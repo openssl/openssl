@@ -9,7 +9,7 @@
 
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 #define BN_BLINDING_COUNTER     32
 
@@ -270,7 +270,7 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 
     do {
         int rv;
-        if (!BN_priv_rand_range(ret->A, ret->mod))
+        if (!BN_priv_rand_range_ex(ret->A, ret->mod, ctx))
             goto err;
         if (int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv))
             break;

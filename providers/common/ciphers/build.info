@@ -1,4 +1,5 @@
-LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=\
-        block.c aes.c aes_basic.c
-INCLUDE[../../../libcrypto]=. ../../../crypto
+# This source is common building blocks for all ciphers in all our providers.
+SOURCE[../../libcommon.a]=\
+        cipher_common.c cipher_common_hw.c block.c \
+        cipher_gcm.c cipher_gcm_hw.c \
+        cipher_ccm.c cipher_ccm_hw.c

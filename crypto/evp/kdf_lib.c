@@ -15,17 +15,28 @@
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
 #include <openssl/kdf.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include <openssl/core.h>
+#include <openssl/core_names.h>
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "internal/numbers.h"
-#include "evp_locl.h"
+#include "internal/provider.h"
+#include "evp_local.h"
 
-EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf)
+EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {
-    EVP_KDF_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
+    EVP_KDF_CTX *ctx = NULL;
 
-    if (ctx == NULL || (ctx->impl = kdf->new()) == NULL) {
+    if (kdf == NULL)
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
+    if (ctx == NULL
+        || (ctx->data = kdf->newctx(ossl_provider_ctx(kdf->prov))) == NULL
+        || !EVP_KDF_up_ref(kdf)) {
         EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        if (ctx != NULL)
+            kdf->freectx(ctx->data);
         OPENSSL_free(ctx);
         ctx = NULL;
     } else {
@@ -34,32 +45,62 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(const EVP_KDF *kdf)
     return ctx;
 }
 
-EVP_KDF_CTX *EVP_KDF_CTX_new_id(int id)
+void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
 {
-    const EVP_KDF *kdf = EVP_get_kdfbynid(id);
-
-    if (kdf == NULL)
-        return NULL;
-    return EVP_KDF_CTX_new(kdf);
+    if (ctx != NULL) {
+        ctx->meth->freectx(ctx->data);
+        ctx->data = NULL;
+        EVP_KDF_free(ctx->meth);
+        OPENSSL_free(ctx);
+    }
 }
 
-int EVP_KDF_nid(const EVP_KDF *kdf)
+EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 {
-    return kdf->type;
+    EVP_KDF_CTX *dst;
+
+    if (src == NULL || src->data == NULL || src->meth->dupctx == NULL)
+        return NULL;
+
+    dst = OPENSSL_malloc(sizeof(*dst));
+    if (dst == NULL) {
+        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    memcpy(dst, src, sizeof(*dst));
+    if (!EVP_KDF_up_ref(dst->meth)) {
+        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(dst);
+        return NULL;
+    }
+
+    dst->data = src->meth->dupctx(src->data);
+    if (dst->data == NULL) {
+        EVP_KDF_CTX_free(dst);
+        return NULL;
+    }
+    return dst;
+}
+
+int EVP_KDF_number(const EVP_KDF *kdf)
+{
+    return kdf->name_id;
+}
+
+int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
+{
+    return evp_is_a(kdf->prov, kdf->name_id, name);
+}
+
+const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)
+{
+    return kdf->prov;
 }
 
 const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
 {
     return ctx->meth;
-}
-
-void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
-{
-    if (ctx == NULL)
-        return;
-
-    ctx->meth->free(ctx->impl);
-    OPENSSL_free(ctx);
 }
 
 void EVP_KDF_reset(EVP_KDF_CTX *ctx)
@@ -68,60 +109,25 @@ void EVP_KDF_reset(EVP_KDF_CTX *ctx)
         return;
 
     if (ctx->meth->reset != NULL)
-        ctx->meth->reset(ctx->impl);
-}
-
-int EVP_KDF_ctrl(EVP_KDF_CTX *ctx, int cmd, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, cmd);
-    ret = EVP_KDF_vctrl(ctx, cmd, args);
-    va_end(args);
-
-    if (ret == -2)
-        EVPerr(EVP_F_EVP_KDF_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-
-    return ret;
-}
-
-int EVP_KDF_vctrl(EVP_KDF_CTX *ctx, int cmd, va_list args)
-{
-    if (ctx == NULL)
-        return 0;
-
-    return ctx->meth->ctrl(ctx->impl, cmd, args);
-}
-
-int EVP_KDF_ctrl_str(EVP_KDF_CTX *ctx, const char *type, const char *value)
-{
-    int ret;
-
-    if (ctx == NULL)
-        return 0;
-
-    if (ctx->meth->ctrl_str == NULL) {
-        EVPerr(EVP_F_EVP_KDF_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
-    }
-
-    ret = ctx->meth->ctrl_str(ctx->impl, type, value);
-    if (ret == -2)
-        EVPerr(EVP_F_EVP_KDF_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-
-    return ret;
+        ctx->meth->reset(ctx->data);
 }
 
 size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
 {
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    size_t s;
+
     if (ctx == NULL)
         return 0;
 
-    if (ctx->meth->size == NULL)
-        return SIZE_MAX;
-
-    return ctx->meth->size(ctx->impl);
+    *params = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &s);
+    if (ctx->meth->get_ctx_params != NULL
+        && ctx->meth->get_ctx_params(ctx->data, params))
+            return s;
+    if (ctx->meth->get_params != NULL
+        && ctx->meth->get_params(params))
+            return s;
+    return 0;
 }
 
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
@@ -129,5 +135,40 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
     if (ctx == NULL)
         return 0;
 
-    return ctx->meth->derive(ctx->impl, key, keylen);
+    return ctx->meth->derive(ctx->data, key, keylen);
+}
+
+/*
+ * The {get,set}_params functions return 1 if there is no corresponding
+ * function in the implementation.  This is the same as if there was one,
+ * but it didn't recognise any of the given params, i.e. nothing in the
+ * bag of parameters was useful.
+ */
+int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[])
+{
+    if (kdf->get_params != NULL)
+        return kdf->get_params(params);
+    return 1;
+}
+
+int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[])
+{
+    if (ctx->meth->get_ctx_params != NULL)
+        return ctx->meth->get_ctx_params(ctx->data, params);
+    return 1;
+}
+
+int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
+{
+    if (ctx->meth->set_ctx_params != NULL)
+        return ctx->meth->set_ctx_params(ctx->data, params);
+    return 1;
+}
+
+void EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
+{
+    if (kdf->prov != NULL)
+        evp_names_do_all(kdf->prov, kdf->name_id, fn, data);
 }

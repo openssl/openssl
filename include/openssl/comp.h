@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_COMP_H
-# define HEADER_COMP_H
+#ifndef OPENSSL_COMP_H
+# define OPENSSL_COMP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_COMP_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -39,7 +45,7 @@ COMP_METHOD *COMP_zlib(void);
 #define COMP_zlib_cleanup() while(0) continue
 #endif
 
-# ifdef HEADER_BIO_H
+# ifdef OPENSSL_BIO_H
 #  ifdef ZLIB
 const BIO_METHOD *BIO_f_zlib(void);
 #  endif

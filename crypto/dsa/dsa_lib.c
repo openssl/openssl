@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include <openssl/bn.h>
-#include "dsa_locl.h"
+#include "dsa_local.h"
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
@@ -273,6 +273,7 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         BN_free(d->g);
         d->g = g;
     }
+    d->dirty_cnt++;
 
     return 1;
 }
@@ -303,6 +304,7 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
         BN_free(d->priv_key);
         d->priv_key = priv_key;
     }
+    d->dirty_cnt++;
 
     return 1;
 }

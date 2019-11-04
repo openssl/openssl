@@ -22,10 +22,12 @@ BEGIN {
     OpenSSL::Test::setup("no_test_here");
 }
 
-use lib srctop_dir("util", "perl");  # for with_fallback
-use lib srctop_dir("test", "ssl-tests");  # for ssltests_base
+use FindBin;
+use lib "$FindBin::Bin/../util/perl";
+use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
+use Text::Template 1.46;
 
-use with_fallback qw(Text::Template);
+use lib "$FindBin::Bin/ssl-tests";
 
 use vars qw/@ISA/;
 push (@ISA, qw/Text::Template/);

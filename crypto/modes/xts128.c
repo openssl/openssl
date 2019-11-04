@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "crypto/modes.h"
 
 int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx,
                           const unsigned char iv[16],

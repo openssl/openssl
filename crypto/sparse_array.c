@@ -10,10 +10,10 @@
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
-#include "internal/sparse_array.h"
+#include "crypto/sparse_array.h"
 
 /*
- * How many bits are used to index each level in the tree structre?
+ * How many bits are used to index each level in the tree structure?
  * This setting determines the number of pointers stored in each node of the
  * tree used to represent the sparse array.  Having more pointers reduces the
  * depth of the tree but potentially wastes more memory.  That is, this is a

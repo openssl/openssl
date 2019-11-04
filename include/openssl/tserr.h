@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TSERR_H
-# define HEADER_TSERR_H
+#ifndef OPENSSL_TSERR_H
+# define OPENSSL_TSERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_TSERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,57 +33,59 @@ int ERR_load_TS_strings(void);
 /*
  * TS function codes.
  */
-#  define TS_F_DEF_SERIAL_CB                               110
-#  define TS_F_DEF_TIME_CB                                 111
-#  define TS_F_INT_TS_RESP_VERIFY_TOKEN                    149
-#  define TS_F_PKCS7_TO_TS_TST_INFO                        148
-#  define TS_F_TS_ACCURACY_SET_MICROS                      115
-#  define TS_F_TS_ACCURACY_SET_MILLIS                      116
-#  define TS_F_TS_ACCURACY_SET_SECONDS                     117
-#  define TS_F_TS_CHECK_IMPRINTS                           100
-#  define TS_F_TS_CHECK_NONCES                             101
-#  define TS_F_TS_CHECK_POLICY                             102
-#  define TS_F_TS_CHECK_SIGNING_CERTS                      103
-#  define TS_F_TS_CHECK_STATUS_INFO                        104
-#  define TS_F_TS_COMPUTE_IMPRINT                          145
-#  define TS_F_TS_CONF_INVALID                             151
-#  define TS_F_TS_CONF_LOAD_CERT                           153
-#  define TS_F_TS_CONF_LOAD_CERTS                          154
-#  define TS_F_TS_CONF_LOAD_KEY                            155
-#  define TS_F_TS_CONF_LOOKUP_FAIL                         152
-#  define TS_F_TS_CONF_SET_DEFAULT_ENGINE                  146
-#  define TS_F_TS_GET_STATUS_TEXT                          105
-#  define TS_F_TS_MSG_IMPRINT_SET_ALGO                     118
-#  define TS_F_TS_REQ_SET_MSG_IMPRINT                      119
-#  define TS_F_TS_REQ_SET_NONCE                            120
-#  define TS_F_TS_REQ_SET_POLICY_ID                        121
-#  define TS_F_TS_RESP_CREATE_RESPONSE                     122
-#  define TS_F_TS_RESP_CREATE_TST_INFO                     123
-#  define TS_F_TS_RESP_CTX_ADD_FAILURE_INFO                124
-#  define TS_F_TS_RESP_CTX_ADD_MD                          125
-#  define TS_F_TS_RESP_CTX_ADD_POLICY                      126
-#  define TS_F_TS_RESP_CTX_NEW                             127
-#  define TS_F_TS_RESP_CTX_SET_ACCURACY                    128
-#  define TS_F_TS_RESP_CTX_SET_CERTS                       129
-#  define TS_F_TS_RESP_CTX_SET_DEF_POLICY                  130
-#  define TS_F_TS_RESP_CTX_SET_SIGNER_CERT                 131
-#  define TS_F_TS_RESP_CTX_SET_STATUS_INFO                 132
-#  define TS_F_TS_RESP_GET_POLICY                          133
-#  define TS_F_TS_RESP_SET_GENTIME_WITH_PRECISION          134
-#  define TS_F_TS_RESP_SET_STATUS_INFO                     135
-#  define TS_F_TS_RESP_SET_TST_INFO                        150
-#  define TS_F_TS_RESP_SIGN                                136
-#  define TS_F_TS_RESP_VERIFY_SIGNATURE                    106
-#  define TS_F_TS_TST_INFO_SET_ACCURACY                    137
-#  define TS_F_TS_TST_INFO_SET_MSG_IMPRINT                 138
-#  define TS_F_TS_TST_INFO_SET_NONCE                       139
-#  define TS_F_TS_TST_INFO_SET_POLICY_ID                   140
-#  define TS_F_TS_TST_INFO_SET_SERIAL                      141
-#  define TS_F_TS_TST_INFO_SET_TIME                        142
-#  define TS_F_TS_TST_INFO_SET_TSA                         143
-#  define TS_F_TS_VERIFY                                   108
-#  define TS_F_TS_VERIFY_CERT                              109
-#  define TS_F_TS_VERIFY_CTX_NEW                           144
+# if !OPENSSL_API_3
+#   define TS_F_DEF_SERIAL_CB                               0
+#   define TS_F_DEF_TIME_CB                                 0
+#   define TS_F_INT_TS_RESP_VERIFY_TOKEN                    0
+#   define TS_F_PKCS7_TO_TS_TST_INFO                        0
+#   define TS_F_TS_ACCURACY_SET_MICROS                      0
+#   define TS_F_TS_ACCURACY_SET_MILLIS                      0
+#   define TS_F_TS_ACCURACY_SET_SECONDS                     0
+#   define TS_F_TS_CHECK_IMPRINTS                           0
+#   define TS_F_TS_CHECK_NONCES                             0
+#   define TS_F_TS_CHECK_POLICY                             0
+#   define TS_F_TS_CHECK_SIGNING_CERTS                      0
+#   define TS_F_TS_CHECK_STATUS_INFO                        0
+#   define TS_F_TS_COMPUTE_IMPRINT                          0
+#   define TS_F_TS_CONF_INVALID                             0
+#   define TS_F_TS_CONF_LOAD_CERT                           0
+#   define TS_F_TS_CONF_LOAD_CERTS                          0
+#   define TS_F_TS_CONF_LOAD_KEY                            0
+#   define TS_F_TS_CONF_LOOKUP_FAIL                         0
+#   define TS_F_TS_CONF_SET_DEFAULT_ENGINE                  0
+#   define TS_F_TS_GET_STATUS_TEXT                          0
+#   define TS_F_TS_MSG_IMPRINT_SET_ALGO                     0
+#   define TS_F_TS_REQ_SET_MSG_IMPRINT                      0
+#   define TS_F_TS_REQ_SET_NONCE                            0
+#   define TS_F_TS_REQ_SET_POLICY_ID                        0
+#   define TS_F_TS_RESP_CREATE_RESPONSE                     0
+#   define TS_F_TS_RESP_CREATE_TST_INFO                     0
+#   define TS_F_TS_RESP_CTX_ADD_FAILURE_INFO                0
+#   define TS_F_TS_RESP_CTX_ADD_MD                          0
+#   define TS_F_TS_RESP_CTX_ADD_POLICY                      0
+#   define TS_F_TS_RESP_CTX_NEW                             0
+#   define TS_F_TS_RESP_CTX_SET_ACCURACY                    0
+#   define TS_F_TS_RESP_CTX_SET_CERTS                       0
+#   define TS_F_TS_RESP_CTX_SET_DEF_POLICY                  0
+#   define TS_F_TS_RESP_CTX_SET_SIGNER_CERT                 0
+#   define TS_F_TS_RESP_CTX_SET_STATUS_INFO                 0
+#   define TS_F_TS_RESP_GET_POLICY                          0
+#   define TS_F_TS_RESP_SET_GENTIME_WITH_PRECISION          0
+#   define TS_F_TS_RESP_SET_STATUS_INFO                     0
+#   define TS_F_TS_RESP_SET_TST_INFO                        0
+#   define TS_F_TS_RESP_SIGN                                0
+#   define TS_F_TS_RESP_VERIFY_SIGNATURE                    0
+#   define TS_F_TS_TST_INFO_SET_ACCURACY                    0
+#   define TS_F_TS_TST_INFO_SET_MSG_IMPRINT                 0
+#   define TS_F_TS_TST_INFO_SET_NONCE                       0
+#   define TS_F_TS_TST_INFO_SET_POLICY_ID                   0
+#   define TS_F_TS_TST_INFO_SET_SERIAL                      0
+#   define TS_F_TS_TST_INFO_SET_TIME                        0
+#   define TS_F_TS_TST_INFO_SET_TSA                         0
+#   define TS_F_TS_VERIFY                                   0
+#   define TS_F_TS_VERIFY_CERT                              0
+#   define TS_F_TS_VERIFY_CTX_NEW                           0
+# endif
 
 /*
  * TS reason codes.

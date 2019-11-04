@@ -217,7 +217,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e)
     }
 
     pbio = BIO_new_file(file, "r");
-    if (!pbio) {
+    if (pbio == NULL) {
         BIO_printf(bio_err, "Can't open parameter file %s\n", file);
         return 0;
     }
@@ -225,7 +225,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e)
     pkey = PEM_read_bio_Parameters(pbio, NULL);
     BIO_free(pbio);
 
-    if (!pkey) {
+    if (pkey == NULL) {
         BIO_printf(bio_err, "Error reading parameter file %s\n", file);
         return 0;
     }

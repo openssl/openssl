@@ -2,18 +2,35 @@
 
 =head1 NAME
 
-ERR_put_error, ERR_add_error_data, ERR_add_error_vdata - record an error
+ERR_raise, ERR_raise_data,
+ERR_put_error, ERR_add_error_data, ERR_add_error_vdata
+- record an error
 
 =head1 SYNOPSIS
 
  #include <openssl/err.h>
 
- void ERR_put_error(int lib, int func, int reason, const char *file, int line);
+ void ERR_raise(int lib, int reason);
+ void ERR_raise_data(int lib, int reason, const char *fmt, ...);
 
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);
 
+Deprecated since OpenSSL 3.0:
+
+ void ERR_put_error(int lib, int func, int reason, const char *file, int line);
+
 =head1 DESCRIPTION
+
+ERR_raise() adds a new error to the thread's error queue.  The
+error occured in the library B<lib> for the reason given by the
+B<reason> code.  Furthermore, the name of the file, the line, and name
+of the function where the error occured is saved with the error
+record.
+
+ERR_raise_data() does the same thing as ERR_raise(), but also lets the
+caller specify additional information as a format string B<fmt> and an
+arbitrary number of values, which are processed with L<BIO_snprintf(3)>.  
 
 ERR_put_error() adds an error code to the thread's error queue. It
 signals that the error of reason code B<reason> occurred in function
@@ -23,12 +40,15 @@ This function is usually called by a macro.
 ERR_add_error_data() associates the concatenation of its B<num> string
 arguments with the error code added last.
 ERR_add_error_vdata() is similar except the argument is a B<va_list>.
+Multiple calls to these functions append to the current top of the error queue.
 
 L<ERR_load_strings(3)> can be used to register
 error strings so that the application can a generate human-readable
 error messages for the error code.
 
 =head2 Reporting errors
+
+=for comment TODO(3.0) should this be internal documentation?
 
 Each sub-library has a specific macro XXXerr() that is used to report
 errors. Its first argument is a function code B<XXX_F_...>, the second
@@ -39,14 +59,14 @@ descriptions. For example, the function ssl3_read_bytes() reports a
 
  SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);
 
-Function and reason codes should consist of upper case characters,
+Function and reason codes should consist of uppercase characters,
 numbers and underscores only. The error file generation script translates
 function codes into function names by looking in the header files
 for an appropriate function name, if none is found it just uses
 the capitalized form such as "SSL3_READ_BYTES" in the above example.
 
 The trailing section of a reason code (after the "_R_") is translated
-into lower case and underscores changed to spaces.
+into lowercase and underscores changed to spaces.
 
 Although a library will normally report errors using its own specific
 XXXerr macro, another library's macro can be used. This is normally
@@ -56,8 +76,12 @@ the ASN1err() macro.
 
 =head1 RETURN VALUES
 
-ERR_put_error() and ERR_add_error_data() return
-no values.
+ERR_raise(), ERR_put_error(), ERR_add_error_data() and
+ERR_add_error_vdata() return no values.
+
+=head1 NOTES
+
+ERR_raise() and ERR_put_error() are implemented as macros.
 
 =head1 SEE ALSO
 
@@ -65,7 +89,7 @@ L<ERR_load_strings(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

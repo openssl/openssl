@@ -32,8 +32,10 @@
 # aggregated reduction - by 170% or 2.7x (resulting in 0.55 cpb).
 # POWER9 delivers 0.51 cpb.
 
-$flavour=shift;
-$output =shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /64/) {
 	$SIZE_T=8;
@@ -61,7 +63,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour $output" || die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 
 my ($Xip,$Htbl,$inp,$len)=map("r$_",(3..6));	# argument block
 

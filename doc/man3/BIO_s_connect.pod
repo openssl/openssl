@@ -106,7 +106,7 @@ If blocking I/O is set then a non positive return value from any
 I/O call is caused by an error condition, although a zero return
 will normally mean that the connection was closed.
 
-If the port name is supplied as part of the host name then this will
+If the port name is supplied as part of the hostname then this will
 override any value set with BIO_set_conn_port(). This may be undesirable
 if the application does not wish to allow connection to arbitrary
 ports. This can be avoided by checking for the presence of the ':'
@@ -163,7 +163,7 @@ BIO_set_nbio() always returns 1.
 BIO_do_connect() returns 1 if the connection was successfully
 established and 0 or -1 if the connection failed.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This is example connects to a webserver on the local host and attempts
 to retrieve a page and copy the result to standard output.

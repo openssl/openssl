@@ -14,12 +14,6 @@ iso 3			: identified-organization
 # GMAC OID
 iso 0 9797 3 4                          : GMAC          : gmac
 
-# There are no OIDs for these yet...
-            : KMAC128   : kmac128
-            : KMAC256   : kmac256
-            : BLAKE2BMAC	: blake2bmac
-            : BLAKE2SMAC   	: blake2smac
-
 # HMAC OIDs
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
 identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
@@ -437,9 +431,9 @@ rsadsi 3 8		: RC5-CBC		: rc5-cbc
 !Cname ms-efs
 1 3 6 1 4 1 311 10 3 4	: msEFS			: Microsoft Encrypted File System
 !Cname ms-smartcard-login
-1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcardlogin
+1 3 6 1 4 1 311 20 2 2	: msSmartcardLogin	: Microsoft Smartcard Login
 !Cname ms-upn
-1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft Universal Principal Name
+1 3 6 1 4 1 311 20 2 3	: msUPN			: Microsoft User Principal Name
 
 1 3 6 1 4 1 188 7 1 1 2	: IDEA-CBC		: idea-cbc
 			: IDEA-ECB		: idea-ecb
@@ -615,6 +609,9 @@ id-cmc 24		: id-cmc-confirmCertAcceptance
 # other names
 id-on 1			: id-on-personalData
 id-on 3			: id-on-permanentIdentifier : Permanent Identifier
+id-on 5			: id-on-xmppAddr : XmppAddr
+id-on 7			: id-on-dnsSRV : SRVName
+id-on 9			: id-on-SmtpUTF8Mailbox : Smtp UTF8 Mailbox
 
 # personal data attributes
 id-pda 1		: id-pda-dateOfBirth
@@ -709,8 +706,10 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 1 3 36 3 2 1		: RIPEMD160		: ripemd160
 1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
 
-1 3 6 1 4 1 1722 12 2 1 16 : BLAKE2b512        : blake2b512
-1 3 6 1 4 1 1722 12 2 2 8  : BLAKE2s256        : blake2s256
+1 3 6 1 4 1 1722 12 2 1 : BLAKE2BMAC	        : blake2bmac
+1 3 6 1 4 1 1722 12 2 2 : BLAKE2SMAC   	        : blake2smac
+blake2bmac 16           : BLAKE2b512            : blake2b512
+blake2smac 8            : BLAKE2s256            : blake2s256
 
 !Cname sxnet
 1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
@@ -987,6 +986,10 @@ nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
 # how to handle them...
 # nist_hashalgs 17	: id-shake128-len	: shake128-len
 # nist_hashalgs 18	: id-shake256-len	: shake256-len
+nist_hashalgs 19        : KMAC128               : kmac128
+nist_hashalgs 20        : KMAC256               : kmac256
+# nist_hashalgs 21      : KMAC128-XOF           : kmac128-xof
+# nist_hashalgs 22      : KMAC256-XOF           : kmac256-xof
 
 # OIDs for dsa-with-sha224 and dsa-with-sha256
 !Alias dsa_with_sha2 nistAlgorithms 3
@@ -1369,7 +1372,7 @@ id-tc26-algorithms 7	:	id-tc26-wrap
 id-tc26-wrap 1	: id-tc26-wrap-gostr3412-2015-magma
 id-tc26-wrap-gostr3412-2015-magma 1	: id-tc26-wrap-gostr3412-2015-magma-kexp15
 id-tc26-wrap 2	: id-tc26-wrap-gostr3412-2015-kuznyechik
-id-tc26-wrap-gostr3412-2015-magma 1	: id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15
+id-tc26-wrap-gostr3412-2015-kuznyechik 1	: id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15
 
 id-tc26 2 		: id-tc26-constants
 
@@ -1616,6 +1619,11 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 
 # NID for SSKDF
                             : SSKDF              : sskdf
+# NID for X942KDF
+                            : X942KDF            : x942kdf
+
+# NID for X963-2001 KDF
+                            : X963KDF            : x963kdf
 
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit

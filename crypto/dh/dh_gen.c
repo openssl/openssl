@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include "dh_locl.h"
+#include "dh_local.h"
 
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
@@ -30,30 +30,29 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
 
 /*-
  * We generate DH parameters as follows
- * find a prime q which is prime_len/2 bits long.
- * p=(2*q)+1 or (p-1)/2 = q
- * For this case, g is a generator if
- * g^((p-1)/q) mod p != 1 for values of q which are the factors of p-1.
- * Since the factors of p-1 are q and 2, we just need to check
- * g^2 mod p != 1 and g^q mod p != 1.
+ * find a prime p which is prime_len bits long,
+ * where q=(p-1)/2 is also prime.
+ * In the following we assume that g is not 0, 1 or p-1, since it
+ * would generate only trivial subgroups.
+ * For this case, g is a generator of the order-q subgroup if
+ * g^q mod p == 1.
+ * Or in terms of the Legendre symbol: (g/p) == 1.
  *
  * Having said all that,
  * there is another special case method for the generators 2, 3 and 5.
- * for 2, p mod 24 == 11
- * for 3, p mod 12 == 5  <<<<< does not work for safe primes.
- * for 5, p mod 10 == 3 or 7
+ * Using the quadratic reciprocity law it is possible to solve
+ * (g/p) == 1 for the special values 2, 3, 5:
+ * (2/p) == 1 if p mod 8 == 1 or 7.
+ * (3/p) == 1 if p mod 12 == 1 or 11.
+ * (5/p) == 1 if p mod 5 == 1 or 4.
+ * See for instance: https://en.wikipedia.org/wiki/Legendre_symbol
  *
- * Thanks to Phil Karn for the pointers about the
- * special generators and for answering some of my questions.
- *
- * I've implemented the second simple method :-).
- * Since DH should be using a safe prime (both p and q are prime),
- * this generator function can take a very very long time to run.
- */
-/*
- * Actually there is no reason to insist that 'generator' be a generator.
- * It's just as OK (and in some sense better) to use a generator of the
- * order-q subgroup.
+ * Since all safe primes > 7 must satisfy p mod 12 == 11
+ * and all safe primes > 11 must satisfy p mod 5 != 1
+ * we can further improve the condition for g = 2, 3 and 5:
+ * for 2, p mod 24 == 23
+ * for 3, p mod 12 == 11
+ * for 5, p mod 60 == 59
  */
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb)
@@ -61,6 +60,16 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     BIGNUM *t1, *t2;
     int g, ok = -1;
     BN_CTX *ctx = NULL;
+
+    if (prime_len > OPENSSL_DH_MAX_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_LARGE);
+        return 0;
+    }
+
+    if (prime_len < DH_MIN_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_SMALL);
+        return 0;
+    }
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
@@ -84,17 +93,14 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     if (generator == DH_GENERATOR_2) {
         if (!BN_set_word(t1, 24))
             goto err;
-        if (!BN_set_word(t2, 11))
+        if (!BN_set_word(t2, 23))
             goto err;
         g = 2;
     } else if (generator == DH_GENERATOR_5) {
-        if (!BN_set_word(t1, 10))
+        if (!BN_set_word(t1, 60))
             goto err;
-        if (!BN_set_word(t2, 3))
+        if (!BN_set_word(t2, 59))
             goto err;
-        /*
-         * BN_set_word(t3,7); just have to miss out on these ones :-(
-         */
         g = 5;
     } else {
         /*
@@ -102,9 +108,9 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
          * not: since we are using safe primes, it will generate either an
          * order-q or an order-2q group, which both is OK
          */
-        if (!BN_set_word(t1, 2))
+        if (!BN_set_word(t1, 12))
             goto err;
-        if (!BN_set_word(t2, 1))
+        if (!BN_set_word(t2, 11))
             goto err;
         g = generator;
     }
@@ -115,6 +121,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
     if (!BN_set_word(ret->g, g))
         goto err;
+    ret->dirty_cnt++;
     ok = 1;
  err:
     if (ok == -1) {

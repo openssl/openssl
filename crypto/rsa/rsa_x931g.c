@@ -12,7 +12,7 @@
 #include <time.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 /* X9.31 RSA key derivation and generation */
 
@@ -131,6 +131,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     if (rsa->iqmp == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
  err:
     BN_CTX_end(ctx);
@@ -184,6 +185,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
                             NULL, NULL, NULL, NULL, NULL, NULL, e, cb))
         goto error;
 
+    rsa->dirty_cnt++;
     ok = 1;
 
  error:

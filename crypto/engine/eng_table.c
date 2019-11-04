@@ -11,7 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/trace.h>
-#include "eng_int.h"
+#include "eng_local.h"
 
 /* The type of the items in the table */
 struct st_engine_pile {
@@ -27,7 +27,7 @@ struct st_engine_pile {
     int uptodate;
 };
 
-/* The type exposed in eng_int.h */
+/* The type exposed in eng_local.h */
 struct st_engine_table {
     LHASH_OF(ENGINE_PILE) piles;
 };                              /* ENGINE_TABLE */
@@ -77,7 +77,7 @@ static int int_table_check(ENGINE_TABLE **t, int create)
 }
 
 /*
- * Privately exposed (via eng_int.h) functions for adding and/or removing
+ * Privately exposed (via eng_local.h) functions for adding and/or removing
  * ENGINEs from the implementation table
  */
 int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
@@ -170,7 +170,7 @@ void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e)
 
 static void int_cleanup_cb_doall(ENGINE_PILE *p)
 {
-    if (!p)
+    if (p == NULL)
         return;
     sk_ENGINE_free(p->sk);
     if (p->funct)
@@ -196,6 +196,9 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     ENGINE *ret = NULL;
     ENGINE_PILE tmplate, *fnd = NULL;
     int initres, loop = 0;
+
+    /* Load the config before trying to check if engines are available */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     if (!(*table)) {
         OSSL_TRACE3(ENGINE_TABLE,

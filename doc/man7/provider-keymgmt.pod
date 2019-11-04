@@ -1,0 +1,178 @@
+=pod
+
+=head1 NAME
+
+provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/core_numbers.h>
+
+ /*
+  * None of these are actual functions, but are displayed like this for
+  * the function signatures for functions that are offered as function
+  * pointers in OSSL_DISPATCH arrays.
+  */
+
+ /* Key domain parameter creation and destruction */
+ void *OP_keymgmt_importdomparams(void *provctx, const OSSL_PARAM params[]);
+ void *OP_keymgmt_gendomparams(void *provctx, const OSSL_PARAM params[]);
+ void OP_keymgmt_freedomparams(void *domparams);
+
+ /* Key domain parameter export */
+ int OP_keymgmt_exportdomparams(void *domparams, OSSL_PARAM params[]);
+
+ /* Key domain parameter discovery */
+ const OSSL_PARAM *OP_keymgmt_importdomparam_types(void);
+ const OSSL_PARAM *OP_keymgmt_exportdomparam_types(void);
+
+ /* Key creation and destruction */
+ void *OP_keymgmt_importkey(void *provctx, const OSSL_PARAM params[]);
+ void *OP_keymgmt_genkey(void *provctx,
+                         void *domparams, const OSSL_PARAM genkeyparams[]);
+ void *OP_keymgmt_loadkey(void *provctx, void *id, size_t idlen);
+ void OP_keymgmt_freekey(void *key);
+
+ /* Key export */
+ int OP_keymgmt_exportkey(void *key, OSSL_PARAM params[]);
+
+ /* Key discovery */
+ const OSSL_PARAM *OP_keymgmt_importkey_types(void);
+ const OSSL_PARAM *OP_keymgmt_exportkey_types(void);
+
+=head1 DESCRIPTION
+
+The KEYMGMT operation doesn't have much public visibility in OpenSSL
+libraries, it's rather an internal operation that's designed to work
+in tandem with operations that use private/public key pairs.
+
+Because the KEYMGMT operation shares knowledge with the operations it
+works with in tandem, they must belong to the same provider.
+The OpenSSL libraries will ensure that they do.
+
+The primary responsibility of the KEYMGMT operation is to hold the
+provider side domain parameters and keys for the OpenSSL library
+EVP_PKEY structure.
+
+All "functions" mentioned here are passed as function pointers between
+F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
+B<OSSL_ALGORITHM> arrays that are returned by the provider's
+provider_query_operation() function
+(see L<provider-base(7)/Provider Functions>).
+
+All these "functions" have a corresponding function type definition
+named B<OSSL_{name}_fn>, and a helper function to retrieve the
+function pointer from a B<OSSL_DISPATCH> element named
+B<OSSL_get_{name}>.
+For example, the "function" OP_keymgmt_importdomparams() has these:
+
+ typedef void *
+     (OSSL_OP_keymgmt_importdomparams_fn)(void *provctx,
+                                          const OSSL_PARAM params[]);
+ static ossl_inline OSSL_OP_keymgmt_importdomparams_fn
+     OSSL_get_OP_keymgmt_importdomparams(const OSSL_DISPATCH *opf);
+
+B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<openssl-core_numbers.h(7)>, as follows:
+
+ OP_keymgmt_importdomparams      OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS
+ OP_keymgmt_gendomparams         OSSL_FUNC_KEYMGMT_GENDOMPARAMS
+ OP_keymgmt_freedomparams        OSSL_FUNC_KEYMGMT_FREEDOMPARAMS
+ OP_keymgmt_exportdomparams      OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS
+ OP_keymgmt_importdomparam_types OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES
+ OP_keymgmt_exportdomparam_types OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES
+
+ OP_keymgmt_importkey            OSSL_FUNC_KEYMGMT_IMPORTKEY
+ OP_keymgmt_genkey               OSSL_FUNC_KEYMGMT_GENKEY
+ OP_keymgmt_loadkey              OSSL_FUNC_KEYMGMT_LOADKEY
+ OP_keymgmt_freekey              OSSL_FUNC_KEYMGMT_FREEKEY
+ OP_keymgmt_exportkey            OSSL_FUNC_KEYMGMT_EXPORTKEY
+ OP_keymgmt_importkey_types      OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES
+ OP_keymgmt_exportkey_types      OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES
+
+=head2 Domain Parameter Functions
+
+OP_keymgmt_importdomparams() should create a provider side structure
+for domain parameters, with values taken from the passed B<OSSL_PARAM>
+array I<params>.
+
+OP_keymgmt_gendomparams() should generate domain parameters and create
+a provider side structure for them.
+Values of the passed B<OSSL_PARAM> array I<params> should be used as
+input for parameter generation.
+
+OP_keymgmt_freedomparams() should free the passed provider side domain
+parameter structure I<domparams>.
+
+OP_keymgmt_exportdomparams() should extract values from the passed
+provider side domain parameter structure I<domparams> into the passed
+B<OSSL_PARAM> I<params>.
+Only the values specified in I<params> should be extracted.
+
+OP_keymgmt_importdomparam_types() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_importdomparams()
+can handle.
+
+=for comment There should be one corresponding to OP_keymgmt_gendomparams()
+as well...
+
+OP_keymgmt_exportdomparam_types() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that can be exported with
+OP_keymgmt_exportdomparams().
+
+=head2 Key functions
+
+OP_keymgmt_importkey() should create a provider side structure
+for keys, with values taken from the passed B<OSSL_PARAM> array
+I<params>.
+
+OP_keymgmt_genkey() should generate keys and create a provider side
+structure for them.
+Values from the passed domain parameters I<domparams> as well as from
+the passed B<OSSL_PARAM> array I<params> should be used as input for
+key generation.
+
+OP_keymgmt_loadkey() should return a provider side key structure with
+a key loaded from a location known only to the provider, identitified
+with the identity I<id> of size I<idlen>.
+This identity is internal to the provider and is retrieved from the
+provider through other means.
+
+=for comment Right now, OP_keymgmt_loadkey is useless, but will be
+useful as soon as we have a OSSL_STORE interface
+
+OP_keymgmt_freekey() should free the passed I<key>.
+
+OP_keymgmt_exportkey() should extract values from the passed
+provider side key I<key> into the passed B<OSSL_PARAM> I<params>.
+Only the values specified in I<params> should be extracted.
+
+OP_keymgmt_importkey_types() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_importkey()
+can handle.
+
+=for comment There should be one corresponding to OP_keymgmt_genkey()
+as well...
+
+OP_keymgmt_exportkey_types() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that can be exported with
+OP_keymgmt_exportkeys().
+
+=head1 SEE ALSO
+
+L<provider(7)>
+
+=head1 HISTORY
+
+The KEYMGMT interface was introduced in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

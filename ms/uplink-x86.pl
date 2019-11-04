@@ -12,8 +12,7 @@ require "x86asm.pl";
 
 require "uplink-common.pl";
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0]);
 

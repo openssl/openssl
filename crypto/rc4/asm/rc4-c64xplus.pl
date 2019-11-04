@@ -186,7 +186,6 @@ rc4_options:
 	.align	4
 ___
 
-$output=pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 print $code;
 close STDOUT;

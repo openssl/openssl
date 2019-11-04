@@ -7,13 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CT_H
-# define HEADER_CT_H
+#ifndef OPENSSL_CT_H
+# define OPENSSL_CT_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CT_H
+# endif
 
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CT
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 # include <openssl/cterr.h>
@@ -463,8 +469,6 @@ __owur int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
 
 /*
  * Loads the default CT log list into a |store|.
- * See internal/cryptlib.h for the environment variable and file path that are
- * consulted to find the default file.
  * Returns 1 if loading is successful, or 0 otherwise.
  */
 __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);

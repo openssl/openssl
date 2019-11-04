@@ -274,6 +274,9 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
         if (!read_lebn(&p, 20, &priv_key))
             goto memerr;
 
+        /* Set constant time flag before public key calculation */
+        BN_set_flags(priv_key, BN_FLG_CONSTTIME);
+
         /* Calculate public key */
         pub_key = BN_new();
         if (pub_key == NULL)
@@ -614,6 +617,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 {
     const unsigned char *p = *in;
     unsigned int pvk_magic, is_encrypted;
+
     if (skip_magic) {
         if (length < 20) {
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
@@ -642,7 +646,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
     if (*pkeylen > PVK_MAX_KEYLEN || *psaltlen > PVK_MAX_SALTLEN)
         return 0;
 
-    if (is_encrypted && !*psaltlen) {
+    if (is_encrypted && *psaltlen == 0) {
         PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
         return 0;
     }

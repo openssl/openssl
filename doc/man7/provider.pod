@@ -1,0 +1,393 @@
+=pod
+
+=head1 NAME
+
+provider - OpenSSL operation implementation providers
+
+=head1 SYNOPSIS
+
+=for openssl generic
+
+#include <openssl/provider.h>
+
+=head1 DESCRIPTION
+
+=head2 General
+
+A I<provider>, in OpenSSL terms, is a unit of code that provides one
+or more implementations for various operations for diverse algorithms
+that one might want to perform.
+
+An I<operation> is something one wants to do, such as encryption and
+decryption, key derivation, MAC calculation, signing and verification,
+etc.
+
+An I<algorithm> is a named method to perform an operation.
+Very often, the algorithms revolve around cryptographic operations,
+but may also revolve around other types of operation, such as managing
+certain types of objects.
+
+=head2 Provider
+
+I<NOTE: This section is mostly interesting for provider authors.>
+
+A I<provider> offers an initialization function, as a set of base
+functions in the form of an B<OSSL_DISPATCH> array, and by extension,
+a set of B<OSSL_ALGORITHM>s (see L<openssl-core.h(7)>).
+It may be a dynamically loadable module, or may be built-in, in
+OpenSSL libraries or in the application.
+If it's a dynamically loadable module, the initialization function
+must be named C<OSSL_provider_init> and must be exported.
+If it's built-in, the initialization function may have any name.
+
+The initialization function must have the following signature:
+
+ int NAME(const OSSL_PROVIDER *provider,
+          const OSSL_DISPATCH *in, const OSSL_DISPATCH **out,
+          void **provctx);
+
+I<provider> is the OpenSSL library object for the provider, and works
+as a handle for everything the OpenSSL libraries need to know about
+the provider.
+For the provider itself, it may hold some interesting information,
+and is also passed to some of the functions given in the dispatch
+array I<in>.
+
+I<in> is a dispatch array of base functions offered by the OpenSSL
+libraries, and the available functions are further described in
+L<provider-base(7)>.
+
+I<*out> must be assigned a dispatch array of base functions that the
+provider offers to the OpenSSL libraries.
+The functions that may be offered are further described in
+L<provider-base(7)>, and they are the central means of communication
+between the OpenSSL libraries and the provider.
+
+I<*provctx> should be assigned a provider specific context to allow
+the provider multiple simultaneous uses.
+This pointer will be passed to various operation functions offered by
+the provider.
+
+One of the functions the provider offers to the OpenSSL libraries is
+the central mechanism for the OpenSSL libraries to get access to
+operation implementations for diverse algorithms.
+Its referred to with the number B<OSSL_FUNC_PROVIDER_QUERY_OPERATION>
+and has the following signature:
+
+ const OSSL_ALGORITHM *provider_query_operation(void *provctx,
+                                                int operation_id,
+                                                const int *no_store);
+
+I<provctx> is the provider specific context that was passed back by
+the initialization function.
+
+I<operation_id> is an operation identity (see L</Operations> below).
+
+I<no_store> is a flag back to the OpenSSL libraries which, when
+nonzero, signifies that the OpenSSL libraries will not store a
+reference to the returned data in their internal store of
+implementations.
+
+The returned B<OSSL_ALGORITHM> is the foundation of any OpenSSL
+library API that uses providers for their implementation, most
+commonly in the I<fetching> type of functions
+(see L</Fetching algorithms> below).
+
+=head2 Operations
+
+I<NOTE: This section is mostly interesting for provider authors.>
+
+Operations are referred to with numbers, via macros with names
+starting with C<OSSL_OP_>.
+
+With each operation comes a set of defined function types that a
+provider may or may not offer, depending on its needs.
+
+Currently available operations are:
+
+=over 4
+
+=item Digests
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_MD>.
+The number for this operation is B<OSSL_OP_DIGEST>.
+The functions the provider can offer are described in
+L<provider-digest(7)>
+
+=item Symmetric ciphers
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_CIPHER>.
+The number for this operation is B<OSSL_OP_CIPHER>.
+The functions the provider can offer are described in
+L<provider-cipher(7)>
+
+=item Message Authentication Code (MAC)
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_MAC>.
+The number for this operation is B<OSSL_OP_MAC>.
+The functions the provider can offer are described in
+L<provider-mac(7)>
+
+=item Key Derivation Function (KDF)
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_KDF>.
+The number for this operation is B<OSSL_OP_KDF>.
+The functions the provider can offer are described in
+L<provider-kdf(7)>
+
+=item Key Exchange
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_KEYEXCH>.
+The number for this operation is B<OSSL_OP_KEYEXCH>.
+The functions the provider can offer are described in
+L<provider-keyexch(7)>
+
+=back
+
+=head2 Fetching algorithms
+
+=head3 Explicit fetch
+
+I<NOTE: This section is mostly interesting to OpenSSL users.>
+
+Users of the OpenSSL libraries never query the provider directly for
+its diverse implementations and dispatch tables.
+Instead, the diverse OpenSSL APIs often have fetching functions that
+do the work, and they return an appropriate method object back to the
+user.
+These functions usually have the name C<APINAME_fetch>, where
+C<APINAME> is the name of the API, for example L<EVP_MD_fetch(3)>.
+
+These fetching functions follow a fairly common pattern, where three
+arguments are passed:
+
+=over 4
+
+=item The library context
+
+See L<OPENSSL_CTX(3)> for a more detailed description.
+This may be NULL to signify the default (global) library context, or a
+context created by the user.
+Only providers loaded in this library context (see
+L<OSSL_PROVIDER_load(3)>) will be considered by the fetching
+function.
+
+=item An identifier
+
+This is most commonly an algorithm name (this is the case for all EVP
+methods), but may also be called something else.
+
+=for comment For example, an OSSL_STORE implementation would use the
+URI scheme as an identifier.
+
+=item A property query string
+
+See L<property(7)> for a more detailed description.
+This is used to select more exactly which providers will get to offer
+an implementation.
+
+=back
+
+The method object that is fetched can then be used with diverse other
+functions that use them, for example L<EVP_DigestInit_ex(3)>.
+
+=head3 Implicit fetch
+
+I<NOTE: This section is mostly interesting to OpenSSL users.>
+
+OpenSSL has a number of functions that return a method object with no
+associated implementation, such as L<EVP_sha256(3)>,
+L<EVP_blake2b512(3)> or L<EVP_aes_128_cbc(3)>, which are present for
+compatibility with OpenSSL before version 3.0.
+
+When they are used with functions like L<EVP_DigestInit_ex(3)> or
+L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
+fetched implicitly using default search criteria.
+
+Implicit fetching can also occur with functions such as
+L<EVP_PKEY_CTX_derive_init_ex(3)> where a NULL algorithm parameter is
+supplied.
+In this case an algorithm implementation is implicitly fetched using
+default search criteria and an algorithm name that is consistent with
+the type of EVP_PKEY being used.
+
+=head1 OPENSSL PROVIDERS
+
+OpenSSL comes with a set of providers.
+All the algorithm names mentioned can be used as an algorithm
+identifier to the appropriate fetching function.
+
+=head2 Default provider
+
+The default provider is built in as part of the F<libcrypto> library.
+Should it be needed (if other providers are loaded and offer
+implementations of the same algorithms), the property "default=yes"
+can be used as a search criterion for these implementations.
+
+It currently offers the following named algorithms:
+
+=over 4
+
+=item Digests
+
+SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
+SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, SHAKE256, SM3,
+BLAKE2b512, BLAKE2s256, KMAC128, KMAC256, MD5, MD5-SHA1
+
+=item Symmetric ciphers
+
+AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
+AES-128-CBC, AES-256-OFB, AES-192-OFB, AES-128-OFB, AES-256-CFB,
+AES-192-CFB, AES-128-CFB, AES-256-CFB1, AES-192-CFB1, AES-128-CFB1,
+AES-256-CFB8, AES-192-CFB8, AES-128-CFB8, AES-256-CTR, AES-192-CTR,
+AES-128-CTR, id-aes256-GCM, id-aes192-GCM, id-aes128-GCM
+
+=item Key Exchange
+
+dhKeyAgreement
+
+=back
+
+=head2 FIPS provider
+
+The FIPS provider is a dynamically loadable module, and must therefore
+be loaded explicitly, either in code or through OpenSSL configuration
+(see L<config(5)>).
+Should it be needed (if other providers are loaded and offer
+implementations of the same algorithms), the property "fips=yes" can
+be used as a search criterion for these implementations.
+
+It currently offers the following FIPS approved named algorithms:
+
+=over 4
+
+=item Digests
+
+SHA1, SHA224, SHA256, SHA384, SHA512, SHA512-224, SHA512-256,
+SHA3-224, SHA3-256, SHA3-384, SHA3-512, KMAC128, KMAC256
+
+=item Symmetric ciphers
+
+AES-256-ECB, AES-192-ECB, AES-128-ECB, AES-256-CBC, AES-192-CBC,
+AES-128-CBC, AES-256-CTR, AES-192-CTR, AES-128-CTR
+
+=back
+
+=head2 Legacy provider
+
+The legacy provider is a dynamically loadable module, and must therefore
+be loaded explicitly, either in code or through OpenSSL configuration
+(see L<config(5)>).
+Should it be needed (if other providers are loaded and offer
+implementations of the same algorithms), the property "legacy=yes" can be
+used as a search criterion for these implementations.
+
+It currently offers the following named algorithms:
+
+=over 4
+
+=item Digest algorithms:
+
+RIPEMD160, MD2, MD4, MDC2, whirlpool.
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Fetching
+
+Fetch any available implementation of SHA256 in the default context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", NULL);
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch any available implementation of AES-128-CBC in the default context:
+
+ EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+ ...
+ EVP_CIPHER_meth_free(cipher);
+
+Fetch an implementation of SHA256 from the default provider in the default
+context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch an implementation of SHA256 that is not from the default provider in the
+default context:
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA256", "default=no");
+ ...
+ EVP_MD_meth_free(md);
+
+Fetch an implementation of SHA256 from the default provider in the specified
+context:
+
+ EVP_MD *md = EVP_MD_fetch(ctx, "SHA256", "default=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Load the legacy provider into the default context and then fetch an
+implementation of whirlpool from it:
+
+ /* This only needs to be done once - usually at application start up */
+ OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
+
+ EVP_MD *md = EVP_MD_fetch(NULL, "whirlpool", "legacy=yes");
+ ...
+ EVP_MD_meth_free(md);
+
+Note that in the above example the property string "legacy=yes" is optional
+since, assuming no other providers have been loaded, the only implementation of
+the "whirlpool" algorithm is in the "legacy" provider. Also note that the
+default provider should be explicitly loaded if it is required in addition to
+other providers:
+
+ /* This only needs to be done once - usually at application start up */
+ OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
+ OSSL_PROVIDER *default = OSSL_PROVIDER_load(NULL, "default");
+
+ EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
+ EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA256", NULL);
+ ...
+ EVP_MD_meth_free(md_whirlpool);
+ EVP_MD_meth_free(md_sha256);
+
+
+=head1 SEE ALSO
+
+L<EVP_DigestInit_ex(3)>, L<EVP_EncryptInit_ex(3)>,
+L<EVP_PKEY_derive_init_ex(3)>, 
+L<OPENSSL_CTX(3)>,
+L<EVP_set_default_properties(3)>,
+L<EVP_MD_fetch(3)>,
+L<EVP_CIPHER_fetch(3)>,
+L<EVP_KEYMGMT_fetch(3)>,
+L<openssl-core.h(7)>,
+L<provider-base(7)>,
+L<provider-digest(7)>,
+L<provider-cipher(7)>,
+L<provider-keyexch(7)>
+
+=head1 HISTORY
+
+The concept of providers and everything surrounding them was
+introduced in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

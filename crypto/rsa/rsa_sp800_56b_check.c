@@ -10,8 +10,8 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
+#include "crypto/bn.h"
+#include "rsa_local.h"
 
 /*
  * Part of the RSA keypair test.
@@ -119,16 +119,15 @@ err:
  * Check the prime factor (for either p or q)
  * i.e: p is prime AND GCD(p - 1, e) = 1
  *
- * See SP800-5bBr1 6.4.1.2.3 Step 5 (a to d) & (e to h).
+ * See SP800-56Br1 6.4.1.2.3 Step 5 (a to d) & (e to h).
  */
 int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
 {
-    int checks = bn_rsa_fips186_4_prime_MR_min_checks(nbits);
     int ret = 0;
     BIGNUM *p1 = NULL, *gcd = NULL;
 
     /* (Steps 5 a-b) prime test */
-    if (BN_is_prime_fasttest_ex(p, checks, ctx, 1, NULL) != 1
+    if (BN_check_prime(p, ctx, NULL) != 1
             /* (Step 5c) (√2)(2^(nbits/2 - 1) <= p <= 2^(nbits/2 - 1) */
             || rsa_check_prime_factor_range(p, nbits, ctx) != 1)
         return 0;
@@ -235,7 +234,7 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
  */
 int rsa_sp800_56b_check_public(const RSA *rsa)
 {
-    int ret = 0, nbits, iterations, status;
+    int ret = 0, nbits, status;
     BN_CTX *ctx = NULL;
     BIGNUM *gcd = NULL;
 
@@ -268,7 +267,6 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
     if (ctx == NULL || gcd == NULL)
         goto err;
 
-    iterations = bn_rsa_fips186_4_prime_MR_min_checks(nbits);
     /* (Steps d-f):
      * The modulus is composite, but not a power of a prime.
      * The modulus has no factors smaller than 752.
@@ -278,7 +276,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
         goto err;
     }
 
-    ret = bn_miller_rabin_is_prime(rsa->n, iterations, ctx, NULL, 1, &status);
+    ret = bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
         ret = 0;

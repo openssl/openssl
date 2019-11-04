@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-X509_get0_sm2_id, X509_set0_sm2_id - get or set SM2 ID for certificate operations
+X509_get0_sm2_id, X509_set0_sm2_id,
+X509_REQ_get0_sm2_id, X509_REQ_set0_sm2_id
+- get or set SM2 ID for certificate operations
 
 =head1 SYNOPSIS
 
@@ -10,6 +12,8 @@ X509_get0_sm2_id, X509_set0_sm2_id - get or set SM2 ID for certificate operation
 
  ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
  void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
+ ASN1_OCTET_STRING *X509_REQ_get0_sm2_id(X509_REQ *x);
+ void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id);
 
 =head1 DESCRIPTION
 
@@ -21,6 +25,10 @@ this function transfers the memory management of the value to the X509 object,
 and therefore the value that has been passed in should not be freed by the
 caller after this function has been called.
 
+X509_REQ_get0_sm2_id() and X509_REQ_set0_sm2_id() have the same functionality
+as X509_get0_sm2_id() and X509_set0_sm2_id() except that they deal with
+B<X509_REQ> objects instead of B<X509>.
+
 =head1 NOTES
 
 SM2 signature algorithm requires an ID value when generating and verifying a
@@ -29,7 +37,7 @@ ability to set and retrieve the SM2 ID value.
 
 =head1 RETURN VALUES
 
-X509_set0_sm2_id() does not return a value.
+X509_set0_sm2_id() and X509_REQ_set0_sm2_id() do not return a value.
 
 =head1 SEE ALSO
 

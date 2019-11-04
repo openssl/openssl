@@ -1,0 +1,18 @@
+# Auxilliary program source
+IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
+  # It's called 'init', but doesn't have much 'init' in it...
+  $AUXLIBAPPSSRC=win32_init.c
+ENDIF
+IF[{- $config{target} =~ /^vms-/ -}]
+  $AUXLIBAPPSSRC=vms_term_sock.c vms_decc_argv.c
+ENDIF
+
+# Source for libapps
+$LIBAPPSSRC=apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
+        bf_prefix.c columns.c app_params.c names.c
+
+IF[{- !$disabled{apps} -}]
+  LIBS{noinst}=../libapps.a
+  SOURCE[../libapps.a]=$LIBAPPSSRC $AUXLIBAPPSSRC
+  INCLUDE[../libapps.a]=../.. ../../include ../include
+ENDIF

@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMSERR_H
-# define HEADER_CMSERR_H
+#ifndef OPENSSL_CMSERR_H
+# define OPENSSL_CMSERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CMSERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,95 +33,99 @@ int ERR_load_CMS_strings(void);
 /*
  * CMS function codes.
  */
-#  define CMS_F_CHECK_CONTENT                              99
-#  define CMS_F_CMS_ADD0_CERT                              164
-#  define CMS_F_CMS_ADD0_RECIPIENT_KEY                     100
-#  define CMS_F_CMS_ADD0_RECIPIENT_PASSWORD                165
-#  define CMS_F_CMS_ADD1_RECEIPTREQUEST                    158
-#  define CMS_F_CMS_ADD1_RECIPIENT_CERT                    101
-#  define CMS_F_CMS_ADD1_SIGNER                            102
-#  define CMS_F_CMS_ADD1_SIGNINGTIME                       103
-#  define CMS_F_CMS_ADD1_SIGNING_CERT                      181
-#  define CMS_F_CMS_ADD1_SIGNING_CERT_V2                   182
-#  define CMS_F_CMS_COMPRESS                               104
-#  define CMS_F_CMS_COMPRESSEDDATA_CREATE                  105
-#  define CMS_F_CMS_COMPRESSEDDATA_INIT_BIO                106
-#  define CMS_F_CMS_COPY_CONTENT                           107
-#  define CMS_F_CMS_COPY_MESSAGEDIGEST                     108
-#  define CMS_F_CMS_DATA                                   109
-#  define CMS_F_CMS_DATAFINAL                              110
-#  define CMS_F_CMS_DATAINIT                               111
-#  define CMS_F_CMS_DECRYPT                                112
-#  define CMS_F_CMS_DECRYPT_SET1_KEY                       113
-#  define CMS_F_CMS_DECRYPT_SET1_PASSWORD                  166
-#  define CMS_F_CMS_DECRYPT_SET1_PKEY                      114
-#  define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX               115
-#  define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO               116
-#  define CMS_F_CMS_DIGESTEDDATA_DO_FINAL                  117
-#  define CMS_F_CMS_DIGEST_VERIFY                          118
-#  define CMS_F_CMS_ENCODE_RECEIPT                         161
-#  define CMS_F_CMS_ENCRYPT                                119
-#  define CMS_F_CMS_ENCRYPTEDCONTENT_INIT                  179
-#  define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO              120
-#  define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT                  121
-#  define CMS_F_CMS_ENCRYPTEDDATA_ENCRYPT                  122
-#  define CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY                 123
-#  define CMS_F_CMS_ENVELOPEDDATA_CREATE                   124
-#  define CMS_F_CMS_ENVELOPEDDATA_INIT_BIO                 125
-#  define CMS_F_CMS_ENVELOPED_DATA_INIT                    126
-#  define CMS_F_CMS_ENV_ASN1_CTRL                          171
-#  define CMS_F_CMS_FINAL                                  127
-#  define CMS_F_CMS_GET0_CERTIFICATE_CHOICES               128
-#  define CMS_F_CMS_GET0_CONTENT                           129
-#  define CMS_F_CMS_GET0_ECONTENT_TYPE                     130
-#  define CMS_F_CMS_GET0_ENVELOPED                         131
-#  define CMS_F_CMS_GET0_REVOCATION_CHOICES                132
-#  define CMS_F_CMS_GET0_SIGNED                            133
-#  define CMS_F_CMS_MSGSIGDIGEST_ADD1                      162
-#  define CMS_F_CMS_RECEIPTREQUEST_CREATE0                 159
-#  define CMS_F_CMS_RECEIPT_VERIFY                         160
-#  define CMS_F_CMS_RECIPIENTINFO_DECRYPT                  134
-#  define CMS_F_CMS_RECIPIENTINFO_ENCRYPT                  169
-#  define CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT             178
-#  define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG            175
-#  define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID        173
-#  define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_REKS           172
-#  define CMS_F_CMS_RECIPIENTINFO_KARI_ORIG_ID_CMP         174
-#  define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT            135
-#  define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT            136
-#  define CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID            137
-#  define CMS_F_CMS_RECIPIENTINFO_KEKRI_ID_CMP             138
-#  define CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP            139
-#  define CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT             140
-#  define CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT             141
-#  define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS           142
-#  define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID      143
-#  define CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT               167
-#  define CMS_F_CMS_RECIPIENTINFO_SET0_KEY                 144
-#  define CMS_F_CMS_RECIPIENTINFO_SET0_PASSWORD            168
-#  define CMS_F_CMS_RECIPIENTINFO_SET0_PKEY                145
-#  define CMS_F_CMS_SD_ASN1_CTRL                           170
-#  define CMS_F_CMS_SET1_IAS                               176
-#  define CMS_F_CMS_SET1_KEYID                             177
-#  define CMS_F_CMS_SET1_SIGNERIDENTIFIER                  146
-#  define CMS_F_CMS_SET_DETACHED                           147
-#  define CMS_F_CMS_SIGN                                   148
-#  define CMS_F_CMS_SIGNED_DATA_INIT                       149
-#  define CMS_F_CMS_SIGNERINFO_CONTENT_SIGN                150
-#  define CMS_F_CMS_SIGNERINFO_SIGN                        151
-#  define CMS_F_CMS_SIGNERINFO_VERIFY                      152
-#  define CMS_F_CMS_SIGNERINFO_VERIFY_CERT                 153
-#  define CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT              154
-#  define CMS_F_CMS_SIGN_RECEIPT                           163
-#  define CMS_F_CMS_STREAM                                 155
-#  define CMS_F_CMS_UNCOMPRESS                             156
-#  define CMS_F_CMS_VERIFY                                 157
-#  define CMS_F_KEK_UNWRAP_KEY                             180
+# if !OPENSSL_API_3
+#   define CMS_F_CHECK_CONTENT                              0
+#   define CMS_F_CMS_ADD0_CERT                              0
+#   define CMS_F_CMS_ADD0_RECIPIENT_KEY                     0
+#   define CMS_F_CMS_ADD0_RECIPIENT_PASSWORD                0
+#   define CMS_F_CMS_ADD1_RECEIPTREQUEST                    0
+#   define CMS_F_CMS_ADD1_RECIPIENT_CERT                    0
+#   define CMS_F_CMS_ADD1_SIGNER                            0
+#   define CMS_F_CMS_ADD1_SIGNINGTIME                       0
+#   define CMS_F_CMS_ADD1_SIGNING_CERT                      0
+#   define CMS_F_CMS_ADD1_SIGNING_CERT_V2                   0
+#   define CMS_F_CMS_COMPRESS                               0
+#   define CMS_F_CMS_COMPRESSEDDATA_CREATE                  0
+#   define CMS_F_CMS_COMPRESSEDDATA_INIT_BIO                0
+#   define CMS_F_CMS_COPY_CONTENT                           0
+#   define CMS_F_CMS_COPY_MESSAGEDIGEST                     0
+#   define CMS_F_CMS_DATA                                   0
+#   define CMS_F_CMS_DATAFINAL                              0
+#   define CMS_F_CMS_DATAINIT                               0
+#   define CMS_F_CMS_DECRYPT                                0
+#   define CMS_F_CMS_DECRYPT_SET1_KEY                       0
+#   define CMS_F_CMS_DECRYPT_SET1_PASSWORD                  0
+#   define CMS_F_CMS_DECRYPT_SET1_PKEY                      0
+#   define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX               0
+#   define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO               0
+#   define CMS_F_CMS_DIGESTEDDATA_DO_FINAL                  0
+#   define CMS_F_CMS_DIGEST_VERIFY                          0
+#   define CMS_F_CMS_ENCODE_RECEIPT                         0
+#   define CMS_F_CMS_ENCRYPT                                0
+#   define CMS_F_CMS_ENCRYPTEDCONTENT_INIT                  0
+#   define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO              0
+#   define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT                  0
+#   define CMS_F_CMS_ENCRYPTEDDATA_ENCRYPT                  0
+#   define CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY                 0
+#   define CMS_F_CMS_ENVELOPEDDATA_CREATE                   0
+#   define CMS_F_CMS_ENVELOPEDDATA_INIT_BIO                 0
+#   define CMS_F_CMS_ENVELOPED_DATA_INIT                    0
+#   define CMS_F_CMS_ENV_ASN1_CTRL                          0
+#   define CMS_F_CMS_FINAL                                  0
+#   define CMS_F_CMS_GET0_CERTIFICATE_CHOICES               0
+#   define CMS_F_CMS_GET0_CONTENT                           0
+#   define CMS_F_CMS_GET0_ECONTENT_TYPE                     0
+#   define CMS_F_CMS_GET0_ENVELOPED                         0
+#   define CMS_F_CMS_GET0_REVOCATION_CHOICES                0
+#   define CMS_F_CMS_GET0_SIGNED                            0
+#   define CMS_F_CMS_MSGSIGDIGEST_ADD1                      0
+#   define CMS_F_CMS_RECEIPTREQUEST_CREATE0                 0
+#   define CMS_F_CMS_RECEIPT_VERIFY                         0
+#   define CMS_F_CMS_RECIPIENTINFO_DECRYPT                  0
+#   define CMS_F_CMS_RECIPIENTINFO_ENCRYPT                  0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT             0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG            0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID        0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_REKS           0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_ORIG_ID_CMP         0
+#   define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT            0
+#   define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT            0
+#   define CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID            0
+#   define CMS_F_CMS_RECIPIENTINFO_KEKRI_ID_CMP             0
+#   define CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP            0
+#   define CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT             0
+#   define CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT             0
+#   define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS           0
+#   define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID      0
+#   define CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT               0
+#   define CMS_F_CMS_RECIPIENTINFO_SET0_KEY                 0
+#   define CMS_F_CMS_RECIPIENTINFO_SET0_PASSWORD            0
+#   define CMS_F_CMS_RECIPIENTINFO_SET0_PKEY                0
+#   define CMS_F_CMS_SD_ASN1_CTRL                           0
+#   define CMS_F_CMS_SET1_IAS                               0
+#   define CMS_F_CMS_SET1_KEYID                             0
+#   define CMS_F_CMS_SET1_SIGNERIDENTIFIER                  0
+#   define CMS_F_CMS_SET_DETACHED                           0
+#   define CMS_F_CMS_SIGN                                   0
+#   define CMS_F_CMS_SIGNED_DATA_INIT                       0
+#   define CMS_F_CMS_SIGNERINFO_CONTENT_SIGN                0
+#   define CMS_F_CMS_SIGNERINFO_SIGN                        0
+#   define CMS_F_CMS_SIGNERINFO_VERIFY                      0
+#   define CMS_F_CMS_SIGNERINFO_VERIFY_CERT                 0
+#   define CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT              0
+#   define CMS_F_CMS_SIGN_RECEIPT                           0
+#   define CMS_F_CMS_SI_CHECK_ATTRIBUTES                    0
+#   define CMS_F_CMS_STREAM                                 0
+#   define CMS_F_CMS_UNCOMPRESS                             0
+#   define CMS_F_CMS_VERIFY                                 0
+#   define CMS_F_KEK_UNWRAP_KEY                             0
+# endif
 
 /*
  * CMS reason codes.
  */
 #  define CMS_R_ADD_SIGNER_ERROR                           99
+#  define CMS_R_ATTRIBUTE_ERROR                            161
 #  define CMS_R_CERTIFICATE_ALREADY_PRESENT                175
 #  define CMS_R_CERTIFICATE_HAS_NO_KEYID                   160
 #  define CMS_R_CERTIFICATE_VERIFY_ERROR                   100

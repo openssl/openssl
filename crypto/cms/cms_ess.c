@@ -15,8 +15,9 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "cms_lcl.h"
-#include "internal/ess_int.h"
+#include "cms_local.h"
+#include "crypto/ess.h"
+#include "crypto/cms.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -201,7 +202,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
     /* Extract and decode receipt content */
     pcont = CMS_get0_content(cms);
-    if (!pcont || !*pcont) {
+    if (pcont == NULL || *pcont == NULL) {
         CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_CONTENT);
         goto err;
     }
@@ -339,12 +340,10 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 }
 
 /*
- * Add signer certificate's V2 digest to a SignerInfo
- * structure
+ * Add signer certificate's V2 digest |sc| to a SignerInfo structure |si|
  */
 
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si,
-                             ESS_SIGNING_CERT_V2 *sc)
+int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp;
@@ -373,11 +372,10 @@ int CMS_add1_signing_cert_v2(CMS_SignerInfo *si,
 }
 
 /*
- * Add signer certificate's digest to a SignerInfo
- * structure
+ * Add signer certificate's digest |sc| to a SignerInfo structure |si|
  */
 
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
+int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp;

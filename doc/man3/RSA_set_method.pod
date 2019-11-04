@@ -129,7 +129,7 @@ the default method is used.
                        const unsigned char *m, unsigned int m_length,
                        const unsigned char *sigbuf, unsigned int siglen,
                        const RSA *rsa);
-     /* keygen. If NULL builtin RSA key generation will be used */
+     /* keygen. If NULL built-in RSA key generation will be used */
      int (*rsa_keygen)(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
 
  } RSA_METHOD;

@@ -7,15 +7,18 @@
 # https://www.openssl.org/source/license.html
 
 
-$flavour = shift;
-$output  = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}perlasm/arm-xlate.pl" and -f $xlate) or
 die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 $code.=<<___;

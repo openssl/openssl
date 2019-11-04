@@ -9,10 +9,250 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added the X509_LOOKUP_METHOD called X509_LOOKUP_store, to allow
+     access to certificate and CRL stores via URIs and OSSL_STORE
+     loaders.
+
+     This adds the following functions:
+
+     X509_LOOKUP_store()
+     X509_STORE_load_file()
+     X509_STORE_load_path()
+     X509_STORE_load_store()
+     SSL_add_store_cert_subjects_to_stack()
+     SSL_CTX_set_default_verify_store()
+     SSL_CTX_load_verify_file()
+     SSL_CTX_load_verify_dir()
+     SSL_CTX_load_verify_store()
+
+     Also, the following functions are now deprecated:
+
+     - X509_STORE_load_locations() (use X509_STORE_load_file(),
+       X509_STORE_load_path() or X509_STORE_load_store() instead)
+     - SSL_CTX_load_verify_locations() (use SSL_CTX_load_verify_file(),
+       SSL_CTX_load_verify_dir() or SSL_CTX_load_verify_store() instead)
+     [Richard Levitte]
+
+  *) Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
+     The presence of this system service is determined at run-time.
+     [Richard Levitte]
+
+  *) Added functionality to create an EVP_PKEY context based on data
+     for methods from providers.  This takes an algorithm name and a
+     property query string and simply stores them, with the intent
+     that any operation that uses this context will use those strings
+     to fetch the needed methods implicitly, thereby making the port
+     of application written for pre-3.0 OpenSSL easier.
+     [Richard Levitte]
+
+  *) The undocumented function NCONF_WIN32() has been deprecated; for
+     conversion details see the HISTORY section of doc/man5/config.pod
+     [Rich Salz]
+
+  *) Introduced the new functions EVP_DigestSignInit_ex() and
+     EVP_DigestVerifyInit_ex(). The macros EVP_DigestSignUpdate() and
+     EVP_DigestVerifyUpdate() have been converted to functions. See the man
+     pages for further details.
+     [Matt Caswell]
+
+  *) Over two thousand fixes were made to the documentation, including:
+     adding missing command flags, better style conformance, documentation
+     of internals, etc.
+     [Rich Salz, Richard Levitte]
+
+  *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
+     X25519, X448, Ed25519 and Ed448.
+     [Patrick Steuer]
+
+  *) Print all values for a PKCS#12 attribute with 'openssl pkcs12', not just
+     the first value.
+     [Jon Spillett]
+
+  *) Deprecated the public definition of ERR_STATE as well as the function
+     ERR_get_state().  This is done in preparation of making ERR_STATE an
+     opaque type.
+     [Richard Levitte]
+
+  *) Added ERR functionality to give callers access to the stored function
+     names that have replaced the older function code based functions.
+
+     New functions are ERR_get_error_func(), ERR_peek_error_func(),
+     ERR_peek_last_error_func(), ERR_get_error_data(), ERR_peek_error_data(),
+     ERR_peek_last_error_data(), ERR_get_error_all(), ERR_peek_error_all()
+     and ERR_peek_last_error_all().
+
+     These functions have become deprecated: ERR_get_error_line_data(),
+     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
+     ERR_func_error_string().
+     [Richard Levitte]
+
+  *) Extended testing to be verbose for failing tests only.  The make variables
+     VERBOSE_FAILURE or VF can be used to enable this:
+
+     $ make VF=1 test                                   # Unix
+     $ mms /macro=(VF=1) test                           ! OpenVMS
+     $ nmake VF=1 test                                  # Windows
+
+     [Richard Levitte]
+
+  *) For built-in EC curves, ensure an EC_GROUP built from the curve name is
+     used even when parsing explicit parameters, when loading a serialized key
+     or calling `EC_GROUP_new_from_ecpkparameters()`/
+     `EC_GROUP_new_from_ecparameters()`.
+     This prevents bypass of security hardening and performance gains,
+     especially for curves with specialized EC_METHODs.
+     By default, if a key encoded with explicit parameters is loaded and later
+     serialized, the output is still encoded with explicit parameters, even if
+     internally a "named" EC_GROUP is used for computation.
+     [Nicola Tuveri]
+
+  *) Compute ECC cofactors if not provided during EC_GROUP construction. Before
+     this change, EC_GROUP_set_generator would accept order and/or cofactor as
+     NULL. After this change, only the cofactor parameter can be NULL. It also
+     does some minimal sanity checks on the passed order.
+     (CVE-2019-1547)
+     [Billy Bob Brumley]
+
+  *) Fixed a padding oracle in PKCS7_dataDecode and CMS_decrypt_set1_pkey.
+     An attack is simple, if the first CMS_recipientInfo is valid but the
+     second CMS_recipientInfo is chosen ciphertext. If the second
+     recipientInfo decodes to PKCS #1 v1.5 form plaintext, the correct
+     encryption key will be replaced by garbage, and the message cannot be
+     decoded, but if the RSA decryption fails, the correct encryption key is
+     used and the recipient will not notice the attack.
+     As a work around for this potential attack the length of the decrypted
+     key must be equal to the cipher default key length, in case the
+     certifiate is not given and all recipientInfo are tried out.
+     The old behaviour can be re-enabled in the CMS code by setting the
+     CMS_DEBUG_DECRYPT flag.
+     [Bernd Edlinger]
+
+  *) Early start up entropy quality from the DEVRANDOM seed source has been
+     improved for older Linux systems.  The RAND subsystem will wait for
+     /dev/random to be producing output before seeding from /dev/urandom.
+     The seeded state is stored for future library initialisations using
+     a system global shared memory segment.  The shared memory identifier
+     can be configured by defining OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID to
+     the desired value.  The default identifier is 114.
+     [Paul Dale]
+
+  *) Revised BN_generate_prime_ex to not avoid factors 2..17863 in p-1
+     when primes for RSA keys are computed.
+     Since we previously always generated primes == 2 (mod 3) for RSA keys,
+     the 2-prime and 3-prime RSA modules were easy to distinguish, since
+     N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+     2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
+     This avoids possible fingerprinting of newly generated RSA modules.
+     [Bernd Edlinger]
+
+  *) Correct the extended master secret constant on EBCDIC systems. Without this
+     fix TLS connections between an EBCDIC system and a non-EBCDIC system that
+     negotiate EMS will fail. Unfortunately this also means that TLS connections
+     between EBCDIC systems with this fix, and EBCDIC systems without this
+     fix will fail if they negotiate EMS.
+     [Matt Caswell]
+
+  *) Changed the library initialisation so that the config file is now loaded
+     by default. This was already the case for libssl. It now occurs for both
+     libcrypto and libssl. Use the OPENSSL_INIT_NO_LOAD_CONFIG option to
+     OPENSSL_init_crypto() to suppress automatic loading of a config file.
+     [Matt Caswell]
+
+  *) Introduced new error raising macros, ERR_raise() and ERR_raise_data(),
+     where the former acts as a replacement for ERR_put_error(), and the
+     latter replaces the combination ERR_put_error()+ERR_add_error_data().
+     ERR_raise_data() adds more flexibility by taking a format string and
+     an arbitrary number of arguments following it, to be processed with
+     BIO_snprintf().
+     [Richard Levitte]
+
+  *) Introduced a new function, OSSL_PROVIDER_available(), which can be used
+     to check if a named provider is loaded and available.  When called, it
+     will also activate all fallback providers if such are still present.
+     [Richard Levitte]
+
+  *) Enforce a minimum DH modulus size of 512 bits.
+     [Bernd Edlinger]
+
+  *) Changed DH parameters to generate the order q subgroup instead of 2q.
+     Previously generated DH parameters are still accepted by DH_check
+     but DH_generate_key works around that by clearing bit 0 of the
+     private key for those. This avoids leaking bit 0 of the private key.
+     [Bernd Edlinger]
+
+  *) Significantly reduce secure memory usage by the randomness pools.
+     [Paul Dale]
+
+  *) {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now no-ops and have been
+     deprecated.
+     [Rich Salz]
+
+  *) A new type, EVP_KEYEXCH, has been introduced to represent key exchange
+     algorithms. An implementation of a key exchange algorithm can be obtained
+     by using the function EVP_KEYEXCH_fetch(). An EVP_KEYEXCH algorithm can be
+     used in a call to EVP_PKEY_derive_init_ex() which works in a similar way to
+     the older EVP_PKEY_derive_init() function. See the man pages for the new
+     functions for further details.
+     [Matt Caswell]
+
+  *) The EVP_PKEY_CTX_set_dh_pad() macro has now been converted to a function.
+     [Matt Caswell]
+
+  *) Removed the function names from error messages and deprecated the
+     xxx_F_xxx define's.
+
+  *) Removed NextStep support and the macro OPENSSL_UNISTD
+     [Rich Salz]
+
+  *) Removed DES_check_key.  Also removed OPENSSL_IMPLEMENT_GLOBAL,
+     OPENSSL_GLOBAL_REF, OPENSSL_DECLARE_GLOBAL.
+     Also removed "export var as function" capability; we do not export
+     variables, only functions.
+     [Rich Salz]
+
+  *) RC5_32_set_key has been changed to return an int type, with 0 indicating
+     an error and 1 indicating success. In previous versions of OpenSSL this
+     was a void type. If a key was set longer than the maximum possible this
+     would crash.
+     [Matt Caswell]
+
+  *) Support SM2 signing and verification schemes with X509 certificate.
+     [Paul Yang]
+
+  *) Use SHA256 as the default digest for TS query in the ts app.
+     [Tomas Mraz]
+
+  *) Change PBKDF2 to conform to SP800-132 instead of the older PKCS5 RFC2898.
+     This checks that the salt length is at least 128 bits, the derived key
+     length is at least 112 bits, and that the iteration count is at least 1000.
+     For backwards compatibility these checks are disabled by default in the
+     default provider, but are enabled by default in the fips provider.
+     To enable or disable these checks use the control
+     EVP_KDF_CTRL_SET_PBKDF2_PKCS5_MODE.
+     [Shane Lontis]
+
+  *) Default cipher lists/suites are now available via a function, the
+     #defines are deprecated.
+     [Todd Short]
+
+  *) Add target VC-WIN32-UWP, VC-WIN64A-UWP, VC-WIN32-ARM-UWP and
+     VC-WIN64-ARM-UWP in Windows OneCore target for making building libraries
+     for Windows Store apps easier. Also, the "no-uplink" option has been added.
+     [Kenji Mouri]
+
+  *) Join the directories crypto/x509 and crypto/x509v3
+     [Richard Levitte]
+
+  *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
+     This changes the size when using the genpkey app when no size is given. It
+     fixes an omission in earlier changes that changed all RSA, DSA and DH
+     generation apps to use 2048 bits by default.
+     [Kurt Roeckx]
+
   *) Added command 'openssl kdf' that uses the EVP_KDF API.
      [Shane Lontis]
 
-   *) Added command 'openssl mac' that uses the EVP_MAC API.
+  *) Added command 'openssl mac' that uses the EVP_MAC API.
      [Shane Lontis]
 
   *) Added OPENSSL_info() to get diverse built-in OpenSSL data, such
@@ -414,7 +654,7 @@
         SSL_set_ciphersuites()
      [Matt Caswell]
 
-  *) Memory allocation failures consistenly add an error to the error
+  *) Memory allocation failures consistently add an error to the error
      stack.
      [Rich Salz]
 
@@ -6952,7 +7192,7 @@
      reason texts, thereby removing some of the footprint that may not
      be interesting if those errors aren't displayed anyway.
 
-     NOTE: it's still possible for any application or module to have it's
+     NOTE: it's still possible for any application or module to have its
      own set of error texts inserted.  The routines are there, just not
      used by default when no-err is given.
      [Richard Levitte]
@@ -8918,7 +9158,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
 
   *) New function OPENSSL_cleanse(), which is used to cleanse a section of
-     memory from it's contents.  This is done with a counter that will
+     memory from its contents.  This is done with a counter that will
      place alternating values in each byte.  This can be used to solve
      two issues: 1) the removal of calls to memset() by highly optimizing
      compilers, and 2) cleansing with other values than 0, since those can

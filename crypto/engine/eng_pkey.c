@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "eng_int.h"
+#include "eng_local.h"
 
 /* Basic get/set stuff */
 
@@ -73,7 +73,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
         return 0;
     }
     pkey = e->load_privkey(e, key_id, ui_method, callback_data);
-    if (!pkey) {
+    if (pkey == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
                   ENGINE_R_FAILED_LOADING_PRIVATE_KEY);
         return 0;
@@ -103,7 +103,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
         return 0;
     }
     pkey = e->load_pubkey(e, key_id, ui_method, callback_data);
-    if (!pkey) {
+    if (pkey == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
                   ENGINE_R_FAILED_LOADING_PUBLIC_KEY);
         return 0;

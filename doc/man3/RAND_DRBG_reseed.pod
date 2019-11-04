@@ -104,7 +104,7 @@ L<RAND_DRBG(7)>
 
 The RAND_DRBG functions were added in OpenSSL 1.1.1.
 
-Prediction resistance is supported from OpenSSL 3.0.0.
+Prediction resistance is supported from OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

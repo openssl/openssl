@@ -40,7 +40,7 @@ PEM_write_bio_SSL_SESSION
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/pem.h>
 
@@ -53,8 +53,8 @@ PEM_write_bio_SSL_SESSION
 
 =head1 DESCRIPTION
 
-In the description below, I<TYPE> is used
-as a placeholder for any of the OpenSSL datatypes, such as I<X509>.
+In the description below, B<I<TYPE>> is used
+as a placeholder for any of the OpenSSL datatypes, such as B<X509>.
 The macro B<DECLARE_PEM_rw> expands to the set of declarations shown in
 the next four lines of the synopsis.
 
@@ -63,15 +63,17 @@ the PEM encoding.  For more information on the templates, see
 L<ASN1_ITEM(3)>.  For more information on the lower-level routines used
 by the functions here, see L<PEM_read(3)>.
 
-PEM_read_TYPE() reads a PEM-encoded object of I<TYPE> from the file B<fp>
-and returns it.  The B<cb> and B<u> parameters are as described in
+B<PEM_read_I<TYPE>>() reads a PEM-encoded object of B<I<TYPE>> from the file
+I<fp> and returns it.  The I<cb> and I<u> parameters are as described in
 L<pem_password_cb(3)>.
 
-PEM_read_bio_TYPE() is similar to PEM_read_TYPE() but reads from the BIO B<bp>.
+B<PEM_read_bio_I<TYPE>>() is similar to B<PEM_read_I<TYPE>>() but reads from
+the BIO I<bp>.
 
-PEM_write_TYPE() writes the PEM encoding of the object B<a> to the file B<fp>.
+B<PEM_write_I<TYPE>>() writes the PEM encoding of the object I<a> to the file
+I<fp>.
 
-PEM_write_bio_TYPE() similarly writes to the BIO B<bp>.
+B<PEM_write_bio_I<TYPE>>() similarly writes to the BIO I<bp>.
 
 =head1 NOTES
 
@@ -81,11 +83,12 @@ It will simply be treated as a byte sequence.
 
 =head1 RETURN VALUES
 
-PEM_read_TYPE() and PEM_read_bio_TYPE() return a pointer to an allocated
-object, which should be released by calling TYPE_free(), or NULL on error.
+B<PEM_read_I<TYPE>>() and B<PEM_read_bio_I<TYPE>>() return a pointer to an
+allocated object, which should be released by calling B<I<TYPE>_free>(), or
+NULL on error.
 
-PEM_write_TYPE() and PEM_write_bio_TYPE() return the number of bytes written
-or zero on error.
+B<PEM_write_I<TYPE>>() and B<PEM_write_bio_I<TYPE>>() return the number of bytes
+written or zero on error.
 
 =head1 SEE ALSO
 

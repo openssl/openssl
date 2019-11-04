@@ -13,7 +13,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "rand_lcl.h"
+#include "prov/providercommon.h"
+#include "rand_local.h"
 
 /*
  * Called twice by SP800-90Ar1 10.1.2.2 HMAC_DRBG_Update_Process.
@@ -183,6 +184,7 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
 
 static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
 {
+    EVP_MD_free(drbg->data.hmac.md);
     HMAC_CTX_free(drbg->data.hmac.ctx);
     OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
     return 1;
@@ -197,23 +199,33 @@ static RAND_DRBG_METHOD drbg_hmac_meth = {
 
 int drbg_hmac_init(RAND_DRBG *drbg)
 {
-    const EVP_MD *md = NULL;
+    EVP_MD *md = NULL;
     RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
 
-    /* Any approved digest is allowed - assume we pass digest (not NID_hmac*) */
-    md = EVP_get_digestbynid(drbg->type);
+    /*
+     * Confirm digest is allowed. We allow all digests that are not XOF
+     * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
+     * digests.
+     */
+    md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
     if (md == NULL)
+        return 0;
+
+    if ((EVP_MD_flags(md) & EVP_MD_FLAG_XOF) != 0)
         return 0;
 
     drbg->meth = &drbg_hmac_meth;
 
     if (hmac->ctx == NULL) {
         hmac->ctx = HMAC_CTX_new();
-        if (hmac->ctx == NULL)
+        if (hmac->ctx == NULL) {
+            EVP_MD_free(md);
             return 0;
+        }
     }
 
     /* These are taken from SP 800-90 10.1 Table 2 */
+    EVP_MD_free(hmac->md);
     hmac->md = md;
     hmac->blocklen = EVP_MD_size(md);
     /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */

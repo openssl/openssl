@@ -2,38 +2,62 @@
 
 =head1 NAME
 
-evp_generic_fetch - generic algorithm fetcher and method creator for EVP
+evp_generic_fetch, evp_generic_fetch_by_number
+- generic algorithm fetchers and method creators for EVP
 
 =head1 SYNOPSIS
 
  /* Only for EVP source */
- #include "evp_locl.h"
+ #include "evp_local.h"
 
  void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
-                         const char *algorithm, const char *properties,
-                         void *(*new_method)(int nid, const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov),
-                         int (*upref_method)(void *),
-                         void (*free_method)(void *),
-                         int (*nid_method)(void *));
+                         const char *name, const char *properties,
+                         void *(*new_method)(int name_id,
+                                             const OSSL_DISPATCH *fns,
+                                             OSSL_PROVIDER *prov,
+                                             void *method_data),
+                         void *method_data,
+                         int (*up_ref_method)(void *),
+                         void (*free_method)(void *));
+
+ void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
+                                   int name_id, const char *properties,
+                                   void *(*new_method)(int name_id,
+                                                       const OSSL_DISPATCH *fns,
+                                                       OSSL_PROVIDER *prov,
+                                                       void *method_data),
+                                   void *method_data,
+                                   int (*up_ref_method)(void *),
+                                   void (*free_method)(void *));
 
 =head1 DESCRIPTION
 
 evp_generic_fetch() calls ossl_method_construct() with the given
-C<libctx>, C<operation_id>, C<algorithm>, and C<properties> and uses
+I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
 it to create an EVP method with the help of the functions
-C<new_method>, C<upref_method>, and C<free_method>.
+I<new_method>, I<up_ref_method>, and I<free_method>.
 
-The three functions are supposed to:
+evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
+but takes a I<name_id> instead of a number.
+I<name_id> must always be nonzero; as a matter of fact, it being zero
+is considered a programming error.
+This is meant to be used when one method needs to fetch an associated
+other method, and is typically called from inside the given function
+I<new_method>.
+
+The three functions I<new_method>, I<up_ref_method>, and
+I<free_method> are supposed to:
 
 =over 4
 
 =item new_method()
 
 creates an internal method from function pointers found in the
-dispatch table C<fns>.
+dispatch table I<fns>, with name identity I<name_id>.
+The provider I<prov> and I<method_data> are also passed to be used as
+new_method() sees fit.
 
-=item upref_method()
+=item up_ref_method()
 
 increments the reference counter for the given method, if there is
 one.
@@ -42,23 +66,19 @@ one.
 
 frees the given method.
 
-=item nid_method()
-
-returns the nid associated with the given method.
-
 =back
 
 =head1 RETURN VALUES
 
-evp_generic_fetch() returns a method on success, or B<NULL> on error.
+evp_generic_fetch() returns a method on success, or NULL on error.
 
 =head1 EXAMPLES
 
 This is a short example of the fictitious EVP API and operation called
-C<EVP_FOO>.
+B<EVP_FOO>.
 
 To begin with, let's assume something like this in
-C<include/openssl/core_numbers.h>:
+F<include/openssl/core_numbers.h>:
 
     #define OSSL_OP_FOO                         100
 
@@ -80,7 +100,7 @@ And here's the implementation of the FOO method fetcher:
     /* typedef struct evp_foo_st EVP_FOO */
     struct evp_foo_st {
         OSSL_PROVIDER *prov;
-        int nid;
+        int name_id;
 	CRYPTO_REF_COUNT refcnt;
         OSSL_OP_foo_newctx_fn *newctx;
         OSSL_OP_foo_init_fn *init;
@@ -93,13 +113,17 @@ And here's the implementation of the FOO method fetcher:
      * In this example, we have a public method creator and destructor.
      * It's not absolutely necessary, but is in the spirit of OpenSSL.
      */
-    EVP_FOO *EVP_FOO_meth_from_dispatch(int foo_type, const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov)
+    EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
+                                        const OSSL_DISPATCH *fns,
+                                        OSSL_PROVIDER *prov,
+                                        void *data)
     {
         EVP_FOO *foo = NULL;
 
         if ((foo = OPENSSL_zalloc(sizeof(*foo))) == NULL)
             return NULL;
+
+        foo->name_id = name_id;
 
         for (; fns->function_id != 0; fns++) {
             switch (fns->function_id) {
@@ -120,10 +144,9 @@ And here's the implementation of the FOO method fetcher:
                 break;
             }
         }
-        foo->nid = foo_type;
         foo->prov = prov;
         if (prov)
-            ossl_provider_upref(prov);
+            ossl_provider_up_ref(prov);
 
         return foo;
     }
@@ -138,13 +161,13 @@ And here's the implementation of the FOO method fetcher:
         }
     }
 
-    static void *foo_from_dispatch(int nid, const OSSL_DISPATCH *fns,
+    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
                                    OSSL_PROVIDER *prov)
     {
-        return EVP_FOO_meth_from_dispatch(nid, fns, prov);
+        return EVP_FOO_meth_from_dispatch(fns, prov);
     }
 
-    static int foo_upref(void *vfoo)
+    static int foo_up_ref(void *vfoo)
     {
         EVP_FOO *foo = vfoo;
         int ref = 0;
@@ -159,11 +182,21 @@ And here's the implementation of the FOO method fetcher:
     }
 
     EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
-                           const char *algorithm,
+                           const char *name,
                            const char *properties)
     {
-        return evp_generic_fetch(ctx, OSSL_OP_FOO, algorithm, properties,
-                                 foo_from_dispatch, foo_upref, foo_free);
+        EVP_FOO *foo =
+            evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
+                              foo_from_dispatch, foo_up_ref, foo_free);
+
+        /*
+         * If this method exists in legacy form, with a constant NID for the
+         * given |name|, this is the spot to find that NID and set it in
+         * the newly constructed EVP_FOO instance.
+         */
+
+        return foo;
+
     }
 
 And finally, the library functions:
@@ -219,7 +252,7 @@ And finally, the library functions:
 
 =head1 SEE ALSO
 
-L<ossl_method_construct>
+L<ossl_method_construct(3)>
 
 =head1 HISTORY
 

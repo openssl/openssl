@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_MDC2_H
-# define HEADER_MDC2_H
+#ifndef OPENSSL_MDC2_H
+# define OPENSSL_MDC2_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_MDC2_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -26,7 +32,7 @@ typedef struct mdc2_ctx_st {
     unsigned int num;
     unsigned char data[MDC2_BLOCK];
     DES_cblock h, hh;
-    int pad_type;               /* either 1 or 2, default 1 */
+    unsigned int pad_type;   /* either 1 or 2, default 1 */
 } MDC2_CTX;
 
 int MDC2_Init(MDC2_CTX *c);

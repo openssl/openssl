@@ -209,7 +209,7 @@ The last feature has been added to support the common practice used with
 previous OpenSSL versions to call RAND_add() before calling RAND_bytes().
 
 
-=head2 Entropy Input vs. Additional Data
+=head2 Entropy Input and Additional Data
 
 The DRBG distinguishes two different types of random input: I<entropy>,
 which comes from a trusted source, and I<additional input>',
@@ -239,7 +239,7 @@ pulls the necessary entropy from its source automatically.
 However, both calls are permitted, and do reseed the RNG.
 
 RAND_add() can be used to add both kinds of random input, depending on the
-value of the B<randomness> argument:
+value of the I<randomness> argument:
 
 =over 4
 
@@ -263,6 +263,13 @@ In this case the missing randomness will be obtained by pulling random input
 from the trusted entropy sources.
 
 =back
+
+NOTE: Manual reseeding is *not allowed* in FIPS mode, because
+[NIST SP-800-90Ar1] mandates that entropy *shall not* be provided by
+the consuming application for instantiation (Section 9.1) or
+reseeding (Section 9.2). For that reason, the I<randomness>
+argument is ignored and the random bytes provided by the L<RAND_add(3)> and
+L<RAND_seed(3)> calls are treated as additional data.
 
 =head2 Reseeding the master DRBG with automatic seeding disabled
 

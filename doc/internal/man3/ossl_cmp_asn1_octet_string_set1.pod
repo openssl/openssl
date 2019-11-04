@@ -1,0 +1,101 @@
+=pod
+
+=head1 NAME
+
+ossl_cmp_log_parse_metadata,
+ossl_cmp_add_error_txt,
+ossl_cmp_add_error_data,
+ossl_cmp_add_error_line,
+ossl_cmp_asn1_octet_string_set1,
+ossl_cmp_asn1_octet_string_set1_bytes,
+ossl_cmp_build_cert_chain
+- misc internal utility functions
+
+=head1 SYNOPSIS
+
+ #include "cmp_local.h"
+
+ const char *ossl_cmp_log_parse_metadata(const char *buf,
+                                         OSSL_CMP_severity *level, char **func,
+                                         char **file, int *line);
+
+ void ossl_cmp_add_error_txt(const char *separator, const char *txt);
+ #define ossl_cmp_add_error_data(txt)
+ #define ossl_cmp_add_error_line(txt)
+
+ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
+                                     const ASN1_OCTET_STRING *src);
+ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
+                                           const unsigned char *bytes, int len);
+
+ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert);
+
+=head1 DESCRIPTION
+
+ossl_cmp_log_parse_metadata() parses the given message buffer I<buf> populated
+by L<OSSL_CMP_log(3)> etc.
+according to the pattern OSSL_CMP_LOG_START#level ": %s\n", filling in
+the variable pointed to by I<level> with the severity level or -1,
+the variable pointed to by I<func> with the function name string or NULL,
+the variable pointed to by I<file> with the filename string or NULL, and
+the variable pointed to by I<line> with the line number or -1.
+Any string returned via I<*func> and I<*file> must be freeed by the caller.
+
+ossl_cmp_add_error_txt() appends text to the extra data field of the last
+error message in the OpenSSL error queue, after adding the optional separator
+unless data has been empty so far. The text can be of arbitrary length,
+which is not possible when using L<ERR_add_error_data(3)> in conjunction with
+L<ERR_print_errors_cb(3)>.
+
+ossl_cmp_add_error_data() is a macro calling
+ossl_cmp_add_error_txt() with the separator being ":".
+
+ossl_cmp_add_error_line() is a macro calling
+ossl_cmp_add_error_txt() with the separator being "\n".
+
+ossl_cmp_asn1_octet_string_set1() frees any previous value of the variable
+referenced via the I<tgt> argument and assigns either a copy of
+the ASN1_OCTET_STRING given as the I<src> argument or NULL.
+It returns 1 on success, 0 on error.
+
+ossl_cmp_asn1_octet_string_set1_bytes() frees any previous value of the variable
+referenced via the I<tgt> argument and assigns either a copy of the given byte
+string (with the given length) or NULL. It returns 1 on success, 0 on error.
+
+ossl_cmp_build_cert_chain() builds up the certificate chain of cert as high up
+as possible using the given X509_STORE containing all possible intermediate
+certificates and optionally the (possible) trust anchor(s).
+
+=head1 RETURN VALUES
+
+ossl_cmp_log_parse_metadata() returns the pointer to the actual message text
+after the OSSL_CMP_LOG_PREFIX and level and ':' if found in the buffer,
+else the beginning of the buffer.
+
+ossl_cmp_add_error_txt()
+ossl_cmp_add_error_data(), and
+ossl_cmp_add_error_line()
+do not return anything.
+
+ossl_cmp_build_cert_chain()
+returns NULL on error, else a pointer to a stack of (up_ref'ed) certificates
+containing the EE certificate given in the function arguments (cert)
+and all intermediate certificates up the chain toward the trust anchor.
+The (self-signed) trust anchor is not included.
+
+All other functions return 1 on success, 0 on error.
+
+=head1 HISTORY
+
+The OpenSSL CMP support was added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

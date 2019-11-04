@@ -11,8 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 {
@@ -40,7 +40,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
         break;
     case PKCS7_OP_GET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
-            if (!p7->d.sign || !p7->d.sign->contents->d.ptr)
+            if (p7->d.sign == NULL || p7->d.sign->contents->d.ptr == NULL)
                 ret = 1;
             else
                 ret = 0;

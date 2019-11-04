@@ -14,7 +14,7 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
@@ -104,7 +104,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
         goto err;
     }
     if ((ctx->srp_ctx.info != NULL) &&
-        ((s->srp_ctx.info = BUF_strdup(ctx->srp_ctx.info)) == NULL)) {
+        ((s->srp_ctx.info = OPENSSL_strdup(ctx->srp_ctx.info)) == NULL)) {
         SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -235,7 +235,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     if (info != NULL) {
         if (s->srp_ctx.info)
             OPENSSL_free(s->srp_ctx.info);
-        if ((s->srp_ctx.info = BUF_strdup(info)) == NULL)
+        if ((s->srp_ctx.info = OPENSSL_strdup(info)) == NULL)
             return -1;
     }
 

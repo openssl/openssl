@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_INTERNAL_ENDIAN_H
-# define HEADER_INTERNAL_ENDIAN_H
+#ifndef OSSL_TEST_OSSL_TEST_ENDIAN_H
+# define OSSL_TEST_OSSL_TEST_ENDIAN_H
 
 # define DECLARE_IS_ENDIAN \
     const union { \

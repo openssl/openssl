@@ -1,0 +1,9 @@
+openssl_conf = openssl_init
+
+.include fipsinstall.conf
+
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+fips = fips_sect

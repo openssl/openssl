@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_RSA_H
-# define HEADER_RSA_H
+#ifndef OPENSSL_RSA_H
+# define OPENSSL_RSA_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_RSA_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -16,11 +22,13 @@
 # include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif
 # include <openssl/rsaerr.h>
+# include <openssl/safestack.h>
+
 # ifdef  __cplusplus
 extern "C" {
 # endif

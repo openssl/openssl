@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_X509ERR_H
-# define HEADER_X509ERR_H
+#ifndef OPENSSL_X509ERR_H
+# define OPENSSL_X509ERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_X509ERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,69 +29,74 @@ int ERR_load_X509_strings(void);
 /*
  * X509 function codes.
  */
-# define X509_F_ADD_CERT_DIR                              100
-# define X509_F_BUILD_CHAIN                               106
-# define X509_F_BY_FILE_CTRL                              101
-# define X509_F_CHECK_NAME_CONSTRAINTS                    149
-# define X509_F_CHECK_POLICY                              145
-# define X509_F_DANE_I2D                                  107
-# define X509_F_DIR_CTRL                                  102
-# define X509_F_GET_CERT_BY_SUBJECT                       103
-# define X509_F_I2D_X509_AUX                              151
-# define X509_F_LOOKUP_CERTS_SK                           152
-# define X509_F_NETSCAPE_SPKI_B64_DECODE                  129
-# define X509_F_NETSCAPE_SPKI_B64_ENCODE                  130
-# define X509_F_NEW_DIR                                   153
-# define X509_F_X509AT_ADD1_ATTR                          135
-# define X509_F_X509V3_ADD_EXT                            104
-# define X509_F_X509_ATTRIBUTE_CREATE_BY_NID              136
-# define X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ              137
-# define X509_F_X509_ATTRIBUTE_CREATE_BY_TXT              140
-# define X509_F_X509_ATTRIBUTE_GET0_DATA                  139
-# define X509_F_X509_ATTRIBUTE_SET1_DATA                  138
-# define X509_F_X509_CHECK_PRIVATE_KEY                    128
-# define X509_F_X509_CRL_DIFF                             105
-# define X509_F_X509_CRL_METHOD_NEW                       154
-# define X509_F_X509_CRL_PRINT_FP                         147
-# define X509_F_X509_EXTENSION_CREATE_BY_NID              108
-# define X509_F_X509_EXTENSION_CREATE_BY_OBJ              109
-# define X509_F_X509_GET_PUBKEY_PARAMETERS                110
-# define X509_F_X509_LOAD_CERT_CRL_FILE                   132
-# define X509_F_X509_LOAD_CERT_FILE                       111
-# define X509_F_X509_LOAD_CRL_FILE                        112
-# define X509_F_X509_LOOKUP_METH_NEW                      160
-# define X509_F_X509_LOOKUP_NEW                           155
-# define X509_F_X509_NAME_ADD_ENTRY                       113
-# define X509_F_X509_NAME_CANON                           156
-# define X509_F_X509_NAME_ENTRY_CREATE_BY_NID             114
-# define X509_F_X509_NAME_ENTRY_CREATE_BY_TXT             131
-# define X509_F_X509_NAME_ENTRY_SET_OBJECT                115
-# define X509_F_X509_NAME_ONELINE                         116
-# define X509_F_X509_NAME_PRINT                           117
-# define X509_F_X509_OBJECT_NEW                           150
-# define X509_F_X509_PRINT_EX_FP                          118
-# define X509_F_X509_PUBKEY_DECODE                        148
-# define X509_F_X509_PUBKEY_GET0                          119
-# define X509_F_X509_PUBKEY_SET                           120
-# define X509_F_X509_REQ_CHECK_PRIVATE_KEY                144
-# define X509_F_X509_REQ_PRINT_EX                         121
-# define X509_F_X509_REQ_PRINT_FP                         122
-# define X509_F_X509_REQ_TO_X509                          123
-# define X509_F_X509_STORE_ADD_CERT                       124
-# define X509_F_X509_STORE_ADD_CRL                        125
-# define X509_F_X509_STORE_ADD_LOOKUP                     157
-# define X509_F_X509_STORE_CTX_GET1_ISSUER                146
-# define X509_F_X509_STORE_CTX_INIT                       143
-# define X509_F_X509_STORE_CTX_NEW                        142
-# define X509_F_X509_STORE_CTX_PURPOSE_INHERIT            134
-# define X509_F_X509_STORE_NEW                            158
-# define X509_F_X509_TO_X509_REQ                          126
-# define X509_F_X509_TRUST_ADD                            133
-# define X509_F_X509_TRUST_SET                            141
-# define X509_F_X509_VERIFY                               161
-# define X509_F_X509_VERIFY_CERT                          127
-# define X509_F_X509_VERIFY_PARAM_NEW                     159
-# define X509_F_X509_VERIFY_SM2                           162
+# if !OPENSSL_API_3
+#  define X509_F_ADD_CERT_DIR                              0
+#  define X509_F_BUILD_CHAIN                               0
+#  define X509_F_BY_FILE_CTRL                              0
+#  define X509_F_CHECK_NAME_CONSTRAINTS                    0
+#  define X509_F_CHECK_POLICY                              0
+#  define X509_F_COMMON_VERIFY_SM2                         0
+#  define X509_F_DANE_I2D                                  0
+#  define X509_F_DIR_CTRL                                  0
+#  define X509_F_GET_CERT_BY_SUBJECT                       0
+#  define X509_F_I2D_X509_AUX                              0
+#  define X509_F_LOOKUP_CERTS_SK                           0
+#  define X509_F_NETSCAPE_SPKI_B64_DECODE                  0
+#  define X509_F_NETSCAPE_SPKI_B64_ENCODE                  0
+#  define X509_F_NEW_DIR                                   0
+#  define X509_F_X509AT_ADD1_ATTR                          0
+#  define X509_F_X509V3_ADD_EXT                            0
+#  define X509_F_X509_ATTRIBUTE_CREATE_BY_NID              0
+#  define X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ              0
+#  define X509_F_X509_ATTRIBUTE_CREATE_BY_TXT              0
+#  define X509_F_X509_ATTRIBUTE_GET0_DATA                  0
+#  define X509_F_X509_ATTRIBUTE_SET1_DATA                  0
+#  define X509_F_X509_CHECK_PRIVATE_KEY                    0
+#  define X509_F_X509_CRL_DIFF                             0
+#  define X509_F_X509_CRL_METHOD_NEW                       0
+#  define X509_F_X509_CRL_PRINT_FP                         0
+#  define X509_F_X509_EXTENSION_CREATE_BY_NID              0
+#  define X509_F_X509_EXTENSION_CREATE_BY_OBJ              0
+#  define X509_F_X509_GET_PUBKEY_PARAMETERS                0
+#  define X509_F_X509_LOAD_CERT_CRL_FILE                   0
+#  define X509_F_X509_LOAD_CERT_FILE                       0
+#  define X509_F_X509_LOAD_CRL_FILE                        0
+#  define X509_F_X509_LOOKUP_METH_NEW                      0
+#  define X509_F_X509_LOOKUP_NEW                           0
+#  define X509_F_X509_NAME_ADD_ENTRY                       0
+#  define X509_F_X509_NAME_CANON                           0
+#  define X509_F_X509_NAME_ENTRY_CREATE_BY_NID             0
+#  define X509_F_X509_NAME_ENTRY_CREATE_BY_TXT             0
+#  define X509_F_X509_NAME_ENTRY_SET_OBJECT                0
+#  define X509_F_X509_NAME_ONELINE                         0
+#  define X509_F_X509_NAME_PRINT                           0
+#  define X509_F_X509_OBJECT_NEW                           0
+#  define X509_F_X509_PRINT_EX_FP                          0
+#  define X509_F_X509_PUBKEY_DECODE                        0
+#  define X509_F_X509_PUBKEY_GET0                          0
+#  define X509_F_X509_PUBKEY_SET                           0
+#  define X509_F_X509_REQ_CHECK_PRIVATE_KEY                0
+#  define X509_F_X509_REQ_PRINT_EX                         0
+#  define X509_F_X509_REQ_PRINT_FP                         0
+#  define X509_F_X509_REQ_TO_X509                          0
+#  define X509_F_X509_REQ_VERIFY                           0
+#  define X509_F_X509_REQ_VERIFY_SM2                       0
+#  define X509_F_X509_STORE_ADD_CERT                       0
+#  define X509_F_X509_STORE_ADD_CRL                        0
+#  define X509_F_X509_STORE_ADD_LOOKUP                     0
+#  define X509_F_X509_STORE_CTX_GET1_ISSUER                0
+#  define X509_F_X509_STORE_CTX_INIT                       0
+#  define X509_F_X509_STORE_CTX_NEW                        0
+#  define X509_F_X509_STORE_CTX_PURPOSE_INHERIT            0
+#  define X509_F_X509_STORE_NEW                            0
+#  define X509_F_X509_TO_X509_REQ                          0
+#  define X509_F_X509_TRUST_ADD                            0
+#  define X509_F_X509_TRUST_SET                            0
+#  define X509_F_X509_VERIFY                               0
+#  define X509_F_X509_VERIFY_CERT                          0
+#  define X509_F_X509_VERIFY_PARAM_NEW                     0
+#  define X509_F_X509_VERIFY_SM2                           0
+# endif
 
 /*
  * X509 reason codes.
@@ -99,6 +110,7 @@ int ERR_load_X509_strings(void);
 # define X509_R_CRL_ALREADY_DELTA                         127
 # define X509_R_CRL_VERIFY_FAILURE                        131
 # define X509_R_IDP_MISMATCH                              128
+# define X509_R_INVALID_ATTRIBUTES                        138
 # define X509_R_INVALID_DIRECTORY                         113
 # define X509_R_INVALID_FIELD_NAME                        119
 # define X509_R_INVALID_TRUST                             123

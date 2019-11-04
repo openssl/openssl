@@ -2,26 +2,47 @@
 
 =head1 NAME
 
+EVP_MD_fetch, EVP_MD_up_ref, EVP_MD_free,
+EVP_MD_get_params, EVP_MD_gettable_params,
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy,
-EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl, EVP_MD_CTX_set_flags,
-EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
+EVP_MD_CTX_copy_ex, EVP_MD_CTX_ctrl,
+EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
+EVP_MD_settable_ctx_params, EVP_MD_gettable_ctx_params,
+EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
+EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
+EVP_MD_is_a, EVP_MD_name, EVP_MD_number, EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
+EVP_MD_CTX_name,
 EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
 EVP_MD_CTX_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
-EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
+EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
+EVP_MD_do_all_provided
+- EVP digest routines
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
+ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                      const char *properties);
+ int EVP_MD_up_ref(EVP_MD *md);
+ void EVP_MD_free(EVP_MD *md);
+ int EVP_MD_get_params(const EVP_MD *digest, OSSL_PARAM params[]);
+ const OSSL_PARAM *EVP_MD_gettable_params(const EVP_MD *digest);
  EVP_MD_CTX *EVP_MD_CTX_new(void);
  int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
+ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md);
+ const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md);
+ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx);
+ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
  void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
  int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
@@ -40,6 +61,13 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
 
  int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
+ const char *EVP_MD_name(const EVP_MD *md);
+ int EVP_MD_number(const EVP_MD *md);
+ int EVP_MD_is_a(const EVP_MD *md, const char *name);
+ void EVP_MD_names_do_all(const EVP_MD *md,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
+ const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);
  int EVP_MD_size(const EVP_MD *md);
@@ -47,9 +75,10 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
  unsigned long EVP_MD_flags(const EVP_MD *md);
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
- int EVP_MD_CTX_size(const EVP_MD *ctx);
- int EVP_MD_CTX_block_size(const EVP_MD *ctx);
- int EVP_MD_CTX_type(const EVP_MD *ctx);
+ const char *EVP_MD_CTX_name(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
  int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                               const void *data, size_t count);
@@ -66,12 +95,37 @@ EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_set_pkey_ctx - EVP digest routines
  EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 
+ void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_MD *mac, void *arg),
+                             void *arg);
+
 =head1 DESCRIPTION
 
 The EVP digest routines are a high level interface to message digests,
-and should be used instead of the cipher-specific functions.
+and should be used instead of the digest-specific functions.
+
+The B<EVP_MD> type is a structure for digest method implementation.
 
 =over 4
+
+=item EVP_MD_fetch()
+
+Fetches the digest implementation for the given B<algorithm> from any
+provider offering it, within the criteria given by the B<properties>.
+See L<provider(7)/Fetching algorithms> for further information.
+
+The returned value must eventually be freed with EVP_MD_free().
+
+Fetched B<EVP_MD> structures are reference counted.
+
+=item EVP_MD_up_ref()
+
+Increments the reference count for an B<EVP_MD> structure.
+
+=item EVP_MD_free()
+
+Decrements the reference count for the fetched B<EVP_MD> structure.
+If the reference count drops to 0 then the structure is freed.
 
 =item EVP_MD_CTX_new()
 
@@ -88,11 +142,42 @@ Cleans up digest context B<ctx> and frees up the space allocated to it.
 
 =item EVP_MD_CTX_ctrl()
 
+This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
+is the mechanism that should be used to set and get parameters that are used by
+providers.
 Performs digest-specific control actions on context B<ctx>. The control command
 is indicated in B<cmd> and any additional arguments in B<p1> and B<p2>.
 EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
 may apply depending on the control type and digest implementation.
 See L</CONTROLS> below for more information.
+
+=item EVP_MD_get_params()
+
+Retrieves the requested list of B<params> from a MD B<md>.
+See L</PARAMETERS> below for more information.
+
+=item EVP_MD_CTX_get_params()
+
+Retrieves the requested list of B<params> from a MD context B<ctx>.
+See L</PARAMETERS> below for more information.
+
+=item EVP_MD_CTX_set_params()
+
+Sets the list of B<params> into a MD context B<ctx>.
+See L</PARAMETERS> below for more information.
+
+=item EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
+EVP_MD_settable_ctx_params(), EVP_MD_CTX_gettable_params(),
+EVP_MD_CTX_settable_params()
+
+Get a B<OSSL_PARAM> array that describes the retrievable and settable
+parameters. EVP_MD_gettable_params() returns parameters that can be used with
+EVP_MD_get_params(). EVP_MD_gettable_ctx_params() and
+EVP_MD_CTX_gettable_params() return parameters that can be used with
+EVP_MD_CTX_get_params(). EVP_MD_settable_ctx_params() and
+EVP_MD_CTX_settable_params() return parameters that can be used with
+EVP_MD_CTX_set_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -108,9 +193,12 @@ If B<impl> is NULL the default implementation of digest B<type> is used.
 
 =item EVP_DigestInit_ex()
 
-Sets up digest context B<ctx> to use a digest B<type> from ENGINE B<impl>.
-B<type> will typically be supplied by a function such as EVP_sha1().  If
-B<impl> is NULL then the default implementation of digest B<type> is used.
+Sets up digest context B<ctx> to use a digest B<type>.
+B<type> is typically supplied by a function such as EVP_sha1(), or a
+value explicitly fetched with EVP_MD_fetch().
+
+If B<impl> is non-NULL, its implementation of the digest B<type> is used if
+there is one, and if not, the default implementation is used.
 
 =item EVP_DigestUpdate()
 
@@ -143,7 +231,7 @@ few bytes.
 =item EVP_DigestInit()
 
 Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation.
+default digest implementation and calls EVP_MD_CTX_reset().
 
 =item EVP_DigestFinal()
 
@@ -154,6 +242,33 @@ automatically cleaned up.
 
 Similar to EVP_MD_CTX_copy_ex() except the destination B<out> does not have to
 be initialized.
+
+=item EVP_MD_is_a()
+
+Returns 1 if I<md> is an implementation of an algorithm that's
+identifiable with I<name>, otherwise 0.
+
+=item EVP_MD_number()
+
+Returns the internal dynamic number assigned to the I<md>.  This is
+only useful with fetched B<EVP_MD>s.
+
+=item EVP_MD_name(),
+EVP_MD_CTX_name()
+
+Return the name of the given message digest.  For fetched message
+digests with multiple names, only one of them is returned; it's
+recommended to use EVP_MD_names_do_all() instead.
+
+=item EVP_MD_names_do_all()
+
+Traverses all names for the I<md>, and calls I<fn> with each name and
+I<data>.  This is only useful with fetched B<EVP_MD>s.
+
+=item EVP_MD_provider()
+
+Returns an B<OSSL_PROVIDER> pointer to the provider that implements the given
+B<EVP_MD>.
 
 =item EVP_MD_size(),
 EVP_MD_CTX_size()
@@ -237,6 +352,46 @@ by the caller. A NULL B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CT
 assigned to B<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
 depends on how the B<EVP_PKEY_CTX> is created.
 
+=item EVP_MD_do_all_provided()
+
+Traverses all messages digests implemented by all activated providers
+in the given library context I<libctx>, and for each of the implementations,
+calls the given function I<fn> with the implementation method and the given
+I<arg> as argument.
+
+=back
+
+=head1 PARAMETERS
+
+See L<OSSL_PARAM(3)> for information about passing parameters.
+
+EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
+
+=over 4
+
+=item "xoflen" (B<OSSL_PARAM_DIGEST_KEY_XOFLEN>) <unsigned integer>
+
+Sets the digest length for extendable output functions.
+It is used by the SHAKE algorithm and should not exceed what can be given
+using a B<size_t>.
+
+=item "pad_type" (B<OSSL_PARAM_DIGEST_KEY_PAD_TYPE>) <integer>
+
+Sets the pad type.
+It is used by the MDC2 algorithm.
+
+=back
+
+EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
+
+=over 4
+
+=item "micalg" (B<OSSL_PARAM_DIGEST_KEY_MICALG>) <UTF8 string>.
+
+Gets the digest Message Integrity Check algorithm string. This is used when
+creating S/MIME multipart/signed messages, as specified in RFC 3851.
+It may be used by external engines or providers.
+
 =back
 
 =head1 CONTROLS
@@ -296,6 +451,14 @@ disabled with this flag.
 
 =over 4
 
+=item EVP_MD_fetch()
+
+Returns a pointer to a B<EVP_MD> for success or NULL for failure.
+
+=item EVP_MD_up_ref()
+
+Returns 1 for success or 0 for failure.
+
 =item EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex()
@@ -306,6 +469,17 @@ success and 0 for failure.
 =item EVP_MD_CTX_ctrl()
 
 Returns 1 if successful or 0 for failure.
+
+=item EVP_MD_CTX_set_params(),
+EVP_MD_CTX_get_params()
+
+Returns 1 if successful or 0 for failure.
+
+=item EVP_MD_CTX_settable_params(),
+EVP_MD_CTX_gettable_params()
+
+Return an array of constant B<OSSL_PARAM>s, or NULL if there is none
+to get.
 
 =item EVP_MD_CTX_copy_ex()
 
@@ -363,14 +537,14 @@ implementations of digests to be specified.
 If digest contexts are not cleaned up after use,
 memory leaks will occur.
 
-EVP_MD_CTX_size(), EVP_MD_CTX_block_size(), EVP_MD_CTX_type(),
-EVP_get_digestbynid() and EVP_get_digestbyobj() are defined as
-macros.
+EVP_MD_CTX_name(), EVP_MD_CTX_size(), EVP_MD_CTX_block_size(),
+EVP_MD_CTX_type(), EVP_get_digestbynid() and EVP_get_digestbyobj() are defined
+as macros.
 
 EVP_MD_CTX_ctrl() sends commands to message digests for additional configuration
 or control.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example digests the data "Test Message\n" and "Hello World\n", using the
 digest name passed on the command line.
@@ -418,7 +592,9 @@ digest name passed on the command line.
 
 L<EVP_MD_meth_new(3)>,
 L<dgst(1)>,
-L<evp(7)>
+L<evp(7)>,
+L<OSSL_PROVIDER(3)>,
+L<OSSL_PARAM(3)>
 
 The full list of digest algorithms are provided below.
 
@@ -433,6 +609,7 @@ L<EVP_sha224(3)>,
 L<EVP_sha3_224(3)>,
 L<EVP_sm3(3)>,
 L<EVP_whirlpool(3)>
+L<provider(7)/Fetching algorithms>
 
 =head1 HISTORY
 
@@ -446,9 +623,12 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in 1.1.1.
 
+The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
+and EVP_MD_CTX_get_params() functions were added in 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

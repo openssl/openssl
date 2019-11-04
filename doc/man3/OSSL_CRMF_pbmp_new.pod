@@ -22,7 +22,7 @@ OSSL_CRMF_pbmp_new
 
 OSSL_CRMF_pbm_new() generates a PBM (Password-Based MAC) based on given PBM
 parameters B<pbmp>, message B<msg>, and secret B<sec>, along with the respective
-lengths B<msglen> and B<seclen>. On success writes the adddress of the newly
+lengths B<msglen> and B<seclen>. On success writes the address of the newly
 allocated MAC via the B<mac> reference parameter and writes the length via the
 B<maclen> reference parameter unless it its NULL.
 
@@ -49,7 +49,7 @@ OSSL_CRMF_pbm_new() returns 1 on success, 0 on error.
 OSSL_CRMF_pbmp_new() returns a new and initialized OSSL_CRMF_PBMPARAMETER
 structure, or NULL on error.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
  OSSL_CRMF_PBMPARAMETER *pbm = NULL;
  unsigned char *msg = "Hello";
@@ -66,9 +66,13 @@ structure, or NULL on error.
 
 RFC 4211 section 4.4
 
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -14,66 +14,83 @@
 
 #include <string.h>
 #include <openssl/evp.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/thread_once.h"
-#include "rand_lcl.h"
+#include "internal/cryptlib.h"
+#include "rand_local.h"
 
-static RAND_POOL *crngt_pool;
-static unsigned char crngt_prev[EVP_MAX_MD_SIZE];
+typedef struct crng_test_global_st {
+    unsigned char crngt_prev[EVP_MAX_MD_SIZE];
+    RAND_POOL *crngt_pool;
+} CRNG_TEST_GLOBAL;
 
-int (*crngt_get_entropy)(unsigned char *, unsigned char *, unsigned int *)
+int (*crngt_get_entropy)(OPENSSL_CTX *, RAND_POOL *, unsigned char *,
+                         unsigned char *, unsigned int *)
     = &rand_crngt_get_entropy_cb;
 
-int rand_crngt_get_entropy_cb(unsigned char *buf, unsigned char *md,
+static void rand_crng_ossl_ctx_free(void *vcrngt_glob)
+{
+    CRNG_TEST_GLOBAL *crngt_glob = vcrngt_glob;
+
+    rand_pool_free(crngt_glob->crngt_pool);
+    OPENSSL_free(crngt_glob);
+}
+
+static void *rand_crng_ossl_ctx_new(OPENSSL_CTX *ctx)
+{
+    unsigned char buf[CRNGT_BUFSIZ];
+    CRNG_TEST_GLOBAL *crngt_glob = OPENSSL_zalloc(sizeof(*crngt_glob));
+
+    if (crngt_glob == NULL)
+        return NULL;
+
+    if ((crngt_glob->crngt_pool
+         = rand_pool_new(0, 1, CRNGT_BUFSIZ, CRNGT_BUFSIZ)) == NULL) {
+        OPENSSL_free(crngt_glob);
+        return NULL;
+    }
+    if (crngt_get_entropy(ctx, crngt_glob->crngt_pool, buf,
+                          crngt_glob->crngt_prev, NULL)) {
+        OPENSSL_cleanse(buf, sizeof(buf));
+        return crngt_glob;
+    }
+    rand_pool_free(crngt_glob->crngt_pool);
+    OPENSSL_free(crngt_glob);
+    return NULL;
+}
+
+static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
+    rand_crng_ossl_ctx_new,
+    rand_crng_ossl_ctx_free,
+};
+
+int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx,
+                              RAND_POOL *pool,
+                              unsigned char *buf,
+                              unsigned char *md,
                               unsigned int *md_size)
 {
     int r;
     size_t n;
     unsigned char *p;
 
-    n = rand_pool_acquire_entropy(crngt_pool);
+    if (pool == NULL)
+        return 0;
+
+    n = rand_pool_acquire_entropy(pool);
     if (n >= CRNGT_BUFSIZ) {
-        p = rand_pool_detach(crngt_pool);
-        r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, EVP_sha256(), NULL);
+        EVP_MD *fmd = EVP_MD_fetch(ctx, "SHA256", "");
+        if (fmd == NULL)
+            return 0;
+        p = rand_pool_detach(pool);
+        r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, fmd, NULL);
         if (r != 0)
             memcpy(buf, p, CRNGT_BUFSIZ);
-        rand_pool_reattach(crngt_pool, p);
+        rand_pool_reattach(pool, p);
+        EVP_MD_free(fmd);
         return r;
     }
     return 0;
-}
-
-void rand_crngt_cleanup(void)
-{
-    rand_pool_free(crngt_pool);
-    crngt_pool = NULL;
-}
-
-int rand_crngt_init(void)
-{
-    unsigned char buf[CRNGT_BUFSIZ];
-
-    if ((crngt_pool = rand_pool_new(0, CRNGT_BUFSIZ, CRNGT_BUFSIZ)) == NULL)
-        return 0;
-    if (crngt_get_entropy(buf, crngt_prev, NULL)) {
-        OPENSSL_cleanse(buf, sizeof(buf));
-        return 1;
-    }
-    rand_crngt_cleanup();
-    return 0;
-}
-
-static CRYPTO_ONCE rand_crngt_init_flag = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_rand_crngt_init)
-{
-    return OPENSSL_init_crypto(0, NULL)
-        && rand_crngt_init()
-        && OPENSSL_atexit(&rand_crngt_cleanup);
-}
-
-int rand_crngt_single_init(void)
-{
-    return RUN_ONCE(&rand_crngt_init_flag, do_rand_crngt_init);
 }
 
 size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
@@ -86,20 +103,24 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
     int attempts = 3;
+    CRNG_TEST_GLOBAL *crngt_glob
+        = openssl_ctx_get_data(drbg->libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
+                               &rand_crng_ossl_ctx_method);
 
-    if (!RUN_ONCE(&rand_crngt_init_flag, do_rand_crngt_init))
+    if (crngt_glob == NULL)
         return 0;
 
-    if ((pool = rand_pool_new(entropy, min_len, max_len)) == NULL)
+    if ((pool = rand_pool_new(entropy, 1, min_len, max_len)) == NULL)
         return 0;
 
     while ((q = rand_pool_bytes_needed(pool, 1)) > 0 && attempts-- > 0) {
         s = q > sizeof(buf) ? sizeof(buf) : q;
-        if (!crngt_get_entropy(buf, md, &sz)
-            || memcmp(crngt_prev, md, sz) == 0
+        if (!crngt_get_entropy(drbg->libctx, crngt_glob->crngt_pool, buf, md,
+                               &sz)
+            || memcmp(crngt_glob->crngt_prev, md, sz) == 0
             || !rand_pool_add(pool, buf, s, s * 8))
             goto err;
-        memcpy(crngt_prev, md, sz);
+        memcpy(crngt_glob->crngt_prev, md, sz);
         t += s;
         attempts++;
     }

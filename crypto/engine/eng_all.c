@@ -8,13 +8,10 @@
  */
 
 #include "internal/cryptlib.h"
-#include "eng_int.h"
+#include "eng_local.h"
 
 void ENGINE_load_builtin_engines(void)
 {
-    /* Some ENGINEs need this */
-    OPENSSL_cpuid_setup();
-
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
 }
 

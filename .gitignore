@@ -2,7 +2,7 @@
 /.dir-locals.el
 
 # Top level excludes
-/Makefile.orig
+/Makefile
 /MINFO
 /TABLE
 /*.pc
@@ -13,11 +13,6 @@
 /tmp.*
 /configdata.pm
 
-# *all* Makefiles
-Makefile
-# ... except in demos
-!/demos/*/Makefile
-
 # Links under apps
 /apps/CA.pl
 /apps/tsget
@@ -26,10 +21,38 @@ Makefile
 
 # Auto generated headers
 /crypto/buildinf.h
-/apps/progs.h
-/crypto/include/internal/*_conf.h
-/openssl/include/opensslconf.h
-/util/domd
+/include/crypto/*_conf.h
+/include/openssl/opensslconf.h
+/include/openssl/opensslv.h
+
+# Auto generated doc files
+doc/man1/openssl-ca.pod
+doc/man1/openssl-cms.pod
+doc/man1/openssl-crl.pod
+doc/man1/openssl-dgst.pod
+doc/man1/openssl-dhparam.pod
+doc/man1/openssl-dsaparam.pod
+doc/man1/openssl-ecparam.pod
+doc/man1/openssl-enc.pod
+doc/man1/openssl-gendsa.pod
+doc/man1/openssl-genrsa.pod
+doc/man1/openssl-ocsp.pod
+doc/man1/openssl-passwd.pod
+doc/man1/openssl-pkcs12.pod
+doc/man1/openssl-pkcs8.pod
+doc/man1/openssl-pkeyutl.pod
+doc/man1/openssl-rand.pod
+doc/man1/openssl-req.pod
+doc/man1/openssl-rsautl.pod
+doc/man1/openssl-s_client.pod
+doc/man1/openssl-s_server.pod
+doc/man1/openssl-s_time.pod
+doc/man1/openssl-smime.pod
+doc/man1/openssl-speed.pod
+doc/man1/openssl-srp.pod
+doc/man1/openssl-ts.pod
+doc/man1/openssl-verify.pod
+doc/man1/openssl-x509.pod
 
 # error code files
 /crypto/err/openssl.txt.old
@@ -62,6 +85,8 @@ Makefile
 /test/rsa_complex
 # Other generated files in test/
 /test/provider_internal_test.conf
+/test/fipsinstall.conf
+/providers/fipsinstall.conf
 
 # Certain files that get created by tests on the fly
 /test/test-runs
@@ -79,7 +104,6 @@ Makefile
 
 # Misc auto generated files
 /doc/man7/openssl_user_macros.pod
-/include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl
 /util/shlib_wrap.sh

@@ -1,0 +1,133 @@
+=pod
+
+=head1 NAME
+
+openssl-list - list algorithms and features
+
+=head1 SYNOPSIS
+
+B<openssl list>
+[B<-help>]
+[B<-verbose>]
+[B<-1>]
+[B<-commands>]
+[B<-digest-commands>]
+[B<-digest-algorithms>]
+[B<-kdf-algorithms>]
+[B<-mac-algorithms>]
+[B<-cipher-commands>]
+[B<-cipher-algorithms>]
+[B<-public-key-algorithms>]
+[B<-public-key-methods>]
+[B<-engines>]
+[B<-disabled>]
+
+=head1 DESCRIPTION
+
+This command is used to generate list of algorithms or disabled
+features.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Display a usage message.
+
+=item B<-verbose>
+
+Displays extra information.
+The options below where verbosity applies say a bit more about what that means.
+
+=item B<-1>
+
+List the commands, digest-commands, or cipher-commands in a single column.
+If used, this option must be given first.
+
+=item B<-commands>
+
+Display a list of standard commands.
+
+=item B<-digest-commands>
+
+Display a list of message digest commands, which are typically used
+as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
+
+=item B<-cipher-commands>
+
+Display a list of cipher commands, which are typically used as input
+to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
+
+=item B<-digest-algorithms>, B<-kdf-algorithms>, B<-mac-algorithms>,
+B<-cipher-algorithms>
+
+Display a list of cipher, digest, kdf and mac algorithms.
+See L</Display of algorithm names> for a description of how names are
+displayed.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
+
+=item B<-public-key-algorithms>
+
+Display a list of public key algorithms, with each algorithm as
+a block of multiple lines, all but the first are indented.
+
+=item B<-public-key-methods>
+
+Display a list of public key method OIDs.
+
+=item B<-engines>
+
+Display a list of loaded engines.
+
+=item B<-disabled>
+
+Display a list of disabled features, those that were compiled out
+of the installation.
+
+=item B<-objects>
+
+Display a list of built in objects, i.e. OIDs with names.  They're listed in the
+format described in L<config(5)/ASN1 Object Configuration Module>.
+
+=back
+
+=head2 Display of algorithm names
+
+Algorithm names may be displayed in one of two manners:
+
+=over 4
+
+=item Legacy implementations
+
+Legacy implementations will simply display the main name of the
+algorithm on a line of its own, or in the form C<<foo > bar>> to show
+that C<foo> is an alias for the main name, C<bar>
+
+=item Provided implementations
+
+Implementations from a provider are displayed like this if the
+implementation is labeled with a single name:
+
+ foo @ bar
+
+or like this if it's labeled with multiple names:
+
+ { foo1, foo2 } @bar
+
+In both cases, C<bar> is the name of the provider.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

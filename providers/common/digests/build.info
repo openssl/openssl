@@ -1,5 +1,2 @@
-SOURCE[../../../libcrypto]=\
-        sha2.c
-
-SOURCE[../../fips]=\
-        sha2.c
+# This source is common for all digests in all our providers.
+SOURCE[../../libcommon.a]=digest_common.c

@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 
 #if defined(OPENSSL_NO_POSIX_IO)
 /*
@@ -94,7 +94,7 @@ static int fd_new(BIO *bi)
     bi->init = 0;
     bi->num = -1;
     bi->ptr = NULL;
-    bi->flags = BIO_FLAGS_UPLINK; /* essentially redundant */
+    bi->flags = BIO_FLAGS_UPLINK_INTERNAL; /* essentially redundant */
     return 1;
 }
 
@@ -107,7 +107,7 @@ static int fd_free(BIO *a)
             UP_close(a->num);
         }
         a->init = 0;
-        a->flags = BIO_FLAGS_UPLINK;
+        a->flags = BIO_FLAGS_UPLINK_INTERNAL;
     }
     return 1;
 }

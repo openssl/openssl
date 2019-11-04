@@ -52,8 +52,12 @@
 # ($t0,$t1,$t2,$t3,$t8,$t9)=map("\$$_",(12..15,24,25));
 # ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)=map("\$$_",(16..23));
 # ($gp,$sp,$fp,$ra)=map("\$$_",(28..31));
-#
-$flavour = shift || "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
+
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+# supported flavours are o32,n32,64,nubi32,nubi64, default is o32
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : "o32"; 
 
 if ($flavour =~ /64|n32/i) {
 	$PTR_ADD="daddu";	# incidentally works even on n32
@@ -77,8 +81,7 @@ if ($flavour =~ /64|n32/i) {
 
 $big_endian=(`echo MIPSEB | $ENV{CC} -E -`=~/MIPSEB/)?0:1 if ($ENV{CC});
 
-for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);   }
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 if (!defined($big_endian))
             {   $big_endian=(unpack('L',pack('N',1))==1);   }

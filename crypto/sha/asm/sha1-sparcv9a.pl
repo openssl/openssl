@@ -47,8 +47,7 @@ for (@ARGV)	{ $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
 if ($bits==64)	{ $bias=2047; $frame=192; }
 else		{ $bias=0;    $frame=112; }
 
-$output=shift;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 $ctx="%i0";
 $inp="%i1";

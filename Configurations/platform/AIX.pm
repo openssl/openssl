@@ -12,6 +12,7 @@ require platform::Unix;
 # Assume someone set @INC right before loading this module
 use configdata;
 
+sub dsoext              { '.so' }
 sub shlibextsimple      { '.a' }
 
 # In shared mode, the default static library names clashes with the final

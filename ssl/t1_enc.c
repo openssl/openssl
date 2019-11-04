@@ -9,8 +9,8 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
-#include "record/record_locl.h"
+#include "ssl_local.h"
+#include "record/record_local.h"
 #include "internal/ktls.h"
 #include "internal/cryptlib.h"
 #include <openssl/comp.h>
@@ -18,6 +18,7 @@
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 #include <openssl/obj_mac.h>
+#include <openssl/core_names.h>
 #include <openssl/trace.h>
 
 /* seed1 through seed5 are concatenated */
@@ -31,8 +32,10 @@ static int tls1_PRF(SSL *s,
                     unsigned char *out, size_t olen, int fatal)
 {
     const EVP_MD *md = ssl_prf_md(s);
-    EVP_PKEY_CTX *pctx = NULL;
-    int ret = 0;
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[8], *p = params;
+    const char *mdname;
 
     if (md == NULL) {
         /* Should never happen */
@@ -43,29 +46,44 @@ static int tls1_PRF(SSL *s,
             SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
-    if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0
-        || EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) <= 0
-        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0
-        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0
-        || EVP_PKEY_derive(pctx, out, &olen) <= 0) {
-        if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
-                     ERR_R_INTERNAL_ERROR);
-        else
-            SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_TLS1_PRF, NULL);
+    if (kdf == NULL)
         goto err;
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (kctx == NULL)
+        goto err;
+    mdname = EVP_MD_name(md);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+                                             (unsigned char *)sec,
+                                             (size_t)slen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed1, (size_t)seed1_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed2, (size_t)seed2_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed3, (size_t)seed3_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed4, (size_t)seed4_len);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+                                             (void *)seed5, (size_t)seed5_len);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_CTX_set_params(kctx, params)
+            && EVP_KDF_derive(kctx, out, olen)) {
+        EVP_KDF_CTX_free(kctx);
+        return 1;
     }
 
-    ret = 1;
-
  err:
-    EVP_PKEY_CTX_free(pctx);
-    return ret;
+    if (fatal)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
+                 ERR_R_INTERNAL_ERROR);
+    else
+        SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+    EVP_KDF_CTX_free(kctx);
+    return 0;
 }
 
 static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
@@ -133,11 +151,15 @@ int tls1_change_cipher_state(SSL *s, int which)
     size_t n, i, j, k, cl;
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
+# ifdef __FreeBSD__
+    struct tls_enable crypto_info;
+# else
     struct tls12_crypto_info_aes_gcm_128 crypto_info;
-    BIO *bio;
     unsigned char geniv[12];
     int count_unprocessed;
     int bit;
+# endif
+    BIO *bio;
 #endif
 
     c = s->s3.tmp.new_sym_enc;
@@ -369,6 +391,42 @@ int tls1_change_cipher_state(SSL *s, int which)
     if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
         goto skip_ktls;
 
+# ifdef __FreeBSD__
+    memset(&crypto_info, 0, sizeof(crypto_info));
+    switch (s->s3.tmp.new_cipher->algorithm_enc) {
+    case SSL_AES128GCM:
+    case SSL_AES256GCM:
+        crypto_info.cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
+        crypto_info.iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+        break;
+    case SSL_AES128:
+    case SSL_AES256:
+        if (s->ext.use_etm)
+            goto skip_ktls;
+        switch (s->s3.tmp.new_cipher->algorithm_mac) {
+        case SSL_SHA1:
+            crypto_info.auth_algorithm = CRYPTO_SHA1_HMAC;
+            break;
+        case SSL_SHA256:
+            crypto_info.auth_algorithm = CRYPTO_SHA2_256_HMAC;
+            break;
+        default:
+            goto skip_ktls;
+        }
+        crypto_info.cipher_algorithm = CRYPTO_AES_CBC;
+        crypto_info.iv_len = EVP_CIPHER_iv_length(c);
+        crypto_info.auth_key = ms;
+        crypto_info.auth_key_len = *mac_secret_size;
+        break;
+    default:
+        goto skip_ktls;
+    }
+    crypto_info.cipher_key = key;
+    crypto_info.cipher_key_len = EVP_CIPHER_key_length(c);
+    crypto_info.iv = iv;
+    crypto_info.tls_vmajor = (s->version >> 8) & 0x000000ff;
+    crypto_info.tls_vminor = (s->version & 0x000000ff);
+# else
     /* check that cipher is AES_GCM_128 */
     if (EVP_CIPHER_nid(c) != NID_aes_128_gcm
         || EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE
@@ -378,6 +436,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     /* check version is 1.2 */
     if (s->version != TLS1_2_VERSION)
         goto skip_ktls;
+# endif
 
     if (which & SSL3_CC_WRITE)
         bio = s->wbio;
@@ -404,6 +463,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+# ifndef __FreeBSD__
     memset(&crypto_info, 0, sizeof(crypto_info));
     crypto_info.info.cipher_type = TLS_CIPHER_AES_GCM_128;
     crypto_info.info.version = s->version;
@@ -437,6 +497,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             count_unprocessed--;
         }
     }
+# endif
 
     /* ktls works with user provided buffers directly */
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {

@@ -6,12 +6,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_OPT_H
-#define HEADER_OPT_H
+#ifndef OSSL_APPS_OPT_H
+#define OSSL_APPS_OPT_H
 
 #include <sys/types.h>
 #include <openssl/e_os2.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <stdarg.h>
 
 /*
@@ -266,6 +266,7 @@
  */
 extern const char OPT_HELP_STR[];
 extern const char OPT_MORE_STR[];
+extern const char OPT_SECTION_STR[];
 typedef struct options_st {
     const char *name;
     int retval;
@@ -307,6 +308,9 @@ typedef struct string_int_pair_st {
         OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NSS   | \
         OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
 
+/* Divide options into sections when displaying usage */
+#define OPT_SECTION(sec) {OPT_SECTION_STR, 1, '-', sec " options:\n"}
+
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
@@ -317,7 +321,8 @@ int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
+    !defined(OPENSSL_NO_INTTYPES_H)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
 #else
@@ -337,8 +342,9 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 void opt_help(const OPTIONS * list);
+void opt_print(const OPTIONS * opt, int width);
 int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 
-#endif /* HEADER_OPT_H */
+#endif /* OSSL_APPS_OPT_H */

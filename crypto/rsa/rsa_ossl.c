@@ -8,9 +8,9 @@
  */
 
 #include "internal/cryptlib.h"
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
-#include "internal/constant_time_locl.h"
+#include "crypto/bn.h"
+#include "rsa_local.h"
+#include "internal/constant_time.h"
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
@@ -321,6 +321,11 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        if (rsa->d == NULL) {
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_MISSING_PRIVATE_KEY);
+            BN_free(d);
+            goto err;
+        }
         BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
         if (!rsa->meth->bn_mod_exp(ret, f, d, rsa->n, ctx,
@@ -438,6 +443,11 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        if (rsa->d == NULL) {
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_MISSING_PRIVATE_KEY);
+            BN_free(d);
+            goto err;
+        }
         BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
         if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -460,6 +470,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             goto err;
 
     j = BN_bn2binpad(ret, buf, num);
+    if (j < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
@@ -559,6 +571,8 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
             goto err;
 
     i = BN_bn2binpad(ret, buf, num);
+    if (i < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_PADDING:

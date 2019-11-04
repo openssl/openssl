@@ -2,12 +2,15 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover - recover signature using a public key algorithm
+EVP_PKEY_verify_recover_init_ex, EVP_PKEY_verify_recover_init,
+EVP_PKEY_verify_recover - recover signature using a public key algorithm
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
+ int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx,
+                                     EVP_SIGNATURE *signature);
  int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
                              unsigned char *rout, size_t *routlen,
@@ -15,8 +18,20 @@ EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover - recover signature using 
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_recover_init() function initializes a public key algorithm
-context using key B<pkey> for a verify recover operation.
+The EVP_PKEY_verify_recover_init_ex() function initializes a public key
+algorithm context for performing signature signed data recovery using the
+signature algorithm B<signature>.
+The signature algorithm B<signature> should be fetched using a call to
+L<EVP_SIGNATURE_fetch(3)>.
+The EVP_PKEY object associated with B<ctx> must be compatible with that
+algorithm.
+B<signature> may be NULL in which case the EVP_SIGNATURE algorithm is fetched
+implicitly based on the type of EVP_PKEY associated with B<ctx>.
+See L<provider(7)/Implicit fetch> for more information about implict fetches.
+
+The EVP_PKEY_verify_recover_init() function is the same as
+EVP_PKEY_verify_recover_init_ex() except that the EVP_SIGNATURE algorithm is
+always implicitly fetched.
 
 The EVP_PKEY_verify_recover() function recovers signed data
 using B<ctx>. The signature is specified using the B<sig> and
@@ -49,7 +64,7 @@ EVP_PKEY_verify_recover_init() and EVP_PKEY_verify_recover() return 1 for succes
 and 0 or a negative value for failure. In particular a return value of -2
 indicates the operation is not supported by the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Recover digest originally signed using PKCS#1 and SHA256 digest:
 

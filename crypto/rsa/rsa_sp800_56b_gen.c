@@ -10,8 +10,8 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
+#include "crypto/bn.h"
+#include "rsa_local.h"
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS1864_MIN_KEYGEN_STRENGTH 112
@@ -118,6 +118,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
             continue;
         break; /* successfully finished */
     }
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     /* Zeroize any internally generated values that are not returned */
@@ -239,6 +240,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
             || BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     if (ret != 1) {

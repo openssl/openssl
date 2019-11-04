@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <limits.h>
 
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
@@ -22,8 +22,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 #include "internal/dane.h"
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
 /* CRL score values */
 
@@ -1276,7 +1276,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
     /* Don't allow recursive CRL path validation */
     if (ctx->parent)
         return 0;
-    if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted))
+    if (!X509_STORE_CTX_init(&crl_ctx, ctx->store, x, ctx->untrusted))
         return -1;
 
     crl_ctx.crls = ctx->crls;
@@ -1788,7 +1788,11 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
     static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
     ASN1_TIME *asn1_cmp_time = NULL;
     int i, day, sec, ret = 0;
-
+#ifdef CHARSET_EBCDIC
+    const char upper_z = 0x5A;
+#else
+    const char upper_z = 'Z';
+#endif
     /*
      * Note that ASN.1 allows much more slack in the time format than RFC5280.
      * In RFC5280, the representation is fixed:
@@ -1819,10 +1823,10 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * Digit and date ranges will be verified in the conversion methods.
      */
     for (i = 0; i < ctm->length - 1; i++) {
-        if (!ossl_isdigit(ctm->data[i]))
+        if (!ascii_isdigit(ctm->data[i]))
             return 0;
     }
-    if (ctm->data[ctm->length - 1] != 'Z')
+    if (ctm->data[ctm->length - 1] != upper_z)
         return 0;
 
     /*
@@ -2130,10 +2134,10 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 {
     int idx;
     /* If purpose not set use default */
-    if (!purpose)
+    if (purpose == 0)
         purpose = def_purpose;
     /* If we have a purpose then check it is valid */
-    if (purpose) {
+    if (purpose != 0) {
         X509_PURPOSE *ptmp;
         idx = X509_PURPOSE_get_by_id(purpose);
         if (idx == -1) {
@@ -2201,7 +2205,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 {
     int ret = 1;
 
-    ctx->ctx = store;
+    ctx->store = store;
     ctx->cert = x509;
     ctx->untrusted = chain;
     ctx->crls = NULL;
@@ -2498,8 +2502,9 @@ int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
 {
     const X509_VERIFY_PARAM *param;
+
     param = X509_VERIFY_PARAM_lookup(name);
-    if (!param)
+    if (param == NULL)
         return 0;
     return X509_VERIFY_PARAM_inherit(ctx->param, param);
 }

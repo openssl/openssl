@@ -1,0 +1,185 @@
+=pod
+
+=head1 NAME
+
+provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
+
+=head1 SYNOPSIS
+
+=for openssl multiple includes
+
+ #include <openssl/core_numbers.h>
+ #include <openssl/core_names.h>
+
+ /*
+  * None of these are actual functions, but are displayed like this for
+  * the function signatures for functions that are offered as function
+  * pointers in OSSL_DISPATCH arrays.
+  */
+
+ /* Context management */
+ void *OP_keyexch_newctx(void *provctx);
+ void OP_keyexch_freectx(void *ctx);
+ void *OP_keyexch_dupctx(void *ctx);
+
+ /* Shared secret derivation */
+ int OP_keyexch_init(void *ctx, void *provkey);
+ int OP_keyexch_set_peer(void *ctx, void *provkey);
+ int OP_keyexch_derive(void *ctx, unsigned char *secret, size_t *secretlen,
+                       size_t outlen);
+
+ /* Key Exchange parameters */
+ int OP_keyexch_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keyexch_settable_ctx_params(void);
+
+=head1 DESCRIPTION
+
+This documentation is primarily aimed at provider authors. See L<provider(7)>
+for further information.
+
+The key exchange (OSSL_OP_KEYEXCH) operation enables providers to implement key
+exchange algorithms and make them available to applications via the API
+functions L<EVP_PKEY_derive_init_ex(3)>, and L<EVP_PKEY_derive(3)> (as well as
+other related functions).
+
+All "functions" mentioned here are passed as function pointers between
+F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
+B<OSSL_ALGORITHM> arrays that are returned by the provider's
+provider_query_operation() function
+(see L<provider-base(7)/Provider Functions>).
+
+All these "functions" have a corresponding function type definition
+named B<OSSL_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<OSSL_DISPATCH> element named
+B<OSSL_get_{name}>.
+For example, the "function" OP_keyexch_newctx() has these:
+
+ typedef void *(OSSL_OP_keyexch_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_OP_keyexch_newctx_fn
+     OSSL_get_OP_keyexch_newctx(const OSSL_DISPATCH *opf);
+
+B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<openssl-core_numbers.h(7)>, as follows:
+
+ OP_keyexch_newctx                OSSL_FUNC_KEYEXCH_NEWCTX
+ OP_keyexch_freectx               OSSL_FUNC_KEYEXCH_FREECTX
+ OP_keyexch_dupctx                OSSL_FUNC_KEYEXCH_DUPCTX
+
+ OP_keyexch_init                  OSSL_FUNC_KEYEXCH_INIT
+ OP_keyexch_set_peer              OSSL_FUNC_KEYEXCH_SET_PEER
+ OP_keyexch_derive                OSSL_FUNC_KEYEXCH_DERIVE
+
+ OP_keyexch_set_ctx_params        OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS
+ OP_keyexch_settable_ctx_params   OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS
+
+A key exchange algorithm implementation may not implement all of these functions.
+In order to be a consistent set of functions a provider must implement
+OP_keyexch_newctx, OP_keyexch_freectx, OP_keyexch_init and OP_keyexch_derive.
+All other functions are optional.
+
+A key exchange algorithm must also implement some mechanism for generating,
+loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.
+See L<provider-keymgmt(7)> for further details.
+
+=head2 Context Management Functions
+
+OP_keyexch_newctx() should create and return a pointer to a provider side
+structure for holding context information during a key exchange operation.
+A pointer to this context will be passed back in a number of the other key
+exchange operation function calls.
+The paramater I<provctx> is the provider context generated during provider
+initialisation (see L<provider(3)>).
+
+OP_keyexch_freectx() is passed a pointer to the provider side key exchange
+context in the I<ctx> parameter.
+This function should free any resources associated with that context.
+
+OP_keyexch_dupctx() should duplicate the provider side key exchange context in
+the I<ctx> parameter and return the duplicate copy.
+
+=head2 Shared Secret Derivation Functions
+
+OP_keyexch_init() initialises a key exchange operation given a provider side key
+exchange context in the I<ctx> paramter, and a pointer to a provider key object
+in the I<provkey> parameter. The key object should have been previously
+generated, loaded or imported into the provider using the key management
+(OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
+
+OP_keyexch_set_peer() is called to supply the peer's public key (in the
+I<provkey> parameter) to be used when deriving the shared secret.
+It is also passed a previously initialised key exchange context in the I<ctx>
+parameter.
+The key object should have been previously generated, loaded or imported into
+the provider using the key management (OSSL_OP_KEYMGMT) operation (see
+provider-keymgmt(7)>.
+
+OP_keyexch_derive() performs the actual key exchange itself by deriving a shared
+secret.
+A previously initialised key exchange context is passed in the I<ctx>
+parameter.
+The derived secret should be written to the location I<secret> which should not
+exceed I<outlen> bytes.
+The length of the shared secret should be written to I<*secretlen>.
+If I<secret> is NULL then the maximum length of the shared secret should be
+written to I<*secretlen>.
+
+=head2 Key Exchange Parameters
+
+See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+the OP_keyexch_set_params() function.
+
+OP_keyexch_set_ctx_params() sets key exchange parameters associated with the
+given provider side key exchange context I<ctx> to I<params>.
+Any parameter settings are additional to any that were previously set.
+
+Parameters currently recognised by built-in key exchange algorithms are as
+follows.
+Not all parameters are relevant to, or are understood by all key exchange
+algorithms:
+
+=over 4
+
+=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
+
+Sets the padding mode for the associated key exchange ctx.
+Setting a value of 1 will turn padding on.
+Setting a vlue of 0 will turn padding off.
+If padding is off then the derived shared secret may be smaller than the largest
+possible secret size.
+If padding is on then the derived shared secret will have its first bytes filled
+with 0s where necessary to make the shared secret the same size as the largest
+possible secret size.
+
+=back
+
+OP_keyexch_settable_ctx_params() gets a constant B<OSSL_PARAM> array that
+decribes the settable parameters, i.e. parameters that can be used with
+OP_signature_set_ctx_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
+=head1 RETURN VALUES
+
+OP_keyexch_newctx() and OP_keyexch_dupctx() should return the newly created
+provider side key exchange context, or NULL on failure.
+
+OP_keyexch_init(), OP_keyexch_set_peer(), OP_keyexch_derive() and
+OP_keyexch_set_params() should return 1 for success or 0 on error.
+
+=head1 SEE ALSO
+
+L<provider(7)>
+
+=head1 HISTORY
+
+The provider KEYEXCH interface was introduced in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -67,7 +67,8 @@
 # hereafter less for longer keys, while verify - by 74-13%.
 # DSA performance improves by 115-30%.
 
-$output=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 
 if ($^O eq "hpux") {
     $ADDP="addp4";

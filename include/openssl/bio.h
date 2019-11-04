@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BIO_H
-# define HEADER_BIO_H
+#ifndef OPENSSL_BIO_H
+# define OPENSSL_BIO_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BIO_H
+# endif
 
 # include <openssl/e_os2.h>
 
@@ -19,10 +25,6 @@
 
 # include <openssl/crypto.h>
 # include <openssl/bioerr.h>
-
-# ifndef OPENSSL_NO_SCTP
-#  include <openssl/e_os2.h>
-# endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -146,7 +148,7 @@ extern "C" {
 # define BIO_CTRL_DGRAM_SET_PEEK_MODE      71
 
 /*
- * internal BIO see include/internal/bio.h:
+ * internal BIO:
  * # define BIO_CTRL_SET_KTLS_SEND                 72
  * # define BIO_CTRL_SET_KTLS_SEND_CTRL_MSG        74
  * # define BIO_CTRL_CLEAR_KTLS_CTRL_MSG           75
@@ -155,13 +157,14 @@ extern "C" {
 # define BIO_CTRL_GET_KTLS_SEND                 73
 # define BIO_CTRL_GET_KTLS_RECV                 76
 
+# define BIO_CTRL_DGRAM_SCTP_WAIT_FOR_DRY       77
+# define BIO_CTRL_DGRAM_SCTP_MSG_WAITING        78
+
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL)
 #  define BIO_get_ktls_recv(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL)
 # else
 #  define BIO_get_ktls_send(b)  (0)
 #  define BIO_get_ktls_recv(b)  (0)
@@ -178,12 +181,9 @@ extern "C" {
 # define BIO_FLAGS_IO_SPECIAL    0x04
 # define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
 # define BIO_FLAGS_SHOULD_RETRY  0x08
-# ifndef BIO_FLAGS_UPLINK
-/*
- * "UPLINK" flag denotes file descriptors provided by application. It
- * defaults to 0, as most platforms don't require UPLINK interface.
- */
-#  define BIO_FLAGS_UPLINK        0
+# if !OPENSSL_API_3
+/* This #define was replaced by an internal constant and should not be used. */
+#  define BIO_FLAGS_UPLINK       0
 # endif
 
 # define BIO_FLAGS_BASE64_NO_NL  0x100
@@ -286,6 +286,9 @@ DEFINE_STACK_OF(BIO)
 typedef int asn1_ps_func (BIO *b, unsigned char **pbuf, int *plen,
                           void *parg);
 
+typedef void (*BIO_dgram_sctp_notification_handler_fn) (BIO *b,
+                                                        void *context,
+                                                        void *buf);
 # ifndef OPENSSL_NO_SCTP
 /* SCTP parameter structs */
 struct bio_dgram_sctp_sndinfo {
@@ -636,10 +639,8 @@ const BIO_METHOD *BIO_s_datagram_sctp(void);
 BIO *BIO_new_dgram_sctp(int fd, int close_flag);
 int BIO_dgram_is_sctp(BIO *bio);
 int BIO_dgram_sctp_notification_cb(BIO *b,
-                                   void (*handle_notifications) (BIO *bio,
-                                                                 void *context,
-                                                                 void *buf),
-                                   void *context);
+                BIO_dgram_sctp_notification_handler_fn handle_notifications,
+                void *context);
 int BIO_dgram_sctp_wait_for_dry(BIO *b);
 int BIO_dgram_sctp_msg_waiting(BIO *b);
 #  endif

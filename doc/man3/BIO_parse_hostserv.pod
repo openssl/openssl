@@ -19,10 +19,10 @@ BIO_parse_hostserv
 =head1 DESCRIPTION
 
 BIO_parse_hostserv() will parse the information given in B<hostserv>,
-create strings with the host name and service name and give those
+create strings with the hostname and service name and give those
 back via B<host> and B<service>.  Those will need to be freed after
 they are used.  B<hostserv_prio> helps determine if B<hostserv> shall
-be interpreted primarily as a host name or a service name in ambiguous
+be interpreted primarily as a hostname or a service name in ambiguous
 cases.
 
 The syntax the BIO_parse_hostserv() recognises is:

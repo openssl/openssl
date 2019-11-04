@@ -12,11 +12,11 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
-#include "dh_locl.h"
+#include "dh_local.h"
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/objects.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 /* DH pkey context structure */
 
@@ -54,7 +54,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
         DHerr(DH_F_PKEY_DH_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    dctx->prime_len = 1024;
+    dctx->prime_len = 2048;
     dctx->subprime_len = -1;
     dctx->generator = 2;
     dctx->kdf_type = EVP_PKEY_DH_KDF_NONE;
@@ -80,6 +80,7 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 static int pkey_dh_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     DH_PKEY_CTX *dctx, *sctx;
+
     if (!pkey_dh_init(dst))
         return 0;
     sctx = src->data;
@@ -478,7 +479,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     return 0;
 }
 
-const EVP_PKEY_METHOD dh_pkey_meth = {
+static const EVP_PKEY_METHOD dh_pkey_meth = {
     EVP_PKEY_DH,
     0,
     pkey_dh_init,
@@ -512,7 +513,12 @@ const EVP_PKEY_METHOD dh_pkey_meth = {
     pkey_dh_ctrl_str
 };
 
-const EVP_PKEY_METHOD dhx_pkey_meth = {
+const EVP_PKEY_METHOD *dh_pkey_method(void)
+{
+    return &dh_pkey_meth;
+}
+
+static const EVP_PKEY_METHOD dhx_pkey_meth = {
     EVP_PKEY_DHX,
     0,
     pkey_dh_init,
@@ -545,3 +551,8 @@ const EVP_PKEY_METHOD dhx_pkey_meth = {
     pkey_dh_ctrl,
     pkey_dh_ctrl_str
 };
+
+const EVP_PKEY_METHOD *dhx_pkey_method(void)
+{
+    return &dhx_pkey_meth;
+}

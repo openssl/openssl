@@ -32,6 +32,10 @@ env:
 
 matrix:
     include:
+        - os: linux
+          arch: arm64
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings"
         - os: linux-ppc64le
           sudo: false
           compiler: clang
@@ -41,6 +45,10 @@ matrix:
           env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           dist: trusty
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated"
+        - os: linux
+          dist: bionic
           compiler: clang
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
         - os: linux
@@ -161,30 +169,25 @@ script:
     - if [ -n "$DESTDIR" ]; then
           cd _build;
       fi
-    - if $make update; then
-          echo -e '+\057 MAKE UPDATE OK';
-      else
-          echo -e '+\057 MAKE UPDATE FAILED'; false;
+    - if ! $make update; then
+          echo -e '\052\052 FAILED -- MAKE UPDATE';
+          travis_terminate 1;
       fi
-    - git diff --exit-code
-    - if [ -n "$CHECKDOCS" ]; then
-          if $make doc-nits; then
-              echo -e '+\057\057 MAKE DOC-NITS OK';
-          else
-              echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
-          fi;
+    - if ! git diff --exit-code; then
+          echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITED';
+          travis_terminate 1;
       fi
-    - if [ -n "$GENERATE" ]; then
-          if $make build_all_generated; then
-              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED OK';
-          else
-              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED FAILED'; false;
-          fi;
+    - if test -n "$GENERATE" && ! $make build_all_generated; then
+          echo -e '\052\052 FAILED -- MAKE BUILD_ALL_GENERATED';
+          travis_terminate 1;
       fi
-    - if $make2; then
-          echo -e '+\057\057\057\057 MAKE OK';
-      else
-          echo -e '+\057\057\057\057 MAKE FAILED'; false;
+    - if test -n "$CHECKDOCS" && ! $make doc-nits; then
+          echo -e '\052\052 FAILED -- MAKE DOC-NITS';
+          travis_terminate 1;
+      fi
+    - if ! $make2; then
+          echo -e '\052\052 FAILED -- MAKE';
+          travis_terminate 1;
       fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
@@ -196,31 +199,27 @@ script:
           if [ -e krb5/src ]; then
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
-          if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
-              echo -e '+\057\057\057\057\057 MAKE TEST OK';
-          else
-              echo -e '+\057\057\057\057\057 MAKE TEST FAILED'; false;
+          if ! HARNESS_VERBOSE_FAILURE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
+              echo -e '\052\052 FAILED -- MAKE TEST';
+              travis_terminate 1;
           fi;
       else
-          if $make build_tests >~/build.log 2>&1; then
-              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS OK';
-          else
-              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+          if ! $make build_tests >~/build.log 2>&1; then
+              echo -e '\052\052 FAILED -- MAKE BUILD_TESTS';
               cat ~/build.log
-              false;
+              travis_terminate 1;
           fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          if $make install DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
-              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL OK';
-          else
-              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL FAILED';
+          if ! $make install DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
+              echo -e '\052\052 FAILED -- MAKE INSTALL';
               cat ~/install.log;
-              false;
+              travis_terminate 1;
           fi;
       fi
     - cd $top
+    - echo -e '\052\052 DONE'
 
 after_success:
     - if [ -n "$COVERALLS" ]; then

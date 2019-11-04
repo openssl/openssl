@@ -25,7 +25,7 @@ The message to sign or verify must be passed using the one-shot
 EVP_DigestSign() and EVP_DigestVerify() functions.
 
 When calling EVP_DigestSignInit() or EVP_DigestVerifyInit(), the
-digest B<type> parameter B<MUST> be set to B<NULL>.
+digest I<type> parameter B<MUST> be set to NULL.
 
 Applications wishing to sign certificates (or other structures such as
 CRLs or certificate requests) using Ed25519 or Ed448 can either use X509_sign()
@@ -53,7 +53,7 @@ Ed25519 and Ed448 can be tested within L<speed(1)> application since version 1.1
 Valid algorithm names are B<ed25519>, B<ed448> and B<eddsa>. If B<eddsa> is
 specified, then both Ed25519 and Ed448 are benchmarked.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example generates an B<ED25519> private key and writes it to standard
 output in PEM format:

@@ -31,8 +31,7 @@
 # on benchmark. Lower coefficients are for ECDSA sign, server-side
 # operation. Keep in mind that +200% means 3x improvement.
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 $code.=<<___;
 #include "sparc_arch.h"
@@ -2301,7 +2300,6 @@ my ($Z1sqr, $Z2sqr) = ($Hsqr, $Rsqr);
 # !in1infty, !in2infty and result of check for zero.
 
 $code.=<<___;
-.globl	ecp_nistz256_point_add_vis3
 .align	32
 ecp_nistz256_point_add_vis3:
 	save	%sp,-STACK64_FRAME-32*18-32,%sp

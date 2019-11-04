@@ -19,8 +19,8 @@
 #endif
 
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
 struct lookup_dir_hashes_st {
     unsigned long hash;
@@ -156,7 +156,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     size_t len;
     const char *s, *ss, *p;
 
-    if (dir == NULL || !*dir) {
+    if (dir == NULL || *dir == '\0') {
         X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
         return 0;
     }
@@ -327,10 +327,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         /*
          * we have added it to the cache so now pull it out again
          */
-        CRYPTO_THREAD_write_lock(ctx->lock);
+        X509_STORE_lock(xl->store_ctx);
         j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
         tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-        CRYPTO_THREAD_unlock(ctx->lock);
+        X509_STORE_unlock(xl->store_ctx);
 
         /* If a CRL, update the last file suffix added for this */
 

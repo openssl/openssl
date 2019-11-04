@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OCSP_H
-# define HEADER_OCSP_H
+#ifndef OPENSSL_OCSP_H
+# define OPENSSL_OCSP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OCSP_H
+# endif
 
 #include <openssl/opensslconf.h>
 
@@ -26,7 +32,10 @@
  *        superseded              (4),
  *        cessationOfOperation    (5),
  *        certificateHold         (6),
- *        removeFromCRL           (8) }
+ *        -- value 7 is not used
+ *        removeFromCRL           (8),
+ *        privilegeWithdrawn      (9),
+ *        aACompromise           (10) }
  */
 #  define OCSP_REVOKED_STATUS_NOSTATUS               -1
 #  define OCSP_REVOKED_STATUS_UNSPECIFIED             0
@@ -37,11 +46,13 @@
 #  define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
 #  define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
 #  define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
+#  define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
+#  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
 
 
 # ifndef OPENSSL_NO_OCSP
 
-#  include <openssl/ossl_typ.h>
+#  include <openssl/types.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>
@@ -123,7 +134,7 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
      (char *(*)())d2i_OCSP_REQUEST,PEM_STRING_OCSP_REQUEST, \
      bp,(char **)(x),cb,NULL)
 
-#  define PEM_read_bio_OCSP_RESPONSE(bp,x,cb)(OCSP_RESPONSE *)PEM_ASN1_read_bio(\
+#  define PEM_read_bio_OCSP_RESPONSE(bp,x,cb) (OCSP_RESPONSE *)PEM_ASN1_read_bio(\
      (char *(*)())d2i_OCSP_RESPONSE,PEM_STRING_OCSP_RESPONSE, \
      bp,(char **)(x),cb,NULL)
 

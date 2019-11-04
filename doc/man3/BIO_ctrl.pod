@@ -141,7 +141,7 @@ the case of BIO_seek() on a file BIO for a successful operation.
 =head1 HISTORY
 
 The BIO_get_ktls_send() and BIO_get_ktls_recv() functions were added in
-OpenSSL 3.0.0.
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

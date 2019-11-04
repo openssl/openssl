@@ -19,9 +19,10 @@ ossl_method_store_cache_get, ossl_method_store_cache_set
  void ossl_method_store_free(OSSL_METHOD_STORE *store);
  int ossl_method_store_init(OPENSSL_CTX *ctx);
  void ossl_method_store_cleanup(OPENSSL_CTX *ctx);
- int ossl_method_store_add(OSSL_METHOD_STORE *store,
-                           int nid, const char *properties,
-                           void *method, void (*method_destruct)(void *));
+ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
+                           int nid, const char *properties, void *method,
+                           int (*method_up_ref)(void *),
+                           void (*method_destruct)(void *));
  int ossl_method_store_remove(OSSL_METHOD_STORE *store,
                               int nid, const void *method);
  int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
@@ -52,58 +53,63 @@ separately (see L</Cache Functions> below).
 =head2 Store Functions
 
 ossl_method_store_init() initialises the method store subsystem in the scope of
-the library context B<ctx>.
+the library context I<ctx>.
 
 ossl_method_store_cleanup() cleans up and shuts down the implementation method
-store subsystem in the scope of the library context B<ctx>.
+store subsystem in the scope of the library context I<ctx>.
 
 ossl_method_store_new() create a new empty method store using the supplied
-B<ctx> to allow access to the required underlying property data.
+I<ctx> to allow access to the required underlying property data.
 
-ossl_method_store_free() frees resources allocated to B<store>.
+ossl_method_store_free() frees resources allocated to I<store>.
 
-ossl_method_store_add() adds the B<method> to the B<store> as an instance of an
-algorithm indicated by B<nid> and the property definition B<properties>.
-The optional B<method_destruct> function is called when B<method> is being
-released from B<store>.
+ossl_method_store_add() adds the I<method> constructed from an implementation in
+the provider I<prov> to the I<store> as an instance of an algorithm indicated by
+I<nid> and the property definition I<properties>, unless the I<store> already
+has a method from the same provider with the same I<nid> and I<properties>.
+If the I<method_up_ref> function is given, it's called to increment the
+reference count of the method.
+If the I<method_destruct> function is given, it's called when this function
+fails to add the method to the store, or later on when it is being released from
+the I<store>.
 
-ossl_method_store_remove() removes the B<method> identified by B<nid> from the
-B<store>.
+ossl_method_store_remove() removes the I<method> identified by I<nid> from the
+I<store>.
 
-ossl_method_store_fetch() queries B<store> for an method identified by B<nid>
-that matches the property query B<prop_query>.
-The result, if any, is returned in B<method>.
+ossl_method_store_fetch() queries I<store> for a method identified by I<nid>
+that matches the property query I<prop_query>.
+The result, if any, is returned in I<method>.
 
-ossl_method_store_set_global_properties() sets method B<store> wide query
-properties to B<prop_query>.
+ossl_method_store_set_global_properties() sets method I<store> wide query
+properties to I<prop_query>.
 All subsequent fetches will need to meet both these global query properties
 and the ones passed to the ossl_method_store_free().
 
 =head2 Cache Functions
 
-ossl_method_store_cache_get() queries the cache associated with the B<store>
-for an method identified by B<nid> that matches the property query
-B<prop_query>.
-The result, if any, is returned in B<method>.
+ossl_method_store_cache_get() queries the cache associated with the I<store>
+for a method identified by I<nid> that matches the property query
+I<prop_query>.
+The result, if any, is returned in I<method>.
 
-ossl_method_store_cache_set() sets a cache entry identified by B<nid> with the
-property query B<prop_query> in the B<store>.
-Future cache gets will return the specified B<method>.
+ossl_method_store_cache_set() sets a cache entry identified by I<nid> with the
+property query I<prop_query> in the I<store>.
+Future calls to ossl_method_store_cache_get() will return the specified I<method>.
 
 =head1 RETURN VALUES
 
-ossl_method_store_new() a new method store object or B<NULL> on failure.
+ossl_method_store_new() returns a new method store object or NULL on failure.
 
 ossl_method_store_free(), ossl_method_store_add(),
 ossl_method_store_remove(), ossl_method_store_fetch(),
 ossl_method_store_set_global_properties(), ossl_method_store_cache_get()
 and ossl_method_store_cache_set() return B<1> on success and B<0> on error.
 
-ossl_method_store_free() and ossl_method_store_cleanup() do not return values.
+ossl_method_store_free() and ossl_method_store_cleanup() do not return any value.
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.0.
+This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

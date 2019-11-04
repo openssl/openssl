@@ -54,7 +54,9 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx);
 
 static CONF *def_create(CONF_METHOD *meth);
 static int def_init_default(CONF *conf);
+#if !OPENSSL_API_3
 static int def_init_WIN32(CONF *conf);
+#endif
 static int def_destroy(CONF *conf);
 static int def_destroy_data(CONF *conf);
 static int def_load(CONF *conf, const char *name, long *eline);
@@ -76,6 +78,12 @@ static CONF_METHOD default_method = {
     def_load
 };
 
+CONF_METHOD *NCONF_default(void)
+{
+    return &default_method;
+}
+
+#if ! OPENSSL_API_3
 static CONF_METHOD WIN32_method = {
     "WIN32",
     def_create,
@@ -89,15 +97,11 @@ static CONF_METHOD WIN32_method = {
     def_load
 };
 
-CONF_METHOD *NCONF_default(void)
-{
-    return &default_method;
-}
-
 CONF_METHOD *NCONF_WIN32(void)
 {
     return &WIN32_method;
 }
+#endif
 
 static CONF *def_create(CONF_METHOD *meth)
 {
@@ -124,6 +128,7 @@ static int def_init_default(CONF *conf)
     return 1;
 }
 
+#if ! OPENSSL_API_3
 static int def_init_WIN32(CONF *conf)
 {
     if (conf == NULL)
@@ -135,6 +140,7 @@ static int def_init_WIN32(CONF *conf)
 
     return 1;
 }
+#endif
 
 static int def_destroy(CONF *conf)
 {
@@ -352,6 +358,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
+                const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
+                char *include_path = NULL;
 
                 if (*p == '=') {
                     p++;
@@ -360,17 +368,34 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 trim_ws(conf, p);
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
+
+                if (include_dir != NULL) {
+                    size_t newlen = strlen(include_dir) + strlen(include) + 2;
+
+                    include_path = OPENSSL_malloc(newlen);
+                    OPENSSL_strlcpy(include_path, include_dir, newlen);
+                    OPENSSL_strlcat(include_path, "/", newlen);
+                    OPENSSL_strlcat(include_path, include, newlen);
+                } else {
+                    include_path = include;
+                }
+
                 /* get the BIO of the included file */
 #ifndef OPENSSL_NO_POSIX_IO
-                next = process_include(include, &dirctx, &dirpath);
-                if (include != dirpath) {
+                next = process_include(include_path, &dirctx, &dirpath);
+                if (include_path != dirpath) {
                     /* dirpath will contain include in case of a directory */
                     OPENSSL_free(include);
+                    if (include_path != include)
+                        OPENSSL_free(include_path);
                 }
 #else
-                next = BIO_new_file(include, "r");
+                next = BIO_new_file(include_path, "r");
                 OPENSSL_free(include);
+                if (include_path != include)
+                    OPENSSL_free(include_path);
 #endif
+
                 if (next != NULL) {
                     /* push the currently processing BIO onto stack */
                     if (biosk == NULL) {
@@ -673,8 +698,9 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
     BIO *next;
 
     if (stat(include, &st) < 0) {
-        SYSerr(SYS_F_STAT, errno);
-        ERR_add_error_data(1, include);
+        ERR_raise_data(ERR_LIB_SYS, errno,
+                       "calling stat(%s)",
+                       include);
         /* missing include file is not fatal error */
         return NULL;
     }

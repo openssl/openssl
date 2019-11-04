@@ -10,14 +10,14 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 #include "testutil.h"
 
 #define IVLEN   12
 #define KEYLEN  16
 
 /*
- * Based on the test vectors availble in:
+ * Based on the test vectors available in:
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-vectors-06
  */
 

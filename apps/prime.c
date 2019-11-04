@@ -35,7 +35,7 @@ const OPTIONS prime_options[] = {
 int prime_main(int argc, char **argv)
 {
     BIGNUM *bn = NULL;
-    int hex = 0, checks = 20, generate = 0, bits = 0, safe = 0, ret = 1;
+    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1;
     char *prog;
     OPTION_CHOICE o;
 
@@ -64,7 +64,8 @@ opthelp:
             safe = 1;
             break;
         case OPT_CHECKS:
-            checks = atoi(opt_arg());
+            /* ignore parameter and argument */
+            opt_arg();
             break;
         }
     }
@@ -121,7 +122,7 @@ opthelp:
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
                        argv[0],
-                       BN_is_prime_ex(bn, checks, NULL, NULL)
+                       BN_check_prime(bn, NULL, NULL)
                            ? "is" : "is not");
         }
     }

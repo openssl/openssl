@@ -53,9 +53,10 @@ my $D="#" if (!$md5);	# if set to "#", MD5 is stitched into RC4(),
 			# to be able to use 'openssl speed rc4' for
 			# benchmarking the stitched subroutine...
 
-my $flavour = shift;
-my $output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 my $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
@@ -64,7 +65,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 my ($dat,$in0,$out,$ctx,$inp,$len, $func,$nargs);

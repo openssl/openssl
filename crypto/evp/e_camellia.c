@@ -17,8 +17,9 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include <assert.h>
 # include <openssl/camellia.h>
-# include "internal/evp_int.h"
-# include "modes_lcl.h"
+# include "crypto/evp.h"
+# include "crypto/modes.h"
+# include "crypto/ciphermode_platform.h"
 
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
@@ -43,34 +44,6 @@ typedef struct {
  * assembler support was in general requested... */
 #  include "sparc_arch.h"
 
-extern unsigned int OPENSSL_sparcv9cap_P[];
-
-#  define SPARC_CMLL_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)
-
-void cmll_t4_set_key(const unsigned char *key, int bits, CAMELLIA_KEY *ks);
-void cmll_t4_encrypt(const unsigned char *in, unsigned char *out,
-                     const CAMELLIA_KEY *key);
-void cmll_t4_decrypt(const unsigned char *in, unsigned char *out,
-                     const CAMELLIA_KEY *key);
-
-void cmll128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                              size_t blocks, const CAMELLIA_KEY *key,
-                              unsigned char *ivec);
-void cmll256_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                              size_t blocks, const CAMELLIA_KEY *key,
-                              unsigned char *ivec);
 
 static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)

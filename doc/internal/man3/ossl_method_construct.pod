@@ -15,13 +15,13 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
      /* Remove a store */
      void (*dealloc_tmp_store)(void *store);
      /* Get an already existing method from a store */
-     void *(*get)(OPENSSL_CTX *libctx, void *store, const char *propquery,
-                  void *data);
+     void *(*get)(OPENSSL_CTX *libctx, void *store, void *data);
      /* Store a method in a store */
-     int (*put)(OPENSSL_CTX *libctx, void *store, const char *propdef,
-                void *method, void *data);
+     int (*put)(OPENSSL_CTX *libctx, void *store, void *method,
+                const OSSL_PROVIDER *prov, int operation_id, const char *name,
+                const char *propdef, void *data);
      /* Construct a new method */
-     void *(*construct)(const char *algorithm_name, const OSSL_DISPATCH *fns,
+     void *(*construct)(const char *name, const OSSL_DISPATCH *fns,
                         OSSL_PROVIDER *prov, void *data);
      /* Destruct a method */
      void (*destruct)(void *method);
@@ -29,7 +29,6 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
  typedef struct ossl_method_construct_method OSSL_METHOD_CONSTRUCT_METHOD;
 
  void *ossl_method_construct(OPENSSL_CTX *ctx, int operation_id,
-                             const char *name, const char *properties,
                              int force_cache,
                              OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
 
@@ -41,14 +40,25 @@ on provider dispatch tables need to do so in exactly the same way.
 ossl_method_construct() does this while leaving it to the sub-systems
 to define more precisely how the methods are created, stored, etc.
 
+It's important to keep in mind that a method is identified by three things:
+
+=over 4
+
+=item The operation identity
+
+=item The name of the algorithm
+
+=item The properties associated with the algorithm implementation
+
+=back
+
 =head2 Functions
 
 ossl_method_construct() creates a method by asking all available
-providers for a dispatch table given an C<operation_id>, an algorithm
-C<name> and a set of C<properties>, and then calling appropriate
-functions given by the sub-system specific method creator through
-C<mcm> and the data in C<mcm_data> (which is passed by
-ossl_method_construct()).
+providers for a dispatch table given an I<operation_id>, and then
+calling the appropriate functions given by the sub-system specific
+method creator through I<mcm> and the data in I<mcm_data> (which is
+passed by ossl_method_construct()).
 
 This function assumes that the sub-system method creator implements
 reference counting and acts accordingly (i.e. it will call the
@@ -59,14 +69,14 @@ appropriate).
 
 A central part of constructing a sub-system specific method is to give
 ossl_method_construct a set of functions, all in the
-C<OSSL_METHOD_CONSTRUCT_METHOD> structure, which holds the following
+B<OSSL_METHOD_CONSTRUCT_METHOD> structure, which holds the following
 function pointers:
 
 =over 4
 
 =item alloc_tmp_store()
 
-Create a temporary method store in the scope of the library context C<ctx>.
+Create a temporary method store in the scope of the library context I<ctx>.
 This store is used to temporarily store methods for easier lookup, for
 when the provider doesn't want its dispatch table stored in a longer
 term cache.
@@ -77,51 +87,53 @@ Remove a temporary store.
 
 =item get()
 
-Look up an already existing method from a store.
+Look up an already existing method from a store by name.
 
-The store may be given with C<store>.
-B<NULL> is a valid value and means that a sub-system default store
+The store may be given with I<store>.
+NULL is a valid value and means that a sub-system default store
 must be used.
-This default store should be stored in the library context C<libctx>.
+This default store should be stored in the library context I<libctx>.
 
-The method to be looked up should be identified with data from C<data>
-(which is the C<mcm_data> that was passed to ossl_construct_method())
-and the provided property query C<propquery>.
+The method to be looked up should be identified with data found in I<data>
+(which is the I<mcm_data> that was passed to ossl_construct_method()).
+In other words, the ossl_method_construct() caller is entirely responsible
+for ensuring the necesssary data is made available.
 
 This function is expected to increment the method's reference count.
 
 =item put()
 
-Places the C<method> created by the construct() function (see below)
+Places the I<method> created by the construct() function (see below)
 in a store.
 
-The store may be given with C<store>.
-B<NULL> is a valid value and means that a sub-system default store
+The store may be given with I<store>.
+NULL is a valid value and means that a sub-system default store
 must be used.
-This default store should be stored in the library context C<libctx>.
+This default store should be stored in the library context I<libctx>.
 
-The method should be associated with the given property definition
-C<propdef> and any identification data given through C<data> (which is
-the C<mcm_data> that was passed to ossl_construct_method()).
+The method should be associated with the given I<operation_id>,
+I<name> and property definition I<propdef> as well as any
+identification data given through I<data> (which is the I<mcm_data>
+that was passed to ossl_construct_method()).
 
-This function is expected to increment the C<method>'s reference count.
+This function is expected to increment the I<method>'s reference count.
 
 =item construct()
 
-Constructs a sub-system method for the given C<algorithm_name> and the given
-dispatch table C<fns>.
+Constructs a sub-system method for the given I<name> and the given
+dispatch table I<fns>.
 
-The associated I<provider object> C<prov> is passed as well, to make
+The associated provider object I<prov> is passed as well, to make
 it possible for the sub-system constructor to keep a reference, which
 is recommended.
 If such a reference is kept, the I<provider object> reference counter
-must be incremented, using ossl_provider_upref().
+must be incremented, using ossl_provider_up_ref().
 
 This function is expected to set the method's reference count to 1.
 
-=item desctruct()
+=item destruct()
 
-Decrement the C<method>'s reference count, and destruct it when
+Decrement the I<method>'s reference count, and destruct it when
 the reference count reaches zero.
 
 =back
@@ -129,11 +141,11 @@ the reference count reaches zero.
 =head1 RETURN VALUES
 
 ossl_method_construct() returns a constructed method on success, or
-B<NULL> on error.
+NULL on error.
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.0.
+This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

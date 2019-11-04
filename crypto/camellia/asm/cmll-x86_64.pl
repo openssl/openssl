@@ -36,9 +36,10 @@
 # EM64T, pre-Core2 Intel x86_64 CPU, is not as impressive, because it
 # apparently emulates some of 64-bit operations in [32-bit] microcode.
 
-$flavour = shift;
-$output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
@@ -47,7 +48,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 sub hi() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1h/;    $r; }

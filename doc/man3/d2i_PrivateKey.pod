@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-d2i_PrivateKey, d2i_PublicKey, d2i_AutoPrivateKey,
-i2d_PrivateKey, i2d_PublicKey,
-d2i_PrivateKey_bio, d2i_PrivateKey_fp
+d2i_PrivateKey, d2i_PublicKey, d2i_KeyParams, d2i_AutoPrivateKey,
+i2d_PrivateKey, i2d_PublicKey, i2d_KeyParams, i2d_KeyParams_bio,
+d2i_PrivateKey_bio, d2i_PrivateKey_fp, d2i_KeyParams_bio
 - decode and encode functions for reading and saving EVP_PKEY structures
 
 =head1 SYNOPSIS
@@ -15,13 +15,19 @@ d2i_PrivateKey_bio, d2i_PrivateKey_fp
                           long length);
  EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
                          long length);
+ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
+                         long length);
  EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
                               long length);
+
  int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp);
  int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp);
+ int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp);
+ int i2d_KeyParams_bio(BIO *bp, const EVP_PKEY *pkey);
 
  EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
  EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
+ EVP_PKEY *d2i_KeyParams_bio(int type, EVP_PKEY **a, BIO *in);
 
 =head1 DESCRIPTION
 
@@ -30,6 +36,7 @@ use any key specific format or PKCS#8 unencrypted PrivateKeyInfo format. The
 B<type> parameter should be a public key algorithm constant such as
 B<EVP_PKEY_RSA>. An error occurs if the decoded key does not match B<type>.
 d2i_PublicKey() does the same for public keys.
+d2i_KeyParams() does the same for domain parameter keys.
 
 d2i_AutoPrivateKey() is similar to d2i_PrivateKey() except it attempts to
 automatically detect the private key format.
@@ -37,7 +44,7 @@ automatically detect the private key format.
 i2d_PrivateKey() encodes B<key>. It uses a key specific format or, if none is
 defined for that key type, PKCS#8 unencrypted PrivateKeyInfo format.
 i2d_PublicKey() does the same for public keys.
-
+i2d_KeyParams() does the same for domain parameter keys.
 These functions are similar to the d2i_X509() functions; see L<d2i_X509(3)>.
 
 =head1 NOTES
@@ -57,12 +64,13 @@ EC_GROUP.
 =head1 RETURN VALUES
 
 The d2i_PrivateKey(), d2i_AutoPrivateKey(), d2i_PrivateKey_bio(), d2i_PrivateKey_fp(),
-and d2i_PublicKey() functions return a valid B<EVP_KEY> structure or B<NULL> if an
-error occurs. The error code can be obtained by calling L<ERR_get_error(3)>.
+d2i_PublicKey(), d2i_KeyParams() and d2i_KeyParams_bio() functions return a valid
+B<EVP_KEY> structure or B<NULL> if an error occurs. The error code can be
+obtained by calling L<ERR_get_error(3)>.
 
-i2d_PrivateKey() and i2d_PublicKey() return the number of bytes successfully
-encoded or a negative value if an error occurs. The error code can be obtained
-by calling L<ERR_get_error(3)>.
+i2d_PrivateKey(), i2d_PublicKey(), i2d_KeyParams() i2d_KeyParams_bio() return
+the number of bytes successfully encoded or a negative value if an error occurs.
+The error code can be obtained by calling L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 

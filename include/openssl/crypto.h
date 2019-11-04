@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CRYPTO_H
-# define HEADER_CRYPTO_H
+#ifndef OPENSSL_CRYPTO_H
+# define OPENSSL_CRYPTO_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CRYPTO_H
+# endif
 
 # include <stdlib.h>
 # include <time.h>
@@ -22,7 +28,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/opensslv.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/opensslconf.h>
 # include <openssl/cryptoerr.h>
 
@@ -107,7 +113,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_BIO             12
 # define CRYPTO_EX_INDEX_APP             13
 # define CRYPTO_EX_INDEX_UI_METHOD       14
-# define CRYPTO_EX_INDEX_DRBG            15
+# define CRYPTO_EX_INDEX_RAND_DRBG       15
+# define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
 # define CRYPTO_EX_INDEX_OPENSSL_CTX     16
 # define CRYPTO_EX_INDEX__COUNT          17
 
@@ -148,13 +155,28 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
-char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+                          const unsigned char *buf, size_t buflen);
+char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
+int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+                          const char *str);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
 int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-DEPRECATEDIN_3(unsigned long OpenSSL_version_num(void))
+/*
+ * These functions return the values of OPENSSL_VERSION_MAJOR,
+ * OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH, OPENSSL_VERSION_PRE_RELEASE
+ * and OPENSSL_VERSION_BUILD_METADATA, respectively.
+ */
+unsigned int OPENSSL_version_major(void);
+unsigned int OPENSSL_version_minor(void);
+unsigned int OPENSSL_version_patch(void);
+const char *OPENSSL_version_pre_release(void);
+const char *OPENSSL_version_build_metadata(void);
+
+unsigned long OpenSSL_version_num(void);
 const char *OpenSSL_version(int type);
 # define OPENSSL_VERSION                0
 # define OPENSSL_CFLAGS                 1
@@ -165,6 +187,7 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_VERSION_STRING         6
 # define OPENSSL_FULL_VERSION_STRING    7
 # define OPENSSL_MODULES_DIR            8
+# define OPENSSL_CPU_INFO               9
 
 const char *OPENSSL_info(int type);
 /*
@@ -177,6 +200,8 @@ const char *OPENSSL_info(int type);
 # define OPENSSL_INFO_DSO_EXTENSION             1004
 # define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
 # define OPENSSL_INFO_LIST_SEPARATOR            1006
+# define OPENSSL_INFO_SEED_SOURCE               1007
+# define OPENSSL_INFO_CPU_SETTINGS              1008
 
 int OPENSSL_issetugid(void);
 
@@ -310,12 +335,16 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
-#  define OPENSSL_mem_debug_push(info) \
-        CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
-#  define OPENSSL_mem_debug_pop() \
-        CRYPTO_mem_debug_pop()
-int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
-int CRYPTO_mem_debug_pop(void);
+#  if !OPENSSL_API_3
+#    define OPENSSL_mem_debug_push(info) \
+         CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
+#    define OPENSSL_mem_debug_pop() \
+         CRYPTO_mem_debug_pop()
+#  endif
+DEPRECATEDIN_3(int CRYPTO_mem_debug_push(const char *info,
+                                         const char *file, int line))
+DEPRECATEDIN_3(int CRYPTO_mem_debug_pop(void))
+
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
 /*-
@@ -395,15 +424,13 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
 # define OPENSSL_INIT_NO_ATEXIT              0x00080000L
 /* OPENSSL_INIT flag range 0x03f00000 reserved for OPENSSL_init_ssl() */
-# define OPENSSL_INIT_NO_ADD_ALL_MACS        0x04000000L
-# define OPENSSL_INIT_ADD_ALL_MACS           0x08000000L
+/* FREE: 0x04000000L */
+/* FREE: 0x08000000L */
 /* FREE: 0x10000000L */
 /* FREE: 0x20000000L */
 /* FREE: 0x40000000L */
 /* FREE: 0x80000000L */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
-# define OPENSSL_INIT_NO_ADD_ALL_KDFS        0x100000000L
-# define OPENSSL_INIT_ADD_ALL_KDFS           0x200000000L
 
 /* openssl and dasync not counted as builtin */
 # define OPENSSL_INIT_ENGINE_ALL_BUILTIN \
@@ -417,6 +444,7 @@ void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
+void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);

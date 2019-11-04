@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_RC5_H
-# define HEADER_RC5_H
+#ifndef OPENSSL_RC5_H
+# define OPENSSL_RC5_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_RC5_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -39,8 +45,8 @@ typedef struct rc5_key_st {
     RC5_32_INT data[2 * (RC5_16_ROUNDS + 1)];
 } RC5_32_KEY;
 
-void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
-                    int rounds);
+int RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
+                   int rounds);
 void RC5_32_ecb_encrypt(const unsigned char *in, unsigned char *out,
                         RC5_32_KEY *key, int enc);
 void RC5_32_encrypt(unsigned long *data, RC5_32_KEY *key);

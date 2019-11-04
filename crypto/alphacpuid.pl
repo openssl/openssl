@@ -7,8 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 print <<'___';
 .text

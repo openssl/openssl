@@ -72,7 +72,7 @@ static char *strip_spaces(char *p)
     /* Skip over leading spaces */
     while (*p && isspace((unsigned char)*p))
         p++;
-    if (!*p)
+    if (*p == '\0')
         return NULL;
 
     for (q = p + strlen(p) - 1; q != p && isspace((unsigned char)*q); )

@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include "internal/err_int.h"
+#include "crypto/err.h"
 #include <openssl/asn1err.h>
 #include <openssl/bnerr.h>
 #include <openssl/ecerr.h>
@@ -35,13 +35,13 @@
 #include <openssl/tserr.h>
 #include <openssl/cmserr.h>
 #include <openssl/crmferr.h>
+#include <openssl/cmperr.h>
 #include <openssl/cterr.h>
 #include <openssl/asyncerr.h>
-#include <openssl/kdferr.h>
 #include <openssl/storeerr.h>
 #include <openssl/esserr.h>
 #include "internal/propertyerr.h"
-#include "internal/providercommonerr.h"
+#include "prov/providercommonerr.h"
 
 int err_load_crypto_strings_int(void)
 {
@@ -92,8 +92,9 @@ int err_load_crypto_strings_int(void)
 # ifndef OPENSSL_NO_CMS
         ERR_load_CMS_strings() == 0 ||
 # endif
-# ifndef OPENSSL_NO_CMP
+# ifndef OPENSSL_NO_CRMF
         ERR_load_CRMF_strings() == 0 ||
+        ERR_load_CMP_strings() == 0 ||
 # endif
 # ifndef OPENSSL_NO_CT
         ERR_load_CT_strings() == 0 ||
@@ -101,7 +102,6 @@ int err_load_crypto_strings_int(void)
         ERR_load_ESS_strings() == 0 ||
         ERR_load_ASYNC_strings() == 0 ||
 #endif
-        ERR_load_KDF_strings() == 0 ||
         ERR_load_OSSL_STORE_strings() == 0 ||
         ERR_load_PROP_strings() == 0 ||
         ERR_load_PROV_strings() == 0)

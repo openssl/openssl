@@ -1,0 +1,62 @@
+#! /usr/bin/env perl
+# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Run this program like this:
+#       perl -pi util/err-to-error files...
+# or
+#       git ls-files | grep '\.c$' | xargs perl -pi util/err-to-raise
+# Consider running util/merge-err-lines first, to catch most (all?) of the
+# cases where the XXXerr() call is split into two lines.
+
+# Also, what to do about the engines files?  This includes:
+#       AFALGerr, CAPIerr, DASYNC, OSSLTEST
+# There are about 70 such lines.
+
+use strict;
+use warnings;
+
+s/ASN1err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ASN1, $1)/;
+s/([^D])ASYNCerr\(\w+, *(\w+)\)/$1ERR_raise(ERR_LIB_ASYNC, $2)/;
+s/BIOerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_BIO, $1)/;
+s/BNerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_BN, $1)/;
+s/BUFerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_BUF, $1)/;
+s/CMPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CMP, $1)/;
+s/CMSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CMS, $1)/;
+s/COMPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_COMP, $1)/;
+s/CONFerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CONF, $1)/;
+s/CRMFerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CRMF, $1)/;
+s/CRYPTOerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CRYPTO, $1)/;
+s/CTerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_CT, $1)/;
+s/DHerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_DH, $1)/;
+s/DSAerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_DSA, $1)/;
+s/DSOerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_DSO, $1)/;
+s/ECDHerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ECDH, $1)/;
+s/ECDSAerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ECDSA, $1)/;
+s/ECerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_EC, $1)/;
+s/ENGINEerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ENGINE, $1)/;
+s/ESSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_ESS, $1)/;
+s/EVPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_EVP, $1)/;
+s/FIPSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_FIPS, $1)/;
+s/KDFerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_KDF, $1)/;
+s/OBJerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_OBJ, $1)/;
+s/OCSPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_OCSP, $1)/;
+s/OSSL_STOREerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_OSSL_STORE, $1)/;
+s/PEMerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_PEM, $1)/;
+s/PKCS12err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_PKCS12, $1)/;
+s/PKCS7err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_PKCS7, $1)/;
+s/PROPerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_PROP, $1)/;
+s/PROVerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_PROV, $1)/;
+s/RANDerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_RAND, $1)/;
+s/RSAerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_RSA, $1)/;
+s/SM2err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_SM2, $1)/;
+s/SSLerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_SSL, $1)/;
+s/SYSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_SYS, $1)/;
+s/TSerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_TS, $1)/;
+s/UIerr\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_UI, $1)/;
+s/X509V3err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_X509V3, $1)/;
+s/X509err\(\w+, *(\w+)\)/ERR_raise(ERR_LIB_X509, $1)/;

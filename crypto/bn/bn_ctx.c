@@ -9,7 +9,7 @@
 
 #include <openssl/trace.h>
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /*-
  * TODO list
@@ -86,8 +86,11 @@ struct bignum_ctx {
     int too_many;
     /* Flags. */
     int flags;
+    /* The library context */
+    OPENSSL_CTX *libctx;
 };
 
+#ifndef FIPS_MODE
 /* Debugging functionality */
 static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 {
@@ -116,39 +119,58 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
     BIO_printf(channel, "\n");
 }
 
-#define CTXDBG(str, ctx)            \
+# define CTXDBG(str, ctx)           \
     OSSL_TRACE_BEGIN(BN_CTX) {      \
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
+#else
+/* TODO(3.0): Consider if we want to do this in FIPS mode */
+# define CTXDBG(str, ctx) do {} while(0)
+#endif /* FIPS_MODE */
 
-
-BN_CTX *BN_CTX_new(void)
+BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
     BN_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        BNerr(BN_F_BN_CTX_NEW_EX, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* Initialise the structure */
     BN_POOL_init(&ret->pool);
     BN_STACK_init(&ret->stack);
+    ret->libctx = ctx;
     return ret;
 }
 
-BN_CTX *BN_CTX_secure_new(void)
+#ifndef FIPS_MODE
+BN_CTX *BN_CTX_new(void)
 {
-    BN_CTX *ret = BN_CTX_new();
+    return BN_CTX_new_ex(NULL);
+}
+#endif
+
+BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
+{
+    BN_CTX *ret = BN_CTX_new_ex(ctx);
 
     if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
     return ret;
 }
 
+#ifndef FIPS_MODE
+BN_CTX *BN_CTX_secure_new(void)
+{
+    return BN_CTX_secure_new_ex(NULL);
+}
+#endif
+
 void BN_CTX_free(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
+#ifndef FIPS_MODE
     OSSL_TRACE_BEGIN(BN_CTX) {
         BN_POOL_ITEM *pool = ctx->pool.head;
         BIO_printf(trc_out,
@@ -163,6 +185,7 @@ void BN_CTX_free(BN_CTX *ctx)
         }
         BIO_printf(trc_out, "\n");
     } OSSL_TRACE_END(BN_CTX);
+#endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
     OPENSSL_free(ctx);
@@ -224,6 +247,13 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     ctx->used++;
     CTXDBG("LEAVE BN_CTX_get()", ctx);
     return ret;
+}
+
+OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->libctx;
 }
 
 /************/

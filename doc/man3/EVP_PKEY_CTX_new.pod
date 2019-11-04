@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free - public key algorithm context functions
+EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_new_provided,
+EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
+- public key algorithm context functions
 
 =head1 SYNOPSIS
 
@@ -10,23 +12,35 @@ EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free - pub
 
  EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
  EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
+ EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(OPENSSL_CTX *libctx,
+                                         const char *name,
+                                         const char *propquery);
  EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
  void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
 =head1 DESCRIPTION
 
 The EVP_PKEY_CTX_new() function allocates public key algorithm context using
-the algorithm specified in B<pkey> and ENGINE B<e>.
+the algorithm specified in I<pkey> and ENGINE I<e>.
 
 The EVP_PKEY_CTX_new_id() function allocates public key algorithm context
-using the algorithm specified by B<id> and ENGINE B<e>. It is normally used
-when no B<EVP_PKEY> structure is associated with the operations, for example
-during parameter generation of key generation for some algorithms.
+using the algorithm specified by I<id> and ENGINE I<e>.
 
-EVP_PKEY_CTX_dup() duplicates the context B<ctx>.
+The EVP_PKEY_CTX_new_provided() function allocates a public key algorithm
+context using the library context I<libctx> (see L<OPENSSL_CTX(3)>), the
+algorithm specified by I<name> and the property query I<propquery>.  None
+of the arguments are duplicated, so they  must remain unchanged for the
+lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.
 
-EVP_PKEY_CTX_free() frees up the context B<ctx>.
-If B<ctx> is NULL, nothing is done.
+EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_provided() are normally
+used when no B<EVP_PKEY> structure is associated with the operations,
+for example during parameter generation or key generation for some
+algorithms.
+
+EVP_PKEY_CTX_dup() duplicates the context I<ctx>.
+
+EVP_PKEY_CTX_free() frees up the context I<ctx>.
+If I<ctx> is NULL, nothing is done.
 
 =head1 NOTES
 

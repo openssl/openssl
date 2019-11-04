@@ -20,14 +20,14 @@ The types are:
 
 =over 4
 
-=item C<OSSL_DISPATCH>
+=item B<OSSL_DISPATCH>
 
 This type is a tuple of function identity and function pointer.
 Arrays of this type are passed between the OpenSSL libraries and the
 providers to describe what functionality one side provides to the
 other.
 Arrays of this type must be terminated with a tuple having function
-identity zero and function pointer C<NULL>.
+identity zero and function pointer NULL.
 
 The available function identities and corresponding function
 signatures are defined by L<openssl-core_numbers.h(7)>.
@@ -38,41 +38,41 @@ This ensures that providers built with one OpenSSL version in mind
 will work together with any other OpenSSL version that supports this
 mechanism.
 
-=item C<OSSL_ITEM>
+=item B<OSSL_ITEM>
 
 This type is a tuple of integer and pointer.
 It's a generic type used as a generic descriptor, its exact meaning
 being defined by how it's used.
 Arrays of this type are passed between the OpenSSL libraries and the
 providers, and must be terminated with a tuple where the integer is
-zero and the pointer C<NULL>.
+zero and the pointer NULL.
 
-=item C<OSSL_ALGORITHM>
+=item B<OSSL_ALGORITHM>
 
 This type is a tuple of an algorithm name (string), a property
-definition (string) and a dispatch table (array of C<OSSL_DISPATCH>).
+definition (string) and a dispatch table (array of B<OSSL_DISPATCH>).
 Arrays of this type are passed on demand from the providers to the
 OpenSSL libraries to describe what algorithms the providers provide
 implementations of, and with what properties.
 Arrays of this type must be terminated with a tuple having function
-identity zero and function pointer C<NULL>.
+identity zero and function pointer NULL.
 
 The algorithm names and property definitions are defined by the
 providers.
 
-=item C<OSSL_PARAM>
+=item B<OSSL_PARAM>
 
 This type is a structure that allows passing arbitrary object data
 between two parties that have no or very little shared knowledge about
 their respective internal structures for that object. 
 It's normally passed in arrays, where the array is terminated with an
-element where all fields are zero (for non-pointers) or C<NULL> (for
+element where all fields are zero (for non-pointers) or NULL (for
 pointers).
 
-These arrays can be used both to set parameters for some object, and
-to request parameters.
+These arrays can be used to set parameters for some object, to request
+parameters, and to describe parameters.
 
-C<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
+B<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
 
 =back
 

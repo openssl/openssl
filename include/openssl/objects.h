@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OBJECTS_H
-# define HEADER_OBJECTS_H
+#ifndef OPENSSL_OBJECTS_H
+# define OPENSSL_OBJECTS_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OBJECTS_H
+# endif
 
 # include <openssl/obj_mac.h>
 # include <openssl/bio.h>

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CAST_H
-# define HEADER_CAST_H
+#ifndef OPENSSL_CAST_H
+# define OPENSSL_CAST_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CAST_H
+# endif
 
 # include <openssl/opensslconf.h>
 

@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PKCS12ERR_H
-# define HEADER_PKCS12ERR_H
+#ifndef OPENSSL_PKCS12ERR_H
+# define OPENSSL_PKCS12ERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_PKCS12ERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,35 +29,37 @@ int ERR_load_PKCS12_strings(void);
 /*
  * PKCS12 function codes.
  */
-# define PKCS12_F_OPENSSL_ASC2UNI                         121
-# define PKCS12_F_OPENSSL_UNI2ASC                         124
-# define PKCS12_F_OPENSSL_UNI2UTF8                        127
-# define PKCS12_F_OPENSSL_UTF82UNI                        129
-# define PKCS12_F_PKCS12_CREATE                           105
-# define PKCS12_F_PKCS12_GEN_MAC                          107
-# define PKCS12_F_PKCS12_INIT                             109
-# define PKCS12_F_PKCS12_ITEM_DECRYPT_D2I                 106
-# define PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT                 108
-# define PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG                117
-# define PKCS12_F_PKCS12_KEY_GEN_ASC                      110
-# define PKCS12_F_PKCS12_KEY_GEN_UNI                      111
-# define PKCS12_F_PKCS12_KEY_GEN_UTF8                     116
-# define PKCS12_F_PKCS12_NEWPASS                          128
-# define PKCS12_F_PKCS12_PACK_P7DATA                      114
-# define PKCS12_F_PKCS12_PACK_P7ENCDATA                   115
-# define PKCS12_F_PKCS12_PARSE                            118
-# define PKCS12_F_PKCS12_PBE_CRYPT                        119
-# define PKCS12_F_PKCS12_PBE_KEYIVGEN                     120
-# define PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF            112
-# define PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8            113
-# define PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT     133
-# define PKCS12_F_PKCS12_SETUP_MAC                        122
-# define PKCS12_F_PKCS12_SET_MAC                          123
-# define PKCS12_F_PKCS12_UNPACK_AUTHSAFES                 130
-# define PKCS12_F_PKCS12_UNPACK_P7DATA                    131
-# define PKCS12_F_PKCS12_VERIFY_MAC                       126
-# define PKCS12_F_PKCS8_ENCRYPT                           125
-# define PKCS12_F_PKCS8_SET0_PBE                          132
+# if !OPENSSL_API_3
+#  define PKCS12_F_OPENSSL_ASC2UNI                         0
+#  define PKCS12_F_OPENSSL_UNI2ASC                         0
+#  define PKCS12_F_OPENSSL_UNI2UTF8                        0
+#  define PKCS12_F_OPENSSL_UTF82UNI                        0
+#  define PKCS12_F_PKCS12_CREATE                           0
+#  define PKCS12_F_PKCS12_GEN_MAC                          0
+#  define PKCS12_F_PKCS12_INIT                             0
+#  define PKCS12_F_PKCS12_ITEM_DECRYPT_D2I                 0
+#  define PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT                 0
+#  define PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG                0
+#  define PKCS12_F_PKCS12_KEY_GEN_ASC                      0
+#  define PKCS12_F_PKCS12_KEY_GEN_UNI                      0
+#  define PKCS12_F_PKCS12_KEY_GEN_UTF8                     0
+#  define PKCS12_F_PKCS12_NEWPASS                          0
+#  define PKCS12_F_PKCS12_PACK_P7DATA                      0
+#  define PKCS12_F_PKCS12_PACK_P7ENCDATA                   0
+#  define PKCS12_F_PKCS12_PARSE                            0
+#  define PKCS12_F_PKCS12_PBE_CRYPT                        0
+#  define PKCS12_F_PKCS12_PBE_KEYIVGEN                     0
+#  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF            0
+#  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8            0
+#  define PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT     0
+#  define PKCS12_F_PKCS12_SETUP_MAC                        0
+#  define PKCS12_F_PKCS12_SET_MAC                          0
+#  define PKCS12_F_PKCS12_UNPACK_AUTHSAFES                 0
+#  define PKCS12_F_PKCS12_UNPACK_P7DATA                    0
+#  define PKCS12_F_PKCS12_VERIFY_MAC                       0
+#  define PKCS12_F_PKCS8_ENCRYPT                           0
+#  define PKCS12_F_PKCS8_SET0_PBE                          0
+# endif
 
 /*
  * PKCS12 reason codes.

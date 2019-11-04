@@ -41,6 +41,7 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
                          const char *pass, int passlen,
                          int options, char *pempass, const EVP_CIPHER *enc);
+void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
@@ -56,7 +57,7 @@ typedef enum OPTION_choice {
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
+    OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -107,10 +108,13 @@ const OPTIONS pkcs12_options[] = {
     {"password", OPT_PASSWORD, 's', "Set import/export password source"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store if CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -136,8 +140,8 @@ int pkcs12_main(int argc, char **argv)
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *badpass = NULL;
-    const char *CApath = NULL, *CAfile = NULL, *prog;
-    int noCApath = 0, noCAfile = 0;
+    const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL, *prog;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
@@ -269,11 +273,17 @@ int pkcs12_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_NOCAFILE:
             noCAfile = 1;
@@ -403,7 +413,8 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath))
+            if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                                      CAstore, noCAstore))
                     == NULL)
                 goto export_end;
 
@@ -464,7 +475,7 @@ int pkcs12_main(int argc, char **argv)
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
 
-        if (!p12) {
+        if (p12 == NULL) {
             ERR_print_errors(bio_err);
             goto export_end;
         }
@@ -838,7 +849,7 @@ static int alg_print(const X509_ALGOR *alg)
                 goto done;
             }
             BIO_printf(bio_err, ", Salt length: %d, Cost(N): %ld, "
-                       "Block size(r): %ld, Paralelizm(p): %ld",
+                       "Block size(r): %ld, Parallelism(p): %ld",
                        ASN1_STRING_length(kdf->salt),
                        ASN1_INTEGER_get(kdf->costParameter),
                        ASN1_INTEGER_get(kdf->blockSize),
@@ -878,6 +889,38 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
     return ret;
 }
 
+/* Generalised x509 attribute value print */
+
+void print_attribute(BIO *out, const ASN1_TYPE *av)
+{
+    char *value;
+
+    switch (av->type) {
+    case V_ASN1_BMPSTRING:
+        value = OPENSSL_uni2asc(av->value.bmpstring->data,
+                                av->value.bmpstring->length);
+        BIO_printf(out, "%s\n", value);
+        OPENSSL_free(value);
+        break;
+
+    case V_ASN1_OCTET_STRING:
+        hex_prin(out, av->value.octet_string->data,
+                 av->value.octet_string->length);
+        BIO_printf(out, "\n");
+        break;
+
+    case V_ASN1_BIT_STRING:
+        hex_prin(out, av->value.bit_string->data,
+                 av->value.bit_string->length);
+        BIO_printf(out, "\n");
+        break;
+
+    default:
+        BIO_printf(out, "<Unsupported tag %d>\n", av->type);
+        break;
+    }
+}
+
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
@@ -885,8 +928,7 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
 {
     X509_ATTRIBUTE *attr;
     ASN1_TYPE *av;
-    char *value;
-    int i, attr_nid;
+    int i, j, attr_nid;
     if (!attrlst) {
         BIO_printf(out, "%s: <No Attributes>\n", name);
         return 1;
@@ -910,30 +952,10 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
         }
 
         if (X509_ATTRIBUTE_count(attr)) {
-            av = X509_ATTRIBUTE_get0_type(attr, 0);
-            switch (av->type) {
-            case V_ASN1_BMPSTRING:
-                value = OPENSSL_uni2asc(av->value.bmpstring->data,
-                                        av->value.bmpstring->length);
-                BIO_printf(out, "%s\n", value);
-                OPENSSL_free(value);
-                break;
-
-            case V_ASN1_OCTET_STRING:
-                hex_prin(out, av->value.octet_string->data,
-                         av->value.octet_string->length);
-                BIO_printf(out, "\n");
-                break;
-
-            case V_ASN1_BIT_STRING:
-                hex_prin(out, av->value.bit_string->data,
-                         av->value.bit_string->length);
-                BIO_printf(out, "\n");
-                break;
-
-            default:
-                BIO_printf(out, "<Unsupported tag %d>\n", av->type);
-                break;
+            for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
+            {
+                av = X509_ATTRIBUTE_get0_type(attr, j);
+                print_attribute(out, av);
             }
         } else {
             BIO_printf(out, "<No Values>\n");

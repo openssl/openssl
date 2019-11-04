@@ -12,9 +12,9 @@
 # include <openssl/conf.h>
 # include <openssl/asn1.h>
 # include <openssl/ocsp.h>
-# include "ocsp_lcl.h"
+# include "ocsp_local.h"
 # include <openssl/x509v3.h>
-# include "../x509v3/ext_dat.h"
+# include "../x509/ext_dat.h"
 
 /*
  * OCSP extensions and a couple of CRL entry extensions

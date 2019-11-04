@@ -37,9 +37,13 @@ multiple utf8Pairs in one regInfo structure, it does not allow multiple certReq.
 
 RFC 4211
 
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

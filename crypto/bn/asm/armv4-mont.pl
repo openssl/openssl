@@ -54,9 +54,10 @@
 # integer-only on Cortex-A8, ~10-210% on Cortex-A15, ~70-450% on
 # Snapdragon S4.
 
-$flavour = shift;
-if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -64,9 +65,10 @@ if ($flavour && $flavour ne "void") {
     ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
     die "can't locate arm-xlate.pl";
 
-    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+    open STDOUT,"| \"$^X\" $xlate $flavour \"$output\""
+        or die "can't call $xlate: $1";
 } else {
-    open STDOUT,">$output";
+    $output and open STDOUT,">$output";
 }
 
 $num="r0";	# starts as num argument, but holds &tp[num-1]

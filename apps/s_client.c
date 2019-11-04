@@ -272,8 +272,6 @@ typedef struct srp_arg_st {
     int strength;               /* minimal size for N */
 } SRP_ARG;
 
-# define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
-
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
 {
     BN_CTX *bn_ctx = BN_CTX_new();
@@ -281,10 +279,10 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
     BIGNUM *r = BN_new();
     int ret =
         g != NULL && N != NULL && bn_ctx != NULL && BN_is_odd(N) &&
-        BN_is_prime_ex(N, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) == 1 &&
+        BN_check_prime(N, bn_ctx, NULL) == 1 &&
         p != NULL && BN_rshift1(p, N) &&
         /* p = (N-1)/2 */
-        BN_is_prime_ex(p, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) == 1 &&
+        BN_check_prime(p, bn_ctx, NULL) == 1 &&
         r != NULL &&
         /* verify g^((N-1)/2) == -1 (mod N) */
         BN_mod_exp(r, g, p, N, bn_ctx) &&
@@ -583,9 +581,11 @@ typedef enum OPTION_choice {
     OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
-    OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
-    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
-    OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
+    OPT_CERT_CHAIN, OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN,
+    OPT_NEXTPROTONEG, OPT_ALPN,
+    OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
+    OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE, OPT_VERIFYCAFILE,
+    OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
     OPT_MAXFRAGLEN, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES,
@@ -632,10 +632,13 @@ const OPTIONS s_client_options[] = {
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
+    {"CAstore", OPT_CAFILE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates store"},
     {"requestCAfile", OPT_REQCAFILE, '<',
       "PEM format file of CA names to send to the server"},
     {"dane_tlsa_domain", OPT_DANE_TLSA_DOMAIN, 's', "DANE TLSA base domain"},
@@ -702,6 +705,10 @@ const OPTIONS s_client_options[] = {
      "CA file for certificate chain (PEM format)"},
     {"verifyCAfile", OPT_VERIFYCAFILE, '<',
      "CA file for certificate verification (PEM format)"},
+    {"chainCAstore", OPT_CHAINCASTORE, ':',
+     "CA store URI for certificate chain"},
+    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
+     "CA store URI for certificate verification"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername (SNI) in ClientHello (default)"},
@@ -901,22 +908,23 @@ int s_client_main(int argc, char **argv)
     int dane_ee_no_name = 0;
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
-    const char *CApath = NULL, *CAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
     char *proxystr = NULL, *proxyuser = NULL;
     char *proxypassarg = NULL, *proxypass = NULL;
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
-    char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
+    char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
-    char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
+    char *passarg = NULL, *pass = NULL;
+    char *vfyCApath = NULL, *vfyCAfile = NULL, *vfyCAstore = NULL;
     char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
     const char *protohost = NULL;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
     int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
@@ -1418,6 +1426,18 @@ int s_client_main(int argc, char **argv)
         case OPT_VERIFYCAFILE:
             vfyCAfile = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
+            break;
+        case OPT_CHAINCASTORE:
+            chCAstore = opt_arg();
+            break;
+        case OPT_VERIFYCASTORE:
+            vfyCAstore = opt_arg();
+            break;
         case OPT_DANE_TLSA_DOMAIN:
             dane_tlsa_domain = opt_arg();
             break;
@@ -1798,7 +1818,9 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+    if (!ssl_load_stores(ctx,
+                         vfyCApath, vfyCAfile, vfyCAstore,
+                         chCApath, chCAfile, chCAstore,
                          crls, crl_download)) {
         BIO_printf(bio_err, "Error loading store locations\n");
         ERR_print_errors(bio_err);
@@ -1927,7 +1949,8 @@ int s_client_main(int argc, char **argv)
 
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
-    if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
+    if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -2017,7 +2040,7 @@ int s_client_main(int argc, char **argv)
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
-            if(host == NULL || is_dNS_name(host)) 
+            if(host == NULL || is_dNS_name(host))
                 servername = (host == NULL) ? "localhost" : host;
         }
         if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
@@ -2395,7 +2418,7 @@ int s_client_main(int argc, char **argv)
             (void)BIO_flush(fbio);
             /*
              * The first line is the HTTP response.  According to RFC 7230,
-             * it's formated exactly like this:
+             * it's formatted exactly like this:
              *
              * HTTP/d.d ddd Reason text\r\n
              */
@@ -3104,7 +3127,7 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
-	    } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
+            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
                     && cmdletters) {
                 BIO_printf(bio_err, "KEYUPDATE\n");
                 SSL_key_update(con,
@@ -3552,7 +3575,7 @@ static char *base64encode (const void *buf, size_t len)
 }
 
 /*
- * Host dNS Name verifier: used for checking that the hostname is in dNS format 
+ * Host dNS Name verifier: used for checking that the hostname is in dNS format
  * before setting it as SNI
  */
 static int is_dNS_name(const char *host)

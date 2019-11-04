@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
 #include <openssl/dh.h>
@@ -427,7 +427,7 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
         char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
         OPENSSL_free(*pfilename);
         *pfilename = OPENSSL_strdup(value);
-        if (!*pfilename)
+        if (*pfilename == NULL)
             rv = 0;
     }
 
@@ -455,10 +455,12 @@ static int cmd_ServerInfoFile(SSL_CONF_CTX *cctx, const char *value)
 }
 
 static int do_store(SSL_CONF_CTX *cctx,
-                    const char *CAfile, const char *CApath, int verify_store)
+                    const char *CAfile, const char *CApath, const char *CAstore,
+                    int verify_store)
 {
     CERT *cert;
     X509_STORE **st;
+
     if (cctx->ctx)
         cert = cctx->ctx->cert;
     else if (cctx->ssl)
@@ -471,27 +473,44 @@ static int do_store(SSL_CONF_CTX *cctx,
         if (*st == NULL)
             return 0;
     }
-    return X509_STORE_load_locations(*st, CAfile, CApath) > 0;
+
+    if (CAfile != NULL && !X509_STORE_load_file(*st, CAfile))
+        return 0;
+    if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
+        return 0;
+    if (CAstore != NULL && !X509_STORE_load_store(*st, CAstore))
+        return 0;
+    return 1;
 }
 
 static int cmd_ChainCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, NULL, value, 0);
+    return do_store(cctx, NULL, value, NULL, 0);
 }
 
 static int cmd_ChainCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, value, NULL, 0);
+    return do_store(cctx, value, NULL, NULL, 0);
+}
+
+static int cmd_ChainCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, NULL, value, 0);
 }
 
 static int cmd_VerifyCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, NULL, value, 1);
+    return do_store(cctx, NULL, value, NULL, 1);
 }
 
 static int cmd_VerifyCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, value, NULL, 1);
+    return do_store(cctx, value, NULL, NULL, 1);
+}
+
+static int cmd_VerifyCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, NULL, value, 1);
 }
 
 static int cmd_RequestCAFile(SSL_CONF_CTX *cctx, const char *value)
@@ -520,6 +539,20 @@ static int cmd_RequestCAPath(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
     return cmd_RequestCAPath(cctx, value);
+}
+
+static int cmd_RequestCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    if (cctx->canames == NULL)
+        cctx->canames = sk_X509_NAME_new_null();
+    if (cctx->canames == NULL)
+        return 0;
+    return SSL_add_store_cert_subjects_to_stack(cctx->canames, value);
+}
+
+static int cmd_ClientCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAStore(cctx, value);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -651,10 +684,14 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(ChainCAFile, "chainCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(ChainCAStore, "chainCAstore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
     SSL_CONF_CMD(VerifyCAPath, "verifyCApath", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(VerifyCAFile, "verifyCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(VerifyCAStore, "verifyCAstore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
     SSL_CONF_CMD(RequestCAFile, "requestCAFile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(ClientCAFile, NULL,
@@ -665,6 +702,11 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD(ClientCAPath, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
+    SSL_CONF_CMD(RequestCAStore, "requestCAStore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
+    SSL_CONF_CMD(ClientCAStore, NULL,
+                 SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
 #ifndef OPENSSL_NO_DH
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
@@ -712,7 +754,7 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 {
-    if (!pcmd || !*pcmd)
+    if (pcmd == NULL || *pcmd == NULL)
         return 0;
     /* If a prefix is set, check and skip */
     if (cctx->prefix) {
@@ -830,13 +872,14 @@ int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv)
 {
     int rv;
     const char *arg = NULL, *argn;
-    if (pargc && *pargc == 0)
+
+    if (pargc != NULL && *pargc == 0)
         return 0;
-    if (!pargc || *pargc > 0)
+    if (pargc == NULL || *pargc > 0)
         arg = **pargv;
     if (arg == NULL)
         return 0;
-    if (!pargc || *pargc > 1)
+    if (pargc == NULL || *pargc > 1)
         argn = (*pargv)[1];
     else
         argn = NULL;

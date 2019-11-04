@@ -132,7 +132,7 @@ the possible answers (given through the I<action_desc> argument).
 
 UI_add_info_string() and UI_add_error_string() add strings that are shown at
 the same time as the prompt for extra information or to show an error string.
-The difference between the two is only conceptual.  With the builtin method,
+The difference between the two is only conceptual.  With the built-in method,
 there's no technical difference between them.  Other methods may make a
 difference between them, however.
 
@@ -152,13 +152,13 @@ UI_construct_prompt() is a helper function that can be used to create
 a prompt from two pieces of information: an description and a name.
 The default constructor (if there is none provided by the method used)
 creates a string "Enter I<description> for I<name>:".  With the
-description "pass phrase" and the file name "foo.key", that becomes
+description "pass phrase" and the filename "foo.key", that becomes
 "Enter pass phrase for foo.key:".  Other methods may create whatever
 string and may include encodings that will be processed by the other
 method functions.
 
 UI_add_user_data() adds a user data pointer for the method to use at any
-time.  The builtin UI method doesn't care about this info.  Note that several
+time.  The built-in UI method doesn't care about this info.  Note that several
 calls to this function doesn't add data, it replaces the previous blob
 with the one given as argument.
 

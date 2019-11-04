@@ -256,19 +256,6 @@ my @opensslchandlers = (
     # an error.
 
     #####
-    # Global variable stuff
-    { regexp   => qr/OPENSSL_DECLARE_GLOBAL<<<\((.*),\s*(.*)\)>>>;/,
-      massager => sub { return (<<"EOF");
-#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-OPENSSL_EXPORT $1 _shadow_$2;
-#else
-$1 *_shadow_$2(void);
-#endif
-EOF
-      },
-    },
-
-    #####
     # Deprecated stuff, by OpenSSL release.
 
     # We trick the parser by pretending that the declaration is wrapped in a
@@ -413,11 +400,7 @@ EOF
     { regexp   => qr/DECLARE_ASN1_ITEM<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
-#ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-OPENSSL_EXTERN const ASN1_ITEM *$1_it;
-#else
 const ASN1_ITEM *$1_it(void);
-#endif
 EOF
       },
     },

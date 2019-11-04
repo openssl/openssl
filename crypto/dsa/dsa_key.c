@@ -11,7 +11,7 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 static int dsa_builtin_keygen(DSA *dsa);
 
@@ -65,6 +65,7 @@ static int dsa_builtin_keygen(DSA *dsa)
 
     dsa->priv_key = priv_key;
     dsa->pub_key = pub_key;
+    dsa->dirty_cnt++;
     ok = 1;
 
  err:

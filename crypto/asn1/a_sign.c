@@ -18,8 +18,8 @@
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 #ifndef NO_ASN1_OLD
 
@@ -145,7 +145,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     unsigned char *buf_in = NULL, *buf_out = NULL;
     size_t inl = 0, outl = 0, outll = 0;
     int signid, paramtype, buf_len = 0;
-    int rv;
+    int rv, pkey_id;
 
     type = EVP_MD_CTX_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
@@ -184,9 +184,14 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
             goto err;
         }
-        if (!OBJ_find_sigid_by_algs(&signid,
-                                    EVP_MD_nid(type),
-                                    pkey->ameth->pkey_id)) {
+
+        pkey_id =
+#ifndef OPENSSL_NO_SM2
+            EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
+#endif
+        pkey->ameth->pkey_id;
+
+        if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type), pkey_id)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
                     ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;

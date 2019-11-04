@@ -2,11 +2,14 @@
 
 =head1 NAME
 
-EVP_MAC, EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_new_id, EVP_MAC_CTX_free,
-EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
-EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_vctrl, EVP_MAC_ctrl_str,
-EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name,
-EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
+EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
+EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_names_do_all,
+EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
+EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
+EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
+EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
+EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
+EVP_MAC_do_all_provided - EVP MAC routines
 
 =head1 SYNOPSIS
 
@@ -15,25 +18,38 @@ EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
  typedef struct evp_mac_st EVP_MAC;
  typedef struct evp_mac_ctx_st EVP_MAC_CTX;
 
- EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
- EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
+ EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                        const char *properties);
+ int EVP_MAC_up_ref(EVP_MAC *mac);
+ void EVP_MAC_free(EVP_MAC *mac);
+ int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
+ int EVP_MAC_number(const EVP_MAC *mac);
+ void EVP_MAC_names_do_all(const EVP_MAC *mac,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
+ const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
+ int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
+
+ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac);
  void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
- int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
- const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
+ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src);
+ EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
+ int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
+
  size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
  int EVP_MAC_init(EVP_MAC_CTX *ctx);
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
- int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
- int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
- int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args);
- int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
- int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
- int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
- int EVP_MAC_nid(const EVP_MAC *mac);
- const char *EVP_MAC_name(const EVP_MAC *mac);
- const EVP_MAC *EVP_get_macbyname(const char *name);
- const EVP_MAC *EVP_get_macbynid(int nid);
- const EVP_MAC *EVP_get_macbyobj(const ASN1_OBJECT *o);
+ int EVP_MAC_final(EVP_MAC_CTX *ctx,
+                   unsigned char *out, size_t *outl, size_t outsize);
+
+ const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
+
+ void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_MAC *mac, void *arg),
+                              void *arg);
 
 =head1 DESCRIPTION
 
@@ -60,25 +76,36 @@ B<EVP_MAC_CTX> is a context type that holds internal MAC information
 as well as a reference to a computation context, for those MACs that
 rely on an underlying computation algorithm.
 
+=head2 Algorithm implementation fetching
+
+EVP_MAC_fetch() fetches an implementation of a MAC I<algorithm>, given
+a library context I<libctx> and a set of I<properties>.
+See L<provider(7)/Fetching algorithms> for further information.
+
+The returned value must eventually be freed with
+L<EVP_MAC_free(3)>.
+
+EVP_MAC_up_ref() increments the reference count of an already fetched
+MAC.
+
+EVP_MAC_free() frees a fetched algorithm.
+NULL is a valid parameter, for which this function is a no-op.
+
 =head2 Context manipulation functions
 
-EVP_MAC_CTX_new() creates a new context for the MAC type C<mac>.
-EVP_MAC_CTX_new_id() creates a new context for the numerical MAC
-identity <nid>.
+EVP_MAC_CTX_new() creates a new context for the MAC type I<mac>.
 The created context can then be used with most other functions
 described here.
 
 EVP_MAC_CTX_free() frees the contents of the context, including an
 underlying context if there is one, as well as the context itself.
-B<NULL> is a valid parameter, for which this function is a no-op.
+NULL is a valid parameter, for which this function is a no-op.
 
-EVP_MAC_CTX_copy() makes a deep copy of the C<src> context to the
-C<dest> context.
-The C<dest> context I<must> have been created before calling this
-function.
+EVP_MAC_CTX_dup() duplicates the I<src> context and returns a newly allocated
+context.
 
 EVP_MAC_CTX_mac() returns the B<EVP_MAC> associated with the context
-C<ctx>.
+I<ctx>.
 
 =head2 Computing functions
 
@@ -87,181 +114,177 @@ through diverse controls.
 This should be called before calling EVP_MAC_update() and
 EVP_MAC_final().
 
-EVP_MAC_update() adds C<datalen> bytes from C<data> to the MAC input.
+EVP_MAC_update() adds I<datalen> bytes from I<data> to the MAC input.
 
 EVP_MAC_final() does the final computation and stores the result in
-the memory pointed at by C<out>, and sets its size in the B<size_t>
-the C<poutlen> points at.
-If C<out> is B<NULL>, then no computation is made.
+the memory pointed at by I<out> of size I<outsize>, and sets the number
+of bytes written in I<*outl> at.
+If I<out> is NULL or I<outsize> is too small, then no computation
+is made.
 To figure out what the output length will be and allocate space for it
-dynamically, simply call with C<out> being B<NULL> and C<poutlen>
+dynamically, simply call with I<out> being NULL and I<outl>
 pointing at a valid location, then allocate space and make a second
-call with C<out> pointing at the allocated space.
+call with I<out> pointing at the allocated space.
 
-EVP_MAC_ctrl() is used to manipulate or get information on aspects of
-the MAC which may vary depending on the MAC algorithm or its
-implementation.
-This includes the MAC key, and for MACs that use other algorithms to
-do their computation, this is also the way to tell it which one to
-use.
-This functions takes variable arguments, the exact expected arguments
-depend on C<cmd>.
-EVP_MAC_ctrl() can be called both before and after EVP_MAC_init(), but
-the effect will depend on what control is being use.
-See L</CONTROLS> below for a description of standard controls.
+EVP_MAC_get_params() retrieves details about the implementation
+I<mac>.
+The set of parameters given with I<params> determine exactly what
+parameters should be retrieved.
+Note that a parameter that is unknown in the underlying context is
+simply ignored.
 
-EVP_MAC_vctrl() is the variant of EVP_MAC_ctrl() that takes a
-C<va_list> argument instead of variadic arguments.
+EVP_MAC_CTX_get_params() retrieves chosen parameters, given the
+context I<ctx> and its underlying context.
+The set of parameters given with I<params> determine exactly what
+parameters should be retrieved.
+Note that a parameter that is unknown in the underlying context is
+simply ignored.
 
-EVP_MAC_ctrl_str() is an alternative to EVP_MAC_ctrl() to control the
-MAC implementation as E<lt> C<type>, C<value> E<gt> pairs.
-The MAC implementation documentation should specify what control type
-strings are accepted.
+EVP_MAC_CTX_set_params() passes chosen parameters to the underlying
+context, given a context I<ctx>.
+The set of parameters given with I<params> determine exactly what
+parameters are passed down.
+Note that a parameter that is unknown in the underlying context is
+simply ignored.
+Also, what happens when a needed parameter isn't passed down is
+defined by the implementation.
 
-EVP_MAC_str2ctrl() and EVP_MAC_hex2ctrl() are helper functions to
-control the MAC implementation with raw strings or with strings
-containing hexadecimal numbers.
-The latter are decoded into bitstrings that are sent on to
-EVP_MAC_ctrl().
+EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
+EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
+decribes the retrievable and settable parameters, i.e. parameters that
+can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
+and EVP_MAC_CTX_set_params(), respectively.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head2 Information functions
 
 EVP_MAC_size() returns the MAC output size for the given context.
 
-EVP_MAC_nid() returns the numeric identity of the given MAC implementation.
+EVP_MAC_is_a() checks if the given I<mac> is an implementation of an
+algorithm that's identifiable with I<name>.
 
-EVP_MAC_name() returns the name of the given MAC implementation.
+EVP_MAC_provider() returns the provider that holds the implementation
+of the given I<mac>.
 
-=head2 Object database functions
+EVP_MAC_do_all_provided() traverses all MAC implemented by all activated
+providers in the given library context I<libctx>, and for each of the
+implementations, calls the given function I<fn> with the implementation method
+and the given I<arg> as argument.
 
-EVP_get_macbyname() fetches a MAC implementation from the object
-database by name.
+EVP_MAC_number() returns the internal dynamic number assigned to
+I<mac>.
 
-EVP_get_macbynid() fetches a MAC implementation from the object
-database by numeric identity.
+EVP_MAC_names_do_all() traverses all names for I<mac>, and calls
+I<fn> with each name and I<data>.
 
-EVP_get_macbyobj() fetches a MAC implementation from the object
-database by ASN.1 OBJECT (i.e. an encoded OID).
+=head1 PARAMETERS
 
-=head1 CONTROLS
+Parameters are identified by name as strings, and have an expected
+data type and maximum size.
+OpenSSL has a set of macros for parameter names it expects to see in
+its own MAC implementations.
+Here, we show all three, the OpenSSL macro for the parameter name, the
+name in string form, and a type description.
 
-The standard controls are:
+The standard parameter names are:
 
 =over 4
 
-=item B<EVP_MAC_CTRL_SET_KEY>
+=item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
-
-These will set the MAC key from the given string of the given length.
-The string may be any bitstring, and can contain NUL bytes.
+Its value is the MAC key as an array of bytes.
 
 For MACs that use an underlying computation algorithm, the algorithm
-I<must> be set first, see B<EVP_MAC_CTRL_SET_ENGINE>,
-B<EVP_MAC_CTRL_SET_MD> and B<EVP_MAC_CTRL_SET_CIPHER> below.
+must be set first, see parameter names "algorithm" below.
 
-=item B<EVP_MAC_CTRL_SET_IV>
+=item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
-This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+Some MAC implementations require an IV, this parameter sets the IV.
 
-Some MAC implementations require an IV, this control sets the IV.
-
-=item B<EVP_MAC_CTRL_SET_CUSTOM>
-
-This control expects two arguments: C<unsigned char *custom>, C<size_t customlen>
+=item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <octet string>
 
 Some MAC implementations (KMAC, BLAKE2) accept a Customization String,
-this control sets the Customization String. The default value is "".
+this parameter sets the Customization String. The default value is the
+empty string.
 
-=item B<EVP_MAC_CTRL_SET_SALT>
-
-This control expects two arguments: C<unsigned char *salt>, C<size_t saltlen>
+=item "salt" (B<OSSL_MAC_PARAM_SALT>) <octet string>
 
 This option is used by BLAKE2 MAC.
 
-=item B<EVP_MAC_CTRL_SET_XOF>
+=item "xof" (B<OSSL_MAC_PARAM_XOF>) <integer>
 
-This control expects one argument: C<int xof>
+It's a simple flag, the value 0 or 1 are expected.
 
 This option is used by KMAC.
 
-=item B<EVP_MAC_CTRL_SET_FLAGS>
-
-This control expects one argument: C<unsigned long flags>
+=item "flags" (B<OSSL_MAC_PARAM_FLAGS>) <integer>
 
 These will set the MAC flags to the given numbers.
 Some MACs do not support this option.
 
-=item B<EVP_MAC_CTRL_SET_ENGINE>
+=item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 
-=item B<EVP_MAC_CTRL_SET_MD>
+=item "digest" (B<OSSL_MAC_PARAM_DIGEST>) <UTF8 string>
 
-=item B<EVP_MAC_CTRL_SET_CIPHER>
+=item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
 
-For MAC implementations that use an underlying computation algorithm,
-these controls set what the algorithm should be, and the engine that
-implements the algorithm if needed.
+For MAC implementations that use an underlying computation cipher or
+digest, these parameters set what the algorithm should be.
 
-Note that not all algorithms may support all digests. HMAC does not support
-variable output length digests such as SHAKE128 or SHAKE256.
+The value is always the name of the intended algorithm,
+or the properties.
 
-B<EVP_MAC_CTRL_SET_ENGINE> takes one argument: C<ENGINE *>
+Note that not all algorithms may support all digests.
+HMAC does not support variable output length digests such as SHAKE128
+or SHAKE256.
 
-B<EVP_MAC_CTRL_SET_MD> takes one argument: C<EVP_MD *>
-
-B<EVP_MAC_CTRL_SET_CIPHER> takes one argument: C<EVP_CIPHER *>
-
-=item B<EVP_MAC_CTRL_SET_SIZE>
+=item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 For MAC implementations that support it, set the output size that
 EVP_MAC_final() should produce.
-The allowed sizes vary between MAC implementations.
+The allowed sizes vary between MAC implementations, but must never exceed
+what can be given with a B<size_t>.
 
 =back
 
-All these control should be used before the calls to any of
+All these parameters should be used before the calls to any of
 EVP_MAC_init(), EVP_MAC_update() and EVP_MAC_final() for a full
 computation.
 Anything else may give undefined results.
 
-=head1 NOTES
-
-EVP_get_macbynid(), EVP_get_macbyobj() and EVP_MAC_name() are
-implemented as a macro.
-
 =head1 RETURN VALUES
 
-EVP_MAC_CTX_new() and EVP_MAC_CTX_new_id() return a pointer to a newly
+EVP_MAC_fetch() returns a pointer to a newly fetched EVP_MAC, or
+NULL if allocation failed.
+
+EVP_MAC_up_ref() returns 1 on success, 0 on error.
+
+EVP_MAC_free() returns nothing at all.
+
+EVP_MAC_is_a() returns 1 if the given method can be identified with
+the given name, otherwise 0.
+
+EVP_MAC_provider() returns a pointer to the provider for the MAC, or
+NULL on error.
+
+EVP_MAC_CTX_new() and EVP_MAC_CTX_dup() return a pointer to a newly
 created EVP_MAC_CTX, or NULL if allocation failed.
 
 EVP_MAC_CTX_free() returns nothing at all.
 
-EVP_MAC_CTX_copy(), EVP_MAC_init(), EVP_MAC_update(),
-and EVP_MAC_final() return 1 on success, 0 on error.
+EVP_MAC_CTX_get_params() and EVP_MAC_CTX_set_params() return 1 on
+success, 0 on error.
 
-EVP_MAC_ctrl(), EVP_MAC_ctrl_str(), EVP_MAC_str2ctrl() and
-EVP_MAC_hex2ctrl() return 1 on success and 0 or a negative value on
-error.
-In particular, the value -2 indicates that the given control type
-isn't supported by the MAC implementation.
+EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0
+on error.
 
 EVP_MAC_size() returns the expected output size, or 0 if it isn't
 set.
 If it isn't set, a call to EVP_MAC_init() should get it set.
 
-EVP_MAC_nid() returns the numeric identity for the given C<mac>.
+EVP_MAC_do_all_provided() returns nothing at all.
 
-EVP_MAC_name() returns the name for the given C<mac>, if it has been
-added to the object database.
-
-EVP_add_mac() returns 1 if the given C<mac> was successfully added to
-the object database, otherwise 0.
-
-EVP_get_macbyname(), EVP_get_macbynid() and EVP_get_macbyobj() return
-the request MAC implementation, if it exists in the object database,
-otherwise B<NULL>.
-
-=head1 EXAMPLE
+=head1 EXAMPLES
 
   #include <stdlib.h>
   #include <stdio.h>
@@ -271,29 +294,12 @@ otherwise B<NULL>.
 
   #include <openssl/evp.h>
   #include <openssl/err.h>
-
-  int ctrl_ign_unsupported(EVP_MAC_CTX *ctx, int cmd, ...)
-  {
-      va_list args;
-      int rv;
-
-      va_start(args, cmd);
-      rv = EVP_MAC_vctrl(ctx, cmd, args);
-      va_end(args);
-
-      if (rv == -2)
-          rv = 1;       /* Ignore unsupported, pretend it worked fine */
-
-      return rv;
-  }
+  #include <openssl/params.h>
 
   int main() {
-      const EVP_MAC *mac =
-          EVP_get_macbyname(getenv("MY_MAC"));
-      const EVP_CIPHER *cipher =
-          EVP_get_cipherbyname(getenv("MY_MAC_CIPHER"));
-      const EVP_MD *digest =
-          EVP_get_digestbyname(getenv("MY_MAC_DIGEST"));
+      EVP_MAC *mac = EVP_MAC_fetch(NULL, getenv("MY_MAC"), NULL);
+      const char *cipher = getenv("MY_MAC_CIPHER");
+      const char *digest = getenv("MY_MAC_DIGEST");
       const char *key = getenv("MY_KEY");
       EVP_MAC_CTX *ctx = NULL;
 
@@ -303,14 +309,23 @@ otherwise B<NULL>.
 
       size_t i;
 
+      OSSL_PARAM params[4];
+      size_t params_n = 0;
+
+      if (cipher != NULL)
+          params[params_n++] =
+              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0, NULL);
+      if (digest != NULL)
+          params[params_n++] =
+              OSSL_PARAM_construct_utf8_string("digest", digest, 0, NULL);
+      params[params_n++] =
+          OSSL_PARAM_construct_octet_string("key", key, strlen(key), NULL);
+      params[params_n] = OSSL_PARAM_construct_end();
+
       if (mac == NULL
           || key == NULL
           || (ctx = EVP_MAC_CTX_new(mac)) == NULL
-          || (cipher != NULL
-              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_CIPHER, cipher))
-          || (digest != NULL
-              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_MD, digest))
-          || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY, key, strlen(key)) <= 0)
+          || EVP_MAC_CTX_set_params(ctx, params) <= 0)
           goto err;
 
       if (!EVP_MAC_init(ctx))
@@ -330,10 +345,12 @@ otherwise B<NULL>.
       printf("\n");
 
       EVP_MAC_CTX_free(ctx);
+      EVP_MAC_free(mac);
       exit(0);
 
    err:
       EVP_MAC_CTX_free(ctx);
+      EVP_MAC_free(mac);
       fprintf(stderr, "Something went wrong\n");
       ERR_print_errors_fp(stderr);
       exit (1);
@@ -351,6 +368,8 @@ F<./foo>)
 
 =head1 SEE ALSO
 
+L<property(7)>
+L<OSSL_PARAM(3)>,
 L<EVP_MAC_BLAKE2(7)>,
 L<EVP_MAC_CMAC(7)>,
 L<EVP_MAC_GMAC(7)>,
@@ -359,9 +378,13 @@ L<EVP_MAC_KMAC(7)>,
 L<EVP_MAC_SIPHASH(7)>,
 L<EVP_MAC_POLY1305(7)>
 
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

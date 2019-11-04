@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DHERR_H
-# define HEADER_DHERR_H
+#ifndef OPENSSL_DHERR_H
+# define OPENSSL_DHERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_DHERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,32 +33,36 @@ int ERR_load_DH_strings(void);
 /*
  * DH function codes.
  */
-#  define DH_F_COMPUTE_KEY                                 102
-#  define DH_F_DHPARAMS_PRINT_FP                           101
-#  define DH_F_DH_BUILTIN_GENPARAMS                        106
-#  define DH_F_DH_CHECK_EX                                 121
-#  define DH_F_DH_CHECK_PARAMS_EX                          122
-#  define DH_F_DH_CHECK_PUB_KEY_EX                         123
-#  define DH_F_DH_CMS_DECRYPT                              114
-#  define DH_F_DH_CMS_SET_PEERKEY                          115
-#  define DH_F_DH_CMS_SET_SHARED_INFO                      116
-#  define DH_F_DH_METH_DUP                                 117
-#  define DH_F_DH_METH_NEW                                 118
-#  define DH_F_DH_METH_SET1_NAME                           119
-#  define DH_F_DH_NEW_BY_NID                               104
-#  define DH_F_DH_NEW_METHOD                               105
-#  define DH_F_DH_PARAM_DECODE                             107
-#  define DH_F_DH_PKEY_PUBLIC_CHECK                        124
-#  define DH_F_DH_PRIV_DECODE                              110
-#  define DH_F_DH_PRIV_ENCODE                              111
-#  define DH_F_DH_PUB_DECODE                               108
-#  define DH_F_DH_PUB_ENCODE                               109
-#  define DH_F_DO_DH_PRINT                                 100
-#  define DH_F_GENERATE_KEY                                103
-#  define DH_F_PKEY_DH_CTRL_STR                            120
-#  define DH_F_PKEY_DH_DERIVE                              112
-#  define DH_F_PKEY_DH_INIT                                125
-#  define DH_F_PKEY_DH_KEYGEN                              113
+# if !OPENSSL_API_3
+#   define DH_F_COMPUTE_KEY                                 0
+#   define DH_F_DHPARAMS_PRINT_FP                           0
+#   define DH_F_DH_BUF2KEY                                  0
+#   define DH_F_DH_BUILTIN_GENPARAMS                        0
+#   define DH_F_DH_CHECK_EX                                 0
+#   define DH_F_DH_CHECK_PARAMS_EX                          0
+#   define DH_F_DH_CHECK_PUB_KEY_EX                         0
+#   define DH_F_DH_CMS_DECRYPT                              0
+#   define DH_F_DH_CMS_SET_PEERKEY                          0
+#   define DH_F_DH_CMS_SET_SHARED_INFO                      0
+#   define DH_F_DH_KEY2BUF                                  0
+#   define DH_F_DH_METH_DUP                                 0
+#   define DH_F_DH_METH_NEW                                 0
+#   define DH_F_DH_METH_SET1_NAME                           0
+#   define DH_F_DH_NEW_BY_NID                               0
+#   define DH_F_DH_NEW_METHOD                               0
+#   define DH_F_DH_PARAM_DECODE                             0
+#   define DH_F_DH_PKEY_PUBLIC_CHECK                        0
+#   define DH_F_DH_PRIV_DECODE                              0
+#   define DH_F_DH_PRIV_ENCODE                              0
+#   define DH_F_DH_PUB_DECODE                               0
+#   define DH_F_DH_PUB_ENCODE                               0
+#   define DH_F_DO_DH_PRINT                                 0
+#   define DH_F_GENERATE_KEY                                0
+#   define DH_F_PKEY_DH_CTRL_STR                            0
+#   define DH_F_PKEY_DH_DERIVE                              0
+#   define DH_F_PKEY_DH_INIT                                0
+#   define DH_F_PKEY_DH_KEYGEN                              0
+# endif
 
 /*
  * DH reason codes.
@@ -76,6 +86,7 @@ int ERR_load_DH_strings(void);
 #  define DH_R_KEYS_NOT_SET                                108
 #  define DH_R_MISSING_PUBKEY                              125
 #  define DH_R_MODULUS_TOO_LARGE                           103
+#  define DH_R_MODULUS_TOO_SMALL                           126
 #  define DH_R_NOT_SUITABLE_GENERATOR                      120
 #  define DH_R_NO_PARAMETERS_SET                           107
 #  define DH_R_NO_PRIVATE_VALUE                            100

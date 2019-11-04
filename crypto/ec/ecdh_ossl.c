@@ -17,7 +17,7 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/ec.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
                           const EC_POINT *pub_key, const EC_KEY *ecdh)
@@ -47,7 +47,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     size_t buflen, len;
     unsigned char *buf = NULL;
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(ecdh->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
@@ -58,7 +58,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 
     priv_key = EC_KEY_get0_private_key(ecdh);
     if (priv_key == NULL) {
-        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_NO_PRIVATE_VALUE);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_MISSING_PRIVATE_KEY);
         goto err;
     }
 

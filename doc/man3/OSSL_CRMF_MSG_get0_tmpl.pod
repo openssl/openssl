@@ -5,6 +5,8 @@
 OSSL_CRMF_MSG_get0_tmpl,
 OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
 OSSL_CRMF_CERTTEMPLATE_get0_issuer,
+OSSL_CRMF_CERTID_get0_serialNumber,
+OSSL_CRMF_CERTID_get0_issuer,
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert,
 OSSL_CRMF_MSG_get_certReqId
 - functions reading from CRMF CertReqMsg structures
@@ -17,6 +19,9 @@ OSSL_CRMF_MSG_get_certReqId
  ASN1_INTEGER
      *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *tmpl);
  X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl);
+
+ ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid);
+ X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
 
  X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                                              EVP_PKEY *pkey);
@@ -33,6 +38,12 @@ given certificate template B<tmpl>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_issuer() retrieves the issuer name of the
 given certificate template B<tmpl>.
+
+OSSL_CRMF_CERTID_get0_serialNumber retrieves the serialNumber
+of the given CertId B<cid>.
+
+OSSL_CRMF_CERTID_get0_issuer retrieves the issuer name
+of the given CertId B<cid>, which must be of ASN.1 type GEN_DIRNAME.
 
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
 encryptedValue B<ecert>, using the private key B<pkey>.
@@ -54,9 +65,13 @@ All other functions return a pointer with the intended result or NULL on error.
 
 B<RFC 4211>
 
+=head1 HISTORY
+
+The OpenSSL CRMF support was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

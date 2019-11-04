@@ -13,18 +13,19 @@
 #include <stdarg.h>
 #include <openssl/crypto.h>
 #include "internal/property.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/lhash.h"
-#include "internal/sparse_array.h"
-#include "property_lcl.h"
+#include "crypto/lhash.h"
+#include "crypto/sparse_array.h"
+#include "property_local.h"
 
 /* The number of elements in the query cache before we initiate a flush */
 #define IMPL_CACHE_FLUSH_THRESHOLD  500
 
 typedef struct {
+    const OSSL_PROVIDER *provider;
     OSSL_PROPERTY_LIST *properties;
     void *method;
     void (*method_destruct)(void *);
@@ -52,15 +53,13 @@ struct ossl_method_store_st {
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
     OSSL_PROPERTY_LIST *global_properties;
     int need_flush;
-    unsigned int nbits;
-    unsigned char rand_bits[(IMPL_CACHE_FLUSH_THRESHOLD + 7) / 8];
     CRYPTO_RWLOCK *lock;
 };
 
 typedef struct {
-    OSSL_METHOD_STORE *store;
     LHASH_OF(QUERY) *cache;
     size_t nelem;
+    uint32_t seed;
 } IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
@@ -81,12 +80,6 @@ int ossl_property_write_lock(OSSL_METHOD_STORE *p)
 int ossl_property_unlock(OSSL_METHOD_STORE *p)
 {
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
-}
-
-static openssl_ctx_run_once_fn do_method_store_init;
-int do_method_store_init(OPENSSL_CTX *ctx)
-{
-    return ossl_property_parse_init(ctx);
 }
 
 static unsigned long query_hash(const QUERY *a)
@@ -131,11 +124,6 @@ OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;
 
-    if (!openssl_ctx_run_once(ctx,
-                              OPENSSL_CTX_METHOD_STORE_RUN_ONCE_INDEX,
-                              do_method_store_init))
-        return NULL;
-
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
@@ -173,13 +161,15 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
         return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
 }
 
-int ossl_method_store_add(OSSL_METHOD_STORE *store,
-                          int nid, const char *properties,
-                          void *method, void (*method_destruct)(void *))
+int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
+                          int nid, const char *properties, void *method,
+                          int (*method_up_ref)(void *),
+                          void (*method_destruct)(void *))
 {
     ALGORITHM *alg = NULL;
     IMPLEMENTATION *impl;
     int ret = 0;
+    int i;
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -190,6 +180,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
+    if (method_up_ref != NULL && !method_up_ref(method)) {
+        OPENSSL_free(impl);
+        return 0;
+    }
+    impl->provider = prov;
     impl->method = method;
     impl->method_destruct = method_destruct;
 
@@ -219,8 +214,16 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
             goto err;
     }
 
-    /* Push onto stack */
-    if (sk_IMPLEMENTATION_push(alg->impls, impl))
+    /* Push onto stack if there isn't one there already */
+    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
+        const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (tmpimpl->provider == impl->provider
+            && tmpimpl->properties == impl->properties)
+            break;
+    }
+    if (i == sk_IMPLEMENTATION_num(alg->impls)
+        && sk_IMPLEMENTATION_push(alg->impls, impl))
         ret = 1;
     ossl_property_unlock(store);
     if (ret == 0)
@@ -277,7 +280,11 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     IMPLEMENTATION *impl;
     OSSL_PROPERTY_LIST *pq = NULL, *p2;
     int ret = 0;
-    int j;
+    int j, best = -1, score, optional;
+
+#ifndef FIPS_MODE
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -310,13 +317,16 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         ossl_property_free(pq);
         pq = p2;
     }
+    optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
         impl = sk_IMPLEMENTATION_value(alg->impls, j);
-
-        if (ossl_property_match(pq, impl->properties)) {
+        score = ossl_property_match_count(pq, impl->properties);
+        if (score > best) {
             *method = impl->method;
             ret = 1;
-            goto fin;
+            if (!optional)
+                goto fin;
+            best = score;
         }
     }
 fin:
@@ -373,31 +383,37 @@ IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
 /*
  * Flush an element from the query cache (perhaps).
  *
- * In order to avoid taking a write lock to keep accurate LRU information or
- * using atomic operations to approximate similar, the procedure used here
- * is to stochastically flush approximately half the cache.  Since generating
- * random numbers is relatively expensive, we produce them in blocks and
- * consume them as we go, saving generated bits between generations of flushes.
+ * In order to avoid taking a write lock or using atomic operations
+ * to keep accurate least recently used (LRU) or least frequently used
+ * (LFU) information, the procedure used here is to stochastically
+ * flush approximately half the cache.
  *
- * This procedure isn't ideal, LRU would be better.  However, in normal
- * operation, reaching a full cache would be quite unexpected.  It means
- * that no steady state of algorithm queries has been reached.  I.e. it is most
- * likely an attack of some form.  A suboptimal clearance strategy that doesn't
- * degrade performance of the normal case is preferable to a more refined
- * approach that imposes a performance impact.
+ * This procedure isn't ideal, LRU or LFU would be better.  However,
+ * in normal operation, reaching a full cache would be unexpected.
+ * It means that no steady state of algorithm queries has been reached.
+ * That is, it is most likely an attack of some form.  A suboptimal clearance
+ * strategy that doesn't degrade performance of the normal case is
+ * preferable to a more refined approach that imposes a performance
+ * impact.
  */
 static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
 {
-    OSSL_METHOD_STORE *store = state->store;
-    unsigned int n;
+    uint32_t n;
 
-    if (store->nbits == 0) {
-        if (!RAND_bytes(store->rand_bits, sizeof(store->rand_bits)))
-            return;
-        store->nbits = sizeof(store->rand_bits) * 8;
-    }
-    n = --store->nbits;
-    if ((store->rand_bits[n >> 3] & (1 << (n & 7))) != 0)
+    /*
+     * Implement the 32 bit xorshift as suggested by George Marsaglia in:
+     *      https://doi.org/10.18637/jss.v008.i14
+     *
+     * This is a very fast PRNG so there is no need to extract bits one at a
+     * time and use the entire value each time.
+     */
+    n = state->seed;
+    n ^= n << 13;
+    n ^= n >> 17;
+    n ^= n << 5;
+    state->seed = n;
+
+    if ((n & 1) != 0)
         OPENSSL_free(lh_QUERY_delete(state->cache, c));
     else
         state->nelem++;
@@ -418,9 +434,10 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     IMPL_CACHE_FLUSH state;
 
     state.nelem = 0;
-    state.store = store;
-    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
+    if ((state.seed = OPENSSL_rdtsc()) == 0)
+        state.seed = 1;
     store->need_flush = 0;
+    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->nelem = state.nelem;
 }
 
@@ -474,7 +491,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
 
     if (method == NULL) {
         elem.query = prop_query;
-        lh_QUERY_delete(alg->cache, &elem);
+        if (lh_QUERY_delete(alg->cache, &elem) != NULL)
+            store->nelem--;
         ossl_property_unlock(store);
         return 1;
     }
@@ -483,11 +501,13 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
         p->query = p->body;
         p->method = method;
         memcpy((char *)p->query, prop_query, len + 1);
-        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL)
+        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
             OPENSSL_free(old);
-        if (old != NULL || !lh_QUERY_error(alg->cache)) {
-            store->nelem++;
-            if (store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
+            ossl_property_unlock(store);
+            return 1;
+        }
+        if (!lh_QUERY_error(alg->cache)) {
+            if (++store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
                 store->need_flush = 1;
             ossl_property_unlock(store);
             return 1;

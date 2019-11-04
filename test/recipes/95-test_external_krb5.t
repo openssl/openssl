@@ -9,7 +9,7 @@
 
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT data_file srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file srctop_file bldtop_dir/;
 
 setup("test_external_krb5");
 
@@ -19,5 +19,7 @@ plan skip_all => "krb5 not available"
     if ! -f srctop_file("krb5", "README");
 
 plan tests => 1;
+
+$ENV{OPENSSL_CONF} = srctop_file("test", "default-and-legacy.cnf");
 
 ok(run(cmd([data_file("krb5.sh")])), "running krb5 tests");

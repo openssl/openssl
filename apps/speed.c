@@ -15,6 +15,7 @@
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
 #define EdDSA_SECONDS   10
+#define SM2_SECONDS     10
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +30,7 @@
 #include <openssl/objects.h>
 #include <openssl/async.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-# include OPENSSL_UNISTD
+# include <unistd.h>
 #endif
 
 #if defined(_WIN32)
@@ -127,6 +128,7 @@ typedef struct openssl_speed_sec_st {
     int ecdsa;
     int ecdh;
     int eddsa;
+    int sm2;
 } openssl_speed_sec_t;
 
 static volatile int run = 0;
@@ -191,6 +193,10 @@ static int ECDSA_sign_loop(void *args);
 static int ECDSA_verify_loop(void *args);
 static int EdDSA_sign_loop(void *args);
 static int EdDSA_verify_loop(void *args);
+# ifndef OPENSSL_NO_SM2
+static int SM2_sign_loop(void *args);
+static int SM2_verify_loop(void *args);
+# endif
 #endif
 
 static double Time_F(int s);
@@ -604,6 +610,18 @@ static OPT_PAIR eddsa_choices[] = {
 # define EdDSA_NUM       OSSL_NELEM(eddsa_choices)
 
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
+
+# ifndef OPENSSL_NO_SM2
+#  define R_EC_CURVESM2        0
+static OPT_PAIR sm2_choices[] = {
+    {"curveSM2", R_EC_CURVESM2}
+};
+#  define SM2_ID        "TLSv1.3+GM+Cipher+Suite"
+#  define SM2_ID_LEN    sizeof("TLSv1.3+GM+Cipher+Suite") - 1
+#  define SM2_NUM       OSSL_NELEM(sm2_choices)
+
+static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
+# endif /* OPENSSL_NO_SM2 */
 #endif /* OPENSSL_NO_EC */
 
 #ifndef SIGALRM
@@ -634,6 +652,11 @@ typedef struct loopargs_st {
     EC_KEY *ecdsa[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
+# ifndef OPENSSL_NO_SM2
+    EVP_MD_CTX *sm2_ctx[SM2_NUM];
+    EVP_MD_CTX *sm2_vfy_ctx[SM2_NUM];
+    EVP_PKEY *sm2_pkey[SM2_NUM];
+# endif
     unsigned char *secret_a;
     unsigned char *secret_b;
     size_t outlen[EC_NUM];
@@ -1296,6 +1319,74 @@ static int EdDSA_verify_loop(void *args)
     }
     return count;
 }
+
+# ifndef OPENSSL_NO_SM2
+static long sm2_c[SM2_NUM][2];
+static int SM2_sign_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_MD_CTX **sm2ctx = tempargs->sm2_ctx;
+    unsigned char *sm2sig = tempargs->buf2;
+    size_t sm2sigsize = tempargs->sigsize;
+    const size_t max_size = tempargs->sigsize;
+    int ret, count;
+    EVP_PKEY **sm2_pkey = tempargs->sm2_pkey;
+
+    for (count = 0; COND(sm2_c[testnum][0]); count++) {
+        if (!EVP_DigestSignInit(sm2ctx[testnum], NULL, EVP_sm3(),
+                                NULL, sm2_pkey[testnum])) {
+            BIO_printf(bio_err, "SM2 init sign failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+        ret = EVP_DigestSign(sm2ctx[testnum], sm2sig, &sm2sigsize,
+                             buf, 20);
+        if (ret == 0) {
+            BIO_printf(bio_err, "SM2 sign failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+        /* update the latest returned size and always use the fixed buffer size */
+        tempargs->sigsize = sm2sigsize;
+        sm2sigsize = max_size;
+    }
+
+    return count;
+}
+
+static int SM2_verify_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_MD_CTX **sm2ctx = tempargs->sm2_vfy_ctx;
+    unsigned char *sm2sig = tempargs->buf2;
+    size_t sm2sigsize = tempargs->sigsize;
+    int ret, count;
+    EVP_PKEY **sm2_pkey = tempargs->sm2_pkey;
+
+    for (count = 0; COND(sm2_c[testnum][1]); count++) {
+        if (!EVP_DigestVerifyInit(sm2ctx[testnum], NULL, EVP_sm3(),
+                                  NULL, sm2_pkey[testnum])) {
+            BIO_printf(bio_err, "SM2 verify init failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+        ret = EVP_DigestVerify(sm2ctx[testnum], sm2sig, sm2sigsize,
+                               buf, 20);
+        if (ret != 1) {
+            BIO_printf(bio_err, "SM2 verify failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+    }
+    return count;
+}
+# endif                         /* OPENSSL_NO_SM2 */
 #endif                          /* OPENSSL_NO_EC */
 
 static int run_benchmark(int async_jobs,
@@ -1477,7 +1568,7 @@ int speed_main(int argc, char **argv)
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
-                                    EdDSA_SECONDS };
+                                    EdDSA_SECONDS, SM2_SECONDS };
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
@@ -1609,11 +1700,27 @@ int speed_main(int argc, char **argv)
         {"Ed25519", NID_ED25519, 253, 64},
         {"Ed448", NID_ED448, 456, 114}
     };
+# ifndef OPENSSL_NO_SM2
+    static const struct {
+        const char *name;
+        unsigned int nid;
+        unsigned int bits;
+    } test_sm2_curves[] = {
+        /* SM2 */
+        {"CurveSM2", NID_sm2, 256}
+    };
+# endif
     int ecdsa_doit[ECDSA_NUM] = { 0 };
     int ecdh_doit[EC_NUM] = { 0 };
     int eddsa_doit[EdDSA_NUM] = { 0 };
+# ifndef OPENSSL_NO_SM2
+    int sm2_doit[SM2_NUM] = { 0 };
+# endif
     OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
     OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
+# ifndef OPENSSL_NO_SM2
+    OPENSSL_assert(OSSL_NELEM(test_sm2_curves) >= SM2_NUM);
+# endif
 #endif                          /* ndef OPENSSL_NO_EC */
 
     prog = opt_init(argc, argv, speed_options);
@@ -1726,7 +1833,8 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_SECONDS:
             seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa
-                        = seconds.ecdh = seconds.eddsa = atoi(opt_arg());
+                        = seconds.ecdh = seconds.eddsa
+                        = seconds.sm2 = atoi(opt_arg());
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
@@ -1819,6 +1927,17 @@ int speed_main(int argc, char **argv)
             eddsa_doit[i] = 2;
             continue;
         }
+# ifndef OPENSSL_NO_SM2
+        if (strcmp(*argv, "sm2") == 0) {
+            for (loop = 0; loop < OSSL_NELEM(sm2_doit); loop++)
+                sm2_doit[loop] = 1;
+            continue;
+        }
+        if (found(*argv, sm2_choices, &i)) {
+            sm2_doit[i] = 2;
+            continue;
+        }
+# endif
 #endif
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
         goto end;
@@ -1876,7 +1995,7 @@ int speed_main(int argc, char **argv)
         }
 
         buflen = lengths[size_num - 1];
-        if (buflen < 36)    /* size of random vector in RSA bencmark */
+        if (buflen < 36)    /* size of random vector in RSA benchmark */
             buflen = 36;
         buflen += MAX_MISALIGNMENT + 1;
         loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
@@ -1921,6 +2040,10 @@ int speed_main(int argc, char **argv)
             ecdh_doit[loop] = 1;
         for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
             eddsa_doit[loop] = 1;
+# ifndef OPENSSL_NO_SM2
+        for (loop = 0; loop < OSSL_NELEM(sm2_doit); loop++)
+            sm2_doit[loop] = 1;
+# endif
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
@@ -1985,7 +2108,10 @@ int speed_main(int argc, char **argv)
     RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
 #ifndef OPENSSL_NO_RC5
-    RC5_32_set_key(&rc5_ks, 16, key16, 12);
+    if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
+        BIO_printf(bio_err, "Failed setting RC5 key\n");
+        goto end;
+    }
 #endif
 #ifndef OPENSSL_NO_BF
     BF_set_key(&bf_ks, 16, key16);
@@ -2223,6 +2349,10 @@ int speed_main(int argc, char **argv)
 
     eddsa_c[R_EC_Ed25519][0] = count / 1800;
     eddsa_c[R_EC_Ed448][0] = count / 7200;
+
+#   ifndef OPENSSL_NO_SM2
+    sm2_c[R_EC_SM2P256][0] = count / 1800;
+#   endif
 #  endif
 
 # else
@@ -2717,16 +2847,28 @@ int speed_main(int argc, char **argv)
 
                 for (k = 0; k < loopargs_len; k++) {
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
-                    EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL, NULL,
-                                      iv, decrypt ? 0 : 1);
+                    if (loopargs[k].ctx == NULL) {
+                        BIO_printf(bio_err, "\nEVP_CIPHER_CTX_new failure\n");
+                        exit(1);
+                    }
+                    if (!EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL,
+                                           NULL, iv, decrypt ? 0 : 1)) {
+                        BIO_printf(bio_err, "\nEVP_CipherInit_ex failure\n");
+                        ERR_print_errors(bio_err);
+                        exit(1);
+                    }
 
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
 
                     keylen = EVP_CIPHER_CTX_key_length(loopargs[k].ctx);
                     loopargs[k].key = app_malloc(keylen, "evp_cipher key");
                     EVP_CIPHER_CTX_rand_key(loopargs[k].ctx, loopargs[k].key);
-                    EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
-                                      loopargs[k].key, NULL, -1);
+                    if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
+                                           loopargs[k].key, NULL, -1)) {
+                        BIO_printf(bio_err, "\nEVP_CipherInit_ex failure\n");
+                        ERR_print_errors(bio_err);
+                        exit(1);
+                    }
                     OPENSSL_clear_free(loopargs[k].key, keylen);
 
                     /* SIV mode only allows for a single Update operation */
@@ -3099,7 +3241,6 @@ int speed_main(int argc, char **argv)
                 if (error == ERR_peek_last_error() && /* oldest and latest errors match */
                     /* check that the error origin matches */
                     ERR_GET_LIB(error) == ERR_LIB_EVP &&
-                    ERR_GET_FUNC(error) == EVP_F_INT_CTX_NEW &&
                     ERR_GET_REASON(error) == EVP_R_UNSUPPORTED_ALGORITHM)
                     ERR_get_error(); /* pop error from queue */
                 if (ERR_peek_error()) {
@@ -3135,7 +3276,7 @@ int speed_main(int argc, char **argv)
                 pctx = NULL;
             }
             if (kctx == NULL ||      /* keygen ctx is not null */
-                !EVP_PKEY_keygen_init(kctx) /* init keygen ctx */ ) {
+                EVP_PKEY_keygen_init(kctx) <= 0/* init keygen ctx */ ) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH keygen failure.\n");
                 ERR_print_errors(bio_err);
@@ -3143,12 +3284,12 @@ int speed_main(int argc, char **argv)
                 break;
             }
 
-            if (!EVP_PKEY_keygen(kctx, &key_A) || /* generate secret key A */
-                !EVP_PKEY_keygen(kctx, &key_B) || /* generate secret key B */
+            if (EVP_PKEY_keygen(kctx, &key_A) <= 0 || /* generate secret key A */
+                EVP_PKEY_keygen(kctx, &key_B) <= 0 || /* generate secret key B */
                 !(ctx = EVP_PKEY_CTX_new(key_A, NULL)) || /* derivation ctx from skeyA */
-                !EVP_PKEY_derive_init(ctx) || /* init derivation ctx */
-                !EVP_PKEY_derive_set_peer(ctx, key_B) || /* set peer pubkey in ctx */
-                !EVP_PKEY_derive(ctx, NULL, &outlen) || /* determine max length */
+                EVP_PKEY_derive_init(ctx) <= 0 || /* init derivation ctx */
+                EVP_PKEY_derive_set_peer(ctx, key_B) <= 0 || /* set peer pubkey in ctx */
+                EVP_PKEY_derive(ctx, NULL, &outlen) <= 0 || /* determine max length */
                 outlen == 0 ||  /* ensure outlen is a valid size */
                 outlen > MAX_ECDH_SIZE /* avoid buffer overflow */ ) {
                 ecdh_checks = 0;
@@ -3235,8 +3376,8 @@ int speed_main(int argc, char **argv)
 
             if ((ed_pctx = EVP_PKEY_CTX_new_id(test_ed_curves[testnum].nid, NULL))
                     == NULL
-                || !EVP_PKEY_keygen_init(ed_pctx)
-                || !EVP_PKEY_keygen(ed_pctx, &ed_pkey)) {
+                || EVP_PKEY_keygen_init(ed_pctx) <= 0
+                || EVP_PKEY_keygen(ed_pctx, &ed_pkey) <= 0) {
                 st = 0;
                 EVP_PKEY_CTX_free(ed_pctx);
                 break;
@@ -3323,6 +3464,175 @@ int speed_main(int argc, char **argv)
         }
     }
 
+# ifndef OPENSSL_NO_SM2
+    for (testnum = 0; testnum < SM2_NUM; testnum++) {
+        int st = 1;
+        EVP_PKEY *sm2_pkey = NULL;
+        EVP_PKEY_CTX *pctx = NULL;
+        EVP_PKEY_CTX *sm2_pctx = NULL;
+        EVP_PKEY_CTX *sm2_vfy_pctx = NULL;
+        size_t sm2_sigsize = 0;
+
+        if (!sm2_doit[testnum])
+            continue;           /* Ignore Curve */
+        /* Init signing and verification */
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].sm2_ctx[testnum] = EVP_MD_CTX_new();
+            if (loopargs[i].sm2_ctx[testnum] == NULL) {
+                st = 0;
+                break;
+            }
+            loopargs[i].sm2_vfy_ctx[testnum] = EVP_MD_CTX_new();
+            if (loopargs[i].sm2_vfy_ctx[testnum] == NULL) {
+                st = 0;
+                break;
+            }
+
+            /* SM2 keys are generated as normal EC keys with a special curve */
+            if ((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
+                || EVP_PKEY_keygen_init(pctx) <= 0
+                || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
+                    test_sm2_curves[testnum].nid) <= 0
+                || EVP_PKEY_keygen(pctx, &sm2_pkey) <= 0) {
+                st = 0;
+                EVP_PKEY_CTX_free(pctx);
+                break;
+            }
+            /* free previous one and alloc a new one */
+            EVP_PKEY_CTX_free(pctx);
+
+            loopargs[i].sigsize = sm2_sigsize
+                = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
+
+            if (!EVP_PKEY_set_alias_type(sm2_pkey, EVP_PKEY_SM2)) {
+                st = 0;
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+
+            sm2_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
+            if (sm2_pctx == NULL) {
+                st = 0;
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+            sm2_vfy_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
+            if (sm2_vfy_pctx == NULL) {
+                st = 0;
+                EVP_PKEY_CTX_free(sm2_pctx);
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+            /*
+             * No need to allow user to set an explicit ID here, just use
+             * the one defined in the 'draft-yang-tls-tl13-sm-suites' I-D.
+             */
+            if (EVP_PKEY_CTX_set1_id(sm2_pctx, SM2_ID, SM2_ID_LEN) != 1) {
+                st = 0;
+                EVP_PKEY_CTX_free(sm2_pctx);
+                EVP_PKEY_CTX_free(sm2_vfy_pctx);
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+
+            if (EVP_PKEY_CTX_set1_id(sm2_vfy_pctx, SM2_ID, SM2_ID_LEN) != 1) {
+                st = 0;
+                EVP_PKEY_CTX_free(sm2_pctx);
+                EVP_PKEY_CTX_free(sm2_vfy_pctx);
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+
+            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_ctx[testnum], sm2_pctx);
+            EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_vfy_ctx[testnum], sm2_vfy_pctx);
+
+            if (!EVP_DigestSignInit(loopargs[i].sm2_ctx[testnum], NULL,
+                                    EVP_sm3(), NULL, sm2_pkey)) {
+                st = 0;
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+            if (!EVP_DigestVerifyInit(loopargs[i].sm2_vfy_ctx[testnum], NULL,
+                                      EVP_sm3(), NULL, sm2_pkey)) {
+                st = 0;
+                EVP_PKEY_free(sm2_pkey);
+                break;
+            }
+            loopargs[i].sm2_pkey[testnum] = sm2_pkey;
+        }
+        if (st == 0) {
+            BIO_printf(bio_err, "SM2 failure.\n");
+            ERR_print_errors(bio_err);
+            rsa_count = 1;
+        } else {
+            for (i = 0; i < loopargs_len; i++) {
+                sm2_sigsize = loopargs[i].sigsize;
+                /* Perform SM2 signature test */
+                st = EVP_DigestSign(loopargs[i].sm2_ctx[testnum],
+                                    loopargs[i].buf2, &sm2_sigsize,
+                                    loopargs[i].buf, 20);
+                if (st == 0)
+                    break;
+            }
+            if (st == 0) {
+                BIO_printf(bio_err,
+                           "SM2 sign failure.  No SM2 sign will be done.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+            } else {
+                pkey_print_message("sign", test_sm2_curves[testnum].name,
+                                   sm2_c[testnum][0],
+                                   test_sm2_curves[testnum].bits, seconds.sm2);
+                Time_F(START);
+                count = run_benchmark(async_jobs, SM2_sign_loop, loopargs);
+                d = Time_F(STOP);
+
+                BIO_printf(bio_err,
+                           mr ? "+R8:%ld:%u:%s:%.2f\n" :
+                           "%ld %u bits %s signs in %.2fs \n",
+                           count, test_sm2_curves[testnum].bits,
+                           test_sm2_curves[testnum].name, d);
+                sm2_results[testnum][0] = (double)count / d;
+                rsa_count = count;
+            }
+
+            /* Perform SM2 verification test */
+            for (i = 0; i < loopargs_len; i++) {
+                st = EVP_DigestVerify(loopargs[i].sm2_vfy_ctx[testnum],
+                                      loopargs[i].buf2, loopargs[i].sigsize,
+                                      loopargs[i].buf, 20);
+                if (st != 1)
+                    break;
+            }
+            if (st != 1) {
+                BIO_printf(bio_err,
+                           "SM2 verify failure.  No SM2 verify will be done.\n");
+                ERR_print_errors(bio_err);
+                sm2_doit[testnum] = 0;
+            } else {
+                pkey_print_message("verify", test_sm2_curves[testnum].name,
+                                   sm2_c[testnum][1],
+                                   test_sm2_curves[testnum].bits, seconds.sm2);
+                Time_F(START);
+                count = run_benchmark(async_jobs, SM2_verify_loop, loopargs);
+                d = Time_F(STOP);
+                BIO_printf(bio_err,
+                           mr ? "+R9:%ld:%u:%s:%.2f\n"
+                           : "%ld %u bits %s verify in %.2fs\n",
+                           count, test_sm2_curves[testnum].bits,
+                           test_sm2_curves[testnum].name, d);
+                sm2_results[testnum][1] = (double)count / d;
+            }
+
+            if (rsa_count <= 1) {
+                /* if longer than 10s, don't do any more */
+                for (testnum++; testnum < SM2_NUM; testnum++)
+                    sm2_doit[testnum] = 0;
+            }
+        }
+    }
+# endif                         /* OPENSSL_NO_SM2 */
+
 #endif                          /* OPENSSL_NO_EC */
 #ifndef NO_FORK
  show_res:
@@ -3349,6 +3659,7 @@ int speed_main(int argc, char **argv)
         printf("%s ", BF_options());
 #endif
         printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
+        printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     }
 
     if (pr_header) {
@@ -3474,6 +3785,28 @@ int speed_main(int argc, char **argv)
                    1.0 / eddsa_results[k][0], 1.0 / eddsa_results[k][1],
                    eddsa_results[k][0], eddsa_results[k][1]);
     }
+
+# ifndef OPENSSL_NO_SM2
+    testnum = 1;
+    for (k = 0; k < OSSL_NELEM(sm2_doit); k++) {
+        if (!sm2_doit[k])
+            continue;
+        if (testnum && !mr) {
+            printf("%30ssign    verify    sign/s verify/s\n", " ");
+            testnum = 0;
+        }
+
+        if (mr)
+            printf("+F6:%u:%u:%s:%f:%f\n",
+                   k, test_sm2_curves[k].bits, test_sm2_curves[k].name,
+                   sm2_results[k][0], sm2_results[k][1]);
+        else
+            printf("%4u bits SM2 (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
+                   test_sm2_curves[k].bits, test_sm2_curves[k].name,
+                   1.0 / sm2_results[k][0], 1.0 / sm2_results[k][1],
+                   sm2_results[k][0], sm2_results[k][1]);
+    }
+# endif
 #endif
 
     ret = 0;
@@ -3499,6 +3832,24 @@ int speed_main(int argc, char **argv)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
         for (k = 0; k < EdDSA_NUM; k++)
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
+# ifndef OPENSSL_NO_SM2
+        for (k = 0; k < SM2_NUM; k++) {
+            EVP_PKEY_CTX *pctx = NULL;
+
+            /* free signing ctx */
+            if (loopargs[i].sm2_ctx[k] != NULL
+                    && (pctx = EVP_MD_CTX_pkey_ctx(loopargs[i].sm2_ctx[k])) != NULL)
+                EVP_PKEY_CTX_free(pctx);
+            EVP_MD_CTX_free(loopargs[i].sm2_ctx[k]);
+            /* free verification ctx */
+            if (loopargs[i].sm2_vfy_ctx[k] != NULL
+                    && (pctx = EVP_MD_CTX_pkey_ctx(loopargs[i].sm2_vfy_ctx[k])) != NULL)
+                EVP_PKEY_CTX_free(pctx);
+            EVP_MD_CTX_free(loopargs[i].sm2_vfy_ctx[k]);
+            /* free pkey */
+            EVP_PKEY_free(loopargs[i].sm2_pkey[k]);
+        }
+# endif
         OPENSSL_free(loopargs[i].secret_a);
         OPENSSL_free(loopargs[i].secret_b);
 #endif
@@ -3623,7 +3974,7 @@ static int do_multi(int multi, int size_num)
             close(fd[1]);
             mr = 1;
             usertime = 0;
-            free(fds);
+            OPENSSL_free(fds);
             return 0;
         }
         printf("Forked child %d\n", n);
@@ -3724,6 +4075,22 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 eddsa_results[k][1] += d;
             }
+#  ifndef OPENSSL_NO_SM2
+            else if (strncmp(buf, "+F7:", 4) == 0) {
+                int k;
+                double d;
+
+                p = buf + 4;
+                k = atoi(sstrsep(&p, sep));
+                sstrsep(&p, sep);
+
+                d = atof(sstrsep(&p, sep));
+                sm2_results[k][0] += d;
+
+                d = atof(sstrsep(&p, sep));
+                sm2_results[k][1] += d;
+            }
+#  endif /* OPENSSL_NO_SM2 */
 # endif
 
             else if (strncmp(buf, "+H:", 3) == 0) {
@@ -3735,7 +4102,7 @@ static int do_multi(int multi, int size_num)
 
         fclose(f);
     }
-    free(fds);
+    OPENSSL_free(fds);
     return 1;
 }
 #endif

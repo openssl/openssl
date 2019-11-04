@@ -103,7 +103,10 @@
 #        Performance increase of ~60%
 #        Based on submission from Suresh N. Chari of IBM
 
-$flavour = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /32/) {
 	$BITS=	32;
@@ -159,7 +162,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 
 $data=<<EOF;
 #--------------------------------------------------------------------

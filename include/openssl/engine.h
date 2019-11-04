@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ENGINE_H
-# define HEADER_ENGINE_H
+#ifndef OPENSSL_ENGINE_H
+# define OPENSSL_ENGINE_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ENGINE_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -24,7 +30,7 @@
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/symhacks.h>
 # include <openssl/x509.h>
 # include <openssl/engineerr.h>

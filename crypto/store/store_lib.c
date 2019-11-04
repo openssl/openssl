@@ -16,10 +16,11 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/trace.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
-#include "internal/store_int.h"
-#include "store_locl.h"
+#include "crypto/store.h"
+#include "store_local.h"
 
 struct ossl_store_ctx_st {
     const OSSL_STORE_LOADER *loader;
@@ -74,9 +75,14 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
 
     /* Try each scheme until we find one that could open the URI */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL)
+        OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
+            OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
             loader_ctx = loader->open(loader, uri, ui_method, ui_data);
+            OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
+        }
     }
+
     if (loader_ctx == NULL)
         goto err;
 
@@ -147,7 +153,7 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     return 1;
 }
 
-int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search)
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
 {
     if (ctx->loading) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
@@ -172,6 +178,7 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     if (OSSL_STORE_eof(ctx))
         return NULL;
 
+    OSSL_TRACE(STORE, "Loading next object\n");
     v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
 
     if (ctx->post_process != NULL && v != NULL) {
@@ -203,6 +210,10 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
         }
     }
 
+    if (v != NULL)
+        OSSL_TRACE1(STORE, "Got a %s\n",
+                    OSSL_STORE_INFO_type_string(OSSL_STORE_INFO_get_type(v)));
+
     return v;
 }
 
@@ -218,7 +229,10 @@ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
 
 int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
 {
-    int loader_ret = ctx->loader->close(ctx->loader_ctx);
+    int loader_ret;
+
+    OSSL_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
+    loader_ret = ctx->loader->close(ctx->loader_ctx);
 
     OPENSSL_free(ctx);
     return loader_ret;
@@ -228,7 +242,7 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
  * Functions to generate OSSL_STORE_INFOs, one function for each type we
  * support having in them as well as a generic constructor.
  *
- * In all cases, ownership of the object is transfered to the OSSL_STORE_INFO
+ * In all cases, ownership of the object is transferred to the OSSL_STORE_INFO
  * and will therefore be freed when the OSSL_STORE_INFO is freed.
  */
 static OSSL_STORE_INFO *store_info_new(int type, void *data)
@@ -569,7 +583,7 @@ int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
     return criterion->search_type;
 }
 
-X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion)
+X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->name;
 }

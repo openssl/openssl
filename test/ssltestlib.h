@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SSLTESTLIB_H
-# define HEADER_SSLTESTLIB_H
+#ifndef OSSL_TEST_SSLTESTLIB_H
+# define OSSL_TEST_SSLTESTLIB_H
 
 # include <openssl/ssl.h>
 
@@ -33,6 +33,9 @@ void bio_f_tls_dump_filter_free(void);
 const BIO_METHOD *bio_s_mempacket_test(void);
 void bio_s_mempacket_test_free(void);
 
+const BIO_METHOD *bio_s_always_retry(void);
+void bio_s_always_retry_free(void);
+
 /* Packet types - value 0 is reserved */
 #define INJECT_PACKET                   1
 #define INJECT_PACKET_IGNORE_REC_SEQ    2
@@ -53,4 +56,4 @@ typedef struct mempacket_st MEMPACKET;
 
 DEFINE_STACK_OF(MEMPACKET)
 
-#endif /* HEADER_SSLTESTLIB_H */
+#endif /* OSSL_TEST_SSLTESTLIB_H */

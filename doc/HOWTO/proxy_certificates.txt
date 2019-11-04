@@ -108,7 +108,7 @@ recognised:
         superfluous, and was removed.
 
   file  indicates that the text of the policy should really be taken from a
-        file.  The string is then really a file name.  This is useful for
+        file.  The string is then really a filename.  This is useful for
         policies that are large (more than a few lines, e.g. XML documents).
 
 The 'policy' setting can be split up in multiple lines like this:
@@ -255,7 +255,7 @@ Here is some skeleton code you can fill in:
 
                       /*
                        * process_rights() is supposed to be a procedure
-                       * that takes a string and it's length, interprets
+                       * that takes a string and its length, interprets
                        * it and sets the bits in the YOUR_RIGHTS pointed
                        * at by the third argument.
                        */

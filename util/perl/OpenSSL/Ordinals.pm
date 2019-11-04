@@ -342,8 +342,6 @@ sub _parse_platforms {
 #       if ($def =~ m{^__DragonFly__$})             { $platforms{$&} = $op; }
 #       if ($def =~ m{^__OpenBSD__$})               { $platforms{$&} = $op; }
 #       if ($def =~ m{^__NetBSD__$})                { $platforms{$&} = $op; }
-        if ($def =~
-            m{^OPENSSL_(EXPORT_VAR_AS_FUNCTION)$})  { $platforms{$1} = $op; }
         if ($def =~ m{^OPENSSL_SYS_})               { $platforms{$'} = $op; }
     }
 

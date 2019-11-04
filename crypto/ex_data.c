@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
 int do_ex_data_init(OPENSSL_CTX *ctx)
@@ -36,7 +36,7 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
     }
 
     global = openssl_ctx_get_ex_data_global(ctx);
-    if (global->ex_data_lock == NULL) {
+    if (global == NULL || global->ex_data_lock == NULL) {
         /*
          * This can happen in normal operation when using CRYPTO_mem_leaks().
          * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
@@ -49,8 +49,8 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
          return NULL;
     }
 
-    ip = &global->ex_data[class_index];
     CRYPTO_THREAD_write_lock(global->ex_data_lock);
+    ip = &global->ex_data[class_index];
     return ip;
 }
 
@@ -114,7 +114,7 @@ int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
-        goto err;
+        return 0;
 
     ip = get_and_lock(ctx, class_index);
     if (ip == NULL)
@@ -152,7 +152,7 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
-        goto err;
+        return -1;
 
     ip = get_and_lock(ctx, class_index);
     if (ip == NULL)
@@ -421,7 +421,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
     if (f->new_func == NULL)
         return 0;
 
-    f->new_func(obj, curval, ad, idx, f->argl, f->argp);
+    f->new_func(obj, NULL, ad, idx, f->argl, f->argp);
 
     return 1;
 }

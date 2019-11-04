@@ -33,8 +33,7 @@
 # instructions and improve single-block and short-input performance
 # with misaligned data.
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 {
 my ($inp,$out,$key,$rounds,$tmp,$mask) = map("%o$_",(0..5));

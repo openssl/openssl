@@ -8,7 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 /*
@@ -125,7 +125,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
          *         = a.
          *
          * (This is due to A.O.L. Atkin,
-         * <URL: http://listserv.nodak.edu/scripts/wa.exe?A2=ind9211&L=nmbrthry&O=T&P=562>,
+         * Subject: Square Roots and Cognate Matters modulo p=8n+5.
+         * URL: https://listserv.nodak.edu/cgi-bin/wa.exe?A2=ind9211&L=NMBRTHRY&P=4026
          * November 1992.)
          */
 
@@ -179,7 +180,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             if (!BN_set_word(y, i))
                 goto end;
         } else {
-            if (!BN_priv_rand(y, BN_num_bits(p), 0, 0))
+            if (!BN_priv_rand_ex(y, BN_num_bits(p), 0, 0, ctx))
                 goto end;
             if (BN_ucmp(y, p) >= 0) {
                 if (!(p->neg ? BN_add : BN_sub) (y, y, p))

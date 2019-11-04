@@ -15,7 +15,7 @@
 
 #include "point_448.h"
 #include "ed448.h"
-#include "curve448_lcl.h"
+#include "curve448_local.h"
 
 #define COFACTOR 4
 
@@ -501,9 +501,9 @@ struct smvt_control {
 };
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 3))
-# define NUMTRAILINGZEROS	__builtin_ctz
+# define NUMTRAILINGZEROS       __builtin_ctz
 #else
-# define NUMTRAILINGZEROS	numtrailingzeros
+# define NUMTRAILINGZEROS       numtrailingzeros
 static uint32_t numtrailingzeros(uint32_t i)
 {
     uint32_t tmp;

@@ -174,7 +174,7 @@ BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or -1 on failure.
 
 BIO_new_accept() returns a BIO or NULL on error.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example accepts two connections on port 4444, sends messages
 down each and finally closes both down.

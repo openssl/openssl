@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASYNCERR_H
-# define HEADER_ASYNCERR_H
+#ifndef OPENSSL_ASYNCERR_H
+# define OPENSSL_ASYNCERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_ASYNCERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,13 +29,15 @@ int ERR_load_ASYNC_strings(void);
 /*
  * ASYNC function codes.
  */
-# define ASYNC_F_ASYNC_CTX_NEW                            100
-# define ASYNC_F_ASYNC_INIT_THREAD                        101
-# define ASYNC_F_ASYNC_JOB_NEW                            102
-# define ASYNC_F_ASYNC_PAUSE_JOB                          103
-# define ASYNC_F_ASYNC_START_FUNC                         104
-# define ASYNC_F_ASYNC_START_JOB                          105
-# define ASYNC_F_ASYNC_WAIT_CTX_SET_WAIT_FD               106
+# if !OPENSSL_API_3
+#  define ASYNC_F_ASYNC_CTX_NEW                            0
+#  define ASYNC_F_ASYNC_INIT_THREAD                        0
+#  define ASYNC_F_ASYNC_JOB_NEW                            0
+#  define ASYNC_F_ASYNC_PAUSE_JOB                          0
+#  define ASYNC_F_ASYNC_START_FUNC                         0
+#  define ASYNC_F_ASYNC_START_JOB                          0
+#  define ASYNC_F_ASYNC_WAIT_CTX_SET_WAIT_FD               0
+# endif
 
 /*
  * ASYNC reason codes.

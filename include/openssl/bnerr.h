@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BNERR_H
-# define HEADER_BNERR_H
+#ifndef OPENSSL_BNERR_H
+# define OPENSSL_BNERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BNERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # ifdef  __cplusplus
 extern "C"
@@ -23,55 +29,58 @@ int ERR_load_BN_strings(void);
 /*
  * BN function codes.
  */
-# define BN_F_BNRAND                                      127
-# define BN_F_BNRAND_RANGE                                138
-# define BN_F_BN_BLINDING_CONVERT_EX                      100
-# define BN_F_BN_BLINDING_CREATE_PARAM                    128
-# define BN_F_BN_BLINDING_INVERT_EX                       101
-# define BN_F_BN_BLINDING_NEW                             102
-# define BN_F_BN_BLINDING_UPDATE                          103
-# define BN_F_BN_BN2DEC                                   104
-# define BN_F_BN_BN2HEX                                   105
-# define BN_F_BN_COMPUTE_WNAF                             142
-# define BN_F_BN_CTX_GET                                  116
-# define BN_F_BN_CTX_NEW                                  106
-# define BN_F_BN_CTX_START                                129
-# define BN_F_BN_DIV                                      107
-# define BN_F_BN_DIV_RECP                                 130
-# define BN_F_BN_EXP                                      123
-# define BN_F_BN_EXPAND_INTERNAL                          120
-# define BN_F_BN_GENCB_NEW                                143
-# define BN_F_BN_GENERATE_DSA_NONCE                       140
-# define BN_F_BN_GENERATE_PRIME_EX                        141
-# define BN_F_BN_GF2M_MOD                                 131
-# define BN_F_BN_GF2M_MOD_EXP                             132
-# define BN_F_BN_GF2M_MOD_MUL                             133
-# define BN_F_BN_GF2M_MOD_SOLVE_QUAD                      134
-# define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR                  135
-# define BN_F_BN_GF2M_MOD_SQR                             136
-# define BN_F_BN_GF2M_MOD_SQRT                            137
-# define BN_F_BN_LSHIFT                                   145
-# define BN_F_BN_MOD_EXP2_MONT                            118
-# define BN_F_BN_MOD_EXP_MONT                             109
-# define BN_F_BN_MOD_EXP_MONT_CONSTTIME                   124
-# define BN_F_BN_MOD_EXP_MONT_WORD                        117
-# define BN_F_BN_MOD_EXP_RECP                             125
-# define BN_F_BN_MOD_EXP_SIMPLE                           126
-# define BN_F_BN_MOD_INVERSE                              110
-# define BN_F_BN_MOD_INVERSE_NO_BRANCH                    139
-# define BN_F_BN_MOD_LSHIFT_QUICK                         119
-# define BN_F_BN_MOD_SQRT                                 121
-# define BN_F_BN_MONT_CTX_NEW                             149
-# define BN_F_BN_MPI2BN                                   112
-# define BN_F_BN_NEW                                      113
-# define BN_F_BN_POOL_GET                                 147
-# define BN_F_BN_RAND                                     114
-# define BN_F_BN_RAND_RANGE                               122
-# define BN_F_BN_RECP_CTX_NEW                             150
-# define BN_F_BN_RSHIFT                                   146
-# define BN_F_BN_SET_WORDS                                144
-# define BN_F_BN_STACK_PUSH                               148
-# define BN_F_BN_USUB                                     115
+# if !OPENSSL_API_3
+#  define BN_F_BNRAND                                      0
+#  define BN_F_BNRAND_RANGE                                0
+#  define BN_F_BN_BLINDING_CONVERT_EX                      0
+#  define BN_F_BN_BLINDING_CREATE_PARAM                    0
+#  define BN_F_BN_BLINDING_INVERT_EX                       0
+#  define BN_F_BN_BLINDING_NEW                             0
+#  define BN_F_BN_BLINDING_UPDATE                          0
+#  define BN_F_BN_BN2DEC                                   0
+#  define BN_F_BN_BN2HEX                                   0
+#  define BN_F_BN_COMPUTE_WNAF                             0
+#  define BN_F_BN_CTX_GET                                  0
+#  define BN_F_BN_CTX_NEW                                  0
+#  define BN_F_BN_CTX_NEW_EX                               0
+#  define BN_F_BN_CTX_START                                0
+#  define BN_F_BN_DIV                                      0
+#  define BN_F_BN_DIV_RECP                                 0
+#  define BN_F_BN_EXP                                      0
+#  define BN_F_BN_EXPAND_INTERNAL                          0
+#  define BN_F_BN_GENCB_NEW                                0
+#  define BN_F_BN_GENERATE_DSA_NONCE                       0
+#  define BN_F_BN_GENERATE_PRIME_EX                        0
+#  define BN_F_BN_GF2M_MOD                                 0
+#  define BN_F_BN_GF2M_MOD_EXP                             0
+#  define BN_F_BN_GF2M_MOD_MUL                             0
+#  define BN_F_BN_GF2M_MOD_SOLVE_QUAD                      0
+#  define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR                  0
+#  define BN_F_BN_GF2M_MOD_SQR                             0
+#  define BN_F_BN_GF2M_MOD_SQRT                            0
+#  define BN_F_BN_LSHIFT                                   0
+#  define BN_F_BN_MOD_EXP2_MONT                            0
+#  define BN_F_BN_MOD_EXP_MONT                             0
+#  define BN_F_BN_MOD_EXP_MONT_CONSTTIME                   0
+#  define BN_F_BN_MOD_EXP_MONT_WORD                        0
+#  define BN_F_BN_MOD_EXP_RECP                             0
+#  define BN_F_BN_MOD_EXP_SIMPLE                           0
+#  define BN_F_BN_MOD_INVERSE                              0
+#  define BN_F_BN_MOD_INVERSE_NO_BRANCH                    0
+#  define BN_F_BN_MOD_LSHIFT_QUICK                         0
+#  define BN_F_BN_MOD_SQRT                                 0
+#  define BN_F_BN_MONT_CTX_NEW                             0
+#  define BN_F_BN_MPI2BN                                   0
+#  define BN_F_BN_NEW                                      0
+#  define BN_F_BN_POOL_GET                                 0
+#  define BN_F_BN_RAND                                     0
+#  define BN_F_BN_RAND_RANGE                               0
+#  define BN_F_BN_RECP_CTX_NEW                             0
+#  define BN_F_BN_RSHIFT                                   0
+#  define BN_F_BN_SET_WORDS                                0
+#  define BN_F_BN_STACK_PUSH                               0
+#  define BN_F_BN_USUB                                     0
+# endif
 
 /*
  * BN reason codes.
@@ -92,6 +101,7 @@ int ERR_load_BN_strings(void);
 # define BN_R_NOT_INITIALIZED                             107
 # define BN_R_NO_INVERSE                                  108
 # define BN_R_NO_SOLUTION                                 116
+# define BN_R_NO_SUITABLE_DIGEST                          120
 # define BN_R_PRIVATE_KEY_TOO_LARGE                       117
 # define BN_R_P_IS_NOT_PRIME                              112
 # define BN_R_TOO_MANY_ITERATIONS                         113

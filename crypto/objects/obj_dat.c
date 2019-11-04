@@ -8,15 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
-#include "internal/objects.h"
+#include "crypto/objects.h"
 #include <openssl/bn.h>
-#include "internal/asn1_int.h"
-#include "obj_lcl.h"
+#include "crypto/asn1.h"
+#include "obj_local.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
@@ -228,20 +228,23 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
             return NULL;
         }
         return (ASN1_OBJECT *)&(nid_objs[n]);
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj;
+
+    OBJerr(OBJ_F_OBJ_NID2OBJ, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 const char *OBJ_nid2sn(int n)
@@ -255,20 +258,23 @@ const char *OBJ_nid2sn(int n)
             return NULL;
         }
         return nid_objs[n].sn;
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj->sn;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj->sn;
+
+    OBJerr(OBJ_F_OBJ_NID2SN, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 const char *OBJ_nid2ln(int n)
@@ -282,20 +288,23 @@ const char *OBJ_nid2ln(int n)
             return NULL;
         }
         return nid_objs[n].ln;
-    } else if (added == NULL)
-        return NULL;
-    else {
-        ad.type = ADDED_NID;
-        ad.obj = &ob;
-        ob.nid = n;
-        adp = lh_ADDED_OBJ_retrieve(added, &ad);
-        if (adp != NULL)
-            return adp->obj->ln;
-        else {
-            OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
-            return NULL;
-        }
     }
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+    if (added == NULL)
+        return NULL;
+
+    ad.type = ADDED_NID;
+    ad.obj = &ob;
+    ob.nid = n;
+    adp = lh_ADDED_OBJ_retrieve(added, &ad);
+    if (adp != NULL)
+        return adp->obj->ln;
+
+    OBJerr(OBJ_F_OBJ_NID2LN, OBJ_R_UNKNOWN_NID);
+    return NULL;
 }
 
 static int obj_cmp(const ASN1_OBJECT *const *ap, const unsigned int *bp)
@@ -326,6 +335,9 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 
     if (a->length == 0)
         return NID_undef;
+
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     if (added != NULL) {
         ad.type = ADDED_DATA;
@@ -544,6 +556,9 @@ int OBJ_ln2nid(const char *s)
     ADDED_OBJ ad, *adp;
     const unsigned int *op;
 
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
     o.ln = s;
     if (added != NULL) {
         ad.type = ADDED_LNAME;
@@ -565,6 +580,9 @@ int OBJ_sn2nid(const char *s)
     ADDED_OBJ ad, *adp;
     const unsigned int *op;
 
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+
     o.sn = s;
     if (added != NULL) {
         ad.type = ADDED_SNAME;
@@ -585,52 +603,32 @@ const void *OBJ_bsearch_(const void *key, const void *base, int num, int size,
     return OBJ_bsearch_ex_(key, base, num, size, cmp, 0);
 }
 
-const void *OBJ_bsearch_ex_(const void *key, const void *base_, int num,
+const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
                             int size,
                             int (*cmp) (const void *, const void *),
                             int flags)
 {
-    const char *base = base_;
-    int l, h, i = 0, c = 0;
-    const char *p = NULL;
+    const char *p = ossl_bsearch(key, base, num, size, cmp, flags);
 
-    if (num == 0)
-        return NULL;
-    l = 0;
-    h = num;
-    while (l < h) {
-        i = (l + h) / 2;
-        p = &(base[i * size]);
-        c = (*cmp) (key, p);
-        if (c < 0)
-            h = i;
-        else if (c > 0)
-            l = i + 1;
-        else
-            break;
-    }
 #ifdef CHARSET_EBCDIC
     /*
      * THIS IS A KLUDGE - Because the *_obj is sorted in ASCII order, and I
      * don't have perl (yet), we revert to a *LINEAR* search when the object
      * wasn't found in the binary search.
      */
-    if (c != 0) {
+    if (p == NULL) {
+        const char *base_ = base;
+        int l, h, i = 0, c = 0;
+
         for (i = 0; i < num; ++i) {
-            p = &(base[i * size]);
+            p = &(base_[i * size]);
             c = (*cmp) (key, p);
-            if (c == 0 || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
+            if (c == 0
+                || (c < 0 && (flags & OBJ_BSEARCH_VALUE_ON_NOMATCH)))
                 return p;
         }
     }
 #endif
-    if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
-        p = NULL;
-    else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH)) {
-        while (i > 0 && (*cmp) (key, &(base[(i - 1) * size])) == 0)
-            i--;
-        p = &(base[i * size]);
-    }
     return p;
 }
 

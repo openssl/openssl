@@ -20,9 +20,12 @@
 #include <openssl/dh.h>
 #include <openssl/cmac.h>
 #include <openssl/engine.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
 
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include "internal/provider.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
@@ -37,7 +40,7 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return 0;
-    if (!pkey->ameth || !pkey->ameth->pkey_security_bits)
+    if (pkey->ameth == NULL || pkey->ameth->pkey_security_bits == NULL)
         return -2;
     return pkey->ameth->pkey_security_bits(pkey);
 }
@@ -318,8 +321,18 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
 #ifndef OPENSSL_NO_CMAC
+# ifndef OPENSSL_NO_ENGINE
+    const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
+# endif
+    const char *cipher_name = EVP_CIPHER_name(cipher);
+    const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
+    OPENSSL_CTX *libctx =
+        prov == NULL ? NULL : ossl_provider_library_context(prov);
     EVP_PKEY *ret = EVP_PKEY_new();
-    EVP_MAC_CTX *cmctx = EVP_MAC_CTX_new_id(EVP_MAC_CMAC);
+    EVP_MAC *cmac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_CMAC, NULL);
+    EVP_MAC_CTX *cmctx = cmac != NULL ? EVP_MAC_CTX_new(cmac) : NULL;
+    OSSL_PARAM params[4];
+    size_t paramsn = 0;
 
     if (ret == NULL
             || cmctx == NULL
@@ -328,9 +341,21 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-    if (EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_ENGINE, e) <= 0
-        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_CIPHER, cipher) <= 0
-        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_KEY, priv, len) <= 0) {
+# ifndef OPENSSL_NO_ENGINE
+    if (engine_id != NULL)
+        params[paramsn++] =
+            OSSL_PARAM_construct_utf8_string("engine", (char *)engine_id, 0);
+# endif
+
+    params[paramsn++] =
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                                         (char *)cipher_name, 0);
+    params[paramsn++] =
+        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                          (char *)priv, len);
+    params[paramsn] = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_set_params(cmctx, params)) {
         EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -341,6 +366,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
  err:
     EVP_PKEY_free(ret);
     EVP_MAC_CTX_free(cmctx);
+    EVP_MAC_free(cmac);
     return NULL;
 #else
     EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
@@ -467,7 +493,7 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 
 RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
-    if (pkey->type != EVP_PKEY_RSA) {
+    if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA_PSS) {
         EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
         return NULL;
     }
@@ -613,6 +639,9 @@ void EVP_PKEY_free(EVP_PKEY *x)
 static void EVP_PKEY_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
+
+    evp_keymgmt_clear_pkey_cache(x);
+
     if (x->ameth && x->ameth->pkey_free) {
         x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;

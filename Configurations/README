@@ -165,6 +165,13 @@ In each table entry, the following keys are significant:
                            that use dlopen() et al but do not have
                            fcntl.h), "DL" (shl_load() et al), "WIN32"
                            and "VMS".
+        asm_arch        => The architecture to be used for compiling assembly
+                           source.  This acts as a selector in build.info files.
+        uplink_arch     => The architecture to be used for compiling uplink
+                           source.  This acts as a selector in build.info files.
+                           This is separate from asm_arch because it's compiled
+                           even when 'no-asm' is given, even though it contains
+                           assembler source.
         perlasm_scheme  => The perlasm method used to create the
                            assembler files used when compiling with
                            assembler implementations.
@@ -229,63 +236,6 @@ In each table entry, the following keys are significant:
                                                 up of 'unsigned char's;
                            RC4_INT              RC4 key schedule is made
                                                 up of 'unsigned int's;
-                           EXPORT_VAR_AS_FN     for shared libraries,
-                                                export vars as
-                                                accessor functions.
-
-        apps_aux_src    => Extra source to build apps/openssl and other
-                           apps, as needed by the target and that can be
-                           collected in a library.
-        apps_init_src   => Init source to build apps/openssl and other
-                           apps, as needed by the target.  This code
-                           cannot be placed in a library, as the rest
-                           of the code isn't expected to link to it
-                           explicitly.
-        cpuid_asm_src   => assembler implementation of cpuid code as
-                           well as OPENSSL_cleanse().
-                           Default to mem_clr.c
-        bn_asm_src      => Assembler implementation of core bignum
-                           functions.
-                           Defaults to bn_asm.c
-        ec_asm_src      => Assembler implementation of core EC
-                           functions.
-        des_asm_src     => Assembler implementation of core DES
-                           encryption functions.
-                           Defaults to 'des_enc.c fcrypt_b.c'
-        aes_asm_src     => Assembler implementation of core AES
-                           functions.
-                           Defaults to 'aes_core.c aes_cbc.c'
-        bf_asm_src      => Assembler implementation of core BlowFish
-                           functions.
-                           Defaults to 'bf_enc.c'
-        md5_asm_src     => Assembler implementation of core MD5
-                           functions.
-        sha1_asm_src    => Assembler implementation of core SHA1,
-                           functions, and also possibly SHA256 and
-                           SHA512 ones.
-        cast_asm_src    => Assembler implementation of core CAST
-                           functions.
-                           Defaults to 'c_enc.c'
-        rc4_asm_src     => Assembler implementation of core RC4
-                           functions.
-                           Defaults to 'rc4_enc.c rc4_skey.c'
-        rmd160_asm_src  => Assembler implementation of core RMD160
-                           functions.
-        rc5_asm_src     => Assembler implementation of core RC5
-                           functions.
-                           Defaults to 'rc5_enc.c'
-        wp_asm_src      => Assembler implementation of core WHIRLPOOL
-                           functions.
-        cmll_asm_src    => Assembler implementation of core CAMELLIA
-                           functions.
-                           Defaults to 'camellia.c cmll_misc.c cmll_cbc.c'
-        modes_asm_src   => Assembler implementation of cipher modes,
-                           currently the functions gcm_gmult_4bit and
-                           gcm_ghash_4bit.
-        padlock_asm_src => Assembler implementation of core parts of
-                           the padlock engine.  This is mandatory on
-                           any platform where the padlock engine might
-                           actually be built.
 
 
 [1] as part of the target configuration, one can have a key called

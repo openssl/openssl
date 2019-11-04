@@ -32,7 +32,7 @@ grained search of objects.
 
 OSSL_STORE_supports_search() checks if the loader of the given OSSL_STORE
 context supports the given search type.
-See L<OSSL_STORE_SEARCH/SUPPORED CRITERION TYPES> for information on the
+See L<OSSL_STORE_SEARCH(3)/SUPPORTED CRITERION TYPES> for information on the
 supported search criterion types.
 
 OSSL_STORE_expect() and OSSL_STORE_find I<must> be called before the first

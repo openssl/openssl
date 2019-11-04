@@ -21,8 +21,8 @@
 #include <string.h>
 
 #include "internal/cryptlib.h"
-#include "internal/bn_int.h"
-#include "ec_lcl.h"
+#include "crypto/bn.h"
+#include "ec_local.h"
 #include "internal/refcount.h"
 
 #if BN_BITS2 != 64
@@ -813,7 +813,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         return 0;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new();
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
         if (ctx == NULL)
             goto err;
     }
@@ -1689,6 +1689,9 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         ecp_nistz256_inv_mod_ord,                   /* can be #define-d NULL */
         0,                                          /* blind_coordinates */
         0,                                          /* ladder_pre */

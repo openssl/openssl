@@ -6,7 +6,8 @@ test/recipes/, named {nn}-test_{name}.t, where {nn} is a two digit number and
 {name} is a unique name of your choice.
 
 Please note that if a test involves a new testing executable, you will need to
-do some additions in test/Makefile.  More on this later.
+do some additions in test/build.info. Please refer to the section "Changes to 
+test/build.info" below.
 
 
 Naming conventions
@@ -100,7 +101,7 @@ to modify the include paths and source files if you don't want to use the
 basic test framework:
 
     SOURCE[{name}]={name}.c
-    INCLUDE[{name}]=.. ../include
+    INCLUDE[{name}]=.. ../include ../apps/include
     DEPEND[{name}]=../libcrypto libtestutil.a
 
 Generic form of C test executables

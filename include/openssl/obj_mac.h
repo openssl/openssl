@@ -49,22 +49,6 @@
 #define NID_gmac                1195
 #define OBJ_gmac                OBJ_iso,0L,9797L,3L,4L
 
-#define SN_kmac128              "KMAC128"
-#define LN_kmac128              "kmac128"
-#define NID_kmac128             1196
-
-#define SN_kmac256              "KMAC256"
-#define LN_kmac256              "kmac256"
-#define NID_kmac256             1197
-
-#define SN_blake2bmac           "BLAKE2BMAC"
-#define LN_blake2bmac           "blake2bmac"
-#define NID_blake2bmac          1201
-
-#define SN_blake2smac           "BLAKE2SMAC"
-#define LN_blake2smac           "blake2smac"
-#define NID_blake2smac          1202
-
 #define SN_hmac_md5             "HMAC-MD5"
 #define LN_hmac_md5             "hmac-md5"
 #define NID_hmac_md5            780
@@ -1316,12 +1300,12 @@
 #define OBJ_ms_efs              1L,3L,6L,1L,4L,1L,311L,10L,3L,4L
 
 #define SN_ms_smartcard_login           "msSmartcardLogin"
-#define LN_ms_smartcard_login           "Microsoft Smartcardlogin"
+#define LN_ms_smartcard_login           "Microsoft Smartcard Login"
 #define NID_ms_smartcard_login          648
 #define OBJ_ms_smartcard_login          1L,3L,6L,1L,4L,1L,311L,20L,2L,2L
 
 #define SN_ms_upn               "msUPN"
-#define LN_ms_upn               "Microsoft Universal Principal Name"
+#define LN_ms_upn               "Microsoft User Principal Name"
 #define NID_ms_upn              649
 #define OBJ_ms_upn              1L,3L,6L,1L,4L,1L,311L,20L,2L,3L
 
@@ -1872,6 +1856,21 @@
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
 
+#define SN_XmppAddr             "id-on-xmppAddr"
+#define LN_XmppAddr             "XmppAddr"
+#define NID_XmppAddr            1209
+#define OBJ_XmppAddr            OBJ_id_on,5L
+
+#define SN_SRVName              "id-on-dnsSRV"
+#define LN_SRVName              "SRVName"
+#define NID_SRVName             1210
+#define OBJ_SRVName             OBJ_id_on,7L
+
+#define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
+#define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
+#define NID_id_on_SmtpUTF8Mailbox               1208
+#define OBJ_id_on_SmtpUTF8Mailbox               OBJ_id_on,9L
+
 #define SN_id_pda_dateOfBirth           "id-pda-dateOfBirth"
 #define NID_id_pda_dateOfBirth          348
 #define OBJ_id_pda_dateOfBirth          OBJ_id_pda,1L
@@ -2139,15 +2138,25 @@
 #define NID_ripemd160WithRSA            119
 #define OBJ_ripemd160WithRSA            1L,3L,36L,3L,3L,1L,2L
 
+#define SN_blake2bmac           "BLAKE2BMAC"
+#define LN_blake2bmac           "blake2bmac"
+#define NID_blake2bmac          1201
+#define OBJ_blake2bmac          1L,3L,6L,1L,4L,1L,1722L,12L,2L,1L
+
+#define SN_blake2smac           "BLAKE2SMAC"
+#define LN_blake2smac           "blake2smac"
+#define NID_blake2smac          1202
+#define OBJ_blake2smac          1L,3L,6L,1L,4L,1L,1722L,12L,2L,2L
+
 #define SN_blake2b512           "BLAKE2b512"
 #define LN_blake2b512           "blake2b512"
 #define NID_blake2b512          1056
-#define OBJ_blake2b512          1L,3L,6L,1L,4L,1L,1722L,12L,2L,1L,16L
+#define OBJ_blake2b512          OBJ_blake2bmac,16L
 
 #define SN_blake2s256           "BLAKE2s256"
 #define LN_blake2s256           "blake2s256"
 #define NID_blake2s256          1057
-#define OBJ_blake2s256          1L,3L,6L,1L,4L,1L,1722L,12L,2L,2L,8L
+#define OBJ_blake2s256          OBJ_blake2smac,8L
 
 #define SN_sxnet                "SXNetID"
 #define LN_sxnet                "Strong Extranet ID"
@@ -2996,6 +3005,16 @@
 #define LN_hmac_sha3_512                "hmac-sha3-512"
 #define NID_hmac_sha3_512               1105
 #define OBJ_hmac_sha3_512               OBJ_nist_hashalgs,16L
+
+#define SN_kmac128              "KMAC128"
+#define LN_kmac128              "kmac128"
+#define NID_kmac128             1196
+#define OBJ_kmac128             OBJ_nist_hashalgs,19L
+
+#define SN_kmac256              "KMAC256"
+#define LN_kmac256              "kmac256"
+#define NID_kmac256             1197
+#define OBJ_kmac256             OBJ_nist_hashalgs,20L
 
 #define OBJ_dsa_with_sha2               OBJ_nistAlgorithms,3L
 
@@ -4306,7 +4325,7 @@
 
 #define SN_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15                "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15"
 #define NID_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               1183
-#define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               OBJ_id_tc26_wrap_gostr3412_2015_magma,1L
+#define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik,1L
 
 #define SN_id_tc26_constants            "id-tc26-constants"
 #define NID_id_tc26_constants           994
@@ -5003,6 +5022,14 @@
 #define SN_sskdf                "SSKDF"
 #define LN_sskdf                "sskdf"
 #define NID_sskdf               1205
+
+#define SN_x942kdf              "X942KDF"
+#define LN_x942kdf              "x942kdf"
+#define NID_x942kdf             1207
+
+#define SN_x963kdf              "X963KDF"
+#define LN_x963kdf              "x963kdf"
+#define NID_x963kdf             1206
 
 #define SN_id_pkinit            "id-pkinit"
 #define NID_id_pkinit           1031

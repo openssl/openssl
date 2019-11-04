@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "rand_lcl.h"
+#include "rand_local.h"
 
 /*
  * Implementation of NIST SP 800-90A CTR DRBG.
@@ -354,6 +354,7 @@ static int drbg_ctr_uninstantiate(RAND_DRBG *drbg)
 {
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx);
     EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_df);
+    EVP_CIPHER_free(drbg->data.ctr.cipher);
     OPENSSL_cleanse(&drbg->data.ctr, sizeof(drbg->data.ctr));
     return 1;
 }
@@ -369,6 +370,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
 {
     RAND_DRBG_CTR *ctr = &drbg->data.ctr;
     size_t keylen;
+    EVP_CIPHER *cipher = NULL;
 
     switch (drbg->type) {
     default:
@@ -376,17 +378,22 @@ int drbg_ctr_init(RAND_DRBG *drbg)
         return 0;
     case NID_aes_128_ctr:
         keylen = 16;
-        ctr->cipher = EVP_aes_128_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-128-ECB", "");
         break;
     case NID_aes_192_ctr:
         keylen = 24;
-        ctr->cipher = EVP_aes_192_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-192-ECB", "");
         break;
     case NID_aes_256_ctr:
         keylen = 32;
-        ctr->cipher = EVP_aes_256_ecb();
+        cipher = EVP_CIPHER_fetch(drbg->libctx, "AES-256-ECB", "");
         break;
     }
+    if (cipher == NULL)
+        return 0;
+
+    EVP_CIPHER_free(ctr->cipher);
+    ctr->cipher = cipher;
 
     drbg->meth = &drbg_ctr_meth;
 

@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include <openssl/bn.h>
-#include "dh_locl.h"
+#include "dh_local.h"
 #include <openssl/engine.h>
 
 int DH_set_method(DH *dh, const DH_METHOD *meth)
@@ -209,6 +209,7 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         dh->length = BN_num_bits(q);
     }
 
+    dh->dirty_cnt++;
     return 1;
 }
 
@@ -234,14 +235,15 @@ void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
     if (pub_key != NULL) {
-        BN_free(dh->pub_key);
+        BN_clear_free(dh->pub_key);
         dh->pub_key = pub_key;
     }
     if (priv_key != NULL) {
-        BN_free(dh->priv_key);
+        BN_clear_free(dh->priv_key);
         dh->priv_key = priv_key;
     }
 
+    dh->dirty_cnt++;
     return 1;
 }
 

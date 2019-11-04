@@ -51,7 +51,7 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
     char *end;
 
     if (strncmp(p, "MASK:", 5) == 0) {
-        if (!p[5])
+        if (p[5] == '\0')
             return 0;
         mask = strtoul(p + 5, &end, 0);
         if (*end)
@@ -128,6 +128,9 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
     int idx;
     ASN1_STRING_TABLE fnd;
+
+    /* "stable" can be impacted by config, so load the config file first */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     fnd.nid = nid;
     if (stable) {

@@ -354,7 +354,7 @@ SSL_set_session_id_context              354	3_0_0	EXIST::FUNCTION:
 SSL_new                                 355	3_0_0	EXIST::FUNCTION:
 TLSv1_1_method                          356	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
 SSL_CTX_get_cert_store                  357	3_0_0	EXIST::FUNCTION:
-SSL_CTX_load_verify_locations           358	3_0_0	EXIST::FUNCTION:
+SSL_CTX_load_verify_locations           358	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 SSL_SESSION_print_fp                    359	3_0_0	EXIST::FUNCTION:STDIO
 SSL_get0_dane_tlsa                      360	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_generate_session_id         361	3_0_0	EXIST::FUNCTION:
@@ -504,3 +504,10 @@ SSL_set_async_callback                  504	3_0_0	EXIST::FUNCTION:
 SSL_set_async_callback_arg              505	3_0_0	EXIST::FUNCTION:
 SSL_get_async_status                    506	3_0_0	EXIST::FUNCTION:
 SSL_sendfile                            507	3_0_0	EXIST::FUNCTION:
+OSSL_default_cipher_list                508	3_0_0	EXIST::FUNCTION:
+OSSL_default_ciphersuites               509	3_0_0	EXIST::FUNCTION:
+SSL_add_store_cert_subjects_to_stack    510	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_default_verify_store        511	3_0_0	EXIST::FUNCTION:
+SSL_CTX_load_verify_file                512	3_0_0	EXIST::FUNCTION:
+SSL_CTX_load_verify_dir                 513	3_0_0	EXIST::FUNCTION:
+SSL_CTX_load_verify_store               514	3_0_0	EXIST::FUNCTION:

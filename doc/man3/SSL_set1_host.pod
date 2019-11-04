@@ -19,8 +19,8 @@ SSL server verification parameters
 These functions configure server hostname checks in the SSL client.
 
 SSL_set1_host() sets the expected DNS hostname to B<name> clearing
-any previously specified host name or names.  If B<name> is NULL,
-or the empty string the list of hostnames is cleared, and name
+any previously specified hostname.  If B<name> is NULL
+or the empty string, the list of hostnames is cleared and name
 checks are not performed on the peer certificate.  When a non-empty
 B<name> is specified, certificate verification automatically checks
 the peer hostname via L<X509_check_host(3)> with B<flags> as specified
@@ -71,7 +71,7 @@ applicable (as with RFC7671 DANE-EE(3)), or no trusted peername was
 matched.  Otherwise, it returns the matched peername.  To determine
 whether verification succeeded call L<SSL_get_verify_result(3)>.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Suppose "smtp.example.com" is the MX host of the domain "example.com".
 The calls below will arrange to match either the MX hostname or the

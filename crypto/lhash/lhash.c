@@ -13,20 +13,20 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/err.h>
-#include "internal/ctype.h"
-#include "internal/lhash.h"
-#include "lhash_lcl.h"
+#include "crypto/ctype.h"
+#include "crypto/lhash.h"
+#include "lhash_local.h"
 
 /*
  * A hashing implementation that appears to be based on the linear hashing
- * alogrithm:
+ * algorithm:
  * https://en.wikipedia.org/wiki/Linear_hashing
  *
  * Litwin, Witold (1980), "Linear hashing: A new tool for file and table
  * addressing", Proc. 6th Conference on Very Large Databases: 212-223
- * http://hackthology.com/pdfs/Litwin-1980-Linear_Hashing.pdf
+ * https://hackthology.com/pdfs/Litwin-1980-Linear_Hashing.pdf
  *
- * From the wikipedia article "Linear hashing is used in the BDB Berkeley
+ * From the Wikipedia article "Linear hashing is used in the BDB Berkeley
  * database system, which in turn is used by many software systems such as
  * OpenLDAP, using a C implementation derived from the CACM article and first
  * published on the Usenet in 1988 by Esmond Pitt."

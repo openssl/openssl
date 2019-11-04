@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -18,7 +18,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 #include <openssl/des.h>
 #include <openssl/engine.h>
 
@@ -680,9 +680,20 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 #endif
 
 /* Some helpers for PEM_read_bio_ex(). */
-static int sanitize_line(char *linebuf, int len, unsigned int flags)
+static int sanitize_line(char *linebuf, int len, unsigned int flags, int first_call)
 {
     int i;
+    if (first_call) {
+        /* Other BOMs imply unsupported multibyte encoding,
+         * so don't strip them and let the error raise */
+        const unsigned char utf8_bom[3] = {0xEF, 0xBB, 0xBF};
+
+        if (len > 3 && memcmp(linebuf, utf8_bom, 3) == 0) {
+            memmove(linebuf, linebuf + 3, len - 3);
+            linebuf[len - 3] = 0;
+            len -= 3;
+        }
+    }
 
     if (flags & PEM_FLAG_EAY_COMPATIBLE) {
         /* Strip trailing whitespace */
@@ -727,6 +738,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
     char *linebuf;
     int ret = 0;
     int len;
+    int first_call = 1;
 
     /*
      * Need to hold trailing NUL (accounted for by BIO_gets() and the newline
@@ -747,7 +759,8 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
         }
 
         /* Strip trailing garbage and standardize ending. */
-        len = sanitize_line(linebuf, len, flags & ~PEM_FLAG_ONLY_B64);
+        len = sanitize_line(linebuf, len, flags & ~PEM_FLAG_ONLY_B64, first_call);
+        first_call = 0;
 
         /* Allow leading empty or non-matching lines. */
     } while (strncmp(linebuf, beginstr, BEGINLEN) != 0
@@ -819,7 +832,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         }
         if (!strncmp(linebuf, endstr, ENDLEN) || got_header == IN_HEADER)
             flags_mask &= ~PEM_FLAG_ONLY_B64;
-        len = sanitize_line(linebuf, len, flags & flags_mask);
+        len = sanitize_line(linebuf, len, flags & flags_mask, 0);
 
         /* Check for end of header. */
         if (linebuf[0] == '\n') {

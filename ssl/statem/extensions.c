@@ -10,8 +10,8 @@
 #include <string.h>
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
-#include "../ssl_locl.h"
-#include "statem_locl.h"
+#include "../ssl_local.h"
+#include "statem_local.h"
 #include "internal/cryptlib.h"
 
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
@@ -46,9 +46,7 @@ static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent);
 static int init_psk_kex_modes(SSL *s, unsigned int context);
-#ifndef OPENSSL_NO_EC
 static int final_key_share(SSL *s, unsigned int context, int sent);
-#endif
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context);
 #endif
@@ -94,7 +92,7 @@ typedef struct extensions_definition_st {
 /*
  * Definitions of all built-in extensions. NOTE: Changes in the number or order
  * of these extensions should be mirrored with equivalent changes to the
- * indexes ( TLSEXT_IDX_* ) defined in ssl_locl.h.
+ * indexes ( TLSEXT_IDX_* ) defined in ssl_local.h.
  * Each extension has an initialiser, a client and
  * server side parser and a finaliser. The initialiser is called (if the
  * extension is relevant to the given context) even if we did not see the
@@ -162,6 +160,10 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
         final_ec_pt_formats
     },
+#else
+    INVALID_EXTENSION,
+#endif
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     {
         /*
          * "supported_groups" is spread across several specifications.
@@ -196,7 +198,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_ctos_supported_groups, NULL
     },
 #else
-    INVALID_EXTENSION,
     INVALID_EXTENSION,
 #endif
     {
@@ -322,7 +323,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_psk_kex_modes, tls_parse_ctos_psk_kex_modes, NULL, NULL,
         tls_construct_ctos_psk_kex_modes, NULL
     },
-#ifndef OPENSSL_NO_EC
     {
         /*
          * Must be in this list after supported_groups. We need that to have
@@ -336,7 +336,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_key_share, tls_construct_ctos_key_share,
         final_key_share
     },
-#endif
     {
         /* Must be after key_share */
         TLSEXT_TYPE_cookie,
@@ -630,7 +629,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                 && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
                      && type == TLSEXT_TYPE_cryptopro_bug)
 #endif
-								) {
+                                                                ) {
             SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
                      SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_UNSOLICITED_EXTENSION);
             goto err;
@@ -1040,18 +1039,18 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
      */
     if (s->ext.ecpointformats != NULL
             && s->ext.ecpointformats_len > 0
-            && s->session->ext.ecpointformats != NULL
-            && s->session->ext.ecpointformats_len > 0
+            && s->ext.peer_ecpointformats != NULL
+            && s->ext.peer_ecpointformats_len > 0
             && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
         size_t i;
-        unsigned char *list = s->session->ext.ecpointformats;
+        unsigned char *list = s->ext.peer_ecpointformats;
 
-        for (i = 0; i < s->session->ext.ecpointformats_len; i++) {
+        for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
             if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
                 break;
         }
-        if (i == s->session->ext.ecpointformats_len) {
+        if (i == s->ext.peer_ecpointformats_len) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_FINAL_EC_PT_FORMATS,
                      SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
             return 0;
@@ -1266,9 +1265,9 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-#ifndef OPENSSL_NO_EC
 static int final_key_share(SSL *s, unsigned int context, int sent)
 {
+#if !defined(OPENSSL_NO_TLS1_3)
     if (!SSL_IS_TLS13(s))
         return 1;
 
@@ -1426,10 +1425,9 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
             return 0;
         }
     }
-
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
     return 1;
 }
-#endif
 
 static int init_psk_kex_modes(SSL *s, unsigned int context)
 {
@@ -1447,8 +1445,13 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
     unsigned char *early_secret;
+#ifdef CHARSET_EBCDIC
+    static const unsigned char resumption_label[] = { 0x72, 0x65, 0x64, 0x20, 0x62, 0x69, 0x6E, 0x64, 0x65, 0x72, 0x00 };
+    static const unsigned char external_label[]   = { 0x65, 0x78, 0x74, 0x20, 0x62, 0x69, 0x6E, 0x64, 0x65, 0x72, 0x00 };
+#else
     static const unsigned char resumption_label[] = "res binder";
     static const unsigned char external_label[] = "ext binder";
+#endif
     const unsigned char *label;
     size_t bindersize, labelsize, hashsize;
     int hashsizei = EVP_MD_size(md);
@@ -1647,9 +1650,9 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
             || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
             || !s->ext.early_data_ok
             || s->hello_retry_request != SSL_HRR_NONE
-            || (s->ctx->allow_early_data_cb != NULL
-                && !s->ctx->allow_early_data_cb(s,
-                                         s->ctx->allow_early_data_cb_data))) {
+            || (s->allow_early_data_cb != NULL
+                && !s->allow_early_data_cb(s,
+                                         s->allow_early_data_cb_data))) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;

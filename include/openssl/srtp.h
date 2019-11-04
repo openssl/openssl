@@ -13,8 +13,14 @@
  * Copyright (C) 2006, Network Resonance, Inc. Copyright (C) 2011, RTFM, Inc.
  */
 
-#ifndef HEADER_D1_SRTP_H
-# define HEADER_D1_SRTP_H
+#ifndef OPENSSL_SRTP_H
+# define OPENSSL_SRTP_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_D1_SRTP_H
+# endif
 
 # include <openssl/ssl.h>
 

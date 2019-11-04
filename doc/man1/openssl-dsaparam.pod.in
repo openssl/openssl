@@ -1,0 +1,120 @@
+=pod
+
+=begin comment
+{- join("\n", @autowarntext) -}
+
+=end comment
+
+=head1 NAME
+
+openssl-dsaparam - DSA parameter manipulation and generation
+
+=head1 SYNOPSIS
+
+B<openssl dsaparam>
+[B<-help>]
+[B<-inform> B<DER>|B<PEM>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
+[B<-noout>]
+[B<-text>]
+[B<-C>]
+[B<-genkey>]
+[B<-engine> I<id>]
+[B<-verbose>]
+{- $OpenSSL::safe::opt_r_synopsis -}
+[I<numbits>]
+
+=head1 DESCRIPTION
+
+This command is used to manipulate or generate DSA parameter files.
+
+DSA parameter generation can be a slow process and as a result the same set of
+DSA parameters is often used to generate several distinct keys.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+
+The input and formats; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
+This is compatible with RFC 2459 B<DSS-Parms> structure.
+
+=item B<-in> I<filename>
+
+This specifies the input filename to read parameters from or standard input if
+this option is not specified. If the I<numbits> parameter is included then
+this option will be ignored.
+
+=item B<-out> I<filename>
+
+This specifies the output filename parameters to. Standard output is used
+if this option is not present. The output filename should B<not> be the same
+as the input filename.
+
+=item B<-noout>
+
+This option inhibits the output of the encoded version of the parameters.
+
+=item B<-text>
+
+This option prints out the DSA parameters in human readable form.
+
+=item B<-C>
+
+This option converts the parameters into C code. The parameters can then
+be loaded by calling the get_dsaXXX() function.
+
+=item B<-genkey>
+
+This option will generate a DSA either using the specified or generated
+parameters.
+
+=item B<-engine> I<id>
+
+Specifying an engine (by its unique I<id> string) will cause this command
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
+
+{- $OpenSSL::safe::opt_r_item -}
+
+=item I<numbits>
+
+This option specifies that a parameter set should be generated of size
+I<numbits>. It must be the last option. If this option is included then
+the input file (if any) is ignored.
+
+=back
+
+=head1 SEE ALSO
+
+L<openssl(1)>,
+L<openssl-gendsa(1)>,
+L<openssl-dsa(1)>,
+L<openssl-genrsa(1)>,
+L<openssl-rsa(1)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

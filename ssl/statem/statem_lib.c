@@ -11,8 +11,8 @@
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
-#include "../ssl_locl.h"
-#include "statem_locl.h"
+#include "../ssl_local.h"
+#include "statem_local.h"
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
@@ -169,9 +169,19 @@ int tls_setup_handshake(SSL *s)
 static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
                                     void **hdata, size_t *hdatalen)
 {
-    static const char *servercontext = "TLS 1.3, server CertificateVerify";
-    static const char *clientcontext = "TLS 1.3, client CertificateVerify";
-
+#ifdef CHARSET_EBCDIC
+    static const char servercontext[] = { 0x54, 0x4c, 0x53, 0x20, 0x31, 0x2e,
+     0x33, 0x2c, 0x20, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x20, 0x43, 0x65,
+     0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x56, 0x65, 0x72,
+     0x69, 0x66, 0x79, 0x00 };
+    static const char clientcontext[] = { 0x54, 0x4c, 0x53, 0x20, 0x31, 0x2e,
+     0x33, 0x2c, 0x20, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x20, 0x43, 0x65,
+     0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x56, 0x65, 0x72,
+     0x69, 0x66, 0x79, 0x00 };
+#else
+    static const char servercontext[] = "TLS 1.3, server CertificateVerify";
+    static const char clientcontext[] = "TLS 1.3, client CertificateVerify";
+#endif
     if (SSL_IS_TLS13(s)) {
         size_t hashlen;
 
@@ -286,9 +296,13 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
     if (s->version == SSL3_VERSION) {
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                (int)s->session->master_key_length,
-                                s->session->master_key)
+            /*
+             * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
+             * with a call to ssl3_digest_master_key_set_params()
+             */
+            || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                               (int)s->session->master_key_length,
+                               s->session->master_key) <= 0
             || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -473,10 +487,14 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+        /*
+         * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
+         * with a call to ssl3_digest_master_key_set_params()
+         */
         if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-                || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                    (int)s->session->master_key_length,
-                                    s->session->master_key)) {
+                || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                   (int)s->session->master_key_length,
+                                    s->session->master_key) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                      ERR_R_EVP_LIB);
             goto err;
@@ -643,12 +661,9 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     /*
      * If we get a request for us to update our sending keys too then, we need
      * to additionally send a KeyUpdate message. However that message should
-     * not also request an update (otherwise we get into an infinite loop). We
-     * ignore a request for us to update our sending keys too if we already
-     * sent close_notify.
+     * not also request an update (otherwise we get into an infinite loop).
      */
-    if (updatetype == SSL_KEY_UPDATE_REQUESTED
-            && (s->shutdown & SSL_SENT_SHUTDOWN) == 0)
+    if (updatetype == SSL_KEY_UPDATE_REQUESTED)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
 
     if (!tls13_update_key(s, 0)) {
@@ -1024,14 +1039,25 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
     int cleanuphand = s->statem.cleanuphand;
 
     if (clearbufs) {
-        if (!SSL_IS_DTLS(s)) {
+        if (!SSL_IS_DTLS(s)
+#ifndef OPENSSL_NO_SCTP
             /*
-             * We don't do this in DTLS because we may still need the init_buf
+             * RFC6083: SCTP provides a reliable and in-sequence transport service for DTLS
+             * messages that require it. Therefore, DTLS procedures for retransmissions
+             * MUST NOT be used.
+             * Hence the init_buf can be cleared when DTLS over SCTP as transport is used.
+             */
+            || BIO_dgram_is_sctp(SSL_get_wbio(s))
+#endif
+            ) {
+            /*
+             * We don't do this in DTLS over UDP because we may still need the init_buf
              * in case there are any unexpected retransmits
              */
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
         }
+
         if (!ssl_free_wbio_buffer(s)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_FINISH_HANDSHAKE,
                      ERR_R_INTERNAL_ERROR);
@@ -2132,7 +2158,6 @@ int ssl_set_client_hello_version(SSL *s)
  * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
  * 1) or 0 otherwise.
  */
-#ifndef OPENSSL_NO_EC
 int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
                   size_t num_groups, int checkallow)
 {
@@ -2146,14 +2171,13 @@ int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
 
         if (group_id == group
                 && (!checkallow
-                    || tls_curve_allowed(s, group, SSL_SECOP_CURVE_CHECK))) {
+                    || tls_group_allowed(s, group, SSL_SECOP_CURVE_CHECK))) {
             return 1;
         }
     }
 
     return 0;
 }
-#endif
 
 /* Replace ClientHello1 in the transcript hash with a synthetic message */
 int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,

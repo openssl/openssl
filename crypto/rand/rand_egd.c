@@ -38,7 +38,7 @@ int RAND_egd_bytes(const char *path, int bytes)
 
 # else
 
-#  include OPENSSL_UNISTD
+#  include <unistd.h>
 #  include <stddef.h>
 #  include <sys/types.h>
 #  include <sys/socket.h>

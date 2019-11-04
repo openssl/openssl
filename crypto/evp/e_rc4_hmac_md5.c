@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <internal/cryptlib.h>
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -19,7 +20,7 @@
 # include <openssl/objects.h>
 # include <openssl/rc4.h>
 # include <openssl/md5.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 
 typedef struct {
     RC4_KEY ks;
@@ -51,7 +52,7 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-# if     defined(RC4_ASM) && defined(MD5_ASM) &&     (	   \
+# if     defined(RC4_ASM) && defined(MD5_ASM) &&     (     \
         defined(__x86_64)       || defined(__x86_64__)  || \
         defined(_M_AMD64)       || defined(_M_X64)      )
 #  define STITCHED_CALL
@@ -71,7 +72,6 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                                        * rc4_md5-x86_64.pl */
         md5_off = MD5_CBLOCK - key->md.num, blocks;
     unsigned int l;
-    extern unsigned int OPENSSL_ia32cap_P[];
 # endif
     size_t plen = key->payload_length;
 

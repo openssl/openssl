@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BUFFER_H
-# define HEADER_BUFFER_H
+#ifndef OPENSSL_BUFFER_H
+# define OPENSSL_BUFFER_H
+# pragma once
 
-# include <openssl/ossl_typ.h>
-# ifndef HEADER_CRYPTO_H
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_BUFFER_H
+# endif
+
+# include <openssl/types.h>
+# ifndef OPENSSL_CRYPTO_H
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/buffererr.h>
@@ -24,16 +30,14 @@ extern "C" {
 # include <stddef.h>
 # include <sys/types.h>
 
-/*
- * These names are outdated as of OpenSSL 1.1; a future release
- * will move them to be deprecated.
- */
-# define BUF_strdup(s) OPENSSL_strdup(s)
-# define BUF_strndup(s, size) OPENSSL_strndup(s, size)
-# define BUF_memdup(data, size) OPENSSL_memdup(data, size)
-# define BUF_strlcpy(dst, src, size)  OPENSSL_strlcpy(dst, src, size)
-# define BUF_strlcat(dst, src, size) OPENSSL_strlcat(dst, src, size)
-# define BUF_strnlen(str, maxlen) OPENSSL_strnlen(str, maxlen)
+# if !OPENSSL_API_3
+#  define BUF_strdup(s) OPENSSL_strdup(s)
+#  define BUF_strndup(s, size) OPENSSL_strndup(s, size)
+#  define BUF_memdup(data, size) OPENSSL_memdup(data, size)
+#  define BUF_strlcpy(dst, src, size)  OPENSSL_strlcpy(dst, src, size)
+#  define BUF_strlcat(dst, src, size) OPENSSL_strlcat(dst, src, size)
+#  define BUF_strnlen(str, maxlen) OPENSSL_strnlen(str, maxlen)
+# endif
 
 struct buf_mem_st {
     size_t length;              /* current number of bytes */

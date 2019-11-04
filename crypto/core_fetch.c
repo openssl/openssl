@@ -24,62 +24,54 @@ struct construct_data_st {
     void *mcm_data;
 };
 
-static int ossl_method_construct_this(OSSL_PROVIDER *provider, void *cbdata)
+static void ossl_method_construct_this(OSSL_PROVIDER *provider,
+                                       const OSSL_ALGORITHM *algo,
+                                       int no_store, void *cbdata)
 {
     struct construct_data_st *data = cbdata;
-    int no_store = 0;    /* Assume caching is ok */
-    const OSSL_ALGORITHM *map =
-        ossl_provider_query_operation(provider, data->operation_id, &no_store);
+    void *method = NULL;
 
-    while (map->algorithm_name != NULL) {
-        const OSSL_ALGORITHM *thismap = map++;
-        void *method = NULL;
+    if ((method = data->mcm->construct(algo->algorithm_names,
+                                       algo->implementation, provider,
+                                       data->mcm_data)) == NULL)
+        return;
 
-        if ((method = data->mcm->construct(thismap->algorithm_name,
-                                           thismap->implementation, provider,
-                                           data->mcm_data)) == NULL)
-            continue;
+    /*
+     * Note regarding putting the method in stores:
+     *
+     * we don't need to care if it actually got in or not here.
+     * If it didn't get in, it will simply not be available when
+     * ossl_method_construct() tries to get it from the store.
+     *
+     * It is *expected* that the put function increments the refcnt
+     * of the passed method.
+     */
 
+    if (data->force_store || !no_store) {
         /*
-         * Note regarding putting the method in stores:
-         *
-         * we don't need to care if it actually got in or not here.
-         * If it didn't get in, it will simply not be available when
-         * ossl_method_construct() tries to get it from the store.
-         *
-         * It is *expected* that the put function increments the refcnt
-         * of the passed method.
+         * If we haven't been told not to store,
+         * add to the global store
          */
-
-        if (data->force_store || !no_store) {
-            /*
-             * If we haven't been told not to store,
-             * add to the global store
-             */
-            data->mcm->put(data->libctx, NULL,
-                           thismap->property_definition,
-                           method, data->mcm_data);
-        }
-
-        data->mcm->put(data->libctx, data->store,
-                       thismap->property_definition,
-                       method, data->mcm_data);
-
-        /* refcnt-- because we're dropping the reference */
-        data->mcm->destruct(method, data->mcm_data);
+        data->mcm->put(data->libctx, NULL, method, provider,
+                       data->operation_id, algo->algorithm_names,
+                       algo->property_definition, data->mcm_data);
     }
 
-    return 1;
+    data->mcm->put(data->libctx, data->store, method, provider,
+                   data->operation_id, algo->algorithm_names,
+                   algo->property_definition, data->mcm_data);
+
+    /* refcnt-- because we're dropping the reference */
+    data->mcm->destruct(method, data->mcm_data);
 }
 
 void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
-                            const char *name, const char *propquery,
                             int force_store,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data)
 {
     void *method = NULL;
 
-    if ((method = mcm->get(libctx, NULL, propquery, mcm_data)) == NULL) {
+    if ((method = mcm->get(libctx, NULL, mcm_data)) == NULL) {
         struct construct_data_st cbdata;
 
         /*
@@ -94,10 +86,10 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
         cbdata.force_store = force_store;
         cbdata.mcm = mcm;
         cbdata.mcm_data = mcm_data;
-        ossl_provider_forall_loaded(libctx, ossl_method_construct_this,
-                                    &cbdata);
+        ossl_algorithm_do_all(libctx, operation_id, NULL,
+                              ossl_method_construct_this, &cbdata);
 
-        method = mcm->get(libctx, cbdata.store, propquery, mcm_data);
+        method = mcm->get(libctx, cbdata.store, mcm_data);
         mcm->dealloc_tmp_store(cbdata.store);
     }
 

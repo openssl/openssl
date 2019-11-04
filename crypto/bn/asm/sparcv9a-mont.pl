@@ -62,8 +62,10 @@
 # key length, more for longer keys] on USI&II cores and 30-80% - on
 # USIII&IV.
 
-$output = pop;
-open STDOUT,">$output";
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+
+$output and open STDOUT,">$output";
 
 $fname="bn_mul_mont_fpu";
 

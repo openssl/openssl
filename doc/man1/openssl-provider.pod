@@ -1,0 +1,62 @@
+=pod
+
+=head1 NAME
+
+openssl-provider - load and query providers
+
+=head1 SYNOPSIS
+
+B<openssl provider>
+[B<-help>]
+[B<-v>]
+[B<-vv>]
+[B<-vvv>]
+[I<provider> ...]
+
+=head1 DESCRIPTION
+
+This command is used to query the capabilities of the
+specified I<provider>'s.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-v> B<-vv> B<-vvv>
+
+Provides information about each specified provider.
+The first flag lists the names of all algorithms each provider
+implements; the second lists them by category; the third adds
+information on what parameters each of them can handle.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_MODULES>
+
+The path to the modules directory, where one can expect provider
+modules to be located.
+
+=back
+
+=head1 SEE ALSO
+
+L<config(5)>
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

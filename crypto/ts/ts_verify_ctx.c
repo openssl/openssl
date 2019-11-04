@@ -10,7 +10,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
-#include "ts_lcl.h"
+#include "ts_local.h"
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
@@ -60,7 +60,7 @@ X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s)
     return ctx->store;
 }
 
-STACK_OF(X509) *TS_VERIFY_CTS_set_certs(TS_VERIFY_CTX *ctx,
+STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx,
                                         STACK_OF(X509) *certs)
 {
     ctx->certs = certs;

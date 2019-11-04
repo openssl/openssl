@@ -14,6 +14,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
 
 #undef BUFSIZE
 #define BUFSIZE 1024*8
@@ -28,8 +29,8 @@ const OPTIONS mac_options[] = {
     {OPT_HELP_STR, 1, '-', "mac_name\t\t MAC algorithm (See list "
                            "-mac-algorithms)"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm control parameters in n:v form. "
-                                "See 'Supported Controls' in the EVP_MAC_ docs"},
+    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
+                                "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
     {"in", OPT_IN, '<', "Input file to MAC (default is stdin)"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-', "Output in binary format (Default is hexadecimal "
@@ -37,29 +38,11 @@ const OPTIONS mac_options[] = {
     {NULL}
 };
 
-static int mac_ctrl_string(EVP_MAC_CTX *ctx, const char *value)
-{
-    int rv;
-    char *stmp, *vtmp = NULL;
-
-    stmp = OPENSSL_strdup(value);
-    if (stmp == NULL)
-        return -1;
-    vtmp = strchr(stmp, ':');
-    if (vtmp != NULL) {
-        *vtmp = 0;
-        vtmp++;
-    }
-    rv = EVP_MAC_ctrl_str(ctx, stmp, vtmp);
-    OPENSSL_free(stmp);
-    return rv;
-}
-
 int mac_main(int argc, char **argv)
 {
     int ret = 1;
     char *prog;
-    const EVP_MAC *mac = NULL;
+    EVP_MAC *mac = NULL;
     OPTION_CHOICE o;
     EVP_MAC_CTX *ctx = NULL;
     STACK_OF(OPENSSL_STRING) *opts = NULL;
@@ -109,7 +92,7 @@ opthelp:
         goto opthelp;
     }
 
-    mac = EVP_get_macbyname(argv[0]);
+    mac = EVP_MAC_fetch(NULL, argv[0], NULL);
     if (mac == NULL) {
         BIO_printf(bio_err, "Invalid MAC name %s\n", argv[0]);
         goto opthelp;
@@ -120,14 +103,21 @@ opthelp:
         goto err;
 
     if (opts != NULL) {
-        for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
-            char *opt = sk_OPENSSL_STRING_value(opts, i);
-            if (mac_ctrl_string(ctx, opt) <= 0) {
-                BIO_printf(bio_err, "MAC parameter error '%s'\n", opt);
-                ERR_print_errors(bio_err);
-                goto err;
-            }
+        int ok = 1;
+        OSSL_PARAM *params =
+            app_params_new_from_opts(opts, EVP_MAC_settable_ctx_params(mac));
+
+        if (params == NULL)
+            goto err;
+
+        if (!EVP_MAC_CTX_set_params(ctx, params)) {
+            BIO_printf(bio_err, "MAC parameter error\n");
+            ERR_print_errors(bio_err);
+            ok = 0;
         }
+        app_params_free(params);
+        if (!ok)
+            goto err;
     }
 
     /* Use text mode for stdin */
@@ -146,7 +136,6 @@ opthelp:
         goto err;
     }
 
-
     for (;;) {
         i = BIO_read(in, (char *)buf, BUFSIZE);
         if (i < 0) {
@@ -161,7 +150,7 @@ opthelp:
         }
     }
 
-    if (!EVP_MAC_final(ctx, NULL, &len)) {
+    if (!EVP_MAC_final(ctx, NULL, &len, 0)) {
         BIO_printf(bio_err, "EVP_MAC_final failed\n");
         goto err;
     }
@@ -170,7 +159,7 @@ opthelp:
         goto err;
     }
 
-    if (!EVP_MAC_final(ctx, buf, &len)) {
+    if (!EVP_MAC_final(ctx, buf, &len, BUFSIZE)) {
         BIO_printf(bio_err, "EVP_MAC_final failed\n");
         goto err;
     }
@@ -195,5 +184,6 @@ err:
     BIO_free(in);
     BIO_free(out);
     EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
     return ret;
 }

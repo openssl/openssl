@@ -1,0 +1,109 @@
+=pod
+
+=head1 NAME
+
+evp_keymgmt_importdomparams, evp_keymgmt_gendomparams,
+evp_keymgmt_freedomparams,
+evp_keymgmt_exportdomparams,
+evp_keymgmt_importdomparams_types, evp_keymgmt_exportdomparams_types,
+evp_keymgmt_importkey, evp_keymgmt_genkey, evp_keymgmt_loadkey,
+evp_keymgmt_freekey,
+evp_keymgmt_exportkey,
+evp_keymgmt_importkey_types, evp_keymgmt_exportkey_types
+- internal KEYMGMT support functions
+
+=head1 SYNOPSIS
+
+ #include "crypto/evp.h"
+
+ void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
+                                const OSSL_PARAM params[]);
+ void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
+                             const OSSL_PARAM params[]);
+ void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt, void *provdomparams);
+ int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
+                              void *provdomparams, OSSL_PARAM params[]);
+ const OSSL_PARAM *evp_keymgmt_importdomparams_types(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *evp_keymgmt_exportdomparams_types(const EVP_KEYMGMT *keymgmt);
+
+ void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
+                             const OSSL_PARAM params[]);
+ void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
+                          const OSSL_PARAM params[]);
+ void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
+                           void *id, size_t idlen);
+ void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
+ int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
+                           OSSL_PARAM params[]);
+ const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
+
+=head1 DESCRIPTION
+
+All these functions are helpers to call the provider's corresponding
+function.
+
+evp_keymgmt_importdomparams() calls the method's importdomparams() function.
+
+evp_keymgmt_gendomparams() calls the method's gendomparams() function.
+
+evp_keymgmt_freedomparams() calls the method's freedomparams() function.
+
+evp_keymgmt_exportdomparams() calls the method's exportdomparams()
+function.
+
+evp_keymgmt_importdomparams_types() calls the method's
+importdomparams_types() function.
+
+evp_keymgmt_exportdomparams_types() calls the method's
+exportdomparams_types() function.
+
+evp_keymgmt_importkey() calls the method's importkey()
+function.
+
+evp_keymgmt_genkey() calls the method's genkey() function.
+
+evp_keymgmt_loadkey() calls the method's loadkey() function.
+
+evp_keymgmt_freekey() calls the method's freekey() function.
+
+evp_keymgmt_exportkey() calls the method's exportkey()
+function.
+
+evp_keymgmt_importkey_types() calls the method's importkey_types() function.
+
+evp_keymgmt_exportkey_types() calls the method's exportkey_types() function.
+
+=head1 RETURN VALUES
+
+evp_keymgmt_importdomparams(), evp_keymgmt_gendomparams() return a pointer
+to a provider owned set of domparams parameters, or NULL on error.
+
+evp_keymgmt_importkey(), evp_keymgmt_genkey(), evp_keymgmt_loadkey() return
+a pointer to a provider owned key, or NULL on error.
+
+evp_keymgmt_exportdomparams() and evp_keymgmt_exportkey() return 1 on success,
+or 0 on error.
+
+evp_keymgmt_importdomparams_types(), evp_keymgmt_exportdomparams_types()
+return parameter descriptor for importing and exporting domparams
+parameters, or NULL if there are no such descriptors.
+
+evp_keymgmt_importkey_types() and evp_keymgmt_exportkey_types()
+return parameter descriptor for importing and exporting keys, or NULL
+if there are no such descriptors.
+
+=head1 HISTORY
+
+The functions described here were all added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CORE_H
-# define OSSL_CORE_H
+#ifndef OPENSSL_CORE_H
+# define OPENSSL_CORE_H
 
 # include <stddef.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -43,7 +43,7 @@ struct ossl_dispatch_st {
  * tables remain tables with function pointers only.
  *
  * This is used whenever we need to pass things like a table of error reason
- * codes <-> reason string maps, parameter name <-> parameter type maps, ...
+ * codes <-> reason string maps, ...
  *
  * Usage determines which field works as key if any, rather than field order.
  *
@@ -55,13 +55,13 @@ struct ossl_item_st {
 };
 
 /*
- * Type to tie together algorithm name, property definition string and
+ * Type to tie together algorithm names, property definition string and
  * the algorithm implementation in the form of a dispatch table.
  *
- * An array of these is always terminated by algorithm_name == NULL
+ * An array of these is always terminated by algorithm_names == NULL
  */
 struct ossl_algorithm_st {
-    const char *algorithm_name;      /* key */
+    const char *algorithm_names;     /* key */
     const char *property_definition; /* key */
     const OSSL_DISPATCH *implementation;
 };
@@ -77,7 +77,7 @@ struct ossl_param_st {
     unsigned int data_type;      /* declare what kind of content is in buffer */
     void *data;                  /* value being passed in or out */
     size_t data_size;            /* data size */
-    size_t *return_size;         /* OPTIONAL: address to content size */
+    size_t return_size;          /* returned content size */
 };
 
 /* Currently supported OSSL_PARAM data types */
@@ -142,6 +142,19 @@ struct ossl_param_st {
  * data and its location are constant.
  */
 # define OSSL_PARAM_OCTET_PTR            7
+
+/*
+ * Typedef for the thread stop handling callback. Used both internally and by
+ * providers.
+ *
+ * Providers may register for notifications about threads stopping by
+ * registering a callback to hear about such events. Providers register the
+ * callback using the OSSL_FUNC_CORE_THREAD_START function in the |in| dispatch
+ * table passed to OSSL_provider_init(). The arg passed back to a provider will
+ * be the provider side context object.
+ */
+typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
+
 
 /*-
  * Provider entry point

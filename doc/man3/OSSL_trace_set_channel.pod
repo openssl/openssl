@@ -1,5 +1,7 @@
 =pod
 
+=for openssl foreign manuals: atexit(3)
+
 =head1 NAME
 
 OSSL_trace_set_channel, OSSL_trace_set_prefix, OSSL_trace_set_suffix,
@@ -212,7 +214,7 @@ the following:
      BIO_dump(trc_out, bar, sizeof(bar));
  } OSSL_TRACE_END(TLS);
 
-=head1 Simple example
+=head2 Simple example
 
 An example with just a channel and constant prefix / suffix.
 
@@ -297,7 +299,7 @@ functions described here are inoperational, i.e. will do nothing.
 
 OSSL_trace_set_channel(), OSSL_trace_set_prefix(),
 OSSL_trace_set_suffix(), and OSSL_trace_set_callback() were all added
-in OpenSSL 3.0.0.
+in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

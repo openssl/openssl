@@ -123,6 +123,8 @@ static SSL_SESSION *psksess = NULL;
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
+static char http_server_binmode = 0; /* for now: 0/1 = default/binary */
+
 #ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk,
@@ -179,9 +181,6 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     return 0;
 }
 #endif
-
-#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
-#define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
 
 static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
                                size_t identity_len, SSL_SESSION **sess)
@@ -468,7 +467,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
         BIO_printf(p->biodebug, "Hostname in TLS extension: \"");
         while ((uc = *cp++) != 0)
             BIO_printf(p->biodebug,
-                       isascii(uc) && isprint(uc) ? "%c" : "\\x%02x", uc);
+                       (((uc) & ~127) == 0) && isprint(uc) ? "%c" : "\\x%02x", uc);
         BIO_printf(p->biodebug, "\"\n");
     }
 
@@ -736,7 +735,9 @@ typedef enum OPTION_choice {
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH, OPT_NO_CACHE,
     OPT_EXT_CACHE, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE,
-    OPT_VERIFYCAFILE, OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
+    OPT_VERIFYCAFILE,
+    OPT_CASTORE, OPT_NOCASTORE, OPT_CHAINCASTORE, OPT_VERIFYCASTORE,
+    OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
@@ -752,6 +753,7 @@ typedef enum OPTION_choice {
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
+    OPT_HTTP_SERVER_BINMODE,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -807,10 +809,13 @@ const OPTIONS s_server_options[] = {
     {"state", OPT_STATE, '-', "Print the SSL states"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store URI"},
     {"nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)"},
     {"quiet", OPT_QUIET, '-', "No server output"},
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
@@ -844,8 +849,12 @@ const OPTIONS s_server_options[] = {
      "second certificate chain file in PEM format"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
      "use dir as certificate store path to build CA certificate chain"},
+    {"chainCAstore", OPT_CHAINCASTORE, ':',
+     "use URI as certificate store to build CA certificate chain"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
      "use dir as certificate store path to verify CA certificate"},
+    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
+     "use URI as certificate store to verify CA certificate"},
     {"no_cache", OPT_NO_CACHE, '-', "Disable session cache"},
     {"ext_cache", OPT_EXT_CACHE, '-',
      "Disable internal cache, setup and use external cache"},
@@ -966,6 +975,7 @@ const OPTIONS s_server_options[] = {
      "The number of TLSv1.3 session tickets that a server will automatically  issue" },
     {"anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)"},
     {"no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection"},
+    {"http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -985,9 +995,11 @@ int s_server_main(int argc, char *argv[])
     STACK_OF(X509_CRL) *crls = NULL;
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    const char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    const char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL;
     char *dpassarg = NULL, *dpass = NULL;
-    char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
+    char *passarg = NULL, *pass = NULL;
+    char *vfyCApath = NULL, *vfyCAfile = NULL, *vfyCAstore = NULL;
     char *crl_file = NULL, *prog;
 #ifdef AF_UNIX
     int unlink_unix_path = 0;
@@ -999,14 +1011,14 @@ int s_server_main(int argc, char *argv[])
     int no_dhe = 0;
 #endif
     int nocert = 0, ret = 1;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
     int rev = 0, naccept = -1, sdebug = 0;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
     char *host = NULL;
-    char *port = BUF_strdup(PORT);
+    char *port = OPENSSL_strdup(PORT);
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1155,7 +1167,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef AF_UNIX
         case OPT_UNIX:
             socket_family = AF_UNIX;
-            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+            OPENSSL_free(host); host = OPENSSL_strdup(opt_arg());
             OPENSSL_free(port); port = NULL;
             break;
         case OPT_UNLINK:
@@ -1256,6 +1268,18 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_VERIFYCAPATH:
             vfyCApath = opt_arg();
+            break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
+            break;
+        case OPT_CHAINCASTORE:
+            chCAstore = opt_arg();
+            break;
+        case OPT_VERIFYCASTORE:
+            vfyCAstore = opt_arg();
             break;
         case OPT_NO_CACHE:
             no_cache = 1;
@@ -1595,6 +1619,9 @@ int s_server_main(int argc, char *argv[])
             if (max_early_data == -1)
                 max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
             break;
+        case OPT_HTTP_SERVER_BINMODE:
+            http_server_binmode = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1876,7 +1903,8 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
-    if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
+    if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -1888,7 +1916,9 @@ int s_server_main(int argc, char *argv[])
 
     ssl_ctx_add_crls(ctx, crls, 0);
 
-    if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+    if (!ssl_load_stores(ctx,
+                         vfyCApath, vfyCAfile, vfyCAstore,
+                         chCApath, chCAfile, chCAstore,
                          crls, crl_download)) {
         BIO_printf(bio_err, "Error loading store locations\n");
         ERR_print_errors(bio_err);
@@ -1937,8 +1967,8 @@ int s_server_main(int argc, char *argv[])
         if (async)
             SSL_CTX_set_mode(ctx2, SSL_MODE_ASYNC);
 
-        if (!ctx_set_verify_locations(ctx2, CAfile, CApath, noCAfile,
-                                      noCApath)) {
+        if (!ctx_set_verify_locations(ctx2, CAfile, noCAfile, CApath,
+                                      noCApath, CAstore, noCAstore)) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -2956,6 +2986,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 #endif
     int width;
     fd_set readfds;
+    const char *opmode;
 
     /* Set width for a select call if needed */
     width = s + 1;
@@ -3206,6 +3237,12 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 if (e[0] == ' ')
                     break;
 
+                if (e[0] == ':') {
+                    /* Windows drive. We treat this the same way as ".." */
+                    dot = -1;
+                    break;
+                }
+
                 switch (dot) {
                 case 1:
                     dot = (e[0] == '.') ? 2 : 0;
@@ -3214,11 +3251,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     dot = (e[0] == '.') ? 3 : 0;
                     break;
                 case 3:
-                    dot = (e[0] == '/') ? -1 : 0;
+                    dot = (e[0] == '/' || e[0] == '\\') ? -1 : 0;
                     break;
                 }
                 if (dot == 0)
-                    dot = (e[0] == '/') ? 1 : 0;
+                    dot = (e[0] == '/' || e[0] == '\\') ? 1 : 0;
             }
             dot = (dot == 3) || (dot == -1); /* filename contains ".."
                                               * component */
@@ -3232,11 +3269,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
             if (dot) {
                 BIO_puts(io, text);
-                BIO_printf(io, "'%s' contains '..' reference\r\n", p);
+                BIO_printf(io, "'%s' contains '..' or ':'\r\n", p);
                 break;
             }
 
-            if (*p == '/') {
+            if (*p == '/' || *p == '\\') {
                 BIO_puts(io, text);
                 BIO_printf(io, "'%s' is an invalid path\r\n", p);
                 break;
@@ -3249,9 +3286,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 break;
             }
 
-            if ((file = BIO_new_file(p, "r")) == NULL) {
+            opmode = (http_server_binmode == 1) ? "rb" : "r";
+            if ((file = BIO_new_file(p, opmode)) == NULL) {
                 BIO_puts(io, text);
-                BIO_printf(io, "Error opening '%s'\r\n", p);
+                BIO_printf(io, "Error opening '%s' mode='%s'\r\n", p, opmode);
                 ERR_print_errors(io);
                 break;
             }

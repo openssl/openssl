@@ -65,8 +65,12 @@
 # ($t0,$t1,$t2,$t3,$t8,$t9)=map("\$$_",(12..15,24,25));
 # ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)=map("\$$_",(16..23));
 # ($gp,$sp,$fp,$ra)=map("\$$_",(28..31));
-#
-$flavour = shift || "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
+
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+$flavour ||= "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
 
 if ($flavour =~ /64|n32/i) {
 	$PTR_LA="dla";
@@ -95,16 +99,12 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 
 $big_endian=(`echo MIPSEB | $ENV{CC} -E -`=~/MIPSEB/)?0:1 if ($ENV{CC});
 
-for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);	}
-open STDOUT,">$output";
-
 if (!defined($big_endian))
 {    $big_endian=(unpack('L',pack('N',1))==1);   }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
-
 my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
+
+$output and open STDOUT,">$output";
 
 $code.=<<___;
 #include "mips_arch.h"

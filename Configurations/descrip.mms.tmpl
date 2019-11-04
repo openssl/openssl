@@ -48,26 +48,26 @@
       @{$unified_info{libraries}};
   our @install_libs =
       map { platform->staticname($_) }
-      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
       @{$unified_info{libraries}};
   our @install_shlibs =
       map { platform->sharedname($_) // () }
-      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
       @{$unified_info{libraries}};
   our @install_engines =
-      grep { !$unified_info{attributes}->{$_}->{noinst}
-             && $unified_info{attributes}->{$_}->{engine} }
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && $unified_info{attributes}->{modules}->{$_}->{engine} }
       @{$unified_info{modules}};
   our @install_programs =
-      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
       @{$unified_info{programs}};
   our @install_bin_scripts =
-      grep { !$unified_info{attributes}->{$_}->{noinst}
-             && !$unified_info{attributes}->{$_}->{misc} }
+      grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+             && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
       @{$unified_info{scripts}};
   our @install_misc_scripts =
-      grep { !$unified_info{attributes}->{$_}->{noinst}
-             && $unified_info{attributes}->{$_}->{misc} }
+      grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+             && $unified_info{attributes}->{scripts}->{$_}->{misc} }
       @{$unified_info{scripts}};
 
   # This is a horrible hack, but is needed because recursive inclusion of files
@@ -114,6 +114,7 @@ BLDDIR={- $config{builddir} -}
 # Allow both V and VERBOSE to indicate verbosity.  This only applies
 # to testing.
 VERBOSE=$(V)
+VERBOSE_FAILURE=$(VF)
 
 VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
@@ -435,10 +436,12 @@ test : tests
         DEFINE BLDTOP {- builddir() -}
         DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
+        DEFINE OPENSSL_MODULES {- builddir("providers") -}
         DEFINE OPENSSL_DEBUG_MEMORY "on"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
         DEASSIGN OPENSSL_DEBUG_MEMORY
+        DEASSIGN OPENSSL_MODULES
         DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
@@ -701,7 +704,7 @@ reconfigure reconf :
       # On Unix platforms, we depend on {shlibname}.so
       return map {
           { lib   => platform->sharedlib($_) // platform->staticlib($_),
-            attrs => $unified_info{attributes}->{$_} }
+            attrs => $unified_info{attributes}->{libraries}->{$_} }
       } @_;
   }
 
@@ -772,10 +775,14 @@ EOF
 	      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
+              my @modules = ( 'configdata.pm',
+                              grep { $_ =~ m|\.pm$| } @{$args{deps}} );
+              my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
+              @modules = map { '"-M'.basename($_, '.pm').'"' } @modules;
+              my $modules = join(' ', '', sort keys %moduleincs, @modules);
               return <<"EOF";
 $target : $args{generator}->[0] $deps
-	\$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile \\
-	    "-o$target{build_file}" $generator > \$\@
+	\$(PERL)$modules $dofile "-o$target{build_file}" $generator > \$\@
 EOF
 	  } else {
               return <<"EOF";
@@ -784,15 +791,6 @@ $target : $args{generator}->[0] $deps
 EOF
 	  }
       } else {
-          my $target = platform->asm($args{src});
-          if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = '$(PERL)'.$generator_incs.' '.$generator;
-          } elsif ($args{generator}->[0] =~ /\.S$/) {
-              $generator = undef;
-          } else {
-              die "Generator type for $src unknown: $generator\n";
-          }
-
           my $cppflags = {
               shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
@@ -809,6 +807,17 @@ EOF
           my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
           my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
           my $defs = join("", map { ",".$_ } @{$args{defs}});
+          my $target = platform->asm($args{src});
+
+          if ($args{generator}->[0] =~ /\.pl$/) {
+              $generator = '$(PERL)'.$generator_incs.' '.$generator
+                  .' '.$cppflags;
+          } elsif ($args{generator}->[0] =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $src unknown: $generator\n";
+          }
+
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -829,7 +838,11 @@ EOF
               # Otherwise....
               return <<"EOF";
 $target : $args{generator}->[0] $deps
+        \@ $incs_on
+        \@ extradefines = "$defs"
 	$generator \$\@
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
 EOF
           }
           return <<"EOF";
@@ -1005,8 +1018,8 @@ EOF
   }
   sub obj2dso {
       my %args = @_;
-      my $dsoname = platform->dsoname($args{lib});
-      my $dso = platform->dso($args{lib});
+      my $dsoname = platform->dsoname($args{module});
+      my $dso = platform->dso($args{module});
       my @objs = map { platform->convertext($_) }
                  grep { platform->isobj($_) }
                  @{$args{objs}};

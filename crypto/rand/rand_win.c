@@ -9,8 +9,8 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include "rand_lcl.h"
-#include "internal/rand_int.h"
+#include "rand_local.h"
+#include "crypto/rand.h"
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
@@ -19,7 +19,8 @@
 
 # include <windows.h>
 /* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
-# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
+# if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
+     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
 #  define USE_BCRYPTGENRANDOM
 # endif
 
@@ -162,7 +163,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-# if !OPENSSL_API_1_1_0
+# if !OPENSSL_API_1_1_0 && !defined(FIPS_MODE)
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();

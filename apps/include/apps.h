@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_APPS_H
-# define HEADER_APPS_H
+#ifndef OSSL_APPS_H
+# define OSSL_APPS_H
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
@@ -21,7 +21,7 @@
 # endif
 
 # include <openssl/e_os2.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/conf.h>
@@ -102,11 +102,9 @@ typedef struct args_st {
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
 int chopup_args(ARGS *arg, char *buf);
-# ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, X509_NAME *nm,
                 unsigned long lflags);
-# endif
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
@@ -128,11 +126,13 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *cert_descrip);
-X509_STORE *setup_verify(const char *CAfile, const char *CApath,
-                         int noCAfile, int noCApath);
-__owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                    const char *CApath, int noCAfile,
-                                    int noCApath);
+X509_STORE *setup_verify(const char *CAfile, int noCAfile,
+                         const char *CApath, int noCApath,
+                         const char *CAstore, int noCAstore);
+__owur int ctx_set_verify_locations(SSL_CTX *ctx,
+                                    const char *CAfile, int noCAfile,
+                                    const char *CApath, int noCApath,
+                                    const char *CAstore, int noCAstore);
 
 #ifndef OPENSSL_NO_CT
 
@@ -265,5 +265,9 @@ typedef struct verify_options_st {
 } VERIFY_CB_ARGS;
 
 extern VERIFY_CB_ARGS verify_args;
+
+OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
+                                     const OSSL_PARAM *paramdefs);
+void app_params_free(OSSL_PARAM *params);
 
 #endif

@@ -1,0 +1,169 @@
+=pod
+
+=head1 NAME
+
+OSSL_PARAM_construct_from_text, OSSL_PARAM_allocate_from_text
+- OSSL_PARAM construction utilities
+
+=head1 SYNOPSIS
+
+ #include <openssl/params.h>
+
+ int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
+                                    const OSSL_PARAM *paramdefs,
+                                    const char *key, const char *value,
+                                    size_t value_n,
+                                    void *buf, size_t *buf_n)
+ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
+                                   const OSSL_PARAM *paramdefs,
+                                   const char *key, const char *value,
+                                   size_t value_n);
+
+=head1 DESCRIPTION
+
+With OpenSSL before version 3.0, parameters were passed down to or
+retrieved from algorithm implementations via control functions.
+Some of these control functions existed in variants that took string
+parameters, for example L<EVP_PKEY_CTX_ctrl_str(3)>.
+
+OpenSSL 3.0 introduces a new mechanism to do the same thing with an
+array of parameters that contain name, value, value type and value
+size (see L<OSSL_PARAM(3)> for more information).
+
+OSSL_PARAM_construct_from_text() takes a control I<key>, I<value> and
+value size I<value_n>, and given a parameter descriptor array
+I<paramdefs>, it converts the value to something suitable for
+L<OSSL_PARAM(3)> and stores that in the buffer I<buf>, and modifies
+the parameter I<to> to match.
+I<buf_n>, if not NULL, will be assigned the number of bytes used in
+I<buf>.
+If I<buf> is NULL, only I<buf_n> will be modified, everything else is
+left untouched, allowing a caller to find out how large the buffer
+should be.
+I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
+I<key>.
+
+OSSL_PARAM_allocate_from_text() works like OSSL_PARAM_construct_from_text(),
+except it allocates the buffer internally.
+The caller must remember to free the data of I<to> when it's not
+useful any more.
+
+For parameters having the type B<OSSL_PARAM_INTEGER>,
+B<OSSL_PARAM_UNSIGNED_INTEGER>, or B<OSSL_PARAM_OCTET_STRING>, both
+functions will interpret the I<value> differently if the key starts
+with "hex".
+In that case, the value is decoded first, and the result will be used
+as parameter value.
+
+=head1 RETURN VALUES
+
+OSSL_PARAM_construct_from_text() and OSSL_PARAM_allocate_from_text()
+returns 1 on success, and 0 on error.
+
+=head1 NOTES
+
+The parameter descriptor array comes from functions dedicated to
+return them.
+The following B<OSSL_PARAM> attributes are used:
+
+=over 4
+
+=item I<key>
+
+=item I<data>
+
+=item I<data_size>
+
+=back
+
+All other attributes are ignored.
+
+The I<data_size> attribute can be zero, meaning that the parameter it
+describes expects arbitrary length data.
+
+=head1 EXAMPLES
+
+Code that looked like this:
+
+  int mac_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
+  {
+      int rv;
+      char *stmp, *vtmp = NULL;
+
+      stmp = OPENSSL_strdup(value);
+      if (stmp == NULL)
+          return -1;
+      vtmp = strchr(stmp, ':');
+      if (vtmp != NULL)
+          *vtmp++ = '\0';
+      rv = EVP_MAC_ctrl_str(ctx, stmp, vtmp);
+      OPENSSL_free(stmp);
+      return rv;
+  }
+
+  ...
+
+
+  for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
+      char *macopt = sk_OPENSSL_STRING_value(macopts, i);
+
+      if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
+          BIO_printf(bio_err,
+                     "MAC parameter error \"%s\"\n", macopt);
+          ERR_print_errors(bio_err);
+          goto mac_end;
+      }
+  }
+
+Can be written like this instead:
+
+  OSSL_PARAM *params =
+      OPENSSL_zalloc(sizeof(*params)
+                     * (sk_OPENSSL_STRING_num(opts) + 1));
+  const OSSL_PARAM *paramdefs = EVP_MAC_settable_ctx_params(mac);
+  size_t params_n;
+  char *opt = "<unknown>";
+
+  for (params_n = 0; params_n < (size_t)sk_OPENSSL_STRING_num(opts);
+       params_n++) {
+      char *stmp, *vtmp = NULL;
+
+      opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
+      if ((stmp = OPENSSL_strdup(opt)) == NULL
+              || (vtmp = strchr(stmp, ':')) == NULL)
+          goto err;
+
+      *vtmp++ = '\0';
+      if (!OSSL_PARAM_allocate_from_text(&params[params_n],
+                                         paramdefs, stmp,
+                                         vtmp, strlen(vtmp)))
+          goto err;
+  }
+  params[params_n] = OSSL_PARAM_construct_end();
+  if (!EVP_MAC_CTX_set_params(ctx, params))
+      goto err;
+  while (params_n-- > 0)
+      OPENSSL_free(params[params_n].data);
+  OPENSSL_free(params);
+  /* ... */
+  return;
+
+ err:
+  BIO_printf(bio_err, "MAC parameter error '%s'\n", opt);
+  ERR_print_errors(bio_err);
+
+
+=head1 SEE ALSO
+
+L<OSSL_PARAM(3)>, L<OSSL_PARAM_int(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

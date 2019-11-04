@@ -6,7 +6,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-$flavour = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -16,8 +19,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 $ra="%r14";
 $sp="%r15";
@@ -77,8 +79,13 @@ OPENSSL_s390x_functions:
 	stg	%r0,S390X_PRNO+8(%r4)
 	stg	%r0,S390X_KMA(%r4)
 	stg	%r0,S390X_KMA+8(%r4)
+	stg	%r0,S390X_PCC(%r4)
+	stg	%r0,S390X_PCC+8(%r4)
+	stg	%r0,S390X_KDSA(%r4)
+	stg	%r0,S390X_KDSA+8(%r4)
 
 	lmg	%r2,%r3,S390X_STFLE(%r4)
+
 	tmhl	%r2,0x4000		# check for message-security-assist
 	jz	.Lret
 
@@ -101,6 +108,13 @@ OPENSSL_s390x_functions:
 	lghi	%r0,S390X_QUERY		# query kmac capability vector
 	la	%r1,S390X_KMAC(%r4)
 	.long	0xb91e0042		# kmac %r4,%r2
+
+	tmhh	%r3,0x0008		# check for message-security-assist-3
+	jz	.Lret
+
+	lghi	%r0,S390X_QUERY		# query pcc capability vector
+	la	%r1,S390X_PCC(%r4)
+	.long	0xb92c0000		# pcc
 
 	tmhh	%r3,0x0004		# check for message-security-assist-4
 	jz	.Lret
@@ -125,12 +139,20 @@ OPENSSL_s390x_functions:
 	.long	0xb93c0042		# prno %r4,%r2
 
 	lg	%r2,S390X_STFLE+16(%r4)
+
 	tmhl	%r2,0x2000		# check for message-security-assist-8
 	jz	.Lret
 
 	lghi	%r0,S390X_QUERY		# query kma capability vector
 	la	%r1,S390X_KMA(%r4)
 	.long	0xb9294022		# kma %r2,%r4,%r2
+
+	tmhl	%r2,0x0010		# check for message-security-assist-9
+	jz	.Lret
+
+	lghi	%r0,S390X_QUERY		# query kdsa capability vector
+	la	%r1,S390X_KDSA(%r4)
+	.long	0xb93a0002		# kdsa %r0,%r2
 
 .Lret:
 	br	$ra
@@ -419,6 +441,113 @@ s390x_kma:
 	l${g}	$out,6*$SIZE_T($sp)
 	br	$ra
 .size	s390x_kma,.-s390x_kma
+___
+}
+
+################
+# int s390x_pcc(unsigned int fc, void *param)
+{
+my ($fc,$param) = map("%r$_",(2..3));
+$code.=<<___;
+.globl	s390x_pcc
+.type	s390x_pcc,\@function
+.align	16
+s390x_pcc:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+	lhi	%r2,0
+
+	.long	0xb92c0000	# pcc
+	brc	1,.-4		# pay attention to "partial completion"
+	brc	7,.Lpcc_err	# if CC==0 return 0, else return 1
+.Lpcc_out:
+	br	$ra
+.Lpcc_err:
+	lhi	%r2,1
+	j	.Lpcc_out
+.size	s390x_pcc,.-s390x_pcc
+___
+}
+
+################
+# int s390x_kdsa(unsigned int fc, void *param,
+#                const unsigned char *in, size_t len)
+{
+my ($fc,$param,$in,$len) = map("%r$_",(2..5));
+$code.=<<___;
+.globl	s390x_kdsa
+.type	s390x_kdsa,\@function
+.align	16
+s390x_kdsa:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+	lhi	%r2,0
+
+	.long	0xb93a0004	# kdsa %r0,$in
+	brc	1,.-4		# pay attention to "partial completion"
+	brc	7,.Lkdsa_err	# if CC==0 return 0, else return 1
+.Lkdsa_out:
+	br	$ra
+.Lkdsa_err:
+	lhi	%r2,1
+	j	.Lkdsa_out
+.size	s390x_kdsa,.-s390x_kdsa
+___
+}
+
+################
+# void s390x_flip_endian32(unsigned char dst[32], const unsigned char src[32])
+{
+my ($dst,$src) = map("%r$_",(2..3));
+$code.=<<___;
+.globl	s390x_flip_endian32
+.type	s390x_flip_endian32,\@function
+.align	16
+s390x_flip_endian32:
+	lrvg	%r0,0($src)
+	lrvg	%r1,8($src)
+	lrvg	%r4,16($src)
+	lrvg	%r5,24($src)
+	stg	%r0,24($dst)
+	stg	%r1,16($dst)
+	stg	%r4,8($dst)
+	stg	%r5,0($dst)
+	br	$ra
+.size	s390x_flip_endian32,.-s390x_flip_endian32
+___
+}
+
+################
+# void s390x_flip_endian64(unsigned char dst[64], const unsigned char src[64])
+{
+my ($dst,$src) = map("%r$_",(2..3));
+$code.=<<___;
+.globl	s390x_flip_endian64
+.type	s390x_flip_endian64,\@function
+.align	16
+s390x_flip_endian64:
+	stmg	%r6,%r9,6*$SIZE_T($sp)
+
+	lrvg	%r0,0($src)
+	lrvg	%r1,8($src)
+	lrvg	%r4,16($src)
+	lrvg	%r5,24($src)
+	lrvg	%r6,32($src)
+	lrvg	%r7,40($src)
+	lrvg	%r8,48($src)
+	lrvg	%r9,56($src)
+	stg	%r0,56($dst)
+	stg	%r1,48($dst)
+	stg	%r4,40($dst)
+	stg	%r5,32($dst)
+	stg	%r6,24($dst)
+	stg	%r7,16($dst)
+	stg	%r8,8($dst)
+	stg	%r9,0($dst)
+
+	lmg	%r6,%r9,6*$SIZE_T($sp)
+	br	$ra
+.size	s390x_flip_endian64,.-s390x_flip_endian64
 ___
 }
 

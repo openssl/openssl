@@ -23,8 +23,7 @@
 # totally unfair, because this module utilizes Galois Field Multiply
 # instruction.
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 ($rp,$a1,$a0,$b1,$b0)=("A4","B4","A6","B6","A8");   # argument vector
 

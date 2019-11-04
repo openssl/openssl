@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OSSL_STORE_H
-# define HEADER_OSSL_STORE_H
+#ifndef OPENSSL_STORE_H
+# define OPENSSL_STORE_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_OSSL_STORE_H
+# endif
 
 # include <stdarg.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/pem.h>
 # include <openssl/storeerr.h>
 
@@ -85,7 +91,7 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
 int OSSL_STORE_eof(OSSL_STORE_CTX *ctx);
 
 /*
- * Check if an error occured
+ * Check if an error occurred
  * Returns 1 if it did, 0 otherwise.
  */
 int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
@@ -117,7 +123,7 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
  * Functions to generate OSSL_STORE_INFOs, one function for each type we
  * support having in them, as well as a generic constructor.
  *
- * In all cases, ownership of the object is transfered to the OSSL_STORE_INFO
+ * In all cases, ownership of the object is transferred to the OSSL_STORE_INFO
  * and will therefore be freed when the OSSL_STORE_INFO is freed.
  */
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name);
@@ -185,7 +191,7 @@ void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search);
 
 /* Search term accessors */
 int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
-X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion);
+X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion);
 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
                                                   *criterion);
 const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
@@ -198,7 +204,7 @@ const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion);
  * to the loading channel.  This MUST happen before the first OSSL_STORE_load().
  */
 int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
-int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search);
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
 
 
 /*-
@@ -230,7 +236,7 @@ typedef int (*OSSL_STORE_expect_fn)(OSSL_STORE_LOADER_CTX *ctx, int expected);
 int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
                                  OSSL_STORE_expect_fn expect_function);
 typedef int (*OSSL_STORE_find_fn)(OSSL_STORE_LOADER_CTX *ctx,
-                                  OSSL_STORE_SEARCH *criteria);
+                                  const OSSL_STORE_SEARCH *criteria);
 int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_find_fn find_function);
 typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,

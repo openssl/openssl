@@ -2,12 +2,14 @@
 
 =head1 NAME
 
-EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
+EVP_PKEY_sign_init_ex, EVP_PKEY_sign_init, EVP_PKEY_sign
+- sign using a public key algorithm
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
+ int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature);
  int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                    unsigned char *sig, size_t *siglen,
@@ -15,8 +17,18 @@ EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_sign_init() function initializes a public key algorithm
-context using key B<pkey> for a signing operation.
+The EVP_PKEY_sign_init_ex() function initializes a public key algorithm
+context for performing signing using the signature algorithm B<signature>.
+The signature algorithm B<signature> should be fetched using a call to
+L<EVP_SIGNATURE_fetch(3)>.
+The EVP_PKEY object associated with B<ctx> must be compatible with that
+algorithm.
+B<signature> may be NULL in which case the EVP_SIGNATURE algorithm is fetched
+implicitly based on the type of EVP_PKEY associated with B<ctx>.
+See L<provider(7)/Implicit fetch> for more information about implict fetches.
+
+The EVP_PKEY_sign_init() function is the same as EVP_PKEY_sign_init_ex() except
+that the EVP_SIGNATURE algorithm is always implicitly fetched.
 
 The EVP_PKEY_sign() function performs a public key signing operation
 using B<ctx>. The data to be signed is specified using the B<tbs> and
@@ -46,7 +58,7 @@ EVP_PKEY_sign_init() and EVP_PKEY_sign() return 1 for success and 0
 or a negative value for failure. In particular a return value of -2
 indicates the operation is not supported by the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
@@ -101,6 +113,7 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
+EVP_PKEY_sign_init_ex() was added in OpenSSL 3.0.
 These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT

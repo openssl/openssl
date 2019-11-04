@@ -6,8 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_INTERNAL_REFCOUNT_H
-# define HEADER_INTERNAL_REFCOUNT_H
+#ifndef OSSL_INTERNAL_REFCOUNT_H
+# define OSSL_INTERNAL_REFCOUNT_H
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
@@ -71,6 +71,21 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
     *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELAXED) - 1;
     if (*ret == 0)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    return 1;
+}
+#  elif defined(__ICL) && defined(_WIN32)
+#   define HAVE_ATOMICS 1
+typedef volatile int CRYPTO_REF_COUNT;
+
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, 1) + 1;
+    return 1;
+}
+
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, -1) - 1;
     return 1;
 }
 

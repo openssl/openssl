@@ -27,7 +27,7 @@
 # over 2x than 32-bit code. X[16] resides on stack, but access to it
 # is scheduled for L2 latency and staged through 32 least significant
 # bits of %l0-%l7. The latter is done to achieve 32-/64-bit ABI
-# duality. Nevetheless it's ~40% faster than SHA256, which is pretty
+# duality. Nevertheless it's ~40% faster than SHA256, which is pretty
 # good [optimal coefficient is 50%].
 #
 # SHA512 on UltraSPARC T1.
@@ -56,8 +56,10 @@
 # saturates at 11.5x single-process result on 8-core processor, or
 # ~11/16GBps per 2.85GHz socket.
 
-$output=pop;
-open STDOUT,">$output";
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+
+$output and open STDOUT,">$output";
 
 if ($output =~ /512/) {
 	$label="512";

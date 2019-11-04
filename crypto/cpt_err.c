@@ -13,82 +13,37 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA CRYPTO_str_functs[] = {
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CMAC_CTX_NEW, 0), "CMAC_CTX_new"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_DUP_EX_DATA, 0),
-     "CRYPTO_dup_ex_data"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_FREE_EX_DATA, 0),
-     "CRYPTO_free_ex_data"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX, 0),
-     "CRYPTO_get_ex_new_index"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, 0),
-     "CRYPTO_get_ex_new_index_ex"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_MEMDUP, 0), "CRYPTO_memdup"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_NEW_EX_DATA, 0),
-     "CRYPTO_new_ex_data"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_NEW_EX_DATA_EX, 0),
-     "crypto_new_ex_data_ex"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_COPY_CTX, 0),
-     "CRYPTO_ocb128_copy_ctx"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_INIT, 0),
-     "CRYPTO_ocb128_init"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_SET_EX_DATA, 0),
-     "CRYPTO_set_ex_data"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_FIPS_MODE_SET, 0), "FIPS_mode_set"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_GET_AND_LOCK, 0), "get_and_lock"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_GET_PROVIDER_STORE, 0),
-     "get_provider_store"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_ATEXIT, 0), "OPENSSL_atexit"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_BUF2HEXSTR, 0),
-     "OPENSSL_buf2hexstr"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_FOPEN, 0), "openssl_fopen"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_HEXSTR2BUF, 0),
-     "OPENSSL_hexstr2buf"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_INIT_CRYPTO, 0),
-     "OPENSSL_init_crypto"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_LH_NEW, 0), "OPENSSL_LH_new"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DEEP_COPY, 0),
-     "OPENSSL_sk_deep_copy"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DUP, 0), "OPENSSL_sk_dup"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OSSL_PROVIDER_ACTIVATE, 0),
-     "ossl_provider_activate"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN, 0),
-     "OSSL_PROVIDER_add_builtin"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER, 0),
-     "ossl_provider_add_parameter"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OSSL_PROVIDER_NEW, 0),
-     "ossl_provider_new"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH, 0),
-     "ossl_provider_set_module_path"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_HMAC_INIT, 0), "pkey_hmac_init"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_POLY1305_INIT, 0),
-     "pkey_poly1305_init"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_SIPHASH_INIT, 0),
-     "pkey_siphash_init"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_ACTIVATE, 0),
-     "provider_activate"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_CONF_INIT, 0),
-     "provider_conf_init"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_CONF_LOAD, 0),
-     "provider_conf_load"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_NEW, 0), "provider_new"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PROVIDER_STORE_NEW, 0),
-     "provider_store_new"},
-    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_SK_RESERVE, 0), "sk_reserve"},
-    {0, NULL}
-};
-
 static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED),
     "fips mode not supported"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ILLEGAL_HEX_DIGIT),
     "illegal hex digit"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INSUFFICIENT_DATA_SPACE),
+    "insufficient data space"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INSUFFICIENT_PARAM_SIZE),
+    "insufficient param size"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE),
+    "insufficient secure data space"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INVALID_NULL_ARGUMENT),
+    "invalid null argument"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INVALID_OSSL_PARAM_TYPE),
+    "invalid ossl param type"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ODD_NUMBER_OF_DIGITS),
     "odd number of digits"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_PROVIDER_ALREADY_EXISTS),
     "provider already exists"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_PROVIDER_SECTION_ERROR),
     "provider section error"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_SECURE_MALLOC_FAILURE),
+    "secure malloc failure"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_STRING_TOO_LONG), "string too long"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_MANY_BYTES), "too many bytes"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_MANY_RECORDS),
+    "too many records"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_TOO_SMALL_BUFFER),
+    "too small buffer"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ZERO_LENGTH_NUMBER),
+    "zero length number"},
     {0, NULL}
 };
 
@@ -97,10 +52,8 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
 int ERR_load_CRYPTO_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(CRYPTO_str_functs[0].error) == NULL) {
-        ERR_load_strings_const(CRYPTO_str_functs);
+    if (ERR_reason_error_string(CRYPTO_str_reasons[0].error) == NULL)
         ERR_load_strings_const(CRYPTO_str_reasons);
-    }
 #endif
     return 1;
 }

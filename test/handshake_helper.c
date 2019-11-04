@@ -16,7 +16,7 @@
 #include <openssl/srp.h>
 #endif
 
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake_helper.h"
@@ -877,7 +877,7 @@ static void do_app_data_step(PEER *peer)
      * to read gives us somewhat better guarantees that all data sent is in fact
      * received.
      */
-    if (!peer->bytes_to_write && !peer->bytes_to_read) {
+    if (peer->bytes_to_write == 0 && peer->bytes_to_read == 0) {
         peer->status = PEER_SUCCESS;
     }
 }

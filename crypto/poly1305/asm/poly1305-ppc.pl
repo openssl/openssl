@@ -52,7 +52,10 @@
 # not, not one usable in the context. Improvement is ~40% over -m64
 # result above and is ~1.43 on little-endian systems.
 
-$flavour = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;
@@ -79,7 +82,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 
 $FRAME=24*$SIZE_T;
 
@@ -969,15 +973,15 @@ __poly1305_blocks_vsx:
 	addi	$t1,$ctx,`48+(12^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^2
+	bl	__poly1305_mul		# calculate r^2
 	addi	$t1,$ctx,`48+(4^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^3
+	bl	__poly1305_mul		# calculate r^3
 	addi	$t1,$ctx,`48+(8^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 
-	bl	__poly1305_mul		# caclulate r^4
+	bl	__poly1305_mul		# calculate r^4
 	addi	$t1,$ctx,`48+(0^$BIG_ENDIAN)`
 	bl	__poly1305_splat
 

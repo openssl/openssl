@@ -17,7 +17,7 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
                               BN_GENCB *cb);
@@ -107,6 +107,8 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
 
     for (i = 0; i < primes; i++)
         bitsr[i] = (i < rmd) ? quo + 1 : quo;
+
+    rsa->dirty_cnt++;
 
     /* We need the RSA components non-NULL */
     if (!rsa->n && ((rsa->n = BN_new()) == NULL))
@@ -256,7 +258,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
              *
              * This strategy has the following goals:
              *
-             * 1. 1024-bit factors are effcient when using 3072 and 4096-bit key
+             * 1. 1024-bit factors are efficient when using 3072 and 4096-bit key
              * 2. stay the same logic with normal 2-prime key
              */
             bitse -= bitsr[i];

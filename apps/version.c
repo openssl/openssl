@@ -33,7 +33,7 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R
+    OPT_B, OPT_D, OPT_E, OPT_M, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R, OPT_C
 } OPTION_CHOICE;
 
 const OPTIONS version_options[] = {
@@ -48,24 +48,15 @@ const OPTIONS version_options[] = {
     {"p", OPT_P, '-', "Show target build platform"},
     {"r", OPT_R, '-', "Show random seeding options"},
     {"v", OPT_V, '-', "Show library version"},
+    {"c", OPT_C, '-', "Show CPU settings info"},
     {NULL}
 };
-
-#if defined(OPENSSL_RAND_SEED_DEVRANDOM) || defined(OPENSSL_RAND_SEED_EGD)
-static void printlist(const char *prefix, const char **dev)
-{
-    printf("%s (", prefix);
-    for ( ; *dev != NULL; dev++)
-        printf(" \"%s\"", *dev);
-    printf(" )");
-}
-#endif
 
 int version_main(int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
-    int engdir = 0, moddir = 0;
+    int engdir = 0, moddir = 0, cpuinfo = 0;
     char *prog;
     OPTION_CHOICE o;
 
@@ -108,9 +99,12 @@ opthelp:
         case OPT_V:
             dirty = version = 1;
             break;
+        case OPT_C:
+            dirty = cpuinfo = 1;
+            break;
         case OPT_A:
             seed = options = cflags = version = date = platform
-                = dir = engdir = moddir
+                = dir = engdir = moddir = cpuinfo
                 = 1;
             break;
         }
@@ -122,35 +116,30 @@ opthelp:
     if (!dirty)
         version = 1;
 
-    if (version) {
-        if (strcmp(OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
-                   OPENSSL_FULL_VERSION_STR) == 0)
-            printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        else
-            printf("%s (Library: %s)\n",
-                   OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
-    }
+    if (version)
+        printf("%s (Library: %s)\n",
+               OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
     if (date)
         printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
     if (platform)
         printf("%s\n", OpenSSL_version(OPENSSL_PLATFORM));
     if (options) {
-        printf("options:  ");
-        printf("%s ", BN_options());
+        printf("options: ");
+        printf(" %s", BN_options());
 #ifndef OPENSSL_NO_MD2
-        printf("%s ", MD2_options());
+        printf(" %s", MD2_options());
 #endif
 #ifndef OPENSSL_NO_RC4
-        printf("%s ", RC4_options());
+        printf(" %s", RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
-        printf("%s ", DES_options());
+        printf(" %s", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", IDEA_options());
+        printf(" %s", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
-        printf("%s ", BF_options());
+        printf(" %s", BF_options());
 #endif
         printf("\n");
     }
@@ -163,39 +152,11 @@ opthelp:
     if (moddir)
         printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
     if (seed) {
-        printf("Seeding source:");
-#ifdef OPENSSL_RAND_SEED_RTDSC
-        printf(" rtdsc");
-#endif
-#ifdef OPENSSL_RAND_SEED_RDCPU
-        printf(" rdrand ( rdseed rdrand )");
-#endif
-#ifdef OPENSSL_RAND_SEED_LIBRANDOM
-        printf(" C-library-random");
-#endif
-#ifdef OPENSSL_RAND_SEED_GETRANDOM
-        printf(" getrandom-syscall");
-#endif
-#ifdef OPENSSL_RAND_SEED_DEVRANDOM
-        {
-            static const char *dev[] = { DEVRANDOM, NULL };
-            printlist(" random-device", dev);
-        }
-#endif
-#ifdef OPENSSL_RAND_SEED_EGD
-        {
-            static const char *dev[] = { DEVRANDOM_EGD, NULL };
-            printlist(" EGD", dev);
-        }
-#endif
-#ifdef OPENSSL_RAND_SEED_NONE
-        printf(" none");
-#endif
-#ifdef OPENSSL_RAND_SEED_OS
-        printf(" os-specific");
-#endif
-        printf("\n");
+        const char *src = OPENSSL_info(OPENSSL_INFO_SEED_SOURCE);
+        printf("Seeding source: %s\n", src ? src : "N/A");
     }
+    if (cpuinfo)
+        printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
     ret = 0;
  end:
     return ret;

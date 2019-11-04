@@ -1,11 +1,29 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        md5_dgst.c md5_one.c {- $target{md5_asm_src} -}
 
-GENERATE[md5-586.s]=asm/md5-586.pl \
-        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS)
+$MD5ASM=
+IF[{- !$disabled{asm} -}]
+  $MD5ASM_x86=md5-586.s
+  $MD5ASM_x86_64=md5-x86_64.s
+  $MD5ASM_sparcv9=md5-sparcv9.S
 
-GENERATE[md5-x86_64.s]=asm/md5-x86_64.pl $(PERLASM_SCHEME)
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$MD5ASM_{- $target{asm_arch} -}]
+    $MD5ASM=$MD5ASM_{- $target{asm_arch} -}
+    $MD5DEF=MD5_ASM
+  ENDIF
+ENDIF
 
-GENERATE[md5-sparcv9.S]=asm/md5-sparcv9.pl $(PERLASM_SCHEME)
+SOURCE[../../libcrypto]=md5_dgst.c md5_one.c md5_sha1.c $MD5ASM
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$MD5DEF
+DEFINE[../../providers/libimplementations.a]=$MD5DEF
+
+GENERATE[md5-586.s]=asm/md5-586.pl
+
+GENERATE[md5-x86_64.s]=asm/md5-x86_64.pl
+
+GENERATE[md5-sparcv9.S]=asm/md5-sparcv9.pl
 INCLUDE[md5-sparcv9.o]=..

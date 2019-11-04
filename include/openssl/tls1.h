@@ -9,8 +9,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TLS1_H
-# define HEADER_TLS1_H
+#ifndef OPENSSL_TLS1_H
+# define OPENSSL_TLS1_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_TLS1_H
+# endif
 
 # include <openssl/buffer.h>
 # include <openssl/x509.h>
@@ -1192,7 +1198,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 /*
  * extended master secret
  */
-#  define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x63\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
+#  define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x6e\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
 # endif
 
 /* TLS Session Ticket extension struct */

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DTLS1_H
-# define HEADER_DTLS1_H
+#ifndef OPENSSL_DTLS1_H
+# define OPENSSL_DTLS1_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_DTLS1_H
+# endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -47,7 +53,7 @@ extern "C" {
 
 # define DTLS1_AL_HEADER_LENGTH                   2
 
-/* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
+/* Timeout multipliers */
 # define DTLS1_TMO_READ_COUNT                      2
 # define DTLS1_TMO_WRITE_COUNT                     2
 

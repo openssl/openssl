@@ -10,12 +10,12 @@
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
-#include "../ssl_locl.h"
+#include "../ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
-#include "record_locl.h"
-#include "../packet_locl.h"
+#include "record_local.h"
+#include "internal/packet.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
         !(      defined(AES_ASM) &&     ( \
@@ -378,6 +378,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     s->rlayer.wnum = 0;
 
     /*
+     * If we are supposed to be sending a KeyUpdate then go into init unless we
+     * have writes pending - in which case we should finish doing that first.
+     */
+    if (wb->left == 0 && s->key_update != SSL_KEY_UPDATE_NONE)
+        ossl_statem_set_in_init(s, 1);
+
+    /*
      * When writing early data on the server side we could be "in_init" in
      * between receiving the EoED and the CF - but we don't want to handle those
      * messages yet.
@@ -419,6 +426,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
+        (BIO_get_ktls_send(s->wbio) == 0) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
@@ -632,8 +640,9 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
              */
             s->s3.empty_fragment_done = 0;
 
-            if ((i == (int)n) && s->mode & SSL_MODE_RELEASE_BUFFERS &&
-                !SSL_IS_DTLS(s))
+            if (tmpwrit == n
+                    && (s->mode & SSL_MODE_RELEASE_BUFFERS) != 0
+                    && !SSL_IS_DTLS(s))
                 ssl3_release_write_buffer(s);
 
             *written = tot + tmpwrit;
@@ -977,7 +986,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * in the wb->buf
          */
 
-        if (!SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (!BIO_get_ktls_send(s->wbio) && !SSL_WRITE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)

@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
-#include "../ssl_locl.h"
-#include "statem_locl.h"
+#include "../ssl_local.h"
+#include "statem_local.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -474,12 +474,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
-        if (s->key_update != SSL_KEY_UPDATE_NONE) {
-            st->hand_state = TLS_ST_CW_KEY_UPDATE;
-            return WRITE_TRAN_CONTINUE;
-        }
-        /* Fall through */
-
     case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:
@@ -3189,7 +3183,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
      * Get server certificate PKEY and create ctx from it
      */
     peer_cert = s->session->peer;
-    if (!peer_cert) {
+    if (peer_cert == NULL) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
         return 0;

@@ -114,7 +114,7 @@ static void set_seed(int s)
         seed = (int)time(NULL);
     test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
     test_flush_stdout();
-    srand(seed);
+    test_random_seed(seed);
 }
 
 
@@ -162,10 +162,10 @@ static int check_single_test_params(char *name, char *testname, char *itname)
             if (strcmp(name, all_tests[i].test_case_name) == 0) {
                 single_test = 1 + i;
                 break;
-	    } 
+            }
         }
-        if (i >= num_tests) 
-	    single_test = atoi(name);
+        if (i >= num_tests)
+            single_test = atoi(name);
     }
 
 
@@ -280,20 +280,20 @@ void set_test_title(const char *title)
     test_title = title == NULL ? NULL : strdup(title);
 }
 
-PRINTF_FORMAT(2, 3) static void test_verdict(int pass, const char *extra, ...)
+PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
+                                             const char *description, ...)
 {
     va_list ap;
 
     test_flush_stdout();
     test_flush_stderr();
 
-    test_printf_stdout("%*s%s", level, "", pass ? "ok" : "not ok");
-    if (extra != NULL) {
-        test_printf_stdout(" ");
-        va_start(ap, extra);
-        test_vprintf_stdout(extra, ap);
-        va_end(ap);
-    }
+    test_printf_stdout("%*s%s ", level, "", verdict != 0 ? "ok" : "not ok");
+    va_start(ap, description);
+    test_vprintf_stdout(description, ap);
+    va_end(ap);
+    if (verdict == TEST_SKIP_CODE)
+        test_printf_stdout(" # skipped");
     test_printf_stdout("\n");
     test_flush_stdout();
 }
@@ -326,7 +326,7 @@ int run_tests(const char *test_prog_name)
         permute[i] = i;
     if (seed != 0)
         for (i = num_tests - 1; i >= 1; i--) {
-            j = rand() % (1 + i);
+            j = test_random() % (1 + i);
             ii = permute[j];
             permute[j] = permute[i];
             permute[i] = ii;
@@ -349,20 +349,16 @@ int run_tests(const char *test_prog_name)
             }
             test_flush_stdout();
         } else if (all_tests[i].num == -1) {
-            int ret = 0;
-
             set_test_title(all_tests[i].test_case_name);
-            ret = all_tests[i].test_fn();
-            verdict = 1;
-            if (!ret) {
-                verdict = 0;
-                ++num_failed;
-            }
+            verdict = all_tests[i].test_fn();
             test_verdict(verdict, "%d - %s", ii + 1, test_title);
-            finalize(ret);
+            finalize(verdict != 0);
+            if (verdict == 0)
+                num_failed++;
         } else {
             int num_failed_inner = 0;
 
+            verdict = TEST_SKIP_CODE;
             level += 4;
             if (all_tests[i].subtest && single_iter == -1) {
                 test_printf_stdout("%*s# Subtest: %s\n", level, "",
@@ -377,43 +373,38 @@ int run_tests(const char *test_prog_name)
                 jstep = 1;
             else
                 do
-                    jstep = rand() % all_tests[i].num;
+                    jstep = test_random() % all_tests[i].num;
                 while (jstep == 0 || gcd(all_tests[i].num, jstep) != 1);
 
             for (jj = 0; jj < all_tests[i].num; jj++) {
-                int ret;
+                int v;
 
                 j = (j + jstep) % all_tests[i].num;
                 if (single_iter != -1 && ((jj + 1) != single_iter))
                     continue;
                 set_test_title(NULL);
-                ret = all_tests[i].param_test_fn(j);
+                v = all_tests[i].param_test_fn(j);
 
-                if (!ret)
+                if (v == 0) {
                     ++num_failed_inner;
+                    verdict = 0;
+                } else if (v != TEST_SKIP_CODE && verdict != 0) {
+                    verdict = 1;
+                }
 
-                finalize(ret);
+                finalize(v != 0);
 
                 if (all_tests[i].subtest) {
-                    verdict = 1;
-                    if (!ret) {
-                        verdict = 0;
-                        ++num_failed_inner;
-                    }
                     if (test_title != NULL)
-                        test_verdict(verdict, "%d - %s", jj + 1, test_title);
+                        test_verdict(v, "%d - %s", jj + 1, test_title);
                     else
-                        test_verdict(verdict, "%d - iteration %d",
-                                     jj + 1, j + 1);
+                        test_verdict(v, "%d - iteration %d", jj + 1, j + 1);
                 }
             }
 
             level -= 4;
-            verdict = 1;
-            if (num_failed_inner) {
-                verdict = 0;
+            if (verdict == 0)
                 ++num_failed;
-            }
             test_verdict(verdict, "%d - %s", ii + 1,
                          all_tests[i].test_case_name);
         }
@@ -448,3 +439,21 @@ char *glue_strings(const char *list[], size_t *out_len)
     return ret;
 }
 
+char *test_mk_file_path(const char *dir, const char *file)
+{
+# ifndef OPENSSL_SYS_VMS
+    const char *sep = "/";
+# else
+    const char *sep = "";
+# endif
+    size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
+    char *full_file = OPENSSL_zalloc(len);
+
+    if (full_file != NULL) {
+        OPENSSL_strlcpy(full_file, dir, len);
+        OPENSSL_strlcat(full_file, sep, len);
+        OPENSSL_strlcat(full_file, file, len);
+    }
+
+    return full_file;
+}

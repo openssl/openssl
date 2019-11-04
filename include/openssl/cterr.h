@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CTERR_H
-# define HEADER_CTERR_H
+#ifndef OPENSSL_CTERR_H
+# define OPENSSL_CTERR_H
+# pragma once
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CTERR_H
 # endif
+
+# include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
+
 
 # include <openssl/opensslconf.h>
 
@@ -27,33 +33,35 @@ int ERR_load_CT_strings(void);
 /*
  * CT function codes.
  */
-#  define CT_F_CTLOG_NEW                                   117
-#  define CT_F_CTLOG_NEW_FROM_BASE64                       118
-#  define CT_F_CTLOG_NEW_FROM_CONF                         119
-#  define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    122
-#  define CT_F_CTLOG_STORE_LOAD_FILE                       123
-#  define CT_F_CTLOG_STORE_LOAD_LOG                        130
-#  define CT_F_CTLOG_STORE_NEW                             131
-#  define CT_F_CT_BASE64_DECODE                            124
-#  define CT_F_CT_POLICY_EVAL_CTX_NEW                      133
-#  define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
-#  define CT_F_I2O_SCT                                     107
-#  define CT_F_I2O_SCT_LIST                                108
-#  define CT_F_I2O_SCT_SIGNATURE                           109
-#  define CT_F_O2I_SCT                                     110
-#  define CT_F_O2I_SCT_LIST                                111
-#  define CT_F_O2I_SCT_SIGNATURE                           112
-#  define CT_F_SCT_CTX_NEW                                 126
-#  define CT_F_SCT_CTX_VERIFY                              128
-#  define CT_F_SCT_NEW                                     100
-#  define CT_F_SCT_NEW_FROM_BASE64                         127
-#  define CT_F_SCT_SET0_LOG_ID                             101
-#  define CT_F_SCT_SET1_EXTENSIONS                         114
-#  define CT_F_SCT_SET1_LOG_ID                             115
-#  define CT_F_SCT_SET1_SIGNATURE                          116
-#  define CT_F_SCT_SET_LOG_ENTRY_TYPE                      102
-#  define CT_F_SCT_SET_SIGNATURE_NID                       103
-#  define CT_F_SCT_SET_VERSION                             104
+# if !OPENSSL_API_3
+#   define CT_F_CTLOG_NEW                                   0
+#   define CT_F_CTLOG_NEW_FROM_BASE64                       0
+#   define CT_F_CTLOG_NEW_FROM_CONF                         0
+#   define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    0
+#   define CT_F_CTLOG_STORE_LOAD_FILE                       0
+#   define CT_F_CTLOG_STORE_LOAD_LOG                        0
+#   define CT_F_CTLOG_STORE_NEW                             0
+#   define CT_F_CT_BASE64_DECODE                            0
+#   define CT_F_CT_POLICY_EVAL_CTX_NEW                      0
+#   define CT_F_CT_V1_LOG_ID_FROM_PKEY                      0
+#   define CT_F_I2O_SCT                                     0
+#   define CT_F_I2O_SCT_LIST                                0
+#   define CT_F_I2O_SCT_SIGNATURE                           0
+#   define CT_F_O2I_SCT                                     0
+#   define CT_F_O2I_SCT_LIST                                0
+#   define CT_F_O2I_SCT_SIGNATURE                           0
+#   define CT_F_SCT_CTX_NEW                                 0
+#   define CT_F_SCT_CTX_VERIFY                              0
+#   define CT_F_SCT_NEW                                     0
+#   define CT_F_SCT_NEW_FROM_BASE64                         0
+#   define CT_F_SCT_SET0_LOG_ID                             0
+#   define CT_F_SCT_SET1_EXTENSIONS                         0
+#   define CT_F_SCT_SET1_LOG_ID                             0
+#   define CT_F_SCT_SET1_SIGNATURE                          0
+#   define CT_F_SCT_SET_LOG_ENTRY_TYPE                      0
+#   define CT_F_SCT_SET_SIGNATURE_NID                       0
+#   define CT_F_SCT_SET_VERSION                             0
+# endif
 
 /*
  * CT reason codes.

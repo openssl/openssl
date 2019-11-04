@@ -30,7 +30,10 @@
 # amount of instruction and assumed instruction issue rate. It's ~2.5x
 # faster than compiler-generated code.
 
-$flavour = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -40,8 +43,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 my @A = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (0,5,10,15,20));
 

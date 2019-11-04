@@ -109,9 +109,10 @@
 #	below certain limit makes no difference/sense; to conserve
 #	space SHA256 XOP code path is therefore omitted;
 
-$flavour = shift;
-$output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
@@ -142,7 +143,8 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([
 $shaext=1;	### set to zero if compiling for 1.0.1
 $avx=1		if (!$shaext && $avx);
 
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 if ($output =~ /512/) {

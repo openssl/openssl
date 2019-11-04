@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
@@ -22,7 +22,7 @@ CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
- * Throughout this file and bio_lcl.h, the existence of the macro
+ * Throughout this file and bio_local.h, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,
  * getnameinfo() and getaddrinfo().  If that macro doesn't exist,
  * we use our own implementation instead, using gethostbyname,
@@ -207,7 +207,8 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                                flags)) != 0) {
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
-                SYSerr(SYS_F_GETNAMEINFO, get_last_socket_error());
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling getnameinfo()");
                 BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
             } else
 # endif
@@ -675,7 +676,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
     if (1) {
 #ifdef AI_PASSIVE
-        int gai_ret = 0;
+        int gai_ret = 0, old_ret = 0;
         struct addrinfo hints;
 
         memset(&hints, 0, sizeof(hints));
@@ -683,32 +684,49 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         hints.ai_family = family;
         hints.ai_socktype = socktype;
         hints.ai_protocol = protocol;
-#ifdef AI_ADDRCONFIG
-#ifdef AF_UNSPEC
+# ifdef AI_ADDRCONFIG
+#  ifdef AF_UNSPEC
         if (family == AF_UNSPEC)
-#endif
+#  endif
             hints.ai_flags |= AI_ADDRCONFIG;
-#endif
+# endif
 
         if (lookup_type == BIO_LOOKUP_SERVER)
             hints.ai_flags |= AI_PASSIVE;
 
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
-         * macro magic in bio_lcl.h
+         * macro magic in bio_local.h
          */
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
+      retry:
+# endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
-            SYSerr(SYS_F_GETADDRINFO, get_last_socket_error());
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling getaddrinfo()");
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
+            break;
+# endif
+# ifdef EAI_MEMORY
+        case EAI_MEMORY:
+            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
             break;
 # endif
         case 0:
             ret = 1;             /* Success */
             break;
         default:
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
+            if (hints.ai_flags & AI_ADDRCONFIG) {
+                hints.ai_flags &= ~AI_ADDRCONFIG;
+                hints.ai_flags |= AI_NUMERICHOST;
+                old_ret = gai_ret;
+                goto retry;
+            }
+# endif
             BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
-            ERR_add_error_data(1, gai_strerror(gai_ret));
+            ERR_add_error_data(1, gai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {
@@ -790,12 +808,15 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                SYSerr(SYS_F_GETHOSTBYNAME, 1000 );
+                ERR_raise_data(ERR_LIB_SYS, 1000,
+                               "calling gethostbyname()");
 # else
-                SYSerr(SYS_F_GETHOSTBYNAME, 1000 + h_errno);
+                ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
+                               "calling gethostbyname()");
 # endif
 #else
-                SYSerr(SYS_F_GETHOSTBYNAME, WSAGetLastError());
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling gethostbyname()");
 #endif
                 ret = 0;
                 goto err;
@@ -841,11 +862,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
-#ifndef OPENSSL_SYS_WINDOWS
-                    SYSerr(SYS_F_GETSERVBYNAME, errno);
-#else
-                    SYSerr(SYS_F_GETSERVBYNAME, WSAGetLastError());
-#endif
+                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                                   "calling getservbyname()");
                     goto err;
                 }
             } else {

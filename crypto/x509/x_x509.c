@@ -13,7 +13,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -52,6 +52,9 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #ifndef OPENSSL_NO_RFC3779
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
+#endif
+#ifndef OPENSSL_NO_SM2
+        ASN1_OCTET_STRING_free(ret->sm2_id);
 #endif
 
         /* fall thru */

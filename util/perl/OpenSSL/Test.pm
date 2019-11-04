@@ -66,6 +66,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
+use Cwd qw/abs_path/;
 
 my $level = 0;
 
@@ -165,13 +166,13 @@ C<indir> takes some additional options OPTS that affect the subdirectory:
 
 =item B<create =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be created if it doesn't already exist.  This happens before BLOCK
 is executed.
 
 =item B<cleanup =E<gt> 0|1>
 
-When set to 1 (or any value that perl preceives as true), the subdirectory
+When set to 1 (or any value that perl perceives as true), the subdirectory
 will be cleaned out and removed.  This happens both before and after BLOCK
 is executed.
 
@@ -445,16 +446,21 @@ sub run {
     die "OpenSSL::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
-    # In non-verbose, we want to shut up the command interpreter, in case
-    # it has something to complain about.  On VMS, it might complain both
-    # on stdout and stderr
+    # For some reason, program output, or even output from this function
+    # somehow isn't caught by TAP::Harness (TAP::Parser?) on VMS, so we're
+    # silencing it specifically there until further notice.
     my $save_STDOUT;
     my $save_STDERR;
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
-        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
-        open STDOUT, ">", devnull();
-        open STDERR, ">", devnull();
+    if ($^O eq 'VMS') {
+        # In non-verbose, we want to shut up the command interpreter, in case
+        # it has something to complain about.  On VMS, it might complain both
+        # on stdout and stderr
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+            open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+            open STDOUT, ">", devnull();
+            open STDERR, ">", devnull();
+        }
     }
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
@@ -488,15 +494,20 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        close STDOUT;
-        close STDERR;
-        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
-        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
-    }
+    # Restore STDOUT / STDERR on VMS
+    if ($^O eq 'VMS') {
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            close STDOUT;
+            close STDERR;
+            open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+            open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
+        }
 
-    print STDERR "$prefix$display_cmd => $e\n"
-        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+        print STDERR "$prefix$display_cmd => $e\n"
+            if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    } else {
+        print STDERR "$prefix$display_cmd => $e\n";
+    }
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -932,8 +943,8 @@ i.e. Some tests may only work in non FIPS mode.
 sub __env {
     (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
 
-    $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
-    $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
+    $directories{SRCTOP}  = abs_path($ENV{SRCTOP} || $ENV{TOP});
+    $directories{BLDTOP}  = abs_path($ENV{BLDTOP} || $ENV{TOP});
     $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
     $directories{SRCAPPS} =                 __srctop_dir("apps");
     $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
@@ -1243,8 +1254,11 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    $stderr=" 2> ".$null
-        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    # VMS program output escapes TAP::Parser
+    if ($^O eq 'VMS') {
+        $stderr=" 2> ".$null
+            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    }
 
     $cmdstr .= "$stdin$stdout$stderr";
 

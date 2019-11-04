@@ -31,7 +31,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
             return 0;
     }
 
-    if (!priv)
+    if (priv == NULL)
         return 1;
 
     if (EVP_PKEY_id(priv) != EVP_PKEY_RSA) {

@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
@@ -152,7 +152,11 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
 # ifndef OPENSSL_NO_KTLS
+#  ifdef __FreeBSD__
+    struct tls_enable *crypto_info;
+#  else
     struct tls12_crypto_info_aes_gcm_128 *crypto_info;
+#  endif
 # endif
 
     switch (cmd) {
@@ -183,7 +187,11 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
+#  ifdef __FreeBSD__
+        crypto_info = (struct tls_enable *)ptr;
+#  else
         crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
+#  endif
         ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
         if (ret)
             BIO_set_ktls_flag(b, num);

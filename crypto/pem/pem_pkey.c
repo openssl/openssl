@@ -17,8 +17,8 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
@@ -40,10 +40,10 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if (strcmp(nm, PEM_STRING_PKCS8INF) == 0) {
         PKCS8_PRIV_KEY_INFO *p8inf;
         p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
-        if (!p8inf)
+        if (p8inf == NULL)
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);
-        if (x) {
+        if (x != NULL) {
             EVP_PKEY_free((EVP_PKEY *)*x);
             *x = ret;
         }
@@ -54,7 +54,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         int klen;
         char psbuf[PEM_BUFSIZE];
         p8 = d2i_X509_SIG(NULL, &p, len);
-        if (!p8)
+        if (p8 == NULL)
             goto p8err;
         if (cb)
             klen = cb(psbuf, PEM_BUFSIZE, 0, u);
@@ -68,7 +68,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         p8inf = PKCS8_decrypt(p8, psbuf, klen);
         X509_SIG_free(p8);
         OPENSSL_cleanse(psbuf, klen);
-        if (!p8inf)
+        if (p8inf == NULL)
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);
         if (x) {

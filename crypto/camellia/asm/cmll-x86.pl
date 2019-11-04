@@ -49,8 +49,7 @@ require "x86asm.pl";
 
 $OPENSSL=1;
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 

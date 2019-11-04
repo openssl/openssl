@@ -19,7 +19,7 @@ X509_check_host, X509_check_email, X509_check_ip, X509_check_ip_asc - X.509 cert
 =head1 DESCRIPTION
 
 The certificate matching functions are used to check whether a
-certificate matches a given host name, email address, or IP address.
+certificate matches a given hostname, email address, or IP address.
 The validity of the certificate and its trust level has to be checked by
 other means.
 
@@ -130,7 +130,7 @@ NULs.
 =head1 NOTES
 
 Applications are encouraged to use X509_VERIFY_PARAM_set1_host()
-rather than explicitly calling L<X509_check_host(3)>. Host name
+rather than explicitly calling L<X509_check_host(3)>. Hostname
 checks may be out of scope with the DANE-EE(3) certificate usage,
 and the internal checks will be suppressed as appropriate when
 DANE support is enabled.

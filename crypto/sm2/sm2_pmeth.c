@@ -11,9 +11,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
-#include "internal/sm2.h"
-#include "internal/sm2err.h"
+#include "crypto/evp.h"
+#include "crypto/sm2.h"
+#include "crypto/sm2err.h"
 
 /* EC pkey context structure */
 
@@ -232,6 +232,10 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
                              const char *type, const char *value)
 {
+    uint8_t *hex_id;
+    long hex_len = 0;
+    int ret = 0;
+
     if (strcmp(type, "ec_paramgen_curve") == 0) {
         int nid = NID_undef;
 
@@ -255,6 +259,21 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
     } else if (strcmp(type, "sm2_id") == 0) {
         return pkey_sm2_ctrl(ctx, EVP_PKEY_CTRL_SET1_ID,
                              (int)strlen(value), (void *)value);
+    } else if (strcmp(type, "sm2_hex_id") == 0) {
+        /*
+         * TODO(3.0): reconsider the name "sm2_hex_id", OR change
+         * OSSL_PARAM_construct_from_text() / OSSL_PARAM_allocate_from_text()
+         * to handle infix "_hex_"
+         */
+        hex_id = OPENSSL_hexstr2buf((const char *)value, &hex_len);
+        if (hex_id == NULL) {
+            SM2err(SM2_F_PKEY_SM2_CTRL_STR, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        ret = pkey_sm2_ctrl(ctx, EVP_PKEY_CTRL_SET1_ID, (int)hex_len,
+                            (void *)hex_id);
+        OPENSSL_free(hex_id);
+        return ret;
     }
 
     return -2;
@@ -290,7 +309,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
-const EVP_PKEY_METHOD sm2_pkey_meth = {
+static const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     0,
     pkey_sm2_init,
@@ -330,3 +349,8 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
 
     pkey_sm2_digest_custom
 };
+
+const EVP_PKEY_METHOD *sm2_pkey_method(void)
+{
+    return &sm2_pkey_meth;
+}

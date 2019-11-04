@@ -1,4 +1,0 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        tls1_prf.c kdf_err.c kdf_util.c hkdf.c scrypt.c pbkdf2.c sshkdf.c \
-        sskdf.c

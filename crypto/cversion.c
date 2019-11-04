@@ -11,12 +11,10 @@
 
 #include "buildinf.h"
 
-#if !OPENSSL_API_3
 unsigned long OpenSSL_version_num(void)
 {
     return OPENSSL_VERSION_NUMBER;
 }
-#endif
 
 unsigned int OPENSSL_version_major(void)
 {
@@ -42,6 +40,8 @@ const char *OPENSSL_version_build_metadata(void)
 {
     return OPENSSL_VERSION_BUILD_METADATA_STR;
 }
+
+extern char ossl_cpu_info_str[];
 
 const char *OpenSSL_version(int t)
 {
@@ -76,6 +76,11 @@ const char *OpenSSL_version(int t)
 #else
         return "MODULESDIR: N/A";
 #endif
+    case OPENSSL_CPU_INFO:
+        if (OPENSSL_info(OPENSSL_INFO_CPU_SETTINGS) != NULL)
+            return ossl_cpu_info_str;
+        else
+            return "CPUINFO: N/A";
     }
     return "not available";
 }

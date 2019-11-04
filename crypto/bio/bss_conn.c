@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -54,6 +54,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a);
 #define BIO_CONN_S_CONNECT               4
 #define BIO_CONN_S_OK                    5
 #define BIO_CONN_S_BLOCKED_CONNECT       6
+#define BIO_CONN_S_CONNECT_ERROR         7
 
 static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
@@ -138,10 +139,9 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                              BIO_ADDRINFO_socktype(c->addr_iter),
                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (ret == (int)INVALID_SOCKET) {
-                SYSerr(SYS_F_SOCKET, get_last_socket_error());
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_hostname,
-                                   " service=", c->param_service);
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling socket(%s, %s)",
+                               c->param_hostname, c->param_service);
                 BIOerr(BIO_F_CONN_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
@@ -170,11 +170,11 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     ERR_clear_error();
                     break;
                 } else {
-                    SYSerr(SYS_F_CONNECT, get_last_socket_error());
-                    ERR_add_error_data(4,
-                                       "hostname=", c->param_hostname,
-                                       " service=", c->param_service);
-                    BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                                   "calling connect(%s, %s)",
+                                    c->param_hostname, c->param_service);
+                    c->state = BIO_CONN_S_CONNECT_ERROR;
+                    break;
                 }
                 goto exit_loop;
             } else {
@@ -186,16 +186,20 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             i = BIO_sock_error(b->num);
             if (i) {
                 BIO_clear_retry_flags(b);
-                SYSerr(SYS_F_CONNECT, i);
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_hostname,
-                                   " service=", c->param_service);
+                ERR_raise_data(ERR_LIB_SYS, i,
+                               "calling connect(%s, %s)",
+                                c->param_hostname, c->param_service);
                 BIOerr(BIO_F_CONN_STATE, BIO_R_NBIO_CONNECT_ERROR);
                 ret = 0;
                 goto exit_loop;
             } else
                 c->state = BIO_CONN_S_OK;
             break;
+
+        case BIO_CONN_S_CONNECT_ERROR:
+            BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+            ret = 0;
+            goto exit_loop;
 
         case BIO_CONN_S_OK:
             ret = 1;
@@ -414,7 +418,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     OPENSSL_free(hold_service);
             } else if (num == 1) {
                 OPENSSL_free(data->param_service);
-                data->param_service = BUF_strdup(ptr);
+                data->param_service = OPENSSL_strdup(ptr);
             } else if (num == 2) {
                 const BIO_ADDR *addr = (const BIO_ADDR *)ptr;
                 if (ret) {

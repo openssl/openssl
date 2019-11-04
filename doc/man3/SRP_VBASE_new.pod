@@ -83,7 +83,7 @@ L<SSL_CTX_set_srp_password(3)>
 
 =head1 HISTORY
 
-The SRP_VBASE_add0_user() function was added in OpenSSL 3.0.0.
+The SRP_VBASE_add0_user() function was added in OpenSSL 3.0.
 
 All other functions were added in OpenSSL 1.0.1.
 

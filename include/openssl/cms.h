@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMS_H
-# define HEADER_CMS_H
+#ifndef OPENSSL_CMS_H
+# define OPENSSL_CMS_H
+# pragma once
+
+# include <openssl/macros.h>
+# if !OPENSSL_API_3
+#  define HEADER_CMS_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -16,7 +22,6 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 # include <openssl/cmserr.h>
-# include <openssl/ess.h>
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -85,7 +90,7 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-# ifdef HEADER_PEM_H
+# ifdef OPENSSL_PEM_H
 DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
@@ -285,10 +290,6 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
                                   const void *bytes, int len);
 void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
-
-# ifdef HEADER_X509V3_H
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
@@ -302,7 +303,6 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     int *pallorfirst,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto);
-# endif
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
                                     X509_ALGOR **palg,
                                     ASN1_OCTET_STRING **pukm);

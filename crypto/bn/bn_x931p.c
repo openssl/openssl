@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /* X9.31 routines for prime derivation */
 
@@ -30,7 +30,7 @@ static int bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* NB 27 MR is specified in X9.31 */
-        is_prime = BN_is_prime_fasttest_ex(pi, 27, ctx, 1, cb);
+        is_prime = BN_check_prime(pi, ctx, cb);
         if (is_prime < 0)
             return 0;
         if (is_prime)
@@ -131,7 +131,7 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
              * offering similar or better guarantees 50 MR is considerably
              * better.
              */
-            int r = BN_is_prime_fasttest_ex(p, 50, ctx, 1, cb);
+            int r = BN_check_prime(p, ctx, cb);
             if (r < 0)
                 goto err;
             if (r)
@@ -173,7 +173,7 @@ int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
      * - 1. By setting the top two bits we ensure that the lower bound is
      * exceeded.
      */
-    if (!BN_priv_rand(Xp, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY))
+    if (!BN_priv_rand_ex(Xp, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, ctx))
         goto err;
 
     BN_CTX_start(ctx);
@@ -182,7 +182,8 @@ int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
         goto err;
 
     for (i = 0; i < 1000; i++) {
-        if (!BN_priv_rand(Xq, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY))
+        if (!BN_priv_rand_ex(Xq, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY,
+                             ctx))
             goto err;
 
         /* Check that |Xp - Xq| > 2^(nbits - 100) */
@@ -227,9 +228,9 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     if (Xp1 == NULL || Xp2 == NULL)
         goto error;
 
-    if (!BN_priv_rand(Xp1, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+    if (!BN_priv_rand_ex(Xp1, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, ctx))
         goto error;
-    if (!BN_priv_rand(Xp2, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+    if (!BN_priv_rand_ex(Xp2, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, ctx))
         goto error;
     if (!BN_X931_derive_prime_ex(p, p1, p2, Xp, Xp1, Xp2, e, ctx, cb))
         goto error;

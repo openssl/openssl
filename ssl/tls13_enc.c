@@ -8,10 +8,11 @@
  */
 
 #include <stdlib.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/core_names.h>
 
 #define TLS13_MAX_LABEL_LEN     249
 
@@ -30,8 +31,16 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen, int fatal)
 {
+#ifdef CHARSET_EBCDIC
+    static const unsigned char label_prefix[] = { 0x74, 0x6C, 0x73, 0x31, 0x33, 0x20, 0x00 };
+#else
     static const unsigned char label_prefix[] = "tls13 ";
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+#endif
+    EVP_KDF *kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_HKDF, NULL);
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[5], *p = params;
+    int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
+    const char *mdname = EVP_MD_name(md);
     int ret;
     size_t hkdflabellen;
     size_t hashlen;
@@ -45,7 +54,9 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                             + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
-    if (pctx == NULL)
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (kctx == NULL)
         return 0;
 
     if (labellen > TLS13_MAX_LABEL_LEN) {
@@ -59,7 +70,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
              */
             SSLerr(SSL_F_TLS13_HKDF_EXPAND, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
         }
-        EVP_PKEY_CTX_free(pctx);
+        EVP_KDF_CTX_free(kctx);
         return 0;
     }
 
@@ -74,7 +85,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
             || !WPACKET_get_total_written(&pkt, &hkdflabellen)
             || !WPACKET_finish(&pkt)) {
-        EVP_PKEY_CTX_free(pctx);
+        EVP_KDF_CTX_free(kctx);
         WPACKET_cleanup(&pkt);
         if (fatal)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_HKDF_EXPAND,
@@ -84,15 +95,19 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
         return 0;
     }
 
-    ret = EVP_PKEY_derive_init(pctx) <= 0
-            || EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXPAND_ONLY)
-               <= 0
-            || EVP_PKEY_CTX_set_hkdf_md(pctx, md) <= 0
-            || EVP_PKEY_CTX_set1_hkdf_key(pctx, secret, hashlen) <= 0
-            || EVP_PKEY_CTX_add1_hkdf_info(pctx, hkdflabel, hkdflabellen) <= 0
-            || EVP_PKEY_derive(pctx, out, &outlen) <= 0;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                             (unsigned char *)secret, hashlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                             hkdflabel, hkdflabellen);
+    *p++ = OSSL_PARAM_construct_end();
 
-    EVP_PKEY_CTX_free(pctx);
+    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
+        || EVP_KDF_derive(kctx, out, outlen) <= 0;
+
+    EVP_KDF_CTX_free(kctx);
 
     if (ret != 0) {
         if (fatal)
@@ -112,7 +127,11 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
 int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
                      unsigned char *key, size_t keylen)
 {
-    static const unsigned char keylabel[] = "key";
+#ifdef CHARSET_EBCDIC
+  static const unsigned char keylabel[] ={ 0x6B, 0x65, 0x79, 0x00 };
+#else
+  static const unsigned char keylabel[] = "key";
+#endif
 
     return tls13_hkdf_expand(s, md, secret, keylabel, sizeof(keylabel) - 1,
                              NULL, 0, key, keylen, 1);
@@ -125,7 +144,11 @@ int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
 int tls13_derive_iv(SSL *s, const EVP_MD *md, const unsigned char *secret,
                     unsigned char *iv, size_t ivlen)
 {
-    static const unsigned char ivlabel[] = "iv";
+#ifdef CHARSET_EBCDIC
+  static const unsigned char ivlabel[] = { 0x69, 0x76, 0x00 };
+#else
+  static const unsigned char ivlabel[] = "iv";
+#endif
 
     return tls13_hkdf_expand(s, md, secret, ivlabel, sizeof(ivlabel) - 1,
                              NULL, 0, iv, ivlen, 1);
@@ -135,7 +158,11 @@ int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
                              const unsigned char *secret,
                              unsigned char *fin, size_t finlen)
 {
-    static const unsigned char finishedlabel[] = "finished";
+#ifdef CHARSET_EBCDIC
+  static const unsigned char finishedlabel[] = { 0x66, 0x69, 0x6E, 0x69, 0x73, 0x68, 0x65, 0x64, 0x00 };
+#else
+  static const unsigned char finishedlabel[] = "finished";
+#endif
 
     return tls13_hkdf_expand(s, md, secret, finishedlabel,
                              sizeof(finishedlabel) - 1, NULL, 0, fin, finlen, 1);
@@ -155,11 +182,22 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int mdleni;
     int ret;
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[5], *p = params;
+    int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
+    const char *mdname = EVP_MD_name(md);
+#ifdef CHARSET_EBCDIC
+    static const char derived_secret_label[] = { 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x00 };
+#else
     static const char derived_secret_label[] = "derived";
+#endif
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
-    if (pctx == NULL) {
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_HKDF, NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (kctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -170,6 +208,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
+        EVP_KDF_CTX_free(kctx);
         return 0;
     }
     mdlen = (size_t)mdleni;
@@ -192,7 +231,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                      ERR_R_INTERNAL_ERROR);
             EVP_MD_CTX_free(mctx);
-            EVP_PKEY_CTX_free(pctx);
+            EVP_KDF_CTX_free(kctx);
             return 0;
         }
         EVP_MD_CTX_free(mctx);
@@ -203,7 +242,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                sizeof(derived_secret_label) - 1, hash, mdlen,
                                preextractsec, mdlen, 1)) {
             /* SSLfatal() already called */
-            EVP_PKEY_CTX_free(pctx);
+            EVP_KDF_CTX_free(kctx);
             return 0;
         }
 
@@ -211,21 +250,25 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         prevsecretlen = mdlen;
     }
 
-    ret = EVP_PKEY_derive_init(pctx) <= 0
-            || EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY)
-               <= 0
-            || EVP_PKEY_CTX_set_hkdf_md(pctx, md) <= 0
-            || EVP_PKEY_CTX_set1_hkdf_key(pctx, insecret, insecretlen) <= 0
-            || EVP_PKEY_CTX_set1_hkdf_salt(pctx, prevsecret, prevsecretlen)
-               <= 0
-            || EVP_PKEY_derive(pctx, outsecret, &mdlen)
-               <= 0;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)mdname, strlen(mdname) + 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                             (unsigned char *)insecret,
+                                             insecretlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (unsigned char *)prevsecret,
+                                             prevsecretlen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
+        || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
 
     if (ret != 0)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
 
-    EVP_PKEY_CTX_free(pctx);
+    EVP_KDF_CTX_free(kctx);
     if (prevsecret == preextractsec)
         OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
@@ -409,6 +452,16 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
 int tls13_change_cipher_state(SSL *s, int which)
 {
+#ifdef CHARSET_EBCDIC
+  static const unsigned char client_early_traffic[]       = {0x63, 0x20, 0x65, 0x20,       /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
+  static const unsigned char client_handshake_traffic[]   = {0x63, 0x20, 0x68, 0x73, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
+  static const unsigned char client_application_traffic[] = {0x63, 0x20, 0x61, 0x70, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
+  static const unsigned char server_handshake_traffic[]   = {0x73, 0x20, 0x68, 0x73, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
+  static const unsigned char server_application_traffic[] = {0x73, 0x20, 0x61, 0x70, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
+  static const unsigned char exporter_master_secret[] = {0x65, 0x78, 0x70, 0x20,                    /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
+  static const unsigned char resumption_master_secret[] = {0x72, 0x65, 0x73, 0x20,                  /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
+  static const unsigned char early_exporter_master_secret[] = {0x65, 0x20, 0x65, 0x78, 0x70, 0x20,  /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
+#else
     static const unsigned char client_early_traffic[] = "c e traffic";
     static const unsigned char client_handshake_traffic[] = "c hs traffic";
     static const unsigned char client_application_traffic[] = "c ap traffic";
@@ -417,6 +470,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     static const unsigned char exporter_master_secret[] = "exp master";
     static const unsigned char resumption_master_secret[] = "res master";
     static const unsigned char early_exporter_master_secret[] = "e exp master";
+#endif
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -684,7 +738,11 @@ int tls13_change_cipher_state(SSL *s, int which)
 
 int tls13_update_key(SSL *s, int sending)
 {
-    static const unsigned char application_traffic[] = "traffic upd";
+#ifdef CHARSET_EBCDIC
+  static const unsigned char application_traffic[] = { 0x74, 0x72 ,0x61 ,0x66 ,0x66 ,0x69 ,0x63 ,0x20 ,0x75 ,0x70 ,0x64, 0x00};
+#else
+  static const unsigned char application_traffic[] = "traffic upd";
+#endif
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen = EVP_MD_size(md);
     unsigned char *insecret, *iv;
@@ -741,7 +799,11 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                  size_t contextlen, int use_context)
 {
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
+#ifdef CHARSET_EBCDIC
+    static const unsigned char exporterlabel[] = {0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x00};
+#else
     static const unsigned char exporterlabel[] = "exporter";
+#endif
     unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md = ssl_handshake_md(s);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -778,7 +840,11 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                        const unsigned char *context,
                                        size_t contextlen)
 {
-    static const unsigned char exporterlabel[] = "exporter";
+#ifdef CHARSET_EBCDIC
+  static const unsigned char exporterlabel[] = {0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x00};
+#else
+  static const unsigned char exporterlabel[] = "exporter";
+#endif
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
     unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md;

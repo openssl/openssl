@@ -15,10 +15,9 @@
 extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
-static size_t buf_l = 0;
 static OSSL_PARAM greeting_request[] = {
-    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), &buf_l },
-    { NULL, 0, NULL, 0, NULL }
+    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), 0 },
+    { NULL, 0, NULL, 0, 0 }
 };
 
 static int test_provider(OSSL_PROVIDER *prov, const char *expected_greeting)
@@ -56,7 +55,7 @@ static int test_builtin_provider(void)
 
     return
         TEST_ptr(prov =
-                 ossl_provider_new(NULL, name, PROVIDER_INIT_FUNCTION_NAME))
+                 ossl_provider_new(NULL, name, PROVIDER_INIT_FUNCTION_NAME, 0))
         && test_provider(prov, expected_greeting1(name));
 }
 
@@ -67,7 +66,7 @@ static int test_loaded_provider(void)
     OSSL_PROVIDER *prov = NULL;
 
     return
-        TEST_ptr(prov = ossl_provider_new(NULL, name, NULL))
+        TEST_ptr(prov = ossl_provider_new(NULL, name, NULL, 0))
         && test_provider(prov, expected_greeting1(name));
 }
 
@@ -80,8 +79,7 @@ static int test_configured_provider(void)
         "Hello OpenSSL, greetings from Test Provider";
 
     return
-        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL)
-        && TEST_ptr(prov = ossl_provider_find(NULL, name))
+        TEST_ptr(prov = ossl_provider_find(NULL, name, 0))
         && test_provider(prov, expected_greeting);
 }
 #endif

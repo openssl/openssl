@@ -136,7 +136,7 @@ SSL_CTX_dane_set_flags() and SSL_dane_set_flags() can be used to enable
 optional DANE verification features.
 SSL_CTX_dane_clear_flags() and SSL_dane_clear_flags() can be used to disable
 the same features.
-The B<flags> argument is a bitmask of the features to enable or disable.
+The B<flags> argument is a bit-mask of the features to enable or disable.
 The B<flags> set for an B<SSL_CTX> context are copied to each B<SSL> handle
 associated with that context at the time the handle is created.
 Subsequent changes in the context's B<flags> have no effect on the B<flags> set
@@ -181,7 +181,7 @@ The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
 SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
 before they were called.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Suppose "smtp.example.com" is the MX host of the domain "example.com", and has
 DNSSEC-validated TLSA records.

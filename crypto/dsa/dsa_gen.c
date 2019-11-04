@@ -21,7 +21,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 int DSA_generate_parameters_ex(DSA *ret, int bits,
                                const unsigned char *seed_in, int seed_len,
@@ -154,8 +154,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
                 goto err;
 
             /* step 4 */
-            r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
-                                        use_random_seed, cb);
+            r = BN_check_prime(q, ctx, cb);
             if (r > 0)
                 break;
             if (r != 0)
@@ -226,7 +225,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
             /* step 10 */
             if (BN_cmp(p, test) >= 0) {
                 /* step 11 */
-                r = BN_is_prime_fasttest_ex(p, DSS_prime_checks, ctx, 1, cb);
+                r = BN_check_prime(p, ctx, cb);
                 if (r > 0)
                     goto end;   /* found it */
                 if (r != 0)
@@ -281,6 +280,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
         ret->p = BN_dup(p);
         ret->q = BN_dup(q);
         ret->g = BN_dup(g);
+        ret->dirty_cnt++;
         if (ret->p == NULL || ret->q == NULL || ret->g == NULL) {
             ok = 0;
             goto err;
@@ -424,8 +424,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
                 goto err;
 
             /* step 4 */
-            r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
-                                        seed_in ? 1 : 0, cb);
+            r = BN_check_prime(q, ctx, cb);
             if (r > 0)
                 break;
             if (r != 0)
@@ -505,7 +504,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
             /* step 10 */
             if (BN_cmp(p, test) >= 0) {
                 /* step 11 */
-                r = BN_is_prime_fasttest_ex(p, DSS_prime_checks, ctx, 1, cb);
+                r = BN_check_prime(p, ctx, cb);
                 if (r > 0)
                     goto end;   /* found it */
                 if (r != 0)
@@ -598,6 +597,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
             ok = -1;
             goto err;
         }
+        ret->dirty_cnt++;
         if (counter_ret != NULL)
             *counter_ret = counter;
         if (h_ret != NULL)

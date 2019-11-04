@@ -95,7 +95,7 @@ manner possible according to the scheme the loader implements, it also
 takes a B<UI_METHOD> and associated data, to be used any time
 something needs to be prompted for.
 Furthermore, this function is expected to initialize what needs to be
-initialized, to create a privata data store (B<OSSL_STORE_LOADER_CTX>, see
+initialized, to create a private data store (B<OSSL_STORE_LOADER_CTX>, see
 above), and to return it.
 If something goes wrong, this function is expected to return NULL.
 

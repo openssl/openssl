@@ -20,7 +20,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <stdio.h>
 # include <time.h>
 # include "internal/cryptlib.h"
-# include "bn_lcl.h"
+# include "bn_local.h"
 
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
                           const BIGNUM *add, const BIGNUM *rem,
@@ -52,7 +52,7 @@ int BN_is_prime(const BIGNUM *a, int checks,
 {
     BN_GENCB cb;
     BN_GENCB_set_old(&cb, callback, cb_arg);
-    return BN_is_prime_ex(a, checks, ctx_passed, &cb);
+    return bn_check_prime_int(a, checks, ctx_passed, 0, &cb);
 }
 
 int BN_is_prime_fasttest(const BIGNUM *a, int checks,
@@ -62,7 +62,7 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 {
     BN_GENCB cb;
     BN_GENCB_set_old(&cb, callback, cb_arg);
-    return BN_is_prime_fasttest_ex(a, checks, ctx_passed,
-                                   do_trial_division, &cb);
+    return bn_check_prime_int(a, checks, ctx_passed, do_trial_division, &cb);
 }
+
 #endif

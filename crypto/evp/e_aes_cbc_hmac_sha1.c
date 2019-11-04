@@ -7,19 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <string.h>
-
+#include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-#include "modes_lcl.h"
-#include "internal/evp_int.h"
-#include "internal/constant_time_locl.h"
+#include "internal/cryptlib.h"
+#include "crypto/modes.h"
+#include "crypto/evp.h"
+#include "internal/constant_time.h"
 
 typedef struct {
     AES_KEY ks;
@@ -37,7 +36,6 @@ typedef struct {
         defined(__x86_64)       || defined(__x86_64__)  || \
         defined(_M_AMD64)       || defined(_M_X64)      )
 
-extern unsigned int OPENSSL_ia32cap_P[];
 # define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
