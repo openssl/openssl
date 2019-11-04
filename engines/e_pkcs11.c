@@ -1048,12 +1048,9 @@ static int pkcs11_rsa_encode_pkcs1(unsigned char **out, int *out_len, int type,
     sig.algor = &algor;
     sig.algor->algorithm = OBJ_nid2obj(type);
     if (sig.algor->algorithm == NULL) {
-        RSAerr(RSA_F_RSA_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
         return 0;
     }
     if (OBJ_length(sig.algor->algorithm) == 0) {
-        RSAerr(RSA_F_RSA_ENCODE_PKCS1,
-               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
         return 0;
     }
     parameter.type = V_ASN1_NULL;
