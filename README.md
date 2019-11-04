@@ -16,6 +16,7 @@ OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key excha
     * [Linux and macOS](#linux-and-macOS)
     * [Windows](#windows)
   * [Running](#running)
+- [Third Party Integrations](#third-party-integrations)
 - [Contributing](#contributing)
 - [License](#license)
 - [Team](#team)
@@ -210,6 +211,10 @@ To run a basic TLS server with all libOQS ciphersuites enabled, run the followin
 In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEX>` = one of the quantum-safe or hybrid key exchange algorithms listed in the [Supported Algorithms](#supported-algorithms) section above):
 
 	apps/openssl s_client -curves <KEX> -CAfile <SIG>_CA.crt -connect localhost:4433
+
+## Third Party Integrations
+
+Various third-party software applications, such as [nginx](https://www.nginx.com/) and [curl](https://curl.haxx.se/) use OpenSSL to establish TLS connections; they can be built against our fork to make use of quantum-safe cryptography. The [oqs-software](https://github.com/open-quantum-safe/oqs-software) repository provides instructions for building various software like so.
 
 ## Contributing
 
