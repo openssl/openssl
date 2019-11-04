@@ -2,14 +2,13 @@
 
 =head1 NAME
 
-EVP_PKEY_sign_init_ex, EVP_PKEY_sign_init, EVP_PKEY_sign
+EVP_PKEY_sign_init, EVP_PKEY_sign
 - sign using a public key algorithm
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_sign_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature);
  int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                    unsigned char *sig, size_t *siglen,
@@ -17,26 +16,19 @@ EVP_PKEY_sign_init_ex, EVP_PKEY_sign_init, EVP_PKEY_sign
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_sign_init_ex() function initializes a public key algorithm
-context for performing signing using the signature algorithm B<signature>.
-The signature algorithm B<signature> should be fetched using a call to
-L<EVP_SIGNATURE_fetch(3)>.
-The EVP_PKEY object associated with B<ctx> must be compatible with that
-algorithm.
-B<signature> may be NULL in which case the EVP_SIGNATURE algorithm is fetched
-implicitly based on the type of EVP_PKEY associated with B<ctx>.
-See L<provider(7)/Implicit fetch> for more information about implict fetches.
-
-The EVP_PKEY_sign_init() function is the same as EVP_PKEY_sign_init_ex() except
-that the EVP_SIGNATURE algorithm is always implicitly fetched.
+EVP_PKEY_sign_init() initializes a public key algorithm context I<ctx> for
+signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_sign() function performs a public key signing operation
-using B<ctx>. The data to be signed is specified using the B<tbs> and
-B<tbslen> parameters. If B<sig> is B<NULL> then the maximum size of the output
-buffer is written to the B<siglen> parameter. If B<sig> is not B<NULL> then
-before the call the B<siglen> parameter should contain the length of the
-B<sig> buffer, if the call is successful the signature is written to
-B<sig> and the amount of data written to B<siglen>.
+using I<ctx>. The data to be signed is specified using the I<tbs> and
+I<tbslen> parameters. If I<sig> is NULL then the maximum size of the output
+buffer is written to the I<siglen> parameter. If I<sig> is not NULL then
+before the call the I<siglen> parameter should contain the length of the
+I<sig> buffer, if the call is successful the signature is written to
+I<sig> and the amount of data written to I<siglen>.
 
 =head1 NOTES
 
