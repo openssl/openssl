@@ -88,6 +88,13 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
     close IN;
 }
 
+# As long as we're running in development or alpha releases, we can have
+# symbols without specific numbers assigned.  When in beta or final release,
+# all symbols MUST have an assigned number.
+if ($version !~ m/^\d+\.\d+\.\d+(?:[a-z]+)?-(?:dev|alpha)/) {
+    $ordinals->renumber();
+}
+
 if ($checkexist) {
     my %new_names = map { $_->name() => 1 }
         $ordinals->items(comparator => sub { $_[0] cmp $_[1] },
