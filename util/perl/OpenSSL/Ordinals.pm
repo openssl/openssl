@@ -169,7 +169,26 @@ sub load {
     return 1;
 }
 
-=item B<$ordinals-E<gt>rewrite>
+=item B<< $ordinals->renumber >>
+
+Renumber any item that doesn't have an assigned number yet.
+
+=cut
+
+sub renumber {
+    my $self = shift;
+
+    my $max_assigned = 0;
+    foreach ($self->items(by => by_number())) {
+        $_->number($_->intnum()) if $_->number() =~ m|^\?|;
+        if ($max_assigned < $_->number()) {
+            $max_assigned = $_->number();
+        }
+    }
+    $self->{maxassigned} = $max_assigned;
+}
+
+=item B<< $ordinals->rewrite >>
 
 If an ordinals file has been loaded, it gets rewritten with the data from
 the current work database.
