@@ -14,7 +14,9 @@
 #ifndef OPENSSL_NO_DGRAM
 
 # ifndef OPENSSL_NO_SCTP
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 #  include <netinet/sctp.h>
+# endif
 #  include <fcntl.h>
 #  define OPENSSL_SCTP_DATA_CHUNK_TYPE            0x00
 #  define OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE 0xc0
@@ -47,14 +49,16 @@ static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
 
 # ifndef OPENSSL_NO_SCTP
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 static int dgram_sctp_write(BIO *h, const char *buf, int num);
 static int dgram_sctp_read(BIO *h, char *buf, int size);
 static int dgram_sctp_puts(BIO *h, const char *str);
 static long dgram_sctp_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int dgram_sctp_new(BIO *h);
-static int dgram_sctp_free(BIO *data);
 static int dgram_sctp_wait_for_dry(BIO *b);
 static int dgram_sctp_msg_waiting(BIO *b);
+# endif
+static int dgram_sctp_new(BIO *h);
+static int dgram_sctp_free(BIO *data);
 #  ifdef SCTP_AUTHENTICATION_EVENT
 static void dgram_sctp_handle_auth_free_key_event(BIO *b, union sctp_notification
                                                   *snp);
@@ -83,6 +87,7 @@ static const BIO_METHOD methods_dgramp = {
 };
 
 # ifndef OPENSSL_NO_SCTP
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 static const BIO_METHOD methods_dgramp_sctp = {
     BIO_TYPE_DGRAM_SCTP,
     "datagram sctp socket",
@@ -99,6 +104,7 @@ static const BIO_METHOD methods_dgramp_sctp = {
     dgram_sctp_free,
     NULL,                       /* dgram_callback_ctrl */
 };
+# endif
 # endif
 
 typedef struct bio_dgram_data_st {
@@ -811,11 +817,16 @@ static int dgram_puts(BIO *bp, const char *str)
 # ifndef OPENSSL_NO_SCTP
 const BIO_METHOD *BIO_s_datagram_sctp(void)
 {
+# ifndef OPENSSL_BUILD_WO_LKSCTP 
     return &methods_dgramp_sctp;
+# else
+    return NULL;    
+# endif
 }
 
 BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 {
+# ifndef OPENSSL_BUILD_WO_LKSCTP
     BIO *bio;
     int ret, optval = 20000;
     int auth_data = 0, auth_forward = 0;
@@ -944,6 +955,9 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
     }
 
     return bio;
+# else
+    return NULL;
+# endif
 }
 
 int BIO_dgram_is_sctp(BIO *bio)
@@ -1004,6 +1018,8 @@ void dgram_sctp_handle_auth_free_key_event(BIO *b,
 }
 #  endif
 
+
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 static int dgram_sctp_read(BIO *b, char *out, int outl)
 {
     int ret = 0, n = 0, i, optval;
@@ -1578,6 +1594,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
     }
     return ret;
 }
+# endif
 
 int BIO_dgram_sctp_notification_cb(BIO *b,
                 BIO_dgram_sctp_notification_handler_fn handle_notifications,
@@ -1612,6 +1629,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
     return (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SCTP_WAIT_FOR_DRY, 0, NULL);
 }
 
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 static int dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
@@ -1770,11 +1788,14 @@ static int dgram_sctp_wait_for_dry(BIO *b)
     return is_dry;
 }
 
+# endif
+
 int BIO_dgram_sctp_msg_waiting(BIO *b)
 {
     return (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SCTP_MSG_WAITING, 0, NULL);
 }
 
+# ifndef OPENSSL_BUILD_WO_LKSCTP
 static int dgram_sctp_msg_waiting(BIO *b)
 {
     int n, sockflags;
@@ -1842,6 +1863,8 @@ static int dgram_sctp_puts(BIO *bp, const char *str)
     ret = dgram_sctp_write(bp, str, n);
     return ret;
 }
+
+# endif
 # endif
 
 static int BIO_dgram_should_retry(int i)
