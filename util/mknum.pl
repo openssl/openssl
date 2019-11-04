@@ -128,5 +128,9 @@ if ($checkexist) {
     } else {
         print STDERR "${ordinals_file}: No new symbols added\n";
     }
-
+    if ($stats{unassigned}) {
+        my $symbol = $stats{unassigned} == 1 ? "symbol" : "symbols";
+        my $is = $stats{unassigned} == 1 ? "is" : "are";
+        print STDERR "${ordinals_file}: $stats{unassigned} $symbol $is without ordinal number\n";
+    }
 }
