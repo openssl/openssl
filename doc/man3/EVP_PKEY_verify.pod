@@ -2,14 +2,13 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_init_ex, EVP_PKEY_verify_init, EVP_PKEY_verify
+EVP_PKEY_verify_init, EVP_PKEY_verify
 - signature verification using a public key algorithm
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_verify_init_ex(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature);
  int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
                      const unsigned char *sig, size_t siglen,
@@ -17,24 +16,16 @@ EVP_PKEY_verify_init_ex, EVP_PKEY_verify_init, EVP_PKEY_verify
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_init_ex() function initializes a public key algorithm
-context for performing signature verification using the signature algorithm
-B<signature>.
-The signature algorithm B<signature> should be fetched using a call to
-L<EVP_SIGNATURE_fetch(3)>.
-The EVP_PKEY object associated with B<ctx> must be compatible with that
-algorithm.
-B<signature> may be NULL in which case the EVP_SIGNATURE algorithm is fetched
-implicitly based on the type of EVP_PKEY associated with B<ctx>.
-See L<provider(7)/Implicit fetch> for more information about implict fetches.
-
-The EVP_PKEY_verify_init() function is the same as EVP_PKEY_verify_init_ex()
-except that the EVP_SIGNATURE algorithm is always implicitly fetched.
+EVP_PKEY_verify_init() initializes a public key algorithm context I<ctx> for
+signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_verify() function performs a public key verification operation
-using B<ctx>. The signature is specified using the B<sig> and
-B<siglen> parameters. The verified data (i.e. the data believed originally
-signed) is specified using the B<tbs> and B<tbslen> parameters.
+using I<ctx>. The signature is specified using the I<sig> and
+I<siglen> parameters. The verified data (i.e. the data believed originally
+signed) is specified using the I<tbs> and I<tbslen> parameters.
 
 =head1 NOTES
 
