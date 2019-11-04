@@ -1713,10 +1713,14 @@ int speed_main(int argc, char **argv)
     int ecdsa_doit[ECDSA_NUM] = { 0 };
     int ecdh_doit[EC_NUM] = { 0 };
     int eddsa_doit[EdDSA_NUM] = { 0 };
+# ifndef OPENSSL_NO_SM2
     int sm2_doit[SM2_NUM] = { 0 };
+# endif
     OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
     OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
+# ifndef OPENSSL_NO_SM2
     OPENSSL_assert(OSSL_NELEM(test_sm2_curves) >= SM2_NUM);
+# endif
 #endif                          /* ndef OPENSSL_NO_EC */
 
     prog = opt_init(argc, argv, speed_options);
