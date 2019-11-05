@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/macros.h>
 #include <openssl/objects.h>
 #include "ssl_local.h"
 
