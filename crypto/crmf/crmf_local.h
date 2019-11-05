@@ -232,7 +232,7 @@ struct ossl_crmf_pbmparameter_st {
  *   -- on the DER-encoded value of publicKey
  * publicKey      SubjectPublicKeyInfo  -- from CertTemplate
  * }
-*/
+ */
 typedef struct ossl_crmf_poposigningkeyinput_authinfo_st {
     int type;
     union {

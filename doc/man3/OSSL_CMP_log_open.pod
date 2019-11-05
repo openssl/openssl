@@ -4,6 +4,8 @@
 
 OSSL_CMP_log_open,
 OSSL_CMP_log_close,
+OSSL_CMP_MSTR_HELPER,
+OSSL_CMP_MSTR,
 OSSL_CMP_alert,
 OSSL_CMP_err,
 OSSL_CMP_warn,
@@ -42,6 +44,8 @@ OSSL_CMP_print_errors_cb
  #define OSSL_CMP_log2(level, fmt, arg1, arg2)
  #define OSSL_CMP_log3(level, fmt, arg1, arg2, arg3)
  #define OSSL_CMP_log4(level, fmt, arg1, arg2, arg3, arg4)
+ #define OSSL_CMP_MSTR_HELPER(x)
+ #define OSSL_CMP_MSTR(x)
 
  /* severity level declarations resemble those from syslog.h */
  typedef int OSSL_CMP_severity;
@@ -103,6 +107,9 @@ As long as neither if the two is used any logging output is ignored.
 OSSL_CMP_log_close() may be called when all activities are finished to flush
 any pending CMP-specific log output and deallocate related resources.
 It may be called multiple times. It does get called at OpenSSL stutdown.
+
+OSSL_CMP_MSTR_HELPER and OSSL_CMP_MSTR are helper macros for CPP string
+composition.
 
 OSSL_CMP_alert() outputs a simple alert message via the trace API.
 OSSL_CMP_err() outputs a simple error message via the trace API.
