@@ -25,9 +25,7 @@
 # include <openssl/symhacks.h>
 
 # include <openssl/types.h>
-# if !OPENSSL_API_1_1_0
-#  include <openssl/bn.h>
-# endif
+# include <openssl/bn.h>
 
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN
