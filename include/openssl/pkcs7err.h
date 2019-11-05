@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_PKCS7ERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_PKCS7_strings(void);
 /*
  * PKCS7 function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PKCS7_F_DO_PKCS7_SIGNED_ATTRIB                   0
 #  define PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME           0
 #  define PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP                0

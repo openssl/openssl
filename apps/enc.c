@@ -51,7 +51,7 @@ typedef enum OPTION_choice {
 const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List ciphers"},
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"ciphers", OPT_LIST, '-', "Alias for -list"},
 #endif
     {"in", OPT_IN, '<', "Input file"},

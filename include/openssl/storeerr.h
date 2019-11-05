@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_OSSL_STOREERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_OSSL_STORE_strings(void);
 /*
  * OSSL_STORE function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define OSSL_STORE_F_FILE_CTRL                           0
 #  define OSSL_STORE_F_FILE_FIND                           0
 #  define OSSL_STORE_F_FILE_GET_PASS                       0

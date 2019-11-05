@@ -23,7 +23,7 @@ int ERR_load_PROV_strings(void);
 /*
  * PROV function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PROV_F_AESNI_INIT_KEY                            0
 #  define PROV_F_AES_BLOCK_FINAL                           0
 #  define PROV_F_AES_BLOCK_UPDATE                          0

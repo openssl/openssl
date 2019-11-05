@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BUFFER_H
 # endif
 
@@ -30,7 +30,7 @@ extern "C" {
 # include <stddef.h>
 # include <sys/types.h>
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define BUF_strdup(s) OPENSSL_strdup(s)
 #  define BUF_strndup(s, size) OPENSSL_strndup(s, size)
 #  define BUF_memdup(data, size) OPENSSL_memdup(data, size)

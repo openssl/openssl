@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BNERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_BN_strings(void);
 /*
  * BN function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define BN_F_BNRAND                                      0
 #  define BN_F_BNRAND_RANGE                                0
 #  define BN_F_BN_BLINDING_CONVERT_EX                      0

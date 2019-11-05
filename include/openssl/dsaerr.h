@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_DSAERR_H
 # endif
 
@@ -33,7 +33,7 @@ int ERR_load_DSA_strings(void);
 /*
  * DSA function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DSA_F_DSAPARAMS_PRINT                            0
 #   define DSA_F_DSAPARAMS_PRINT_FP                         0
 #   define DSA_F_DSA_BUILTIN_PARAMGEN                       0

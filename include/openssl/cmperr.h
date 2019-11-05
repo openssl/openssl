@@ -27,7 +27,7 @@ int ERR_load_CMP_strings(void);
 /*
  * CMP function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 # endif
 
 /*

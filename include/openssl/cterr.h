@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CTERR_H
 # endif
 
@@ -33,7 +33,7 @@ int ERR_load_CT_strings(void);
 /*
  * CT function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CT_F_CTLOG_NEW                                   0
 #   define CT_F_CTLOG_NEW_FROM_BASE64                       0
 #   define CT_F_CTLOG_NEW_FROM_CONF                         0

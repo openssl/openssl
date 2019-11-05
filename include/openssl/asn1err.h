@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_ASN1ERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_ASN1_strings(void);
 /*
  * ASN1 function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define ASN1_F_A2D_ASN1_OBJECT                           0
 #  define ASN1_F_A2I_ASN1_INTEGER                          0
 #  define ASN1_F_A2I_ASN1_STRING                           0

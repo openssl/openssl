@@ -108,7 +108,7 @@ for ($i = 0; $i < 128; $i++) {
 }
 print "\n};\n\n";
 
-print "#if ! OPENSSL_API_3\n";
+print "#ifndef OPENSSL_NO_DEPRECATED_3_0\n";
 print "static const unsigned short CONF_type_win32[128] = {";
 for ($i = 0; $i < 128; $i++) {
     print "\n   " if ($i % 8) == 0;

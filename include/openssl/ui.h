@@ -27,7 +27,7 @@
 # include <openssl/uierr.h>
 
 /* For compatibility reasons, the macro OPENSSL_NO_UI is currently retained */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  ifdef OPENSSL_NO_UI_CONSOLE
 #   define OPENSSL_NO_UI
 #  endif

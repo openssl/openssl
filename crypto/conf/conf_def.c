@@ -54,7 +54,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx);
 
 static CONF *def_create(CONF_METHOD *meth);
 static int def_init_default(CONF *conf);
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int def_init_WIN32(CONF *conf);
 #endif
 static int def_destroy(CONF *conf);
@@ -83,7 +83,7 @@ CONF_METHOD *NCONF_default(void)
     return &default_method;
 }
 
-#if ! OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static CONF_METHOD WIN32_method = {
     "WIN32",
     def_create,
@@ -128,7 +128,7 @@ static int def_init_default(CONF *conf)
     return 1;
 }
 
-#if ! OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int def_init_WIN32(CONF *conf)
 {
     if (conf == NULL)

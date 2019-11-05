@@ -21,7 +21,7 @@
 /*
  * DASYNC function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DASYNC_F_BIND_DASYNC                             0
 #  define DASYNC_F_CIPHER_AES_128_CBC_CODE                 0
 #  define DASYNC_F_DASYNC_AES128_CBC_HMAC_SHA1_INIT_KEY    0
