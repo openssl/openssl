@@ -40,16 +40,17 @@
 /*
  * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
  * declarations of functions deprecated in or before <version>.  If this is
- * undefined, the value of the macro OPENSSL_API_MIN above is the default.
+ * undefined, the value of the macro OPENSSL_CONFIGURED_API (defined in
+ * <openssl/opensslconf.h>) is the default.
  *
  * For any version number up until version 1.1.x, <version> is expected to be
  * the calculated version number 0xMNNFFPPSL.
- * For version numbers 3.0.0 and on, <version> is expected to be a computation
- * of the major and minor number in decimal using this formula:
+ * For version numbers 3.0 and on, <version> is expected to be a computation
+ * of the major and minor numbers in decimal using this formula:
  *
- *     MAJOR * 100 + MINOR
+ *     MAJOR * 10000 + MINOR * 100
  *
- * So version 3.0 becomes 300, version 3.2 becomes 302, etc.
+ * So version 3.0 becomes 30000, version 3.2 becomes 30200, etc.
  */
 
 /*
@@ -61,9 +62,15 @@
 #  error "OPENSSL_API_LEVEL must not be defined by application"
 # endif
 
+/*
+ * We figure out what API level was intended by simple numeric comparison.
+ * The lowest old style number we recognise is 0x00908000L, so we take some
+ * safety margin and assume that anything below 0x00900000L is a new style
+ * number.  This allows new versions up to and including v943.71.83.
+ */
 # ifdef OPENSSL_API_COMPAT
-#  if OPENSSL_API_COMPAT < 0x10000L /* Up to v655.36 */
-#   define OPENSSL_API_LEVEL (OPENSSL_API_COMPAT * 100)
+#  if OPENSSL_API_COMPAT < 0x900000L
+#   define OPENSSL_API_LEVEL (OPENSSL_API_COMPAT)
 #  else
 #   define OPENSSL_API_LEVEL                            \
            (((OPENSSL_API_COMPAT >> 28) & 0xF) * 10000  \
@@ -72,6 +79,10 @@
 #  endif
 # endif
 
+/*
+ * If OPENSSL_API_COMPAT wasn't given, we use default numbers to set
+ * the API compatibility level.
+ */
 # ifndef OPENSSL_API_LEVEL
 #  if OPENSSL_CONFIGURED_API > 0
 #   define OPENSSL_API_LEVEL (OPENSSL_CONFIGURED_API)
@@ -82,29 +93,30 @@
 # endif
 
 # if OPENSSL_API_LEVEL > OPENSSL_CONFIGURED_API
-#  error "The requested API level higher than the configured API level"
+#  error "The requested API level higher than the configured API compatibility level"
 # endif
 
 /*
  * Check of sane values.
  */
 /* Can't go higher than the current version. */
-# if OPENSSL_API_LEVEL > 30000
-#  error "OPENSSL_API_COMPAT expresses an impossible API level"
+# if OPENSSL_API_LEVEL > (OPENSSL_VERSION_MAJOR * 10000 + OPENSSL_VERSION_MINOR * 100)
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
 # endif
 /* OpenSSL will have no version 2.y.z */
 # if OPENSSL_API_LEVEL < 30000 && OPENSSL_API_LEVEL >= 20000
-#  error "OPENSSL_API_COMPAT expresses an impossible API level"
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
 # endif
 /* Below 0.9.8 is unacceptably low */
 # if OPENSSL_API_LEVEL < 908
-#  error "OPENSSL_API_COMPAT expresses an impossible API level"
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
 # endif
 
 /*
- * Define API level check macros up to what makes sense.  Since we
- * do future deprecations, we define one API level beyond the current
- * major version number.
+ * Define macros for deprecation purposes.  We always define the macros
+ * DEPERECATEDIN_{major}_{minor}() for all OpenSSL versions we care for,
+ * and OPENSSL_NO_DEPRECATED_{major}_{minor} to be used to check if
+ * removal of deprecated functions applies on that particular version.
  */
 
 # undef OPENSSL_NO_DEPRECATED_3_0
