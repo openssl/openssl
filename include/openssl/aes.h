@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_AES_H
 # endif
 
@@ -73,17 +73,18 @@ void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num);
-# if !OPENSSL_API_3
 /* NB: the IV is _two_ blocks long */
-void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
-                     size_t length, const AES_KEY *key,
-                     unsigned char *ivec, const int enc);
+DEPRECATEDIN_3_0(void AES_ige_encrypt(const unsigned char *in,
+                                      unsigned char *out,
+                                      size_t length, const AES_KEY *key,
+                                      unsigned char *ivec, const int enc))
 /* NB: the IV is _four_ blocks long */
-void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
-                        size_t length, const AES_KEY *key,
-                        const AES_KEY *key2, const unsigned char *ivec,
-                        const int enc);
-# endif
+DEPRECATEDIN_3_0(void AES_bi_ige_encrypt(const unsigned char *in,
+                                         unsigned char *out,
+                                         size_t length, const AES_KEY *key,
+                                         const AES_KEY *key2,
+                                         const unsigned char *ivec,
+                                         const int enc))
 
 int AES_wrap_key(AES_KEY *key, const unsigned char *iv,
                  unsigned char *out,

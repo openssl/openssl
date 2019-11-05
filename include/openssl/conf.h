@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CONF_H
 # endif
 
@@ -114,7 +114,7 @@ struct conf_st {
 
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-DEPRECATEDIN_3(CONF_METHOD *NCONF_WIN32(void))
+DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 

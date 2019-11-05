@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CMSERR_H
 # endif
 
@@ -33,7 +33,7 @@ int ERR_load_CMS_strings(void);
 /*
  * CMS function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CMS_F_CHECK_CONTENT                              0
 #   define CMS_F_CMS_ADD0_CERT                              0
 #   define CMS_F_CMS_ADD0_RECIPIENT_KEY                     0

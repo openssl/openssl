@@ -496,7 +496,7 @@ EOF
     }
 
     print OUT "\n/*\n * $lib function codes.\n */\n";
-    print OUT "# if !OPENSSL_API_3\n";
+    print OUT "# ifndef OPENSSL_NO_DEPRECATED_3_0\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
         $z = 0 if $z < 0;

@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_SSLERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_SSL_strings(void);
 /*
  * SSL function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_F_ADD_CLIENT_KEY_SHARE_EXT                   0
 #  define SSL_F_ADD_KEY_SHARE                              0
 #  define SSL_F_BYTES_TO_CIPHER_LIST                       0

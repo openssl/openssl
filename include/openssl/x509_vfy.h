@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_X509_VFY_H
 # endif
 
@@ -500,7 +500,7 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 int X509_STORE_load_file(X509_STORE *ctx, const char *file);
 int X509_STORE_load_path(X509_STORE *ctx, const char *path);
 int X509_STORE_load_store(X509_STORE *ctx, const char *store);
-DEPRECATEDIN_3(int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
+DEPRECATEDIN_3_0(int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
                                              const char *dir))
 int X509_STORE_set_default_paths(X509_STORE *ctx);
 

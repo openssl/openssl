@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CRYPTO_H
 # endif
 
@@ -335,15 +335,15 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
-#  if !OPENSSL_API_3
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #    define OPENSSL_mem_debug_push(info) \
          CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
 #    define OPENSSL_mem_debug_pop() \
          CRYPTO_mem_debug_pop()
 #  endif
-DEPRECATEDIN_3(int CRYPTO_mem_debug_push(const char *info,
-                                         const char *file, int line))
-DEPRECATEDIN_3(int CRYPTO_mem_debug_pop(void))
+DEPRECATEDIN_3_0(int CRYPTO_mem_debug_push(const char *info,
+                                           const char *file, int line))
+DEPRECATEDIN_3_0(int CRYPTO_mem_debug_pop(void))
 
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 

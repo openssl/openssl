@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
-#if OPENSSL_API_3
+#ifdef OPENSSL_NO_DEPRECATED_3_0
 NON_EMPTY_TRANSLATION_UNIT
 #else
 

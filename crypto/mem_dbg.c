@@ -209,7 +209,7 @@ static unsigned long mem_hash(const MEM *a)
     return ret;
 }
 
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
     return 0;

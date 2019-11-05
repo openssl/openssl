@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CRYPTOERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_CRYPTO_strings(void);
 /*
  * CRYPTO function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define CRYPTO_F_CMAC_CTX_NEW                            0
 #  define CRYPTO_F_CRYPTO_DUP_EX_DATA                      0
 #  define CRYPTO_F_CRYPTO_FREE_EX_DATA                     0

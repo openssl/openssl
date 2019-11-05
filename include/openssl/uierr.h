@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_UIERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_UI_strings(void);
 /*
  * UI function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define UI_F_CLOSE_CONSOLE                               0
 #  define UI_F_ECHO_CONSOLE                                0
 #  define UI_F_GENERAL_ALLOCATE_BOOLEAN                    0

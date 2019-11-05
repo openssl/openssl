@@ -14,7 +14,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_SSL_H
 # endif
 
@@ -178,7 +178,7 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_cipher_list()
  * Update both macro and function simultaneously
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
 /*
  * This is the default set of TLSv1.3 ciphersuites
@@ -1345,7 +1345,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 # define SSL_set_tmp_dh(ssl,dh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)(dh))
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)(ecdh))
 #  define SSL_set_tmp_ecdh(ssl,ecdh) \
@@ -2020,7 +2020,7 @@ __owur int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
 __owur int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
 __owur int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
 __owur int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
-DEPRECATEDIN_3(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
+DEPRECATEDIN_3_0(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
                                                         const char *CAfile,
                                                         const char *CApath))
 # define SSL_get0_session SSL_get_session/* just peek at pointer */

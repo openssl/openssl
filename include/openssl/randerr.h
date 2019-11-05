@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_RANDERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_RAND_strings(void);
 /*
  * RAND function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define RAND_F_DRBG_BYTES                                0
 #  define RAND_F_DRBG_CTR_INIT                             0
 #  define RAND_F_DRBG_GET_ENTROPY                          0

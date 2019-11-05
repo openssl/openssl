@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BN_H
 # endif
 
@@ -109,7 +109,7 @@ void BN_GENCB_set(BN_GENCB *gencb, int (*callback) (int, int, BN_GENCB *),
 
 void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define BN_prime_checks 0      /* default: select number of iterations based
                                   * on the size of the number */
 
@@ -355,8 +355,8 @@ DEPRECATEDIN_0_9_8(int
                                         BN_CTX *ctx, void *cb_arg,
                                         int do_trial_division))
 
-DEPRECATEDIN_3(int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb))
-DEPRECATEDIN_3(int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
+DEPRECATEDIN_3_0(int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb))
+DEPRECATEDIN_3_0(int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb))
 /* Newer versions */
 int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,

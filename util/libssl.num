@@ -354,7 +354,7 @@ SSL_set_session_id_context              354	3_0_0	EXIST::FUNCTION:
 SSL_new                                 355	3_0_0	EXIST::FUNCTION:
 TLSv1_1_method                          356	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
 SSL_CTX_get_cert_store                  357	3_0_0	EXIST::FUNCTION:
-SSL_CTX_load_verify_locations           358	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
+SSL_CTX_load_verify_locations           358	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_SESSION_print_fp                    359	3_0_0	EXIST::FUNCTION:STDIO
 SSL_get0_dane_tlsa                      360	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_generate_session_id         361	3_0_0	EXIST::FUNCTION:

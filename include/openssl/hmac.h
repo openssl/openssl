@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_HMAC_H
 # endif
 
@@ -20,7 +20,7 @@
 
 # include <openssl/evp.h>
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HMAC_MAX_MD_CBLOCK      128    /* Deprecated */
 # endif
 

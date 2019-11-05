@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_DTLS1_H
 # endif
 
@@ -24,7 +24,7 @@ extern "C" {
 
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DTLS_MIN_VERSION                DTLS1_VERSION
 #  define DTLS_MAX_VERSION                DTLS1_2_VERSION
 # endif
