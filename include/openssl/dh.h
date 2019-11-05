@@ -23,7 +23,7 @@
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
 # include <openssl/types.h>
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/bn.h>
 # endif
 # include <openssl/dherr.h>
@@ -40,7 +40,7 @@ extern "C" {
 
 # define DH_FLAG_CACHE_MONT_P     0x01
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */

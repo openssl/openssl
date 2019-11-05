@@ -4243,7 +4243,7 @@ int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
     return X509_STORE_load_store(ctx->cert_store, CAstore);
 }
 
-#if OPENSSL_API_LEVEL < 3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath)
 {
@@ -4668,7 +4668,7 @@ int SSL_is_server(const SSL *s)
     return s->server;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void SSL_set_debug(SSL *s, int debug)
 {
     /* Old function was do-nothing anyway... */

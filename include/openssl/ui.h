@@ -12,13 +12,13 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_UI_H
 # endif
 
 # include <openssl/opensslconf.h>
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/safestack.h>

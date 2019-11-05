@@ -896,7 +896,7 @@ int RAND_bytes(unsigned char *buf, int num)
     return rand_bytes_ex(NULL, buf, num);
 }
 
-#if !OPENSSL_API_1_1_0 && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();

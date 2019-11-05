@@ -86,7 +86,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     return rv;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)

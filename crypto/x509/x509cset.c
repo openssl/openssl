@@ -91,7 +91,7 @@ const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl)
     return crl->crl.nextUpdate;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl)
 {
     return crl->crl.lastUpdate;

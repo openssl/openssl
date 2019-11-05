@@ -172,7 +172,7 @@ IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
                           DTLS_client_method,
                           ssl_undefined_function,
                           ossl_statem_connect, DTLSv1_2_enc_data)
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # ifndef OPENSSL_NO_TLS1_2_METHOD
 const SSL_METHOD *TLSv1_2_method(void)
 {

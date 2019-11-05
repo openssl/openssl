@@ -659,13 +659,13 @@ static void err_delete_thread_state(void *arg)
     ERR_STATE_free(state);
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
 }
 #endif
 
-#if !OPENSSL_API_1_0_0
+#ifndef OPENSSL_NO_DEPRECATED_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
 }

@@ -96,7 +96,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OPENSSL_no_config() \
     OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
 #endif
@@ -143,7 +143,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define CONF_modules_free() while(0) continue
 #endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,

@@ -10,7 +10,7 @@
 /* This file contains deprecated functions as wrappers to the new ones */
 
 #include <openssl/opensslconf.h>
-#if OPENSSL_API_0_9_8
+#ifdef OPENSSL_NO_DEPRECATED_0_9_8
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
