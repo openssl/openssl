@@ -110,7 +110,7 @@ Note that the hash algorithm used for subject name hashing changed in OpenSSL
 0.9.8 to 1.0.0.
 
 OpenSSL includes a L<openssl-rehash(1)> utility which creates symlinks with
-correct hashed names for all files with .pem suffix in a given directory.
+hashed names for all files with F<.pem> suffix in a given directory.
 
 =head2 OSSL_STORE Method
 
