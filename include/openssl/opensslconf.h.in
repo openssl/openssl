@@ -66,8 +66,5 @@ extern "C" {
 # endif
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
-#  define HEADER_FILE_H /* deprecated in version 3.0 */
-# endif
 
 #endif                          /* OPENSSL_OPENSSLCONF_H */
