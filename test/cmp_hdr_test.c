@@ -193,7 +193,9 @@ static int execute_HDR_set1_senderKID_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(senderKID))
         return 0;
 
-    ASN1_OCTET_STRING_set(senderKID, rand_data, sizeof(rand_data));
+    if (!TEST_int_eq(ASN1_OCTET_STRING_set(senderKID, rand_data,
+                                           sizeof(rand_data)), 1))
+        return 0;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_senderKID(fixture->hdr, senderKID), 1))
         return 0;
     if (!TEST_int_eq(
@@ -372,7 +374,7 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
                 || !TEST_true(0 == ASN1_OCTET_STRING_cmp(
                         ossl_cmp_hdr_get0_senderNonce(fixture->hdr),
                         fixture->cmp_ctx->senderNonce))
-                || !TEST_true(0 ==  ASN1_OCTET_STRING_cmp(
+                || !TEST_true(0 == ASN1_OCTET_STRING_cmp(
                             OSSL_CMP_HDR_get0_transactionID(fixture->hdr),
                             fixture->cmp_ctx->transactionID)))
             goto err;
@@ -414,9 +416,9 @@ static int test_HDR_init_with_subject(void)
 
     fixture->expected = 1;
     if (!TEST_ptr(subject = X509_NAME_new())
-        || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
-        || !TEST_true(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx,
-                                                    subject))) {
+            || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
+            || !TEST_true(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx,
+                                                        subject))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -461,8 +463,10 @@ int setup_tests(void)
     ADD_TEST(test_HDR_init);
     ADD_TEST(test_HDR_init_with_subject);
     ADD_TEST(test_HDR_init_no_ref_no_subject);
-    /* TODO make sure that total number of tests (here currently 24) is shown,
-     also for other cmp_*text.c. Currently the test drivers always show 1. */
+    /*
+     *  TODO make sure that total number of tests (here currently 24) is shown,
+     *  also for other cmp_*text.c. Currently the test drivers always show 1.
+     */
 
     return 1;
 }

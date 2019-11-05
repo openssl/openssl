@@ -39,7 +39,8 @@ static OSSL_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
     return fixture;
 }
 
-static STACK_OF(X509) *sk_X509_new_1(void) {
+static STACK_OF(X509) *sk_X509_new_1(void)
+{
     STACK_OF(X509) *sk = sk_X509_new_null();
     X509 *x = X509_new();
 
@@ -51,7 +52,8 @@ static STACK_OF(X509) *sk_X509_new_1(void) {
     return sk;
 }
 
-static void sk_X509_pop_X509_free(STACK_OF(X509) *sk) {
+static void sk_X509_pop_X509_free(STACK_OF(X509) *sk)
+{
     sk_X509_pop_free(sk, X509_free);
 }
 
@@ -75,7 +77,6 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
             || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
             || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
             || !ossl_cmp_ctx_set1_recipNonce(ctx, bytes))
-
         goto err;
 
     if (!TEST_true(OSSL_CMP_CTX_reinit(ctx)))
@@ -335,7 +336,7 @@ static int execute_CTX_##SETN##_##GETN##_##FIELD( \
     CMP_CTX *ctx = fixture->ctx; \
     int (*set_fn)(CMP_CTX *ctx, TYPE) = \
         (int (*)(CMP_CTX *ctx, TYPE))PREFIX##_##SETN##_##FIELD; \
- /* need type cast in above assignment because TYPE arg sometimes is const */ \
+    /* need type cast in above assignment because TYPE arg sometimes is const */ \
     TYPE (*get_fn)(const CMP_CTX *ctx) = OSSL_CMP_CTX_##GETN##_##FIELD; \
     TYPE val1_to_free = NEW; \
     TYPE val1 = val1_to_free; \
@@ -467,17 +468,20 @@ static int test_CTX_##SETN##_##GETN##_##FIELD(void) \
     return result; \
 }
 
-static char *char_new(void) {
+static char *char_new(void)
+{
     return OPENSSL_strdup("test");
 }
 
-static void char_free(char *val) {
+static void char_free(char *val)
+{
     OPENSSL_free(val);
 }
 
 #define EMPTY_SK_X509(x) ((x) == NULL || sk_X509_num(x) == 0)
 
-static X509_STORE *X509_STORE_new_1(void) {
+static X509_STORE *X509_STORE_new_1(void)
+{
     X509_STORE *store = X509_STORE_new();
 
     if (store != NULL)
@@ -497,24 +501,24 @@ static X509_STORE *X509_STORE_new_1(void) {
 
 #define DEFINE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
-                              TYPE*, NULL, IS_0, TYPE##_new(), TYPE##_free)
+                             TYPE*, NULL, IS_0, TYPE##_new(), TYPE##_free)
 
 #define DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
                                        DEFAULT, NEW, FREE) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, 1, FIELD, \
-                              STACK_OF(ELEM_TYPE)*, NULL, DEFAULT, NEW, FREE)
+                             STACK_OF(ELEM_TYPE)*, NULL, DEFAULT, NEW, FREE)
 #define DEFINE_SET_GET_SK_TEST(OSSL_CMP, CTX, N, M, FIELD, T) \
     DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, T, \
-                                    IS_0, sk_##T##_new_null(), sk_##T##_free)
+                                   IS_0, sk_##T##_new_null(), sk_##T##_free)
 #define DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, N, M, FNAME) \
     DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FNAME, X509, \
-                                    EMPTY_SK_X509, \
-                                    sk_X509_new_1(), sk_X509_pop_X509_free)
+                                   EMPTY_SK_X509, \
+                                   sk_X509_new_1(), sk_X509_pop_X509_free)
 
 #define DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE, \
                                     DEFAULT) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
-                              TYPE*, NULL, DEFAULT, TYPE##_new(), TYPE##_free)
+                             TYPE*, NULL, DEFAULT, TYPE##_new(), TYPE##_free)
 #define DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
     static TYPE *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
@@ -530,27 +534,26 @@ static X509_STORE *X509_STORE_new_1(void) {
         return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
     } \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get0, 1, FIELD, \
-                              STACK_OF(TYPE)*, NULL, IS_0, \
-                              sk_##TYPE##_new_null(), sk_##TYPE##_free)
+                             STACK_OF(TYPE)*, NULL, IS_0, \
+                             sk_##TYPE##_new_null(), sk_##TYPE##_free)
 
 #define DEFINE_SET_CB_TEST(FIELD) \
-    static OSSL_cmp_##FIELD##_t \
-        OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
+    static OSSL_cmp_##FIELD##_t OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
         if (ctx == NULL) \
             CMPerr(0, CMP_R_NULL_ARGUMENT); \
         return ctx == NULL ? NULL /* cannot use ERR(NULL) here */ : ctx->FIELD;\
     } \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, \
-                              OSSL_cmp_##FIELD##_t, NULL, IS_0, \
-                              test_##FIELD, DROP)
+                             OSSL_cmp_##FIELD##_t, NULL, IS_0, \
+                             test_##FIELD, DROP)
 #define DEFINE_SET_GET_P_VOID_TEST(FIELD) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, void*, \
-                              NULL, IS_0, ((void *)1), DROP)
+                             NULL, IS_0, ((void *)1), DROP)
 
 #define DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, DEFAULT) \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set, get, 0, FIELD, int, -1, \
-                              DEFAULT, 1, DROP)
+                             DEFAULT, 1, DROP)
 #define DEFINE_SET_GET_INT_TEST(OSSL_CMP, CTX, FIELD) \
     DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_NEG)
 #define DEFINE_SET_PORT_TEST(FIELD) \
@@ -590,8 +593,9 @@ static X509_STORE *X509_STORE_new_1(void) {
 #define push0 0
 #define push1 1
 #define DEFINE_PUSH_BASE_TEST(PUSHN, DUP, FIELD, ELEM, TYPE, T, \
-                               DEFAULT, NEW, FREE) \
-static TYPE sk_top_##FIELD(const CMP_CTX *ctx) { \
+                              DEFAULT, NEW, FREE) \
+static TYPE sk_top_##FIELD(const CMP_CTX *ctx) \
+{ \
     return sk_##T##_value(ctx->FIELD, sk_##T##_num(ctx->FIELD) - 1); \
 } \
 \
@@ -600,7 +604,9 @@ static int execute_CTX_##PUSHN##_##ELEM(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
     CMP_CTX *ctx = fixture->ctx; \
     int (*push_fn)(CMP_CTX *ctx, TYPE) = \
         (int (*)(CMP_CTX *ctx, TYPE))OSSL_CMP_CTX_##PUSHN##_##ELEM; \
- /* need type cast in above assignment because TYPE arg sometimes is const */ \
+    /* \
+     * need type cast in above assignment because TYPE arg sometimes is const \
+     */ \
     int n_elem = sk_##T##_num(ctx->FIELD); \
     STACK_OF(TYPE) field_read; \
     TYPE val1_to_free = NEW; \
@@ -696,7 +702,7 @@ static int test_CTX_##PUSHN##_##ELEM(void) \
 
 #define DEFINE_PUSH_TEST(N, DUP, FIELD, ELEM, TYPE) \
     DEFINE_PUSH_BASE_TEST(push##N, DUP, FIELD, ELEM, TYPE*, TYPE, \
-                           IS_0, TYPE##_new(), TYPE##_free)
+                          IS_0, TYPE##_new(), TYPE##_free)
 
 void cleanup_tests(void)
 {
@@ -704,9 +710,9 @@ void cleanup_tests(void)
 }
 
 DEFINE_SET_GET_ARG_FN(set, get, option, 16, int)
-                                    /* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
+/* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
-                          1 /* true */, DROP)
+                         1 /* true */, DROP)
 
 #ifndef OPENSSL_NO_TRACE
 DEFINE_SET_CB_TEST(log_cb)
@@ -726,8 +732,8 @@ DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
 DEFINE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
-                          X509_STORE*, NULL,
-                          DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
+                         X509_STORE*, NULL,
+                         DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
 DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, clCert, X509)
@@ -741,11 +747,10 @@ DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
 DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY*) /* priv == 0 */
 DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
 DEFINE_SET_GET1_STR_FN(set1, referenceValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str,
-                             char, IS_0)
+DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str, char,
+                            IS_0)
 DEFINE_SET_GET1_STR_FN(set1, secretValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str,
-                             char, IS_0)
+DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str, char, IS_0)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
 #ifdef ISSUE_9504_RESOLVED
@@ -768,8 +773,8 @@ DEFINE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
 DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
 DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
 
-DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID,
-                         ASN1_OCTET_STRING, IS_0)
+DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID, ASN1_OCTET_STRING,
+                        IS_0)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
 DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
 
@@ -779,9 +784,9 @@ int setup_tests(void)
     /* OSSL_CMP_CTX_free() is tested by tear_down() */
     ADD_TEST(test_CTX_reinit);
 
-/* various CMP options: */
+    /* various CMP options: */
     ADD_TEST(test_CTX_set_get_option_16);
-/* CMP-specific callback for logging and outputting the error queue: */
+    /* CMP-specific callback for logging and outputting the error queue: */
 #ifndef OPENSSL_NO_TRACE
     ADD_TEST(test_CTX_set_get_log_cb);
 #endif
@@ -793,13 +798,14 @@ int setup_tests(void)
      */
     ADD_TEST(test_cmp_ctx_log_cb);
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    /* also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
-       ossl_cmp_add_error_txt(), and the macros
-       ossl_cmp_add_error_data and ossl_cmp_add_error_line:
-    */
+    /*
+     * also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
+     * ossl_cmp_add_error_txt(), and the macros
+     * ossl_cmp_add_error_data and ossl_cmp_add_error_line:
+     */
     ADD_TEST(test_CTX_print_errors);
 #endif
-/* message transfer: */
+    /* message transfer: */
     ADD_TEST(test_CTX_set1_get0_serverPath);
     ADD_TEST(test_CTX_set1_get0_serverName);
     ADD_TEST(test_CTX_set_get_serverPort);
@@ -809,29 +815,31 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set_get_http_cb_arg);
     ADD_TEST(test_CTX_set_get_transfer_cb);
     ADD_TEST(test_CTX_set_get_transfer_cb_arg);
-/* server authentication: */
+    /* server authentication: */
     ADD_TEST(test_CTX_set1_get0_srvCert);
     ADD_TEST(test_CTX_set0_get0_validatedSrvCert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
     ADD_TEST(test_CTX_set0_get0_trustedStore);
     ADD_TEST(test_CTX_set1_get0_untrusted_certs);
-/* client authentication: */
+    /* client authentication: */
     ADD_TEST(test_CTX_set1_get0_clCert);
     ADD_TEST(test_CTX_set1_get0_pkey);
     /* the following two also test ossl_cmp_asn1_octet_string_set1_bytes(): */
     ADD_TEST(test_CTX_set1_get1_referenceValue_str);
     ADD_TEST(test_CTX_set1_get1_secretValue_str);
-/* CMP message header and extra certificates: */
+    /* CMP message header and extra certificates: */
     ADD_TEST(test_CTX_set1_get0_recipient);
     ADD_TEST(test_CTX_push0_geninfo_ITAV);
     ADD_TEST(test_CTX_set1_get0_extraCertsOut);
-/* certificate template: */
+    /* certificate template: */
     ADD_TEST(test_CTX_set0_get0_newPkey_1);
     ADD_TEST(test_CTX_set0_get0_newPkey_0);
     ADD_TEST(test_CTX_set1_get0_issuer);
     ADD_TEST(test_CTX_set1_get0_subjectName);
 #ifdef ISSUE_9504_RESOLVED
-/* test currently fails, see https://github.com/openssl/openssl/issues/9504 */
+    /*
+     * test currently fails, see https://github.com/openssl/openssl/issues/9504
+     */
     ADD_TEST(test_CTX_push1_subjectAltName);
 #endif
     ADD_TEST(test_CTX_set0_get0_reqExtensions);
@@ -839,28 +847,28 @@ int setup_tests(void)
     ADD_TEST(test_CTX_push0_policy);
     ADD_TEST(test_CTX_set1_get0_oldCert);
 #ifdef ISSUE_9504_RESOLVED
-/* test currently fails, see https://github.com/openssl/openssl/issues/9504 */
+    /*
+     * test currently fails, see https://github.com/openssl/openssl/issues/9504
+     */
     ADD_TEST(test_CTX_set1_get0_p10CSR);
 #endif
-/* misc body contents: */
+    /* misc body contents: */
     ADD_TEST(test_CTX_push0_genm_ITAV);
-/* certificate confirmation: */
+    /* certificate confirmation: */
     ADD_TEST(test_CTX_set_get_certConf_cb);
     ADD_TEST(test_CTX_set_get_certConf_cb_arg);
-/* result fetching: */
+    /* result fetching: */
     ADD_TEST(test_CTX_set_get_status);
     ADD_TEST(test_CTX_set0_get0_statusString);
     ADD_TEST(test_CTX_set_get_failInfoCode);
     ADD_TEST(test_CTX_set0_get0_newCert);
     ADD_TEST(test_CTX_set1_get1_caPubs);
     ADD_TEST(test_CTX_set1_get1_extraCertsIn);
-/* exported for testing and debugging purposes: */
+    /* exported for testing and debugging purposes: */
     /* the following three also test ossl_cmp_asn1_octet_string_set1(): */
     ADD_TEST(test_CTX_set1_get0_transactionID);
     ADD_TEST(test_CTX_set1_get0_senderNonce);
     ADD_TEST(test_CTX_set1_get0_recipNonce);
-
-    /* TODO ossl_cmp_build_cert_chain() will be tested with cmp_protect.c*/
-
+    /* ossl_cmp_build_cert_chain() is tested in cmp_protect.c */
     return 1;
 }

@@ -946,7 +946,8 @@ int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx)
  * Sets a Boolean or integer option of the context to the "val" arg.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val) {
+int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
+{
     int min_val;
 
     if (ctx == NULL) {
@@ -1049,7 +1050,8 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val) {
  * Reads a Boolean or integer option value from the context.
  * Returns -1 on error (which is the default OSSL_CMP_OPT_REVOCATION_REASON)
  */
-int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt) {
+int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
+{
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return -1;

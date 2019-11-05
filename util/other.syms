@@ -348,6 +348,8 @@ OSSL_CMP_LOG_ERR                        define
 OSSL_CMP_LOG_INFO                       define
 OSSL_CMP_LOG_NOTICE                     define
 OSSL_CMP_LOG_WARNING                    define
+OSSL_CMP_MSTR_HELPER                    define
+OSSL_CMP_MSTR                           define
 OSSL_CMP_alert                          define
 OSSL_CMP_debug                          define
 OSSL_CMP_err                            define
