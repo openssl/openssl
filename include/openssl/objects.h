@@ -163,7 +163,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
 int OBJ_new_nid(int num);
 int OBJ_add_object(const ASN1_OBJECT *obj);
 int OBJ_create(const char *oid, const char *sn, const char *ln);
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OBJ_cleanup() while(0) continue
 #endif
 int OBJ_create_objects(BIO *in);

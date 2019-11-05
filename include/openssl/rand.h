@@ -42,7 +42,7 @@ int RAND_set_rand_engine(ENGINE *engine);
 
 RAND_METHOD *RAND_OpenSSL(void);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #   define RAND_cleanup() while(0) continue
 # endif
 int RAND_bytes(unsigned char *buf, int num);

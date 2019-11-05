@@ -22,7 +22,7 @@
 # include <openssl/opensslconf.h>
 # include <openssl/comp.h>
 # include <openssl/bio.h>
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/x509.h>
 #  include <openssl/crypto.h>
 #  include <openssl/buffer.h>
@@ -1125,7 +1125,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_VERIFY_CLIENT_ONCE          0x04
 # define SSL_VERIFY_POST_HANDSHAKE       0x08
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define OpenSSL_add_ssl_algorithms()   SSL_library_init()
 #  define SSLeay_add_ssl_algorithms()    SSL_library_init()
 # endif
@@ -1500,7 +1500,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_shared_curve          SSL_get_shared_group
 
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /* Provide some compatibility macros for removed functionality. */
 #  define SSL_CTX_need_tmp_RSA(ctx)                0
 #  define SSL_CTX_set_tmp_rsa(ctx,rsa)             1
@@ -1630,7 +1630,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *uri);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_load_error_strings() \
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS \
                      | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
@@ -1987,7 +1987,7 @@ void SSL_set_accept_state(SSL *s);
 
 __owur long SSL_get_default_timeout(const SSL *s);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_library_init() OPENSSL_init_ssl(0, NULL)
 # endif
 
@@ -2121,7 +2121,7 @@ __owur int SSL_COMP_get_id(const SSL_COMP *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                              *meths);
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_COMP_free_compression_methods() while(0) continue
 # endif
 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
@@ -2173,7 +2173,7 @@ size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif
 

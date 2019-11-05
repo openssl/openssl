@@ -12,7 +12,7 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid)
 {
     return PKCS12_get_attr_gen(bag->attrib, attr_nid);

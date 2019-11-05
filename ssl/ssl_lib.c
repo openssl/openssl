@@ -4668,7 +4668,7 @@ int SSL_is_server(const SSL *s)
     return s->server;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void SSL_set_debug(SSL *s, int debug)
 {
     /* Old function was do-nothing anyway... */

@@ -526,7 +526,7 @@ void *EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx);
 void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # define EVP_CIPHER_CTX_name(c)         EVP_CIPHER_name(EVP_CIPHER_CTX_cipher(c))
 # define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c))
 # endif
 # define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
@@ -726,7 +726,7 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
                     char *out, int *outl);
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)
 #  define EVP_CIPHER_CTX_cleanup(c)   EVP_CIPHER_CTX_reset(c)
 # endif
@@ -1005,7 +1005,7 @@ const EVP_CIPHER *EVP_sm4_ofb(void);
 const EVP_CIPHER *EVP_sm4_ctr(void);
 # endif
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define OPENSSL_add_all_algorithms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS \

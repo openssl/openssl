@@ -42,7 +42,7 @@
  */
 # include <openssl/symhacks.h>
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/opensslv.h>
 # endif
 
@@ -50,7 +50,7 @@
 extern "C" {
 #endif
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSLeay                  OpenSSL_version_num
 #  define SSLeay_version          OpenSSL_version
 #  define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
@@ -68,7 +68,7 @@ typedef struct {
     int dummy;
 } CRYPTO_dynlock;
 
-# endif /* OPENSSL_API_1_1_0 */
+# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -238,7 +238,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
@@ -285,11 +285,11 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_THREADID_cpy(dest, src)
 #  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-#  if !OPENSSL_API_1_0_0
+#  ifndef OPENSSL_NO_DEPRECATED_1_0_0
 #   define CRYPTO_set_id_callback(func)
 #   define CRYPTO_get_id_callback()                     (NULL)
 #   define CRYPTO_thread_id()                           (0UL)
-#  endif /* OPENSSL_API_1_0_0 */
+#  endif /* OPENSSL_NO_DEPRECATED_1_0_0 */
 
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
@@ -297,7 +297,7 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_create_callback()          (NULL)
 #  define CRYPTO_get_dynlock_lock_callback()            (NULL)
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
-# endif /* OPENSSL_API_1_1_0 */
+# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -370,7 +370,7 @@ int CRYPTO_mem_leaks(BIO *bio);
 
 /* die if we have to */
 ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
 # define OPENSSL_assert(e) \

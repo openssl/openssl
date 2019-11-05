@@ -67,7 +67,7 @@ extern "C" {
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# if !OPENSSL_API_0_9_8
+# ifndef OPENSSL_NO_DEPRECATED_0_9_8
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
 #  define BN_FLG_FREE            0x8000 /* used for debugging */
@@ -539,7 +539,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
 #  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
 #  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
