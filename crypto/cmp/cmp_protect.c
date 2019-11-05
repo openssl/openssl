@@ -73,40 +73,37 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
 
     if (secret != NULL && pkey == NULL) {
-        if (NID_id_PasswordBasedMAC == OBJ_obj2nid(algorOID)) {
-            if (ppval == NULL) {
-                CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
-                goto end;
-            }
-            pbm_str = (ASN1_STRING *)ppval;
-            pbm_str_uc = pbm_str->data;
-            pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
-            if (pbm == NULL) {
-                CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
-                goto end;
-            }
-
-            if (!OSSL_CRMF_pbm_new(pbm, prot_part_der, prot_part_der_len,
-                                   secret->data, secret->length,
-                                   &protection, &sig_len)) {
-                CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
-                goto end;
-            }
-        } else {
+        if (ppval == NULL) {
+            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            goto end;
+        }
+        if (NID_id_PasswordBasedMAC != OBJ_obj2nid(algorOID)) {
             CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
             goto end;
         }
+        pbm_str = (ASN1_STRING *)ppval;
+        pbm_str_uc = pbm_str->data;
+        pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
+        if (pbm == NULL) {
+            CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
+            goto end;
+        }
+
+        if (!OSSL_CRMF_pbm_new(pbm, prot_part_der, prot_part_der_len,
+                               secret->data, secret->length,
+                               &protection, &sig_len))
+            goto end;
     } else if (secret == NULL && pkey != NULL) {
         /* TODO combine this with large parts of CRMF_poposigningkey_init() */
         /* EVP_DigestSignInit() checks that pkey type is correct for the alg */
 
         if (!OBJ_find_sigid_algs(OBJ_obj2nid(algorOID), &md_NID, NULL)
-                || (md = EVP_get_digestbynid(md_NID)) == NULL) {
+                || (md = EVP_get_digestbynid(md_NID)) == NULL
+                || (evp_ctx = EVP_MD_CTX_new()) == NULL) {
             CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
             goto end;
         }
-        if ((evp_ctx = EVP_MD_CTX_new()) == NULL
-                || EVP_DigestSignInit(evp_ctx, NULL, md, NULL, pkey) <= 0
+        if (EVP_DigestSignInit(evp_ctx, NULL, md, NULL, pkey) <= 0
                 || EVP_DigestSignUpdate(evp_ctx, prot_part_der,
                                         prot_part_der_len) <= 0
                 || EVP_DigestSignFinal(evp_ctx, NULL, &sig_len) <= 0
