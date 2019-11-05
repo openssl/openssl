@@ -399,12 +399,12 @@ static int execute_X509_STORE_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 static int test_X509_STORE(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
-    fixture->certs = sk_X509_new_null();
     fixture->callback_arg = 0;  /* self-signed allowed */
-    if (!TEST_true(sk_X509_push(fixture->certs, endentity1)
-                       && sk_X509_push(fixture->certs, endentity2)
-                       && sk_X509_push(fixture->certs, root)
-                       && sk_X509_push(fixture->certs, intermediate))
+    if (!TEST_ptr(fixture->certs = sk_X509_new_null())
+            || !sk_X509_push(fixture->certs, endentity1)
+            || !sk_X509_push(fixture->certs, endentity2)
+            || !sk_X509_push(fixture->certs, root)
+            || !sk_X509_push(fixture->certs, intermediate)
             || !TEST_ptr(fixture->chain = sk_X509_dup(fixture->certs))) {
         tear_down(fixture);
         fixture = NULL;
