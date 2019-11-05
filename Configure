@@ -45,9 +45,11 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
-# --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0.0 / 3.
-#               Do not compile support for interfaces deprecated as of the
-#               specified OpenSSL version.
+# --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0
+#               Define the public APIs as they were for that version
+#               including patch releases.  If 'no-deprecated' is also
+#               given, do not compile support for interfaces deprecated
+#               up to and including the specified OpenSSL version.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -186,15 +188,24 @@ our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 # API compatibility name to version number mapping.
 #
-my $maxapi = "3.0.0";           # API for "no-deprecated" builds
 my $apitable = {
-    "3.0.0" => 3,
-    "1.1.1" => 2,
-    "1.1.0" => 2,
-    "1.0.2" => 1,
-    "1.0.1" => 1,
-    "1.0.0" => 1,
-    "0.9.8" => 0,
+    # This table expresses when API additions or changes can occur.
+    # The numbering used changes from 3.0 and on because we updated
+    # (solidified) our version numbering scheme at that point.
+
+    # From 3.0 and on, we internalise the given version number in dedcimal
+    # as MAJOR * 10000 + MINOR * 100 + 0
+    "3.0.0" => 30000,
+    "3.0"   => 30000,
+
+    # Note that before 3.0, we didn't have the same version number scheme.
+    # Still, the numbering we use here covers what we need.
+    "1.1.1" => 10101,
+    "1.1.0" => 10100,
+    "1.0.2" => 10002,
+    "1.0.1" => 10001,
+    "1.0.0" => 10000,
+    "0.9.8" =>   908,
 };
 
 our %table = ();
@@ -844,7 +855,10 @@ while (@argvcopy)
                         }
                 elsif (/^--api=(.*)$/)
                         {
-                        $config{api}=$1;
+                        my $api = $1;
+                        die "Unknown API compatibility level $api"
+                                unless defined $apitable->{$api};
+                        $config{api}=$apitable->{$api};
                         }
                 elsif (/^--libdir=(.*)$/)
                         {
@@ -960,10 +974,6 @@ while (@argvcopy)
                         { $config{options} .= " ".$_; }
                 }
         }
-
-if (defined($config{api}) && !exists $apitable->{$config{api}}) {
-        die "***** Unsupported api compatibility level: $config{api}\n",
-}
 
 if (keys %deprecated_options)
         {
@@ -1365,11 +1375,6 @@ unless($disabled{threads}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
 }
 
-# With "deprecated" disable all deprecated features.
-if (defined($disabled{"deprecated"})) {
-        $config{api} = $maxapi;
-}
-
 my $no_shared_warn=0;
 if ($target{shared_target} eq "")
         {
@@ -1503,6 +1508,8 @@ foreach (sort split(/\s+/,$target{bn_ops})) {
 die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set in bn_ops\n"
     if $count > 1;
 
+$config{api} = $config{major} * 10000 + $config{minor} * 100
+    unless $config{api};
 
 # Hack cflags for better warnings (dev option) #######################
 
@@ -1514,7 +1521,7 @@ $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
 $config{openssl_api_defines} = [
-    "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
+    "OPENSSL_CONFIGURED_API=".$config{api}
 ];
 
 my @strict_warnings_collection=();

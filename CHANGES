@@ -9,6 +9,32 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Change the interpretation of the '--api' configuration option to
+     mean that this is a desired API compatibility level with no
+     further meaning.  The previous interpretation, that this would
+     also mean to remove all deprecated symbols up to and including
+     the given version, no requires that 'no-deprecated' is also used
+     in the configuration.
+
+     When building applications, the desired API compatibility level
+     can be set with the OPENSSL_API_COMPAT macro like before.  For
+     API compatibility version below 3.0, the old style numerical
+     value is valid as before, such as -DOPENSSL_API_COMPAT=0x10100000L.
+     For version 3.0 and on, the value is expected to be the decimal
+     value calculated from the major and minor version like this:
+
+         MAJOR * 10000 + MINOR * 100
+
+     Examples:
+
+         -DOPENSSL_API_COMPAT=30000             For 3.0
+         -DOPENSSL_API_COMPAT=30200             For 3.2
+
+     To hide declarations that are deprecated up to and including the
+     given API compatibility level, -DOPENSSL_NO_DEPRECATED must be
+     given when building the application as well.
+     [Richard Levitte]
+
   *) Added the X509_LOOKUP_METHOD called X509_LOOKUP_store, to allow
      access to certificate and CRL stores via URIs and OSSL_STORE
      loaders.
@@ -358,15 +384,6 @@
      [Richard Levitte]
 
   *) Change the license to the Apache License v2.0.
-     [Richard Levitte]
-
-  *) Change the possible version information given with OPENSSL_API_COMPAT.
-     It may be a pre-3.0.0 style numerical version number as it was defined
-     in 1.1.0, and it may also simply take the major version number.
-
-     Because of the version numbering of pre-3.0.0 releases, the values 0,
-     1 and 2 are equivalent to 0x00908000L (0.9.8), 0x10000000L (1.0.0) and
-     0x10100000L (1.1.0), respectively.
      [Richard Levitte]
 
   *) Switch to a new version scheme using three numbers MAJOR.MINOR.PATCH.
