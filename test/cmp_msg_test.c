@@ -51,8 +51,8 @@ static CMP_MSG_TEST_FIXTURE *set_up(const char *const test_case_name)
 
     if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new())
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 1))
-            || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx, ref,
-                                                           sizeof(ref)))) {
+            || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
+                                                           ref, sizeof(ref)))) {
         tear_down(fixture);
         return NULL;
     }
@@ -353,15 +353,15 @@ static int test_cmp_create_rr(void)
 
 static int test_cmp_create_genm(void)
 {
-    OSSL_CMP_ITAV *itv = NULL;
+    OSSL_CMP_ITAV *iv = NULL;
 
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    itv = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm), NULL);
+    iv = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm), NULL);
     if (!TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 1))
-            || !TEST_ptr(itv)
-            || !TEST_true(OSSL_CMP_CTX_push0_genm_ITAV(fixture->cmp_ctx, itv))) {
-        OSSL_CMP_ITAV_free(itv);
+            || !TEST_ptr(iv)
+            || !TEST_true(OSSL_CMP_CTX_push0_genm_ITAV(fixture->cmp_ctx, iv))) {
+        OSSL_CMP_ITAV_free(iv);
         tear_down(fixture);
         fixture = NULL;
     }

@@ -105,6 +105,7 @@ static int verify_signature(OSSL_CMP_MSG *msg,
     unsigned char *prot_part_der = NULL;
     int l;
     EVP_MD_CTX *ctx = NULL;
+    const EVP_MD *digest = EVP_get_digestbynid(digest_nid);
     int res;
 
     prot_part.header = OSSL_CMP_MSG_get0_header(msg);
@@ -112,9 +113,7 @@ static int verify_signature(OSSL_CMP_MSG *msg,
     res =
         TEST_int_ge(l = i2d_CMP_PROTECTEDPART(&prot_part, &prot_part_der), 0)
             && TEST_ptr(ctx = EVP_MD_CTX_new())
-            && TEST_true(EVP_DigestVerifyInit
-                         (ctx, NULL, (EVP_MD *)EVP_get_digestbynid(digest_nid),
-                          NULL, pkey))
+            && TEST_true(EVP_DigestVerifyInit(ctx, NULL, digest, NULL, pkey))
             && TEST_int_eq(EVP_DigestVerify(ctx, protection->data,
                                             protection->length,
                                             prot_part_der, l), 1);

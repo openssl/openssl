@@ -180,8 +180,9 @@ OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype)
     return NULL;
 }
 
-#define HAS_SAN(ctx) (sk_GENERAL_NAME_num((ctx)->subjectAltNames) > 0 \
-    || OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) == 1)
+#define HAS_SAN(ctx) \
+    (sk_GENERAL_NAME_num((ctx)->subjectAltNames) > 0    \
+        || OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) == 1)
 
 static X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
                                  int bodytype)
@@ -628,7 +629,8 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
         goto err;
 
     OSSL_CMP_PKISI_free(msg->body->value.error->pKIStatusInfo);
-    if ((msg->body->value.error->pKIStatusInfo = OSSL_CMP_PKISI_dup(si)) == NULL)
+    if ((msg->body->value.error->pKIStatusInfo = OSSL_CMP_PKISI_dup(si))
+        == NULL)
         goto err;
     if (errorCode >= 0) {
         if ((msg->body->value.error->errorCode = ASN1_INTEGER_new()) == NULL)
