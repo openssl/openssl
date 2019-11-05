@@ -8,6 +8,7 @@
  */
 
 #include <openssl/opensslconf.h>
+#include <openssl/opensslv.h>
 
 #ifndef OPENSSL_MACROS_H
 # define OPENSSL_MACROS_H
@@ -19,14 +20,7 @@
 # define NON_EMPTY_TRANSLATION_UNIT static void *dummy = &dummy;
 
 /*
- * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
- * declarations of functions deprecated in or before <version>.  If this is
- * undefined, the value of the macro OPENSSL_API_MIN above is the default.
- *
- * For any version number up until version 1.1.x, <version> is expected to be
- * the calculated version number 0xMNNFFPPSL.  For version numbers 3.0.0 and
- * on, <version> is expected to be only the major version number (i.e. 3 for
- * version 3.0.0).
+ * Generic deprecation macro
  */
 # ifndef DECLARE_DEPRECATED
 #  define DECLARE_DEPRECATED(f)   f;
@@ -44,82 +38,169 @@
 # endif
 
 /*
- * We convert the OPENSSL_API_COMPAT value to an API level.  The API level
- * is the major version number for 3.0.0 and on.  For earlier versions, it
- * uses this scheme, which is close enough for our purposes:
+ * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
+ * declarations of functions deprecated in or before <version>.  If this is
+ * undefined, the value of the macro OPENSSL_CONFIGURED_API (defined in
+ * <openssl/opensslconf.h>) is the default.
  *
- *      0.x.y   0       (0.9.8 was the last release in this series)
- *      1.0.x   1       (1.0.2 was the last release in this series)
- *      1.1.x   2       (1.1.1 was the last release in this series)
+ * For any version number up until version 1.1.x, <version> is expected to be
+ * the calculated version number 0xMNNFFPPSL.
+ * For version numbers 3.0 and on, <version> is expected to be a computation
+ * of the major and minor numbers in decimal using this formula:
+ *
+ *     MAJOR * 10000 + MINOR * 100
+ *
+ * So version 3.0 becomes 30000, version 3.2 becomes 30200, etc.
  */
 
-/* In case someone defined both */
-# if defined(OPENSSL_API_COMPAT) && defined(OPENSSL_API_LEVEL)
-#  error "Disallowed to define both OPENSSL_API_COMPAT and OPENSSL_API_LEVEL"
+/*
+ * We use the OPENSSL_API_COMPAT value to define API level macros.  These
+ * macros are used to enable or disable features at that API version boundary.
+ */
+
+# ifdef OPENSSL_API_LEVEL
+#  error "OPENSSL_API_LEVEL must not be defined by application"
 # endif
 
-# ifndef OPENSSL_API_COMPAT
-#  define OPENSSL_API_LEVEL OPENSSL_MIN_API
-# else
-#  if (OPENSSL_API_COMPAT < 0x1000L) /* Major version numbers up to 16777215 */
-#   define OPENSSL_API_LEVEL OPENSSL_API_COMPAT
-#  elif (OPENSSL_API_COMPAT & 0xF0000000L) == 0x00000000L
-#   define OPENSSL_API_LEVEL 0
-#  elif (OPENSSL_API_COMPAT & 0xFFF00000L) == 0x10000000L
-#   define OPENSSL_API_LEVEL 1
-#  elif (OPENSSL_API_COMPAT & 0xFFF00000L) == 0x10100000L
-#   define OPENSSL_API_LEVEL 2
+/*
+ * We figure out what API level was intended by simple numeric comparison.
+ * The lowest old style number we recognise is 0x00908000L, so we take some
+ * safety margin and assume that anything below 0x00900000L is a new style
+ * number.  This allows new versions up to and including v943.71.83.
+ */
+# ifdef OPENSSL_API_COMPAT
+#  if OPENSSL_API_COMPAT < 0x900000L
+#   define OPENSSL_API_LEVEL (OPENSSL_API_COMPAT)
 #  else
-    /* Major number 3 to 15 */
-#   define OPENSSL_API_LEVEL ((OPENSSL_API_COMPAT >> 28) & 0xF)
+#   define OPENSSL_API_LEVEL                            \
+           (((OPENSSL_API_COMPAT >> 28) & 0xF) * 10000  \
+            + ((OPENSSL_API_COMPAT >> 20) & 0xFF) * 100 \
+            + ((OPENSSL_API_COMPAT >> 12) & 0xFF))
 #  endif
 # endif
 
 /*
- * Define API level check macros up to what makes sense.  Since we
- * do future deprecations, we define one API level beyond the current
- * major version number.
+ * If OPENSSL_API_COMPAT wasn't given, we use default numbers to set
+ * the API compatibility level.
+ */
+# ifndef OPENSSL_API_LEVEL
+#  if OPENSSL_CONFIGURED_API > 0
+#   define OPENSSL_API_LEVEL (OPENSSL_CONFIGURED_API)
+#  else
+#   define OPENSSL_API_LEVEL \
+           (OPENSSL_VERSION_MAJOR * 10000 + OPENSSL_VERSION_MINOR * 100)
+#  endif
+# endif
+
+# if OPENSSL_API_LEVEL > OPENSSL_CONFIGURED_API
+#  error "The requested API level higher than the configured API compatibility level"
+# endif
+
+/*
+ * Check of sane values.
+ */
+/* Can't go higher than the current version. */
+# if OPENSSL_API_LEVEL > (OPENSSL_VERSION_MAJOR * 10000 + OPENSSL_VERSION_MINOR * 100)
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
+# endif
+/* OpenSSL will have no version 2.y.z */
+# if OPENSSL_API_LEVEL < 30000 && OPENSSL_API_LEVEL >= 20000
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
+# endif
+/* Below 0.9.8 is unacceptably low */
+# if OPENSSL_API_LEVEL < 908
+#  error "OPENSSL_API_COMPAT expresses an impossible API compatibility level"
+# endif
+
+/*
+ * Define macros for deprecation purposes.  We always define the macros
+ * DEPERECATEDIN_{major}_{minor}() for all OpenSSL versions we care for,
+ * and OPENSSL_NO_DEPRECATED_{major}_{minor} to be used to check if
+ * removal of deprecated functions applies on that particular version.
  */
 
-# if OPENSSL_API_LEVEL < 4
-#  define DEPRECATEDIN_4(f)       DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_4 0
+# undef OPENSSL_NO_DEPRECATED_3_0
+# undef OPENSSL_NO_DEPRECATED_1_1_1
+# undef OPENSSL_NO_DEPRECATED_1_1_0
+# undef OPENSSL_NO_DEPRECATED_1_0_2
+# undef OPENSSL_NO_DEPRECATED_1_0_1
+# undef OPENSSL_NO_DEPRECATED_1_0_0
+# undef OPENSSL_NO_DEPRECATED_0_9_8
+
+# if OPENSSL_API_LEVEL >= 30000
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_3_0(f)       DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_3_0(f)
+#   define OPENSSL_NO_DEPRECATED_3_0
+#  endif
 # else
-#  define DEPRECATEDIN_4(f)
-#  define OPENSSL_API_4 1
+#  define DEPRECATEDIN_3_0(f)        f;
+# endif
+# if OPENSSL_API_LEVEL >= 10101
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_1_1_1(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_1_1_1(f)
+#   define OPENSSL_NO_DEPRECATED_1_1_1
+#  endif
+# else
+#  define DEPRECATEDIN_1_1_1(f)      f;
+# endif
+# if OPENSSL_API_LEVEL >= 10100
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_1_1_0(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_1_1_0(f)
+#   define OPENSSL_NO_DEPRECATED_1_1_0
+#  endif
+# else
+#  define DEPRECATEDIN_1_1_0(f)      f;
+# endif
+# if OPENSSL_API_LEVEL >= 10002
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_1_0_2(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_1_0_2(f)
+#   define OPENSSL_NO_DEPRECATED_1_0_2
+#  endif
+# else
+#  define DEPRECATEDIN_1_0_2(f)      f;
+# endif
+# if OPENSSL_API_LEVEL >= 10001
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_1_0_1(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_1_0_1(f)
+#   define OPENSSL_NO_DEPRECATED_1_0_1
+#  endif
+# else
+#  define DEPRECATEDIN_1_0_1(f)      f;
+# endif
+# if OPENSSL_API_LEVEL >= 10000
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_1_0_0(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_1_0_0(f)
+#   define OPENSSL_NO_DEPRECATED_1_0_0
+#  endif
+# else
+#  define DEPRECATEDIN_1_0_0(f)      f;
+# endif
+# if OPENSSL_API_LEVEL >= 908
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define DEPRECATEDIN_0_9_8(f)     DECLARE_DEPRECATED(f)
+#  else
+#   define DEPRECATEDIN_0_9_8(f)
+#   define OPENSSL_NO_DEPRECATED_0_9_8
+#  endif
+# else
+#  define DEPRECATEDIN_0_9_8(f)      f;
 # endif
 
-# if OPENSSL_API_LEVEL < 3
-#  define DEPRECATEDIN_3(f)       DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_3 0
-# else
-#  define DEPRECATEDIN_3(f)
-#  define OPENSSL_API_3 1
-# endif
-
-# if OPENSSL_API_LEVEL < 2
-#  define DEPRECATEDIN_1_1_0(f)   DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_1_1_0 0
-# else
-#  define DEPRECATEDIN_1_1_0(f)
-#  define OPENSSL_API_1_1_0 1
-# endif
-
-# if OPENSSL_API_LEVEL < 1
-#  define DEPRECATEDIN_1_0_0(f)   DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_1_0_0 0
-# else
-#  define DEPRECATEDIN_1_0_0(f)
-#  define OPENSSL_API_1_0_0 1
-# endif
-
-# if OPENSSL_API_LEVEL < 0
-#  define DEPRECATEDIN_0_9_8(f)   DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_0_9_8 0
-# else
-#  define DEPRECATEDIN_0_9_8(f)
-#  define OPENSSL_API_0_9_8 1
-# endif
+/*
+ * Make our own variants of __FILE__ and __LINE__, depending on configuration
+ */
 
 # ifndef OPENSSL_FILE
 #  ifdef OPENSSL_NO_FILENAMES
