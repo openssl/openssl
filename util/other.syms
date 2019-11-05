@@ -300,6 +300,11 @@ EVP_rc5_32_12_16_cfb                    define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
+OPENSSL_FILE                            define
+OPENSSL_FUNC                            define
+OPENSSL_LINE                            define
+OPENSSL_MSTR                            define
+OPENSSL_MSTR_HELPER                     define
 OPENSSL_VERSION_MAJOR                   define
 OPENSSL_VERSION_MINOR                   define
 OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
