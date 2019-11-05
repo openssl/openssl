@@ -729,7 +729,9 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
 static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 {
     const char *filename;
+    size_t pathlen;
 
+    pathlen = strlen(path);
     while ((filename = OPENSSL_DIR_read(dirctx, path)) != NULL) {
         size_t namelen;
 
@@ -742,7 +744,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
             char *newpath;
             BIO *bio;
 
-            newlen = strlen(path) + namelen + 2;
+            newlen = pathlen + namelen + 2;
             newpath = OPENSSL_zalloc(newlen);
             if (newpath == NULL) {
                 CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
