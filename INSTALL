@@ -141,14 +141,20 @@
  --openssldir depend in what configuration is used and what Windows
  implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
-  --api=x.y.z
-                   Don't build with support for deprecated APIs below the
-                   specified version number. For example "--api=1.1.0" will
-                   remove support for all APIS that were deprecated in OpenSSL
-                   version 1.1.0 or below. This is a rather specialized option
-                   for developers. If you just intend to remove all deprecated
-                   APIs entirely (up to the current version), it is easier
-                   to add the 'no-deprecated' option instead (see below).
+  --api=x.y[.z]
+                   Build the OpenSSL libraries to support the API for
+                   the specified version.  If "no-deprecated" is also
+                   given, don't build with support for deprecated APIs
+                   in or below the specified version number. For example
+                   "--api=1.1.0" with "no-deprecated" will remove
+                   support for all APIS that were deprecated in
+                   OpenSSL version 1.1.0 or below.
+                   This is a rather specialized option for developers.
+                   If you just intend to remove all deprecated APIs
+                   entirely (up to the current version), only specify
+                   "-no-deprecated" (see below).
+                   If "--api" isn't given, it defaults to the current
+                   OpenSSL minor version.
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
@@ -356,9 +362,10 @@
                    Don't build support for Certificate Transparency.
 
   no-deprecated
-                   Don't build with support for any deprecated APIs. This is the
-                   same as using "--api" and supplying the latest version
-                   number.
+                   Don't build with support for deprecated APIs up
+                   until and including the version given with
+                   "--api" (or the current version of "--api" wasn't
+                   given).
 
   no-dgram
                    Don't build support for datagram based BIOs. Selecting this
