@@ -675,6 +675,8 @@ const OPTIONS s_client_options[] = {
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
     {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
+    {"name", OPT_PROTOHOST, 's',
+     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
 
     OPT_SECTION("Session"),
     {"reconnect", OPT_RECONNECT, '-',
@@ -691,8 +693,6 @@ const OPTIONS s_client_options[] = {
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
      "Alias of -name option for \"-starttls xmpp[-server]\""},
-    {"name", OPT_PROTOHOST, 's',
-     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
     {"brief", OPT_BRIEF, '-',
      "Restrict output to brief summary of connection parameters"},
     {"prexit", OPT_PREXIT, '-',

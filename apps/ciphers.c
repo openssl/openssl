@@ -43,19 +43,19 @@ const OPTIONS ciphers_options[] = {
     OPT_SECTION("Cipher specification"),
     {"s", OPT_S, '-', "Only supported ciphers"},
 #ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Ciphers defined for SSL3"},
+    {"ssl3", OPT_SSL3, '-', "Ciphers compatible with SSL3"},
 #endif
 #ifndef OPENSSL_NO_TLS1
-    {"tls1", OPT_TLS1, '-', "Ciphers defined for TLS1"},
+    {"tls1", OPT_TLS1, '-', "Ciphers compatible with TLS1"},
 #endif
 #ifndef OPENSSL_NO_TLS1_1
-    {"tls1_1", OPT_TLS1_1, '-', "Ciphers defined for TLS1.1"},
+    {"tls1_1", OPT_TLS1_1, '-', "Ciphers compatible with TLS1.1"},
 #endif
 #ifndef OPENSSL_NO_TLS1_2
-    {"tls1_2", OPT_TLS1_2, '-', "Ciphers defined for TLS1.2"},
+    {"tls1_2", OPT_TLS1_2, '-', "Ciphers compatible with TLS1.2"},
 #endif
 #ifndef OPENSSL_NO_TLS1_3
-    {"tls1_3", OPT_TLS1_3, '-', "Ciphers defined for TLS1.3"},
+    {"tls1_3", OPT_TLS1_3, '-', "Ciphers compatible with TLS1.3"},
 #endif
 #ifndef OPENSSL_NO_PSK
     {"psk", OPT_PSK, '-', "Include ciphersuites requiring PSK"},

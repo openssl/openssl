@@ -114,6 +114,7 @@ const OPTIONS x509_options[] = {
     {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
 #endif
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
 
     OPT_SECTION("Certificate"),
     {"startdate", OPT_STARTDATE, '-', "Set notBefore field"},
@@ -130,7 +131,6 @@ const OPTIONS x509_options[] = {
     {"signkey", OPT_SIGNKEY, '<', "Self sign cert with arg"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's', "Section from config file to use"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text options"},
     {"checkhost", OPT_CHECKHOST, 's', "Check certificate matches host"},
     {"checkemail", OPT_CHECKEMAIL, 's', "Check certificate matches email"},

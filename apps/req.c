@@ -101,6 +101,9 @@ const OPTIONS req_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
      "Specify engine to be used for key generation operations"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
 #endif
 
     OPT_SECTION("Certificate"),
@@ -137,8 +140,6 @@ const OPTIONS req_options[] = {
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
-    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_SM2
     {"sm2-id", OPT_SM2ID, 's',
@@ -147,18 +148,16 @@ const OPTIONS req_options[] = {
      "Specify a hex ID string to verify an SM2 certificate request"},
 #endif
 
-    {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
-
-    OPT_SECTION("Output"),
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
     {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
+    {"modulus", OPT_MODULUS, '-', "RSA modulus"},
 
     OPT_R_OPTIONS,
     {NULL}
