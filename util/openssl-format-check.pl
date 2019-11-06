@@ -155,10 +155,10 @@ while(<>) {
     else {
         $hanging_indent     += $local_hanging_indent;
         $hanging_alt_indent += $local_hanging_indent;
-        # reduce hanging indent to adapt to given code. This prefers false negatives to false positives that would occur due to incompleteness of the paren/brace matching
         if ($count - $local_hanging_indent >=
             max($indent + $extra_singular_indent + $local_indent,
-                $multiline_condition_indent)) {
+                $multiline_condition_indent)) { # actual indent (count) is at least at minimum
+            # reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of the paren/brace matching
             $hanging_indent     = $count if $count < $hanging_indent;
             $hanging_alt_indent = $count if $count < $hanging_alt_indent;
         }
