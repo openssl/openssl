@@ -37,6 +37,7 @@ my $multiline_condition_indent; # special indent after if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return
 my $in_enum;               # used to determine terminator of assignment
 my $in_multiline_macro;    # number of lines so far within multi-line macro
+my $multiline_macro_no_indent; # workaround for macro body without extra indent
 my $in_multiline_comment;  # flag whether within multi-line comment
 my $comment_indent;        # used only if $in_multiline_comment == 1
 
@@ -151,9 +152,13 @@ while(<>) {
     elsif ($hanging_indent == -1) {
         my $tmp = $contents_before;
         my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
-        if (($in_multiline_macro == 1 || $in_multiline_macro == 2 && $parens_balance == -1) && # first line of macro body, where we also match two-line macro headers
-            $count == 0 && $indent == INDENT_LEVEL) {
-            $indent -= INDENT_LEVEL; # workaround for macro started without indentation
+        if ($in_multiline_macro == 1 ||
+            $in_multiline_macro == 2 && $parens_balance < 0) {
+            # first line of macro body, where we we've also matched two-line macro headers
+            if ($count == $indent - INDENT_LEVEL) { # macro started with same indentation
+                $indent -= INDENT_LEVEL;
+                $multiline_macro_no_indent = 1;
+            }
         }
         my $allowed = $indent+$extra_singular_indent+$local_offset;
         $allowed = "{1,$allowed}" if $label;
@@ -357,11 +362,13 @@ while(<>) {
 
         # detect start and end of multi-line macro, potentially adapting indent
         if ($orig_ =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
-            $indent += INDENT_LEVEL if $in_multiline_macro == 0;
+            if ($in_multiline_macro == 0) {
+                $multiline_macro_no_indent = 0;
+                $indent += INDENT_LEVEL ;
+            }
             $in_multiline_macro += 1;
         } else {
-            $indent -= INDENT_LEVEL if $in_multiline_macro
-                && $indent >= INDENT_LEVEL; # workaround for macro started without indentation
+            $indent -= INDENT_LEVEL if $in_multiline_macro && !$multiline_macro_no_indent;
             $in_multiline_macro = 0;
         }
 
