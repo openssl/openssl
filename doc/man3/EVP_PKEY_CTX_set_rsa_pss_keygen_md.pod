@@ -35,10 +35,10 @@ to the B<RSA> operation except detection of the salt length (using
 RSA_PSS_SALTLEN_AUTO) is not supported for verification if the key has
 usage restrictions.
 
-The EVP_PKEY_CTX_set_signature_md() and EVP_PKEY_CTX_set_rsa_mgf1_md() macros
-are used to set the digest and MGF1 algorithms respectively. If the key has
-usage restrictions then an error is returned if an attempt is made to set the
-digest to anything other than the restricted value. Otherwise these are
+The L<EVP_PKEY_CTX_set_signature_md(3)> and L<EVP_PKEY_CTX_set_rsa_mgf1_md(3)>
+fuunctions are used to set the digest and MGF1 algorithms respectively. If the
+key has usage restrictions then an error is returned if an attempt is made to
+set the digest to anything other than the restricted value. Otherwise these are
 similar to the B<RSA> versions.
 
 =head2 Key Generation
