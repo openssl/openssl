@@ -20,8 +20,10 @@ EVP_PKEY_CTX_get_rsa_pss_saltlen,
 EVP_PKEY_CTX_set_rsa_keygen_bits,
 EVP_PKEY_CTX_set_rsa_keygen_pubexp,
 EVP_PKEY_CTX_set_rsa_keygen_primes,
+EVP_PKEY_CTX_set_rsa_mgf1_md_ex,
 EVP_PKEY_CTX_set_rsa_mgf1_md,
 EVP_PKEY_CTX_get_rsa_mgf1_md,
+EVP_PKEY_CTX_set_rsa_oaep_md_ex,
 EVP_PKEY_CTX_set_rsa_oaep_md,
 EVP_PKEY_CTX_get_rsa_oaep_md,
 EVP_PKEY_CTX_set0_rsa_oaep_label,
@@ -95,8 +97,13 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int mbits);
  int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp);
  int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes);
+ int EVP_PKEY_CTX_set_rsa_mgf1_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
+                                     const char *mdprops);
  int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+ int EVP_PKEY_CTX_set_rsa_oaep_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
+                                     const char *mdprops);
  int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
  int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char *label, int len);
@@ -241,7 +248,7 @@ supported by the L<EVP_PKEY_new_raw_private_key(3)> function.
 
 =head2 RSA parameters
 
-The EVP_PKEY_CTX_set_rsa_padding() macro sets the RSA padding mode for B<ctx>.
+The EVP_PKEY_CTX_set_rsa_padding() function sets the RSA padding mode for B<ctx>.
 The B<pad> parameter can take the value B<RSA_PKCS1_PADDING> for PKCS#1
 padding, B<RSA_SSLV23_PADDING> for SSLv23 padding, B<RSA_NO_PADDING> for
 no padding, B<RSA_PKCS1_OAEP_PADDING> for OAEP padding (encrypt and
@@ -258,7 +265,7 @@ padding for RSA the algorithm identifier byte is added or checked and removed
 if this control is called. If it is not called then the first byte of the plaintext
 buffer is expected to be the algorithm identifier byte.
 
-The EVP_PKEY_CTX_get_rsa_padding() macro gets the RSA padding mode for B<ctx>.
+The EVP_PKEY_CTX_get_rsa_padding() function gets the RSA padding mode for B<ctx>.
 
 The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro sets the RSA PSS salt length to
 B<len>. As its name implies it is only supported for PSS padding. Three special
@@ -283,30 +290,42 @@ modified or freed after the call. If not specified 65537 is used.
 The EVP_PKEY_CTX_set_rsa_keygen_primes() macro sets the number of primes for
 RSA key generation to B<primes>. If not specified 2 is used.
 
-The EVP_PKEY_CTX_set_rsa_mgf1_md() macro sets the MGF1 digest for RSA padding
-schemes to B<md>. If not explicitly set the signing digest is used. The
-padding mode must have been set to B<RSA_PKCS1_OAEP_PADDING>
+The EVP_PKEY_CTX_set_rsa_mgf1_md_ex() function sets the MGF1 digest for RSA
+padding schemes to the digest named B<mdname>. If the RSA algorithm
+implementation for the selected provider supports it then the digest will be
+fetched using the properties B<mdprops>. If not explicitly set the signing
+digest is used. The padding mode must have been set to B<RSA_PKCS1_OAEP_PADDING>
 or B<RSA_PKCS1_PSS_PADDING>.
 
-The EVP_PKEY_CTX_get_rsa_mgf1_md() macro gets the MGF1 digest for B<ctx>.
+The EVP_PKEY_CTX_set_rsa_mgf1_md() function does the same as
+EVP_PKEY_CTX_set_rsa_mgf1_md_ex() except that the name of the digest is inferred
+from the supplied B<md> and it is not possible to specify any properties.
+
+The EVP_PKEY_CTX_get_rsa_mgf1_md() function gets the MGF1 digest for B<ctx>.
 If not explicitly set the signing digest is used. The padding mode must have
 been set to B<RSA_PKCS1_OAEP_PADDING> or B<RSA_PKCS1_PSS_PADDING>.
 
-The EVP_PKEY_CTX_set_rsa_oaep_md() macro sets the message digest type used
+The EVP_PKEY_CTX_set_rsa_oaep_md_ex() function sets the message digest type used
+in RSA OAEP to the digest named B<mdname>.  If the RSA algorithm implementation
+for the selected provider supports it then the digest will be fetched using the
+properties B<mdprops>. The padding mode must have been set to
+B<RSA_PKCS1_OAEP_PADDING>.
+
+The EVP_PKEY_CTX_set_rsa_oaep_md() function does the same as
+EVP_PKEY_CTX_set_rsa_oaep_md_ex() except that the name of the digest is inferred
+from the supplied B<md> and it is not possible to specify any properties.
+
+The EVP_PKEY_CTX_get_rsa_oaep_md() function gets the message digest type used
 in RSA OAEP to B<md>. The padding mode must have been set to
 B<RSA_PKCS1_OAEP_PADDING>.
 
-The EVP_PKEY_CTX_get_rsa_oaep_md() macro gets the message digest type used
-in RSA OAEP to B<md>. The padding mode must have been set to
-B<RSA_PKCS1_OAEP_PADDING>.
-
-The EVP_PKEY_CTX_set0_rsa_oaep_label() macro sets the RSA OAEP label to
+The EVP_PKEY_CTX_set0_rsa_oaep_label() function sets the RSA OAEP label to
 B<label> and its length to B<len>. If B<label> is NULL or B<len> is 0,
 the label is cleared. The library takes ownership of the label so the
 caller should not free the original memory pointed to by B<label>.
 The padding mode must have been set to B<RSA_PKCS1_OAEP_PADDING>.
 
-The EVP_PKEY_CTX_get0_rsa_oaep_label() macro gets the RSA OAEP label to
+The EVP_PKEY_CTX_get0_rsa_oaep_label() function gets the RSA OAEP label to
 B<label>. The return value is the label length. The padding mode
 must have been set to B<RSA_PKCS1_OAEP_PADDING>. The resulting pointer is owned
 by the library and should not be freed by the caller.
@@ -515,13 +534,20 @@ L<EVP_PKEY_keygen(3)>
 
 =head1 HISTORY
 
-The
-EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
-macros were added in 1.1.1, other functions were added in OpenSSL 1.0.0.
+EVP_PKEY_CTX_get_signature_md(), EVP_PKEY_CTX_set_signature_md(),
+EVP_PKEY_CTX_set_dh_pad(), EVP_PKEY_CTX_set_rsa_padding(),
+EVP_PKEY_CTX_get_rsa_padding(), EVP_PKEY_CTX_get_rsa_mgf1_md(),
+EVP_PKEY_CTX_set_rsa_mgf1_md(), EVP_PKEY_CTX_set_rsa_oaep_md(),
+EVP_PKEY_CTX_get_rsa_oaep_md(), EVP_PKEY_CTX_set0_rsa_oaep_label(),
+EVP_PKEY_CTX_get0_rsa_oaep_label() were macros in OpenSSL 1.1.1 and below. From
+OpenSSL 3.0 they are functions.
 
-EVP_PKEY_CTX_get_signature_md(), EVP_PKEY_CTX_set_signature_md() and
-EVP_PKEY_CTX_set_dh_pad() were macros in OpenSSL 1.1.1 and below. From OpenSSL
-3.0 they are functions.
+EVP_PKEY_CTX_set_rsa_mgf1_md_ex() and EVP_PKEY_CTX_set_rsa_oaep_md_ex() were
+added in OpenSSL 3.0.
+
+The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and
+EVP_PKEY_CTX_get1_id_len() macros were added in 1.1.1, other functions were
+added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
