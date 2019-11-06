@@ -163,10 +163,10 @@ while(<>) {
             $hanging_alt_indent = $count if $count < $hanging_alt_indent;
         }
 
-        my $allowed = $hanging_alt_indent == -1 ? "$hanging_indent" : "{$hanging_alt_indent,$hanging_indent}";
+        my $allowed = $hanging_alt_indent == $hanging_indent ? "$hanging_indent" : "{$hanging_alt_indent,$hanging_indent}";
         print "$ARGV:$line:indent=$count!=$allowed: $orig_"
             if $count != $hanging_indent &&
-               ($hanging_alt_indent == -1 || $count != $hanging_alt_indent);
+               $count != $hanging_alt_indent;
         $hanging_indent     -= $local_hanging_indent;
         $hanging_alt_indent -= $local_hanging_indent;
     }
@@ -267,7 +267,7 @@ while(<>) {
                 goto MATCH_PAREN;
             }
             $hanging_indent = length($head) + 1;
-            $hanging_alt_indent = -1;
+            $hanging_alt_indent = $hanging_indent;
             my $tmp = $_;
             $hanging_open_parens += $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
         }
@@ -279,7 +279,7 @@ while(<>) {
                 goto MATCH_PAREN;
             }
             $hanging_indent = length($head) + 1;
-            $hanging_alt_indent = -1;
+            $hanging_alt_indent = $hanging_indent;
             my $tmp = $_;
             $hanging_open_braces += $tmp =~ tr/\{// - $tmp =~ tr/\}//; # count balance of opening - closing braces
         } elsif ($hanging_indent != -1) {
@@ -293,7 +293,7 @@ while(<>) {
                 ? ($hanging_open_parens == 0 &&
                    ($hanging_open_braces == 0 || ($hanging_open_braces == 1 && $trailing_brace)))
                 : ($hanging_open_parens == 0 && $hanging_open_braces == 0 &&
-                   ($hanging_alt_indent == -1 || $trailing_semicolon)); # assignment and return are terminated by ';', else we assume function header
+                   ($hanging_alt_indent == $hanging_indent || $trailing_semicolon)); # assignment and return are terminated by ';', else we assume function header
             if ($hanging_end) {
                 $hanging_indent = -1;      # reset hanging indent
                 if ($multiline_condition_indent != -1 && !$trailing_brace) {
