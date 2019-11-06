@@ -153,9 +153,7 @@ while(<>) {
 
     # check hanging indent (outside multi-line comments)
     else {
-        $hanging_indent     += $local_hanging_indent;
-        $hanging_alt_indent += $local_hanging_indent;
-        if ($count - $local_hanging_indent >=
+        if ($count >=
             max($indent + $extra_singular_indent + $local_indent,
                 $multiline_condition_indent)) { # actual indent (count) is at least at minimum
             # reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of the paren/brace matching
@@ -163,12 +161,21 @@ while(<>) {
             $hanging_alt_indent = $count if $count < $hanging_alt_indent;
         }
 
-        my $allowed = $hanging_alt_indent == $hanging_indent ? "$hanging_indent" : "{$hanging_alt_indent,$hanging_indent}";
+        my $allowed = "$hanging_indent";
+        if ($hanging_alt_indent != $hanging_indent || $local_hanging_indent != 0) {
+            $allowed = "{$hanging_indent";
+            $allowed .= ",".($hanging_indent+$local_hanging_indent) if $local_hanging_indent != 0;
+            if ($hanging_alt_indent != $hanging_indent) {
+                $allowed .= ",$hanging_alt_indent";
+                $allowed .= ",".($hanging_alt_indent+$local_hanging_indent) if $local_hanging_indent != 0;
+            }
+            $allowed .= "}";
+        }
         print "$ARGV:$line:indent=$count!=$allowed: $orig_"
             if $count != $hanging_indent &&
-               $count != $hanging_alt_indent;
-        $hanging_indent     -= $local_hanging_indent;
-        $hanging_alt_indent -= $local_hanging_indent;
+               $count != $hanging_indent + $local_hanging_indent &&
+               $count != $hanging_alt_indent &&
+               $count != $hanging_alt_indent + $local_hanging_indent;
     }
 
     # adapt indent for following lines according to braces
