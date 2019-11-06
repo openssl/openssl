@@ -25,8 +25,8 @@ use constant MAX_LENGTH => 80;
 
 my $line;
 my $line_opening_brace;    # number of last line with opening brace
-my $contents_before;       # used only if $line > 1
-my $contents_before2;      # used only if $line > 2
+my $contents_before;       # contents of last non-comment line, used only if $line > 1
+my $contents_before2;      # contents of but-last non-comment line, used only if $line > 2
 my $indent;                # currently required indent
 my $hanging_indent;        # currently hanging indent, else -1
 my $hanging_open_parens;   # used only if $hanging_indent != -1
@@ -125,17 +125,18 @@ while(<>) {
             $local_hanging_indent = INDENT_LEVEL if ($2 eq "&" && $3 eq "&") ||
                                                     ($2 eq "|" && $3 eq "|");  # line starting with && or ||
         }
-    }
-    # TODO make sure that any '{' and '}' in comments and string literals do not interfere with the following calculations
-    m/^([^\{]*)/; # prefix before any opening {
-    my $num_initial_closing_braces = $1 =~ tr/\}//;
-    $local_offset -= $num_initial_closing_braces * INDENT_LEVEL;
 
-    # sanity-check underflow due to closing braces
-    if ($indent + $local_offset < 0) {
-        $local_offset = -$indent;
-        print "$ARGV:$line:too many }:$orig_"
-            unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
+        # TODO make sure that any '{' and '}' in string literals do not interfere with the following calculations
+        m/^([^\{]*)/; # prefix before any opening {
+        my $num_initial_closing_braces = $1 =~ tr/\}//;
+        $local_offset -= $num_initial_closing_braces * INDENT_LEVEL;
+
+        # sanity-check underflow due to closing braces
+        if ($indent + $local_offset < 0) {
+            $local_offset = -$indent;
+            print "$ARGV:$line:too many }:$orig_"
+                unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
+        }
     }
 
     # check indent within multi-line comments
@@ -189,15 +190,17 @@ print "$hanging_indent $hanging_alt_indent  ####\n" if $line == 1424 || $line ==
                $count != $hanging_alt_indent + $local_hanging_indent;
     }
 
-    # adapt indent for following lines according to braces
-    my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
-    $indent += $brace_balance * INDENT_LEVEL;
-    $hanging_indent += $brace_balance * INDENT_LEVEL if  $multiline_value_indent != -1;
+    if(!$in_multiline_comment) {
+        # adapt indent for following lines according to braces
+        my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
+        $indent += $brace_balance * INDENT_LEVEL;
+        $hanging_indent += $brace_balance * INDENT_LEVEL if  $multiline_value_indent != -1;
 
-    # sanity-check underflow due to closing braces
-    if ($indent < 0) {
-        $indent = 0;
-        # print "$ARGV:$line:too many }:$orig_"; # already reported above
+        # sanity-check underflow due to closing braces
+        if ($indent < 0) {
+            $indent = 0;
+            # print "$ARGV:$line:too many }:$orig_"; # already reported above
+        }
     }
 
     # detect end comment, must be within multi-line comment, check if it is preceded by non-space text
@@ -356,10 +359,10 @@ print "$hanging_indent $hanging_alt_indent  ###\n" if $line == 1424 || $line == 
                 && $indent >= INDENT_LEVEL; # workaround for macro started without indentation
             $in_multiline_macro = 0;
         }
-    }
 
-    $contents_before2 = $contents_before;
-    $contents_before = $orig_;
+        $contents_before2 = $contents_before;
+        $contents_before = $orig_;
+    }
 
     if(eof) {
         # sanity-check balance of braces and final indent at end of file
