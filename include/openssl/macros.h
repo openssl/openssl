@@ -129,11 +129,13 @@
 
 # if OPENSSL_API_LEVEL >= 30000
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_3_0(f)     DECLARE_DEPRECATED(f)
+#   define DEPRECATEDIN_3_0(f)       DECLARE_DEPRECATED(f)
 #  else
 #   define DEPRECATEDIN_3_0(f)
 #   define OPENSSL_NO_DEPRECATED_3_0
 #  endif
+# else
+#  define DEPRECATEDIN_3_0(f)        f;
 # endif
 # if OPENSSL_API_LEVEL >= 10101
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -142,6 +144,8 @@
 #   define DEPRECATEDIN_1_1_1(f)
 #   define OPENSSL_NO_DEPRECATED_1_1_1
 #  endif
+# else
+#  define DEPRECATEDIN_1_1_1(f)      f;
 # endif
 # if OPENSSL_API_LEVEL >= 10100
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -150,6 +154,8 @@
 #   define DEPRECATEDIN_1_1_0(f)
 #   define OPENSSL_NO_DEPRECATED_1_1_0
 #  endif
+# else
+#  define DEPRECATEDIN_1_1_0(f)      f;
 # endif
 # if OPENSSL_API_LEVEL >= 10002
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -158,6 +164,8 @@
 #   define DEPRECATEDIN_1_0_2(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_2
 #  endif
+# else
+#  define DEPRECATEDIN_1_0_2(f)      f;
 # endif
 # if OPENSSL_API_LEVEL >= 10001
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -166,6 +174,8 @@
 #   define DEPRECATEDIN_1_0_1(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_1
 #  endif
+# else
+#  define DEPRECATEDIN_1_0_1(f)      f;
 # endif
 # if OPENSSL_API_LEVEL >= 10000
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -174,6 +184,8 @@
 #   define DEPRECATEDIN_1_0_0(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_0
 #  endif
+# else
+#  define DEPRECATEDIN_1_0_0(f)      f;
 # endif
 # if OPENSSL_API_LEVEL >= 908
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -182,6 +194,8 @@
 #   define DEPRECATEDIN_0_9_8(f)
 #   define OPENSSL_NO_DEPRECATED_0_9_8
 #  endif
+# else
+#  define DEPRECATEDIN_0_9_8(f)      f;
 # endif
 
 /*
