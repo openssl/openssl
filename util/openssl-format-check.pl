@@ -95,7 +95,8 @@ while(<>) {
     my $count = length($1) - (m/^\s*$/ ? 1 : 0); # number of leading space characters (except newline), which basically should equal $indent as checked below
 
     # set up local offsets to required indent
-    my $local_indent = 0; # due to line empty or starting with '#' (preprocessor directive) or label or case or default
+    my $label = 0;
+    my $local_offset = 0; # due to line empty or starting with '#' (preprocessor directive) or label or case or default
     my $local_hanging_indent = 0; # due to line starting with '&&' or '||'
     if (!$in_multiline_comment) {
         if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
@@ -108,13 +109,16 @@ while(<>) {
             # ignore indent:
             $hanging_indent = -1;
             $extra_singular_indent = 0;
-            $local_indent = $count - $indent;
+            $local_offset = $count - $indent;
         }
         if ($hanging_indent == -1) {
             if (m/^(\s*)(case|default)\W/) {
-                $local_indent = -INDENT_LEVEL;
+                $local_offset = -INDENT_LEVEL;
             } else {
-                $local_indent = -($indent - 1) if (m/^(\s*)([a-z_0-9]+):/) #  && $2 ne "default"); # label
+                if (m/^(\s*)([a-z_0-9]+):/) { #  && $2 ne "default")  # label
+                    $label = 1;
+                    $local_offset = -INDENT_LEVEL + 1 ;
+                }
             }
         } else {
             $local_hanging_indent = INDENT_LEVEL if ($2 eq "&" && $3 eq "&") ||
@@ -124,11 +128,11 @@ while(<>) {
     # TODO make sure that any '{' and '}' in comments and string literals do not interfere with the following calculations
     m/^([^\{]*)/; # prefix before any opening {
     my $num_initial_closing_braces = $1 =~ tr/\}//;
-    $local_indent -= $num_initial_closing_braces * INDENT_LEVEL;
+    $local_offset -= $num_initial_closing_braces * INDENT_LEVEL;
 
     # sanity-check underflow due to closing braces
-    if ($indent + $local_indent < 0) {
-        $local_indent = -$indent;
+    if ($indent + $local_offset < 0) {
+        $local_offset = -$indent;
         print "$ARGV:$line:too many }:$orig_"
             unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
     }
@@ -147,14 +151,17 @@ while(<>) {
             $count == 0 && $indent == INDENT_LEVEL) {
             $indent -= INDENT_LEVEL; # workaround for macro started without indentation
         }
-        print "$ARGV:$line:indent=$count!=".($indent+$extra_singular_indent+$local_indent).": $orig_"
-            if $count != $indent + $extra_singular_indent + $local_indent;
+        my $allowed = $indent+$extra_singular_indent+$local_offset;
+        $allowed = "{1,$allowed}" if $label;
+        print "$ARGV:$line:indent=$count!=$allowed: $orig_"
+            if $count != $indent + $extra_singular_indent + $local_offset &&
+               ($label && $count != 1);
     }
 
     # check hanging indent (outside multi-line comments)
     else {
         if ($count >=
-            max($indent + $extra_singular_indent + $local_indent,
+            max($indent + $extra_singular_indent + $local_offset,
                 $multiline_condition_indent)) { # actual indent (count) is at least at minimum
             # reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of the paren/brace matching
             $hanging_indent     = $count if $count < $hanging_indent;
