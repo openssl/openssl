@@ -58,7 +58,7 @@ static int test_fromdata_rsa(void)
         OSSL_PARAM_END
     };
 
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_provided("RSA", NULL)))
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_provided(NULL, "RSA", NULL)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
