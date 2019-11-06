@@ -11,7 +11,7 @@
 
   *) Added functionality to create an EVP_PKEY from user data.  This
      is effectively the same as creating a RSA, DH or DSA object and
-     then assign them to an EVP_PKEY, but directly using algorithm
+     then assigning them to an EVP_PKEY, but directly using algorithm
      agnostic EVP functions.  A benefit is that this should be future
      proof for public key algorithms to come.
      [Richard Levitte]
