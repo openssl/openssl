@@ -93,13 +93,6 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 
     if ((ctx = ossl_store_attach_pem_bio(bp, UI_null(), NULL)) == NULL)
         goto err;
-#ifndef OPENSSL_NO_SECURE_HEAP
-    {
-        int on = 1;
-        if (!OSSL_STORE_ctrl(ctx, OSSL_STORE_C_USE_SECMEM, &on))
-            goto err;
-    }
-#endif
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
         if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PARAMS) {
@@ -181,13 +174,6 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
 
     if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u)) == NULL)
         goto err;
-#ifndef OPENSSL_NO_SECURE_HEAP
-    {
-        int on = 1;
-        if (!OSSL_STORE_ctrl(ctx, OSSL_STORE_C_USE_SECMEM, &on))
-            goto err;
-    }
-#endif
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
         if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PARAMS) {
