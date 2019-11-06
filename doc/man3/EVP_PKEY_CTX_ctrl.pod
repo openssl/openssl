@@ -20,12 +20,14 @@ EVP_PKEY_CTX_get_rsa_pss_saltlen,
 EVP_PKEY_CTX_set_rsa_keygen_bits,
 EVP_PKEY_CTX_set_rsa_keygen_pubexp,
 EVP_PKEY_CTX_set_rsa_keygen_primes,
-EVP_PKEY_CTX_set_rsa_mgf1_md_ex,
+EVP_PKEY_CTX_set_rsa_mgf1_md_name,
 EVP_PKEY_CTX_set_rsa_mgf1_md,
 EVP_PKEY_CTX_get_rsa_mgf1_md,
-EVP_PKEY_CTX_set_rsa_oaep_md_ex,
+EVP_PKEY_CTX_get_rsa_mgf1_md_name,
+EVP_PKEY_CTX_set_rsa_oaep_md_name,
 EVP_PKEY_CTX_set_rsa_oaep_md,
 EVP_PKEY_CTX_get_rsa_oaep_md,
+EVP_PKEY_CTX_get_rsa_oaep_md_name,
 EVP_PKEY_CTX_set0_rsa_oaep_label,
 EVP_PKEY_CTX_get0_rsa_oaep_label,
 EVP_PKEY_CTX_set_dsa_paramgen_bits,
@@ -97,15 +99,18 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int mbits);
  int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp);
  int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes);
- int EVP_PKEY_CTX_set_rsa_mgf1_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
+ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                      const char *mdprops);
  int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
- int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
- int EVP_PKEY_CTX_set_rsa_oaep_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
-                                     const char *mdprops);
+ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                       size_t namelen);
+ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                       const char *mdprops);
  int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+ int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                       size_t namelen)
  int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char *label, int len);
  int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);
 
@@ -290,7 +295,7 @@ modified or freed after the call. If not specified 65537 is used.
 The EVP_PKEY_CTX_set_rsa_keygen_primes() macro sets the number of primes for
 RSA key generation to B<primes>. If not specified 2 is used.
 
-The EVP_PKEY_CTX_set_rsa_mgf1_md_ex() function sets the MGF1 digest for RSA
+The EVP_PKEY_CTX_set_rsa_mgf1_md_name() function sets the MGF1 digest for RSA
 padding schemes to the digest named B<mdname>. If the RSA algorithm
 implementation for the selected provider supports it then the digest will be
 fetched using the properties B<mdprops>. If not explicitly set the signing
@@ -298,26 +303,43 @@ digest is used. The padding mode must have been set to B<RSA_PKCS1_OAEP_PADDING>
 or B<RSA_PKCS1_PSS_PADDING>.
 
 The EVP_PKEY_CTX_set_rsa_mgf1_md() function does the same as
-EVP_PKEY_CTX_set_rsa_mgf1_md_ex() except that the name of the digest is inferred
-from the supplied B<md> and it is not possible to specify any properties.
+EVP_PKEY_CTX_set_rsa_mgf1_md_name() except that the name of the digest is
+inferred from the supplied B<md> and it is not possible to specify any
+properties.
 
-The EVP_PKEY_CTX_get_rsa_mgf1_md() function gets the MGF1 digest for B<ctx>.
-If not explicitly set the signing digest is used. The padding mode must have
-been set to B<RSA_PKCS1_OAEP_PADDING> or B<RSA_PKCS1_PSS_PADDING>.
+The EVP_PKEY_CTX_get_rsa_mgf1_md_name() function gets the name of the MGF1
+digest algorithm for B<ctx>. If not explicitly set the signing digest is used.
+The padding mode must have been set to B<RSA_PKCS1_OAEP_PADDING> or
+B<RSA_PKCS1_PSS_PADDING>.
 
-The EVP_PKEY_CTX_set_rsa_oaep_md_ex() function sets the message digest type used
-in RSA OAEP to the digest named B<mdname>.  If the RSA algorithm implementation
-for the selected provider supports it then the digest will be fetched using the
-properties B<mdprops>. The padding mode must have been set to
+The EVP_PKEY_CTX_get_rsa_mgf1_md() function does the same as
+EVP_PKEY_CTX_get_rsa_mgf1_md_name() except that it returns a pointer to an
+EVP_MD object instead. Note that only known, built-in EVP_MD objects will be
+returned. The EVP_MD object may be NULL if the digest is not one of these (such
+as a digest only implemented in a third party provider).
+
+The EVP_PKEY_CTX_set_rsa_oaep_md_name() function sets the message digest type
+used in RSA OAEP to the digest named B<mdname>.  If the RSA algorithm
+implementation for the selected provider supports it then the digest will be
+fetched using the properties B<mdprops>. The padding mode must have been set to
 B<RSA_PKCS1_OAEP_PADDING>.
 
 The EVP_PKEY_CTX_set_rsa_oaep_md() function does the same as
-EVP_PKEY_CTX_set_rsa_oaep_md_ex() except that the name of the digest is inferred
-from the supplied B<md> and it is not possible to specify any properties.
+EVP_PKEY_CTX_set_rsa_oaep_md_name() except that the name of the digest is
+inferred from the supplied B<md> and it is not possible to specify any
+properties.
 
-The EVP_PKEY_CTX_get_rsa_oaep_md() function gets the message digest type used
-in RSA OAEP to B<md>. The padding mode must have been set to
-B<RSA_PKCS1_OAEP_PADDING>.
+The EVP_PKEY_CTX_get_rsa_oaep_md_name() function gets the message digest
+algorithm name used in RSA OAEP and stores it in the buffer B<name> which is of
+size B<namelen>. The padding mode must have been set to
+B<RSA_PKCS1_OAEP_PADDING>. The buffer should be sufficiently large for any
+expected digest algorithm names or the function will fail.
+
+The EVP_PKEY_CTX_get_rsa_oaep_md() function does the same as
+EVP_PKEY_CTX_get_rsa_oaep_md_name() except that it returns a pointer to an
+EVP_MD object instead. Note that only known, built-in EVP_MD objects will be
+returned. The EVP_MD object may be NULL if the digest is not one of these (such
+as a digest only implemented in a third party provider).
 
 The EVP_PKEY_CTX_set0_rsa_oaep_label() function sets the RSA OAEP label to
 B<label> and its length to B<len>. If B<label> is NULL or B<len> is 0,
@@ -516,10 +538,9 @@ EVP_PKEY_CTX_settable_params() returns an OSSL_PARAM array on success or NULL on
 error.
 It may also return NULL if there are no settable parameters available.
 
-EVP_PKEY_CTX_set_signature_md(), EVP_PKEY_CTX_set_dh_pad(), EVP_PKEY_CTX_ctrl()
-and its macros return a positive value for success and 0 or a negative value for
-failure. In particular a return value of -2 indicates the operation is not
-supported by the public key algorithm.
+All other functions and macros described on this page return a positive value
+for success and 0 or a negative value for failure. In particular a return value
+of -2 indicates the operation is not supported by the public key algorithm.
 
 =head1 SEE ALSO
 
@@ -542,7 +563,8 @@ EVP_PKEY_CTX_get_rsa_oaep_md(), EVP_PKEY_CTX_set0_rsa_oaep_label(),
 EVP_PKEY_CTX_get0_rsa_oaep_label() were macros in OpenSSL 1.1.1 and below. From
 OpenSSL 3.0 they are functions.
 
-EVP_PKEY_CTX_set_rsa_mgf1_md_ex() and EVP_PKEY_CTX_set_rsa_oaep_md_ex() were
+EVP_PKEY_CTX_get_rsa_oaep_md_name(), EVP_PKEY_CTX_get_rsa_mgf1_md_name(),
+EVP_PKEY_CTX_set_rsa_mgf1_md_name() and EVP_PKEY_CTX_set_rsa_oaep_md_name() were
 added in OpenSSL 3.0.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and
