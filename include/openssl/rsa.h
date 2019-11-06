@@ -136,9 +136,11 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode);
                           EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, primes, NULL)
 
 int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
-int EVP_PKEY_CTX_set_rsa_mgf1_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
-                                    const char *mdprops);
+int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                      const char *mdprops);
 int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                      size_t namelen);
 
 
 # define  EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(ctx, md) \
@@ -146,9 +148,11 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
                           EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
 
 int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
-int EVP_PKEY_CTX_set_rsa_oaep_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
-                                    const char *mdprops);
+int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                      const char *mdprops);
 int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                      size_t namelen);
 int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label,
                                      int llen);
 int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);

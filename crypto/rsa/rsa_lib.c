@@ -833,8 +833,8 @@ int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
 
-int EVP_PKEY_CTX_set_rsa_oaep_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
-                                    const char *mdprops)
+int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                      const char *mdprops)
 {
     OSSL_PARAM rsa_params[3], *p = rsa_params;
 
@@ -871,12 +871,35 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
 
-int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
+int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                      size_t namelen)
 {
     OSSL_PARAM rsa_params[2], *p = rsa_params;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
+        return -1;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+                                            name, namelen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
+        return -1;
+
+    return 1;
+}
+
+int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
+{
     /* 80 should be big enough */
     char name[80] = "";
-    const EVP_MD *tmp;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -893,17 +916,11 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
                                  EVP_PKEY_CTRL_GET_RSA_OAEP_MD, 0, (void *)md);
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-                                            name,
-                                            sizeof(name));
-    *p++ = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_get_rsa_oaep_md_name(ctx, name, sizeof(name)) <= 0)
+        return -1;
 
-    if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
-        return 0;
-
-    /* tmp may be NULL meaning "unknown" */
-    tmp = EVP_get_digestbyname(name);
-    *md = tmp;
+    /* May be NULL meaning "unknown" */
+    *md = EVP_get_digestbyname(name);
 
     return 1;
 }
@@ -954,8 +971,8 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
 
-int EVP_PKEY_CTX_set_rsa_mgf1_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
-                                    const char *mdprops)
+int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                      const char *mdprops)
 {
     OSSL_PARAM rsa_params[3], *p = rsa_params;
 
@@ -995,12 +1012,39 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_ex(EVP_PKEY_CTX *ctx, const char *mdname,
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
 
-int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
+int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
+                                      size_t namelen)
 {
     OSSL_PARAM rsa_params[2], *p = rsa_params;
+
+    if (ctx == NULL
+            || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+                && !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx))) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx->pmeth != NULL
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+                                            name, namelen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
+        return -1;
+
+    return 1;
+}
+
+int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
+{
     /* 80 should be big enough */
     char name[80] = "";
-    const EVP_MD *tmp;
 
     if (ctx == NULL
             || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
@@ -1025,17 +1069,11 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
                                  EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
                                  EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)md);
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
-                                            name,
-                                            sizeof(name));
-    *p++ = OSSL_PARAM_construct_end();
-
-    if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
+    if (EVP_PKEY_CTX_get_rsa_mgf1_md_name(ctx, name, sizeof(name)) <= 0)
         return -1;
 
-    /* tmp may be NULL meaning "unknown" */
-    tmp = EVP_get_digestbyname(name);
-    *md = tmp;
+    /* May be NULL meaning "unknown" */
+    *md = EVP_get_digestbyname(name);
 
     return 1;
 }

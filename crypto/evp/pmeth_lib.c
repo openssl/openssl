@@ -837,10 +837,10 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     }
 
     if (strcmp(name, "rsa_mgf1_md") == 0)
-        return EVP_PKEY_CTX_set_rsa_mgf1_md_ex(ctx, value, NULL);
+        return EVP_PKEY_CTX_set_rsa_mgf1_md_name(ctx, value, NULL);
 
     if (strcmp(name, "rsa_oaep_md") == 0)
-        return EVP_PKEY_CTX_set_rsa_oaep_md_ex(ctx, value, NULL);
+        return EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx, value, NULL);
 
     if (strcmp(name, "rsa_oaep_label") == 0) {
         unsigned char *lab;
