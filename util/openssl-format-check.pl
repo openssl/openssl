@@ -39,8 +39,8 @@ my $multiline_value_indent;# special indent at LHS of assignment or after return
 my $in_enum;               # used to determine terminator of assignment
 my $in_multiline_macro;    # number of lines so far within multi-line macro
 my $multiline_macro_no_indent; # workaround for macro body without extra indent
-my $in_multiline_comment;  # flag whether within multi-line comment
-my $comment_indent;        # used only if $in_multiline_comment == 1
+my $in_multiline_comment;  # number of lines so far within multi-line comment
+my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 
 sub reset_file_state {
     $indent = 0;
@@ -79,9 +79,56 @@ while(<>) {
     # check for whitespace at EOL
     complain("SPC at EOL") if m/\s\n$/;
 
+    # assign to $count the actual indentation level of the current line
+    chomp; # remove tailing \n
+    m/^(\s*)/;
+    my $count = length $1; # number of leading whitespace characters (except newline), which basically should equal $indent as checked below
+
+    # check indent within multi-line comments
+    if($in_multiline_comment > 0) {
+        complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
+        $in_multiline_comment++;
+    }
+
+    # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
+    if (m/^(.*?)\*\/(.*)$/) { # ending comment: '*/' - TODO this goes wrong when inside string literal
+        my $head = $1;
+        my $tail = $2;
+        if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
+            complain("*/ outside comment") if $in_multiline_comment == 0;
+            complain("... */") if $head =~ m/\S/;
+            $_ = ($head =~ tr/ / /cr)."  $tail"; # blind comment text, retaining length
+            $in_multiline_comment = 0;
+            goto ENDLOOP if m/^\s*$/; # ignore any resulting all-whitespace line
+        }
+    }
+
+    # detect start of multi-line comment, check if it is followed by non-space text
+  MATCH_COMMENT:
+    if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO this goes wrong when inside string literal
+        my $head = $1;
+        my $opt_minus = $2;
+        my $tail = $3;
+        if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO this goes wrong when inside string literal
+            $_ = "$head  $opt_minus".($1 =~ tr/ / /cr)."  $2"; # blind comment text, retaining length
+            goto ENDLOOP if m/^\s*$/; # ignore any resulting all-whitespace line
+            goto MATCH_COMMENT;
+        } else {
+            complain("/* inside comment") if $in_multiline_comment == 1;
+            complain("/* ...") if $tail =~ m/\S/;
+            $multiline_comment_indent = length($head) + 1; # adopt actual indentation of first comment line
+            $_ = "$head  ".($opt_minus =~ tr/ / /cr).($tail =~ tr/ / /cr); # blind comment text, retaining length
+            $in_multiline_comment = 1;
+            if (m/^\s*$/) { # all-whitespace line
+                complain("indent=$count!=$indent") if $count != $indent+$extra_singular_indent;
+                goto ENDLOOP; # ignore all-whitespace line
+            }
+        }
+    }
+
     # check for over-long lines,
     # while allowing trailing string literals to go past MAX_LENGTH
-    my $len = length($_) - 1; # '- 1' avoids counting trailing \n
+    my $len = length; # total line length (without trailing \n)
     my $hidden_esc_dblquot = $_;
     while($hidden_esc_dblquot =~ s/([^\"]\".*?\\)\"/$1\\/g) {} # TODO check this
     if($len > MAX_LENGTH &&
@@ -90,21 +137,16 @@ while(<>) {
         complain("len=$len>".MAX_LENGTH);
     }
 
-    # assign to $count the actual indent of the current line
-    m/^(\s*)(.?)(.?)/;
-    my $count = length($1) - (m/^\s*$/ ? 1 : 0); # number of leading space characters (except newline), which basically should equal $indent as checked below
-
     # set up local offsets to required indent
     my $label = 0;
     my $local_offset = 0; # due to line empty or starting with '#' (preprocessor directive) or label or case or default
     my $local_hanging_indent = 0; # due to line starting with '&&' or '||'
-    if (!$in_multiline_comment) {
+    if ($in_multiline_comment <= 1) {
         if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
-            $_ = "$1\n"; # remove it along with any preceding whitespace
+            $_ = $1; # remove it along with any preceding whitespace
         }
         $_ = "$1$2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {' (used with '#ifdef __cplusplus' in header files)
-        if (m/^\n$/ || # empty line
-            # ($2 eq "/" && $3 eq "*"); # do not ignore indent on line starting comment: '/*'
+        if (m/^$/ || # empty line
             m/^#/) { # preprocessor line, starting with '#'
             # ignore indent:
             $hanging_indent = -1;
@@ -121,8 +163,7 @@ while(<>) {
                 }
             }
         } else {
-            $local_hanging_indent = INDENT_LEVEL if ($2 eq "&" && $3 eq "&") ||
-                                                    ($2 eq "|" && $3 eq "|");  # line starting with && or ||
+            $local_hanging_indent = INDENT_LEVEL if m/^\s*(\&\&|\|\|)/;  # line starting with && or ||
         }
 
         # TODO make sure that any '{' and '}' in string literals do not interfere with the following calculations
@@ -138,10 +179,7 @@ while(<>) {
         }
     }
 
-    # check indent within multi-line comments
-    if($in_multiline_comment) {
-        complain("indent=$count!=$comment_indent") if $count != $comment_indent;
-    }
+    if ($in_multiline_comment > 1) { } # nothing left to do
 
     # check indent for other lines except hanging indent
     elsif ($hanging_indent == -1) {
@@ -190,7 +228,7 @@ while(<>) {
                $count != $hanging_alt_indent + $local_hanging_indent;
     }
 
-    if(!$in_multiline_comment) {
+    if($in_multiline_comment <= 1) {
         # adapt indent for following lines according to braces
         my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
         $indent += $brace_balance * INDENT_LEVEL;
@@ -206,38 +244,6 @@ while(<>) {
         $in_enum += 1 if m/\Wenum\s*\{[^\}]*$/;
         $in_enum += $brace_balance if $brace_balance < 0;
         $in_enum = 0 if $in_enum < 0;
-    }
-
-    # detect end comment, must be within multi-line comment, check if it is preceded by non-space text
-    if (m/^(.*?)\*\/(.*)$/) { # ending comment: '*/'
-        my $head = $1;
-        my $tail = $2;
-        if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
-            complain("*/ outside comment") if $in_multiline_comment == 0;
-            complain("... */") if $head =~ m/\S/;
-            $_ = $tail;
-            $in_multiline_comment = 0;
-        }
-    }
-
-    # detect start of multi-line comment, check if it is followed by non-space text
-  MATCH_COMMENT:
-    if (m/^(.*?)\/\*-?(.*)$/) { # starting comment: '/*'
-        my $head = $1;
-        my $tail = $2;
-        if ($tail =~ m/\*\/(.*)$/) { # strip contents up to comment end: */
-            $_ = "$head $1\n";
-            goto MATCH_COMMENT;
-        } else {
-            complain("/* inside comment") if $in_multiline_comment == 1;
-            complain("/* ...") if $tail =~ m/\S/;
-            $comment_indent = length($head) + 1;
-            $in_multiline_comment = 1;
-        }
-    }
-
-    # for lines not inside multi-line comments
-    if(!$in_multiline_comment) {
 
         # handle last opening brace in line
         if (m/^(.*?)\{[^\}]*$/) { # match ... {
@@ -272,7 +278,7 @@ while(<>) {
             $hanging_open_braces = 0;
 
             $multiline_condition_indent = $multiline_value_indent = -1;
-            if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)(\W.*)$/) {
+            if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
                 my ($head, $tail) = ($1, $4);
                 if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
                     my $tmp = $_;
@@ -296,7 +302,7 @@ while(<>) {
             my $head = $1;
             my $tail = $2;
             if ($tail =~ m/\)(.*)/) { # strip contents up to matching ')':
-                $_ = "$head $1\n";
+                $_ = "$head $1";
                 goto MATCH_PAREN;
             }
             $hanging_indent = $hanging_alt_indent = length($head) + 1;
@@ -307,7 +313,7 @@ while(<>) {
             my $head = $1;
             my $tail = $2;
             if ($tail =~ m/\}(.*)/) { # strip contents up to matching '}'
-                $_ = "$head $1\n";
+                $_ = "$head $1";
                 goto MATCH_PAREN;
             }
             $hanging_indent = $hanging_alt_indent = length($head) + 1;
@@ -371,6 +377,7 @@ while(<>) {
         $contents_before = $contents;
     }
 
+  ENDLOOP:
     if(eof) {
         # sanity-check balance of braces and final indent at end of file
         print "$ARGV:EOF:unbalanced nesting of {..}, indentation off by $indent" if $indent != 0;
