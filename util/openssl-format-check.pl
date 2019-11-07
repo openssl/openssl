@@ -267,7 +267,7 @@ while(<>) {
         }
 
         # a rough check to determine whether inside enum
-        $in_enum += 1 if m/\Wenum\s*\{[^\}]*$/;
+        $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
         $in_enum += $brace_balance if $brace_balance < 0;
         $in_enum = 0 if $in_enum < 0;
 
