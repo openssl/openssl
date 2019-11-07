@@ -7,11 +7,11 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 #
-# openssl-format-check.pl
+# check-format.pl
 # - check formatting of C source according to OpenSSL coding style
 #
 # usage:
-#   openssl-format-check.pl <files>
+#   check-format.pl <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
 # This pragmatic tool is incomplete and yields some false positives.
