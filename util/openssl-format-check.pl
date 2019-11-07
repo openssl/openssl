@@ -23,10 +23,11 @@ use List::Util qw[min max];
 use constant INDENT_LEVEL => 4;
 use constant MAX_LENGTH => 80;
 
-my $line;
-my $line_opening_brace;    # number of last line with opening brace
+my $line;                  # current line number
+my $contents;              # contens of current line
 my $contents_before;       # contents of last non-comment line, used only if $line > 1
 my $contents_before2;      # contents of but-last non-comment line, used only if $line > 2
+my $line_opening_brace;    # number of last line with opening brace
 my $indent;                # currently required indent
 my $hanging_indent;        # currently hanging indent, else -1
 my $hanging_open_parens;   # used only if $hanging_indent != -1
@@ -53,35 +54,30 @@ sub reset_file_state {
     $in_multiline_comment = 0;
 }
 
+sub complain {
+    my $msg = shift;
+    print "$ARGV:$line:$msg: $contents";
+}
+
 reset_file_state();
 while(<>) {
     $line++;
-    my $orig_ = $_;
+    $contents = $_;
 
     # check for TAB character(s)
-    if(m/[\x09]/) {
-        print "$ARGV:$line:TAB: $orig_";
-    }
+    complain("TAB") if m/[\x09]/;
 
     # check for CR character(s)
-    if(m/[\x0d]/) {
-        print "$ARGV:$line:CR: $orig_";
-    }
+    complain("CR") if m/[\x0d]/;
 
     # check for other non-printable ASCII character(s)
-    if(m/[\x00-\x08\x0B-\x0C\x0E-\x1F]/) {
-        print "$ARGV:$line:non-printable: $orig_";
-    }
+    complain("non-printable") if m/[\x00-\x08\x0B-\x0C\x0E-\x1F]/;
 
     # check for other non-ASCII character(s)
-    if(m/[\x7F-\xFF]/) {
-        print "$ARGV:$line:non-ASCII: $orig_";
-    }
+    complain("non-ASCII") if m/[\x7F-\xFF]/;
 
     # check for whitespace at EOL
-    if(m/\s\n$/) {
-        print "$ARGV:$line:SPC\@EOL: $orig_";
-    }
+    complain("SPC at EOL") if m/\s\n$/;
 
     # check for over-long lines,
     # while allowing trailing string literals to go past MAX_LENGTH
@@ -91,7 +87,7 @@ while(<>) {
     if($len > MAX_LENGTH &&
        !($hidden_esc_dblquot =~ m/^(.*?)\"[^\"]*\"\s*(,|[\)\}]*[,;]?)\s*$/
          && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH
-        print "$ARGV:$line:len=$len: $orig_";
+        complain("len=$len>80");
     }
 
     # assign to $count the actual indent of the current line
@@ -137,15 +133,14 @@ while(<>) {
         # sanity-check underflow due to closing braces
         if ($indent + $local_offset < 0) {
             $local_offset = -$indent;
-            print "$ARGV:$line:too many }:$orig_"
+            complain("too many }")
                 unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
         }
     }
 
     # check indent within multi-line comments
     if($in_multiline_comment) {
-        print "$ARGV:$line:indent=$count!=$comment_indent: $orig_"
-            if $count != $comment_indent;
+        complain("indent=$count!=$comment_indent") if $count != $comment_indent;
     }
 
     # check indent for other lines except hanging indent
@@ -162,7 +157,7 @@ while(<>) {
         }
         my $allowed = $indent+$extra_singular_indent+$local_offset;
         $allowed = "{1,$allowed}" if $label;
-        print "$ARGV:$line:indent=$count!=$allowed: $orig_"
+        complain("indent=$count!=$allowed")
             if $count != $indent + $extra_singular_indent + $local_offset &&
                (!$label || $count != 1);
     }
@@ -188,7 +183,7 @@ while(<>) {
             }
             $allowed .= "}";
         }
-        print "$ARGV:$line:indent=$count!=$allowed: $orig_"
+        complain("indent=$count!=$allowed")
             if $count != $hanging_indent &&
                $count != $hanging_indent + $local_hanging_indent &&
                $count != $hanging_alt_indent &&
@@ -204,7 +199,7 @@ while(<>) {
         # sanity-check underflow due to closing braces
         if ($indent < 0) {
             $indent = 0;
-            # print "$ARGV:$line:too many }:$orig_"; # already reported above
+            # complain("too many }"); # already reported above
         }
 
         # a rough check to determine whether inside enum
@@ -218,8 +213,8 @@ while(<>) {
         my $head = $1;
         my $tail = $2;
         if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
-            print "$ARGV:$line:*/ outside comment: $orig_" if $in_multiline_comment == 0;
-            print "$ARGV:$line:... */: $orig_" if $head =~ m/\S/;
+            complain("*/ outside comment") if $in_multiline_comment == 0;
+            complain("... */") if $head =~ m/\S/;
             $_ = $tail;
             $in_multiline_comment = 0;
         }
@@ -234,8 +229,8 @@ while(<>) {
             $_ = "$head $1\n";
             goto MATCH_COMMENT;
         } else {
-            print "$ARGV:$line:/* inside comment: $orig_" if $in_multiline_comment == 1;
-            print "$ARGV:$line:/* ...: $orig_" if $tail =~ m/\S/;
+            complain("/* inside comment") if $in_multiline_comment == 1;
+            complain("/* ...") if $tail =~ m/\S/;
             $comment_indent = length($head) + 1;
             $in_multiline_comment = 1;
         }
@@ -252,7 +247,7 @@ while(<>) {
                 !($before =~ m/=\s*$/)) { # no directly preceded by '=' (assignment)
                 if ($in_multiline_macro == 0 && $indent == INDENT_LEVEL) { # $indent has already been incremented, so this essentially checks for 0 (outermost level) 
                     # we assume end of function definition header, check if { is at end of line (rather than on next line)
-                    print "$ARGV:$line:outer {: $orig_" if $head =~ m/\S/; # non-whitespace before {
+                    complain("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
                 } else {
                     $line_opening_brace = $line;
                 }
@@ -282,7 +277,7 @@ while(<>) {
                 if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
                     my $tmp = $_;
                     my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
-                    print "$ARGV:$line:too many ):$orig_" if $parens_balance < 0;
+                    complain("too many )") if $parens_balance < 0;
                     if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
                         $multiline_condition_indent = length($1);
                     } else {
@@ -361,7 +356,7 @@ while(<>) {
         }
 
         # detect start and end of multi-line macro, potentially adapting indent
-        if ($orig_ =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
+        if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
             if ($in_multiline_macro == 0) {
                 $multiline_macro_no_indent = 0;
                 $indent += INDENT_LEVEL ;
@@ -373,7 +368,7 @@ while(<>) {
         }
 
         $contents_before2 = $contents_before;
-        $contents_before = $orig_;
+        $contents_before = $contents;
     }
 
     if(eof) {
