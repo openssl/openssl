@@ -313,4 +313,3 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     CMPerr(0, CMP_R_ERROR_PROTECTING_MESSAGE);
     return 0;
 }
-

@@ -181,8 +181,8 @@ OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype)
 }
 
 #define HAS_SAN(ctx) \
-    (sk_GENERAL_NAME_num((ctx)->subjectAltNames) > 0    \
-        || OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) == 1)
+    (sk_GENERAL_NAME_num((ctx)->subjectAltNames) > 0 \
+         || OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) == 1)
 
 static X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
                                  int bodytype)

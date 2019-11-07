@@ -299,4 +299,3 @@ OSSL_CMP_PKISI *ossl_cmp_statusinfo_new(int status, int fail_info,
     ASN1_UTF8STRING_free(utf8_text);
     return NULL;
 }
-

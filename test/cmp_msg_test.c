@@ -388,7 +388,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
         OSSL_CMP_CERTORENCCERT_CERTIFICATE;
     if ((cresp->certifiedKeyPair->certOrEncCert->value.certificate =
          X509_dup(cert)) == NULL
-            || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
+             || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
         goto err;
     cresp = NULL;
     read_cresp = ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 99);

@@ -349,10 +349,9 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr);
 /* from cmp_msg.c */
 /* BIO definitions */
 #  define OSSL_d2i_CMP_MSG_bio(bp, p) \
-         ASN1_d2i_bio_of(OSSL_CMP_MSG, OSSL_CMP_MSG_new,\
-                         d2i_OSSL_CMP_MSG, bp, p)
+    ASN1_d2i_bio_of(OSSL_CMP_MSG, OSSL_CMP_MSG_new, d2i_OSSL_CMP_MSG, bp, p)
 #  define OSSL_i2d_CMP_MSG_bio(bp, o) \
-         ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bp, o)
+    ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bp, o)
 /* support application-level CMP debugging in cmp.c: */
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
 
