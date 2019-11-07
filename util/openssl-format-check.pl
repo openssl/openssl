@@ -54,9 +54,15 @@ sub reset_file_state {
     $in_multiline_comment = 0;
 }
 
+sub complain_contents {
+    my $msg = shift;
+    my $contents = shift;
+    print "$ARGV:$line:$msg$contents";
+}
+
 sub complain {
     my $msg = shift;
-    print "$ARGV:$line:$msg: $contents";
+    complain_contents($msg, ": $contents");
 }
 
 reset_file_state();
@@ -99,7 +105,7 @@ while(<>) {
             complain("... */") if $head =~ m/\S/;
             $_ = ($head =~ tr/ / /cr)."  $tail"; # blind comment text, retaining length
             $in_multiline_comment = 0;
-            goto ENDLOOP if m/^\s*$/; # ignore any resulting all-whitespace line
+            goto LINE_FINISHED if m/^\s*$/; # ignore any resulting all-whitespace line
         }
     }
 
@@ -111,7 +117,7 @@ while(<>) {
         my $tail = $3;
         if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             $_ = "$head  $opt_minus".($1 =~ tr/ / /cr)."  $2"; # blind comment text, retaining length
-            goto ENDLOOP if m/^\s*$/; # ignore any resulting all-whitespace line
+            goto LINE_FINISHED if m/^\s*$/; # ignore any resulting all-whitespace line
             goto MATCH_COMMENT;
         } else {
             complain("/* inside comment") if $in_multiline_comment == 1;
@@ -121,7 +127,7 @@ while(<>) {
             $in_multiline_comment = 1;
             if (m/^\s*$/) { # all-whitespace line
                 complain("indent=$count!=$indent") if $count != $indent+$extra_singular_indent;
-                goto ENDLOOP; # ignore all-whitespace line
+                goto LINE_FINISHED; # ignore all-whitespace line
             }
         }
     }
@@ -263,11 +269,12 @@ while(<>) {
         # detect first closing brace in line, check if it closes a block containing a single line/statement
         if(m/^([^\}]*)\}/) { # first }
             my $head = $1;
-            my $line_before = $line - 1;
             if($line_opening_brace != 0 &&
-               $line_opening_brace == $line_before - 1) {
-                print "$ARGV:$line_before:{1 line}:$contents_before" if !($contents_before2 =~ m/typedef|struct|union|static|void/); # including poor matching of function header decl
+               $line_opening_brace == $line - 2) {
+                $line--;
+                complain_contents("{1 line}", ": $contents_before") if !($contents_before2 =~ m/typedef|struct|union|static|void/); # including poor matching of function header decl
                 # TODO do not complain about cases where there is another if .. else branch with a block containg more than one line
+                $line++;
             }
             $line_opening_brace = 0;
         }
@@ -376,10 +383,14 @@ while(<>) {
         $contents_before = $contents;
     }
 
-  ENDLOOP:
+  LINE_FINISHED:
     if(eof) {
+        # check for all-whitespace line just before EOF
+        complain("whitespace line before EOF") if $contents =~ m/^\s*$/;
+
         # sanity-check balance of braces and final indent at end of file
-        print "$ARGV:EOF:unbalanced nesting of {..}, indentation off by $indent" if $indent != 0;
+        $line = "EOF";
+        complain_contents("indentation off by $indent, likely due to unbalanced nesting of {..}", "\n") if $indent != 0;
         reset_file_state();
     }
 }
