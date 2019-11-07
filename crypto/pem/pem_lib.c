@@ -818,6 +818,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         return 0;
     }
 
+    namelen = strlen(name);
     for (line = 0; ; line++) {
         flags_mask = ~0u;
         len = BIO_gets(bp, linebuf, LINESIZE);
@@ -849,7 +850,6 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         /* Check for end of stream (which means there is no header). */
         if (strncmp(linebuf, endstr, ENDLEN) == 0) {
             p = linebuf + ENDLEN;
-            namelen = strlen(name);
             if (strncmp(p, name, namelen) != 0 ||
                 strncmp(p + namelen, tailstr, TAILLEN) != 0) {
                 PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
