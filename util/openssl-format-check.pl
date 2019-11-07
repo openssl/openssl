@@ -36,7 +36,7 @@ my $hanging_open_braces;   # used only if $hanging_indent != -1
 my $hanging_alt_indent;    # alternative hanging indent (for assignments), used only if $hanging_indent != -1
 my $extra_singular_indent; # extra indent for just one statement
 my $multiline_condition_indent; # special indent after if/for/while
-my $multiline_value_indent;# special indent at LHS of assignment or after return
+my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
 my $in_enum;               # used to determine terminator of assignment
 my $in_multiline_macro;    # number of lines so far within multi-line macro
 my $multiline_macro_no_indent; # workaround for macro body without extra indent
@@ -253,7 +253,7 @@ while(<>) {
         # adapt indent for following lines according to braces
         my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
         $indent += $brace_balance * INDENT_LEVEL;
-        $hanging_indent += $brace_balance * INDENT_LEVEL if  $multiline_value_indent != -1;
+        $hanging_indent += $brace_balance * INDENT_LEVEL if $multiline_value_indent != -1;
 
         # sanity-check underflow due to closing braces
         if ($indent < 0) {
@@ -366,20 +366,23 @@ while(<>) {
         if ($hanging_indent == -1) {
             # reset extra_singular_indent on trailing ';'
             $extra_singular_indent = 0 if m/;\s*$/; # trailing ';'
+        }
 
-            # set hanging_indent and hanging_indent in case of multi-line value or typedef expression
-            # at this point, matching (...) have been stripped, simplifying type decl matching
-            my $terminator = $in_enum > 0 ? "," : ";";
-            if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
-                my $head = $1;
-                my $var_eq = $2;
-                my $trail = $6;
-                $multiline_value_indent =
-                    $hanging_indent = $hanging_alt_indent = length($head) + INDENT_LEVEL;
+        # set multiline_value_indent and potentially set hanging_indent and hanging_indent in case of multi-line value or typedef expression
+        # at this point, matching (...) have been stripped, simplifying type decl matching
+        my $terminator = $in_enum > 0 ? "," : ";";
+        if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
+            my $head = $1;
+            my $var_eq = $2;
+            my $trail = $6;
+            $multiline_value_indent = length($head) + INDENT_LEVEL;
+            if ($hanging_indent == -1) {
+                $hanging_indent = $hanging_alt_indent = $multiline_value_indent;
                 $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return' or 'typedef'
             }
-            # TODO complain on missing empty line after local variable decls
         }
+
+        # TODO complain on missing empty line after local variable decls
 
         # detect start and end of multi-line macro, potentially adapting indent
         if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
