@@ -34,8 +34,13 @@ int cipher_hw_generic_ecb(PROV_CIPHER_CTX *dat, unsigned char *out,
     if (len < bl)
         return 1;
 
-    for (i = 0, len -= bl; i <= len; i += bl)
-        (*dat->block) (in + i, out + i, dat->ks);
+    if (dat->stream.ecb) {
+        (*dat->stream.ecb) (in, out, len, dat->ks, dat->enc);
+    }
+    else {
+        for (i = 0, len -= bl; i <= len; i += bl)
+            (*dat->block) (in + i, out + i, dat->ks);
+    }
 
     return 1;
 }
