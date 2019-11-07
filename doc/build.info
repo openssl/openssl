@@ -19,8 +19,8 @@ SUBDIRS = man1
 
      foreach my $p (sort keys %podfiles) {
          my $podfile = abs2rel($p, $sourcedir);
-	 my $podname = basename($podfile, '.pod');
-	 my $podinfile = $podinfiles{"$p.in"} ? "$podfile.in" : undef;
+         my $podname = basename($podfile, '.pod');
+         my $podinfile = $podinfiles{"$p.in"} ? "$podfile.in" : undef;
 
          my $podname = basename($podfile, ".pod");
 
@@ -39,13 +39,13 @@ SUBDIRS = man1
              $manfile = VMS::Filespec::unixify($manfile);
              $podfile = VMS::Filespec::unixify($podfile);
              $podinfile = VMS::Filespec::unixify($podinfile)
-	         if defined $podinfile;
+                 if defined $podinfile;
          } elsif ($^O eq 'MSWin32') {
              $htmlfile =~ s|\\|/|g;
              $manfile =~ s|\\|/|g;
              $podfile =~ s|\\|/|g;
              $podinfile =~ s|\\|/|g
-	         if defined $podinfile;
+                 if defined $podinfile;
          }
          push @htmlfiles, $htmlfile;
          push @manfiles, $manfile;
