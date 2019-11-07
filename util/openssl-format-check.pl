@@ -8,14 +8,14 @@
 # https://www.openssl.org/source/license.html
 #
 # openssl-format-check.pl
-# - check source file(s) according to OpenSSL coding style
+# - check formatting of C source according to OpenSSL coding style
 #
 # usage:
 #   openssl-format-check.pl <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
-# This tool is in preliminary state: it is incomplete and yields some false
-# positives. Still it should be useful for detecting most typical glitches.
+# This pragmatic tool is incomplete and yields some false positives.
+# Still it should be useful for detecting most typical glitches.
 
 use strict;
 use List::Util qw[min max];
@@ -87,7 +87,7 @@ while(<>) {
     if($len > MAX_LENGTH &&
        !($hidden_esc_dblquot =~ m/^(.*?)\"[^\"]*\"\s*(,|[\)\}]*[,;]?)\s*$/
          && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH
-        complain("len=$len>80");
+        complain("len=$len>".MAX_LENGTH);
     }
 
     # assign to $count the actual indent of the current line
