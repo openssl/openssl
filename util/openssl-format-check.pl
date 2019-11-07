@@ -25,8 +25,9 @@ use constant MAX_LENGTH => 80;
 
 my $line;                  # current line number
 my $contents;              # contens of current line
-my $contents_before;       # contents of last non-comment line, used only if $line > 1
-my $contents_before2;      # contents of but-last non-comment line, used only if $line > 2
+my $contents_before;       # contents of last line (except multi-line string literals and comments), used only if $line > 1
+my $contents_before2;      # contents of but-last line (except multi-line string literals and comments), used only if $line > 2
+my $multiline_string;      # accumulator for lines containing multi-line string
 my $line_opening_brace;    # number of last line with opening brace
 my $indent;                # currently required indent
 my $hanging_indent;        # currently hanging indent, else -1
@@ -45,6 +46,7 @@ my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 sub reset_file_state {
     $indent = 0;
     $line = 0;
+    undef $multiline_string;
     $line_opening_brace = 0;
     $hanging_indent = -1;
     $extra_singular_indent = 0;
@@ -133,15 +135,28 @@ while(<>) {
     }
 
     s/\\"/\\\\/g; # blind all '\"' (typically whithin string literals) to '\\'
-    s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg; # blind contents of string literals - TODO handle also multi-line string literals
+    s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg; # blind contents of string literals; multi-line string literals are handled below
 
     # check for over-long lines,
-    # while allowing trailing string literals to go past MAX_LENGTH
+    # while allowing trailing (also multi-line) string literals to go past MAX_LENGTH
     my $len = length; # total line length (without trailing \n)
     if($len > MAX_LENGTH &&
-       !(m/^(.*?)"[^"]*"\s*(,|[\)\}]*[,;]?)\s*$/
-         && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH - TODO handle also multi-line string literals
+       !(m/^(.*?)"[^"]*("|\\)\s*(,|[\)\}]*[,;]?)\s*$/
+         && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH
         complain("len=$len>".MAX_LENGTH);
+    }
+
+    # handle multi-line string literals
+    # this is not done for other uses of trailing '\' in order to be able to check layout of macro declarations
+    if (defined $multiline_string) {
+        $_ = $multiline_string.$_;
+        undef $multiline_string;
+        m/^(\s*)/;
+        $count = length $1; # re-calculate count, like done above
+    }
+    if (m/^(([^"]*"[^"]*")*[^"]*"[^"]*)\\\s*$/) { # trailing '\' in last string literal
+        $multiline_string = $1;
+        goto LINE_FINISHED;
     }
 
     # set up local offsets to required indent
@@ -149,7 +164,7 @@ while(<>) {
     my $local_offset = 0; # due to line empty or starting with '#' (preprocessor directive) or label or case or default
     my $local_hanging_indent = 0; # due to line starting with '&&' or '||'
     if ($in_multiline_comment <= 1) {
-        if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
+        if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations; multi-line string literals have already been handled
             $_ = $1; # remove it along with any preceding whitespace
         }
         $_ = "$1$2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {' (used with '#ifdef __cplusplus' in header files)
