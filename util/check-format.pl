@@ -30,10 +30,12 @@ my $contents_before2;      # contents of but-last line (except multi-line string
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line, which basically should equal $indent
 my $label;                 # current line contains label
-my $local_offset;          # current line extra indent offset due to line empty or starting with '#' (preprocessor directive) or label or case or default
+my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing brace(s)
 my $local_hanging_indent;  # current line allowed extra indent due to line starting with '&&' or '||'
 my $line_opening_brace;    # number of last line with opening brace
-my $indent;                # currently required indent
+my $indent;                # currently required indentation for normal code
+my $preprocessor_indent;   # currently required indentation for preprocessor directives
+my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $hanging_indent;        # currently hanging indent, else -1
 my $hanging_open_parens;   # used only if $hanging_indent != -1
 my $hanging_open_braces;   # used only if $hanging_indent != -1
@@ -49,6 +51,8 @@ my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 
 sub reset_file_state {
     $indent = 0;
+    $preprocessor_indent = 0;
+    $ifdef__cplusplus = 0;
     $line = 0;
     undef $multiline_string;
     $line_opening_brace = 0;
@@ -168,9 +172,16 @@ while(<>) {
         }
     }
 
-    $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {' (used with '#ifdef __cplusplus' in header files)
+    # handle special case of line after '#ifdef __cplusplus' (which typically appears in header files)
+    if ($ifdef__cplusplus) {
+        $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {'
+        goto LINE_FINISHED if m/^\s*\}\s*$/; # ignore closing brace
+    }
+
+    # blind contents of string literals; multi-line string literals are handled below
+
     s/\\"/\\\\/g; # blind all '\"' (typically whithin string literals) to '\\'
-    s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg; # blind contents of string literals; multi-line string literals are handled below
+    s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg;
 
     # check for over-long lines,
     # while allowing trailing (also multi-line) string literals to go past MAX_LENGTH
@@ -182,8 +193,18 @@ while(<>) {
     }
 
     goto LINE_FINISHED if m/^$/; # empty line
-    if (m/^#\s*(\w+)/ && $1 ne "define") { # line starting with '#', ignore preprocessor directive except #define
-        goto LINE_FINISHED;
+
+    # handle preprocessor directives
+    if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
+        my $preprocessor_count = length $1; # maybe could also use indentation before '#'
+        my $directive = $2;
+        complain("indent=$count!=0") if $count != 0;
+        $preprocessor_indent-- if $directive =~ m/^else|elsif|endif$/;
+        complain("#indent=$preprocessor_count!=$preprocessor_indent")
+                          if $preprocessor_count != $preprocessor_indent;
+        $preprocessor_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
+        $ifdef__cplusplus = m/^\s*#\s*ifdef\s*__cplusplus\s*$/;
+        goto LINE_FINISHED unless $directive =~ m/^define$/; # further ignore preprocessor directive except #define
     }
 
     # handle multi-line string literals
@@ -219,14 +240,13 @@ while(<>) {
     }
 
     m/^([^\{]*)/; # prefix before any opening {
-    my $num_initial_closing_braces = $1 =~ tr/\}//;
-    $local_offset -= $num_initial_closing_braces * INDENT_LEVEL;
+    my $num_leading_closing_braces = $1 =~ tr/\}//;
+    $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
 
     # sanity-check underflow due to closing braces
     if ($indent + $local_offset < 0) {
         $local_offset = -$indent;
-        complain("too many }")
-            unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
+        complain("too many }");
     }
 
     # adapatations of indent for first line of multi-line macro body
@@ -249,7 +269,7 @@ while(<>) {
         $hanging_alt_indent = $count if $count < $hanging_alt_indent;
     }
 
-    check_indent() unless m/^#\s*define/; # ignore indent of #define
+    check_indent() unless m/^#\s*define/; # indent of #define has been handled above
 
     # adapt indent for following lines according to braces
     my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
@@ -399,15 +419,20 @@ while(<>) {
 
     $contents_before2 = $contents_before;
     $contents_before = $contents;
+    $ifdef__cplusplus = 0;
 
   LINE_FINISHED:
     if(eof) {
         # check for all-whitespace line just before EOF
         complain("whitespace line before EOF") if $contents =~ m/^\s*$/;
-
-        # sanity-check balance of braces and final indent at end of file
         $line = "EOF";
+
+        # sanity-check balance of braces via final indent at end of file
         complain_contents("indentation off by $indent, likely due to unbalanced nesting of {..}", "\n") if $indent != 0;
+
+        # sanity-check balance of #if via final preprocessor indent at end of file
+        complain_contents("preprocessor indentation off by $preprocessor_indent, likely due to unbalanced nesting of #if ... #endif", "\n") if $preprocessor_indent != 0;
+
         reset_file_state();
     }
 }
