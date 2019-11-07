@@ -369,9 +369,8 @@ while(<>) {
 
             # set hanging_indent and hanging_indent in case of multi-line (RHS of assignment or return) value
             # at this point, matching (...) have been stripped, simplifying type decl matching
-            if ($in_enum > 0 ? m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return)\s*)([^,\{]*)\s*$/
-                             : m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return)\s*)([^;\{]*)\s*$/
-                ) { # multi-line value: "[type] var = " or return without ;
+            my $terminator = $in_enum > 0 ? "," : ";";
+            if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return without ; or ,
                 my $head = $1;
                 my $var_eq = $2;
                 my $trail = $6;
