@@ -25,8 +25,23 @@
 #include <openssl/md5.h>
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
+#include <openssl/asn1t.h>
 
 #define TICKET_NONCE_SIZE       8
+
+typedef struct {
+  ASN1_TYPE *kxBlob;
+  ASN1_TYPE *opaqueBlob;
+} GOST_KX_MESSAGE;
+
+DECLARE_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
+
+ASN1_SEQUENCE(GOST_KX_MESSAGE) = {
+  ASN1_SIMPLE(GOST_KX_MESSAGE,  kxBlob, ASN1_ANY),
+  ASN1_OPT(GOST_KX_MESSAGE, opaqueBlob, ASN1_ANY),
+} ASN1_SEQUENCE_END(GOST_KX_MESSAGE)
+
+IMPLEMENT_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
 
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 
@@ -3277,9 +3292,9 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     const unsigned char *start;
     size_t outlen = 32, inlen;
     unsigned long alg_a;
-    unsigned int asn1id, asn1len;
+    GOST_KX_MESSAGE *pKX = NULL;
+    const unsigned char *ptr;
     int ret = 0;
-    PACKET encdata;
 
     /* Get our certificate private key */
     alg_a = s->s3.tmp.new_cipher->algorithm_auth;
@@ -3320,42 +3335,33 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
         if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
             ERR_clear_error();
     }
-    /* Decrypt session key */
-    if (!PACKET_get_1(pkt, &asn1id)
-            || asn1id != (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)
-            || !PACKET_peek_1(pkt, &asn1len)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                 SSL_R_DECRYPTION_FAILED);
-        goto err;
-    }
-    if (asn1len == 0x81) {
-        /*
-         * Long form length. Should only be one byte of length. Anything else
-         * isn't supported.
-         * We did a successful peek before so this shouldn't fail
-         */
-        if (!PACKET_forward(pkt, 1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                     SSL_R_DECRYPTION_FAILED);
-            goto err;
-        }
-    } else  if (asn1len >= 0x80) {
-        /*
-         * Indefinite length, or more than one long form length bytes. We don't
-         * support it
-         */
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                 SSL_R_DECRYPTION_FAILED);
-        goto err;
-    } /* else short form length */
 
-    if (!PACKET_as_length_prefixed_1(pkt, &encdata)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+    ptr = PACKET_data(pkt);
+    /* Some implementations provide extra data in the opaqueBlob
+     * We have nothing to do with this blob so we just skip it */
+    pKX = d2i_GOST_KX_MESSAGE(NULL, &ptr, PACKET_remaining(pkt));
+    if (pKX == NULL
+       || pKX->kxBlob == NULL
+       || ASN1_TYPE_get(pKX->kxBlob) != V_ASN1_SEQUENCE) {
+         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                  SSL_R_DECRYPTION_FAILED);
+         goto err;
+    }
+
+    if (!PACKET_forward(pkt, ptr - PACKET_data(pkt))) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
-    inlen = PACKET_remaining(&encdata);
-    start = PACKET_data(&encdata);
+
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+
+    inlen = pKX->kxBlob->value.sequence->length;
+    start = pKX->kxBlob->value.sequence->data;
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
                          inlen) <= 0) {
@@ -3377,6 +3383,7 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     ret = 1;
  err:
     EVP_PKEY_CTX_free(pkey_ctx);
+    GOST_KX_MESSAGE_free(pKX);
     return ret;
 #else
     /* Should never happen */
