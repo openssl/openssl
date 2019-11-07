@@ -351,7 +351,7 @@ while(<>) {
                 ? ($hanging_open_parens == 0 &&
                    ($hanging_open_braces == 0 || ($hanging_open_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
                 : ($hanging_open_parens == 0 && $hanging_open_braces == 0 &&
-                   ($multiline_value_indent == -1 || $trailing_terminator)); # assignment and return are terminated by ';' (but in enum by ','), otherwise we assume function header
+                   ($multiline_value_indent == -1 || $trailing_terminator)); # assignment, return, and typedef are terminated by ';' (but in enum by ','), otherwise we assume function header
             if ($hanging_end) {
                 # reset hanging indents
                 $hanging_indent = -1;
@@ -367,16 +367,16 @@ while(<>) {
             # reset extra_singular_indent on trailing ';'
             $extra_singular_indent = 0 if m/;\s*$/; # trailing ';'
 
-            # set hanging_indent and hanging_indent in case of multi-line (RHS of assignment or return) value
+            # set hanging_indent and hanging_indent in case of multi-line value or typedef expression
             # at this point, matching (...) have been stripped, simplifying type decl matching
             my $terminator = $in_enum > 0 ? "," : ";";
-            if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return without ; or ,
+            if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
                 my $head = $1;
                 my $var_eq = $2;
                 my $trail = $6;
                 $multiline_value_indent =
                     $hanging_indent = $hanging_alt_indent = length($head) + INDENT_LEVEL;
-                $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return'
+                $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return' or 'typedef'
             }
             # TODO complain on missing empty line after local variable decls
         }
