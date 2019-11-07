@@ -42,7 +42,7 @@ my $extra_singular_indent; # extra indent for just one statement
 my $multiline_condition_indent; # special indent after if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
 my $in_enum;               # used to determine terminator of assignment
-my $in_multiline_macro;    # number of lines so far within multi-line macro
+my $in_multiline_macro;    # number of lines so far within multi-line macro definition
 my $multiline_macro_no_indent; # workaround for macro body without extra indent
 my $in_multiline_comment;  # number of lines so far within multi-line comment
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
@@ -181,8 +181,13 @@ while(<>) {
         complain("len=$len>".MAX_LENGTH);
     }
 
+    goto LINE_FINISHED if m/^$/; # empty line
+    if (m/^#\s*(\w+)/ && $1 ne "define") { # line starting with '#', ignore preprocessor directive except #define
+        goto LINE_FINISHED;
+    }
+
     # handle multi-line string literals
-    # this is not done for other uses of trailing '\' in order to be able to check layout of macro declarations
+    # this is not done for other uses of trailing '\' in order to be able to check layout of macro definitions
     if (defined $multiline_string) {
         $_ = $multiline_string.$_;
         undef $multiline_string;
@@ -196,15 +201,8 @@ while(<>) {
 
     # set up local offsets to required indent
     if ($in_multiline_comment <= 1) {
-        if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations; multi-line string literals have already been handled
+        if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in multi-line macro definitions; multi-line string literals have already been handled
             $_ = $1; # remove it along with any preceding whitespace
-        }
-        if (m/^$/ || # empty line
-            m/^#/) { # preprocessor line, starting with '#'
-            # ignore indent:
-            $hanging_indent = -1;
-            $extra_singular_indent = 0;
-            $local_offset = $count - $indent;
         }
         if ($hanging_indent == -1) {
             if (m/^(\s*)(case|default)\W/) {
@@ -229,11 +227,8 @@ while(<>) {
             complain("too many }")
                 unless $contents_before =~ m/^\s*#\s*ifdef\s*__cplusplus\s*$/; # ignore closing brace on line after '#ifdef __cplusplus' (used in header files)
         }
-    }
 
-    if ($in_multiline_comment <= 1) {
-
-        # adapatations of indent for first line of macro body
+        # adapatations of indent for first line of multi-line macro body
         my $tmp = $contents_before;
         my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
         if ($in_multiline_macro == 1 ||
@@ -253,7 +248,7 @@ while(<>) {
             $hanging_alt_indent = $count if $count < $hanging_alt_indent;
         }
 
-        check_indent();
+        check_indent() unless m/^#\s*define/; # ignore indent of #define
 
         # adapt indent for following lines according to braces
         my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
@@ -390,7 +385,7 @@ while(<>) {
         # TODO complain on missing empty line after local variable decls
 
         # detect start and end of multi-line macro, potentially adapting indent
-        if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations
+        if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro definitions
             if ($in_multiline_macro == 0) {
                 $multiline_macro_no_indent = 0;
                 $indent += INDENT_LEVEL ;
