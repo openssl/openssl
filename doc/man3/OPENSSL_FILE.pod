@@ -41,7 +41,8 @@ L<crypto(7)>
 
 =head1 HISTORY
 
-B<OPENSSL_FUNC> was added in OpenSSL 3.0.
+B<OPENSSL_FUNC>, B<OPENSSL_MSTR>, and B<OPENSSL_MSTR_HELPER>
+were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
