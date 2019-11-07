@@ -49,30 +49,41 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List ciphers"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"ciphers", OPT_LIST, '-', "Alias for -list"},
 #endif
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},
     {"P", OPT_UPPER_P, '-', "Print the iv/key and exit"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"k", OPT_K, 's', "Passphrase"},
+    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"pass", OPT_PASS, 's', "Passphrase source"},
     {"v", OPT_V, '-', "Verbose output"},
-    {"nopad", OPT_NOPAD, '-', "Disable standard block padding"},
-    {"salt", OPT_SALT, '-', "Use salt in the KDF (default)"},
-    {"nosalt", OPT_NOSALT, '-', "Do not use salt in the KDF"},
-    {"debug", OPT_DEBUG, '-', "Print debug info"},
     {"a", OPT_A, '-', "Base64 encode/decode, depending on encryption flag"},
     {"base64", OPT_A, '-', "Same as option -a"},
     {"A", OPT_UPPER_A, '-',
      "Used with -[base64|a] to specify base64 buffer as a single line"},
+
+    OPT_SECTION("Encryption"),
+    {"nopad", OPT_NOPAD, '-', "Disable standard block padding"},
+    {"salt", OPT_SALT, '-', "Use salt in the KDF (default)"},
+    {"nosalt", OPT_NOSALT, '-', "Do not use salt in the KDF"},
+    {"debug", OPT_DEBUG, '-', "Print debug info"},
+
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
-    {"k", OPT_K, 's', "Passphrase"},
-    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
@@ -80,14 +91,12 @@ const OPTIONS enc_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
     {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-    OPT_R_OPTIONS,
 #ifdef ZLIB
     {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
 #endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 

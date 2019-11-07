@@ -28,7 +28,11 @@ typedef enum OPTION_choice {
 const OPTIONS provider_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] provider...\n"},
     {OPT_HELP_STR, 1, '-', "  provider... Providers to load\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Output"),
     {"v", OPT_V, '-', "List the algorithm names of specified provider"},
     {"vv", OPT_VV, '-', "List the algorithm names of specified providers,"},
     {OPT_MORE_STR, 0, '-', "categorised by operation type"},

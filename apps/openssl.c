@@ -386,6 +386,8 @@ typedef enum HELP_CHOICE {
 const OPTIONS help_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: help [options]\n"},
     {OPT_HELP_STR, 1, '-', "       help [command]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };

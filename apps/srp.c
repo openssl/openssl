@@ -197,24 +197,29 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
     {"name", OPT_NAME, 's', "The particular srp definition to use"},
-    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Action"),
     {"add", OPT_ADD, '-', "Add a user and srp verifier"},
-    {"modify", OPT_MODIFY, '-',
-     "Modify the srp verifier of an existing user"},
+    {"modify", OPT_MODIFY, '-', "Modify the srp verifier of an existing user"},
     {"delete", OPT_DELETE, '-', "Delete user from verifier file"},
     {"list", OPT_LIST, '-', "List users"},
+
+    OPT_SECTION("Configuration"),
+    {"srpvfile", OPT_SRPVFILE, '<', "The srp verifier file name"},
     {"gn", OPT_GN, 's', "Set g and N values to be used for new verifier"},
     {"userinfo", OPT_USERINFO, 's', "Additional info to be set for user"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {NULL}
 };
 

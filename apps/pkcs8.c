@@ -30,31 +30,39 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS pkcs8_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
-    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"topk8", OPT_TOPK8, '-', "Output PKCS8 file"},
-    {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
-    {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
-    OPT_R_OPTIONS,
-    {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
-    {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
-    {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
-    {"iter", OPT_ITER, 'p', "Specify the iteration count"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
+    {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
+    {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
+    {"topk8", OPT_TOPK8, '-', "Output PKCS8 file"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
+    {"iter", OPT_ITER, 'p', "Specify the iteration count"},
+    {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
+
 #ifndef OPENSSL_NO_SCRYPT
+    OPT_SECTION("Scrypt"),
     {"scrypt", OPT_SCRYPT, '-', "Use scrypt algorithm"},
     {"scrypt_N", OPT_SCRYPT_N, 's', "Set scrypt N parameter"},
     {"scrypt_r", OPT_SCRYPT_R, 's', "Set scrypt r parameter"},
     {"scrypt_p", OPT_SCRYPT_P, 's', "Set scrypt p parameter"},
 #endif
+
+    OPT_R_OPTIONS,
     {NULL}
 };
 

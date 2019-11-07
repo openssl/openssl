@@ -31,33 +31,38 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS ciphers_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+
+    OPT_SECTION("Output"),
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
+    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
+    {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
+
+    OPT_SECTION("Cipher specification"),
     {"s", OPT_S, '-', "Only supported ciphers"},
 #ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "SSL3 mode"},
+    {"ssl3", OPT_SSL3, '-', "Ciphers compatible with SSL3"},
 #endif
 #ifndef OPENSSL_NO_TLS1
-    {"tls1", OPT_TLS1, '-', "TLS1 mode"},
+    {"tls1", OPT_TLS1, '-', "Ciphers compatible with TLS1"},
 #endif
 #ifndef OPENSSL_NO_TLS1_1
-    {"tls1_1", OPT_TLS1_1, '-', "TLS1.1 mode"},
+    {"tls1_1", OPT_TLS1_1, '-', "Ciphers compatible with TLS1.1"},
 #endif
 #ifndef OPENSSL_NO_TLS1_2
-    {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
+    {"tls1_2", OPT_TLS1_2, '-', "Ciphers compatible with TLS1.2"},
 #endif
 #ifndef OPENSSL_NO_TLS1_3
-    {"tls1_3", OPT_TLS1_3, '-', "TLS1.3 mode"},
+    {"tls1_3", OPT_TLS1_3, '-', "Ciphers compatible with TLS1.3"},
 #endif
-    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #ifndef OPENSSL_NO_PSK
-    {"psk", OPT_PSK, '-', "include ciphersuites requiring PSK"},
+    {"psk", OPT_PSK, '-', "Include ciphersuites requiring PSK"},
 #endif
 #ifndef OPENSSL_NO_SRP
-    {"srp", OPT_SRP, '-', "include ciphersuites requiring SRP"},
+    {"srp", OPT_SRP, '-', "Include ciphersuites requiring SRP"},
 #endif
-    {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
     {NULL}

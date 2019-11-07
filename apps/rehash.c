@@ -452,12 +452,15 @@ typedef enum OPTION_choice {
 
 const OPTIONS rehash_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"h", OPT_HELP, '-', "Display this summary"},
     {"compat", OPT_COMPAT, '-', "Create both new- and old-style hash links"},
     {"old", OPT_OLD, '-', "Use old-style hash to generate links"},
     {"n", OPT_N, '-', "Do not remove existing links"},
+
+    OPT_SECTION("Output"),
     {"v", OPT_VERBOSE, '-', "Verbose output"},
     {NULL}
 };

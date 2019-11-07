@@ -605,7 +605,21 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
+     "Specify engine to be used for client certificate operations"},
+#endif
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
+#ifndef OPENSSL_NO_CT
+    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
+    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
+    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
+#endif
+
+    OPT_SECTION("Network"),
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
@@ -622,6 +636,18 @@ const OPTIONS s_client_options[] = {
 #ifdef AF_INET6
     {"6", OPT_6, '-', "Use IPv6 only"},
 #endif
+    {"maxfraglen", OPT_MAXFRAGLEN, 'p',
+     "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
+    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
+     "Size used to split data for encrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'p',
+     "Default read buffer size to be used for connections"},
+    {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
+
+    OPT_SECTION("Identity"),
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
@@ -646,16 +672,19 @@ const OPTIONS s_client_options[] = {
      "DANE TLSA rrdata presentation form"},
     {"dane_ee_no_namechecks", OPT_DANE_EE_NO_NAME, '-',
      "Disable name checks when matching DANE-EE(3) TLSA records"},
+    {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
+    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
+    {"name", OPT_PROTOHOST, 's',
+     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
+
+    OPT_SECTION("Session"),
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
-    {"showcerts", OPT_SHOWCERTS, '-',
-     "Show all certificates sent by the server"},
-    {"debug", OPT_DEBUG, '-', "Extra output"},
-    {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>',
-     "File to send output of -msg or -trace, instead of stdout"},
-    {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
-    {"state", OPT_STATE, '-', "Print the ssl states"},
+    {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
+    {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
+
+    OPT_SECTION("Input/Output"),
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
@@ -664,51 +693,35 @@ const OPTIONS s_client_options[] = {
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
      "Alias of -name option for \"-starttls xmpp[-server]\""},
-    OPT_R_OPTIONS,
-    {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
-    {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
-#ifndef OPENSSL_NO_SRTP
-    {"use_srtp", OPT_USE_SRTP, 's',
-     "Offer SRTP key management with a colon-separated profile list"},
-#endif
-    {"keymatexport", OPT_KEYMATEXPORT, 's',
-     "Export keying material using label"},
-    {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
-     "Export len bytes of keying material (default 20)"},
-    {"maxfraglen", OPT_MAXFRAGLEN, 'p',
-     "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
-    {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
-    {"name", OPT_PROTOHOST, 's',
-     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
-    {"CRL", OPT_CRL, '<', "CRL file to use"},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
-    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
-     "Close connection on verification error"},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
     {"brief", OPT_BRIEF, '-',
      "Restrict output to brief summary of connection parameters"},
     {"prexit", OPT_PREXIT, '-',
      "Print session information when the program exits"},
+
+    OPT_SECTION("Debug"),
+    {"showcerts", OPT_SHOWCERTS, '-',
+     "Show all certificates sent by the server"},
+    {"debug", OPT_DEBUG, '-', "Extra output"},
+    {"msg", OPT_MSG, '-', "Show protocol messages"},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
+    {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
+    {"state", OPT_STATE, '-', "Print the ssl states"},
+    {"keymatexport", OPT_KEYMATEXPORT, 's',
+     "Export keying material using label"},
+    {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
+     "Export len bytes of keying material (default 20)"},
     {"security_debug", OPT_SECURITY_DEBUG, '-',
      "Enable security debug messages"},
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
      "Output more security debug output"},
-    {"cert_chain", OPT_CERT_CHAIN, '<',
-     "Certificate chain file (in PEM format)"},
-    {"chainCApath", OPT_CHAINCAPATH, '/',
-     "Use dir as certificate store path to build CA certificate chain"},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/',
-     "Use dir as certificate store path to verify CA certificate"},
-    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
-    {"chainCAfile", OPT_CHAINCAFILE, '<',
-     "CA file for certificate chain (PEM format)"},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
-     "CA file for certificate verification (PEM format)"},
-    {"chainCAstore", OPT_CHAINCASTORE, ':',
-     "CA store URI for certificate chain"},
-    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
-     "CA store URI for certificate verification"},
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
+#endif
+#ifdef WATT32
+    {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
+#endif
+    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername (SNI) in ClientHello (default)"},
@@ -724,17 +737,9 @@ const OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
-    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
-    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
-     "Size used to split data for encrypt pipelines"},
-    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
-     "Maximum number of encrypt/decrypt pipelines to be used"},
-    {"read_buf", OPT_READ_BUF, 'p',
-     "Default read buffer size to be used for connections"},
-    OPT_S_OPTIONS,
-    OPT_V_OPTIONS,
-    OPT_X_OPTIONS,
+    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
+
+    OPT_SECTION("Protocol and version"),
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
@@ -766,16 +771,16 @@ const OPTIONS s_client_options[] = {
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
     {"sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug"},
 #endif
-#ifndef OPENSSL_NO_SSL_TRACE
-    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
+     "Enable NPN extension, considering named protocols supported (comma-separated list)"},
 #endif
-#ifdef WATT32
-    {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
+    {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
+    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
+#ifndef OPENSSL_NO_SRTP
+    {"use_srtp", OPT_USE_SRTP, 's',
+     "Offer SRTP key management with a colon-separated profile list"},
 #endif
-    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-    {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
-    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
@@ -785,24 +790,33 @@ const OPTIONS s_client_options[] = {
      "Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
 #endif
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
-     "Enable NPN extension, considering named protocols supported (comma-separated list)"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
-     "Specify engine to be used for client certificate operations"},
-#endif
-#ifndef OPENSSL_NO_CT
-    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
-    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
-    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
-#endif
-    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
-    {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
-    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
-    {NULL, OPT_EOF, 0x00, NULL}
+
+    OPT_R_OPTIONS,
+    OPT_S_OPTIONS,
+    OPT_V_OPTIONS,
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "Certificate chain file (in PEM format)"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "Use dir as certificate store path to build CA certificate chain"},
+    {"chainCAstore", OPT_CHAINCASTORE, ':',
+     "CA store URI for certificate chain"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "Use dir as certificate store path to verify CA certificate"},
+    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
+     "CA store URI for certificate verification"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    OPT_X_OPTIONS,
+    {NULL}
 };
 
 typedef enum PROTOCOL_choice {

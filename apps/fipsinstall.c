@@ -32,18 +32,20 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {OPT_MORE_STR, 0, 0, "e.g: openssl fipsinstall -provider_name fips"
-     "-section_name fipsinstall -out fips.conf -module ./fips.so"
-     "-mac_name HMAC -macopt digest:SHA256 -macopt hexkey:00"},
     {"verify", OPT_VERIFY, '-', "Verification mode, i.e verify a config file "
      "instead of generating one"},
-    {"in", OPT_IN, '<', "Input config file, used when verifying"},
-    {"out", OPT_OUT, '>', "Output config file, used when generating"},
     {"module", OPT_MODULE, '<', "File name of the provider module"},
     {"provider_name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section_name", OPT_SECTION_NAME, 's',
      "FIPS Provider config section name (optional)"},
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input config file, used when verifying"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output config file, used when generating"},
     {"mac_name", OPT_MAC_NAME, 's', "MAC name"},
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
                                 "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},

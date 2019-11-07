@@ -22,15 +22,20 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"text", OPT_TEXT, '-', "Print parameters as text"},
-    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"check", OPT_CHECK, '-', "Check key param consistency"},
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"text", OPT_TEXT, '-', "Print parameters as text"},
+    {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
     {NULL}
 };
 

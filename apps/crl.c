@@ -28,13 +28,28 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS crl_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
+    {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
-    {"out", OPT_OUT, '>', "output file - default stdout"},
-    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"key", OPT_KEY, '<', "CRL signing Private key to use"},
+    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "output file - default stdout"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+    {"text", OPT_TEXT, '-', "Print out a text format version"},
+    {"hash", OPT_HASH, '-', "Print hash value"},
+#ifndef OPENSSL_NO_MD5
+    {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
+#endif
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"", OPT_MD, '-', "Any supported digest"},
+
+    OPT_SECTION("CRL"),
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
     {"lastupdate", OPT_LASTUPDATE, '-', "Set lastUpdate field"},
     {"nextupdate", OPT_NEXTUPDATE, '-', "Set nextUpdate field"},
@@ -43,6 +58,8 @@ const OPTIONS crl_options[] = {
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
     {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
+
+    OPT_SECTION("Certificate"),
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
     {"CAstore", OPT_CASTORE, ':', "Verify CRL using certificates in store URI"},
@@ -52,14 +69,6 @@ const OPTIONS crl_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
-    {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
-    {"text", OPT_TEXT, '-', "Print out a text format version"},
-    {"hash", OPT_HASH, '-', "Print hash value"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_MD5
-    {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
-#endif
     {NULL}
 };
 
