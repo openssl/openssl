@@ -91,7 +91,7 @@ while(<>) {
     }
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
-    if (m/^(.*?)\*\/(.*)$/) { # ending comment: '*/' - TODO this goes wrong when inside string literal
+    if (m/^(.*?)\*\/(.*)$/) { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my $head = $1;
         my $tail = $2;
         if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
@@ -105,11 +105,11 @@ while(<>) {
 
     # detect start of multi-line comment, check if it is followed by non-space text
   MATCH_COMMENT:
-    if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO this goes wrong when inside string literal
+    if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO ignore '/*' inside string literal
         my $head = $1;
         my $opt_minus = $2;
         my $tail = $3;
-        if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO this goes wrong when inside string literal
+        if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             $_ = "$head  $opt_minus".($1 =~ tr/ / /cr)."  $2"; # blind comment text, retaining length
             goto ENDLOOP if m/^\s*$/; # ignore any resulting all-whitespace line
             goto MATCH_COMMENT;
@@ -126,14 +126,15 @@ while(<>) {
         }
     }
 
+    s/\\"/\\\\/g; # blind all '\"' (typically whithin string literals) to '\\'
+    s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg; # blind contents of string literals - TODO handle also multi-line string literals
+
     # check for over-long lines,
     # while allowing trailing string literals to go past MAX_LENGTH
     my $len = length; # total line length (without trailing \n)
-    my $hidden_esc_dblquot = $_;
-    while($hidden_esc_dblquot =~ s/([^\"]\".*?\\)\"/$1\\/g) {} # TODO check this
     if($len > MAX_LENGTH &&
-       !($hidden_esc_dblquot =~ m/^(.*?)\"[^\"]*\"\s*(,|[\)\}]*[,;]?)\s*$/
-         && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH
+       !(m/^(.*?)"[^"]*"\s*(,|[\)\}]*[,;]?)\s*$/
+         && length($1) < MAX_LENGTH)) { # allow over-long trailing string literal with starting col before MAX_LENGTH - TODO handle also multi-line string literals
         complain("len=$len>".MAX_LENGTH);
     }
 
@@ -166,7 +167,6 @@ while(<>) {
             $local_hanging_indent = INDENT_LEVEL if m/^\s*(\&\&|\|\|)/;  # line starting with && or ||
         }
 
-        # TODO make sure that any '{' and '}' in string literals do not interfere with the following calculations
         m/^([^\{]*)/; # prefix before any opening {
         my $num_initial_closing_braces = $1 =~ tr/\}//;
         $local_offset -= $num_initial_closing_braces * INDENT_LEVEL;
@@ -296,7 +296,6 @@ while(<>) {
         # adapt hanging_indent, hanging_alt_indent and the auxiliary hanging_open_parens and hanging_open_braces
         # potentially reduce extra_singular_indent
       MATCH_PAREN:
-        # TODO make sure that any '{', '(', ')', and '}' in string literals do not interfere with the following calculations
         # TODO the following assignments to $hanging_indent are just heuristics - nested closing parens and braces are not treated fully
         if (m/^(.*)\(([^\(]*)$/) { # last '('
             my $head = $1;
@@ -358,7 +357,7 @@ while(<>) {
                     $hanging_indent = $hanging_alt_indent = length($head) + INDENT_LEVEL;
                 $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return'
             }
-            # TODO add check for empty line after local variable decls
+            # TODO complain on missing empty line after local variable decls
         }
 
         # detect start and end of multi-line macro, potentially adapting indent
