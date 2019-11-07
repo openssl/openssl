@@ -168,6 +168,7 @@ while(<>) {
         }
     }
 
+    $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {' (used with '#ifdef __cplusplus' in header files)
     s/\\"/\\\\/g; # blind all '\"' (typically whithin string literals) to '\\'
     s#^([^"]*")([^"]*)(")#$1.($2 =~ tr/ / /cr).$3#eg; # blind contents of string literals; multi-line string literals are handled below
 
@@ -198,7 +199,6 @@ while(<>) {
         if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro declarations; multi-line string literals have already been handled
             $_ = $1; # remove it along with any preceding whitespace
         }
-        $_ = "$1$2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {' (used with '#ifdef __cplusplus' in header files)
         if (m/^$/ || # empty line
             m/^#/) { # preprocessor line, starting with '#'
             # ignore indent:
