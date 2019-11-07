@@ -30,6 +30,10 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
             if (dat->mode == EVP_CIPH_CBC_MODE)
                 dat->stream.cbc = (cbc128_f)HWAES_cbc_encrypt;
 # endif
+# ifdef HWAES_ecb_encrypt
+            if (dat->mode == EVP_CIPH_ECB_MODE)
+                dat->stream.ecb = (ecb128_f)HWAES_ecb_encrypt;
+# endif
         } else
 #endif
 #ifdef BSAES_CAPABLE
@@ -62,6 +66,11 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
 # ifdef HWAES_cbc_encrypt
         if (dat->mode == EVP_CIPH_CBC_MODE)
             dat->stream.cbc = (cbc128_f)HWAES_cbc_encrypt;
+        else
+# endif
+# ifdef HWAES_ecb_encrypt
+        if (dat->mode == EVP_CIPH_ECB_MODE)
+            dat->stream.ecb = (ecb128_f)HWAES_ecb_encrypt;
         else
 # endif
 # ifdef HWAES_ctr32_encrypt_blocks

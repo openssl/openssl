@@ -37,6 +37,7 @@ struct prov_cipher_ctx_st {
     union {
         cbc128_f cbc;
         ctr128_f ctr;
+        ecb128_f ecb;
     } stream;
 
     unsigned int mode;

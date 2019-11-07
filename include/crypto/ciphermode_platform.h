@@ -89,6 +89,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_encrypt aes_v8_encrypt
 #    define HWAES_decrypt aes_v8_decrypt
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
+#    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
 #   endif
 #  endif
@@ -411,6 +412,9 @@ void HWAES_decrypt(const unsigned char *in, unsigned char *out,
 void HWAES_cbc_encrypt(const unsigned char *in, unsigned char *out,
                        size_t length, const AES_KEY *key,
                        unsigned char *ivec, const int enc);
+void HWAES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t length, const AES_KEY *key,
+                       const int enc);
 void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 size_t len, const AES_KEY *key,
                                 const unsigned char ivec[16]);
