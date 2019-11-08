@@ -45,7 +45,7 @@ my $multiline_condition_indent; # special indent after if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
 my $in_enum;               # used to determine terminator of assignment
 my $in_multiline_macro;    # number of lines so far within multi-line macro definition
-my $multiline_macro_no_indent; # workaround for macro body without extra indent
+my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_multiline_comment;  # number of lines so far within multi-line comment
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 
@@ -202,7 +202,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # handle multi-line string literals
-    # this is not done for other uses of trailing '\' in order to be able to check layout of macro definitions
+    # this is not done for other uses of trailing '\' in order to be able to check layout of multi-line macro definitions
     if (defined $multiline_string) {
         $_ = $multiline_string.$_;
         undef $multiline_string;
@@ -247,14 +247,14 @@ while(<>) { # loop over all lines of all input files
     }
     $hanging_indent = -1 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
-    # adapatations of indent for first line of multi-line macro body
+    # potential adapatations of indent in first line of macro body in multi-line macro definition
     my $tmp = $contents_before;
     my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
     if ($in_multiline_macro == 1 ||
         $in_multiline_macro == 2 && $parens_balance < 0) { # also match two-line macro headers
-        if ($count == $indent - INDENT_LEVEL) { # macro started with same indentation
+        if ($count == $indent - INDENT_LEVEL) { # macro started with same indentation as preceding code
             $indent -= INDENT_LEVEL;
-            $multiline_macro_no_indent = 1;
+            $multiline_macro_same_indent = 1;
         }
     }
 
@@ -405,15 +405,13 @@ while(<>) { # loop over all lines of all input files
     # TODO complain on missing empty line after local variable decls
 
     # detect start and end of multi-line macro, potentially adapting indent
-    if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in macro definitions
-        if ($in_multiline_macro == 0) {
-            $multiline_macro_no_indent = 0;
+    if ($contents =~ # need to use original line contents here, not potentially modified $_
+        m/^(.*?)\s*\\\s*$/) { # trailing '\', typically used in macro definitions
+        if ($in_multiline_macro == 0 && m/^(DEFINE_|\s*#(\s*)define\W)/) { # #define ... or leading DEFINE_...
+            $multiline_macro_same_indent = 0;
             $indent += INDENT_LEVEL ;
         }
         $in_multiline_macro += 1;
-    } else {
-        $indent -= INDENT_LEVEL if $in_multiline_macro && !$multiline_macro_no_indent;
-        $in_multiline_macro = 0;
     }
 
     $contents_before2 = $contents_before;
@@ -421,6 +419,12 @@ while(<>) { # loop over all lines of all input files
     $ifdef__cplusplus = 0;
 
   LINE_FINISHED:
+    unless ($contents =~ # need to use original line contents here, not potentially modified $_
+            m/^(.*?)\s*\\\s*$/) { # no trailing '\'
+        $indent -= INDENT_LEVEL if $in_multiline_macro > 0 && !$multiline_macro_same_indent;
+        $in_multiline_macro = 0;
+    }
+
     if(eof) {
         # check for essentially empty line just before EOF
         complain("empty before EOF") if $contents =~ m/^\s*\\?\s*$/;
