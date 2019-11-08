@@ -30,7 +30,7 @@ my $contents_before2;      # contents of but-last line (except multi-line string
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line, which basically should equal $indent
 my $label;                 # current line contains label
-my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing brace(s)
+my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing braces
 my $local_hanging_indent;  # current line allowed extra indent due to line starting with '&&' or '||'
 my $line_opening_brace;    # number of last line with opening brace
 my $indent;                # currently required indentation for normal code
@@ -103,7 +103,7 @@ sub check_indent { # for lines outside multi-line comments and string literals
 }
 
 reset_file_state();
-while(<>) {
+while(<>) { # loop over all lines of all input files
     $line++;
     $contents = $_;
 
@@ -239,15 +239,19 @@ while(<>) {
         $local_hanging_indent = INDENT_LEVEL if m/^\s*(\&\&|\|\|)/;  # line starting with && or ||
     }
 
-    m/^([^\{]*)/; # prefix before any opening {
+    # adapt required indent due to leading closing }
+    m/^([^\{]*)/; # get prefix before any opening {
     my $num_leading_closing_braces = $1 =~ tr/\}//;
-    $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
-
+    if ($num_leading_closing_braces != 0) {
+        $hanging_indent = -1; # reset hanging indents
+        $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+    }
     # sanity-check underflow due to closing braces
     if ($indent + $local_offset < 0) {
         $local_offset = -$indent;
         complain("too many }");
     }
+    $hanging_indent = -1 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
     # adapatations of indent for first line of multi-line macro body
     my $tmp = $contents_before;
@@ -264,7 +268,8 @@ while(<>) {
     if ($hanging_indent != -1 && $count >= # actual indent (count) is at least at minimum:
             max($indent + $extra_singular_indent + $local_offset,
                 max($multiline_condition_indent, $multiline_value_indent))
-        || m/$\s*ASN1_ITEM_TEMPLATE_END/ && $multiline_value_indent != -1) {
+        && 1 # TODO more restrictions needed here, e.g., something like $multiline_value_indent != -1
+       ) {
         $hanging_indent     = $count if $count < $hanging_indent;
         $hanging_alt_indent = $count if $count < $hanging_alt_indent;
     }
