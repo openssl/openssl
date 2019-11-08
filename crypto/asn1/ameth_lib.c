@@ -79,6 +79,9 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
     const EVP_PKEY_ASN1_METHOD *t;
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e;
+#endif
 
     for (;;) {
         t = pkey_asn1_find(type);
@@ -88,7 +91,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
     }
 
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE *e;
     /* type will contain the final unaliased type */
     e = ENGINE_get_pkey_asn1_meth_engine(type);
     if (e) {
@@ -107,12 +109,14 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 {
     int i;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *e;
+#endif
 
     if (len == -1)
         len = strlen(str);
 
 #ifndef OPENSSL_NO_ENGINE
-        ENGINE *e;
         ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
         if (ameth) {
             /*
