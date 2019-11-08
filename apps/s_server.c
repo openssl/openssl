@@ -2594,7 +2594,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     continue;
                 }
                 if (buf[0] == 'P') {
-                    BIO_write(SSL_get_wbio(con), "Lets print some clear text\n", sizeof("Lets print some clear text\n") -1);
+                    static const char str[] = "Lets print some clear text\n";
+                    BIO_write(SSL_get_wbio(con), "Lets print some clear text\n", sizeof(str) -1);
                 }
                 if (buf[0] == 'S') {
                     print_stats(bio_s_out, SSL_get_SSL_CTX(con));
