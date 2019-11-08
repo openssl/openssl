@@ -2524,7 +2524,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                 for (j = i - 1; j >= 0; j--) {
                     buf[j + lf_num] = buf[j];
                     if (buf[j] == '\n') {
-                        lf_num--; 
+                        lf_num--;
                         i++;
                         buf[j + lf_num] = '\r';
                     }
