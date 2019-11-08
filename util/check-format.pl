@@ -76,6 +76,16 @@ sub complain {
     complain_contents($msg, ": $contents");
 }
 
+sub parens_balance { # count balance of opening parentheses - closing parentheses
+    my $str = shift;
+    return $str =~ tr/\(// - $str =~ tr/\)//;
+}
+
+sub braces_balance { # count balance of opening braces - closing braces
+    my $str = shift;
+    return $str =~ tr/\{// - $str =~ tr/\}//;
+}
+
 sub check_indent { # for lines outside multi-line comments and string literals
     if ($hanging_indent == -1) {
         my $allowed = $indent+$extra_singular_indent+$local_offset;
@@ -259,9 +269,7 @@ while(<>) { # loop over all lines of all input files
     $hanging_indent = -1 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
-    my $tmp = $contents_before;
-    my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
-    my $more_lines = $parens_balance < 0; # then match two-line macro headers - TODO improve to handle also more header lines
+    my $more_lines = parens_balance($contents_before) < 0; # then match two-line macro headers - TODO improve to handle also more header lines
     if (($more_lines ? $contents_before2 : $contents_before) =~ m/^\s*#\s*define(\W|$)/ &&
         $in_multiline_directive == 1 + $more_lines) {
         if ($count == $indent - INDENT_LEVEL) { # macro body actually started with same indentation as preceding code
@@ -283,9 +291,9 @@ while(<>) { # loop over all lines of all input files
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
     # adapt indent for following lines according to braces
-    my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
-    $indent += $brace_balance * INDENT_LEVEL;
-    $hanging_indent += $brace_balance * INDENT_LEVEL if $multiline_value_indent != -1;
+    my $braces_balance = braces_balance($_);
+    $indent += $braces_balance * INDENT_LEVEL;
+    $hanging_indent += $braces_balance * INDENT_LEVEL if $multiline_value_indent != -1;
 
     # sanity-check underflow due to closing braces
     if ($indent < 0) {
@@ -295,7 +303,7 @@ while(<>) { # loop over all lines of all input files
 
     # a rough check to determine whether inside enum
     $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
-    $in_enum += $brace_balance if $brace_balance < 0;
+    $in_enum += $braces_balance if $braces_balance < 0;
     $in_enum = 0 if $in_enum < 0;
 
     # handle last opening brace in line
@@ -339,8 +347,7 @@ while(<>) { # loop over all lines of all input files
         if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
             my ($head, $tail) = ($1, $4);
             if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
-                my $tmp = $_;
-                my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
+                my $parens_balance = parens_balance($_);
                 complain("too many )") if $parens_balance < 0;
                 if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
                     $multiline_condition_indent = length($1);
@@ -363,8 +370,7 @@ while(<>) { # loop over all lines of all input files
             goto MATCH_PAREN;
         }
         $hanging_indent = $hanging_alt_indent = length($head) + 1;
-        my $tmp = $_;
-        $hanging_open_parens += $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
+        $hanging_open_parens += parens_balance($_);
     }
     elsif (m/^(.*)\{(\s*[^\s\{][^\{]*\s*)$/) { # last '{' followed by non-space: struct initializer
         my $head = $1;
@@ -374,12 +380,10 @@ while(<>) { # loop over all lines of all input files
             goto MATCH_PAREN;
         }
         $hanging_indent = $hanging_alt_indent = length($head) + 1;
-        my $tmp = $_;
-        $hanging_open_braces += $tmp =~ tr/\{// - $tmp =~ tr/\}//; # count balance of opening - closing braces
+        $hanging_open_braces += braces_balance($_);
     } elsif ($hanging_indent != -1) {
-        my $tmp = $_;
-        $hanging_open_parens += $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
-        $hanging_open_braces += $tmp =~ tr/\{// - $tmp =~ tr/\}//; # count balance of opening - closing braces
+        $hanging_open_parens += parens_balance($_);
+        $hanging_open_braces += braces_balance($_);
 
         my $trailing_opening_brace = m/\{\s*$/;
         my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
@@ -447,10 +451,10 @@ while(<>) { # loop over all lines of all input files
         complain("empty before EOF") if $contents =~ m/^\s*\\?\s*$/;
         $line = "EOF";
 
-        # sanity-check balance of braces via final indent at end of file
+        # sanity-check balance of { .. } via final indent at end of file
         complain_contents(ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
 
-        # sanity-check balance of #if via final preprocessor indent at end of file
+        # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
         complain_contents("$directive_indent unclosed #if", "\n") if $directive_indent != 0;
 
         reset_file_state();
