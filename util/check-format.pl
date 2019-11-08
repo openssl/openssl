@@ -142,10 +142,9 @@ while(<>) { # loop over all lines of all input files
         my $tail = $2;
         if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
             complain("*/ outside comment") if $in_multiline_comment == 0;
-            complain("... */") if $head =~ m/\S/;
+            complain("... */") if $head =~ m/\S/; # head contains non-whitespace
             $_ = ($head =~ tr/ / /cr)."  $tail"; # blind comment text, retaining length
             $in_multiline_comment = 0;
-            goto LINE_FINISHED if m/^\s*$/; # ignore any resulting all-whitespace line
         }
     }
 
@@ -157,18 +156,13 @@ while(<>) { # loop over all lines of all input files
         my $tail = $3;
         if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             $_ = "$head  $opt_minus".($1 =~ tr/ / /cr)."  $2"; # blind comment text, retaining length
-            goto LINE_FINISHED if m/^\s*$/; # ignore any resulting all-whitespace line
             goto MATCH_COMMENT;
         } else {
             complain("/* inside comment") if $in_multiline_comment == 1;
-            complain("/* ...") if $tail =~ m/\S/;
+            complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
             $multiline_comment_indent = length($head) + 1; # adopt actual indentation of first comment line
             $_ = "$head  ".($opt_minus =~ tr/ / /cr).($tail =~ tr/ / /cr); # blind comment text, retaining length
             $in_multiline_comment = 1;
-            if (m/^\s*$/) { # all-whitespace line
-                check_indent();
-                goto LINE_FINISHED; # ignore all-whitespace line
-            }
         }
     }
 
@@ -192,7 +186,7 @@ while(<>) { # loop over all lines of all input files
         complain("len=$len>".MAX_LENGTH);
     }
 
-    goto LINE_FINISHED if m/^$/; # empty line
+    goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace except potentially a single backslash)
 
     # handle preprocessor directives
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
@@ -428,8 +422,8 @@ while(<>) { # loop over all lines of all input files
 
   LINE_FINISHED:
     if(eof) {
-        # check for all-whitespace line just before EOF
-        complain("whitespace line before EOF") if $contents =~ m/^\s*$/;
+        # check for essentially empty line just before EOF
+        complain("empty before EOF") if $contents =~ m/^\s*\\?\s*$/;
         $line = "EOF";
 
         # sanity-check balance of braces via final indent at end of file
