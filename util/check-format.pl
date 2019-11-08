@@ -35,7 +35,7 @@ my $local_offset;          # current line extra indent offset due to label or sw
 my $local_hanging_indent;  # current line allowed extra indent due to line starting with '&&' or '||'
 my $line_opening_brace;    # number of last line with opening brace
 my $indent;                # currently required indentation for normal code
-my $preprocessor_indent;   # currently required indentation for preprocessor directives
+my $directive_indent;      # currently required indentation for preprocessor directives
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $hanging_indent;        # currently hanging indent, else -1
 my $hanging_open_parens;   # used only if $hanging_indent != -1
@@ -45,14 +45,14 @@ my $extra_singular_indent; # extra indent for just one statement
 my $multiline_condition_indent; # special indent after if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
 my $in_enum;               # used to determine terminator of assignment
-my $in_multiline_macro;    # number of lines so far within multi-line macro definition
+my $in_multiline_directive; # number of lines so far within multi-line preprocessor directive, e.g., macro definition
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_multiline_comment;  # number of lines so far within multi-line comment
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 
 sub reset_file_state {
     $indent = 0;
-    $preprocessor_indent = 0;
+    $directive_indent = 0;
     $ifdef__cplusplus = 0;
     $line = 0;
     undef $multiline_string;
@@ -61,7 +61,7 @@ sub reset_file_state {
     $extra_singular_indent = 0;
     $multiline_condition_indent = $multiline_value_indent = -1;
     $in_enum = 0;
-    $in_multiline_macro = 0;
+    $in_multiline_directive = 0;
     $in_multiline_comment = 0;
 }
 
@@ -196,24 +196,24 @@ while(<>) { # loop over all lines of all input files
 
     # handle preprocessor directives
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
-        my $preprocessor_count = length $1; # maybe could also use indentation before '#'
+        my $directive_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
         complain("indent=$count!=0") if $count != 0;
-        $preprocessor_indent-- if $directive =~ m/^else|elsif|endif$/;
-        if ($preprocessor_indent < 0) {
-            $preprocessor_indent = 0;
+        $directive_indent-- if $directive =~ m/^else|elsif|endif$/;
+        if ($directive_indent < 0) {
+            $directive_indent = 0;
             complain("unexpected #$directive");
         }
-        complain("#indent=$preprocessor_count!=$preprocessor_indent")
-                     if $preprocessor_count != $preprocessor_indent;
-        $preprocessor_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
+        complain("#indent=$directive_count!=$directive_indent")
+                     if $directive_count != $directive_indent;
+        $directive_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto HANDLE_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
         # TODO improve current mix of handling indents for normal C code and preprocessor directives
     }
 
     # handle multi-line string literals
-    # this is not done for other uses of trailing '\' in order to be able to check layout of multi-line macro definitions
+    # this is not done for other uses of trailing '\' in order to be able to check layout of multi-line preprocessor directives
     if (defined $multiline_string) {
         $_ = $multiline_string.$_;
         undef $multiline_string;
@@ -228,8 +228,8 @@ while(<>) { # loop over all lines of all input files
     goto LINE_FINISHED if $in_multiline_comment > 1;
 
     # set up local offsets to required indent
-    if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in multi-line macro definitions; multi-line string literals have already been handled
-        $_ = $1; # remove it along with any preceding whitespace
+    if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in multi-line preprocessor directives such as macro definitions; multi-line string literals have already been handled
+        $_ = $1; # strip it along with any preceding whitespace such that it does not interfere with various matching done below
     }
     if ($hanging_indent == -1) {
         if (m/^(\s*)(case|default)\W/) {
@@ -258,12 +258,13 @@ while(<>) { # loop over all lines of all input files
     }
     $hanging_indent = -1 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
-    # potential adapatations of indent in first line of macro body in multi-line macro definition
+    # potential adaptations of indent in first line of macro body in multi-line macro definition
     my $tmp = $contents_before;
     my $parens_balance = $tmp =~ tr/\(// - $tmp =~ tr/\)//; # count balance of opening - closing parens
-    if ($in_multiline_macro == 1 ||
-        $in_multiline_macro == 2 && $parens_balance < 0) { # also match two-line macro headers
-        if ($count == $indent - INDENT_LEVEL) { # macro started with same indentation as preceding code
+    my $more_lines = $parens_balance < 0; # then match two-line macro headers - TODO improve to handle also more header lines
+    if (($more_lines ? $contents_before2 : $contents_before) =~ m/^\s*#\s*define(\W|$)/ &&
+        $in_multiline_directive == 1 + $more_lines) {
+        if ($count == $indent - INDENT_LEVEL) { # macro body actually started with same indentation as preceding code
             $indent -= INDENT_LEVEL;
             $multiline_macro_same_indent = 1;
         }
@@ -303,7 +304,7 @@ while(<>) { # loop over all lines of all input files
         my $before = $head =~ m/^\s*$/ ? $contents_before : $head;
         if (!($before =~ m/^\s*(typedef|struct|union)/) && # not type decl
             !($before =~ m/=\s*$/)) { # no directly preceded by '=' (assignment)
-            if ($in_multiline_macro == 0 && $indent == INDENT_LEVEL) { # $indent has already been incremented, so this essentially checks for 0 (outermost level) 
+            if ($in_multiline_directive == 0 && $indent == INDENT_LEVEL) { # $indent has already been incremented, so this essentially checks for 0 (outermost level) 
                 # we assume end of function definition header, check if { is at end of line (rather than on next line)
                 complain("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
             } else {
@@ -313,7 +314,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # check for code block containing a single line/statement
-    if(!($indent == 0 || ($indent == INDENT_LEVEL && $in_multiline_macro > 0 && !$multiline_macro_same_indent)) && # not at outermost declaration level
+    if(!($indent == 0 || ($indent == INDENT_LEVEL && $in_multiline_directive > 0 && !$multiline_macro_same_indent)) && # not at outermost declaration level
        m/^([^\}]*)\}/) { # first closing brace } in line
         my $head = $1;
         # TODO extend detection from single-line to potentially multi-line statement
@@ -420,25 +421,25 @@ while(<>) { # loop over all lines of all input files
     # TODO complain on missing empty line after local variable decls
 
   HANDLE_DIRECTIVE:
-    # on start of multi-line macro definition, adapt indent
-    if ($contents =~ # need to use original line contents here, not potentially modified $_
-        m/^(.*?)\s*\\\s*$/) { # trailing '\', typically used in macro definitions
-        if ($in_multiline_macro == 0) { #  && m/^(DEFINE_|\s*#(\s*)define\W)/ - not just for #define ... or leading DEFINE_...
-            $multiline_macro_same_indent = 0;
+    # on start of multi-line preprocessor directive, adapt indent
+    if ($contents =~ # need to use original line contents because trailing \ may have been stripped above
+        m/^(.*?)\s*\\\s*$/) { # trailing '\', typically used in macro definitions (or other preprocessor directives)
+        if ($in_multiline_directive == 0 && m/^(DEFINE_|\s*#)/) { # not only for #define
             $indent += INDENT_LEVEL ;
+            $multiline_macro_same_indent = 0;
         }
-        $in_multiline_macro += 1;
+        $in_multiline_directive += 1;
     }
 
     $contents_before2 = $contents_before;
     $contents_before = $contents;
 
   LINE_FINISHED:
-    # on end of multi-line macro definition, adapt indent
-    unless ($contents =~ # need to use original line contents here, not potentially modified $_
+    # on end of multi-line preprocessor directive, adapt indent
+    unless ($contents =~ # need to use original line contents because trailing \ may have been stripped above
             m/^(.*?)\s*\\\s*$/) { # no trailing '\'
-        $indent -= INDENT_LEVEL if $in_multiline_macro > 0 && !$multiline_macro_same_indent;
-        $in_multiline_macro = 0;
+        $indent -= INDENT_LEVEL if $in_multiline_directive > 0 && !$multiline_macro_same_indent;
+        $in_multiline_directive = 0;
     }
 
     if(eof) {
@@ -450,7 +451,7 @@ while(<>) { # loop over all lines of all input files
         complain_contents(ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
 
         # sanity-check balance of #if via final preprocessor indent at end of file
-        complain_contents("$preprocessor_indent unclosed #if", "\n") if $preprocessor_indent != 0;
+        complain_contents("$directive_indent unclosed #if", "\n") if $directive_indent != 0;
 
         reset_file_state();
     }
