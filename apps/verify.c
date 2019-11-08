@@ -74,7 +74,7 @@ const OPTIONS verify_options[] = {
 #endif
 
     OPT_PARAMETERS(),
-    {"cert", 0, 0, "Certificate(s) to verify (optional)"},
+    {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
     {NULL}
 };
 

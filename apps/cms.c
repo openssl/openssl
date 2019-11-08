@@ -219,7 +219,7 @@ const OPTIONS cms_options[] = {
     OPT_V_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"cert", 0, 0, "Recipient certs, used when encrypting"},
+    {"cert", 0, 0, "Recipient certs (optional; used only when encrypting)"},
     {NULL}
 };
 
