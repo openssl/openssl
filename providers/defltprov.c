@@ -156,6 +156,11 @@ static const OSSL_ALGORITHM deflt_ciphers[] = {
     { "AES-192-OCB", "default=yes", aes192ocb_functions },
     { "AES-128-OCB", "default=yes", aes128ocb_functions },
 #endif /* OPENSSL_NO_OCB */
+#ifndef OPENSSL_NO_SIV
+    { "AES-128-SIV", "default=yes", aes128siv_functions },
+    { "AES-192-SIV", "default=yes", aes192siv_functions },
+    { "AES-256-SIV", "default=yes", aes256siv_functions },
+#endif /* OPENSSL_NO_SIV */
     { "AES-256-GCM:id-aes256-GCM", "default=yes", aes256gcm_functions },
     { "AES-192-GCM:id-aes192-GCM", "default=yes", aes192gcm_functions },
     { "AES-128-GCM:id-aes128-GCM", "default=yes", aes128gcm_functions },

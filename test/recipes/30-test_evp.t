@@ -33,10 +33,12 @@ push @configs, 'fips.cnf' unless $no_fips;
 
 my @files = qw( evpciph.txt evpdigest.txt );
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
-    evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpaessiv.txt
-    evpccmcavs.txt );
+    evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpccmcavs.txt );
 my @ideafiles = qw( evpciph_idea.txt );
 push @defltfiles, @ideafiles unless disabled("idea");
+
+my @sivfiles = qw( evpaessiv.txt );
+push @defltfiles, @sivfiles unless disabled("siv");
 
 my @castfiles = qw( evpciph_cast5.txt );
 push @defltfiles, @castfiles unless disabled("cast");

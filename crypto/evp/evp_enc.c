@@ -171,6 +171,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_aes_256_gcm:
         case NID_aes_192_gcm:
         case NID_aes_128_gcm:
+        case NID_aes_256_siv:
+        case NID_aes_192_siv:
+        case NID_aes_128_siv:
         case NID_id_aes256_wrap:
         case NID_id_aes256_wrap_pad:
         case NID_id_aes192_wrap:
@@ -1123,6 +1126,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             return 0;
         i = (unsigned int)arg;
         params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_ROUNDS, &i);
+        break;
+    case EVP_CTRL_SET_SPEED:
+        if (arg < 0)
+            return 0;
+        i = (unsigned int)arg;
+        params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_SPEED, &i);
         break;
     case EVP_CTRL_AEAD_GET_TAG:
         set_params = 0; /* Fall thru */
