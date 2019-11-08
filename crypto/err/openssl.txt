@@ -2206,6 +2206,8 @@ CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
 	unsupported method for creating popo
 CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
 CRMF_R_UNSUPPORTED_POPO_NOT_ACCEPTED:117:unsupported popo not accepted
+CRYPTO_R_BAD_ALGORITHM_NAME:117:bad algorithm name
+CRYPTO_R_CONFLICTING_NAMES:118:conflicting names
 CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space

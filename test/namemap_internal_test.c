@@ -18,10 +18,10 @@
 
 static int test_namemap(OSSL_NAMEMAP *nm)
 {
-    int num1 = ossl_namemap_add(nm, 0, NAME1);
-    int num2 = ossl_namemap_add(nm, 0, NAME2);
-    int num3 = ossl_namemap_add(nm, num1, ALIAS1);
-    int num4 = ossl_namemap_add(nm, 0, ALIAS1_UC);
+    int num1 = ossl_namemap_add_name(nm, 0, NAME1);
+    int num2 = ossl_namemap_add_name(nm, 0, NAME2);
+    int num3 = ossl_namemap_add_name(nm, num1, ALIAS1);
+    int num4 = ossl_namemap_add_name(nm, 0, ALIAS1_UC);
     int check1 = ossl_namemap_name2num(nm, NAME1);
     int check2 = ossl_namemap_name2num(nm, NAME2);
     int check3 = ossl_namemap_name2num(nm, ALIAS1);
@@ -66,10 +66,10 @@ static int test_digestbyname(void)
     OSSL_NAMEMAP *nm = ossl_namemap_stored(NULL);
     const EVP_MD *sha256, *foo;
 
-    id = ossl_namemap_add(nm, 0, "SHA256");
+    id = ossl_namemap_add_name(nm, 0, "SHA256");
     if (!TEST_int_ne(id, 0))
         return 0;
-    if (!TEST_int_eq(ossl_namemap_add(nm, id, "foo"), id))
+    if (!TEST_int_eq(ossl_namemap_add_name(nm, id, "foo"), id))
         return 0;
 
     sha256 = EVP_get_digestbyname("SHA256");
@@ -92,10 +92,10 @@ static int test_cipherbyname(void)
     OSSL_NAMEMAP *nm = ossl_namemap_stored(NULL);
     const EVP_CIPHER *aes128, *bar;
 
-    id = ossl_namemap_add(nm, 0, "AES-128-CBC");
+    id = ossl_namemap_add_name(nm, 0, "AES-128-CBC");
     if (!TEST_int_ne(id, 0))
         return 0;
-    if (!TEST_int_eq(ossl_namemap_add(nm, id, "bar"), id))
+    if (!TEST_int_eq(ossl_namemap_add_name(nm, id, "bar"), id))
         return 0;
 
     aes128 = EVP_get_cipherbyname("AES-128-CBC");

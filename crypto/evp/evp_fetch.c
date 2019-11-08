@@ -52,75 +52,12 @@ struct evp_method_data_st {
     void (*destruct_method)(void *method);
 };
 
-static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
-                                const char *names)
-{
-    const char *p, *q;
-    size_t l;
-    int id = 0;
-
-    /* Check that we have a namemap and that there is at least one name */
-    if (namemap == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    /*
-     * Check that no name is an empty string, and that all names have at
-     * most one numeric identity together.
-     */
-    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
-        int this_id;
-
-        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
-            l = strlen(p);       /* offset to \0 */
-        else
-            l = q - p;           /* offset to the next separator */
-
-        this_id = ossl_namemap_name2num_n(namemap, p, l);
-
-        if (*p == '\0' || *p == NAME_SEPARATOR) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_BAD_ALGORITHM_NAME);
-            return 0;
-        }
-        if (id == 0)
-            id = this_id;
-        else if (this_id != 0 && this_id != id) {
-            ERR_raise_data(ERR_LIB_EVP, EVP_R_CONFLICTING_ALGORITHM_NAME,
-                           "\"%.*s\" has an existing different identity %d (from \"%s\")",
-                           l, p, this_id, names);
-            return 0;
-        }
-    }
-
-    /* Now that we have checked, register all names */
-    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
-        int this_id;
-
-        if ((q = strchr(p, NAME_SEPARATOR)) == NULL)
-            l = strlen(p);       /* offset to \0 */
-        else
-            l = q - p;           /* offset to the next separator */
-
-        this_id = ossl_namemap_add_n(namemap, id, p, l);
-        if (id == 0)
-            id = this_id;
-        else if (this_id != id) {
-            ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
-                           "Got id %d when expecting %d", this_id, id);
-            return 0;
-        }
-    }
-
-    return id;
-}
-
 #ifndef FIPS_MODE
 /* Creates an initial namemap with names found in the legacy method db */
 static void get_legacy_evp_names(const char *main_name, const char *alias,
                                  void *arg)
 {
-    int main_id = ossl_namemap_add(arg, 0, main_name);
+    int main_id = ossl_namemap_add_name(arg, 0, main_name);
 
     /*
      * We could check that the returned value is the same as main_id,
@@ -133,7 +70,7 @@ static void get_legacy_evp_names(const char *main_name, const char *alias,
      * simply a no-op.
      */
     if (alias != NULL)
-        (void)ossl_namemap_add(arg, main_id, alias);
+        (void)ossl_namemap_add_name(arg, main_id, alias);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
@@ -303,12 +240,13 @@ static void *construct_evp_method(const char *names, const OSSL_DISPATCH *fns,
      * This function is only called if get_evp_method_from_store() returned
      * NULL, so it's safe to say that of all the spots to create a new
      * namemap entry, this is it.  Should the name already exist there, we
-     * know that ossl_namemap_add() will return its corresponding number.
+     * know that ossl_namemap_add_name() will return its corresponding
+     * number.
      */
     struct evp_method_data_st *methdata = data;
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int name_id = add_names_to_namemap(namemap, names);
+    int name_id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
 
     if (name_id == 0)
         return NULL;
@@ -466,7 +404,8 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     struct do_all_data_st *data = vdata;
     OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int name_id = add_names_to_namemap(namemap, algo->algorithm_names);
+    int name_id = ossl_namemap_add_names(namemap, 0, algo->algorithm_names,
+                                         NAME_SEPARATOR);
     void *method = NULL;
 
     if (name_id != 0)
