@@ -965,7 +965,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
                        SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
-            if (strncmp(name, namePrefix2, sieof(namePrefix2) - 1) != 0) {
+            if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
                 SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
                        SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
