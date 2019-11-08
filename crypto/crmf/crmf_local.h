@@ -217,7 +217,7 @@ struct ossl_crmf_pbmparameter_st {
     ASN1_INTEGER *iterationCount;
     X509_ALGOR *mac;
 } /* OSSL_CRMF_PBMPARAMETER */;
-#define OSSL_CRMF_PBM_MAX_ITERATION_COUNT 100000 /* if too large allows DoS */
+# define OSSL_CRMF_PBM_MAX_ITERATION_COUNT 100000 /* if too large allows DoS */
 
 /*-
  * POPOSigningKeyInput ::= SEQUENCE {
