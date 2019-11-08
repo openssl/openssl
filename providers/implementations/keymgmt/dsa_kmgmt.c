@@ -12,7 +12,10 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/params.h>
+#include "internal/param_build.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
+#include "prov/callback.h"
 
 static OSSL_OP_keymgmt_importdomparams_fn dsa_importdomparams;
 static OSSL_OP_keymgmt_exportdomparams_fn dsa_exportdomparams;
@@ -48,23 +51,22 @@ static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
     return 0;
 }
 
-static int domparams_to_params(DSA *dsa, OSSL_PARAM params[])
+static int domparams_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 {
-    OSSL_PARAM *p;
     const BIGNUM *dsa_p = NULL, *dsa_q = NULL, *dsa_g = NULL;
 
     if (dsa == NULL)
         return 0;
 
     DSA_get0_pqg(dsa, &dsa_p, &dsa_q, &dsa_g);
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_FFC_P)) != NULL
-        && !OSSL_PARAM_set_BN(p, dsa_p))
+    if (dsa_p != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dsa_p))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_FFC_Q)) != NULL
-        && !OSSL_PARAM_set_BN(p, dsa_q))
+    if (dsa_q != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q, dsa_q))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_FFC_G)) != NULL
-        && !OSSL_PARAM_set_BN(p, dsa_g))
+    if (dsa_g != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dsa_g))
         return 0;
 
     return 1;
@@ -110,22 +112,21 @@ static int params_to_key(DSA *dsa, const OSSL_PARAM params[])
     return 0;
 }
 
-static int key_to_params(DSA *dsa, OSSL_PARAM params[])
+static int key_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 {
-    OSSL_PARAM *p;
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
 
     if (dsa == NULL)
         return 0;
-    if (!domparams_to_params(dsa, params))
+    if (!domparams_to_params(dsa, tmpl))
         return 0;
 
     DSA_get0_key(dsa, &pub_key, &priv_key);
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DSA_PRIV_KEY)) != NULL
-        && !OSSL_PARAM_set_BN(p, priv_key))
+    if (priv_key != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY, priv_key))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DSA_PUB_KEY)) != NULL
-        && !OSSL_PARAM_set_BN(p, pub_key))
+    if (pub_key != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY, pub_key))
         return 0;
 
     return 1;
@@ -143,11 +144,21 @@ static void *dsa_importdomparams(void *provctx, const OSSL_PARAM params[])
     return dsa;
 }
 
-static int dsa_exportdomparams(void *domparams, OSSL_PARAM params[])
+static int dsa_exportdomparams(void *domparams, OSSL_CALLBACK *param_callback)
 {
     DSA *dsa = domparams;
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret;
 
-    return dsa != NULL && !domparams_to_params(dsa, params);
+    ossl_param_bld_init(&tmpl);
+    if (dsa == NULL
+        || !domparams_to_params(dsa, &tmpl)
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
+    ret = ossl_prov_generic_callback(param_callback, params);
+    ossl_param_bld_free(params);
+    return ret;
 }
 
 static void *dsa_importkey(void *provctx, const OSSL_PARAM params[])
@@ -162,11 +173,21 @@ static void *dsa_importkey(void *provctx, const OSSL_PARAM params[])
     return dsa;
 }
 
-static int dsa_exportkey(void *key, OSSL_PARAM params[])
+static int dsa_exportkey(void *key, OSSL_CALLBACK *param_callback)
 {
     DSA *dsa = key;
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret;
 
-    return dsa != NULL && !key_to_params(dsa, params);
+    ossl_param_bld_init(&tmpl);
+    if (dsa == NULL
+        || !key_to_params(dsa, &tmpl)
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
+    ret = ossl_prov_generic_callback(param_callback, params);
+    ossl_param_bld_free(params);
+    return ret;
 }
 
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {

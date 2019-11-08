@@ -13,7 +13,10 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/types.h>
+#include "internal/param_build.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
+#include "prov/callback.h"
 #include "crypto/rsa.h"
 
 static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
@@ -96,10 +99,9 @@ static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
     return 0;
 }
 
-static int export_numbers(OSSL_PARAM params[], const char *key,
+static int export_numbers(OSSL_PARAM_BLD *tmpl, const char *key,
                           STACK_OF(BIGNUM_const) *numbers)
 {
-    OSSL_PARAM *p = NULL;
     int i, nnum;
 
     if (numbers == NULL)
@@ -107,24 +109,18 @@ static int export_numbers(OSSL_PARAM params[], const char *key,
 
     nnum = sk_BIGNUM_const_num(numbers);
 
-    for (p = params, i = 0;
-         i < nnum && (p = OSSL_PARAM_locate(p, key)) != NULL;
-         p++, i++) {
-        if (!OSSL_PARAM_set_BN(p, sk_BIGNUM_const_value(numbers, i)))
+    for (i = 0; i < nnum; i++) {
+        if (!ossl_param_bld_push_BN(tmpl, key,
+                                    sk_BIGNUM_const_value(numbers, i)))
             return 0;
     }
 
-    /*
-     * If we didn't export the amount of numbers we have, the caller didn't
-     * specify enough OSSL_PARAM entries named |key|.
-     */
-    return i == nnum;
+    return 1;
 }
 
-static int key_to_params(RSA *rsa, OSSL_PARAM params[])
+static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *tmpl)
 {
     int ret = 0;
-    OSSL_PARAM *p;
     const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
     STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
     STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
@@ -136,19 +132,19 @@ static int key_to_params(RSA *rsa, OSSL_PARAM params[])
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
     rsa_get0_all_params(rsa, factors, exps, coeffs);
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_N)) != NULL
-        && !OSSL_PARAM_set_BN(p, rsa_n))
+    if (rsa_n != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_N, rsa_n))
         goto err;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_E)) != NULL
-        && !OSSL_PARAM_set_BN(p, rsa_e))
+    if (rsa_e != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_E, rsa_e))
         goto err;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_D)) != NULL
-        && !OSSL_PARAM_set_BN(p, rsa_d))
+    if (rsa_d != NULL
+        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_D, rsa_d))
         goto err;
 
-    if (!export_numbers(params, OSSL_PKEY_PARAM_RSA_FACTOR, factors)
-        || !export_numbers(params, OSSL_PKEY_PARAM_RSA_EXPONENT, exps)
-        || !export_numbers(params, OSSL_PKEY_PARAM_RSA_COEFFICIENT, coeffs))
+    if (!export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_FACTOR, factors)
+        || !export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT, exps)
+        || !export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT, coeffs))
         goto err;
 
     ret = 1;
@@ -171,11 +167,21 @@ static void *rsa_importkey(void *provctx, const OSSL_PARAM params[])
     return rsa;
 }
 
-static int rsa_exportkey(void *key, OSSL_PARAM params[])
+static int rsa_exportkey(void *key, OSSL_CALLBACK *param_callback)
 {
     RSA *rsa = key;
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params = NULL;
+    int ret;
 
-    return rsa != NULL && key_to_params(rsa, params);
+    ossl_param_bld_init(&tmpl);
+    if (rsa == NULL
+        || !key_to_params(rsa, &tmpl)
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
+    ret = ossl_prov_generic_callback(param_callback, params);
+    ossl_param_bld_free(params);
+    return ret;
 }
 
 /*
