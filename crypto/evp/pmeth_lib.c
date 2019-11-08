@@ -642,6 +642,17 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     pmeth->ctrl_str = ctrl_str;
 }
 
+void EVP_PKEY_meth_set_digestsignverify(EVP_PKEY_METHOD *pmeth,
+    int (*digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+                       const unsigned char *tbs, size_t tbslen),
+    int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+                         size_t siglen, const unsigned char *tbs,
+                         size_t tbslen))
+{
+    pmeth->digestsign = digestsign;
+    pmeth->digestverify = digestverify;
+}
+
 void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
                              int (*check) (EVP_PKEY *pkey))
 {
@@ -832,6 +843,19 @@ void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
         *pctrl = pmeth->ctrl;
     if (pctrl_str)
         *pctrl_str = pmeth->ctrl_str;
+}
+
+void EVP_PKEY_meth_get_digestsignverify(EVP_PKEY_METHOD *pmeth,
+    int (**digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+                        const unsigned char *tbs, size_t tbslen),
+    int (**digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+                          size_t siglen, const unsigned char *tbs,
+                          size_t tbslen))
+{
+    if (digestsign)
+        *digestsign = pmeth->digestsign;
+    if (digestverify)
+        *digestverify = pmeth->digestverify;
 }
 
 void EVP_PKEY_meth_get_check(const EVP_PKEY_METHOD *pmeth,

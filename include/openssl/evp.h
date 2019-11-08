@@ -1512,6 +1512,18 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
                                              const char *type,
                                              const char *value));
 
+void EVP_PKEY_meth_set_digestsignverify(EVP_PKEY_METHOD *pmeth,
+                                        int (*digestsign) (EVP_MD_CTX *ctx,
+                                                           unsigned char *sig,
+                                                           size_t *siglen,
+                                                           const unsigned char *tbs,
+                                                           size_t tbslen),
+                                        int (*digestverify) (EVP_MD_CTX *ctx,
+                                                             const unsigned char *sig,
+                                                             size_t siglen,
+                                                             const unsigned char *tbs,
+                                                             size_t tbslen));
+
 void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
                              int (*check) (EVP_PKEY *pkey));
 
@@ -1616,6 +1628,18 @@ void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
                             int (**pctrl_str) (EVP_PKEY_CTX *ctx,
                                                const char *type,
                                                const char *value));
+
+void EVP_PKEY_meth_get_digestsignverify(EVP_PKEY_METHOD *pmeth,
+                                        int (**digestsign) (EVP_MD_CTX *ctx,
+                                                            unsigned char *sig,
+                                                            size_t *siglen,
+                                                            const unsigned char *tbs,
+                                                            size_t tbslen),
+                                        int (**digestverify) (EVP_MD_CTX *ctx,
+                                                              const unsigned char *sig,
+                                                              size_t siglen,
+                                                              const unsigned char *tbs,
+                                                              size_t tbslen));
 
 void EVP_PKEY_meth_get_check(const EVP_PKEY_METHOD *pmeth,
                              int (**pcheck) (EVP_PKEY *pkey));
