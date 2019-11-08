@@ -358,7 +358,7 @@ const OPTIONS speed_options[] = {
     OPT_R_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"algorithm", 0, 0, "Algorithm(s) to test"},
+    {"algorithm", 0, 0, "Algorithm(s) to test (optional; otherwise tests all)"},
     {NULL}
 };
 
