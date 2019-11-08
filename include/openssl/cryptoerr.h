@@ -83,6 +83,8 @@ int ERR_load_CRYPTO_strings(void);
 /*
  * CRYPTO reason codes.
  */
+# define CRYPTO_R_BAD_ALGORITHM_NAME                      117
+# define CRYPTO_R_CONFLICTING_NAMES                       118
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_INSUFFICIENT_DATA_SPACE                 106

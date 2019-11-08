@@ -224,8 +224,8 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
     return data.name;
 }
 
-int ossl_namemap_add_n(OSSL_NAMEMAP *namemap, int number,
-                       const char *name, size_t name_len)
+int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
+                            const char *name, size_t name_len)
 {
     NAMENUM_ENTRY *namenum = NULL;
     int tmp_number;
@@ -265,10 +265,73 @@ int ossl_namemap_add_n(OSSL_NAMEMAP *namemap, int number,
     return 0;
 }
 
-int ossl_namemap_add(OSSL_NAMEMAP *namemap, int number, const char *name)
+int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name)
 {
     if (name == NULL)
         return 0;
 
-    return ossl_namemap_add_n(namemap, number, name, strlen(name));
+    return ossl_namemap_add_name_n(namemap, number, name, strlen(name));
+}
+
+int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
+                           const char *names, const char separator)
+{
+    const char *p, *q;
+    size_t l;
+
+    /* Check that we have a namemap */
+    if (!ossl_assert(namemap != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /*
+     * Check that no name is an empty string, and that all names have at
+     * most one numeric identity together.
+     */
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+        int this_number;
+
+        if ((q = strchr(p, separator)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_number = ossl_namemap_name2num_n(namemap, p, l);
+
+        if (*p == '\0' || *p == separator) {
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_BAD_ALGORITHM_NAME);
+            return 0;
+        }
+        if (number == 0) {
+            number = this_number;
+        } else if (this_number != 0 && this_number != number) {
+            ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_CONFLICTING_NAMES,
+                           "\"%.*s\" has an existing different identity %d (from \"%s\")",
+                           l, p, this_number, names);
+            return 0;
+        }
+    }
+
+    /* Now that we have checked, register all names */
+    for (p = names; *p != '\0'; p = (q == NULL ? p + l : q + 1)) {
+        int this_number;
+
+        if ((q = strchr(p, separator)) == NULL)
+            l = strlen(p);       /* offset to \0 */
+        else
+            l = q - p;           /* offset to the next separator */
+
+        this_number = ossl_namemap_add_name_n(namemap, number, p, l);
+        if (number == 0) {
+            number = this_number;
+        } else if (this_number != number) {
+            ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
+                           "Got number %d when expecting %d",
+                           this_number, number);
+            return 0;
+        }
+    }
+
+    return number;
 }
