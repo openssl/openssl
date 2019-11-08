@@ -95,6 +95,8 @@ sub check_indent { # for lines outside multi-line comments and string literals
                (!$label || $count != 1);
     }
     else {
+        return if substr($contents, $count, 1) eq ":" &&
+            substr($contents_before, $count, 1) eq "?"; # in conditional expression, leading character is ":" with same position as "?" in line before
         my $allowed = "$hanging_indent";
         if ($hanging_alt_indent != $hanging_indent || $local_hanging_indent != 0) {
             $allowed = "{$hanging_indent";
@@ -282,8 +284,9 @@ while(<>) { # loop over all lines of all input files
     if ($hanging_indent != -1 && $count >= # actual indent (count) is at least at minimum:
             max($indent + $extra_singular_indent + $local_offset,
                 max($multiline_condition_indent, $multiline_value_indent))
-        && 1 # TODO more restrictions needed here, e.g., something like $multiline_value_indent != -1
+        && 0 # TODO more restrictions needed here, e.g., something like $multiline_value_indent != -1
        ) {
+        print "### $line: $count $indent+$extra_singular_indent+$local_offset max($multiline_condition_indent, $multiline_value_indent) $hanging_indent $hanging_alt_indent\n";
         $hanging_indent     = $count if $count < $hanging_indent;
         $hanging_alt_indent = $count if $count < $hanging_alt_indent;
     }
