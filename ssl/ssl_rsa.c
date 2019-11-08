@@ -935,7 +935,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_SYS_LIB);
         goto end;
     }
-  
+ 
     for (num_extensions = 0;; num_extensions++) {
         unsigned int version;
 
