@@ -19,6 +19,7 @@
 
 use strict;
 use List::Util qw[min max];
+use POSIX;
 
 use constant INDENT_LEVEL => 4;
 use constant MAX_LENGTH => 80;
@@ -137,7 +138,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
-    if (m/^(.*?)\*\/(.*)$/) { # ending comment: '*/' - TODO ignore '*/' inside string literal
+    if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my $head = $1;
         my $tail = $2;
         if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
@@ -156,18 +157,23 @@ while(<>) { # loop over all lines of all input files
         my $tail = $3;
         if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             $_ = "$head  $opt_minus".($1 =~ tr/ / /cr)."  $2"; # blind comment text, retaining length
+            complain("/* inside intra-line comment") if $1 =~ /\/\*/;
             goto MATCH_COMMENT;
         } else {
-            complain("/* inside comment") if $in_multiline_comment == 1;
-            complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
-            $multiline_comment_indent = length($head) + 1; # adopt actual indentation of first comment line
+            if ($in_multiline_comment > 0) {
+                complain("/* inside multi-line comment") ;
+            } else {
+                complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
+            }
+            $multiline_comment_indent = length($head) + 1 if $in_multiline_comment == 0; # adopt actual indentation of first comment line
             $_ = "$head  ".($opt_minus =~ tr/ / /cr).($tail =~ tr/ / /cr); # blind comment text, retaining length
-            $in_multiline_comment = 1;
+            $in_multiline_comment++;
         }
     }
 
     # handle special case of line after '#ifdef __cplusplus' (which typically appears in header files)
     if ($ifdef__cplusplus) {
+        $ifdef__cplusplus = 0;
         $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {'
         goto LINE_FINISHED if m/^\s*\}\s*$/; # ignore closing brace
     }
@@ -194,11 +200,16 @@ while(<>) { # loop over all lines of all input files
         my $directive = $2;
         complain("indent=$count!=0") if $count != 0;
         $preprocessor_indent-- if $directive =~ m/^else|elsif|endif$/;
+        if ($preprocessor_indent < 0) {
+            $preprocessor_indent = 0;
+            complain("unexpected #$directive");
+        }
         complain("#indent=$preprocessor_count!=$preprocessor_indent")
-                          if $preprocessor_count != $preprocessor_indent;
+                     if $preprocessor_count != $preprocessor_indent;
         $preprocessor_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
-        $ifdef__cplusplus = m/^\s*#\s*ifdef\s*__cplusplus\s*$/;
-        goto LINE_FINISHED unless $directive =~ m/^define$/; # further ignore preprocessor directive except #define
+        $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
+        goto HANDLE_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
+        # TODO improve current mix of handling indents for normal C code and preprocessor directives
     }
 
     # handle multi-line string literals
@@ -268,7 +279,7 @@ while(<>) { # loop over all lines of all input files
         $hanging_alt_indent = $count if $count < $hanging_alt_indent;
     }
 
-    check_indent() unless m/^#\s*define/; # indent of #define has been handled above
+    check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
     # adapt indent for following lines according to braces
     my $tmp = $_; my $brace_balance = ($tmp =~ tr/\{//) - $tmp =~ tr/\}//;
@@ -301,12 +312,13 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
-    # check for code block containing a single statement
+    # check for code block containing a single line/statement
     if(!($indent == 0 || ($indent == INDENT_LEVEL && $in_multiline_macro > 0 && !$multiline_macro_same_indent)) && # not at outermost declaration level
        m/^([^\}]*)\}/) { # first closing brace } in line
         my $head = $1;
         # TODO extend detection from single-line to potentially multi-line statement
-        if($line_opening_brace != 0 &&
+        if($head =~ m/^\s*$/ &&
+           $line_opening_brace != 0 &&
            $line_opening_brace == $line - 2) {
             $line--;
             complain_contents("{1 line}", ": $contents_before")
@@ -407,10 +419,11 @@ while(<>) { # loop over all lines of all input files
 
     # TODO complain on missing empty line after local variable decls
 
-    # detect start and end of multi-line macro, potentially adapting indent
+  HANDLE_DIRECTIVE:
+    # on start of multi-line macro definition, adapt indent
     if ($contents =~ # need to use original line contents here, not potentially modified $_
         m/^(.*?)\s*\\\s*$/) { # trailing '\', typically used in macro definitions
-        if ($in_multiline_macro == 0 && m/^(DEFINE_|\s*#(\s*)define\W)/) { # #define ... or leading DEFINE_...
+        if ($in_multiline_macro == 0) { #  && m/^(DEFINE_|\s*#(\s*)define\W)/ - not just for #define ... or leading DEFINE_...
             $multiline_macro_same_indent = 0;
             $indent += INDENT_LEVEL ;
         }
@@ -419,9 +432,9 @@ while(<>) { # loop over all lines of all input files
 
     $contents_before2 = $contents_before;
     $contents_before = $contents;
-    $ifdef__cplusplus = 0;
 
   LINE_FINISHED:
+    # on end of multi-line macro definition, adapt indent
     unless ($contents =~ # need to use original line contents here, not potentially modified $_
             m/^(.*?)\s*\\\s*$/) { # no trailing '\'
         $indent -= INDENT_LEVEL if $in_multiline_macro > 0 && !$multiline_macro_same_indent;
@@ -434,10 +447,10 @@ while(<>) { # loop over all lines of all input files
         $line = "EOF";
 
         # sanity-check balance of braces via final indent at end of file
-        complain_contents("indentation off by $indent, likely due to unbalanced nesting of {..}", "\n") if $indent != 0;
+        complain_contents(ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
 
         # sanity-check balance of #if via final preprocessor indent at end of file
-        complain_contents("preprocessor indentation off by $preprocessor_indent, likely due to unbalanced nesting of #if ... #endif", "\n") if $preprocessor_indent != 0;
+        complain_contents("$preprocessor_indent unclosed #if", "\n") if $preprocessor_indent != 0;
 
         reset_file_state();
     }
