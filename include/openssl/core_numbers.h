@@ -346,7 +346,7 @@ OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomparams, (void *domparams))
 /* Key domain parameter export */
 # define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS          4
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
-                    (void *domparams, OSSL_PARAM params[]))
+                    (void *domparams, OSSL_CALLBACK *param_cb, void *cbarg))
 
 /* Key domain parameter discovery */
 # define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     5
@@ -373,7 +373,7 @@ OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
 /* Key export */
 # define OSSL_FUNC_KEYMGMT_EXPORTKEY               14
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
-                    (void *key, OSSL_PARAM params[]))
+                    (void *key, OSSL_CALLBACK *param_cb, void *cbarg))
 
 /* Key discovery */
 # define OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES         15
