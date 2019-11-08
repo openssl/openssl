@@ -1125,7 +1125,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                     data->handle_notifications(b, data->notification_context,
                                                (void *)out);
 
-                OPENSSL_cleanse(&snp, sizeof(snp));
+                memset(&snp, 0, sizeof(snp));
                 memset(out, 0, outl);
             } else {
                 ret += n;
