@@ -290,21 +290,10 @@ while(<>) { # loop over all lines of all input files
 
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
-    # adapt indent for following lines according to braces
-    my $braces_balance = braces_balance($_);
-    $indent += $braces_balance * INDENT_LEVEL;
-    $hanging_indent += $braces_balance * INDENT_LEVEL if $multiline_value_indent != -1;
-
-    # sanity-check underflow due to closing braces
-    if ($indent < 0) {
-        $indent = 0;
-        # complain("too many }"); # already reported above
-    }
-
-    # a rough check to determine whether inside enum
-    $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
-    $in_enum += $braces_balance if $braces_balance < 0;
-    $in_enum = 0 if $in_enum < 0;
+    my $outermost_level =
+         $indent == 0 ||
+        ($indent == INDENT_LEVEL && $in_multiline_directive > 0 &&
+                                    !$multiline_macro_same_indent);
 
     # handle last opening brace in line
     if (m/^(.*?)\{[^\}]*$/) { # match ... {
@@ -312,8 +301,8 @@ while(<>) { # loop over all lines of all input files
         my $before = $head =~ m/^\s*$/ ? $contents_before : $head;
         if (!($before =~ m/^\s*(typedef|struct|union)/) && # not type decl
             !($before =~ m/=\s*$/)) { # no directly preceded by '=' (assignment)
-            if ($in_multiline_directive == 0 && $indent == INDENT_LEVEL) { # $indent has already been incremented, so this essentially checks for 0 (outermost level) 
-                # we assume end of function definition header, check if { is at end of line (rather than on next line)
+            if ($outermost_level) { # we assume end of function definition header
+                # check if { is at end of line (rather than on next line)
                 complain("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
             } else {
                 $line_opening_brace = $line;
@@ -322,8 +311,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # check for code block containing a single line/statement
-    if(!($indent == 0 || ($indent == INDENT_LEVEL && $in_multiline_directive > 0 && !$multiline_macro_same_indent)) && # not at outermost declaration level
-       m/^([^\}]*)\}/) { # first closing brace } in line
+    if(!$outermost_level && m/^([^\}]*)\}/) { # first closing brace } in line
         my $head = $1;
         # TODO extend detection from single-line to potentially multi-line statement
         if($head =~ m/^\s*$/ &&
@@ -338,6 +326,22 @@ while(<>) { # loop over all lines of all input files
         $line_opening_brace = 0;
     }
 
+    # adapt indent for following lines according to braces
+    my $braces_balance = braces_balance($_);
+    $indent += $braces_balance * INDENT_LEVEL;
+    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != -1 && $multiline_value_indent != -1;
+
+    # sanity-check underflow due to closing braces
+    if ($indent < 0) {
+        $indent = 0;
+        # complain("too many }"); # already reported above
+    }
+
+    # a rough check to determine whether inside enum
+    $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
+    $in_enum += $braces_balance if $braces_balance < 0;
+    $in_enum = 0 if $in_enum < 0;
+
     # detect multi-line if/for/while condition (with ) and extra indent for one statement after if/else/for/do/while not followed by brace
     if($hanging_indent == -1) {
         $hanging_open_parens = 0;
@@ -346,9 +350,9 @@ while(<>) { # loop over all lines of all input files
         $multiline_condition_indent = $multiline_value_indent = -1;
         if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
             my ($head, $tail) = ($1, $4);
+            my $parens_balance = parens_balance($_);
+            complain("too many )") if $parens_balance < 0;
             if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
-                my $parens_balance = parens_balance($_);
-                complain("too many )") if $parens_balance < 0;
                 if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
                     $multiline_condition_indent = length($1);
                 } else {
@@ -448,7 +452,7 @@ while(<>) { # loop over all lines of all input files
 
     if(eof) {
         # check for essentially empty line just before EOF
-        complain("empty before EOF") if $contents =~ m/^\s*\\?\s*$/;
+        complain("empty line before EOF") if $contents =~ m/^\s*\\?\s*$/;
         $line = "EOF";
 
         # sanity-check balance of { .. } via final indent at end of file
