@@ -301,14 +301,17 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
-    # detect first closing brace in line, check if it closes a block containing a single line/statement
-    if(m/^([^\}]*)\}/) { # first }
+    # check for code block containing a single statement
+    if(!($indent == 0 || ($indent == INDENT_LEVEL && $in_multiline_macro > 0 && !$multiline_macro_same_indent)) && # not at outermost declaration level
+       m/^([^\}]*)\}/) { # first closing brace } in line
         my $head = $1;
+        # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
            $line_opening_brace == $line - 2) {
             $line--;
-            complain_contents("{1 line}", ": $contents_before") if !($contents_before2 =~ m/typedef|struct|union|static|void/); # including poor matching of function header decl
-            # TODO do not complain about cases where there is another if .. else branch with a block containg more than one line
+            complain_contents("{1 line}", ": $contents_before")
+                if !($contents_before2 =~ m/typedef|struct|union|enum/); # exclude type decl
+            # TODO do not complain about cases where there is another if .. else branch with a block containg more than one statement
             $line++;
         }
         $line_opening_brace = 0;
