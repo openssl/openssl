@@ -71,8 +71,8 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 }
 
 /*
- * Find an implementation of an ASN1 algorithm. If 'pe' is not NULL also
- * search through engines and set *pe to a functional reference to the engine
+ * Find an implementation of an ASN1 algorithm. Also search through engines.
+ * If 'pe' is not NULL set *pe to a functional reference of the engine
  * implementing 'type' or NULL if no engine implements it.
  */
 
@@ -86,18 +86,19 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
             break;
         type = t->pkey_base_id;
     }
-    if (pe) {
+
 #ifndef OPENSSL_NO_ENGINE
-        ENGINE *e;
-        /* type will contain the final unaliased type */
-        e = ENGINE_get_pkey_asn1_meth_engine(type);
-        if (e) {
+    ENGINE *e;
+    /* type will contain the final unaliased type */
+    e = ENGINE_get_pkey_asn1_meth_engine(type);
+    if (e) {
+        if (pe)
             *pe = e;
-            return ENGINE_get_pkey_asn1_meth(e, type);
-        }
-#endif
-        *pe = NULL;
+        return ENGINE_get_pkey_asn1_meth(e, type);
     }
+#endif
+    if (pe)
+        *pe = NULL;
     return t;
 }
 
@@ -109,7 +110,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 
     if (len == -1)
         len = strlen(str);
-    if (pe) {
+
 #ifndef OPENSSL_NO_ENGINE
         ENGINE *e;
         ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
@@ -120,12 +121,17 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
             if (!ENGINE_init(e))
                 ameth = NULL;
             ENGINE_free(e);
-            *pe = e;
+            if (pe) {
+                *pe = NULL;
+                if (ameth)
+                    *pe = e;
+            }
             return ameth;
         }
 #endif
+    if (pe)
         *pe = NULL;
-    }
+
     for (i = EVP_PKEY_asn1_get_count(); i-- > 0; ) {
         ameth = EVP_PKEY_asn1_get0(i);
         if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
