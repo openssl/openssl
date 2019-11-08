@@ -914,8 +914,8 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     long extension_length = 0;
     char *name = NULL;
     char *header = NULL;
-    static char namePrefix1[] = "SERVERINFO FOR ";
-    static char namePrefix2[] = "SERVERINFOV2 FOR ";
+    static const char namePrefix1[] = "SERVERINFO FOR ";
+    static const char namePrefix2[] = "SERVERINFOV2 FOR ";
     unsigned int name_len;
     int ret = 0;
     BIO *bin = NULL;
