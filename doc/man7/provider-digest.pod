@@ -30,11 +30,11 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
                       unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_params(void);
+ const OSSL_PARAM *OP_digest_gettable_params(void);
 
  /* Digest operation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
+ const OSSL_PARAM *OP_digest_gettable_ctx_params(void);
+ const OSSL_PARAM *OP_digest_settable_ctx_params(void);
 
  /* Digest parameters */
  int OP_digest_get_params(OSSL_PARAM params[]);
