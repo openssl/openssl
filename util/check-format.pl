@@ -276,15 +276,18 @@ while(<>) { # loop over all lines of all input files
         $local_hanging_indent = INDENT_LEVEL if m/^\s*(\&\&|\|\|)/;  # line starting with && or ||
     }
 
-    # adapt required indent due to leading closing }
-    m/^((\s*\})*)/; # get prefix of } before any other text
+    # adapt required indent due to leading closing braces, potentially followed by terminator ';'
+    m/^((\s*\})*)(\s*;)?/; # get prefix of } before any other text, plus any ;
     my $num_leading_closing_braces = $1 =~ tr/\}//;
-    if ($num_leading_closing_braces != 0) {
-        if ($hanging_indent != 0) {
-            $hanging_indent = 0; # reset hanging indents
-        } else {
-            $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
-        }
+    my $terminated = $3 ne "";
+    if ($multiline_value_indent && $terminated) { # ';' after assignment etc.
+        $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+        $local_offset = 0 if $hanging_indent > $indent; # workaround for structure assignment with extra indent on opening brace; TODO check
+        $hanging_indent = 0; # reset hanging indents
+    }
+    elsif ($num_leading_closing_braces != 0) {
+        $hanging_indent = 0; # reset any hanging indents; TODO check
+        $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
     }
     # sanity-check underflow due to closing braces
     if ($indent + $local_offset < 0) {
@@ -322,17 +325,21 @@ while(<>) { # loop over all lines of all input files
                                     !$multiline_macro_same_indent);
 
     # handle last opening brace in line
-    if (m/^(.*?)\{[^\{]*$/) { # match ... {
+    if (m/^(.*?)\{([^\{]*)$/) { # match ... {
         my $head = $1;
+        my $tail = $2;
         my $before = $head =~ m/^\s*$/ ? $contents_before : $head;
-        if (!($before =~ m/^\s*(typedef|struct|union)/) && # not type decl
-            !($before =~ m/=\s*$/)) { # no directly preceded by '=' (assignment)
-            if ($outermost_level) { # we assume end of function definition header
-                # check if { is at end of line (rather than on next line)
-                complain("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
-            } else {
-                $line_opening_brace = $line;
+        if ($multiline_value_indent == 0 &&
+            !($before =~ m/=\s*$/)) { # not directly preceded by '=' (assignment)
+            if (!($before =~ m/^\s*(typedef|struct|union)/)) { # not type decl
+                if ($outermost_level) { # we assume end of function definition header
+                    # check if { is at end of line (rather than on next line)
+                    complain("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
+                } else {
+                    $line_opening_brace = $line;
+                }
             }
+            complain("{ ...") if $tail=~ m/\S/; # non-whitespace after last {
         }
     }
 
@@ -444,7 +451,7 @@ while(<>) { # loop over all lines of all input files
     # set multiline_value_indent and potentially set hanging_indent and hanging_indent in case of multi-line value or typedef expression
     # at this point, matching (...) have been stripped, simplifying type decl matching
     my $terminator = $in_enum > 0 ? "," : ";";
-    if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator\{]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
+    if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
         my $head = $1;
         my $var_eq = $2;
         my $trail = $6;
