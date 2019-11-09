@@ -54,10 +54,10 @@ my $line_opening_brace;    # number of previous line with opening brace
 my $indent;                # currently required indentation for normal code
 my $directive_indent;      # currently required indentation for preprocessor directives
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
-my $hanging_indent;        # currently hanging indent, else -1
-my $hanging_open_parens;   # used only if $hanging_indent != -1
-my $hanging_open_braces;   # used only if $hanging_indent != -1
-my $hanging_alt_indent;    # alternative hanging indent (for assignments), used only if $hanging_indent != -1
+my $hanging_indent;        # currently hanging indent, else 0
+my $hanging_open_parens;   # used only if $hanging_indent != 0
+my $hanging_open_braces;   # used only if $hanging_indent != 0
+my $hanging_alt_indent;    # alternative hanging indent (for assignments), used only if $hanging_indent != 0
 my $extra_singular_indent; # extra indent for just one statement
 my $multiline_condition_indent; # special indent after if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
@@ -74,9 +74,9 @@ sub reset_file_state {
     $line = 0;
     undef $multiline_string;
     $line_opening_brace = 0;
-    $hanging_indent = -1;
+    $hanging_indent = 0;
     $extra_singular_indent = 0;
-    $multiline_condition_indent = $multiline_value_indent = -1;
+    $multiline_condition_indent = $multiline_value_indent = 0;
     $in_enum = 0;
     $in_multiline_directive = 0;
     $in_multiline_comment = 0;
@@ -104,7 +104,7 @@ sub braces_balance { # count balance of opening braces - closing braces
 }
 
 sub check_indent { # for lines outside multi-line comments and string literals
-    if ($hanging_indent == -1) {
+    if ($hanging_indent == 0) {
         my $allowed = $indent+$extra_singular_indent+$local_offset;
         $allowed = "{1,$allowed}" if $label;
         complain("indent=$count!=$allowed")
@@ -263,7 +263,7 @@ while(<>) { # loop over all lines of all input files
     if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in multi-line preprocessor directives such as macro definitions; multi-line string literals have already been handled
         $_ = $1; # strip it along with any preceding whitespace such that it does not interfere with various matching done below
     }
-    if ($hanging_indent == -1) {
+    if ($hanging_indent == 0) {
         if (m/^(\s*)(case|default)\W/) {
             $local_offset = -INDENT_LEVEL;
         } else {
@@ -280,8 +280,8 @@ while(<>) { # loop over all lines of all input files
     m/^((\s*\})*)/; # get prefix of } before any other text
     my $num_leading_closing_braces = $1 =~ tr/\}//;
     if ($num_leading_closing_braces != 0) {
-        if ($hanging_indent != -1) {
-            $hanging_indent = -1; # reset hanging indents
+        if ($hanging_indent != 0) {
+            $hanging_indent = 0; # reset hanging indents
         } else {
             $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
         }
@@ -291,7 +291,7 @@ while(<>) { # loop over all lines of all input files
         $local_offset = -$indent;
         complain("too many }");
     }
-    $hanging_indent = -1 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
+    $hanging_indent = 0 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
     my $more_lines = parens_balance($contents_before) < 0; # then match two-line macro headers - TODO improve to handle also more header lines
@@ -305,7 +305,7 @@ while(<>) { # loop over all lines of all input files
 
     if ($sloppy_expr) {
         # potentially reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of the paren/brace matching
-        if ($hanging_indent != -1 && $count >= # actual indent (count) is at least at minimum:
+        if ($hanging_indent != 0 && $count >= # actual indent (count) is at least at minimum:
                 max($indent + $extra_singular_indent + $local_offset,
                     max($multiline_condition_indent, $multiline_value_indent))
            ) {
@@ -355,7 +355,7 @@ while(<>) { # loop over all lines of all input files
     # adapt indent for following lines according to braces
     my $braces_balance = braces_balance($_);
     $indent += $braces_balance * INDENT_LEVEL;
-    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != -1 && $multiline_value_indent != -1;
+    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0;
 
     # sanity-check underflow due to closing braces
     if ($indent < 0) {
@@ -369,11 +369,11 @@ while(<>) { # loop over all lines of all input files
     $in_enum = 0 if $in_enum < 0;
 
     # detect multi-line if/for/while condition (with ) and extra indent for one statement after if/else/for/do/while not followed by brace
-    if($hanging_indent == -1) {
+    if($hanging_indent == 0) {
         $hanging_open_parens = 0;
         $hanging_open_braces = 0;
 
-        $multiline_condition_indent = $multiline_value_indent = -1;
+        $multiline_condition_indent = $multiline_value_indent = 0;
         if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
             my ($head, $tail) = ($1, $4);
             my $parens_balance = parens_balance($_);
@@ -413,30 +413,30 @@ while(<>) { # loop over all lines of all input files
             }
             $hanging_indent = $hanging_alt_indent = length($head) + 1;
             $hanging_open_braces += braces_balance($_);
-      } elsif ($hanging_indent != -1) {
+      } elsif ($hanging_indent != 0) {
           $hanging_open_parens += parens_balance($_);
           $hanging_open_braces += braces_balance($_);
 
           my $trailing_opening_brace = m/\{\s*$/;
           my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
-          my $hanging_end = $multiline_condition_indent != -1
+          my $hanging_end = $multiline_condition_indent != 0
                 ? ($hanging_open_parens == 0 &&
                    ($hanging_open_braces == 0 || ($hanging_open_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
                 : ($hanging_open_parens == 0 && $hanging_open_braces == 0 &&
-                   ($multiline_value_indent == -1 || $trailing_terminator)); # assignment, return, and typedef are terminated by ';' (but in enum by ','), otherwise we assume function header
+                   ($multiline_value_indent == 0 || $trailing_terminator)); # assignment, return, and typedef are terminated by ';' (but in enum by ','), otherwise we assume function header
           if ($hanging_end) {
               # reset hanging indents
-              $hanging_indent = -1;
-              if ($multiline_condition_indent != -1 && !$trailing_opening_brace) {
+              $hanging_indent = 0;
+              if ($multiline_condition_indent != 0 && !$trailing_opening_brace) {
                   $extra_singular_indent += INDENT_LEVEL;
               }
-              $multiline_condition_indent = -1;
-              $multiline_value_indent = -1;
+              $multiline_condition_indent = 0;
+              $multiline_value_indent = 0;
           }
         }
     }
 
-    if ($hanging_indent == -1) {
+    if ($hanging_indent == 0) {
         # reset extra_singular_indent on trailing ';'
         $extra_singular_indent = 0 if m/;\s*$/; # trailing ';'
     }
@@ -449,7 +449,7 @@ while(<>) { # loop over all lines of all input files
         my $var_eq = $2;
         my $trail = $6;
         $multiline_value_indent = length($head) + INDENT_LEVEL;
-        if ($hanging_indent == -1) {
+        if ($hanging_indent == 0) {
             $hanging_indent = $hanging_alt_indent = $multiline_value_indent;
             $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return' or 'typedef'
         }
