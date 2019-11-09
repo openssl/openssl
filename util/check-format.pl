@@ -322,7 +322,7 @@ while(<>) { # loop over all lines of all input files
                                     !$multiline_macro_same_indent);
 
     # handle last opening brace in line
-    if (m/^(.*?)\{[^\}]*$/) { # match ... {
+    if (m/^(.*?)\{[^\{]*$/) { # match ... {
         my $head = $1;
         my $before = $head =~ m/^\s*$/ ? $contents_before : $head;
         if (!($before =~ m/^\s*(typedef|struct|union)/) && # not type decl
