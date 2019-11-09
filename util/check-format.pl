@@ -42,14 +42,15 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
 
 my $line;                  # current line number
 my $contents;              # contens of current line
-my $contents_before;       # contents of last line (except multi-line string literals and comments), used only if $line > 1
-my $contents_before2;      # contents of but-last line (except multi-line string literals and comments), used only if $line > 2
+my $contents_before;       # contents of previous line (except multi-line string literals and comments), used only if $line > 1
+my $contents_before2;      # contents of line before previous line (except multi-line string literals and comments), used only if $line > 2
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line, which basically should equal $indent
+my $count_before;          # number of leading whitespace characters (except newline) in previous line
 my $label;                 # current line contains label
 my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing braces
 my $local_hanging_indent;  # current line allowed extra indent due to line starting with '&&' or '||'
-my $line_opening_brace;    # number of last line with opening brace
+my $line_opening_brace;    # number of previous line with opening brace
 my $indent;                # currently required indentation for normal code
 my $directive_indent;      # currently required indentation for preprocessor directives
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
@@ -112,6 +113,7 @@ sub check_indent { # for lines outside multi-line comments and string literals
     }
     else {
         if ($sloppy_expr) {
+            return if $count == $count_before; # workaround in particular for struct initializers in *_err.c files
             return if substr($contents, $count, 1) eq ":" &&
                 substr($contents_before, $count, 1) eq "?"; # in conditional expression, leading character is ":" with same position as "?" in line before
         }
@@ -275,11 +277,14 @@ while(<>) { # loop over all lines of all input files
     }
 
     # adapt required indent due to leading closing }
-    m/^([^\{]*)/; # get prefix before any opening {
+    m/^((\s*\})*)/; # get prefix of } before any other text
     my $num_leading_closing_braces = $1 =~ tr/\}//;
     if ($num_leading_closing_braces != 0) {
-        $hanging_indent = -1; # reset hanging indents
-        $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+        if ($hanging_indent != -1) {
+            $hanging_indent = -1; # reset hanging indents
+        } else {
+            $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+        }
     }
     # sanity-check underflow due to closing braces
     if ($indent + $local_offset < 0) {
@@ -465,6 +470,7 @@ while(<>) { # loop over all lines of all input files
 
     $contents_before2 = $contents_before;
     $contents_before = $contents;
+    $count_before = $count;
 
   LINE_FINISHED:
     # on end of multi-line preprocessor directive, adapt indent
