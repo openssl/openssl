@@ -7,14 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
+#include "crypto/evp.h"
 #include "prov/md5_sha1.h"   /* diverse MD5_SHA1 macros */
 
-#ifndef OPENSSL_NO_MD5
-
-# include <openssl/obj_mac.h>
-# include "crypto/evp.h"
 
 static const EVP_MD md5_sha1_md = {
     NID_md5_sha1,
@@ -34,4 +29,3 @@ const EVP_MD *EVP_md5_sha1(void)
     return &md5_sha1_md;
 }
 
-#endif /* OPENSSL_NO_MD5 */

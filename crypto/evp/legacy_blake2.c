@@ -7,13 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#ifndef OPENSSL_NO_BLAKE2
-
-# include <openssl/obj_mac.h>
-# include "crypto/evp.h"
-# include "prov/blake2.h"        /* diverse BLAKE2 macros */
+#include "crypto/evp.h"
+#include "prov/blake2.h"        /* diverse BLAKE2 macros */
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,
@@ -50,5 +45,3 @@ const EVP_MD *EVP_blake2s256(void)
 {
     return &blake2s_md;
 }
-
-#endif /* OPENSSL_NO_BLAKE2 */

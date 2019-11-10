@@ -276,6 +276,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         case NID_rc5_ecb:
         case NID_rc5_cfb64:
         case NID_rc5_ofb64:
+        case NID_rc2_ecb:
         case NID_rc2_cbc:
         case NID_rc2_40_cbc:
         case NID_rc2_64_cbc:

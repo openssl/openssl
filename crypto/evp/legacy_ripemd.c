@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,23 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/md5.h>
+
+#include <openssl/ripemd.h>
 #include "crypto/evp.h"
 
-static const EVP_MD md5_md = {
-    NID_md5,
-    NID_md5WithRSAEncryption,
-    MD5_DIGEST_LENGTH,
+static const EVP_MD ripemd160_md = {
+    NID_ripemd160,
+    NID_ripemd160WithRSA,
+    RIPEMD160_DIGEST_LENGTH,
     0,
     NULL,
     NULL,
     NULL,
     NULL,
     NULL,
-    MD5_CBLOCK,
+    RIPEMD160_CBLOCK,
 };
 
-const EVP_MD *EVP_md5(void)
+const EVP_MD *EVP_ripemd160(void)
 {
-    return &md5_md;
+    return &ripemd160_md;
 }

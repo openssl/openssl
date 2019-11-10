@@ -7,23 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/md5.h>
 #include "crypto/evp.h"
+#include "crypto/chacha.h"
 
-static const EVP_MD md5_md = {
-    NID_md5,
-    NID_md5WithRSAEncryption,
-    MD5_DIGEST_LENGTH,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    MD5_CBLOCK,
+static const EVP_CIPHER chacha20 = {
+    NID_chacha20,
+    1,                      /* block_size */
+    CHACHA_KEY_SIZE,        /* key_len */
+    CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
+    EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT
 };
 
-const EVP_MD *EVP_md5(void)
+const EVP_CIPHER *EVP_chacha20(void)
 {
-    return &md5_md;
+    return &chacha20;
 }
