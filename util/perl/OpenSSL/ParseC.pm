@@ -561,7 +561,7 @@ my @chandlers = (
     # Note that the main parse function has a special hack for 'extern "C" {'
     # which can't be done in handlers
     # We simply ignore it.
-    { regexp   => qr/extern "C" (.*;)/,
+    { regexp   => qr/^extern "C" (.*(?:;|>>>))/,
       massager => sub { return ($1); },
     },
     # any other extern is just ignored
