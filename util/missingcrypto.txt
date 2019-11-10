@@ -446,6 +446,7 @@ ERR_load_ENGINE_strings
 ERR_load_ERR_strings
 ERR_load_ESS_strings
 ERR_load_EVP_strings
+ERR_load_KDF_strings
 ERR_load_OBJ_strings
 ERR_load_OCSP_strings
 ERR_load_OSSL_STORE_strings
