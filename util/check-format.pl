@@ -59,7 +59,7 @@ my $hanging_open_parens;   # used only if $hanging_indent != 0
 my $hanging_open_braces;   # used only if $hanging_indent != 0
 my $hanging_alt_indent;    # alternative hanging indent (for assignments), used only if $hanging_indent != 0
 my $extra_singular_indent; # extra indent for just one statement
-my $multiline_condition_indent; # special indent after if/for/while
+my $multiline_condition_indent; # special indent in condition of if/for/while
 my $multiline_value_indent;# special indent at LHS of assignment or after return or typedef
 my $in_enum;               # used to determine terminator of assignment
 my $in_multiline_directive; # number of lines so far within multi-line preprocessor directive, e.g., macro definition
@@ -106,7 +106,7 @@ sub braces_balance { # count balance of opening braces - closing braces
 sub check_indent { # for lines outside multi-line comments and string literals
     if ($hanging_indent == 0) {
         my $allowed = $indent+$extra_singular_indent+$local_offset;
-        $allowed = "{1,$allowed}" if $label;
+        $allowed = "{1,$allowed}" if $label && $allowed != 1;
         complain("indent=$count!=$allowed")
             if $count != $indent + $extra_singular_indent + $local_offset &&
                (!$label || $count != 1);
@@ -207,7 +207,7 @@ while(<>) { # loop over all lines of all input files
     if ($ifdef__cplusplus) {
         $ifdef__cplusplus = 0;
         $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {'
-        goto LINE_FINISHED if m/^\s*\}\s*$/; # ignore closing brace
+        goto LINE_FINISHED if m/^\s*\}\s*$/; # ignore closing brace '}'
     }
 
     # blind contents of string literals; multi-line string literals are handled below
@@ -276,25 +276,29 @@ while(<>) { # loop over all lines of all input files
         $local_hanging_indent = INDENT_LEVEL if m/^\s*(\&\&|\|\|)/;  # line starting with && or ||
     }
 
-    # adapt required indent due to leading closing braces, potentially followed by terminator ';'
-    m/^((\s*\})*)(\s*;)?/; # get prefix of } before any other text, plus any ;
-    my $num_leading_closing_braces = $1 =~ tr/\}//;
-    my $terminated = $3 ne "";
-    if ($multiline_value_indent && $terminated) { # ';' after assignment etc.
+    # adapt required indent due to *ASN1_*_END* or initial closing braces potentially followed by terminator ';' (or ASN1_*END*)
+    my $asn1_end = m/\s*\w*ASN1_[A-Z_]+END\w*/;
+    m/^([^\{\}]*)((\}\s*)*)(;|\w*ASN1_[A-Z_]+END\w*)?/; # get prefix of '}' before any ('{' or other text), plus any (';' or *ASN1_*_END*)
+    my $head = $1;
+    my $num_leading_closing_braces = $2 =~ tr/\}//;
+    my $terminated = $4 ne "" || $asn1_end;
+    if ($multiline_value_indent != 0 && $terminated) { # ';' after assignment etc.
         $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
-        $local_offset = 0 if $hanging_indent > $indent; # workaround for structure assignment with extra indent on opening brace; TODO check
         $hanging_indent = 0; # reset hanging indents
+        $extra_singular_indent = 0 if $asn1_end; # workaround for structure assignment with extra indent on opening brace; TODO check - TODO check
     }
     elsif ($num_leading_closing_braces != 0) {
-        $hanging_indent = 0; # reset any hanging indents; TODO check
-        $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+        complain("... }") if $multiline_value_indent == 0 && $head=~ m/\S/; # non-whitespace before first '}'
+        if($multiline_value_indent == 0 || $terminated) {
+            $hanging_indent = 0; # reset any hanging indents; TODO check
+            $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
+        }
     }
     # sanity-check underflow due to closing braces
     if ($indent + $local_offset < 0) {
         $local_offset = -$indent;
         complain("too many }");
     }
-    $hanging_indent = 0 if m/$\s*ASN1_ITEM_TEMPLATE_END/; # reset hanging indent also on ASN1_ITEM_TEMPLATE_END
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
     my $more_lines = parens_balance($contents_before) < 0; # then match two-line macro headers - TODO improve to handle also more header lines
@@ -324,8 +328,8 @@ while(<>) { # loop over all lines of all input files
         ($indent == INDENT_LEVEL && $in_multiline_directive > 0 &&
                                     !$multiline_macro_same_indent);
 
-    # handle last opening brace in line
-    if (m/^(.*?)\{([^\{]*)$/) { # match ... {
+    # handle last opening brace '{' in line
+    if (m/^(.*?)\{([^\{]*)$/) { # match ... '{'
         my $head = $1;
         my $tail = $2;
         my $before = $head =~ m/^\s*$/ ? $contents_before : $head;
@@ -339,12 +343,12 @@ while(<>) { # loop over all lines of all input files
                     $line_opening_brace = $line;
                 }
             }
-            complain("{ ...") if $tail=~ m/\S/; # non-whitespace after last {
+            complain("{ ...") if $tail=~ m/\S/; # non-whitespace after last '{'
         }
     }
 
     # check for code block containing a single line/statement
-    if(!$outermost_level && m/^([^\}]*)\}/) { # first closing brace } in line
+    if(!$outermost_level && m/^([^\}]*)\}/) { # first closing brace '}' in line
         my $head = $1;
         # TODO extend detection from single-line to potentially multi-line statement
         if($head =~ m/^\s*$/ &&
@@ -359,7 +363,7 @@ while(<>) { # loop over all lines of all input files
         $line_opening_brace = 0;
     }
 
-    # adapt indent for following lines according to braces
+    # adapt indent for following lines according to balance of braces
     my $braces_balance = braces_balance($_);
     $indent += $braces_balance * INDENT_LEVEL;
     $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0;
@@ -370,76 +374,71 @@ while(<>) { # loop over all lines of all input files
         # complain("too many }"); # already reported above
     }
 
-    # a rough check to determine whether inside enum
+    # check to determine whether inside enum, TODO possibly improve
     $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
     $in_enum += $braces_balance if $braces_balance < 0;
     $in_enum = 0 if $in_enum < 0;
 
-    # detect multi-line if/for/while condition (with ) and extra indent for one statement after if/else/for/do/while not followed by brace
+    # reset hanging indents on end of statement
+    $hanging_indent = 0 if m/;\s*/; # trailing ';'
     if($hanging_indent == 0) {
-        $hanging_open_parens = 0;
-        $hanging_open_braces = 0;
-
+        $hanging_open_parens = $hanging_open_braces = 0;
         $multiline_condition_indent = $multiline_value_indent = 0;
-        if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
-            my ($head, $tail) = ($1, $4);
-            my $parens_balance = parens_balance($_);
-            complain("too many )") if $parens_balance < 0;
-            if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
-                if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
-                    $multiline_condition_indent = length($1);
-                } else {
-                    $extra_singular_indent += INDENT_LEVEL;
-                }
+    }
+
+    # detect multi-line if/for/while condition and extra indent for one statement after if/else/for/do/while not followed by opening brace
+    if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
+        my ($head, $tail) = ($1, $4);
+        my $parens_balance = parens_balance($_);
+        complain("too many )") if $parens_balance < 0;
+        if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
+            if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
+                $multiline_condition_indent = length($1);
+            } else {
+                $extra_singular_indent += INDENT_LEVEL;
             }
         }
     }
 
     # adapt hanging_indent and hanging_alt_indent
-    if ($sloppy_expr) {
-        # the following assignments to $hanging_indent are just heuristics - nested closing parens and braces are not treated fully
-        # adapt also the auxiliary hanging_open_parens and hanging_open_braces
-        # potentially increase extra_singular_indent
-      MATCH_PAREN:
-        if (m/^(.*)\(([^\(]*)$/) { # last '('
-            my $head = $1;
-            my $tail = $2;
-            if ($tail =~ m/\)(.*)/) { # strip contents up to matching ')':
-                $_ = "$head $1";
-                goto MATCH_PAREN;
-            }
-            $hanging_indent = $hanging_alt_indent = length($head) + 1;
-            $hanging_open_parens += parens_balance($_);
-      }
-        elsif (m/^(.*)\{(\s*[^\s\{][^\{]*\s*)$/) { # last '{' followed by non-space: struct initializer
-            my $head = $1;
-            my $tail = $2;
-            if ($tail =~ m/\}(.*)/) { # strip contents up to matching '}'
-                $_ = "$head $1";
-                goto MATCH_PAREN;
-            }
-            $hanging_indent = $hanging_alt_indent = length($head) + 1;
-            $hanging_open_braces += braces_balance($_);
-      } elsif ($hanging_indent != 0) {
-          $hanging_open_parens += parens_balance($_);
-          $hanging_open_braces += braces_balance($_);
+  MATCH_PAREN:
+    if (m/^(.*)\(([^\(]*)$/) { # last (remaining) '('
+        my $head = $1;
+        my $tail = $2;
+        if ($tail =~ m/\)(.*)/) {
+            $_ = "$head $1"; # strip contents from '(' up to matching ')'
+            goto MATCH_PAREN;
+        }
+        $hanging_indent = $hanging_alt_indent = length($head) + 1; # TODO treat nested closing parens
+    } elsif (m/^(.*)\{(\s*[^\s\{][^\{]*\s*)$/) { # last (remaining) '{' followed by non-space: struct initializer
+        my $head = $1;
+        my $tail = $2;
+        if ($tail =~ m/\}(.*)/) {
+            $_ = "$head $1"; # strip contents from '{' up to matching '}'
+            goto MATCH_PAREN;
+        }
+        $hanging_indent = $hanging_alt_indent = length($head) + 1; # TODO treat nested closing races
+    }
 
-          my $trailing_opening_brace = m/\{\s*$/;
-          my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
-          my $hanging_end = $multiline_condition_indent != 0
-                ? ($hanging_open_parens == 0 &&
-                   ($hanging_open_braces == 0 || ($hanging_open_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
-                : ($hanging_open_parens == 0 && $hanging_open_braces == 0 &&
-                   ($multiline_value_indent == 0 || $trailing_terminator)); # assignment, return, and typedef are terminated by ';' (but in enum by ','), otherwise we assume function header
-          if ($hanging_end) {
-              # reset hanging indents
-              $hanging_indent = 0;
-              if ($multiline_condition_indent != 0 && !$trailing_opening_brace) {
-                  $extra_singular_indent += INDENT_LEVEL;
-              }
-              $multiline_condition_indent = 0;
-              $multiline_value_indent = 0;
-          }
+    # detect end of hanging indent, if so adapt hanging indents and potentially increase extra_singular_indent
+    if ($hanging_indent != 0) {
+        $hanging_open_parens += parens_balance($_);
+        $hanging_open_braces += braces_balance($_);
+        my $trailing_opening_brace = m/\{\s*$/;
+        my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
+        my $hanging_end = $multiline_condition_indent != 0
+            ? ($hanging_open_parens == 0 &&
+               ($hanging_open_braces == 0 || ($hanging_open_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
+            : ($hanging_open_parens == 0 && $hanging_open_braces == 0 &&
+               ($multiline_value_indent == 0 || $trailing_terminator)); # assignment, return, and typedef are terminated by ';' (but in enum by ','), otherwise we assume function header
+        if ($hanging_end) {
+            # reset hanging indents
+            $hanging_indent = 0;
+            if ($multiline_condition_indent != 0 && !$trailing_opening_brace) {
+                $extra_singular_indent += INDENT_LEVEL;
+            }
+            $multiline_condition_indent = 0;
+            $multiline_value_indent = 0;
         }
     }
 
@@ -451,14 +450,15 @@ while(<>) { # loop over all lines of all input files
     # set multiline_value_indent and potentially set hanging_indent and hanging_indent in case of multi-line value or typedef expression
     # at this point, matching (...) have been stripped, simplifying type decl matching
     my $terminator = $in_enum > 0 ? "," : ";";
-    if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator]*)\s*$/) { # multi-line value: "[type] var = " or return or typedef without ; or ,
+    if (m/^(\s*)((((\w+|->|[\.\[\]\*])\s*)+=|return|typedef)\s*)([^$terminator]*)\s*$/) { # multi-line value: assignment "[type] var = " or return or typedef without ; or ,
         my $head = $1;
         my $var_eq = $2;
-        my $trail = $6;
+        my $tail = $6;
         $multiline_value_indent = length($head) + INDENT_LEVEL;
         if ($hanging_indent == 0) {
             $hanging_indent = $hanging_alt_indent = $multiline_value_indent;
-            $hanging_alt_indent = length($head) + length($var_eq) if $trail =~ m/\S/; # non-space after '=' or 'return' or 'typedef'
+            $hanging_alt_indent = length($head) + length($var_eq) if $tail =~ m/\S/; # non-space after '=' or 'return' or 'typedef'
+            $extra_singular_indent += INDENT_LEVEL unless $tail =~ m/\{/; # no opening brace '{'
         }
     }
 

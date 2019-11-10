@@ -11,6 +11,7 @@
 
 /* this demonstrates/tests cases where check-format.pl should complain */
 
+/* for each of the following set of lines the tool should complain */
 /* tab character: 	 */
 /* cr character:  */
 /* non-printable ASCII character:  */
@@ -24,14 +25,36 @@
 */ /* comment end outside comment */
 /* over-loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong line */
  #define X      /* '#' of preprocessor directive not at first column */
-# define X      /* indent of by 1 in preprocessor directive */
+# define X      /* indent off by 1 in preprocessor directive */
 fun() {         /* opening brace at end of function definition header */
     if(cond)) { /* too many closing parens */
         stmt;   /* single-line statement in braces */
 }}}             /* too many closing braces */
 #endif          /* too many #endif */
+ int f(int a,   /* normal indent off by 1 */
+      int b,    /* hanging indent off by -1, flagged unless sloppy_expr */
+        int c)  /* hanging indent off by 1 */
+{ int x;        /* text after opening brace */
+   g(a,         /* normal indent off by -1 */
+    b,          /* hanging indent off by -1, flagged unless sloppy_expr */
+# define M(X) X /* macro indent off by 1, does not disturb surrounding C code */
+      c,        /* hanging indent off by 1 */
+   d);          /* hanging indent off by -2 */
+    if(e        /* just whitespace at EOL */ 
+        && 1)   /* indent off by 1 */
+       cmd;     /* indent off by -1 */
+    while(e2)   /* just whitespace at EOL */ 
+         cmd2;  /* indent off by 1 */
+    switch(e) { /* just whitespace at EOL */ 
+   case 1:      /* case indent off by -1 */
+     default:  /* default indent off by 1 */
+    }           /* just whitespace at EOL */ 
+  label:        /* label indent off by 1*/
+x; }            /* text before closing brace */
+/* here the tool should stop complaining apart from those three issues at EOF */
+
 
 { /* unclosed brace */
 #if /* unclosed #if */
-/* empty line just before EOF: */
+/* empty line follows just before EOF: */
 
