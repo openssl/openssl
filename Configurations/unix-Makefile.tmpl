@@ -419,7 +419,7 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
+{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
