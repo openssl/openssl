@@ -1807,6 +1807,7 @@ i2d_ASN1_bio_stream                     1849	3_0_0	EXIST::FUNCTION:
 CRYPTO_THREAD_init_local                1850	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_serial_cb               1851	3_0_0	EXIST::FUNCTION:TS
 POLICY_MAPPING_it                       1852	3_0_0	EXIST::FUNCTION:
+ERR_load_KDF_strings                    1853	3_0_0	EXIST::FUNCTION:
 UI_method_set_reader                    1854	3_0_0	EXIST::FUNCTION:
 BIO_next                                1855	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_set_default_mask_asc        1856	3_0_0	EXIST::FUNCTION:
