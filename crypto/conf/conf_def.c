@@ -384,11 +384,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     if (strcmp(pval, "on") == 0
                         || strcmp(pval, "true") == 0) {
                         conf->flag_dollarid = 1;
-                        fprintf(stderr, "setting dollarid\n");
                     } else if (strcmp(pval, "off") == 0
                                || strcmp(pval, "false") == 0) {
                         conf->flag_dollarid = 0;
-                        fprintf(stderr, "clearing dollarid\n");
                     } else {
                         CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_INVALID_PRAGMA);
                         goto err;
