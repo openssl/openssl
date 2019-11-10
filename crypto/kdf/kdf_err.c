@@ -12,58 +12,8 @@
 #include <openssl/kdferr.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-# ifndef OPENSSL_NO_ERR
-
-static const ERR_STRING_DATA KDF_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_BAD_ENCODING), "bad encoding"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_BAD_LENGTH), "bad length"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_BOTH_MODE_AND_MODE_INT),
-    "both mode and mode int"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INAVLID_UKM_LEN), "inavlid ukm len"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST), "invalid digest"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_ITERATION_COUNT),
-    "invalid iteration count"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_KEY_LEN), "invalid key len"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_MAC_TYPE), "invalid mac type"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_MODE), "invalid mode"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_MODE_INT), "invalid mode int"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_SALT_LEN), "invalid salt len"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_CEK_ALG), "missing cek alg"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_ITERATION_COUNT),
-    "missing iteration count"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_KEY), "missing key"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_MESSAGE_DIGEST),
-    "missing message digest"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PARAMETER), "missing parameter"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PASS), "missing pass"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SALT), "missing salt"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SECRET), "missing secret"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SEED), "missing seed"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SESSION_ID), "missing session id"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_TYPE), "missing type"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_XCGHASH), "missing xcghash"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_NOT_SUPPORTED), "not supported"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNKNOWN_PARAMETER_TYPE),
-    "unknown parameter type"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNSUPPORTED_CEK_ALG),
-    "unsupported cek alg"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNSUPPORTED_MAC_TYPE),
-    "unsupported mac type"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_ERROR), "value error"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_MISSING), "value missing"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_WRONG_OUTPUT_BUFFER_SIZE),
-    "wrong output buffer size"},
-    {0, NULL}
-};
-
-# endif
-
 int ERR_load_KDF_strings(void)
 {
-# ifndef OPENSSL_NO_ERR
-    if (ERR_reason_error_string(KDF_str_reasons[0].error) == NULL)
-        ERR_load_strings_const(KDF_str_reasons);
-# endif
     return 1;
 }
 #endif

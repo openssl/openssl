@@ -24,7 +24,7 @@
 # ifdef  __cplusplus
 extern "C"
 # endif
-int ERR_load_KDF_strings(void);
+DEPRECATEDIN_3_0(int ERR_load_KDF_strings(void))
 
 /*
  * KDF function codes.
@@ -82,35 +82,37 @@ int ERR_load_KDF_strings(void);
 /*
  * KDF reason codes.
  */
-# define KDF_R_BAD_ENCODING                               122
-# define KDF_R_BAD_LENGTH                                 123
-# define KDF_R_BOTH_MODE_AND_MODE_INT                     127
-# define KDF_R_INAVLID_UKM_LEN                            124
-# define KDF_R_INVALID_DIGEST                             100
-# define KDF_R_INVALID_ITERATION_COUNT                    119
-# define KDF_R_INVALID_KEY_LEN                            120
-# define KDF_R_INVALID_MAC_TYPE                           116
-# define KDF_R_INVALID_MODE                               128
-# define KDF_R_INVALID_MODE_INT                           129
-# define KDF_R_INVALID_SALT_LEN                           121
-# define KDF_R_MISSING_CEK_ALG                            125
-# define KDF_R_MISSING_ITERATION_COUNT                    109
-# define KDF_R_MISSING_KEY                                104
-# define KDF_R_MISSING_MESSAGE_DIGEST                     105
-# define KDF_R_MISSING_PARAMETER                          101
-# define KDF_R_MISSING_PASS                               110
-# define KDF_R_MISSING_SALT                               111
-# define KDF_R_MISSING_SECRET                             107
-# define KDF_R_MISSING_SEED                               106
-# define KDF_R_MISSING_SESSION_ID                         113
-# define KDF_R_MISSING_TYPE                               114
-# define KDF_R_MISSING_XCGHASH                            115
-# define KDF_R_NOT_SUPPORTED                              118
-# define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
-# define KDF_R_UNSUPPORTED_CEK_ALG                        126
-# define KDF_R_UNSUPPORTED_MAC_TYPE                       117
-# define KDF_R_VALUE_ERROR                                108
-# define KDF_R_VALUE_MISSING                              102
-# define KDF_R_WRONG_OUTPUT_BUFFER_SIZE                   112
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define KDF_R_BAD_ENCODING                               122
+#  define KDF_R_BAD_LENGTH                                 123
+#  define KDF_R_BOTH_MODE_AND_MODE_INT                     127
+#  define KDF_R_INAVLID_UKM_LEN                            124
+#  define KDF_R_INVALID_DIGEST                             100
+#  define KDF_R_INVALID_ITERATION_COUNT                    119
+#  define KDF_R_INVALID_KEY_LEN                            120
+#  define KDF_R_INVALID_MAC_TYPE                           116
+#  define KDF_R_INVALID_MODE                               128
+#  define KDF_R_INVALID_MODE_INT                           129
+#  define KDF_R_INVALID_SALT_LEN                           121
+#  define KDF_R_MISSING_CEK_ALG                            125
+#  define KDF_R_MISSING_ITERATION_COUNT                    109
+#  define KDF_R_MISSING_KEY                                104
+#  define KDF_R_MISSING_MESSAGE_DIGEST                     105
+#  define KDF_R_MISSING_PARAMETER                          101
+#  define KDF_R_MISSING_PASS                               110
+#  define KDF_R_MISSING_SALT                               111
+#  define KDF_R_MISSING_SECRET                             107
+#  define KDF_R_MISSING_SEED                               106
+#  define KDF_R_MISSING_SESSION_ID                         113
+#  define KDF_R_MISSING_TYPE                               114
+#  define KDF_R_MISSING_XCGHASH                            115
+#  define KDF_R_NOT_SUPPORTED                              118
+#  define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
+#  define KDF_R_UNSUPPORTED_CEK_ALG                        126
+#  define KDF_R_UNSUPPORTED_MAC_TYPE                       117
+#  define KDF_R_VALUE_ERROR                                108
+#  define KDF_R_VALUE_MISSING                              102
+#  define KDF_R_WRONG_OUTPUT_BUFFER_SIZE                   112
+# endif
 
 #endif
