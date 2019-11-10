@@ -602,14 +602,6 @@ static unsigned long xname_hash(const X509_NAME *a)
     return X509_NAME_hash((X509_NAME *)a);
 }
 
-/**
- * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
- * it doesn't really have anything to do with clients (except that a common use
- * for a stack of CAs is to send it to the client). Actually, it doesn't have
- * much to do with CAs, either, since it will load any old cert.
- * \param file the file containing one or more certs.
- * \return a ::STACK containing the certs.
- */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 {
     BIO *in = BIO_new(BIO_s_file());
@@ -667,15 +659,6 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     return ret;
 }
 
-/**
- * Add a file of certs to a stack.
- * \param stack the stack to add to.
- * \param file the file to add from. All certs in this file that are not
- * already in the stack will be added.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                         const char *file)
 {
@@ -726,17 +709,6 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/**
- * Add a directory of certs to a stack.
- * \param stack the stack to append to.
- * \param dir the directory to append from. All files in this directory will be
- * examined as potential certs. Any that are acceptable to
- * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will be
- * included.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                        const char *dir)
 {
@@ -783,15 +755,6 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/**
- * Add a container of certs to a stack.
- * \param stack the stack to add to.
- * \param file the file to add from. All certs in this file that are not
- * already in the stack will be added.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
                               const char *uri, int depth)
 {
@@ -815,8 +778,9 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
              * This is an entry in the "directory" represented by the current
              * uri.  if |depth| allows, dive into it.
              */
-            if (depth == 0)
-                ok = add_uris_recursive(stack, uri, depth - 1);
+            if (depth > 0)
+                ok = add_uris_recursive(stack, OSSL_STORE_INFO_get0_NAME(info),
+                                        depth - 1);
         } else if (infotype == OSSL_STORE_INFO_CERT) {
             if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
                 || (xn = X509_get_subject_name(x)) == NULL
