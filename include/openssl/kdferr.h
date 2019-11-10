@@ -24,7 +24,7 @@
 # ifdef  __cplusplus
 extern "C"
 # endif
-int ERR_load_KDF_strings(void);
+DEPRECATEDIN_3_0(int ERR_load_KDF_strings(void))
 
 /*
  * KDF function codes.
