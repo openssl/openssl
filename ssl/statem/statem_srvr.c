@@ -24,6 +24,7 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
 
 #define TICKET_NONCE_SIZE       8
 
@@ -2966,16 +2967,15 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt)
 static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 {
 #ifndef OPENSSL_NO_RSA
-    unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
-    int decrypt_len;
-    unsigned char decrypt_good, version_good;
-    size_t j, padding_len;
+    size_t outlen;
     PACKET enc_premaster;
-    RSA *rsa = NULL;
+    EVP_PKEY *rsa = NULL;
     unsigned char *rsa_decrypt = NULL;
     int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM params[3], *p = params;
 
-    rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA].privatekey);
+    rsa = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
     if (rsa == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_MISSING_RSA_CERTIFICATE);
@@ -3000,124 +3000,77 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * (SSL_MAX_MASTER_KEY_LENGTH). Reject overly short RSA keys because
      * their ciphertext cannot accommodate a premaster secret anyway.
      */
-    if (RSA_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
+    if (EVP_PKEY_size(rsa) < RSA_PKCS1_PADDING_SIZE
+                             + SSL_MAX_MASTER_KEY_LENGTH) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
-    rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
+    outlen = SSL_MAX_MASTER_KEY_LENGTH;
+    rsa_decrypt = OPENSSL_malloc(outlen);
     if (rsa_decrypt == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
+    ctx = EVP_PKEY_CTX_new(rsa, NULL);
+    if (ctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
     /*
      * We must not leak whether a decryption failure occurs because of
      * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
-     * section 7.4.7.1). The code follows that advice of the TLS RFC and
-     * generates a random premaster secret for the case that the decrypt
-     * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
+     * section 7.4.7.1). We use the special padding type
+     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automaticaly decrypt the
+     * RSA, check the padding and check that the client version is as expected
+     * in the premaster secret. If any of that fails then the function appears
+     * to return successfully but with a random result. The call below could
+     * still fail if the input is publicly invalid.
+     * See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
-
-    if (RAND_priv_bytes(rand_premaster_secret,
-                      sizeof(rand_premaster_secret)) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * Decrypt with no padding. PKCS#1 padding will be removed as part of
-     * the timing-sensitive code below.
-     */
-     /* TODO(size_t): Convert this function */
-    decrypt_len = (int)RSA_private_decrypt((int)PACKET_remaining(&enc_premaster),
-                                           PACKET_data(&enc_premaster),
-                                           rsa_decrypt, rsa, RSA_NO_PADDING);
-    if (decrypt_len < 0) {
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Check the padding. See RFC 3447, section 7.2.2. */
-
-    /*
-     * The smallest padded premaster is 11 bytes of overhead. Small keys
-     * are publicly invalid, so this may return immediately. This ensures
-     * PS is at least 8 bytes.
-     */
-    if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
+    if (EVP_PKEY_decrypt_init(ctx) <= 0
+            || EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_WITH_TLS_PADDING) <= 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
 
-    padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
-    decrypt_good = constant_time_eq_int_8(rsa_decrypt[0], 0) &
-        constant_time_eq_int_8(rsa_decrypt[1], 2);
-    for (j = 2; j < padding_len - 1; j++) {
-        decrypt_good &= ~constant_time_is_zero_8(rsa_decrypt[j]);
-    }
-    decrypt_good &= constant_time_is_zero_8(rsa_decrypt[padding_len - 1]);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION,
+                                     (unsigned int *)&s->client_version);
+   if ((s->options & SSL_OP_TLS_ROLLBACK_BUG) != 0)
+        *p++ = OSSL_PARAM_construct_uint(
+            OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION,
+            (unsigned int *)&s->version);
+    *p++ = OSSL_PARAM_construct_end();
 
-    /*
-     * If the version in the decrypted pre-master secret is correct then
-     * version_good will be 0xff, otherwise it'll be zero. The
-     * Klima-Pokorny-Rosa extension of Bleichenbacher's attack
-     * (http://eprint.iacr.org/2003/052/) exploits the version number
-     * check as a "bad version oracle". Thus version checks are done in
-     * constant time and are treated like any other decryption error.
-     */
-    version_good =
-        constant_time_eq_8(rsa_decrypt[padding_len],
-                           (unsigned)(s->client_version >> 8));
-    version_good &=
-        constant_time_eq_8(rsa_decrypt[padding_len + 1],
-                           (unsigned)(s->client_version & 0xff));
-
-    /*
-     * The premaster secret must contain the same version number as the
-     * ClientHello to detect version rollback attacks (strangely, the
-     * protocol does not offer such protection for DH ciphersuites).
-     * However, buggy clients exist that send the negotiated protocol
-     * version instead if the server does not support the requested
-     * protocol version. If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such
-     * clients.
-     */
-    if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
-        unsigned char workaround_good;
-        workaround_good = constant_time_eq_8(rsa_decrypt[padding_len],
-                                             (unsigned)(s->version >> 8));
-        workaround_good &=
-            constant_time_eq_8(rsa_decrypt[padding_len + 1],
-                               (unsigned)(s->version & 0xff));
-        version_good |= workaround_good;
+    if (!EVP_PKEY_CTX_set_params(ctx, params)
+            || EVP_PKEY_decrypt(ctx, rsa_decrypt, &outlen,
+                                PACKET_data(&enc_premaster),
+                                PACKET_remaining(&enc_premaster)) <= 0) {
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
 
     /*
-     * Both decryption and version must be good for decrypt_good to
-     * remain non-zero (0xff).
+     * This test should never fail (otherwise we should have failed above) but
+     * we double check anyway.
      */
-    decrypt_good &= version_good;
-
-    /*
-     * Now copy rand_premaster_secret over from p using
-     * decrypt_good_mask. If decryption failed, then p does not
-     * contain valid plaintext, however, a check above guarantees
-     * it is still sufficiently large to read from.
-     */
-    for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-        rsa_decrypt[padding_len + j] =
-            constant_time_select_8(decrypt_good,
-                                   rsa_decrypt[padding_len + j],
-                                   rand_premaster_secret[j]);
+    if (outlen != SSL_MAX_MASTER_KEY_LENGTH) {
+        OPENSSL_cleanse(rsa_decrypt, SSL_MAX_MASTER_KEY_LENGTH);
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
 
-    if (!ssl_generate_master_secret(s, rsa_decrypt + padding_len,
-                                    sizeof(rand_premaster_secret), 0)) {
+    /* Also cleanses rsa_decrypt (on success or failure) */
+    if (!ssl_generate_master_secret(s, rsa_decrypt,
+                                    SSL_MAX_MASTER_KEY_LENGTH, 0)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -3125,6 +3078,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     ret = 1;
  err:
     OPENSSL_free(rsa_decrypt);
+    EVP_PKEY_CTX_free(ctx);
     return ret;
 #else
     /* Should never happen */
