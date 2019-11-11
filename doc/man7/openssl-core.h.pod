@@ -74,6 +74,18 @@ parameters, and to describe parameters.
 
 B<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
 
+=item B<OSSL_CALLBACK>
+
+This is a function type for a generic callback function:
+
+    typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+
+A function that takes a pointer of this type should also take a
+pointer to caller data.  When calling this callback, the function is
+expected to build an B<OSSL_PARAM> array of data it wants or is
+expected to pass back, and pass that as I<params>, as well as
+the caller data pointer it received, as I<arg>.
+
 =back
 
 =head1 SEE ALSO
