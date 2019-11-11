@@ -258,7 +258,9 @@ The B<pad> parameter can take the value B<RSA_PKCS1_PADDING> for PKCS#1
 padding, B<RSA_SSLV23_PADDING> for SSLv23 padding, B<RSA_NO_PADDING> for
 no padding, B<RSA_PKCS1_OAEP_PADDING> for OAEP padding (encrypt and
 decrypt only), B<RSA_X931_PADDING> for X9.31 padding (signature operations
-only) and B<RSA_PKCS1_PSS_PADDING> (sign and verify only).
+only), B<RSA_PKCS1_PSS_PADDING> (sign and verify only) and
+B<RSA_PKCS1_WITH_TLS_PADDING> for TLS RSA ClientKeyExchange message padding
+(decryption only).
 
 Two RSA padding modes behave differently if EVP_PKEY_CTX_set_signature_md()
 is used. If this macro is called for PKCS#1 padding the plaintext buffer is
@@ -351,6 +353,25 @@ The EVP_PKEY_CTX_get0_rsa_oaep_label() function gets the RSA OAEP label to
 B<label>. The return value is the label length. The padding mode
 must have been set to B<RSA_PKCS1_OAEP_PADDING>. The resulting pointer is owned
 by the library and should not be freed by the caller.
+
+B<RSA_PKCS1_WITH_TLS_PADDING> is used when decrypting an RSA encrypted TLS
+pre-master secret in a TLS ClientKeyExchange message. It is the same as
+RSA_PKCS1_PADDING except that it additionally verifies that the result is the
+correct length and the first two bytes are the protocol version initially
+requested by the client. If the encrypted content is publicly invalid then the
+decryption will fail. However, if the padding checks fail then decryption will
+still appear to succeed but a random TLS premaster secret will be returned
+instead. This padding mode accepts two parameters which can be set using the
+L<EVP_PKEY_CTX_set_params(3)> function. These are
+OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION and
+OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, both of which are expected to be
+unsigned integers. Normally only the first of these will be set and represents
+the TLS protocol version that was first requested by the client (e.g. 0x0303 for
+TLSv1.2, 0x0302 for TLSv1.1 etc). Historically some buggy clients would use the
+negotiated protocol version instead of the protocol version first requested. If
+this behaviour should be tolerated then
+OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION should be set to the actual
+negotiated protocol version. Otherwise it should be left unset.
 
 =head2 DSA parameters
 
