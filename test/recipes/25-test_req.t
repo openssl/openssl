@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 13;
+plan tests => 14;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -97,6 +97,26 @@ subtest "generating certificate requests with ECDSA" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "testec-p256.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq.pem", "-noout"])),
+           "Verifying signature on request");
+    }
+};
+
+subtest "generating certificate requests with EDDSA" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "EDDSA is not supported by this OpenSSL build", 2
+            if disabled("ec");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-key", srctop_file("test", "tested25519.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
