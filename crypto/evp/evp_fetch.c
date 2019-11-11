@@ -141,8 +141,12 @@ static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
 #ifndef FIPS_MODE
-    OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH, get_legacy_evp_names, namemap);
-    OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, get_legacy_evp_names, namemap);
+    if (namemap != NULL && ossl_namemap_empty(namemap)) {
+        OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
+                        get_legacy_evp_names, namemap);
+        OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
+                        get_legacy_evp_names, namemap);
+    }
 #endif
 
     return namemap;
