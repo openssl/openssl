@@ -774,8 +774,7 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 
 static void *evp_asym_cipher_from_dispatch(int name_id,
                                            const OSSL_DISPATCH *fns,
-                                           OSSL_PROVIDER *prov,
-                                           void *unused)
+                                           OSSL_PROVIDER *prov)
 {
     EVP_ASYM_CIPHER *cipher = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
@@ -917,7 +916,7 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-                             evp_asym_cipher_from_dispatch, NULL,
+                             evp_asym_cipher_from_dispatch,
                              (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
                              (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
@@ -937,13 +936,9 @@ void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
                                                 void *arg),
                                      void *arg)
 {
-    struct keymgmt_data_st keymgmt_data;
-
-    keymgmt_data.ctx = libctx;
-    keymgmt_data.properties = NULL;
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_asym_cipher_from_dispatch, &keymgmt_data,
+                       evp_asym_cipher_from_dispatch,
                        (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
 
