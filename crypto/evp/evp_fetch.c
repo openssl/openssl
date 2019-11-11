@@ -117,9 +117,9 @@ static int add_names_to_namemap(OSSL_NAMEMAP *namemap,
 
 #ifndef FIPS_MODE
 /* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(const OBJ_NAME *on, void *arg)
+static void get_legacy_evp_names(const char *main_name, const char *alias,
+                                 void *arg)
 {
-    const char *main_name = OBJ_NAME_get(on->name, on->type);
     int main_id = ossl_namemap_add(arg, 0, main_name);
 
     /*
@@ -132,7 +132,21 @@ static void get_legacy_evp_names(const OBJ_NAME *on, void *arg)
      * Should it be that the current |on| *has* the main name, this is
      * simply a no-op.
      */
-    (void)ossl_namemap_add(arg, main_id, on->name);
+    (void)ossl_namemap_add(arg, main_id, alias);
+}
+
+static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
+{
+    const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+
+    get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
+}
+
+static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
+{
+    const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
+
+    get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
 }
 #endif
 
@@ -143,9 +157,10 @@ static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
 #ifndef FIPS_MODE
     if (namemap != NULL && ossl_namemap_empty(namemap)) {
         OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
-                        get_legacy_evp_names, namemap);
+                        get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
-                        get_legacy_evp_names, namemap);
+                        get_legacy_md_names, namemap);
+        dump_names(namemap);
     }
 #endif
 
