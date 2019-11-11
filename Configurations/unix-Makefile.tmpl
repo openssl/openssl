@@ -164,35 +164,35 @@ MISC_SCRIPTS={-
 -}
 HTMLDOCS1={-
         join(" \\\n" . ' ' x 10,
-             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) },
-                        @{$unified_info{htmldocs}->{man1}}) -}
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
+                        @{$unified_info{htmldocs}->{man1}})) -}
 HTMLDOCS3={-
         join(" \\\n" . ' ' x 10,
-             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
                         @{$unified_info{htmldocs}->{man3}})) -}
 HTMLDOCS5={-
         join(" \\\n" . ' ' x 10,
-             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
                         @{$unified_info{htmldocs}->{man5}})) -}
 HTMLDOCS7={-
         join(" \\\n" . ' ' x 10,
-             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
                         @{$unified_info{htmldocs}->{man7}})) -}
 MANDOCS1={-
         join(" \\\n" . ' ' x 9,
-             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man1}})) -}
 MANDOCS3={-
         join(" \\\n" . ' ' x 9,
-             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man3}})) -}
 MANDOCS5={-
         join(" \\\n" . ' ' x 9,
-             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man5}})) -}
 MANDOCS7={-
         join(" \\\n" . ' ' x 9,
-             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) },
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man7}})) -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
