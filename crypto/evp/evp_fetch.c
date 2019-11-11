@@ -132,7 +132,8 @@ static void get_legacy_evp_names(const char *main_name, const char *alias,
      * Should it be that the current |on| *has* the main name, this is
      * simply a no-op.
      */
-    (void)ossl_namemap_add(arg, main_id, alias);
+    if (alias != NULL)
+        (void)ossl_namemap_add(arg, main_id, alias);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
@@ -145,8 +146,15 @@ static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
+    /* We don't want the pkey_type names, so we need some extra care */
+    int snid, lnid;
 
-    get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
+    snid = OBJ_sn2nid(on->name);
+    lnid = OBJ_ln2nid(on->name);
+    if (snid != EVP_MD_pkey_type(md) && lnid != EVP_MD_pkey_type(md))
+        get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
+    else
+        get_legacy_evp_names(EVP_MD_name(md), NULL, arg);
 }
 #endif
 
@@ -156,11 +164,14 @@ static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
 
 #ifndef FIPS_MODE
     if (namemap != NULL && ossl_namemap_empty(namemap)) {
+        /* Before pilfering, we make sure the legacy database is populated */
+        OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
+                            |OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+
         OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
                         get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
                         get_legacy_md_names, namemap);
-        dump_names(namemap);
     }
 #endif
 
