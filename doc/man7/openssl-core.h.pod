@@ -78,7 +78,7 @@ B<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
 
 This is a function type for a generic callback function:
 
-    int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+    typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
 
 A function that takes a pointer of this type should also take a
 pointer to caller data.  When calling this callback, the function is

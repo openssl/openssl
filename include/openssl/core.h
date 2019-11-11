@@ -200,7 +200,7 @@ extern OSSL_provider_init_fn OSSL_provider_init;
  * libcrypto may use the OSSL_PARAM array to create arguments for an
  * application callback it knows about.
  */
-int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
 
 # ifdef __cplusplus
 }
