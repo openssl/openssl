@@ -10,6 +10,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /*
  * EVP_sm4_ecb()

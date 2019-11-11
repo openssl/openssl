@@ -10,6 +10,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /*
  * EVP_camellia_128_cbc()

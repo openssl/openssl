@@ -9,6 +9,7 @@
 
 #include <openssl/aes.h>
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
 #ifdef NID_aes_128_cbc_hmac_sha256

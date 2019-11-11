@@ -8,6 +8,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 #define XTS_FLAGS (EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV             \
                    | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT            \

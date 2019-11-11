@@ -8,6 +8,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /*
  * EVP_des_ede_ecb()

@@ -278,51 +278,6 @@ struct evp_cipher_st {
 
 /* Wrapper functions for each cipher mode */
 
-#define EVP_CIPH_AEAD_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER                        \
-                    | EVP_CIPH_FLAG_DEFAULT_ASN1                              \
-                    | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER        \
-                    | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT          \
-                    | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_CUSTOM_IV_LENGTH)
-
-#define IMPLEMENT_EVP_CIPHER_CONST(alg, nid, keybits, blocksize, ivlen,        \
-                                   mode, MODE, flags)                          \
-static const EVP_CIPHER alg##_##keybits##_##mode = {                           \
-    nid, blocksize,                                                            \
-    keybits / 8 * (EVP_CIPH_##MODE##_MODE == EVP_CIPH_XTS_MODE                 \
-                   || EVP_CIPH_##MODE##_MODE == EVP_CIPH_SIV_MODE ? 2 : 1),    \
-    ivlen, flags | EVP_CIPH_##MODE##_MODE                                      \
-};                                                                             \
-const EVP_CIPHER *EVP_##alg##_##keybits##_##mode(void)                         \
-{                                                                              \
-    return &alg##_##keybits##_##mode;                                          \
-}
-
-#define IMPLEMENT_EVP_CIPHER_CONST2(alg, nid, keybits, blocksize, ivlen,       \
-                                   mode, MODE, flags)                          \
-static const EVP_CIPHER alg##_##mode = {                                       \
-    nid, blocksize, keybits / 8, ivlen, flags | EVP_CIPH_##MODE##_MODE         \
-};                                                                             \
-const EVP_CIPHER *EVP_##alg##_##mode(void)                                     \
-{                                                                              \
-    return &alg##_##mode;                                                      \
-}
-
-#define IMPLEMENT_EVP_CIPHER_CONST_modes(alg, nid, keybits, flags)                         \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_cbc, keybits, 16, 16, cbc, CBC, flags)   \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_ecb, keybits, 16, 0, ecb, ECB, flags)    \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_ctr, keybits, 1, 16, ctr, CTR, flags)    \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_ofb128, keybits, 1, 16, ofb, OFB, flags) \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_cfb128, keybits, 1, 16, cfb, CFB, flags) \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_cfb1, keybits, 1, 16, cfb1 ,CFB, flags)  \
-IMPLEMENT_EVP_CIPHER_CONST(alg, nid##_##keybits##_cfb8, keybits, 1, 16, cfb8, CFB, flags)
-
-#define IMPLEMENT_EVP_CIPHER_CONST_modes2(alg, nid, keybits, blocklen, ivlen, cbits, flags)   \
-IMPLEMENT_EVP_CIPHER_CONST2(alg, nid##_ecb, keybits, blocklen, 0, ecb, ECB, flags)            \
-IMPLEMENT_EVP_CIPHER_CONST2(alg, nid##_cbc, keybits, blocklen, ivlen, cbc, CBC, flags)        \
-IMPLEMENT_EVP_CIPHER_CONST2(alg, nid##_ofb##cbits, keybits, 1, ivlen, ofb, OFB, flags)        \
-IMPLEMENT_EVP_CIPHER_CONST2(alg, nid##_cfb##cbits, keybits, 1, ivlen, cfb##cbits, CFB, flags)
-
-
 #define EVP_C_DATA(kstruct, ctx) \
         ((kstruct *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 

@@ -8,6 +8,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /*
  * EVP_rc5_32_12_16_ecb()

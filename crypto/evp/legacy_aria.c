@@ -9,6 +9,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /*
  * EVP_aria_128_cbc()

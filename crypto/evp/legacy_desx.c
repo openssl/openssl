@@ -8,6 +8,7 @@
  */
 
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 /* EVP_desx_cbc() */
 IMPLEMENT_EVP_CIPHER_CONST2(desx, NID_desx_cbc, 192, 8, 8, cbc, CBC, 0)
