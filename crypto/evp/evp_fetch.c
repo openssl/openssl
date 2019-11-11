@@ -186,13 +186,9 @@ static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_evp_method_store(libctx)) == NULL)
         return NULL;
 
-    (void)ossl_method_store_fetch(store, meth_id, methdata->propquery,
-                                  &method);
-
-    if (method != NULL
-        && !methdata->refcnt_up_method(method)) {
-        method = NULL;
-    }
+    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
+                                 &method))
+        return NULL;
     return method;
 }
 
@@ -328,7 +324,6 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.names = name;
         mcmdata.propquery = properties;
         mcmdata.method_from_dispatch = new_method;
-        mcmdata.destruct_method = free_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
         if ((method = ossl_method_construct(libctx, operation_id,
@@ -343,10 +338,9 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
             if (name_id == 0)
                 name_id = ossl_namemap_name2num(namemap, name);
             meth_id = evp_method_id(operation_id, name_id);
-            ossl_method_store_cache_set(store, meth_id, properties, method);
+            ossl_method_store_cache_set(store, meth_id, properties, method,
+                                        up_ref_method, free_method);
         }
-    } else {
-        up_ref_method(method);
     }
 
     return method;

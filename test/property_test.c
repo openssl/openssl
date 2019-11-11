@@ -28,6 +28,15 @@ static int add_property_names(const char *n, ...)
     return res;
 }
 
+static int up_ref(void *p)
+{
+    return 1;
+}
+
+static void down_ref(void *p)
+{
+}
+
 static int test_property_string(void)
 {
     OSSL_METHOD_STORE *store;
@@ -242,7 +251,7 @@ static int test_register_deregister(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
-                                             NULL, NULL))) {
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -310,7 +319,7 @@ static int test_property(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
-                                             NULL, NULL))) {
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -350,10 +359,12 @@ static int test_query_cache_stochastic(void)
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!TEST_true(ossl_method_store_add(store, NULL, i, buf, "abc",
-                                             NULL, NULL))
-                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i))
+                                             &up_ref, &down_ref))
+                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i,
+                                                          &up_ref, &down_ref))
                 || !TEST_true(ossl_method_store_cache_set(store, i, "n=1234",
-                                                          "miss"))) {
+                                                          "miss", &up_ref,
+                                                          &down_ref))) {
             TEST_note("iteration %d", i);
             goto err;
         }

@@ -33,7 +33,9 @@ ossl_method_store_cache_get, ossl_method_store_cache_set
  int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
                                  const char *prop_query, void **method);
  int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
-                                 const char *prop_query, void *method);
+                                 const char *prop_query, void *method,
+                                 int (*method_up_ref)(void *),
+                                 void (*method_destruct)(void *));
 
 =head1 DESCRIPTION
 
@@ -95,6 +97,9 @@ The result, if any, is returned in I<method>.
 ossl_method_store_cache_set() sets a cache entry identified by I<nid> with the
 property query I<prop_query> in the I<store>.
 Future calls to ossl_method_store_cache_get() will return the specified I<method>.
+The I<method_up_ref> function is called to increment the
+reference count of the method and the I<method_destruct> function is called
+to decrement it.
 
 =head1 RETURN VALUES
 
