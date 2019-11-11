@@ -797,7 +797,6 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 
 int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    OSSL_PARAM rsa_params[2], *p = rsa_params;
     const char *name;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
@@ -821,16 +820,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
         name = EVP_MD_name(md);
     }
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (char *)name,
-                                            strlen(name) + 1);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, rsa_params);
+    return EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx, name, NULL);
 }
 
 int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
@@ -927,7 +917,6 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 
 int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    OSSL_PARAM rsa_params[2], *p = rsa_params;
     const char *name;
 
     if (ctx == NULL
@@ -959,16 +948,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
         name = EVP_MD_name(md);
     }
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (char *)name,
-                                            strlen(name) + 1);
-    *p++ = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, rsa_params);
+    return EVP_PKEY_CTX_set_rsa_mgf1_md_name(ctx, name, NULL);
 }
 
 int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
