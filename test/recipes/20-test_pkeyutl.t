@@ -15,7 +15,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_pkeyutl");
 
-plan tests => 6;
+plan tests => 10;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -68,3 +68,99 @@ SKIP: {
 }
 
 unlink 'signature.dat';
+
+sub tsignverify {
+    my $testtext = shift;
+    my $privkey = shift;
+    my $pubkey = shift;
+    my @extraopts = @_;
+
+    my $data_to_sign = srctop_file('test', 'README');
+    my $other_data = srctop_file('test', 'README.external');
+    my $sigfile = 'testpkeyutl.sig';
+
+    my @args = ();
+    plan tests => 4;
+
+    @args = ('openssl', 'pkeyutl', '-sign',
+             '-inkey', $privkey,
+             '-out', $sigfile,
+             '-in', $data_to_sign);
+    push(@args, @extraopts);
+    ok(run(app([@args])),
+       $testtext.": Generating signature");
+
+    @args = ('openssl', 'pkeyutl', '-verify',
+             '-inkey', $privkey,
+             '-sigfile', $sigfile,
+             '-in', $data_to_sign);
+    push(@args, @extraopts);
+    ok(run(app([@args])),
+       $testtext.": Verify signature with private key");
+
+    @args = ('openssl', 'pkeyutl', '-verify',
+             '-inkey', $pubkey, '-pubin',
+             '-sigfile', $sigfile,
+             '-in', $data_to_sign);
+    push(@args, @extraopts);
+    ok(run(app([@args])),
+       $testtext.": Verify signature with public key");
+
+    @args = ('openssl', 'pkeyutl', '-verify',
+             '-inkey', $pubkey, '-pubin',
+             '-sigfile', $sigfile,
+             '-in', $other_data);
+    push(@args, @extraopts);
+    ok(!run(app([@args])),
+       $testtext.": Expect failure verifying mismatching data");
+
+    unlink $sigfile;
+}
+
+SKIP: {
+    skip "RSA is not supported by this OpenSSL build", 1
+        if disabled("rsa");
+
+    subtest "RSA CLI signature generation and verification" => sub {
+        tsignverify("RSA",
+                    srctop_file("test","testrsa.pem"),
+                    srctop_file("test","testrsapub.pem"),
+                    "-rawin", "-digest", "sha256");
+    };
+}
+
+SKIP: {
+    skip "DSA is not supported by this OpenSSL build", 1
+        if disabled("dsa");
+
+    subtest "DSA CLI signature generation and verification" => sub {
+        tsignverify("DSA",
+                    srctop_file("test","testdsa.pem"),
+                    srctop_file("test","testdsapub.pem"),
+                    "-rawin", "-digest", "sha256");
+    };
+}
+
+SKIP: {
+    skip "ECDSA is not supported by this OpenSSL build", 1
+        if disabled("ec");
+
+    subtest "ECDSA CLI signature generation and verification" => sub {
+        tsignverify("ECDSA",
+                    srctop_file("test","testec-p256.pem"),
+                    srctop_file("test","testecpub-p256.pem"),
+                    "-rawin", "-digest", "sha256");
+    };
+}
+
+SKIP: {
+    skip "EdDSA is not supported by this OpenSSL build", 1
+        if disabled("ec");
+
+    subtest "EdDSA CLI signature generation and verification" => sub {
+        tsignverify("Ed25519",
+                    srctop_file("test","tested25519.pem"),
+                    srctop_file("test","tested25519pub.pem"),
+                    "-rawin");
+    };
+}
