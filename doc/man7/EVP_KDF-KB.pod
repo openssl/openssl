@@ -86,9 +86,9 @@ Label "label", and Context "context".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", strlen("secret"))
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                          "context", strlen("context"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", strlen("label"));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                          "context", strlen("context"));
  *p = OSSL_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
      error("EVP_KDF_CTX_set_params");
@@ -116,9 +116,9 @@ Label "label", and IV "sixteen bytes iv".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", strlen("secret"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                          "context", strlen("context"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", strlen("label"));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                          "context", strlen("context"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           iv, strlen(iv));
  *p = OSSL_PARAM_construct_end();
