@@ -9,7 +9,9 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_BLAKE2
+#ifdef OPENSSL_NO_BLAKE2
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <openssl/obj_mac.h>
 # include "crypto/evp.h"
