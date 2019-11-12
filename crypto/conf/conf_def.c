@@ -121,9 +121,9 @@ static int def_init_default(CONF *conf)
     if (conf == NULL)
         return 0;
 
+    memset(conf, 0, sizeof(*conf));
     conf->meth = &default_method;
     conf->meth_data = (void *)CONF_type_default;
-    conf->data = NULL;
 
     return 1;
 }
@@ -134,9 +134,9 @@ static int def_init_WIN32(CONF *conf)
     if (conf == NULL)
         return 0;
 
+    memset(conf, 0, sizeof(*conf));
     conf->meth = &WIN32_method;
     conf->meth_data = (void *)CONF_type_win32;
-    conf->data = NULL;
 
     return 1;
 }
