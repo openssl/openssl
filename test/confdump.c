@@ -51,10 +51,10 @@ static void dump_section(const char *name, const CONF *cnf)
 int main(int argc, char **argv)
 {
     long eline;
-    CONF *conf;
+    CONF *conf = NCONF_new(NCONF_default());
+    int ret = 1;
 
-    if ((conf = NCONF_new(NCONF_default())) != NULL
-        && NCONF_load(conf, argv[1], &eline)) {
+    if (conf != NULL && NCONF_load(conf, argv[1], &eline)) {
         int i;
 
         collect_all_sections(conf);
@@ -62,9 +62,10 @@ int main(int argc, char **argv)
             dump_section(sk_OPENSSL_CSTRING_value(section_names, i), conf);
         }
         sk_OPENSSL_CSTRING_free(section_names);
+        ret = 0;
     } else {
         ERR_print_errors_fp(stderr);
-        return 1;
     }
-    return 0;
+    NCONF_free(conf);
+    return ret;
 }
