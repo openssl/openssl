@@ -10,7 +10,7 @@ openssl/core.h - OpenSSL Core types
 
 =head1 DESCRIPTION
 
-The file F<< <openssl/core.h> >> defines a number of public types that
+The F<< <openssl/core.h> >> header defines a number of public types that
 are used to communicate between the OpenSSL libraries and
 implementation providers.
 These types are designed to minimise the need for intimate knowledge
