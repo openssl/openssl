@@ -210,7 +210,7 @@ Gets the length of an OAEP label when OAEP padding is in use.
 =back
 
 OP_asym_cipher_gettable_ctx_params() and OP_asym_cipher_settable_ctx_params()
-get a constant B<OSSL_PARAM> array that decribes the gettable and settable
+get a constant B<OSSL_PARAM> array that describes the gettable and settable
 parameters, i.e. parameters that can be used with OP_asym_cipherget_ctx_params()
 and OP_asym_cipher_set_ctx_params() respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
