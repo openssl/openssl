@@ -24,7 +24,7 @@ The supported parameters are:
 
 =over 4
 
-=item "properies" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
 =item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
 
@@ -84,9 +84,10 @@ This example derives a key using the AES-128-CBC cipher:
  if (EVP_KDF_set_params(kctx, params) <= 0)
      /* Error */
 
- if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
+ if (EVP_KDF_derive(kctx, out, outlen) <= 0)
      /* Error */
 
+ EVP_KDF_CTX_free(kctx);
 
 =head1 CONFORMING TO
 
