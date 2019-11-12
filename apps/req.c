@@ -101,10 +101,10 @@ const OPTIONS req_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
      "Specify engine to be used for key generation operations"},
+#endif
     {"in", OPT_IN, '<', "Input file"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
-#endif
 
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
