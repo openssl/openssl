@@ -51,7 +51,7 @@ algorithm that's identifiable with I<name>, otherwise 0.
 EVP_ASYM_CIPHER_provider() returns the provider that I<cipher> was fetched from.
 
 EVP_ASYM_CIPHER_do_all_provided() traverses all EVP_ASYM_CIPHERs implemented by
-all activated roviders in the given library context I<libctx>, and for each of
+all activated providers in the given library context I<libctx>, and for each of
 the implementations, calls the given function I<fn> with the implementation
 method and the given I<arg> as argument.
 
