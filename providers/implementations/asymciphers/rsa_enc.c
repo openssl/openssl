@@ -36,7 +36,7 @@ static OSSL_OP_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
- * We happen to know that our KEYMGMT simply passes DSA structures, so
+ * We happen to know that our KEYMGMT simply passes RSA structures, so
  * we use that here too.
  */
 
@@ -306,6 +306,10 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     if (p != NULL) {
         if (!OSSL_PARAM_get_int(p, &pad_mode))
             return 0;
+        /*
+         * PSS padding is for signatures only so is not compatible with
+         * asymmetric cipher use.
+         */
         if (pad_mode == RSA_PKCS1_PSS_PADDING)
             return 0;
         if (pad_mode == RSA_PKCS1_OAEP_PADDING && prsactx->oaep_md == NULL) {

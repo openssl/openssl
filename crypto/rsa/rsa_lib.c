@@ -767,7 +767,7 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 {
     OSSL_PARAM pad_params[2], *p = pad_params;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || pad_mode == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -814,11 +814,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
                                  EVP_PKEY_CTRL_RSA_OAEP_MD, 0, (void *)md);
 
-    if (md == NULL) {
-        name = "";
-    } else {
-        name = EVP_MD_name(md);
-    }
+    name = (md == NULL) ? "" : EVP_MD_name(md);
 
     return EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx, name, NULL);
 }
@@ -891,7 +887,7 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     /* 80 should be big enough */
     char name[80] = "";
 
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+    if (ctx == NULL || md == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -942,11 +938,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
                                  EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
                                  EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md);
 
-    if (md == NULL) {
-        name = "";
-    } else {
-        name = EVP_MD_name(md);
-    }
+    name = (md == NULL) ? "" : EVP_MD_name(md);
 
     return EVP_PKEY_CTX_set_rsa_mgf1_md_name(ctx, name, NULL);
 }
@@ -957,6 +949,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
     OSSL_PARAM rsa_params[3], *p = rsa_params;
 
     if (ctx == NULL
+            || mdname == NULL
             || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
                 && !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx))) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
