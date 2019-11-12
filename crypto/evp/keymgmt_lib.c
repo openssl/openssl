@@ -219,6 +219,10 @@ const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
     return keymgmt->importdomparam_types();
 }
 
+/*
+ * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * be a caller...
+ */
 const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->exportdomparam_types();
@@ -265,6 +269,10 @@ const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
     return keymgmt->importkey_types();
 }
 
+/*
+ * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * be a caller...
+ */
 const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->exportkey_types();

@@ -349,6 +349,10 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
                     (void *domparams, OSSL_CALLBACK *param_cb, void *cbarg))
 
 /* Key domain parameter discovery */
+/*
+ * TODO(v3.0) investigate if we need OP_keymgmt_exportdomparam_types.
+ * 'openssl provider' may be a caller...
+ */
 # define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     5
 # define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES     6
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
@@ -376,6 +380,10 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
                     (void *key, OSSL_CALLBACK *param_cb, void *cbarg))
 
 /* Key discovery */
+/*
+ * TODO(v3.0) investigate if we need OP_keymgmt_exportkey_types.
+ * 'openssl provider' may be a caller...
+ */
 # define OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES         15
 # define OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES         16
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
