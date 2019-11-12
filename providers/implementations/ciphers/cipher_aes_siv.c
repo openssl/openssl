@@ -49,9 +49,6 @@ static int siv_init(void *vctx, const unsigned char *key, size_t keylen,
 
     ctx->enc = enc;
 
-    if (iv != NULL)
-        return 0;
-
     if (key != NULL) {
         if (keylen != ctx->keylen) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
