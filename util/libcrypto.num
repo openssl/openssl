@@ -4434,15 +4434,6 @@ EVP_MAC_size                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_init                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_update                          ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_final                           ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_ctrl                            ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_vctrl                           ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_ctrl_str                        ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_str2ctrl                        ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_hex2ctrl                        ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_nid                             ?	3_0_0	NOEXIST::FUNCTION:
-EVP_get_macbyname                       ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_do_all                          ?	3_0_0	NOEXIST::FUNCTION:
-EVP_MAC_do_all_sorted                   ?	3_0_0	NOEXIST::FUNCTION:
 EVP_str2ctrl                            ?	3_0_0	EXIST::FUNCTION:
 EVP_hex2ctrl                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_supports_digest_nid            ?	3_0_0	EXIST::FUNCTION:
