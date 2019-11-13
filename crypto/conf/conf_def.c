@@ -107,7 +107,7 @@ static CONF *def_create(CONF_METHOD *meth)
 {
     CONF *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret != NULL)
         if (meth->init(ret) == 0) {
             OPENSSL_free(ret);
@@ -121,6 +121,7 @@ static int def_init_default(CONF *conf)
     if (conf == NULL)
         return 0;
 
+    memset(conf, 0, sizeof(*conf));
     conf->meth = &default_method;
     conf->meth_data = (void *)CONF_type_default;
 
@@ -133,6 +134,7 @@ static int def_init_WIN32(CONF *conf)
     if (conf == NULL)
         return 0;
 
+    memset(conf, 0, sizeof(*conf));
     conf->meth = &WIN32_method;
     conf->meth_data = (void *)CONF_type_win32;
 
