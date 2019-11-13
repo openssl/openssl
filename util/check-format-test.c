@@ -16,7 +16,7 @@
 /*@ cr character:  */
 /*@ non-printable ASCII character:  */
 /*@ non-ascii character: ä */
-/*@ whitespace at EOL: */ 
+/*@ space at EOL: */ 
 // /*@ end-of-line comment style not allowed for C90 */
 /*@ comment start: /* inside intra-line comment */
 /*@ multi-line comment with text on first line
@@ -29,7 +29,7 @@
 # define X          /*@ indent off by 1 in preprocessor directive */
 typedef struct s  { /*@ double space, flagged unless sloppy_space */
      enum {         /*@ indent off by 1 */
-          x = 1,    /*@ indent off by -1 or 1 */
+          x = 1,    /*@ hanging indent off by -1 or 1 */
            y,z      /*@ no space after first comma */
     } type ;        /*@ space before ; */
    union {          /*@ indent off by -1 */
@@ -54,7 +54,7 @@ fun() {             /*@ opening brace at end of function definition header */
     if(e+           /*@ no space before + */
        g*= 2        /*@ no space before *= */
        h %2         /*@ no space after % */
-        && 1)       /*@ indent off by 1 or -3 */
+        && 1)       /*@ hanging indent off by 1 or -3 */
        cmd;         /*@ indent off by -1 */
     while( e2)      /*@ space after ( */
          cmd2;      /*@ indent off by 1 */
@@ -68,5 +68,5 @@ x; }                /*@ text before closing brace */
 
 {                   /*@ unclosed brace */
 #if                 /*@ unclosed #if */
-                    /*@ empty line follows just before EOF: */
+                    /*@ space/empty line follows just before EOF: */
 

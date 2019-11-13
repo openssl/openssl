@@ -70,7 +70,9 @@ my $in_multiline_directive; # number of lines so far within multi-line preproces
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_multiline_comment;  # number of lines so far within multi-line comment
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
-my $num_complaints = 0;    # total number of issues found
+my $num_complaints = 0;        # total number of issues found
+my $num_SPC_complaints = 0;    # total number of whitespace issues found
+my $num_indent_complaints = 0; # total number of indentation issues found
 
 sub reset_file_state {
     $indent = 0;
@@ -94,6 +96,8 @@ sub complain_contents {
     my $contents = shift;
     print "$ARGV:$line:$msg$contents";
     $num_complaints++;
+    $num_SPC_complaints++ if $msg =~ /SPC/;
+    $num_indent_complaints++ if $msg =~ /indent/;
 }
 
 sub complain {
@@ -135,7 +139,7 @@ sub check_indent { # for lines outside multi-line comments and string literals
             }
             $allowed .= "}";
         }
-        complain("indent=$count!=$allowed")
+        complain("hanging indent=$count!=$allowed")
             if $count != $hanging_indent &&
                $count != $hanging_indent + $local_hanging_indent &&
                $count != $hanging_alt_indent &&
@@ -569,7 +573,7 @@ while(<>) { # loop over all lines of all input files
 
     if(eof) {
         # check for essentially empty line just before EOF
-        complain("empty line before EOF") if $contents =~ m/^\s*\\?\s*$/;
+        complain("SPC/empty line at EOF") if $contents =~ m/^\s*\\?\s*$/;
         $line = "EOF";
 
         # sanity-check balance of { .. } via final indent at end of file
@@ -582,4 +586,4 @@ while(<>) { # loop over all lines of all input files
     }
 }
 
-print "$num_complaints issues have been found by $0\n";
+print "$num_complaints ($num_indent_complaints indentation, $num_SPC_complaints whitespace) issues have been found by $0\n";
