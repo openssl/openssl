@@ -175,6 +175,8 @@ while(<>) { # loop over all lines of all input files
     $local_offset = 0;
     $local_hanging_indent = 0;
 
+    # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     # check indent within multi-line comments
     if($in_multiline_comment > 0) {
         complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
@@ -251,7 +253,8 @@ while(<>) { # loop over all lines of all input files
         $_ = $1; # anyway remove comment text (not preserving length)
     }
 
-    # detect intra-line whitespace nits
+    # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     if(1) {
         m/^\s*(#\s*)?(.*?)\s*$/;
         my $intra_line = $2 =~ s/([\+\-\*\/%\&\|\!<>=]|&&|\|\||<<|>>)=/=/gr  # treat op= as '=', simplifying matching below
@@ -275,6 +278,8 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
+    # empty lines, preprocessor directives, and characters/string iterals @@@@@@
+
     goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace except potentially a single backslash)
 
     # handle preprocessor directives
@@ -291,11 +296,11 @@ while(<>) { # loop over all lines of all input files
                      if $directive_count != $directive_indent;
         $directive_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
-        goto HANDLE_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
+        goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
         # TODO improve current mix of handling indents for normal C code and preprocessor directives
     }
 
-    # handle multi-line string literals
+    # handle multi-line string literals to avoid confusion on trailing '\'
     # this is not done for other uses of trailing '\' in order to be able to check layout of multi-line preprocessor directives
     if (defined $multiline_string) {
         $_ = $multiline_string.$_;
@@ -305,8 +310,10 @@ while(<>) { # loop over all lines of all input files
     }
     if (m/^(([^"]*"[^"]*")*[^"]*"[^"]*)\\\s*$/) { # trailing '\' in last string literal
         $multiline_string = $1;
-        goto LINE_FINISHED;
+        goto LINE_FINISHED; # TODO check indents not only for first line of multi-line string
     }
+
+    # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # set up local offsets to required indent
     if (m/^(.*?)\s*\\\s*$/) { # trailing '\' typically used in multi-line preprocessor directives such as macro definitions; multi-line string literals have already been handled
@@ -373,23 +380,32 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
+    # check required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
-
+    # adapt required indentation for following lines @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     my $outermost_level =
          $indent == 0 ||
         ($indent == INDENT_LEVEL && $in_multiline_directive > 0 &&
                                     !$multiline_macro_same_indent);
 
+    # adapt indent for following lines according to balance of braces
+    my $braces_balance = braces_balance($_);
+    $indent += $braces_balance * INDENT_LEVEL;
+    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0;
+    if ($indent < 0) { # sanity-check underflow due to closing braces
+        $indent = 0;
+        # complain(-$indent." too many }"); # already reported above
+    }
+
     # detect start of multi-line if/for/while condition and extra indent for one statement after if/else/for/do/while not followed by opening brace
-    my $multiline_condition_starting = 0;
     if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
         my ($head, $tail) = ($1, $4);
         my $parens_balance = parens_balance($_);
         if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
             if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
-                $multiline_condition_starting = 1;
                 $hanging_indent = $multiline_condition_indent = length($1);
             } else {
                 $extra_singular_indent += INDENT_LEVEL;
@@ -400,7 +416,6 @@ while(<>) { # loop over all lines of all input files
     # set multiline_value_indent and potentially set hanging_indent and hanging_indent in case of multi-line value (including enum), potentially set extra_singular_indent for multi-line typedefs
     # TODO update $in_enum also according to contents before matching '='
     my $terminator = $in_enum > 0 ? "," : ";";
-    my $multiline_value_starting = 0;
     s/(^\s*)typedef(\s*)(struct|union|enum)/"$1       $2$3"/e; # treat typedef followed by struct/union/enum as the latter, blinding it as space, preserving length
     s/[\!<>=]=/@@/g; # prevent matching (in-)equality on next line
     if (m/^(\s*)((return|enum|typedef|([^=]*)=)\s*)([^$terminator]*)\s*$/) { # multi-line value: return or enum or typedef or assignment 'LHS = ' without terminating ';' or ',' - TODO handle also more complex (e.g., multi-line) LHS of assignment
@@ -415,7 +430,6 @@ while(<>) { # loop over all lines of all input files
             if ($core =~ m/^typedef$/) {
                 $extra_singular_indent += INDENT_LEVEL;
             } else {
-                $multiline_value_starting = 1;
                 $multiline_value_indent = length($head) + INDENT_LEVEL;
                 if ($hanging_indent == 0) {
                     $hanging_indent = $hanging_alt_indent = $multiline_value_indent;
@@ -458,22 +472,14 @@ while(<>) { # loop over all lines of all input files
         $line_opening_brace = 0;
     }
 
-    # adapt indent for following lines according to balance of braces
-    my $braces_balance = braces_balance($_);
-    $indent += $braces_balance * INDENT_LEVEL;
-    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0 && !$multiline_value_starting && !$multiline_condition_starting; ### TODO improve by moving up, eliminating !$multiline_value_starting and !$multiline_condition_starting
-
-    # sanity-check underflow due to closing braces
-    if ($indent < 0) {
-        $indent = 0;
-        # complain(-$indent." too many }"); # already reported above
-    }
+    # TODO complain on missing empty line after local variable decls
 
     # check to determine whether inside enum, TODO possibly improve
     $in_enum += 1 if m/(^|\W)enum\s*\{[^\}]*$/;
     $in_enum += $braces_balance if $braces_balance < 0;
     $in_enum = 0 if $in_enum < 0;
 
+    # update open_parens and open_value_braces
     $open_parens += parens_balance($_);
     if($open_parens < 0) {
         complain(-$open_parens." too many )") ;
@@ -546,9 +552,7 @@ while(<>) { # loop over all lines of all input files
         $extra_singular_indent = 0 if m/;\s*$/; # trailing ';'
     }
 
-    # TODO complain on missing empty line after local variable decls
-
-  HANDLE_DIRECTIVE:
+  POSTPROCESS_DIRECTIVE:
     # on start of multi-line preprocessor directive, adapt indent
     if ($contents =~ # need to use original line contents because trailing \ may have been stripped above
         m/^(.*?)\s*\\\s*$/) { # trailing '\', typically used in macro definitions (or other preprocessor directives)
@@ -571,6 +575,8 @@ while(<>) { # loop over all lines of all input files
         $in_multiline_directive = 0;
     }
 
+    # post-processing at end of file @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
     if(eof) {
         # check for essentially empty line just before EOF
         complain("SPC/empty line at EOF") if $contents =~ m/^\s*\\?\s*$/;
@@ -586,4 +592,5 @@ while(<>) { # loop over all lines of all input files
     }
 }
 
-print "$num_complaints ($num_indent_complaints indentation, $num_SPC_complaints whitespace) issues have been found by $0\n";
+my $num_other_complaints = $num_complaints - $num_indent_complaints - $num_SPC_complaints;
+print "$num_complaints ($num_indent_complaints indentation, $num_SPC_complaints whitespace, $num_other_complaints other) issues have been found by $0\n";
