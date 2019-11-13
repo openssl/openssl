@@ -100,10 +100,6 @@ testssl("keyU.ss", $Ucert, $CAcert);
 # -----------
 # subtest functions
 sub testss {
-    open RND, ">>", ".rnd";
-    print RND "string to make the random number generator think it has randomness";
-    close RND;
-
     my @req_dsa = ("-newkey",
                    "dsa:".srctop_file("apps", "dsa1024.pem"));
     my $dsaparams = srctop_file("apps", "dsa1024.pem");
