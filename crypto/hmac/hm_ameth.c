@@ -41,7 +41,7 @@ static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 1;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 }
 

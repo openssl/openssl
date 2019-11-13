@@ -59,7 +59,7 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     return X509_NAME_get_index_by_OBJ(name, obj, lastpos);
 }
 

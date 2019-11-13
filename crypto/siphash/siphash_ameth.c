@@ -39,7 +39,7 @@ static void siphash_key_free(EVP_PKEY *pkey)
 static int siphash_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     /* nothing (including ASN1_PKEY_CTRL_DEFAULT_MD_NID), is supported */
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static int siphash_pkey_public_cmp(const EVP_PKEY *a, const EVP_PKEY *b)

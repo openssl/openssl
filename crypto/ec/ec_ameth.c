@@ -496,7 +496,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             return ecdh_cms_decrypt(arg2);
         else if (arg1 == 0)
             return ecdh_cms_encrypt(arg2);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
         *(int *)arg2 = CMS_RECIPINFO_AGREE;
@@ -520,7 +520,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
                               POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 

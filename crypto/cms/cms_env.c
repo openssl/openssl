@@ -67,7 +67,7 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
-    if (i == -2) {
+    if (i == OSSL_RET_UNSUPPORTED) {
         CMSerr(CMS_F_CMS_ENV_ASN1_CTRL,
                CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         return 0;

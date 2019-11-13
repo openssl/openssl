@@ -171,7 +171,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
                 OPENSSL_free(micstr);
                 continue;
             }
-            if (rv != -2)
+            if (rv != OSSL_RET_UNSUPPORTED)
                 goto err;
         }
         switch (md_nid) {

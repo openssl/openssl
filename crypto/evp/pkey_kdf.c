@@ -163,7 +163,7 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         name = OSSL_KDF_PARAM_SCRYPT_MAXMEM;
         break;
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (collector != NULL) {

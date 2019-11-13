@@ -25,7 +25,7 @@ int sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
     if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     if (sha1 == NULL)
         return 0;

@@ -427,7 +427,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
  bad_pad:
         RSAerr(RSA_F_PKEY_RSA_CTRL,
                RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     case EVP_PKEY_CTRL_GET_RSA_PADDING:
         *(int *)p2 = rctx->pad_mode;
@@ -437,18 +437,18 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
         if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
             *(int *)p2 = rctx->saltlen;
         } else {
             if (p1 < RSA_PSS_SALTLEN_MAX)
-                return -2;
+                return OSSL_RET_UNSUPPORTED;
             if (rsa_pss_restricted(rctx)) {
                 if (p1 == RSA_PSS_SALTLEN_AUTO
                     && ctx->operation == EVP_PKEY_OP_VERIFY) {
                     RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
-                    return -2;
+                    return OSSL_RET_UNSUPPORTED;
                 }
                 if ((p1 == RSA_PSS_SALTLEN_DIGEST
                      && rctx->min_saltlen > EVP_MD_size(rctx->md))
@@ -464,7 +464,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
         if (p1 < RSA_MIN_MODULUS_BITS) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_SIZE_TOO_SMALL);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         rctx->nbits = p1;
         return 1;
@@ -472,7 +472,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
         if (p2 == NULL || !BN_is_odd((BIGNUM *)p2) || BN_is_one((BIGNUM *)p2)) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_BAD_E_VALUE);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         BN_free(rctx->pub_exp);
         rctx->pub_exp = p2;
@@ -481,7 +481,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
         if (p1 < RSA_DEFAULT_PRIME_NUM || p1 > RSA_MAX_PRIME_NUM) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_PRIME_NUM_INVALID);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         rctx->primes = p1;
         return 1;
@@ -490,7 +490,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_OAEP_MD)
             *(const EVP_MD **)p2 = rctx->md;
@@ -519,7 +519,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING
             && rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_MGF1_MD);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_MGF1_MD) {
             if (rctx->mgf1md)
@@ -540,7 +540,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         OPENSSL_free(rctx->oaep_label);
         if (p2 && p1 > 0) {
@@ -555,7 +555,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         *(unsigned char **)p2 = rctx->oaep_label;
         return rctx->oaep_labellen;
@@ -579,10 +579,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_PEER_KEY:
         RSAerr(RSA_F_PKEY_RSA_CTRL,
                RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -613,7 +613,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
             pm = RSA_PKCS1_PSS_PADDING;
         } else {
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_UNKNOWN_PADDING_TYPE);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
     }
@@ -696,7 +696,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         return ret;
     }
 
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 /* Set PSS parameters when generating a key, if necessary */

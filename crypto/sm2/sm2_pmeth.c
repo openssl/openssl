@@ -225,7 +225,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 }
 
@@ -254,7 +254,7 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
         else if (strcmp(value, "named_curve") == 0)
             param_enc = OPENSSL_EC_NAMED_CURVE;
         else
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
     } else if (strcmp(type, "sm2_id") == 0) {
         return pkey_sm2_ctrl(ctx, EVP_PKEY_CTRL_SET1_ID,
@@ -276,7 +276,7 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
         return ret;
     }
 
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)

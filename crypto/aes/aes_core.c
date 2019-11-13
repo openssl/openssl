@@ -640,7 +640,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
     if (!userKey || !key)
         return -1;
     if (bits != 128 && bits != 192 && bits != 256)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     rk = key->rd_key;
 
@@ -1218,7 +1218,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
     if (!userKey || !key)
         return -1;
     if (bits != 128 && bits != 192 && bits != 256)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     rk = key->rd_key;
 

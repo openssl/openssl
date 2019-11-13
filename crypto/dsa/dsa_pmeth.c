@@ -111,13 +111,13 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     switch (type) {
     case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
         if (p1 < 256)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->nbits = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS:
         if (p1 != 160 && p1 != 224 && p1 && p1 != 256)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->qbits = p1;
         return 1;
 
@@ -161,9 +161,9 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_PEER_KEY:
         DSAerr(DSA_F_PKEY_DSA_CTRL,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -189,7 +189,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
         }
         return EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md);
     }
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)

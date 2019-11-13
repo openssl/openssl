@@ -337,7 +337,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 0;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -351,7 +351,7 @@ static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 2;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -716,7 +716,7 @@ static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     /* Only need to handle peer key for derivation */
     if (type == EVP_PKEY_CTRL_PEER_KEY)
         return 1;
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static const EVP_PKEY_METHOD ecx25519_pkey_meth = {
@@ -827,7 +827,7 @@ static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DIGESTINIT:
         return 1;
     }
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static const EVP_PKEY_METHOD ed25519_pkey_meth = {

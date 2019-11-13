@@ -34,7 +34,7 @@ static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
  not_supported:
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx)
@@ -53,7 +53,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
 
     if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_TYPE_FROMDATA) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ppkey == NULL)
@@ -106,7 +106,7 @@ int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
     if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
         EVPerr(EVP_F_EVP_PKEY_PARAMGEN_INIT,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     ctx->operation = EVP_PKEY_OP_PARAMGEN;
     if (!ctx->pmeth->paramgen_init)
@@ -123,7 +123,7 @@ int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
         EVPerr(EVP_F_EVP_PKEY_PARAMGEN,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_PARAMGEN) {
@@ -156,7 +156,7 @@ int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
     if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
         EVPerr(EVP_F_EVP_PKEY_KEYGEN_INIT,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     ctx->operation = EVP_PKEY_OP_KEYGEN;
     if (!ctx->pmeth->keygen_init)
@@ -174,7 +174,7 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
         EVPerr(EVP_F_EVP_PKEY_KEYGEN,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     if (ctx->operation != EVP_PKEY_OP_KEYGEN) {
         EVPerr(EVP_F_EVP_PKEY_KEYGEN, EVP_R_OPERATON_NOT_INITIALIZED);
@@ -270,7 +270,7 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     if (pkey->ameth == NULL || pkey->ameth->pkey_check == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CHECK,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     return pkey->ameth->pkey_check(pkey);
@@ -293,7 +293,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     if (pkey->ameth == NULL || pkey->ameth->pkey_public_check == NULL) {
         EVPerr(EVP_F_EVP_PKEY_PUBLIC_CHECK,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     return pkey->ameth->pkey_public_check(pkey);
@@ -316,7 +316,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     if (pkey->ameth == NULL || pkey->ameth->pkey_param_check == NULL) {
         EVPerr(EVP_F_EVP_PKEY_PARAM_CHECK,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     return pkey->ameth->pkey_param_check(pkey);

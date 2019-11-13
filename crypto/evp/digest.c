@@ -271,7 +271,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         int r;
         r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
                               EVP_PKEY_CTRL_DIGESTINIT, 0, ctx);
-        if (r <= 0 && (r != -2))
+        if (r <= 0 && (r != OSSL_RET_UNSUPPORTED))
             return 0;
     }
 #endif

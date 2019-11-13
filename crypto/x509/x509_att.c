@@ -28,7 +28,7 @@ int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
     const ASN1_OBJECT *obj = OBJ_nid2obj(nid);
 
     if (obj == NULL)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     return X509at_get_attr_by_OBJ(x, obj, lastpos);
 }
 

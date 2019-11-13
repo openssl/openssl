@@ -1106,7 +1106,7 @@ static int mac_test_ctrl_pkey(EVP_TEST *t, EVP_PKEY_CTX *pctx,
     if (p != NULL)
         *p++ = '\0';
     rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
-    if (rv == -2)
+    if (rv == OSSL_RET_UNSUPPORTED)
         t->err = "PKEY_CTRL_INVALID";
     else if (rv <= 0)
         t->err = "PKEY_CTRL_ERROR";
@@ -1448,7 +1448,7 @@ static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
     if (p != NULL)
         *p++ = '\0';
     rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
-    if (rv == -2) {
+    if (rv == OSSL_RET_UNSUPPORTED) {
         t->err = "PKEY_CTRL_INVALID";
         rv = 1;
     } else if (p != NULL && rv <= 0) {

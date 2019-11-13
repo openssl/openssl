@@ -474,7 +474,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_PKCS7_ENCRYPT:
         if (pkey_is_pss(pkey))
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         if (arg1 == 0)
             PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
         break;
@@ -488,7 +488,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
         if (pkey_is_pss(pkey))
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         if (arg1 == 0)
             return rsa_cms_encrypt(arg2);
         else if (arg1 == 1)
@@ -497,7 +497,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
         if (pkey_is_pss(pkey))
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         *(int *)arg2 = CMS_RECIPINFO_TRANS;
         return 1;
 #endif
@@ -517,7 +517,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 1;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 

@@ -38,7 +38,7 @@ int md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms)
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
     if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     if (mctx == NULL)
         return 0;

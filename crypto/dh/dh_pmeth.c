@@ -115,13 +115,13 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     switch (type) {
     case EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN:
         if (p1 < 256)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->prime_len = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN:
         if (dctx->use_dsa == 0)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->subprime_len = p1;
         return 1;
 
@@ -131,30 +131,30 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR:
         if (dctx->use_dsa)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->generator = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_TYPE:
 #ifdef OPENSSL_NO_DSA
         if (p1 != 0)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
 #else
         if (p1 < 0 || p1 > 2)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
 #endif
         dctx->use_dsa = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_RFC5114:
         if (p1 < 1 || p1 > 3 || dctx->param_nid != NID_undef)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->rfc5114_param = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_NID:
         if (p1 <= 0 || dctx->rfc5114_param != 0)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->param_nid = p1;
         return 1;
 
@@ -163,14 +163,14 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_KDF_TYPE:
-        if (p1 == -2)
+        if (p1 == OSSL_RET_UNSUPPORTED)
             return dctx->kdf_type;
 #ifdef OPENSSL_NO_CMS
         if (p1 != EVP_PKEY_DH_KDF_NONE)
 #else
         if (p1 != EVP_PKEY_DH_KDF_NONE && p1 != EVP_PKEY_DH_KDF_X9_42)
 #endif
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->kdf_type = p1;
         return 1;
 
@@ -184,7 +184,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DH_KDF_OUTLEN:
         if (p1 <= 0)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->kdf_outlen = (size_t)p1;
         return 1;
 
@@ -215,7 +215,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -233,7 +233,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         int len;
         len = atoi(value);
         if (len < 0 || len > 3)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->rfc5114_param = len;
         return 1;
     }
@@ -243,7 +243,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 
         if (nid == NID_undef) {
             DHerr(DH_F_PKEY_DH_CTRL_STR, DH_R_INVALID_PARAMETER_NAME);
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         dctx->param_nid = nid;
         return 1;
@@ -268,7 +268,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         pad = atoi(value);
         return EVP_PKEY_CTX_set_dh_pad(ctx, pad);
     }
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -346,7 +346,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
             break;
 
         default:
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         }
         EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
         return 1;

@@ -50,6 +50,8 @@
 extern "C" {
 #endif
 
+# define OSSL_RET_UNSUPPORTED   -2
+
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSLeay                  OpenSSL_version_num
 #  define SSLeay_version          OpenSSL_version

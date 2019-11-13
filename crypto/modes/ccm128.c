@@ -157,7 +157,7 @@ int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 
     ctx->blocks += ((len + 15) >> 3) | 1;
     if (ctx->blocks > (U64(1) << 61))
-        return -2;              /* too much data */
+        return OSSL_RET_UNSUPPORTED; /* too much data */
 
     while (len >= 16) {
 #if defined(STRICT_ALIGNMENT)
@@ -328,7 +328,7 @@ int CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
 
     ctx->blocks += ((len + 15) >> 3) | 1;
     if (ctx->blocks > (U64(1) << 61))
-        return -2;              /* too much data */
+        return OSSL_RET_UNSUPPORTED; /* too much data */
 
     if ((n = len / 16)) {
         (*stream) (inp, out, n, key, ctx->nonce.c, ctx->cmac.c);

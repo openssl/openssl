@@ -19,6 +19,7 @@
  */
 
 #include <openssl/e_os2.h>
+#include <openssl/crypto.h>
 #include "crypto/aria.h"
 
 #include <assert.h>
@@ -549,7 +550,7 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
         return -1;
     }
     if (bits != 128 && bits != 192 && bits != 256) {
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     rk = key->rd_key;
@@ -1130,7 +1131,7 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
     memcpy(w0.c, userKey, sizeof(w0));
     switch (bits) {
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     case 128:
         key->rounds = 12;
         ck1 = &c1;

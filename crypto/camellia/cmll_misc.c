@@ -9,6 +9,7 @@
 
 #include <openssl/opensslv.h>
 #include <openssl/camellia.h>
+#include <openssl/crypto.h>
 #include "cmll_local.h"
 
 int Camellia_set_key(const unsigned char *userKey, const int bits,
@@ -17,7 +18,7 @@ int Camellia_set_key(const unsigned char *userKey, const int bits,
     if (!userKey || !key)
         return -1;
     if (bits != 128 && bits != 192 && bits != 256)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     key->grand_rounds = Camellia_Ekeygen(bits, userKey, key->u.rd_key);
     return 0;
 }

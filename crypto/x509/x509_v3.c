@@ -31,7 +31,7 @@ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     return X509v3_get_ext_by_OBJ(x, obj, lastpos);
 }
 

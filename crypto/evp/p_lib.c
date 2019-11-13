@@ -41,7 +41,7 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
     if (pkey == NULL)
         return 0;
     if (pkey->ameth == NULL || pkey->ameth->pkey_security_bits == NULL)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     return pkey->ameth->pkey_security_bits(pkey);
 }
 
@@ -692,7 +692,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
 {
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     return pkey->ameth->pkey_ctrl(pkey, op, arg1, arg2);
 }
 
@@ -706,7 +706,7 @@ int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
     int rv, default_nid;
 
     rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SUPPORTS_MD_NID, nid, NULL);
-    if (rv == -2) {
+    if (rv == OSSL_RET_UNSUPPORTED) {
         /*
          * If there is a mandatory default digest and this isn't it, then
          * the answer is 'no'.

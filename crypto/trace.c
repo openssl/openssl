@@ -96,7 +96,7 @@ static long trace_ctrl(BIO *channel, int cmd, long argl, void *argp)
     default:
         break;
     }
-    return -2;                   /* Unsupported */
+    return OSSL_RET_UNSUPPORTED; /* Unsupported */
 }
 
 static int trace_free(BIO *channel)

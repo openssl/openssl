@@ -253,12 +253,12 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 return EC_KEY_get_flags(ec_key) & EC_FLAG_COFACTOR_ECDH ? 1 : 0;
             }
         } else if (p1 < -1 || p1 > 1)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->cofactor_mode = p1;
         if (p1 != -1) {
             EC_KEY *ec_key = ctx->pkey->pkey.ec;
             if (!ec_key->group)
-                return -2;
+                return OSSL_RET_UNSUPPORTED;
             /* If cofactor is 1 cofactor mode does nothing */
             if (BN_is_one(ec_key->group->cofactor))
                 return 1;
@@ -282,7 +282,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (p1 == -2)
             return dctx->kdf_type;
         if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_63)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->kdf_type = p1;
         return 1;
 
@@ -296,7 +296,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_EC_KDF_OUTLEN:
         if (p1 <= 0)
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         dctx->kdf_outlen = (size_t)p1;
         return 1;
 
@@ -347,7 +347,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
 }
@@ -374,7 +374,7 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
         else if (strcmp(value, "named_curve") == 0)
             param_enc = OPENSSL_EC_NAMED_CURVE;
         else
-            return -2;
+            return OSSL_RET_UNSUPPORTED;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
     } else if (strcmp(type, "ecdh_kdf_md") == 0) {
         const EVP_MD *md;
@@ -389,7 +389,7 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
         return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, co_mode);
     }
 
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)

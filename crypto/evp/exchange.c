@@ -161,7 +161,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
@@ -223,7 +223,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
  legacy:
     if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->pmeth->derive_init == NULL)
@@ -242,7 +242,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     if (ctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.exchprovctx == NULL)
@@ -251,7 +251,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     if (ctx->op.kex.exchange->set_peer == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     provkey = evp_keymgmt_export_to_provider(peer, ctx->keymgmt, 0);
@@ -269,7 +269,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         || ctx->pmeth->ctrl == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     if (ctx->operation != EVP_PKEY_OP_DERIVE
         && ctx->operation != EVP_PKEY_OP_ENCRYPT
@@ -331,7 +331,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     if (ctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
@@ -350,7 +350,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     if (ctx ==  NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)

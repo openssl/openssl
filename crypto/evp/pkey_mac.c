@@ -268,7 +268,8 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_CIPHER:
         switch (hctx->type) {
         case MAC_TYPE_RAW:
-            return -2;       /* The raw types don't support ciphers */
+            /* The raw types don't support ciphers */
+            return OSSL_RET_UNSUPPORTED;
         case MAC_TYPE_MAC:
             {
                 OSSL_PARAM params[3];
@@ -352,7 +353,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
              * control is unsupported.
              */
             if (verify != size)
-                return -2;
+                return OSSL_RET_UNSUPPORTED;
         }
         break;
     case EVP_PKEY_CTRL_SET_MAC_KEY:
@@ -415,7 +416,8 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             }
             break;
         case MAC_TYPE_MAC:
-            return -2;       /* The mac types don't support ciphers */
+            /* The mac types don't support ciphers */
+            return OSSL_RET_UNSUPPORTED;
         default:
             /* This should be dead code */
             return 0;
@@ -423,7 +425,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         break;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
     return 1;

@@ -334,7 +334,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
         ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
         if (ret > 0)
             return 1;
-        if (ret != -2) {
+        if (ret != OSSL_RET_UNSUPPORTED) {
             PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SET,
                      PKCS7_R_SIGNING_CTRL_FAILURE);
             return 0;
@@ -483,7 +483,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
     }
 
     ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_ENCRYPT, 0, p7i);
-    if (ret == -2) {
+    if (ret == OSSL_RET_UNSUPPORTED) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;

@@ -498,7 +498,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2);
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 }
 
@@ -512,14 +512,14 @@ static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             return dh_cms_decrypt(arg2);
         else if (arg1 == 0)
             return dh_cms_encrypt(arg2);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
         *(int *)arg2 = CMS_RECIPINFO_AGREE;
         return 1;
 #endif
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
 }

@@ -319,7 +319,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
@@ -377,7 +377,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_SIGN:
         if (signature->sign_init == NULL) {
             EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-            ret = -2;
+            ret = OSSL_RET_UNSUPPORTED;
             goto err;
         }
         ret = signature->sign_init(ctx->op.sig.sigprovctx, provkey);
@@ -385,7 +385,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_VERIFY:
         if (signature->verify_init == NULL) {
             EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-            ret = -2;
+            ret = OSSL_RET_UNSUPPORTED;
             goto err;
         }
         ret = signature->verify_init(ctx->op.sig.sigprovctx, provkey);
@@ -393,7 +393,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_VERIFYRECOVER:
         if (signature->verify_recover_init == NULL) {
             EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-            ret = -2;
+            ret = OSSL_RET_UNSUPPORTED;
             goto err;
         }
         ret = signature->verify_recover_init(ctx->op.sig.sigprovctx, provkey);
@@ -417,7 +417,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
             || (operation == EVP_PKEY_OP_VERIFYRECOVER
                 && ctx->pmeth->verify_recover == NULL)) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     switch (operation) {
@@ -462,7 +462,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_SIGN) {
@@ -481,7 +481,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
  
     if (ctx->pmeth == NULL || ctx->pmeth->sign == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     M_check_autoarg(ctx, sig, siglen, EVP_F_EVP_PKEY_SIGN)
@@ -501,7 +501,7 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFY) {
@@ -519,7 +519,7 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->verify == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     return ctx->pmeth->verify(ctx, sig, siglen, tbs, tbslen);
@@ -538,7 +538,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
@@ -557,7 +557,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->verify_recover == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER)
         return ctx->pmeth->verify_recover(ctx, rout, routlen, sig, siglen);
@@ -571,7 +571,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     evp_pkey_ctx_free_old_ops(ctx);
@@ -692,7 +692,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_ENCRYPT) {
@@ -730,7 +730,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (ctx->operation != EVP_PKEY_OP_DECRYPT) {

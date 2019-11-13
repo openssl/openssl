@@ -566,7 +566,7 @@ static int ossl_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         break;
 
     default:
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
 
     }
     return 1;
@@ -593,7 +593,7 @@ static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
         OPENSSL_free(key);
         return r;
     }
-    return -2;
+    return OSSL_RET_UNSUPPORTED;
 }
 
 static EVP_PKEY_METHOD *ossl_hmac_meth;

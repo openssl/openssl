@@ -254,7 +254,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
         BIOerr(BIO_F_BIO_READ_INTERN, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
@@ -327,7 +327,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 
     if ((b->method == NULL) || (b->method->bwrite == NULL)) {
         BIOerr(BIO_F_BIO_WRITE_INTERN, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
@@ -391,7 +391,7 @@ int BIO_puts(BIO *b, const char *buf)
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL)) {
         BIOerr(BIO_F_BIO_PUTS, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
@@ -436,7 +436,7 @@ int BIO_gets(BIO *b, char *buf, int size)
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (size < 0) {
@@ -516,7 +516,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 
     if ((b->method == NULL) || (b->method->ctrl == NULL)) {
         BIOerr(BIO_F_BIO_CTRL, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
@@ -544,7 +544,7 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
     if ((b->method == NULL) || (b->method->callback_ctrl == NULL)
             || (cmd != BIO_CTRL_SET_CALLBACK)) {
         BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {

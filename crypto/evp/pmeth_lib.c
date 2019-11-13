@@ -601,7 +601,7 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
     /* We use EVP_PKEY_CTX_ctrl return values */
     if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
@@ -626,7 +626,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
@@ -660,7 +660,7 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     /* TODO(3.0): Remove this eventually when no more legacy */
@@ -740,7 +740,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
     if (ctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
@@ -752,7 +752,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
     if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
         return -1;
@@ -774,7 +774,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
  doit:
     ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
-    if (ret == -2)
+    if (ret == OSSL_RET_UNSUPPORTED)
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
 
     return ret;
@@ -866,7 +866,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 {
     if (ctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
 
     if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
@@ -878,7 +878,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+        return OSSL_RET_UNSUPPORTED;
     }
     if (strcmp(name, "digest") == 0)
         return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG, EVP_PKEY_CTRL_MD,

@@ -239,7 +239,7 @@ int BIO_accept(int sock, char **ip_port)
     ret = BIO_accept_ex(sock, &res, 0);
     if (ret == (int)INVALID_SOCKET) {
         if (BIO_sock_should_retry(ret)) {
-            ret = -2;
+            ret = OSSL_RET_UNSUPPORTED;
             goto end;
         }
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
