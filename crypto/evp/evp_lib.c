@@ -403,7 +403,7 @@ int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
     rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
-    if (rv == EVP_CTRL_RET_UNSUPPORTED)
+    if (rv == OSSL_RET_UNSUPPORTED)
         goto legacy;
     return rv != 0 ? (int)v : -1;
     /* TODO (3.0) Remove legacy support */
@@ -486,7 +486,7 @@ int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &v);
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+    return ok != 0 ? (int)v : -1;
 }
 
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
@@ -517,7 +517,7 @@ int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &v);
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
 
-    return ok != 0 ? (int)v : EVP_CTRL_RET_UNSUPPORTED;
+    return ok != 0 ? (int)v : -1;
 }
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher)

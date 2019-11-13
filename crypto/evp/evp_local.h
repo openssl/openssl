@@ -11,9 +11,6 @@
 
 #include <openssl/core_numbers.h>
 
-#define EVP_CTRL_RET_UNSUPPORTED -1
-
-
 struct evp_md_ctx_st {
     const EVP_MD *reqdigest;    /* The original requested digest */
     const EVP_MD *digest;

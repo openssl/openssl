@@ -1082,7 +1082,7 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
-    int ret = EVP_CTRL_RET_UNSUPPORTED;
+    int ret = OSSL_RET_UNSUPPORTED;
     int set_params = 1;
     size_t sz = arg;
     unsigned int i;
@@ -1198,7 +1198,7 @@ legacy:
     ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
 
  end:
-    if (ret == EVP_CTRL_RET_UNSUPPORTED) {
+    if (ret == OSSL_RET_UNSUPPORTED) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL,
                EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
         return 0;

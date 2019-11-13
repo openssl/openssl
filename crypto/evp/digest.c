@@ -649,7 +649,7 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
 /* TODO(3.0): Remove legacy code below - only used by engines & DigestSign */
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
-    int ret = EVP_CTRL_RET_UNSUPPORTED;
+    int ret = OSSL_RET_UNSUPPORTED;
     int set_params = 1;
     size_t sz;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };

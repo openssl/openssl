@@ -18,7 +18,7 @@
 #include "evp_local.h"
 
 /*
- * EVP_CTRL_RET_UNSUPPORTED = -1 is the returned value from any ctrl function
+ * OSSL_RET_UNSUPPORTED = -2 is the returned value from any ctrl function
  * where the control command isn't supported, and an alternative code path
  * may be chosen.
  * Since these functions are used to implement ctrl functionality, we
@@ -28,7 +28,7 @@
     if (obj == NULL)                                                           \
         return 0;                                                              \
     if (obj->prov == NULL)                                                     \
-        return EVP_CTRL_RET_UNSUPPORTED;                                       \
+        return OSSL_RET_UNSUPPORTED;                                           \
     if (obj->func == NULL) {                                                   \
         errfunc();                                                             \
         return 0;                                                              \
