@@ -26,17 +26,12 @@ extern "C" {
 /*
  * convenience functions for CMP-specific logging via the trace API
  */
-
-/* Helper macros for CPP string composition */
-#  define OSSL_CMP_MSTR_HELPER(x) #x
-#  define OSSL_CMP_MSTR(x) OSSL_CMP_MSTR_HELPER(x)
-
 int  OSSL_CMP_log_open(void);
 void OSSL_CMP_log_close(void);
 #  define OSSL_CMP_LOG_PREFIX "CMP "
 /* in OSSL_CMP_LOG_START, cannot use OPENSSL_FUNC when expands to __func__ */
 #  define OSSL_CMP_LOG_START "%s:" OPENSSL_FILE ":" \
-    OSSL_CMP_MSTR(OPENSSL_LINE) ":" OSSL_CMP_LOG_PREFIX
+    OPENSSL_MSTR(OPENSSL_LINE) ":" OSSL_CMP_LOG_PREFIX
 #  define OSSL_CMP_alert(msg) OSSL_CMP_log(ALERT, msg)
 #  define OSSL_CMP_err(msg)   OSSL_CMP_log(ERROR, msg)
 #  define OSSL_CMP_warn(msg)  OSSL_CMP_log(WARN, msg)
