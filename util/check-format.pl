@@ -61,7 +61,7 @@ my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in
 my $hanging_indent;        # currently hanging indent, else 0
 my $hanging_alt_indent;    # alternative hanging indent (for assignments), used only if $hanging_indent != 0
 my $extra_singular_indent; # extra indent for just one statement
-my $multiline_condition_indent; # special indent in condition of if/for/whilee, used only if $hanging_indent != 0
+my $multiline_condition_indent; # special indent in condition of if/for/while, used only if $hanging_indent != 0
 my $multiline_value_indent;# special indent at LHS of assignment or after return or enum for multi-line value
 my $open_parens;           # number of parens open up to current line
 my $open_value_braces;     # number of braces open up to current line, used only if $multiline_value_indent != 0
@@ -359,7 +359,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     if ($sloppy_expr) {
-        # potentially reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of the paren/brace matching
+        # potentially reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of indent updates according to paren/brace balance
         if ($hanging_indent != 0 && $count >= # actual indent (count) is at least at minimum:
                 max($indent + $extra_singular_indent + $local_offset,
                     max($multiline_condition_indent, $multiline_value_indent))
@@ -378,24 +378,40 @@ while(<>) { # loop over all lines of all input files
         ($indent == INDENT_LEVEL && $in_multiline_directive > 0 &&
                                     !$multiline_macro_same_indent);
 
+    # detect start of multi-line if/for/while condition and extra indent for one statement after if/else/for/do/while not followed by opening brace
+    my $multiline_condition_starting = 0;
+    if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
+        my ($head, $tail) = ($1, $4);
+        my $parens_balance = parens_balance($_);
+        if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
+            if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
+                $multiline_condition_starting = 1;
+                $hanging_indent = $multiline_condition_indent = length($1);
+            } else {
+                $extra_singular_indent += INDENT_LEVEL;
+            }
+        }
+    }
+
     # set multiline_value_indent and potentially set hanging_indent and hanging_indent in case of multi-line value (including enum), potentially set extra_singular_indent for multi-line typedefs
     # TODO update $in_enum also according to contents before matching '='
     my $terminator = $in_enum > 0 ? "," : ";";
     my $multiline_value_starting = 0;
     s/(^\s*)typedef(\s*)(struct|union|enum)/"$1       $2$3"/e; # treat typedef followed by struct/union/enum as the latter, blinding it as space, preserving length
     s/[\!<>=]=/@@/g; # prevent matching (in-)equality on next line
-    if (m/^(\s*)((([^=]*)(=|return|enum|typedef))\s*)([^$terminator]*)\s*$/) { # multi-line value: assignment "LHS = " or return or enum or typedef without terminating ';' or ',' - TODO handle also more complex (e.g., multi-line) LHS of assignment
-        $multiline_value_starting = 1;
+    if (m/^(\s*)((return|enum|typedef|([^=]*)=)\s*)([^$terminator]*)\s*$/) { # multi-line value: return or enum or typedef or assignment 'LHS = ' without terminating ';' or ',' - TODO handle also more complex (e.g., multi-line) LHS of assignment
         my $head = $1;
         my $mid = $2;
-        my $core = $5;
-        my $tail = $6;
+        my $core = $3;
+        my $tail = $5;
         $tail =~ m/^([^\{]*\{)/; # first opening brace '{' after $mid
         my $tail_brace = $1;
-        if ($open_parens + parens_balance($mid) == 0) { # otherwise nested assignment
-            if ($core =~ m/typedef/) {
+        if ($multiline_condition_indent == 0 && $multiline_value_indent == 0 &&
+            $open_parens + parens_balance($mid) == 0) { # otherwise nested assignment
+            if ($core =~ m/^typedef$/) {
                 $extra_singular_indent += INDENT_LEVEL;
             } else {
+                $multiline_value_starting = 1;
                 $multiline_value_indent = length($head) + INDENT_LEVEL;
                 if ($hanging_indent == 0) {
                     $hanging_indent = $hanging_alt_indent = $multiline_value_indent;
@@ -441,7 +457,7 @@ while(<>) { # loop over all lines of all input files
     # adapt indent for following lines according to balance of braces
     my $braces_balance = braces_balance($_);
     $indent += $braces_balance * INDENT_LEVEL;
-    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0 && !$multiline_value_starting;
+    $hanging_indent += $braces_balance * INDENT_LEVEL if $hanging_indent != 0 && $multiline_value_indent != 0 && !$multiline_value_starting && !$multiline_condition_starting; ### TODO improve by moving up, eliminating !$multiline_value_starting and !$multiline_condition_starting
 
     # sanity-check underflow due to closing braces
     if ($indent < 0) {
@@ -472,19 +488,6 @@ while(<>) { # loop over all lines of all input files
         $hanging_indent = 0;
     }
 
-    # detect start of multi-line if/for/while condition and extra indent for one statement after if/else/for/do/while not followed by opening brace
-    if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while)((\W|$).*)$/) {
-        my ($head, $tail) = ($1, $4);
-        my $parens_balance = parens_balance($_);
-        if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
-            if (m/^(\s*((\}\s*)?(else\s*)?if|for|while)\s*\(?)/ && $parens_balance > 0) {
-                $hanging_indent = $multiline_condition_indent = length($1);
-            } else {
-                $extra_singular_indent += INDENT_LEVEL;
-            }
-        }
-    }
-
     # adapt hanging_indent and hanging_alt_indent
   MATCH_PAREN:
     if (m/^(.*)\(([^\(]*)$/) { # last (remaining) '(' - TODO treat '[' ']' and '?' ':' analogously
@@ -497,7 +500,7 @@ while(<>) { # loop over all lines of all input files
         $hanging_indent = $hanging_alt_indent = length($head) + 1; # TODO treat nested closing parens
     } elsif ($multiline_value_indent != 0 && m/^(.*)\{((\s*)[^\s\{][^\{]*\s*)$/) { # last (remaining) '{' followed by non-space: struct initializer
         my $head = $1;
-        my $space = $2;
+        my $space = $3;
         my $tail = $3;
         if ($tail =~ m/([^\}]*)\}(.*)/) {
             $_ = "$head@".($1 =~ tr/ /@/cr)."@$2"; # blind contents from '{' up to matching '}', preserving length
@@ -509,7 +512,7 @@ while(<>) { # loop over all lines of all input files
     if ($hanging_indent != 0) {
         my $trailing_opening_brace = m/\{\s*$/;
         my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
-        my $hanging_end = $multiline_value_starting == 0 &&
+        my $hanging_end =
             $multiline_condition_indent != 0
             ? ($open_parens == 0 &&
                ($open_value_braces == 0 || ($open_value_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
