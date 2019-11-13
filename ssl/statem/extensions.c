@@ -950,7 +950,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      */
     if (s->server) {
         /* TODO(OpenSSL1.2) revisit !sent case */
-        if (sent && ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
+        if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
             s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
