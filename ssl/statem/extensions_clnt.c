@@ -1871,6 +1871,17 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
+#ifndef OPENSSL_NO_QUIC
+        /*
+         * QUIC server must send 0xFFFFFFFF or it's a PROTOCOL_VIOLATION
+         * per draft-ietf-quic-tls-24 S4.5
+         */
+        if (s->quic_method != NULL && max_early_data != 0xFFFFFFFF) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INVALID_MAX_EARLY_DATA);
+            return 0;
+        }
+#endif
+
         s->session->ext.max_early_data = max_early_data;
 
         return 1;
