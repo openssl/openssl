@@ -264,7 +264,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     if (!b->init) {
         BIOerr(BIO_F_BIO_READ_INTERN, BIO_R_UNINITIALIZED);
-        return -2;
+        return -2;               /* shouldn't this be -1? */
     }
 
     ret = b->method->bread(b, data, dlen, readbytes);
@@ -337,7 +337,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 
     if (!b->init) {
         BIOerr(BIO_F_BIO_WRITE_INTERN, BIO_R_UNINITIALIZED);
-        return -2;
+        return -2;               /* shouldn't this be -1? */
     }
 
     ret = b->method->bwrite(b, data, dlen, written);
@@ -402,7 +402,7 @@ int BIO_puts(BIO *b, const char *buf)
 
     if (!b->init) {
         BIOerr(BIO_F_BIO_PUTS, BIO_R_UNINITIALIZED);
-        return -2;
+        return -2;               /* shouldn't this be -1? */
     }
 
     ret = b->method->bputs(b, buf);
@@ -452,7 +452,7 @@ int BIO_gets(BIO *b, char *buf, int size)
 
     if (!b->init) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNINITIALIZED);
-        return -2;
+        return -2;               /* shouldn't this be -1? */
     }
 
     ret = b->method->bgets(b, buf, size);
