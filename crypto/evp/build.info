@@ -17,7 +17,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c \
         pkey_mac.c exchange.c \
-        legacy_sha.c legacy_md5_sha1.c legacy_blake2.c
+        legacy_sha.c legacy_md5_sha1.c
 
 IF[{- !$disabled{md2} -}]
   SOURCE[../../libcrypto]=legacy_md2.c
@@ -31,6 +31,10 @@ ENDIF
 IF[{- !$disabled{mdc2} -}]
   SOURCE[../../libcrypto]=legacy_mdc2.c
 ENDIF
+IF[{- !$disabled{blake2} -}]
+  SOURCE[../../libcrypto]=legacy_blake2.c
+ENDIF
+
 
 SOURCE[../../providers/libfips.a]=$COMMON
 
