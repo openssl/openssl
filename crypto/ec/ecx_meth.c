@@ -163,6 +163,7 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
                       KEY_OP_PUBLIC);
 }
 
+/* -1 is a valid return value, so we return -2 for error */
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     const ECX_KEY *akey = a->pkey.ecx;

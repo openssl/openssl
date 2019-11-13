@@ -166,6 +166,7 @@ static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     return 0;
 }
 
+/* -1 is a valid return value, so we return -2 for error */
 static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     int r;
@@ -316,6 +317,7 @@ static int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     return 0;
 }
 
+/* -1 is a valid return value, so we return -2 for error */
 static int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec),

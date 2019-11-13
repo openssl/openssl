@@ -513,6 +513,7 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     return 0;
 }
 
+/* Because -1 is a valid return value, this function returns -2 as error */
 int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)
 {
     struct tm stm, ttm;
@@ -544,6 +545,7 @@ int ASN1_TIME_normalize(ASN1_TIME *t)
     return asn1_time_from_tm(t, &tm, V_ASN1_UNDEF) != NULL;
 }
 
+/* Because -1 is a valid return value, this function returns -2 as error */
 int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 {
     int day, sec;

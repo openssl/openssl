@@ -90,6 +90,7 @@ int CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri,
     return 1;
 }
 
+/* -1 is a valid return value, so we use -2 for error here */
 int CMS_RecipientInfo_kari_orig_id_cmp(CMS_RecipientInfo *ri, X509 *cert)
 {
     CMS_OriginatorIdentifierOrKey *oik;

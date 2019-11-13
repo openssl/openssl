@@ -267,6 +267,7 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
     return cms_SignerIdentifier_get0_signer_id(ktri->rid, keyid, issuer, sno);
 }
 
+/* -1 is a valid return value, so we use -2 for error here */
 int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert)
 {
     if (ri->type != CMS_RECIPINFO_TRANS) {
@@ -440,6 +441,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
 /* Key Encrypted Key (KEK) RecipientInfo routines */
 
+/* -1 is a valid return value, so we use -2 for error here */
 int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
                                    const unsigned char *id, size_t idlen)
 {

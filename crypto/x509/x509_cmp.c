@@ -154,6 +154,7 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv;
 }
 
+/* -1 is a valid return value, so we return -2 for error */
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {
     int ret;

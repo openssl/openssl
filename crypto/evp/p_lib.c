@@ -119,6 +119,13 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
+/*
+ * Return values:
+ *  1: match
+ *  0: key type match, but not key contents
+ * -1: key type mismatch
+ * -2: key type match, comparison otherwise unsupported
+ */
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     if (a->type != b->type)

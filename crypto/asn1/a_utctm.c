@@ -69,6 +69,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     return asn1_time_from_tm(s, ts, V_ASN1_UTCTIME);
 }
 
+/* Because -1 is a valid return value, this function returns -2 as error */
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 {
     struct tm stm, ttm;
