@@ -19,10 +19,6 @@ plan tests => 13;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
-open RND, ">>", ".rnd";
-print RND "string to make the random number generator think it has randomness";
-close RND;
-
 # What type of key to generate?
 my @req_new;
 if (disabled("rsa")) {

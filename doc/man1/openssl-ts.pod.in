@@ -403,15 +403,23 @@ section can be overridden with the B<-section> command line switch. (Optional)
 
 =item B<oid_file>
 
-See L<openssl-ca(1)> for description. (Optional)
+This specifies a file containing additional B<OBJECT IDENTIFIERS>.
+Each line of the file should consist of the numerical form of the
+object identifier followed by white space then the short name followed
+by white space and finally the long name. (Optional)
 
 =item B<oid_section>
 
-See L<openssl-ca(1)> for description. (Optional)
+This specifies a section in the configuration file containing extra
+object identifiers. Each line should consist of the short name of the
+object identifier followed by B<=> and the numerical form. The short
+and long names are the same when this option is used. (Optional)
 
 =item B<RANDFILE>
 
-See L<openssl-ca(1)> for description. (Optional)
+At startup the specified file is loaded into the random number generator,
+and at exit 256 bytes will be written to it. (Note: Using a RANDFILE is
+not necessary anymore, see the L</HISTORY> section.
 
 =item B<serial>
 
@@ -643,6 +651,13 @@ More testing is needed, I have done only some basic tests (see
 test/testtsa).
 
 =back
+
+=head1 HISTORY
+
+OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
+seeding mechanism. The new seeding mechanism makes it dispensable to
+define a RANDFILE for saving and restoring randomness. This option is
+retained mainly for compatibility reasons.
 
 =head1 SEE ALSO
 

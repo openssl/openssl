@@ -592,8 +592,6 @@ Sample configuration file prompting for field values:
 Sample configuration containing all field values:
 
 
- RANDFILE               = $ENV::HOME/.rnd
-
  [ req ]
  default_bits           = 2048
  default_keyfile        = keyfile.pem

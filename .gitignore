@@ -124,7 +124,6 @@ doc/man1/openssl-x509.pod
 /out32dll.dbg
 /inc32
 /MINFO
-/ms/.rnd
 /ms/bcb.mak
 /ms/libeay32.def
 /ms/nt.mak

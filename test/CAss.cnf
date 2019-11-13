@@ -3,8 +3,6 @@
 # This is mostly being used for generation of certificate requests.
 #
 
-RANDFILE		= ./.rnd
-
 ####################################################################
 [ req ]
 default_bits		= 2048
@@ -43,7 +41,6 @@ certificate	= $dir/cacert.pem 	# The CA certificate
 serial		= $dir/serial 		# The current serial number
 crl		= $dir/crl.pem 		# The current CRL
 private_key	= $dir/private/cakey.pem# The private key
-RANDFILE	= $dir/private/.rand	# private random number file
 
 x509_extensions	= v3_ca			# The extensions to add to the cert
 

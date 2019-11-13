@@ -3,8 +3,6 @@
 # This is mostly being used for generation of certificate requests.
 #
 
-RANDFILE		= ./.rnd
-
 ####################################################################
 [ req ]
 default_bits		= 2048

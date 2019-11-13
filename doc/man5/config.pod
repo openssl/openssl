@@ -416,7 +416,6 @@ mentioned above.
  # This is the default section.
 
  HOME=/temp
- RANDFILE= ${ENV::HOME}/.rnd
  configdir=$ENV::HOME/config
 
  [ section_one ]

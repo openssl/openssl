@@ -4,8 +4,6 @@
 #
 # hacked by iang to do DSA certs - CA
 
-RANDFILE              = ./.rnd
-
 ####################################################################
 [ req ]
 distinguished_name    = req_distinguished_name
