@@ -1026,17 +1026,31 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
-    int ok;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    size_t len = keylen;
+    if (c->cipher->prov != NULL) {
+        int ok;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t len = keylen;
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
-    ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
+        if (EVP_CIPHER_CTX_key_length(c) == keylen)
+            return 1;
 
-    if (ok != EVP_CTRL_RET_UNSUPPORTED)
-        return ok;
+        /* Check the cipher actually understands this parameter */
+        if (OSSL_PARAM_locate_const(EVP_CIPHER_settable_ctx_params(c->cipher),
+                                    OSSL_CIPHER_PARAM_KEYLEN) == NULL)
+            return 0;
+
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &len);
+        ok = evp_do_ciph_ctx_setparams(c->cipher, c->provctx, params);
+
+        return ok > 0 ? 1 : 0;
+    }
 
     /* TODO(3.0) legacy code follows */
+
+    /*
+     * Note there have never been any built-in ciphers that define this flag
+     * since it was first introduced.
+     */
     if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
         return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
     if (EVP_CIPHER_CTX_key_length(c) == keylen)
