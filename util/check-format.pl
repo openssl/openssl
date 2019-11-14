@@ -61,8 +61,8 @@ my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in
 my $hanging_indent;        # current hanging indent, which may be adapted during multi-line expressions etc., else 0
 my $hanging_alt_indent;    # alternative hanging indent, which may be adapted during multi-line expressions, e.g., at RHS of assignments, used only if $hanging_indent != 0
 my $extra_singular_indent; # extra indent for just one hanging statement or expression or typedef
-my $multiline_condition_indent; # special indent in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
-my $hanging_expr_indent;   # special indent at LHS of assignment or behind return or enum for multi-line expression
+my $hanging_expr_indent;   # special indent at LHS of assignment or behind return or enum for multi-line expression, used only if $hanging_indent != 0
+my $hanging_expr_stmt_indent; # special indent in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
 my $open_parens;           # number of parens open up to current line
 my $open_value_braces;     # number of braces open up to current line, used only if $hanging_expr_indent != 0
 my $in_enum;               # used to determine terminator of assignment
@@ -83,7 +83,7 @@ sub reset_file_state {
     $line_opening_brace = 0;
     $hanging_indent = 0;
     $extra_singular_indent = 0;
-    $multiline_condition_indent = 0;
+    $hanging_expr_stmt_indent = 0;
     $hanging_expr_indent = 0;
     $open_parens = 0;
     $open_value_braces = 0;
@@ -369,7 +369,7 @@ while(<>) { # loop over all lines of all input files
         # potentially reduce hanging indent to adapt to given code. This prefers false negatives over false positives that would occur due to incompleteness of indent updates according to paren/brace balance
         if ($hanging_indent != 0 && $count >= # actual indent (count) is at least at minimum:
                 max($indent + $extra_singular_indent + $local_offset,
-                    max($multiline_condition_indent, $hanging_expr_indent))
+                    max($hanging_expr_stmt_indent, $hanging_expr_indent))
            ) {
             $hanging_indent     = $count if $count < $hanging_indent;
             $hanging_alt_indent = $count if $count < $hanging_alt_indent;
@@ -403,7 +403,7 @@ while(<>) { # loop over all lines of all input files
 #        if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
             if (m/^(\s*((\}\s*)?(else\s*)?if|for|while|switch)\s*\(?)/ # this can match also terminating 'while' after 'do', but no problem because there will be a ';' thereafter
                 && parens_balance($tail) > 0) { # typically: trailing '('
-                $hanging_indent = $multiline_condition_indent = length($1);
+                $hanging_indent = $hanging_expr_stmt_indent = length($1);
             } else {
                 $extra_singular_indent += INDENT_LEVEL; # hanging statement or condition
             }
@@ -420,7 +420,7 @@ while(<>) { # loop over all lines of all input files
         my $core = $3;
         $tail =~ m/^([^\{]*\{)/; # first opening brace '{' after $mid
         my $tail_brace = $1;
-        if ($multiline_condition_indent == 0 && $hanging_expr_indent == 0 &&
+        if ($hanging_expr_stmt_indent == 0 && $hanging_expr_indent == 0 &&
             $open_parens + parens_balance($mid) == 0) { # otherwise nested assignment
             if ($core =~ m/^typedef$/) {
                 $extra_singular_indent += INDENT_LEVEL;
@@ -499,7 +499,7 @@ while(<>) { # loop over all lines of all input files
         my $trailing_opening_brace = m/\{\s*$/;
         my $trailing_terminator = $in_enum > 0 ? m/,\s*$/ : m/;\s*$/;
         my $hanging_end =
-            $multiline_condition_indent != 0
+            $hanging_expr_stmt_indent != 0
             ? ($open_parens == 0 &&
                ($open_value_braces == 0 || ($open_value_braces == 1 && $trailing_opening_brace))) # this checks for end of multi-line condition
             : ($open_parens == 0 && $open_value_braces == 0 &&
@@ -507,12 +507,12 @@ while(<>) { # loop over all lines of all input files
         if ($hanging_end) {
             # reset hanging indents
             $hanging_indent = 0;
-            if ($multiline_condition_indent != 0 && !$trailing_opening_brace) {
+            if ($hanging_expr_stmt_indent != 0 && !$trailing_opening_brace) {
                 $extra_singular_indent += INDENT_LEVEL; # switch over from multi-line condition to hanging statement
             } # note that else any $extra_singular_indent is retained
 
             # TODO check if really not needed any more:
-            # if ($multiline_condition_indent != 0) {
+            # if ($hanging_expr_stmt_indent != 0) {
             #     $open_value_braces = 0;
             # }
         }
@@ -541,7 +541,7 @@ while(<>) { # loop over all lines of all input files
         complain("$open_parens open (")       if $open_parens != 0;
         complain("$open_value_braces open {") if $open_value_braces != 0 && $hanging_expr_indent != 0;
         $open_value_braces = 0;
-        $multiline_condition_indent = 0;
+        $hanging_expr_stmt_indent = 0;
         $hanging_expr_indent = 0;
         # reset extra_singular_indent on terminating ';'
         $extra_singular_indent = 0 if m/;\s*$/; # trailing ';'
