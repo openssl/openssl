@@ -139,6 +139,16 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL) {
+        size_t keylen;
+
+        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        ctx->base.keylen = keylen;
+    }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALG_ID);
     if (p != NULL) {
         ASN1_TYPE *type = NULL;
@@ -176,6 +186,7 @@ OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(rc2)
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(rc2)
+OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
 OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc2)
 

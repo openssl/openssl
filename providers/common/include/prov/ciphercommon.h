@@ -118,8 +118,8 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { 0, NULL }                                                                \
 };
 
-#define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
-                                 blkbits, ivbits, typ)                         \
+#define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
+                                       kbits, blkbits, ivbits, typ)            \
 static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
@@ -137,6 +137,11 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \
+
+#define IMPLEMENT_generic_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
+                                 blkbits, ivbits, typ)                         \
+IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags, kbits,       \
+                               blkbits, ivbits, typ)                           \
 IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,        \
                               blkbits, ivbits, typ)
 
@@ -251,7 +256,6 @@ const OSSL_PARAM * name##_gettable_ctx_params(void)                            \
 
 #define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(name)                         \
 static const OSSL_PARAM name##_known_settable_ctx_params[] = {                 \
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),                         \
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),                          \
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),
 #define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(name)                           \

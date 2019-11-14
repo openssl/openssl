@@ -89,7 +89,6 @@ const OSSL_PARAM *cipher_aead_gettable_ctx_params(void)
 }
 
 static const OSSL_PARAM cipher_aead_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
@@ -361,16 +360,6 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         ctx->num = num;
-    }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL) {
-        size_t keylen;
-
-        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        ctx->keylen = keylen;
     }
     return 1;
 }
