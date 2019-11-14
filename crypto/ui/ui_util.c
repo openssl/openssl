@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/pem.h>         /* PEM_def_callback() */
 #include "internal/thread_once.h"
 #include "ui_local.h"
 
@@ -156,7 +157,7 @@ UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag)
         return NULL;
     }
     data->rwflag = rwflag;
-    data->cb = cb;
+    data->cb = cb != NULL ? cb : PEM_def_callback;
 
     return ui_method;
 }
