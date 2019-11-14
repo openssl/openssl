@@ -36,6 +36,10 @@ matrix:
           arch: arm64
           compiler: gcc
           env: CONFIG_OPTS="--strict-warnings"
+        - os: linux
+          arch: s390x
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings"
         - os: linux-ppc64le
           sudo: false
           compiler: clang
