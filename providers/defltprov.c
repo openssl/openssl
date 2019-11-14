@@ -74,7 +74,7 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
  * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
  * we have used historically.
  *
- * Algorithm names are case insenstive, but we use all caps in our "canoncial"
+ * Algorithm names are case insensitive, but we use all caps in our "canonical"
  * names for consistency.
  */
 static const OSSL_ALGORITHM deflt_digests[] = {
