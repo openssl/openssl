@@ -76,7 +76,8 @@ static int cipher_hw_aesni_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW aesni_##mode = {                                   \
     cipher_hw_aesni_initkey,                                                   \
-    cipher_hw_aesni_##mode                                                     \
+    cipher_hw_aesni_##mode,                                                    \
+    cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if (AESNI_CAPABLE)                                                             \

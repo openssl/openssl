@@ -84,8 +84,8 @@ static ossl_inline int aes_generic_ocb_cipher(PROV_AES_OCB_CTX *ctx,
 static ossl_inline int aes_generic_ocb_copy_ctx(PROV_AES_OCB_CTX *dst,
                                                 PROV_AES_OCB_CTX *src)
 {
-    return (!CRYPTO_ocb128_copy_ctx(&dst->ocb, &src->ocb,
-                                    &src->ksenc.ks, &src->ksdec.ks));
+    return CRYPTO_ocb128_copy_ctx(&dst->ocb, &src->ocb,
+                                  &dst->ksenc.ks, &dst->ksdec.ks);
 }
 
 /*-
