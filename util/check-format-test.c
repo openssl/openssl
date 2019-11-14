@@ -37,10 +37,10 @@ typedef struct s  { /*@ double space, flagged unless sloppy_space */
     }p;             /*@ no space after } */
     };              /*@ indent off by 4 */
 fun() {             /*@ opening brace at end of function definition header */
-    if(cond)) {     /*@ too many closing parens */
+    if (cond)) {    /*@ too many closing parens */
         stmt;       /*@ single-line statement in braces */
 }}}                 /*@ too many closing braces */
-#endif              /*@ too many #endif */
+#endif              /*@ unexpected #endif */
  int f(int a,       /*@ normal indent off by 1 */
       int b,        /*@ hanging indent off by -1, flagged unless sloppy_expr */
         int c)      /*@ hanging indent off by 1 */
@@ -51,14 +51,16 @@ fun() {             /*@ opening brace at end of function definition header */
 # define M(X) X     /*@ macro indent off by 1 */
       c,            /*@ hanging indent off by 1 */
    d);              /*@ hanging indent off by -2 */
-    if(e+           /*@ no space before + */
-       g*= 2        /*@ no space before *= */
-       h %2         /*@ no space after % */
-        && 1)       /*@ hanging indent off by 1 or -3 */
+    if (e+          /*@ no space before + */
+        g*= 2       /*@ no space before *= */
+        h %2        /*@ no space after % */
+         && 1)      /*@ hanging indent off by 1 or -3 */
        cmd;         /*@ indent off by -1 */
-    while( e2)      /*@ space after ( */
+    while ( e2)     /*@ space after ( */
          cmd2;      /*@ indent off by 1 */
-    switch(e ) {    /*@ space before ) */
+    do{ c3; }       /*@ again no space before { */
+    while(e3);      /*@ no space after 'while' */
+    switch (e ) {   /*@ space before ) */
    case 1:          /*@ case indent off by -1 */
      default:       /*@ default indent off by 1 */
 }                   /*@ indent off by -4 */
