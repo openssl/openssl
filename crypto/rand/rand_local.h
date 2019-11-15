@@ -138,9 +138,11 @@ typedef struct rand_drbg_method_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx_ecb;
+    EVP_CIPHER_CTX *ctx_ctr;
     EVP_CIPHER_CTX *ctx_df;
-    const EVP_CIPHER *cipher;
+    const EVP_CIPHER *cipher_ecb;
+    const EVP_CIPHER *cipher_ctr;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
