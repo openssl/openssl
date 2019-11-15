@@ -130,7 +130,7 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (!cipher_generic_set_ctx_params(vctx, params))
+    if (!cipher_var_keylen_set_ctx_params(vctx, params))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_RC2_KEYBITS);
     if (p != NULL) {
@@ -138,16 +138,6 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-    }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL) {
-        size_t keylen;
-
-        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        ctx->base.keylen = keylen;
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALG_ID);
     if (p != NULL) {

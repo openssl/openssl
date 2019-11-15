@@ -71,6 +71,34 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(cipher_generic)
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(cipher_generic)
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(cipher_generic)
 
+/*
+ * Variable key length cipher functions for OSSL_PARAM settables
+ */
+
+int cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+    const OSSL_PARAM *p;
+
+    if (!cipher_generic_set_ctx_params(vctx, params))
+        return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL) {
+        size_t keylen;
+
+        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        ctx->keylen = keylen;
+    }
+    return 1;
+}
+
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(cipher_var_keylen)
+OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(cipher_var_keylen)
+
 /*-
  * AEAD cipher functions for OSSL_PARAM gettables and settables
  */

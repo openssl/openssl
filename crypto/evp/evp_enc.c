@@ -1026,11 +1026,11 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
-    int ok;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    size_t len = keylen;
-
     if (c->cipher->prov != NULL) {
+        int ok;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        size_t len = keylen;
+
         if (EVP_CIPHER_CTX_key_length(c) == keylen)
             return 1;
 
