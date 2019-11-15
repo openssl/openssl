@@ -2594,8 +2594,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     continue;
                 }
                 if (buf[0] == 'P') {
-                    static const char *str = "Lets print some clear text\n";
-                    BIO_write(SSL_get_wbio(con), str, strlen(str));
+                    static const char str[] = "Lets print some clear text\n";
+                    BIO_write(SSL_get_wbio(con), str, sizeof(str) -1);
                 }
                 if (buf[0] == 'S') {
                     print_stats(bio_s_out, SSL_get_SSL_CTX(con));
@@ -3544,6 +3544,8 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len)
 {
     unsigned int count = 0;
+    unsigned int session_id_prefix_len = strlen(session_id_prefix);
+  
     do {
         if (RAND_bytes(id, *id_len) <= 0)
             return 0;
@@ -3555,8 +3557,8 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
          * conflicts.
          */
         memcpy(id, session_id_prefix,
-               (strlen(session_id_prefix) < *id_len) ?
-               strlen(session_id_prefix) : *id_len);
+               (session_id_prefix_len < *id_len) ?
+                session_id_prefix_len : *id_len);
     }
     while (SSL_has_matching_session_id(ssl, id, *id_len) &&
            (++count < MAX_SESSION_ID_ATTEMPTS));
