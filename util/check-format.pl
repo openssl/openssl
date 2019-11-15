@@ -60,6 +60,10 @@ my $directive_indent;      # currently required indentation for preprocessor dir
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $hanging_indent;        # current hanging indent, which may be adapted during multi-line expressions etc., else 0
 my $hanging_alt_indent;    # alternative hanging indent, which may be adapted during multi-line expressions, e.g., at RHS of assignments, used only if $hanging_indent != 0
+my @nested_parens_indents; # stack of shadowed hanging indents due to parens, adapted during multi-line expressions etc.
+my @nested_braces_indents; # stack of shadowed hanging indents due to brackes, adapted during multi-line expressions etc.
+my @nested_brackets_indents; # stack of shadowed hanging indents due to brackets, adapted during multi-line expressions etc.
+my @nested_conditionals_indents; # stack of shadowed hanging indents due to '?' ':', adapted during multi-line expressions etc.
 my $extra_singular_indent; # extra indent for just one hanging statement or expression or typedef
 my $hanging_expr_indent;   # special indent at LHS of assignment or behind return or enum for multi-line expression, used only if $hanging_indent != 0
 my $hanging_expr_stmt_indent; # special indent in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
@@ -82,6 +86,8 @@ sub reset_file_state {
     undef $multiline_string;
     $line_opening_brace = 0;
     $hanging_indent = 0;
+    @nested_parens_indents = @nested_braces_indents =
+        @nested_brackets_indents = @nested_conditionals_indents = ();
     $extra_singular_indent = 0;
     $hanging_expr_stmt_indent = 0;
     $hanging_expr_indent = 0;
@@ -127,7 +133,11 @@ sub check_indent { # for lines outside multi-line comments and string literals
         if ($sloppy_expr) {
             return if $count == $count_before; # workaround in particular for struct initializers in *_err.c files
             return if substr($contents, $count, 1) eq ":" &&
-                substr($contents_before, $count, 1) eq "?"; # in conditional expression, leading character is ":" with same position as "?" in line before
+                substr($contents_before, $count, 1) eq "?"; # leading character is ":" (assumed within conditional expression) with same position as "?" in line before - TODO extend any earlier line of the same expression
+        } else {
+            return if @nested_conditionals_indents &&
+                substr($contents, $count, 1) eq ":" &&
+            $count == $nested_conditionals_indents[-1]; # leading character is ":" (assumed within conditional expression) with same position as matching "?"
         }
         my $allowed = "$hanging_indent";
         if ($hanging_alt_indent != $hanging_indent || $local_hanging_indent != 0) {
@@ -372,7 +382,6 @@ while(<>) { # loop over all lines of all input files
                     max($hanging_expr_stmt_indent, $hanging_expr_indent))
            ) {
             $hanging_indent     = $count if $count < $hanging_indent;
-            $hanging_alt_indent = $count if $count < $hanging_alt_indent;
         }
     }
 
@@ -428,12 +437,9 @@ while(<>) { # loop over all lines of all input files
                 $extra_singular_indent += INDENT_LEVEL;
             } else {
                 $hanging_expr_indent = length($head) + INDENT_LEVEL;
-                # TODO check if really not needed any more: if ($hanging_indent == 0)
-                {
-                    $hanging_indent = length($head) + INDENT_LEVEL;
-                    $hanging_alt_indent = length($head) + length($mid) + length($tail_brace);
-                    $extra_singular_indent += INDENT_LEVEL unless $tail_brace; # no opening brace '{'
-                }
+                $hanging_indent = length($head) + INDENT_LEVEL;
+                $hanging_alt_indent = length($head) + length($mid) + length($tail_brace);
+                $extra_singular_indent += INDENT_LEVEL unless $tail_brace; # no opening brace '{'
             }
         }
     }
@@ -522,21 +528,40 @@ while(<>) { # loop over all lines of all input files
 
     # adapt hanging_indent and hanging_alt_indent
   MATCH_PAREN:
-    if (m/^(.*)\(([^\(]*)$/) { # last (remaining) '(' - TODO treat '[' ']' and '?' ':' analogously
+    if ($sloppy_expr && m/^(.*)\(([^\(]*)$/) { # last (remaining) '(' - TODO treat '[' ']' and '?' ':' analogously
         my ($head, $tail) = ($1, $2);
         if ($tail =~ m/([^\)]*)\)(.*)/) {
             $_ = "$head@".($1 =~ tr/ /@/cr)."@".$2; # blind contents from '(' up to matching ')', preserving length
             goto MATCH_PAREN;
         }
-        $hanging_indent = $hanging_alt_indent = length($head) + 1; # TODO treat nested closing parens
-    } elsif ($hanging_expr_indent != 0 && m/^(.*)\{((\s*)[^\s\{][^\{]*\s*)$/) { # last (remaining) '{' followed by non-space: struct initializer
+        $hanging_indent = $hanging_alt_indent = length($head) + 1;
+    } elsif ($sloppy_expr && $hanging_expr_indent != 0 && m/^(.*)\{((\s*)[^\s\{][^\{]*\s*)$/) { # last (remaining) '{' followed by non-space: struct initializer
         my ($head, $tail) = ($1, $2);
         my $space = $3;
         if ($tail =~ m/([^\}]*)\}(.*)/) {
             $_ = "$head@".($1 =~ tr/ /@/cr)."@".$2; # blind contents from '{' up to matching '}', preserving length
             goto MATCH_PAREN;
         }
-        $hanging_indent = $hanging_alt_indent = length($head) + 1 + length($space); # TODO treat nested closing braces
+        $hanging_indent = $hanging_alt_indent = length($head) + 1 + length($space);
+    } elsif (!$sloppy_expr) {
+        # do the adaptation properly according to nested_paren_indents and nested_brace_indents
+        for(my $i = 0; $i < length; $i++) {
+            my $c = substr($_, $i, 1);
+            push(@nested_parens_indents, $i + 1)   if $c eq "(";
+            pop (@nested_parens_indents)           if $c eq ")";
+            push(@nested_braces_indents, $i + 1)   if $c eq "{" && $hanging_expr_indent != 0;
+            pop (@nested_braces_indents)           if $c eq "}" && $hanging_expr_indent != 0;
+            push(@nested_brackets_indents, $i + 1) if $c eq "[";
+            pop (@nested_brackets_indents)         if $c eq "]";
+            push(@nested_conditionals_indents, $i) if $c eq "?";
+            pop (@nested_conditionals_indents)     if $c eq ":";
+        }
+        # adapt $hangning_indent according to maximum of existing stack top elememts
+        my $max_indent = -1;
+        $max_indent = max($max_indent, $nested_parens_indents[-1]) if @nested_parens_indents;
+        $max_indent = max($max_indent, $nested_braces_indents[-1]) if @nested_braces_indents;
+        $max_indent = max($max_indent, $nested_brackets_indents[-1]) if @nested_brackets_indents;
+        $hanging_indent = $hanging_alt_indent = $max_indent if $max_indent >= 0;
     }
 
     if ($hanging_indent == 0) {

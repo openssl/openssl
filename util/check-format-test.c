@@ -29,7 +29,7 @@
 # define X          /*@ indent off by 1 in preprocessor directive */
 typedef struct s  { /*@ double space, flagged unless sloppy_space */
      enum {         /*@ indent off by 1 */
-          x = 1,    /*@ hanging indent off by -1 or 1 */
+          x = 1,    /*@ hanging indent off by 1 (or else -1 for sloppy expr) */
            y,z      /*@ no space after first comma */
     } type ;        /*@ space before ; */
    union {          /*@ indent off by -1 */
@@ -49,8 +49,9 @@ fun() {             /*@ opening brace at end of function definition header */
    g(a,             /*@ normal indent off by -1 */
     b,              /*@ hanging indent off by -1, flagged unless sloppy_expr */
 # define M(X) X     /*@ macro indent off by 1 */
-      c,            /*@ hanging indent off by 1 */
-   d);              /*@ hanging indent off by -2 */
+      c ? 1         /*@ hanging indent off by 1 (or else -2 for sloppy expr) */
+         : 2,       /*@ hanging indent further off by 1 (or else -5 f sl. e.)  */
+   d);              /*@ hanging indent off by -2 (or else -1 for sloppy expr)  */
     if (e+          /*@ no space before + */
         g*= 2       /*@ no space before *= */
         h %2        /*@ no space after % */
