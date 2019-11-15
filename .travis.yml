@@ -16,6 +16,11 @@ before_install:
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
+    - eval "${MATRIX_EVAL}"
+
+arch:
+    - amd64
+    - arm64
 
 os:
     - linux
@@ -34,8 +39,25 @@ matrix:
     include:
         - os: linux
           arch: arm64
-          compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings"
+          dist: bionic
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
         - os: linux
           arch: s390x
           compiler: gcc
@@ -148,6 +170,8 @@ matrix:
           compiler: clang
         - os: osx
           compiler: gcc
+        - arch: arm64
+          os: osx
 
 before_script:
     - env
