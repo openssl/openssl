@@ -235,7 +235,7 @@ static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
 }
 
 #define IMPLEMENT_CIPHER_HW_COPYCTX(name, CTX_TYPE)                            \
-static void name (PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src)            \
+static void name(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src)             \
 {                                                                              \
     CTX_TYPE *sctx = (CTX_TYPE *)src;                                          \
     CTX_TYPE *dctx = (CTX_TYPE *)dst;                                          \
