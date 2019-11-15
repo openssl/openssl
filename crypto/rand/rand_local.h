@@ -175,9 +175,11 @@ typedef struct rand_drbg_hmac_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx_ecb;
+    EVP_CIPHER_CTX *ctx_ctr;
     EVP_CIPHER_CTX *ctx_df;
-    EVP_CIPHER *cipher;
+    EVP_CIPHER *cipher_ecb;
+    EVP_CIPHER *cipher_ctr;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
