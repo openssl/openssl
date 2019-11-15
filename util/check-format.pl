@@ -395,17 +395,19 @@ while(<>) { # loop over all lines of all input files
         # complain(-$indent." too many }"); # already reported above
     }
 
-    # detect start of multi-line if/for/while/switch condition and extra indent for one statement after if/else/for/do/while not followed by trailing opening brace
+    # detect start of multi-line if/else/for/while/switch expression or else extra indent for one statement after if/else/for/do/while, both if not followed by trailing opening brace and not (else/do followed by complete statement)
     if (m/^\s*(if|(\}\s*)?else(\s*if)?|for|do|while|switch)((\W|$).*)$/) {
         my ($head, $tail) = ($1, $4);
-        if (!($tail =~ m/\{\s*$/) && # no trailing '{'
-            !($head =~ /^(else|do)$/ && $tail =~ m/\S/ && braces_balance($tail) == 0)) { # not else/do with non-empty tail and balanced braces '{' '}'
-#        if (!($tail =~ m/\{\s*$/)) { # no trailing '{'
-            if (m/^(\s*((\}\s*)?(else\s*)?if|for|while|switch)\s*\(?)/ # this can match also terminating 'while' after 'do', but no problem because there will be a ';' thereafter
-                && parens_balance($tail) > 0) { # typically: trailing '('
+        if (!($tail =~ m/\{\s*$/) && # no trailing open brace '{'
+            !($head =~ /^(else|do)$/ && $tail =~ m/\S/ && braces_balance($tail) == 0)) { # not: else/do with non-empty tail having balanced braces '{' '}'
+            if (m/^(\s*((\}\s*)?(else\s*)?if|for|while|switch)\s*\(?)/ #  (else)if/for/while/switch, this can match also terminating 'while' after 'do', but no problem because there will be a ';' thereafter
+                && parens_balance($tail) > 0) { # unclosed open paren '(', typically: trailing open paren '('
+                 # start of multi-line expression
                 $hanging_indent = $hanging_expr_stmt_indent = length($1);
             } else {
-                $extra_singular_indent += INDENT_LEVEL; # hanging statement or condition
+                # after else/do: hanging statement
+                # after (else)if/for/while/switch: hanging expression (+plus statement) if tail is empty, else hanging statement
+                $extra_singular_indent += INDENT_LEVEL;
             }
         }
     }
@@ -508,8 +510,8 @@ while(<>) { # loop over all lines of all input files
             # reset hanging indents
             $hanging_indent = 0;
             if ($hanging_expr_stmt_indent != 0 && !$trailing_opening_brace) {
-                $extra_singular_indent += INDENT_LEVEL; # switch over from multi-line condition to hanging statement
-            } # note that else any $extra_singular_indent is retained
+                $extra_singular_indent += INDENT_LEVEL; # switch over from multi-line hanging expression to hanging statement
+            } # note that else (which is the case in particular after if/else/for/do/while/switch not followed by trailing '{' nor by trailing '(') any $extra_singular_indent is retained
 
             # TODO check if really not needed any more:
             # if ($hanging_expr_stmt_indent != 0) {
