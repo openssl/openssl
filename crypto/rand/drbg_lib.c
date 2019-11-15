@@ -336,7 +336,9 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
         drbg->meth = NULL;
         return 1;
     } else if (is_ctr(type)) {
-        ret = drbg_ctr_init(drbg);
+        //ret = drbg_ctr_init(drbg);
+        /* TODO Need to check and call aesni */
+        ret = drbg_ctr_aesni_init(drbg);
     } else if (is_digest(type)) {
         if (flags & RAND_DRBG_FLAG_HMAC)
             ret = drbg_hmac_init(drbg);

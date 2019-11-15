@@ -16,6 +16,7 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include <openssl/modes.h>
 # include "internal/tsan_assist.h"
 # include "crypto/rand.h"
 
@@ -175,9 +176,14 @@ typedef struct rand_drbg_hmac_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
+    int type;
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER_CTX *ctx_df;
     EVP_CIPHER *cipher;
+    ctr128_f ctr128;
+    block128_f block128;
+    AES_KEY ks;
+    AES_KEY ks_df;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
@@ -343,6 +349,7 @@ int rand_drbg_enable_locking(RAND_DRBG *drbg);
 
 /* initializes the DRBG implementation */
 int drbg_ctr_init(RAND_DRBG *drbg);
+int drbg_ctr_aesni_init(RAND_DRBG *drbg);
 int drbg_hash_init(RAND_DRBG *drbg);
 int drbg_hmac_init(RAND_DRBG *drbg);
 
