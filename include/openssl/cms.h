@@ -91,7 +91,7 @@ int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
 # ifdef OPENSSL_PEM_H
-DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
+DECLARE_PEM_rw(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms);

@@ -19,7 +19,8 @@ int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
     return EVP_DigestInit_ex(ctx, type, NULL);
 }
 
-int PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data, unsigned int count)
+int PEM_SignUpdate(EVP_MD_CTX *ctx,
+                   const unsigned char *data, unsigned int count)
 {
     return EVP_DigestUpdate(ctx, data, count);
 }
