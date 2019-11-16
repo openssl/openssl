@@ -578,6 +578,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_KEY_UPDATE_TYPE                    120
 # define SSL_R_INVALID_MAX_EARLY_DATA                     174
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
+# define SSL_R_INVALID_OPERATOR_INSIDE_GROUP              294
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
 # define SSL_R_INVALID_SERVERINFO_DATA                    388
 # define SSL_R_INVALID_SESSION_ID                         999
@@ -592,6 +593,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_DSA_SIGNING_CERT                   165
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381
 # define SSL_R_MISSING_FATAL                              256
+# define SSL_R_MISSING_GROUP_CLOSE                        299
 # define SSL_R_MISSING_PARAMETERS                         290
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
@@ -603,6 +605,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA     293
+# define SSL_R_MIXED_SPECIAL_OPERATOR_WITH_GROUPS         295
+# define SSL_R_NESTED_GROUP                               296
 # define SSL_R_NOT_ON_RECORD_BOUNDARY                     182
 # define SSL_R_NOT_REPLACING_CERTIFICATE                  289
 # define SSL_R_NOT_SERVER                                 284
@@ -733,6 +737,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES          243
 # define SSL_R_UNEXPECTED_CCS_MESSAGE                     262
 # define SSL_R_UNEXPECTED_END_OF_EARLY_DATA               178
+# define SSL_R_UNEXPECTED_GROUP_CLOSE                     297
 # define SSL_R_UNEXPECTED_MESSAGE                         244
 # define SSL_R_UNEXPECTED_RECORD                          245
 # define SSL_R_UNINITIALIZED                              276

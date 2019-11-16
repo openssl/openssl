@@ -748,6 +748,12 @@ typedef struct ssl_ctx_ext_secure_st {
 #define CIPHER_FLAG_FROM_CIPHERRSUITE   1
 /* Prioritize cipher on server when client does. */
 #define CIPHER_FLAG_PREFER              2
+/*
+ * Cipher belongs to group and it's not the last element, e.g.:
+ * cipherlist        [A:B:C]:D:[E]:[F:G]
+ * CIPHER_IN_GROUP    1 1 0  0  0   1 0
+ */
+#define CIPHER_IN_GROUP                 4
 
 struct ssl_cipher_list_flags_st {
     STACK_OF(SSL_CIPHER) *cipher_list;
