@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_dgst");
 
-plan tests => 4;
+plan tests => 5;
 
 sub tsignverify {
     my $testtext = shift;
@@ -85,14 +85,20 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EdDSA is not supported by this OpenSSL build", 1
+    skip "EdDSA is not supported by this OpenSSL build", 2
         if disabled("ec");
 
-    skip "EdDSA is not supported with `dgst` CLI", 1;
+    skip "EdDSA is not supported with `dgst` CLI", 2;
 
-    subtest "EdDSA signature generation and verification with `dgst` CLI" => sub {
+    subtest "Ed25519 signature generation and verification with `dgst` CLI" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
                     srctop_file("test","tested25519pub.pem"));
+    };
+
+    subtest "Ed448 signature generation and verification with `dgst` CLI" => sub {
+        tsignverify("Ed448",
+                    srctop_file("test","tested448.pem"),
+                    srctop_file("test","tested448pub.pem"));
     };
 }

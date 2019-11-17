@@ -15,7 +15,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_pkeyutl");
 
-plan tests => 10;
+plan tests => 11;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -154,13 +154,20 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EdDSA is not supported by this OpenSSL build", 1
+    skip "EdDSA is not supported by this OpenSSL build", 2
         if disabled("ec");
 
-    subtest "EdDSA CLI signature generation and verification" => sub {
+    subtest "Ed2559 CLI signature generation and verification" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
                     srctop_file("test","tested25519pub.pem"),
+                    "-rawin");
+    };
+
+    subtest "Ed448 CLI signature generation and verification" => sub {
+        tsignverify("Ed448",
+                    srctop_file("test","tested448.pem"),
+                    srctop_file("test","tested448pub.pem"),
                     "-rawin");
     };
 }
