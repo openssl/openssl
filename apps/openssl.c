@@ -55,6 +55,7 @@ static int apps_startup(void)
 
     /* Set non-default library initialisation settings */
     if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
+                          | OPENSSL_INIT_NO_ATEXIT
                           | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
@@ -376,6 +377,7 @@ int main(int argc, char *argv[])
         ret = 1;
 #endif
     BIO_free(bio_err);
+    OPENSSL_cleanup();
     EXIT(ret);
 }
 
