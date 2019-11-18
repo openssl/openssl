@@ -372,34 +372,9 @@ EOF
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $1,$1)"); },
     },
-    { regexp   => qr/PREDECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_SPECIAL_STACK_OF<<<\((.*?),\s*(.*?)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-     },
 
     #####
     # ASN1 stuff
-
-    { regexp   => qr/TYPEDEF_D2I_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *d2i_of_$1($1 **,const unsigned char **,long)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *i2d_of_$1($1 *,unsigned char **)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_D2I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("TYPEDEF_D2I_OF($1); TYPEDEF_I2D_OF($1)");
-      },
-    },
     { regexp   => qr/DECLARE_ASN1_ITEM<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");

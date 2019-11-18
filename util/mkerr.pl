@@ -315,7 +315,7 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
         s/[\n\s]*$//g;
 
         # Skip over recognized non-function declarations
-        next if /typedef\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/;
+        next if /typedef\W/;
 
         # Remove STACK_OF(foo)
         s/STACK_OF\(\w+\)/void/;
