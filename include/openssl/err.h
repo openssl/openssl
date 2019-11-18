@@ -112,6 +112,7 @@ struct err_state_st {
 # define ERR_LIB_CRMF            56
 # define ERR_LIB_PROV            57
 # define ERR_LIB_CMP             58
+# define ERR_LIB_OSSL_SERIALIZER 59
 
 # define ERR_LIB_USER            128
 
@@ -231,6 +232,7 @@ struct err_state_st {
 # define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
 # define ERR_R_PASSED_INVALID_ARGUMENT           (7)
 # define ERR_R_OPERATION_FAIL                    (8|ERR_R_FATAL)
+# define ERR_R_INVALID_PROVIDER_FUNCTIONS        (9|ERR_R_FATAL)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for

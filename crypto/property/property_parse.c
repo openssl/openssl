@@ -568,6 +568,8 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
         "version",      /* Version number of this provider */
         "fips",         /* FIPS supporting provider */
         "engine",       /* An old style engine masquerading as a provider */
+        "format",       /* output format for serializers */
+        "type",         /* output type for serializers */
     };
     size_t i;
 
