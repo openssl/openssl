@@ -22,6 +22,7 @@
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 # include <openssl/pemerr.h>
+# include <openssl/serializer.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -187,6 +188,120 @@ extern "C" {
         IMPLEMENT_PEM_read(name, type, str, asn1) \
         IMPLEMENT_PEM_write_cb(name, type, str, asn1)
 
+/* Alternatives using provided serializers */
+
+# define IMPLEMENT_PEM_write_fnsig(name, type, OUTTYPE, writename)      \
+    int PEM_##writename##_##name(OUTTYPE *out, const type *x)
+# define IMPLEMENT_PEM_write_cb_fnsig(name, type, OUTTYPE, writename)   \
+    int PEM_##writename##_##name(OUTTYPE *out, const type *x,           \
+                             const EVP_CIPHER *enc,                     \
+                             const unsigned char *kstr, int klen,       \
+                             pem_password_cb *cb, void *u)
+# define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \
+    int ret = 0;                                                        \
+    const char *pq = OSSL_SERIALIZER_##asn1##_TO_PEM_PQ;                \
+    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_##type(x, pq); \
+                                                                        \
+    if (ctx != NULL && OSSL_SERIALIZER_CTX_get_serializer(ctx) == NULL) { \
+        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+        goto legacy;                                                    \
+    }
+# define IMPLEMENT_PEM_provided_write_body_pass()                       \
+    ret = 1;                                                            \
+    if (kstr == NULL && cb == NULL) {                                   \
+        if (u != NULL) {                                                \
+            kstr = u;                                                   \
+            klen = strlen(u);                                           \
+        } else {                                                        \
+            cb = PEM_def_callback;                                      \
+        }                                                               \
+    }                                                                   \
+    if (kstr != NULL                                                    \
+        && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen))        \
+        ret = 0;                                                        \
+    else if (cb != NULL                                                 \
+             && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1, cb, u))  \
+        ret = 0;                                                        \
+    else if (enc != NULL                                                \
+             && !OSSL_SERIALIZER_CTX_set_cipher_name(ctx,               \
+                                                     EVP_CIPHER_name(enc))) \
+        ret = 0;                                                        \
+    if (!ret) {                                                         \
+        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+        return 0;                                                       \
+    }
+# define IMPLEMENT_PEM_provided_write_body_main(type, outtype)          \
+    ret = OSSL_SERIALIZER_to_##outtype(ctx, out);                       \
+    OSSL_SERIALIZER_CTX_free(ctx);                                      \
+    return ret
+# define IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,          \
+                                                    writename)          \
+    legacy:                                                             \
+    return PEM_ASN1_##writename((i2d_of_void *)i2d_##asn1, str, out,    \
+                                  x, NULL, NULL, 0, NULL, NULL)
+# define IMPLEMENT_PEM_provided_write_body_fallback_cb(str, asn1,       \
+                                                       writename)       \
+    legacy:                                                             \
+    return PEM_ASN1_##writename((i2d_of_void *)i2d_##asn1, str, out,    \
+                                x, enc, kstr, klen, cb, u)
+
+# define IMPLEMENT_PEM_provided_write_to(name, type, str, asn1,         \
+                                         OUTTYPE, outtype, writename)   \
+    IMPLEMENT_PEM_write_fnsig(name, type, OUTTYPE, writename)           \
+    {                                                                   \
+        IMPLEMENT_PEM_provided_write_body_vars(type, asn1);             \
+        IMPLEMENT_PEM_provided_write_body_main(type, outtype);          \
+        IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,           \
+                                                   writename);          \
+    }
+
+
+# define IMPLEMENT_PEM_provided_write_cb_to(name, type, str, asn1,      \
+                                            OUTTYPE, outtype, writename) \
+    IMPLEMENT_PEM_write_cb_fnsig(name, type, OUTTYPE, writename)        \
+    {                                                                   \
+        IMPLEMENT_PEM_provided_write_body_vars(type, asn1);             \
+        IMPLEMENT_PEM_provided_write_body_pass();                       \
+        IMPLEMENT_PEM_provided_write_body_main(type, outtype);          \
+        IMPLEMENT_PEM_provided_write_body_fallback_cb(str, asn1,        \
+                                                      writename);       \
+    }
+
+# ifdef OPENSSL_NO_STDIO
+
+#  define IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1) /**/
+#  define IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1) /**/
+
+# else
+
+#  define IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1)        \
+    IMPLEMENT_PEM_provided_write_to(name, type, str, asn1, FILE, fp, write)
+#  define IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1)     \
+    IMPLEMENT_PEM_provided_write_cb_to(name, type, str, asn1, FILE, fp, write)
+
+# endif
+
+# define IMPLEMENT_PEM_provided_write_bio(name, type, str, asn1)        \
+    IMPLEMENT_PEM_provided_write_to(name, type, str, asn1, BIO, bio, write_bio)
+# define IMPLEMENT_PEM_provided_write_cb_bio(name, type, str, asn1)     \
+    IMPLEMENT_PEM_provided_write_cb_to(name, type, str, asn1, BIO, bio, write_bio)
+
+# define IMPLEMENT_PEM_provided_write(name, type, str, asn1)    \
+    IMPLEMENT_PEM_provided_write_bio(name, type, str, asn1)     \
+    IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1)
+
+# define IMPLEMENT_PEM_provided_write_cb(name, type, str, asn1) \
+    IMPLEMENT_PEM_provided_write_cb_bio(name, type, str, asn1)  \
+    IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1)
+
+# define IMPLEMENT_PEM_provided_rw(name, type, str, asn1) \
+    IMPLEMENT_PEM_read(name, type, str, asn1)                   \
+    IMPLEMENT_PEM_provided_write(name, type, str, asn1)
+
+# define IMPLEMENT_PEM_provided_rw_cb(name, type, str, asn1) \
+    IMPLEMENT_PEM_read(name, type, str, asn1)                   \
+    IMPLEMENT_PEM_provided_write_cb(name, type, str, asn1)
+
 /* These are the same except they are for the declarations */
 
 # if defined(OPENSSL_NO_STDIO)
@@ -203,18 +318,15 @@ extern "C" {
     type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u);
 
 #  define DECLARE_PEM_write_fp(name, type)              \
-    int PEM_write_##name(FILE *fp, const type *x);
+    IMPLEMENT_PEM_write_fnsig(name, type, FILE, write);
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const(name, type)        \
-    DECLARE_PEM_write_fp(name, type)
+    IMPLEMENT_PEM_write_fnsig(name, type, FILE, write);
 #  endif
 
 #  define DECLARE_PEM_write_cb_fp(name, type)                   \
-    int PEM_write_##name(FILE *fp, const type *x,               \
-                         const EVP_CIPHER *enc,                 \
-                         const unsigned char *kstr, int klen,   \
-                         pem_password_cb *cb, void *u);
+    IMPLEMENT_PEM_write_cb_fnsig(name, type, FILE, write);
 
 # endif
 
@@ -223,18 +335,15 @@ extern "C" {
                               pem_password_cb *cb, void *u);
 
 #  define DECLARE_PEM_write_bio(name, type)             \
-    int PEM_write_bio_##name(BIO *bp, const type *x);
+    IMPLEMENT_PEM_write_fnsig(name, type, BIO, write_bio);
 
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_bio_const(name, type)       \
-    DECLARE_PEM_write_bio(name, type)
+    IMPLEMENT_PEM_write_fnsig(name, type, BIO, write_bio);
 #  endif
 
 #  define DECLARE_PEM_write_cb_bio(name, type)                          \
-    int PEM_write_bio_##name(BIO *bp, const type *x,                    \
-                             const EVP_CIPHER *enc,                     \
-                             const unsigned char *kstr, int klen,       \
-                             pem_password_cb *cb, void *u);
+    IMPLEMENT_PEM_write_cb_fnsig(name, type, BIO, write_bio);
 
 # define DECLARE_PEM_write(name, type) \
         DECLARE_PEM_write_bio(name, type) \
