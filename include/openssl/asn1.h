@@ -276,7 +276,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 # define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(const type *,unsigned char **)
 # define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
 
-TYPEDEF_D2I2D_OF(void);
+typedef void *d2i_of_void(void **, const unsigned char **, long);
+typedef int i2d_of_void(const void *, unsigned char **);
 
 /*-
  * The following macros and typedefs allow an ASN1_ITEM
