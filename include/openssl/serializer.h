@@ -53,6 +53,20 @@ int OSSL_SERIALIZER_CTX_set_params(OSSL_SERIALIZER_CTX *ctx,
                                    const OSSL_PARAM params[]);
 void OSSL_SERIALIZER_CTX_free(OSSL_SERIALIZER_CTX *ctx);
 
+/* Utilities that help set specific parameters */
+int OSSL_SERIALIZER_CTX_set0_object(OSSL_SERIALIZER_CTX *ctx,
+                                    const void *object);
+const void *OSSL_SERIALIZER_CTX_get0_object(OSSL_SERIALIZER_CTX *ctx);
+int OSSL_SERIALIZER_CTX_set_do_output(OSSL_SERIALIZER_CTX *ctx,
+                                      int (*do_output)(OSSL_SERIALIZER_CTX *ctx,
+                                                       BIO *out));
+
+/* Utilities to output the object to serialize */
+int OSSL_SERIALIZER_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out);
+#ifndef OPENSSL_NO_STDIO
+int OSSL_SERIALIZER_to_fp(OSSL_SERIALIZER_CTX *ctx, FILE *fp);
+#endif
+
 # ifdef __cplusplus
 }
 # endif

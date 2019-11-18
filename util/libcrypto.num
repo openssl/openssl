@@ -4892,3 +4892,8 @@ OSSL_SERIALIZER_CTX_get_serializer      ?	3_0_0	EXIST::FUNCTION:
 OSSL_SERIALIZER_CTX_set_params          ?	3_0_0	EXIST::FUNCTION:
 OSSL_SERIALIZER_CTX_free                ?	3_0_0	EXIST::FUNCTION:
 OSSL_SERIALIZER_properties              ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_set0_object         ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_get0_object         ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_set_do_output       ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_to_bio                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_to_fp                   ?	3_0_0	EXIST::FUNCTION:STDIO
