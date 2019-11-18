@@ -37,7 +37,6 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     ASN1_BIT_STRING *prot = NULL;
     CMP_PROTECTEDPART prot_part;
     const ASN1_OBJECT *algorOID = NULL;
-
     int l;
     size_t prot_part_der_len;
     unsigned char *prot_part_der = NULL;
