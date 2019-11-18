@@ -9,6 +9,24 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Introduced a new method type and API, OSSL_SERIALIZER, to
+     represent generic serializers.  An implementation is expected to
+     be able to serialize an object associated with a given name (such
+     as an algorithm name for an asymmetric key) into forms given by
+     implementation properties.
+
+     Serializers are primarily used from inside libcrypto, through
+     calls to functions like EVP_PKEY_print_private(),
+     PEM_write_bio_PrivateKey() and similar.
+
+     Serializers are specified in such a way that they can be made to
+     directly handle the provider side portion of an object, if this
+     provider side part comes from the same provider as the serializer
+     itself, but can also be made to handle objects in parametrized
+     form (as an OSSL_PARAM array of data).  This allows a provider to
+     offer generic serializers as a service for any other provider.
+     [Richard Levitte]
+
   *) Added a .pragma directive to the syntax of configuration files, to
      allow varying behavior in a supported and predictable manner.
      Currently added pragma:
