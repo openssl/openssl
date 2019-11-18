@@ -4900,7 +4900,6 @@ OSSL_SERIALIZER_CTX_set_passphrase      ?	3_0_0	EXIST::FUNCTION:
 OSSL_SERIALIZER_CTX_set_passphrase_cb   ?	3_0_0	EXIST::FUNCTION:
 OSSL_SERIALIZER_CTX_set_passphrase_ui   ?	3_0_0	EXIST::FUNCTION:
 ERR_load_OSSL_SERIALIZER_strings        ?	3_0_0	EXIST::FUNCTION:
-RSA_get0_pss_params                     ?	3_0_0	EXIST::FUNCTION:RSA
 PEM_read_X509_PUBKEY                    ?	3_0_0	EXIST::FUNCTION:STDIO
 PEM_write_X509_PUBKEY                   ?	3_0_0	EXIST::FUNCTION:STDIO
 PEM_read_bio_X509_PUBKEY                ?	3_0_0	EXIST::FUNCTION:
@@ -4909,3 +4908,4 @@ d2i_X509_PUBKEY_fp                      ?	3_0_0	EXIST::FUNCTION:STDIO
 i2d_X509_PUBKEY_fp                      ?	3_0_0	EXIST::FUNCTION:STDIO
 d2i_X509_PUBKEY_bio                     ?	3_0_0	EXIST::FUNCTION:
 i2d_X509_PUBKEY_bio                     ?	3_0_0	EXIST::FUNCTION:
+RSA_get0_pss_params                     ?	3_0_0	EXIST::FUNCTION:RSA

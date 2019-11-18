@@ -385,6 +385,23 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_serializer[] = {
+    { "RSA", "default=yes,format=text,type=private",
+      rsa_priv_text_serializer_functions },
+    { "RSA", "default=yes,format=text,type=public",
+      rsa_pub_text_serializer_functions },
+    { "RSA", "default=yes,format=der,type=private",
+      rsa_priv_der_serializer_functions },
+    { "RSA", "default=yes,format=der,type=public",
+      rsa_pub_der_serializer_functions },
+    { "RSA", "default=yes,format=pem,type=private",
+      rsa_priv_pem_serializer_functions },
+    { "RSA", "default=yes,format=pem,type=public",
+      rsa_pub_pem_serializer_functions },
+
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
@@ -407,6 +424,8 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
         return deflt_signature;
     case OSSL_OP_ASYM_CIPHER:
         return deflt_asym_cipher;
+    case OSSL_OP_SERIALIZER:
+        return deflt_serializer;
     }
     return NULL;
 }

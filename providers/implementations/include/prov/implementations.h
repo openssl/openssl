@@ -261,3 +261,11 @@ extern const OSSL_DISPATCH dsa_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
+
+/* Serializers */
+extern const OSSL_DISPATCH rsa_priv_text_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_text_serializer_functions[];
+extern const OSSL_DISPATCH rsa_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH rsa_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_pem_serializer_functions[];
