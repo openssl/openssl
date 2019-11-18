@@ -19,9 +19,11 @@
 #include <openssl/dh.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
+#include <openssl/serializer.h>
 #include "crypto/store.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "pem_local.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
@@ -64,15 +66,18 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     return ret;
 }
 
-int PEM_write_bio_PrivateKey(BIO *bp, const EVP_PKEY *x,
-                             const EVP_CIPHER *enc,
-                             const unsigned char *kstr, int klen,
-                             pem_password_cb *cb, void *u)
+PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
+    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey);
+
+    IMPLEMENT_PEM_provided_write_body_pass();
+    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+
+ legacy:
     if (x->ameth == NULL || x->ameth->priv_encode != NULL)
-        return PEM_write_bio_PKCS8PrivateKey(bp, x, enc,
+        return PEM_write_bio_PKCS8PrivateKey(out, x, enc,
                                              (const char *)kstr, klen, cb, u);
-    return PEM_write_bio_PrivateKey_traditional(bp, x, enc, kstr, klen, cb, u);
+    return PEM_write_bio_PrivateKey_traditional(out, x, enc, kstr, klen, cb, u);
 }
 
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
@@ -112,15 +117,20 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
     return ret;
 }
 
-int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x)
+PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 {
     char pem_str[80];
+    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters);
+
+    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+
+ legacy:
     if (!x->ameth || !x->ameth->param_encode)
         return 0;
 
     BIO_snprintf(pem_str, 80, "%s PARAMETERS", x->ameth->pem_str);
     return PEM_ASN1_write_bio((i2d_of_void *)x->ameth->param_encode,
-                              pem_str, bp, x, NULL, NULL, 0, 0, NULL);
+                              pem_str, out, x, NULL, NULL, 0, 0, NULL);
 }
 
 #ifndef OPENSSL_NO_STDIO

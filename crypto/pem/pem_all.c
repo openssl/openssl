@@ -17,6 +17,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include "pem_local.h"
 
 #ifndef OPENSSL_NO_RSA
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);
@@ -172,4 +173,5 @@ EC_KEY *PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb,
 IMPLEMENT_PEM_write(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
 IMPLEMENT_PEM_write(DHxparams, DH, PEM_STRING_DHXPARAMS, DHxparams)
 #endif
-IMPLEMENT_PEM_rw(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
+IMPLEMENT_PEM_provided_write(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
+IMPLEMENT_PEM_read(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
