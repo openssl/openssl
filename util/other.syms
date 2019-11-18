@@ -370,6 +370,12 @@ OSSL_PARAM_utf8_string                  define
 OSSL_PARAM_get_TYPE                     generic
 OSSL_PARAM_END                          define
 OSSL_PARAM_set_TYPE                     generic
+OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ        define
+OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ    define
+OSSL_SERIALIZER_Parameters_TO_PEM_PQ    define
+OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ       define
+OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ   define
+OSSL_SERIALIZER_Parameters_TO_TEXT_PQ   define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define

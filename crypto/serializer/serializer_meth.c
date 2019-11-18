@@ -10,6 +10,7 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/serializer.h>
+#include <openssl/ui.h>
 #include "internal/core.h"
 #include "internal/namemap.h"
 #include "internal/property.h"
@@ -503,6 +504,7 @@ void OSSL_SERIALIZER_CTX_free(OSSL_SERIALIZER_CTX *ctx)
         if (ctx->ser != NULL && ctx->ser->freectx != NULL)
             ctx->ser->freectx(ctx->serctx);
         OSSL_SERIALIZER_free(ctx->ser);
+        UI_destroy_method(ctx->allocated_ui_method);
         OPENSSL_free(ctx);
     }
 }

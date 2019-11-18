@@ -455,6 +455,7 @@ ERR_load_PKCS12_strings
 ERR_load_PKCS7_strings
 ERR_load_RAND_strings
 ERR_load_RSA_strings
+ERR_load_OSSL_SERIALIZER_strings
 ERR_load_TS_strings
 ERR_load_UI_strings
 ERR_load_X509V3_strings

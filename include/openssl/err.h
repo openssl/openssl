@@ -233,6 +233,7 @@ struct err_state_st {
 # define ERR_R_PASSED_INVALID_ARGUMENT           (7)
 # define ERR_R_OPERATION_FAIL                    (8|ERR_R_FATAL)
 # define ERR_R_INVALID_PROVIDER_FUNCTIONS        (9|ERR_R_FATAL)
+# define ERR_R_INTERRUPTED_OR_CANCELLED          (10)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
