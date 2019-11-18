@@ -19,6 +19,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BAD_DECRYPT), "bad decrypt"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BAD_ENCODING), "bad encoding"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BAD_LENGTH), "bad length"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BN_ERROR), "bn error"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_BOTH_MODE_AND_MODE_INT),
     "both mode and mode int"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_CIPHER_OPERATION_FAILED),

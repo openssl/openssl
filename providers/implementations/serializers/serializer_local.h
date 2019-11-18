@@ -33,10 +33,24 @@ struct pkcs8_encrypt_ctx_st {
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_importkey(const OSSL_DISPATCH *fns);
 
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_rsa_importkey(void);
+OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dh_importkey(void);
+
+int ossl_prov_prepare_dh_params(const void *dh, int nid,
+                                ASN1_STRING **pstr, int *pstrtype);
+int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);
+int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
 
 int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
                                    const BIGNUM *n);
 int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv);
+
+enum dh_print_type {
+    dh_print_priv,
+    dh_print_pub,
+    dh_print_params
+};
+
+int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type);
 
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,

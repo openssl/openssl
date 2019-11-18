@@ -53,6 +53,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_BAD_DECRYPT                               100
 # define PROV_R_BAD_ENCODING                              141
 # define PROV_R_BAD_LENGTH                                142
+# define PROV_R_BN_ERROR                                  160
 # define PROV_R_BOTH_MODE_AND_MODE_INT                    127
 # define PROV_R_CIPHER_OPERATION_FAILED                   102
 # define PROV_R_FAILED_TO_GENERATE_KEY                    121

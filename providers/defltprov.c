@@ -399,6 +399,25 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { "RSA", "default=yes,format=pem,type=public",
       rsa_pub_pem_serializer_functions },
 
+    { "DH", "default=yes,format=text,type=private",
+      dh_priv_text_serializer_functions },
+    { "DH", "default=yes,format=text,type=public",
+      dh_pub_text_serializer_functions },
+    { "DH", "default=yes,format=text,type=domainparams",
+      dh_param_text_serializer_functions },
+    { "DH", "default=yes,format=der,type=private",
+      dh_priv_der_serializer_functions },
+    { "DH", "default=yes,format=der,type=public",
+      dh_pub_der_serializer_functions },
+    { "DH", "default=yes,format=der,type=domainparams",
+      dh_param_der_serializer_functions },
+    { "DH", "default=yes,format=pem,type=private",
+      dh_priv_pem_serializer_functions },
+    { "DH", "default=yes,format=pem,type=public",
+      dh_pub_pem_serializer_functions },
+    { "DH", "default=yes,format=pem,type=domainparams",
+      dh_param_pem_serializer_functions },
+
     { NULL, NULL, NULL }
 };
 
