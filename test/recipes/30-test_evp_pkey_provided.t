@@ -10,4 +10,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_evp_fromdata", "evp_fromdata_test");
+simple_test("test_evp_pkey_provided", "evp_pkey_provided_test");
