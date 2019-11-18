@@ -1504,6 +1504,10 @@ EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                           evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
 
+    if (cipher != NULL && !evp_cipher_cache_constants(cipher)) {
+        EVP_CIPHER_free(cipher);
+        cipher = NULL;
+    }
     return cipher;
 }
 
