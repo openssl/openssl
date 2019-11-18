@@ -77,6 +77,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NO_KEY_SET), "no key set"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OUTPUT_BUFFER_TOO_SMALL),
     "output buffer too small"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_READ_KEY), "read key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_TAG_NOTSET), "tag notset"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_TAG_NOT_NEEDED), "tag not needed"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNABLE_TO_LOAD_SHA1),

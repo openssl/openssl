@@ -1,0 +1,6 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$SERIALIZER_GOAL=../../libimplementations.a
+
+SOURCE[$SERIALIZER_GOAL]=serializer_common.c
