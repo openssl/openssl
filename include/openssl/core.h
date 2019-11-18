@@ -202,6 +202,16 @@ extern OSSL_provider_init_fn OSSL_provider_init;
  */
 typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
 
+/*
+ * Passphrase callback function signature
+ *
+ * This is similar to the generic callback function above, but adds a
+ * result parameter.
+ */
+typedef int (OSSL_PASSPHRASE_CALLBACK)(char *pass, size_t pass_size,
+                                       size_t *pass_len,
+                                       const OSSL_PARAM params[], void *arg);
+
 # ifdef __cplusplus
 }
 # endif

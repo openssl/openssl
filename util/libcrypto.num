@@ -4878,3 +4878,17 @@ EVP_PKEY_meth_set_digestsign            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_digestverify          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_digestsign            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_digestverify          ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_up_ref                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_free                    ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_fetch                   ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_number                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_is_a                    ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_provider                ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_do_all_provided         ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_names_do_all            ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_settable_ctx_params     ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_new                 ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_get_serializer      ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_set_params          ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_CTX_free                ?	3_0_0	EXIST::FUNCTION:
+OSSL_SERIALIZER_properties              ?	3_0_0	EXIST::FUNCTION:

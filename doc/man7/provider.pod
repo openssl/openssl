@@ -147,6 +147,14 @@ The number for this operation is B<OSSL_OP_KEYEXCH>.
 The functions the provider can offer are described in
 L<provider-keyexch(7)>
 
+=item Serialization
+
+In the OpenSSL libraries, the corresponding method object is
+B<OSSL_SERIALIZER>.
+The number for this operation is B<OSSL_OP_SERIALIZER>.
+The functions the provider can offer are described in
+L<provider-serializer(7)>
+
 =back
 
 =head2 Fetching algorithms
