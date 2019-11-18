@@ -31,4 +31,11 @@ struct ossl_serializer_st {
 struct ossl_serializer_ctx_st {
     OSSL_SERIALIZER *ser;
     void *serctx;
+
+    /*
+     * |object| is the libcrypto object to handle.
+     * |do_output| must have intimate knowledge of this object.
+     */
+    const void *object;
+    int (*do_output)(OSSL_SERIALIZER_CTX *ctx, BIO *out);
 };
