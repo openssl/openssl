@@ -194,6 +194,7 @@ static int s390x_aes_cfb8_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
 static const PROV_CIPHER_HW s390x_aes_##mode = {                               \
     s390x_aes_##mode##_initkey,                                                \
     s390x_aes_##mode##_cipher_hw                                               \
+    cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if ((keybits == 128 && S390X_aes_128_##mode##_CAPABLE)                         \

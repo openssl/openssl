@@ -68,6 +68,7 @@ struct prov_cipher_ctx_st {
 struct prov_cipher_hw_st {
     int (*init)(PROV_CIPHER_CTX *dat, const uint8_t *key, size_t keylen);
     PROV_CIPHER_HW_FN *cipher;
+    void (*copyctx)(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 };
 
 OSSL_OP_cipher_encrypt_init_fn cipher_generic_einit;
@@ -231,6 +232,16 @@ static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
     }                                                                          \
     ctx->num = num;                                                            \
     return 1;                                                                  \
+}
+
+#define IMPLEMENT_CIPHER_HW_COPYCTX(name, CTX_TYPE)                            \
+static void name(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src)             \
+{                                                                              \
+    CTX_TYPE *sctx = (CTX_TYPE *)src;                                          \
+    CTX_TYPE *dctx = (CTX_TYPE *)dst;                                          \
+                                                                               \
+    *dctx = *sctx;                                                             \
+    dst->ks = &dctx->ks.ks;                                                    \
 }
 
 #define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(name)                         \

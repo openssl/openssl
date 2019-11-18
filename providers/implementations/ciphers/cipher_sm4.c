@@ -31,7 +31,7 @@ static void *sm4_dupctx(void *ctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    *ret = *in;
+    in->base.hw->copyctx(&ret->base, &in->base);
 
     return ret;
 }

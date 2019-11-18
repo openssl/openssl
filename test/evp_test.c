@@ -621,12 +621,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     unsigned char *in, *expected_out, *tmp = NULL;
     size_t in_len, out_len, donelen = 0;
     int ok = 0, tmplen, chunklen, tmpflen, i;
+    EVP_CIPHER_CTX *ctx_base = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
 
     t->err = "TEST_FAILURE";
+    if (!TEST_ptr(ctx_base = EVP_CIPHER_CTX_new()))
+        goto err;
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto err;
-    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+    EVP_CIPHER_CTX_set_flags(ctx_base, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (enc) {
         in = expected->plaintext;
         in_len = expected->plaintext_len;
@@ -663,18 +666,18 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
                     inp_misalign, in, in_len);
     }
-    if (!EVP_CipherInit_ex(ctx, expected->cipher, NULL, NULL, NULL, enc)) {
+    if (!EVP_CipherInit_ex(ctx_base, expected->cipher, NULL, NULL, NULL, enc)) {
         t->err = "CIPHERINIT_ERROR";
         goto err;
     }
     if (expected->iv) {
         if (expected->aead) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+            if (!EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_AEAD_SET_IVLEN,
                                      expected->iv_len, 0)) {
                 t->err = "INVALID_IV_LENGTH";
                 goto err;
             }
-        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx)) {
+        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx_base)) {
             t->err = "INVALID_IV_LENGTH";
             goto err;
         }
@@ -693,7 +696,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             tag = expected->tag;
         }
         if (tag || expected->aead != EVP_CIPH_GCM_MODE) {
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+            if (!EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_AEAD_SET_TAG,
                                      expected->tag_len, tag))
                 goto err;
         }
@@ -702,25 +705,25 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (expected->rounds > 0) {
         int  rounds = (int)expected->rounds;
 
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC5_ROUNDS, rounds, NULL)) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_SET_RC5_ROUNDS, rounds, NULL)) {
             t->err = "INVALID_ROUNDS";
             goto err;
         }
     }
 
-    if (!EVP_CIPHER_CTX_set_key_length(ctx, expected->key_len)) {
+    if (!EVP_CIPHER_CTX_set_key_length(ctx_base, expected->key_len)) {
         t->err = "INVALID_KEY_LENGTH";
         goto err;
     }
     if (expected->key_bits > 0) {
         int bits = (int)expected->key_bits;
 
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS, bits, NULL)) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx_base, EVP_CTRL_SET_RC2_KEY_BITS, bits, NULL)) {
             t->err = "INVALID KEY BITS";
             goto err;
         }
     }
-    if (!EVP_CipherInit_ex(ctx, NULL, NULL, expected->key, expected->iv, -1)) {
+    if (!EVP_CipherInit_ex(ctx_base, NULL, NULL, expected->key, expected->iv, -1)) {
         t->err = "KEY_SET_ERROR";
         goto err;
     }
@@ -729,9 +732,18 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (expected->iv != NULL
         && (EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
         && !TEST_mem_eq(expected->iv, expected->iv_len,
-                        EVP_CIPHER_CTX_iv(ctx), expected->iv_len)) {
+                        EVP_CIPHER_CTX_iv(ctx_base), expected->iv_len)) {
         t->err = "INVALID_IV";
         goto err;
+    }
+
+    /* Test that the cipher dup functions correctly if it is supported */
+    if (EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
+        EVP_CIPHER_CTX_free(ctx_base);
+        ctx_base = NULL;
+    } else {
+        EVP_CIPHER_CTX_free(ctx);
+        ctx = ctx_base;
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
@@ -840,6 +852,8 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     ok = 1;
  err:
     OPENSSL_free(tmp);
+    if (ctx != ctx_base)
+        EVP_CIPHER_CTX_free(ctx_base);
     EVP_CIPHER_CTX_free(ctx);
     return ok;
 }
