@@ -21,7 +21,8 @@
 /*@ comment start: /* inside intra-line comment */
 /*@ multi-line comment with text on first line
  *@ comment start: /* inside multi-line comment
-  *@ indent off by 1 in multi-line comment
+*@ indent off by -1 in multi-line comment
+ *@ triple space after .   in comment, flagged unless sloppy-spc
  *@ multi-line comment with text on last line */
 */ /*@ comment end outside comment */
 /*@ line is 4 columns toooooooooooooooooooooooooo wide, flagged unless sloppy-len */
@@ -29,7 +30,7 @@
  #define X          /*@ indent of '#' (preprocessor directive) off by 1 */
 # define X          /*@ indent off by 1 in preprocessor directive */
 typedef struct s  { /*@ double space, flagged unless sloppy-spc */
-    enum { /*@ double space      in 1-line comment, flagged unless sloppy-spc */
+    enum {          /*@ double space  in comment, flagged unless sloppy-spc */
          x = 1,     /*@ hanging indent off by -1 or 1 */
           y,z,      /*@ no space after first comma, flagged unless sloppy-spc */
            zz       /*@ indent off by 1 or 3 */

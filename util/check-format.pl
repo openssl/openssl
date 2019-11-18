@@ -294,7 +294,7 @@ while(<>) { # loop over all lines of all input files
             complain("/* inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
             my ($comment_text, $rest) = ("$opt_minus$1", $2);
-            complain("/*dbl SPC*/") if !$sloppy_spc && $comment_text =~ m/\s\s\S/;
+            complain("/*dbl SPC*/") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
             $_ = $head.($rest =~ m/^\s*$/ # trailing commment
                         ? "  ".($comment_text =~ tr/ / /cr)."  " # blind trailing commment as space
                         : "@@".($comment_text =~ tr/ /@/cr)."@@" # blind intra-line comment as @
@@ -335,7 +335,10 @@ while(<>) { # loop over all lines of all input files
         complain("len=$len>$max_length");
     }
 
-    goto LINE_FINISHED if $in_multiline_comment > 1;
+    if($in_multiline_comment > 1) {
+        complain(" * dbl SPC") if !$sloppy_spc && $contents =~ m/(^|[^.])\s\s\S/;
+        goto LINE_FINISHED;
+    }
 
     # handle C++ / C99 - style end-of-line comments
     if(m|(.*?)//(.*$)|) {
