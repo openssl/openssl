@@ -111,7 +111,7 @@ OSSL_SERIALIZER_number() returns an integer.
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_SERIALIZER_CTX(3)>, L<OSSL_SERIALIZER_to_bio(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
 
 =head1 HISTORY
 

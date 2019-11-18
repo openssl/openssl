@@ -18,6 +18,7 @@
 # endif
 # include <stdarg.h>
 # include <stddef.h>
+# include <openssl/serializererr.h>
 # include <openssl/types.h>
 # include <openssl/core.h>
 
@@ -53,11 +54,45 @@ int OSSL_SERIALIZER_CTX_set_params(OSSL_SERIALIZER_CTX *ctx,
                                    const OSSL_PARAM params[]);
 void OSSL_SERIALIZER_CTX_free(OSSL_SERIALIZER_CTX *ctx);
 
+/* Utilities that help set specific parameters */
+int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
+                                   const char *cipher_name,
+                                   const char *propquery);
+int OSSL_SERIALIZER_CTX_set_passphrase(OSSL_SERIALIZER_CTX *ctx,
+                                       const unsigned char *kstr,
+                                       size_t klen);
+int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
+                                          pem_password_cb *cb, void *cbarg);
+int OSSL_SERIALIZER_CTX_set_passphrase_ui(OSSL_SERIALIZER_CTX *ctx,
+                                          const UI_METHOD *ui_method,
+                                          void *ui_data);
+
 /* Utilities to output the object to serialize */
 int OSSL_SERIALIZER_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out);
 #ifndef OPENSSL_NO_STDIO
 int OSSL_SERIALIZER_to_fp(OSSL_SERIALIZER_CTX *ctx, FILE *fp);
 #endif
+
+/*
+ * Create the OSSL_SERIALIZER_CTX with an associated type.  This will perform
+ * an implicit OSSL_SERIALIZER_fetch(), suitable for the object of that type.
+ * This is more useful than calling OSSL_SERIALIZER_CTX_new().
+ */
+OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
+                                                         const char *propquery);
+
+/*
+ * These macros define the last argument to pass to
+ * OSSL_SERIALIZER_CTX_new_by_TYPE().
+ */
+# define OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ "format=pem,type=public"
+# define OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ "format=pem,type=private"
+# define OSSL_SERIALIZER_Parameters_TO_PEM_PQ "format=pem,type=domainparams"
+
+/* Corresponding macros for text output */
+# define OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ "format=text,type=public"
+# define OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ "format=text,type=private"
+# define OSSL_SERIALIZER_Parameters_TO_TEXT_PQ "format=text,type=domainparams"
 
 # ifdef __cplusplus
 }

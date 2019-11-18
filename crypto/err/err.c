@@ -113,6 +113,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INIT_FAIL, "init fail"},
     {ERR_R_OPERATION_FAIL, "operation fail"},
     {ERR_R_INVALID_PROVIDER_FUNCTIONS, "invalid provider functions"},
+    {ERR_R_INTERRUPTED_OR_CANCELLED, "interrupted or cancelled"},
 
     {0, NULL},
 };

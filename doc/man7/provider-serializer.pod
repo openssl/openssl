@@ -193,6 +193,55 @@ Both serialization functions also take an B<OSSL_PASSPHRASE_CALLBACK>
 function pointer along with a pointer to application data I<cbarg>,
 which should be used when a pass phrase prompt is needed.
 
+=head2 Serializer parameters
+
+Parameters currently recognised by built-in serializers are as
+follows:
+
+=over 4
+
+=item "cipher" (B<OSSL_SERIALIZER_PARAM_CIPHER>) <UTF8 string>
+
+The name of the encryption cipher to be used when generating encrypted
+serialization.  This is used when serializing private keys, as well as
+other objects that need protection.
+
+If this name is invalid for the serialization implementation, the
+implementation should refuse to perform the serialization, i.e.
+OP_serializer_serialize_data() and OP_serializer_serialize_object()
+should return an error.
+
+=item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
+
+The properties to be queried when trying to fetch the algorithm given
+with the "cipher" parameter.
+This must be given together with the "cipher" parameter to be
+considered valid.
+
+The serialization implementation isn't obligated to use this value.
+However, it is recommended that implementations that do not handle
+property strings return an error on receiving this parameter unless
+its value NULL or the empty string.
+
+=item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>
+
+A pass phrase provided by the application.  When this is given, the
+built-in serializers will not attempt to use the passphrase callback.
+
+=back
+
+Parameters currently recognised by the built-in pass phrase callback:
+
+=over 4
+
+=item "info" (B<OSSL_PASSPHRASE_PARAM_INFO>) <UTF8 string>
+
+A string of information that will become part of the pass phrase
+prompt.  This could be used to give the user information on what kind
+of object it's being prompted for.
+
+=back
+
 =head1 RETURN VALUES
 
 OP_serializer_newctx() returns a pointer to a context, or NULL on

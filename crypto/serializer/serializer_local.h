@@ -38,4 +38,13 @@ struct ossl_serializer_ctx_st {
      */
     const void *object;
     int (*do_output)(OSSL_SERIALIZER_CTX *ctx, BIO *out);
+
+    /* For any function that needs a passphrase reader */
+    const UI_METHOD *ui_method;
+    void *ui_data;
+    /*
+     * if caller used OSSL_SERIALIZER_CTX_set_passphrase_cb(), we need
+     * intermediary storage.
+     */
+    UI_METHOD *allocated_ui_method;
 };
