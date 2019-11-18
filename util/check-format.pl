@@ -16,7 +16,12 @@
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
 # This pragmatic tool is incomplete and yields some false positives.
 # Still it should be useful for detecting most typical glitches.
-
+#
+# options:
+#  -l | --sloppy-len   increases accepted max line length from 80 to 84
+#  -s | --sloppy-space disables reporting of whitespace nits
+#  -e | --sloppy-expr  add grace when checking multi-line expr indentation
+#
 # There are known false positives in particular when correct detection would
 # require look-ahead of lines:
 # * The check for the rule that for
