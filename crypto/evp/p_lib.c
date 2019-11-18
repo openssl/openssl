@@ -21,6 +21,7 @@
 #include <openssl/cmac.h>
 #include <openssl/engine.h>
 #include <openssl/params.h>
+#include <openssl/serializer.h>
 #include <openssl/core_names.h>
 
 #include "crypto/asn1.h"
@@ -666,6 +667,18 @@ static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
 int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
+    const char *pq = OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ;
+    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
+    int ret = -2;                /* mark as unsupported */
+
+    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
+        ret = OSSL_SERIALIZER_to_bio(ctx, out);
+    OSSL_SERIALIZER_CTX_free(ctx);
+
+    if (ret != -2)
+        return ret;
+
+    /* legacy fallback */
     if (pkey->ameth && pkey->ameth->pub_print)
         return pkey->ameth->pub_print(out, pkey, indent, pctx);
 
@@ -675,6 +688,18 @@ int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
                            int indent, ASN1_PCTX *pctx)
 {
+    const char *pq = OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ;
+    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
+    int ret = -2;                /* mark as unsupported */
+
+    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
+        ret = OSSL_SERIALIZER_to_bio(ctx, out);
+    OSSL_SERIALIZER_CTX_free(ctx);
+
+    if (ret != -2)
+        return ret;
+
+    /* legacy fallback */
     if (pkey->ameth && pkey->ameth->priv_print)
         return pkey->ameth->priv_print(out, pkey, indent, pctx);
 
@@ -684,8 +709,21 @@ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
+    const char *pq = OSSL_SERIALIZER_Parameters_TO_TEXT_PQ;
+    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
+    int ret = -2;                /* mark as unsupported */
+
+    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
+        ret = OSSL_SERIALIZER_to_bio(ctx, out);
+    OSSL_SERIALIZER_CTX_free(ctx);
+
+    if (ret != -2)
+        return ret;
+
+    /* legacy fallback */
     if (pkey->ameth && pkey->ameth->param_print)
         return pkey->ameth->param_print(out, pkey, indent, pctx);
+
     return unsup_alg(out, pkey, indent, "Parameters");
 }
 
