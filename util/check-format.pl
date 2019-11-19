@@ -274,10 +274,15 @@ while(<>) { # loop over all lines of all input files
     my $self_test_exception = $self_test ? "@" : "";
     if($in_multiline_comment > 0) {
         complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
-        m/^\s*(.*)$/;
-        my $start = $1;
-        complain("no leading * in multi-line comment") if $start =~ m/^[^*]/;
-        complain("*no SPC") if !$sloppy_spc && $start =~ m/^\*[^\/\s$self_test_exception]/;
+        m/^\s*(.?)(.*)$/;
+        my ($start, $comment_text) = ($1, $2);
+        if($start eq "*") {
+            complain("*no SPC")  if !$sloppy_spc && $comment_text =~ m/^[^\/\s$self_test_exception]/;
+        } else {
+            complain("no leading * in multi-line comment");
+        }
+        $comment_text =~ m/\s*(.*)$/; # ignore leading whitespace on below check
+        complain("*dbl SPC") if !$sloppy_spc && $1 =~ m/(^|[^.])\s\s\S/;
         $in_multiline_comment++;
     }
 
@@ -349,10 +354,7 @@ while(<>) { # loop over all lines of all input files
         complain("len=$len>$max_length");
     }
 
-    if($in_multiline_comment > 1) {
-        complain(" * dbl SPC") if !$sloppy_spc && $contents =~ m/(^|[^.])\s\s\S/;
-        goto LINE_FINISHED;
-    }
+    goto LINE_FINISHED if $in_multiline_comment;
 
     # handle C++ / C99 - style end-of-line comments
     if(m|(.*?)//(.*$)|) {
