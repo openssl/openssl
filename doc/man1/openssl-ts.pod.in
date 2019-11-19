@@ -655,7 +655,7 @@ test/testtsa).
 =head1 HISTORY
 
 OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
-seeding mechanism. The new seeding mechanism makes it dispensable to
+seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
