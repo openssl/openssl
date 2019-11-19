@@ -159,3 +159,8 @@ const EVP_PKEY_METHOD cmac_pkey_meth = {
     pkey_cmac_ctrl,
     pkey_cmac_ctrl_str
 };
+
+const EVP_PKEY_METHOD *cmac_pkey_method(void)
+{
+    return &cmac_pkey_meth;
+}

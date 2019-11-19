@@ -192,3 +192,8 @@ const EVP_PKEY_METHOD poly1305_pkey_meth = {
     pkey_poly1305_ctrl,
     pkey_poly1305_ctrl_str
 };
+
+const EVP_PKEY_METHOD *poly1305_pkey_method(void)
+{
+    return &poly1305_pkey_meth;
+}

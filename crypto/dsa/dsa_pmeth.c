@@ -271,3 +271,8 @@ const EVP_PKEY_METHOD dsa_pkey_meth = {
     pkey_dsa_ctrl,
     pkey_dsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD *dsa_pkey_method(void)
+{
+    return &dsa_pkey_meth;
+}

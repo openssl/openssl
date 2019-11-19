@@ -327,3 +327,8 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
 
     pkey_sm2_digest_custom
 };
+
+const EVP_PKEY_METHOD *sm2_pkey_method(void)
+{
+    return &sm2_pkey_meth;
+}

@@ -172,6 +172,11 @@ const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
     pkey_tls1_prf_ctrl_str
 };
 
+const EVP_PKEY_METHOD *tls1_prf_pkey_method(void)
+{
+    return &tls1_prf_pkey_meth;
+}
+
 static int tls1_prf_P_hash(const EVP_MD *md,
                            const unsigned char *sec, size_t sec_len,
                            const unsigned char *seed, size_t seed_len,
