@@ -68,6 +68,7 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     }
 }
 
+my $self_test;
 my $line;                  # current line number
 my $contents;              # contens of current line
 my $contents_before;       # contents of previous line (except multi-line string literals and comments),
@@ -107,7 +108,7 @@ my $num_indent_complaints = 0;  # total number of indentation issues found
 sub complain_contents {
     my $msg = shift;
     my $contents = shift;
-    print "$ARGV:$line:$msg$contents";
+    print "$ARGV:$line:$msg$contents" unless $self_test;
     $num_current_complaints++;
     $num_complaints++;
     $num_SPC_complaints++ if $msg =~ /SPC/;
@@ -241,6 +242,7 @@ sub reset_file_state {
 
 reset_file_state();
 while(<>) { # loop over all lines of all input files
+    $self_test = $ARGV =~ m/check-format-test.c$/;
     $line++;
     $contents = $_;
 
@@ -646,10 +648,10 @@ while(<>) { # loop over all lines of all input files
         $in_multiline_directive = 0;
     }
 
-    if($ARGV =~ m/check-format-test.c/) { # debugging
+    if($self_test) { # debugging
         my $should_complain = $contents =~ m/\*@(\d)?/ ? 1 : 0;
         $should_complain = +$1 if defined $1;
-        print("$ARGV:$line:##"."##$num_current_complaints complaints##"."##:$contents")
+        print("$ARGV:$line:$num_current_complaints complaints on:$contents")
             if $num_current_complaints != $should_complain;
     }
     $num_current_complaints = 0;
@@ -673,4 +675,4 @@ while(<>) { # loop over all lines of all input files
 
 my $num_other_complaints = $num_complaints - $num_indent_complaints - $num_SPC_complaints;
 print "$num_complaints ($num_indent_complaints indentation, $num_SPC_complaints whitespace,"
-    ." $num_other_complaints other) issues have been found by $0\n";
+    ." $num_other_complaints other) issues have been found by $0\n" unless $self_test;
