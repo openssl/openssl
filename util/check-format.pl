@@ -270,15 +270,22 @@ while(<>) { # loop over all lines of all input files
 
     # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    # check indent within multi-line comments
+    # do checks within multi-line comments
+    my $self_test_exception = $self_test ? "@" : "";
     if($in_multiline_comment > 0) {
         complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
+        m/^\s*(.*)$/;
+        my $start = $1;
+        complain("no leading * in multi-line comment") if $start =~ m/^[^*]/;
+        complain("*no SPC") if !$sloppy_spc && $start =~ m/^\*[^\/\s$self_test_exception]/;
         $in_multiline_comment++;
     }
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my ($head, $tail) = ($1, $2);
+        complain("no SPC*/") if !$sloppy_spc && $head =~ m/\S$/;
+        complain("*/no SPC") if !$sloppy_spc && $tail =~ m/^\S/;
         if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
             complain("*/ outside comment") if $in_multiline_comment == 0;
             complain("... */") if $head =~ m/\S/; # head contains non-whitespace
@@ -288,23 +295,28 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
-    # detect start of multi-line comment, check if it is followed by non-space text
+    # detect start of comment, check if it is followed by non-space text
   MATCH_COMMENT:
     if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO ignore '/*' inside string literal
         my ($head, $opt_minus, $tail) = ($1, $2, $3);
+        complain("no SPC/*") if !$sloppy_spc && $head =~ m/[^\s]$/;
+        complain("/*no SPC") if !$sloppy_spc && $tail =~ m/^[^\s$self_test_exception]/;
         if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             complain("/* inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
             my ($comment_text, $rest) = ("$opt_minus$1", $2);
             complain("/*dbl SPC*/") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
-            $_ = $head.($rest =~ m/^\s*$/ # trailing commment
-                        ? "  ".($comment_text =~ tr/ / /cr)."  " # blind trailing commment as space
+            my $leading_comment = $head =~ m/^\s*$/; # only whitespace before
+            $_ = $head.(($leading_comment ||
+                         $rest =~ m/^\s*$/) # trailing commment: only whitespace after
+                        ? "  ".($comment_text =~ tr/ / /cr)."  " # blind leading/trailing commment as space
                         : "@@".($comment_text =~ tr/ /@/cr)."@@" # blind intra-line comment as @
                         ).$rest;
+            m/^(\s*)/; $count = length $1 if $leading_comment; # re-calculate count, like done above
             goto MATCH_COMMENT;
-        } else {
+        } else { # start of multi-line comment
             if ($in_multiline_comment > 0) {
-                complain("/* inside multi-line comment") ;
+                complain("/* inside multi-line comment");
             } else {
                 complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
             }
@@ -416,8 +428,7 @@ while(<>) { # loop over all lines of all input files
     if (defined $multiline_string) {
         $_ = $multiline_string.$_;
         undef $multiline_string;
-        m/^(\s*)/;
-        $count = length $1; # re-calculate count, like done above
+        m/^(\s*)/; $count = length $1; # re-calculate count, like done above
     }
     if (m/^(([^"]*"[^"]*")*[^"]*"[^"]*)\\\s*$/) { # trailing '\' in last string literal
         $multiline_string = $1;
