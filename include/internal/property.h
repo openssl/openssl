@@ -14,9 +14,18 @@
 #include "internal/cryptlib.h"
 
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
+typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 
 /* Initialisation */
 int ossl_property_parse_init(OPENSSL_CTX *ctx);
+
+/* Property definition parser */
+OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn);
+/* Property query parser */
+OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
+/* Property checker of query vs definition */
+int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
+                              const OSSL_PROPERTY_LIST *defn);
 
 /* Implementation store functions */
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
