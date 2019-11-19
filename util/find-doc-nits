@@ -140,6 +140,7 @@ sub name_synopsis {
     foreach my $line ( split /\n+/, $syn ) {
         next unless $line =~ /^\s/;
         my $sym;
+        my $is_prototype = 1;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
@@ -154,11 +155,13 @@ sub name_synopsis {
             $sym = $1;
         } elsif ( $line =~ /typedef.* (\S+);/ ) {
             # a simple typedef: typedef ... NAME;
+            $is_prototype = 0;
             $sym = $1;
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
         } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
+            $is_prototype = 0;
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;
@@ -172,7 +175,7 @@ sub name_synopsis {
 
         # Do some sanity checks on the prototype.
         err($id, "prototype missing spaces around commas: $line")
-            if ( $line =~ /[a-z0-9],[^ ]/ );
+            if $is_prototype && $line =~ /[a-z0-9],[^ ]/;
     }
 
     foreach my $n ( keys %names ) {
