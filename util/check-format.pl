@@ -130,6 +130,12 @@ sub braces_balance { # count balance of opening braces - closing braces
     return $str =~ tr/\{// - $str =~ tr/\}//;
 }
 
+sub blind_nonspace { # blind non-space text of comment as @, preserving length
+    my $comment_text = shift;
+    $comment_text =~ s/\.\s\s/.. /; # in dbl SPC check allow one extra space after period '.' in comments
+    return $comment_text =~ tr/ /@/cr;
+}
+
 sub check_indent { # for lines outside multi-line comments and string literals
     my $normal_indent = my $alt_indent = $indent + $extra_singular_indent + $local_offset;
     if ($hanging_indent == 0) {
@@ -270,19 +276,17 @@ while(<>) { # loop over all lines of all input files
 
     # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    # do checks within multi-line comments
+    # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
-    if($in_multiline_comment > 0) {
+    if($in_multiline_comment > 0) { # this includes the ending line of multi-line commment
         complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
-        m/^\s*(.?)(.*)$/;
-        my ($start, $comment_text) = ($1, $2);
-        if($start eq "*") {
+        m/^(\s*)(.?)(.*)$/;
+        my ($head, $any_symbol, $comment_text) = ($1, $2, $3);
+        if($any_symbol eq "*") {
             complain("*no SPC")  if !$sloppy_spc && $comment_text =~ m/^[^\/\s$self_test_exception]/;
         } else {
             complain("no leading * in multi-line comment");
         }
-        $comment_text =~ m/\s*(.*)$/; # ignore leading whitespace on below check
-        complain("*dbl SPC") if !$sloppy_spc && $1 =~ m/(^|[^.])\s\s\S/;
         $in_multiline_comment++;
     }
 
@@ -291,12 +295,21 @@ while(<>) { # loop over all lines of all input files
         my ($head, $tail) = ($1, $2);
         complain("no SPC*/") if !$sloppy_spc && $head =~ m/\S$/;
         complain("*/no SPC") if !$sloppy_spc && $tail =~ m/^\S/;
-        if (!($head =~ m/\/\*/)) { # starting comment '/*' is handled below
-            complain("*/ outside comment") if $in_multiline_comment == 0;
-            complain("... */") if $head =~ m/\S/; # head contains non-whitespace
-            $_ = ($head =~ tr/ /@/cr)."  $tail"; # blind comment text, preserving length
-            $in_multiline_comment = 0;
-            goto LINE_FINISHED if $tail =~ m/^\s*$/; # ignore rest if just whitespace
+        if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
+            if ($in_multiline_comment == 0) {
+                complain("*/ outside comment");
+                $_ = "$head@@".$tail; # blind the "*/"
+            } else {
+                $in_multiline_comment = 0;
+                my $comment_text = $head;
+                complain("... */") if $head =~ m/\S/; # head contains non-whitespace
+                if($tail =~ m/^\s*$/) { # rest is just whitespace
+                    complain("dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
+                    # sacrifycing multi-line column alignment for this line
+                    goto LINE_FINISHED; # in this case ignore text of ending multi-line comment
+                }
+                $_ = blind_nonspace($comment_text)."@@".$tail;
+            }
         }
     }
 
@@ -306,31 +319,41 @@ while(<>) { # loop over all lines of all input files
         my ($head, $opt_minus, $tail) = ($1, $2, $3);
         complain("no SPC/*") if !$sloppy_spc && $head =~ m/[^\s]$/;
         complain("/*no SPC") if !$sloppy_spc && $tail =~ m/^[^\s$self_test_exception]/;
+        my $comment_text = $opt_minus.$tail; # preliminary
         if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             complain("/* inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
-            my ($comment_text, $rest) = ("$opt_minus$1", $2);
-            complain("/*dbl SPC*/") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
+            ($comment_text, my $rest) = ($opt_minus.$1, $2);
             my $leading_comment = $head =~ m/^\s*$/; # only whitespace before
-            $_ = $head.(($leading_comment ||
-                         $rest =~ m/^\s*$/) # trailing commment: only whitespace after
-                        ? "  ".($comment_text =~ tr/ / /cr)."  " # blind leading/trailing commment as space
-                        : "@@".($comment_text =~ tr/ /@/cr)."@@" # blind intra-line comment as @
-                        ).$rest;
-            m/^(\s*)/; $count = length $1 if $leading_comment; # re-calculate count, like done above
+            if ($leading_comment ||
+                $rest =~ m/^\s*$/) { # trailing commment: only whitespace after
+                complain("/* dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
+                # blind leading/trailing commment as space
+                $_ = "$head  ".($comment_text =~ tr/ / /cr)."  $rest";
+                m/^(\s*)/; $count = length $1 if $leading_comment; # re-calculate count, like done above
+            } else { # intra-line comment
+                $_ = "$head@@".blind_nonspace($comment_text)."@@".$rest;
+            }
             goto MATCH_COMMENT;
         } else { # start of multi-line comment
             if ($in_multiline_comment > 0) {
                 complain("/* inside multi-line comment");
             } else {
                 complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
+                # adopt actual indentation of first line
+                $multiline_comment_indent = length($head) + 1;
             }
-            # adopt actual indentation of first comment line
-            $multiline_comment_indent = length($head) + 1 if $in_multiline_comment == 0;
-            # blind comment text, preserving length
-            $_ = "$head  ".($opt_minus =~ tr/ /@/cr).($tail =~ tr/ /@/cr);
-            $in_multiline_comment++;
+            # do not: complain("/* dbl SPC") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
+            # because this would disable multi-line column alignment
+            # blind non-space text of starting comment, preserving length
+            $_ = "$head@@".blind_nonspace($comment_text);
+            $in_multiline_comment = 1;
         }
+    }
+
+    if($in_multiline_comment > 1) { # still inside multi-line comment (not at its start)
+        m/^(\s*)\*?(\s*)(.*)$/;
+        $_ = "$1 $2".blind_nonspace($3);
     }
 
     # handle special case of line after '#ifdef __cplusplus' (which typically appears in header files)
@@ -354,13 +377,16 @@ while(<>) { # loop over all lines of all input files
         complain("len=$len>$max_length");
     }
 
-    goto LINE_FINISHED if $in_multiline_comment;
-
     # handle C++ / C99 - style end-of-line comments
     if(m|(.*?)//(.*$)|) {
         complain("//");  # the '//' comment style is not allowed for C90
-        $_ = $1; # anyway remove comment text (not preserving length)
+        complain("// dbl SPC") if !$sloppy_spc && $2 =~ m/(^|[^.])\s\s\S/;
+        # sacrifycing multi-line column alignment for this line
+        $_ = $1; # anyway ignore comment text (not preserving length)
     }
+
+    # at this point comment text has been removed/ignored (after checking dbl SPC)
+    # or at least the non-space portions of commment text have blinded as @
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -404,6 +430,7 @@ while(<>) { # loop over all lines of all input files
 
     # empty lines, preprocessor directives, and characters/string iterals @@@@@@
 
+    goto LINE_FINISHED if $in_multiline_comment > 0; # TODO handle any code preceding its start or following its end
     goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace except potentially a single backslash)
 
     # handle preprocessor directives
