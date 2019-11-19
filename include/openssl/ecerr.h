@@ -206,6 +206,12 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
+#   define EC_F_S390X_PKEY_ECD_DIGESTSIGN25519             320
+#   define EC_F_S390X_PKEY_ECD_DIGESTSIGN448               321
+#   define EC_F_S390X_PKEY_ECD_KEYGEN25519                 322
+#   define EC_F_S390X_PKEY_ECD_KEYGEN448                   323
+#   define EC_F_S390X_PKEY_ECX_KEYGEN25519                 324
+#   define EC_F_S390X_PKEY_ECX_KEYGEN448                   325
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*

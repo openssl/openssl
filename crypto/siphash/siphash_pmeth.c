@@ -203,3 +203,8 @@ const EVP_PKEY_METHOD siphash_pkey_meth = {
     pkey_siphash_ctrl,
     pkey_siphash_ctrl_str
 };
+
+const EVP_PKEY_METHOD *siphash_pkey_method(void)
+{
+    return &siphash_pkey_meth;
+}

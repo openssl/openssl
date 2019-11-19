@@ -789,6 +789,11 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     pkey_rsa_ctrl_str
 };
 
+const EVP_PKEY_METHOD *rsa_pkey_method(void)
+{
+    return &rsa_pkey_meth;
+}
+
 /*
  * Called for PSS sign or verify initialisation: checks PSS parameter
  * sanity and sets any restrictions on key usage.
@@ -859,3 +864,8 @@ const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     pkey_rsa_ctrl,
     pkey_rsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD *rsa_pss_pkey_method(void)
+{
+    return &rsa_pss_pkey_meth;
+}

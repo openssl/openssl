@@ -13,6 +13,10 @@
      on renegotiation.
      [Tomas Mraz]
 
+  *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
+     X25519, X448, Ed25519 and Ed448.
+     [Patrick Steuer]
+
   *) The Oracle Developer Studio compiler will start reporting deprecated APIs
 
  Changes between 1.1.1f and 1.1.1g [21 Apr 2020]

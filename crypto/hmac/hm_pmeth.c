@@ -210,3 +210,8 @@ const EVP_PKEY_METHOD hmac_pkey_meth = {
     pkey_hmac_ctrl,
     pkey_hmac_ctrl_str
 };
+
+const EVP_PKEY_METHOD *hmac_pkey_method(void)
+{
+    return &hmac_pkey_meth;
+}

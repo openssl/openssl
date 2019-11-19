@@ -353,6 +353,34 @@ static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
 }
 
 /*
+ * mask must be 0xFF or 0x00.
+ * "constant time" is per len.
+ *
+ * if (mask) {
+ *     unsigned char tmp[len];
+ *
+ *     memcpy(tmp, a, len);
+ *     memcpy(a, b);
+ *     memcpy(b, tmp);
+ * }
+ */
+static ossl_inline void constant_time_cond_swap_buff(unsigned char mask,
+                                                     unsigned char *a,
+                                                     unsigned char *b,
+                                                     size_t len)
+{
+    size_t i;
+    unsigned char tmp;
+
+    for (i = 0; i < len; i++) {
+        tmp = a[i] ^ b[i];
+        tmp &= mask;
+        a[i] ^= tmp;
+        b[i] ^= tmp;
+    }
+}
+
+/*
  * table is a two dimensional array of bytes. Each row has rowsize elements.
  * Copies row number idx into out. rowsize and numrows are not considered
  * private.

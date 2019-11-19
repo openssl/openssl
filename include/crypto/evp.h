@@ -440,3 +440,22 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 #define EVP_ENCODE_CTX_NO_NEWLINES          1
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
+
+const EVP_PKEY_METHOD *cmac_pkey_method(void);
+const EVP_PKEY_METHOD *dh_pkey_method(void);
+const EVP_PKEY_METHOD *dhx_pkey_method(void);
+const EVP_PKEY_METHOD *dsa_pkey_method(void);
+const EVP_PKEY_METHOD *ec_pkey_method(void);
+const EVP_PKEY_METHOD *sm2_pkey_method(void);
+const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
+const EVP_PKEY_METHOD *ecx448_pkey_method(void);
+const EVP_PKEY_METHOD *ed25519_pkey_method(void);
+const EVP_PKEY_METHOD *ed448_pkey_method(void);
+const EVP_PKEY_METHOD *hmac_pkey_method(void);
+const EVP_PKEY_METHOD *rsa_pkey_method(void);
+const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
+const EVP_PKEY_METHOD *scrypt_pkey_method(void);
+const EVP_PKEY_METHOD *tls1_prf_pkey_method(void);
+const EVP_PKEY_METHOD *hkdf_pkey_method(void);
+const EVP_PKEY_METHOD *poly1305_pkey_method(void);
+const EVP_PKEY_METHOD *siphash_pkey_method(void);
