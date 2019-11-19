@@ -233,7 +233,7 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
  * The core fetching functionality passes the name of the implementation.
  * This function is responsible to getting an identity number for it.
  */
-static void *construct_evp_method(const char *names, const OSSL_DISPATCH *fns,
+static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
                                   OSSL_PROVIDER *prov, void *data)
 {
     /*
@@ -246,11 +246,13 @@ static void *construct_evp_method(const char *names, const OSSL_DISPATCH *fns,
     struct evp_method_data_st *methdata = data;
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    const char *names = algodef->algorithm_names;
     int name_id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
 
     if (name_id == 0)
         return NULL;
-    return methdata->method_from_dispatch(name_id, fns, prov);
+    return methdata->method_from_dispatch(name_id, algodef->implementation,
+                                          prov);
 }
 
 static void destruct_evp_method(void *method, void *data)
