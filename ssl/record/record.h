@@ -25,6 +25,8 @@ typedef struct ssl3_buffer_st {
     size_t offset;
     /* how many bytes left */
     size_t left;
+    /* 'buf' is from application for KTLS */
+    int app_buffer;
 } SSL3_BUFFER;
 
 #define SEQ_NUM_SIZE                            8
