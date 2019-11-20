@@ -72,9 +72,11 @@ static void stored_namemap_free(void *vnamemap)
 {
     OSSL_NAMEMAP *namemap = vnamemap;
 
-    /* Pretend it isn't stored, or ossl_namemap_free() will do nothing */
-    namemap->stored = 0;
-    ossl_namemap_free(namemap);
+    if (namemap != NULL) {
+        /* Pretend it isn't stored, or ossl_namemap_free() will do nothing */
+        namemap->stored = 0;
+        ossl_namemap_free(namemap);
+    }
 }
 
 static const OPENSSL_CTX_METHOD stored_namemap_method = {
