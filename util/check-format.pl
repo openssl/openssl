@@ -22,26 +22,29 @@
 #  -s | --sloppy-space disables reporting of whitespace nits
 #  -e | --sloppy-expr  add grace when checking multi-line expr indentation
 #
-# There are known false positives in particular when correct detection would
-# require look-ahead of lines:
-# * The check for the rule that for
+# There are known false positives such as the following.
+#
+# * There is the special OpenSSL rule not to unnecessarily use braces around
+#   a single statement :
 #   {
-#       single-line statement;
+#       single statement;
 #   }
-#   the opening and closing braces should be left out except this is part of an
-#   if .. else statement where blocks for other branches contain more than just
-#   one single-line statement. The exception is not recognized - and thus false
-#   positives are reported - where such blocks occur after the current position.
+#   except within if .. else constructs where some branch contains more than one
+#   statement. The exception is not recognized - and thus false positives are
+#   reported - when such a branch occurs after the current position.
+#   Moreover, false negatives occur if the braces are more than two lines apart.
+#
 # * Use of multiple consecutive spaces is regarded a coding style nit except
 #   when done in order to align certain columns over multiple lines, e.g.:
-#   # define ABC 1
-#   # define DE  2
-#   # define F   3
-#   The tool recognizes this pattern - and consequently does not report the use
-#   of double space - if in at least two immediately prededing lines (if any)
-#   there is a space followed by non-space charater at the same column position.
-#   It does not recognize this pattern while handling the first two such lines.
-
+#   # define AB  1
+#   # define CDE 22
+#   # define F   3333
+#   This pattern is recognized - and consequently double space not reported -
+#   for a given line if in the line before or after (as far as these exist)
+#   for each occurrence of "  \S" (where \S means non-space) in the given line
+#   there is " \S" in the other line in the respective column position.
+#   This may lead to both false negatives (in case of coincidental " \S")
+#   and false negatives (in case of more complex multi-column alignment).
 
 use strict;
 use List::Util qw[min max];
@@ -70,15 +73,15 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
 
 my $self_test;
 my $line;                  # current line number
-my $contents;              # contens of current line
-my $contents_before;       # contents of previous line (except multi-line string literals and comments),
-                           # used only if $line > 1
-my $contents_before2;      # contents of line before previous line (except multi-line string literals and comments),
-                           # used only if $line > 2
+my $contents;              # contents of current line
+my $contents_before;       # contents of previous line, used only if $line > 1
+my $contents_before_;      # contents of previous line after blinding comments etc., used only if $line > 1
+my $contents_before2;      # contents of line before previous line, used only if $line > 2
+my $contents_before_2;     # contents of line before previous line after blinding comments etc., used only if $line > 2
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line,
                            # which basically should equal $indent or $hanging_indent, respectively
-my $count_before;          # number of leading whitespace characters (except newline) in previous line
+my $count_before;          # number of leading whitespace characters (except newline) in previous line, used only if $line > 1
 my $label;                 # current line contains label
 my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing braces
 my $line_opening_brace;    # number of previous line with opening brace outside expression or type declaration
@@ -96,7 +99,8 @@ my $in_expr;               # in expression (after if/for/while/switch/return/enu
 my $in_paren_expr;         # in condition of if/for/while and expr of switch, used only if $hanging_indent != 0,
                            # implies $in_expr
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
-my $in_multiline_directive; # number of lines so far within multi-line preprocessor directive, e.g., macro definition
+my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
+my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_multiline_comment;  # number of lines so far within multi-line comment
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
@@ -106,6 +110,7 @@ my $num_SPC_complaints = 0;     # total number of whitespace issues found
 my $num_indent_complaints = 0;  # total number of indentation issues found
 
 sub complain_contents {
+    my $line = shift;
     my $msg = shift;
     my $contents = shift;
     print "$ARGV:$line:$msg$contents" unless $self_test;
@@ -117,7 +122,7 @@ sub complain_contents {
 
 sub complain {
     my $msg = shift;
-    complain_contents($msg, ": $contents");
+    complain_contents($line, $msg, ": $contents");
 }
 
 sub parens_balance { # count balance of opening parentheses - closing parentheses
@@ -132,7 +137,7 @@ sub braces_balance { # count balance of opening braces - closing braces
 
 sub blind_nonspace { # blind non-space text of comment as @, preserving length
     my $comment_text = shift;
-    $comment_text =~ s/\.\s\s/.. /; # in dbl SPC check allow one extra space after period '.' in comments
+    $comment_text =~ s/\.\s\s/.. /g; # in dbl SPC checks allow one extra space after period '.' in comments
     return $comment_text =~ tr/ /@/cr;
 }
 
@@ -149,7 +154,7 @@ sub check_indent { # for lines outside multi-line comments and string literals
         my $alt_indent = $hanging_indent;
         if ($sloppy_hang) {
             # do not report on repeated identical indentation potentially due to same violations
-            return if $count == $count_before;
+            return if $line > 1 && $count == $count_before;
 
             if ($count >= $indent) { # actual indent is at least at minimum, not taking into account $extra_singular_indent + $local_offset
                 # adapt to actual indent if contents have been shifted left to fit within line length limit
@@ -242,7 +247,7 @@ sub reset_file_state {
     undef $multiline_string;
     $line_opening_brace = 0;
     $in_typedecl = 0;
-    $in_multiline_directive = 0;
+    $in_directive = 0;
     $in_multiline_comment = 0;
 }
 
@@ -306,7 +311,9 @@ while(<>) { # loop over all lines of all input files
                 if($tail =~ m/^\s*$/) { # rest is just whitespace
                     complain("dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
                     # sacrifycing multi-line column alignment for this line
-                    goto LINE_FINISHED; # in this case ignore text of ending multi-line comment
+                    # blind ending multi-line comment as space
+                    $_ = ($comment_text =~ tr/ / /cr)."  $tail";
+                    $local_offset = -$indent + $multiline_comment_indent; # indent has already been checked
                 }
                 $_ = blind_nonspace($comment_text)."@@".$tail;
             }
@@ -386,37 +393,55 @@ while(<>) { # loop over all lines of all input files
     }
 
     # at this point comment text has been removed/ignored (after checking dbl SPC)
-    # or at least the non-space portions of commment text have blinded as @
+    # or at least the non-space portions of commment text have been blinded as @
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if(!$sloppy_spc) {
-        m/^(\s*(#\s*)?)(.*?)\s*$/;
-        my ($head, $intra_line) = ($1, $3);
-        $intra_line =~ s/\\\s*$//; # strip any '\' at EOL
-        my $start = length($head);
-        for(my $col = $start; $col < $start + length($intra_line) - 2; $col++) {
-            complain("dbl SPC") if substr($_, $col, 3) =~ m/\s\s\S/ && !# double space (after leading space)
-                # allowed within multi-line column alignment
-                # TODO improve to properly cover also first two lines of such an alignment:
-                (($line <= 1 || (substr($contents_before , $col + 1, 2) =~ m/\s\S/)) &&
-                 ($line <= 2 || (substr($contents_before2, $col + 1, 2) =~ m/\s\S/)));
+        sub split_line_head {
+            shift =~ m/^(\s*(#\s*)?)(.*?)\s*$/; # do not check for dbl SPC in leading spaces and any leading '#'
+            return ($1, $3 =~ s/\s*\\\s*$//r); # strip any trailing '\' (and any whitespace around it)
         }
-        # ignore (not preserving length) paths in #include
-        $intra_line =~ s/^(include\s*)(".*?"|<.*?>)/$1/e if $1 =~ m/#/;
-        # treat op= and comparison operators as simple '=' (not preserving length), simplifying matching below
+        my ($head , $intra_line ) = split_line_head($_);
+        my ($head1, $intra_line1) = split_line_head($contents_before_ ) if $line > 1;
+        my ($head2, $intra_line2) = split_line_head($contents_before_2) if $line > 2;
+        if($line >= 2) { # check with one line delay, such that at least $contents_before is available
+            sub column_alignments_only {
+                my $head = shift;
+                my $intra = shift;
+                my $contents = shift;
+                # check if all dbl SPC in $intra is used only for multi-line column alignment with $contents
+                my $offset = length($head);
+                for(my $col = 0; $col < length($intra) - 2; $col++) {
+                   return 0 if substr($intra   , $col, 3) =~ m/\s\s\S/ # double space (after leading space)
+                          && !(substr($contents, $col + $offset + 1, 2) =~ m/\s\S/)
+                }
+                return 1;
+            }
+            complain_contents($line - 1, "dbl SPC", $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
+                (    column_alignments_only($head1, $intra_line1, $_                )    # compare with $line
+                 || ($line > 2 &&
+                     column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare with $line - 2
+            complain("dbl SPC") if $intra_line  =~ m/\s\s\S/ && eof
+                && ! column_alignments_only($head , $intra_line , $contents_before_ )  ; # compare with $line - 1
+        } elsif(eof) { # special case: just one line exists
+            complain("dbl SPC") if $intra_line  =~ m/\s\s\S/;
+        }
+        # ignore paths in #include
+        $intra_line =~ s/^(include\s*)(".*?"|<.*?>)/$1/e if $head =~ m/#/;
+        # treat op= and comparison operators as simple '=', simplifying matching below
         $intra_line =~ s/([\+\-\*\/\/%\&\|\^\!<>=]|<<|>>)=/=/g;
-        # treat double &&, ||, <<, and >> as single ones (not preserving length), simplifying matching below
+        # treat double &&, ||, <<, and >> as single ones, simplifying matching below
         $intra_line =~ s/(&&|\|\||<<|>>)/substr($1,0,1)/eg;
         # remove blinded comments etc. directly before ,;)}
         while($intra_line =~ s/\s*@+([,;\)\}\]])/$1/e) {} # /g does not work here
         # treat remaining blinded comments and string literals as (single) space during matching below
-        $intra_line =~ s/(@+\s*)+/ /;
+        $intra_line =~ s/(@+\s*)+/ /g;
         $intra_line =~ s/\s+$//;                    # strip any (resulting) space at EOL
-        $intra_line =~ s/(for\s*\();;(\))/"$1$2"/e; # strip ';;' in for (;;)
+        $intra_line =~ s/(for\s*\();;(\))/"$1$2"/eg; # strip ';;' in for (;;)
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;       # do not complain about {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;              # do not complain about SPC} in initializers such as ' = { 0, };'
-        $intra_line =~ s/\-\>|\+\+|\-\-/@@/g;       # blind '->,', '++', and '--', preserving length
+        $intra_line =~ s/\-\>|\+\+|\-\-/@/g;       # blind '->,', '++', and '--'
         complain("SPC$1")       if $intra_line =~ m/\s([,;\)\]])/;     # space before ,;)]
         complain("$1SPC")       if $intra_line =~ m/([\(\[])\s/;       # space after ([
         complain("no SPC$1")    if $intra_line =~ m/\S([=\|\+\/%<>])/; # =|+/%<> without preceding space
@@ -514,13 +539,15 @@ while(<>) { # loop over all lines of all input files
     }
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
-    my $more_lines = parens_balance($contents_before) < 0; # then match two-line macro headers
-    # - TODO handle also multiple header lines
-    if (($more_lines ? $contents_before2 : $contents_before) =~ m/^\s*#\s*define(\W|$)/ &&
-        $in_multiline_directive == 1 + $more_lines) {
-        if ($count == $indent - INDENT_LEVEL) { # macro body actually started with same indentation as preceding code
-            $indent -= INDENT_LEVEL;
-            $multiline_macro_same_indent = 1;
+    if ($in_directive > 0 && $in_define_header > 0) {
+        if ($in_define_header > 1) { # still in macro definition header
+            $in_define_header += parens_balance($_);
+        } else { # start of macro body
+            $in_define_header = 0;
+            if ($count == $indent - INDENT_LEVEL) { # macro body started with same indentation as preceding code
+                $indent -= INDENT_LEVEL;
+                $multiline_macro_same_indent = 1;
+            }
         }
     }
 
@@ -528,23 +555,21 @@ while(<>) { # loop over all lines of all input files
 
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
-    # do some further checkds @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     my $outermost_level =
          $indent == 0 ||
-        ($indent == INDENT_LEVEL && $in_multiline_directive > 0 && !$multiline_macro_same_indent);
+        ($indent == INDENT_LEVEL && $in_directive > 0 && !$multiline_macro_same_indent);
 
     # check for code block containing a single line/statement
-    if(!$outermost_level && $in_typedecl == 0 && m/^\s*\}/) {
+    if($line > 2 && !$outermost_level && $in_typedecl == 0 && m/^\s*\}/) {
         # leading closing brace '}' in function body, not within type declaration
-        # TODO extend detection from single-line to potentially multi-line statement?
+        # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
            $line_opening_brace == $line - 2) {
             # TODO do not complain about cases where a further if .. else branch
             # follows with a block containg more than one line/statement
-            $line--;
-            complain_contents("{1 line}", ": $contents_before");
-            $line++;
+            complain_contents($line - 1, "{1 line}", $contents_before);
         }
     }
 
@@ -669,24 +694,28 @@ while(<>) { # loop over all lines of all input files
     # need to use original line contents because trailing '\' may have been stripped above
     if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\',
         # typically used in macro definitions (or other preprocessor directives)
-        if ($in_multiline_directive == 0 && m/^(DEFINE_|\s*#)/) { # not only for #define
+        $in_define_header = 0;
+        if ($in_directive == 0 && m/^DEFINE_|\s*#\s*(define(\W|$))?(.*)/) { # start, not only for #define
+            $in_define_header = 1 + parens_balance($2) if defined $1;
             $indent += INDENT_LEVEL ;
             $multiline_macro_same_indent = 0;
         }
-        $in_multiline_directive += 1;
+        $in_directive += 1;
     }
-
-    $contents_before2 = $contents_before;
-    $contents_before = $contents;
-    $count_before = $count;
 
   LINE_FINISHED:
     # on end of multi-line preprocessor directive, adapt indent
-    # need to use original line contents because trailing \ may have been stripped above
+    # need to use original line contents because trailing \ may have been stripped
     unless ($contents =~ m/^(.*?)\s*\\\s*$/) { # no trailing '\'
-        $indent -= INDENT_LEVEL if $in_multiline_directive > 0 && !$multiline_macro_same_indent;
-        $in_multiline_directive = 0;
+        $indent -= INDENT_LEVEL if $in_directive > 0 && !$multiline_macro_same_indent;
+        $in_directive = 0;
     }
+
+    $contents_before2  = $contents_before;
+    $contents_before_2 = $contents_before_;
+    $contents_before   = $contents;
+    $contents_before_  = $_;
+    $count_before = $count;
 
     if($self_test) { # debugging
         my $should_complain = $contents =~ m/\*@(\d)?/ ? 1 : 0;

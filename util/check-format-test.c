@@ -11,6 +11,13 @@
 
 /* This demonstrates/tests cases where check-format.pl should complain */
 
+/*
+ * The '@'s after '*' are used for self-tests: they mark lines containing
+ * a single flaw that should be reported. Normally it should be reported
+ * while handling the given line, but in case of delayed checks there is a
+ * following digit indicating the number of reports expected for this line.
+ */
+
 /* For each of the following set of lines the tool should complain */
 /*@ tab character: 	 */
 /*@ cr character:  */
@@ -25,15 +32,15 @@
  *@ comment start: /* inside multi-line comment
 *@ indent off by -1 in multi-line comment
  *X *@ no space after leading * in multi-line comment, flagged unless sloppy-spc
- *@ triple space after .   in comment, flagged unless sloppy-spc
- *@ multi-line comment with text on last line */
+ *@0 more than double space after .   in comment, flagged unless sloppy-spc
+ *@2 non-empty comment text on last line of multi-line comment */
 */ /*@ comment end outside comment */
 /*@ comment line is 4 columns toooooooooooooooooo wide, flagged unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
  #define X          /*@ indent of '#' before preprocessor directive off by 1 */
 # define X          /*@ indent of preprocessor directive off by 1  */
-typedef struct s  { /*@ double space, flagged unless sloppy-spc */
-    enum {          /*@ double space  in comment, flagged unless sloppy-spc */
+typedef struct s  { /*@0 double space, flagged unless sloppy-spc */
+    enum {          /*@2  double space in comment, flagged unless sloppy-spc */
            zz       /*@ hanging indent off by 1 or 3 */
          x = 1 +    /*@ hanging indent off by -1 or 1 */
            && 1,    /*@ hanging indent of '&&' off by 1 or 3 or -3 or -1, ... */
@@ -63,7 +70,7 @@ fun() {             /*@ opening brace at end of function definition header */
       b1,           /*@ hanging indent off by -1 (or else 2 for sloppy-hang) */
       b2,           /*@ hang.ind. again off by -1, flagged unless sloppy-hang */
    0,               /*@ hanging indent off by -4 (left of normal indent, .. */
-       c1 +..       /*@ .. so reported also with sloppy-hang; this line too long */ c2
+       c1 + c3 + .. /*@ .. so reported also with sloppy-hang; this line too long */ c3
 # define M(X) X     /*@ macro indent off by 1 */
         d ? 1       /*@ hanging indent off by 1 (or else 2 for sloppy-hang) */
            : 2);    /*@ hang.ind. further off by 1 (or else 5 f. sloppy-hang) */
