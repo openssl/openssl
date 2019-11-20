@@ -910,7 +910,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->pseudorand != NULL)
+    if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
     return -1;
 }
