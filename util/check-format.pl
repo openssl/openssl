@@ -11,7 +11,9 @@
 # - check formatting of C source according to OpenSSL coding style
 #
 # usage:
-#   check-format.pl [-l|--sloppy-len] [-s|--sloppy-space] [-e|--sloppy-expr] <files>
+#   check-format.pl [-l|--sloppy-len] [-s|--sloppy-space]
+#                   [-h|--sloppy-hang] [-s|--sloppy-cmt]
+#                   <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
 # This pragmatic tool is incomplete and yields some false positives.
@@ -20,7 +22,8 @@
 # options:
 #  -l | --sloppy-len   increases accepted max line length from 80 to 84
 #  -s | --sloppy-space disables reporting of whitespace nits
-#  -e | --sloppy-expr  add grace when checking multi-line expr indentation
+#  -h | --sloppy-hang  add grace when checking hanging indentation
+#  -c | --sloppy-cmt   allow comment start on any column
 #
 # There are known false positives such as the following.
 #
@@ -55,8 +58,9 @@ use constant MAX_LENGTH => 80;
 
 # command-line options
 my $max_length = MAX_LENGTH;
-my $sloppy_hang = 0;
 my $sloppy_spc = 0;
+my $sloppy_hang = 0;
+my $sloppy_cmt = 0;
 
 while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     my $arg = $1; shift;
@@ -66,6 +70,8 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $sloppy_spc = 1;
     } elsif($arg =~ m/^(h|-sloppy-hang)$/) {
         $sloppy_hang = 1;
+    } elsif($arg =~ m/^(c|-sloppy-cmt)$/) {
+        $sloppy_cmt = 1;
     } else {
         die("unknown option: $arg");
     }
@@ -96,13 +102,12 @@ my @nested_conds_indents;  # stack of hanging indents due to '?' ':'
 my $extra_singular_indent; # extra indent for just one (hanging) statement or expression or typedef
 my $in_expr;               # in expression (after if/for/while/switch/return/enum/LHS of assignment,
                            # implies use of $hanging_indent
-my $in_paren_expr;         # in condition of if/for/while and expr of switch, used only if $hanging_indent != 0,
-                           # implies $in_expr
+my $in_paren_expr;         # in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
-my $in_multiline_comment;  # number of lines so far within multi-line comment
+my $in_multiline_comment;  # number of lines so far within multi-line comment, or -1 when end has been detected
 my $multiline_comment_indent; # used only if $in_multiline_comment > 0
 my $num_current_complaints = 0; # number of issues found on current line
 my $num_complaints = 0;         # total number of issues found
@@ -113,7 +118,7 @@ sub complain_contents {
     my $line = shift;
     my $msg = shift;
     my $contents = shift;
-    print "$ARGV:$line:$msg$contents" unless $self_test;
+    print "$ARGV:$line:$msg:$contents" unless $self_test;
     $num_current_complaints++;
     $num_complaints++;
     $num_SPC_complaints++ if $msg =~ /SPC/;
@@ -122,7 +127,7 @@ sub complain_contents {
 
 sub complain {
     my $msg = shift;
-    complain_contents($line, $msg, ": $contents");
+    complain_contents($line, $msg, $contents);
 }
 
 sub parens_balance { # count balance of opening parentheses - closing parentheses
@@ -136,19 +141,27 @@ sub braces_balance { # count balance of opening braces - closing braces
 }
 
 sub blind_nonspace { # blind non-space text of comment as @, preserving length
+    # the @ character is used because it cannot occur in normal program code so there is no confusion
+    # comment text is not blinded to whitespace in order to be able to check dbl SPC also in comments
     my $comment_text = shift;
     $comment_text =~ s/\.\s\s/.. /g; # in dbl SPC checks allow one extra space after period '.' in comments
     return $comment_text =~ tr/ /@/cr;
 }
 
-sub check_indent { # for lines outside multi-line comments and string literals
-    my $normal_indent = my $alt_indent = $indent + $extra_singular_indent + $local_offset;
-    if ($hanging_indent == 0) {
+sub check_indent { # for lines outside multi-line string literals
+    my $normal_indent =
+        my $alt_indent = $indent + $extra_singular_indent + $local_offset;
+    if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line starting with comment
+        ($in_multiline_comment == 0 || $in_multiline_comment == 1)) { # normal or first line of multi-line comment
+        return;
+    }
+    if ($in_multiline_comment > 1 || $in_multiline_comment == -1) { # multi-line comment, not first line
+        complain("comment indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
+    } elsif ($hanging_indent == 0) {
         my $allowed = $normal_indent;
         $alt_indent = 1 if $label;
         $allowed = "{$alt_indent,$normal_indent}" if $alt_indent != $normal_indent;
-        complain("indent=$count!=$allowed")
-            if $count != $normal_indent && $count != $alt_indent;
+        complain("indent=$count!=$allowed") if $count != $normal_indent && $count != $alt_indent;
     }
     else {
         my $alt_indent = $hanging_indent;
@@ -162,6 +175,9 @@ sub check_indent { # for lines outside multi-line comments and string literals
             }
             # allow hanging expression etc. indent at normal indentation level, at least INDENT_LEVEL
             $alt_indent = max(INDENT_LEVEL, $normal_indent);
+        } elsif (substr($_, $count, 1) eq ":") { # special treatment for leading ':'
+            # allow hanging expression etc. indent at normal indentation level
+            $alt_indent = $normal_indent;
         }
         if(@nested_braces_indents) {
             $alt_indent = $normal_indent; # allow hanging initializer expression indent at normal indentation level
@@ -213,16 +229,17 @@ sub update_nested_indents {
             @nested_brackets_indents  ?
         pop(@nested_brackets_indents) : complain("too many ]")  if $c eq "]";
             @nested_conds_indents     ?
-        pop(@nested_conds_indents)    : complain("too many :")  if $c eq ":" # ignore in following situations:
-                # not after initial label/case/default - TODO extend to multi-line expressions after 'case'
-                && !($hanging_indent == 0 && substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/)
-                # bitfield length within unsigned type decl - TODO improve matching
-                && !(!$in_expr && substr($str, $i + 1) =~ m/^\d+/);
+        pop(@nested_conds_indents)    : complain("too many ':'")  if $c eq ":"
+                && ($in_expr || $hanging_indent != 0 || !( # ignore in following situations:
+                    # after initial label/case/default - TODO extend to multi-line expressions after 'case'
+                                                           substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/
+                    # bitfield length within unsigned type decl - TODO improve matching
+                                                        || substr($str, $i + 1) =~ m/^\s*\d+/));
     }
     return ($end_in_paren_expr, -1);
 }
 
-sub reset_hanging_indents { # reset $hanging_indent and subordinate variables
+sub check_nested_indents {
     my $position = shift;
     complain(+@nested_parens_indents  ." unclosed ( at $position") if @nested_parens_indents;
    (complain(+@nested_braces_indents  ." unclosed { at $position")
@@ -231,14 +248,13 @@ sub reset_hanging_indents { # reset $hanging_indent and subordinate variables
     complain(+@nested_conds_indents   ." unclosed ? at $position") if @nested_conds_indents;
     @nested_parens_indents = @nested_braces_indents =
         @nested_brackets_indents = @nested_conds_indents = ();
-
-    $hanging_indent = 0;
-    $in_paren_expr = 0;
-    $in_expr = 0;
 }
 
 sub reset_file_state {
-    reset_hanging_indents("EOF");
+    check_nested_indents("EOF");
+    $hanging_indent = 0;
+    $in_paren_expr = 0;
+    $in_expr = 0;
     $extra_singular_indent = 0;
     $indent = 0;
     $directive_indent = 0;
@@ -283,12 +299,11 @@ while(<>) { # loop over all lines of all input files
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
-    if($in_multiline_comment > 0) { # this includes the ending line of multi-line commment
-        complain("indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
+    if($in_multiline_comment > 0) { # this includes the last line of multi-line commment
         m/^(\s*)(.?)(.*)$/;
         my ($head, $any_symbol, $comment_text) = ($1, $2, $3);
         if($any_symbol eq "*") {
-            complain("*no SPC")  if !$sloppy_spc && $comment_text =~ m/^[^\/\s$self_test_exception]/;
+            complain("*no SPC")  if !$sloppy_spc && $comment_text =~ m|^[^/\s$self_test_exception]|;
         } else {
             complain("no leading * in multi-line comment");
         }
@@ -305,17 +320,10 @@ while(<>) { # loop over all lines of all input files
                 complain("*/ outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
             } else {
-                $in_multiline_comment = 0;
-                my $comment_text = $head;
                 complain("... */") if $head =~ m/\S/; # head contains non-whitespace
-                if($tail =~ m/^\s*$/) { # rest is just whitespace
-                    complain("dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
-                    # sacrifycing multi-line column alignment for this line
-                    # blind ending multi-line comment as space
-                    $_ = ($comment_text =~ tr/ / /cr)."  $tail";
-                    $local_offset = -$indent + $multiline_comment_indent; # indent has already been checked
-                }
+                my $comment_text = $head;
                 $_ = blind_nonspace($comment_text)."@@".$tail;
+                $in_multiline_comment = -1;
             }
         }
     }
@@ -327,40 +335,33 @@ while(<>) { # loop over all lines of all input files
         complain("no SPC/*") if !$sloppy_spc && $head =~ m/[^\s]$/;
         complain("/*no SPC") if !$sloppy_spc && $tail =~ m/^[^\s$self_test_exception]/;
         my $comment_text = $opt_minus.$tail; # preliminary
-        if ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
+        if ($in_multiline_comment > 0) {
+            complain("/* inside multi-line comment");
+        } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             complain("/* inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
             ($comment_text, my $rest) = ($opt_minus.$1, $2);
-            my $leading_comment = $head =~ m/^\s*$/; # only whitespace before
-            if ($leading_comment ||
-                $rest =~ m/^\s*$/) { # trailing commment: only whitespace after
+            if ($head =~ m/\S/ && # not leading comment: non-whitespace before
+                $rest =~ m/^\s*$/) { # trailing comment: only whitespace after
                 complain("/* dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
-                # blind leading/trailing commment as space
+                # blind trailing commment as space - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($comment_text =~ tr/ / /cr)."  $rest";
-                m/^(\s*)/; $count = length $1 if $leading_comment; # re-calculate count, like done above
-            } else { # intra-line comment
+            } else { # leading or intra-line comment
                 $_ = "$head@@".blind_nonspace($comment_text)."@@".$rest;
             }
             goto MATCH_COMMENT;
         } else { # start of multi-line comment
-            if ($in_multiline_comment > 0) {
-                complain("/* inside multi-line comment");
-            } else {
-                complain("/* ...") unless $tail =~ m/^\s*\\?\s*$/; # tail not essentially empty
-                # adopt actual indentation of first line
-                $multiline_comment_indent = length($head) + 1;
-            }
-            # do not: complain("/* dbl SPC") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
-            # because this would disable multi-line column alignment
-            # blind non-space text of starting comment, preserving length
+            complain("/* ...") unless $tail =~ m/^.?\s*\\?\s*$/; # tail not essentially empty, first char already checked: "/*no SPC"
+            # adopt actual indentation of first line
+            $multiline_comment_indent = length($head) + 1;
             $_ = "$head@@".blind_nonspace($comment_text);
             $in_multiline_comment = 1;
         }
     }
 
-    if($in_multiline_comment > 1) { # still inside multi-line comment (not at its start)
+    if($in_multiline_comment > 1) { # still inside multi-line comment (not at its start or end)
         m/^(\s*)\*?(\s*)(.*)$/;
-        $_ = "$1 $2".blind_nonspace($3);
+        $_ = $1."@".$2.blind_nonspace($3);
     }
 
     # handle special case of line after '#ifdef __cplusplus' (which typically appears in header files)
@@ -388,7 +389,7 @@ while(<>) { # loop over all lines of all input files
     if(m|(.*?)//(.*$)|) {
         complain("//");  # the '//' comment style is not allowed for C90
         complain("// dbl SPC") if !$sloppy_spc && $2 =~ m/(^|[^.])\s\s\S/;
-        # sacrifycing multi-line column alignment for this line
+        # sacrifycing multi-line column alignment for this line - TODO blind by @ after improving matching of trailing items
         $_ = $1; # anyway ignore comment text (not preserving length)
     }
 
@@ -455,7 +456,6 @@ while(<>) { # loop over all lines of all input files
 
     # empty lines, preprocessor directives, and characters/string iterals @@@@@@
 
-    goto LINE_FINISHED if $in_multiline_comment > 0; # TODO handle any code preceding its start or following its end
     goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace except potentially a single backslash)
 
     # handle preprocessor directives
@@ -496,8 +496,8 @@ while(<>) { # loop over all lines of all input files
     # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # temporarily adapt required indents according to leading closing symbols
-    if ($hanging_indent != 0) {
-        if(m/^(\s*)([\)\}\]:])(.*)$/) { # leading }, ), ], :
+    if ($in_expr || $hanging_indent != 0) {
+        if(m/^(\s*)([\)\}\]:])(.*)$/) { # leading '}', ')', ']', ':'
             my ($head, $closing_symbol, $tail) = ($1, $2, $3);
             $hanging_indent = @nested_parens_indents   >= 2 ? @nested_parens_indents  [-2] : 0 if $closing_symbol eq ")";
             $hanging_indent = @nested_braces_indents   >= 2 ? @nested_braces_indents  [-2] : 0 if $closing_symbol eq "}";
@@ -509,11 +509,9 @@ while(<>) { # loop over all lines of all input files
                 $hanging_indent = 0;
                 $local_offset -= INDENT_LEVEL;
             }
-        }
-        elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) {
+        } elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) {
             $hanging_indent = 0;
             $extra_singular_indent -= INDENT_LEVEL;
-            #$local_offset -= INDENT_LEVEL; # these macros are used for formatting like an implicit '}'
         }
     } else { # outside expression/statement/type declaration/variable definition/function header
         complain("... }") if m/^\s*[^\s\{\}][^\{\}]*\}/; # non-whitespace non-} before first '}'
@@ -555,6 +553,8 @@ while(<>) { # loop over all lines of all input files
 
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
+    $in_multiline_comment = 0 if $in_multiline_comment == -1; # multi-line comment has ended
+
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     my $outermost_level =
@@ -567,7 +567,7 @@ while(<>) { # loop over all lines of all input files
         # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
            $line_opening_brace == $line - 2) {
-            # TODO do not complain about cases where a further if .. else branch
+            # TODO do not complain about cases where a further else branch
             # follows with a block containg more than one line/statement
             complain_contents($line - 1, "{1 line}", $contents_before);
         }
@@ -594,10 +594,9 @@ while(<>) { # loop over all lines of all input files
     if (m/^(.*\W(if|for|while|switch))((\W|$).*)$/) {
         my ($head, $tail) = ($1, $3);
         # start of expression
+        $in_expr = 1;
         $in_paren_expr = 1;
         $tail =~ m/^(\s*\(?)/;
-        $in_expr = 1;
-        $hanging_indent = length($head) + length($1);
         # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
         $_ = $head =~ tr/ /@/cr . $tail;
         # then start of statement
@@ -624,7 +623,6 @@ while(<>) { # loop over all lines of all input files
         if (!$in_expr && @nested_parens_indents + parens_balance($head) == 0) # not nested assignment etc.
         {
             $in_expr = 1;
-            $hanging_indent = $indent + INDENT_LEVEL;
             # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
             $_ = $head =~ tr/ /@/cr . $tail;
             $extra_singular_indent += INDENT_LEVEL;
@@ -636,7 +634,9 @@ while(<>) { # loop over all lines of all input files
     if ($in_paren_expr) { # if/for/while/switch
         if ($end_in_paren_expr) { # end of its (expr)
             # reset hanging indents while keeping extra_singular_indent
-            reset_hanging_indents("end of (expr)");
+            check_nested_indents("end of (expr)");
+            $in_expr = 0;
+            $in_paren_expr = 0;
         }
     } elsif ($in_expr || $hanging_indent != 0) {
         # reset hanging indents
@@ -644,10 +644,12 @@ while(<>) { # loop over all lines of all input files
         # on end of statement/type declaration/variable definition/function header
         my $trailing_opening_brace = m/\{\s*$/;
         if ($terminator_position >= 0) {
-            reset_hanging_indents("end of expr/stmt/decl");
+            check_nested_indents("end of expr/stmt/decl");
+            $in_expr = 0;
         } elsif ($outermost_level && !$in_expr && @nested_parens_indents == 0 && !$trailing_opening_brace) {
             # assuming end of function header in function definition
-            reset_hanging_indents("end of fn hdr");
+            check_nested_indents("end of fn hdr");
+            $in_expr = 0;
         }
     }
 
@@ -656,10 +658,9 @@ while(<>) { # loop over all lines of all input files
         $extra_singular_indent = 0; # normal end, or cancel after 'do .. while'
         $in_typedecl-- if $in_typedecl > 0; # TODO also handle multiple type decls per line
         m/(;[^;]*)$/; # match last ';'
-        # - this may be undefined in case of virtual terminator used in update_nested_indents(): /^\w*ASN1_[A-Z_]+END\w*/
         $terminator_position = length($_) - length($1) if $1;
         # the new $terminator_position value may be after the earlier one in case multiple terminators on current line
-        # TODO check treatment in case multiple terminators on current line
+        # TODO check treatment in case of multiple terminators on current line
         update_nested_indents($_, $terminator_position + 1);
     }
 
@@ -672,10 +673,10 @@ while(<>) { # loop over all lines of all input files
   # $max_indent = max($max_indent, $nested_conds_indents   [-1]) if @nested_conds_indents;
     complain("unexpected requirement for hanging indent=0") if $max_indent == 0;
     # this sets $hanging_indent also outside expressions: in statement/type declaration/variable definition/function header
-    $hanging_indent = $max_indent if $max_indent >= 0;
+    $hanging_indent = $max_indent >= 0 ? $max_indent : 0;
 
     # handle last (typically trailing) opening brace '{' in line
-    if (m/^(.*?)\{([^\{]*)$/) { # match ... '{'
+    if (m/^(.*?)\{([^\{]*)$/) { # match last ... '{'
         my ($head, $tail) = ($1, $2);
         if (!$in_expr && $in_typedecl == 0) {
             if ($outermost_level) { # we assume end of function definition header (or statement or variable definition)
@@ -730,13 +731,12 @@ while(<>) { # loop over all lines of all input files
     if(eof) {
         # check for essentially empty line just before EOF
         complain("SPC/empty line at EOF") if $contents =~ m/^\s*\\?\s*$/;
-        $line = "EOF";
 
         # sanity-check balance of { .. } via final indent at end of file
-        complain_contents(ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
+        complain_contents("$line (EOF)", ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
 
         # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
-        complain_contents("$directive_indent unclosed #if", "\n") if $directive_indent != 0;
+        complain_contents("$line (EOF)", "$directive_indent unclosed #if", "\n") if $directive_indent != 0;
 
         reset_file_state();
     }

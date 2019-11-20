@@ -27,10 +27,14 @@
 // /*@ end-of-line comment style not allowed for C90 */
 /*X */ /*@ no space after comment start, flagged unless sloppy-spc */
 /* X*/ /*@ no space before comment end , flagged unless sloppy-spc */
-/*@ comment start: /* inside intra-line comment */
-/*@ multi-line comment with text on first line
- *@ comment start: /* inside multi-line comment
-*@ indent off by -1 in multi-line comment
+/*@ comment starting delimiter: /* inside intra-line comment */
+ /*@ normal comment indent off by 1, flagged unless sloppy-cmt */
+ /*@
+   *@ multi-line comment start indent off by 1, curent indent further off by 1
+*/ /*@ multi-line comment end indent off by -1 */
+/*@ multi-line comment starting with text on first line
+ *@ comment starting delimiter: /* inside multi-line comment
+*@ multi-line comment indent off by -1
  *X *@ no space after leading * in multi-line comment, flagged unless sloppy-spc
  *@0 more than double space after .   in comment, flagged unless sloppy-spc
  *@2 non-empty comment text on last line of multi-line comment */
@@ -79,7 +83,7 @@ fun() {             /*@ opening brace at end of function definition header */
         ( 0) *      /*@ space after (, flagged unless sloppy-spc */
         h %2 -      /*@ no space after, flagged unless sloppy-spc % */
         0 +/* */    /*@ no space before comment, flagged unless sloppy-spc */
-   /* */1 *         /*@ no space after comment, flagged unless sloppy-spc */
+        /* */1 *    /*@ no space after comment, flagged unless sloppy-spc */
      shifted.. /*@ hanging indent off by -2, flagged unless sloppy-hang */ left)
        cmd;         /*@ single-statement indent off by -1 */
     do{ x = 3; }    /*@ no space before opening {, flagged unless sloppy-spc */
@@ -95,5 +99,5 @@ fun() {             /*@ opening brace at end of function definition header */
 
 {                   /*@0 unclosed brace outside expression */
 #if                 /*@0 unclosed #if */
-                    /*@0 space/empty line follows just before EOF: */
+    ;               /*@0 space/empty line follows just before EOF: */
 
