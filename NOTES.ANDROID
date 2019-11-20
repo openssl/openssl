@@ -36,7 +36,7 @@
  to compile for Android 10 arm64 with a side-by-side NDK r20.0.5594570
 
 	export ANDROID_NDK_HOME=/home/whoever/Android/android-sdk/ndk/20.0.5594570
-	PATH=$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+	PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
 	./Configure android-arm64 -D__ANDROID_API__=29
 	make
  
