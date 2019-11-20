@@ -386,6 +386,9 @@ int RAND_poll(void)
 
     const RAND_METHOD *meth = RAND_get_rand_method();
 
+    if (meth == NULL)
+        return 0;
+
     if (meth == RAND_OpenSSL()) {
         /* fill random pool and seed the master DRBG */
         RAND_DRBG *drbg = RAND_DRBG_get0_master();
@@ -896,7 +899,7 @@ void RAND_seed(const void *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->seed != NULL)
+    if (meth != NULL && meth->seed != NULL)
         meth->seed(buf, num);
 }
 
@@ -904,7 +907,7 @@ void RAND_add(const void *buf, int num, double randomness)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->add != NULL)
+    if (meth != NULL && meth->add != NULL)
         meth->add(buf, num, randomness);
 }
 
@@ -918,6 +921,9 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     const RAND_METHOD *meth = RAND_get_rand_method();
     RAND_DRBG *drbg;
     int ret;
+
+    if (meth == NULL)
+        return 0;
 
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
@@ -934,7 +940,7 @@ int RAND_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->bytes != NULL)
+    if (meth != NULL && meth->bytes != NULL)
         return meth->bytes(buf, num);
     RANDerr(RAND_F_RAND_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
     return -1;
@@ -945,7 +951,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->pseudorand != NULL)
+    if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
     return -1;
 }
@@ -955,7 +961,7 @@ int RAND_status(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->status != NULL)
+    if (meth != NULL && meth->status != NULL)
         return meth->status();
     return 0;
 }
