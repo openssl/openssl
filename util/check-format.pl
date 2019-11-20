@@ -107,8 +107,8 @@ my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
-my $in_multiline_comment;  # number of lines so far within multi-line comment, or -1 when end has been detected
-my $multiline_comment_indent; # used only if $in_multiline_comment > 0
+my $in_comment;            # number of lines so far within multi-line comment, or -1 when end has been detected
+my $multiline_comment_indent; # used only if $in_comment > 0
 my $num_current_complaints = 0; # number of issues found on current line
 my $num_complaints = 0;         # total number of issues found
 my $num_SPC_complaints = 0;     # total number of whitespace issues found
@@ -152,10 +152,10 @@ sub check_indent { # for lines outside multi-line string literals
     my $normal_indent =
         my $alt_indent = $indent + $extra_singular_indent + $local_offset;
     if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line starting with comment
-        ($in_multiline_comment == 0 || $in_multiline_comment == 1)) { # normal or first line of multi-line comment
+        ($in_comment == 0 || $in_comment == 1)) { # normal or first line of multi-line comment
         return;
     }
-    if ($in_multiline_comment > 1 || $in_multiline_comment == -1) { # multi-line comment, not first line
+    if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, not first line
         complain("comment indent=$count!=$multiline_comment_indent") if $count != $multiline_comment_indent;
     } elsif ($hanging_indent == 0) {
         my $allowed = $normal_indent;
@@ -264,7 +264,7 @@ sub reset_file_state {
     $line_opening_brace = 0;
     $in_typedecl = 0;
     $in_directive = 0;
-    $in_multiline_comment = 0;
+    $in_comment = 0;
 }
 
 reset_file_state();
@@ -299,7 +299,7 @@ while(<>) { # loop over all lines of all input files
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
-    if($in_multiline_comment > 0) { # this includes the last line of multi-line commment
+    if($in_comment > 0) { # this includes the last line of multi-line commment
         m/^(\s*)(.?)(.*)$/;
         my ($head, $any_symbol, $comment_text) = ($1, $2, $3);
         if($any_symbol eq "*") {
@@ -307,7 +307,7 @@ while(<>) { # loop over all lines of all input files
         } else {
             complain("no leading * in multi-line comment");
         }
-        $in_multiline_comment++;
+        $in_comment++;
     }
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
@@ -316,14 +316,14 @@ while(<>) { # loop over all lines of all input files
         complain("no SPC*/") if !$sloppy_spc && $head =~ m/\S$/;
         complain("*/no SPC") if !$sloppy_spc && $tail =~ m/^\S/;
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
-            if ($in_multiline_comment == 0) {
+            if ($in_comment == 0) {
                 complain("*/ outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
             } else {
                 complain("... */") if $head =~ m/\S/; # head contains non-whitespace
                 my $comment_text = $head;
                 $_ = blind_nonspace($comment_text)."@@".$tail;
-                $in_multiline_comment = -1;
+                $in_comment = -1;
             }
         }
     }
@@ -335,7 +335,7 @@ while(<>) { # loop over all lines of all input files
         complain("no SPC/*") if !$sloppy_spc && $head =~ m/[^\s]$/;
         complain("/*no SPC") if !$sloppy_spc && $tail =~ m/^[^\s$self_test_exception]/;
         my $comment_text = $opt_minus.$tail; # preliminary
-        if ($in_multiline_comment > 0) {
+        if ($in_comment > 0) {
             complain("/* inside multi-line comment");
         } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
             complain("/* inside intra-line comment") if $1 =~ /\/\*/;
@@ -355,11 +355,11 @@ while(<>) { # loop over all lines of all input files
             # adopt actual indentation of first line
             $multiline_comment_indent = length($head) + 1;
             $_ = "$head@@".blind_nonspace($comment_text);
-            $in_multiline_comment = 1;
+            $in_comment = 1;
         }
     }
 
-    if($in_multiline_comment > 1) { # still inside multi-line comment (not at its start or end)
+    if($in_comment > 1) { # still inside multi-line comment (not at its start or end)
         m/^(\s*)\*?(\s*)(.*)$/;
         $_ = $1."@".$2.blind_nonspace($3);
     }
@@ -553,7 +553,7 @@ while(<>) { # loop over all lines of all input files
 
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
-    $in_multiline_comment = 0 if $in_multiline_comment == -1; # multi-line comment has ended
+    $in_comment = 0 if $in_comment == -1; # multi-line comment has ended
 
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
