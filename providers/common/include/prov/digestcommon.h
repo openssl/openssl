@@ -49,7 +49,8 @@ static void *name##_dupctx(void *ctx)                                          \
 {                                                                              \
     CTX *in = (CTX *)ctx;                                                      \
     CTX *ret = OPENSSL_malloc(sizeof(*ret));                                   \
-    *ret = *in;                                                                \
+    if (ret != NULL)                                                           \
+        *ret = *in;                                                            \
     return ret;                                                                \
 }                                                                              \
 static OSSL_OP_digest_final_fn name##_internal_final;                          \
