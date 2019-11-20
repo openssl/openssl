@@ -786,7 +786,7 @@ See L<openssl(1)/Format Options> for details.
 =head2 Name Format Options
 
 OpenSSL provides fine-grain control over how the subject and issuer DN's are
-display.
+displayed.
 This is specified by using the B<-nameopt> option, which takes a
 comma-separated list of options from the following set.
 An option may be preceeded by a minus sign, C<->, to turn it off.
@@ -802,7 +802,7 @@ Display the name using an old format from previous OpenSSL versions.
 =item B<RFC2253>
 
 Display the name using the format defined in RFC 2253.
-This is equivalent to B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>,
+It is equivalent to B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>,
 B<dump_nostr>, B<dump_unknown>, B<dump_der>, B<sep_comma_plus>, B<dn_rev>
 and B<sname>.
 
@@ -817,7 +817,7 @@ B<space_eq> and B<sname> options.
 =item B<multiline>
 
 Display the name using multiple lines.
-It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>, B<space_eq>,
+It is equivalent to B<esc_ctrl>, B<esc_msb>, B<sep_multiline>, B<space_eq>,
 B<lname> and B<align>.
 
 =item B<esc_2253>
