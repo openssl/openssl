@@ -771,6 +771,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          */
         SSL3_BUFFER_set_buf(&s->rlayer.wbuf[0], (unsigned char *)buf);
         SSL3_BUFFER_set_offset(&s->rlayer.wbuf[0], 0);
+        SSL3_BUFFER_set_app_buffer(&s->rlayer.wbuf[0], 1);
         goto wpacket_init_complete;
     }
 
