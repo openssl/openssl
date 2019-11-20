@@ -2117,10 +2117,18 @@ EOF
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
             die "more than one generator for $dest: "
-                    ,join(" ", @{$generate{$_}}),"\n"
-                    if scalar @{$generate{$_}} > 1;
+                ,join(" ", @{$generate{$_}}),"\n"
+                if scalar @{$generate{$_}} > 1;
             my @generator = split /\s+/, $generate{$dest}->[0];
-            $generator[0] = cleanfile($sourced, $generator[0], $blddir),
+            my $gen = $generator[0];
+            $generator[0] = cleanfile($sourced, $gen, $blddir);
+
+            # If the generator isn't in the source tree, we assume it's
+            # generated in the build tree
+            if ($generate{$gen}) {
+                $generator[0] = cleanfile($buildd, $gen, $blddir);
+            }
+
             $unified_info{generate}->{$ddest} = [ @generator ];
         }
 
