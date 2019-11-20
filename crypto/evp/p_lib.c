@@ -105,7 +105,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey->ameth && pkey->ameth->param_missing)
+    if (pkey != NULL && pkey->ameth && pkey->ameth->param_missing)
         return pkey->ameth->param_missing(pkey);
     return 0;
 }
