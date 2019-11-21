@@ -62,7 +62,7 @@ use constant MAX_LENGTH => 80;
 
 # command-line options
 my $max_length = MAX_LENGTH;
-my $sloppy_spc = 0;
+my $sloppy_SPC = 0;
 my $sloppy_hang = 0;
 my $sloppy_cmt = 0;
 
@@ -71,7 +71,7 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     if($arg =~ m/^(l|-sloppy-len)$/) {
         $max_length += INDENT_LEVEL;
     } elsif($arg =~ m/^(s|-sloppy-spc)$/) {
-        $sloppy_spc = 1;
+        $sloppy_SPC = 1;
     } elsif($arg =~ m/^(h|-sloppy-hang)$/) {
         $sloppy_hang = 1;
     } elsif($arg =~ m/^(c|-sloppy-cmt)$/) {
@@ -113,19 +113,23 @@ my $in_define_header;      # number of open parentheses + 1 in (multi-line) head
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_comment;            # number of lines so far within multi-line comment, or -1 when end has been detected
 my $comment_indent;        # used only if $in_comment > 0
-my $num_current_reports = 0; # number of issues found on current line
-my $num_reports = 0;         # total number of issues found
-my $num_SPC_reports = 0;     # total number of whitespace issues found
-my $num_indent_reports = 0;  # total number of indentation issues found
+my $num_reports_line = 0;  # number of issues found on current line
+my $num_reports = 0;       # total number of issues found
+my $num_SPC_reports = 0;   # total number of whitespace issues found
+my $num_indent_reports = 0;# total number of indentation issues found
 
 sub report_flex {
     my $line = shift;
     my $msg = shift;
     my $contents = shift;
+
+    my $report_SPC = $msg =~ /SPC/;
+    return if $report_SPC && $sloppy_SPC;
+
     print "$ARGV:$line:$msg:$contents" unless $self_test;
-    $num_current_reports++;
+    $num_reports_line++;
     $num_reports++;
-    $num_SPC_reports++ if $msg =~ /SPC/;
+    $num_SPC_reports++ if $report_SPC;
     $num_indent_reports++ if $msg =~ /indent/;
 }
 
@@ -306,7 +310,7 @@ while(<>) { # loop over all lines of all input files
         m/^(\s*)(.?)(.*)$/;
         my ($head, $any_symbol, $comment_text) = ($1, $2, $3);
         if($any_symbol eq "*") {
-            report("*no SPC")  if !$sloppy_spc && $comment_text =~ m|^[^/\s$self_test_exception]|;
+            report("*no SPC")  if $comment_text =~ m|^[^/\s$self_test_exception]|;
         } else {
             report("no leading * in multi-line comment");
         }
@@ -316,8 +320,8 @@ while(<>) { # loop over all lines of all input files
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my ($head, $tail) = ($1, $2);
-        report("no SPC*/") if !$sloppy_spc && $head =~ m/\S$/;
-        report("*/no SPC") if !$sloppy_spc && $tail =~ m/^\S/;
+        report("no SPC*/") if $head =~ m/\S$/;
+        report("*/no SPC") if $tail =~ m/^\S/;
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("*/ outside comment");
@@ -335,8 +339,8 @@ while(<>) { # loop over all lines of all input files
   MATCH_COMMENT:
     if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO ignore '/*' inside string literal
         my ($head, $opt_minus, $tail) = ($1, $2, $3);
-        report("no SPC/*") if !$sloppy_spc && $head =~ m/[^\s]$/;
-        report("/*no SPC") if !$sloppy_spc && $tail =~ m/^[^\s$self_test_exception]/;
+        report("no SPC/*") if $head =~ m/[^\s]$/;
+        report("/*no SPC") if $tail =~ m/^[^\s$self_test_exception]/;
         my $comment_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("/* inside multi-line comment");
@@ -346,7 +350,7 @@ while(<>) { # loop over all lines of all input files
             ($comment_text, my $rest) = ($opt_minus.$1, $2);
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
                 $rest =~ m/^\s*$/) { # trailing comment: only whitespace after
-                report("/* dbl SPC */") if !$sloppy_spc && $comment_text =~ m/(^|[^.])\s\s\S/;
+                report("/* dbl SPC */") if $comment_text =~ m/(^|[^.])\s\s\S/;
                 # blind trailing commment as space - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($comment_text =~ tr/ / /cr)."  $rest";
             } else { # leading or intra-line comment
@@ -391,7 +395,7 @@ while(<>) { # loop over all lines of all input files
     # handle C++ / C99 - style end-of-line comments
     if(m|(.*?)//(.*$)|) {
         report("//");  # the '//' comment style is not allowed for C90
-        report("// dbl SPC") if !$sloppy_spc && $2 =~ m/(^|[^.])\s\s\S/;
+        report("// dbl SPC") if $2 =~ m/(^|[^.])\s\s\S/;
         # sacrifycing multi-line column alignment for this line - TODO blind by @ after improving matching of trailing items
         $_ = $1; # anyway ignore comment text (not preserving length)
     }
@@ -401,7 +405,7 @@ while(<>) { # loop over all lines of all input files
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    if(!$sloppy_spc) {
+    if(!$sloppy_SPC) {
         sub split_line_head {
             shift =~ m/^(\s*(#\s*)?)(.*?)\s*$/; # do not check for dbl SPC in leading spaces and any leading '#'
             return ($1, $3 =~ s/\s*\\\s*$//r); # strip any trailing '\' (and any whitespace around it)
@@ -724,10 +728,10 @@ while(<>) { # loop over all lines of all input files
     if($self_test) { # debugging
         my $should_report = $contents =~ m/\*@(\d)?/ ? 1 : 0;
         $should_report = +$1 if defined $1;
-        print("$ARGV:$line:$num_current_reports reports on:$contents")
-            if $num_current_reports != $should_report;
+        print("$ARGV:$line:$num_reports_line reports on:$contents")
+            if $num_reports_line != $should_report;
     }
-    $num_current_reports = 0;
+    $num_reports_line = 0;
 
     # post-processing at end of file @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
