@@ -22,6 +22,7 @@
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
+#define min(a,b)                ((a) > (b) ? (b) : (a))
 
 /* TLSv1.3 downgrade protection sentinel values */
 const unsigned char tls11downgrade[] = {
@@ -4209,6 +4210,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif
     uint8_t *flags;
     int found = 0;
+    int group_flag, min_index, min_index_sha256, ret_index, pass;
     if (srvr_flags == NULL)
         return 0;
     srvr = srvr_flags->cipher_list;
@@ -4319,6 +4321,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         ssl_set_masks(s);
     }
 
+    /* Check clients first cipher for preference flag */
     if (flags != NULL) {
         c = sk_SSL_CIPHER_value(allow, 0);
         ii = sk_SSL_CIPHER_find(prio, c);
@@ -4329,39 +4332,60 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         }
     }
 
-    if (!found)
+    if (!found) {
+        min_index = min_index_sha256 = ret_index = INT_MAX;
+        /* Check ciphers one by one and respect groups */
         for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
+
+            group_flag = (flags && flags[i] & CIPHER_IN_GROUP);
+
             c = sk_SSL_CIPHER_value(prio, i);
-            if (!ssl3_check_cipher(s, c, &alg_mask))
-                continue;
+            if ((pass = ssl3_check_cipher(s, c, &alg_mask)))
+                ii = sk_SSL_CIPHER_find(allow, c);
 
-
-            ii = sk_SSL_CIPHER_find(allow, c);
-            if (ii >= 0) {
+            if (pass && ii >= 0) {
                 /* Check security callback permits this cipher */
                 if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
                                   c->strength_bits, 0, (void *)c))
-                    continue;
+                    pass = 0;
 #if !defined(OPENSSL_NO_EC)
-                if (alg_mask && s->s3.is_probably_safari) {
+                if (pass && alg_mask && s->s3.is_probably_safari) {
                     if (!ret)
                         ret = c;
-                    continue;
+                    pass = 0;
                 }
 #endif
-                if (prefer_sha256) {
 
-                    if (ssl_md(c->algorithm2) == mdsha256) {
-                        ret = c;
+                if (pass) {
+                    min_index = min(min_index, ii);
+                    if (prefer_sha256 && ssl_md(c->algorithm2) == mdsha256)
+                        min_index_sha256 = min(min_index_sha256, INT_MAX);
+                }
+            }
+
+            /* Last cipher in group / no group exists */
+            if (!group_flag) {
+                if (prefer_sha256) {
+                    if (min_index_sha256 != INT_MAX) {
+                        ret_index = min_index_sha256;
                         break;
                     }
-                    if (ret == NULL)
-                        ret = c;
-                    continue;
+                    if (ret_index != INT_MAX) {
+                        ret_index = min_index;
+                        continue;
+                    }
+
+                } else {
+                    if (min_index != INT_MAX) {
+                        ret_index = min_index;
+                        break;
+                    }
                 }
-                ret = c;
-                break;
+                min_index = INT_MAX;
             }
+        }
+        if (ret_index != INT_MAX)
+            ret = sk_SSL_CIPHER_value(allow, ret_index);
     }
 
 #ifndef OPENSSL_NO_CHACHA
