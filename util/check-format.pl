@@ -321,7 +321,7 @@ while(<>) { # loop over all lines of all input files
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my ($head, $tail) = ($1, $2);
         report("no SPC*/") if $head =~ m/\S$/;
-        report("*/no SPC") if $tail =~ m/^\S/;
+        report("*/no SPC") if $tail =~ m/^\w/; # report space nit only if '*/' is followed by alphanumeric character
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("*/ outside comment");
