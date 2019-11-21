@@ -25,9 +25,9 @@
 #  -c | --sloppy-cmt   allows any indentation for comments
 #  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
 #                      * same indentation as on line before
+#                      * same indentation as non-hanging indent level
 #                      * indentation moved left (not beyond non-hanging indent)
 #                        just to fit contents within the line length limit
-#                      and allows the non-hanging indent level as alternative
 #
 # There are known false positives such as the following.
 #
@@ -158,34 +158,40 @@ sub blind_nonspace { # blind non-space text of comment as @, preserving length
 }
 
 sub check_indent { # for lines outside multi-line string literals
-    my $normal_indent =
-        my $alt_indent = $indent + $extra_singular_indent + $local_offset;
     if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line starting with comment
         ($in_comment == 0 || $in_comment == 1)) { # normal or first line of multi-line comment
         return;
     }
+
     if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, but not on first line
         report("comment indent=$count!=$comment_indent") if $count != $comment_indent;
-    } elsif ($hanging_indent == 0) {
+        return;
+    }
+
+    my $normal_indent = $indent + $extra_singular_indent + $local_offset;
+    my $alt_indent =  $hanging_indent == 0 ? $normal_indent : $hanging_indent;
+    if (@nested_conds_indents > 0 && substr($_, $count, 1) eq ":") { # special treatment for leading ':'
+        # allow leading ":" at indent level of corresponding "?" (which can only happen in expressions )
+        $alt_indent =  @nested_conds_indents[-1];
+    }
+
+    if ($hanging_indent == 0) {
         my $allowed = $normal_indent;
-        $alt_indent = 1 if $label;
-        $allowed = "{$alt_indent,$normal_indent}" if $alt_indent != $normal_indent;
+        $alt_indent = 1 if $label; # this cannot happen for leading ":"
+        ($alt_indent, $normal_indent) = ($normal_indent, $alt_indent) if $alt_indent < $normal_indent;
+        $allowed = "{$normal_indent,$alt_indent}" if $alt_indent != $normal_indent;
         report("indent=$count!=$allowed") if $count != $normal_indent && $count != $alt_indent;
     }
     else {
-        my $alt_indent = $hanging_indent;
         if ($sloppy_hang) {
-            # do not report same indentation as on line before (potentially due to same violations)
+            # do not report same indentation as on the line before (potentially due to same violations)
             return if $line > 1 && $count == $count_before;
+
+            # do not report indentation at normal indentation level
+            return if $count == $normal_indent;
 
             # do not report if contents have been shifted left (but not left of normal indent) in order to fit within line length limit
             return if $indent <= $count && $count < $hanging_indent && length($contents) == MAX_LENGTH + length("\n");
-
-            # in addition to hanging indent, allow normal indentation level
-            $alt_indent = $normal_indent;
-        } elsif (($in_expr || $hanging_indent != 0) && substr($_, $count, 1) eq ":") { # special treatment for leading ':'
-            # allow hanging expression etc. indent of leading ":" at normal indentation level
-            $alt_indent = $normal_indent;
         }
         if(@nested_braces_indents) {
             $alt_indent = $normal_indent; # allow hanging initializer expression indent at normal indentation level
@@ -238,11 +244,13 @@ sub update_nested_indents {
         pop(@nested_brackets_indents) : report("too many ]")  if $c eq "]";
             @nested_conds_indents     ?
         pop(@nested_conds_indents)    : report("too many ':'")  if $c eq ":"
-                && ($in_expr || $hanging_indent != 0 || !( # ignore in following situations:
-                    # after initial label/case/default - TODO extend to multi-line expressions after 'case'
-                                                           substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/
-                    # bitfield length within unsigned type decl - TODO improve matching
-                                                        || substr($str, $i + 1) =~ m/^\s*\d+/));
+                && ($in_expr || $hanging_indent != 0 || !(
+                    # the following sanity checks are relevant only for ':' without corresponding '?'
+                    # that occur outside exressions - allow them in following situations:
+                        # after initial label/case/default - TODO extend to multi-line expressions after 'case'
+                        substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/
+                        # bitfield length within unsigned type decl - TODO improve matching
+                        || substr($str, $i + 1) =~ m/^\s*\d+/));
     }
     return ($end_in_paren_expr, -1);
 }
@@ -463,8 +471,8 @@ while(<>) { # loop over all lines of all input files
         report("$1no SPC")    if $intra_line =~ m/([,;=\|\/%])\S/;   # ,;=|/% without following space
         # - TODO same for '*' and '&' except in type/pointer expressions, same also for binary +-<>
         report("'$2' no SPC") if $intra_line =~ m/(^|\W)(if|for|while|switch)[^\w\s]/;  # if etc. without following space
-        report("no SPC{")     if $intra_line =~ m/[^\s\{]\{/;        # '{' without preceding (space or '{')
-        report("}no SPC")     if $intra_line =~ m/\}[^\s,;\}]/;      # '}' without following (space or ',' ';' or '}')
+        report("no SPC{")     if $intra_line =~ m/[^\s\{\[\(]\{/;        # '{' without preceding (space or {[( )
+        report("}no SPC")     if $intra_line =~ m/\}[^\s,;\)\]\}]/;  # '}' without following (space or ,;)]} )
     }
 
     # empty lines, preprocessor directives, and characters/string iterals @@@@@@
@@ -508,17 +516,12 @@ while(<>) { # loop over all lines of all input files
 
     # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    # temporarily adapt required indents according to leading closing symbols
+    # temporarily adapt required indents according to leading closing brace(s) '}' or label or switch case
     if ($in_expr || $hanging_indent != 0) {
-        if(m/^(\s*)([\)\}\]:])(.*)$/) { # leading '}', ')', ']', ':'
-            my ($head, $closing_symbol, $tail) = ($1, $2, $3);
-            $hanging_indent = @nested_parens_indents   >= 2 ? @nested_parens_indents  [-2] : 0 if $closing_symbol eq ")";
-            $hanging_indent = @nested_braces_indents   >= 2 ? @nested_braces_indents  [-2] : 0 if $closing_symbol eq "}";
-            $hanging_indent = @nested_brackets_indents >= 2 ? @nested_brackets_indents[-2] : 0 if $closing_symbol eq "]";
-            $hanging_indent = @nested_conds_indents    >= 1 ? @nested_conds_indents   [-1] : 0 if $closing_symbol eq ":";
-            if($closing_symbol eq "}" && @nested_braces_indents <= 1
-               && @nested_parens_indents == 0 && @nested_brackets_indents == 0 && @nested_conds_indents == 0
-               ) { # end of expr - TODO maybe add && $tail =~ m/;/ but terminator could be on a later line
+        if(m/^\s*\}/) { # leading '}', any preceding blinded comment must not be matched
+            if(@nested_braces_indents <= 1 && @nested_parens_indents == 0 &&
+               @nested_brackets_indents == 0 && @nested_conds_indents == 0
+                ) { # end of initialization expr - TODO maybe add && $tail =~ m/;/ but terminator could be on a later line
                 $hanging_indent = 0;
                 $local_offset -= INDENT_LEVEL;
             }
@@ -528,7 +531,7 @@ while(<>) { # loop over all lines of all input files
         }
     } else { # outside expression/statement/type declaration/variable definition/function header
         report("... }") if m/^\s*[^\s\{\}][^\{\}]*\}/; # non-whitespace non-} before first '}'
-        if(m/^\s*((\}\s*)+)/) { # leading sequence of closing braces '}'
+        if(m/^\s*((\}\s*)+)/) { # leading '}'s, any preceding blinded comment must not be matched
             # reduce to-be-cecked indent according to number of statement-level '}'
             my $num_leading_closing_braces = $1 =~ tr/\}//;
             $local_offset -= $num_leading_closing_braces * INDENT_LEVEL;
@@ -682,7 +685,7 @@ while(<>) { # loop over all lines of all input files
     $max_indent = max($max_indent, $nested_parens_indents  [-1]) if @nested_parens_indents;
     $max_indent = max($max_indent, $nested_braces_indents  [-1]) if @nested_braces_indents;
     $max_indent = max($max_indent, $nested_brackets_indents[-1]) if @nested_brackets_indents;
-    # ":" is treated specially as closing symbol
+    # ":" is treated specially in check_indent()
   # $max_indent = max($max_indent, $nested_conds_indents   [-1]) if @nested_conds_indents;
     report("unexpected requirement for hanging indent=0") if $max_indent == 0;
     # this sets $hanging_indent also outside expressions: in statement/type declaration/variable definition/function header
