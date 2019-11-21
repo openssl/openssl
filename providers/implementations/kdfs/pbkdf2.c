@@ -80,8 +80,10 @@ static void kdf_pbkdf2_free(void *vctx)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
 
-    kdf_pbkdf2_cleanup(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        kdf_pbkdf2_cleanup(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void kdf_pbkdf2_reset(void *vctx)

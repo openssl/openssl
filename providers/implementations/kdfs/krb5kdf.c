@@ -63,8 +63,10 @@ static void krb5kdf_free(void *vctx)
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
 
-    krb5kdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        krb5kdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void krb5kdf_reset(void *vctx)

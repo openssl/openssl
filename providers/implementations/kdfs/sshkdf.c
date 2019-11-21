@@ -63,8 +63,10 @@ static void kdf_sshkdf_free(void *vctx)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
 
-    kdf_sshkdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        kdf_sshkdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void kdf_sshkdf_reset(void *vctx)

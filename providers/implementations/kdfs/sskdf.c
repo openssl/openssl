@@ -315,8 +315,10 @@ static void sskdf_free(void *vctx)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
 
-    sskdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        sskdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static int sskdf_set_buffer(unsigned char **out, size_t *out_len,
