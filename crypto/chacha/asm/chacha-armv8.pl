@@ -1232,8 +1232,7 @@ $code.=<<___;
 	adds	$len,$len,#512
 	ushr	$ONE,$ONE,#1			// 4 -> 2
 
-	ldp	d8,d9,[sp,#128+0]		// meet ABI requirements
-	ldp	d10,d11,[sp,#128+16]
+	ldp	d10,d11,[sp,#128+16]		// meet ABI requirements
 	ldp	d12,d13,[sp,#128+32]
 	ldp	d14,d15,[sp,#128+48]
 
@@ -1250,6 +1249,7 @@ $code.=<<___;
 	ld1	{$CTR,$ROT24},[$key]
 	b.hs	.Loop_outer_neon
 
+	ldp	d8,d9,[sp,#0]			// meet ABI requirements
 	eor	@K[1],@K[1],@K[1]
 	eor	@K[2],@K[2],@K[2]
 	eor	@K[3],@K[3],@K[3]
@@ -1259,6 +1259,7 @@ $code.=<<___;
 	b	.Loop_outer
 
 .Ldone_512_neon:
+	ldp	d8,d9,[sp,#128+0]		// meet ABI requirements
 	ldp	x19,x20,[x29,#16]
 	add	sp,sp,#128+64
 	ldp	x21,x22,[x29,#32]
