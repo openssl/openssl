@@ -96,7 +96,6 @@ my $label;                 # current line contains label
 my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing braces
 my $line_opening_brace;    # number of previous line with opening brace outside expression or type declaration
 my $indent;                # currently required indentation for normal code
-my $directive_indent;      # currently required indentation for preprocessor directives
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $hanging_indent;        # hanging indent within (multi-line) expressions and statements, else 0
 my @nested_parens_indents; # stack of hanging indents due to parentheses
@@ -109,8 +108,9 @@ my $in_expr;               # in expression (after if/for/while/switch/return/enu
 my $in_paren_expr;         # in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
+my $directive_nesting;     # currently required indentation of preprocessor directive according to #if(n)(def)
+my $directive_offset;      # indent offset within multi-line preprocessor directive, used only if $in_directive > 0
 my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
-my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
 my $in_comment;            # number of lines so far within multi-line comment, or -1 when end is on current line
 my $in_formatted_comment;  # in multi-line comment started with "/*-", which indicates/allows special formatting
 my $comment_indent;        # used only if $in_comment != 0
@@ -273,13 +273,13 @@ sub reset_file_state {
     $in_expr = 0;
     $extra_singular_indent = 0;
     $indent = 0;
-    $directive_indent = 0;
     $ifdef__cplusplus = 0;
     $line = 0;
     undef $multiline_string;
     $line_opening_brace = 0;
     $in_typedecl = 0;
     $in_directive = 0;
+    $directive_nesting = 0;
     $in_comment = 0;
     $in_formatted_comment = 0;
 }
@@ -359,7 +359,7 @@ while(<>) { # loop over all lines of all input files
             # blind comment text, preserving length
             ($comment_text, my $rest) = ($opt_minus.$1, $2);
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
-                $rest =~ m/^\s*$/) { # trailing comment: only whitespace after
+                $rest =~ m/^\s*\\?\s*$/) { # trailing comment: only whitespace (apart from any '\') after it
                 report("/* dbl SPC */") if $opt_minus ne "-" && $comment_text =~ m/(^|[^.])\s\s\S/;
                 # blind trailing commment as space - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($comment_text =~ tr/ / /cr)."  $rest";
@@ -481,17 +481,16 @@ while(<>) { # loop over all lines of all input files
 
     # handle preprocessor directives
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
-        my $directive_count = length $1; # maybe could also use indentation before '#'
+        my $space_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
         report("indent=$count!=0") if $count != 0;
-        $directive_indent-- if $directive =~ m/^else|elsif|endif$/;
-        if ($directive_indent < 0) {
-            $directive_indent = 0;
+        $directive_nesting-- if $directive =~ m/^(else|elsif|endif)$/;
+        if ($directive_nesting < 0) {
+            $directive_nesting = 0;
             report("unexpected #$directive");
         }
-        report("#indent=$directive_count!=$directive_indent")
-                     if $directive_count != $directive_indent;
-        $directive_indent++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
+        report("#indent=$space_count!=$directive_nesting") if $space_count != $directive_nesting;
+        $directive_nesting++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
         # TODO improve current mix of handling indents for normal C code and preprocessor directives
@@ -558,9 +557,9 @@ while(<>) { # loop over all lines of all input files
             $in_define_header += parens_balance($_);
         } else { # start of macro body
             $in_define_header = 0;
-            if ($count == $indent - INDENT_LEVEL) { # macro body started with same indentation as preceding code
-                $indent -= INDENT_LEVEL;
-                $multiline_macro_same_indent = 1;
+            if ($count == $indent - $directive_offset) { # macro body started with same indentation as preceding code
+                $indent -= $directive_offset; # workaround for this situation
+                $directive_offset = 0;
             }
         }
     }
@@ -573,9 +572,7 @@ while(<>) { # loop over all lines of all input files
 
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    my $outermost_level =
-         $indent == 0 ||
-        ($indent == INDENT_LEVEL && $in_directive > 0 && !$multiline_macro_same_indent);
+    my $outermost_level = $indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
 
     # check for code block containing a single line/statement
     if($line > 2 && !$outermost_level && $in_typedecl == 0 && m/^\s*\}/) {
@@ -694,7 +691,7 @@ while(<>) { # loop over all lines of all input files
     # handle last (typically trailing) opening brace '{' in line
     if (m/^(.*?)\{([^\{]*)$/) { # match last ... '{'
         my ($head, $tail) = ($1, $2);
-        if (!$in_expr && $in_typedecl == 0) {
+        if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) { # we assume end of function definition header (or statement or variable definition)
                 # check if { is at end of line (rather than on next line)
                 report("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
@@ -711,21 +708,23 @@ while(<>) { # loop over all lines of all input files
     # need to use original line contents because trailing '\' may have been stripped above
     if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\',
         # typically used in macro definitions (or other preprocessor directives)
-        $in_define_header = 0;
-        if ($in_directive == 0 && m/^DEFINE_|\s*#\s*(define(\W|$))?(.*)/) { # start, not only for #define
-            $in_define_header = 1 + parens_balance($2) if defined $1;
-            $indent += INDENT_LEVEL ;
-            $multiline_macro_same_indent = 0;
+        if ($in_directive == 0) {
+            $in_define_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is starting
+            $directive_offset = INDENT_LEVEL;
+            $indent += $directive_offset;
         }
         $in_directive += 1;
     }
 
   LINE_FINISHED:
     # on end of multi-line preprocessor directive, adapt indent
-    # need to use original line contents because trailing \ may have been stripped
-    unless ($contents =~ m/^(.*?)\s*\\\s*$/) { # no trailing '\'
-        $indent -= INDENT_LEVEL if $in_directive > 0 && !$multiline_macro_same_indent;
+    if ($in_directive > 0 &&
+        # need to use original line contents because trailing \ may have been stripped
+        !($contents =~ m/^(.*?)\s*\\\s*$/)) { # no trailing '\'
+        $indent -= $directive_offset;
         $in_directive = 0;
+        # macro body typically does not include terminating ';'
+        $extra_singular_indent = 0; # compensate for this in case macor ends, e.g., as "while(0)"
     }
 
     $contents_before2  = $contents_before;
@@ -752,7 +751,7 @@ while(<>) { # loop over all lines of all input files
         report_flex("$line (EOF)", ceil($indent / INDENT_LEVEL)." unclosed {", "\n") if $indent != 0;
 
         # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
-        report_flex("$line (EOF)", "$directive_indent unclosed #if", "\n") if $directive_indent != 0;
+        report_flex("$line (EOF)", "$directive_nesting unclosed #if", "\n") if $directive_nesting != 0;
 
         reset_file_state();
     }
