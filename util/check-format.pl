@@ -12,7 +12,7 @@
 #
 # usage:
 #   check-format.pl [-l|--sloppy-len] [-s|--sloppy-space]
-#                   [-h|--sloppy-hang] [-s|--sloppy-cmt]
+#                   [-c|--sloppy-cmt] [-h|--sloppy-hang]
 #                   <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
@@ -22,8 +22,12 @@
 # options:
 #  -l | --sloppy-len   increases accepted max line length from 80 to 84
 #  -s | --sloppy-space disables reporting whitespace nits
-#  -h | --sloppy-hang  add grace when checking hanging indentation
-#  -c | --sloppy-cmt   allow comment start on any column
+#  -c | --sloppy-cmt   allows any indentation for comments
+#  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
+#                      * same indentation as on line before
+#                      * indentation moved left (not beyond non-hanging indent)
+#                        just to fit contents within the line length limit
+#                      and allows the non-hanging indent level as alternative
 #
 # There are known false positives such as the following.
 #
@@ -166,17 +170,16 @@ sub check_indent { # for lines outside multi-line string literals
     else {
         my $alt_indent = $hanging_indent;
         if ($sloppy_hang) {
-            # do not report repeated identical indentation potentially due to same violations
+            # do not report same indentation as on line before (potentially due to same violations)
             return if $line > 1 && $count == $count_before;
 
-            if ($count >= $indent) { # actual indent is at least at minimum, not taking into account $extra_singular_indent + $local_offset
-                # adapt to actual indent if contents have been shifted left to fit within line length limit
-                $hanging_indent = $count if $count < $hanging_indent && length($contents) == MAX_LENGTH + length("\n");
-            }
-            # allow hanging expression etc. indent at normal indentation level, at least INDENT_LEVEL
-            $alt_indent = max(INDENT_LEVEL, $normal_indent);
-        } elsif (substr($_, $count, 1) eq ":") { # special treatment for leading ':'
-            # allow hanging expression etc. indent at normal indentation level
+            # do not report if contents have been shifted left (but not left of normal indent) in order to fit within line length limit
+            return if $indent <= $count && $count < $hanging_indent && length($contents) == MAX_LENGTH + length("\n");
+
+            # in addition to hanging indent, allow normal indentation level
+            $alt_indent = $normal_indent;
+        } elsif (($in_expr || $hanging_indent != 0) && substr($_, $count, 1) eq ":") { # special treatment for leading ':'
+            # allow hanging expression etc. indent of leading ":" at normal indentation level
             $alt_indent = $normal_indent;
         }
         if(@nested_braces_indents) {
