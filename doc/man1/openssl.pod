@@ -8,8 +8,8 @@ openssl - OpenSSL command line tool
 
 B<openssl>
 I<command>
-[ I<command_opts> ... ]
-[ I<command_args> ... ]
+[ I<options> ... ]
+[ I<parameters> ... ]
 
 B<openssl>
 B<list>
@@ -21,7 +21,7 @@ B<-digest-algorithms> |
 B<-mac-algorithms> |
 B<-public-key-algorithms>
 
-B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
+B<openssl> B<no->I<XXX> [ I<options> ]
 
 =head1 DESCRIPTION
 
@@ -45,8 +45,9 @@ It can be used for
 =head1 COMMAND SUMMARY
 
 The B<openssl> program provides a rich variety of commands (I<command> in
-the SYNOPSIS above), each of which often has a wealth of options and arguments
-(I<command_opts> and I<command_args> in the SYNOPSIS).
+the L</SYNOPSIS> above).
+Each command can have many options and argument parameters, shown above as
+I<options> and I<parameters>.
 
 Detailed documentation and use cases for most standard subcommands are available
 (e.g., L<openssl-x509(1)>).
@@ -398,8 +399,7 @@ The following aliases provide convenient access to the most used encodings
 and ciphers.
 
 Depending on how OpenSSL was configured and built, not all ciphers listed
-here may be present. See L<openssl-enc(1)> for more information and command
-usage.
+here may be present. See L<openssl-enc(1)> for more information.
 
 =over 4
 
