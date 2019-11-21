@@ -113,8 +113,10 @@ static void kbkdf_free(void *vctx)
 {
     KBKDF *ctx = (KBKDF *)vctx;
 
-    kbkdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        kbkdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void kbkdf_reset(void *vctx)
