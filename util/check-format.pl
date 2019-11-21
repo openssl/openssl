@@ -407,7 +407,10 @@ while(<>) { # loop over all lines of all input files
 
     if(!$sloppy_SPC) {
         sub split_line_head {
-            shift =~ m/^(\s*(#\s*)?)(.*?)\s*$/; # do not check for dbl SPC in leading spaces and any leading '#'
+            my $comment_symbol = $in_comment != 0 ? "@" : ""; # '@' will match the blinded leading '*' in multi-line comment
+                                                              # note that $in_comment may pertain to the following line due to delayed check
+            # do not check for dbl SPC in leading spaces including any leading '#' (or '*' within multi-line comment)
+            shift =~ m/^(\s*([#$comment_symbol]\s*)?)(.*?)\s*$/;
             return ($1, $3 =~ s/\s*\\\s*$//r); # strip any trailing '\' (and any whitespace around it)
         }
         my ($head , $intra_line ) = split_line_head($_);
