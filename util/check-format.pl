@@ -111,8 +111,9 @@ my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
 my $multiline_macro_same_indent; # workaround for multiline macro body without extra indent
-my $in_comment;            # number of lines so far within multi-line comment, or -1 when end has been detected
-my $comment_indent;        # used only if $in_comment > 0
+my $in_comment;            # number of lines so far within multi-line comment, or -1 when end is on current line
+my $in_formatted_comment;  # in multi-line comment started with "/*-", which indicates/allows special formatting
+my $comment_indent;        # used only if $in_comment != 0
 my $num_reports_line = 0;  # number of issues found on current line
 my $num_reports = 0;       # total number of issues found
 my $num_SPC_reports = 0;   # total number of whitespace issues found
@@ -163,7 +164,7 @@ sub check_indent { # for lines outside multi-line string literals
         ($in_comment == 0 || $in_comment == 1)) { # normal or first line of multi-line comment
         return;
     }
-    if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, not first line
+    if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, but not on first line
         report("comment indent=$count!=$comment_indent") if $count != $comment_indent;
     } elsif ($hanging_indent == 0) {
         my $allowed = $normal_indent;
@@ -272,6 +273,7 @@ sub reset_file_state {
     $in_typedecl = 0;
     $in_directive = 0;
     $in_comment = 0;
+    $in_formatted_comment = 0;
 }
 
 reset_file_state();
@@ -306,7 +308,7 @@ while(<>) { # loop over all lines of all input files
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
-    if($in_comment > 0) { # this includes the last line of multi-line commment
+    if($in_comment > 0) { # this still includes the last line of multi-line commment
         m/^(\s*)(.?)(.*)$/;
         my ($head, $any_symbol, $comment_text) = ($1, $2, $3);
         if($any_symbol eq "*") {
@@ -330,7 +332,7 @@ while(<>) { # loop over all lines of all input files
                 report("... */") if $head =~ m/\S/; # head contains non-whitespace
                 my $comment_text = $head;
                 $_ = blind_nonspace($comment_text)."@@".$tail;
-                $in_comment = -1;
+                $in_comment = -1; # indicate that multi-line comment ends on current line
             }
         }
     }
@@ -350,7 +352,7 @@ while(<>) { # loop over all lines of all input files
             ($comment_text, my $rest) = ($opt_minus.$1, $2);
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
                 $rest =~ m/^\s*$/) { # trailing comment: only whitespace after
-                report("/* dbl SPC */") if $comment_text =~ m/(^|[^.])\s\s\S/;
+                report("/* dbl SPC */") if $opt_minus ne "-" && $comment_text =~ m/(^|[^.])\s\s\S/;
                 # blind trailing commment as space - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($comment_text =~ tr/ / /cr)."  $rest";
             } else { # leading or intra-line comment
@@ -363,6 +365,7 @@ while(<>) { # loop over all lines of all input files
             $comment_indent = length($head) + 1;
             $_ = "$head@@".blind_nonspace($comment_text);
             $in_comment = 1;
+            $in_formatted_comment = $opt_minus eq "-";
         }
     }
 
@@ -405,7 +408,7 @@ while(<>) { # loop over all lines of all input files
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    if(!$sloppy_SPC) {
+    if(!$sloppy_SPC && !$in_formatted_comment) {
         sub split_line_head {
             my $comment_symbol = $in_comment != 0 ? "@" : ""; # '@' will match the blinded leading '*' in multi-line comment
                                                               # note that $in_comment may pertain to the following line due to delayed check
@@ -563,7 +566,7 @@ while(<>) { # loop over all lines of all input files
 
     check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
 
-    $in_comment = 0 if $in_comment == -1; # multi-line comment has ended
+    $in_comment = $in_formatted_comment = 0 if $in_comment == -1; # multi-line comment has ended
 
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
