@@ -297,7 +297,7 @@ static int test_x509_cmp_time_current(void)
     return failed == 0;
 }
 
-static int test_X509_cmp_timeframe_vpm(X509_VERIFY_PARAM *vpm,
+static int test_X509_cmp_timeframe_vpm(const X509_VERIFY_PARAM *vpm,
                                        ASN1_TIME *asn1_before,
                                        ASN1_TIME *asn1_mid,
                                        ASN1_TIME *asn1_after)
