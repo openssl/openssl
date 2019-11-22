@@ -156,7 +156,7 @@ static int put_serializer_in_store(OPENSSL_CTX *libctx, void *store,
                                  (void (*)(void *))OSSL_SERIALIZER_free);
 }
 
-/* Create a populate a serializer method */
+/* Create and populate a serializer method */
 static void *serializer_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
                                       OSSL_PROVIDER *prov)
 {
@@ -211,10 +211,13 @@ static void *serializer_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
-    ser->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
+    if (prov != NULL && !ossl_provider_up_ref(prov)) {
+        OSSL_SERIALIZER_free(ser);
+        return NULL;
+    }
+
+    ser->prov = prov;
     return ser;
 }
 

@@ -66,7 +66,7 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
-For example, the "function" OP_keymgmt_importdomparams() has these:
+For example, the "function" OP_serializer_serialize_data() has these:
 
  typedef int
      (OSSL_OP_serializer_serialize_data_fn)(void *provctx,
