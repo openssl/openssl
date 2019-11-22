@@ -27,7 +27,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" ASAN_OPTIONS="detect_leaks=1" LSAN_OPTIONS="report_objects=1"
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
 matrix:
