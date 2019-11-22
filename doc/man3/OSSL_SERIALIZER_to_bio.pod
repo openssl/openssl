@@ -27,7 +27,7 @@ Feature availability macros:
 
 =over 4
 
-=item OSSL_SERIALIZER_to_fp() is only available with B<OPENSSL_NO_STDIO>
+=item OSSL_SERIALIZER_to_fp() is only available when B<OPENSSL_NO_STDIO>
 is undefined.
 
 =back
