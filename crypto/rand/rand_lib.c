@@ -885,7 +885,7 @@ int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 
     drbg = OPENSSL_CTX_get0_public_drbg(ctx);
     if (drbg != NULL)
-        RAND_DRBG_bytes(drbg, buf, num);
+        return RAND_DRBG_bytes(drbg, buf, num);
 
     return 0;
 }
