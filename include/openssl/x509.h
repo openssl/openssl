@@ -495,6 +495,8 @@ DECLARE_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
 
 int X509_cmp_time(const ASN1_TIME *s, time_t *t);
 int X509_cmp_current_time(const ASN1_TIME *s);
+int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
+                       const ASN1_TIME *start, const ASN1_TIME *end);
 ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
 ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
                             int offset_day, long offset_sec, time_t *t);
