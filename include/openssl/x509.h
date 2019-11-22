@@ -788,7 +788,7 @@ unsigned long X509_subject_name_hash_old(X509 *x);
 
 int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
-unsigned long X509_NAME_hash(X509_NAME *x);
+unsigned long X509_NAME_hash(const X509_NAME *x);
 unsigned long X509_NAME_hash_old(X509_NAME *x);
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
@@ -861,7 +861,7 @@ ASN1_OBJECT *X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
 ASN1_STRING * X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne);
 int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
 
-int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder,
+int X509_NAME_get0_der(const X509_NAME *nm, const unsigned char **pder,
                        size_t *pderlen);
 
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
@@ -991,8 +991,8 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
 int X509_verify_cert(X509_STORE_CTX *ctx);
 
 /* lookup a cert from a X509 STACK */
-X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
-                                     ASN1_INTEGER *serial);
+X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
+                                     const ASN1_INTEGER *serial);
 X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
