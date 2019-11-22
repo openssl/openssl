@@ -826,7 +826,7 @@ OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
 OSSL_CMP_PKISI *
 ossl_cmp_revrepcontent_get_pkistatusinfo(OSSL_CMP_REVREPCONTENT *rrep, int rsid)
 {
-    OSSL_CMP_PKISI *status = NULL;
+    OSSL_CMP_PKISI *status;
 
     if (!ossl_assert(rrep != NULL))
         return NULL;
