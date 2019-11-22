@@ -205,7 +205,7 @@ follows:
 =item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
 
 The name of the encryption cipher along with the desired properties to
-fetch it with.  The cipher will be used when produced an encrypted
+fetch it with.  The cipher will be used when producing an encrypted
 serialization.
 
 =item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>

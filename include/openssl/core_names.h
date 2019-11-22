@@ -206,12 +206,12 @@ extern "C" {
  * Serializer parameters
  */
 /* The passphrase may be passed as a utf8 string or an octet string */
-#define OSSL_SERIALIZER_PARAM_CIPHER    OSSL_ALG_PARAM_CIPHER
-#define OSSL_SERIALIZER_PARAM_PROPERTIES OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_SERIALIZER_PARAM_PASS      "passphrase"
+#define OSSL_SERIALIZER_PARAM_CIPHER            OSSL_ALG_PARAM_CIPHER
+#define OSSL_SERIALIZER_PARAM_PROPERTIES        OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_SERIALIZER_PARAM_PASS              "passphrase"
 
 /* Passphrase callback parameters */
-#define OSSL_PASSPHRASE_PARAM_INFO      "info"
+#define OSSL_PASSPHRASE_PARAM_INFO              "info"
 
 # ifdef __cplusplus
 }
