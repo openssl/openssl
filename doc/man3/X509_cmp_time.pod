@@ -67,6 +67,10 @@ reference time is before, else 0 to indicate that the reference time is in range
 X509_time_adj() and X509_time_adj_ex() return a pointer to the updated
 ASN1_TIME structure, and NULL on error.
 
+=head1 HISTORY
+
+X509_cmp_timeframe() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
