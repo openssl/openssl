@@ -19,7 +19,7 @@ X509_time_adj, X509_time_adj_ex
 =head1 DESCRIPTION
 
 X509_cmp_time() compares the ASN1_TIME in B<asn1_time> with the time
-in <cmp_time>.
+in <in_tm>.
 
 X509_cmp_current_time() compares the ASN1_TIME in
 B<asn1_time> with the current time, expressed as time_t.
@@ -53,7 +53,7 @@ X509_cmp_current_time() return 0 on error.
 =head1 RETURN VALUES
 
 X509_cmp_time() and X509_cmp_current_time() return -1 if B<asn1_time>
-is earlier than, or equal to, B<cmp_time> (resp. current time), and 1
+is earlier than, or equal to, B<in_tm> (resp. current time), and 1
 otherwise. These methods return 0 on error.
 
 X509_cmp_timeframe() returns 0 if B<vpm> is not NULL and the verification
