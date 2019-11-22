@@ -108,7 +108,7 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
 
 int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
 {
-    EX_CALLBACKS *ip = get_and_lock(ctx, class_index);
+    EX_CALLBACKS *ip;
     EX_CALLBACK *a;
     int toret = 0;
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
