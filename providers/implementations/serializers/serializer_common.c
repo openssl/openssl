@@ -111,14 +111,10 @@ static X509_PUBKEY *ossl_prov_pubkey_from_obj(const void *obj, int obj_nid,
 
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_importkey(const OSSL_DISPATCH *fns)
 {
-    OSSL_OP_keymgmt_importkey_fn *importkey = NULL;
-
     /* Pilfer the keymgmt dispatch table */
-    if (importkey == NULL) {
-        for (; fns->function_id != 0; fns++)
-            if (fns->function_id == OSSL_FUNC_KEYMGMT_IMPORTKEY)
-                return OSSL_get_OP_keymgmt_importkey(fns);
-    }
+    for (; fns->function_id != 0; fns++)
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_IMPORTKEY)
+            return OSSL_get_OP_keymgmt_importkey(fns);
 
     return NULL;
 }
