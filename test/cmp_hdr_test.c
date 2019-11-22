@@ -418,7 +418,7 @@ static int test_HDR_init_with_subject(void)
     if (!TEST_ptr(subject = X509_NAME_new())
             || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
             || !TEST_true(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx,
-                                                    subject))) {
+                                                        subject))) {
         tear_down(fixture);
         fixture = NULL;
     }
