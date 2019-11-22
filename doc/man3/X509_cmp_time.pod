@@ -57,7 +57,8 @@ is earlier than, or equal to, B<in_tm> (resp. current time), and 1
 otherwise. These methods return 0 on error.
 
 X509_cmp_timeframe() returns 0 if B<vpm> is not NULL and the verification
-parameters contain B<X509_V_FLAG_NO_CHECK_TIME>. Otherwise it returns
+parameters do not contain B<X509_V_FLAG_USE_CHECK_TIME>
+but do contain B<X509_V_FLAG_NO_CHECK_TIME>. Otherwise it returns
 1 if the end time is not NULL and the reference time (which has determined as
 stated above) is past the end time, -1 if the start time is not NULL and the
 reference time is before, else 0 to indicate that the reference time is in range
