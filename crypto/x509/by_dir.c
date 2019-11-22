@@ -228,11 +228,11 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
     stmp.type = type;
     if (type == X509_LU_X509) {
-        data.st_x509.cert_info.subject = name;
+        data.st_x509.cert_info.subject = (X509_NAME *)name; /* not modified */
         stmp.data.x509 = &data.st_x509;
         postfix = "";
     } else if (type == X509_LU_CRL) {
-        data.crl.crl.issuer = name;
+        data.crl.crl.issuer = (X509_NAME *)name; /* name is not modified */
         stmp.data.crl = &data.crl;
         postfix = "r";
     } else {

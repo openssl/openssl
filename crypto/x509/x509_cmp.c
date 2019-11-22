@@ -242,7 +242,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
         return NULL;
 
     x.cert_info.serialNumber = *serial;
-    x.cert_info.issuer = name;
+    x.cert_info.issuer = (X509_NAME *)name; /* name is not modified */
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);

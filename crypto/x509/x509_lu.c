@@ -484,11 +484,11 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     switch (type) {
     case X509_LU_X509:
         stmp.data.x509 = &x509_s;
-        x509_s.cert_info.subject = name;
+        x509_s.cert_info.subject = (X509_NAME *)name; /* name is not modified */
         break;
     case X509_LU_CRL:
         stmp.data.crl = &crl_s;
-        crl_s.crl.issuer = name;
+        crl_s.crl.issuer = (X509_NAME *)name; /* name is not modified */
         break;
     case X509_LU_NONE:
         /* abort(); */
