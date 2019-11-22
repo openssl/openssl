@@ -85,12 +85,13 @@ fun() {             /*@ opening brace at end of function definition header */
         0 +/* */    /*@ no space before comment, reported unless sloppy-spc */
         /* */1 *    /*@ no space after comment, reported unless sloppy-spc */
     shifted.. /*@ hanging indent off by -2, reported unless sloppy-hang */ left)
-       cmd;         /*@ single-statement indent off by -1 */
+       z = a        /*@ single-statement indent off by -1 */
+           || b;    /*@ single-statement indent w leading '||' off by -1 or 3 */
     do{ x = 3; }    /*@ no space before opening {, reported unless sloppy-spc */
     while(e3);      /*@ no space after 'while', reported unless sloppy-spc */
     switch (e ) {   /*@ space before ), reported unless sloppy-spc */
-   case 1:          /*@ case indent off by -1 */
-     default:       /*@ default indent off by 1 */
+   case 1:          /*@ 'case' indent off by -1 */
+     default:       /*@ 'default' indent off by 1 */
 }                   /*@ normal indent off by -4 */
   label:            /*@ label indent off by 1 */
     x; }            /*@ text before closing brace */

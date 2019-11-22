@@ -84,36 +84,37 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
 my $self_test;
 my $line;                  # current line number
 my $contents;              # contents of current line
-my $contents_before;       # contents of previous line, used only if $line > 1
-my $contents_before_;      # contents of previous line after blinding comments etc., used only if $line > 1
-my $contents_before2;      # contents of line before previous line, used only if $line > 2
-my $contents_before_2;     # contents of line before previous line after blinding comments etc., used only if $line > 2
+my $contents_before;       # contents of previous line, if $line > 1
+my $contents_before_;      # contents of previous line after blinding comments etc., if $line > 1
+my $contents_before2;      # contents of line before previous line, if $line > 2
+my $contents_before_2;     # contents of line before previous line after blinding comments etc., if $line > 2
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line,
                            # which basically should equal $indent or $hanging_indent, respectively
-my $count_before;          # number of leading whitespace characters (except newline) in previous line, used only if $line > 1
+my $count_before;          # number of leading whitespace characters (except newline) in previous line, if $line > 1
 my $label;                 # current line contains label
 my $local_offset;          # current line extra indent offset due to label or switch case/default or leading closing braces
 my $line_opening_brace;    # number of previous line with opening brace outside expression or type declaration
 my $indent;                # currently required indentation for normal code
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $hanging_indent;        # hanging indent within (multi-line) expressions and statements, else 0
+my $hanging_symbol;        # character ('(', '{', '[', or ':') resonsible for current hanging indent, if $hanging_indent != 0
 my @nested_parens_indents; # stack of hanging indents due to parentheses
-my @nested_braces_indents; # stack of hanging indents due to braces within expressions, used only if $in_expr
+my @nested_braces_indents; # stack of hanging indents due to braces within expressions, if $in_expr
 my @nested_brackets_indents; # stack of hanging indents due to brackets
 my @nested_conds_indents;  # stack of hanging indents due to '?' ':'
-my $extra_singular_indent; # extra indent for just one (hanging) statement or expression or typedef
+my $extra_singular_indent; # extra indent, which may be nested, for just one hanging statement or expression or typedef
 my $in_expr;               # in expression (after if/for/while/switch/return/enum/LHS of assignment,
                            # implies use of $hanging_indent
-my $in_paren_expr;         # in condition of if/for/while and expr of switch, used only if $hanging_indent != 0
+my $in_paren_expr;         # in condition of if/for/while and expr of switch, if $hanging_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $directive_nesting;     # currently required indentation of preprocessor directive according to #if(n)(def)
-my $directive_offset;      # indent offset within multi-line preprocessor directive, used only if $in_directive > 0
-my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, used only if $in_directive > 0
+my $directive_offset;      # indent offset within multi-line preprocessor directive, if $in_directive > 0
+my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, if $in_directive > 0
 my $in_comment;            # number of lines so far within multi-line comment, or -1 when end is on current line
 my $in_formatted_comment;  # in multi-line comment started with "/*-", which indicates/allows special formatting
-my $comment_indent;        # used only if $in_comment != 0
+my $comment_indent;        # comment indent, if $in_comment != 0
 my $num_reports_line = 0;  # number of issues found on current line
 my $num_reports = 0;       # total number of issues found
 my $num_SPC_reports = 0;   # total number of whitespace issues found
@@ -157,63 +158,59 @@ sub blind_nonspace { # blind non-space text of comment as @, preserving length
     return $comment_text =~ tr/ /@/cr;
 }
 
-sub check_indent { # for lines outside multi-line string literals
+sub check_indent { # used for lines outside multi-line string literals
     if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line starting with comment
         ($in_comment == 0 || $in_comment == 1)) { # normal or first line of multi-line comment
         return;
     }
 
     if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, but not on first line
-        report("comment indent=$count!=$comment_indent") if $count != $comment_indent;
+        report("/*indent=$count!=$comment_indent") if $count != $comment_indent;
         return;
     }
 
     my $normal_indent = $indent + $extra_singular_indent + $local_offset;
-    my $alt_indent =  $hanging_indent == 0 ? $normal_indent : $hanging_indent;
+    my $ref_indent =  $hanging_indent == 0 ? $normal_indent : $hanging_indent;
+    my $alt_indent = $ref_indent;
     if (@nested_conds_indents > 0 && substr($_, $count, 1) eq ":") { # special treatment for leading ':'
         # allow leading ":" at indent level of corresponding "?" (which can only happen in expressions )
         $alt_indent =  @nested_conds_indents[-1];
     }
+    $alt_indent = 1 if $hanging_indent == 0 && $label; # this cannot happen for leading ":"
 
-    if ($hanging_indent == 0) {
-        my $allowed = $normal_indent;
-        $alt_indent = 1 if $label; # this cannot happen for leading ":"
-        ($alt_indent, $normal_indent) = ($normal_indent, $alt_indent) if $alt_indent < $normal_indent;
-        $allowed = "{$normal_indent,$alt_indent}" if $alt_indent != $normal_indent;
-        report("indent=$count!=$allowed") if $count != $normal_indent && $count != $alt_indent;
+    if ($sloppy_hang && ($extra_singular_indent != 0 || $hanging_indent != 0)) {
+        # do not report same indentation as on the line before (potentially due to same violations)
+        return if $line > 1 && $count == $count_before;
+
+        # do not report indentation at normal indentation level while hanging_indent would be required
+        return if $hanging_indent != 0 && $count == $normal_indent;
+
+        # do not report if contents have been shifted left of hanging indent (but not as far as normal indent)
+        # apparently in order to fit within line length limit
+        return if $normal_indent < $count && $count < $hanging_indent && length($contents) == MAX_LENGTH + length("\n");
     }
-    else {
-        if ($sloppy_hang) {
-            # do not report same indentation as on the line before (potentially due to same violations)
-            return if $line > 1 && $count == $count_before;
 
-            # do not report indentation at normal indentation level
-            return if $count == $normal_indent;
-
-            # do not report if contents have been shifted left (but not left of normal indent) in order to fit within line length limit
-            return if $indent <= $count && $count < $hanging_indent && length($contents) == MAX_LENGTH + length("\n");
-        }
-        if(@nested_braces_indents) {
-            $alt_indent = $normal_indent; # allow hanging initializer expression indent at normal indentation level
-            # adapt hanging initializer expression indent to actual indentation level if it the normal one
-            @nested_braces_indents[-1] = $normal_indent if $count == $normal_indent;
-        }
-        ($alt_indent, $hanging_indent) = ($hanging_indent, $alt_indent) if $alt_indent < $hanging_indent;
-        my $optional_offset = m/^\s*(\&\&|\|\|)/ ? INDENT_LEVEL : 0; # line starting with && or ||
-        my $allowed = "$hanging_indent";
-        if ($alt_indent != $hanging_indent || $optional_offset != 0) {
-            $allowed = "{$hanging_indent";
-            $allowed .= ",".($hanging_indent + $optional_offset) if $optional_offset != 0;
-            if ($alt_indent != $hanging_indent) {
-                $allowed .= ",$alt_indent";
-                $allowed .= ",".($alt_indent+$optional_offset) if $optional_offset != 0;
-            }
-            $allowed .= "}";
-        }
-        report("hanging indent=$count!=$allowed")
-            if $count != $hanging_indent && $count != $hanging_indent + $optional_offset &&
-               $count != $alt_indent     && $count != $alt_indent     + $optional_offset;
+    if(@nested_braces_indents) {
+        $alt_indent = $normal_indent; # allow hanging initializer expression indent at normal indentation level
+        # adapt hanging initializer expression indent to actual indentation level if it is the normal one
+        @nested_braces_indents[-1] = $normal_indent if $count == $normal_indent;
     }
+
+    ($alt_indent, $ref_indent) = ($ref_indent, $alt_indent) if $alt_indent < $ref_indent;
+    my $optional_offset = m/^\s*(\&\&|\|\|)/ ? INDENT_LEVEL : 0; # line starting with && or ||
+    my $allowed = "$ref_indent";
+    if ($alt_indent != $ref_indent || $optional_offset != 0) {
+        $allowed = "{$ref_indent";
+        $allowed .= ",".($ref_indent + $optional_offset) if $optional_offset != 0;
+        if ($alt_indent != $ref_indent) {
+            $allowed .= ",$alt_indent";
+            $allowed .= ",".($alt_indent+$optional_offset) if $optional_offset != 0;
+        }
+        $allowed .= "}";
+    }
+    report(($extra_singular_indent != 0 ? "1-" : $hanging_indent != 0 ? "h-": ""). "indent=$count!=$allowed")
+        if $count != $ref_indent && $count != $ref_indent + $optional_offset &&
+        $count != $alt_indent     && $count != $alt_indent     + $optional_offset;
 }
 
 sub update_nested_indents {
@@ -483,13 +480,13 @@ while(<>) { # loop over all lines of all input files
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
         my $space_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
-        report("indent=$count!=0") if $count != 0;
+        report("#-indent=$count!=0") if $count != 0;
         $directive_nesting-- if $directive =~ m/^(else|elsif|endif)$/;
         if ($directive_nesting < 0) {
             $directive_nesting = 0;
             report("unexpected #$directive");
         }
-        report("#indent=$space_count!=$directive_nesting") if $space_count != $directive_nesting;
+        report("#nesting=$space_count!=$directive_nesting") if $space_count != $directive_nesting;
         $directive_nesting++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
@@ -684,6 +681,7 @@ while(<>) { # loop over all lines of all input files
     $max_indent = max($max_indent, $nested_brackets_indents[-1]) if @nested_brackets_indents;
     # ":" is treated specially in check_indent()
   # $max_indent = max($max_indent, $nested_conds_indents   [-1]) if @nested_conds_indents;
+    $hanging_symbol = "h"; # TODO
     report("unexpected requirement for hanging indent=0") if $max_indent == 0;
     # this sets $hanging_indent also outside expressions: in statement/type declaration/variable definition/function header
     $hanging_indent = $max_indent >= 0 ? $max_indent : 0;
@@ -724,7 +722,7 @@ while(<>) { # loop over all lines of all input files
         $indent -= $directive_offset;
         $in_directive = 0;
         # macro body typically does not include terminating ';'
-        $extra_singular_indent = 0; # compensate for this in case macor ends, e.g., as "while(0)"
+        $extra_singular_indent = 0; # compensate for this in case macro ends, e.g., as "while(0)"
     }
 
     $contents_before2  = $contents_before;
