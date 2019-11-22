@@ -54,8 +54,8 @@ typedef struct s  { /*@0 double space, reported unless sloppy-spc */
         struct{} n; /*@ no space before {, reported unless sloppy-spc */
     }p;             /*@ no space after, reported unless sloppy-spc } */
     };              /*@ normal indent off by 4 */
-fun() {             /*@ opening brace at end of function definition header */
-    if (cond)) {    /*@ too many closing parens */
+void fun(void) {    /*@ opening brace at end of function definition header */
+    if (cond)) {    /*@ unexpected closing paren */
         stmt;       /*@0 single-line statement in braces */
 }}}                 /*@2 too many closing braces */
 #endif              /*@ unexpected #endif */
@@ -63,9 +63,7 @@ fun() {             /*@ opening brace at end of function definition header */
       int b,        /*@ expr indent off by -1 (or else 6 for sloppy-hang) */
         int c)      /*@ expr indent off by 1 (or else 8 for sloppy-hang) */
 { int               /*@ text after opening brace */
-    x = 1] +        /*@ too many closing brackets */
-        2} -        /*@ too many closing braces within expr */
-        3:;         /*@ ':' without preceding '?' within expr */
+    x = 1];         /*@ unexpected closing bracket */
     s = {           /*@0 unclosed brace within initializer expression */
          (          /*@0 unclosed paren */
           a[        /*@0 unclosed bracket */
