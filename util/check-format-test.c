@@ -20,9 +20,9 @@
 
 /* For each of the following set of lines the tool should complain */
 /*@ tab character: 	 */
-/*@ cr character:  */
+/*@ carriage return character:  */
 /*@ non-printable ASCII character:  */
-/*@ non-ascii character: ä */
+/*@ non-ASCII character: ä */
 /*@ space at EOL: */ 
 // /*@ end-of-line comment style not allowed for C90 */
 /*X */ /*@ no space after comment start, reported unless sloppy-spc */
@@ -41,13 +41,13 @@
 */ /*@ comment end outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
- #define X          /*@ indent of '#' before preprocessor directive off by 1 */
-# define X          /*@ indent of preprocessor directive off by 1  */
+ #define X          /*@ indent of preprocessor directive off by 1 */
+# define X          /*@ nesting of preprocessor directive off by 1  */
 typedef struct s  { /*@0 double space, reported unless sloppy-spc */
     enum {          /*@2  double space in comment, reported unless sloppy-spc */
-           zz       /*@ hanging indent off by 1 or 3 */
-         x = 1 +    /*@ hanging indent off by -1 or 1 */
-           && 1,    /*@ hanging indent of '&&' off by 1 or 3 or -3 or -1, ... */
+           zz       /*@ expr indent off by 1 or 3 */
+         x = 1 +    /*@ expr indent off by -1 or 1 */
+           && 1,    /*@ expr indent of '&&' off by 1 or 3 or -3 or -1, ... */
           y,z       /*@ no space after comma, reported unless sloppy-spc */
     } type ;        /*@ space before ;, reported unless sloppy-spc */
    union {          /*@ normal indent off by -1 */
@@ -60,8 +60,8 @@ fun() {             /*@ opening brace at end of function definition header */
 }}}                 /*@2 too many closing braces */
 #endif              /*@ unexpected #endif */
  int f(int a,       /*@ normal indent off by 1 */
-      int b,        /*@ hanging indent off by -1 (or else 6 for sloppy-hang) */
-        int c)      /*@ hanging indent off by 1 (or else 8 for sloppy-hang) */
+      int b,        /*@ expr indent off by -1 (or else 6 for sloppy-hang) */
+        int c)      /*@ expr indent off by 1 (or else 8 for sloppy-hang) */
 { int               /*@ text after opening brace */
     x = 1] +        /*@ too many closing brackets */
         2} -        /*@ too many closing braces within expr */
@@ -71,20 +71,20 @@ fun() {             /*@ opening brace at end of function definition header */
           a[        /*@0 unclosed bracket */
             ?;      /*@4 unclosed conditional expression */
    ggg(a,           /*@ normal indent off by -1 */
-      b1,           /*@ hanging indent off by -1 (or else 2 for sloppy-hang) */
-      b2,     /*@ hanging indent again off by -1, reported unless sloppy-hang */
-   0,               /*@ hanging indent off by -4 (left of normal indent, .. */
+      b1,           /*@ expr indent off by -1 (or else 2 for sloppy-hang) */
+      b2,           /*@ expr indent again off, reported unless sloppy-hang */
+   0,               /*@ expr indent off by -4 (left of normal indent, .. */
        c1 + c3 + .. /*@ .. so reported also with sloppy-hang; this line too long */ c3
 # define M(X) X     /*@ macro indent off by 1 */
-        d ? 1       /*@ hanging indent off by 1 (or else 4 for sloppy-hang) */
-           : 2);    /*@ hanging indent further off by 1 or 7 */
+        d ? 1       /*@ expr indent off by 1 (or else 4 for sloppy-hang) */
+           : 2);    /*@ expr indent further off by 1 or 7 */
     if (e+          /*@ no space before +, reported unless sloppy-spc */
         (g*= 2) +   /*@ no space before *=, reported unless sloppy-spc */
         ( 0) *      /*@ space after (, reported unless sloppy-spc */
         h %2 -      /*@ no space after, reported unless sloppy-spc % */
         0 +/* */    /*@ no space before comment, reported unless sloppy-spc */
         /* */1 *    /*@ no space after comment, reported unless sloppy-spc */
-    shifted.. /*@ hanging indent off by -2, reported unless sloppy-hang */ left)
+    shifted.. /*@ expr indent off by -2, reported unless sloppy-hang */ left)
        z = a        /*@ single-statement indent off by -1 */
            || b;    /*@ single-statement indent w leading '||' off by -1 or 3 */
     do{ x = 3; }    /*@ no space before opening {, reported unless sloppy-spc */
@@ -100,5 +100,5 @@ fun() {             /*@ opening brace at end of function definition header */
 
 {                   /*@0 unclosed brace outside expression */
 #if                 /*@0 unclosed #if */
-    ;               /*@0 space/empty line follows just before EOF: */
+    ;               /*@0 empty line follows just before EOF: */
 

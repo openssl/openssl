@@ -120,7 +120,7 @@ my $num_reports = 0;       # total number of issues found
 my $num_SPC_reports = 0;   # total number of whitespace issues found
 my $num_indent_reports = 0;# total number of indentation issues found
 
-sub report_flex {
+sub report_flexibly {
     my $line = shift;
     my $msg = shift;
     my $contents = shift;
@@ -137,7 +137,7 @@ sub report_flex {
 
 sub report {
     my $msg = shift;
-    report_flex($line, $msg, $contents);
+    report_flexibly($line, $msg, $contents);
 }
 
 sub parens_balance { # count balance of opening parentheses - closing parentheses
@@ -254,11 +254,11 @@ sub update_nested_indents {
 
 sub check_nested_indents {
     my $position = shift;
-    report(+@nested_parens_indents  ." unclosed ( at $position") if @nested_parens_indents;
-   (report(+@nested_braces_indents  ." unclosed { at $position")
+    report(+@nested_parens_indents  ." unclosed ( @ $position") if @nested_parens_indents;
+   (report(+@nested_braces_indents  ." unclosed { @ $position")
    ,$base_indent -= INDENT_LEVEL)                                     if @nested_braces_indents;
-    report(+@nested_brackets_indents." unclosed [ at $position") if @nested_brackets_indents;
-    report(+@nested_conds_indents   ." unclosed ? at $position") if @nested_conds_indents;
+    report(+@nested_brackets_indents." unclosed [ @ $position") if @nested_brackets_indents;
+    report(+@nested_conds_indents   ." unclosed ? @ $position") if @nested_conds_indents;
     @nested_parens_indents = @nested_braces_indents =
         @nested_brackets_indents = @nested_conds_indents = ();
 }
@@ -287,20 +287,12 @@ while(<>) { # loop over all lines of all input files
     $line++;
     $contents = $_;
 
-    # check for TAB character(s)
-    report("TAB") if m/[\x09]/;
-
-    # check for CR character(s)
-    report("CR") if m/[\x0d]/;
-
-    # check for other non-printable ASCII character(s)
-    report("non-printable at ".(length $1)) if m/(.*?)[\x00-\x08\x0B-\x0C\x0E-\x1F]/;
-
-    # check for other non-ASCII character(s)
-    report("non-ASCII '$1'") if m/([\x7F-\xFF])/;
+    # check for illegal characters
+    report(($2 eq "\x09" ? "TAB" : $2 eq "\x0D" ? "CR" : $2 =~ m/[\x00-\x1F]/ ? "non-printable" : "non-7bit")
+           . " @ column ".(length $1)) if m/(.*?)([\x00-\x09\x0B-\x1F\x7F-\xFF])/;
 
     # check for whitespace at EOL
-    report("SPC at EOL") if m/\s\n$/;
+    report("SPC @ EOL") if m/\s\n$/;
 
     # assign to $count the actual indentation level of the current line
     chomp; # remove tailing \n
@@ -437,7 +429,7 @@ while(<>) { # loop over all lines of all input files
                 }
                 return 1;
             }
-            report_flex($line - 1, "dbl SPC", $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
+            report_flexibly($line - 1, "dbl SPC", $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
                 (    column_alignments_only($head1, $intra_line1, $_                )    # compare with $line
                  || ($line > 2 &&
                      column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare with $line - 2
@@ -579,7 +571,7 @@ while(<>) { # loop over all lines of all input files
            $line_opening_brace == $line - 2) {
             # TODO do not report cases where a further else branch
             # follows with a block containg more than one line/statement
-            report_flex($line - 1, "{1 line}", $contents_before);
+            report_flexibly($line - 1, "{1 stmt}", $contents_before);
         }
     }
 
@@ -644,7 +636,7 @@ while(<>) { # loop over all lines of all input files
     if ($in_paren_expr) { # if/for/while/switch
         if ($end_in_paren_expr) { # end of its (expr)
             # reset hanging expr indents while keeping $hanging_offset
-            check_nested_indents("end of (expr)");
+            check_nested_indents("(expr)");
             $in_expr = 0;
             $in_paren_expr = 0;
         }
@@ -654,11 +646,11 @@ while(<>) { # loop over all lines of all input files
         # on end of statement/type declaration/variable definition/function header
         my $trailing_opening_brace = m/\{\s*$/;
         if ($terminator_position >= 0) {
-            check_nested_indents("end of expr/stmt/decl");
+            check_nested_indents("expr");
             $in_expr = 0;
         } elsif ($outermost_level && !$in_expr && @nested_parens_indents == 0 && !$trailing_opening_brace) {
             # assuming end of function header in function definition
-            check_nested_indents("end of fn hdr");
+            check_nested_indents("fn hdr");
             $in_expr = 0;
         }
     }
@@ -692,7 +684,7 @@ while(<>) { # loop over all lines of all input files
         if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) { # we assume end of function definition header (or statement or variable definition)
                 # check if { is at end of line (rather than on next line)
-                report("{ at EOL") if $head =~ m/\S/; # non-whitespace before {
+                report("{ @ EOL") if $head =~ m/\S/; # non-whitespace before {
             } else {
                 $line_opening_brace = $line unless $in_else && $line_opening_brace < $line - 2;
             }
@@ -742,14 +734,14 @@ while(<>) { # loop over all lines of all input files
     # post-processing at end of file @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if(eof) {
-        # check for essentially empty line just before EOF
-        report("SPC/empty line at EOF") if $contents =~ m/^\s*\\?\s*$/;
+        # check for essentially empty line (which may include a single '\\') just before EOF
+        report($1 eq "" ? "empty line" : $2 ne "" ? "\\" : "SPC") if $contents =~ m/^(\s*(\\?)\s*)$/;
 
         # sanity-check balance of { .. } via final indent at end of file
-        report_flex("$line (EOF)", ceil($base_indent / INDENT_LEVEL)." unclosed {", "\n") if $base_indent != 0;
+        report_flexibly($line, ceil($base_indent / INDENT_LEVEL)." unclosed {", "(EOF)\n") if $base_indent != 0;
 
         # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
-        report_flex("$line (EOF)", "$directive_nesting unclosed #if", "\n") if $directive_nesting != 0;
+        report_flexibly($line, "$directive_nesting unclosed #if", "(EOF)\n") if $directive_nesting != 0;
 
         reset_file_state();
     }
