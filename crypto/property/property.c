@@ -21,8 +21,12 @@
 #include "crypto/sparse_array.h"
 #include "property_local.h"
 
-/* The number of elements in the query cache before we initiate a flush */
-#define IMPL_CACHE_FLUSH_THRESHOLD  50
+/*
+ * The number of elements in the query cache before we initiate a flush.
+ * If reducing this, also ensure the stochastic test in test/property_test.c
+ * isn't likely to fail.
+ */
+#define IMPL_CACHE_FLUSH_THRESHOLD  500
 
 typedef struct {
     void *method;
