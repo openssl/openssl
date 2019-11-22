@@ -27,7 +27,7 @@ const void *OSSL_SERIALIZER_CTX_get0_object(OSSL_SERIALIZER_CTX *ctx)
 {
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return NULL;
     }
 
     return ctx->object;
