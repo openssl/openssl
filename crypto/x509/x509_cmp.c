@@ -80,7 +80,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
 }
 
-X509_NAME *X509_get_issuer_name(const X509 *a)
+const X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return a->cert_info.issuer;
 }
@@ -97,7 +97,7 @@ unsigned long X509_issuer_name_hash_old(X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(const X509 *a)
+const X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return a->cert_info.subject;
 }
@@ -204,7 +204,7 @@ unsigned long X509_NAME_hash(const X509_NAME *x)
  * this is reasonably efficient.
  */
 
-unsigned long X509_NAME_hash_old(X509_NAME *x)
+unsigned long X509_NAME_hash_old(const X509_NAME *x)
 {
     EVP_MD *md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
@@ -242,7 +242,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
         return NULL;
 
     x.cert_info.serialNumber = *serial;
-    x.cert_info.issuer = (X509_NAME *)name; /* name is not modified */
+    x.cert_info.issuer = name;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
@@ -252,7 +252,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
     return NULL;
 }
 
-X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
+X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;

@@ -1108,7 +1108,8 @@ static int prompt_info(X509_REQ *req,
     const char *def;
     CONF_VALUE *v;
     X509_NAME *subj;
-    subj = X509_REQ_get_subject_name(req);
+
+    subj = X509_NAME_dup(X509_REQ_get_subject_name(req));
 
     if (!batch) {
         BIO_printf(bio_err,
@@ -1190,13 +1191,15 @@ static int prompt_info(X509_REQ *req,
 
             if (!add_DN_object(subj, v->value, def, value, nid,
                                n_min, n_max, chtype, mval))
-                return 0;
+                goto err_free;
         }
         if (X509_NAME_entry_count(subj) == 0) {
-            BIO_printf(bio_err,
-                       "error, no objects specified in config file\n");
-            return 0;
+            BIO_printf(bio_err, "error, no objects specified in config file\n");
+            goto err_free;
         }
+        if (!X509_REQ_set_subject_name(req, subj))
+            goto err_free;
+        X509_NAME_free(subj);
 
         if (attribs) {
             if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0)
@@ -1262,6 +1265,9 @@ static int prompt_info(X509_REQ *req,
 
     return 1;
 
+ err_free:
+    X509_NAME_free(subj);
+    return 0;
 }
 
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
@@ -1274,7 +1280,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
     CONF_VALUE *v;
     X509_NAME *subj;
 
-    subj = X509_REQ_get_subject_name(req);
+    subj = X509_NAME_dup(X509_REQ_get_subject_name(req));
 
     for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++) {
         int mval;
@@ -1312,14 +1318,18 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
         if (!X509_NAME_add_entry_by_txt(subj, type, chtype,
                                         (unsigned char *)v->value, -1, -1,
                                         mval))
-            return 0;
+            goto err_free;
 
     }
 
     if (!X509_NAME_entry_count(subj)) {
         BIO_printf(bio_err, "error, no objects specified in config file\n");
-        return 0;
+        goto err_free;
     }
+    if (!X509_REQ_set_subject_name(req, subj))
+        goto err_free;
+    X509_NAME_free(subj);
+
     if (attribs) {
         for (i = 0; i < sk_CONF_VALUE_num(attr_sk); i++) {
             v = sk_CONF_VALUE_value(attr_sk, i);
@@ -1329,6 +1339,10 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
         }
     }
     return 1;
+
+ err_free:
+    X509_NAME_free(subj);
+    return 0;
 }
 
 static int add_DN_object(X509_NAME *n, char *text, const char *def,

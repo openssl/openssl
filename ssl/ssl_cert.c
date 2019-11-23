@@ -628,10 +628,8 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
                 goto err;
             }
         }
-        if ((xn = X509_get_subject_name(x)) == NULL)
-            goto err;
         /* check for duplicates */
-        xn = X509_NAME_dup(xn);
+        xn = X509_NAME_dup(X509_get_subject_name(x));
         if (xn == NULL)
             goto err;
         if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
@@ -683,9 +681,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     for (;;) {
         if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
             break;
-        if ((xn = X509_get_subject_name(x)) == NULL)
-            goto err;
-        xn = X509_NAME_dup(xn);
+        xn = X509_NAME_dup(X509_get_subject_name(x));
         if (xn == NULL)
             goto err;
         if (sk_X509_NAME_find(stack, xn) >= 0) {
@@ -783,8 +779,7 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
                                         depth - 1);
         } else if (infotype == OSSL_STORE_INFO_CERT) {
             if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
-                || (xn = X509_get_subject_name(x)) == NULL
-                || (xn = X509_NAME_dup(xn)) == NULL)
+                || (xn = X509_NAME_dup(X509_get_subject_name(x))) == NULL)
                 goto err;
             if (sk_X509_NAME_find(stack, xn) >= 0) {
                 /* Duplicate. */

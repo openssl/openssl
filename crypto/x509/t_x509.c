@@ -227,7 +227,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     int i;
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
     ASN1_BIT_STRING *keybstr;
-    X509_NAME *subj;
+    const X509_NAME *subj;
 
     /*
      * display the hash of the subject as it would appear in OCSP requests

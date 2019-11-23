@@ -55,7 +55,7 @@ struct x509_sig_info_st {
 struct X509_req_info_st {
     ASN1_ENCODING enc;          /* cached encoding of signed part */
     ASN1_INTEGER *version;      /* version, defaults to v1(0) so can be NULL */
-    X509_NAME *subject;         /* certificate request DN */
+    const X509_NAME *subject;   /* certificate request DN */
     X509_PUBKEY *pubkey;        /* public key of request */
     /*
      * Zero or more attributes.
@@ -79,7 +79,7 @@ struct X509_req_st {
 struct X509_crl_info_st {
     ASN1_INTEGER *version;      /* version: defaults to v1(0) so may be NULL */
     X509_ALGOR sig_alg;         /* signature algorithm */
-    X509_NAME *issuer;          /* CRL issuer name */
+    const X509_NAME *issuer;    /* CRL issuer name */
     ASN1_TIME *lastUpdate;      /* lastUpdate field */
     ASN1_TIME *nextUpdate;      /* nextUpdate field: optional */
     STACK_OF(X509_REVOKED) *revoked;        /* revoked entries: optional */
@@ -148,9 +148,9 @@ struct x509_cinf_st {
     ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
     ASN1_INTEGER serialNumber;
     X509_ALGOR signature;
-    X509_NAME *issuer;
+    const X509_NAME *issuer;
     X509_VAL validity;
-    X509_NAME *subject;
+    const X509_NAME *subject;
     X509_PUBKEY *key;
     ASN1_BIT_STRING *issuerUID; /* [ 1 ] optional in v2 */
     ASN1_BIT_STRING *subjectUID; /* [ 2 ] optional in v2 */

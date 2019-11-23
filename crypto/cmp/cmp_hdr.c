@@ -266,8 +266,8 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
 /* fill in all fields of the hdr according to the info given in ctx */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
-    X509_NAME *sender;
-    X509_NAME *rcp = NULL;
+    const X509_NAME *sender;
+    const X509_NAME *rcp = NULL;
 
     if (!ossl_assert(ctx != NULL && hdr != NULL))
         return 0;

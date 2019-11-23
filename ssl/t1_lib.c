@@ -2240,7 +2240,7 @@ static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
 /* Check to see if a certificate issuer name matches list of CA names */
 static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, X509 *x)
 {
-    X509_NAME *nm;
+    const X509_NAME *nm;
     int i;
     nm = X509_get_issuer_name(x);
     for (i = 0; i < sk_X509_NAME_num(names); i++) {

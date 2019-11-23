@@ -143,7 +143,7 @@ typedef struct GENERAL_NAME_st {
         ASN1_IA5STRING *rfc822Name;
         ASN1_IA5STRING *dNSName;
         ASN1_TYPE *x400Address;
-        X509_NAME *directoryName;
+        const X509_NAME *directoryName;
         EDIPARTYNAME *ediPartyName;
         ASN1_IA5STRING *uniformResourceIdentifier;
         ASN1_OCTET_STRING *iPAddress;
@@ -530,7 +530,7 @@ DECLARE_ASN1_FUNCTIONS(DIST_POINT)
 DECLARE_ASN1_FUNCTIONS(DIST_POINT_NAME)
 DECLARE_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
 
-int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, X509_NAME *iname);
+int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname);
 
 int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc);
 int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc);

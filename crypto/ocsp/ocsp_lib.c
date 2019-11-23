@@ -22,7 +22,7 @@
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
                              const X509 *issuer)
 {
-    X509_NAME *iname;
+    const X509_NAME *iname;
     const ASN1_INTEGER *serial;
     ASN1_BIT_STRING *ikey;
     if (!dgst)

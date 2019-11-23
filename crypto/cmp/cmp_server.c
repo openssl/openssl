@@ -249,7 +249,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     OSSL_CMP_REVDETAILS *details;
     OSSL_CRMF_CERTID *certId;
     OSSL_CRMF_CERTTEMPLATE *tmpl;
-    X509_NAME *issuer;
+    const X509_NAME *issuer;
     ASN1_INTEGER *serial;
     OSSL_CMP_PKISI *si;
 

@@ -98,7 +98,7 @@ struct ocsp_response_st {
 struct ocsp_responder_id_st {
     int type;
     union {
-        X509_NAME *byName;
+        const X509_NAME *byName;
         ASN1_OCTET_STRING *byKey;
     } value;
 };

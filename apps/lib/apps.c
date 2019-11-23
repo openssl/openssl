@@ -968,7 +968,7 @@ static int set_table_opts(unsigned long *flags, const char *arg,
     return 0;
 }
 
-void print_name(BIO *out, const char *title, X509_NAME *nm,
+void print_name(BIO *out, const char *title, const X509_NAME *nm,
                 unsigned long lflags)
 {
     char *buf;

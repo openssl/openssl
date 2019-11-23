@@ -23,7 +23,7 @@ int X509_REQ_set_version(X509_REQ *x, long version)
     return ASN1_INTEGER_set(x->req_info.version, version);
 }
 
-int X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
+int X509_REQ_set_subject_name(X509_REQ *x, const X509_NAME *name)
 {
     if (x == NULL)
         return 0;

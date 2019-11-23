@@ -484,11 +484,11 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     switch (type) {
     case X509_LU_X509:
         stmp.data.x509 = &x509_s;
-        x509_s.cert_info.subject = (X509_NAME *)name; /* name is not modified */
+        x509_s.cert_info.subject = name;
         break;
     case X509_LU_CRL:
         stmp.data.crl = &crl_s;
-        crl_s.crl.issuer = (X509_NAME *)name; /* name is not modified */
+        crl_s.crl.issuer = name;
         break;
     case X509_LU_NONE:
         /* abort(); */
@@ -714,7 +714,7 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
  */
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-    X509_NAME *xn;
+    const X509_NAME *xn;
     X509_OBJECT *obj = X509_OBJECT_new(), *pobj = NULL;
     X509_STORE *store = ctx->store;
     int i, ok, idx, ret;

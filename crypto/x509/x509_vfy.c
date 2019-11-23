@@ -600,8 +600,9 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * (RFC 3820: 3.4, 4.1.3 (a)(4))
          */
         if (x->ex_flags & EXFLAG_PROXY) {
-            X509_NAME *tmpsubject = X509_get_subject_name(x);
-            X509_NAME *tmpissuer = X509_get_issuer_name(x);
+            const X509_NAME *tmpsubject = X509_get_subject_name(x);
+            X509_NAME *tmpsubject2;
+            const X509_NAME *tmpissuer = X509_get_issuer_name(x);
             X509_NAME_ENTRY *tmpentry = NULL;
             int last_object_nid = 0;
             int err = X509_V_OK;
@@ -639,25 +640,25 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              * Check that the last subject RDN is a commonName, and that
              * all the previous RDNs match the issuer exactly
              */
-            tmpsubject = X509_NAME_dup(tmpsubject);
-            if (tmpsubject == NULL) {
+            tmpsubject2 = X509_NAME_dup(tmpsubject);
+            if (tmpsubject2 == NULL) {
                 X509err(X509_F_CHECK_NAME_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return 0;
             }
 
             tmpentry =
-                X509_NAME_delete_entry(tmpsubject, last_object_loc);
+                X509_NAME_delete_entry(tmpsubject2, last_object_loc);
             last_object_nid =
                 OBJ_obj2nid(X509_NAME_ENTRY_get_object(tmpentry));
 
             if (last_object_nid != NID_commonName
-                || X509_NAME_cmp(tmpsubject, tmpissuer) != 0) {
+                || X509_NAME_cmp(tmpsubject2, tmpissuer) != 0) {
                 err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
             }
 
             X509_NAME_ENTRY_free(tmpentry);
-            X509_NAME_free(tmpsubject);
+            X509_NAME_free(tmpsubject2);
 
          proxy_name_done:
             if (err != X509_V_OK
@@ -1212,7 +1213,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
                            X509 **pissuer, int *pcrl_score)
 {
     X509 *crl_issuer = NULL;
-    X509_NAME *cnm = X509_CRL_get_issuer(crl);
+    const X509_NAME *cnm = X509_CRL_get_issuer(crl);
     int cidx = ctx->error_depth;
     int i;
 
@@ -1388,7 +1389,7 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 {
     int i;
-    X509_NAME *nm = X509_CRL_get_issuer(crl);
+    const X509_NAME *nm = X509_CRL_get_issuer(crl);
     /* If no CRLissuer return is successful iff don't need a match */
     if (!dp->CRLissuer)
         return ! !(crl_score & CRL_SCORE_ISSUER_NAME);
@@ -1447,7 +1448,7 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     unsigned int reasons;
     X509_CRL *crl = NULL, *dcrl = NULL;
     STACK_OF(X509_CRL) *skcrl;
-    X509_NAME *nm = X509_get_issuer_name(x);
+    const X509_NAME *nm = X509_get_issuer_name(x);
 
     reasons = ctx->current_reasons;
     ok = get_crl_sk(ctx, &crl, &dcrl,

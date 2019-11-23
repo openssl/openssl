@@ -479,7 +479,7 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     return 1;
 }
 
-int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, X509_NAME *iname)
+int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname)
 {
     int i;
     STACK_OF(X509_NAME_ENTRY) *frag;

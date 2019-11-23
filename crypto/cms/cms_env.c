@@ -303,7 +303,7 @@ int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
 
 int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
                                           ASN1_OCTET_STRING **keyid,
-                                          X509_NAME **issuer,
+                                          const X509_NAME **issuer,
                                           ASN1_INTEGER **sno)
 {
     CMS_KeyTransRecipientInfo *ktri;

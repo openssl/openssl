@@ -567,14 +567,14 @@ ASN1_INTEGER
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
-X509_NAME
-*OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+const X509_NAME
+    *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
 /* retrieves the issuer name of the given CertId or NULL on error */
-X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
+const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 {
     return cid != NULL && cid->issuer->type == GEN_DIRNAME ?
         cid->issuer->d.directoryName : NULL;

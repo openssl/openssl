@@ -342,7 +342,8 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_free) (X509_CRL *crl),
                                      int (*crl_lookup) (X509_CRL *crl,
                                                         X509_REVOKED **ret,
-                                                        ASN1_INTEGER *ser,
+                                                        const ASN1_INTEGER *ser,
+                                                        const
                                                         X509_NAME *issuer),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk));
@@ -555,7 +556,7 @@ DECLARE_ASN1_FUNCTIONS(X509_NAME_ENTRY)
 
 DECLARE_ASN1_FUNCTIONS(X509_NAME)
 
-int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
+int X509_NAME_set(const X509_NAME **xn, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
@@ -655,10 +656,10 @@ int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *X509_get_serialNumber(X509 *x);
 const ASN1_INTEGER *X509_get0_serialNumber(const X509 *x);
-int X509_set_issuer_name(X509 *x, X509_NAME *name);
-X509_NAME *X509_get_issuer_name(const X509 *a);
-int X509_set_subject_name(X509 *x, X509_NAME *name);
-X509_NAME *X509_get_subject_name(const X509 *a);
+int X509_set_issuer_name(X509 *x, const X509_NAME *name);
+const X509_NAME *X509_get_issuer_name(const X509 *a);
+int X509_set_subject_name(X509 *x, const X509_NAME *name);
+const X509_NAME *X509_get_subject_name(const X509 *a);
 const ASN1_TIME * X509_get0_notBefore(const X509 *x);
 ASN1_TIME *X509_getm_notBefore(const X509 *x);
 int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
@@ -694,8 +695,8 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
-X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
-int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
+const X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
+int X509_REQ_set_subject_name(X509_REQ *req, const X509_NAME *name);
 void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
                              const X509_ALGOR **palg);
 int X509_REQ_get_signature_nid(const X509_REQ *req);
@@ -729,7 +730,7 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
                               const unsigned char *bytes, int len);
 
 int X509_CRL_set_version(X509_CRL *x, long version);
-int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
+int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name);
 int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
@@ -745,7 +746,7 @@ const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
 DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl))
 DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl))
-X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
+const X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
@@ -789,7 +790,7 @@ unsigned long X509_subject_name_hash_old(X509 *x);
 int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long X509_NAME_hash(const X509_NAME *x);
-unsigned long X509_NAME_hash_old(X509_NAME *x);
+unsigned long X509_NAME_hash_old(const X509_NAME *x);
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
@@ -818,16 +819,17 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag,
 int X509_REQ_print(BIO *bp, X509_REQ *req);
 
 int X509_NAME_entry_count(const X509_NAME *name);
-int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len);
-int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
+int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid,
+                              char *buf, int len);
+int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
                               char *buf, int len);
 
 /*
  * NOTE: you should be passing -1, not 0 as lastpos. The functions that use
  * lastpos, search after that position on.
  */
-int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos);
-int X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
+int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos);
+int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
                                int lastpos);
 X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
@@ -993,7 +995,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx);
 /* lookup a cert from a X509 STACK */
 X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
                                      const ASN1_INTEGER *serial);
-X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name);
+X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
