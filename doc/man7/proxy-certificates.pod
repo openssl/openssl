@@ -1,16 +1,17 @@
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 proxy-certificates - Proxy certificates in OpenSSL
 
 =head1 DESCRIPTION
 
-Proxy certificates are defined in
-L<RFC 3820|https://tools.ietf.org/html/rfc3820>.  They are used to
+Proxy certificates are defined in RFC 3820.  They are used to
 extend rights to some other entity (a computer process, typically, or
 sometimes to the user itself).  This allows the entity to perform
-operations on behalf of the owner of the EE certificate.
+operations on behalf of the owner of the EE (End Entity) certificate.
 
 The requirements for a valid proxy certificate are:
 
@@ -83,27 +84,27 @@ I<syntag>s are recognised:
 
 =item B<text>
 
-indicates that the string is simply bytes, without any encoding:
+indicates that the string is a byte sequence, without any encoding:
 
     policy=text:räksmörgås
 
 =item B<hex>
 
-indicates the string is encoded in hex, with colons between each byte
-(every second hex digit):
+indicates the string is encoded hexadecimal encoded binary data, with
+colons between each byte (every second hex digit):
 
     policy=hex:72:E4:6B:73:6D:F6:72:67:E5:73
 
 =item B<file>
 
-indicates that the text of the policy should really be taken from a
-file.  The string is then really a filename.  This is useful for
-policies that are large (more than a few lines, e.g. XML documents).
+indicates that the text of the policy should be taken from a file.
+The string is then a filename.  This is useful for policies that are
+large (more than a few lines, e.g. XML documents).
 
 =back
 
 I<NOTE: The proxy policy value is what determines the rights granted
-to the process uring the proxy certificate.  It's up to the
+to the process during the proxy certificate.  It's up to the
 application to interpret and combine these policies.>
 
 With a proxy extension, creating a proxy certificate is a matter of
@@ -118,8 +119,8 @@ two commands:
         -extfile proxy.cnf -extensions v3_proxy1
 
 You can also create a proxy certificate using another proxy
-certificate as issuer (note: I'm using a different configuration
-section for it):
+certificate as issuer (note: using a different configuration
+section for the proxy extensions):
 
     openssl req -new -config proxy.cnf \
         -out proxy2.req -keyout proxy2.key \
@@ -146,7 +147,7 @@ The following ingredients are needed for such processing:
 =item *
 
 a callback function that will be called for every certificate being
-validated.  The callback be called several times for each certificate,
+validated.  The callback is called several times for each certificate,
 so you must be careful to do the proxy policy interpretation at the
 right time.  You also need to fill in the defaults when the EE
 certificate is checked.
@@ -329,8 +330,9 @@ certificates checked properly, using the code above:
 =head1 NOTES
 
 To this date, it seems that proxy certificates have only been used in
-a context highly aware of them, and no one seems to have investigated
-how they can be used of misused outside of such an environment.
+environments that are aware of them, and no one seems to have
+investigated how they can be used or misused outside of such an
+environment.
 
 For that reason, OpenSSL requires that applications aware of proxy
 certificates must also make that explicit.
@@ -345,7 +347,8 @@ L<X509_STORE_CTX_set_flags(3)>,
 L<X509_STORE_CTX_set_verify_cb(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
-L<openssl-req(1)>, L<openssl-x509(1)>
+L<openssl-req(1)>, L<openssl-x509(1)>,
+L<RFC 3820|https://tools.ietf.org/html/rfc3820>
 
 =head1 COPYRIGHT
 
