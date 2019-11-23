@@ -83,7 +83,7 @@ unless ($no_fips) {
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
                 '-section_name', 'fips_sect'])),
-       "fipinstall");
+       "fipsinstall");
 }
 
 foreach (@configs) {
