@@ -920,20 +920,15 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
     RAND_DRBG *drbg;
-    int ret;
 
-    if (meth == NULL)
-        return 0;
-
-    if (meth != RAND_OpenSSL())
+    if (meth != NULL && meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
 
     drbg = RAND_DRBG_get0_private();
-    if (drbg == NULL)
-        return 0;
+    if (drbg != NULL)
+        return RAND_DRBG_bytes(drbg, buf, num);
 
-    ret = RAND_DRBG_bytes(drbg, buf, num);
-    return ret;
+    return 0;
 }
 
 int RAND_bytes(unsigned char *buf, int num)
