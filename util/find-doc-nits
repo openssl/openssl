@@ -450,12 +450,14 @@ sub check {
     # Make sure every link has a section.
     while ( $contents =~ /$markup_re/msg ) {
         my $target = $1;
-        next unless $target =~ /^L</;           # Skip if not L<...>, or
+        next unless $target =~ /^L<(.*)>$/;     # Skip if not L<...>
+        $target = $1;                           # Peal away L< and >
+        $target =~ s/\/[^\/]*$//;               # Peal away possible anchor
+        $target =~ s/.*\|//g;                   # Peal away possible link text
+        next if $target eq '';                  # Skip if links within page, or
         next if $target =~ /::/;                #   links to a Perl module, or
-        next if $target =~ m@L</@;              #   links within the page, or
-        next if $target =~ /^L<https?:/;        #   is a URL link, or
-        next if $target =~ m@\([1357]\)>$@;     #   it has a section, or
-        next if $target =~ m@\([1357]\)/.*>$@;  #   it has a section/anchor
+        next if $target =~ /^https?:/;          #   is a URL link, or
+        next if $target =~ /\([1357]\)$/;       #   it has a section
         err($id, "Section missing in $target")
     }
     # Check for proper links to commands.
