@@ -55,19 +55,22 @@ typedef struct s  { /*@0 double space, reported unless sloppy-spc */
     }p;             /*@ no space after, reported unless sloppy-spc } */
     };              /*@ normal indent off by 4 */
 void fun(void) {    /*@ opening brace at end of function definition header */
-    if (cond)) {    /*@ unexpected closing paren */
+    if (cond)) {    /*@ unexpected closing parenthesis outside expression */
         stmt;       /*@0 single-line statement in braces */
-}}}                 /*@2 too many closing braces */
+}}}                 /*@2 unexpected closing brace (too many '}') outside expr */
 #endif              /*@ unexpected #endif */
  int f(int a,       /*@ normal indent off by 1 */
       int b,        /*@ expr indent off by -1 (or else 6 for sloppy-hang) */
         int c)      /*@ expr indent off by 1 (or else 8 for sloppy-hang) */
 { int               /*@ text after opening brace */
-    x = 1];         /*@ unexpected closing bracket */
-    s = {           /*@0 unclosed brace within initializer expression */
-         (          /*@0 unclosed paren */
+    x = 1) +        /*@ unexpected closing parenthesis */
+        2] -        /*@ unexpected closing bracket */
+        3} *        /*@ unexpected closing brace within expression */
+        4:;         /*@ unexpected ':' (without preceding '?') within expr */
+    s = {           /*@0 unclosed brace within initializer/enum expression */
+         (          /*@0 unclosed parenthesis */
           a[        /*@0 unclosed bracket */
-            ?;      /*@4 unclosed conditional expression */
+            ?;      /*@4 unclosed '? (conditional expression) */
    ggg(a,           /*@ normal indent off by -1 */
       b1,           /*@ expr indent off by -1 (or else 2 for sloppy-hang) */
       b2,           /*@ expr indent again off, reported unless sloppy-hang */
@@ -93,10 +96,11 @@ void fun(void) {    /*@ opening brace at end of function definition header */
 }                   /*@ normal indent off by -4 */
   label:            /*@ label indent off by 1 */
     x; }            /*@ text before closing brace */
-}                   /*@ extra closing brace */
+}                   /*@ unexpected closing brace, at outermost block level */
 /* Here the tool should stop complaining apart from the below issues at EOF */
 
-{                   /*@0 unclosed brace outside expression */
+{                   /*@0 unclosed brace at block level, outside stmt/exp/decl */
+    (               /*@0 unclosed parenthesis */
 #if                 /*@0 unclosed #if */
-    ;               /*@0 empty line follows just before EOF: */
+     0              /*@0 empty line follows just before EOF: */
 

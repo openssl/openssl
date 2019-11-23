@@ -90,19 +90,19 @@ my $contents_before2;      # contents of line before previous line, if $line > 2
 my $contents_before_2;     # contents of line before previous line after blinding comments etc., if $line > 2
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line, which
-                           # should be $base_indent+hanging_offset+$local_offset or $expr_indent, respectively
+                           # should be $block_indent+hanging_offset+$local_offset or $expr_indent, respectively
 my $count_before;          # number of leading whitespace characters (except newline) in previous line, if $line > 1
 my $label;                 # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
 my $line_opening_brace;    # number of previous line with opening brace outside expression or type declaration
-my $base_indent;           # currently required normal indentation at statement level
+my $block_indent;          # currently required normal indentation at block/statement level
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my @nested_indents;        # stack of hanging indents due to parentheses, braces, brackets, or conditionals
 my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in parallel to @nested_indents
 my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' .. ':')
 my $expr_indent;           # resulting hanging indent within (multi-line) expressions including type exprs, else 0
 my $hanging_symbol;        # character ('(', '{', '[', not: '?') responsible for $expr_indent, if $expr_indent != 0
-my $in_expr;               # in expression (after if/for/while/switch/return/enum/LHS of assignment
+my $in_expr;               # in expression after if/for/while/switch/return/enum/LHS of assignment
 my $in_paren_expr;         # in condition of if/for/while and expr of switch, if $expr_indent != 0
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
@@ -167,7 +167,7 @@ sub check_indent { # used for lines outside multi-line string literals
         return;
     }
 
-    my $stmt_indent = $base_indent + $hanging_offset + $local_offset;
+    my $stmt_indent = $block_indent + $hanging_offset + $local_offset;
     my $ref_indent =  $expr_indent == 0 ? $stmt_indent : $expr_indent;
     my $alt_indent = $ref_indent;
     if (@nested_conds_indents > 0 && substr($_, $count, 1) eq ":") { # special treatment for leading ':'
@@ -220,34 +220,35 @@ sub update_nested_indents {
         # stop at terminator outside 'for(..;..;..)', assuming that 'for' is followed by '('
         return ($end_in_paren_expr, $i) if $c eq ";" && (!$in_paren_expr || @nested_indents == 0);
 
-        if ($c =~ m/[({[?]/ && ($c ne "{" || ($in_expr && !$end_in_paren_expr))) {
+        my $in_stmt = ($in_expr && !$end_in_paren_expr) || @nested_symbols > 0;
+        if ($c =~ m/[({[?]/ && # $c is '(', '{', '[', or '?'
+            ($c ne "{" || $in_stmt) # ignore '{' outside stmt/expr/decl
+            ) {
             push @nested_indents, $i + 1; # done also for '?' to be able to check correct nesting
             push @nested_symbols, $c;
-            push @nested_conds_indents, $i if $c eq "?";
+            push @nested_conds_indents, $i if $c eq "?"; # remember special alternative indent for ':'
         } else {
             my $opening_c = ($c =~ tr/)}]:/({[/r);
-            if ($opening_c ne $c && # there is a match
-                ($c ne "}" ||
-                 (@nested_symbols > 0 && @nested_symbols[-1] eq "{")) && # for the '}' there was a corresponding '{' 
-                # in the presence of '}', one could add this sanity check: ($in_expr && !$end_in_paren_expr)
-                ($c ne ":" ||
-                 (@nested_symbols > 0 && @nested_symbols[-1] eq "?")) # for the ':' there was a corresponding '?'
+            if ($opening_c ne $c && # there is a match, so $c is ')', '}', ']', or ':'
+                ($c ne "}" || $in_stmt) && # ignore '}' outside stmt/expr/decl
+                # in the presence of '}', one could add this sanity check:
+                ($c ne ":" || $in_stmt    # ignore ':' outside stmt/expr/decl
                 # in the presence of ':', one could add this sanity check:
-                # ($in_expr || $expr_indent != 0 || # else the occurrence of ':' is outside expressions
-                # !(# ':' after initial label/case/default
-                #   substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/ || # this matching would not work for multi-line expr after 'case'
-                #   # bitfield length within unsigned type decl - 
-                #   substr($str, $i + 1) =~ m/^\s*\d+/) # this matching would need to be improved
-                ) {
-                if (@nested_symbols > 0 && @nested_symbols[-1] == $opening_c) {
+                # && !(# ':' after initial label/case/default
+                #      substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/ || # this matching would not work for multi-line expr after 'case'
+                #      # bitfield length within unsigned type decl
+                #      substr($str, $i + 1) =~ m/^\s*\d+/ # this matching would need to be improved
+                #     )
+                )) {
+                if (@nested_symbols > 0 && @nested_symbols[-1] == $opening_c) { # for $c there was a corresponding $opening_c
                     pop @nested_indents;
                     pop @nested_symbols;
                     pop @nested_conds_indents if $opening_c eq "?";
                 } else {
-                    report("unexpected ".$c);
+                    report("unexpected $c @ ".($in_paren_expr ? "(expr)" : "expr"));
                     if ($c eq "}") { # need to repair outer indent levels
                         $expr_indent += INDENT_LEVEL;
-                        $base_indent += INDENT_LEVEL;
+                        $block_indent += INDENT_LEVEL;
                     }
                 }
             }
@@ -262,7 +263,7 @@ sub check_nested_indents {
     while(@nested_symbols != 0) {
         my $symbol = pop @nested_symbols;
         report("unclosed $symbol @ $position");
-        $base_indent -= INDENT_LEVEL if $symbol eq "{";
+        $block_indent -= INDENT_LEVEL if $symbol eq "{";
     }
     @nested_indents = ();
     @nested_conds_indents = ();
@@ -276,7 +277,7 @@ sub reset_file_state {
     $in_paren_expr = 0;
     $in_expr = 0;
     $hanging_offset = 0;
-    $base_indent = 0;
+    $block_indent = 0;
     $ifdef__cplusplus = 0;
     $line = 0;
     undef $multiline_string;
@@ -289,6 +290,7 @@ sub reset_file_state {
 }
 
 reset_file_state();
+
 while(<>) { # loop over all lines of all input files
     $self_test = $ARGV =~ m/check-format-test.c$/;
     $line++;
@@ -542,9 +544,9 @@ while(<>) { # loop over all lines of all input files
     }
 
     # sanity-check underflow due to closing braces
-    if ($base_indent + $local_offset < 0) {
-        report(-($base_indent + $local_offset)/INDENT_LEVEL." too many }");
-        $local_offset = -$base_indent;
+    if ($block_indent + $local_offset < 0) {
+        report(-($block_indent + $local_offset)/INDENT_LEVEL." unexpected }");
+        $local_offset = -$block_indent;
     }
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
@@ -553,8 +555,8 @@ while(<>) { # loop over all lines of all input files
             $in_define_header += parens_balance($_);
         } else { # start of macro body
             $in_define_header = 0;
-            if ($count == $base_indent - $directive_offset) { # macro body started with same indentation as preceding code
-                $base_indent -= $directive_offset; # workaround for this situation
+            if ($count == $block_indent - $directive_offset) { # macro body started with same indentation as preceding code
+                $block_indent -= $directive_offset; # workaround for this situation
                 $directive_offset = 0;
             }
         }
@@ -568,7 +570,7 @@ while(<>) { # loop over all lines of all input files
 
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    my $outermost_level = $base_indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
+    my $outermost_level = $block_indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
 
     # check for code block containing a single line/statement
     if($line > 2 && !$outermost_level && $in_typedecl == 0 && m/^\s*\}/) {
@@ -590,12 +592,12 @@ while(<>) { # loop over all lines of all input files
 
     # adapt indent for following lines according to balance of braces (also within expressions)
     my $braces_balance = braces_balance($_);
-    $base_indent += $braces_balance * INDENT_LEVEL;
+    $block_indent += $braces_balance * INDENT_LEVEL;
     $expr_indent += $braces_balance * INDENT_LEVEL if $expr_indent != 0
         && $in_expr; # the latter actually implies $expr_indent != 0
-    if ($base_indent < 0) { # sanity-check underflow due to closing braces
-        $base_indent = 0;
-        # report(-$base_indent." too many }"); # already reported above
+    if ($block_indent < 0) { # sanity-check underflow due to closing braces
+        # report(-$block_indent/INDENT_LEVEL." unexpected }"); # already reported above
+        $block_indent = 0;
     }
 
     # detect start of if/for/while/switch expression
@@ -640,14 +642,14 @@ while(<>) { # loop over all lines of all input files
 
     my ($end_in_paren_expr, $terminator_position) = update_nested_indents($_);
 
-    if ($in_paren_expr) { # if/for/while/switch
+    if ($in_paren_expr) { # expression in parentheses after if/for/while/switch
         if ($end_in_paren_expr) { # end of its (expr)
             # reset nested expr indents while keeping $hanging_offset
             check_nested_indents("(expr)");
             $in_expr = 0;
             $in_paren_expr = 0;
         }
-    } elsif ($in_expr || $expr_indent != 0) {
+    } elsif ($in_expr) {
         # reset nested expr indents
         # on end of non-if/for/while/switch (multi-line) expression (i.e., return/enum/assignment) and
         # on end of statement/type declaration/variable definition/function header
@@ -703,7 +705,7 @@ while(<>) { # loop over all lines of all input files
         if ($in_directive == 0) {
             $in_define_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is starting
             $directive_offset = INDENT_LEVEL;
-            $base_indent += $directive_offset;
+            $block_indent += $directive_offset;
         }
         $in_directive += 1;
     }
@@ -713,7 +715,7 @@ while(<>) { # loop over all lines of all input files
     if ($in_directive > 0 &&
         # need to use original line contents because trailing \ may have been stripped
         !($contents =~ m/^(.*?)\s*\\\s*$/)) { # no trailing '\'
-        $base_indent -= $directive_offset;
+        $block_indent -= $directive_offset;
         $in_directive = 0;
         # macro body typically does not include terminating ';'
         $hanging_offset = 0; # compensate for this in case macro ends, e.g., as "while(0)"
@@ -737,15 +739,17 @@ while(<>) { # loop over all lines of all input files
 
     if(eof) {
         # check for essentially empty line (which may include a single '\\') just before EOF
-        report($1 eq "" ? "empty line" : $2 ne "" ? "\\" : "SPC") if $contents =~ m/^(\s*(\\?)\s*)$/;
+        report(($contents eq "\n" ? "empty line" : $2 ne "" ? "\\" : "whitespace")." @ EOF") if $contents =~ m/^(\s*(\\?)\s*)$/;
 
-        # sanity-check balance of { .. } via final indent at end of file
-        report_flexibly($line, ceil($base_indent / INDENT_LEVEL)." unclosed {", "(EOF)\n") if $base_indent != 0;
+        # report unclosed expression-level nesting
+        check_nested_indents("expr at EOF"); # also adapts $block_indent
+
+        # sanity-check balance of block-level { .. } via final $block_indent at end of file
+        my $block_level = ceil($block_indent / INDENT_LEVEL);
+        report_flexibly($line, "$block_level unclosed {", "(EOF)\n") if $block_level != 0;
 
         # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
         report_flexibly($line, "$directive_nesting unclosed #if", "(EOF)\n") if $directive_nesting != 0;
-
-        check_nested_indents("EOF");
 
         reset_file_state();
     }
