@@ -117,6 +117,7 @@ my $num_reports_line = 0;  # number of issues found on current line
 my $num_reports = 0;       # total number of issues found
 my $num_SPC_reports = 0;   # total number of whitespace issues found
 my $num_indent_reports = 0;# total number of indentation issues found
+my $num_nesting_issues = 0; # total number of syntax issues found during sanity checks
 
 sub report_flexibly {
     my $line = shift;
@@ -130,7 +131,8 @@ sub report_flexibly {
     $num_reports_line++;
     $num_reports++;
     $num_SPC_reports++ if $report_SPC;
-    $num_indent_reports++ if $msg =~ /indent/;
+    $num_indent_reports++ if $msg =~ m/indent/;
+    $num_nesting_issues++ if $msg =~ m/unclosed|unexpected/;
 }
 
 sub report {
@@ -332,7 +334,7 @@ while(<>) { # loop over all lines of all input files
         report("'*/'no SPC") if $tail =~ m/^\w/; # report space nit only if '*/' is followed by alphanumeric character
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
-                report("'*/' outside comment");
+                report("unexpected '*/' outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
             } else {
                 report("text before '*/' in multi-line comment") if $head =~ m/\S/; # head contains non-whitespace
@@ -351,9 +353,9 @@ while(<>) { # loop over all lines of all input files
         report("'/*'no SPC") if $tail =~ m/^[^\s$self_test_exception]/;
         my $comment_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
-            report("'/*' inside multi-line comment");
+            report("unexpected '/*' inside multi-line comment");
         } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line - TODO ignore '*/' inside string literal
-            report("'/*' inside intra-line comment") if $1 =~ /\/\*/;
+            report("unexpected '/*' inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
             ($comment_text, my $rest) = ($opt_minus.$1, $2);
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
@@ -470,6 +472,12 @@ while(<>) { # loop over all lines of all input files
         report("'$1'no SPC")    if $intra_line =~ m/([,;=\|\/%])\S/;   # ,;=|/% without following space
         # - TODO same for '*' and '&' except in type/pointer expressions, same also for binary +-<>
         report("'$2' no SPC")   if $intra_line =~ m/(^|\W)(if|for|while|switch)[^\w\s]/;  # if etc. without following space
+        if ($intra_line =~ m/(\w+)\s+\(/) { # likely function header or call with space after fn name
+            my $name = $1;
+            report("fn SPC'('") if !(m/^\s*#\s*define\s/)
+                                   && !($name =~ m/^(if|for|while|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
+                                   && !($name =~ m/^[A-Z_]+$/ && $contents =~ m/^(.*?)\s*\\\s*$/); # type variable within macro, indicated by trailing '\'
+        }
         report("no SPC'{'")     if $intra_line =~ m/[^\s\{\[\(]\{/;        # '{' without preceding (space or {[( )
         report("'}'no SPC")     if $intra_line =~ m/\}[^\s,;\)\]\}]/;  # '}' without following (space or ,;)]} )
     }
@@ -757,5 +765,6 @@ while(<>) { # loop over all lines of all input files
 }
 
 my $num_other_reports = $num_reports - $num_indent_reports - $num_SPC_reports;
-print "$num_reports ($num_indent_reports indentation, $num_SPC_reports whitespace,"
-    ." $num_other_reports other) issues have been found by $0\n" unless $self_test;
+print "$num_reports ($num_indent_reports indentation, $num_SPC_reports whitespace, ".
+    "$num_nesting_issues nesting, $num_other_reports other) issues ".
+    "have been found by $0\n" unless $self_test;
