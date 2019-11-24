@@ -202,11 +202,16 @@ follows:
 
 =item "cipher" (B<OSSL_SERIALIZER_PARAM_CIPHER>) <UTF8 string>
 
+The name of the encryption cipher to be used when generating encrypted
+serialization.  This is used when serializing private keys, as well as
+other objects that need protection.
+
 =item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
 
-The name of the encryption cipher along with the desired properties to
-fetch it with.  The cipher will be used when producing an encrypted
-serialization.
+The properties to be queried when trying to fetch the algorithm given
+with the "cipher" parameter.
+This must be given together with the "cipher" parameter to be
+considered valid.
 
 =item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>
 
