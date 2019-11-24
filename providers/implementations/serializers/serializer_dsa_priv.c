@@ -93,7 +93,8 @@ static int dsa_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         props = (propsp != NULL ? propsp->data : NULL);
 
         EVP_CIPHER_free(ctx->sc.cipher);
-        ctx->sc.cipher = EVP_CIPHER_fetch(NULL, p->data, props);
+        if ((ctx->sc.cipher = EVP_CIPHER_fetch(NULL, p->data, props)) == NULL)
+            return 0;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PASS))
         != NULL) {
