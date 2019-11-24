@@ -546,9 +546,9 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
         }
         ossl_method_free(&p->method);
     }
-    OPENSSL_free(p);
 err:
     res = 0;
+    OPENSSL_free(p);
 end:
     ossl_property_unlock(store);
     return res;
