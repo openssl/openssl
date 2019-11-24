@@ -365,8 +365,9 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
     OSSL_SERIALIZER_free(ser);          /* refcnt(ser)-- */
 
     if (ctx != NULL) {
-        OSSL_SERIALIZER_CTX_set0_object(ctx, pkey);
-        OSSL_SERIALIZER_CTX_set_do_output(ctx, serializer_EVP_PKEY_to_bio);
+        /* Setup for OSSL_SERIALIZE_to_bio() */
+        ctx->object = pkey;
+        ctx->do_output = serializer_EVP_PKEY_to_bio;
     }
 
     return ctx;
