@@ -296,6 +296,7 @@ reset_file_state();
 while(<>) { # loop over all lines of all input files
     $self_test = $ARGV =~ m/check-format-test.c$/;
     $line++;
+    s/\r$//; # strip any trailing CR (which are typical on Windows systems)
     $contents = $_;
 
     # check for illegal characters
