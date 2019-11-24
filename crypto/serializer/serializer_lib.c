@@ -11,41 +11,6 @@
 #include <openssl/serializer.h>
 #include "serializer_local.h"
 
-int OSSL_SERIALIZER_CTX_set0_object(OSSL_SERIALIZER_CTX *ctx,
-                                    const void *object)
-{
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    ctx->object = object;
-    return 1;
-}
-
-const void *OSSL_SERIALIZER_CTX_get0_object(OSSL_SERIALIZER_CTX *ctx)
-{
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-
-    return ctx->object;
-}
-
-int OSSL_SERIALIZER_CTX_set_do_output(OSSL_SERIALIZER_CTX *ctx,
-                                      int (*do_output)(OSSL_SERIALIZER_CTX *ctx,
-                                                       BIO *out))
-{
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    ctx->do_output = do_output;
-    return 1;
-}
-
 int OSSL_SERIALIZER_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
 {
     return ctx->do_output(ctx, out);

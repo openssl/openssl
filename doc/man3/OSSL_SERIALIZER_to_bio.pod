@@ -3,10 +3,7 @@
 =head1 NAME
 
 OSSL_SERIALIZER_to_bio,
-OSSL_SERIALIZER_to_fp,
-OSSL_SERIALIZER_CTX_set0_object,
-OSSL_SERIALIZER_CTX_get0_object,
-OSSL_SERIALIZER_CTX_set_do_output
+OSSL_SERIALIZER_to_fp
 - Serializer file output routines
 
 =head1 SYNOPSIS
@@ -15,13 +12,6 @@ OSSL_SERIALIZER_CTX_set_do_output
 
  int OSSL_SERIALIZER_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out);
  int OSSL_SERIALIZER_to_fp(OSSL_SERIALIZER_CTX *ctx, FILE *fp);
-
- int OSSL_SERIALIZER_CTX_set0_object(OSSL_SERIALIZER_CTX *ctx,
-                                     const void *object);
- const void *OSSL_SERIALIZER_CTX_get0_object(OSSL_SERIALIZER_CTX *ctx);
- int OSSL_SERIALIZER_CTX_set_do_output(OSSL_SERIALIZER_CTX *ctx,
-                                       int (*do_output)(OSSL_SERIALIZER_CTX *ctx,
-                                                        BIO *out));
 
 Feature availability macros:
 
@@ -44,39 +34,14 @@ have it in text or binary mode if that's appropriate.
 OSSL_SERIALIZER_to_fp() does the same thing as OSSL_SERIALIZER_to_bio(),
 except that the output is going to the B<FILE> I<fp>.
 
-OSSL_SERIALIZER_CTX_set0_object() sets the object to be serialized in
-the context.  This object must be intimately known by the processing
-function gitven with OSSL_SERIALIZER_CTX_set_do_output() (see it's
-description below).  No limit is imposed on the passed I<object>, so
-NULL is a valid value.
-
-OSSL_SERIALIZER_CTX_get0_object() gets back the object that was set in
-I<ctx> with OSSL_SERIALIZER_CTX_set0_object().
-
-OSSL_SERIALIZER_CTX_set_do_output() adds the pointer to a serialization
-function.  Together with OSSL_SERIALIZER_CTX_get0_object(), it
-provides a simple way to create your own serialization API for
-specific object types.  No limit is imposed on the passed
-I<do_output>, so NULL is a valid value.
-
 =head1 RETURN VALUES
 
 OSSL_SERIALIZER_to_bio() and OSSL_SERIALIZER_to_fp() return 1 on
 success, or 0 on failure.
 
-OSSL_SERIALIZER_CTX_set0_object() returns 1 if the object could be set
-in the context, or 0 if the given context is NULL.
-
-OSSL_SERIALIZER_CTX_get0_object() returns the object that was
-previously set with OSSL_SERIALIZER_CTX_set0_object(), or NULL.
-It also returns NULL if I<ctx> is NULL.
-
-OSSL_SERIALIZER_CTX_set_do_output() returns 1 if the object could be
-set in the context, or 0 if the given context is NULL.
-
 =head1 SEE ALSO
 
-L<provider(7)>, L<OSSL_SERIALIZER(3)>
+L<provider(7)>, L<OSSL_SERIALIZER_CTX(3)>
 
 =head1 HISTORY
 

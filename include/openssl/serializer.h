@@ -65,12 +65,6 @@ int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
 int OSSL_SERIALIZER_CTX_set_passphrase_ui(OSSL_SERIALIZER_CTX *ctx,
                                           const UI_METHOD *ui_method,
                                           void *ui_data);
-int OSSL_SERIALIZER_CTX_set0_object(OSSL_SERIALIZER_CTX *ctx,
-                                    const void *object);
-const void *OSSL_SERIALIZER_CTX_get0_object(OSSL_SERIALIZER_CTX *ctx);
-int OSSL_SERIALIZER_CTX_set_do_output(OSSL_SERIALIZER_CTX *ctx,
-                                      int (*do_output)(OSSL_SERIALIZER_CTX *ctx,
-                                                       BIO *out));
 
 /* Utilities to output the object to serialize */
 int OSSL_SERIALIZER_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out);
