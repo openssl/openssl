@@ -10,6 +10,10 @@
 use OpenSSL::Test;
 
 setup("test_memleak");
+
+plan skip_all => "MacOS currently doesn't support leak sanitizer"
+    if $^O eq 'darwin';
+
 plan tests => 2;
-ok(run(test(["memleaktest"])), "running leak test");
+ok(!run(test(["memleaktest"])), "running leak test");
 ok(run(test(["memleaktest", "freeit"])), "running no leak test");
