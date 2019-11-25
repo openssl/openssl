@@ -19,6 +19,10 @@
 #  define __SANITIZE_ADDRESS__ 1
 # endif
 #endif
+/* If __SANITIZE_ADDRESS__ isn't defined, define it to be false */
+#ifndef __SANITIZE_ADDRESS__
+# define __SANITIZE_ADDRESS__ 0
+#endif
 
 /*
  * We use a proper main function here instead of the custom main from the
