@@ -304,7 +304,7 @@ while(<>) { # loop over all lines of all input files
            . " @ column ".(length $1)) if m/(.*?)([\x00-\x09\x0B-\x1F\x7F-\xFF])/;
 
     # check for whitespace at EOL
-    report("SPC @ EOL") if m/\s\n$/;
+    report("whitespace @ EOL") if m/\s\n$/;
 
     # assign to $count the actual indentation level of the current line
     chomp; # remove tailing \n
@@ -331,7 +331,7 @@ while(<>) { # loop over all lines of all input files
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my ($head, $tail) = ($1, $2);
-        report("no SPC'*'/") if $head =~ m/\S$/;
+        report("no SPC'*/'") if $head =~ m/\S$/;
         report("'*/'no SPC") if $tail =~ m/^\w/; # report space nit only if '*/' is followed by alphanumeric character
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
@@ -455,32 +455,36 @@ while(<>) { # loop over all lines of all input files
         $intra_line =~ s/^(include\s*)(".*?"|<.*?>)/$1/e if $head =~ m/#/;
         # treat op= and comparison operators as simple '=', simplifying matching below
         $intra_line =~ s/([\+\-\*\/\/%\&\|\^\!<>=]|<<|>>)=/=/g;
+        # treat (type) variables within macro, indicated by trailing '\', as 'int' simplifying matching below
+        $intra_line =~ s/[A-Z_]+/int/g if $contents =~ m/^(.*?)\s*\\\s*$/;
         # treat double &&, ||, <<, and >> as single ones, simplifying matching below
         $intra_line =~ s/(&&|\|\||<<|>>)/substr($1,0,1)/eg;
         # remove blinded comments etc. directly before ,;)}
-        while($intra_line =~ s/\s*@+([,;\)\}\]])/$1/e) {} # /g does not work here
+        while($intra_line =~ s/\s*@+([,;)}\]])/$1/e) {} # /g does not work here
         # treat remaining blinded comments and string literals as (single) space during matching below
-        $intra_line =~ s/(@+\s*)+/ /g;
-        $intra_line =~ s/\s+$//;                    # strip any (resulting) space at EOL
+        $intra_line =~ s/@+/ /g; # note that dbl SPC has already been handled above
+        $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
         $intra_line =~ s/(for\s*\();;(\))/"$1$2"/eg; # strip ';;' in for (;;)
-        $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;       # do not report {SPC in initializers such as ' = { 0, };'
-        $intra_line =~ s/, \};/, @;/g;              # do not report SPC} in initializers such as ' = { 0, };'
-        $intra_line =~ s/\-\>|\+\+|\-\-/@/g;       # blind '->,', '++', and '--'
-        report("SPC'$1'")       if $intra_line =~ m/\s([,;\)\]])/;     # space before ,;)]
-        report("'$1'SPC")       if $intra_line =~ m/([\(\[])\s/;       # space after ([
-        report("no SPC'$1'")    if $intra_line =~ m/\S([=\|\+\/%<>])/; # =|+/%<> without preceding space
-        # - TODO same for '*' and '&' except in type/pointer expressions, same for '-' except after casts
-        report("'$1'no SPC")    if $intra_line =~ m/([,;=\|\/%])\S/;   # ,;=|/% without following space
+        $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
+        $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
+        $intra_line =~ s/\-\>|\+\+|\-\-/@/g;         # blind '->,', '++', and '--'
+        $intra_line =~ s/:\s;/:;/g;                  # strip any SPC between 'label:' and ';'
+        report("SPC'$1'")       if $intra_line =~ m/\s([,;)\]])/;      # space before ,;)]
+        report("'$1'SPC")       if $intra_line =~ m/([(\[])\s/;        # space after ([
+        report("no SPC'$1'")    if $intra_line =~ m/\S([=|+\/%<>])/;   # =|+/%<> without preceding space
+        report("no SPC'$1'")    if $intra_line =~ m/[^\s()]([-])/;     # '-' without preceding space or '(' or ')' (which is used for type casts)
+        report("no SPC'$1'")    if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
+        report("no SPC'$1'")    if $intra_line =~ m/[^\s{(\[]([&])/;   # '&' without preceding space or {([
+        report("'$1'no SPC")    if $intra_line =~ m/([,;=|\/%])\S/;    # ,;=|/% without following space
         # - TODO same for '*' and '&' except in type/pointer expressions, same also for binary +-<>
         report("'$2' no SPC")   if $intra_line =~ m/(^|\W)(if|for|while|switch)[^\w\s]/;  # if etc. without following space
-        if ($intra_line =~ m/(\w+)\s+\(/) { # likely function header or call with space after fn name
-            my $name = $1;
-            report("fn SPC'('") if !(m/^\s*#\s*define\s/)
-                                   && !($name =~ m/^(if|for|while|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
-                                   && !($name =~ m/^[A-Z_]+$/ && $contents =~ m/^(.*?)\s*\\\s*$/); # type variable within macro, indicated by trailing '\'
-        }
-        report("no SPC'{'")     if $intra_line =~ m/[^\s\{\[\(]\{/;        # '{' without preceding (space or {[( )
-        report("'}'no SPC")     if $intra_line =~ m/\}[^\s,;\)\]\}]/;  # '}' without following (space or ,;)]} )
+        report("fn SPC'('")     if $intra_line =~ m/(\w+)\s+\(/        # likely function header or function/macro call with space after fn name
+                                    && !($1 =~ m/^(if|for|while|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
+                                    && !(m/^\s*#\s*define\s/); # we skip macro definitions here
+                                    # because macros without parameters but with body starting with '(', e.g., '#define X (1)',
+                                    # would lead to false positives - TODO also check for macros with parameters
+        report("no SPC'{'")     if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
+        report("'}'no SPC")     if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }
 
     # empty lines, preprocessor directives, and characters/string iterals @@@@@@
@@ -598,6 +602,8 @@ while(<>) { # loop over all lines of all input files
 
     # TODO report missing empty line after local variable definitions
 
+    # TODO report needless use of parentheses, while macro parameters should always be in parens, e.g., '#define ID(x) (x)'
+
     # adapt required indentation for following lines @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # adapt indent for following lines according to balance of braces (also within expressions)
@@ -631,7 +637,7 @@ while(<>) { # loop over all lines of all input files
 
     # set hanging_offset for typedef/do/else
     # treat typedef followed by struct/union/enum as the latter, blinding it as @, preserving length
-    s/(^\s*)typedef(\s*)(struct|union|enum)/$1."@@@@@@@".$2.$3/e;
+    s/(^\s*)typedef(\s+)(struct|union|enum)/$1."@@@@@@@".$2.$3/e;
     if (m/(^|\W)(typedef|else|do)(\W|$)/) { # TODO also handle multiple type decls per line
         $hanging_offset += INDENT_LEVEL;
     }
@@ -654,19 +660,19 @@ while(<>) { # loop over all lines of all input files
 
     if ($in_paren_expr) { # expression in parentheses after if/for/while/switch
         if ($end_in_paren_expr) { # end of its (expr)
-            # reset nested expr indents while keeping $hanging_offset
             check_nested_indents("(expr)");
             $in_expr = 0;
             $in_paren_expr = 0;
         }
     } elsif ($in_expr) {
-        # reset nested expr indents
         # on end of non-if/for/while/switch (multi-line) expression (i.e., return/enum/assignment) and
         # on end of statement/type declaration/variable definition/function header
         if ($terminator_position >= 0) {
             check_nested_indents("expr");
             $in_expr = 0;
         }
+    } else {
+        check_nested_indents("stmt/decl") if $terminator_position >= 0;
     }
 
     # on ';', which terminates the current statement/type declaration/variable definition/function declaration
