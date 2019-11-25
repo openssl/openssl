@@ -501,13 +501,13 @@ while(<>) { # loop over all lines of all input files
         my $space_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
         report("#-indent=$count!=0") if $count != 0;
-        $directive_nesting-- if $directive =~ m/^(else|elsif|endif)$/;
+        $directive_nesting-- if $directive =~ m/^(else|elif|endif)$/;
         if ($directive_nesting < 0) {
             $directive_nesting = 0;
             report("unexpected '#$directive'");
         }
         report("'#if' nesting=$space_count!=$directive_nesting") if $space_count != $directive_nesting;
-        $directive_nesting++ if $directive =~ m/^if|ifdef|ifndef|else|elsif$/;
+        $directive_nesting++ if $directive =~ m/^if|ifdef|ifndef|else|elif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code line handling except for #define
         # TODO improve current mix of handling indents for normal C code and preprocessor directives
