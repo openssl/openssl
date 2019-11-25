@@ -18,6 +18,7 @@
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn rsa_pub_newctx;
+static OSSL_OP_serializer_freectx_fn rsa_pub_freectx;
 static OSSL_OP_serializer_serialize_data_fn rsa_pub_der_data;
 static OSSL_OP_serializer_serialize_object_fn rsa_pub_der;
 static OSSL_OP_serializer_serialize_data_fn rsa_pub_pem_data;
@@ -34,6 +35,10 @@ static OSSL_OP_serializer_serialize_object_fn rsa_pub_print;
 static void *rsa_pub_newctx(void *provctx)
 {
     return provctx;
+}
+
+static void rsa_pub_freectx(void *ctx)
+{
 }
 
 /* Public key : DER */
@@ -106,6 +111,7 @@ static int rsa_pub_print(void *ctx, void *rsa, BIO *out,
 
 const OSSL_DISPATCH rsa_pub_der_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_der_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_der },
     { 0, NULL }
@@ -113,6 +119,7 @@ const OSSL_DISPATCH rsa_pub_der_serializer_functions[] = {
 
 const OSSL_DISPATCH rsa_pub_pem_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_pem_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_pem },
     { 0, NULL }
@@ -120,6 +127,7 @@ const OSSL_DISPATCH rsa_pub_pem_serializer_functions[] = {
 
 const OSSL_DISPATCH rsa_pub_text_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_print },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA,
       (void (*)(void))rsa_pub_print_data },
