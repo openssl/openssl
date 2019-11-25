@@ -22,7 +22,6 @@
 # include <openssl/evp.h>
 # include <openssl/x509.h>
 # include <openssl/pemerr.h>
-# include <openssl/serializer.h>
 
 #ifdef  __cplusplus
 extern "C" {

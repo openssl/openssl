@@ -13,6 +13,7 @@
  */
 
 #include <openssl/pem.h>
+#include <openssl/serializer.h>
 
 /* Alternative IMPLEMENT macros for provided serializers */
 
