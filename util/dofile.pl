@@ -63,8 +63,6 @@ sub errorcallback {
 
 my $prepend = <<"_____";
 use File::Spec::Functions;
-_____
-$prepend .= <<"_____" if defined $target{perl_platform};
 use lib "$FindBin::Bin/../Configurations";
 use lib '$config{builddir}';
 use platform;

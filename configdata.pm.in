@@ -124,8 +124,6 @@ unless (caller) {
         my $prepend = <<"_____";
 use File::Spec::Functions;
 use lib '{- sourcedir('util', 'perl') -}';
-_____
-        $prepend .= <<"_____" if defined $target{perl_platform};
 use lib '{- sourcedir('Configurations') -}';
 use lib '{- $config{builddir} -}';
 use platform;
