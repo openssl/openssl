@@ -16,12 +16,7 @@
 
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dh_importkey(void)
 {
-    static OSSL_OP_keymgmt_importkey_fn *dh_importkey = NULL;
-
-    if (dh_importkey == NULL)
-        dh_importkey = ossl_prov_get_importkey(dh_keymgmt_functions);
-
-    return dh_importkey;
+    return ossl_prov_get_importkey(dh_keymgmt_functions);
 }
 
 int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
