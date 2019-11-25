@@ -16,12 +16,7 @@ DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_rsa_importkey(void)
 {
-    static OSSL_OP_keymgmt_importkey_fn *rsa_importkey = NULL;
-
-    if (rsa_importkey == NULL)
-        rsa_importkey = ossl_prov_get_importkey(rsa_keymgmt_functions);
-
-    return rsa_importkey;
+    return ossl_prov_get_importkey(rsa_keymgmt_functions);
 }
 
 int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
