@@ -211,7 +211,6 @@ static int serializer_passphrase(char *pass, size_t pass_size,
         goto end;
     }
 
-
     if (verify) {
         /* Get a buffer for verification prompt */
         vpass = OPENSSL_zalloc(pass_size);

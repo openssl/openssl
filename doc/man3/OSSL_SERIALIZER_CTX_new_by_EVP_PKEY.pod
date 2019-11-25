@@ -54,7 +54,7 @@ first serializer that supplies a generic serializing function.
 If no suitable serializer was found, OSSL_SERIALIZER_CTX_new_by_EVP_PKEY()
 still creates a B<OSSL_SERIALIZER_CTX>, but with no associated
 serializer (L<OSSL_SERIALIZER_CTX_get_serializer(3)> returns NULL).
-This helps the caller distinguish between  an error when creating
+This helps the caller distinguish between an error when creating
 the B<OSSL_SERIALIZER_CTX>, and the lack the serializer support and
 act accordingly.
 
