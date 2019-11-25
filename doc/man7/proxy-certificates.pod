@@ -24,12 +24,12 @@ another proxy certificate.
 
 =item *
 
-They must not have the extensions B<subjectAltName> or
-B<issuerAltName>.
+They must not have the B<subjectAltName> or B<issuerAltName>
+extensions.
 
 =item *
 
-They must have the extension B<proxyCertInfo>.
+They must have the B<proxyCertInfo> extension.
 
 =item *
 
