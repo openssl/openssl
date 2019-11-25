@@ -18,6 +18,7 @@
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dsa_pub_newctx;
+static OSSL_OP_serializer_freectx_fn dsa_pub_freectx;
 static OSSL_OP_serializer_serialize_data_fn dsa_pub_der_data;
 static OSSL_OP_serializer_serialize_object_fn dsa_pub_der;
 static OSSL_OP_serializer_serialize_data_fn dsa_pub_pem_data;
@@ -34,6 +35,10 @@ static OSSL_OP_serializer_serialize_object_fn dsa_pub_print;
 static void *dsa_pub_newctx(void *provctx)
 {
     return provctx;
+}
+
+static void dsa_pub_freectx(void *ctx)
+{
 }
 
 /* Public key : DER */
@@ -122,6 +127,7 @@ static int dsa_pub_print(void *ctx, void *dsa, BIO *out,
 
 const OSSL_DISPATCH dsa_pub_der_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))dsa_pub_der_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dsa_pub_der },
     { 0, NULL }
@@ -129,6 +135,7 @@ const OSSL_DISPATCH dsa_pub_der_serializer_functions[] = {
 
 const OSSL_DISPATCH dsa_pub_pem_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))dsa_pub_pem_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dsa_pub_pem },
     { 0, NULL }
@@ -136,6 +143,7 @@ const OSSL_DISPATCH dsa_pub_pem_serializer_functions[] = {
 
 const OSSL_DISPATCH dsa_pub_text_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dsa_pub_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dsa_pub_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dsa_pub_print },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA,
       (void (*)(void))dsa_pub_print_data },
