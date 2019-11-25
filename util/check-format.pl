@@ -12,7 +12,8 @@
 #
 # usage:
 #   check-format.pl [-l|--sloppy-len] [-s|--sloppy-space]
-#                   [-c|--sloppy-cmt] [-h|--sloppy-hang]
+#                   [-c|--sloppy-cmt] [-m|--sloppy-macro]
+#                   [-h|--sloppy-hang]
 #                   <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
@@ -23,6 +24,7 @@
 #  -l | --sloppy-len   increases accepted max line length from 80 to 84
 #  -s | --sloppy-space disables reporting whitespace nits
 #  -c | --sloppy-cmt   allows any indentation for comments
+#  -c | --sloppy-macro allows missing extra indentation of macro bodies
 #  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
 #                      * same indentation as on line before
 #                      * same indentation as non-hanging indent level
@@ -65,6 +67,7 @@ my $max_length = MAX_LENGTH;
 my $sloppy_SPC = 0;
 my $sloppy_hang = 0;
 my $sloppy_cmt = 0;
+my $sloppy_macro = 0;
 
 while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     my $arg = $1; shift;
@@ -76,6 +79,8 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $sloppy_hang = 1;
     } elsif($arg =~ m/^(c|-sloppy-cmt)$/) {
         $sloppy_cmt = 1;
+    } elsif($arg =~ m/^(m|-sloppy-macro)$/) {
+        $sloppy_macro = 1;
     } else {
         die("unknown option: $arg");
     }
@@ -109,7 +114,7 @@ my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $directive_nesting;     # currently required indentation of preprocessor directive according to #if(n)(def)
 my $directive_offset;      # indent offset within multi-line preprocessor directive, if $in_directive > 0
-my $in_define_header;      # number of open parentheses + 1 in (multi-line) header of #define, if $in_directive > 0
+my $in_macro_header;       # number of open parentheses + 1 in (multi-line) header of #define, if $in_directive > 0
 my $in_comment;            # number of lines so far within multi-line comment, or -1 when end is on current line
 my $in_formatted_comment;  # in multi-line comment started with "/*-", which indicates/allows special formatting
 my $comment_indent;        # comment indent, if $in_comment != 0
@@ -564,13 +569,14 @@ while(<>) { # loop over all lines of all input files
     }
 
     # potential adaptations of indent in first line of macro body in multi-line macro definition
-    if ($in_directive > 0 && $in_define_header > 0) {
-        if ($in_define_header > 1) { # still in macro definition header
-            $in_define_header += parens_balance($_);
+    if ($in_directive > 0 && $in_macro_header > 0) {
+        if ($in_macro_header > 1) { # still in macro definition header
+            $in_macro_header += parens_balance($_);
         } else { # start of macro body
-            $in_define_header = 0;
-            if ($count == $block_indent - $directive_offset) { # macro body started with same indentation as preceding code
-                $block_indent -= $directive_offset; # workaround for this situation
+            $in_macro_header = 0;
+            if ($count == $block_indent - $directive_offset # macro body started with same indentation as preceding code
+                && $sloppy_macro) { # workaround for this situation is enabled
+                $block_indent -= $directive_offset;
                 $directive_offset = 0;
             }
         }
@@ -719,7 +725,7 @@ while(<>) { # loop over all lines of all input files
     if ($contents =~ m/^(.*?)\s*\\\s*$/) { # trailing '\',
         # typically used in macro definitions (or other preprocessor directives)
         if ($in_directive == 0) {
-            $in_define_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is starting
+            $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is starting
             $directive_offset = INDENT_LEVEL;
             $block_indent += $directive_offset;
         }
