@@ -37,7 +37,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     ASN1_BIT_STRING *prot = NULL;
     CMP_PROTECTEDPART prot_part;
     const ASN1_OBJECT *algorOID = NULL;
-    int l;
+    int len;
     size_t prot_part_der_len;
     unsigned char *prot_part_der = NULL;
     size_t sig_len;
@@ -58,12 +58,12 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     prot_part.header = msg->header;
     prot_part.body = msg->body;
 
-    l = i2d_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
-    if (l < 0 || prot_part_der == NULL) {
+    len = i2d_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
+    if (len < 0 || prot_part_der == NULL) {
         CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
         goto end;
     }
-    prot_part_der_len = (size_t) l;
+    prot_part_der_len = (size_t) len;
 
     if (msg->header->protectionAlg == NULL) {
         CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
@@ -193,12 +193,11 @@ static X509_ALGOR *create_pbmac_algor(OSSL_CMP_CTX *ctx)
     if (!ossl_assert(ctx != NULL))
         return NULL;
 
-    if ((alg = X509_ALGOR_new()) == NULL)
-        goto err;
-    if ((pbm = OSSL_CRMF_pbmp_new(ctx->pbm_slen, ctx->pbm_owf,
-                                  ctx->pbm_itercnt, ctx->pbm_mac)) == NULL)
-        goto err;
-    if ((pbm_str = ASN1_STRING_new()) == NULL)
+    alg = X509_ALGOR_new();
+    pbm = OSSL_CRMF_pbmp_new(ctx->pbm_slen, ctx->pbm_owf, ctx->pbm_itercnt,
+                             ctx->pbm_mac);
+    pbm_str = ASN1_STRING_new();
+    if (alg == NULL || pbm == NULL || pbm_str == NULL)
         goto err;
 
     if ((pbm_der_len = i2d_OSSL_CRMF_PBMPARAMETER(pbm, &pbm_der)) < 0)
