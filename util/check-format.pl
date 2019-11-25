@@ -336,7 +336,7 @@ while(<>) { # loop over all lines of all input files
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
         my ($head, $tail) = ($1, $2);
-        report("no SPC'*/'") if $head =~ m/\S$/;
+        report("no SPC or '*' before '*/'") if $head =~ m/[^\s*]$/; # no space nor '*' before comment end delimiter
         report("'*/'no SPC") if $tail =~ m/^\w/; # report space nit only if '*/' is followed by alphanumeric character
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
@@ -355,8 +355,9 @@ while(<>) { # loop over all lines of all input files
   MATCH_COMMENT:
     if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO ignore '/*' inside string literal
         my ($head, $opt_minus, $tail) = ($1, $2, $3);
-        report("no SPC'/*'") if $head =~ m/[^\s]$/;
-        report("'/*'no SPC") if $tail =~ m/^[^\s$self_test_exception]/;
+        report("no SPC'/*'") if $head =~ m/[^\s]$/; # no space nor '*' after comment start delimiter;
+                                                    # a '-' is allowed anyway due to the above matching
+        report("'/*'['-'] then no SPC or '*'") if $tail =~ m/^[^\s*$self_test_exception]/;
         my $comment_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
