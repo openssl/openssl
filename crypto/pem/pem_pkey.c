@@ -23,6 +23,7 @@
 #include "crypto/store.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "pem_local.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
@@ -65,7 +66,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     return ret;
 }
 
-IMPLEMENT_PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
+PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
     IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey);
 
@@ -116,7 +117,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
     return ret;
 }
 
-IMPLEMENT_PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
+PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 {
     char pem_str[80];
     IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters);
