@@ -193,6 +193,7 @@ The following skeleton code can be used as a starting point:
     static int get_proxy_auth_ex_data_idx(X509_STORE_CTX *ctx)
     {
         static volatile int idx = -1;
+
         if (idx < 0) {
             X509_STORE_lock(X509_STORE_CTX_get0_store(ctx));
             if (idx < 0) {
