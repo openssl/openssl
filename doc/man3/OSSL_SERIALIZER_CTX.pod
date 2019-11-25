@@ -53,7 +53,7 @@ array of parameter descriptors.
 
 OSSL_SERIALIZER_CTX_set_params() attempts to set parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
-implementation doesn't recognised should be ignored.
+implementation doesn't recognise should be ignored.
 
 OSSL_SERIALIZER_CTX_free() frees the given context I<ctx>.
 
