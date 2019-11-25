@@ -16,12 +16,7 @@
 
 OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dsa_importkey(void)
 {
-    static OSSL_OP_keymgmt_importkey_fn *dsa_importkey = NULL;
-
-    if (dsa_importkey == NULL)
-        dsa_importkey = ossl_prov_get_importkey(dsa_keymgmt_functions);
-
-    return dsa_importkey;
+    return ossl_prov_get_importkey(dsa_keymgmt_functions);
 }
 
 int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
