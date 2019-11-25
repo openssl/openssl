@@ -18,6 +18,7 @@
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dh_param_newctx;
+static OSSL_OP_serializer_freectx_fn dh_param_freectx;
 static OSSL_OP_serializer_serialize_data_fn dh_param_der_data;
 static OSSL_OP_serializer_serialize_object_fn dh_param_der;
 static OSSL_OP_serializer_serialize_data_fn dh_param_pem_data;
@@ -34,6 +35,10 @@ static OSSL_OP_serializer_serialize_object_fn dh_param_print;
 static void *dh_param_newctx(void *provctx)
 {
     return provctx;
+}
+
+static void dh_param_freectx(void *ctx)
+{
 }
 
 /* Public key : DER */
@@ -106,6 +111,7 @@ static int dh_param_print(void *ctx, void *dh, BIO *out,
 
 const OSSL_DISPATCH dh_param_der_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dh_param_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dh_param_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))dh_param_der_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dh_param_der },
     { 0, NULL }
@@ -113,6 +119,7 @@ const OSSL_DISPATCH dh_param_der_serializer_functions[] = {
 
 const OSSL_DISPATCH dh_param_pem_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dh_param_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dh_param_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))dh_param_pem_data },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dh_param_pem },
     { 0, NULL }
@@ -120,6 +127,7 @@ const OSSL_DISPATCH dh_param_pem_serializer_functions[] = {
 
 const OSSL_DISPATCH dh_param_text_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dh_param_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dh_param_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dh_param_print },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA,
       (void (*)(void))dh_param_print_data },
