@@ -445,12 +445,12 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[shlibloadtest]=../include ../apps/include ../crypto/include
   ENDIF
 
-  IF[{- $disabled{shared} -}]
-    PROGRAMS{noinst}=cipher_overhead_test
-    SOURCE[cipher_overhead_test]=cipher_overhead_test.c
-    INCLUDE[cipher_overhead_test]=.. ../include ../apps/include
-    DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
-  ENDIF
+  # cipher_overhead_test uses internal symbols, so it must be linked with
+  # the static libraries
+  PROGRAMS{noinst}=cipher_overhead_test
+  SOURCE[cipher_overhead_test]=cipher_overhead_test.c
+  INCLUDE[cipher_overhead_test]=.. ../include ../apps/include
+  DEPEND[cipher_overhead_test]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[uitest]=uitest.c ../apps/lib/apps_ui.c
   INCLUDE[uitest]=.. ../include ../apps/include
