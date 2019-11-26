@@ -18,9 +18,9 @@ sig_algs_master_111 = [
     'ecdsa',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_START
     # post-quantum signatures
-    'oqsdefault','dilithium2','dilithium3','dilithium4','picnicl1fs','qteslapi','qteslapiii',
+    'oqsdefault','dilithium2','dilithium3','dilithium4','picnicl1fs','picnic2l1fs','qteslapi','qteslapiii',
     # post-quantum + classical signatures
-    'p256_oqsdefault','rsa3072_oqsdefault','p256_dilithium2','rsa3072_dilithium2','p384_dilithium4','p256_picnicl1fs','rsa3072_picnicl1fs','p256_qteslapi','rsa3072_qteslapi','p384_qteslapiii',
+    'p256_oqsdefault','rsa3072_oqsdefault','p256_dilithium2','rsa3072_dilithium2','p384_dilithium4','p256_picnicl1fs','rsa3072_picnicl1fs','p256_picnic2l1fs','rsa3072_picnic2l1fs','p256_qteslapi','rsa3072_qteslapi','p384_qteslapiii',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_END
     ]
 

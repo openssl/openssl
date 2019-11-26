@@ -227,16 +227,22 @@
 #define SSL_aP256PICNICL1FS 0x00040000
 /* RSA3072 - Picnic L1 FS auth */
 #define SSL_aRSA3072PICNICL1FS 0x00080000
+/* Picnic2 L1 FS auth */
+#define SSL_aPICNIC2L1FS 0x00100000
+/* ECDSA p256 - Picnic2 L1 FS auth */
+#define SSL_aP256PICNIC2L1FS 0x00200000
+/* RSA3072 - Picnic2 L1 FS auth */
+#define SSL_aRSA3072PICNIC2L1FS 0x00400000
 /* qTesla-I-p auth */
-#define SSL_aQTESLAPI 0x00100000
+#define SSL_aQTESLAPI 0x00800000
 /* ECDSA p256 - qTesla-I-p auth */
-#define SSL_aP256QTESLAPI 0x00200000
+#define SSL_aP256QTESLAPI 0x01000000
 /* RSA3072 - qTesla-I-p auth */
-#define SSL_aRSA3072QTESLAPI 0x00400000
+#define SSL_aRSA3072QTESLAPI 0x02000000
 /* qTESLA-p-III auth */
-#define SSL_aQTESLAPIII 0x00800000
+#define SSL_aQTESLAPIII 0x04000000
 /* ECDSA p384 - qTESLA-p-III auth */
-#define SSL_aP384QTESLAPIII 0x01000000
+#define SSL_aP384QTESLAPIII 0x08000000
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_MASKS_END
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
@@ -433,13 +439,16 @@
 #define SSL_PKEY_PICNICL1FS 18
 #define SSL_PKEY_P256_PICNICL1FS 19
 #define SSL_PKEY_RSA3072_PICNICL1FS 20
-#define SSL_PKEY_QTESLAPI 21
-#define SSL_PKEY_P256_QTESLAPI 22
-#define SSL_PKEY_RSA3072_QTESLAPI 23
-#define SSL_PKEY_QTESLAPIII 24
-#define SSL_PKEY_P384_QTESLAPIII 25
+#define SSL_PKEY_PICNIC2L1FS 21
+#define SSL_PKEY_P256_PICNIC2L1FS 22
+#define SSL_PKEY_RSA3072_PICNIC2L1FS 23
+#define SSL_PKEY_QTESLAPI 24
+#define SSL_PKEY_P256_QTESLAPI 25
+#define SSL_PKEY_RSA3072_QTESLAPI 26
+#define SSL_PKEY_QTESLAPIII 27
+#define SSL_PKEY_P384_QTESLAPIII 28
 
-#define SSL_PKEY_NUM 26
+#define SSL_PKEY_NUM 29
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SSL_PKEYS_END
 
 /*
@@ -2388,16 +2397,22 @@ typedef enum downgrade_en {
       0xfe0a /* private use code point */
 #define TLSEXT_SIGALG_rsa3072_picnicl1fs \
       0xfe0b /* private use code point */
-#define TLSEXT_SIGALG_qteslapi \
+#define TLSEXT_SIGALG_picnic2l1fs \
       0xfe0c /* private use code point */
-#define TLSEXT_SIGALG_p256_qteslapi \
+#define TLSEXT_SIGALG_p256_picnic2l1fs \
       0xfe0d /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_qteslapi \
+#define TLSEXT_SIGALG_rsa3072_picnic2l1fs \
       0xfe0e /* private use code point */
-#define TLSEXT_SIGALG_qteslapiii \
+#define TLSEXT_SIGALG_qteslapi \
       0xfe0f /* private use code point */
-#define TLSEXT_SIGALG_p384_qteslapiii \
+#define TLSEXT_SIGALG_p256_qteslapi \
       0xfe10 /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_qteslapi \
+      0xfe11 /* private use code point */
+#define TLSEXT_SIGALG_qteslapiii \
+      0xfe12 /* private use code point */
+#define TLSEXT_SIGALG_p384_qteslapiii \
+      0xfe13 /* private use code point */
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_END
 
 /* Known PSK key exchange modes */

@@ -300,6 +300,18 @@ sigs:
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
                     "oid": "1.3.6.1.4.1.311.89.2.1.3"}]
+      -
+        name: "picnic2l1fs"
+        pretty_name: "Picnic2 L1 FS"
+        oqs_meth: "OQS_SIG_alg_picnic2_L1_FS"
+        security: 128
+        oid: "1.3.6.1.4.1.311.89.2.1.11"
+        mix_with: [{"name": "p256",
+                    "pretty_name": "ECDSA p256",
+                    "oid": "1.3.6.1.4.1.311.89.2.1.12"},
+                   {"name": "rsa3072",
+                    "pretty_name": "RSA3072",
+                    "oid": "1.3.6.1.4.1.311.89.2.1.13"}]
   -
     # iso (1)
     # identified-organization (3)
