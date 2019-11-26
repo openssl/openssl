@@ -5257,27 +5257,42 @@
 #define NID_rsa3072_picnicl1fs          1206
 #define OBJ_rsa3072_picnicl1fs          1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,3L
 
+#define SN_picnic2l1fs          "picnic2l1fs"
+#define LN_picnic2l1fs          "picnic2l1fs"
+#define NID_picnic2l1fs         1207
+#define OBJ_picnic2l1fs         1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,11L
+
+#define SN_p256_picnic2l1fs             "p256_picnic2l1fs"
+#define LN_p256_picnic2l1fs             "p256_picnic2l1fs"
+#define NID_p256_picnic2l1fs            1208
+#define OBJ_p256_picnic2l1fs            1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,12L
+
+#define SN_rsa3072_picnic2l1fs          "rsa3072_picnic2l1fs"
+#define LN_rsa3072_picnic2l1fs          "rsa3072_picnic2l1fs"
+#define NID_rsa3072_picnic2l1fs         1209
+#define OBJ_rsa3072_picnic2l1fs         1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,13L
+
 #define SN_qteslapi             "qteslapi"
 #define LN_qteslapi             "qteslapi"
-#define NID_qteslapi            1207
-#define OBJ_qteslapi            1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,1L
+#define NID_qteslapi            1210
+#define OBJ_qteslapi            1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,10L
 
 #define SN_p256_qteslapi                "p256_qteslapi"
 #define LN_p256_qteslapi                "p256_qteslapi"
-#define NID_p256_qteslapi               1208
-#define OBJ_p256_qteslapi               1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,2L
+#define NID_p256_qteslapi               1211
+#define OBJ_p256_qteslapi               1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,11L
 
 #define SN_rsa3072_qteslapi             "rsa3072_qteslapi"
 #define LN_rsa3072_qteslapi             "rsa3072_qteslapi"
-#define NID_rsa3072_qteslapi            1209
-#define OBJ_rsa3072_qteslapi            1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,3L
+#define NID_rsa3072_qteslapi            1212
+#define OBJ_rsa3072_qteslapi            1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,12L
 
 #define SN_qteslapiii           "qteslapiii"
 #define LN_qteslapiii           "qteslapiii"
-#define NID_qteslapiii          1210
-#define OBJ_qteslapiii          1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,4L
+#define NID_qteslapiii          1213
+#define OBJ_qteslapiii          1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,20L
 
 #define SN_p384_qteslapiii              "p384_qteslapiii"
 #define LN_p384_qteslapiii              "p384_qteslapiii"
-#define NID_p384_qteslapiii             1211
-#define OBJ_p384_qteslapiii             1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,5L
+#define NID_p384_qteslapiii             1214
+#define OBJ_p384_qteslapiii             1L,3L,6L,1L,4L,1L,311L,89L,2L,2L,21L
