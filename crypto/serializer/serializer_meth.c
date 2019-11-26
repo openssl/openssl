@@ -203,14 +203,13 @@ static void *serializer_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
         }
     }
     /*
-     * Try to check that the method is sensible.  It MUST have a context
-     * constructor and destructor, and at least one of the serializing
-     * driver functions.
+     * Try to check that the method is sensible.
+     * If you have a constructor, you must have a destructor and vice versa.
+     * You must have at least one of the serializing driver functions.
      */
-    if (ser->newctx == NULL
-        || ser->freectx == NULL
-        || (ser->serialize_data == NULL
-            && ser->serialize_object == NULL)) {
+    if (!((ser->newctx == NULL && ser->freectx == NULL)
+          || (ser->newctx != NULL && ser->freectx != NULL))
+        || (ser->serialize_data == NULL && ser->serialize_object == NULL)) {
         OSSL_SERIALIZER_free(ser);
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
