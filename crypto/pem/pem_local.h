@@ -36,16 +36,20 @@
             cb = PEM_def_callback;                                      \
         }                                                               \
     }                                                                   \
-    if (kstr != NULL                                                    \
-        && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen))        \
+    if (enc != NULL) {                                                  \
         ret = 0;                                                        \
-    else if (cb != NULL                                                 \
-             && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1, cb, u))  \
-        ret = 0;                                                        \
-    else if (enc != NULL                                                \
-             && !OSSL_SERIALIZER_CTX_set_cipher_name(ctx,               \
-                                                     EVP_CIPHER_name(enc))) \
-        ret = 0;                                                        \
+        if (OSSL_SERIALIZER_CTX_set_cipher_name(ctx,                    \
+                                                EVP_CIPHER_name(enc))) { \
+            ret = 1;                                                    \
+            if (kstr != NULL                                            \
+                && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen)) \
+                ret = 0;                                                \
+            else if (cb != NULL                                         \
+                     && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,  \
+                                                               cb, u))  \
+                ret = 0;                                                \
+        }                                                               \
+    }                                                                   \
     if (!ret) {                                                         \
         OSSL_SERIALIZER_CTX_free(ctx);                                  \
         return 0;                                                       \
