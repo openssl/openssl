@@ -51,7 +51,7 @@
 typedef struct  {   /*@0 double space, reported unless sloppy-spc */
     enum {          /*@2 double space  in comment, reported unless sloppy-spc */
            w = 0    /*@ hanging expr indent inside type decl off by 1 or 3 */
-            && 1,   /*@ expr indent off off by 2 or 4, no exception for '&&' */
+            && 1,   /*@ hanging expr indent off by 2 or 4, also for '&&' */
          x = 1,     /*@ hanging expr indent off by -1 or 1 */
           y,z       /*@ no space after ',', reported unless sloppy-spc */
     } e_type ;      /*@ space before ';', reported unless sloppy-spc */
@@ -64,7 +64,7 @@ int* somefunc();    /*@ no space before '*' in type declaration */
 void main(int n) {  /*@ opening brace at end of function definition header */
     if (n)) {       /*@ unexpected closing parenthesis outside expression */
         return;     /*@0 (1-line) single statement in braces */
-}}}                 /*@2 unexpected closing brace (too many '}') outside expr */
+    }}}             /*@2 unexpected closing brace (too many '}') outside expr */
 #endif              /*@ unexpected #endif */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
       int b)        /*@ hanging expr indent off by -1 */
