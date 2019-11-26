@@ -20,6 +20,9 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
     EVP_SIGNATURE *signature = OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
 
+    if (signature == NULL)
+        return NULL;
+
     signature->lock = CRYPTO_THREAD_lock_new();
     if (signature->lock == NULL) {
         OPENSSL_free(signature);
@@ -759,6 +762,9 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 {
     EVP_ASYM_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
+
+    if (cipher == NULL)
+        return NULL;
 
     cipher->lock = CRYPTO_THREAD_lock_new();
     if (cipher->lock == NULL) {
