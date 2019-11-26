@@ -316,7 +316,6 @@ CRYPTO_ocb128_setiv
 CRYPTO_ocb128_tag
 CRYPTO_ofb128_encrypt
 CRYPTO_secure_actual_size
-CRYPTO_secure_allocated
 CRYPTO_xts128_encrypt
 Camellia_cbc_encrypt
 Camellia_cfb128_encrypt
