@@ -138,6 +138,10 @@ opthelp:
         BIO_write(out, dkm_bytes, dkm_len);
     } else {
         hexout = OPENSSL_buf2hexstr(dkm_bytes, dkm_len);
+        if (hexout == NULL) {
+            BIO_printf(bio_err, "Memory allocation failure\n");
+            goto err;
+        }
         BIO_printf(out, "%s\n\n", hexout);
     }
 
