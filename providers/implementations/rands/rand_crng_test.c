@@ -17,7 +17,7 @@
 #include "crypto/rand.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
-#include "rand_local.h"
+#include "drbg_local.h"
 
 typedef struct crng_test_global_st {
     unsigned char crngt_prev[EVP_MAX_MD_SIZE];
@@ -93,7 +93,7 @@ int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx,
     return 0;
 }
 
-size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
+size_t rand_crngt_get_entropy(PROV_RAND *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance)
@@ -132,7 +132,7 @@ err:
     return r;
 }
 
-void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
+void rand_crngt_cleanup_entropy(PROV_RAND *drbg,
                                 unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);
