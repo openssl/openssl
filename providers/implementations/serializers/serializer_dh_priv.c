@@ -28,6 +28,7 @@ static OSSL_OP_serializer_serialize_data_fn dh_pem_priv_data;
 static OSSL_OP_serializer_serialize_object_fn dh_pem_priv;
 
 static OSSL_OP_serializer_newctx_fn dh_print_newctx;
+static OSSL_OP_serializer_freectx_fn dh_print_freectx;
 static OSSL_OP_serializer_serialize_data_fn dh_priv_print_data;
 static OSSL_OP_serializer_serialize_object_fn dh_priv_print;
 
@@ -93,7 +94,10 @@ static int dh_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         props = (propsp != NULL ? propsp->data : NULL);
 
         EVP_CIPHER_free(ctx->sc.cipher);
-        if ((ctx->sc.cipher = EVP_CIPHER_fetch(NULL, p->data, props)) == NULL)
+        ctx->sc.cipher_intent = p->data != NULL;
+        if (p->data != NULL
+            && ((ctx->sc.cipher = EVP_CIPHER_fetch(NULL, p->data, props))
+                == NULL))
             return 0;
     }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PASS))
@@ -185,6 +189,10 @@ static void *dh_print_newctx(void *provctx)
     return provctx;
 }
 
+static void dh_print_freectx(void *ctx)
+{
+}
+
 static int dh_priv_print_data(void *provctx, const OSSL_PARAM params[],
                                BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
@@ -234,6 +242,7 @@ const OSSL_DISPATCH dh_priv_pem_serializer_functions[] = {
 
 const OSSL_DISPATCH dh_priv_text_serializer_functions[] = {
     { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))dh_print_newctx },
+    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))dh_print_freectx },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))dh_priv_print },
     { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA,
       (void (*)(void))dh_priv_print_data },
