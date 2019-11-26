@@ -54,6 +54,9 @@ static X509_SIG *ossl_prov_encp8_from_p8info(PKCS8_PRIV_KEY_INFO *p8info,
     const void *kstr = ctx->cipher_pass;
     size_t klen = ctx->cipher_pass_length;
 
+    if (ctx->cipher == NULL)
+        return NULL;
+
     if (kstr == NULL) {
         if (!ctx->cb(buf, sizeof(buf), &klen, NULL, ctx->cbarg)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
@@ -227,7 +230,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
 
-    if (ctx->cipher != NULL) {
+    if (ctx->cipher_intent) {
         X509_SIG *p8 =
             ossl_prov_encp8_from_obj(obj, obj_nid, str, strtype, k2d, ctx);
 
@@ -263,7 +266,7 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
 
-    if (ctx->cipher != NULL) {
+    if (ctx->cipher_intent) {
         X509_SIG *p8 = ossl_prov_encp8_from_obj(obj, obj_nid, str, strtype,
                                                 k2d, ctx);
 

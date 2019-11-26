@@ -15,6 +15,9 @@
 #include <openssl/types.h>
 
 struct pkcs8_encrypt_ctx_st {
+    /* Set to 1 if intending to encrypt/decrypt, otherwise 0 */
+    int cipher_intent;
+
     EVP_CIPHER *cipher;
     int pbe_nid;                 /* For future variation */
 
