@@ -9,12 +9,75 @@
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <openssl/serializer.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/nelem.h"
 #include "crypto/evp.h"          /* For the internal API */
 #include "testutil.h"
+
+static int test_print_key_using_pem(const EVP_PKEY *pk)
+{
+    if (!TEST_true(EVP_PKEY_print_private(bio_out, pk, 0, NULL))
+        /* Public key in PEM form */
+        || !TEST_true(PEM_write_bio_PUBKEY(bio_out, pk))
+        /* Unencrypted private key in PEM form */
+        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk,
+                                               NULL, NULL, 0, NULL, NULL))
+        /* Encrypted private key in PEM form */
+        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
+                                               (unsigned char *)"pass", 4,
+                                               NULL, NULL)))
+        return 0;
+
+    return 1;
+}
+
+static int test_print_key_using_serializer(const EVP_PKEY *pk)
+{
+    const char *pq = OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
+    OSSL_SERIALIZER_CTX *ctx = NULL;
+    int ret = 1;
+
+    /* Make a context, it's valid for several prints */
+    TEST_note("Setting up a OSSL_SERIALIZER context with passphrase");
+    if (!TEST_ptr(ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pk, pq))
+        /* Check that this operation is supported */
+        || !TEST_ptr(OSSL_SERIALIZER_CTX_get_serializer(ctx))
+        /* Set a passphrase to be used later */
+        || !TEST_true(OSSL_SERIALIZER_CTX_set_passphrase(ctx,
+                                                         (unsigned char *)"pass",
+                                                         4)))
+        goto err;
+
+    /* Use no cipher.  This should give us an unencrypted PEM */
+    TEST_note("Displaying PEM with no encryption");
+    if (!TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        ret = 0;
+
+    /* Use a valid cipher name */
+    TEST_note("Displaying PEM encrypted with AES-256-CBC");
+    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, "AES-256-CBC"))
+        || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        ret = 0;
+
+    /* Use an invalid cipher name, which should generate no output */
+    TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
+    if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, "FOO"))
+        || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        ret = 0;
+
+    /* Clear the cipher.  This should give us an unencrypted PEM again */
+    TEST_note("Displaying PEM with encryption cleared (no encryption)");
+    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, NULL))
+        || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        ret = 0;
+
+err:
+    OSSL_SERIALIZER_CTX_free(ctx);
+    return ret;
+}
 
 /* Array indexes used in test_fromdata_rsa */
 #define N       0
@@ -66,19 +129,8 @@ static int test_fromdata_rsa(void)
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_print_private(bio_out, pk, 0, NULL))
-        /* Public key in PEM form */
-        || !TEST_true(PEM_write_bio_PUBKEY(bio_out, pk))
-        /* Unencrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk,
-                                               NULL, NULL, 0, NULL, NULL))
-        /* Encrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
-                                               (unsigned char *)"pass", 4,
-                                               NULL, NULL)))
-        goto err;
-
-    ret = 1;
+    ret = test_print_key_using_pem(pk)
+        | test_print_key_using_serializer(pk);
 
  err:
     EVP_PKEY_free(pk);
@@ -126,21 +178,8 @@ static int test_fromdata_dh(void)
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_print_private(bio_out, pk, 0, NULL))
-        /* Public key in PEM form */
-        || !TEST_true(PEM_write_bio_PUBKEY(bio_out, pk))
-        /* Unencrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk,
-                                               NULL, NULL, 0, NULL, NULL))
-        /* Encrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
-                                               (unsigned char *)"pass", 4,
-                                               NULL, NULL))
-        /* Key parameters in PEM form */
-        || !TEST_true(PEM_write_bio_Parameters(bio_out, pk)))
-        goto err;
-
-    ret = 1;
+    ret = test_print_key_using_pem(pk)
+        | test_print_key_using_serializer(pk);
 
  err:
     EVP_PKEY_free(pk);
