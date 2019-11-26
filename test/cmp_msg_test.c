@@ -63,15 +63,15 @@ static EVP_PKEY *newkey = NULL;
 static X509 *cert = NULL;
 
 #define EXECUTE_MSG_CREATION_TEST(expr) \
-do { \
-    OSSL_CMP_MSG *msg = NULL; \
-    int good = fixture->expected != 0 ? \
-            TEST_ptr(msg = expr) && TEST_true(valid_asn1_encoding(msg)) : \
-            TEST_ptr_null(msg = expr); \
+    do { \
+        OSSL_CMP_MSG *msg = NULL; \
+        int good = fixture->expected != 0 ? \
+            TEST_ptr(msg = (expr)) && TEST_true(valid_asn1_encoding(msg)) : \
+            TEST_ptr_null(msg = (expr)); \
  \
-    OSSL_CMP_MSG_free(msg); \
-    return good; \
-} while(0)
+        OSSL_CMP_MSG_free(msg); \
+        return good; \
+    } while (0)
 
 /*-
  * The following tests call a cmp message creation function.
@@ -91,7 +91,7 @@ static int execute_errormsg_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
     EXECUTE_MSG_CREATION_TEST(ossl_cmp_error_new(fixture->cmp_ctx, fixture->si,
                                                  fixture->err_code,
-                                                 NULL/* fixture->free_text */,
+                                                 NULL /* fixture->free_text */,
                                                  0));
 }
 
@@ -388,7 +388,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
         OSSL_CMP_CERTORENCCERT_CERTIFICATE;
     if ((cresp->certifiedKeyPair->certOrEncCert->value.certificate =
          X509_dup(cert)) == NULL
-             || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
+            || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
         goto err;
     cresp = NULL;
     read_cresp = ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 99);
@@ -428,16 +428,19 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
 
     if (si == NULL || issuer == NULL || serial == NULL)
         goto err;
+
     if (!X509_NAME_add_entry_by_txt(issuer, "CN", MBSTRING_ASC,
                                     (unsigned char*)"The Issuer", -1, -1, 0)
             || !ASN1_INTEGER_set(serial, 99)
             || (cid = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL
             || (rpmsg = ossl_cmp_rp_new(fixture->cmp_ctx, si, cid, 1)) == NULL)
         goto err;
+
     if (!TEST_ptr(ossl_cmp_revrepcontent_get_CertId(rpmsg->body->value.rp, 0)))
         goto err;
-    if (!TEST_ptr(ossl_cmp_revrepcontent_get_pkistatusinfo(
-            rpmsg->body->value.rp, 0)))
+
+    if (!TEST_ptr(ossl_cmp_revrepcontent_get_pkistatusinfo(rpmsg->body->value.rp,
+                                                           0)))
         goto err;
 
     res = 1;
