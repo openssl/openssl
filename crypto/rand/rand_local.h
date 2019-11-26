@@ -18,15 +18,18 @@
 # include <openssl/rand_drbg.h>
 # include "internal/tsan_assist.h"
 # include "crypto/rand.h"
+# include "crypto/evp_rand.h"
 
 # include "internal/numbers.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
 
+#if 0
 /* Maximum reseed intervals */
 # define MAX_RESEED_INTERVAL                     (1 << 24)
 # define MAX_RESEED_TIME_INTERVAL                (1 << 20) /* approx. 12 days */
+#endif
 
 /* Default reseed intervals */
 # define MASTER_RESEED_INTERVAL                  (1 << 8)
@@ -34,6 +37,7 @@
 # define MASTER_RESEED_TIME_INTERVAL             (60*60)   /* 1 hour */
 # define SLAVE_RESEED_TIME_INTERVAL              (7*60)    /* 7 minutes */
 
+#if 0
 /*
  * The number of bytes that constitutes an atomic lump of entropy with respect
  * to the FIPS 140-2 section 4.9.2 Conditional Tests.  The size is somewhat
@@ -61,7 +65,7 @@
 #else
 # define DRBG_DEFAULT_PERS_STRING                "OpenSSL NIST SP 800-90A DRBG"
 #endif
-
+#endif
 /*
  * Maximum allocation size for RANDOM_POOL buffers
  *
@@ -107,14 +111,6 @@
  */
 # define RAND_POOL_MIN_ALLOCATION(secure) ((secure) ? 16 : 48)
 
-/* DRBG status values */
-typedef enum drbg_status_e {
-    DRBG_UNINITIALISED,
-    DRBG_READY,
-    DRBG_ERROR
-} DRBG_STATUS;
-
-
 /* instantiate */
 typedef int (*RAND_DRBG_instantiate_fn)(RAND_DRBG *ctx,
                                         const unsigned char *ent,
@@ -150,43 +146,6 @@ typedef struct rand_drbg_method_st {
     RAND_DRBG_uninstantiate_fn uninstantiate;
 } RAND_DRBG_METHOD;
 
-/* 888 bits from SP800-90Ar1 10.1 table 2 */
-#define HASH_PRNG_MAX_SEEDLEN    (888/8)
-
-typedef struct rand_drbg_hash_st {
-    EVP_MD *md;
-    EVP_MD_CTX *ctx;
-    size_t blocklen;
-    unsigned char V[HASH_PRNG_MAX_SEEDLEN];
-    unsigned char C[HASH_PRNG_MAX_SEEDLEN];
-    /* Temporary value storage: should always exceed max digest length */
-    unsigned char vtmp[HASH_PRNG_MAX_SEEDLEN];
-} RAND_DRBG_HASH;
-
-typedef struct rand_drbg_hmac_st {
-    EVP_MD *md;
-    HMAC_CTX *ctx;
-    size_t blocklen;
-    unsigned char K[EVP_MAX_MD_SIZE];
-    unsigned char V[EVP_MAX_MD_SIZE];
-} RAND_DRBG_HMAC;
-
-/*
- * The state of a DRBG AES-CTR.
- */
-typedef struct rand_drbg_ctr_st {
-    EVP_CIPHER_CTX *ctx;
-    EVP_CIPHER_CTX *ctx_df;
-    EVP_CIPHER *cipher;
-    size_t keylen;
-    unsigned char K[32];
-    unsigned char V[16];
-    /* Temporary block storage used by ctr_df */
-    unsigned char bltmp[16];
-    size_t bltmp_pos;
-    unsigned char KX[48];
-} RAND_DRBG_CTR;
-
 
 /*
  * The 'random pool' acts as a dumb container for collecting random
@@ -218,12 +177,28 @@ struct rand_pool_st {
  * right now.
  */
 struct rand_drbg_st {
-    CRYPTO_RWLOCK *lock;
-    /* The library context this DRBG is associated with, if any */
-    OPENSSL_CTX *libctx;
-    RAND_DRBG *parent;
+    OPENSSL_CTX *ctx;
+    EVP_RAND_CTX *rand;
     int secure; /* 1: allocated on the secure heap, 0: otherwise */
-    int type; /* the nid of the underlying algorithm */
+    unsigned short flags; /* various external flags */
+    int type;
+
+    /*
+     * Auxiliary pool for additional data.
+     */
+    struct rand_pool_st *adin_pool;
+    /*
+     * Maximum number of generate requests until a reseed is required.
+     * This value is ignored if it is zero.
+     */
+
+    unsigned int reseed_interval;
+#if 0
+    /*
+     * Specifies the maximum time interval (in seconds) between reseeds.
+     * This value is ignored if it is zero.
+     */
+    unsigned int reseed_time_interval;
     /*
      * Stores the return value of openssl_get_fork_id() as of when we last
      * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
@@ -231,7 +206,23 @@ struct rand_drbg_st {
      * DRBG in the child process.
      */
     int fork_id;
-    unsigned short flags; /* various external flags */
+    /*
+     * Counts the number of reseeds since instantiation.
+     * This value is ignored if it is zero.
+     *
+     * This counter is used only for seed propagation from the <master> DRBG
+     * to its two children, the <public> and <private> DRBG. This feature is
+     * very special and its sole purpose is to ensure that any randomness which
+     * is added by RAND_add() or RAND_seed() will have an immediate effect on
+     * the output of RAND_bytes() resp. RAND_priv_bytes().
+     */
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
+
+    CRYPTO_RWLOCK *lock;
+    /* The library context this DRBG is associated with, if any */
+    OPENSSL_CTX *libctx;
+    RAND_DRBG *parent;
 
     /*
      * The random_data is used by RAND_add()/drbg_add() to attach random
@@ -292,18 +283,6 @@ struct rand_drbg_st {
      * This value is ignored if it is zero.
      */
     time_t reseed_time_interval;
-    /*
-     * Counts the number of reseeds since instantiation.
-     * This value is ignored if it is zero.
-     *
-     * This counter is used only for seed propagation from the <master> DRBG
-     * to its two children, the <public> and <private> DRBG. This feature is
-     * very special and its sole purpose is to ensure that any randomness which
-     * is added by RAND_add() or RAND_seed() will have an immediate effect on
-     * the output of RAND_bytes() resp. RAND_priv_bytes().
-     */
-    TSAN_QUALIFIER unsigned int reseed_prop_counter;
-    unsigned int reseed_next_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
@@ -312,14 +291,22 @@ struct rand_drbg_st {
     CRYPTO_EX_DATA ex_data;
 
     /* Implementation specific data */
-    union {
-        RAND_DRBG_CTR ctr;
-        RAND_DRBG_HASH hash;
-        RAND_DRBG_HMAC hmac;
-    } data;
+    void *data;
 
     /* Implementation specific methods */
     RAND_DRBG_METHOD *meth;
+
+    /* Callback functions.  See comments in rand_lib.c */
+    RAND_DRBG_get_entropy_fn get_entropy;
+    RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
+    RAND_DRBG_get_nonce_fn get_nonce;
+    RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+#endif
+    /* Application data, mainly used in the KATs. */
+    CRYPTO_EX_DATA ex_data;
+
+    /* Implementation specific data */
+    /*void *data;*/
 
     /* Callback functions.  See comments in rand_lib.c */
     RAND_DRBG_get_entropy_fn get_entropy;
@@ -335,16 +322,6 @@ extern RAND_METHOD rand_meth;
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
 size_t rand_drbg_seedlen(RAND_DRBG *drbg);
-/* locking api */
-int rand_drbg_lock(RAND_DRBG *drbg);
-int rand_drbg_unlock(RAND_DRBG *drbg);
-int rand_drbg_enable_locking(RAND_DRBG *drbg);
-
-
-/* initializes the DRBG implementation */
-int drbg_ctr_init(RAND_DRBG *drbg);
-int drbg_hash_init(RAND_DRBG *drbg);
-int drbg_hmac_init(RAND_DRBG *drbg);
 
 /*
  * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
