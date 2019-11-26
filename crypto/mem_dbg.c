@@ -374,8 +374,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
     hex = OPENSSL_buf2hexstr((const unsigned char *)&m->threadid,
                              sizeof(m->threadid));
-    n = BIO_snprintf(bufp, len, "thread=%s, number=%d, address=%p\n", hex,
-                     m->num, m->addr);
+    n = BIO_snprintf(bufp, len, "thread=%s, number=%d, address=%p\n",
+                     hex == NULL ? "<null>" : hex, m->num, m->addr);
     OPENSSL_free(hex);
     if (n <= 0)
         return;
