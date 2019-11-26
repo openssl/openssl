@@ -18,8 +18,9 @@
 # include <openssl/rand_drbg.h>
 # include "internal/tsan_assist.h"
 # include "crypto/rand.h"
-
 # include "internal/numbers.h"
+# include "prov/provider_util.h"
+# include "prov/provider_ctx.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -82,10 +83,10 @@
  */
 # define RAND_POOL_FACTOR        256
 # define RAND_POOL_MAX_LENGTH    (RAND_POOL_FACTOR * \
-                                  3 * (RAND_DRBG_STRENGTH / 16))
+                                  3 * (PROV_RAND_STRENGTH / 16))
 /*
  *                             = (RAND_POOL_FACTOR * \
- *                                1.5 * (RAND_DRBG_STRENGTH / 8))
+ *                                1.5 * (PROV_RAND_STRENGTH / 8))
  */
 
 /*
@@ -107,58 +108,13 @@
  */
 # define RAND_POOL_MIN_ALLOCATION(secure) ((secure) ? 16 : 48)
 
-/* DRBG status values */
-typedef enum drbg_status_e {
-    DRBG_UNINITIALISED,
-    DRBG_READY,
-    DRBG_ERROR
-} DRBG_STATUS;
-
-
-/* instantiate */
-typedef int (*RAND_DRBG_instantiate_fn)(RAND_DRBG *ctx,
-                                        const unsigned char *ent,
-                                        size_t entlen,
-                                        const unsigned char *nonce,
-                                        size_t noncelen,
-                                        const unsigned char *pers,
-                                        size_t perslen);
-/* reseed */
-typedef int (*RAND_DRBG_reseed_fn)(RAND_DRBG *ctx,
-                                   const unsigned char *ent,
-                                   size_t entlen,
-                                   const unsigned char *adin,
-                                   size_t adinlen);
-/* generate output */
-typedef int (*RAND_DRBG_generate_fn)(RAND_DRBG *ctx,
-                                     unsigned char *out,
-                                     size_t outlen,
-                                     const unsigned char *adin,
-                                     size_t adinlen);
-/* uninstantiate */
-typedef int (*RAND_DRBG_uninstantiate_fn)(RAND_DRBG *ctx);
-
-
-/*
- * The DRBG methods
- */
-
-typedef struct rand_drbg_method_st {
-    RAND_DRBG_instantiate_fn instantiate;
-    RAND_DRBG_reseed_fn reseed;
-    RAND_DRBG_generate_fn generate;
-    RAND_DRBG_uninstantiate_fn uninstantiate;
-} RAND_DRBG_METHOD;
-
-
-
-
+typedef struct rand_drbg_st PROV_RAND;
 
 /*
  * The 'random pool' acts as a dumb container for collecting random
  * input from various entropy sources. The pool has no knowledge about
  * whether its randomness is fed into a legacy RAND_METHOD via RAND_add()
- * or into a new style RAND_DRBG. It is the callers duty to 1) initialize the
+ * or into a new style PROV_RAND. It is the callers duty to 1) initialize the
  * random pool, 2) pass it to the polling callbacks, 3) seed the RNG, and
  * 4) cleanup the random pool again.
  *
@@ -179,50 +135,53 @@ struct rand_pool_st {
     size_t entropy_requested; /* requested entropy count in bits */
 };
 
-int drbg_get_ctx_params(RAND_DRBG *drbg, OSSL_PARAM params[]);
-int drbg_set_ctx_params(RAND_DRBG *drbg, const OSSL_PARAM params[]);
+int drbg_get_ctx_params(PROV_RAND *drbg, OSSL_PARAM params[]);
+int drbg_set_ctx_params(PROV_RAND *drbg, const OSSL_PARAM params[]);
 
 #define OSSL_PARAM_DRBG_SETABLE_CTX_COMMON                                      \
-    OSSL_PARAM_uint(OSSL_RAND_PARAM_RESEED_REQUESTS, NULL, 0),              \
-    OSSL_PARAM_uint64(OSSL_RAND_PARAM_RESEED_TIME_INTERVAL, NULL, 0)
+    OSSL_PARAM_uint(OSSL_RAND_PARAM_RESEED_REQUESTS, NULL),             \
+    OSSL_PARAM_uint64(OSSL_RAND_PARAM_RESEED_TIME_INTERVAL, NULL)
 
-#define OSSL_PARAM_DRBG_GETABLE_CTX_COMMON                                  \
-    OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL, 0),                     \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL, 0),                \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MIN_ENTROPYLEN, NULL, 0),             \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_ENTROPYLEN, NULL, 0),             \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MIN_NONCELEN, NULL, 0),               \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_NONCELEN, NULL, 0),               \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_PERSLEN, NULL, 0),                \
-    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_ADINLEN, NULL, 0),                \
-    OSSL_PARAM_uint(OSSL_RAND_PARAM_RESEED_REQUESTS, NULL, 0),              \
-    OSSL_PARAM_uint64(OSSL_RAND_PARAM_RESEED_TIME_INTERVAL, NULL, 0)
+#define OSSL_PARAM_DRBG_GETABLE_CTX_COMMON                              \
+    OSSL_PARAM_int(OSSL_RAND_PARAM_STATUS, NULL),                       \
+    OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL),                    \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),               \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MIN_ENTROPYLEN, NULL),            \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_ENTROPYLEN, NULL),            \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MIN_NONCELEN, NULL),              \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_NONCELEN, NULL),              \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_PERSLEN, NULL),               \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_ADINLEN, NULL),               \
+    OSSL_PARAM_uint(OSSL_RAND_PARAM_RESEED_CTR, NULL),                  \
+    OSSL_PARAM_uint(OSSL_RAND_PARAM_RESEED_REQUESTS, NULL),             \
+    OSSL_PARAM_uint64(OSSL_RAND_PARAM_RESEED_TIME_INTERVAL, NULL)
 
 /*
  * The state of all types of DRBGs, even though we only have CTR mode
  * right now.
  */
 struct rand_drbg_st {
+    void *provctx;
     CRYPTO_RWLOCK *lock;
     /* The library context this DRBG is associated with, if any */
-    OPENSSL_CTX *libctx;
-    RAND_DRBG *parent;
-    int secure; /* 1: allocated on the secure heap, 0: otherwise */
-    int type; /* the nid of the underlying algorithm */
-    /*
-     * Stores the return value of openssl_get_fork_id() as of when we last
-     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
-     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
-     * DRBG in the child process.
-     */
-    int fork_id;
-    unsigned short flags; /* various external flags */
+    void *libctx;
 
+    int secure; /* 1: allocated on the secure heap, 0: otherwise */
+
+    /* Common DRBG parameters */
+    int strength;
+    size_t max_request;
+    size_t min_entropylen, max_entropylen;
+    size_t min_noncelen, max_noncelen;
+    size_t max_perslen, max_adinlen;
+    size_t seedlen;
+
+#if 0
     /*
      * The random_data is used by RAND_add()/drbg_add() to attach random
      * data to the global drbg, such that the rand_drbg_get_entropy() callback
      * can pull it during instantiation and reseeding. This is necessary to
-     * reconcile the different philosophies of the RAND and the RAND_DRBG
+     * reconcile the different philosophies of the RAND and the PROV_RAND
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
@@ -252,7 +211,6 @@ struct rand_drbg_st {
      * the 'len' suffix has been added to all buffer sizes for
      * clarification.
      */
-
     int strength;
     size_t max_request;
     size_t min_entropylen, max_entropylen;
@@ -289,57 +247,39 @@ struct rand_drbg_st {
      */
     TSAN_QUALIFIER unsigned int reseed_prop_counter;
     unsigned int reseed_next_counter;
-
     size_t seedlen;
     DRBG_STATUS state;
 
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
+#endif
 
     /* Implementation specific data */
-    union {
-        RAND_DRBG_CTR ctr;
-        RAND_DRBG_HASH hash;
-        RAND_DRBG_HMAC hmac;
-    } data;
-
-    /* Implementation specific methods */
-    RAND_DRBG_METHOD *meth;
-
+    void *data;
+#if 0
     /* Callback functions.  See comments in rand_lib.c */
-    RAND_DRBG_get_entropy_fn get_entropy;
-    RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
-    RAND_DRBG_get_nonce_fn get_nonce;
-    RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+    PROV_RAND_get_entropy_fn get_entropy;
+    PROV_RAND_cleanup_entropy_fn cleanup_entropy;
+    PROV_RAND_get_nonce_fn get_nonce;
+    PROV_RAND_cleanup_nonce_fn cleanup_nonce;
+#endif
 };
 
-/* The global RAND method, and the global buffer and DRBG instance. */
-extern RAND_METHOD rand_meth;
+PROV_RAND *prov_rand_drbg_new(void *provctx, int secure, int df,
+                              int (*dnew)(PROV_RAND *ctx, int df));
+void prov_rand_free(PROV_RAND *drbg);
 
-/* DRBG helpers */
-int rand_drbg_restart(RAND_DRBG *drbg,
-                      const unsigned char *buffer, size_t len, size_t entropy);
-size_t rand_drbg_seedlen(RAND_DRBG *drbg);
-/* locking api */
-int rand_drbg_lock(RAND_DRBG *drbg);
-int rand_drbg_unlock(RAND_DRBG *drbg);
-int rand_drbg_enable_locking(RAND_DRBG *drbg);
+int prov_rand_generate(PROV_RAND *drbg, unsigned char *out, size_t outlen,
+                       int prediction_resistance,
+                       const unsigned char *adin, size_t adinlen,
+                       int (*generate)(PROV_RAND *drbg,
+                                       unsigned char *out, size_t outlen,
+                                       const unsigned char *adin,
+                                       size_t adin_len),
+                       int (*reseed)(PROV_RAND *drbg,
+                                     const unsigned char *ent, size_t ent_len,
+                                     const unsigned char *adin,
+                                     size_t adin_len));
 
-
-/* initializes the DRBG implementation */
-int drbg_ctr_init(RAND_DRBG *drbg);
-int drbg_hash_init(RAND_DRBG *drbg);
-int drbg_hmac_init(RAND_DRBG *drbg);
-
-/*
- * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
- * These need to be exposed for the unit tests.
- */
-int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx, RAND_POOL *pool,
-                              unsigned char *buf, unsigned char *md,
-                              unsigned int *md_size);
-extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, RAND_POOL *pool,
-                                unsigned char *buf, unsigned char *md,
-                                unsigned int *md_size);
 
 #endif
