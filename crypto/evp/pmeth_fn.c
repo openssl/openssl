@@ -20,8 +20,14 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
     EVP_SIGNATURE *signature = OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
 
+    if (signature == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     signature->lock = CRYPTO_THREAD_lock_new();
     if (signature->lock == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(signature);
         return NULL;
     }
@@ -760,8 +766,14 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 {
     EVP_ASYM_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
 
+    if (cipher == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     cipher->lock = CRYPTO_THREAD_lock_new();
     if (cipher->lock == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(cipher);
         return NULL;
     }
