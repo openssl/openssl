@@ -1,6 +1,12 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
+SUBDIRS=seeds
+
 $TEST_GOAL=../../libimplementations.a
+$SEED_GOAL=../../libimplementations.a
+$DRBG_HASH=../../libimplementations.a
 
 SOURCE[$TEST_GOAL]=test_rand.c
+SOURCE[$SEED_GOAL]=seed.c
+SOURCE[$DRBG_HASH]=drbg_ctr.c drbg_hash.c drbg_hmac.c drgb.c

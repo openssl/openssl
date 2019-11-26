@@ -1,0 +1,5 @@
+LIBS=../../../libcrypto
+
+$COMMON=rand_win.c rand_unix.c rand_vms.c rand_vxworks.c
+
+SOURCE[../../../libimplementations.a]=$COMMON
