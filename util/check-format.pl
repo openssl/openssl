@@ -651,16 +651,20 @@ while(<>) { # loop over all lines of all input files
         $hanging_offset += INDENT_LEVEL;
     }
 
+    my $in_assignment;
     # set $in_expr and $hanging_offset for return/enum/assignment
-    s/[\!<>=]=/@@/g; # prevent matching (in-)equality on next line
-    if (m/^((((^|.*\W)(return|enum))|([^=]*)=)\s*)(.*)\s*$/) {
+    s/[\!<>=]=/@@/g; # blind (in-)equality as '@@' to prevent matching on next line
+    if (m/^((^|.*\W)(return|enum)(\W.*|$)|([^=]*)(=)(.*))$/) {
         # 'return' or 'enum 'or assignment 'LHS = ' - TODO check if complex LHS of assignment needs to be handled
-        my ($head, $tail) = ($1, $7);
+        my ($head1, $mid1, $tail1, $head2, $mid2, $tail2) = ($2, $3, $4, $5, $6, $7);
+        ($in_assignment, my $head, my $mid, my $tail) =
+          defined $mid1 ? (0, $head1, $mid1, $tail1)
+                        : (1, $head2, $mid2, $tail2);
         if (!$in_expr && @nested_indents == 0 && parens_balance($head) == 0) # not nested assignment etc.
         {
             update_nested_indents($head); # handle $head, i.e., anything before
             # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
-            $_ = $head =~ tr/ /@/cr . $tail;
+            $_ = ($head =~ tr/ /@/cr).$mid.$tail;
             # then follows expr (e.g., on RHS of assignment)
             $in_expr = 1;
             $hanging_offset += INDENT_LEVEL;
@@ -715,11 +719,10 @@ while(<>) { # loop over all lines of all input files
     # special checks for last (typically trailing) opening brace '{' in line
     if (m/^(.*?)\{([^\{]*)$/) { # match last ... '{'
         my ($head, $tail) = ($1, $2);
-        if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
+        if ($in_directive == 0 && !$in_expr && !$in_assignment && $in_typedecl == 0) {
             if ($outermost_level) { # we assume end of function definition header (or statement or variable definition)
-                # check if { is at end of line (rather than on next line)
-                if ($head =~ m/\S/) { # non-whitespace before {
-                    report("'{' @ EOL");
+                if (!($head =~ m/^$/)) { # check if opening brace '{' is at the beginning of the next line
+                    report("'{' not at line start");
                 }
             } else {
                 $line_opening_brace = $line unless $in_else && $line_opening_brace < $line - 2;
