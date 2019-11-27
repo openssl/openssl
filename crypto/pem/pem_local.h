@@ -93,8 +93,8 @@
 
 # ifdef OPENSSL_NO_STDIO
 
-#  define IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1) /**/
-#  define IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1) /**/
+#  define IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1)
+#  define IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1)
 
 # else
 
