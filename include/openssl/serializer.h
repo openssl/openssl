@@ -55,8 +55,9 @@ int OSSL_SERIALIZER_CTX_set_params(OSSL_SERIALIZER_CTX *ctx,
 void OSSL_SERIALIZER_CTX_free(OSSL_SERIALIZER_CTX *ctx);
 
 /* Utilities that help set specific parameters */
-int OSSL_SERIALIZER_CTX_set_cipher_name(OSSL_SERIALIZER_CTX *ctx,
-                                        const char *cipher_name);
+int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
+                                   const char *cipher_name,
+                                   const char *propquery);
 int OSSL_SERIALIZER_CTX_set_passphrase(OSSL_SERIALIZER_CTX *ctx,
                                        const unsigned char *kstr,
                                        size_t klen);

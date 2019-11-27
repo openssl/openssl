@@ -17,13 +17,20 @@
 #include "crypto/evp.h"
 #include "serializer_local.h"
 
-int OSSL_SERIALIZER_CTX_set_cipher_name(OSSL_SERIALIZER_CTX *ctx,
-                                        const char *cipher_name)
+int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
+                                   const char *cipher_name,
+                                   const char *propquery)
 {
-    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_END, OSSL_PARAM_END , OSSL_PARAM_END, OSSL_PARAM_END
+    };
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_SERIALIZER_PARAM_CIPHER,
-                                                 (void *)cipher_name, 0);
+    params[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_SERIALIZER_PARAM_CIPHER,
+                                         (void *)cipher_name, 0);
+    params[1] =
+        OSSL_PARAM_construct_utf8_string(OSSL_SERIALIZER_PARAM_PROPERTIES,
+                                         (void *)propquery, 0);
 
     return OSSL_SERIALIZER_CTX_set_params(ctx, params);
 }
