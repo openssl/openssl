@@ -214,6 +214,11 @@ static int aes_ocb_block_update(void *vctx, unsigned char *out, size_t *outl,
     if (!ctx->key_set || !update_iv(ctx))
         return 0;
 
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
+
     /* Are we dealing with AAD or normal data here? */
     if (out == NULL) {
         buf = ctx->aad_buf;
