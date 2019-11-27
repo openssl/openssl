@@ -22,8 +22,9 @@ OSSL_SERIALIZER_Parameters_TO_TEXT_PQ
  OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                                           const char *propquery);
 
- int OSSL_SERIALIZER_CTX_set_cipher_name(OSSL_SERIALIZER_CTX *ctx,
-                                         const char *cipher_name);
+ int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
+                                    const char *cipher_name,
+                                    const char *propquery);
  int OSSL_SERIALIZER_CTX_set_passphrase(OSSL_SERIALIZER_CTX *ctx,
                                         const unsigned char *kstr,
                                         size_t klen);
@@ -58,10 +59,15 @@ This helps the caller distinguish between an error when creating
 the B<OSSL_SERIALIZER_CTX>, and the lack the serializer support and
 act accordingly.
 
-OSSL_SERIALIZER_CTX_set_cipher_name() tells the implementation what
-cipher should be used to encrypt serialized keys.  If no cipher is
-specified, the implementation may still choose to serialize the key,
-but with unencrypted result.
+OSSL_SERIALIZER_CTX_set_cipher() tells the implementation what cipher
+should be used to encrypt serialized keys.  The cipher is given by
+name I<cipher_name>.  The interpretation of that I<cipher_name> is
+implementation dependent.  The implementation may implement the digest
+directly itself or by other implementations, or it may choose to fetch
+it.  If the implementation supports fetching the cipher, then it may
+use I<propquery> as properties to be queried for when fetching.
+I<cipher_name> may also be NULL, which will result in unencrypted
+serialization.
 
 OSSL_SERIALIZER_CTX_set_passphrase() gives the implementation a
 pass phrase to use when encrypting the serialized private key.
