@@ -4911,3 +4911,4 @@ i2d_X509_PUBKEY_bio                     ?	3_0_0	EXIST::FUNCTION:
 RSA_get0_pss_params                     ?	3_0_0	EXIST::FUNCTION:RSA
 X509_cmp_timeframe                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_MSG_get0_header                ?	3_0_0	EXIST::FUNCTION:CMP
+BIO_f_prefix                            ?	3_0_0	EXIST::FUNCTION:
