@@ -247,7 +247,8 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
                 $hanging_offset = 0;
             }
             if ($c ne "{" || $in_stmt) { # for '{' inside stmt/expr/decl, '(', '[', or '?'
-                push @nested_indents, $i + 1; # done also for '?' to be able to check correct nesting
+                substr($str, $i + 1) =~ m/^(\s*)/;
+                push @nested_indents, $i + 1 + length $1; # done also for '?' to be able to check correct nesting
                 push @nested_symbols, $c;
                 push @nested_conds_indents, $i if $c eq "?"; # remember special alternative indent for ':'
             }
