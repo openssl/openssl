@@ -355,6 +355,13 @@ while(<>) { # loop over all lines of all input files
 
     # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+    # blind contents of character and string literals as @, preserving length
+    # this prevents confusing any of the matching below, e.g., on SPC and comment delimiters
+    s/\\"/@@/g; # blind all '\"' (typically within character literals or string literals)
+    s#("[^"]*")#$1 =~ tr/"/@/cr#eg;
+    s#('[^']*')#$1 =~ tr/'/@/cr#eg;
+    # note that multi-line string literals are handled below
+
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
     if($in_comment > 0) { # this still includes the last line of multi-line commment
@@ -369,7 +376,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
-    if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/' - TODO ignore '*/' inside string literal
+    if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/'
         my ($head, $tail) = ($1, $2);
         report("no SPC nor '*' before '*/'") if $head =~ m/[^\s*]$/;
         report("no SPC nor alphanumeric char after '*/'") if $tail =~ m/^\w/;
@@ -388,7 +395,7 @@ while(<>) { # loop over all lines of all input files
 
     # detect start of comment, check if it is followed by non-space text
   MATCH_COMMENT:
-    if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*' - TODO ignore '/*' inside string literal
+    if (m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*'
         my ($head, $opt_minus, $tail) = ($1, $2, $3);
         report("no SPC before '/*'") if $head =~ m/[^\s*]$/; # no space before comment start delimiter;
                                                              # a '-' is allowed anyway due to the above matching
@@ -396,15 +403,14 @@ while(<>) { # loop over all lines of all input files
         my $cmt_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
-        } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line -
-                                                # TODO ignore '*/' inside string literal
+        } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line
             report("unexpected '/*' inside intra-line comment") if $1 =~ /\/\*/;
             # blind comment text, preserving length
             ($cmt_text, my $rest) = ($opt_minus.$1, $2);
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
                 $rest =~ m/^\s*\\?\s*$/) { # trailing comment: only whitespace (apart from any '\') after it
                 report("dbl SPC in intra-line comment") if $opt_minus ne "-" && $cmt_text =~ m/(^|[^.])\s\s\S/;
-                # blind trailing commment as space - TODO replace by @ after improving matching of trailing items
+                # blind trailing comment as space - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($cmt_text =~ tr/ / /cr)."  $rest";
             } else { # leading or intra-line comment
                 $_ = "$head@@".blind_nonspace($cmt_text)."@@".$rest;
@@ -429,15 +435,9 @@ while(<>) { # loop over all lines of all input files
     # handle special case of line after '#ifdef __cplusplus' (which typically appears in header files)
     if ($ifdef__cplusplus) {
         $ifdef__cplusplus = 0;
-        $_ = "$1 $2" if m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {'
+        $_ = "$1 $2" if $contents =~ m/^(\s*extern\s*"C"\s*)\{(\s*)$/; # ignore opening brace in 'extern "C" {'
         goto LINE_FINISHED if m/^\s*\}\s*$/; # ignore closing brace '}'
     }
-
-    # blind contents of character and string literals preserving length
-    # note that multi-line string literals are handled below
-    s/\\"/@@/g; # blind all '\"' (typically within character literals or string literals)
-    s#("[^"]*")#$1 =~ tr/"/@/cr#eg;
-    s#('[^']*')#$1 =~ tr/'/@/cr#eg;
 
     # check for over-long lines,
     # while allowing trailing (also multi-line) string literals to go past $max_length
