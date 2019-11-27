@@ -173,7 +173,7 @@ sub check_indent { # used for lines outside multi-line string literals
     }
 
     if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, but not on first line
-        report("multi-line comment indent=$count!=$comment_indent") if $count != $comment_indent;
+        report("multi-line comment indent = $count != $comment_indent") if $count != $comment_indent;
         return;
     }
 
@@ -217,7 +217,7 @@ sub check_indent { # used for lines outside multi-line string literals
         ($alt_desc, $alt_indent) = ("lines after '{'", $stmt_indent);
     }
 
-    report("$ref_desc indent=$count!=$ref_indent".
+    report("$ref_desc indent = $count != $ref_indent".
            ($alt_desc eq ""
             # this could prevent showing alternative with equal indent: || $alt_indent == $ref_indent
             ? "" : " or $alt_indent for $alt_desc"))
@@ -336,11 +336,11 @@ while(<>) { # loop over all lines of all input files
     if (m/(.*?)([\x00-\x09\x0B-\x1F\x7F-\xFF])/) {
         my $col = length $1;
         report(($2 eq "\x09" ? "TAB" : $2 eq "\x0D" ? "CR " : $2 =~ m/[\x00-\x1F]/ ? "non-printable"
-                : "non-7bit char") . " @ column $col") ;
+                : "non-7bit char") . " at column $col") ;
     }
 
     # check for whitespace at EOL
-    report("whitespace @ EOL") if m/\s\n$/;
+    report("whitespace at EOL") if m/\s\n$/;
 
     # assign to $count the actual indentation level of the current line
     chomp; # remove trailing \n
@@ -408,7 +408,7 @@ while(<>) { # loop over all lines of all input files
             goto MATCH_COMMENT;
         } else { # start of multi-line comment
             report("non-SPC after '/*' in multi-line comment") unless $tail =~ m/^.?\s*\\?\s*$/;
-                           # tail not essentially empty, first char already checked: "/*no SPC"
+                           # tail not essentially empty, first char already checked
             # adopt actual indentation of first line
             $comment_indent = length($head) + 1;
             $_ = "$head@@".blind_nonspace($cmt_text);
@@ -541,7 +541,7 @@ while(<>) { # loop over all lines of all input files
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
         my $space_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
-        report("#-indent=$count!=0") if $count != 0;
+        report("#-indent = $count != 0") if $count != 0;
         $directive_nesting-- if $directive =~ m/^(else|elif|endif)$/;
         if ($directive_nesting < 0) {
             $directive_nesting = 0;
@@ -805,7 +805,7 @@ while(<>) { # loop over all lines of all input files
     if(eof) {
         # check for essentially empty line (which may include a single '\\') just before EOF
         report(($contents eq "\n" ? "empty line" : $2 ne "" ? "'\\'" : "whitespace").
-               " @ EOF") if $contents =~ m/^(\s*(\\?)\s*)$/;
+               " at EOF") if $contents =~ m/^(\s*(\\?)\s*)$/;
 
         # report unclosed expression-level nesting
         check_nested_nonblock_indents("expr at EOF"); # also adapts @nested_block_indents
