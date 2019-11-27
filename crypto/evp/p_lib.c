@@ -657,6 +657,40 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 #endif
 }
 
+static int print_reset_indent(BIO **out, int pop_f_prefix, long saved_indent)
+{
+    BIO_set_indent(*out, saved_indent);
+    if (pop_f_prefix) {
+        BIO *next = BIO_pop(*out);
+
+        BIO_free(*out);
+        *out = next;
+    }
+    return 1;
+}
+
+static int print_set_indent(BIO **out, int *pop_f_prefix, long *saved_indent,
+                            long indent)
+{
+    *pop_f_prefix = 0;
+    *saved_indent = 0;
+    if (indent > 0) {
+        long i = BIO_get_indent(*out);
+
+        *saved_indent =  (i < 0 ? 0 : i);
+        if (BIO_set_indent(*out, indent) <= 0) {
+            if ((*out = BIO_push(BIO_new(BIO_f_prefix()), *out)) == NULL)
+                return 0;
+            *pop_f_prefix = 1;
+        }
+        if (BIO_set_indent(*out, indent) <= 0) {
+            print_reset_indent(out, *pop_f_prefix, *saved_indent);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
                      const char *kstr)
 {
@@ -666,67 +700,61 @@ static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
     return 1;
 }
 
-int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
-                          int indent, ASN1_PCTX *pctx)
+static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
+                      const char *propquery /* For provided serialization */,
+                      int (*legacy_print)(BIO *out, const EVP_PKEY *pkey,
+                                          int indent, ASN1_PCTX *pctx),
+                      ASN1_PCTX *legacy_pctx /* For legacy print */)
 {
-    const char *pq = OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ;
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
-    int ret = -2;                /* mark as unsupported */
+    int pop_f_prefix;
+    long saved_indent;
+    OSSL_SERIALIZER_CTX *ctx = NULL;
+    int ret = -2;                /* default to unsupported */
 
+    if (!print_set_indent(&out, &pop_f_prefix, &saved_indent, indent))
+        return 0;
+
+    ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, propquery);
     if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
         ret = OSSL_SERIALIZER_to_bio(ctx, out);
     OSSL_SERIALIZER_CTX_free(ctx);
 
     if (ret != -2)
-        return ret;
+        goto end;
 
     /* legacy fallback */
-    if (pkey->ameth && pkey->ameth->pub_print)
-        return pkey->ameth->pub_print(out, pkey, indent, pctx);
+    if (legacy_print != NULL)
+        ret = legacy_print(out, pkey, 0, legacy_pctx);
+    else
+        ret = unsup_alg(out, pkey, 0, "Public Key");
 
-    return unsup_alg(out, pkey, indent, "Public Key");
+ end:
+    print_reset_indent(&out, pop_f_prefix, saved_indent);
+    return ret;
+}
+
+int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
+                          int indent, ASN1_PCTX *pctx)
+{
+    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ,
+                      (pkey->ameth != NULL ? pkey->ameth->pub_print : NULL),
+                      pctx);
 }
 
 int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
                            int indent, ASN1_PCTX *pctx)
 {
-    const char *pq = OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ;
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
-    int ret = -2;                /* mark as unsupported */
-
-    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
-        ret = OSSL_SERIALIZER_to_bio(ctx, out);
-    OSSL_SERIALIZER_CTX_free(ctx);
-
-    if (ret != -2)
-        return ret;
-
-    /* legacy fallback */
-    if (pkey->ameth && pkey->ameth->priv_print)
-        return pkey->ameth->priv_print(out, pkey, indent, pctx);
-
-    return unsup_alg(out, pkey, indent, "Private Key");
+    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ,
+                      (pkey->ameth != NULL ? pkey->ameth->priv_print : NULL),
+                      pctx);
 }
 
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
-    const char *pq = OSSL_SERIALIZER_Parameters_TO_TEXT_PQ;
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, pq);
-    int ret = -2;                /* mark as unsupported */
-
-    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
-        ret = OSSL_SERIALIZER_to_bio(ctx, out);
-    OSSL_SERIALIZER_CTX_free(ctx);
-
-    if (ret != -2)
-        return ret;
-
-    /* legacy fallback */
-    if (pkey->ameth && pkey->ameth->param_print)
-        return pkey->ameth->param_print(out, pkey, indent, pctx);
-
-    return unsup_alg(out, pkey, indent, "Parameters");
+    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_Parameters_TO_TEXT_PQ,
+                      (pkey->ameth != NULL ? pkey->ameth->param_print : NULL),
+                      pctx);
 }
 
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
