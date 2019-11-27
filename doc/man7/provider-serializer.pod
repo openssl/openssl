@@ -206,12 +206,18 @@ The name of the encryption cipher to be used when generating encrypted
 serialization.  This is used when serializing private keys, as well as
 other objects that need protection.
 
+If this name is invalid for the serialization implementation, the
+implementation should refuse to perform the serialization, i.e.
+OP_serializer_serialize_data() and OP_serializer_serialize_object()
+should return an error.
+
 =item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
 
 The properties to be queried when trying to fetch the algorithm given
 with the "cipher" parameter.
 This must be given together with the "cipher" parameter to be
 considered valid.
+The serialization implementation isn't obligated to use this value.
 
 =item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>
 
