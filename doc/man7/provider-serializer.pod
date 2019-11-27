@@ -217,7 +217,11 @@ The properties to be queried when trying to fetch the algorithm given
 with the "cipher" parameter.
 This must be given together with the "cipher" parameter to be
 considered valid.
+
 The serialization implementation isn't obligated to use this value.
+However, it is recommended that implementations that do not handle
+property strings return an error on receiving this parameter unless
+its value NULL or the empty string.
 
 =item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>
 
