@@ -99,7 +99,7 @@ my $count;                 # number of leading whitespace characters (except new
 my $count_before;          # number of leading whitespace characters (except newline) in previous line, if $line > 1
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
-my $line_opening_brace;    # number of previous line with opening brace outside expression or type declaration
+my $line_opening_brace;    # number of previous line with opening brace (used after if/else/do/while/for)
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $block_indent;          # currently required normal indentation at block/statement level
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
@@ -110,8 +110,8 @@ my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in 
 my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' .. ':')
 my $expr_indent;           # resulting hanging indent within (multi-line) expressions including type exprs, else 0
 my $hanging_symbol;        # character ('(', '{', '[', not: '?') responsible for $expr_indent, if $expr_indent != 0
-my $in_expr;               # in expression after if/for/while/switch/return/enum/LHS of assignment
-my $in_paren_expr;         # in condition of if/for/while and expr of switch, if $expr_indent != 0
+my $in_expr;               # in expression after if/while/for/switch/return/enum/LHS of assignment
+my $in_paren_expr;         # in parenthesized if/while/for condition and switch expression, if $expr_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
 my $in_directive;          # number of lines so far within preprocessor directive, e.g., macro definition
 my $directive_nesting;     # currently required indentation of preprocessor directive according to #if(n)(def)
@@ -514,11 +514,11 @@ while(<>) { # loop over all lines of all input files
         report("no SPC befor '$1'")   if $intra_line =~ m/[^\s{(\[]([&])/;   # '&' without preceding space or {([
         report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%])\S/;    # ,;=|/% without following space
         # - TODO same for '*' and '&' except in type/pointer expressions, same also for binary +-<>
-        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|for|while|switch)[^\w\s]/;  # if etc.
+        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch)[^\w\s]/;  # if etc.
                                                                              # without following space
         report("SPC after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
-              && !($1 =~ m/^(if|for|while|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
+              && !($1 =~ m/^(if|while|for|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
                                     && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
                                     # without parameters but with body starting with '(', e.g., '#define X (1)',
                                     # would lead to false positives - TODO also check for macros with parameters
@@ -579,7 +579,7 @@ while(<>) { # loop over all lines of all input files
                 $hanging_symbol = @nested_symbols[-1];
                 $expr_indent = $nested_indents[-1];
             }
-        } elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) {
+        } elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) { # special handling for ASN1 macro indented as '}'
             $local_offset -= INDENT_LEVEL;
             $expr_indent = 0;
         }
@@ -624,8 +624,8 @@ while(<>) { # loop over all lines of all input files
     my $outermost_level = $block_indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
 
     # check for code block containing a single line/statement
-    if($line > 2 && !$outermost_level && $in_typedecl == 0 && m/^\s*\}/) {
-        # leading closing brace '}' in function body, not within type declaration
+    if($line > 2 && !$outermost_level && $in_typedecl == 0 && # within function body, not within type declaration
+       m/^\s*\}/) { # leading closing brace '}', any preceding blinded comment must not be matched
         # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
            $line_opening_brace == $line - 2) {
@@ -645,18 +645,17 @@ while(<>) { # loop over all lines of all input files
     # adapt required indentation for following lines @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # set $in_expr, $in_paren_expr, and $hanging_offset for if/for/while/switch (expr)
-    my $in_else = m/\Welse(\W|$)/; # save (since it will be blinded) for below handling of $line_opening_brace
-    if (m/^(.*\W(if|for|while|switch))((\W|$).*)$/) {
-        my ($head, $tail) = ($1, $3);
-        $tail =~ m/^(\s*\(?)/;
+    my $in_else = m/(^|\W)else(\W|$)/; # save (since it will be blinded) for below handling of $line_opening_brace
+    if (m/^(^|.*\W)(if|while|for|switch)(\W.*|$)$/) {
+        my ($head, $mid, $tail) = ($1, $2, $3);
         update_nested_indents($head); # handle $head, i.e., anything before (expr)
         # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
-        $_ = $head =~ tr/ /@/cr . $tail;
+        $_ = ($head =~ tr/ /@/cr).$mid.$tail;
         # then follows (expr)
         $in_expr = 1;
         $in_paren_expr = 1;
-        $hanging_offset += INDENT_LEVEL;
-        # on 'do .. while' the latter += will be canceled after the 'while' because it is terminated by ';'
+        $hanging_offset += INDENT_LEVEL; # this will be canceled for 'while' that terminates a 'do ... while'
+                                         # becaus in this case the 'while' it is terminated by a ';'
     }
 
     # set $hanging_offset for typdef/do/else (enum is handled below)
@@ -667,8 +666,7 @@ while(<>) { # loop over all lines of all input files
     my $in_assignment;
     # set $in_expr and $hanging_offset for return/enum/assignment
     s/[\!<>=]=/@@/g; # blind (in-)equality as '@@' to prevent matching on next line
-    if (m/^((^|.*\W)(return|enum)(\W.*|$)|([^=]*)(=)(.*))$/) {
-        # 'return' or 'enum 'or assignment 'LHS = ' - TODO check if complex LHS of assignment needs to be handled
+    if (m/^((^|.*\W)(return|enum)(\W.*|$)|([^=]*)(=)(.*))$/) { # first return/enum/'=' (assignment)
         my ($head1, $mid1, $tail1, $head2, $mid2, $tail2) = ($2, $3, $4, $5, $6, $7);
         ($in_assignment, my $head, my $mid, my $tail) = defined $mid1
             ? (0,           $head1,   $mid1,   $tail1)
@@ -691,12 +689,12 @@ while(<>) { # loop over all lines of all input files
     my ($bak_in_expr, $bak_in_paren_expr) = ($in_expr, $in_paren_expr);
     my $terminator_position = update_nested_indents($_);
 
-    if ($bak_in_paren_expr) { # expression in parentheses after if/for/while/switch
+    if ($bak_in_paren_expr) { # expression in parentheses after if/while/for/switch
         if (!$in_paren_expr) { # end of its (expr)
             check_nested_nonblock_indents("(expr)");
         }
     } elsif ($bak_in_expr) {
-        # on end of non-if/for/while/switch (multi-line) expression (i.e., return/enum/assignment) and
+        # on end of non-if/while/for/switch (multi-line) expression (i.e., return/enum/assignment) and
         # on end of statement/type declaration/variable definition/function header
         if ($terminator_position >= 0) {
             check_nested_nonblock_indents("expr");
@@ -739,7 +737,9 @@ while(<>) { # loop over all lines of all input files
                     report("'{' not at line start");
                 }
             } else {
-                $line_opening_brace = $line unless $in_else && $line_opening_brace < $line - 2;
+                $line_opening_brace = $line if # m/(^|\W)(if|else|do|while|for)(\W|$)/ &&
+                    # this helps detecting exceptions when handling multiple 'if ... else' branches:
+                    !($in_else && $line_opening_brace < $line - 2);
             }
             report("code after '{'") if $tail=~ m/\S/ && # non-whitespace
                                       !($tail=~ m/\}/);  # no '}' after last '{'
@@ -767,7 +767,7 @@ while(<>) { # loop over all lines of all input files
         $block_indent -= $directive_offset;
         $in_directive = 0;
         # macro body typically does not include terminating ';'
-        $hanging_offset = 0; # compensate for this in case macro ends, e.g., as "while(0)"
+        $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
     }
 
     $contents_before2  = $contents_before;
