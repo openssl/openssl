@@ -42,8 +42,10 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     char *tmp;
     if (akeyid->keyid) {
         tmp = OPENSSL_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
-        if (tmp == NULL)
+        if (tmp == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return NULL;
+        }
         X509V3_add_value((akeyid->issuer || akeyid->serial) ? "keyid" : NULL,
                          tmp, &extlist);
         OPENSSL_free(tmp);
@@ -52,8 +54,10 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
     if (akeyid->serial) {
         tmp = OPENSSL_buf2hexstr(akeyid->serial->data, akeyid->serial->length);
-        if (tmp == NULL)
+        if (tmp == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return NULL;
+        }
         X509V3_add_value("serial", tmp, &extlist);
         OPENSSL_free(tmp);
     }
