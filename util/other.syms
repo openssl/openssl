@@ -127,6 +127,7 @@ BIO_get_conn_port                       define
 BIO_get_conn_ip_family                  define
 BIO_get_fd                              define
 BIO_get_fp                              define
+BIO_get_indent                          define
 BIO_get_info_callback                   define
 BIO_get_md                              define
 BIO_get_md_ctx                          define
@@ -158,12 +159,14 @@ BIO_set_conn_port                       define
 BIO_set_conn_ip_family                  define
 BIO_set_fd                              define
 BIO_set_fp                              define
+BIO_set_indent                          define
 BIO_set_info_callback                   define
 BIO_set_md                              define
 BIO_set_mem_buf                         define
 BIO_set_mem_eof_return                  define
 BIO_set_nbio                            define
 BIO_set_nbio_accept                     define
+BIO_set_prefix                          define
 BIO_set_read_buffer_size                define
 BIO_set_ssl                             define
 BIO_set_ssl_mode                        define
