@@ -646,34 +646,34 @@ while(<>) { # loop over all lines of all input files
 
     my $update_nested_indents_start = 0; # this will be changed for handling expressions starting within the line
 
-    # set $in_expr, $in_paren_expr, and $hanging_offset for if/for/while/switch (expr)
-    if (m/^((^|.*\W)(if|while|for|switch))(\W.*|$)$/) {
-        my ($head, $tail) = ($1, $4);
-        update_nested_indents($head); # already handle $head, i.e., anything before (expr)
+    # set $in_expr, $in_paren_expr, and $hanging_offset for if/while/for/switch, return/enum, and assignment RHS
+    my $new_in_paren_expr = 0;
+    my $in_return_enum = 0;
+    my $in_assignment = 0;
+    s/[\!<>=]=/@@/g; # blind (in-)equality symbols like '<=' as '@@' to prevent matching them as '=' below
+    if      (m/^((^|.*\W)(if|while|for|switch))(\W.*|$)$/) { # (first) if/for/while/switch
+        $new_in_paren_expr = 1;
+    } elsif (m/^((^|.*\W)(return|enum))(\W.*|$)/) {          # (first) return/enum
+        $in_return_enum = 1;
+    } elsif (m/^(([^=]*)(=))(.*)$/                           # (first) '=', i.e., assignment
+        && !$in_expr && @nested_indents == 0 && parens_balance($1) == 0) { # not nested assignment
+        $in_assignment = 1;
+    }
+    if ($new_in_paren_expr || $in_return_enum || $in_assignment)
+    {
+        (my $head, my $tail) = ($1, $4);
+        # already handle $head, i.e., anything before expression
+        update_nested_indents($head);
         $update_nested_indents_start = length $head;
+        # now can set $in_expr and $in_paren_expr
         $in_expr = 1;
-        $in_paren_expr = 1;
+        $in_paren_expr = 1 if $new_in_paren_expr;
         $hanging_offset += INDENT_LEVEL; # this will be canceled for 'while' that terminates a 'do ... while'
-                                         # becaus in this case the 'while' it is terminated by a ';'
+                                         # because in this case the 'while' is terminated by a ';'
     }
 
     # set $hanging_offset for typdef/do/else (enum is handled below)
     if (!$in_paren_expr && m/(^|\W)(typedef|else|do)(\W|$)/) {
-        $hanging_offset += INDENT_LEVEL;
-    }
-
-    my $in_assignment = 0;
-    # set $in_expr and $hanging_offset for return/enum expression and assignment RHS expression
-    my $head = ""; my $tail;
-    s/[\!<>=]=/@@/g; # blind (in-)equality symbols like '<=' as '@@' to prevent matching them as '=' below
-    ($head, $tail, $in_assignment) = ($1, $4, 1) if m/^(([^=]*)(=))(.*)$/ # (first) '=', i.e., assignment
-        && !$in_expr && @nested_indents == 0 && parens_balance($1) == 0; # not nested assignment etc.
-    ($head, $tail) = ($1, $4)      if m/^((^|.*\W)(return|enum))(\W.*|$)/; # (first) return/enum
-    if ($head ne "")
-    {
-        update_nested_indents($head); # already handle $head, i.e., anything before expression
-        $update_nested_indents_start = length $head;
-        $in_expr = 1;
         $hanging_offset += INDENT_LEVEL;
     }
 
