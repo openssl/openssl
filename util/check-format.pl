@@ -644,14 +644,13 @@ while(<>) { # loop over all lines of all input files
 
     # adapt required indentation for following lines @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+    my $update_nested_indents_start = 0; # this will be changed for handling expressions starting within the line
+
     # set $in_expr, $in_paren_expr, and $hanging_offset for if/for/while/switch (expr)
-    my $in_else = m/(^|\W)else(\W|$)/; # save (since it will be blinded) for below handling of $line_opening_brace
-    if (m/^(^|.*\W)(if|while|for|switch)(\W.*|$)$/) {
-        my ($head, $mid, $tail) = ($1, $2, $3);
-        update_nested_indents($head); # handle $head, i.e., anything before (expr)
-        # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
-        $_ = ($head =~ tr/ /@/cr).$mid.$tail;
-        # then follows (expr)
+    if (m/^((^|.*\W)(if|while|for|switch))(\W.*|$)$/) {
+        my ($head, $tail) = ($1, $4);
+        update_nested_indents($head); # already handle $head, i.e., anything before (expr)
+        $update_nested_indents_start = length $head;
         $in_expr = 1;
         $in_paren_expr = 1;
         $hanging_offset += INDENT_LEVEL; # this will be canceled for 'while' that terminates a 'do ... while'
@@ -659,27 +658,23 @@ while(<>) { # loop over all lines of all input files
     }
 
     # set $hanging_offset for typdef/do/else (enum is handled below)
-    if (m/(^|\W)(typedef|else|do)(\W|$)/) {
+    if (!$in_paren_expr && m/(^|\W)(typedef|else|do)(\W|$)/) {
         $hanging_offset += INDENT_LEVEL;
     }
 
-    my $in_assignment;
-    # set $in_expr and $hanging_offset for return/enum/assignment
-    s/[\!<>=]=/@@/g; # blind (in-)equality as '@@' to prevent matching on next line
-    if (m/^((^|.*\W)(return|enum)(\W.*|$)|([^=]*)(=)(.*))$/) { # first return/enum/'=' (assignment)
-        my ($head1, $mid1, $tail1, $head2, $mid2, $tail2) = ($2, $3, $4, $5, $6, $7);
-        ($in_assignment, my $head, my $mid, my $tail) = defined $mid1
-            ? (0,           $head1,   $mid1,   $tail1)
-            : (1,           $head2,   $mid2,   $tail2);
-        if (!$in_expr && @nested_indents == 0 && parens_balance($head) == 0) # not nested assignment etc.
-        {
-            update_nested_indents($head); # handle $head, i.e., anything before
-            # blind non-space within head as @ to avoid confusing update_nested_indents() due to potential '{'
-            $_ = ($head =~ tr/ /@/cr).$mid.$tail;
-            # then follows expr (e.g., on RHS of assignment)
-            $in_expr = 1;
-            $hanging_offset += INDENT_LEVEL;
-        }
+    my $in_assignment = 0;
+    # set $in_expr and $hanging_offset for return/enum expression and assignment RHS expression
+    my $head = ""; my $tail;
+    s/[\!<>=]=/@@/g; # blind (in-)equality symbols like '<=' as '@@' to prevent matching them as '=' below
+    ($head, $tail, $in_assignment) = ($1, $4, 1) if m/^(([^=]*)(=))(.*)$/ # (first) '=', i.e., assignment
+        && !$in_expr && @nested_indents == 0 && parens_balance($1) == 0; # not nested assignment etc.
+    ($head, $tail) = ($1, $4)      if m/^((^|.*\W)(return|enum))(\W.*|$)/; # (first) return/enum
+    if ($head ne "")
+    {
+        update_nested_indents($head); # already handle $head, i.e., anything before expression
+        $update_nested_indents_start = length $head;
+        $in_expr = 1;
+        $hanging_offset += INDENT_LEVEL;
     }
 
     if (m/(^|\W)(typedef|struct|union|enum)(\W|$)/) { # type declaration
@@ -687,7 +682,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     my ($bak_in_expr, $bak_in_paren_expr) = ($in_expr, $in_paren_expr);
-    my $terminator_position = update_nested_indents($_);
+    my $terminator_position = update_nested_indents($_, $update_nested_indents_start);
 
     if ($bak_in_paren_expr) { # expression in parentheses after if/while/for/switch
         if (!$in_paren_expr) { # end of its (expr)
@@ -739,7 +734,7 @@ while(<>) { # loop over all lines of all input files
             } else {
                 $line_opening_brace = $line if # m/(^|\W)(if|else|do|while|for)(\W|$)/ &&
                     # this helps detecting exceptions when handling multiple 'if ... else' branches:
-                    !($in_else && $line_opening_brace < $line - 2);
+                    !(m/(^|\W)else(\W|$)/ && $line_opening_brace < $line - 2);
             }
             report("code after '{'") if $tail=~ m/\S/ && # non-whitespace
                                       !($tail=~ m/\}/);  # no '}' after last '{'
