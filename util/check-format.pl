@@ -524,11 +524,12 @@ while(<>) { # loop over all lines of all input files
         report("no SPC before '$1'")  if $intra_line =~ m/[^\s()]([-])/;     # '-' without preceding space or '('
                                                                              # or ')' (which is used for type casts)
         report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
-        report("no SPC befor '$1'")   if $intra_line =~ m/[^\s{(\[]([&])/;   # '&' without preceding space or {([
-        report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%])\S/;    # ,;=|/% without following space
-        # - TODO same for '*' and '&' except in type/pointer expressions, same also for binary +-<>
-        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch)[^\w\s]/;  # if etc.
-                                                                             # without following space
+        report("no SPC before '$1'")  if $intra_line =~ m/[^\s{(\[]([&])/;   # '&' without preceding space or {([
+        report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>])\S/;    # ,;=|/% without following space
+        report("no SPC or name after '$1'") if $intra_line =~ m/([*])[^\s\w()*]/;# '*' w/o following space or \w()*
+        report("no SPC or name after '$1'") if $intra_line =~ m/([&])[^\s\w]/;   # '&' without following space or \w
+        report("no SPC or digit after '$1'")if $intra_line =~ m/([+\-])[^\s\d]/; # +- without following space or \d
+        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch)[^\w\s]/;  # if etc. w/o SPC
         report("SPC after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
               && !($1 =~ m/^(if|while|for|switch|return|void|char|unsigned|int|long|float|double)$/) # not: keyword
