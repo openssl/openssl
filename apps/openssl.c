@@ -116,8 +116,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
                      hex == NULL ? "<null>" : hex,
                      OSSL_trace_get_category_name(category));
         OPENSSL_free(hex);
-        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
-                 strlen(buffer), buffer);
+        BIO_set_prefix(trace_data->bio, buffer);
         break;
     case OSSL_TRACE_CTRL_WRITE:
         if (!ossl_assert(trace_data->ingroup))
@@ -130,7 +129,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
             return 0;
         trace_data->ingroup = 0;
 
-        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX, 0, NULL);
+        BIO_set_prefix(trace_data->bio, NULL);
 
         break;
     }
@@ -162,8 +161,7 @@ static void setup_trace_category(int category)
     if (OSSL_trace_enabled(category))
         return;
 
-    channel = BIO_push(BIO_new(apps_bf_prefix()),
-                       dup_bio_err(FORMAT_TEXT));
+    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
@@ -246,13 +244,6 @@ int main(int argc, char *argv[])
      */
     win32_utf8argv(&argc, &argv);
 #endif
-
-    /*
-     * We use the prefix method to get the trace output we want.  Since some
-     * trace outputs happen with OPENSSL_cleanup(), which is run automatically
-     * after exit(), we need to destroy the prefix method as late as possible.
-     */
-    atexit(destroy_prefix_method);
 
 #ifndef OPENSSL_NO_TRACE
     setup_trace(getenv("OPENSSL_TRACE"));

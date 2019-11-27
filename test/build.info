@@ -14,7 +14,7 @@ ENDIF
 IF[{- $config{target} =~ /^vms-/ -}]
   $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
 ENDIF
-$LIBAPPSSRC=../apps/lib/opt.c ../apps/lib/bf_prefix.c $AUXLIBAPPSSRC
+$LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
 
 IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
