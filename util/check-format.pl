@@ -175,7 +175,7 @@ sub check_indent { # used for lines outside multi-line string literals
     }
 
     if ($in_comment > 1 || $in_comment == -1) { # multi-line comment, but not on first line
-        report("multi-line comment indent = $count != $comment_indent") if $count != $comment_indent;
+        report("indent = $count != $comment_indent for multi-line comment") if $count != $comment_indent;
         return;
     }
 
@@ -219,7 +219,7 @@ sub check_indent { # used for lines outside multi-line string literals
         ($alt_desc, $alt_indent) = ("lines after '{'", $stmt_indent);
     }
 
-    report("$ref_desc indent = $count != $ref_indent".
+    report("indent = $count != $ref_indent for $ref_desc".
            ($alt_desc eq ""
             # this could prevent showing alternative with equal indent: || $alt_indent == $ref_indent
             ? "" : " or $alt_indent for $alt_desc"))
@@ -446,7 +446,7 @@ while(<>) { # loop over all lines of all input files
        !(m/^(.*?)"[^"]*("|\\)\s*(,|[\)\}]*[,;]?)\s*$/ && length($1) < $max_length)
         # this allows over-long trailing string literal with starting col before $max_length
         ) {
-        report("line length=$len>$max_length");
+        report("line length = $len > $max_length");
     }
 
     # handle C++ / C99 - style end-of-line comments
@@ -546,7 +546,7 @@ while(<>) { # loop over all lines of all input files
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
         my $space_count = length $1; # maybe could also use indentation before '#'
         my $directive = $2;
-        report("#-indent = $count != 0") if $count != 0;
+        report("indent = $count != 0 for '#'") if $count != 0;
         $directive_nesting-- if $directive =~ m/^(else|elif|endif)$/;
         if ($directive_nesting < 0) {
             $directive_nesting = 0;
