@@ -52,7 +52,7 @@
 #   # define CDE 22
 #   # define F   3333
 #   This pattern is recognized - and consequently double space not reported -
-#   for a given line if in the line before or after (as far as these exist)
+#   for a given line if in the nonempty line before or after (if existing)
 #   for each occurrence of "  \S" (where \S means non-space) in the given line
 #   there is " \S" in the other line in the respective column position.
 #   This may lead to both false negatives (in case of coincidental " \S")
@@ -94,15 +94,17 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
 
 my $self_test;
 my $line;                  # current line number
+my $line_before;           # number of previous not essentially empty line (containing at most whitespace and '\')
+my $line_before2;          # number of not essentially empty line before previous not essentially empty line
 my $contents;              # contents of current line
-my $contents_before;       # contents of previous line, if $line > 1
-my $contents_before_;      # contents of previous line after blinding comments etc., if $line > 1
-my $contents_before2;      # contents of line before previous line, if $line > 2
-my $contents_before_2;     # contents of line before previous line after blinding comments etc., if $line > 2
+my $contents_before;       # contents of $line_before, if $line_before > 0
+my $contents_before_;      # contents of $line_before after blinding comments etc., if $line_before > 0
+my $contents_before2;      # contents of $line_before2, if $line_before2 > 0
+my $contents_before_2;     # contents of $line_before2 after blinding comments etc., if $line_before2 > 0
 my $multiline_string;      # accumulator for lines containing multi-line string
 my $count;                 # number of leading whitespace characters (except newline) in current line, which
                            # should be $block_indent+hanging_offset+$local_offset or $expr_indent, respectively
-my $count_before;          # number of leading whitespace characters (except newline) in previous line, if $line > 1
+my $count_before;          # number of leading whitespace characters (except line ending chars) in $contents_before
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
 my $line_opening_brace;    # number of previous line with opening brace after do/while/for, optionally for if/else
@@ -181,7 +183,7 @@ sub check_indent { # used for lines outside multi-line string literals
 
     if ($sloppy_hang && ($hanging_offset != 0 || $expr_indent != 0)) {
         # do not report same indentation as on the line before (potentially due to same violations)
-        return if $line > 1 && $count == $count_before;
+        return if $line_before > 0 && $count == $count_before;
 
         # do not report indentation at normal indentation level while hanging expression indent would be required
         return if $expr_indent != 0 && $count == $stmt_indent;
@@ -303,6 +305,9 @@ sub check_nested_nonblock_indents {
 }
 
 sub reset_file_state {
+    $line = 0;
+    $line_before = 0;
+    $line_before2 = 0;
     @nested_block_indents = ();
     @nested_hanging_offsets = ();
     @nested_symbols = ();
@@ -314,7 +319,6 @@ sub reset_file_state {
     $hanging_offset = 0;
     $block_indent = 0;
     $ifdef__cplusplus = 0;
-    $line = 0;
     undef $multiline_string;
     $line_opening_brace = 0;
     $in_typedecl = 0;
@@ -457,6 +461,8 @@ while(<>) { # loop over all lines of all input files
     # at this point comment text has been removed/ignored (after checking dbl SPC)
     # or at least the non-space portions of commment text have been blinded as @
 
+    goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace any maybe a single backslash)
+
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if(!$sloppy_SPC && !$in_formatted_comment) {
@@ -470,9 +476,9 @@ while(<>) { # loop over all lines of all input files
             return ($1, $3 =~ s/\s*\\\s*$//r); # strip any trailing '\' (and any whitespace around it)
         }
         my ($head , $intra_line ) = split_line_head($_);
-        my ($head1, $intra_line1) = split_line_head($contents_before_ ) if $line > 1;
-        my ($head2, $intra_line2) = split_line_head($contents_before_2) if $line > 2;
-        if($line >= 2) { # check with one line delay, such that at least $contents_before is available
+        my ($head1, $intra_line1) = split_line_head($contents_before_ ) if $line_before > 0;
+        my ($head2, $intra_line2) = split_line_head($contents_before_2) if $line_before2 > 0;
+        if($line_before > 0) { # check with one line delay, such that at least $contents_before is available
             sub column_alignments_only {
                 my $head = shift;
                 my $intra = shift;
@@ -485,12 +491,12 @@ while(<>) { # loop over all lines of all input files
                 }
                 return 1;
             }
-            report_flexibly($line - 1, $dbl_SPC, $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
+            report_flexibly($line_before, $dbl_SPC, $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
                 (    column_alignments_only($head1, $intra_line1, $_                )    # compare with $line
-                 || ($line > 2 &&
-                     column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare with $line - 2
+                 || ($line_before2 > 0 &&
+                     column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare with $line_before2
             report($dbl_SPC) if $intra_line  =~ m/\s\s\S/ && eof
-                && ! column_alignments_only($head , $intra_line , $contents_before_ )  ; # compare with $line - 1
+                && ! column_alignments_only($head , $intra_line , $contents_before_ )  ; # compare with $line_before
         } elsif(eof) { # special case: just one line exists
             report($dbl_SPC) if $intra_line  =~ m/\s\s\S/;
         }
@@ -533,9 +539,7 @@ while(<>) { # loop over all lines of all input files
         report("no SPC after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }
 
-    # empty lines, preprocessor directives, and characters/string iterals @@@@@@
-
-    goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace any maybe a single backslash)
+    # preprocessor directives and characters/string iterals @@@@@@@@@@@@@@@@@@@@
 
     # handle preprocessor directives
     if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
@@ -631,18 +635,18 @@ while(<>) { # loop over all lines of all input files
     my $outermost_level = $block_indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
 
     # check for code block containing a single line/statement
-    if($line > 2 && !$outermost_level && # within function body
+    if($line_before2 > 0 && !$outermost_level && # within function body
        $in_typedecl == 0 && @nested_indents == 0 && # not within type declaration nor inside stmt/expr
        m/^\s*\}/) { # leading closing brace '}', any preceding blinded comment must not be matched
         # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
-           ($line_opening_brace == $line - 2 ||
-            $line_opening_brace == $line - 1)
+           ($line_opening_brace == $line_before2 ||
+            $line_opening_brace == $line_before)
            &&  ($contents_before =~ m/;/)
            && !($contents_before =~ m/;.*;/)) { # one but not two or more terminators ';', so just single statement
             # TODO do not report cases where a further else branch
             # follows with a block containg more than one line/statement
-            report_flexibly($line - 1, "'$keyword_opening_brace' { 1 stmt }", $contents_before);
+            report_flexibly($line_before, "'$keyword_opening_brace' { 1 stmt }", $contents_before);
         }
     }
 
@@ -755,7 +759,7 @@ while(<>) { # loop over all lines of all input files
                 # TODO prevent false positives for if/else where braces around single-statement branches
                 # should be avoided but only if all branches have just single statements
                 # The following helps detecting the exception when handling multiple 'if ... else' branches:
-                    !($keyword_opening_brace eq "else" && $line_opening_brace < $line - 2);
+                    !($keyword_opening_brace eq "else" && $line_opening_brace < $line_before2);
             }
             report("code after '{'") if $tail=~ m/\S/ && # non-whitespace
                                       !($tail=~ m/\}/);  # no '}' after last '{'
@@ -786,11 +790,15 @@ while(<>) { # loop over all lines of all input files
         $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
     }
 
-    $contents_before2  = $contents_before;
-    $contents_before_2 = $contents_before_;
-    $contents_before   = $contents;
-    $contents_before_  = $_;
-    $count_before = $count;
+    unless (m/^\s*\\?\s*$/) { # essentially empty line (just whitespace any maybe a single backslash)
+        $line_before2      = $line_before;
+        $contents_before2  = $contents_before;
+        $contents_before_2 = $contents_before_;
+        $line_before       = $line;
+        $contents_before   = $contents;
+        $contents_before_  = $_;
+        $count_before      = $count;
+    }
 
     if($self_test) { # debugging
         my $should_report = $contents =~ m/\*@(\d)?/ ? 1 : 0;
