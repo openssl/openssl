@@ -21,9 +21,7 @@ int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
                                    const char *cipher_name,
                                    const char *propquery)
 {
-    OSSL_PARAM params[] = {
-        OSSL_PARAM_END, OSSL_PARAM_END , OSSL_PARAM_END, OSSL_PARAM_END
-    };
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] =
         OSSL_PARAM_construct_utf8_string(OSSL_SERIALIZER_PARAM_CIPHER,
