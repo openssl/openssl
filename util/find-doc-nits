@@ -645,15 +645,16 @@ sub checkmacros {
             next unless /^#\s*define\s*(\S+)\(/;
             my $macro = $1;
             next if $docced{$macro} || defined $seen{$macro};
-            next if $macro =~ /i2d_/
-                || $macro =~ /d2i_/
-                || $macro =~ /DEPRECATEDIN/
-                || $macro =~ /IMPLEMENT_/
-                || $macro =~ /DECLARE_/;
+            next if $macro =~ /^i2d_/
+                || $macro =~ /^d2i_/
+                || $macro =~ /^DEPRECATEDIN/
+                || $macro =~ /_fnsig$/
+                || $macro =~ /^IMPLEMENT_/
+                || $macro =~ /^_?DECLARE_/;
 
             # Skip macros known to be missing
             next if $opt_v && grep( /^$macro$/, @missing);
-    
+
             err("$f:", "macro $macro undocumented")
                 if $opt_d || $opt_e;
             $count++;
