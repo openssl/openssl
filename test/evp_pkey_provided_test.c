@@ -58,19 +58,19 @@ static int test_print_key_using_serializer(const EVP_PKEY *pk)
 
     /* Use a valid cipher name */
     TEST_note("Displaying PEM encrypted with AES-256-CBC");
-    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, "AES-256-CBC"))
+    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
         || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
         ret = 0;
 
     /* Use an invalid cipher name, which should generate no output */
     TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
-    if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, "FOO"))
+    if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher(ctx, "FOO", NULL))
         || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
         ret = 0;
 
     /* Clear the cipher.  This should give us an unencrypted PEM again */
     TEST_note("Displaying PEM with encryption cleared (no encryption)");
-    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher_name(ctx, NULL))
+    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, NULL, NULL))
         || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
         ret = 0;
 
