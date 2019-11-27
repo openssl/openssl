@@ -11,9 +11,9 @@
 # - check formatting of C source according to OpenSSL coding style
 #
 # usage:
-#   check-format.pl [-l|--sloppy-len] [-s|--sloppy-space]
+#   check-format.pl [-l|--sloppy-len] [-s|--sloppy-spc]
 #                   [-c|--sloppy-cmt] [-m|--sloppy-macro]
-#                   [-h|--sloppy-hang]
+#                   [-h|--sloppy-hang] [-1|--1-stmt]
 #                   <files>
 #
 # checks adherence to the formatting rules of the OpenSSL coding guidelines.
@@ -22,7 +22,7 @@
 #
 # options:
 #  -l | --sloppy-len   increases accepted max line length from 80 to 84
-#  -s | --sloppy-space disables reporting whitespace nits
+#  -s | --sloppy-spc   disables reporting whitespace nits
 #  -c | --sloppy-cmt   allows any indentation for comments
 #  -c | --sloppy-macro allows missing extra indentation of macro bodies
 #  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
@@ -30,18 +30,21 @@
 #                      * same indentation as non-hanging indent level
 #                      * indentation moved left (not beyond non-hanging indent)
 #                        just to fit contents within the line length limit
+#  -1 | --1-stmt       do more aggressive checks for { 1 stmt } - see below
 #
-# There are known false positives such as the following.
+# There are non-triviel false positives and negatives such as the following.
 #
 # * There is the special OpenSSL rule not to unnecessarily use braces around
-#   a single statement :
+#   single statements:
 #   {
-#       single statement;
+#       stmt;
 #   }
 #   except within if .. else constructs where some branch contains more than one
-#   statement. The exception is not recognized - and thus false positives are
-#   reported - when such a branch occurs after the current position.
-#   Moreover, false negatives occur if the braces are more than two lines apart.
+#   statement. Since the exception is hard to recognize when such branches occur
+#   after the current position (such that false positives would be reported)
+#   the tool by checks for this rule by defaul only for do/while/for bodies.
+#   Yet with the --1-stmt option false positives are preferred over negatives.
+#   False negatives occur if the braces are more than two lines apart.
 #
 # * Use of multiple consecutive spaces is regarded a coding style nit except
 #   when done in order to align certain columns over multiple lines, e.g.:
@@ -68,6 +71,7 @@ my $sloppy_SPC = 0;
 my $sloppy_hang = 0;
 my $sloppy_cmt = 0;
 my $sloppy_macro = 0;
+my $extended_1_stmt = 0;
 
 while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     my $arg = $1; shift;
@@ -75,12 +79,14 @@ while($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $max_length += INDENT_LEVEL;
     } elsif($arg =~ m/^(s|-sloppy-spc)$/) {
         $sloppy_SPC = 1;
-    } elsif($arg =~ m/^(h|-sloppy-hang)$/) {
-        $sloppy_hang = 1;
     } elsif($arg =~ m/^(c|-sloppy-cmt)$/) {
         $sloppy_cmt = 1;
     } elsif($arg =~ m/^(m|-sloppy-macro)$/) {
         $sloppy_macro = 1;
+    } elsif($arg =~ m/^(h|-sloppy-hang)$/) {
+        $sloppy_hang = 1;
+    } elsif($arg =~ m/^(1|-1-stmt)$/) {
+        $extended_1_stmt = 1;
     } else {
         die("unknown option: $arg");
     }
@@ -99,7 +105,8 @@ my $count;                 # number of leading whitespace characters (except new
 my $count_before;          # number of leading whitespace characters (except newline) in previous line, if $line > 1
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
-my $line_opening_brace;    # number of previous line with opening brace (used after if/else/do/while/for)
+my $line_opening_brace;    # number of previous line with opening brace after do/while/for, optionally for if/else
+my $keyword_opening_brace; # name of previous keyword, used if $line_opening_brace != 0
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $block_indent;          # currently required normal indentation at block/statement level
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
@@ -624,14 +631,18 @@ while(<>) { # loop over all lines of all input files
     my $outermost_level = $block_indent == 0 + ($in_directive > 0 ? $directive_offset : 0);
 
     # check for code block containing a single line/statement
-    if($line > 2 && !$outermost_level && $in_typedecl == 0 && # within function body, not within type declaration
+    if($line > 2 && !$outermost_level && # within function body
+       $in_typedecl == 0 && @nested_indents == 0 && # not within type declaration nor inside stmt/expr
        m/^\s*\}/) { # leading closing brace '}', any preceding blinded comment must not be matched
         # TODO extend detection from single-line to potentially multi-line statement
         if($line_opening_brace != 0 &&
-           $line_opening_brace == $line - 2) {
+           ($line_opening_brace == $line - 2 ||
+            $line_opening_brace == $line - 1)
+           &&  ($contents_before =~ m/;/)
+           && !($contents_before =~ m/;.*;/)) { # one but not two or more terminators ';', so just single statement
             # TODO do not report cases where a further else branch
             # follows with a block containg more than one line/statement
-            report_flexibly($line - 1, "'{' 1 stmt '}'", $contents_before);
+            report_flexibly($line - 1, "'$keyword_opening_brace' { 1 stmt }", $contents_before);
         }
     }
 
@@ -661,7 +672,9 @@ while(<>) { # loop over all lines of all input files
     }
     if ($new_in_paren_expr || $in_return_enum || $in_assignment)
     {
-        (my $head, my $tail) = ($1, $4);
+        (my $head, my $mid, my $tail) = ($1, $3, $4);
+        $keyword_opening_brace = $mid if $mid ne "=" && $tail =~ m/\{/;
+
         # already handle $head, i.e., anything before expression
         update_nested_indents($head);
         $update_nested_indents_start = length $head;
@@ -673,11 +686,14 @@ while(<>) { # loop over all lines of all input files
     }
 
     # set $hanging_offset for typdef/do/else (enum is handled below)
-    if (!$in_paren_expr && m/(^|\W)(typedef|else|do)(\W|$)/) {
+    if (!$in_paren_expr && m/(^|\W)(typedef|else|do)(\W.*|$)$/) {
+        (my $mid, my $tail) = ($2, $3);
+        $keyword_opening_brace = $mid if $tail =~ m/\{/;
         $hanging_offset += INDENT_LEVEL;
     }
 
-    if (m/(^|\W)(typedef|struct|union|enum)(\W|$)/) { # type declaration
+    if (m/(^|\W)(typedef|struct|union|enum)(\W.*|$)$/) { # type declaration
+        # not needed: $keyword_opening_brace = $2 if $3 =~ m/\{/;
         $in_typedecl++;
     }
 
@@ -722,19 +738,24 @@ while(<>) { # loop over all lines of all input files
         }
     }
 
-    # special checks for last (typically trailing) opening brace '{' in line
+    # special checks for last, typically trailing opening brace '{' in line
     if (m/^(.*?)\{([^\{]*)$/) { # match last ... '{'
         my ($head, $tail) = ($1, $2);
-        if ($in_directive == 0 && !$in_expr && !$in_assignment && $in_typedecl == 0) {
+        if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) {
-                # we assume end of function definition header (or statement or variable definition)
-                if (!($head =~ m/^$/)) { # check if opening brace '{' is at the beginning of the next line
+                if (!$in_assignment &&
+                    # at end of function definition header (or stmt or var definition)
+                    !($head =~ m/^$/)) { # check if opening brace '{' is at the beginning of the next line
                     report("'{' not at line start");
                 }
             } else {
-                $line_opening_brace = $line if # m/(^|\W)(if|else|do|while|for)(\W|$)/ &&
-                    # this helps detecting exceptions when handling multiple 'if ... else' branches:
-                    !(m/(^|\W)else(\W|$)/ && $line_opening_brace < $line - 2);
+                $line_opening_brace = $line if $keyword_opening_brace =~ m/do|while|for/;
+                # using, not assigning, $keyword_opening_brace here because it could be on an earlier line
+                $line_opening_brace = $line if $keyword_opening_brace =~ m/if|else/ && $extended_1_stmt &&
+                # TODO prevent false positives for if/else where braces around single-statement branches
+                # should be avoided but only if all branches have just single statements
+                # The following helps detecting the exception when handling multiple 'if ... else' branches:
+                    !($keyword_opening_brace eq "else" && $line_opening_brace < $line - 2);
             }
             report("code after '{'") if $tail=~ m/\S/ && # non-whitespace
                                       !($tail=~ m/\}/);  # no '}' after last '{'

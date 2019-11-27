@@ -62,7 +62,7 @@ typedef struct  {   /*@0 double space, reported unless sloppy-spc */
     } s_type;       /*@ statement/type declaration indent off by 4 */
 int* somefunc();    /*@ no space before '*' in type declaration */
 void main(int n) {  /*@ opening brace at end of function definition header */
-    if (n)) {       /*@ unexpected closing parenthesis outside expression */
+    for (;;)) {     /*@ unexpected closing parenthesis outside expression */
         return;     /*@0 (1-line) single statement in braces */
     }}}             /*@2 unexpected closing brace (too many '}') outside expr */
 #endif              /*@ unexpected #endif */
@@ -97,8 +97,8 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
        /* */b)      /*@ no space after comment, reported unless sloppy-spc */
          x = a + b  /*@ extra single-statement indent off by 1 */
                + 0; /*@ double extra single-statement indent off by 3 */
-    do{ x = 3; }    /*@ no space before '{', reported unless sloppy-spc */
-    while (a+ 0);   /*@ no space before '+', reported unless sloppy-spc */
+    do{             /*@ no space before '{', reported unless sloppy-spc */
+    } while (a+ 0); /*@ no space before '+', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
      default: ;     /*@ 'default' special statement indent off by 1 */
