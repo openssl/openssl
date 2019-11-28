@@ -343,7 +343,7 @@ OSSL_SERIALIZER *ossl_serializer_fetch_by_number(OPENSSL_CTX *libctx, int id,
 
 const OSSL_PROVIDER *OSSL_SERIALIZER_provider(const OSSL_SERIALIZER *ser)
 {
-    if (ser == NULL) {
+    if (!ossl_assert(ser != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -353,7 +353,7 @@ const OSSL_PROVIDER *OSSL_SERIALIZER_provider(const OSSL_SERIALIZER *ser)
 
 const char *OSSL_SERIALIZER_properties(const OSSL_SERIALIZER *ser)
 {
-    if (ser == NULL) {
+    if (!ossl_assert(ser != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -363,7 +363,7 @@ const char *OSSL_SERIALIZER_properties(const OSSL_SERIALIZER *ser)
 
 int OSSL_SERIALIZER_number(const OSSL_SERIALIZER *ser)
 {
-    if (ser == NULL) {
+    if (!ossl_assert(ser != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -482,7 +482,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new(OSSL_SERIALIZER *ser)
 const OSSL_SERIALIZER *
 OSSL_SERIALIZER_CTX_get_serializer(OSSL_SERIALIZER_CTX *ctx)
 {
-    if (ctx == NULL) {
+    if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -494,7 +494,7 @@ OSSL_SERIALIZER_CTX_get_serializer(OSSL_SERIALIZER_CTX *ctx)
 int OSSL_SERIALIZER_CTX_set_params(OSSL_SERIALIZER_CTX *ctx,
                                    const OSSL_PARAM params[])
 {
-    if (ctx == NULL) {
+    if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
