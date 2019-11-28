@@ -278,7 +278,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     size_t l;
 
     /* Check that we have a namemap */
-    if (namemap == NULL) {
+    if (!ossl_assert(namemap != NULL)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
