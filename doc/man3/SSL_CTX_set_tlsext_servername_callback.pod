@@ -34,8 +34,24 @@ the application callback.
 SSL_CTX_set_tlsext_servername_arg() sets a context-specific argument to be
 passed into the callback for this B<SSL_CTX>.
 
-SSL_get_servername() returns a servername extension value of the specified
-type if provided in the Client Hello or NULL.
+The behaviour of SSL_get_servername() depends on a number of different factors.
+In particular note that in TLSv1.3 the servername is negotiated in every
+handshake. In TLSv1.2 the servername is only negotiated on initial handshakes
+and not on resumption handshakes.
+
+On the client, if this is called before a handshake has started, then it will
+return the servername being requested if one has been set. If a servername has
+not been set then it returns the servername from the original session (if a
+resumption is being attempted). After or during the handshake, if TLSv1.2 or
+below has been negotiated and a session was resumed, then it returns the
+servername from the original session if there was one. Otherwise the servername
+requested by the client in this handshake is returned.
+
+On the server, if this is called before a handshake has started, then NULL will
+be returned. After or during the handshake, if TLSv1.2 has been negotiated and
+a session was resumed, then the servername from the original session is
+returned. Otherwise the servername requested by the client in this handshake is
+returned.
 
 SSL_get_servername_type() returns the servername type or -1 if no servername
 is present. Currently the only supported type (defined in RFC3546) is
