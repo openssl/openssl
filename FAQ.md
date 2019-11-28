@@ -1,2 +1,6 @@
-The FAQ is now maintained on the web:
-        https://www.openssl.org/docs/faq.html
+Frequently Asked Questions (FAQ)
+================================
+
+The [Frequently Asked Questions][FAQ] are now maintained on the OpenSSL homepage.
+
+  [FAQ]: https://www.openssl.org/docs/faq.html
