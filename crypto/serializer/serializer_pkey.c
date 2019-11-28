@@ -57,8 +57,11 @@ int OSSL_SERIALIZER_CTX_set_passphrase_ui(OSSL_SERIALIZER_CTX *ctx,
                                           const UI_METHOD *ui_method,
                                           void *ui_data)
 {
-    if (ctx == NULL)
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
+
     serializer_ctx_reset_passphrase_ui(ctx);
     ctx->ui_method = ui_method;
     ctx->ui_data = ui_data;
@@ -68,8 +71,11 @@ int OSSL_SERIALIZER_CTX_set_passphrase_ui(OSSL_SERIALIZER_CTX *ctx,
 int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
                                           pem_password_cb *cb, void *cbarg)
 {
-    if (ctx == NULL)
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
+
     serializer_ctx_reset_passphrase_ui(ctx);
     if (cb == NULL)
         return 1;
@@ -181,7 +187,8 @@ static int serializer_passphrase(char *pass, size_t pass_size,
     UI *ui = NULL;
     int ret = 0;
 
-    if (ctx == NULL || pass == NULL || pass_size == 0 || pass_len == NULL) {
+    if (!ossl_assert(ctx != NULL && pass != NULL
+                    && pass_size != 0 && pass_len != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -337,7 +344,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
     OSSL_SERIALIZER *ser = NULL;
     EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
 
-    if (pkey == NULL || propquery == NULL) {
+    if (!ossl_assert(pkey != NULL && propquery != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
