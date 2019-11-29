@@ -65,16 +65,17 @@ int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg)
 static int add1_extension(X509_EXTENSIONS **pexts, int nid, int crit, void *ex)
 {
     X509_EXTENSION *ext;
+    int res;
 
     if (!ossl_assert(pexts != NULL)) /* pointer to var must not be NULL */
         return 0;
 
-    ext = X509V3_EXT_i2d(nid, crit, ex);
-    if (ext == NULL || !X509v3_add_ext(pexts, ext, 0)) {
-        X509_EXTENSION_free(ext);
+    if ((ext = X509V3_EXT_i2d(nid, crit, ex)) == NULL)
         return 0;
-    }
-    return 1;
+
+    res = X509v3_add_ext(pexts, ext, 0) != NULL;
+    X509_EXTENSION_free(ext);
+    return res;
 }
 
 /* Add a CRL revocation reason code to extension stack, which may be NULL */
@@ -285,14 +286,16 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
             goto err;
     }
 
-    sk_GENERAL_NAME_pop_free(default_sans, GENERAL_NAME_free);
-    return crm;
+    goto end;
 
  err:
+    OSSL_CRMF_MSG_free(crm);
+    crm = NULL;
+
+ end:
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     sk_GENERAL_NAME_pop_free(default_sans, GENERAL_NAME_free);
-    OSSL_CRMF_MSG_free(crm);
-    return NULL;
+    return crm;
 }
 
 OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
