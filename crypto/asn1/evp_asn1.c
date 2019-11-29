@@ -27,7 +27,10 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
     return 1;
 }
 
-/* int max_len:  for returned value    */
+/* int max_len:  for returned value
+ * if passing NULL in data, nothing is copied but the necessary length
+ * for it is returned.
+ */
 int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
     int ret, num;
@@ -43,7 +46,8 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
         num = ret;
     else
         num = max_len;
-    memcpy(data, p, num);
+    if (num > 0 && data != NULL)
+        memcpy(data, p, num);
     return ret;
 }
 
