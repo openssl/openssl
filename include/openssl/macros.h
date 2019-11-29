@@ -203,6 +203,16 @@
 # endif
 
 /*
+ * Some deprecated functions are still needed for use internally within OpenSSL.
+ * Applications should *not* define the OPENSSL_INTERNAL_USE macro.
+ */
+# ifdef OPENSSL_INTERNAL_USE
+#  define DEPRECATEDIN_3_0_EXTERN(f)       f;
+# else
+#  define DEPRECATEDIN_3_0_EXTERN(f)       DEPRECATEDIN_3_0(f)
+# endif
+
+/*
  * Make our own variants of __FILE__ and __LINE__, depending on configuration
  */
 
