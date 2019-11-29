@@ -17,6 +17,9 @@
 #define EdDSA_SECONDS   10
 #define SM2_SECONDS     10
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
