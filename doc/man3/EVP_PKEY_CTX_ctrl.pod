@@ -198,7 +198,7 @@ The internal algorithm that supports this parameter is DSA.
 =back
 
 EVP_PKEY_CTX_gettable_params() and EVP_PKEY_CTX_settable_params() gets a
-constant B<OSSL_PARAM> array that decribes the  gettable and
+constant B<OSSL_PARAM> array that describes the  gettable and
 settable parameters for the current algorithm implementation, i.e. parameters
 that can be used with EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params()
 respectively.

@@ -152,7 +152,7 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     /*
-     * Impose a limit of 2^20 blocks per data unit as specifed by
+     * Impose a limit of 2^20 blocks per data unit as specified by
      * IEEE Std 1619-2018.  The earlier and obsolete IEEE Std 1619-2007
      * indicated that this was a SHOULD NOT rather than a MUST NOT.
      * NIST SP 800-38E mandates the same limit.

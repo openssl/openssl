@@ -73,7 +73,7 @@ generators, and are used to specify exactly what end product files
 (programs, libraries, modules or scripts) are to be produced, and from
 what sources.
 
-Intermediate files, such as object files, are seldom refered to at
+Intermediate files, such as object files, are seldom referred to at
 all.  They sometimes can be, if there's a need, but this should happen
 very rarely, and support for that sort of thing is added on as-needed
 basis.
@@ -534,7 +534,7 @@ dependency is maintained:
 
     DEPEND[libfoo.a]{weak}=libfoo.a libcookie.a 
 
-This is useful in complex dependecy trees where two libraries can be
+This is useful in complex dependency trees where two libraries can be
 used as alternatives for each other.  In this example, C<lib1.a> and
 C<lib2.a> have alternative implementations of the same thing, and
 C<libmandatory.a> has unresolved references to that same thing, and is

@@ -238,7 +238,7 @@ sub check_head_style {
 my $markup_re =
     qr/(                        # Capture group
            [BIL]<               # The start of what we recurse on
-           (?:(?-1)|.)*?        # recurse the whole regexp (refering to
+           (?:(?-1)|.)*?        # recurse the whole regexp (referring to
                                 # the last opened capture group, i.e. the
                                 # start of this regexp), or pick next
                                 # character.  Do NOT be greedy!

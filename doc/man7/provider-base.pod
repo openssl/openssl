@@ -159,7 +159,7 @@ This corresponds to the OpenSSL function L<ERR_new(3)>.
 sets debugging information in the current thread specific error
 record.
 The debugging information includes the name of the file I<file>, the
-line I<line> and the function name I<func> where the error occured.
+line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
@@ -173,7 +173,7 @@ The additional data is given as a format string I<fmt> and a set of
 arguments I<args>, which are treated in the same manner as with
 BIO_vsnprintf().
 I<file> and I<line> may also be passed to indicate exactly where the
-error occured or was reported.
+error occurred or was reported.
 
 This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 

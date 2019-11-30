@@ -14,7 +14,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 
-/* TODO (3.0) Figure out what flags are requred */
+/* TODO (3.0) Figure out what flags are required */
 #define TDES_WRAP_FLAGS (EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV)
 
 

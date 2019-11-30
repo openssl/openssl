@@ -59,7 +59,7 @@
 # nothing one can do and the result appears optimal. CCM result is
 # identical to CBC, because CBC-MAC is essentially CBC encrypt without
 # saving output. CCM CTR "stays invisible," because it's neatly
-# interleaved wih CBC-MAC. This provides ~30% improvement over
+# interleaved with CBC-MAC. This provides ~30% improvement over
 # "straightforward" CCM implementation with CTR and CBC-MAC performed
 # disjointly. Parallelizable modes practically achieve the theoretical
 # limit.

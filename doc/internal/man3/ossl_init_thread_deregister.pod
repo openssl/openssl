@@ -32,7 +32,7 @@ thread local variable and then register a stop handler. When the thread is
 stopping the stop handler is called (while on that thread) and the code can
 clean up the value stored in the thread local variable.
 
-A new stop handler is registerd using the function ossl_init_thread_start().
+A new stop handler is registered using the function ossl_init_thread_start().
 The I<index> parameter should be a unique value that can be used to identify a
 set of common stop handlers and is passed in a later call to
 ossl_init_thread_deregister. If no later call to ossl_init_thread_deregister is

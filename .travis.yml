@@ -178,7 +178,7 @@ script:
           travis_terminate 1;
       fi
     - if ! git diff --exit-code; then
-          echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITED';
+          echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITTED';
           travis_terminate 1;
       fi
     - if test -n "$GENERATE" && ! $make build_all_generated; then

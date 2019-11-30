@@ -78,7 +78,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
 }
 
 /*
- * TODO(3.0) Re-evalutate the names, it's possible that we find these to be
+ * TODO(3.0) Re-evaluate the names, it's possible that we find these to be
  * better:
  *
  * EVP_PKEY_param_settable()

@@ -28,7 +28,7 @@ currently being compiled, as far as language and compiler versions allow.
 Otherwise, it yields "(unknown function)".
 
 The macro B<OPENSSL_MSTR> yields the expansion of the macro given as argument,
-which is useful for concatentation with string constants.
+which is useful for concatenation with string constants.
 The macro B<OPENSSL_MSTR_HELPER> is an auxiliary macro for this purpose.
 
 =head1 RETURN VALUES

@@ -209,7 +209,7 @@ The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 =back
 
 OP_signature_gettable_ctx_params() and OP_signature_settable_ctx_params() get a
-constant B<OSSL_PARAM> array that decribes the gettable and settable parameters,
+constant B<OSSL_PARAM> array that describes the gettable and settable parameters,
 i.e. parameters that can be used with OP_signature_get_ctx_params() and
 OP_signature_set_ctx_params() respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.

@@ -299,7 +299,7 @@ B<params> from CIPHER context B<ctx>.
 
 EVP_CIPHER_gettable_params(), EVP_CIPHER_gettable_ctx_params(), and
 EVP_CIPHER_settable_ctx_params() get a constant B<OSSL_PARAM> array
-that decribes the retrievable and settable parameters, i.e. parameters
+that describes the retrievable and settable parameters, i.e. parameters
 that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.

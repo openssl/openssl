@@ -778,7 +778,7 @@ client.
 
 =item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
-The input format for the extra certifcate and key, respectively.
+The input format for the extra certificate and key, respectively.
 See L<openssl(1)/Format Options> for details.
 
 =back

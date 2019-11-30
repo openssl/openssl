@@ -1,4 +1,4 @@
-# Auxilliary program source
+# Auxiliary program source
 IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=win32_init.c
