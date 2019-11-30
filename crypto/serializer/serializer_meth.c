@@ -450,7 +450,7 @@ const OSSL_PARAM *OSSL_SERIALIZER_settable_ctx_params(OSSL_SERIALIZER *ser)
 /*
  * |ser| value NULL is valid, and signifies that there is no serializer.
  * This is useful to provide fallback mechanisms.
- *  Funtions that want to verify if there is a serializer can do so with
+ *  Functions that want to verify if there is a serializer can do so with
  * OSSL_SERIALIZER_CTX_get_serializer()
  */
 OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new(OSSL_SERIALIZER *ser)

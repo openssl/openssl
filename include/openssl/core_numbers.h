@@ -29,7 +29,7 @@ extern "C" {
  * Names:
  * for any function base name 'foo' (uppercase form 'FOO'), we will have
  * the following:
- * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivates
+ * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivatives
  *   thereof (to be specified further down)
  * - a function signature typedef with the name OSSL_'foo'_fn
  * - a function pointer extractor function with the name OSSL_'foo'

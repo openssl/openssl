@@ -26,7 +26,7 @@ See L<openssl-rehash(1)/Script Configuration>.
 
 =item B<OPENSSL_CONF>
 
-Specfies the path to a configuration file.
+Specifies the path to a configuration file.
 See L<openssl(1)> and L<config(5)>.
 
 =item B<OPENSSL_ENGINES>

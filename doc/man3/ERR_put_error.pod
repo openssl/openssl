@@ -23,9 +23,9 @@ Deprecated since OpenSSL 3.0:
 =head1 DESCRIPTION
 
 ERR_raise() adds a new error to the thread's error queue.  The
-error occured in the library B<lib> for the reason given by the
+error occurred in the library B<lib> for the reason given by the
 B<reason> code.  Furthermore, the name of the file, the line, and name
-of the function where the error occured is saved with the error
+of the function where the error occurred is saved with the error
 record.
 
 ERR_raise_data() does the same thing as ERR_raise(), but also lets the

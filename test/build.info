@@ -6,7 +6,7 @@ SUBDIRS=ossl_shim
 # Most of all, ../apps/lib/apps.c needs to be divided in smaller pieces to
 # be useful here.
 #
-# Auxilliary program source (copied from ../apps/build.info)
+# Auxiliary program source (copied from ../apps/build.info)
 IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=../apps/lib/win32_init.c

@@ -130,11 +130,11 @@ registered very early with L<atexit(3)>.
 
 =item C<OSSL_TRACE_CATEGORY_TLS>
 
-Traces the TLS/SSL protocoll.
+Traces the TLS/SSL protocol.
 
 =item C<OSSL_TRACE_CATEGORY_TLS_CIPHER>
 
-Traces the ciphers used by the TLS/SSL protocoll.
+Traces the ciphers used by the TLS/SSL protocol.
 
 =item C<OSSL_TRACE_CATEGORY_ENGINE_CONF>
 

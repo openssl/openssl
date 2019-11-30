@@ -187,7 +187,7 @@ ASYNC_WAIT_CTX_set_wait_fd, ASYNC_WAIT_CTX_get_fd, ASYNC_WAIT_CTX_get_all_fds,
 ASYNC_WAIT_CTX_get_changed_fds, ASYNC_WAIT_CTX_clear_fd,
 ASYNC_WAIT_CTX_set_callback, ASYNC_WAIT_CTX_get_callback and
 ASYNC_WAIT_CTX_set_status all return 1 on success or 0 on error.
-ASYNC_WAIT_CTX_get_status() returs the engine status.
+ASYNC_WAIT_CTX_get_status() returns the engine status.
 
 
 =head1 NOTES

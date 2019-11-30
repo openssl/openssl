@@ -87,7 +87,7 @@ OP_keyexch_newctx() should create and return a pointer to a provider side
 structure for holding context information during a key exchange operation.
 A pointer to this context will be passed back in a number of the other key
 exchange operation function calls.
-The paramater I<provctx> is the provider context generated during provider
+The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(7)>).
 
 OP_keyexch_freectx() is passed a pointer to the provider side key exchange
@@ -100,7 +100,7 @@ the I<ctx> parameter and return the duplicate copy.
 =head2 Shared Secret Derivation Functions
 
 OP_keyexch_init() initialises a key exchange operation given a provider side key
-exchange context in the I<ctx> paramter, and a pointer to a provider key object
+exchange context in the I<ctx> parameter, and a pointer to a provider key object
 in the I<provkey> parameter. The key object should have been previously
 generated, loaded or imported into the provider using the key management
 (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
@@ -153,7 +153,7 @@ possible secret size.
 =back
 
 OP_keyexch_settable_ctx_params() gets a constant B<OSSL_PARAM> array that
-decribes the settable parameters, i.e. parameters that can be used with
+describes the settable parameters, i.e. parameters that can be used with
 OP_signature_set_ctx_params().
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
