@@ -2798,6 +2798,10 @@ int SSL_CTX_set_cipher_list_and_mask(SSL_CTX *ctx, const char *str,
         SSLerr(SSL_F_SSL_CTX_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
+    /* User wants to use new cipher_list, so remove cipehrs from ciphersuites */
+    if (SSL_CTX_count_ciphers_by_version(ctx, TLS1_3_VERSION) > 0
+        || default_version_mask != 0)
+        return SSL_CTX_set_ciphersuites(ctx, "");
     return 1;
 }
 
@@ -2823,6 +2827,10 @@ int SSL_set_cipher_list_and_mask(SSL *s, const char *str,
         SSLerr(SSL_F_SSL_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
+    /* User wants to use new cipher_list, so remove cipehrs from ciphersuites */
+    if (SSL_count_ciphers_by_version(s, TLS1_3_VERSION) > 0
+        || default_version_mask != 0)
+        return SSL_set_ciphersuites(s, "");
     return 1;
 }
 
