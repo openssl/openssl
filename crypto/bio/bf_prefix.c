@@ -43,10 +43,10 @@ const BIO_METHOD *BIO_f_prefix(void)
 }
 
 typedef struct prefix_ctx_st {
-    char *prefix;       /* Text prefix, given by user */
-    int indent;         /* Indentation amount, given by user */
+    char *prefix;              /* Text prefix, given by user */
+    unsigned int indent;       /* Indentation amount, given by user */
 
-    int linestart;      /* flag to indicate we're at the line start */
+    int linestart;             /* flag to indicate we're at the line start */
 } PREFIX_CTX;
 
 static int prefix_create(BIO *b)
@@ -109,7 +109,7 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
 
         /*
          * If we know that we're at the start of the line, output prefix and
-         * intendation.
+         * indentation.
          */
         if (ctx->linestart) {
             size_t dontcare;
