@@ -668,13 +668,13 @@ EVP_CipherInit_ex() and EVP_CipherFinal_ex() because they can reuse an
 existing context without allocating and freeing it up on each call.
 
 There are some differences between functions EVP_CipherInit() and
-EVP_CipherInit_ex(), significant in some circumstances. First, EVP_CipherInit()
-fills the passed context object with zeroes. It means that the flags set for
-the CTX are removed, and it is especially important for the
+EVP_CipherInit_ex(), significant in some circumstances. EVP_CipherInit() fills
+the passed context object with zeroes. It means that the flags set for the CTX
+are removed, and it is especially important for the
 B<EVP_CIPHER_CTX_FLAG_WRAP_ALLOW> flag treated specially in
-EVP_CipherInit_ex(). Second, EVP_CipherInit() does not allow step-by-step
-initialization of the ctx when the B<key> and B<iv> are passed in separate
-calls.
+EVP_CipherInit_ex(). As a consequence, EVP_CipherInit() does not allow
+step-by-step initialization of the ctx when the B<key> and B<iv> are passed in
+separate calls.
 
 EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
