@@ -108,9 +108,9 @@ extern "C" {
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode);
 int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode);
 
-#  define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
-        RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
+int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen);
+int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *saltlen);
+
 /* Salt length matches digest */
 #  define RSA_PSS_SALTLEN_DIGEST -1
 /* Verify only: auto detect salt length */
@@ -123,10 +123,6 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode);
 #  define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
                           EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
-
-#  define EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, plen) \
-        RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-                          EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, 0, plen)
 
 #  define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \

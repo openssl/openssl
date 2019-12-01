@@ -817,12 +817,14 @@ int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
         return -1;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-            || ctx->op.ciph.ciphprovctx == NULL)
+    if ((!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+         || ctx->op.ciph.ciphprovctx == NULL)
+        && (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            || ctx->op.sig.sigprovctx == NULL))
         return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_RSA_PADDING,
                                  pad_mode, NULL);
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, &pad_mode);
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_PAD_MODE, &pad_mode);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, pad_params);
@@ -845,12 +847,14 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
         return -1;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-            || ctx->op.ciph.ciphprovctx == NULL)
+    if ((!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+         || ctx->op.ciph.ciphprovctx == NULL)
+        && (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            || ctx->op.sig.sigprovctx == NULL))
         return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET_RSA_PADDING, 0,
                                  pad_mode);
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, pad_mode);
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_PAD_MODE, pad_mode);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, pad_params))
@@ -1026,20 +1030,20 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
             && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MGF1_DIGEST,
                                             /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
+                                             * Cast away the const. This is
+                                             * read only so should be safe
                                              */
                                             (char *)mdname, 0);
     if (mdprops != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(
-                    OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS,
-                    /*
-                     * Cast away the const. This is read
-                     * only so should be safe
-                     */
-                    (char *)mdprops, 0);
+        *p++ =
+            OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MGF1_PROPERTIES,
+                                             /*
+                                              * Cast away the const. This is
+                                              * read only so should be safe
+                                              */
+                                             (char *)mdprops, 0);
     }
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1065,7 +1069,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
             && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MGF1_DIGEST,
                                             name, namelen);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1133,12 +1137,12 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
                                  (void *)label);
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (void *)label,
-                                            (size_t)llen);
+                                             /*
+                                              * Cast away the const. This is
+                                              * read only so should be safe
+                                              */
+                                             (void *)label,
+                                             (size_t)llen);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_set_params(ctx, rsa_params))
@@ -1182,5 +1186,68 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
         return -1;
 
     return (int)labellen;
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
+{
+    OSSL_PARAM pad_params[2], *p = pad_params;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx->pmeth != NULL
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+        || ctx->op.sig.sigprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_RSA_PSS_SALTLEN,
+                                 saltlen, NULL);
+
+    *p++ =
+        OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, &saltlen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, pad_params);
+}
+
+int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *saltlen)
+{
+    OSSL_PARAM pad_params[2], *p = pad_params;
+
+    if (ctx == NULL || saltlen == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx->pmeth != NULL
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+        || ctx->op.sig.sigprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, -1, -1,
+                                 EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN,
+                                 0, saltlen);
+
+    *p++ =
+        OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, saltlen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_PKEY_CTX_get_params(ctx, pad_params))
+        return 0;
+
+    return 1;
+
 }
 #endif

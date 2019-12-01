@@ -50,6 +50,7 @@ int ERR_load_PROV_strings(void);
  * PROV reason codes.
  */
 # define PROV_R_AES_KEY_SETUP_FAILED                      101
+# define PROV_R_ALGORITHM_MISMATCH                        173
 # define PROV_R_BAD_DECRYPT                               100
 # define PROV_R_BAD_ENCODING                              141
 # define PROV_R_BAD_LENGTH                                142
@@ -57,17 +58,20 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_BN_ERROR                                  160
 # define PROV_R_BOTH_MODE_AND_MODE_INT                    127
 # define PROV_R_CIPHER_OPERATION_FAILED                   102
+# define PROV_R_DIGEST_NOT_ALLOWED                        174
 # define PROV_R_FAILED_DURING_DERIVATION                  164
 # define PROV_R_FAILED_TO_DECRYPT                         162
 # define PROV_R_FAILED_TO_GENERATE_KEY                    121
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
+# define PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE       165
 # define PROV_R_INAVLID_UKM_LENGTH                        146
 # define PROV_R_INVALID_AAD                               108
 # define PROV_R_INVALID_CONSTANT_LENGTH                   157
 # define PROV_R_INVALID_CUSTOM_LENGTH                     111
 # define PROV_R_INVALID_DATA                              115
 # define PROV_R_INVALID_DIGEST                            122
+# define PROV_R_INVALID_DIGEST_LENGTH                     166
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IVLEN                             116
 # define PROV_R_INVALID_IV_LENGTH                         109
@@ -76,12 +80,17 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
 # define PROV_R_INVALID_MAC                               151
+# define PROV_R_INVALID_MGF1_MD                           167
 # define PROV_R_INVALID_MODE                              125
 # define PROV_R_INVALID_MODE_INT                          126
+# define PROV_R_INVALID_PADDING_MODE                      168
+# define PROV_R_INVALID_PSS_SALTLEN                       169
 # define PROV_R_INVALID_SALT_LENGTH                       112
 # define PROV_R_INVALID_SEED_LENGTH                       154
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
+# define PROV_R_INVALID_X931_DIGEST                       170
+# define PROV_R_KEY_SIZE_TOO_SMALL                        171
 # define PROV_R_MISSING_CEK_ALG                           144
 # define PROV_R_MISSING_CIPHER                            155
 # define PROV_R_MISSING_CONSTANT                          156
@@ -99,6 +108,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
 # define PROV_R_NO_KEY_SET                                114
 # define PROV_R_OUTPUT_BUFFER_TOO_SMALL                   106
+# define PROV_R_PSS_SALTLEN_TOO_SMALL                     172
 # define PROV_R_READ_KEY                                  159
 # define PROV_R_TAG_NOTSET                                119
 # define PROV_R_TAG_NOT_NEEDED                            120

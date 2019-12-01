@@ -29,4 +29,12 @@ int rsa_validate_public(const RSA *key);
 int rsa_validate_private(const RSA *key);
 int rsa_validate_pairwise(const RSA *key);
 
+int int_rsa_verify(int dtype, const unsigned char *m,
+                   unsigned int m_len, unsigned char *rm,
+                   size_t *prm_len, const unsigned char *sigbuf,
+                   size_t siglen, RSA *rsa);
+
+const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len);
+const unsigned char *rsa_algorithmidentifier_encoding(int md_nid, size_t *len);
+
 #endif

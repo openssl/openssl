@@ -88,11 +88,16 @@ extern "C" {
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_MD5            "MD5"
+#define OSSL_DIGEST_NAME_MD5_SHA1       "MD5-SHA1"
 #define OSSL_DIGEST_NAME_SHA1           "SHA1"
 #define OSSL_DIGEST_NAME_SHA2_224       "SHA2-224"
 #define OSSL_DIGEST_NAME_SHA2_256       "SHA2-256"
 #define OSSL_DIGEST_NAME_SHA2_384       "SHA2-384"
 #define OSSL_DIGEST_NAME_SHA2_512       "SHA2-512"
+#define OSSL_DIGEST_NAME_MD2            "MD2"
+#define OSSL_DIGEST_NAME_MD4            "MD4"
+#define OSSL_DIGEST_NAME_MDC2           "MDC2"
+#define OSSL_DIGEST_NAME_RIPEMD160      "RIPEMD160"
 #define OSSL_DIGEST_NAME_SHA3_224       "SHA3-224"
 #define OSSL_DIGEST_NAME_SHA3_256       "SHA3-256"
 #define OSSL_DIGEST_NAME_SHA3_384       "SHA3-384"
@@ -171,6 +176,14 @@ extern "C" {
 #define OSSL_PKEY_PARAM_PROPERTIES          OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
+#define OSSL_PKEY_PARAM_PAD_MODE            "pad-mode"
+#define OSSL_PKEY_PARAM_DIGEST              OSSL_ALG_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_PROPERTIES          OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_PKEY_PARAM_DIGEST_SIZE         "digest-size"
+#define OSSL_PKEY_PARAM_MGF1_DIGEST         "mgf1-digest"
+#define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
+
+/* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
 #define OSSL_PKEY_PARAM_PRIV_KEY            "priv"
 
@@ -234,15 +247,22 @@ extern "C" {
 
 /* Signature parameters */
 #define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"
+#define OSSL_SIGNATURE_PARAM_PAD_MODE           OSSL_PKEY_PARAM_PAD_MODE
 #define OSSL_SIGNATURE_PARAM_DIGEST             OSSL_PKEY_PARAM_DIGEST
 #define OSSL_SIGNATURE_PARAM_PROPERTIES         OSSL_PKEY_PARAM_PROPERTIES
+#define OSSL_SIGNATURE_PARAM_PSS_SALTLEN        "pss-saltlen"
+#define OSSL_SIGNATURE_PARAM_MGF1_DIGEST        OSSL_PKEY_PARAM_MGF1_DIGEST
+#define OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES    \
+    OSSL_PKEY_PARAM_MGF1_PROPERTIES
 
 /* Asym cipher parameters */
-#define OSSL_ASYM_CIPHER_PARAM_PAD_MODE                 "pad-mode"
+#define OSSL_ASYM_CIPHER_PARAM_PAD_MODE                 OSSL_PKEY_PARAM_PAD_MODE
+#define OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST              \
+    OSSL_PKEY_PARAM_MGF1_DIGEST
+#define OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS        \
+    OSSL_PKEY_PARAM_MGF1_PROPERTIES
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST              OSSL_ALG_PARAM_DIGEST
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS        "digest-props"
-#define OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST              "mgf1-digest"
-#define OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS        "mgf1-digest-props"
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL               "oaep-label"
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN           "oaep-label-len"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION       "tls-client-version"

@@ -25,6 +25,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
 #include "rsa_local.h"
 
 /* RSA pkey context structure */

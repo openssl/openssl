@@ -384,6 +384,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "provider=default", dsa_signature_functions },
 #endif
+    { "RSA:rsaEncryption", "default=yes", rsa_signature_functions },
     { NULL, NULL, NULL }
 };
 

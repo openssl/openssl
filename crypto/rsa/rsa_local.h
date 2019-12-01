@@ -122,10 +122,6 @@ struct rsa_meth_st {
                                    BIGNUM *e, BN_GENCB *cb);
 };
 
-extern int int_rsa_verify(int dtype, const unsigned char *m,
-                          unsigned int m_len, unsigned char *rm,
-                          size_t *prm_len, const unsigned char *sigbuf,
-                          size_t siglen, RSA *rsa);
 /* Macros to test if a pkey or ctx is for a PSS key */
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)

@@ -23,13 +23,20 @@
 #ifndef OPENSSL_NO_MD2
 # include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
 #endif
+#ifndef OPENSSL_NO_MD4
+# include <openssl/md4.h> /* uses MD4_DIGEST_LENGTH */
+#endif
 #ifndef OPENSSL_NO_MD5
 # include <openssl/md5.h> /* uses MD5_DIGEST_LENGTH */
 #endif
 #ifndef OPENSSL_NO_MDC2
 # include <openssl/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
 #endif
+#ifndef OPENSSL_NO_RMD160
+# include <openssl/ripemd.h> /* uses RIPEMD160_DIGEST_LENGTH */
+#endif
 #include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
+#include "crypto/rsa.h"
 #include "rsa_local.h"
 
 /*
@@ -76,7 +83,7 @@ static const unsigned char digestinfo_##name##_der[] = {                       \
       ASN1_OCTET_STRING, sz                                                    \
 };
 
-/* MD2 and MD5 OIDs are of the form: (1 2 840 113549 2 |n|) */
+/* MD2, MD4 and MD5 OIDs are of the form: (1 2 840 113549 2 |n|) */
 #define ENCODE_DIGESTINFO_MD(name, n, sz)                                      \
 static const unsigned char digestinfo_##name##_der[] = {                       \
     ASN1_SEQUENCE, 0x10 + sz,                                                  \
@@ -89,6 +96,9 @@ static const unsigned char digestinfo_##name##_der[] = {                       \
 #ifndef FIPS_MODE
 # ifndef OPENSSL_NO_MD2
 ENCODE_DIGESTINFO_MD(md2, 0x02, MD2_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD4
+ENCODE_DIGESTINFO_MD(md4, 0x03, MD4_DIGEST_LENGTH)
 # endif
 # ifndef OPENSSL_NO_MD5
 ENCODE_DIGESTINFO_MD(md5, 0x05, MD5_DIGEST_LENGTH)
@@ -103,6 +113,18 @@ static const unsigned char digestinfo_mdc2_der[] = {
       ASN1_OCTET_STRING, MDC2_DIGEST_LENGTH
 };
 # endif
+# ifndef OPENSSL_NO_RMD160
+/* RIPEMD160 (1 3 36 3 3 1 2) */
+static const unsigned char digestinfo_ripemd160_der[] = {
+    ASN1_SEQUENCE, 0x0c + RIPEMD160_DIGEST_LENGTH,
+      ASN1_SEQUENCE, 0x08,
+        ASN1_OID, 0x04, 1 * 40 + 3, 36, 3, 3, 1, 2,
+        ASN1_NULL, 0x00,
+      ASN1_OCTET_STRING, RIPEMD160_DIGEST_LENGTH
+};
+# endif
+#endif /* FIPS_MODE */
+
 /* SHA-1 (1 3 14 3 2 26) */
 static const unsigned char digestinfo_sha1_der[] = {
     ASN1_SEQUENCE, 0x0d + SHA_DIGEST_LENGTH,
@@ -111,8 +133,6 @@ static const unsigned char digestinfo_sha1_der[] = {
         ASN1_NULL, 0x00,
       ASN1_OCTET_STRING, SHA_DIGEST_LENGTH
 };
-
-#endif /* FIPS_MODE */
 
 ENCODE_DIGESTINFO_SHA(sha256, 0x01, SHA256_DIGEST_LENGTH)
 ENCODE_DIGESTINFO_SHA(sha384, 0x02, SHA384_DIGEST_LENGTH)
@@ -130,9 +150,9 @@ ENCODE_DIGESTINFO_SHA(sha3_512, 0x0a, SHA512_DIGEST_LENGTH)
         *len = sizeof(digestinfo_##name##_der);                                \
         return digestinfo_##name##_der;
 
-static const unsigned char *digestinfo_encoding(int nid, size_t *len)
+const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
 {
-    switch (nid) {
+    switch (md_nid) {
 #ifndef FIPS_MODE
 # ifndef OPENSSL_NO_MDC2
     MD_CASE(mdc2)
@@ -140,11 +160,17 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
 # ifndef OPENSSL_NO_MD2
     MD_CASE(md2)
 # endif
+# ifndef OPENSSL_NO_MD4
+    MD_CASE(md4)
+# endif
 # ifndef OPENSSL_NO_MD5
     MD_CASE(md5)
 # endif
-    MD_CASE(sha1)
+# ifndef OPENSSL_NO_RMD160
+    MD_CASE(ripemd160)
+# endif
 #endif /* FIPS_MODE */
+    MD_CASE(sha1)
     MD_CASE(sha224)
     MD_CASE(sha256)
     MD_CASE(sha384)
@@ -183,7 +209,7 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
         RSAerr(RSA_F_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
         return 0;
     }
-    di_prefix = digestinfo_encoding(type, &di_prefix_len);
+    di_prefix = rsa_digestinfo_encoding(type, &di_prefix_len);
     if (di_prefix == NULL) {
         RSAerr(RSA_F_ENCODE_PKCS1,
                RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);

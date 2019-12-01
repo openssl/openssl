@@ -786,69 +786,73 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
 # ifndef OPENSSL_NO_EC
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
-            case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
-                if (p1 == -2) {
-                    return EVP_PKEY_CTX_get_ecdh_cofactor_mode(ctx);
-                } else if (p1 < -1 || p1 > 1) {
-                    /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-                    return -2;
-                } else {
-                    return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, p1);
-                }
-            case EVP_PKEY_CTRL_EC_KDF_TYPE:
-                if (p1 == -2) {
-                    return EVP_PKEY_CTX_get_ecdh_kdf_type(ctx);
-                } else {
-                    return EVP_PKEY_CTX_set_ecdh_kdf_type(ctx, p1);
-                }
-            case EVP_PKEY_CTRL_GET_EC_KDF_MD:
-                return EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, p2);
-            case EVP_PKEY_CTRL_EC_KDF_MD:
-                return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, p2);
-            case EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN:
-                return EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, p2);
-            case EVP_PKEY_CTRL_EC_KDF_OUTLEN:
-                return EVP_PKEY_CTX_set_ecdh_kdf_outlen(ctx, p1);
-            case EVP_PKEY_CTRL_GET_EC_KDF_UKM:
-                return EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, p2);
-            case EVP_PKEY_CTRL_EC_KDF_UKM:
-                return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p2, p1);
+        case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
+            if (p1 == -2) {
+                return EVP_PKEY_CTX_get_ecdh_cofactor_mode(ctx);
+            } else if (p1 < -1 || p1 > 1) {
+                /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+                return -2;
+            } else {
+                return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, p1);
+            }
+        case EVP_PKEY_CTRL_EC_KDF_TYPE:
+            if (p1 == -2) {
+                return EVP_PKEY_CTX_get_ecdh_kdf_type(ctx);
+            } else {
+                return EVP_PKEY_CTX_set_ecdh_kdf_type(ctx, p1);
+            }
+        case EVP_PKEY_CTRL_GET_EC_KDF_MD:
+            return EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, p2);
+        case EVP_PKEY_CTRL_EC_KDF_MD:
+            return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN:
+            return EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, p2);
+        case EVP_PKEY_CTRL_EC_KDF_OUTLEN:
+            return EVP_PKEY_CTX_set_ecdh_kdf_outlen(ctx, p1);
+        case EVP_PKEY_CTRL_GET_EC_KDF_UKM:
+            return EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, p2);
+        case EVP_PKEY_CTRL_EC_KDF_UKM:
+            return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p2, p1);
         }
     }
 # endif
     if (keytype == -1) {
         switch (cmd) {
-            case EVP_PKEY_CTRL_MD:
-                return EVP_PKEY_CTX_set_signature_md(ctx, p2);
-            case EVP_PKEY_CTRL_GET_MD:
-                return EVP_PKEY_CTX_get_signature_md(ctx, p2);
-            case EVP_PKEY_CTRL_RSA_PADDING:
-                return EVP_PKEY_CTX_set_rsa_padding(ctx, p1);
-            case EVP_PKEY_CTRL_GET_RSA_PADDING:
-                return EVP_PKEY_CTX_get_rsa_padding(ctx, p2);
-            case EVP_PKEY_CTRL_RSA_OAEP_MD:
-                return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
-            case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
-                return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
-            case EVP_PKEY_CTRL_RSA_MGF1_MD:
-                return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
-            case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
-                return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
-            case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
-                return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
-            case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
-                return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
-            case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
-            case EVP_PKEY_CTRL_PKCS7_DECRYPT:
+        case EVP_PKEY_CTRL_MD:
+            return EVP_PKEY_CTX_set_signature_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_MD:
+            return EVP_PKEY_CTX_get_signature_md(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_PADDING:
+            return EVP_PKEY_CTX_set_rsa_padding(ctx, p1);
+        case EVP_PKEY_CTRL_GET_RSA_PADDING:
+            return EVP_PKEY_CTX_get_rsa_padding(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_OAEP_MD:
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
+            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_MGF1_MD:
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
+            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
+            return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
+        case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
+            return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
+        case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
+            return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, p1);
+        case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
+            return EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, p2);
+        case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
+        case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 # ifndef OPENSSL_NO_CMS
-            case EVP_PKEY_CTRL_CMS_DECRYPT:
-            case EVP_PKEY_CTRL_CMS_ENCRYPT:
+        case EVP_PKEY_CTRL_CMS_DECRYPT:
+        case EVP_PKEY_CTRL_CMS_ENCRYPT:
 # endif
-                if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
-                    return 1;
-                ERR_raise(ERR_LIB_EVP,
-                          EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-                return -2;
+            if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+                return 1;
+            ERR_raise(ERR_LIB_EVP,
+                      EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            return -2;
         }
     }
     return 0;
@@ -918,6 +922,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST;
     else if (strcmp(name, "rsa_oaep_label") == 0)
         name = OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL;
+    else if (strcmp(name, "rsa_pss_saltlen") == 0)
+        name = OSSL_SIGNATURE_PARAM_PSS_SALTLEN;
 # ifndef OPENSSL_NO_DH
     else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;
