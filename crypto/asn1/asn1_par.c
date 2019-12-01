@@ -17,8 +17,6 @@
 #define ASN1_PARSE_MAXDEPTH 128
 #endif
 
-static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
-                           int tag, int xclass, int constructed, int indent);
 static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                        int offset, int depth, int indent, int dump);
 static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
@@ -27,7 +25,7 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     char str[128];
     const char *p;
     int pop_f_prefix = 0;
-    long saved_indent = 0;
+    long saved_indent = -1;
     int i = 0;
 
     if (constructed & V_ASN1_CONSTRUCTED)
@@ -71,7 +69,8 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
 
     i = (BIO_printf(bp, "%-18s", p) > 0);
  err:
-    BIO_set_indent(bp, saved_indent);
+    if (saved_indent >= 0)
+        BIO_set_indent(bp, saved_indent);
     if (pop_f_prefix) {
         BIO *next = BIO_pop(bp);
 
