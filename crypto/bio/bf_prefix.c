@@ -169,7 +169,7 @@ static long prefix_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_SET_INDENT:
         if (num >= 0) {
-            ctx->indent = (int)num;
+            ctx->indent = (unsigned int)num;
             ret = 1;
         }
         break;
