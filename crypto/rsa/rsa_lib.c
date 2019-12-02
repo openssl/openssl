@@ -780,6 +780,10 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
     if (r == NULL)
         return 0;
 
+    /* If |p| is NULL, there are no CRT parameters */
+    if (RSA_get0_p(r) == NULL)
+        return 1;
+
     sk_BIGNUM_const_push(primes, RSA_get0_p(r));
     sk_BIGNUM_const_push(primes, RSA_get0_q(r));
     sk_BIGNUM_const_push(exps, RSA_get0_dmp1(r));
