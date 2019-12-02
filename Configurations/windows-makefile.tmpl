@@ -3,6 +3,8 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+ use File::Basename;
+
  our $sover_dirname = platform->shlib_version_as_filename();
 
  my $build_scheme = $target{build_scheme};
@@ -111,10 +113,22 @@ MISC_SCRIPTS={-
                          && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
-HTMLDOCS1={- our @HTMLDOCS1 = @{$unified_info{htmldocs}->{man1}}; join(" ", @HTMLDOCS1) -}
-HTMLDOCS3={- our @HTMLDOCS3 = @{$unified_info{htmldocs}->{man3}}; join(" ", @HTMLDOCS3) -}
-HTMLDOCS5={- our @HTMLDOCS5 = @{$unified_info{htmldocs}->{man5}}; join(" ", @HTMLDOCS5) -}
-HTMLDOCS7={- our @HTMLDOCS7 = @{$unified_info{htmldocs}->{man7}}; join(" ", @HTMLDOCS7) -}
+HTMLDOCS1={- our @HTMLDOCS1 = @{$unified_info{htmldocs}->{man1}};
+             join(" ", @HTMLDOCS1) -}
+HTMLDOCS3={- our @HTMLDOCS3 = @{$unified_info{htmldocs}->{man3}};
+             join(" ", @HTMLDOCS3) -}
+HTMLDOCS5={- our @HTMLDOCS5 = @{$unified_info{htmldocs}->{man5}};
+             join(" ", @HTMLDOCS5) -}
+HTMLDOCS7={- our @HTMLDOCS7 = @{$unified_info{htmldocs}->{man7}};
+             join(" ", @HTMLDOCS7) -}
+HTMLDOCS1_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS1;
+                     sort keys %dirs -}
+HTMLDOCS3_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS3;
+                     sort keys %dirs -}
+HTMLDOCS5_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS5;
+                     sort keys %dirs -}
+HTMLDOCS7_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS7;
+                     sort keys %dirs -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 "\"".catfile("apps","openssl")."\"" -}
@@ -401,10 +415,10 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS1) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS3) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS5) -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS7) -}
+	-rmdir /Q /S $(HTMLDOCS1_BLDDIRS)
+	-rmdir /Q /S $(HTMLDOCS3_BLDDIRS)
+	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
+	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(MODULES)
 	-del /Q /F $(SCRIPTS)
