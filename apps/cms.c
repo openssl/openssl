@@ -32,6 +32,8 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
+static int set_asn1_parameters(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
+
 # define SMIME_OP        0x10
 # define SMIME_IP        0x20
 # define SMIME_SIGNERS   0x40
@@ -83,7 +85,8 @@ typedef enum OPTION_choice {
     OPT_3DES_WRAP, OPT_ENGINE,
     OPT_R_ENUM,
     OPT_V_ENUM,
-    OPT_CIPHER
+    OPT_CIPHER,
+    OPT_WINCOMP
 } OPTION_CHOICE;
 
 const OPTIONS cms_options[] = {
@@ -180,6 +183,7 @@ const OPTIONS cms_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+    {"win-comp", OPT_WINCOMP, '-', "Create Windows compatible kari keyEncryptionAlgorithm parameter. Use together with -*-wrap"},
     {NULL}
 };
 
@@ -192,6 +196,7 @@ int cms_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
     const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
+    EVP_CIPHER *wr = NULL;
     const EVP_MD *sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
     STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
@@ -217,6 +222,7 @@ int cms_main(int argc, char **argv)
     long ltmp;
     const char *mime_eol = "\n";
     OPTION_CHOICE o;
+    int wincomp = 0;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -580,6 +586,8 @@ int cms_main(int argc, char **argv)
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
             break;
+        case OPT_WINCOMP:
+            wincomp = 1;
         }
     }
     argc = opt_num_rest();
@@ -840,7 +848,11 @@ int cms_main(int argc, char **argv)
                 && wrap_cipher) {
                 EVP_CIPHER_CTX *wctx;
                 wctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-                EVP_EncryptInit_ex(wctx, wrap_cipher, NULL, NULL, NULL);
+                if (wincomp) {
+                    wr = EVP_CIPHER_meth_dup(wrap_cipher);
+                    EVP_CIPHER_meth_set_set_asn1_params(wr, set_asn1_parameters);
+                }
+                EVP_EncryptInit_ex(wctx, wr ? wr : wrap_cipher, NULL, NULL, NULL);
             }
         }
 
@@ -1109,6 +1121,8 @@ int cms_main(int argc, char **argv)
     BIO_free(indata);
     BIO_free_all(out);
     OPENSSL_free(passin);
+    if (wr)
+        EVP_CIPHER_meth_free(wr);
     return ret;
 }
 
@@ -1285,6 +1299,44 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
         }
     }
     return 1;
+}
+
+static int set_asn1_parameters(EVP_CIPHER_CTX *c, ASN1_TYPE *type) {
+    int ret;
+    unsigned long flags;
+
+    flags = EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c));
+    if (flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
+        switch (EVP_CIPHER_CTX_mode(c)) {
+        case EVP_CIPH_WRAP_MODE:
+            /* MS Windows expects parameter to be NULL, this violates
+             * RFC for AES wrap, 3DES is ok, but no longer supported
+             * in Windows Crypto API. */
+            if ((EVP_CIPHER_CTX_nid(c) == NID_id_smime_alg_CMS3DESwrap) ||
+                (EVP_CIPHER_CTX_nid(c) == NID_id_aes128_wrap) ||
+                (EVP_CIPHER_CTX_nid(c) == NID_id_aes192_wrap) ||
+                (EVP_CIPHER_CTX_nid(c) == NID_id_aes256_wrap))
+                ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
+            ret = 1;
+            break;
+
+        case EVP_CIPH_GCM_MODE:
+        case EVP_CIPH_CCM_MODE:
+        case EVP_CIPH_XTS_MODE:
+        case EVP_CIPH_OCB_MODE:
+            ret = -2;
+            break;
+
+        default:
+            ret = EVP_CIPHER_set_asn1_iv(c, type);
+        }
+    } else
+        ret = -1;
+
+    if (ret < -1)
+        ret = -1;
+
+    return ret;
 }
 
 #endif

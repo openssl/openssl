@@ -398,7 +398,17 @@ my @smime_cms_param_tests = (
 	"-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
       [ "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
 	"-in", "test.cms", "-out", "smtst.txt" ]
+    ],
+
+    [ "enveloped content test S/MIME format, AES256-wrap, ECDH, Windows 10 compatible.",
+      [ "-encrypt", "-in", $smcont,
+	"-out", "test.cms",
+        "-win-comp", "-aes256-wrap", "-aes256",
+	"-recip", catfile($smdir, "smec1.pem") ],
+      [ "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
+	"-in", "test.cms", "-out", "smtst.txt" ]
     ]
+
     );
 
 my @contenttype_cms_test = (
