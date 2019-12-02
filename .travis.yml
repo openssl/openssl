@@ -152,7 +152,7 @@ matrix:
 before_script:
     - env
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
-          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
+          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || travis_terminate 0;
       fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
