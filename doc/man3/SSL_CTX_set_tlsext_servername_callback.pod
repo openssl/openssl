@@ -11,7 +11,7 @@ SSL_set_tlsext_host_name - handle server name indication (SNI)
  #include <openssl/ssl.h>
 
  long SSL_CTX_set_tlsext_servername_callback(SSL_CTX *ctx,
-                                   int (*cb)(SSL *, int *, void *));
+                                   int (*cb)(SSL *s, int *al, void *arg));
  long SSL_CTX_set_tlsext_servername_arg(SSL_CTX *ctx, void *arg);
 
  const char *SSL_get_servername(const SSL *s, const int type);
@@ -21,18 +21,51 @@ SSL_set_tlsext_host_name - handle server name indication (SNI)
 
 =head1 DESCRIPTION
 
-The functionality provided by the servername callback is superseded by the
-ClientHello callback, which can be set using SSL_CTX_set_client_hello_cb().
-The servername callback is retained for historical compatibility.
+The functionality provided by the servername callback is mostly superseded by
+the ClientHello callback, which can be set using SSL_CTX_set_client_hello_cb().
+However, even where the ClientHello callback is used, the servername callback is
+still necessary in order to acknowledge the servername requested by the client.
 
 SSL_CTX_set_tlsext_servername_callback() sets the application callback B<cb>
 used by a server to perform any actions or configuration required based on
 the servername extension received in the incoming connection. When B<cb>
-is NULL, SNI is not used. The B<arg> value is a pointer which is passed to
-the application callback.
+is NULL, SNI is not used.
+
+The servername callback should return one of the following values:
+
+=over 4
+
+=item SSL_TLSEXT_ERR_OK
+
+This is used to indicate that the servername requested by the client has been
+accepted. Typically a server will call SSL_set_SSL_CTX() in the callback to set
+up a different configuration for the selected servername in this case.
+
+=item SSL_TLSEXT_ERR_ALERT_FATAL
+
+In this case the servername requested by the client is not accepted and the
+handshake will be aborted. The value of the alert to be used should be stored in
+the location pointed to by the B<al> parameter to the callback. By default this
+value is initialised to SSL_AD_UNRECOGNIZED_NAME.
+
+=item SSL_TLSEXT_ERR_ALERT_WARNING
+
+If this value is returned then the servername is not accepted by the server.
+However the handshake will continue and send a warning alert instead. The value
+of the alert should be stored in the location pointed to by the B<al> parameter
+as for SSL_TLSEXT_ERR_ALERT_FATAL above. Note that TLSv1.3 does not support
+warning alerts, so if TLSv1.3 has been negotiated then this return value is
+treated the same way as SSL_TLSEXT_ERR_NOACK.
+
+=item SSL_TLSEXT_ERR_NOACK
+
+This return value indicates that the servername is not accepted by the server.
+No alerts are sent and the server will not acknowledge the requested servername.
+
+=back
 
 SSL_CTX_set_tlsext_servername_arg() sets a context-specific argument to be
-passed into the callback for this B<SSL_CTX>.
+passed into the callback (via the B<arg> parameter) for this B<SSL_CTX>.
 
 The behaviour of SSL_get_servername() depends on a number of different factors.
 In particular note that in TLSv1.3 the servername is negotiated in every
@@ -55,8 +88,8 @@ resumed, then the servername from the original session is returned. Otherwise
 the servername requested by the client in this handshake is returned.
 
 Note that the ClientHello callback occurs before a servername extension from the
-client is processed. The servername and alpn callbacks occur after a
-servername extension from the client is processed.
+client is processed. The servername, certificate and alpn callbacks occur after
+a servername extension from the client is processed.
 
 SSL_get_servername_type() returns the servername type or -1 if no servername
 is present. Currently the only supported type (defined in RFC3546) is
