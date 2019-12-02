@@ -127,11 +127,28 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     if (pkey == NULL && e == NULL && id == -1)
         goto common;
 
+    /*
+     * If the key doesn't contain anything legacy, then it must be provided,
+     * so we extract the necessary information and use that.
+     */
+    if (pkey != NULL && pkey->pkey.ptr == NULL) {
+        /* If we have an engine, something went wrong somewhere... */
+        if (!ossl_assert(e == NULL))
+            return NULL;
+        name = evp_first_name(pkey->pkeys[0].keymgmt->prov,
+                              pkey->pkeys[0].keymgmt->name_id);
+        /*
+         * TODO: I wonder if the EVP_PKEY should have the name and propquery
+         * that were used when building it....  /RL
+         */
+        goto common;
+    }
+
     /* TODO(3.0) Legacy code should be removed when all is provider based */
     /* BEGIN legacy */
     if (id == -1) {
         if (pkey == NULL)
-            return 0;
+            return NULL;
         id = pkey->type;
     }
 
