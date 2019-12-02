@@ -21,6 +21,7 @@
 #include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
+#include <openssl/params.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include "testutil.h"
@@ -1232,52 +1233,17 @@ done:
 }
 #endif /* OPENSSL_NO_EC */
 
-#ifndef OPENSSL_NO_DSA
 /* Test getting and setting parameters on an EVP_PKEY_CTX */
-static int test_EVP_PKEY_CTX_get_set_params(void)
+static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
 {
     EVP_MD_CTX *mdctx = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    EVP_SIGNATURE *dsaimpl = NULL;
     const OSSL_PARAM *params;
     OSSL_PARAM ourparams[2], *param = ourparams, *param_md;
-    DSA *dsa = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
-    EVP_PKEY *pkey = NULL;
     int ret = 0;
     const EVP_MD *md;
     char mdname[OSSL_MAX_NAME_SIZE];
     char ssl3ms[48];
-
-    /*
-     * Setup the parameters for our DSA object. For our purposes they don't
-     * have to actually be *valid* parameters. We just need to set something.
-     */
-    dsa = DSA_new();
-    p = BN_new();
-    q = BN_new();
-    g = BN_new();
-    pub = BN_new();
-    priv = BN_new();
-    if (!TEST_ptr(dsa)
-            || !TEST_ptr(p)
-            || !TEST_ptr(q)
-            || !TEST_ptr(g)
-            || !DSA_set0_pqg(dsa, p, q, g))
-        goto err;
-    p = q = g = NULL;
-    if (!TEST_ptr(pub)
-            || !TEST_ptr(priv)
-            || !DSA_set0_key(dsa, pub, priv))
-        goto err;
-    pub = priv = NULL;
-
-    pkey = EVP_PKEY_new();
-    if (!TEST_ptr(pkey)
-            || !TEST_true(EVP_PKEY_assign_DSA(pkey, dsa)))
-        goto err;
-
-    dsa = NULL;
 
     /* Initialise a sign operation */
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
@@ -1286,9 +1252,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
         goto err;
 
     /*
-     * We should be able to query the parameters now. The default DSA
-     * implementation supports exactly one parameter - so we expect to see that
-     * returned and no more.
+     * We should be able to query the parameters now.
      */
     params = EVP_PKEY_CTX_settable_params(ctx);
     if (!TEST_ptr(params)
@@ -1366,7 +1330,48 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
  err:
     EVP_MD_CTX_free(mdctx);
     EVP_PKEY_CTX_free(ctx);
-    EVP_SIGNATURE_free(dsaimpl);
+
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DSA
+static int test_DSA_get_set_params(void)
+{
+    DSA *dsa = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    /*
+     * Setup the parameters for our DSA object. For our purposes they don't
+     * have to actually be *valid* parameters. We just need to set something.
+     */
+    dsa = DSA_new();
+    p = BN_new();
+    q = BN_new();
+    g = BN_new();
+    pub = BN_new();
+    priv = BN_new();
+    if (!TEST_ptr(dsa)
+            || !TEST_ptr(p)
+            || !TEST_ptr(q)
+            || !TEST_ptr(g)
+            || !TEST_ptr(pub)
+            || !DSA_set0_pqg(dsa, p, q, g)
+        || !DSA_set0_key(dsa, pub, priv))
+        goto err;
+    p = q = g = pub = priv = NULL;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey)
+            || !TEST_true(EVP_PKEY_assign_DSA(pkey, dsa)))
+        goto err;
+
+    dsa = NULL;
+
+    ret = test_EVP_PKEY_CTX_get_set_params(pkey);
+
+ err:
     EVP_PKEY_free(pkey);
     DSA_free(dsa);
     BN_free(p);
@@ -1378,6 +1383,48 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     return ret;
 }
 #endif
+
+static int test_RSA_get_set_params(void)
+{
+    RSA *rsa = NULL;
+    BIGNUM *n = NULL, *e = NULL, *d = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    /*
+     * Setup the parameters for our RSA object. For our purposes they don't
+     * have to actually be *valid* parameters. We just need to set something.
+     */
+    rsa = RSA_new();
+    n = BN_new();
+    e = BN_new();
+    d = BN_new();
+    if (!TEST_ptr(rsa)
+            || !TEST_ptr(n)
+            || !TEST_ptr(e)
+            || !TEST_ptr(d)
+        || !RSA_set0_key(rsa, n, e, d))
+        goto err;
+    n = e = d = NULL;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey)
+            || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa)))
+        goto err;
+
+    rsa = NULL;
+
+    ret = test_EVP_PKEY_CTX_get_set_params(pkey);
+
+ err:
+    EVP_PKEY_free(pkey);
+    RSA_free(rsa);
+    BN_free(n);
+    BN_free(e);
+    BN_free(d);
+
+    return ret;
+}
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
@@ -1522,8 +1569,9 @@ int setup_tests(void)
                   OSSL_NELEM(ec_der_pub_keys));
 #endif
 #ifndef OPENSSL_NO_DSA
-    ADD_TEST(test_EVP_PKEY_CTX_get_set_params);
+    ADD_TEST(test_DSA_get_set_params);
 #endif
+    ADD_TEST(test_RSA_get_set_params);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
