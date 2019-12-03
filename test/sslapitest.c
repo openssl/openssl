@@ -6828,6 +6828,9 @@ static const char *multiblock_cipherlist_data[]=
     "AES256-SHA256",
 };
 
+/* Reduce the fragment size - so the multiblock test buffer can be small */
+#define MULTIBLOCK_FRAGSIZE 512
+
 static int test_multiblock_write(int test_index)
 {
     static const char *fetchable_ciphers[]=
@@ -6845,14 +6848,13 @@ static int test_multiblock_write(int test_index)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    /* Reduce the fragment size - so the multiblock test buffer can be smaller */
-    int frag_sz = 512;
+
     /*
      * Choose a buffer large enough to perform a multi-block operation
      * i.e: write_len >= 4 * frag_sz
      * 9 * is chosen so that multiple multiblocks are used + some leftover.
      */
-    unsigned char msg[frag_sz * 9];
+    unsigned char msg[MULTIBLOCK_FRAGSIZE * 9];
     unsigned char buf[sizeof(msg)], *p = buf;
     size_t readbytes, written, len;
     EVP_CIPHER *ciph = NULL;
@@ -6875,7 +6877,7 @@ static int test_multiblock_write(int test_index)
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_max_send_fragment(sctx, frag_sz)))
+    if (!TEST_true(SSL_CTX_set_max_send_fragment(sctx, MULTIBLOCK_FRAGSIZE)))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -6896,7 +6898,7 @@ static int test_multiblock_write(int test_index)
 
     len = written;
     while (len > 0) {
-        if (!TEST_true(SSL_read_ex(clientssl, p, frag_sz, &readbytes)))
+        if (!TEST_true(SSL_read_ex(clientssl, p, MULTIBLOCK_FRAGSIZE, &readbytes)))
             goto end;
         p += readbytes;
         len -= readbytes;
