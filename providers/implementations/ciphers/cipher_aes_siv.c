@@ -12,7 +12,7 @@
 #include "cipher_aes_siv.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
-#include "prov/cipher_aead.h"
+#include "prov/ciphercommon_aead.h"
 
 #define siv_stream_update siv_cipher
 #define SIV_FLAGS AEAD_FLAGS

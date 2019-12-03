@@ -8,7 +8,7 @@
  */
 
 #include <assert.h>
-#include "cipher_local.h"
+#include "ciphercommon_local.h"
 #include "prov/providercommonerr.h"
 
 /*

@@ -1,5 +1,3 @@
-SUBDIRS=digests ciphers
-
 SOURCE[../libcommon.a]=provider_err.c bio_prov.c
 $FIPSCOMMON=provider_util.c
 SOURCE[../libnonfips.a]=$FIPSCOMMON nid_to_name.c

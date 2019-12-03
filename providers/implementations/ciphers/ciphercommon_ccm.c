@@ -10,7 +10,7 @@
 /* Dispatch functions for ccm mode */
 
 #include "prov/ciphercommon.h"
-#include "prov/cipher_ccm.h"
+#include "prov/ciphercommon_ccm.h"
 #include "prov/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,

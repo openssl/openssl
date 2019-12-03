@@ -40,14 +40,14 @@ $LIBNONFIPS=libnonfips.a
 $LIBFIPS=libfips.a
 
 # Enough of our implementations include prov/ciphercommon.h (present in
-# providers/common/include), which includes crypto/ciphermode_platform.h
+# providers/implementations/include), which includes crypto/ciphermode_platform.h
 # (present in include), which in turn may include very internal header
 # files in crypto/, so let's have a common include list for them all.
-$COMMON_INCLUDES=../crypto ../include common/include
+$COMMON_INCLUDES=../crypto ../include implementations/include common/include
 
 INCLUDE[$LIBCOMMON]=$COMMON_INCLUDES
-INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES implementations/include
-INCLUDE[$LIBLEGACY]=$COMMON_INCLUDES implementations/include
+INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES
+INCLUDE[$LIBLEGACY]=$COMMON_INCLUDES
 INCLUDE[$LIBNONFIPS]=$COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODE
@@ -84,7 +84,7 @@ $DEFAULTGOAL=../libcrypto
 SOURCE[$DEFAULTGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
 SOURCE[$DEFAULTGOAL]=defltprov.c
 # Some legacy implementations depend on provider header files
-INCLUDE[../libcrypto]=implementations/include
+INCLUDE[$DEFAULTGOAL]=implementations/include
 
 LIBS=$DEFAULTGOAL
 

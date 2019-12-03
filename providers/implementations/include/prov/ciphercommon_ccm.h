@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_aead.h"
+#include "ciphercommon_aead.h"
 
 typedef struct prov_ccm_hw_st PROV_CCM_HW;
 
