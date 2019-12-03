@@ -1949,6 +1949,38 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     return cipherstack;
 }
 
+char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf, int len)
+{
+    SSL_CIPHER_FLAGS *cipher_list_flags = SSL_get_ciphers_flags(s);
+    uint8_t *flags;
+    char *group = " ";
+    char prefer = ' ';
+    static const char *format = "%s %c ";
+
+    if (buf == NULL) {
+        len = 8;
+        if ((buf = OPENSSL_malloc(len)) == NULL) {
+            SSLerr(SSL_F_SSL_CIPHER_DESCRIPTION, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    } else if (len < 8) {
+        return NULL;
+    }
+
+    if (cipher_list_flags && (flags = cipher_list_flags->flags) != NULL) {
+        if (flags[i] & CIPHER_IN_GROUP) {
+            group = i == 0 || (flags[i - 1] & CIPHER_IN_GROUP) == 0 ? "┍" : "│";
+        } else if (i && (flags[i - 1] & CIPHER_IN_GROUP)) {
+            group = "┕";
+        }
+        prefer = flags[i] & CIPHER_FLAG_PREFER ? '*' : ' ';
+    }
+
+    BIO_snprintf(buf, len, format, group, prefer);
+
+    return buf;
+}
+
 char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
     const char *ver;
