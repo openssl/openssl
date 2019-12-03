@@ -1590,6 +1590,21 @@ unless ($disabled{afalgeng}) {
     }
 }
 
+unless ($disabled{devcryptoeng}) {
+    if ($target =~ m/^BSD/) {
+        my $maxver = 5*100 + 7;
+        my $sysstr = `uname -s`;
+        my $verstr = `uname -r`;
+        $sysstr =~ s|\R$||;
+        $verstr =~ s|\R$||;
+        my ($ma, $mi, @rest) = split m|\.|, $verstr;
+        my $ver = $ma*100 + $mi;
+        if ($sysstr eq 'OpenBSD' && $ver >= $maxver) {
+            disable('too-new-kernel', 'devcryptoeng');
+        }
+    }
+}
+
 push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
 
 unless ($disabled{ktls}) {
