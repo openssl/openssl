@@ -3007,7 +3007,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         return 0;
     }
 
-    outlen = EVP_PKEY_size(rsa);
+    outlen = SSL_MAX_MASTER_KEY_LENGTH;
     rsa_decrypt = OPENSSL_malloc(outlen);
     if (rsa_decrypt == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
@@ -3062,11 +3062,13 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * we double check anyway.
      */
     if (outlen != SSL_MAX_MASTER_KEY_LENGTH) {
+        OPENSSL_cleanse(rsa_decrypt, SSL_MAX_MASTER_KEY_LENGTH);
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
 
+    /* Also cleanses rsa_decrypt (on success or failure) */
     if (!ssl_generate_master_secret(s, rsa_decrypt,
                                     SSL_MAX_MASTER_KEY_LENGTH, 0)) {
         /* SSLfatal() already called */
