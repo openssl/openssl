@@ -262,12 +262,13 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * padding from a decrypted RSA message in a TLS signature. The result is stored
  * in the buffer pointed to by |to| which should be |tlen| bytes long. |tlen|
  * must be at least SSL_MAX_MASTER_KEY_LENGTH. The original decrypted message
- * should be stored in |from| which must be |flen| bytes in length. The TLS
- * protocol version that the client originally requested should be passed in
- * |client_version|. Some buggy clients can exist which use the negotiated
- * version instead of the originally requested protocol version. If it is
- * necessary to work around this bug then the negotiated protocol version can be
- * passed in |alt_version|, otherwise 0 should be passed.
+ * should be stored in |from| which must be |flen| bytes in length and padded
+ * such that |flen == RSA_size()|. The TLS protocol version that the client
+ * originally requested should be passed in |client_version|. Some buggy clients
+ * can exist which use the negotiated version instead of the originally
+ * requested protocol version. If it is necessary to work around this bug then
+ * the negotiated protocol version can be passed in |alt_version|, otherwise 0
+ * should be passed.
  *
  * If the passed message is publicly invalid or some other error than can be
  * treated in non-constant time occurs then -1 is returned. On success the
