@@ -414,7 +414,7 @@ Reason = operation not supported for this keytype
 Sign = RSA-2048
 Availablein = default
 Ctrl = rsa_mgf1_md:sha1
-Result = PKEY_CTRL_INVALID
+Result = PKEY_CTRL_ERROR
 Reason = invalid mgf1 md
 
 # RSA PSS key tests
