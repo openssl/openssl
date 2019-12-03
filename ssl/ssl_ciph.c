@@ -921,10 +921,9 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
         /* Move the added cipher to this location */
         else if (rule == CIPHER_ORD) {
             /* reverse == 0 */
-            if (curr->active) {
+             if (curr->active && curr->group_id == 0)
+                /* ignore ciphers that belong to any equal-preference group */
                 ll_append_tail(&head, curr, &tail);
-                curr->group_id = 0;
-            }
         } else if (rule == CIPHER_DEL) {
             /* reverse == 1 */
             if (curr->active) {
@@ -937,12 +936,15 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 curr->active = 0;
             }
         } else if (rule == CIPHER_BUMP) {
-            if (curr->active) {
+            if (curr->active && curr->group_id == 0)
+                /* ignore ciphers that belong to any equal-preference group */
                 ll_append_head(&head, curr, &tail);
-                curr->group_id = 0;
-            }
         } else if (rule == CIPHER_PREFER) {
-            if (curr->active)
+            /*
+             * Set priority flag only for ciphers in current equal-preference
+             * group or outside any group (group_id == 0)
+             */
+            if (curr->active && curr->group_id == group_id)
                 curr->flags |= CIPHER_FLAG_PREFER;
         } else if (rule == CIPHER_KILL) {
             /* reverse == 0 */
