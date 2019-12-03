@@ -9,7 +9,7 @@
  */
 
 #include <openssl/aes.h>
-#include "cipher_aead.h"
+#include "ciphercommon_aead.h"
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 

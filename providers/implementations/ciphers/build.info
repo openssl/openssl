@@ -5,6 +5,8 @@
 # The latter may become legacy sooner, so it's comfortable to have two
 # variables already now, to switch the non-FIPSable TDES to legacy if needed.
 
+$COMMON_GOAL=../../libcommon.a
+
 $AES_GOAL=../../libimplementations.a
 $TDES_1_GOAL=../../libimplementations.a
 $TDES_2_GOAL=../../libimplementations.a
@@ -22,6 +24,12 @@ $RC2_GOAL=../../libimplementations.a
 $CHACHA_GOAL=../../libimplementations.a
 $CHACHAPOLY_GOAL=../../libimplementations.a
 $SIV_GOAL=../../libimplementations.a
+
+# This source is common building blocks for all ciphers in all our providers.
+SOURCE[$COMMON_GOAL]=\
+        ciphercommon.c ciphercommon_hw.c ciphercommon_block.c \
+        ciphercommon_gcm.c ciphercommon_gcm_hw.c \
+        ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_hw.c

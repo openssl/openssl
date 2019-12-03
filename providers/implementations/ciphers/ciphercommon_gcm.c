@@ -10,7 +10,7 @@
 /* Dispatch functions for gcm mode */
 
 #include "prov/ciphercommon.h"
-#include "prov/cipher_gcm.h"
+#include "prov/ciphercommon_gcm.h"
 #include "prov/providercommonerr.h"
 #include "crypto/rand.h"
 #include "prov/provider_ctx.h"

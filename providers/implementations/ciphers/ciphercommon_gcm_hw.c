@@ -8,7 +8,7 @@
  */
 
 #include "prov/ciphercommon.h"
-#include "prov/cipher_gcm.h"
+#include "prov/ciphercommon_gcm.h"
 
 
 int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
