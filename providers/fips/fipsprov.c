@@ -305,6 +305,14 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "DES-EDE3";
     case NID_des_ede3_cbc:
         return "DES-EDE3-CBC";
+    case NID_aes_256_cbc_hmac_sha256:
+        return "AES-256-CBC-HMAC-SHA256";
+    case NID_aes_128_cbc_hmac_sha256:
+        return "AES-128-CBC-HMAC-SHA256";
+    case NID_aes_256_cbc_hmac_sha1:
+        return "AES-256-CBC-HMAC-SHA1";
+    case NID_aes_128_cbc_hmac_sha1:
+        return "AES-128-CBC-HMAC-SHA1";
     default:
         break;
     }
@@ -366,7 +374,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
 static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
     ALG("AES-256-ECB", aes256ecb_functions),
-    ALG("AESfips=yes", aes192ecb_functions),
+    ALG("AES-192-ECB", aes192ecb_functions),
     ALG("AES-128-ECB", aes128ecb_functions),
     ALG("AES-256-CBC", aes256cbc_functions),
     ALG("AES-192-CBC", aes192cbc_functions),
