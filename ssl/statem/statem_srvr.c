@@ -3000,7 +3000,8 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * (SSL_MAX_MASTER_KEY_LENGTH). Reject overly short RSA keys because
      * their ciphertext cannot accommodate a premaster secret anyway.
      */
-    if (EVP_PKEY_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
+    if (EVP_PKEY_size(rsa) < RSA_PKCS1_PADDING_SIZE
+                             + SSL_MAX_MASTER_KEY_LENGTH) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
