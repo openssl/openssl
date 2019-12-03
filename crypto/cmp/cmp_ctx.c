@@ -68,14 +68,21 @@ STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted_certs(const OSSL_CMP_CTX *ctx)
  */
 int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
 {
+    STACK_OF(X509) *untrusted_certs;
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
-    if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
+    if ((untrusted_certs = sk_X509_new_null()) == NULL)
         return 0;
-    return ossl_cmp_sk_X509_add1_certs(ctx->untrusted_certs, certs, 0, 1, 0);
+    if (ossl_cmp_sk_X509_add1_certs(untrusted_certs, certs, 0, 1, 0) != 1)
+        goto err;
+    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
+    ctx->untrusted_certs = untrusted_certs;
+    return 1;
+err:
+    sk_X509_pop_free(untrusted_certs, X509_free);
+    return 0;
 }
 
 /*
@@ -373,13 +380,19 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
 int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
                                   const int len)
 {
+    ASN1_OCTET_STRING *secretValue = NULL;
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (ctx->secretValue != NULL)
+    if (ossl_cmp_asn1_octet_string_set1_bytes(&secretValue, sec, len) != 1)
+        return 0;
+    if (ctx->secretValue != NULL) {
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
-    return ossl_cmp_asn1_octet_string_set1_bytes(&ctx->secretValue, sec, len);
+        ASN1_OCTET_STRING_free(ctx->secretValue);
+    }
+    ctx->secretValue = secretValue;
+    return 1;
 }
 
 /*

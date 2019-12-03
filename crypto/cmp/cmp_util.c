@@ -408,21 +408,23 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src)
 {
+    ASN1_OCTET_STRING *new;
     if (tgt == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (*tgt == src) /* self-assignment */
         return 1;
-    ASN1_OCTET_STRING_free(*tgt);
 
     if (src != NULL) {
-        if ((*tgt = ASN1_OCTET_STRING_dup(src)) == NULL)
+        if ((new = ASN1_OCTET_STRING_dup(src)) == NULL)
             return 0;
     } else {
-        *tgt = NULL;
+        new = NULL;
     }
 
+    ASN1_OCTET_STRING_free(*tgt);
+    *tgt = new;
     return 1;
 }
 
