@@ -358,11 +358,11 @@ B<RSA_PKCS1_WITH_TLS_PADDING> is used when decrypting an RSA encrypted TLS
 pre-master secret in a TLS ClientKeyExchange message. It is the same as
 RSA_PKCS1_PADDING except that it additionally verifies that the result is the
 correct length and the first two bytes are the protocol version initially
-requested by the client. If the padding checks fail then decryption will still
-appear to succeed but a random TLS premaster secret will be returned instead
-unless the encrypted content is publicly invalid (in which case the decryption
-will fail as normal). This padding mode accepts two parameters which can be set
-using the L<EVP_PKEY_CTX_set_params(3)> function. These are
+requested by the client. If the encrypted content is publicly invalid then the
+decryption will fail. However, if the padding checks fail then decryption will
+still appear to succeed but a random TLS premaster secret will be returned
+instead. This padding mode accepts two parameters which can be set using the
+L<EVP_PKEY_CTX_set_params(3)> function. These are
 OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION and
 OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, both of which are expected to be
 unsigned integers. Normally only the first of these will be set and represents
