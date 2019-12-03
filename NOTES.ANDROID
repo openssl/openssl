@@ -39,7 +39,7 @@
 	PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
 	./Configure android-arm64 -D__ANDROID_API__=29
 	make
- 
+
  Older versions of the NDK have GCC under their common prebuilt tools directory, so the bin path
  will be slightly different. EG: to compile for ICS on ARM with NDK 10d:
 
