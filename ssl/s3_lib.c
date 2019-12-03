@@ -4185,7 +4185,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr;
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
-    int i, ii, prefer_sha256 = 0;
+    int i, ii = -1, prefer_sha256 = 0;
     unsigned long alg_mask;
     const EVP_MD *mdsha256 = EVP_sha256();
 #ifndef OPENSSL_NO_CHACHA
@@ -4304,10 +4304,13 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         ssl_set_masks(s);
     }
 
-    /* Check clients first cipher for preference flag */
+    /* Check clients first common cipher for preference flag */
     if (flags != NULL) {
-        c = sk_SSL_CIPHER_value(allow, 0);
-        ii = sk_SSL_CIPHER_find(prio, c);
+        for (i = 0; i < sk_SSL_CIPHER_num(allow); i++) {
+            c = sk_SSL_CIPHER_value(allow, i);
+            if ((ii = sk_SSL_CIPHER_find(prio, c)) >= 0)
+                break;
+        }
         if (ii >= 0 && flags[ii] & CIPHER_FLAG_PREFER
             && ssl3_check_cipher(s, c, &alg_mask)) {
             found = 1;
