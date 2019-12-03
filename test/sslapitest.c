@@ -6820,6 +6820,7 @@ static int test_ca_names(int tst)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_2
 static const char *multiblock_cipherlist_data[]=
 {
     "AES128-SHA",
@@ -6829,7 +6830,7 @@ static const char *multiblock_cipherlist_data[]=
 };
 
 /* Reduce the fragment size - so the multiblock test buffer can be small */
-#define MULTIBLOCK_FRAGSIZE 512
+# define MULTIBLOCK_FRAGSIZE 512
 
 static int test_multiblock_write(int test_index)
 {
@@ -6851,7 +6852,7 @@ static int test_multiblock_write(int test_index)
 
     /*
      * Choose a buffer large enough to perform a multi-block operation
-     * i.e: write_len >= 4 * frag_sz
+     * i.e: write_len >= 4 * frag_size
      * 9 * is chosen so that multiple multiblocks are used + some leftover.
      */
     unsigned char msg[MULTIBLOCK_FRAGSIZE * 9];
@@ -6871,7 +6872,7 @@ static int test_multiblock_write(int test_index)
     EVP_CIPHER_free(ciph);
 
     /* Set up a buffer with some data that will be sent to the client */
-    memset(msg, 2, sizeof(msg));
+    RAND_bytes(msg, sizeof(msg));
 
     if (!TEST_true(create_ssl_ctx_pair(smeth, cmeth, min_version, max_version,
                                        &sctx, &cctx, cert, privkey)))
@@ -6915,6 +6916,7 @@ end:
 
     return testresult;
 }
+#endif /* OPENSSL_NO_TLS1_2 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
@@ -7063,7 +7065,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
+#ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
+#endif
     return 1;
 }
 

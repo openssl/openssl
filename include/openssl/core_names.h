@@ -73,13 +73,13 @@ extern "C" {
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALG_ID             "alg_id_param" /* octet_string */
 
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE "tls1multi_maxbufsz" /* size_t */
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE "tls1multi_interleave" /* uint */
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD    "tls1multi_aad" /* octet_string */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE "tls1multi_maxbufsz"   /* size_t */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE  "tls1multi_interleave" /* uint */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD         "tls1multi_aad"        /* octet_string */
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN "tls1multi_aadpacklen" /* uint */
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC    "tls1multi_enc" /* octet_string */
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN "tls1multi_encin" /* octet_string */
-#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN  "tls1multi_enclen" /* size_t */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC         "tls1multi_enc"        /* octet_string */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN      "tls1multi_encin"      /* octet_string */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN     "tls1multi_enclen"     /* size_t */
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */

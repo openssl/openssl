@@ -51,13 +51,6 @@ static int aesni_cbc_hmac_sha1_init_key(PROV_CIPHER_CTX *vctx,
     return ret < 0 ? 0 : 1;
 }
 
-# define STITCHED_CALL
-# undef  STITCHED_DECRYPT_CALL
-
-# if !defined(STITCHED_CALL)
-#  define aes_off 0
-# endif
-
 static void sha1_update(SHA_CTX *c, const void *data, size_t len)
 {
     const unsigned char *ptr = data;
@@ -88,11 +81,6 @@ static void sha1_update(SHA_CTX *c, const void *data, size_t len)
     if (res)
         SHA1_Update(c, ptr, res);
 }
-
-# ifdef SHA1_Update
-#  undef SHA1_Update
-# endif
-# define SHA1_Update sha1_update
 
 # if !defined(OPENSSL_NO_MULTIBLOCK)
 
@@ -131,8 +119,8 @@ static size_t tls1_multi_block_encrypt(void *vctx,
         u8 c[128];
     } blocks[8];
     SHA1_MB_CTX *mctx;
-    unsigned int frag, last, packlen, i, x4 = 4 * n4x, minblocks, processed =
-        0;
+    unsigned int frag, last, packlen, i;
+    unsigned int x4 = 4 * n4x, minblocks, processed = 0;
     size_t ret = 0;
     u8 *IVs;
 #  if defined(BSWAP8)
@@ -310,7 +298,7 @@ static size_t tls1_multi_block_encrypt(void *vctx,
         mctx->E[i] = sctx->tail.h4;
         blocks[i].c[20] = 0x80;
         PUTU32(blocks[i].c + 60, (64 + 20) * 8);
-#  endif
+#  endif /* BSWAP */
         edges[i].ptr = blocks[i].c;
         edges[i].blocks = 1;
     }
@@ -364,7 +352,7 @@ static size_t tls1_multi_block_encrypt(void *vctx,
     ctx->multiblock_encrypt_len = ret;
     return ret;
 }
-# endif
+# endif /* OPENSSL_NO_MULTIBLOCK */
 
 static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
                                       unsigned char *out,
@@ -373,14 +361,10 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
     PROV_AES_HMAC_SHA1_CTX *sctx = (PROV_AES_HMAC_SHA1_CTX *)vctx;
     unsigned int l;
-    size_t plen = ctx->payload_length, iv = 0, /* explicit IV in TLS 1.1 and
-                                                * later */
-        sha_off = 0;
-# if defined(STITCHED_CALL)
+    size_t plen = ctx->payload_length;
+    size_t iv = 0; /* explicit IV in TLS 1.1 and later */
     size_t aes_off = 0, blocks;
-
-    sha_off = SHA_CBLOCK - sctx->md.num;
-# endif
+    size_t sha_off = SHA_CBLOCK - sctx->md.num;
 
     ctx->payload_length = NO_PAYLOAD_LENGTH;
 
@@ -397,10 +381,9 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
         else if (ctx->aux.tls_ver >= TLS1_1_VERSION)
             iv = AES_BLOCK_SIZE;
 
-# if defined(STITCHED_CALL)
         if (plen > (sha_off + iv)
-            && (blocks = (plen - (sha_off + iv)) / SHA_CBLOCK)) {
-            SHA1_Update(&sctx->md, in + iv, sha_off);
+                && (blocks = (plen - (sha_off + iv)) / SHA_CBLOCK)) {
+            sha1_update(&sctx->md, in + iv, sha_off);
 
             aesni_cbc_sha1_enc(in, out, blocks, &ctx->ks, ctx->base.iv,
                                &sctx->md, in + iv + sha_off);
@@ -414,9 +397,8 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
         } else {
             sha_off = 0;
         }
-# endif
         sha_off += iv;
-        SHA1_Update(&sctx->md, in + sha_off, plen - sha_off);
+        sha1_update(&sctx->md, in + sha_off, plen - sha_off);
 
         if (plen != len) {      /* "TLS" mode of operation */
             if (in != out)
@@ -425,7 +407,7 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
             /* calculate HMAC and append it to payload */
             SHA1_Final(out + plen, &sctx->md);
             sctx->md = sctx->tail;
-            SHA1_Update(&sctx->md, out + plen, SHA_DIGEST_LENGTH);
+            sha1_update(&sctx->md, out + plen, SHA_DIGEST_LENGTH);
             SHA1_Final(out + plen, &sctx->md);
 
             /* pad the payload|hmac */
@@ -456,10 +438,6 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
                 unsigned int u[SHA_LBLOCK];
                 unsigned char c[SHA_CBLOCK];
             } *data = (void *)sctx->md.data;
-# if defined(STITCHED_DECRYPT_CALL)
-            unsigned char tail_iv[AES_BLOCK_SIZE];
-            int stitch = 0;
-# endif
 
             if ((ctx->aux.tls_aad[plen - 4] << 8 | ctx->aux.tls_aad[plen - 3])
                 >= TLS1_1_VERSION) {
@@ -475,19 +453,8 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
             } else if (len < (SHA_DIGEST_LENGTH + 1))
                 return 0;
 
-# if defined(STITCHED_DECRYPT_CALL)
-            if (len >= 1024 && ctx->key_len == 32) {
-                /* decrypt last block */
-                memcpy(tail_iv, in + len - 2 * AES_BLOCK_SIZE,
-                       AES_BLOCK_SIZE);
-                aesni_cbc_encrypt(in + len - AES_BLOCK_SIZE,
-                                  out + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE,
-                                  &ctx->ks, tail_iv, 0);
-                stitch = 1;
-            } else
-# endif
-                /* decrypt HMAC|padding at once */
-                aesni_cbc_encrypt(in, out, len, &ctx->ks, ctx->base.iv, 0);
+            /* decrypt HMAC|padding at once */
+            aesni_cbc_encrypt(in, out, len, &ctx->ks, ctx->base.iv, 0);
 
             /* figure out payload length */
             pad = out[len - 1];
@@ -512,37 +479,14 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
 
             /* calculate HMAC */
             sctx->md = sctx->head;
-            SHA1_Update(&sctx->md, ctx->aux.tls_aad, plen);
+            sha1_update(&sctx->md, ctx->aux.tls_aad, plen);
 
-# if defined(STITCHED_DECRYPT_CALL)
-            if (stitch) {
-                blocks = (len - (256 + 32 + SHA_CBLOCK)) / SHA_CBLOCK;
-                aes_off = len - AES_BLOCK_SIZE - blocks * SHA_CBLOCK;
-                sha_off = SHA_CBLOCK - plen;
-
-                aesni_cbc_encrypt(in, out, aes_off, &ctx->ks, ctx->iv, 0);
-
-                SHA1_Update(&sctx->md, out, sha_off);
-                aesni256_cbc_sha1_dec(in + aes_off,
-                                      out + aes_off, blocks, &ctx->ks,
-                                      ctx->iv, &sctx->md, out + sha_off);
-
-                sha_off += blocks *= SHA_CBLOCK;
-                out += sha_off;
-                len -= sha_off;
-                inp_len -= sha_off;
-
-                sctx->md.Nl += (blocks << 3); /* at most 18 bits */
-                memcpy(ctx->iv, tail_iv, AES_BLOCK_SIZE);
-            }
-# endif
-
-# if 1      /* see original reference version in #else */
+            /* code containing lucky-13 fix */
             len -= SHA_DIGEST_LENGTH; /* amend mac */
             if (len >= (256 + SHA_CBLOCK)) {
                 j = (len - (256 + SHA_CBLOCK)) & (0 - SHA_CBLOCK);
                 j += SHA_CBLOCK - sctx->md.num;
-                SHA1_Update(&sctx->md, out, j);
+                sha1_update(&sctx->md, out, j);
                 out += j;
                 len -= j;
                 inp_len -= j;
@@ -550,15 +494,15 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
 
             /* but pretend as if we hashed padded payload */
             bitlen = sctx->md.Nl + (inp_len << 3); /* at most 18 bits */
-#  ifdef BSWAP4
+# ifdef BSWAP4
             bitlen = BSWAP4(bitlen);
-#  else
+# else
             mac.c[0] = 0;
             mac.c[1] = (unsigned char)(bitlen >> 16);
             mac.c[2] = (unsigned char)(bitlen >> 8);
             mac.c[3] = (unsigned char)bitlen;
             bitlen = mac.u[0];
-#  endif
+# endif /* BSWAP */
 
             pmac->u[0] = 0;
             pmac->u[1] = 0;
@@ -615,13 +559,13 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
             pmac->u[3] |= sctx->md.h3 & mask;
             pmac->u[4] |= sctx->md.h4 & mask;
 
-#  ifdef BSWAP4
+# ifdef BSWAP4
             pmac->u[0] = BSWAP4(pmac->u[0]);
             pmac->u[1] = BSWAP4(pmac->u[1]);
             pmac->u[2] = BSWAP4(pmac->u[2]);
             pmac->u[3] = BSWAP4(pmac->u[3]);
             pmac->u[4] = BSWAP4(pmac->u[4]);
-#  else
+# else
             for (i = 0; i < 5; i++) {
                 res = pmac->u[i];
                 pmac->c[4 * i + 0] = (unsigned char)(res >> 24);
@@ -629,36 +573,16 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
                 pmac->c[4 * i + 2] = (unsigned char)(res >> 8);
                 pmac->c[4 * i + 3] = (unsigned char)res;
             }
-#  endif
+# endif /* BSWAP4 */
             len += SHA_DIGEST_LENGTH;
-# else      /* pre-lucky-13 reference version of above */
-            SHA1_Update(&sctx->md, out, inp_len);
-            res = sctx->md.num;
-            SHA1_Final(pmac->c, &sctx->md);
-
-            {
-                unsigned int inp_blocks, pad_blocks;
-
-                /* but pretend as if we hashed padded payload */
-                inp_blocks =
-                    1 + ((SHA_CBLOCK - 9 - res) >> (sizeof(res) * 8 - 1));
-                res += (unsigned int)(len - inp_len);
-                pad_blocks = res / SHA_CBLOCK;
-                res %= SHA_CBLOCK;
-                pad_blocks +=
-                    1 + ((SHA_CBLOCK - 9 - res) >> (sizeof(res) * 8 - 1));
-                for (; inp_blocks < pad_blocks; inp_blocks++)
-                    sha1_block_data_order(&sctx->md, data, 1);
-            }
-# endif
             sctx->md = sctx->tail;
-            SHA1_Update(&sctx->md, pmac->c, SHA_DIGEST_LENGTH);
+            sha1_update(&sctx->md, pmac->c, SHA_DIGEST_LENGTH);
             SHA1_Final(pmac->c, &sctx->md);
 
             /* verify HMAC */
             out += inp_len;
             len -= inp_len;
-# if 1      /* see original reference version in #else */
+            /* version of code with lucky-13 fix */
             {
                 unsigned char *p = out + len - 1 - maxpad - SHA_DIGEST_LENGTH;
                 size_t off = out - p;
@@ -680,51 +604,11 @@ static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;
             }
-# else      /* pre-lucky-13 reference version of above */
-            for (res = 0, i = 0; i < SHA_DIGEST_LENGTH; i++)
-                res |= out[i] ^ pmac->c[i];
-            res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
-            ret &= (int)~res;
-
-            /* verify padding */
-            pad = (pad & ~res) | (maxpad & res);
-            out = out + len - 1 - pad;
-            for (res = 0, i = 0; i < pad; i++)
-                res |= out[i] ^ pad;
-
-            res = (0 - res) >> (sizeof(res) * 8 - 1);
-            ret &= (int)~res;
-# endif
             return ret;
         } else {
-# if defined(STITCHED_DECRYPT_CALL)
-            if (len >= 1024 && ctx->key_len == 32) {
-                if (sha_off %= SHA_CBLOCK)
-                    blocks = (len - 3 * SHA_CBLOCK) / SHA_CBLOCK;
-                else
-                    blocks = (len - 2 * SHA_CBLOCK) / SHA_CBLOCK;
-                aes_off = len - blocks * SHA_CBLOCK;
-
-                aesni_cbc_encrypt(in, out, aes_off, &ctx->ks, ctx->iv, 0);
-                SHA1_Update(&sctx->md, out, sha_off);
-                aesni256_cbc_sha1_dec(in + aes_off,
-                                      out + aes_off, blocks, &ctx->ks,
-                                      ctx->iv, &sctx->md, out + sha_off);
-
-                sha_off += blocks *= SHA_CBLOCK;
-                out += sha_off;
-                len -= sha_off;
-
-                sctx->md.Nh += blocks >> 29;
-                sctx->md.Nl += blocks <<= 3;
-                if (sctx->md.Nl < (unsigned int)blocks)
-                    sctx->md.Nh++;
-            } else
-# endif
-                /* decrypt HMAC|padding at once */
-                aesni_cbc_encrypt(in, out, len, &ctx->ks, ctx->base.iv, 0);
-
-            SHA1_Update(&sctx->md, out, len);
+            /* decrypt HMAC|padding at once */
+            aesni_cbc_encrypt(in, out, len, &ctx->ks, ctx->base.iv, 0);
+            sha1_update(&sctx->md, out, len);
         }
     }
 
@@ -743,7 +627,7 @@ static void aesni_cbc_hmac_sha1_set_mac_key(void *vctx,
 
     if (len > (int)sizeof(hmac_key)) {
         SHA1_Init(&ctx->head);
-        SHA1_Update(&ctx->head, mac, len);
+        sha1_update(&ctx->head, mac, len);
         SHA1_Final(hmac_key, &ctx->head);
     } else {
         memcpy(hmac_key, mac, len);
@@ -752,12 +636,12 @@ static void aesni_cbc_hmac_sha1_set_mac_key(void *vctx,
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36; /* ipad */
     SHA1_Init(&ctx->head);
-    SHA1_Update(&ctx->head, hmac_key, sizeof(hmac_key));
+    sha1_update(&ctx->head, hmac_key, sizeof(hmac_key));
 
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36 ^ 0x5c; /* opad */
     SHA1_Init(&ctx->tail);
-    SHA1_Update(&ctx->tail, hmac_key, sizeof(hmac_key));
+    sha1_update(&ctx->tail, hmac_key, sizeof(hmac_key));
 
     OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
 }
@@ -787,7 +671,7 @@ static int aesni_cbc_hmac_sha1_set_tls1_aad(void *vctx,
             p[aad_len - 1] = len;
         }
         sctx->md = sctx->head;
-        SHA1_Update(&sctx->md, p, aad_len);
+        sha1_update(&sctx->md, p, aad_len);
         ctx->tls_aad_pad = (int)(((len + SHA_DIGEST_LENGTH +
                        AES_BLOCK_SIZE) & -AES_BLOCK_SIZE)
                      - len);
@@ -836,7 +720,7 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
             return -1;
 
         sctx->md = sctx->head;
-        SHA1_Update(&sctx->md, param->inp, 13);
+        sha1_update(&sctx->md, param->inp, 13);
 
         x4 = 4 * n4x;
         n4x += 1;
