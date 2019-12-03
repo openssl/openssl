@@ -270,7 +270,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * the negotiated protocol version can be passed in |alt_version|, otherwise 0
  * should be passed.
  *
- * If the passed message is publicly invalid or some other error than can be
+ * If the passed message is publicly invalid or some other error that can be
  * treated in non-constant time occurs then -1 is returned. On success the
  * length of the decrypted data is returned. This will always be
  * SSL_MAX_MASTER_KEY_LENGTH. If an error occurs that should be treated in
