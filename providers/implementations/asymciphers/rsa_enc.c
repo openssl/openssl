@@ -14,6 +14,8 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+/* Just for SSL_MAX_MASTER_KEY_LENGTH */
+#include <openssl/ssl.h>
 #include "internal/constant_time.h"
 #include "crypto/rsa.h"
 #include "prov/providercommonerr.h"
@@ -136,19 +138,29 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
     int ret;
     size_t len = RSA_size(prsactx->rsa);
 
-    if (out == NULL) {
-
-        if (len == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+    if (prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
+        if (out == NULL) {
+            *outlen = SSL_MAX_MASTER_KEY_LENGTH;
+            return 1;
+        }
+        if (outsize < SSL_MAX_MASTER_KEY_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
             return 0;
         }
-        *outlen = len;
-        return 1;
-    }
+    } else {
+        if (out == NULL) {
+            if (len == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+                return 0;
+            }
+            *outlen = len;
+            return 1;
+        }
 
-    if (outsize < len) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
-        return 0;
+        if (outsize < len) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
+            return 0;
+        }
     }
 
     if (prsactx->pad_mode == RSA_PKCS1_OAEP_PADDING
