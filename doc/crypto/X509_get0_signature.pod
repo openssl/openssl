@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_get0_signature, X509_get_signature_nid, X509_get0_tbs_sigalg,
+X509_get0_signature, X509_REQ_set0_signature, X509_get_signature_nid, X509_get0_tbs_sigalg,
 X509_REQ_get0_signature, X509_REQ_get_signature_nid, X509_CRL_get0_signature,
 X509_CRL_get_signature_nid - signature information
 
@@ -13,6 +13,8 @@ X509_CRL_get_signature_nid - signature information
  void X509_get0_signature(const ASN1_BIT_STRING **psig,
                           const X509_ALGOR **palg,
                           const X509 *x);
+ void X509_REQ_set0_signature(X509_REQ *req, ASN1_BIT_STRING *psigOrNull,
+                             X509_ALGOR *palgOrNull)
  int X509_get_signature_nid(const X509 *x);
  const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 
@@ -31,6 +33,14 @@ X509_CRL_get_signature_nid - signature information
 X509_get0_signature() sets B<*psig> to the signature of B<x> and B<*palg>
 to the signature algorithm of B<x>. The values returned are internal
 pointers which B<MUST NOT> be freed up after the call.
+
+X509_set0_signature() is the equivalent setter. If NULL is passed - that
+value is ignored; and the value in B<*req> is not overwritten. The algorithm
+value B<*palgOrNull> is copied into the struct of the B<*req>; but the 
+signature value B<*palgOrNull> is simply a pointer from B<*req>. So calling 
+this function transfers the memory management of that value; and therefore 
+the  B<*palgOrNull> tha has been passed in should not be freed directly after 
+the X509_set0_signature() function has been called. 
 
 X509_get0_tbs_sigalg() returns the signature algorithm in the signed
 portion of B<x>.

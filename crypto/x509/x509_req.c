@@ -286,6 +286,15 @@ void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
         *palg = &req->sig_alg;
 }
 
+void X509_REQ_set0_signature(X509_REQ *req, ASN1_BIT_STRING *psigOrNull,
+                             X509_ALGOR *palgOrNull)
+{
+    if (psigOrNull != NULL)
+        req->signature = psigOrNull;
+    if (palgOrNull != NULL)
+        req->sig_alg = *palgOrNull;
+}
+
 int X509_REQ_get_signature_nid(const X509_REQ *req)
 {
     return OBJ_obj2nid(req->sig_alg.algorithm);

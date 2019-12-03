@@ -660,6 +660,8 @@ X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
 int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
 void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
                              const X509_ALGOR **palg);
+void X509_REQ_set0_signature(X509_REQ *req, ASN1_BIT_STRING *psigOrNull,
+                             X509_ALGOR *palgOrNull);
 int X509_REQ_get_signature_nid(const X509_REQ *req);
 int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
