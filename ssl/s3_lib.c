@@ -19,7 +19,6 @@
 #include <openssl/trace.h>
 #include "internal/cryptlib.h"
 
-#define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
 #define min(a,b)                ((a) > (b) ? (b) : (a))
@@ -32,8 +31,17 @@ const unsigned char tls12downgrade[] = {
     0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
 };
 
-/* The list of available TLSv1.3 ciphers */
-static SSL_CIPHER tls13_ciphers[] = {
+/*
+ * The list of available ciphers, mostly organized into the following
+ * groups:
+ *      Always there
+ *      EC
+ *      PSK
+ *      SRP (within that: RSA EC PSK)
+ *      Cipher families: Chacha/poly, Camellia, Gost, IDEA, SEED
+ *      Weak ciphers
+ */
+static SSL_CIPHER ssl3_ciphers[] = {
     {
         1,
         TLS1_3_RFC_AES_128_GCM_SHA256,
@@ -113,21 +121,7 @@ static SSL_CIPHER tls13_ciphers[] = {
         SSL_HANDSHAKE_MAC_SHA256,
         128,
         128,
-    }
-};
-
-/*
- * The list of available ciphers, mostly organized into the following
- * groups:
- *      Always there
- *      EC
- *      PSK
- *      SRP (within that: RSA EC PSK)
- *      Cipher families: Chacha/poly, Camellia, Gost, IDEA, SEED
- *      Weak ciphers
- */
-static SSL_CIPHER ssl3_ciphers[] = {
-    {
+    }, {
      1,
      SSL3_TXT_RSA_NULL_MD5,
      SSL3_RFC_RSA_NULL_MD5,
@@ -3212,8 +3206,6 @@ static int cipher_compare(const void *a, const void *b)
 
 void ssl_sort_cipher_list(void)
 {
-    qsort(tls13_ciphers, TLS13_NUM_CIPHERS, sizeof(tls13_ciphers[0]),
-          cipher_compare);
     qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(ssl3_ciphers[0]),
           cipher_compare);
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
@@ -3272,7 +3264,7 @@ SSL_CIPHER_FLAGS *SSL_get_ciphers_flags(const SSL *s)
 
 int ssl3_num_ciphers(void)
 {
-    return SSL3_NUM_CIPHERS + TLS13_NUM_CIPHERS;
+    return SSL3_NUM_CIPHERS;
 }
 
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
@@ -3280,12 +3272,7 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
     if (u < SSL3_NUM_CIPHERS) {
         return &(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]);
     } else {
-        /* Join table ssl3_ciphers with tls13_ciphers. */
-        u -= SSL3_NUM_CIPHERS;
-        if (u < TLS13_NUM_CIPHERS)
-            return &(tls13_ciphers[TLS13_NUM_CIPHERS - 1 - u]);
-        else
-            return NULL;
+        return NULL;
     }
 
 }
@@ -4067,9 +4054,6 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     const SSL_CIPHER *cp;
 
     c.id = id;
-    cp = OBJ_bsearch_ssl_cipher_id(&c, tls13_ciphers, TLS13_NUM_CIPHERS);
-    if (cp != NULL)
-        return cp;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
     if (cp != NULL)
         return cp;
@@ -4078,21 +4062,20 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
 
 const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
 {
-    SSL_CIPHER *c = NULL, *tbl;
-    SSL_CIPHER *alltabs[] = {tls13_ciphers, ssl3_ciphers};
-    size_t i, j, tblsize[] = {TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS};
+    SSL_CIPHER *c = NULL;
+    SSL_CIPHER *tbl = ssl3_ciphers;
+    size_t i;
 
     /* this is not efficient, necessary to optimize this? */
-    for (j = 0; j < OSSL_NELEM(alltabs); j++) {
-        for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
-            if (tbl->stdname == NULL)
-                continue;
-            if (strcmp(stdname, tbl->stdname) == 0) {
-                c = tbl;
-                break;
-            }
+    for (i = 0; i < SSL3_NUM_CIPHERS; i++, tbl++) {
+        if (tbl->stdname == NULL)
+            continue;
+        if (strcmp(stdname, tbl->stdname) == 0) {
+            c = tbl;
+            break;
         }
     }
+
     if (c == NULL) {
         tbl = ssl3_scsvs;
         for (i = 0; i < SSL3_NUM_SCSVS; i++, tbl++) {
