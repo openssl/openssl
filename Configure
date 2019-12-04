@@ -1187,43 +1187,6 @@ foreach (keys %useradd) {
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
-my %disabled_info = ();         # For configdata.pm
-foreach my $what (sort keys %disabled) {
-    $config{options} .= " no-$what";
-
-    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared', 'pic',
-                                'dynamic-engine', 'makedepend',
-                                'zlib-dynamic', 'zlib', 'sse2' )) {
-        (my $WHAT = uc $what) =~ s|-|_|g;
-
-        # Fix up C macro end names
-        $WHAT = "RMD160" if $what eq "ripemd";
-
-        # fix-up crypto/directory name(s)
-        $what = "ripemd" if $what eq "rmd160";
-        $what = "whrlpool" if $what eq "whirlpool";
-
-        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
-
-        if ((grep { $what eq $_ } @{$config{sdirs}})
-                && $what ne 'async' && $what ne 'err' && $what ne 'dso') {
-            @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
-            $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
-
-            if ($what ne 'engine') {
-                push @{$config{openssl_algorithm_defines}}, $macro;
-            } else {
-                @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
-                push @{$disabled_info{engine}->{skipped}}, catdir('engines');
-                push @{$config{openssl_other_defines}}, $macro;
-            }
-        } else {
-            push @{$config{openssl_other_defines}}, $macro;
-        }
-
-    }
-}
-
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
@@ -1313,10 +1276,8 @@ if ($target{shared_target} eq "")
         }
 
 if ($disabled{"dynamic-engine"}) {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
 } else {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
 }
 
@@ -1602,8 +1563,6 @@ unless ($disabled{devcryptoeng}) {
     }
 }
 
-push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
-
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.
 
@@ -1646,6 +1605,49 @@ $target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_l
 }
 
 # ALL MODIFICATIONS TO %disabled, %config and %target MUST BE DONE FROM HERE ON
+
+my %disabled_info = ();         # For configdata.pm
+foreach my $what (sort keys %disabled) {
+    $config{options} .= " no-$what";
+
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared', 'pic',
+                                'dynamic-engine', 'makedepend',
+                                'zlib-dynamic', 'zlib', 'sse2' )) {
+        (my $WHAT = uc $what) =~ s|-|_|g;
+
+        # Fix up C macro end names
+        $WHAT = "RMD160" if $what eq "ripemd";
+
+        # fix-up crypto/directory name(s)
+        $what = "ripemd" if $what eq "rmd160";
+        $what = "whrlpool" if $what eq "whirlpool";
+
+        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
+
+        if ((grep { $what eq $_ } @{$config{sdirs}})
+                && $what ne 'async' && $what ne 'err' && $what ne 'dso') {
+            @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
+            $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
+
+            if ($what ne 'engine') {
+                push @{$config{openssl_algorithm_defines}}, $macro;
+            } else {
+                @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
+                push @{$disabled_info{engine}->{skipped}}, catdir('engines');
+                push @{$config{openssl_other_defines}}, $macro;
+            }
+        } else {
+            push @{$config{openssl_other_defines}}, $macro;
+        }
+
+    }
+}
+
+if ($disabled{"dynamic-engine"}) {
+    push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+} else {
+    push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+}
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
