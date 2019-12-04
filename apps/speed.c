@@ -248,21 +248,6 @@ static int opt_found(const char *name, unsigned int *result,
 #define opt_found(value, pairs, result)\
     opt_found(value, result, pairs, OSSL_NELEM(pairs))
 
-static int alg_found(const char *name, unsigned int *result,
-                     const char * const alg_names[], unsigned int nbelem)
-{
-    unsigned int idx;
-
-    for (idx = 0; idx < nbelem; ++idx)
-        if (strcmp(name, alg_names[idx]) == 0) {
-            *result = idx;
-            return 1;
-        }
-    return 0;
-}
-#define found(value, algo_name_list, result)\
-    alg_found(value, result, algo_name_list, OSSL_NELEM(algo_name_list))
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
@@ -415,7 +400,7 @@ static double results[ALGOR_NUM][SIZE_NUM];
 
 #ifndef OPENSSL_NO_DSA
 enum { R_DSA_512, R_DSA_1024, R_DSA_2048, DSA_NUM };
-static const OPT_PAIR dsa_choices[] = {
+static const OPT_PAIR dsa_choices[DSA_NUM] = {
     {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048}
@@ -2793,6 +2778,7 @@ int speed_main(int argc, char **argv)
 
     if (doit[D_EVP_HMAC] && evp_hmac_md != NULL) {
         const char *md_name = OBJ_nid2ln(EVP_MD_type(evp_hmac_md));
+
         evp_hmac_name = app_malloc(sizeof("HMAC()") + strlen(md_name),
                                    "HMAC name");
         sprintf(evp_hmac_name, "HMAC(%s)", md_name);
