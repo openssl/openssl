@@ -165,6 +165,7 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p != NULL) {
         size_t len;
 
+        /* This parameter passes in a value and then returns a value */
         if (!OSSL_PARAM_get_size_t(p, &len)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
