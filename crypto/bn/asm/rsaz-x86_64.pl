@@ -266,9 +266,9 @@ $code.=<<___;
 	adcq	\$0, %rbx
 
 	mulq	%rax
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rcx, %rax
 	 movq	16($inp), %rbp
-	adcq	\$0, %rdx
 	addq	%rax, %r9
 	 movq	24($inp), %rax
 	adcq	%rdx, %r10
@@ -322,9 +322,9 @@ $code.=<<___;
 	adcq	\$0, %rcx
 
 	mulq	%rax
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rbx, %rax
 	 movq	24($inp), %r10
-	adcq	\$0, %rdx
 	addq	%rax, %r11
 	 movq	32($inp), %rax
 	adcq	%rdx, %r12
@@ -373,8 +373,8 @@ $code.=<<___;
 	adcq	\$0, %rbx
 
 	mulq	%rax
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rcx, %rax
-	adcq	\$0, %rdx
 	addq	%rax, %r13
 	 movq	%r12, %rax		# 40($inp)
 	adcq	%rdx, %r14
@@ -413,8 +413,8 @@ $code.=<<___;
 	adcq	\$0, %rcx
 
 	mulq	%rax
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rbx, %rax
-	adcq	\$0, %rdx
 	addq	%rax, %r15
 	 movq	%rbp, %rax		# 48($inp)
 	adcq	%rdx, %r8
@@ -444,8 +444,8 @@ $code.=<<___;
 	adcq	\$0, %rbx
 
 	mulq	%rax
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rcx, %rax
-	adcq	\$0, %rdx
 	addq	%rax, %r9
 	 movq	%r14, %rax		# 56($inp)
 	adcq	%rdx, %r10
@@ -467,8 +467,8 @@ $code.=<<___;
 	adcq	\$0, %rcx
 
 	mulq	%rax
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rbx, %rax
-	adcq	\$0, %rdx
 	addq	%rax, %r11
 	 movq	%r14, %rax		# 56($inp)
 	adcq	%rdx, %r12
@@ -483,8 +483,8 @@ $code.=<<___;
 	adcq	\$0, %rbx
 
 	mulq	%rax
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	addq	%rcx, %rax
-	adcq	\$0, %rdx
 	addq	%r13, %rax
 	adcq	%rbx, %rdx
 
@@ -596,9 +596,9 @@ $code.=<<___;
 	 .byte	0x48,0x8b,0x96,0x10,0x00,0x00,0x00		# mov	16($inp), %rdx
 
 	xor	%rbx, %rbx
+	 adox	%r9, %r9
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rcx, %rax
-	adox	%r9, %r9
-	adcx	%rbp, $out
 	adox	%r10, %r10
 	adcx	%rax, %r9
 	adox	%rbp, %rbx
@@ -633,9 +633,9 @@ $code.=<<___;
 	 mov	24($inp), %rdx
 
 	xor	%rcx, %rcx
+	 adox	%r11, %r11
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rbx, %rax
-	adox	%r11, %r11
-	adcx	%rbp, $out
 	adox	%r12, %r12
 	adcx	%rax, %r11
 	adox	%rbp, %rcx
@@ -666,9 +666,9 @@ $code.=<<___;
 	 mov	32($inp), %rdx
 
 	xor	%rbx, %rbx
+	 adox	%r13, %r13
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rcx, %rax
-	adox	%r13, %r13
-	adcx	%rbp, $out
 	adox	%r14, %r14
 	adcx	%rax, %r13
 	adox	%rbp, %rbx
@@ -695,9 +695,9 @@ $code.=<<___;
 	adox	%rbp, %r11
 
 	xor	%rcx, %rcx
+	 adox	%r15, %r15
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rbx, %rax
-	adox	%r15, %r15
-	adcx	%rbp, $out
 	adox	%r8, %r8
 	adcx	%rax, %r15
 	adox	%rbp, %rcx
@@ -720,9 +720,9 @@ $code.=<<___;
 	 mov	48($inp), %rdx
 
 	xor	%rbx, %rbx
+	 adox	%r9, %r9
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rcx, %rax
-	adox	%r9, %r9
-	adcx	%rbp, $out
 	adox	%r10, %r10
 	adcx	%rax, %r9
 	adcx	$out, %r10
@@ -740,9 +740,9 @@ $code.=<<___;
 	mulx	%rdx, %rax, $out
 	xor	%rcx, %rcx
 	 mov	56($inp), %rdx
+	 adox	%r11, %r11
+	# rbx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rbx, %rax
-	adox	%r11, %r11
-	adcx	%rbp, $out
 	adox	%r12, %r12
 	adcx	%rax, %r11
 	adox	%rbp, %rcx
@@ -755,9 +755,9 @@ $code.=<<___;
 #eighth iteration
 	mulx	%rdx, %rax, %rdx
 	xor	%rbx, %rbx
+	 adox	%r13, %r13
+	# rcx <= 2 and rax <= 0xFFFF..F9, so carry must be zero here
 	adcx	%rcx, %rax
-	adox	%r13, %r13
-	adcx	%rbp, %rdx
 	adox	%rbp, %rbx
 	adcx	%r13, %rax
 	adcx	%rdx, %rbx
