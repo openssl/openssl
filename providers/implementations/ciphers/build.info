@@ -5,7 +5,8 @@
 # The latter may become legacy sooner, so it's comfortable to have two
 # variables already now, to switch the non-FIPSable TDES to legacy if needed.
 
-$COMMON_GOAL=../../libimplementations.a
+$COMMON_GOAL=../../libcommon.a
+
 $AES_GOAL=../../libimplementations.a
 $TDES_1_GOAL=../../libimplementations.a
 $TDES_2_GOAL=../../libimplementations.a

@@ -1,7 +1,8 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$COMMON_GOAL=../../libimplementations.a
+$COMMON_GOAL=../../libcommon.a
+
 $SHA1_GOAL=../../libimplementations.a
 $SHA2_GOAL=../../libimplementations.a
 $SHA3_GOAL=../../libimplementations.a
