@@ -633,10 +633,12 @@ int x509_main(int argc, char **argv)
             // Supress Overwritten warning below.
             fsubj = NULL;
         } else {
-           n = X509_REQ_get_subject_name(req);
+            n = X509_REQ_get_subject_name(req);
         }
 
         if (!X509_set_issuer_name(x, n))
+            goto end;
+        if (!X509_set_subject_name(x, n))
             goto end;
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
