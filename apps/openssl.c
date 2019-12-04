@@ -258,11 +258,6 @@ int main(int argc, char *argv[])
     setup_trace(getenv("OPENSSL_TRACE"));
 #endif
 
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
     if (getenv("OPENSSL_FIPS")) {
         BIO_printf(bio_err, "FIPS mode not supported.\n");
         return 1;
@@ -379,10 +374,6 @@ int main(int argc, char *argv[])
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = 1;
-#endif
     BIO_free(bio_err);
     EXIT(ret);
 }

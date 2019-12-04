@@ -46,10 +46,7 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
      * platform then we just leak it deliberately. So we temporarily disable the
      * mem leak checking while we allocate this.
      */
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     self_test_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-
     return self_test_lock != NULL;
 }
 

@@ -691,7 +691,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
     /*
      * Calling SSL_clear() first is not required but this tests that SSL_clear()
-     * doesn't leak (when using enable-crypto-mdebug).
+     * doesn't leak.
      */
     if (!TEST_true(SSL_clear(serverssl)))
         goto end;
@@ -2116,8 +2116,7 @@ static int test_ssl_set_bio(int idx)
     /*
      * This test is checking that the ref counting for SSL_set_bio is correct.
      * If we get here and we did too many frees then we will fail in the above
-     * functions. If we haven't done enough then this will only be detected in
-     * a crypto-mdebug build
+     * functions.
      */
     SSL_free(serverssl);
     SSL_free(clientssl);
@@ -2144,8 +2143,7 @@ static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
     BIO_set_ssl(sslbio, ssl, BIO_CLOSE);
 
     /*
-     * If anything goes wrong here then we could leak memory, so this will
-     * be caught in a crypto-mdebug build
+     * If anything goes wrong here then we could leak memory.
      */
     BIO_push(sslbio, membio1);
 

@@ -66,10 +66,8 @@ static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b);
 static CRYPTO_ONCE init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(o_names_init)
 {
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     names_lh = lh_OBJ_NAME_new(obj_name_hash, obj_name_cmp);
     obj_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return names_lh != NULL && obj_lock != NULL;
 }
 
@@ -90,11 +88,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
 
     CRYPTO_THREAD_write_lock(obj_lock);
 
-    if (name_funcs_stack == NULL) {
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
+    if (name_funcs_stack == NULL)
         name_funcs_stack = sk_NAME_FUNCS_new_null();
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-    }
     if (name_funcs_stack == NULL) {
         /* ERROR */
         goto out;
@@ -102,9 +97,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     ret = names_type_num;
     names_type_num++;
     for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
         name_funcs = OPENSSL_zalloc(sizeof(*name_funcs));
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         if (name_funcs == NULL) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             ret = 0;
@@ -112,10 +105,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         }
         name_funcs->hash_func = openssl_lh_strcasehash;
         name_funcs->cmp_func = obj_strcasecmp;
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
 
         if (!push) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);

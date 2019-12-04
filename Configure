@@ -170,10 +170,6 @@ my @cl_devteam_warn = qw(
     /WX
 );
 
-# This adds backtrace information to the memory leak info.  Is only used
-# when crypto-mdebug-backtrace is enabled.
-my $memleak_devteam_backtrace = "-rdynamic";
-
 my $strict_warnings = 0;
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
@@ -345,7 +341,6 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
-    "ktls",
     "afalgeng",
     "aria",
     "asan",
@@ -392,6 +387,7 @@ my @disablables = (
     "fuzz-afl",
     "gost",
     "idea",
+    "ktls",
     "legacy",
     "makedepend",
     "md2",
@@ -1512,19 +1508,6 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
                               ? @strict_warnings_collection
                               : ( $_ ) }
                     @{$config{CFLAGS}} ];
-
-unless ($disabled{"crypto-mdebug-backtrace"})
-        {
-        foreach my $wopt (split /\s+/, $memleak_devteam_backtrace)
-                {
-                push @{$config{cflags}}, $wopt
-                        unless grep { $_ eq $wopt } @{$config{cflags}};
-                }
-        if ($target =~ /^BSD-/)
-                {
-                push @{$config{ex_libs}}, "-lexecinfo";
-                }
-        }
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
