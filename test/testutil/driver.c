@@ -81,22 +81,6 @@ int subtest_level(void)
     return level;
 }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int should_report_leaks(void)
-{
-    /*
-     * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
-     * can be used to disable leak checking at runtime.
-     * Note this only works when running the test binary manually;
-     * the test harness always enables OPENSSL_DEBUG_MEMORY.
-     */
-    char *mem_debug_env = getenv("OPENSSL_DEBUG_MEMORY");
-
-    return mem_debug_env == NULL
-        || (strcmp(mem_debug_env, "0") && strcmp(mem_debug_env, ""));
-}
-#endif
-
 static int gcd(int a, int b)
 {
     while (b != 0) {
@@ -127,13 +111,6 @@ int setup_test_framework(int argc, char *argv[])
         level = 4 * atoi(TAP_levels);
     if (test_seed != NULL)
         set_seed(atoi(test_seed));
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks()) {
-        CRYPTO_set_mem_debug(1);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    }
-#endif
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
@@ -256,11 +233,6 @@ end:
 int pulldown_test_framework(int ret)
 {
     set_test_title(NULL);
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks()
-        && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
-        return EXIT_FAILURE;
-#endif
     return ret;
 }
 

@@ -41,6 +41,10 @@
      (CVE-2019-1551)
      [Andy Polyakov]
 
+  *) Most memory-debug features have been deprecated, and the functionality
+     replaced with no-ops.
+     [Rich Salz]
+
   *) Introduced a new method type and API, OSSL_SERIALIZER, to
      represent generic serializers.  An implementation is expected to
      be able to serialize an object associated with a given name (such

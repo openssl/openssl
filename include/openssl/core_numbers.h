@@ -119,8 +119,6 @@ OSSL_CORE_MAKE_FUNC(int,
 #define OSSL_FUNC_OPENSSL_CLEANSE             21
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
-#define OSSL_FUNC_CRYPTO_MEM_CTRL             22
-OSSL_CORE_MAKE_FUNC(int, CRYPTO_mem_ctrl, (int mode))
 
 /* Bio functions provided by the core */
 #define OSSL_FUNC_BIO_NEW_FILE                23

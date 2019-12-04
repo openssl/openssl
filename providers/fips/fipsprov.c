@@ -60,7 +60,6 @@ static OSSL_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
 static OSSL_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
 static OSSL_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
 static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
-static OSSL_CRYPTO_mem_ctrl_fn *c_CRYPTO_mem_ctrl;
 
 typedef struct fips_global_st {
     const OSSL_PROVIDER *prov;
@@ -516,9 +515,6 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
             c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
             break;
-        case OSSL_FUNC_CRYPTO_MEM_CTRL:
-            c_CRYPTO_mem_ctrl = OSSL_get_CRYPTO_mem_ctrl(in);
-            break;
         case OSSL_FUNC_BIO_NEW_FILE:
             selftest_params.bio_new_file_cb = OSSL_get_BIO_new_file(in);
             break;
@@ -703,9 +699,4 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *file, int line)
 int CRYPTO_secure_allocated(const void *ptr)
 {
     return c_CRYPTO_secure_allocated(ptr);
-}
-
-int CRYPTO_mem_ctrl(int mode)
-{
-    return c_CRYPTO_mem_ctrl(mode);
 }

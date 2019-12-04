@@ -14,9 +14,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE) && !defined(FIPS_MODE)
-# include <execinfo.h>
-#endif
 
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
@@ -43,7 +40,6 @@ static char *md_failstring;
 static long md_count;
 static int md_fail_percent = 0;
 static int md_tracefd = -1;
-static int call_malloc_debug = 1;
 
 static void parseit(void);
 static int shouldfail(void);
@@ -51,7 +47,6 @@ static int shouldfail(void);
 # define FAILTEST() if (shouldfail()) return NULL
 
 #else
-static int call_malloc_debug = 0;
 
 # define INCREMENT(x) /* empty */
 # define FAILTEST() /* empty */
@@ -70,14 +65,6 @@ int CRYPTO_set_mem_functions(
         realloc_impl = r;
     if (f)
         free_impl = f;
-    return 1;
-}
-
-int CRYPTO_set_mem_debug(int flag)
-{
-    if (!allow_customize)
-        return 0;
-    call_malloc_debug = flag;
     return 1;
 }
 
@@ -209,18 +196,8 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
          */
         allow_customize = 0;
     }
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
-        CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
-        ret = malloc(num);
-        CRYPTO_mem_debug_malloc(ret, num, 1, file, line);
-    } else {
-        ret = malloc(num);
-    }
-#else
     (void)(file); (void)(line);
     ret = malloc(num);
-#endif
 
     return ret;
 }
@@ -250,17 +227,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
-        void *ret;
-        CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
-        ret = realloc(str, num);
-        CRYPTO_mem_debug_realloc(str, ret, num, 1, file, line);
-        return ret;
-    }
-#else
     (void)(file); (void)(line);
-#endif
     return realloc(str, num);
 
 }
@@ -300,17 +267,7 @@ void CRYPTO_free(void *str, const char *file, int line)
         return;
     }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
-    if (call_malloc_debug) {
-        CRYPTO_mem_debug_free(str, 0, file, line);
-        free(str);
-        CRYPTO_mem_debug_free(str, 1, file, line);
-    } else {
-        free(str);
-    }
-#else
     free(str);
-#endif
 }
 
 void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
@@ -321,3 +278,54 @@ void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
         OPENSSL_cleanse(str, num);
     CRYPTO_free(str, file, line);
 }
+
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG)
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+int CRYPTO_mem_ctrl(int mode)
+{
+    (void)mode;
+    return -1;
+}
+
+int CRYPTO_set_mem_debug(int flag)
+{
+    (void)flag;
+    return -1;
+}
+
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
+{
+    (void)info; (void)file; (void)line;
+    return -1;
+}
+
+int CRYPTO_mem_debug_pop(void)
+{
+    return -1;
+}
+
+int CRYPTO_mem_leaks(BIO *b)
+{
+    (void)b;
+    return -1;
+}
+
+#  ifndef OPENSSL_NO_STDIO
+int CRYPTO_mem_leaks_fp(FILE *fp)
+{
+    (void)fp;
+    return -1;
+}
+#  endif
+
+int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                        void *u)
+{
+    (void)cb; (void)u;
+    return -1;
+}
+
+# endif
+
+#endif

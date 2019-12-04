@@ -38,13 +38,8 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
     global = openssl_ctx_get_ex_data_global(ctx);
     if (global == NULL || global->ex_data_lock == NULL) {
         /*
-         * This can happen in normal operation when using CRYPTO_mem_leaks().
-         * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
-         * up the locks. Subsequently the BIO that CRYPTO_mem_leaks() uses gets
-         * freed, which also attempts to free the ex_data. However
-         * CRYPTO_mem_leaks() ensures that the ex_data is freed early (i.e.
-         * before OPENSSL_cleanup() is called), so if we get here we can safely
-         * ignore this operation. We just treat it as an error.
+         * If we get here, someone (who?) cleaned up the lock, so just
+         * treat it as an error.
          */
          return NULL;
     }
