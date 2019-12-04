@@ -451,6 +451,11 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
     return r->iqmp;
 }
 
+const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
+{
+    return r->pss;
+}
+
 void RSA_clear_flags(RSA *r, int flags)
 {
     r->flags &= ~flags;
