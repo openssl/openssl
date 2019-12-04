@@ -46,8 +46,8 @@
 */ /*@ unexpected comment end symbol outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
- #define X          /*@ indent of preprocessor directive off by 1 (must be 0) */
-#  define Y         /*@ nesting of preprocessor directive off by 2 */
+#define X   1       /*@0 dbl space false negative due to coincidental match */
+ #define Y  2       /*@ indent of preprocessor directive off by 1 (must be 0) */
 typedef struct  {   /*@0 double space, reported unless sloppy-spc */
     enum {          /*@2 double space  in comment, reported unless sloppy-spc */
            w = 0   /*@ hanging expr indent off by 1, or 3 for lines after '{' */
@@ -87,22 +87,25 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
         b,  /*@ expr indent off -4 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, .. */"right",
             123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
-# define MAC(X) (X) /*@ nesting indent of preprocessor directive off by 1 */
+# define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
     if(a            /*@ no space after 'if', reported unless sloppy-spc */
          || b ==    /*@ hanging expr indent off by 2, or -2 for leading '||' */
        (xx^= 2) +   /*@ no space before '^', reported unless sloppy-spc */
-       ( 0) -       /*@ space after '(', reported unless sloppy-spc */
-       f (1, 2) *   /*@ space after fn before '(', reported unless sloppy-spc */
        a %2 /       /*@ no space after '%', reported unless sloppy-spc */
        1 +/* */     /*@ no space before comment, reported unless sloppy-spc */
        /* */b)      /*@ no space after comment, reported unless sloppy-spc */
          xx = a + b /*@ extra single-statement indent off by 1 */
                + 0; /*@ double extra single-statement indent off by 3 */
-    if (1) a;       /*@ (non-brace) code after end of 'if' condition */
+    if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
+             b); else /*@ (non-brace) code before 'else' */
+        do 1;       /*@ (non-brace) code after 'do' */
+        while ( 2); /*@ space after '(', reported unless sloppy-spc */
     b; c;           /*@ more than one statement per line */
     do{             /*@ no space before '{', reported unless sloppy-spc */
+        f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
+           4);      /*@0 false negative: should report single stmt in braces */
     } while (a+ 0); /*@ no space before '+', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
