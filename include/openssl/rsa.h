@@ -224,6 +224,7 @@ const BIGNUM *RSA_get0_q(const RSA *d);
 const BIGNUM *RSA_get0_dmp1(const RSA *r);
 const BIGNUM *RSA_get0_dmq1(const RSA *r);
 const BIGNUM *RSA_get0_iqmp(const RSA *r);
+const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r);
 void RSA_clear_flags(RSA *r, int flags);
 int RSA_test_flags(const RSA *r, int flags);
 void RSA_set_flags(RSA *r, int flags);
