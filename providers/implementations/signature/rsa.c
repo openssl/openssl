@@ -308,6 +308,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             return 0;
         }
 
+#ifndef FIPS_MODE
         if (EVP_MD_is_a(prsactx->md, OSSL_DIGEST_NAME_MDC2)) {
             unsigned int sltmp;
 
@@ -326,6 +327,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             ret = sltmp;
             goto end;
         }
+#endif
 
         switch (prsactx->pad_mode) {
         case RSA_X931_PADDING:
@@ -401,7 +403,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                   prsactx->pad_mode);
     }
 
-#ifdef LEGACY_MODE
+#ifndef FIPS_MODE
  end:
 #endif
     if (ret <= 0) {
