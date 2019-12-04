@@ -1239,46 +1239,6 @@ foreach (keys %useradd) {
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
-######################################################################
-# Build up information for skipping certain directories depending on disabled
-# features, as well as setting up macros for disabled features.
-
-# This is a tentative database of directories to skip.  Some entries may not
-# correspond to anything real, but that's ok, they will simply be ignored.
-# The actual processing of these entries is done in the build.info lookup
-# loop further down.
-#
-# The key is a Unix formatted path in the source tree, the value is an index
-# into %disabled_info, so any existing path gets added to a corresponding
-# 'skipped' entry in there with the list of skipped directories.
-my %skipdir = ();
-my %disabled_info = ();         # For configdata.pm
-foreach my $what (sort keys %disabled) {
-    # There are deprecated disablables that translate to themselves.
-    # They cause disabling cascades, but should otherwise not regiter.
-    next if $deprecated_disablables{$what};
-
-    $config{options} .= " no-$what";
-
-    if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
-                                'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'zlib-dynamic', 'zlib', 'sse2', 'legacy' )) {
-        (my $WHAT = uc $what) =~ s|-|_|g;
-        my $skipdir = $what;
-
-        # fix-up crypto/directory name(s)
-        $skipdir = "ripemd" if $what eq "rmd160";
-        $skipdir = "whrlpool" if $what eq "whirlpool";
-
-        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
-        push @{$config{openssl_feature_defines}}, $macro;
-
-        $skipdir{engines} = $what if $what eq 'engine';
-        $skipdir{"crypto/$skipdir"} = $what
-            unless $what eq 'async' || $what eq 'err' || $what eq 'dso';
-    }
-}
-
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
@@ -1384,10 +1344,8 @@ if ($target{shared_target} eq "")
         }
 
 if ($disabled{"dynamic-engine"}) {
-        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
 } else {
-        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
 }
 
@@ -1605,8 +1563,6 @@ unless ($disabled{devcryptoeng}) {
     }
 }
 
-push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
-
 unless ($disabled{ktls}) {
     $config{ktls}="";
     if ($target =~ m/^linux/) {
@@ -1676,6 +1632,52 @@ $target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_l
 }
 
 # ALL MODIFICATIONS TO %disabled, %config and %target MUST BE DONE FROM HERE ON
+
+######################################################################
+# Build up information for skipping certain directories depending on disabled
+# features, as well as setting up macros for disabled features.
+
+# This is a tentative database of directories to skip.  Some entries may not
+# correspond to anything real, but that's ok, they will simply be ignored.
+# The actual processing of these entries is done in the build.info lookup
+# loop further down.
+#
+# The key is a Unix formatted path in the source tree, the value is an index
+# into %disabled_info, so any existing path gets added to a corresponding
+# 'skipped' entry in there with the list of skipped directories.
+my %skipdir = ();
+my %disabled_info = ();         # For configdata.pm
+foreach my $what (sort keys %disabled) {
+    # There are deprecated disablables that translate to themselves.
+    # They cause disabling cascades, but should otherwise not regiter.
+    next if $deprecated_disablables{$what};
+
+    $config{options} .= " no-$what";
+
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
+                                'module', 'pic', 'dynamic-engine', 'makedepend',
+                                'zlib-dynamic', 'zlib', 'sse2', 'legacy' )) {
+        (my $WHAT = uc $what) =~ s|-|_|g;
+        my $skipdir = $what;
+
+        # fix-up crypto/directory name(s)
+        $skipdir = "ripemd" if $what eq "rmd160";
+        $skipdir = "whrlpool" if $what eq "whirlpool";
+
+        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
+        push @{$config{openssl_feature_defines}}, $macro;
+
+        $skipdir{engines} = $what if $what eq 'engine';
+        $skipdir{"crypto/$skipdir"} = $what
+            unless $what eq 'async' || $what eq 'err' || $what eq 'dso';
+    }
+}
+
+if ($disabled{"dynamic-engine"}) {
+    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+} else {
+    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+}
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
