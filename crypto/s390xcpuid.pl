@@ -558,4 +558,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT;	# force flush
+close STDOUT or die "error closing STDOUT";	# force flush
