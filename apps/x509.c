@@ -630,8 +630,6 @@ int x509_main(int argc, char **argv)
                 goto end;
             }
             n = fsubj;
-            // Supress Overwritten warning below.
-            fsubj = NULL;
         } else {
             n = X509_REQ_get_subject_name(req);
         }
@@ -640,11 +638,17 @@ int x509_main(int argc, char **argv)
             goto end;
         if (!X509_set_subject_name(x, n))
             goto end;
+
+        if (n == fsubj) {
+            X509_NAME_free(fsubj);
+	    fsubj = NULL;
+        }
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
+
     } else {
         x = load_cert(infile, informat, "Certificate");
         if (x == NULL)
