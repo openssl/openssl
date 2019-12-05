@@ -516,10 +516,12 @@ int tls13_change_cipher_state(SSL *s, int which)
     const EVP_MD *md = NULL;
     const EVP_CIPHER *cipher = NULL;
 #if !defined(OPENSSL_NO_KTLS) && defined(OPENSSL_KTLS_TLS13)
-# ifndef __FreeBSD__
+# ifdef __FreeBSD__
+    struct tls_enable crypto_info;
+# else
     struct tls_crypto_info_all crypto_info;
-    BIO *bio;
 # endif
+    BIO *bio;
 #endif
 
     if (which & SSL3_CC_READ) {
@@ -784,7 +786,6 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 #ifndef OPENSSL_NO_KTLS
 # if defined(OPENSSL_KTLS_TLS13)
-#  ifndef __FreeBSD__
     if (!(which & SSL3_CC_WRITE) || !(which & SSL3_CC_APPLICATION)
         || ((which & SSL3_CC_WRITE) && (s->mode & SSL_MODE_NO_KTLS_TX)))
         goto skip_ktls;
@@ -797,9 +798,27 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (s->record_padding_cb != NULL)
         goto skip_ktls;
 
+#  ifdef __FreeBSD__
+    memset(&crypto_info, 0, sizeof(crypto_info));
+    switch (s->s3.tmp.new_cipher->algorithm_enc) {
+    case SSL_AES128GCM:
+    case SSL_AES256GCM:
+        crypto_info.cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
+        crypto_info.iv_len = EVP_CIPHER_CTX_iv_length(ciph_ctx);
+        break;
+    default:
+        goto skip_ktls;
+    }
+    crypto_info.cipher_key = key;
+    crypto_info.cipher_key_len = EVP_CIPHER_key_length(cipher);
+    crypto_info.iv = iv;
+    crypto_info.tls_vmajor = (s->version >> 8) & 0x000000ff;
+    crypto_info.tls_vminor = (s->version & 0x000000ff);
+#  else
     /* check that cipher is supported */
     if (!ktls_check_supported_cipher(cipher, ciph_ctx))
         goto skip_ktls;
+#  endif
 
     bio = s->wbio;
 
@@ -813,16 +832,17 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (BIO_flush(bio) <= 0)
         goto skip_ktls;
 
+#  ifndef __FreeBSD__
     /* configure kernel crypto structure */
     if (!ktls_configure_crypto(cipher, s->version, ciph_ctx, 
                                RECORD_LAYER_get_write_sequence(&s->rlayer),
                                &crypto_info, NULL, iv, key))
         goto skip_ktls;
+#  endif
 
     /* ktls works with user provided buffers directly */
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE))
         ssl3_release_write_buffer(s);
-#  endif
 skip_ktls:
 # endif
 #endif

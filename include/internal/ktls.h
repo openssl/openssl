@@ -32,6 +32,8 @@
 #   include <netinet/tcp.h>
 #   include <crypto/cryptodev.h>
 
+#   define OPENSSL_KTLS_TLS13
+
 /*
  * Only used by the tests in sslapitest.c.
  */
