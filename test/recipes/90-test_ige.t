@@ -7,6 +7,17 @@
 # https://www.openssl.org/source/license.html
 
 
+use strict;
+use warnings;
+
 use OpenSSL::Test::Simple;
+use OpenSSL::Test;
+use OpenSSL::Test::Utils;
+
+setup("test_ige");
+
+plan skip_all => "AES_ige support is disabled in this build"
+    if disabled("deprecated")
+       && (!defined config("api") || config("api") >= 30000);
 
 simple_test("test_ige", "igetest");

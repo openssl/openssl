@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_aes_xts.h"
-
 #ifdef FIPS_MODE
 const int allow_insecure_decrypt = 0;
 #else

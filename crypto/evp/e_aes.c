@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement the EVP AES ciphers.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <assert.h>
 #include <openssl/opensslconf.h>

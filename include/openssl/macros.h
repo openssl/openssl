@@ -25,6 +25,9 @@
 
 /*
  * Generic deprecation macro
+  *
+  * If OPENSSL_SUPPRESS_DEPRECATED is defined, then DECLARE_DEPRECATED
+  * becomes a no-op
  */
 # ifndef DECLARE_DEPRECATED
 #  define DECLARE_DEPRECATED(f)   f;
