@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 14;
+plan tests => 17;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -97,7 +97,29 @@ SKIP: {
        comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
 		 "subject=CN = SomeNewCNOnReq"));
 
+     # Create a naked public RSA key for the next step.
+     my $pub = "cert.pub";
+     my $prv = "cert.key";
+     ok(run(app(["openssl", "genrsa","-out", $prv])));
+     ok(run(app(["openssl", "rsa","-in", $prv,
+		"-pubout", "-out", $pub])));
+    
+     # And finally the -new, no req, no cert variation using
+     # just the naked key.
+     #
+     ok(run(app(["openssl", "x509", 
+                 "-new", 
+                 "-subj", "/CN=NakedCN", 
+                 "-force_pubkey", $pub,
+                 "-signkey", $signkey, 
+                 "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 "subject=CN = NakedCN"));
+
     unlink $selfout;
+    unlink $pub;
+    unlink $prv;
 };
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
