@@ -14,13 +14,24 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
-#include <openssl/md2.h>
-#include <openssl/md5.h>
-#include <openssl/mdc2.h>
-#include <openssl/sha.h>
+#ifndef OPENSSL_NO_MD2
+# include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
+#endif
+#ifndef OPENSSL_NO_MD5
+# include <openssl/md5.h> /* uses MD5_DIGEST_LENGTH */
+#endif
+#ifndef OPENSSL_NO_MDC2
+# include <openssl/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
+#endif
+#include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
 #include "rsa_local.h"
 
 /*
+ * The general purpose ASN1 code is not available inside the FIPS provider.
+ * To remove the dependency RSASSA-PKCS1-v1_5 DigestInfo encodings can be
+ * treated as a special case by pregenerating the required ASN1 encoding.
+ * This encoding will also be shared by the default provider.
+ *
  * The EMSA-PKCS1-v1_5 encoding method includes an ASN.1 value of type
  * DigestInfo, where the type DigestInfo has the syntax
  *
@@ -50,29 +61,24 @@
 #define ASN1_OID 0x06
 
 /* SHA OIDs are of the form: (2 16 840 1 101 3 4 2 |n|) */
-#define ENCODE_DIGESTINFO_SHA(name, n, sz) \
-static const unsigned char digestinfo_##name##_der[] = { \
-    ASN1_SEQUENCE, 0x11 + sz, \
-      ASN1_SEQUENCE, 0x0d, \
-        ASN1_OID, 0x09, 2 * 40 + 16, 0x86, 0x48, 1, 101, 3, 4, 2, n, \
-        ASN1_NULL, 0x00, \
-      ASN1_OCTET_STRING, sz \
+#define ENCODE_DIGESTINFO_SHA(name, n, sz)                                     \
+static const unsigned char digestinfo_##name##_der[] = {                       \
+    ASN1_SEQUENCE, 0x11 + sz,                                                  \
+      ASN1_SEQUENCE, 0x0d,                                                     \
+        ASN1_OID, 0x09, 2 * 40 + 16, 0x86, 0x48, 1, 101, 3, 4, 2, n,           \
+        ASN1_NULL, 0x00,                                                       \
+      ASN1_OCTET_STRING, sz                                                    \
 };
 
 /* MD2 and MD5 OIDs are of the form: (1 2 840 113549 2 |n|) */
-#define ENCODE_DIGESTINFO_MD(name, n, sz) \
-static const unsigned char digestinfo_##name##_der[] = { \
-    ASN1_SEQUENCE, 0x10 + sz, \
-      ASN1_SEQUENCE, 0x0c, \
-        ASN1_OID, 0x08, 1 * 40 + 2, 0x86, 0x48, 0x86, 0xf7, 0x0d, 2, n, \
-        ASN1_NULL, 0x00, \
-      ASN1_OCTET_STRING, sz \
+#define ENCODE_DIGESTINFO_MD(name, n, sz)                                      \
+static const unsigned char digestinfo_##name##_der[] = {                       \
+    ASN1_SEQUENCE, 0x10 + sz,                                                  \
+      ASN1_SEQUENCE, 0x0c,                                                     \
+        ASN1_OID, 0x08, 1 * 40 + 2, 0x86, 0x48, 0x86, 0xf7, 0x0d, 2, n,        \
+        ASN1_NULL, 0x00,                                                       \
+      ASN1_OCTET_STRING, sz                                                    \
 };
-
-#define MD_CASE(name) \
-    case NID_##name: \
-        *len = sizeof(digestinfo_##name##_der); \
-        return digestinfo_##name##_der;
 
 #ifndef FIPS_MODE
 # ifndef OPENSSL_NO_MD2
@@ -81,16 +87,6 @@ ENCODE_DIGESTINFO_MD(md2, 0x02, MD2_DIGEST_LENGTH)
 # ifndef OPENSSL_NO_MD5
 ENCODE_DIGESTINFO_MD(md5, 0x05, MD5_DIGEST_LENGTH)
 # endif
-
-/* SHA-1 (1 3 14 3 2 26) */
-static const unsigned char digestinfo_sha1_der[] = {
-    ASN1_SEQUENCE, 0x0d + SHA_DIGEST_LENGTH,
-      ASN1_SEQUENCE, 0x09,
-        ASN1_OID, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
-        ASN1_NULL, 0x00,
-      ASN1_OCTET_STRING, SHA_DIGEST_LENGTH
-};
-
 # ifndef OPENSSL_NO_MDC2
 /* MDC-2 (2 5 8 3 101) */
 static const unsigned char digestinfo_mdc2_der[] = {
@@ -101,7 +97,16 @@ static const unsigned char digestinfo_mdc2_der[] = {
       ASN1_OCTET_STRING, MDC2_DIGEST_LENGTH
 };
 # endif
-#endif
+/* SHA-1 (1 3 14 3 2 26) */
+static const unsigned char digestinfo_sha1_der[] = {
+    ASN1_SEQUENCE, 0x0d + SHA_DIGEST_LENGTH,
+      ASN1_SEQUENCE, 0x09,
+        ASN1_OID, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
+        ASN1_NULL, 0x00,
+      ASN1_OCTET_STRING, SHA_DIGEST_LENGTH
+};
+
+#endif /* FIPS_MODE */
 
 ENCODE_DIGESTINFO_SHA(sha256, 0x01, SHA256_DIGEST_LENGTH)
 ENCODE_DIGESTINFO_SHA(sha384, 0x02, SHA384_DIGEST_LENGTH)
@@ -113,6 +118,11 @@ ENCODE_DIGESTINFO_SHA(sha3_224, 0x07, SHA224_DIGEST_LENGTH)
 ENCODE_DIGESTINFO_SHA(sha3_256, 0x08, SHA256_DIGEST_LENGTH)
 ENCODE_DIGESTINFO_SHA(sha3_384, 0x09, SHA384_DIGEST_LENGTH)
 ENCODE_DIGESTINFO_SHA(sha3_512, 0x0a, SHA512_DIGEST_LENGTH)
+
+#define MD_CASE(name)                                                          \
+    case NID_##name:                                                           \
+        *len = sizeof(digestinfo_##name##_der);                                \
+        return digestinfo_##name##_der;
 
 static const unsigned char *digestinfo_encoding(int nid, size_t *len)
 {
@@ -128,7 +138,7 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
     MD_CASE(md5)
 # endif
     MD_CASE(sha1)
-#endif
+#endif /* FIPS_MODE */
     MD_CASE(sha224)
     MD_CASE(sha256)
     MD_CASE(sha384)
@@ -148,7 +158,7 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
 #define SSL_SIG_LENGTH  36
 
 /*
- * encode_pkcs1 encodes a DigestInfo prefix of hash |type| and digest |m|, as
+ * Encodes a DigestInfo prefix of hash |type| and digest |m|, as
  * described in EMSA-PKCS1-v1_5-ENCODE, RFC 3447 section 9.2 step 2. This
  * encodes the DigestInfo (T and tLen) but does not add the padding.
  *
@@ -195,9 +205,8 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *tmps = NULL;
     const unsigned char *encoded = NULL;
 
-    if (rsa->meth->rsa_sign) {
+    if (rsa->meth->rsa_sign != NULL)
         return rsa->meth->rsa_sign(type, m, m_len, sigret, siglen, rsa);
-    }
 
     /* Compute the encoded digest. */
     if (type == NID_md5_sha1) {
@@ -218,7 +227,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
         encoded = tmps;
     }
 
-    if (encoded_len > (size_t)RSA_size(rsa) - RSA_PKCS1_PADDING_SIZE) {
+    if (encoded_len + RSA_PKCS1_PADDING_SIZE > (size_t)RSA_size(rsa)) {
         RSAerr(RSA_F_RSA_SIGN, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
@@ -236,12 +245,13 @@ err:
 }
 
 /*
- * int_rsa_verify verifies an RSA signature in |sigbuf| using |rsa|. It may be
- * called in two modes. If |rm| is NULL, it verifies the signature for digest
- * |m|. Otherwise, it recovers the digest from the signature, writing the digest
- * to |rm| and the length to |*prm_len|. |type| is the NID of the digest
- * algorithm to use. It returns one on successful verification and zero
- * otherwise.
+ * Verify an RSA signature in |sigbuf| using |rsa|.
+ * |type| is the NID of the digest algorithm to use.
+ * If |rm| is NULL, it verifies the signature for digest |m|, otherwise
+ * it recovers the digest from the signature, writing the digest to |rm| and
+ * the length to |*prm_len|.
+ *
+ * It returns one on successful verification or zero otherwise.
  */
 int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
                    unsigned char *rm, size_t *prm_len,
@@ -367,9 +377,8 @@ int RSA_verify(int type, const unsigned char *m, unsigned int m_len,
                const unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
 {
 
-    if (rsa->meth->rsa_verify) {
+    if (rsa->meth->rsa_verify != NULL)
         return rsa->meth->rsa_verify(type, m, m_len, sigbuf, siglen, rsa);
-    }
 
     return int_rsa_verify(type, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
 }
