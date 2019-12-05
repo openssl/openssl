@@ -5,7 +5,7 @@
 RSA_set0_key, RSA_set0_factors, RSA_set0_crt_params, RSA_get0_key,
 RSA_get0_factors, RSA_get0_crt_params,
 RSA_get0_n, RSA_get0_e, RSA_get0_d, RSA_get0_p, RSA_get0_q,
-RSA_get0_dmp1, RSA_get0_dmq1, RSA_get0_iqmp, RSA_get0_pss_params
+RSA_get0_dmp1, RSA_get0_dmq1, RSA_get0_iqmp, RSA_get0_pss_params,
 RSA_clear_flags,
 RSA_test_flags, RSA_set_flags, RSA_get0_engine, RSA_get_multi_prime_extra_count,
 RSA_get0_multi_prime_factors, RSA_get0_multi_prime_crt_params,
