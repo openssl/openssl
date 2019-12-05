@@ -363,7 +363,17 @@
      for scripting purposes.
      [Richard Levitte]
 
-  *) The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have been
+  *) All of the low level AES functions have been deprecated including:
+     AES_options, AES_set_encrypt_key, AES_set_decrypt_key, AES_encrypt,
+     AES_decrypt, AES_ecb_encrypt, AES_cbc_encrypt, AES_cfb128_encrypt,
+     AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ofb128_encrypt, AES_wrap_key and
+     AES_unwrap_key
+     Use of these low level functions has been informally discouraged for a long
+     time. Instead applications should use the high level EVP APIs, e.g.
+     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
+     equivalently named decrypt functions.
+
+     The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have also been
      deprecated. These undocumented functions were never integrated into the EVP
      layer and implement the AES Infinite Garble Extension (IGE) mode and AES
      Bi-directional IGE mode. These modes were never formally standardised and

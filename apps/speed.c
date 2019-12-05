@@ -44,7 +44,9 @@
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 #include <openssl/aes.h>
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
 # include <openssl/camellia.h>
 #endif
@@ -358,10 +360,10 @@ static const OPT_PAIR doit_choices[] = {
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"aes-128-ige", D_IGE_128_AES},
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
@@ -752,6 +754,8 @@ static int DES_ede3_cbc_encrypt_loop(void *args)
 #define MAX_BLOCK_SIZE 128
 
 static unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static AES_KEY aes_ks1, aes_ks2, aes_ks3;
 static int AES_cbc_128_encrypt_loop(void *args)
 {
@@ -786,7 +790,6 @@ static int AES_cbc_256_encrypt_loop(void *args)
     return count;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int AES_ige_128_encrypt_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -822,7 +825,6 @@ static int AES_ige_256_encrypt_loop(void *args)
                         (size_t)lengths[testnum], &aes_ks3, iv, AES_ENCRYPT);
     return count;
 }
-#endif
 
 static int CRYPTO_gcm128_aad_loop(void *args)
 {
@@ -834,6 +836,7 @@ static int CRYPTO_gcm128_aad_loop(void *args)
         CRYPTO_gcm128_aad(gcm_ctx, buf, lengths[testnum]);
     return count;
 }
+#endif
 
 static int RAND_bytes_loop(void *args)
 {
@@ -1749,10 +1752,12 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         if (strcmp(algo, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
             continue;
         }
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
         if (strcmp(algo, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
@@ -1946,9 +1951,11 @@ int speed_main(int argc, char **argv)
         DES_set_key_unchecked(&keys[2], &sch[2]);
     }
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML] || doit[D_CBC_192_CML] || doit[D_CBC_256_CML]) {
         Camellia_set_key(key16, 128, &camellia_ks[0]);
@@ -2407,6 +2414,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_CBC_128_AES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_CBC_128_AES], c[D_CBC_128_AES][testnum],
@@ -2441,7 +2449,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+
     if (doit[D_IGE_128_AES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_IGE_128_AES], c[D_IGE_128_AES][testnum],
@@ -2475,7 +2483,6 @@ int speed_main(int argc, char **argv)
             print_result(D_IGE_256_AES, testnum, count, d);
         }
     }
-#endif
     if (doit[D_GHASH]) {
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].gcm_ctx =
@@ -2495,6 +2502,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
     }
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 #ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML]) {
         if (async_jobs > 0) {
@@ -3488,7 +3496,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
         printf("%s ", DES_options());
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         printf("%s ", AES_options());
+#endif
 #ifndef OPENSSL_NO_IDEA
         printf("%s ", IDEA_options());
 #endif

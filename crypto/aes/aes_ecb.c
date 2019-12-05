@@ -9,6 +9,12 @@
 
 #include <assert.h>
 
+/*
+ * AES_encrypt/AES_decrypt are deprecated - but we need to use them to implement
+ * AES_ecb_encrypt
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/aes.h>
 #include "aes_local.h"
 
