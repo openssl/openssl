@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement provider AES ciphers.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_aes_siv.h"
 
 static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)

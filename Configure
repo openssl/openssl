@@ -559,6 +559,11 @@ my @disable_cascades = (
     "legacy"                 => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
+
+    # Padlock engine uses low-level AES APIs which are deprecated
+    sub { $disabled{"deprecated"}
+          && (!defined $config{"api"} || $config{"api"} >= 30000) }
+          => [ "padlockeng" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
