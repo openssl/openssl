@@ -626,7 +626,7 @@ int x509_main(int argc, char **argv)
 
         if (req == NULL) {
             if (fsubj == NULL) {
-                BIO_printf(bio_err, "We need either a request/certificate to extract a subject fomr; or one set with -subj\n");
+                BIO_printf(bio_err, "We need either a request/certificate to extract a subject from; or one set with -subj\n");
                 goto end;
             }
             n = fsubj;
@@ -641,7 +641,7 @@ int x509_main(int argc, char **argv)
 
         if (n == fsubj) {
             X509_NAME_free(fsubj);
-	    fsubj = NULL;
+            fsubj = NULL;
         }
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
