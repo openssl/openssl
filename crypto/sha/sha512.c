@@ -60,6 +60,14 @@
 # define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
 
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+# define U64(C)     C##UI64
+#elif defined(__arch64__)
+# define U64(C)     C##UL
+#else
+# define U64(C)     C##ULL
+#endif
+
 int sha512_224_init(SHA512_CTX *c)
 {
     c->h[0] = U64(0x8c3d37c819544da2);
