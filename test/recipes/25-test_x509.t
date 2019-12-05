@@ -59,6 +59,7 @@ SKIP: {
     unlink $pubkey;
     unlink $selfout;
 }
+# X509 -subj override tests.
 {
     my @path = qw(test certs);
     my $signkey = srctop_file(@path, "rootCA.key");
