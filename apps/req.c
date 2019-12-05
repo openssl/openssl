@@ -214,9 +214,12 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     *p = '\0';
 
     /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
-    if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
-        != NULL || lh_OPENSSL_STRING_error(addexts)) {
-        OPENSSL_free(p != NULL ? p : kv);
+    p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv);
+    if (p != NULL) {
+        OPENSSL_free(p);
+        return 1;
+    } else if (lh_OPENSSL_STRING_error(addexts)) {
+        OPENSSL_free(kv);
         return -1;
     }
 
