@@ -89,13 +89,10 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 # define SHA512_CBLOCK   (SHA_LBLOCK*8)
 # if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 #  define SHA_LONG64 unsigned __int64
-#  define U64(C)     C##UI64
 # elif defined(__arch64__)
 #  define SHA_LONG64 unsigned long
-#  define U64(C)     C##UL
 # else
 #  define SHA_LONG64 unsigned long long
-#  define U64(C)     C##ULL
 # endif
 
 typedef struct SHA512state_st {
