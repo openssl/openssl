@@ -38,6 +38,7 @@
 #   endif
 #   define OPENSSL_KTLS_AES_GCM_128
 #   define OPENSSL_KTLS_AES_GCM_256
+#   define OPENSSL_KTLS_TLS13
 
 /*
  * Only used by the tests in sslapitest.c.
@@ -221,6 +222,7 @@ static ossl_inline int ktls_check_supported_cipher(const SSL *s,
     case TLS1_VERSION:
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:
+    case TLS1_3_VERSION:
         break;
     default:
         return 0;
@@ -263,7 +265,10 @@ static ossl_inline int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c,
     case SSL_AES128GCM:
     case SSL_AES256GCM:
         crypto_info->cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
-        crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
+        if (s->version == TLS1_3_VERSION)
+            crypto_info->iv_len = EVP_CIPHER_CTX_iv_length(dd);
+        else
+            crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
         break;
     case SSL_AES128:
     case SSL_AES256:
