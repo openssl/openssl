@@ -1598,7 +1598,7 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
     tmp_flags = OPENSSL_malloc(
         (num_of_ciphers + num_of_tls13_ciphersuites) * sizeof(uint8_t));
     if (tmp_flags == NULL) {
-        OPENSSL_free(tmp_cipher_list_flags);
+        ssl_cipher_list_flags_free(tmp_cipher_list_flags);
         sk_SSL_CIPHER_free(tmp_cipher_list);
         return 0;
     }
@@ -1614,8 +1614,10 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
         tmp_flags[i] = 0;
     }
 
-    if (!update_cipher_list_by_id(cipher_list_by_id, tmp_cipher_list))
+    if (!update_cipher_list_by_id(cipher_list_by_id, tmp_cipher_list)) {
+        ssl_cipher_list_flags_free(tmp_cipher_list_flags);
         return 0;
+    }
 
     ssl_cipher_list_flags_free(*cipher_list_flags);
     *cipher_list_flags = tmp_cipher_list_flags;
@@ -1869,6 +1871,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      */
     tmp_flags = OPENSSL_malloc(num_of_ciphers + sk_SSL_CIPHER_num(tls13_ciphersuites));
     if (tmp_flags == NULL) {
+        sk_SSL_CIPHER_free(cipherstack);
         OPENSSL_free(co_list);
         return NULL;
     }

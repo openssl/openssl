@@ -4345,7 +4345,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 if (pass) {
                     min_index = min(min_index, ii);
                     if (prefer_sha256 && ssl_md(c->algorithm2) == mdsha256)
-                        min_index_sha256 = min(min_index_sha256, INT_MAX);
+                        min_index_sha256 = min(min_index_sha256, ii);
                 }
             }
 
