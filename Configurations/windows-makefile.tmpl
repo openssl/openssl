@@ -194,23 +194,22 @@ CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { " -I ".$_} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}
 CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
-LD={- $config{LD} -}
+LD="{- $config{LD} -}"
 LDFLAGS={- join(' ', @{$config{LDFLAGS}}) -}
 EX_LIBS={- join(' ', @{$config{LDLIBS}}) -}
 
 PERL={- $config{PERL} -}
 
-AR={- $config{AR} -}
+AR="{- $config{AR} -}"
 ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
 
-MT={- $config{MT} -}
+MT="{- $config{MT} -}"
 MTFLAGS= {- join(' ', @{$config{MTFLAGS}}) -}
 
-AS={- $config{AS} -}
+AS="{- $config{AS} -}"
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 RC="{- $config{RC} -}"
-RC={- $config{RC} -}
 RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -}
 
 ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
