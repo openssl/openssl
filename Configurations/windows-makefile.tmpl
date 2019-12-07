@@ -187,29 +187,29 @@ libdir={- file_name_is_absolute($libdir)
 
 ##### User defined commands and flags ################################
 
-CC={- $config{CC} -}
-CPP={- $config{CPP} -}
+CC="{- $config{CC} -}"
+CPP="{- $config{CPP} -}"
 CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
                                   (map { " -I ".$_} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}
 CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
-LD={- $config{LD} -}
+LD="{- $config{LD} -}"
 LDFLAGS={- join(' ', @{$config{LDFLAGS}}) -}
 EX_LIBS={- join(' ', @{$config{LDLIBS}}) -}
 
 PERL={- $config{PERL} -}
 
-AR={- $config{AR} -}
+AR="{- $config{AR} -}"
 ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
 
-MT={- $config{MT} -}
+MT="{- $config{MT} -}"
 MTFLAGS= {- join(' ', @{$config{MTFLAGS}}) -}
 
-AS={- $config{AS} -}
+AS="{- $config{AS} -}"
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
-RC={- $config{RC} -}
+RC="{- $config{RC} -}"
 RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -}
 
 ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
@@ -444,7 +444,8 @@ install_ssldirs:
 	@IF NOT EXIST "$(OPENSSLDIR)\openssl.cnf" \
          "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
                                         "$(OPENSSLDIR)\openssl.cnf"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
+	@if not "$(MISC_SCRIPTS)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
                                         "$(OPENSSLDIR)\misc"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\ct_log_list.cnf" \
                                         "$(OPENSSLDIR)\ct_log_list.cnf.dist"
@@ -498,12 +499,16 @@ install_runtime_libs: build_libs
 install_programs: install_runtime_libs build_programs
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing runtime programs"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMS) \
+	@if not "$(INSTALL_PROGRAMS)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
+	@if not "$(INSTALL_PROGRAMS)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMS) \
                                         "$(INSTALLTOP)\bin"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMPDBS) \
+	@if not "$(INSTALL_PROGRAMS)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMPDBS) \
                                         "$(INSTALLTOP)\bin"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BIN_SCRIPTS) \
+	@if not "$(INSTALL_PROGRAMS)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(BIN_SCRIPTS) \
                                         "$(INSTALLTOP)\bin"
 
 uninstall_runtime:
