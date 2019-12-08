@@ -24,6 +24,9 @@
 # define SM3_CBLOCK      64
 # define SM3_LBLOCK      (SM3_CBLOCK/4)
 
+# ifdef  __cplusplus
+extern "C" {
+# endif
 typedef struct SM3state_st {
    SM3_WORD A, B, C, D, E, F, G, H;
    SM3_WORD Nl, Nh;
@@ -34,5 +37,7 @@ typedef struct SM3state_st {
 int sm3_init(SM3_CTX *c);
 int sm3_update(SM3_CTX *c, const void *data, size_t len);
 int sm3_final(unsigned char *md, SM3_CTX *c);
-
+# ifdef  __cplusplus
+}
+# endif
 #endif /* OSSL_INTERNAL_SM3_H */

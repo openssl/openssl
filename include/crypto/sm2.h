@@ -16,7 +16,9 @@
 # ifndef OPENSSL_NO_SM2
 
 #  include <openssl/ec.h>
-
+# ifdef  __cplusplus
+extern "C" {
+# endif
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
 
@@ -73,6 +75,9 @@ int sm2_decrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
+# ifdef  __cplusplus
+}
+# endif
 
 # endif /* OPENSSL_NO_SM2 */
 #endif
