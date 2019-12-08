@@ -1026,7 +1026,6 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
 {
     cctx->ssl = ssl;
     cctx->ctx = NULL;
-    OPENSSL_version_list(NULL, &cctx->version_mask);
     if (ssl) {
         cctx->poptions = &ssl->options;
         cctx->min_version = &ssl->min_proto_version;
@@ -1046,7 +1045,6 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
 {
     cctx->ctx = ctx;
     cctx->ssl = NULL;
-    OPENSSL_version_list(NULL, &cctx->version_mask);
     if (ctx) {
         cctx->poptions = &ctx->options;
         cctx->min_version = &ctx->min_proto_version;
