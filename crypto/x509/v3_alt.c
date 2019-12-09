@@ -113,6 +113,13 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                             &ret))
                 return NULL;
             break;
+        case NID_NAIRealm:
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: NAIRealm:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
+                return NULL;
+            break;
         default:
             if (!X509V3_add_value("othername", "<unsupported>", &ret))
                 return NULL;
@@ -215,6 +222,10 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
             break;
         case NID_ms_upn:
             BIO_printf(out, "othername:UPN:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
+        case NID_NAIRealm:
+            BIO_printf(out, "othername:NAIRealm:%s",
                        gen->d.otherName->value->value.utf8string->data);
             break;
         default:

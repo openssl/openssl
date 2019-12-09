@@ -1866,6 +1866,11 @@
 #define NID_SRVName             1210
 #define OBJ_SRVName             OBJ_id_on,7L
 
+#define SN_NAIRealm             "id-on-NAIRealm"
+#define LN_NAIRealm             "NAIRealm"
+#define NID_NAIRealm            1211
+#define OBJ_NAIRealm            OBJ_id_on,8L
+
 #define SN_id_on_SmtpUTF8Mailbox                "id-on-SmtpUTF8Mailbox"
 #define LN_id_on_SmtpUTF8Mailbox                "Smtp UTF8 Mailbox"
 #define NID_id_on_SmtpUTF8Mailbox               1208
