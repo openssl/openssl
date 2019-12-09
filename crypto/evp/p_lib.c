@@ -569,7 +569,9 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
-    int ret = EVP_PKEY_assign_DH(pkey, key);
+    int type = DH_get0_q(key) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
+    int ret = EVP_PKEY_assign(pkey, type, key);
+
     if (ret)
         DH_up_ref(key);
     return ret;
