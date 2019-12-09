@@ -123,6 +123,7 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
  * If a random pool has been added to the DRBG using RAND_add(), then
  * its entropy will be used up first.
  */
+#if 0
 size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                              unsigned char **pout,
                              int entropy, size_t min_len, size_t max_len,
@@ -165,7 +166,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
              * generating bits from it. (Note: taking the lock will be a no-op
              * if locking if drbg->parent->lock == NULL.)
              */
-            rand_drbg_lock(drbg->parent);
+            /*rand_drbg_lock(drbg->parent);*/
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    prediction_resistance,
@@ -173,7 +174,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                 bytes = bytes_needed;
             drbg->reseed_next_counter
                 = tsan_load(&drbg->parent->reseed_prop_counter);
-            rand_drbg_unlock(drbg->parent);
+            /*rand_drbg_unlock(drbg->parent);*/
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
             entropy_available = rand_pool_entropy_available(pool);
@@ -208,6 +209,7 @@ void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
             OPENSSL_clear_free(out, outlen);
     }
 }
+#endif
 
 /*
  * Generate additional data that can be used for the drbg. The data does
@@ -321,9 +323,9 @@ int RAND_poll(void)
         if (drbg == NULL)
             return 0;
 
-        rand_drbg_lock(drbg);
+        /*rand_drbg_lock(drbg);*/
         ret = rand_drbg_restart(drbg, NULL, 0, 0);
-        rand_drbg_unlock(drbg);
+        /*rand_drbg_unlock(drbg);*/
 
         return ret;
 
