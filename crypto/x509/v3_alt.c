@@ -224,6 +224,10 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
             BIO_printf(out, "othername:UPN:%s",
                        gen->d.otherName->value->value.utf8string->data);
             break;
+        case NID_NAIRealm:
+            BIO_printf(out, "othername:NAIRealm:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
         default:
             BIO_printf(out, "othername:<unsupported>");
             break;
