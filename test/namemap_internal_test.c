@@ -26,7 +26,7 @@ static int test_namemap(OSSL_NAMEMAP *nm)
     int check2 = ossl_namemap_name2num(nm, NAME2);
     int check3 = ossl_namemap_name2num(nm, ALIAS1);
     int check4 = ossl_namemap_name2num(nm, ALIAS1_UC);
-    int false1 = ossl_namemap_name2num(nm, "foo");
+    int false1 = ossl_namemap_name2num(nm, "cookie");
 
     return TEST_int_ne(num1, 0)
         && TEST_int_ne(num2, 0)
