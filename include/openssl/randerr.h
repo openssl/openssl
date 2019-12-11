@@ -57,6 +57,8 @@ int ERR_load_RAND_strings(void);
 #  define RAND_F_RAND_POOL_BYTES_NEEDED                    0
 #  define RAND_F_RAND_POOL_GROW                            0
 #  define RAND_F_RAND_POOL_NEW                             0
+#  define RAND_F_RAND_PRIV_BYTES_EX                        0
+#  define RAND_F_RAND_PSEUDO_BYTES                         0
 #  define RAND_F_RAND_WRITE_FILE                           0
 # endif
 
