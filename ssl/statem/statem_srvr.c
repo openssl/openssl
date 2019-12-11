@@ -3344,20 +3344,20 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
        || pKX->kxBlob == NULL
        || ASN1_TYPE_get(pKX->kxBlob) != V_ASN1_SEQUENCE) {
          SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                   SSL_R_DECRYPTION_FAILED);
+                  SSL_R_DECRYPTION_FAILED);
          goto err;
     }
 
     if (!PACKET_forward(pkt, ptr - PACKET_data(pkt))) {
-         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                   SSL_R_DECRYPTION_FAILED);
-         goto err;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
      
     if (PACKET_remaining(pkt) != 0) {
-         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                   SSL_R_DECRYPTION_FAILED);
-         goto err;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
 
     inlen = pKX->kxBlob->value.sequence->length;
