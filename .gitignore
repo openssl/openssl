@@ -22,7 +22,7 @@
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
-/include/openssl/opensslconf.h
+/include/openssl/configuration.h
 /include/openssl/opensslv.h
 
 # Auto generated doc files

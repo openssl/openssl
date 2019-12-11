@@ -836,8 +836,8 @@
 
      Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
      and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
-     and defines various macros in include/openssl/opensslconf.h (generated from
-     include/openssl/opensslconf.h.in).
+     and defines various macros in include/openssl/configuration.h (generated
+     from include/openssl/configuration.h.in).
 
  1c. Configure OpenSSL for building outside of the source tree.
 

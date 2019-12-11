@@ -9,6 +9,26 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Removed include/openssl/opensslconf.h.in and replaced it with
+     include/openssl/configuration.h.in, which differs in not including
+     <openssl/macros.h>.  A short header include/openssl/opensslconf.h
+     was added to include both.
+
+     This allows internal hacks where one might need to modify the set
+     of configured macros, for example this if deprecated symbols are
+     still supposed to be available internally:
+
+         #include <openssl/configuration.h>
+
+         #undef OPENSSL_NO_DEPRECATED
+         #define OPENSSL_SUPPRESS_DEPRECATED
+
+         #include <openssl/macros.h>
+
+     This should not be used by applications that use the exported
+     symbols, as that will lead to linking errors.
+     [Richard Levitte]
+
   *) Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
      used in exponentiation with 512-bit moduli. No EC algorithms are
      affected. Analysis suggests that attacks against 2-prime RSA1024,
