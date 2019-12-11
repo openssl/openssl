@@ -37,45 +37,12 @@ typedef struct prov_ccm_st {
     size_t keylen;
     size_t tls_aad_len;        /* TLS AAD length */
     size_t tls_aad_pad_sz;
-    unsigned char iv[AES_BLOCK_SIZE];
-    unsigned char buf[AES_BLOCK_SIZE];
+    unsigned char iv[GENERIC_BLOCK_SIZE];
+    unsigned char buf[GENERIC_BLOCK_SIZE];
     CCM128_CONTEXT ccm_ctx;
     ccm128_f str;
     const PROV_CCM_HW *hw;     /* hardware specific methods  */
 } PROV_CCM_CTX;
-
-typedef struct prov_aes_ccm_ctx_st {
-    PROV_CCM_CTX base;         /* Must be first */
-    union {
-        OSSL_UNION_ALIGN;
-        /*-
-         * Padding is chosen so that s390x.kmac.k overlaps with ks.ks and
-         * fc with ks.ks.rounds. Remember that on s390x, an AES_KEY's
-         * rounds field is used to store the function code and that the key
-         * schedule is not stored (if aes hardware support is detected).
-         */
-        struct {
-            unsigned char pad[16];
-            AES_KEY ks;
-        } ks;
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-        struct {
-            S390X_KMAC_PARAMS kmac;
-            unsigned long long blocks;
-            union {
-                unsigned long long g[2];
-                unsigned char b[AES_BLOCK_SIZE];
-            } nonce;
-            union {
-                unsigned long long g[2];
-                unsigned char b[AES_BLOCK_SIZE];
-            } buf;
-            unsigned char dummy_pad[168];
-            unsigned int fc;   /* fc has same offset as ks.ks.rounds */
-        } s390x;
-#endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
-    } ccm;
-} PROV_AES_CCM_CTX;
 
 PROV_CIPHER_FUNC(int, CCM_cipher, (PROV_CCM_CTX *ctx, unsigned char *out,      \
                                    size_t *padlen, const unsigned char *in,    \
@@ -110,8 +77,6 @@ struct prov_ccm_hw_st {
     OSSL_CCM_auth_decrypt_fn auth_decrypt;
     OSSL_CCM_gettag_fn gettag;
 };
-
-const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keylen);
 
 OSSL_OP_cipher_encrypt_init_fn ccm_einit;
 OSSL_OP_cipher_decrypt_init_fn ccm_dinit;
