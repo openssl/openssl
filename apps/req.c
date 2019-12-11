@@ -435,12 +435,14 @@ int req_main(int argc, char **argv)
 
     if (verbose)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
-    req_conf = app_load_config(template);
+    if ((req_conf = app_load_config(template)) == NULL)
+        goto end;
     if (addext_bio) {
         if (verbose)
             BIO_printf(bio_err,
                        "Using additional configuration from command line\n");
-        addext_conf = app_load_config_bio(addext_bio, NULL);
+        if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
+            goto end;
     }
     if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
