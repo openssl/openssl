@@ -361,7 +361,6 @@ my @disablables = (
     "cms",
     "comp",
     "crypto-mdebug",
-    "crypto-mdebug-backtrace",
     "ct",
     "deprecated",
     "des",
@@ -459,6 +458,7 @@ my @disablables_int = qw(
 my %deprecated_disablables = (
     "ssl2" => undef,
     "buf-freelists" => undef,
+    "crypto-mdebug-backtrace" => undef,
     "hw" => "hw",               # causes cascade, but no macro
     "hw-padlock" => "padlockeng",
     "ripemd" => "rmd160",
