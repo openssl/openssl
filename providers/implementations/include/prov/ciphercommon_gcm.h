@@ -79,35 +79,6 @@ typedef struct prov_gcm_ctx_st {
     const void *ks;
 } PROV_GCM_CTX;
 
-typedef struct prov_aes_gcm_ctx_st {
-    PROV_GCM_CTX base;          /* must be first entry in struct */
-    union {
-        OSSL_UNION_ALIGN;
-        AES_KEY ks;
-    } ks;                       /* AES key schedule to use */
-
-    /* Platform specific data */
-    union {
-        int dummy;
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
-        struct {
-            union {
-                OSSL_UNION_ALIGN;
-                S390X_KMA_PARAMS kma;
-            } param;
-            unsigned int fc;
-            unsigned char ares[16];
-            unsigned char mres[16];
-            unsigned char kres[16];
-            int areslen;
-            int mreslen;
-            int kreslen;
-            int res;
-        } s390x;
-#endif /* defined(OPENSSL_CPUID_OBJ) && defined(__s390__) */
-    } plat;
-} PROV_AES_GCM_CTX;
-
 PROV_CIPHER_FUNC(int, GCM_setkey, (PROV_GCM_CTX *ctx, const unsigned char *key,
                                    size_t keylen));
 PROV_CIPHER_FUNC(int, GCM_setiv, (PROV_GCM_CTX *dat, const unsigned char *iv,
@@ -130,7 +101,6 @@ struct prov_gcm_hw_st {
   OSSL_GCM_cipherfinal_fn cipherfinal;
   OSSL_GCM_oneshot_fn oneshot;
 };
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits);
 
 OSSL_OP_cipher_encrypt_init_fn gcm_einit;
 OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
