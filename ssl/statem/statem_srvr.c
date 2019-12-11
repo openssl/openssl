@@ -3353,6 +3353,13 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
                    SSL_R_DECRYPTION_FAILED);
          goto err;
     }
+     
+    if (PACKET_remaining(pkt) != 0) {
+         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                   SSL_R_DECRYPTION_FAILED);
+         goto err;
+    }
+
     inlen = pKX->kxBlob->value.sequence->length;
     start = pKX->kxBlob->value.sequence->data;
 
