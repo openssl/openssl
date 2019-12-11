@@ -11,7 +11,7 @@ B<openssl> B<x509>
 [B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
-[B<-keyform DER|PEM>]
+[B<-keyform DER|PEM|ENGINE>]
 [B<-CAform DER|PEM>]
 [B<-CAkeyform DER|PEM>]
 [B<-in filename>]

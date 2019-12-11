@@ -72,7 +72,7 @@ const OPTIONS x509_options[] = {
     {"outform", OPT_OUTFORM, 'f',
      "Output format - default PEM (one of DER or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
@@ -217,7 +217,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
                 goto opthelp;
             break;
         case OPT_CAFORM:
