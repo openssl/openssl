@@ -290,6 +290,7 @@ int CRYPTO_mem_ctrl(int mode)
 
 int CRYPTO_set_mem_debug(int flag)
 {
+    (void)flag;
     return -1;
 }
 

@@ -21,7 +21,7 @@
      (CVE-2019-1551)
      [Andy Polyakov]
 
-  *) Most memory-debug features have been deprecated, and the function
+  *) Most memory-debug features have been deprecated, and the functionality
      replaced with no-ops.
      [Rich Salz]
 
