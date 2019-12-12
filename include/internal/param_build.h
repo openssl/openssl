@@ -47,6 +47,7 @@ OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld,
                                        void *data, size_t data_n,
                                        void *secure, size_t secure_n);
 
+int ossl_param_bld_push_param(OSSL_PARAM_BLD *bld, const OSSL_PARAM *param);
 int ossl_param_bld_push_int(OSSL_PARAM_BLD *bld, const char *key, int val);
 int ossl_param_bld_push_uint(OSSL_PARAM_BLD *bld, const char *key,
                              unsigned int val);

@@ -71,6 +71,17 @@ void ossl_param_bld_init(OSSL_PARAM_BLD *bld)
     memset(bld, 0, sizeof(*bld));
 }
 
+int ossl_param_bld_push_param(OSSL_PARAM_BLD *bld, const OSSL_PARAM *param)
+{
+    OSSL_PARAM_BLD_DEF *pd = param_push(bld, param->key, param->data_size,
+                                        param->data_size, param->data_type, 0);
+
+    if (pd == NULL)
+        return 0;
+    pd->string = param->data;
+    return 1;
+}
+
 int ossl_param_bld_push_int(OSSL_PARAM_BLD *bld, const char *key, int num)
 {
     return param_push_num(bld, key, &num, sizeof(num), OSSL_PARAM_INTEGER);
@@ -261,12 +272,11 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */
             *(const void **)p = pd->string;
+        } else if (pd->string != NULL) {
+            memcpy(p, pd->string, pd->size);
         } else if (pd->type == OSSL_PARAM_OCTET_STRING
                    || pd->type == OSSL_PARAM_UTF8_STRING) {
-            if (pd->string != NULL)
-                memcpy(p, pd->string, pd->size);
-            else
-                memset(p, 0, pd->size);
+            memset(p, 0, pd->size);
         } else {
             /* Number, but could also be a NULL BIGNUM */
             if (pd->size > sizeof(pd->num))
