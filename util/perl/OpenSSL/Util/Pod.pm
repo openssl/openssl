@@ -82,6 +82,10 @@ was given as input.
 
 All the names extracted from the NAME section.
 
+=item B<contents =E<gt> "...">
+
+The whole contents of the .pod file.
+
 =back
 
 =back
@@ -94,17 +98,24 @@ sub extract_pod_info {
     my %defaults = ( debug => 0, section => 0, %$defaults_ref );
     my $fh = undef;
     my $filename = undef;
+    my $contents;
 
     # If not a file handle, then it's assume to be a file path (a string)
-    unless (ref $input eq "GLOB") {
+    if (ref $input eq "") {
         $filename = $input;
         open $fh, $input or die "Trying to read $filename: $!\n";
         print STDERR "DEBUG: Reading $input\n" if $defaults{debug};
         $input = $fh;
     }
+    if (ref $input eq "GLOB") {
+        local $/ = undef;
+        $contents = <$input>;
+    } else {
+        die "Unknown input type";
+    }
 
     my %podinfo = ( section => $defaults{section});
-    while(<$input>) {
+    foreach (split /^/, $contents) {
         s|\R$||;
         # Stop reading when we have reached past the NAME section.
         last if (m|^=head1|
@@ -140,10 +151,15 @@ sub extract_pod_info {
     $podinfo{lastsecttext} =~ s| - .*$||;
 
     my @names =
-        map { s|\s+||g; s|/|-|g; $_ }
+        map { s/^\s+//g;        # Trim prefix blanks
+              s/\s+$//g;        # Trim suffix blanks
+              s|/|-|g;          # Treat slash as dash
+              $_ }
         split(m|,|, $podinfo{lastsecttext});
 
-    return ( section => $podinfo{section}, names => [ @names ] );
+    return ( section => $podinfo{section},
+             names => [ @names ],
+             contents =>  $contents );
 }
 
 1;
