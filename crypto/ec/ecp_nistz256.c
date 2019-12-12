@@ -942,6 +942,29 @@ static void booth_recode_w7(unsigned char *sign,
     *digit = d;
 }
 
+int avx2_is_at_infinity(BN_ULONG *Ax4, int idx)
+{
+    BN_ULONG infty = 0;
+    int i;
+    for (i=0; i<4*9*2; i++) {
+		BN_ULONG mask = 0 - (i%4 != idx);
+		mask = ~mask;
+		infty |= Ax4[i]&mask;
+    }
+    return is_zero(infty);
+}
+
+void avx2_set0(BN_ULONG *Ax4, BN_ULONG infty, int idx)
+{
+	int i = 0;
+
+	infty = ~(-infty);
+	for (i=0; i<4*9; i++) {
+		BN_ULONG temp = infty&Ax4[i];
+		Ax4[i] = (i%4 == idx)? temp: Ax4[i];
+	}
+}
+
 /*
  * ecp_nistz256_avx2_mul_g performs multiplication by G, using only the
  * precomputed table. It does 4 affine point additions in parallel,
@@ -1003,6 +1026,11 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     ecp_nistz256_avx2_to_mont(&aX4[4 * 9], &aX4[4 * 9]);
     ecp_nistz256_avx2_set1(&aX4[4 * 9 * 2]);
 
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 0), 0);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 1), 1);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 2), 2);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 3), 3);
+
     wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
     wvalue = (wvalue >> ((idx - 1) % 8)) & mask;
     idx += window_size;
@@ -1037,6 +1065,12 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
     ecp_nistz256_avx2_to_mont(&bX4[4 * 9], &bX4[4 * 9]);
     /* Optimized when both inputs are affine */
     ecp_nistz256_avx2_point_add_affines_x4(aX4, aX4, bX4);
+
+    //check whether aX4 is at infinity
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 0), 0);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 1), 1);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 2), 2);
+    avx2_set0(&aX4[4 * 9 * 2], avx2_is_at_infinity(aX4, 3), 3);
 
     for (i = 2; i < 9; i++) {
         wvalue = *((u16 *) & p_str[(idx - 1) / 8]);
@@ -1089,7 +1123,27 @@ static void ecp_nistz256_avx2_mul_g(P256_POINT *r,
                            preComputedTable[36], digit0);
     ecp_nistz256_neg(tmp, r->Y);
     copy_conditional(r->Y, tmp, sign0);
-    memcpy(r->Z, ONE, sizeof(ONE));
+
+    BN_ULONG infty = (r->X[0] | r->X[1] | r->X[2] | r->X[3] |
+                      r->Y[0] | r->Y[1] | r->Y[2] | r->Y[3]);
+    if (P256_LIMBS == 8)
+        infty |= (r->X[4] | r->X[5] | r->X[6] | r->X[7] |
+                  r->Y[4] | r->Y[5] | r->Y[6] | r->Y[7]);
+
+    infty = 0 - is_zero(infty);
+    infty = ~infty;
+
+    r->Z[0] = ONE[0] & infty;
+    r->Z[1] = ONE[1] & infty;
+    r->Z[2] = ONE[2] & infty;
+    r->Z[3] = ONE[3] & infty;
+    if (P256_LIMBS == 8) {
+        r->Z[4] = ONE[4] & infty;
+        r->Z[5] = ONE[5] & infty;
+        r->Z[6] = ONE[6] & infty;
+        r->Z[7] = ONE[7] & infty;
+    }
+
     /* Sum the four windows */
     ecp_nistz256_point_add(r, r, &res_point_arr[0]);
     ecp_nistz256_point_add(r, r, &res_point_arr[1]);
