@@ -580,27 +580,6 @@ sub parsenum {
 
 # Parse all the manpages, getting return map of what they document
 # (by looking at their NAME sections).
-sub getdocced
-{
-    my $dir = shift;
-    my %return;
-    my %dups;
-
-    foreach my $pod ( glob("$dir/*.pod") ) {
-        my %podinfo = extract_pod_info($pod);
-        foreach my $n ( @{$podinfo{names}} ) {
-            $return{$n} = $pod;
-            err("# Duplicate $n in $pod and $dups{$n}")
-                if defined $dups{$n} && $dups{$n} ne $pod;
-            $dups{$n} = $pod;
-        }
-    }
-
-    return %return;
-}
-
-# Map of documented functions; function => manpage
-my %docced;
 # Map of links in each POD file; filename => [ "foo(1)", "bar(3)", ... ]
 my %link_map = ();
 # Map of names in each POD file; "name(s)" => filename
@@ -645,17 +624,17 @@ sub checkmacros {
         open(IN, $f) || die "Can't open $f, $!";
         while ( <IN> ) {
             next unless /^#\s*define\s*(\S+)\(/;
-            my $macro = $1;
-            next if $docced{$macro} || defined $seen{$macro};
+            my $macro = "$1(3)"; # We know they're all in section 3
+            next if exists $name_map{$macro} || defined $seen{$macro};
             next if $macro =~ /^i2d_/
                 || $macro =~ /^d2i_/
                 || $macro =~ /^DEPRECATEDIN/
-                || $macro =~ /_fnsig$/
+                || $macro =~ /\Q_fnsig(3)\E$/
                 || $macro =~ /^IMPLEMENT_/
                 || $macro =~ /^_?DECLARE_/;
 
             # Skip macros known to be missing
-            next if $opt_v && grep( /^$macro$/, @missing);
+            next if $opt_v && grep( /^\Q$macro\E$/, @missing);
 
             err("$f:", "macro $macro undocumented")
                 if $opt_d || $opt_e;
@@ -680,13 +659,14 @@ sub printem {
     my @missing = loadmissing($missingfile) if ( $opt_v );
 
     foreach my $func ( parsenum($numfile) ) {
-        next if $docced{$func} || defined $seen{$func};
+        $func .= '(3)';         # We know they're all in section 3
+        next if exists $name_map{$func} || defined $seen{$func};
 
         # Skip ASN1 utilities
         next if $func =~ /^ASN1_/;
 
-        # Skip functions known to be missing
-        next if $opt_v && grep( /^$func$/, @missing);
+        # Skip functions known to be missing.
+        next if $opt_v && grep( /^\Q$func\E$/, @missing);
 
         err("$libname:", "function $func undocumented")
             if $opt_d || $opt_e;
@@ -704,33 +684,13 @@ sub collectnames {
     my $section = $1;
     my $simplename = basename($filename, ".pod");
     my $id = "${filename}:1:";
+    my %podinfo = extract_pod_info($filename, { debug => $debug });
 
-    my $contents = '';
-    {
-        local $/ = undef;
-        open POD, $filename or die "Couldn't open $filename, $!";
-        $contents = <POD>;
-        close POD;
-    }
-
-    $contents =~ /=head1 NAME([^=]*)=head1 /ms;
-    my $tmp = $1;
-    unless ( defined $tmp ) {
-        err($id, "weird name section");
-        return;
-    }
-    $tmp =~ tr/\n/ /;
-    $tmp =~ s/ -.*//g;
-
-    my @names =
-        map { s|/|-|g; $_ }              # Treat slash as dash
-        map { s/^\s+//g; s/\s+$//g; $_ } # Trim prefix and suffix blanks
-        split(/,/, $tmp);
-    unless ( grep { $simplename eq $_ } @names ) {
+    unless ( grep { $simplename eq $_ } @{$podinfo{names}} ) {
         err($id, "$simplename not in NAME section");
-        push @names, $simplename;
+        push @{$podinfo{names}}, $simplename;
     }
-    foreach my $name (@names) {
+    foreach my $name (@{$podinfo{names}}) {
         next if $name eq "";
         err($id, "'$name' contains white space")
             if $name =~ /\s/;
@@ -738,7 +698,7 @@ sub collectnames {
         if ( !exists $name_map{$name_sec} ) {
             $name_map{$name_sec} = $filename;
         } elsif ( $filename eq $name_map{$name_sec} ) {
-            err($id, "$name_sec repeated in NAME section of",
+            err($id, "$name_sec duplicated in NAME section of",
                  $name_map{$name_sec});
         } else {
             err($id, "$name_sec also in NAME section of",
@@ -748,12 +708,13 @@ sub collectnames {
 
     my @foreign_names =
         map { map { s/\s+//g; $_ } split(/,/, $_) }
-        $contents =~ /=for\s+comment\s+foreign\s+manuals:\s*(.*)\n\n/;
+        $podinfo{contents} =~ /=for\s+openssl\s+foreign\s+manuals:\s*(.*)\n\n/;
     foreach ( @foreign_names ) {
         $name_map{$_} = undef; # It still exists!
     }
 
-    my @links = $contents =~ /L<
+    my @links =
+        $podinfo{contents} =~ /L<
                               # if the link is of the form L<something|name(s)>,
                               # then remove 'something'.  Note that 'something'
                               # may contain POD codes as well...
@@ -903,10 +864,14 @@ if ( $opt_c ) {
     exit $status;
 }
 
-if ( $opt_l ) {
+# Preparation for some options, populate %name_map and %link_map
+if ( $opt_l || $opt_u || $opt_v ) {
     foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
         collectnames($_);
     }
+}
+
+if ( $opt_l ) {
     checklinks();
 }
 
@@ -926,10 +891,6 @@ if ( $opt_n ) {
 }
 
 if ( $opt_u || $opt_v) {
-    my %temp = getdocced('doc/man3');
-    foreach ( keys %temp ) {
-        $docced{$_} = $temp{$_};
-    }
     if ( $opt_o ) {
         printem('crypto', 'util/libcrypto.num', 'util/missingcrypto111.txt');
         printem('ssl', 'util/libssl.num', 'util/missingssl111.txt');
