@@ -638,3 +638,7 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 
 const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
 const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
+
+EVP_PKEY_CTX *evp_pkey_ctx_new_int(OPENSSL_CTX *libctx, EVP_PKEY *pkey,
+                                   ENGINE *e, const char *name,
+                                   const char *propquery, int id);

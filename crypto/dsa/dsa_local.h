@@ -78,3 +78,6 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
                           size_t seed_len, int idx, unsigned char *seed_out,
                           int *counter_ret, unsigned long *h_ret,
                           BN_GENCB *cb);
+
+DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
+                         int dlen, DSA *dsa);
