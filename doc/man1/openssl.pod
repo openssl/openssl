@@ -931,6 +931,8 @@ B<sep_multiline>.
 Places spaces round the equal sign, C<=>, character which follows the field
 name.
 
+=back
+
 =head2 TLS Version Options
 
 Several commands use SSL, TLS, or DTLS. By default, the commands use TLS and
