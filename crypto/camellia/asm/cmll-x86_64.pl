@@ -51,6 +51,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+my $endbr=&endbr64();
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -690,6 +692,7 @@ $code.=<<___;
 .align	16
 Camellia_cbc_encrypt:
 .cfi_startproc
+	$endbr
 	cmp	\$0,%rdx
 	je	.Lcbc_abort
 	push	%rbx

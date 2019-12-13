@@ -105,6 +105,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+my $endbr=&endbr64();
+
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.20) + ($1>=2.22);
@@ -244,6 +246,7 @@ $code=<<___;
 .align	16
 gcm_gmult_4bit:
 .cfi_startproc
+	$endbr
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp		# %rbp and others are pushed exclusively in
@@ -291,6 +294,7 @@ $code.=<<___;
 .align	16
 gcm_ghash_4bit:
 .cfi_startproc
+	$endbr
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -616,6 +620,7 @@ $code.=<<___;
 .type	gcm_gmult_clmul,\@abi-omnipotent
 .align	16
 gcm_gmult_clmul:
+	$endbr
 .cfi_startproc
 .L_gmult_clmul:
 	movdqu		($Xip),$Xi
@@ -668,6 +673,7 @@ $code.=<<___;
 .align	32
 gcm_ghash_clmul:
 .cfi_startproc
+	$endbr
 .L_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
@@ -1171,6 +1177,7 @@ $code.=<<___;
 .align	32
 gcm_gmult_avx:
 .cfi_startproc
+	$endbr
 	jmp	.L_gmult_clmul
 .cfi_endproc
 .size	gcm_gmult_avx,.-gcm_gmult_avx
@@ -1182,6 +1189,7 @@ $code.=<<___;
 .align	32
 gcm_ghash_avx:
 .cfi_startproc
+	$endbr
 ___
 if ($avx) {
 my ($Xip,$Htbl,$inp,$len)=@_4args;
