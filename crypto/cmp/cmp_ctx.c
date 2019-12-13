@@ -301,7 +301,7 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
                                     int category, int cmd, void *vdata)
 {
     OSSL_CMP_CTX *ctx = vdata;
-    const char *prefix_msg;
+    const char *msg;
     OSSL_CMP_severity level = -1;
     char *func = NULL;
     char *file = NULL;
@@ -312,14 +312,14 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
     if (ctx->log_cb == NULL)
         return 1; /* silently drop message */
 
-    prefix_msg = ossl_cmp_log_parse_metadata(buf, &level, &func, &file, &line);
+    msg = ossl_cmp_log_parse_metadata(buf, &level, &func, &file, &line);
 
     if (level > ctx->log_verbosity) /* excludes the case level is unknown */
         goto end; /* suppress output since severity is not sufficient */
 
     if (!ctx->log_cb(func != NULL ? func : "(no func)",
                      file != NULL ? file : "(no file)",
-                     line, level, prefix_msg))
+                     line, level, msg))
         cnt = 0;
 
  end:
@@ -328,6 +328,57 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
     return cnt;
 }
 #endif
+
+/* Print CMP log messages (i.e., diagnostic info) via the log cb of the ctx */
+int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
+                       const char *func, const char *file, int line,
+                       const char *level_str, const char *format, ...)
+{
+    va_list args;
+    char hugebuf[1024 * 2];
+    int res = 0;
+
+    if (ctx == NULL || ctx->log_cb == NULL)
+        return 1; /* silently drop message */
+
+    if (level > ctx->log_verbosity) /* excludes the case level is unknown */
+        return 1; /* suppress output since severity is not sufficient */
+
+    if (format == NULL)
+        return 0;
+
+    va_start(args, format);
+
+    if (func == NULL)
+        func = "(unset function name)";
+    if (file == NULL)
+        file = "(unset file name)";
+    if (level_str == NULL)
+        level_str = "(unset level string)";
+
+#ifndef OPENSSL_NO_TRACE
+    if (OSSL_TRACE_ENABLED(CMP)) {
+        OSSL_TRACE_BEGIN(CMP) {
+            int printed =
+                BIO_snprintf(hugebuf, sizeof(hugebuf),
+                             "%s:%s:%d:" OSSL_CMP_LOG_PREFIX "%s: ",
+                             func, file, line, level_str);
+            if (printed > 0 && (size_t)printed < sizeof(hugebuf)) {
+                if (BIO_vsnprintf(hugebuf + printed,
+                                  sizeof(hugebuf) - printed, format, args) > 0)
+                    res = BIO_puts(trc_out, hugebuf) > 0;
+            }
+        } OSSL_TRACE_END(CMP);
+    }
+#else /* compensate for disabled trace API */
+    {
+        if (BIO_vsnprintf(hugebuf, sizeof(hugebuf), format, args) > 0)
+            res = ctx->log_cb(func, file, line, level, hugebuf);
+    }
+#endif
+    va_end(args);
+    return res;
+}
 
 /*
  * Set a callback function for error reporting and logging messages.
@@ -768,7 +819,7 @@ int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
  * returns 1 on success, 0 on error
  */
 int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
-                            const ASN1_OCTET_STRING *nonce)
+                                 const ASN1_OCTET_STRING *nonce)
 {
     if (!ossl_assert(ctx != NULL))
         return 0;

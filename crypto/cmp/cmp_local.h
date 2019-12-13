@@ -718,6 +718,31 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
 STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert);
 
 /* from cmp_ctx.c */
+int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
+                       const char *func, const char *file, int line,
+                       const char *level_str, const char *format, ...);
+# define ossl_cmp_log(level, ctx, msg) \
+    ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, #level, "%s", msg)
+# define ossl_cmp_log1(level, ctx, fmt, arg1) \
+    ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, #level, fmt, arg1)
+# define ossl_cmp_log2(level, ctx, fmt, arg1, arg2) \
+    ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, #level, fmt, arg1, arg2)
+# define ossl_cmp_log3(level, ctx, fmt, arg1, arg2, arg3) \
+    ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, #level, fmt, arg1, arg2, arg3)
+# define ossl_cmp_log4(level, ctx, fmt, arg1, arg2, arg3, arg4)         \
+    ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
+                       OPENSSL_LINE, #level, fmt, arg1, arg2, arg3, arg4)
+# define OSSL_CMP_LOG_ERROR OSSL_CMP_LOG_ERR
+# define OSSL_CMP_LOG_WARN OSSL_CMP_LOG_WARNING
+# define ossl_cmp_alert(ctx, msg) ossl_cmp_log(ALERT, ctx, msg)
+# define ossl_cmp_err(ctx, msg)   ossl_cmp_log(ERROR, ctx, msg)
+# define ossl_cmp_warn(ctx, msg)  ossl_cmp_log(WARN,  ctx, msg)
+# define ossl_cmp_info(ctx, msg)  ossl_cmp_log(INFO,  ctx, msg)
+# define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
 int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,

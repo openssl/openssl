@@ -4,16 +4,6 @@
 
 OSSL_CMP_log_open,
 OSSL_CMP_log_close,
-OSSL_CMP_alert,
-OSSL_CMP_err,
-OSSL_CMP_warn,
-OSSL_CMP_info,
-OSSL_CMP_debug,
-OSSL_CMP_log,
-OSSL_CMP_log1,
-OSSL_CMP_log2,
-OSSL_CMP_log3,
-OSSL_CMP_log4,
 OSSL_CMP_severity,
 OSSL_CMP_LOG_EMERG,
 OSSL_CMP_LOG_ALERT,
@@ -24,6 +14,7 @@ OSSL_CMP_LOG_NOTICE,
 OSSL_CMP_LOG_INFO,
 OSSL_CMP_LOG_DEBUG,
 OSSL_cmp_log_cb_t,
+OSSL_CMP_print_to_bio,
 OSSL_CMP_print_errors_cb
 - functions for logging and error reporting
 
@@ -33,16 +24,6 @@ OSSL_CMP_print_errors_cb
 
  int  OSSL_CMP_log_open(void);
  void OSSL_CMP_log_close(void);
- #define OSSL_CMP_alert(msg)
- #define OSSL_CMP_err(msg)
- #define OSSL_CMP_warn(msg)
- #define OSSL_CMP_info(msg)
- #define OSSL_CMP_debug(msg)
- #define OSSL_CMP_log(level, msg)
- #define OSSL_CMP_log1(level, fmt, arg1)
- #define OSSL_CMP_log2(level, fmt, arg1, arg2)
- #define OSSL_CMP_log3(level, fmt, arg1, arg2, arg3)
- #define OSSL_CMP_log4(level, fmt, arg1, arg2, arg3, arg4)
 
  /* severity level declarations resemble those from syslog.h */
  typedef int OSSL_CMP_severity;
@@ -54,16 +35,18 @@ OSSL_CMP_print_errors_cb
  #define OSSL_CMP_LOG_NOTICE  5
  #define OSSL_CMP_LOG_INFO    6
  #define OSSL_CMP_LOG_DEBUG   7
+
  typedef int (*OSSL_cmp_log_cb_t)(const char *component,
                                   const char *file, int line,
                                   OSSL_CMP_severity level, const char *msg);
-
+ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
+                           int line, OSSL_CMP_severity level, const char *msg);
  void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
 
 =head1 DESCRIPTION
 
 The logging and error reporting facility described here contains
-convenience functions for CMP-specific logging via the trace API,
+convenience functions for CMP-specific logging,
 including a string prefix mirroring the severity levels of syslog.h,
 and enhancements of the error queue mechanism needed for large diagnostic
 messages produced by the CMP library in case of certificate validation failures.
@@ -73,12 +56,12 @@ should be provided for user information, debugging, and auditing purposes.
 A CMP application can obtain this information by providing a callback function
 with the following type:
 
- typedef void (*OSSL_cmp_log_cb_t)(const char *component,
-                                   const char *file, int line,
-                                   OSSL_CMP_severity level, const char *msg);
+ typedef int (*OSSL_cmp_log_cb_t)(const char *component,
+                                  const char *file, int line,
+                                  OSSL_CMP_severity level, const char *msg);
 
 The parameters may provide
-a component identifier (which may be a library name or function name) or NULL,
+some component info (which may be a module name and/or function name) or NULL,
 a file pathname or NULL,
 a line number or 0 indicating the source code location,
 a severity level, and
@@ -105,19 +88,15 @@ OSSL_CMP_log_close() may be called when all activities are finished to flush
 any pending CMP-specific log output and deallocate related resources.
 It may be called multiple times. It does get called at OpenSSL stutdown.
 
-OSSL_CMP_alert() outputs a simple alert message via the trace API.
-OSSL_CMP_err() outputs a simple error message via the trace API.
-OSSL_CMP_warn() outputs a simple warning message via the trace API.
-OSSL_CMP_info() outputs a simple info message via the trace API.
-OSSL_CMP_debug() outputs a simple debug message via the trace API.
-
-Note that due to the design of the trace API used, the log functions have no
-effect unless the B<enable-trace> option is used during build configuration.
+OSSL_CMP_print_to_bio() prints the given component info, filename, line number,
+severity level, and log message or error queue message to the given B<bio>.
+B<component> usually is a function or module name.
+If it is NULL, empty, or "(unknown function)" then "CMP" is used as fallback.
 
 OSSL_CMP_print_errors_cb() outputs any entries in the OpenSSL error queue.
 It is similar to B<ERR_print_errors_cb()> but uses the CMP log callback function
-C<log_fn> for uniformity with CMP logging if not B<NULL>. Otherwise it uses
-B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
+C<log_fn> for uniformity with CMP logging if not B<NULL>. Otherwise it prints to
+STDERR using B<OSSL_CMP_print_to_bio(3)> (unless OPENSSL_NO_STDIO is defined).
 
 =head1 RETURN VALUES
 

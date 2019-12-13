@@ -359,17 +359,7 @@ OSSL_CMP_LOG_NOTICE                     define
 OSSL_CMP_LOG_WARNING                    define
 OSSL_CMP_MSTR_HELPER                    define
 OSSL_CMP_MSTR                           define
-OSSL_CMP_alert                          define
-OSSL_CMP_debug                          define
-OSSL_CMP_err                            define
-OSSL_CMP_info                           define
-OSSL_CMP_log                            define
-OSSL_CMP_log1                           define
-OSSL_CMP_log2                           define
-OSSL_CMP_log3                           define
-OSSL_CMP_log4                           define
 OSSL_CMP_severity                       datatype
-OSSL_CMP_warn                           define
 OSSL_cmp_certConf_cb_t                  datatype
 OSSL_cmp_log_cb_t                       datatype
 OSSL_cmp_transfer_cb_t                  datatype
