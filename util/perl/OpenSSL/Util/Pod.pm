@@ -114,6 +114,7 @@ sub extract_pod_info {
         die "Unknown input type";
     }
 
+    my @invisible_names = ();
     my %podinfo = ( section => $defaults{section});
 
     # Regexp to split a text into paragraphs found at
@@ -143,6 +144,16 @@ sub extract_pod_info {
             $podinfo{lastsecttext} = "";
         }
 
+        # Add invisible names
+        if (m|^=for\s+openssl\s+names:\s*(.*)|s) {
+            my $x = $1;
+            my @tmp = map { map { s/\s+//g; $_ } split(/,/, $_) } $x;
+            print STDERR
+                "DEBUG: Found invisible names: ", join(', ', @tmp), "\n"
+                if $defaults{debug};
+            push @invisible_names, @tmp;
+        }
+
         next if (m|^=| || m|^\s*$|);
 
         # Collect the section text
@@ -168,11 +179,12 @@ sub extract_pod_info {
         split(m|,|, $podinfo{lastsecttext});
 
     print STDERR
-        "DEBUG: Collected names are: ", join(', ', @names), "\n"
+        "DEBUG: Collected names are: ",
+        join(', ', @names, @invisible_names), "\n"
         if $defaults{debug};
 
     return ( section => $podinfo{section},
-             names => [ @names ],
+             names => [ @names, @invisible_names ],
              contents =>  $contents );
 }
 
