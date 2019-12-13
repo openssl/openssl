@@ -22,6 +22,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}/perlasm");
 require "x86_64asm.pl";
 
+$endbr=&endbr64();
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
      or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -45,6 +47,7 @@ print<<___;
 .align	16
 OPENSSL_atomic_add:
 .cfi_startproc
+	$endbr
 	movl	($arg1),%eax
 .Lspin:	leaq	($arg2,%rax),%r8
 	.byte	0xf0		# lock
@@ -61,6 +64,7 @@ OPENSSL_atomic_add:
 .align	16
 OPENSSL_rdtsc:
 .cfi_startproc
+	$endbr
 	rdtsc
 	shl	\$32,%rdx
 	or	%rdx,%rax
@@ -73,6 +77,7 @@ OPENSSL_rdtsc:
 .align	16
 OPENSSL_ia32_cpuid:
 .cfi_startproc
+	$endbr
 	mov	%rbx,%r8		# save %rbx
 .cfi_register	%rbx,%r8
 
@@ -242,6 +247,7 @@ OPENSSL_ia32_cpuid:
 .align  16
 OPENSSL_cleanse:
 .cfi_startproc
+	$endbr
 	xor	%rax,%rax
 	cmp	\$15,$arg2
 	jae	.Lot
@@ -279,6 +285,7 @@ OPENSSL_cleanse:
 .align  16
 CRYPTO_memcmp:
 .cfi_startproc
+	$endbr
 	xor	%rax,%rax
 	xor	%r10,%r10
 	cmp	\$0,$arg3
@@ -317,6 +324,7 @@ print<<___ if (!$win64);
 .align	16
 OPENSSL_wipe_cpu:
 .cfi_startproc
+	$endbr
 	pxor	%xmm0,%xmm0
 	pxor	%xmm1,%xmm1
 	pxor	%xmm2,%xmm2
@@ -381,6 +389,7 @@ print<<___;
 .align	16
 OPENSSL_instrument_bus:
 .cfi_startproc
+	$endbr
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg2,$max
@@ -415,6 +424,7 @@ OPENSSL_instrument_bus:
 .align	16
 OPENSSL_instrument_bus2:
 .cfi_startproc
+	$endbr
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg3,$max
@@ -470,6 +480,7 @@ print<<___;
 .align	16
 OPENSSL_ia32_${rdop}_bytes:
 .cfi_startproc
+	$endbr
 	xor	%rax, %rax	# return value
 	cmp	\$0,$arg2
 	je	.Ldone_${rdop}_bytes

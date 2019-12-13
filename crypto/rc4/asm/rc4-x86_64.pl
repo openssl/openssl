@@ -126,6 +126,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+$endbr=&endbr64();
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -143,7 +145,9 @@ $code=<<___;
 .globl	RC4
 .type	RC4,\@function,4
 .align	16
-RC4:	or	$len,$len
+RC4:
+	$endbr
+	or	$len,$len
 	jne	.Lentry
 	ret
 .Lentry:
@@ -459,6 +463,7 @@ $code.=<<___;
 .align	16
 RC4_set_key:
 .cfi_startproc
+	$endbr
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -532,6 +537,7 @@ RC4_set_key:
 .type	RC4_options,\@abi-omnipotent
 .align	16
 RC4_options:
+	$endbr
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx

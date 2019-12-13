@@ -78,6 +78,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+$endbr=&endbr64();
+
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.19) + ($1>=2.22) + ($1>=2.25) + ($1>=2.26);
@@ -2811,6 +2813,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vpmadd52:
 .cfi_startproc
+	$endbr
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52		# too short
 
@@ -3744,6 +3747,7 @@ $code.=<<___;
 .align	32
 poly1305_emit_base2_44:
 .cfi_startproc
+	$endbr
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
 	mov	16($ctx),%r10
