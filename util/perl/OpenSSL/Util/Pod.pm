@@ -115,8 +115,18 @@ sub extract_pod_info {
     }
 
     my %podinfo = ( section => $defaults{section});
-    foreach (split /^/, $contents) {
-        s|\R$||;
+
+    # Regexp to split a text into paragraphs found at
+    # https://www.perlmonks.org/?node_id=584367
+    # Most of all, \G (continue at last match end) and /g (anchor
+    # this match for \G) are significant
+    foreach (map { /\G((?:(?!\n\n).)*\n+|.+\z)/sg } $contents) {
+        # Remove as many line endings as possible from the end of the paragraph
+        while (s|\R$||) {}
+
+        print STDERR "DEBUG: Paragraph:\n$_\n"
+            if $defaults{debug};
+
         # Stop reading when we have reached past the NAME section.
         last if (m|^=head1|
                  && defined $podinfo{lastsect}
@@ -148,7 +158,7 @@ sub extract_pod_info {
         print STDERR "DEBUG: Done reading $filename\n" if $defaults{debug};
     }
 
-    $podinfo{lastsecttext} =~ s| - .*$||;
+    $podinfo{lastsecttext} =~ s|\s+-\s+.*$||s;
 
     my @names =
         map { s/^\s+//g;        # Trim prefix blanks
@@ -156,6 +166,10 @@ sub extract_pod_info {
               s|/|-|g;          # Treat slash as dash
               $_ }
         split(m|,|, $podinfo{lastsecttext});
+
+    print STDERR
+        "DEBUG: Collected names are: ", join(', ', @names), "\n"
+        if $defaults{debug};
 
     return ( section => $podinfo{section},
              names => [ @names ],
