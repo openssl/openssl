@@ -51,6 +51,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
+push(@INC,"${dir}","${dir}../../perlasm");
+require "x86_64asm.pl";
+
 $avx=0;
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
@@ -1613,4 +1616,5 @@ foreach (split("\n",$code)) {
 	print $_,"\n";
 }
 
+&file_end($flavour);
 close STDOUT;
