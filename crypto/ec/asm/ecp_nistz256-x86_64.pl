@@ -52,6 +52,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
+push(@INC,"${dir}","${dir}../../perlasm");
+require "x86_64asm.pl";
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -4738,4 +4741,5 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
+&file_end($flavour);
 close STDOUT;
