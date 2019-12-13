@@ -684,7 +684,7 @@ sub collectnames {
     my $section = $1;
     my $simplename = basename($filename, ".pod");
     my $id = "${filename}:1:";
-    my %podinfo = extract_pod_info($filename);
+    my %podinfo = extract_pod_info($filename, { debug => $debug });
 
     unless ( grep { $simplename eq $_ } @{$podinfo{names}} ) {
         err($id, "$simplename not in NAME section");
