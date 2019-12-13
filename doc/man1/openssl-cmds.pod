@@ -2,6 +2,8 @@
 
 =head1 NAME
 
+=for openssl names: openssl-cmds
+
 asn1parse,
 ca,
 ciphers,
