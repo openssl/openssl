@@ -49,6 +49,7 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
      "rand_pool_bytes_needed"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_GROW, 0), "rand_pool_grow"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_NEW, 0), "rand_pool_new"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_PSEUDO_BYTES, 0), "RAND_pseudo_bytes"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_WRITE_FILE, 0), "RAND_write_file"},
     {0, NULL}
 };

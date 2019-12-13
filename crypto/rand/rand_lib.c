@@ -948,6 +948,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 
     if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
+    RANDerr(RAND_F_RAND_PSEUDO_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
     return -1;
 }
 #endif
