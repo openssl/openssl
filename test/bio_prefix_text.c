@@ -44,7 +44,7 @@ typedef enum OPTION_choice {
     OPT_EOF = 0,
     OPT_AMOUNT,
     OPT_INDENT,
-    OPT_PREFIX,
+    OPT_PREFIX
 } OPTION_CHOICE;
 
 static const OPTIONS options[] = {
