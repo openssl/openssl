@@ -73,7 +73,8 @@ ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ERRORMSGCONTENT)
 
 ASN1_ADB_TEMPLATE(infotypeandvalue_default) = ASN1_OPT(OSSL_CMP_ITAV,
-        infoValue.other, ASN1_ANY);
+                                                       infoValue.other,
+                                                       ASN1_ANY);
 /* ITAV means InfoTypeAndValue */
 ASN1_ADB(OSSL_CMP_ITAV) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */

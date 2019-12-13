@@ -19,7 +19,7 @@
 
 # ifndef OPENSSL_NO_CMP
 
-#  ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C"
 #  endif
 int ERR_load_CMP_strings(void);
@@ -27,8 +27,8 @@ int ERR_load_CMP_strings(void);
 /*
  * CMP function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-# endif
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  endif
 
 /*
  * CMP reason codes.

@@ -232,7 +232,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
              */
             || !OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_MSG_get0_tmpl(crm), rkey,
                                             subject, ctx->issuer,
-                                            NULL/* serial */))
+                                            NULL /* serial */))
         goto err;
     if (ctx->days != 0) {
         time_t notBefore, notAfter;
@@ -442,8 +442,8 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
 
     /* Fill the template from the contents of the certificate to be revoked */
     if (!OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
-                                     NULL/* pubkey would be redundant */,
-                                     NULL/* subject would be redundant */,
+                                     NULL /* pubkey would be redundant */,
+                                     NULL /* subject would be redundant */,
                                      X509_get_issuer_name(ctx->oldCert),
                                      X509_get_serialNumber(ctx->oldCert)))
         goto err;
@@ -569,7 +569,7 @@ int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
         return 0;
 
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
-        if ((itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs,i))) == NULL)
+        if ((itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i))) == NULL)
             return 0;
         if (!ossl_cmp_msg_gen_push0_ITAV(msg, itav)) {
             OSSL_CMP_ITAV_free(itav);
@@ -643,8 +643,8 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
     }
     if (errorDetails != NULL)
         if ((msg->body->value.error->errorDetails =
-            sk_ASN1_UTF8STRING_deep_copy(errorDetails, ASN1_STRING_dup,
-                                         ASN1_STRING_free)) == NULL)
+             sk_ASN1_UTF8STRING_deep_copy(errorDetails, ASN1_STRING_dup,
+                                          ASN1_STRING_free)) == NULL)
             goto err;
 
     if (!unprotected && !ossl_cmp_msg_protect(ctx, msg))

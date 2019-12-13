@@ -15,9 +15,9 @@ ossl_cmp_X509_STORE_get1_certs
   int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
                                  int no_dup, int prepend);
   int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                                  int no_self_signed, int no_dups, int prepend);
+                                  int no_self_issued, int no_dups, int prepend);
   int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-                                     int only_self_signed);
+                                     int only_self_issued);
   STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
 
 =head1 DESCRIPTION
@@ -29,10 +29,10 @@ On success the reference count of the certificate is increased.
 
 ossl_cmp_sk_X509_add1_certs() appends or prepends (depending on the I<prepend>
 argument) a list of certificates to the given list,
-optionally only if not self-signed and optionally only if not already contained.
+optionally only if not self-issued and optionally only if not already contained.
 The reference counts of those certificates appended successfully are increased.
 
-ossl_cmp_X509_STORE_add1_certs() adds all or only self-signed certificates from
+ossl_cmp_X509_STORE_add1_certs() adds all or only self-issued certificates from
 the given stack to given store. The I<certs> parameter may be NULL.
 
 ossl_cmp_X509_STORE_get1_certs() retrieves a copy of all certificates in the

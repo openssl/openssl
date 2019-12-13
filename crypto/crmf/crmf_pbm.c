@@ -71,7 +71,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     /*
      * iterationCount identifies the number of times the hash is applied
      * during the key computation process.  The iterationCount MUST be a
-     * minimum of 100.      Many people suggest using values as high as 1000
+     * minimum of 100. Many people suggest using values as high as 1000
      * iterations as the minimum value.  The trade off here is between
      * protection of the password from attacks and the time spent by the
      * server processing all of the different iterations in deriving

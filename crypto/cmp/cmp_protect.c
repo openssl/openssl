@@ -156,7 +156,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             STACK_OF(X509) *chain =
                 ossl_cmp_build_cert_chain(ctx->untrusted_certs, ctx->clCert);
             int res = ossl_cmp_sk_X509_add1_certs(msg->extraCerts, chain,
-                                                  1 /* no self-signed */,
+                                                  1 /* no self-issued */,
                                                   1 /* no duplicates */, 0);
             sk_X509_pop_free(chain, X509_free);
             if (res == 0)

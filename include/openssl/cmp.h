@@ -26,7 +26,7 @@
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 
-#  ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C" {
 #  endif
 
@@ -128,9 +128,9 @@ extern "C" {
 #  define OSSL_CMP_PKIFAILUREINFO_duplicateCertReq 26
 #  define OSSL_CMP_PKIFAILUREINFO_MAX 26
 #  define OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN \
-    ( (1<<(OSSL_CMP_PKIFAILUREINFO_MAX+1)) - 1)
+    ((1 << (OSSL_CMP_PKIFAILUREINFO_MAX + 1)) - 1)
 #  if OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN > INT_MAX
-#   error  CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
+#   error CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
 #  endif
 
 typedef ASN1_BIT_STRING OSSL_CMP_PKIFAILUREINFO;

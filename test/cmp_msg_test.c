@@ -122,7 +122,7 @@ static int execute_pkimessage_create_test(CMP_MSG_TEST_FIXTURE *fixture)
                               (fixture->cmp_ctx, fixture->bodytype));
 }
 
-static int set1_newPkey(OSSL_CMP_CTX *ctx, EVP_PKEY* pkey)
+static int set1_newPkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey)
 {
     if (!EVP_PKEY_up_ref(pkey))
         return 0;
@@ -321,7 +321,7 @@ static int test_cmp_create_error_msg(void)
                                           OSSL_CMP_PKIFAILUREINFO_systemFailure,
                                           NULL);
     fixture->err_code = -1;
-    fixture->expected = 1;      /* Expected: Message creation is successful */
+    fixture->expected = 1; /* expected: message creation is successful */
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
         tear_down(fixture);
         fixture = NULL;
@@ -430,7 +430,7 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
         goto err;
 
     if (!X509_NAME_add_entry_by_txt(issuer, "CN", MBSTRING_ASC,
-                                    (unsigned char*)"The Issuer", -1, -1, 0)
+                                    (unsigned char *)"The Issuer", -1, -1, 0)
             || !ASN1_INTEGER_set(serial, 99)
             || (cid = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL
             || (rpmsg = ossl_cmp_rp_new(fixture->cmp_ctx, si, cid, 1)) == NULL)
@@ -439,8 +439,8 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
     if (!TEST_ptr(ossl_cmp_revrepcontent_get_CertId(rpmsg->body->value.rp, 0)))
         goto err;
 
-    if (!TEST_ptr(ossl_cmp_revrepcontent_get_pkistatusinfo(rpmsg->body->value.rp,
-                                                           0)))
+    if (!TEST_ptr(ossl_cmp_revrepcontent_get_pkistatusinfo(rpmsg->body->
+                                                           value.rp, 0)))
         goto err;
 
     res = 1;
@@ -468,11 +468,11 @@ static int execute_pollrep_create(CMP_MSG_TEST_FIXTURE *fixture)
     pollrep = ossl_cmp_pollRep_new(fixture->cmp_ctx, 77, 2000);
     if (!TEST_ptr(pollrep))
         return 0;
-    if (!TEST_ptr(ossl_cmp_pollrepcontent_get0_pollrep(
-            pollrep->body->value.pollRep, 77)))
+    if (!TEST_ptr(ossl_cmp_pollrepcontent_get0_pollrep(pollrep->body->
+                                                       value.pollRep, 77)))
         goto err;
-    if (!TEST_ptr_null(ossl_cmp_pollrepcontent_get0_pollrep(
-            pollrep->body->value.pollRep, 88)))
+    if (!TEST_ptr_null(ossl_cmp_pollrepcontent_get0_pollrep(pollrep->body->
+                                                            value.pollRep, 88)))
         goto err;
 
     res = 1;

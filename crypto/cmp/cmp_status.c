@@ -61,7 +61,7 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
             char buf[40];
             BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
             CMPerr(0, CMP_R_ERROR_PARSING_PKISTATUS);
-            ossl_cmp_add_error_data(buf);
+            ERR_add_error_data(1, buf);
             return NULL;
         }
     }
@@ -195,7 +195,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     int printed_chars;
     int failinfo_found = 0;
     int n_status_strings;
-    char* write_ptr = buf;
+    char *write_ptr = buf;
 
 #define ADVANCE_BUFFER                                         \
     if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \

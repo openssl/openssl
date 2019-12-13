@@ -120,7 +120,7 @@ static const char *improve_location_name(const char *func, const char *fallback)
         ? fallback : func;
 }
 
-int OSSL_CMP_print_to_bio(BIO* bio, const char *component, const char *file,
+int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
                           int line, OSSL_CMP_severity level, const char *msg)
 {
     const char *level_string =

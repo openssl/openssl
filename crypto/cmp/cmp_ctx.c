@@ -80,7 +80,7 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
     sk_X509_pop_free(ctx->untrusted_certs, X509_free);
     ctx->untrusted_certs = untrusted_certs;
     return 1;
-err:
+ err:
     sk_X509_pop_free(untrusted_certs, X509_free);
     return 0;
 }
