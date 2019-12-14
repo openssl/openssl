@@ -173,6 +173,26 @@ sub ::file_end
 	else		{ push (@out,"$tmp\n"); }
     }
     push(@out,$initseg) if ($initseg);
+    if ($::elf) {
+	push(@out,"
+	.section \".note.gnu.property\", \"a\"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz \"GNU\"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:
+");
+    }
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
