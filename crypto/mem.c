@@ -145,14 +145,6 @@ static int shouldfail(void)
         len = strlen(buff);
         if (write(md_tracefd, buff, len) != len)
             perror("shouldfail write failed");
-#  ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
-        if (shoulditfail) {
-            void *addrs[30];
-            int num = backtrace(addrs, OSSL_NELEM(addrs));
-
-            backtrace_symbols_fd(addrs, num, md_tracefd);
-        }
-#  endif
     }
 # endif
 
@@ -303,6 +295,24 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 int CRYPTO_mem_debug_pop(void)
 {
     return -1;
+}
+
+void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
+                             const char *file, int line)
+{
+    (void)addr; (void)num; (void)flag; (void)file; (void)line;
+}
+
+void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
+                              const char *file, int line)
+{
+    (void)addr1; (void)addr2; (void)num; (void)flag; (void)file; (void)line;
+}
+
+void CRYPTO_mem_debug_free(void *addr, int flag,
+                           const char *file, int line)
+{
+    (void)addr; (void)flag; (void)file; (void)line;
 }
 
 int CRYPTO_mem_leaks(BIO *b)
