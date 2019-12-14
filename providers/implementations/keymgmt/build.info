@@ -3,6 +3,7 @@
 
 $DH_GOAL=../../libimplementations.a
 $DSA_GOAL=../../libimplementations.a
+$EC_GOAL=../../libimplementations.a
 $RSA_GOAL=../../libimplementations.a
 $ECX_GOAL=../../libimplementations.a
 
@@ -11,6 +12,9 @@ IF[{- !$disabled{dh} -}]
 ENDIF
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa_kmgmt.c
+ENDIF
+IF[{- !$disabled{ec} -}]
+  SOURCE[$EC_GOAL]=ec_kmgmt.c
 ENDIF
 SOURCE[$RSA_GOAL]=rsa_kmgmt.c
 IF[{- !$disabled{ec} -}]

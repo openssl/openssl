@@ -179,6 +179,14 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_G        "g"
 #define OSSL_PKEY_PARAM_FFC_Q        "q"
 
+/* Elliptic Curve Domain Parameters */
+#define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
+
+/* Elliptic Curve Key Parameters */
+#define OSSL_PKEY_PARAM_USE_COFACTOR_FLAG "use-cofactor-flag"
+#define OSSL_PKEY_PARAM_USE_COFACTOR_ECDH \
+    OSSL_PKEY_PARAM_USE_COFACTOR_FLAG
+
 /* RSA Keys */
 /*
  * n, e, d are the usual public and private key components
@@ -202,7 +210,27 @@ extern "C" {
 
 /* Key Exchange parameters */
 
-#define OSSL_EXCHANGE_PARAM_PAD      "pad" /* uint */
+#define OSSL_EXCHANGE_PARAM_PAD                   "pad" /* uint */
+#define OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE "ecdh-cofactor-mode" /* int */
+#define OSSL_EXCHANGE_PARAM_KDF_TYPE              "kdf-type" /* utf8_string */
+#define OSSL_EXCHANGE_PARAM_KDF_DIGEST            "kdf-digest" /* utf8_string */
+#define OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS      "kdf-digest-props" /* utf8_string */
+#define OSSL_EXCHANGE_PARAM_KDF_OUTLEN            "kdf-outlen" /* size_t */
+
+/*
+ * TODO(3.0): improve this pattern
+ *
+ * Currently the sole internal user of OSSL_EXCHANGE_PARAM_KDF_UKM is
+ * EVP_PKEY_CTX_{set0,get0}_ecdh_kdf_ukm():
+ *      OSSL_EXCHANGE_PARAM_KDF_UKM is handled as a octet_string on set0,
+ *      and as an octet_ptr on get0.
+ *
+ * This pattern is borrowed from the handling of
+ * OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL in
+ * EVP_PKEY_CTX_{set0,get0}_rsa_oaep_label().
+ */
+#define OSSL_EXCHANGE_PARAM_KDF_UKM               "kdf-ukm" /* see note above */
+#define OSSL_EXCHANGE_PARAM_KDF_UKM_LEN           "kdf-ukm-len" /* size_t */
 
 /* Signature parameters */
 #define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"

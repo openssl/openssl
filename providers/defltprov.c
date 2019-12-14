@@ -373,6 +373,7 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { "DH:dhKeyAgreement", "default=yes", dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
+    { "ECDH:id-ecPublicKey", "default=yes", ecdh_keyexch_functions },
     { "X25519", "default=yes", x25519_keyexch_functions },
     { "X448", "default=yes", x448_keyexch_functions },
 #endif
@@ -400,6 +401,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #endif
     { "RSA:rsaEncryption", "default=yes", rsa_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
+    { "EC:id-ecPublicKey", "default=yes", ec_keymgmt_functions },
     { "X25519", "default=yes", x25519_keymgmt_functions },
     { "X448", "default=yes", x448_keymgmt_functions },
 #endif

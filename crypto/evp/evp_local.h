@@ -78,6 +78,8 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_free_fn *free;
     OSSL_OP_keymgmt_get_params_fn *get_params;
     OSSL_OP_keymgmt_gettable_params_fn *gettable_params;
+    OSSL_OP_keymgmt_set_params_fn *set_params;
+    OSSL_OP_keymgmt_settable_params_fn *settable_params;
 
     /* Key object checking */
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
@@ -105,6 +107,8 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_dupctx_fn *dupctx;
     OSSL_OP_keyexch_set_ctx_params_fn *set_ctx_params;
     OSSL_OP_keyexch_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_keyexch_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_keyexch_gettable_ctx_params_fn *gettable_ctx_params;
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {

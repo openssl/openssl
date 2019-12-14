@@ -594,6 +594,9 @@ void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, OSSL_PARAM params[]);
 const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
+                           void *keydata, const OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt);
 
 
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
@@ -627,3 +630,19 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
 const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
 
+#ifndef FIPS_MODE
+/*
+ * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
+ *
+ * Return 1 on success, 0 or negative for errors.
+ *
+ * In particular they return -2 if any of the params is not supported.
+ *
+ * They are not available in FIPS_MODE as they depend on
+ *      - EVP_PKEY_CTX_{get,set}_params()
+ *      - EVP_PKEY_CTX_{gettable,settable}_params()
+ *
+ */
+int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+#endif /* !defined(FIPS_MODE) */

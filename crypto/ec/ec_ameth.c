@@ -22,6 +22,8 @@
 #include <openssl/asn1t.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 #include "ec_local.h"
 
 #ifndef OPENSSL_NO_CMS
@@ -574,6 +576,126 @@ static int ec_pkey_param_check(const EVP_PKEY *pkey)
     return EC_GROUP_check(eckey->group, NULL);
 }
 
+static
+size_t ec_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.ec->dirty_cnt;
+}
+
+static ossl_inline
+int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
+{
+    const EC_GROUP *ecg;
+    int curve_nid;
+
+    if (eckey == NULL)
+        return 0;
+
+    ecg = EC_KEY_get0_group(eckey);
+    if (ecg == NULL)
+        return 0;
+
+    curve_nid = EC_GROUP_get_curve_name(ecg);
+
+    if (curve_nid == NID_undef) {
+        /* explicit parameters */
+
+        /*
+         * TODO(3.0): should we support explicit parameters curves?
+         */
+        return 0;
+    } else {
+        /* named curve */
+        const char *curve_name = NULL;
+
+        if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
+            return 0;
+
+        if (!ossl_param_bld_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
+            return 0;
+    }
+
+    return 1;
+}
+
+static
+int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                      EVP_KEYMGMT *to_keymgmt)
+{
+    const EC_KEY *eckey = NULL;
+    const EC_GROUP *ecg = NULL;
+    unsigned char *pub_key_buf = NULL;
+    size_t pub_key_buflen;
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params = NULL;
+    const BIGNUM *priv_key = NULL;
+    const EC_POINT *pub_point = NULL;
+    int rv = 0;
+
+    if (from == NULL
+            || (eckey = from->pkey.ec) == NULL
+            || (ecg = EC_KEY_get0_group(eckey)) == NULL)
+        return 0;
+
+    ossl_param_bld_init(&tmpl);
+
+    /* export the domain parameters */
+    if (!ecparams_to_params(eckey, &tmpl))
+        return 0;
+
+    priv_key = EC_KEY_get0_private_key(eckey);
+    pub_point = EC_KEY_get0_public_key(eckey);
+
+    /* public_key must be present, priv_key is optional */
+    if (pub_point == NULL)
+        return 0;
+
+    /* convert pub_point to a octet string according to the SECG standard */
+    if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
+                                             POINT_CONVERSION_COMPRESSED,
+                                             &pub_key_buf, NULL)) == 0)
+        return 0;
+
+    if (!ossl_param_bld_push_octet_string(&tmpl,
+                OSSL_PKEY_PARAM_PUB_KEY,
+                pub_key_buf,
+                pub_key_buflen))
+        goto err;
+
+    if (priv_key != NULL) {
+        /*
+         * The ECDH Cofactor Mode is defined only if the EC_KEY actually
+         * contains a private key, so we check for the flag and export it only
+         * in this case.
+         */
+        int ecdh_cofactor_mode =
+            (EC_KEY_get_flags(eckey) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
+
+        /* Export the actual private key */
+        if (!ossl_param_bld_push_BN(&tmpl,
+                                    OSSL_PKEY_PARAM_PRIV_KEY,
+                                    priv_key))
+            goto err;
+
+        /* Export the ECDH_COFACTOR_MODE parameter */
+        if (!ossl_param_bld_push_int(&tmpl,
+                                     OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                                     ecdh_cofactor_mode))
+            goto err;
+    }
+
+    params = ossl_param_bld_to_param(&tmpl);
+
+    /* We export, the provider imports */
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
+                            params);
+
+ err:
+    ossl_param_bld_free(params);
+    OPENSSL_free(pub_key_buf);
+    return rv;
+}
+
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
@@ -611,7 +733,15 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 
     ec_pkey_check,
     ec_pkey_public_check,
-    ec_pkey_param_check
+    ec_pkey_param_check,
+
+    0, /* set_priv_key */
+    0, /* set_pub_key */
+    0, /* get_priv_key */
+    0, /* get_pub_key */
+
+    ec_pkey_dirty_cnt,
+    ec_pkey_export_to
 };
 
 #if !defined(OPENSSL_NO_SM2)
