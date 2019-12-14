@@ -14,6 +14,26 @@ package x86gas;
 $::lbdecor=$::aout?"L":".L";		# local label decoration
 $nmdecor=($::aout or $::coff)?"_":"";	# external name decoration
 
+$cet_property=($::elf and `echo __CET__ | $ENV{CC} -E -` !~ /__CET__/)?"
+	.section \".note.gnu.property\", \"a\"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz \"GNU\"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:
+":"";
+$endbr32=(`echo __CET__ | $ENV{CC} -E -` !~ /__CET__/)?"endbr32":"";
+
 $initseg="";
 
 $align=16;
@@ -124,6 +144,7 @@ sub ::function_begin_B
     push(@out,".align\t$align\n");
     push(@out,"$func:\n");
     push(@out,"$begin:\n")		if ($global);
+    push(@out,"\tendbr32\n")		if ($endbr32);
     $::stack=4;
 }
 
@@ -172,6 +193,7 @@ sub ::file_end
 	else		{ push (@out,"$tmp\n"); }
     }
     push(@out,$initseg) if ($initseg);
+    push(@out,$cet_property) if ($cet_property);
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
