@@ -1460,55 +1460,21 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
                           EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN, \
                           EVP_PKEY_CTRL_EC_PARAM_ENC, flag, NULL)
 
-#  define EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, flag) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_ECDH_COFACTOR, flag, NULL)
+int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
+int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx);
 
-#  define EVP_PKEY_CTX_get_ecdh_cofactor_mode(ctx) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_ECDH_COFACTOR, -2, NULL)
+int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
+int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx);
 
-#  define EVP_PKEY_CTX_set_ecdh_kdf_type(ctx, kdf) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_KDF_TYPE, kdf, NULL)
+int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
 
-#  define EVP_PKEY_CTX_get_ecdh_kdf_type(ctx) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_KDF_TYPE, -2, NULL)
+int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
+int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
 
-#  define EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, md) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md))
-
-#  define EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, pmd) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)(pmd))
-
-#  define EVP_PKEY_CTX_set_ecdh_kdf_outlen(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_KDF_OUTLEN, len, NULL)
-
-#  define EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, 0, (void *)(plen))
-
-#  define EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_EC_KDF_UKM, plen, (void *)(p))
-
-#  define EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, p) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
+int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
+                                   int len);
+int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
 /* SM2 will skip the operation check so no need to pass operation here */
 #  define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \

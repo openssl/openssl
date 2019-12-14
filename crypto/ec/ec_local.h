@@ -301,6 +301,9 @@ struct ec_key_st {
 #endif
     CRYPTO_RWLOCK *lock;
     OPENSSL_CTX *libctx;
+
+    /* Provider data */
+    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct ec_point_st {

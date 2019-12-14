@@ -3,6 +3,7 @@
 
 $DH_GOAL=../../libimplementations.a
 $ECX_GOAL=../../libimplementations.a
+$ECDH_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_exch.c
@@ -21,4 +22,5 @@ ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$ECX_GOAL]=ecx_exch.c
   DEFINE[$ECX_GOAL]=$ECDEF
+  SOURCE[$ECDH_GOAL]=ecdh_exch.c
 ENDIF

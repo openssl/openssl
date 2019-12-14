@@ -1051,6 +1051,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         *a = ret;
     EC_PRIVATEKEY_free(priv_key);
     *in = p;
+    ret->dirty_cnt++;
     return ret;
 
  err:
@@ -1162,8 +1163,11 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
         ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
         if (a == NULL || *a != ret)
              EC_KEY_free(ret);
+        else
+            ret->dirty_cnt++;
         return NULL;
     }
+    ret->dirty_cnt++;
 
     if (a)
         *a = ret;
@@ -1183,6 +1187,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
         return 0;
     }
     ret = *a;
+    /* EC_KEY_opt2key updates dirty_cnt */
     if (!EC_KEY_oct2key(ret, *in, len, NULL)) {
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_EC_LIB);
         return 0;

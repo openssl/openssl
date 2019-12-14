@@ -169,6 +169,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->meth->copy != NULL && src->meth->copy(dest, src) == 0)
         return NULL;
 
+    dest->dirty_cnt++;
+
     return dest;
 }
 
@@ -209,15 +211,28 @@ int EC_KEY_generate_key(EC_KEY *eckey)
         ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (eckey->meth->keygen != NULL)
-        return eckey->meth->keygen(eckey);
+    if (eckey->meth->keygen != NULL) {
+        int ret;
+
+        ret = eckey->meth->keygen(eckey);
+        if (ret == 1)
+            eckey->dirty_cnt++;
+
+        return ret;
+    }
     ECerr(EC_F_EC_KEY_GENERATE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
     return 0;
 }
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
-    return eckey->group->meth->keygen(eckey);
+    int ret;
+
+    ret = eckey->group->meth->keygen(eckey);
+
+    if (ret == 1)
+        eckey->dirty_cnt++;
+    return ret;
 }
 
 /*
@@ -287,6 +302,8 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     priv_key = NULL;
     pub_key = NULL;
 
+    eckey->dirty_cnt++;
+
     ok = 1;
 
 err:
@@ -305,12 +322,19 @@ err:
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
+    int ret;
+
     /*
      * See SP800-56AR3 5.6.1.2.2: Step (8)
      * pub_key = priv_key * G (where G is a point on the curve)
      */
-    return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
-                        NULL, NULL);
+    ret = EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
+                       NULL, NULL);
+
+    if (ret == 1)
+        eckey->dirty_cnt++;
+
+    return ret;
 }
 
 int EC_KEY_check_key(const EC_KEY *eckey)
@@ -505,6 +529,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
         goto err;
     }
 
+    /* EC_KEY_set_public_key updates dirty_cnt */
     if (!EC_KEY_set_public_key(key, point))
         goto err;
 
@@ -532,6 +557,7 @@ int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
         return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
+    key->dirty_cnt++;
     return (key->group == NULL) ? 0 : 1;
 }
 
@@ -552,6 +578,7 @@ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
         return 0;
     BN_clear_free(key->priv_key);
     key->priv_key = BN_dup(priv_key);
+    key->dirty_cnt++;
     return (key->priv_key == NULL) ? 0 : 1;
 }
 
@@ -567,6 +594,7 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
         return 0;
     EC_POINT_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);
+    key->dirty_cnt++;
     return (key->pub_key == NULL) ? 0 : 1;
 }
 
@@ -613,11 +641,13 @@ int EC_KEY_get_flags(const EC_KEY *key)
 void EC_KEY_set_flags(EC_KEY *key, int flags)
 {
     key->flags |= flags;
+    key->dirty_cnt++;
 }
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
     key->flags &= ~flags;
+    key->dirty_cnt++;
 }
 
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
@@ -639,6 +669,7 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         return 0;
     if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
         return 0;
+    key->dirty_cnt++;
     /*
      * Save the point conversion form.
      * For non-custom curves the first octet of the buffer (excluding
@@ -689,13 +720,18 @@ size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
 
 int EC_KEY_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
+    int ret;
+
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
     if (eckey->group->meth->oct2priv == NULL) {
         ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    return eckey->group->meth->oct2priv(eckey, buf, len);
+    ret = eckey->group->meth->oct2priv(eckey, buf, len);
+    if (ret == 1)
+        eckey->dirty_cnt++;
+    return ret;
 }
 
 int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
@@ -711,6 +747,7 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
+    eckey->dirty_cnt++;
     return 1;
 }
 

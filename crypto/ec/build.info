@@ -43,8 +43,6 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-LIBS=../../libcrypto
-
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ec_curve.c ec_check.c ec_print.c ec_key.c ec_asn1.c \
         ec2_smpl.c \
@@ -55,7 +53,7 @@ $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
         $ECASM
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
-                        ec_err.c ecdh_kdf.c eck_prn.c
+                        ec_err.c ecdh_kdf.c eck_prn.c ec_evp_lib.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
