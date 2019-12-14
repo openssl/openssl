@@ -111,7 +111,7 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
     return 1;
 
  err:
-    BN_free(priv_key);
+    BN_clear_free(priv_key);
     BN_free(pub_key);
     return 0;
 }
