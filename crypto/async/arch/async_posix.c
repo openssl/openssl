@@ -34,7 +34,9 @@ void async_local_cleanup(void)
 
 int async_fibre_makecontext(async_fibre *fibre)
 {
+#ifndef USE_SWAPCONTEXT
     fibre->env_init = 0;
+#endif
     if (getcontext(&fibre->fibre) == 0) {
         fibre->fibre.uc_stack.ss_sp = OPENSSL_malloc(STACKSIZE);
         if (fibre->fibre.uc_stack.ss_sp != NULL) {
