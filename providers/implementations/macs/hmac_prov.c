@@ -90,8 +90,10 @@ static void *hmac_dup(void *vsrc)
 static size_t hmac_size(void *vmacctx)
 {
     struct hmac_data_st *macctx = vmacctx;
+    const EVP_MD *md = ossl_prov_digest_md(&macctx->digest);
+    int size = md == NULL ? 0 : EVP_MD_size(md);
 
-    return HMAC_size(macctx->ctx);
+    return size < 0 ? 0 : size;
 }
 
 static int hmac_init(void *vmacctx)
