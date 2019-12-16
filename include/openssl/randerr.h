@@ -10,12 +10,6 @@
 
 #ifndef OPENSSL_RANDERR_H
 # define OPENSSL_RANDERR_H
-# pragma once
-
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_RANDERR_H
-# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -75,6 +69,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_ENTROPY_INPUT_TOO_LONG                    106
 # define RAND_R_ENTROPY_OUT_OF_RANGE                      124
 # define RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED            127
+# define RAND_R_ERROR_EXTRACTING_NONCE                    138
 # define RAND_R_ERROR_INITIALISING_DRBG                   107
 # define RAND_R_ERROR_INSTANTIATING_DRBG                  108
 # define RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT         109
@@ -101,6 +96,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_SELFTEST_FAILURE                          119
 # define RAND_R_TOO_LITTLE_NONCE_REQUESTED                135
 # define RAND_R_TOO_MUCH_NONCE_REQUESTED                  136
+# define RAND_R_UNABLE_TO_GET_PARENT_STRENGTH             139
 # define RAND_R_UNSUPPORTED_DRBG_FLAGS                    132
 # define RAND_R_UNSUPPORTED_DRBG_TYPE                     120
 

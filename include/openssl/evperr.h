@@ -10,12 +10,6 @@
 
 #ifndef OPENSSL_EVPERR_H
 # define OPENSSL_EVPERR_H
-# pragma once
-
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_EVPERR_H
-# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -173,6 +167,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_BUFFER_TOO_SMALL                           155
 # define EVP_R_CAMELLIA_KEY_SETUP_FAILED                  157
 # define EVP_R_CANNOT_GET_PARAMETERS                      197
+# define EVP_R_CANNOT_RESEED_WITHOUT_PARENT_SET           202
 # define EVP_R_CANNOT_SET_PARAMETERS                      198
 # define EVP_R_CIPHER_NOT_GCM_MODE                        184
 # define EVP_R_CIPHER_PARAMETER_ERROR                     122
@@ -181,6 +176,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_COPY_ERROR                                 173
 # define EVP_R_CTRL_NOT_IMPLEMENTED                       132
 # define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED             133
+# define EVP_R_CTX_IS_NOT_REFERENCE_COUNTED               203
 # define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH          138
 # define EVP_R_DECODE_ERROR                               114
 # define EVP_R_DIFFERENT_KEY_TYPES                        101
@@ -224,6 +220,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_KEYMGMT_PRESENT                         196
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149
+# define EVP_R_NULL_CONTEXT                               204
 # define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151
@@ -234,7 +231,11 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_PRIVATE_KEY_DECODE_ERROR                   145
 # define EVP_R_PRIVATE_KEY_ENCODE_ERROR                   146
 # define EVP_R_PUBLIC_KEY_NOT_RSA                         106
+# define EVP_R_REFERENCE_COUNT_FAILURE                    205
 # define EVP_R_TOO_MANY_RECORDS                           183
+# define EVP_R_TOO_MUCH_ENTROPY_REQUESTED                 206
+# define EVP_R_UNABLE_TO_GET_PARAMS                       207
+# define EVP_R_UNABLE_TO_LOCK_CONTEXT                     208
 # define EVP_R_UNKNOWN_CIPHER                             160
 # define EVP_R_UNKNOWN_DIGEST                             161
 # define EVP_R_UNKNOWN_OPTION                             169
