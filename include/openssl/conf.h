@@ -73,6 +73,9 @@ typedef void conf_finish_func (CONF_IMODULE *md);
 # define CONF_MFLAGS_IGNORE_MISSING_FILE 0x10
 # define CONF_MFLAGS_DEFAULT_SECTION     0x20
 
+/*
+ * Somewhat newer, yet still old, CONF API.
+ */
 int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
@@ -103,8 +106,7 @@ DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
 #endif
 
 /*
- * New conf code.  The semantics are different from the functions above. If
- * that wasn't the case, the above functions would have been replaced
+ * Current conf API.
  */
 
 struct conf_st {
@@ -123,18 +125,16 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf, const char *file, long *eline);
-# ifndef OPENSSL_NO_STDIO
-int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
-# endif
-int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,
                                         const char *section);
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
 int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
                        long *result);
 #ifndef OPENSSL_NO_STDIO
+int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 int NCONF_dump_fp(const CONF *conf, FILE *out);
 #endif
+int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
 int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 #define NCONF_get_number(c,g,n,r) NCONF_get_number_e(c,g,n,r)

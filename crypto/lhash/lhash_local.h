@@ -10,6 +10,25 @@
 
 #include "internal/tsan_assist.h"
 
+/*
+ * Testing shows that only some of these fields need TSAN safety.
+ */
+typedef struct lhash_stats_st {
+    TSAN_QUALIFIER unsigned long retrieve;
+    TSAN_QUALIFIER unsigned long retrieve_miss;
+    TSAN_QUALIFIER unsigned long hash_comps;
+    TSAN_QUALIFIER unsigned long hash_calls;
+    TSAN_QUALIFIER unsigned long comp_calls;
+    unsigned long expand_reallocs;
+    unsigned long contracts;
+    unsigned long contract_reallocs;
+    unsigned long insert;
+    unsigned long replace;
+    unsigned long expands;
+    unsigned long deletes;
+    unsigned long no_delete;
+} LHASH_STATS;
+
 struct lhash_node_st {
     void *data;
     struct lhash_node_st *next;
@@ -20,25 +39,14 @@ struct lhash_st {
     OPENSSL_LH_NODE **b;
     OPENSSL_LH_COMPFUNC comp;
     OPENSSL_LH_HASHFUNC hash;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    LHASH_STATS num;
+#endif
     unsigned int num_nodes;
     unsigned int num_alloc_nodes;
     unsigned int p;
     unsigned int pmax;
-    unsigned long up_load;      /* load times 256 */
     unsigned long down_load;    /* load times 256 */
     unsigned long num_items;
-    unsigned long num_expands;
-    unsigned long num_expand_reallocs;
-    unsigned long num_contracts;
-    unsigned long num_contract_reallocs;
-    TSAN_QUALIFIER unsigned long num_hash_calls;
-    TSAN_QUALIFIER unsigned long num_comp_calls;
-    unsigned long num_insert;
-    unsigned long num_replace;
-    unsigned long num_delete;
-    unsigned long num_no_delete;
-    TSAN_QUALIFIER unsigned long num_retrieve;
-    TSAN_QUALIFIER unsigned long num_retrieve_miss;
-    TSAN_QUALIFIER unsigned long num_hash_comps;
     int error;
 };

@@ -154,7 +154,6 @@ void obj_cleanup_int(void)
 {
     if (added == NULL)
         return;
-    lh_ADDED_OBJ_set_down_load(added, 0);
     lh_ADDED_OBJ_doall(added, cleanup1_doall); /* zero counters */
     lh_ADDED_OBJ_doall(added, cleanup2_doall); /* set counters */
     lh_ADDED_OBJ_doall(added, cleanup3_doall); /* free objects */

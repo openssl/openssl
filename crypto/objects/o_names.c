@@ -374,15 +374,10 @@ static void name_funcs_free(NAME_FUNCS *ptr)
 
 void OBJ_NAME_cleanup(int type)
 {
-    unsigned long down_load;
-
     if (names_lh == NULL)
         return;
 
     free_type = type;
-    down_load = lh_OBJ_NAME_get_down_load(names_lh);
-    lh_OBJ_NAME_set_down_load(names_lh, 0);
-
     lh_OBJ_NAME_doall(names_lh, names_lh_free_doall);
     if (type < 0) {
         lh_OBJ_NAME_free(names_lh);
@@ -391,6 +386,5 @@ void OBJ_NAME_cleanup(int type)
         names_lh = NULL;
         name_funcs_stack = NULL;
         obj_lock = NULL;
-    } else
-        lh_OBJ_NAME_set_down_load(names_lh, down_load);
+    }
 }

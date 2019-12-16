@@ -9,3 +9,5 @@
 
 void conf_add_ssl_module(void);
 
+CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section);
+char *_CONF_get_string(const CONF *conf, const char *section, const char *name);

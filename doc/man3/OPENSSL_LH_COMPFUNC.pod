@@ -128,15 +128,6 @@ For example:
  /* Then the hash table itself can be deallocated */
  lh_TYPE_free(hashtable);
 
-When doing this, be careful if you delete entries from the hash table
-in your callbacks: the table may decrease in size, moving the item
-that you are currently on down lower in the hash table - this could
-cause some entries to be skipped during the iteration.  The second
-best solution to this problem is to set hash-E<gt>down_load=0 before
-you start (which will stop the hash table ever decreasing in size).
-The best solution is probably to avoid deleting items from the hash
-table inside a "doall" callback!
-
 B<lh_I<TYPE>_doall_arg>() is the same as B<lh_I<TYPE>_doall>() except that
 I<func> will be called with I<arg> as the second argument and I<func>
 should be of type B<LHASH_DOALL_ARG_FN>(B<I<TYPE>>) (a callback prototype

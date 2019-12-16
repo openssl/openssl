@@ -414,7 +414,19 @@ OpenSSL 3.0
    *Andy Polyakov*
 
  * Most memory-debug features have been deprecated, and the functionality
-   replaced with no-ops.
+   replaced with no-ops. {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now
+   no-ops and have been deprecated.
+
+   *Rich Salz*
+
+ * The undocumented _CONF_xxx API has been removed from the public headers.
+   The undocumented function NCONF_WIN32() has been deprecated; for
+   conversion details see the HISTORY section of doc/man5/config.pod
+
+   *Rich Salz*
+
+ * Statistics collection in the LHASH API has also been deprecated,
+   which can save an atomic increment on every lookup.
 
    *Rich Salz*
  

@@ -15,7 +15,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
+#include "conf_local.h"
 #include <openssl/lhash.h>
 
 static CONF_METHOD *default_CONF_method = NULL;
@@ -247,6 +247,8 @@ int NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
 
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section)
 {
+    CONF_VALUE *v;
+
     if (conf == NULL) {
         CONFerr(CONF_F_NCONF_GET_SECTION, CONF_R_NO_CONF);
         return NULL;
@@ -257,7 +259,10 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section)
         return NULL;
     }
 
-    return _CONF_get_section_values(conf, section);
+    v = _CONF_get_section(conf, section);
+    if (v == NULL)
+        return NULL;
+    return ((STACK_OF(CONF_VALUE) *)v->value);
 }
 
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
