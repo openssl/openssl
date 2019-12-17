@@ -415,7 +415,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_keyexch_derive, (void *ctx,  unsigned char *secret,
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_peer, (void *ctx, void *provkey))
 OSSL_CORE_MAKE_FUNC(void, OP_keyexch_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
-OSSL_CORE_MAKE_FUNC(int, OP_keyexch_get_params, (const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keyexch_gettable_params, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_ctx_params, (void *ctx,
                                                      const OSSL_PARAM params[]))
@@ -487,7 +487,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_final,
                     (void *ctx, const unsigned char *sig, size_t siglen))
 OSSL_CORE_MAKE_FUNC(void, OP_signature_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_dupctx, (void *ctx))
-OSSL_CORE_MAKE_FUNC(int, OP_signature_get_params, (const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_signature_gettable_params, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_get_ctx_params,
                     (void *ctx, OSSL_PARAM params[]))
@@ -538,7 +538,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_decrypt, (void *ctx, unsigned char *out,
                                                   size_t inlen))
 OSSL_CORE_MAKE_FUNC(void, OP_asym_cipher_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_asym_cipher_dupctx, (void *ctx))
-OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_get_params, (const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_asym_cipher_gettable_params, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_get_ctx_params,
                     (void *ctx, OSSL_PARAM params[]))
