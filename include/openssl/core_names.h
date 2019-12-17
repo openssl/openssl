@@ -49,6 +49,12 @@ extern "C" {
 #define OSSL_ALG_PARAM_CIPHER       "cipher"    /* utf8_string */
 #define OSSL_ALG_PARAM_MAC          "mac"       /* utf8_string */
 #define OSSL_ALG_PARAM_PROPERTIES   "properties"/* utf8_string */
+/*
+ * Any algorithm that has some kind of key can, at their option, respond
+ * with a key type name to this parameter.  libcrypto will then use that
+ * name instead of the algorithm name to find a keymgmt implementation.
+ */
+#define OSSL_ALG_PARAM_KEYTYPE      "keytype"
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING   "padding"    /* uint */

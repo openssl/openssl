@@ -10,6 +10,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/core_names.h>
 #include "internal/refcount.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
@@ -170,6 +171,25 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              (void (*)(void *))EVP_KEYEXCH_free);
 }
 
+static EVP_KEYMGMT *evp_keyexch_get_keymgmt(EVP_KEYEXCH *exchange,
+                                            int fallback_id,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propquery)
+{
+    char *keytype_name = NULL;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] =
+        OSSL_PARAM_construct_utf8_ptr(OSSL_ALG_PARAM_KEYTYPE,
+                                      &keytype_name, 0);
+    if (exchange->get_params != NULL && !exchange->get_params(params))
+        return NULL;
+    if (keytype_name == NULL) {
+        return evp_keymgmt_fetch_by_number(libctx, fallback_id, propquery);
+    }
+    return EVP_KEYMGMT_fetch(libctx, keytype_name, propquery);
+}
+
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
     int ret;
@@ -193,12 +213,10 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      * matter, as it isn't tied to a specific EVP_PKEY op.
      */
     exchange = EVP_KEYEXCH_fetch(ctx->libctx, ctx->algorithm, ctx->propquery);
-    if (exchange != NULL && ctx->keymgmt == NULL) {
-        int name_id = EVP_KEYEXCH_number(exchange);
-
+    if (exchange != NULL && ctx->keymgmt == NULL)
         ctx->keymgmt =
-            evp_keymgmt_fetch_by_number(ctx->libctx, name_id, ctx->propquery);
-    }
+            evp_keyexch_get_keymgmt(exchange, EVP_KEYEXCH_number(exchange),
+                                    ctx->libctx, ctx->propquery);
 
     if (ctx->keymgmt == NULL
         || exchange == NULL

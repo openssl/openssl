@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
@@ -328,6 +329,25 @@ void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
         evp_names_do_all(signature->prov, signature->name_id, fn, data);
 }
 
+EVP_KEYMGMT *evp_signature_get_keymgmt(EVP_SIGNATURE *signature,
+                                       int fallback_id,
+                                       OPENSSL_CTX *libctx,
+                                       const char *propquery)
+{
+    char *keytype_name = NULL;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] =
+        OSSL_PARAM_construct_utf8_ptr(OSSL_ALG_PARAM_KEYTYPE,
+                                      &keytype_name, 0);
+    if (signature->get_params != NULL && !signature->get_params(params))
+        return NULL;
+    if (keytype_name == NULL) {
+        return evp_keymgmt_fetch_by_number(libctx, fallback_id, propquery);
+    }
+    return EVP_KEYMGMT_fetch(libctx, keytype_name, propquery);
+}
+
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
@@ -352,12 +372,11 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      */
     signature = EVP_SIGNATURE_fetch(ctx->libctx, ctx->algorithm,
                                     ctx->propquery);
-    if (signature != NULL && ctx->keymgmt == NULL) {
-        int name_id = EVP_SIGNATURE_number(signature);
-
-        ctx->keymgmt = evp_keymgmt_fetch_by_number(ctx->libctx, name_id,
-                                                   ctx->propquery);
-    }
+    if (signature != NULL && ctx->keymgmt == NULL)
+        ctx->keymgmt =
+            evp_signature_get_keymgmt(signature,
+                                      EVP_SIGNATURE_number(signature),
+                                      ctx->libctx, ctx->propquery);
 
     if (ctx->keymgmt == NULL
         || signature == NULL
@@ -580,6 +599,25 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
         return ctx->pmeth->verify_recover(ctx, rout, routlen, sig, siglen);
 }
 
+static EVP_KEYMGMT *evp_asym_cipher_get_keymgmt(EVP_ASYM_CIPHER *cipher,
+                                                int fallback_id,
+                                                OPENSSL_CTX *libctx,
+                                                const char *propquery)
+{
+    char *keytype_name = NULL;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] =
+        OSSL_PARAM_construct_utf8_ptr(OSSL_ALG_PARAM_KEYTYPE,
+                                      &keytype_name, 0);
+    if (cipher->get_params != NULL && !cipher->get_params(params))
+        return NULL;
+    if (keytype_name == NULL) {
+        return evp_keymgmt_fetch_by_number(libctx, fallback_id, propquery);
+    }
+    return EVP_KEYMGMT_fetch(libctx, keytype_name, propquery);
+}
+
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
@@ -603,12 +641,10 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
      * matter, as it isn't tied to a specific EVP_PKEY op.
      */
     cipher = EVP_ASYM_CIPHER_fetch(ctx->libctx, ctx->algorithm, ctx->propquery);
-    if (cipher != NULL && ctx->keymgmt == NULL) {
-        int name_id = EVP_ASYM_CIPHER_number(cipher);
-
+    if (cipher != NULL && ctx->keymgmt == NULL)
         ctx->keymgmt =
-            evp_keymgmt_fetch_by_number(ctx->libctx, name_id, ctx->propquery);
-    }
+            evp_asym_cipher_get_keymgmt(cipher, EVP_ASYM_CIPHER_number(cipher),
+                                        ctx->libctx, ctx->propquery);
 
     if (ctx->keymgmt == NULL
         || cipher == NULL

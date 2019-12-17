@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/core_names.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -78,13 +79,11 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      */
     signature = EVP_SIGNATURE_fetch(locpctx->libctx, locpctx->algorithm,
                                     locpctx->propquery);
-    if (signature != NULL && locpctx->keymgmt == NULL) {
-        int name_id = EVP_SIGNATURE_number(signature);
-
+    if (signature != NULL && locpctx->keymgmt == NULL)
         locpctx->keymgmt =
-            evp_keymgmt_fetch_by_number(locpctx->libctx, name_id,
-                                        locpctx->propquery);
-    }
+            evp_signature_get_keymgmt(signature,
+                                      EVP_SIGNATURE_number(signature),
+                                      locpctx->libctx, locpctx->propquery);
 
     if (locpctx->keymgmt == NULL
         || signature == NULL

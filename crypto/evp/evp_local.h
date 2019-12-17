@@ -280,3 +280,8 @@ void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+EVP_KEYMGMT *evp_signature_get_keymgmt(EVP_SIGNATURE *signature,
+                                       int fallback_id,
+                                       OPENSSL_CTX *libctx,
+                                       const char *propquery);
