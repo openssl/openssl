@@ -505,11 +505,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_status_test]=.. ../include ../apps/include
   DEPEND[cmp_status_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[cmp_protect_test]=cmp_status_test.c cmp_testlib.c
+  SOURCE[cmp_protect_test]=cmp_protect_test.c cmp_testlib.c
   INCLUDE[cmp_protect_test]=.. ../include ../apps/include
   DEPEND[cmp_protect_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[cmp_msg_test]=cmp_status_test.c cmp_testlib.c
+  SOURCE[cmp_msg_test]=cmp_msg_test.c cmp_testlib.c
   INCLUDE[cmp_msg_test]=.. ../include ../apps/include
   DEPEND[cmp_msg_test]=../libcrypto.a libtestutil.a
 
