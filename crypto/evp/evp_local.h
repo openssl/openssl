@@ -108,6 +108,8 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_derive_fn *derive;
     OSSL_OP_keyexch_freectx_fn *freectx;
     OSSL_OP_keyexch_dupctx_fn *dupctx;
+    OSSL_OP_keyexch_get_params_fn *get_params;
+    OSSL_OP_keyexch_gettable_params_fn *gettable_params;
     OSSL_OP_keyexch_set_ctx_params_fn *set_ctx_params;
     OSSL_OP_keyexch_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_KEYEXCH */;
@@ -133,6 +135,8 @@ struct evp_signature_st {
     OSSL_OP_signature_digest_verify_final_fn *digest_verify_final;
     OSSL_OP_signature_freectx_fn *freectx;
     OSSL_OP_signature_dupctx_fn *dupctx;
+    OSSL_OP_signature_get_params_fn *get_params;
+    OSSL_OP_signature_gettable_params_fn *gettable_params;
     OSSL_OP_signature_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_signature_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_signature_set_ctx_params_fn *set_ctx_params;
@@ -156,6 +160,8 @@ struct evp_asym_cipher_st {
     OSSL_OP_asym_cipher_decrypt_fn *decrypt;
     OSSL_OP_asym_cipher_freectx_fn *freectx;
     OSSL_OP_asym_cipher_dupctx_fn *dupctx;
+    OSSL_OP_asym_cipher_get_params_fn *get_params;
+    OSSL_OP_asym_cipher_gettable_params_fn *gettable_params;
     OSSL_OP_asym_cipher_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_asym_cipher_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_asym_cipher_set_ctx_params_fn *set_ctx_params;

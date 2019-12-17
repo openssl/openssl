@@ -39,6 +39,8 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
                                  const unsigned char *sig, size_t siglen);
 
  /* Signature parameters */
+ int OP_signature_get_params(OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_signature_gettable_params(void);
  int OP_signature_get_ctx_params(void *ctx, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_signature_gettable_ctx_params(void);
  int OP_signature_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
@@ -88,6 +90,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_signature_verify_recover_init    OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT
  OP_signature_verify_recover         OSSL_FUNC_SIGNATURE_VERIFY_RECOVER
 
+ OP_signature_get_params             OSSL_FUNC_SIGNATURE_GET_PARAMS
+ OP_signature_gettable_params        OSSL_FUNC_SIGNATURE_GETTABLE_PARAMS
  OP_signature_get_ctx_params         OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS
  OP_signature_gettable_ctx_params    OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS
  OP_signature_set_ctx_params         OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS
@@ -181,8 +185,12 @@ the I<routlen> parameter.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_signature_get_ctx_params() and OP_signature_set_ctx_params() functions.
 
+OP_signature_get_params() gets details of the algorithm implementation
+and stores them in I<params>.
+
 OP_signature_get_ctx_params() gets signature parameters associated with the
 given provider side signature context I<ctx> and stored them in I<params>.
+
 OP_signature_set_ctx_params() sets the signature parameters associated with the
 given provider side signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.

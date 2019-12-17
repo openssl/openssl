@@ -153,6 +153,17 @@ static void *evp_signature_from_dispatch(int name_id,
                 break;
             signature->dupctx = OSSL_get_OP_signature_dupctx(fns);
             break;
+        case OSSL_FUNC_SIGNATURE_GET_PARAMS:
+            if (signature->get_params != NULL)
+                break;
+            signature->get_params = OSSL_get_OP_signature_get_params(fns);
+            break;
+        case OSSL_FUNC_SIGNATURE_GETTABLE_PARAMS:
+            if (signature->gettable_params != NULL)
+                break;
+            signature->gettable_params
+                = OSSL_get_OP_signature_gettable_params(fns);
+            break;
         case OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS:
             if (signature->get_ctx_params != NULL)
                 break;
@@ -841,6 +852,17 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
             if (cipher->dupctx != NULL)
                 break;
             cipher->dupctx = OSSL_get_OP_asym_cipher_dupctx(fns);
+            break;
+        case OSSL_FUNC_ASYM_CIPHER_GET_PARAMS:
+            if (cipher->get_params != NULL)
+                break;
+            cipher->get_params = OSSL_get_OP_asym_cipher_get_params(fns);
+            break;
+        case OSSL_FUNC_ASYM_CIPHER_GETTABLE_PARAMS:
+            if (cipher->gettable_params != NULL)
+                break;
+            cipher->gettable_params
+                = OSSL_get_OP_asym_cipher_gettable_params(fns);
             break;
         case OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS:
             if (cipher->get_ctx_params != NULL)

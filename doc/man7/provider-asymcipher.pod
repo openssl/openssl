@@ -35,6 +35,8 @@ provider-asym_cipher - The asym_cipher library E<lt>-E<gt> provider functions
                             size_t inlen);
 
  /* Asymmetric Cipher parameters */
+ int OP_asym_cipher_get_params(OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_asym_cipher_gettable_params(void);
  int OP_asym_cipher_get_ctx_params(void *ctx, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_asym_cipher_gettable_ctx_params(void);
  int OP_asym_cipher_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
@@ -80,6 +82,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_asym_cipher_decrypt_init         OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT
  OP_asym_cipher_decrypt              OSSL_FUNC_ASYM_CIPHER_DECRYPT
 
+ OP_asym_cipher_get_params           OSSL_FUNC_ASYM_CIPHER_GET_PARAMS
+ OP_asym_cipher_gettable_params      OSSL_FUNC_ASYM_CIPHER_GETTABLE_PARAMS
  OP_asym_cipher_get_ctx_params       OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS
  OP_asym_cipher_gettable_ctx_params  OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS
  OP_asym_cipher_set_ctx_params       OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS
@@ -165,9 +169,13 @@ See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_asym_cipher_get_ctx_params() and OP_asym_cipher_set_ctx_params()
 functions.
 
+OP_asym_cipher_get_params() gets details of the algorithm implementation
+and stores them in I<params>.
+
 OP_asym_cipher_get_ctx_params() gets asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> and stores them in
 I<params>.
+
 OP_asym_cipher_set_ctx_params() sets the asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.

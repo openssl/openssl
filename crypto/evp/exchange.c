@@ -88,6 +88,17 @@ static void *evp_keyexch_from_dispatch(int name_id,
                 break;
             exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
             break;
+        case OSSL_FUNC_KEYEXCH_GET_PARAMS:
+            if (exchange->get_params != NULL)
+                break;
+            exchange->get_params = OSSL_get_OP_keyexch_get_params(fns);
+            break;
+        case OSSL_FUNC_KEYEXCH_GETTABLE_PARAMS:
+            if (exchange->gettable_params != NULL)
+                break;
+            exchange->gettable_params
+                = OSSL_get_OP_keyexch_gettable_params(fns);
+            break;
         case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
