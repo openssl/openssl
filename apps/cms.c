@@ -22,6 +22,7 @@
 # include <openssl/x509_vfy.h>
 # include <openssl/x509v3.h>
 # include <openssl/cms.h>
+# include <openssl/core_names.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
@@ -877,23 +878,36 @@ int cms_main(int argc, char **argv)
         for (i = 0; i < sk_X509_num(encerts); i++) {
             CMS_RecipientInfo *ri;
             cms_key_param *kparam;
-            int tflags = flags;
+            EVP_PKEY_CTX *pctx;
             X509 *x = sk_X509_value(encerts, i);
+            OSSL_PARAM ctx_params[2];
+
             for (kparam = key_first; kparam; kparam = kparam->next) {
                 if (kparam->idx == i) {
-                    tflags |= CMS_KEY_PARAM;
                     break;
                 }
             }
-            ri = CMS_add1_recipient_cert(cms, x, tflags);
+            ri = CMS_add1_recipient_cert(cms, x, flags | CMS_KEY_PARAM);
             if (ri == NULL)
                 goto end;
+
+            pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
             if (kparam != NULL) {
-                EVP_PKEY_CTX *pctx;
-                pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
                 if (!cms_set_pkey_param(pctx, kparam->param))
                     goto end;
             }
+            /* As we do not get parameter here, the cast is safe */
+            ctx_params[0] = OSSL_PARAM_construct_utf8_string(
+                OSSL_ALG_PARAM_CIPHER, (char *)EVP_CIPHER_name(cipher), 
+                strlen(EVP_CIPHER_name(cipher)));
+            ctx_params[1] = OSSL_PARAM_construct_end();
+
+            if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_settable_params(pctx),
+                OSSL_ALG_PARAM_CIPHER) != NULL) {
+                if (EVP_PKEY_CTX_set_params(pctx, ctx_params) <=0)
+                    goto end;
+            }
+
             if (CMS_RecipientInfo_type(ri) == CMS_RECIPINFO_AGREE
                 && wrap_cipher) {
                 EVP_CIPHER_CTX *wctx;
