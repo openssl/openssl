@@ -44,7 +44,7 @@ static void *evp_keyexch_from_dispatch(int name_id,
                                        OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0, paramfncnt = 0;
+    int fncnt = 0, paramfncnt = 0, ctxparamfncnt = 0;
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -93,29 +93,33 @@ static void *evp_keyexch_from_dispatch(int name_id,
             if (exchange->get_params != NULL)
                 break;
             exchange->get_params = OSSL_get_OP_keyexch_get_params(fns);
+            paramfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_GETTABLE_PARAMS:
             if (exchange->gettable_params != NULL)
                 break;
             exchange->gettable_params
                 = OSSL_get_OP_keyexch_gettable_params(fns);
+            paramfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
             exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
-            paramfncnt++;
+            ctxparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
             if (exchange->settable_ctx_params != NULL)
                 break;
             exchange->settable_ctx_params
                 = OSSL_get_OP_keyexch_settable_ctx_params(fns);
-            paramfncnt++;
+            ctxparamfncnt++;
             break;
         }
     }
-    if (fncnt != 4 || (paramfncnt != 0 && paramfncnt != 2)) {
+    if (fncnt != 4
+        || (paramfncnt != 0 && paramfncnt != 2)
+        || (ctxparamfncnt != 0 && ctxparamfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "exchange" functions: init, derive, newctx,

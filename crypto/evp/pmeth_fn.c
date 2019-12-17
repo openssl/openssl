@@ -46,7 +46,8 @@ static void *evp_signature_from_dispatch(int name_id,
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
     int digsignfncnt = 0, digverifyfncnt = 0;
-    int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
+    int gparamfncnt = 0, gctxparamfncnt = 0, sctxparamfncnt = 0;
+    int gmdparamfncnt = 0, smdparamfncnt = 0;
 
     if ((signature = evp_signature_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -158,40 +159,42 @@ static void *evp_signature_from_dispatch(int name_id,
             if (signature->get_params != NULL)
                 break;
             signature->get_params = OSSL_get_OP_signature_get_params(fns);
+            gparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GETTABLE_PARAMS:
             if (signature->gettable_params != NULL)
                 break;
             signature->gettable_params
                 = OSSL_get_OP_signature_gettable_params(fns);
+            gparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS:
             if (signature->get_ctx_params != NULL)
                 break;
             signature->get_ctx_params
                 = OSSL_get_OP_signature_get_ctx_params(fns);
-            gparamfncnt++;
+            gctxparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS:
             if (signature->gettable_ctx_params != NULL)
                 break;
             signature->gettable_ctx_params
                 = OSSL_get_OP_signature_gettable_ctx_params(fns);
-            gparamfncnt++;
+            gctxparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS:
             if (signature->set_ctx_params != NULL)
                 break;
             signature->set_ctx_params
                 = OSSL_get_OP_signature_set_ctx_params(fns);
-            sparamfncnt++;
+            sctxparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS:
             if (signature->settable_ctx_params != NULL)
                 break;
             signature->settable_ctx_params
                 = OSSL_get_OP_signature_settable_ctx_params(fns);
-            sparamfncnt++;
+            sctxparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS:
             if (signature->get_ctx_md_params != NULL)
@@ -235,7 +238,8 @@ static void *evp_signature_from_dispatch(int name_id,
         || (digsignfncnt != 0 && digsignfncnt != 3)
         || (digverifyfncnt != 0 && digverifyfncnt != 3)
         || (gparamfncnt != 0 && gparamfncnt != 2)
-        || (sparamfncnt != 0 && sparamfncnt != 2)
+        || (gctxparamfncnt != 0 && gctxparamfncnt != 2)
+        || (sctxparamfncnt != 0 && sctxparamfncnt != 2)
         || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
         || (smdparamfncnt != 0 && smdparamfncnt != 2)) {
         /*
@@ -837,7 +841,7 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
 {
     EVP_ASYM_CIPHER *cipher = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
-    int gparamfncnt = 0, sparamfncnt = 0;
+    int gparamfncnt = 0, gctxparamfncnt = 0, sctxparamfncnt = 0;
 
     if ((cipher = evp_asym_cipher_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -893,40 +897,42 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
             if (cipher->get_params != NULL)
                 break;
             cipher->get_params = OSSL_get_OP_asym_cipher_get_params(fns);
+            gparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_GETTABLE_PARAMS:
             if (cipher->gettable_params != NULL)
                 break;
             cipher->gettable_params
                 = OSSL_get_OP_asym_cipher_gettable_params(fns);
+            gparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS:
             if (cipher->get_ctx_params != NULL)
                 break;
             cipher->get_ctx_params
                 = OSSL_get_OP_asym_cipher_get_ctx_params(fns);
-            gparamfncnt++;
+            gctxparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS:
             if (cipher->gettable_ctx_params != NULL)
                 break;
             cipher->gettable_ctx_params
                 = OSSL_get_OP_asym_cipher_gettable_ctx_params(fns);
-            gparamfncnt++;
+            gctxparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS:
             if (cipher->set_ctx_params != NULL)
                 break;
             cipher->set_ctx_params
                 = OSSL_get_OP_asym_cipher_set_ctx_params(fns);
-            sparamfncnt++;
+            sctxparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS:
             if (cipher->settable_ctx_params != NULL)
                 break;
             cipher->settable_ctx_params
                 = OSSL_get_OP_asym_cipher_settable_ctx_params(fns);
-            sparamfncnt++;
+            sctxparamfncnt++;
             break;
         }
     }
@@ -935,7 +941,8 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
         || (decfncnt != 0 && decfncnt != 2)
         || (encfncnt != 2 && decfncnt != 2)
         || (gparamfncnt != 0 && gparamfncnt != 2)
-        || (sparamfncnt != 0 && sparamfncnt != 2)) {
+        || (gctxparamfncnt != 0 && gctxparamfncnt != 2)
+        || (sctxparamfncnt != 0 && sctxparamfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a set of context functions (newctx and freectx) as well as a pair of
