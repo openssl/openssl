@@ -671,6 +671,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
 
+    /* 8 byte prefix for AES wrap ciphers */
     wkey = OPENSSL_malloc(ec->keylen + 8);
     if (wkey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -683,6 +684,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
 
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (!EVP_EncryptInit_ex(ctx, cipher, NULL, kekri->key, NULL)
             || !EVP_EncryptUpdate(ctx, wkey, &wkeylen, ec->key, ec->keylen)
             || !EVP_EncryptFinal_ex(ctx, wkey + wkeylen, &outlen)) {
@@ -690,6 +692,10 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
     wkeylen += outlen;
+    if (!ossl_assert((size_t)wkeylen == ec->keylen + 8)) {
+        CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, CMS_R_WRAP_ERROR);
+        goto err;
+    }
 
     ASN1_STRING_set0(kekri->encryptedKey, wkey, wkeylen);
 
