@@ -146,6 +146,13 @@ algorithms:
 
 =over 4
 
+=item "keytype" (B<OSSL_ALG_PARAM_KEYTYPE>) <utf8 pointer>
+
+Gets the keytype name for the associated key exchange algorithm.
+This allows the EVP_PKEY API to get an appropriate L<EVP_KEYMGMT(3)>
+for the algorithm.  If an algorithm doesn't respond to this parameter,
+the keytype name is assumed to be the same as the algorithm name.
+
 =item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the padding mode for the associated key exchange ctx.

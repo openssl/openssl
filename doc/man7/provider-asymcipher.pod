@@ -187,6 +187,13 @@ algorithms:
 
 =over 4
 
+=item "keytype" (B<OSSL_ALG_PARAM_KEYTYPE>) <utf8 pointer>
+
+Gets the keytype name for the associated asymmetric cipher algorithm.
+This allows the EVP_PKEY API to get an appropriate L<EVP_KEYMGMT(3)>
+for the algorithm.  If an algorithm doesn't respond to this parameter,
+the keytype name is assumed to be the same as the algorithm name.
+
 =item "pad-mode" (B<OSSL_ASYM_CIPHER_PARAM_PAD_MODE>) <integer>
 
 The type of padding to be used. The interpretation of this value will depend

@@ -202,6 +202,13 @@ algorithms:
 
 =over 4
 
+=item "keytype" (B<OSSL_ALG_PARAM_KEYTYPE>) <utf8 pointer>
+
+Gets the keytype name for the associated signature algorithm.
+This allows the EVP_PKEY API to get an appropriate L<EVP_KEYMGMT(3)>
+for the algorithm.  If an algorithm doesn't respond to this parameter,
+the keytype name is assumed to be the same as the algorithm name.
+
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 Get or sets the name of the digest algorithm used for the input to the signature
