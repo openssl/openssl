@@ -118,6 +118,12 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->exportkey_types =
                 OSSL_get_OP_keymgmt_exportkey_types(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
+            if (keymgmt->query_operation_name != NULL)
+                break;
+            keymgmt->query_operation_name =
+                OSSL_get_OP_keymgmt_query_operation_name(fns);
+            break;
         }
     }
     /*

@@ -89,6 +89,7 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_exportkey_fn *exportkey;
     OSSL_OP_keymgmt_importkey_types_fn *importkey_types;
     OSSL_OP_keymgmt_exportkey_types_fn *exportkey_types;
+    OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
 } /* EVP_KEYMGMT */ ;
 
 struct keymgmt_data_st {
