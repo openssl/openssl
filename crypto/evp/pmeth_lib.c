@@ -221,7 +221,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         return NULL;
     }
     ret->libctx = libctx;
-    ret->algorithm = name;
+    ret->keytype = name;
     ret->propquery = propquery;
     ret->engine = e;
     ret->pmeth = pmeth;
@@ -382,7 +382,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;
     rctx->libctx = pctx->libctx;
-    rctx->algorithm = pctx->algorithm;
+    rctx->keytype = pctx->keytype;
     rctx->propquery = pctx->propquery;
 
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
