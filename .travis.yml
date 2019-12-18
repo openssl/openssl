@@ -150,6 +150,12 @@ matrix:
           compiler: gcc
         - arch: arm64
           os: osx
+        # arm64 times out when using -fsanitize=address
+        # The amd64 build should be sufficient to test this.
+        # Note the env line must exactly match the env setting above 
+        - arch: arm64
+          env: CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
+
 
 before_script:
     - env
