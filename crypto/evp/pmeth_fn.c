@@ -331,21 +331,32 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    if (ctx->algorithm == NULL)
+    if (ctx->keytype == NULL)
         goto legacy;
 
-    /*
-     * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if signature is already there.  Keymgmt is a different
-     * matter, as it isn't tied to a specific EVP_PKEY op.
-     */
-    signature = EVP_SIGNATURE_fetch(ctx->libctx, ctx->algorithm,
-                                    ctx->propquery);
-    if (signature != NULL && ctx->keymgmt == NULL) {
-        int name_id = EVP_SIGNATURE_number(signature);
+    if (ctx->keymgmt == NULL)
+        ctx->keymgmt =
+            EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, ctx->propquery);
+    if (ctx->keymgmt != NULL) {
+        const char *supported_sig = NULL;
 
-        ctx->keymgmt = evp_keymgmt_fetch_by_number(ctx->libctx, name_id,
-                                                   ctx->propquery);
+        if (ctx->keymgmt->query_operation_name != NULL)
+            supported_sig =
+                ctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+
+        /*
+         * If we didn't get a supported sig, assume there is one with the
+         * same name as the key type.
+         */
+        if (supported_sig == NULL)
+            supported_sig = ctx->keytype;
+
+        /*
+         * Because we cleared out old ops, we shouldn't need to worry about
+         * checking if signature is already there.
+         */
+        signature =
+            EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
     }
 
     if (ctx->keymgmt == NULL
@@ -583,20 +594,32 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
-    if (ctx->algorithm == NULL || ctx->engine != NULL)
+    if (ctx->keytype == NULL || ctx->engine != NULL)
         goto legacy;
 
-    /*
-     * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if exchange is already there.  Keymgmt is a different
-     * matter, as it isn't tied to a specific EVP_PKEY op.
-     */
-    cipher = EVP_ASYM_CIPHER_fetch(ctx->libctx, ctx->algorithm, ctx->propquery);
-    if (cipher != NULL && ctx->keymgmt == NULL) {
-        int name_id = EVP_ASYM_CIPHER_number(cipher);
-
+    if (ctx->keymgmt == NULL)
         ctx->keymgmt =
-            evp_keymgmt_fetch_by_number(ctx->libctx, name_id, ctx->propquery);
+            EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, ctx->propquery);
+    if (ctx->keymgmt != NULL) {
+        const char *supported_ciph = NULL;
+
+        if (ctx->keymgmt->query_operation_name != NULL)
+            supported_ciph =
+                ctx->keymgmt->query_operation_name(OSSL_OP_ASYM_CIPHER);
+
+        /*
+         * If we didn't get a supported ciph, assume there is one with the
+         * same name as the key type.
+         */
+        if (supported_ciph == NULL)
+            supported_ciph = ctx->keytype;
+
+        /*
+         * Because we cleared out old ops, we shouldn't need to worry about
+         * checking if cipher is already there.
+         */
+        cipher =
+            EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
     }
 
     if (ctx->keymgmt == NULL

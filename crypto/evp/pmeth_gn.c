@@ -19,13 +19,13 @@
 
 static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
 {
-    if (ctx == NULL || ctx->algorithm == NULL)
+    if (ctx == NULL || ctx->keytype == NULL)
         goto not_supported;
 
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
     if (ctx->keymgmt == NULL)
-        ctx->keymgmt = EVP_KEYMGMT_fetch(NULL, ctx->algorithm, ctx->propquery);
+        ctx->keymgmt = EVP_KEYMGMT_fetch(NULL, ctx->keytype, ctx->propquery);
     if (ctx->keymgmt == NULL)
         goto not_supported;
 

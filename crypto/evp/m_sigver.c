@@ -52,7 +52,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     locpctx = ctx->pctx;
     evp_pkey_ctx_free_old_ops(locpctx);
 
-    if (locpctx->algorithm == NULL)
+    if (locpctx->keytype == NULL)
         goto legacy;
 
     if (mdname == NULL) {
@@ -71,18 +71,28 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         }
     }
 
-    /*
-     * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if signature is already there.  Keymgmt is a different
-     * matter, as it isn't tied to a specific EVP_PKEY op.
-     */
-    signature = EVP_SIGNATURE_fetch(locpctx->libctx, locpctx->algorithm,
-                                    locpctx->propquery);
-    if (signature != NULL && locpctx->keymgmt == NULL) {
-        int name_id = EVP_SIGNATURE_number(signature);
+    if (locpctx->keymgmt == NULL)
+        locpctx->keymgmt = EVP_KEYMGMT_fetch(locpctx->libctx, locpctx->keytype,
+                                             locpctx->propquery);
+    if (locpctx->keymgmt != NULL) {
+        const char *supported_sig = NULL;
 
-        locpctx->keymgmt =
-            evp_keymgmt_fetch_by_number(locpctx->libctx, name_id,
+        if (locpctx->keymgmt->query_operation_name != NULL)
+            supported_sig =
+                locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+
+        /*
+         * If we didn't get a supported sig, assume there is one with the
+         * same name as the key type.
+         */
+        if (supported_sig == NULL)
+            supported_sig = locpctx->keytype;
+
+        /*
+         * Because we cleared out old ops, we shouldn't need to worry about
+         * checking if signature is already there.
+         */
+        signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
                                         locpctx->propquery);
     }
 
