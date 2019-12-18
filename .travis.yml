@@ -103,8 +103,10 @@ matrix:
               apt:
                   packages:
                       - golang-1.10
-          compiler: gcc
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="g++" TESTS=95
+                      - libboost-dev
+                      - clang-8
+          compiler: clang
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++ enable-md2 enable-rc5 enable-asan enable-ubsan" BORINGSSL_TESTS="yes" CC="clang-8" CXX="clang++-8" CFLAGS="-fsanitize=address,undefined" CXXFLAGS="-fsanitize=address,undefined" ASAN_OPTIONS="detect_leaks=0" TESTS=95
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
