@@ -85,13 +85,43 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
+#elif defined(__sun)
+
+void dep_init(void);
+void dep_cleanup(void);
+
+#pragma init(dep_init)
+void dep_init(void)
+{
+    FIPS_state = FIPS_STATE_SELFTEST;
+}
+
+#pragma fini(dep_cleanup)
+void dep_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(self_test_lock);
+}
+
+#elif defined(__hpux)
+
+#pragma init "dep_init"
+void dep_init(void)
+{
+    FIPS_state = FIPS_STATE_SELFTEST;
+}
+
+#pragma fini "dep_cleanup"
+void dep_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(self_test_lock);
+}
+
 #elif defined(__GNUC__)
 
 static __attribute__((constructor)) void init(void)
 {
     FIPS_state = FIPS_STATE_SELFTEST;
 }
-
 
 static __attribute__((destructor)) void cleanup(void)
 {
