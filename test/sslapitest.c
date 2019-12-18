@@ -6923,9 +6923,13 @@ end:
  * Test 0: Client sets servername and server acknowledges it (TLSv1.2)
  * Test 1: Client sets servername and server does not acknowledge it (TLSv1.2)
  * Test 2: Client sets inconsistent servername on resumption (TLSv1.2)
- * Test 3: Client sets servername and server acknowledges it (TLSv1.3)
- * Test 4: Client sets servername and server does not acknowledge it (TLSv1.3)
- * Test 5: Client sets inconsistent servername on resumption (TLSv1.3)
+ * Test 3: Client does not set servername on initial handshake (TLSv1.2)
+ * Test 4: Client does not set servername on resumption handshake (TLSv1.2)
+ * Test 5: Client sets servername and server acknowledges it (TLSv1.3)
+ * Test 6: Client sets servername and server does not acknowledge it (TLSv1.3)
+ * Test 7: Client sets inconsistent servername on resumption (TLSv1.3)
+ * Test 8: Client does not set servername on initial handshake(TLSv1.3)
+ * Test 9: Client does not set servername on resumption handshake (TLSv1.2)
  */
 static int test_servername(int tst)
 {
@@ -6933,42 +6937,47 @@ static int test_servername(int tst)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
-    const char *sexpectedhost, *cexpectedhost;
+    const char *sexpectedhost = NULL, *cexpectedhost = NULL;
 
 #ifdef OPENSSL_NO_TLS1_2
-    if (tst <= 2)
+    if (tst <= 4)
         return 1;
 #endif
 #ifdef OPENSSL_NO_TLS1_3
-    if (tst >= 3)
+    if (tst >= 5)
         return 1;
 #endif
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION,
-                                       (tst <= 2) ? TLS1_2_VERSION
+                                       (tst <= 4) ? TLS1_2_VERSION
                                                   : TLS1_3_VERSION,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL))
-            || !TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost")))
+                                             NULL, NULL)))
         goto end;
 
-    if (tst != 1 && tst != 4) {
+    if (tst != 1 && tst != 6) {
         if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
                                                               hostname_cb)))
             goto end;
+    }
+
+    if (tst != 3 && tst != 8) {
+        if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost")))
+            goto end;
+        sexpectedhost = cexpectedhost = "goodhost";
     }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
     if (!TEST_str_eq(SSL_get_servername(clientssl, TLSEXT_NAMETYPE_host_name),
-                     "goodhost")
+                     cexpectedhost)
             || !TEST_str_eq(SSL_get_servername(serverssl,
                                                TLSEXT_NAMETYPE_host_name),
-                            "goodhost"))
+                            sexpectedhost))
         goto end;
 
     /* Now repeat with a resumption handshake */
@@ -6991,7 +7000,7 @@ static int test_servername(int tst)
         goto end;
 
     sexpectedhost = cexpectedhost = "goodhost";
-    if (tst == 2 || tst == 5) {
+    if (tst == 2 || tst == 7) {
         /* Set an inconsistent hostname */
         if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "altgoodhost")))
             goto end;
@@ -6999,12 +7008,24 @@ static int test_servername(int tst)
          * In TLSv1.2 we expect the hostname from the original handshake, in
          * TLSv1.3 we expect the hostname from this handshake
          */
-        if (tst == 5)
+        if (tst == 7)
             sexpectedhost = cexpectedhost = "altgoodhost";
 
         if (!TEST_str_eq(SSL_get_servername(clientssl,
                                             TLSEXT_NAMETYPE_host_name),
                          "altgoodhost"))
+            goto end;
+    } else if (tst == 4 || tst == 9) {
+        /*
+         * A TLSv1.3 session does not associate a session with a servername,
+         * but a TLSv1.2 session does.
+         */
+        if (tst == 9)
+            sexpectedhost = cexpectedhost = NULL;
+
+        if (!TEST_str_eq(SSL_get_servername(clientssl,
+                                            TLSEXT_NAMETYPE_host_name),
+                         cexpectedhost))
             goto end;
     } else {
         if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost")))
@@ -7013,19 +7034,17 @@ static int test_servername(int tst)
          * In a TLSv1.2 resumption where the hostname was not acknowledged
          * we expect the hostname on the server to be empty. On the client we
          * return what was requested in this case.
+         *
+         * Similarly if the client didn't set a hostname on an original TLSv1.2
+         * session but is now, the server hostname will be empty, but the client
+         * is as we set it.
          */
-        if (tst == 1 || tst == 2)
+        if (tst == 1 || tst == 3)
             sexpectedhost = NULL;
 
         if (!TEST_str_eq(SSL_get_servername(clientssl,
                                             TLSEXT_NAMETYPE_host_name),
                          "goodhost"))
-            goto end;
-    }
-
-    if (tst != 1 && tst != 4) {
-        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
-                                                              hostname_cb)))
             goto end;
     }
 
@@ -7209,7 +7228,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
 #endif
-    ADD_ALL_TESTS(test_servername, 6);
+    ADD_ALL_TESTS(test_servername, 10);
     return 1;
 }
 
