@@ -139,6 +139,7 @@ static int test_fromdata_rsa(void)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DH
 /* Array indexes used in test_fromdata_dh */
 #define PRIV_KEY        0
 #define PUB_KEY         1
@@ -187,10 +188,13 @@ static int test_fromdata_dh(void)
 
     return ret;
 }
+#endif
 
 int setup_tests(void)
 {
     ADD_TEST(test_fromdata_rsa);
+#ifndef OPENSSL_NO_DH
     ADD_TEST(test_fromdata_dh);
+#endif
     return 1;
 }
