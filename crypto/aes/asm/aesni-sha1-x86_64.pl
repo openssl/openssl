@@ -133,6 +133,7 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
 .align	32
 aesni_cbc_sha1_enc:
+.cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11
@@ -151,6 +152,7 @@ ___
 $code.=<<___;
 	jmp	aesni_cbc_sha1_enc_ssse3
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc,.-aesni_cbc_sha1_enc
 ___
 
@@ -840,6 +842,7 @@ $code.=<<___;
 .type	aesni256_cbc_sha1_dec,\@abi-omnipotent
 .align	32
 aesni256_cbc_sha1_dec:
+.cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
@@ -854,6 +857,7 @@ ___
 $code.=<<___;
 	jmp	aesni256_cbc_sha1_dec_ssse3
 	ret
+.cfi_endproc
 .size	aesni256_cbc_sha1_dec,.-aesni256_cbc_sha1_dec
 
 .type	aesni256_cbc_sha1_dec_ssse3,\@function,6
@@ -1760,6 +1764,7 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc_shaext,\@function,6
 .align	32
 aesni_cbc_sha1_enc_shaext:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 ___
 $code.=<<___ if ($win64);
@@ -1911,6 +1916,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc_shaext,.-aesni_cbc_sha1_enc_shaext
 ___
 						}}}

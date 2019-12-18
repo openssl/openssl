@@ -123,6 +123,7 @@ $code=<<___;
 .type	$func,\@abi-omnipotent
 .align	16
 $func:
+.cfi_startproc
 ___
 						if ($avx) {
 $code.=<<___;
@@ -162,6 +163,7 @@ $code.=<<___;
 	ud2
 .Lprobe:
 	ret
+.cfi_endproc
 .size	$func,.-$func
 
 .align	64

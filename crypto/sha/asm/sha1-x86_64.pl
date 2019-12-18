@@ -468,8 +468,8 @@ $code.=<<___ if ($win64);
 .Lepilogue_shaext:
 ___
 $code.=<<___;
-.cfi_endproc
 	ret
+.cfi_endproc
 .size	sha1_block_data_order_shaext,.-sha1_block_data_order_shaext
 ___
 }}}

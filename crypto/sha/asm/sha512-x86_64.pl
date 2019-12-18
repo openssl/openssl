@@ -569,6 +569,7 @@ $code.=<<___;
 .align	64
 sha256_block_data_order_shaext:
 _shaext_shortcut:
+.cfi_startproc
 ___
 $code.=<<___ if ($win64);
 	lea	`-8-5*16`(%rsp),%rsp
@@ -712,6 +713,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	ret
+.cfi_endproc
 .size	sha256_block_data_order_shaext,.-sha256_block_data_order_shaext
 ___
 }}}
