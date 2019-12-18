@@ -7,29 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <openssl/md5.h>
+#include "crypto/evp.h"
+#include "legacy_meth.h"
 
-#ifndef OPENSSL_NO_MD5
-
-# include <openssl/md5.h>
-# include "crypto/evp.h"
+IMPLEMENT_LEGACY_EVP_MD_METH(md5, MD5)
 
 static const EVP_MD md5_md = {
     NID_md5,
     NID_md5WithRSAEncryption,
     MD5_DIGEST_LENGTH,
     0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    MD5_CBLOCK,
+    LEGACY_EVP_MD_METH_TABLE(md5_init, md5_update, md5_final, NULL, MD5_CBLOCK)
 };
 
 const EVP_MD *EVP_md5(void)
 {
     return &md5_md;
 }
-
-#endif /* OPENSSL_NO_MD5 */
