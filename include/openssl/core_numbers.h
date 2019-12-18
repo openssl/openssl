@@ -395,6 +395,11 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 
+/* Discovery of supported operations */
+# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME    17
+OSSL_CORE_MAKE_FUNC(const char *,OP_keymgmt_query_operation_name,
+                    (int operation_id))
+
 /* Key Exchange */
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1

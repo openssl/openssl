@@ -40,6 +40,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OP_keymgmt_importkey_types(void);
  const OSSL_PARAM *OP_keymgmt_exportkey_types(void);
 
+ /* Discovery of supported operations */
+ const char *OP_keymgmt_query_operation_name(int operation_id);
+
 =head1 DESCRIPTION
 
 The KEYMGMT operation doesn't have much public visibility in OpenSSL
@@ -157,6 +160,16 @@ as well...
 OP_keymgmt_exportkey_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that can be exported with
 OP_keymgmt_exportkeys().
+
+=head2 Supported operations
+
+OP_keymgmt_query_operation_name() should return the name of the
+supported algorithm for the operation I<operation_id>.  This is
+similar to provider_query_operation() (see L<provider-base(7)>),
+but only works as an advisory.  If this function is not present, or
+returns NULL, the caller is free to assume that there's an algorithm
+from the same provider, of the same name as the one used to fetch the
+keymgmt and try to use that.
 
 =head1 SEE ALSO
 
