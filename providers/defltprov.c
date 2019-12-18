@@ -388,12 +388,12 @@ static const OSSL_ALGORITHM deflt_asym_cipher[] = {
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH", "default=yes", dh_keymgmt_functions },
+    { "DH:dhKeyAgreement", "default=yes", dh_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
-    { "DSA", "default=yes", dsa_keymgmt_functions },
+    { "DSA:dsaEncryption", "default=yes", dsa_keymgmt_functions },
 #endif
-    { "RSA", "default=yes", rsa_keymgmt_functions },
+    { "RSA:rsaEncryption", "default=yes", rsa_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 
