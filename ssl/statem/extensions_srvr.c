@@ -159,13 +159,12 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         }
 
         s->servername_done = 1;
-    }
-    /*
-     * In TLSv1.2 and below we should check if the SNI is consistent between
-     * the initial handshake and the resumption. In TLSv1.3 SNI is not
-     * associated with the session.
-     */
-    if (s->hit && !SSL_IS_TLS13(s)) {
+    } else {
+        /*
+         * In TLSv1.2 and below we should check if the SNI is consistent between
+         * the initial handshake and the resumption. In TLSv1.3 SNI is not
+         * associated with the session.
+         */
         /*
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.

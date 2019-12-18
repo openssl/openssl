@@ -2765,10 +2765,15 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
  */
 const char *SSL_get_servername(const SSL *s, const int type)
 {
+    /*
+     * If we don't know if we are the client or the server yet then we assume
+     * client.
+     */
+    int server = s->handshake_func == NULL ? 0 : s->server;
     if (type != TLSEXT_NAMETYPE_host_name)
         return NULL;
 
-    if (s->server) {
+    if (server) {
         /*
          * Server side
          * In TLSv1.3 on the server SNI is not associated with the session
@@ -2777,11 +2782,13 @@ const char *SSL_get_servername(const SSL *s, const int type)
          * Before the handshake:
          *  - return NULL
          *
-         * During/after the handshake:
-         * - If TLSv1.2 or below has been negotiated and we resumed then we
-         *   return the servername from the original session
-         * - Otherwise the servername requested by the client in this handshake
-         *   is returned.
+         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * - If a servername was accepted by the server in the original
+         *   handshake then it will return that servername, or NULL otherwise.
+         *
+         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * - The function will return the servername requested by the client in
+         *   this handshake or NULL if none was requested.
          */
          if (s->hit && !SSL_IS_TLS13(s))
             return s->session->ext.hostname;
@@ -2790,19 +2797,28 @@ const char *SSL_get_servername(const SSL *s, const int type)
          * Client side
          *
          * Before the handshake:
-         *  - We return the servername we are requesting if one has been set
-         *  - If a servername has not been set then we return the servername from
-         *    the original session (if a resumption is being attempted)
+         *  - If a servername has been set via a call to
+         *    SSL_set_tlsext_host_name() then it will return that servername
+         *  - If one has not been set, but a TLSv1.2 resumption is being
+         *    attempted and the session from the original handshake had a
+         *    servername accepted by the server then it will return that
+         *    servername
+         *  - Otherwise it returns NULL
          *
-         * During/after the handshake:
-         * - If TLSv1.3 has been negotiated then we return the servername we
-         *   requested.
-         * - If TLSv1.2 or below has been negotiated and we resumed then we
-         *   return the servername from the original session if there was one,
-         *   and otherwise the servername we requested in this handshake.
+         * During/after the handshake (TLSv1.2 or below resumption occurred):
+         * - If the session from the orignal handshake had a servername accepted
+         *   by the server then it will return that servername.
+         * - Otherwise it returns the servername set via
+         *   SSL_set_tlsext_host_name() (or NULL if it was not called).
+         *
+         * During/after the handshake (TLSv1.2 or below resumption did not occur):
+         * - It will return the servername set via SSL_set_tlsext_host_name()
+         *   (or NULL if it was not called).
          */
         if (SSL_in_before(s)) {
-            if (s->ext.hostname == NULL && s->session != NULL)
+            if (s->ext.hostname == NULL
+                    && s->session != NULL
+                    && s->session->ssl_version != TLS1_3_VERSION)
                 return s->session->ext.hostname;
         } else {
             if (!SSL_IS_TLS13(s) && s->hit && s->session->ext.hostname != NULL)
