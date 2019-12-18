@@ -72,20 +72,51 @@ In particular note that in TLSv1.3 the servername is negotiated in every
 handshake. In TLSv1.2 the servername is only negotiated on initial handshakes
 and not on resumption handshakes.
 
-On the client, if this is called before a server accepts or ignores the
-servername, then it will return the servername being requested if one has been
-set. If a servername has not been set then it returns the servername from the
-original session (if a resumption is being attempted). After the server has
-accepted or ignored the servername, if TLSv1.2 or below has been negotiated and
-a session was resumed, then it returns the servername from the original session
-if there was one. Otherwise the servername requested by the client in this
-handshake is returned.
+=over 4
 
-On the server, if this is called before the servername extension from the client
-is processed, then NULL will be returned. After processing of any servername
-extension from the client, if TLSv1.2 has been negotiated and a session was
-resumed, then the servername from the original session is returned. Otherwise
-the servername requested by the client in this handshake is returned.
+=item On the client, before the handshake
+
+If a servername has been set via a call to SSL_set_tlsext_host_name() then it
+will return that servername.
+
+If one has not been set, but a TLSv1.2 resumption is being attempted and the
+session from the original handshake had a servername accepted by the server then
+it will return that servername.
+
+Otherwise it returns NULL.
+
+=item On the client, during or after the handshake and a TLSv1.2 (or below)
+resumption occurred
+
+If the session from the orignal handshake had a servername accepted by the
+server then it will return that servername.
+
+Otherwise it returns the servername set via SSL_set_tlsext_host_name() (or NULL
+if it was not called).
+
+=item On the client, during or after the handshake and a TLSv1.2 (or below)
+resumption did not occur
+
+It will return the servername set via SSL_set_tlsext_host_name() (or NULL if it
+was not called).
+
+=item On the server, before the handshake
+
+The function will always return NULL before the handshake
+
+=item On the server, after the servername extension has been processed and a
+TLSv1.2 (or below) resumption occurred
+
+If a servername was accepted by the server in the original handshake then it
+will return that servername, or NULL otherwise.
+
+=item On the server, after the servername extension has been processed and a
+TLSv1.2 (or below) resumption did not occur
+
+The function will return the servername requested by the client in this
+handshake or NULL if none was requested.
+
+=back
 
 Note that the ClientHello callback occurs before a servername extension from the
 client is processed. The servername, certificate and alpn callbacks occur after
