@@ -1619,6 +1619,7 @@ $code.=<<___;
 .type	__rsaz_512_reduce,\@abi-omnipotent
 .align	32
 __rsaz_512_reduce:
+.cfi_startproc
 	movq	%r8, %rbx
 	imulq	128+8(%rsp), %rbx
 	movq	0(%rbp), %rax
@@ -1698,6 +1699,7 @@ __rsaz_512_reduce:
 	jne	.Lreduction_loop
 
 	ret
+.cfi_endproc
 .size	__rsaz_512_reduce,.-__rsaz_512_reduce
 ___
 }
@@ -1711,6 +1713,7 @@ $code.=<<___;
 .type	__rsaz_512_reducex,\@abi-omnipotent
 .align	32
 __rsaz_512_reducex:
+.cfi_startproc
 	#movq	128+8(%rsp), %rdx		# pull $n0
 	imulq	%r8, %rdx
 	xorq	%rsi, %rsi			# cf=0,of=0
@@ -1763,6 +1766,7 @@ __rsaz_512_reducex:
 	jne	.Lreduction_loopx
 
 	ret
+.cfi_endproc
 .size	__rsaz_512_reducex,.-__rsaz_512_reducex
 ___
 }
@@ -1774,6 +1778,7 @@ $code.=<<___;
 .type	__rsaz_512_subtract,\@abi-omnipotent
 .align	32
 __rsaz_512_subtract:
+.cfi_startproc
 	movq	%r8, ($out)
 	movq	%r9, 8($out)
 	movq	%r10, 16($out)
@@ -1827,6 +1832,7 @@ __rsaz_512_subtract:
 	movq	%r15, 56($out)
 
 	ret
+.cfi_endproc
 .size	__rsaz_512_subtract,.-__rsaz_512_subtract
 ___
 }
@@ -1840,6 +1846,7 @@ $code.=<<___;
 .type	__rsaz_512_mul,\@abi-omnipotent
 .align	32
 __rsaz_512_mul:
+.cfi_startproc
 	leaq	8(%rsp), %rdi
 
 	movq	($ap), %rax
@@ -1978,6 +1985,7 @@ __rsaz_512_mul:
 	movq	%r15, 56(%rdi)
 
 	ret
+.cfi_endproc
 .size	__rsaz_512_mul,.-__rsaz_512_mul
 ___
 }
@@ -1992,6 +2000,7 @@ $code.=<<___;
 .type	__rsaz_512_mulx,\@abi-omnipotent
 .align	32
 __rsaz_512_mulx:
+.cfi_startproc
 	mulx	($ap), %rbx, %r8	# initial %rdx preloaded by caller
 	mov	\$-6, %rcx
 
@@ -2108,6 +2117,7 @@ __rsaz_512_mulx:
 	mov	%r15, 8+64+56(%rsp)
 
 	ret
+.cfi_endproc
 .size	__rsaz_512_mulx,.-__rsaz_512_mulx
 ___
 }
@@ -2118,6 +2128,7 @@ $code.=<<___;
 .type	rsaz_512_scatter4,\@abi-omnipotent
 .align	16
 rsaz_512_scatter4:
+.cfi_startproc
 	leaq	($out,$power,8), $out
 	movl	\$8, %r9d
 	jmp	.Loop_scatter
@@ -2130,12 +2141,14 @@ rsaz_512_scatter4:
 	decl	%r9d
 	jnz	.Loop_scatter
 	ret
+.cfi_endproc
 .size	rsaz_512_scatter4,.-rsaz_512_scatter4
 
 .globl	rsaz_512_gather4
 .type	rsaz_512_gather4,\@abi-omnipotent
 .align	16
 rsaz_512_gather4:
+.cfi_startproc
 ___
 $code.=<<___	if ($win64);
 .LSEH_begin_rsaz_512_gather4:
@@ -2230,6 +2243,7 @@ ___
 $code.=<<___;
 	ret
 .LSEH_end_rsaz_512_gather4:
+.cfi_endproc
 .size	rsaz_512_gather4,.-rsaz_512_gather4
 
 .align	64
