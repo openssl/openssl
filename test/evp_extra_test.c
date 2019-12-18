@@ -1413,6 +1413,7 @@ static int test_decrypt_null_chunks(void)
 }
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
+#ifndef OPENSSL_NO_DH
 static int test_EVP_PKEY_set1_DH(void)
 {
     DH *x942dh, *pkcs3dh;
@@ -1447,6 +1448,7 @@ static int test_EVP_PKEY_set1_DH(void)
 
     return ret;
 }
+#endif
 
 int setup_tests(void)
 {
@@ -1483,7 +1485,9 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
+#ifndef OPENSSL_NO_DH
     ADD_TEST(test_EVP_PKEY_set1_DH);
+#endif
 
     return 1;
 }
