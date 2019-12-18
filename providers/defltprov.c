@@ -399,6 +399,7 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { "RSA", "default=yes,format=pem,type=public",
       rsa_pub_pem_serializer_functions },
 
+#ifndef OPENSSL_NO_DH
     { "DH", "default=yes,format=text,type=private",
       dh_priv_text_serializer_functions },
     { "DH", "default=yes,format=text,type=public",
@@ -417,6 +418,7 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
       dh_pub_pem_serializer_functions },
     { "DH", "default=yes,format=pem,type=domainparams",
       dh_param_pem_serializer_functions },
+#endif
 
     { NULL, NULL, NULL }
 };
