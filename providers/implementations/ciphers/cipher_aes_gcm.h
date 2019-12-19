@@ -10,6 +10,7 @@
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
+#include "crypto/aes_platform.h"
 
 typedef struct prov_aes_gcm_ctx_st {
     PROV_GCM_CTX base;          /* must be first entry in struct */
