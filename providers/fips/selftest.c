@@ -50,7 +50,7 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
     return self_test_lock != NULL;
 }
 
-#define DEP_DELCARE()                                                          \
+#define DEP_DECLARE()                                                          \
 void init(void);                                                               \
 void cleanup(void);
 
@@ -74,7 +74,7 @@ void cleanup(void);
  */
 # endif
 
-DEP_DELCARE();
+DEP_DECLARE()
 # define DEP_INIT_ATTRIBUTE
 # define DEP_FINI_ATTRIBUTE
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
@@ -94,7 +94,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 #elif defined(__sun)
 
-DEP_DELCARE(); /* must be declared before pragma */
+DEP_DECLARE() /* must be declared before pragma */
 # define DEP_INIT_ATTRIBUTE
 # define DEP_FINI_ATTRIBUTE
 # pragma init(init)
@@ -102,7 +102,7 @@ DEP_DELCARE(); /* must be declared before pragma */
 
 #elif defined(__hpux)
 
-DEP_DELCARE();
+DEP_DECLARE()
 # define DEP_INIT_ATTRIBUTE
 # define DEP_FINI_ATTRIBUTE
 # pragma init "init"
