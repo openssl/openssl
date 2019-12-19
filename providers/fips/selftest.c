@@ -50,6 +50,10 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
     return self_test_lock != NULL;
 }
 
+#define DEP_DELCARE()                                                          \
+void init(void);                                                               \
+void cleanup(void);
+
 /*
  * This is the Default Entry Point (DEP) code. Every platform must have a DEP.
  * See FIPS 140-2 IG 9.10
@@ -70,15 +74,18 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
  */
 # endif
 
+DEP_DELCARE();
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        FIPS_state = FIPS_STATE_SELFTEST;
+        init();
         break;
     case DLL_PROCESS_DETACH:
-        CRYPTO_THREAD_lock_free(self_test_lock);
+        cleanup();
         break;
     default:
         break;
@@ -87,47 +94,35 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 #elif defined(__sun)
 
-void dep_init(void);
-void dep_cleanup(void);
-
-#pragma init(dep_init)
-void dep_init(void)
-{
-    FIPS_state = FIPS_STATE_SELFTEST;
-}
-
-#pragma fini(dep_cleanup)
-void dep_cleanup(void)
-{
-    CRYPTO_THREAD_lock_free(self_test_lock);
-}
+DEP_DELCARE(); /* must be declared before pragma */
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+# pragma init(init)
+# pragma fini(cleanup)
 
 #elif defined(__hpux)
 
-#pragma init "dep_init"
-void dep_init(void)
-{
-    FIPS_state = FIPS_STATE_SELFTEST;
-}
-
-#pragma fini "dep_cleanup"
-void dep_cleanup(void)
-{
-    CRYPTO_THREAD_lock_free(self_test_lock);
-}
+DEP_DELCARE();
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+# pragma init "init"
+# pragma fini "cleanup"
 
 #elif defined(__GNUC__)
+# define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
+# define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
+#endif
 
-static __attribute__((constructor)) void init(void)
+#if defined(DEP_INIT_ATTRIBUTE) && defined(DEP_FINI_ATTRIBUTE)
+DEP_INIT_ATTRIBUTE void init(void)
 {
     FIPS_state = FIPS_STATE_SELFTEST;
 }
 
-static __attribute__((destructor)) void cleanup(void)
+DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
 }
-
 #endif
 
 /*
