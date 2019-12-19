@@ -10,10 +10,12 @@ IF[{- !$disabled{asm} -}]
   # appropriate one
   IF[$CMLLASM_{- $target{asm_arch} -}]
     $CMLLASM=$CMLLASM_{- $target{asm_arch} -}
+    $CMLLDEF=CMLL_ASM
   ENDIF
 ENDIF
 
 SOURCE[../../libcrypto]=cmll_ecb.c cmll_ofb.c cmll_cfb.c cmll_ctr.c $CMLLASM
+DEFINE[../../libcrypto]=$CMLLDEF
 
 GENERATE[cmll-x86.s]=asm/cmll-x86.pl
 DEPEND[cmll-x86.s]=../perlasm/x86asm.pl
