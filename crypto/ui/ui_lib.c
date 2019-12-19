@@ -15,6 +15,8 @@
 #include <openssl/err.h>
 #include "ui_local.h"
 
+DEFINE_STACK_OF(UI_STRING)
+
 UI *UI_new(void)
 {
     return UI_new_method(NULL);

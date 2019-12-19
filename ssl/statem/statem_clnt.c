@@ -25,6 +25,10 @@
 #include <openssl/trace.h>
 #include <internal/cryptlib.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(SSL_COMP)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
 

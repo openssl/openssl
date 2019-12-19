@@ -169,7 +169,8 @@ struct crypto_ex_data_st {
     OPENSSL_CTX *ctx;
     STACK_OF(void) *sk;
 };
-DEFINE_STACK_OF(void)
+
+DEFINE_OR_DECLARE_STACK_OF(void)
 
 /*
  * Per class, we have a STACK of function pointers.

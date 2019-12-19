@@ -34,6 +34,9 @@ extern "C" {
 /* All hashes are SHA256 in v1 of Certificate Transparency */
 # define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
 
+DEFINE_OR_DECLARE_STACK_OF(SCT)
+DEFINE_OR_DECLARE_STACK_OF(CTLOG)
+
 typedef enum {
     CT_LOG_ENTRY_TYPE_NOT_SET = -1,
     CT_LOG_ENTRY_TYPE_X509 = 0,
@@ -60,9 +63,6 @@ typedef enum {
     SCT_VALIDATION_STATUS_UNVERIFIED,
     SCT_VALIDATION_STATUS_UNKNOWN_VERSION
 } sct_validation_status_t;
-
-DEFINE_STACK_OF(SCT)
-DEFINE_STACK_OF(CTLOG)
 
 /******************************************
  * CT policy evaluation context functions *

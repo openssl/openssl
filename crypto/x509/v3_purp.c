@@ -15,6 +15,11 @@
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
 
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(DIST_POINT)
+DEFINE_STACK_OF(X509_PURPOSE)
+DEFINE_STACK_OF(ASN1_OBJECT)
+
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);

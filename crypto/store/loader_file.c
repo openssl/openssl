@@ -32,6 +32,8 @@
 #include "crypto/evp.h"
 #include "store_local.h"
 
+DEFINE_STACK_OF(X509)
+
 #ifdef _WIN32
 # define stat    _stat
 #endif

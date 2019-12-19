@@ -60,7 +60,9 @@ typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
 # endif
 
+typedef struct asn1_type_st ASN1_TYPE;
 typedef struct asn1_object_st ASN1_OBJECT;
+typedef struct asn1_string_table_st ASN1_STRING_TABLE;
 
 typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct asn1_pctx_st ASN1_PCTX;

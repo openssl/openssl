@@ -19,6 +19,9 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF_STRING()
+
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
 

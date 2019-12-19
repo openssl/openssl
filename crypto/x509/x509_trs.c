@@ -12,6 +12,9 @@
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
+DEFINE_STACK_OF(X509_TRUST)
+DEFINE_STACK_OF(ASN1_OBJECT)
+
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
 static void trtable_free(X509_TRUST *p);
 

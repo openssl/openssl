@@ -20,6 +20,9 @@
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,

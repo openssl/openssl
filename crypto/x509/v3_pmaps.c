@@ -14,6 +14,9 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(POLICY_MAPPING)
+DEFINE_STACK_OF(CONF_VALUE)
+
 static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
                                  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD

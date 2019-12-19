@@ -17,6 +17,9 @@
 #include "crypto/x509.h"
 #include <openssl/x509v3.h>
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(X509_EXTENSION)
+
 static int v3_check_critical(const char **value);
 static int v3_check_generic(const char **value);
 static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,

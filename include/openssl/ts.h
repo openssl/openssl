@@ -37,6 +37,8 @@ extern "C" {
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
+DEFINE_OR_DECLARE_STACK_OF(EVP_MD)
+
 typedef struct TS_msg_imprint_st TS_MSG_IMPRINT;
 typedef struct TS_req_st TS_REQ;
 typedef struct TS_accuracy_st TS_ACCURACY;
@@ -263,8 +265,6 @@ typedef int (*TS_extension_cb) (struct TS_resp_ctx *, X509_EXTENSION *,
                                 void *);
 
 typedef struct TS_resp_ctx TS_RESP_CTX;
-
-DEFINE_STACK_OF_CONST(EVP_MD)
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);

@@ -16,6 +16,10 @@
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+
 /*
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity
  */

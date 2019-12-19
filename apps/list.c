@@ -19,6 +19,8 @@
 #include "opt.h"
 #include "names.h"
 
+DEFINE_STACK_OF_CSTRING()
+
 static int verbose = 0;
 
 static void legacy_cipher_fn(const EVP_CIPHER *c,

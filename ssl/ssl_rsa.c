@@ -17,6 +17,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
+DEFINE_STACK_OF(X509)
+
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
 

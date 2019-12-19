@@ -15,6 +15,8 @@
 
 #include "testutil.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+
 static const ASN1_ITEM *x509_it = NULL;
 static X509 *x509 = NULL;
 #define SERVER "mock.server"

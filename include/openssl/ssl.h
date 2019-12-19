@@ -230,8 +230,10 @@ typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 typedef struct ssl_comp_st SSL_COMP;
 
-STACK_OF(SSL_CIPHER);
-STACK_OF(SSL_COMP);
+DEFINE_OR_DECLARE_STACK_OF(SSL_CIPHER)
+DEFINE_OR_DECLARE_STACK_OF(SSL_COMP)
+DEFINE_OR_DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
+DEFINE_OR_DECLARE_STACK_OF(SSL_COMP)
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
@@ -239,7 +241,6 @@ typedef struct srtp_protection_profile_st {
     unsigned long id;
 } SRTP_PROTECTION_PROFILE;
 
-DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
 
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
                                             int len, void *arg);
@@ -979,8 +980,6 @@ extern "C" {
  * These need to be after the above set of includes due to a compiler bug
  * in VisualStudio 2015
  */
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
-DEFINE_STACK_OF(SSL_COMP)
 
 /* compatibility */
 # define SSL_set_app_data(s,arg)         (SSL_set_ex_data(s,0,(char *)(arg)))

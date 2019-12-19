@@ -18,6 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
+DEFINE_STACK_OF(X509)
+
 /*
  * This function is also used for verification from cmp_vfy.
  *

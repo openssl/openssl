@@ -11,6 +11,8 @@
 #include "ssltestlib.h"
 #include "testutil.h"
 
+DEFINE_STACK_OF(SSL_CIPHER)
+
 static int docorrupt = 0;
 
 static void copy_flags(BIO *bio)

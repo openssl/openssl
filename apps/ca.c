@@ -34,6 +34,11 @@
 #include "apps.h"
 #include "progs.h"
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_EXTENSION)
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF_STRING()
+
 #ifndef W_OK
 # define F_OK 0
 # define W_OK 2

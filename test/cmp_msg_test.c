@@ -11,6 +11,8 @@
 
 #include "cmp_testlib.h"
 
+DEFINE_STACK_OF(OSSL_CMP_CERTRESPONSE)
+
 static const char *server_cert_f;
 static const char *pkcs10_f;
 

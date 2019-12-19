@@ -372,6 +372,28 @@ EOF
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $1,$1)"); },
     },
+    { regexp   => qr/DEFINE_STACK_OF_STRING<<<\((.*?)\)>>>/,
+      massager => sub {
+          return ("DEFINE_SPECIAL_STACK_OF(OPENSSL_STRING, char)");
+      }
+    },
+    { regexp   => qr/DEFINE_STACK_OF_CSTRING<<<\((.*?)\)>>>/,
+      massager => sub {
+          return ("DEFINE_SPECIAL_STACK_OF_CONST(OPENSSL_CSTRING, char)");
+      }
+    },
+    # DEFINE_OR_DECLARE macro calls must be interpretted as DEFINE macro
+    # calls, because that's what they look like to the external apps.
+    # (if that ever changes, we must change the substitutions to STACK_OF)
+    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF<<<\((.*?)\)>>>/,
+      massager => sub { return ("DEFINE_STACK_OF($1)"); }
+    },
+    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF_STRING<<<\(\)>>>/,
+      massager => sub { return ("DEFINE_STACK_OF_STRING()"); },
+    },
+    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF_CSTRING<<<\(\)>>>/,
+      massager => sub { return ("DEFINE_STACK_OF_CSTRING()"); },
+    },
 
     #####
     # ASN1 stuff

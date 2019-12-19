@@ -23,6 +23,8 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
+DEFINE_STACK_OF(X509_INFO)
+
 #ifndef OPENSSL_NO_STDIO
 STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
                                         pem_password_cb *cb, void *u)

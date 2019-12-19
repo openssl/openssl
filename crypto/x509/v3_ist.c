@@ -15,6 +15,8 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+
 /*
  * Issuer Sign Tool (1.2.643.100.112) The name of the tool used to signs the subject (ASN1_SEQUENCE)
  * This extention is required to obtain the status of a qualified certificate at Russian Federation.

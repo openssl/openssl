@@ -19,16 +19,16 @@ extern "C" {
 # include <openssl/x509.h>
 # include <openssl/esserr.h>
 
+DEFINE_OR_DECLARE_STACK_OF(ESS_CERT_ID)
+DEFINE_OR_DECLARE_STACK_OF(ESS_CERT_ID_V2)
+
 typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
 typedef struct ESS_cert_id ESS_CERT_ID;
 typedef struct ESS_signing_cert ESS_SIGNING_CERT;
 
-DEFINE_STACK_OF(ESS_CERT_ID)
-
 typedef struct ESS_signing_cert_v2_st ESS_SIGNING_CERT_V2;
 typedef struct ESS_cert_id_v2_st ESS_CERT_ID_V2;
 
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
 
 DECLARE_ASN1_ALLOC_FUNCTIONS(ESS_ISSUER_SERIAL)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(ESS_ISSUER_SERIAL, ESS_ISSUER_SERIAL)

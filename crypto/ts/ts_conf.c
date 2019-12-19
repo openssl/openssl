@@ -15,6 +15,10 @@
 #include <openssl/engine.h>
 #include <openssl/ts.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_INFO)
+DEFINE_STACK_OF(CONF_VALUE)
+
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION                    "tsa"
 #define ENV_DEFAULT_TSA                 "default_tsa"

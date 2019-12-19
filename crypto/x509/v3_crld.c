@@ -17,6 +17,11 @@
 #include "crypto/x509.h"
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(DIST_POINT)
+DEFINE_STACK_OF(X509_NAME_ENTRY)
+
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,

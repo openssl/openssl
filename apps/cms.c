@@ -23,6 +23,12 @@
 # include <openssl/x509v3.h>
 # include <openssl/cms.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(CMS_SignerInfo)
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(GENERAL_NAMES)
+DEFINE_STACK_OF_STRING()
+
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);

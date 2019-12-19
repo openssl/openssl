@@ -14,9 +14,11 @@
 #include <openssl/safestack.h>
 #include "internal/provider.h"
 
+DEFINE_STACK_OF(OSSL_PROVIDER)
+DEFINE_STACK_OF(CONF_VALUE)
+
 /* PROVIDER config module */
 
-DEFINE_STACK_OF(OSSL_PROVIDER)
 static STACK_OF(OSSL_PROVIDER) *activated_providers = NULL;
 
 static const char *skip_dot(const char *name)

@@ -16,6 +16,8 @@
 
 #include "testutil.h"
 
+DEFINE_STACK_OF(X509)
+
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
 

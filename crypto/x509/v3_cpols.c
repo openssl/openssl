@@ -17,6 +17,11 @@
 #include "pcy_local.h"
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(POLICYINFO)
+DEFINE_STACK_OF(POLICYQUALINFO)
+DEFINE_STACK_OF(ASN1_INTEGER)
+
 /* Certificate policies extension support: this one is a bit complex... */
 
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,

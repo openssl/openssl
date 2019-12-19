@@ -16,6 +16,12 @@
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
+DEFINE_STACK_OF(CMS_SignerInfo)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
+DEFINE_STACK_OF(CMS_RecipientInfo)
+
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
     BIO *rbio;

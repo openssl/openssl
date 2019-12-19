@@ -21,6 +21,8 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+
 typedef struct cipherlist_test_fixture {
     const char *test_case_name;
     SSL_CTX *server;

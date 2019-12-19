@@ -20,6 +20,12 @@
 #include <openssl/bn.h>
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(ACCESS_DESCRIPTION)
+DEFINE_STACK_OF(X509_EXTENSION)
+DEFINE_STACK_OF_STRING()
+
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,

@@ -15,6 +15,11 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
+DEFINE_STACK_OF(X509_LOOKUP)
+DEFINE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(X509)
+
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));

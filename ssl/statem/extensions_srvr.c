@@ -12,6 +12,10 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 
+DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
+DEFINE_STACK_OF(OCSP_RESPID)
+DEFINE_STACK_OF(X509_EXTENSION)
+
 #define COOKIE_STATE_FORMAT_VERSION     0
 
 /*
