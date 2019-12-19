@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.0.2t and OpenSSL 1.0.2u [under development]
 
-      o
+      o Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
+        used in exponentiation with 512-bit moduli (CVE-2019-1551)
 
   Major changes between OpenSSL 1.0.2s and OpenSSL 1.0.2t [10 Sep 2019]
 
