@@ -150,6 +150,27 @@ SSL_set_tlsext_host_name() returns 1 on success, 0 in case of error.
 L<ssl(7)>, L<SSL_CTX_set_alpn_select_cb(3)>,
 L<SSL_get0_alpn_selected(3)>, L<SSL_CTX_set_client_hello_cb(3)>
 
+=head1 HISTORY
+
+SSL_get_servername() historically provided some unexpected results in certain
+corner cases. This has been fixed from OpenSSL 1.1.1e. Prior to that version
+the following occurred:
+
+If the client requests a servername in an initial TLSv1.2 handshake, the
+server accepts it, and then the client successfully resumes but sets a different
+explict servername in the second handshake we would expect SSL_get_servername()
+called by the client to return the servername from the original handshake. This
+is because a TLSv1.2 resumption was successful and therefore the servername that
+has been agreed for the connection is the one from the original handshake.
+However historically it returned the servername from the second handshake.
+
+If the client sends a servername in the first handshake but the server does not
+accept it, and then a second handshake occurs where TLSv1.2 resumption is
+successful then we would expect SSL_get_servername() called by the server to
+return NULL. This is because there was no servername negotiated for the session.
+However historically it returned the servername from the original handshake even
+though the server did not accept it.
+
 =head1 COPYRIGHT
 
 Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
