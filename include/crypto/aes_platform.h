@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_CIPHERMODE_PLATFORM_H
-# define OSSL_CRYPTO_CIPHERMODE_PLATFORM_H
+#ifndef OSSL_AES_PLATFORM_H
+# define OSSL_AES_PLATFORM_H
 
 # include "openssl/aes.h"
 
@@ -223,39 +223,7 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 extern unsigned int OPENSSL_sparcv9cap_P[];
 #  include "sparc_arch.h"
 
-#  ifndef OPENSSL_NO_CAMELLIA
-#   define SPARC_CMLL_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)
-#   include "openssl/camellia.h"
-
-void cmll_t4_set_key(const unsigned char *key, int bits, CAMELLIA_KEY *ks);
-void cmll_t4_encrypt(const unsigned char *in, unsigned char *out,
-                     const CAMELLIA_KEY *key);
-void cmll_t4_decrypt(const unsigned char *in, unsigned char *out,
-                     const CAMELLIA_KEY *key);
-
-void cmll128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
-void cmll128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                              size_t blocks, const CAMELLIA_KEY *key,
-                              unsigned char *ivec);
-void cmll256_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
-                              size_t blocks, const CAMELLIA_KEY *key,
-                              unsigned char *ivec);
-#  endif /* OPENSSL_NO_CAMELLIA */
-
-
 #  define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
-#  define SPARC_DES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_DES)
 #  define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
 #  define HWAES_set_encrypt_key aes_fx_set_encrypt_key
 #  define HWAES_set_decrypt_key aes_fx_set_decrypt_key
@@ -320,19 +288,6 @@ void aes256_t4_xts_encrypt(const unsigned char *in, unsigned char *out,
 void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
                            size_t blocks, const AES_KEY *key1,
                            const AES_KEY *key2, const unsigned char *ivec);
-
-#  ifndef OPENSSL_NO_DES
-#   include <openssl/des.h>
-void des_t4_key_expand(const void *key, DES_key_schedule *ks);
-void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
-                             const DES_key_schedule ks[3], unsigned char iv[8]);
-void des_t4_ede3_cbc_decrypt(const void *inp, void *out, size_t len,
-                             const DES_key_schedule ks[3], unsigned char iv[8]);
-void des_t4_cbc_encrypt(const void *inp, void *out, size_t len,
-                        const DES_key_schedule *ks, unsigned char iv[8]);
-void des_t4_cbc_decrypt(const void *inp, void *out, size_t len,
-                        const DES_key_schedule *ks, unsigned char iv[8]);
-#  endif /*  OPENSSL_NO_DES */
 
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /* IBM S390X support */
@@ -480,4 +435,4 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
 
 # endif /* HWAES_CAPABLE */
 
-#endif /* OSSL_CRYPTO_CIPHERMODE_PLATFORM_H */
+#endif /* OSSL_AES_PLATFORM_H */
