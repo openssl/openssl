@@ -9,6 +9,7 @@
 
 #include "openssl/camellia.h"
 #include "prov/ciphercommon.h"
+#include "crypto/cmll_platform.h"
 
 typedef struct prov_camellia_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

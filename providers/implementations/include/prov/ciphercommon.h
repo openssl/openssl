@@ -13,7 +13,6 @@
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
-#include "crypto/ciphermode_platform.h"
 
 #define MAXCHUNK    ((size_t)1 << (sizeof(long) * 8 - 2))
 #define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))

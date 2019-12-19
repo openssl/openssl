@@ -9,6 +9,7 @@
 
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
+#include "crypto/aes_platform.h"
 
 #define OCB_MAX_TAG_LEN     AES_BLOCK_SIZE
 #define OCB_MAX_DATA_LEN    AES_BLOCK_SIZE
