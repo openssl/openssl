@@ -32,6 +32,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
+    # Note: This CONFIG_OPTS entry must match the value in the exclude: table below that contains env: CONFIG_OPTS , otherwise it will not find a match.
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
@@ -152,7 +153,9 @@ matrix:
           os: osx
         # arm64 times out when using -fsanitize=address
         # The amd64 build should be sufficient to test this.
-        # Note the env line must exactly match the env setting above 
+        # Note: the env line must exactly match the env line from the build
+        # matrix above which contains the `-fsanitize=address` option.
+        # TODO: come up with a better way of doing this that is less error prone.
         - arch: arm64
           env: CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
 
