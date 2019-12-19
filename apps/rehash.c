@@ -42,6 +42,8 @@
 # include <openssl/pem.h>
 # include <openssl/x509.h>
 
+DEFINE_STACK_OF(X509_INFO)
+DEFINE_STACK_OF_STRING()
 
 # ifndef PATH_MAX
 #  define PATH_MAX 4096

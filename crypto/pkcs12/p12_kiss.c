@@ -11,6 +11,10 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(PKCS7)
+DEFINE_STACK_OF(PKCS12_SAFEBAG)
+
 /* Simplified PKCS#12 routines */
 
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,

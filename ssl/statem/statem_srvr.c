@@ -26,6 +26,10 @@
 #include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(SSL_COMP)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+
 #define TICKET_NONCE_SIZE       8
 
 typedef struct {

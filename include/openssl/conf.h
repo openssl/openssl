@@ -33,7 +33,9 @@ typedef struct {
     char *value;
 } CONF_VALUE;
 
-DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(CONF_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(CONF_MODULE)
+
 DEFINE_LHASH_OF(CONF_VALUE);
 
 struct conf_st;
@@ -58,8 +60,7 @@ struct conf_method_st {
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
-DEFINE_STACK_OF(CONF_MODULE)
-DEFINE_STACK_OF(CONF_IMODULE)
+STACK_OF(CONF_IMODULE);
 
 /* DSO module function typedefs */
 typedef int conf_init_func (CONF_IMODULE *md, const CONF *cnf);

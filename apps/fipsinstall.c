@@ -18,6 +18,8 @@
 #include "apps.h"
 #include "progs.h"
 
+DEFINE_STACK_OF_STRING()
+
 #define BUFSIZE 4096
 #define DEFAULT_MAC_NAME "HMAC"
 #define DEFAULT_FIPS_SECTION "fips_check_section"

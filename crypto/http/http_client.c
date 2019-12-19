@@ -25,6 +25,8 @@
 
 #include "http_local.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_VERSION_STR_LEN 3

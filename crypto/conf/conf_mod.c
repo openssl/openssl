@@ -18,6 +18,10 @@
 #include <openssl/trace.h>
 #include <openssl/engine.h>
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(CONF_MODULE)
+DEFINE_STACK_OF(CONF_IMODULE)
+
 #define DSO_mod_init_name "OPENSSL_init"
 #define DSO_mod_finish_name "OPENSSL_finish"
 

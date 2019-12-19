@@ -22,6 +22,8 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
+DEFINE_STACK_OF(X509)
+
 /*
  * Verify a message protected by signature according to section 5.1.3.3
  * (sha1+RSA/DSA or any other algorithm supported by OpenSSL).

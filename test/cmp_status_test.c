@@ -11,6 +11,8 @@
 
 #include "cmp_testlib.h"
 
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+
 typedef struct test_fixture {
     const char *test_case_name;
     int pkistatus;

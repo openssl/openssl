@@ -19,6 +19,8 @@
 #include "dso_local.h"
 #include "e_os.h"
 
+DEFINE_STACK_OF(void)
+
 #ifdef DSO_DLFCN
 
 # ifdef HAVE_DLFCN_H

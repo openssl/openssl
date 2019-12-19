@@ -15,6 +15,13 @@
 #include "ts_local.h"
 #include "crypto/ess.h"
 
+DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(ESS_CERT_ID)
+DEFINE_STACK_OF(ESS_CERT_ID_V2)
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+DEFINE_STACK_OF(GENERAL_NAME)
+
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
 static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,

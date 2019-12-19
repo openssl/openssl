@@ -10,6 +10,8 @@
 #include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
+DEFINE_STACK_OF(void)
+
 int do_ex_data_init(OPENSSL_CTX *ctx)
 {
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);

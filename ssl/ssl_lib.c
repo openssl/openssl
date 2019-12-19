@@ -26,6 +26,14 @@
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+DEFINE_STACK_OF(X509_EXTENSION)
+DEFINE_STACK_OF(OCSP_RESPID)
+DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
+DEFINE_STACK_OF(SCT)
+
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
 {
     (void)r;

@@ -22,6 +22,9 @@
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 
+DEFINE_STACK_OF(SSL_COMP)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+
 /* NB: make sure indices in these tables match values above */
 
 typedef struct {

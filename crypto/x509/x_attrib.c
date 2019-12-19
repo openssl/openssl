@@ -14,6 +14,8 @@
 #include <openssl/x509.h>
 #include "x509_local.h"
 
+DEFINE_STACK_OF(ASN1_TYPE)
+
 /*-
  * X509_ATTRIBUTE: this has the following form:
  *

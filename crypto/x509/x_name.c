@@ -16,6 +16,9 @@
 #include "crypto/asn1.h"
 #include "x509_local.h"
 
+DEFINE_STACK_OF(X509_NAME_ENTRY)
+DEFINE_STACK_OF(ASN1_VALUE)
+
 /*
  * Maximum length of X509_NAME: much larger than anything we should
  * ever see in practice.

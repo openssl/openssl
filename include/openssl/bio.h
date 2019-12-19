@@ -286,7 +286,7 @@ int BIO_method_type(const BIO *b);
 typedef int BIO_info_cb(BIO *, int, int);
 typedef BIO_info_cb bio_info_cb;  /* backward compatibility */
 
-DEFINE_STACK_OF(BIO)
+DEFINE_OR_DECLARE_STACK_OF(BIO)
 
 /* Prefix and suffix callback in ASN1 BIO */
 typedef int asn1_ps_func (BIO *b, unsigned char **pbuf, int *plen,

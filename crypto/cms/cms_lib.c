@@ -16,6 +16,10 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 
+DEFINE_STACK_OF(CMS_RevocationInfoChoice)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 

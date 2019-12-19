@@ -14,6 +14,8 @@
 #include <openssl/dh.h>
 #include "internal/nelem.h"
 
+DEFINE_STACK_OF(X509_NAME)
+
 /*
  * structure holding name tables. This is used for permitted elements in lists
  * such as TLSv1.

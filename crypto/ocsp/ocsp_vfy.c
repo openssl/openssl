@@ -12,6 +12,10 @@
 #include <openssl/err.h>
 #include <string.h>
 
+DEFINE_STACK_OF(OCSP_ONEREQ)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(OCSP_SINGLERESP)
+
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
                             STACK_OF(X509) *certs, unsigned long flags);
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id);

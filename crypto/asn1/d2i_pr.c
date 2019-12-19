@@ -18,6 +18,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
+DEFINE_STACK_OF(ASN1_TYPE)
 EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
                             long length, OPENSSL_CTX *libctx, const char *propq)
 {

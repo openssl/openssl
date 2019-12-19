@@ -12,6 +12,8 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
+DEFINE_STACK_OF_STRING()
+
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
                          const OSSL_STORE_SEARCH *criterion,

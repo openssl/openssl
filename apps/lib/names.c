@@ -12,6 +12,8 @@
 #include <openssl/safestack.h>
 #include "names.h"
 
+DEFINE_STACK_OF_CSTRING()
+
 #ifdef _WIN32
 # define strcasecmp _stricmp
 #endif

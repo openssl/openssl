@@ -13,6 +13,11 @@
 #include <openssl/ess.h>
 #include "crypto/ess.h"
 
+DEFINE_STACK_OF(ESS_CERT_ID)
+DEFINE_STACK_OF(ESS_CERT_ID_V2)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(GENERAL_NAME)
+
 static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
                                                X509 *cert, int issuer_needed);

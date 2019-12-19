@@ -19,6 +19,9 @@
 #include <openssl/ssl.h>
 #include <openssl/store.h>
 
+DEFINE_STACK_OF_STRING()
+DEFINE_STACK_OF_CSTRING()
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_C, OPT_T, OPT_TT, OPT_PRE, OPT_POST,

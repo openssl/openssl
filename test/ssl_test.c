@@ -19,6 +19,8 @@
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
+DEFINE_STACK_OF(X509_NAME)
+
 static CONF *conf = NULL;
 static OSSL_PROVIDER *defctxnull = NULL, *thisprov = NULL;
 static OPENSSL_CTX *libctx = NULL;

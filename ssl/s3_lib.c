@@ -20,6 +20,10 @@
 #include <openssl/x509v3.h>
 #include "internal/cryptlib.h"
 
+DEFINE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)

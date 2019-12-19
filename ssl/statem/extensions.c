@@ -14,6 +14,8 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 
+DEFINE_STACK_OF(X509_NAME)
+
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
 static int init_server_name(SSL *s, unsigned int context);
 static int final_server_name(SSL *s, unsigned int context, int sent);

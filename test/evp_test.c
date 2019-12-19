@@ -25,6 +25,8 @@
 #include "testutil.h"
 #include "evp_test.h"
 
+DEFINE_STACK_OF_STRING()
+
 #define AAD_NUM 4
 
 typedef struct evp_test_method_st EVP_TEST_METHOD;

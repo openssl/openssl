@@ -22,6 +22,8 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+DEFINE_STACK_OF(SSL_CIPHER)
+
 typedef struct cipher_id_name {
     int id;
     const char *name;

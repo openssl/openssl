@@ -417,6 +417,11 @@ OpenSSL 3.0
    replaced with no-ops.
 
    *Rich Salz*
+ 
+ * Added documentation for the STACK API. OpenSSL only defines the STACK
+   functions where they are used.
+  
+   *Rich Salz*
 
  * Introduced a new method type and API, OSSL_SERIALIZER, to
    represent generic serializers.  An implementation is expected to
