@@ -1579,6 +1579,7 @@ $code.=<<___;
 .type	ecp_nistz256_to_mont,\@function,2
 .align	32
 ecp_nistz256_to_mont:
+.cfi_startproc
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -1587,6 +1588,7 @@ ___
 $code.=<<___;
 	lea	.LRR(%rip), $b_org
 	jmp	.Lmul_mont
+.cfi_endproc
 .size	ecp_nistz256_to_mont,.-ecp_nistz256_to_mont
 
 ################################################################################
@@ -2562,6 +2564,7 @@ $code.=<<___;
 .type	ecp_nistz256_scatter_w5,\@abi-omnipotent
 .align	32
 ecp_nistz256_scatter_w5:
+.cfi_startproc
 	lea	-3($index,$index,2), $index
 	movdqa	0x00($in_t), %xmm0
 	shl	\$5, $index
@@ -2578,6 +2581,7 @@ ecp_nistz256_scatter_w5:
 	movdqa	%xmm5, 0x50($val,$index)
 
 	ret
+.cfi_endproc
 .size	ecp_nistz256_scatter_w5,.-ecp_nistz256_scatter_w5
 
 ################################################################################
@@ -2685,6 +2689,7 @@ $code.=<<___;
 .type	ecp_nistz256_scatter_w7,\@abi-omnipotent
 .align	32
 ecp_nistz256_scatter_w7:
+.cfi_startproc
 	movdqu	0x00($in_t), %xmm0
 	shl	\$6, $index
 	movdqu	0x10($in_t), %xmm1
@@ -2696,6 +2701,7 @@ ecp_nistz256_scatter_w7:
 	movdqa	%xmm3, 0x30($val,$index)
 
 	ret
+.cfi_endproc
 .size	ecp_nistz256_scatter_w7,.-ecp_nistz256_scatter_w7
 
 ################################################################################
@@ -3020,8 +3026,10 @@ $code.=<<___;
 .type	ecp_nistz256_avx2_gather_w7,\@function,3
 .align	32
 ecp_nistz256_avx2_gather_w7:
+.cfi_startproc
 	.byte	0x0f,0x0b	# ud2
 	ret
+.cfi_endproc
 .size	ecp_nistz256_avx2_gather_w7,.-ecp_nistz256_avx2_gather_w7
 ___
 }
