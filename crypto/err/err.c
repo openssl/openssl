@@ -27,6 +27,8 @@
 #include "e_os.h"
 #include "err_local.h"
 
+DEFINE_LHASH_OF(ERR_STRING_DATA);
+
 /* Forward declaration in case it's not published because of configuration */
 ERR_STATE *ERR_get_state(void);
 

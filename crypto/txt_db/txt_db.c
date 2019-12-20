@@ -14,6 +14,14 @@
 #include <openssl/buffer.h>
 #include <openssl/txt_db.h>
 
+#ifdef __GNUC__
+# pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wunused-function"
+#endif
+DEFINE_LHASH_OF(OPENSSL_STRING);
+
 #undef BUFSIZE
 #define BUFSIZE 512
 

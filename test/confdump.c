@@ -16,6 +16,14 @@
 
 DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_STACK_OF_CSTRING()
+DEFINE_LHASH_OF(CONF_VALUE);
+
+#ifdef __GNUC__
+# pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wunused-function"
+#endif
 
 static STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
 

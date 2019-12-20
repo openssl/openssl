@@ -34,6 +34,7 @@
 
 DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_STACK_OF_STRING()
+DEFINE_LHASH_OF(OPENSSL_STRING);
 
 #define BITS            "default_bits"
 #define KEYFILE         "default_keyfile"

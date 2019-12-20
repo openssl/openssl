@@ -247,7 +247,11 @@ typedef struct ERR_string_data_st {
     const char *string;
 } ERR_STRING_DATA;
 
+#if defined(OPENSSL_BUILDING_OPENSSL) || defined(OPENSSL_NO_DEPRECATED_3_0)
+LHASH_OF(ERR_STRING_DATA);
+#else
 DEFINE_LHASH_OF(ERR_STRING_DATA);
+#endif
 
 /* 12 lines and some on an 80 column terminal */
 #define ERR_MAX_DATA_SIZE       1024

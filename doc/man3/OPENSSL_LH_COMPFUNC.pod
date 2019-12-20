@@ -16,7 +16,8 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  #include <openssl/lhash.h>
 
- DECLARE_LHASH_OF(TYPE);
+ LHASH_OF(TYPE);
+ DEFINE_LHASH_OF(TYPE);
 
  LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
@@ -40,13 +41,23 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 =head1 DESCRIPTION
 
 This library implements type-checked dynamic hash tables. The hash
-table entries can be arbitrary structures. Usually they consist of key
-and value fields.  In the description here, B<I<TYPE>> is used a placeholder
-for any of the OpenSSL datatypes, such as I<SSL_SESSION>.
+table entries can be arbitrary structures, often containing a key and
+one or more related values.
+In the description here, B<I<TYPE>> is used a placeholder
+for any of the OpenSSL datatypes, such as I<SSL_SESSION>.  Applications can
+also create hash tables of their own datatypes.
+
+The macro LHASH_OF() declares the hash type, which is a pointer to an
+opaque structure. It should be used in every file that references
+the hashtable.
+The macro DEFINE_LHASH_OF() defines static inline functions to actually
+implement the functions described on this page.
+This normally would appear in just one file, and the hash functions are
+wrapped with application-specific functions.
 
 B<lh_I<TYPE>_new>() creates a new B<LHASH_OF>(B<I<TYPE>>) structure to store
-arbitrary data entries, and specifies the 'hash' and 'compare'
-callbacks to be used in organising the table's entries.  The I<hash>
+arbitrary data entries, and specifies the C<hash> and C<compare>
+callbacks to be used in organising the table's entries.  The C<hash>
 callback takes a pointer to a table entry as its argument and returns
 an unsigned long hash value for its key field.  The hash value is
 normally truncated to a power of 2, so make sure that your hash
@@ -55,7 +66,7 @@ takes two arguments (pointers to two hash table entries), and returns
 0 if their keys are equal, nonzero otherwise.
 
 If your hash table
-will contain items of some particular type and the I<hash> and
+contains items of a particular type and the I<hash> and
 I<compare> callbacks hash/compare these types, then the
 B<IMPLEMENT_LHASH_HASH_FN> and B<IMPLEMENT_LHASH_COMP_FN> macros can be
 used to create callback wrappers of the prototypes required by

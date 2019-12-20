@@ -505,6 +505,11 @@ OpenSSL 3.0
 
    *Rich Salz*
 
+ * LHASH macros have better documentation, and OpenSSL source only
+   defines LHASH tables where the tables are actually used.
+
+   *Rich Salz*
+
  * Introduced a new method type and API, OSSL_SERIALIZER, to
    represent generic serializers.  An implementation is expected to
    be able to serialize an object associated with a given name (such

@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Part of the code in here was originally in conf.c, which is now removed */
-
 #include "e_os.h"
 #include "internal/cryptlib.h"
 #include <stdlib.h>
@@ -17,6 +15,7 @@
 #include <openssl/conf_api.h>
 
 DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_LHASH_OF(CONF_VALUE);
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);

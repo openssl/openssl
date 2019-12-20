@@ -39,7 +39,7 @@ typedef struct lhash_st OPENSSL_LHASH;
  * callbacks. This way, callbacks can be provided to LHASH structures without
  * function pointer casting and the macro-defined callbacks provide
  * per-variable casting before deferring to the underlying type-specific
- * callbacks. NB: It is possible to place a "static" in front of both the
+ * callbacks. Note that it's possible to put "static" in front of both the
  * DECLARE and IMPLEMENT macros if the functions are strictly internal.
  */
 
@@ -62,7 +62,7 @@ typedef struct lhash_st OPENSSL_LHASH;
                 return name##_cmp(a,b); }
 # define LHASH_COMP_FN(name) name##_LHASH_COMP
 
-/* Fourth: "doall_arg" functions */
+/* Third: "doall_arg" functions */
 # define DECLARE_LHASH_DOALL_ARG_FN(name, o_type, a_type) \
         void name##_LHASH_DOALL_ARG(void *, void *);
 # define IMPLEMENT_LHASH_DOALL_ARG_FN(name, o_type, a_type) \
@@ -204,7 +204,13 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     } \
     LHASH_OF(type)
 
+
+# if defined(OPENSSL_BUILDING_OPENSSL) || defined(OPENSSL_NO_DEPRECATED_3_0)
+LHASH_OF(OPENSSL_STRING);
+# else
 DEFINE_LHASH_OF(OPENSSL_STRING);
+# endif
+
 # ifdef _MSC_VER
 /*
  * push and pop this warning:
@@ -214,7 +220,11 @@ DEFINE_LHASH_OF(OPENSSL_STRING);
 #  pragma warning (disable: 4090)
 # endif
 
+# if defined(OPENSSL_BUILDING_OPENSSL) || defined(OPENSSL_NO_DEPRECATED_3_0)
+LHASH_OF(OPENSSL_CSTRING);
+# else
 DEFINE_LHASH_OF(OPENSSL_CSTRING);
+# endif
 
 # ifdef _MSC_VER
 #  pragma warning (pop)
