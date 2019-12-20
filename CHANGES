@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.0.2u and 1.0.2v [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2t and 1.0.2u [20 Dec 2019]
 
   *) Fixed an an overflow bug in the x64_64 Montgomery squaring procedure

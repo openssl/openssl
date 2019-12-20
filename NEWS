@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.2u and OpenSSL 1.0.2v [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.2t and OpenSSL 1.0.2u [20 Dec 2019]
 
       o Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
