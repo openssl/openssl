@@ -144,6 +144,11 @@ sub name_synopsis {
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
+        if ( $line =~ /typedef.*\(\*\S+\)\s+\(/ ) {
+            # a callback function with whitespace before the argument list:
+            # typedef ... (*NAME) (...
+            err($id, "function typedef has space before arg list: $line");
+        }
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
             $sym = $1;
