@@ -50,6 +50,10 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
     return self_test_lock != NULL;
 }
 
+#define DEP_DECLARE()                                                          \
+void init(void);                                                               \
+void cleanup(void);
+
 /*
  * This is the Default Entry Point (DEP) code. Every platform must have a DEP.
  * See FIPS 140-2 IG 9.10
@@ -70,34 +74,55 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
  */
 # endif
 
+DEP_DECLARE()
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        FIPS_state = FIPS_STATE_SELFTEST;
+        init();
         break;
     case DLL_PROCESS_DETACH:
-        CRYPTO_THREAD_lock_free(self_test_lock);
+        cleanup();
         break;
     default:
         break;
     }
     return TRUE;
 }
-#elif defined(__GNUC__)
+#elif defined(__sun)
 
-static __attribute__((constructor)) void init(void)
+DEP_DECLARE() /* must be declared before pragma */
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+# pragma init(init)
+# pragma fini(cleanup)
+
+#elif defined(__hpux)
+
+DEP_DECLARE()
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+# pragma init "init"
+# pragma fini "cleanup"
+
+#elif defined(__GNUC__)
+# define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
+# define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
+#endif
+
+#if defined(DEP_INIT_ATTRIBUTE) && defined(DEP_FINI_ATTRIBUTE)
+DEP_INIT_ATTRIBUTE void init(void)
 {
     FIPS_state = FIPS_STATE_SELFTEST;
 }
 
-
-static __attribute__((destructor)) void cleanup(void)
+DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
 }
-
 #endif
 
 /*
