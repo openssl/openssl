@@ -147,10 +147,10 @@ sub name_synopsis {
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
             $sym = $1;
-        } elsif ( $line =~ /typedef.*\(\*(\S+)\)\(.*/ ) {
+        } elsif ( $line =~ /typedef.*\(\*(\S+)\)\s*\(/ ) {
             # a callback function pointer: typedef ... (*NAME)(...
             $sym = $1;
-        } elsif ( $line =~ /typedef.* (\S+)\(.*/ ) {
+        } elsif ( $line =~ /typedef.* (\S+)\(/ ) {
             # a callback function signature: typedef ... NAME(...
             $sym = $1;
         } elsif ( $line =~ /typedef.* (\S+);/ ) {
