@@ -122,13 +122,13 @@ HTMLDOCS5={- our @HTMLDOCS5 = @{$unified_info{htmldocs}->{man5}};
 HTMLDOCS7={- our @HTMLDOCS7 = @{$unified_info{htmldocs}->{man7}};
              join(" ", @HTMLDOCS7) -}
 HTMLDOCS1_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS1;
-                     sort keys %dirs -}
+                     join(' ', sort keys %dirs) -}
 HTMLDOCS3_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS3;
-                     sort keys %dirs -}
+                     join(' ', sort keys %dirs) -}
 HTMLDOCS5_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS5;
-                     sort keys %dirs -}
+                     join(' ', sort keys %dirs) -}
 HTMLDOCS7_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS7;
-                     sort keys %dirs -}
+                     join(' ', sort keys %dirs) -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 "\"".catfile("apps","openssl")."\"" -}
