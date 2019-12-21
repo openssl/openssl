@@ -23,6 +23,7 @@ OSSL_CMP_LOG_WARNING,
 OSSL_CMP_LOG_NOTICE,
 OSSL_CMP_LOG_INFO,
 OSSL_CMP_LOG_DEBUG,
+OSSL_cmp_log_cb_t,
 OSSL_CMP_print_errors_cb
 - functions for logging and error reporting
 

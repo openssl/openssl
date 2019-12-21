@@ -64,6 +64,9 @@ SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_allow_early_data_cb_fn              datatype
 SSL_client_hello_cb_fn                  datatype
+SSL_custom_ext_add_cb_ex                datatype
+SSL_custom_ext_free_cb_ex               datatype
+SSL_custom_ext_parse_cb_ex              datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
@@ -364,6 +367,10 @@ OSSL_CMP_log3                           define
 OSSL_CMP_log4                           define
 OSSL_CMP_severity                       datatype
 OSSL_CMP_warn                           define
+OSSL_cmp_certConf_cb_t                  datatype
+OSSL_cmp_http_cb_t                      datatype
+OSSL_cmp_log_cb_t                       datatype
+OSSL_cmp_transfer_cb_t                  datatype
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define
