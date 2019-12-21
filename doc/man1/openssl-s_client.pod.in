@@ -111,6 +111,7 @@ B<openssl> B<s_client>
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
+[B<-version_mask> I<val>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
 [B<-serverpref>]
@@ -575,12 +576,21 @@ ultimately selected by the server. For a list of all curves, use:
 
     $ openssl ecparam -list_curves
 
+=item B<-version_mask> I<val>
+
+Sets the list of versions. This list will be used as the mask for cipher strings
+where no version was specified. The format for this list is a simple vertical bar
+("|") separated list of version names. This option, if used, must be specified
+before B<-cipher> and will set B<-ciphersuites> to empty string.
+See L<openssl-ciphers(1)> for more information.
+
 =item B<-cipher> I<cipherlist>
 
-This allows the TLSv1.2 and below cipher list sent by the client to be modified.
-This list will be combined with any TLSv1.3 ciphersuites that have been
-configured. Although the server determines which ciphersuite is used it should
-take the first supported cipher in the list sent by the client. See
+This allows the ciphersuites sent by the client to be modified. If there are
+no TLSv1.3 ciphersuites and B<-version_mask> is not used, this list will be
+combined with any TLSv1.3 ciphersuites that have been configured using
+B<-ciphersuites>. Although the server determines which ciphersuite is used it
+should take the first supported cipher in the list sent by the client. See
 L<openssl-ciphers(1)> for more information.
 
 =item B<-ciphersuites> I<val>
@@ -591,6 +601,10 @@ configured. Although the server determines which cipher suite is used it should
 take the first supported cipher in the list sent by the client. See
 L<openssl-ciphers(1)> for more information. The format for this list is a simple
 colon (":") separated list of TLSv1.3 ciphersuite names.
+
+If at least one valid TLSv1.3 ciphersuite is in the B<-cipher>, or parameter
+B<-version_mask> is used, all ciphers entered here will be erased
+(B<-ciphersuites> will be set to empty string).
 
 =item B<-starttls> I<protocol>
 

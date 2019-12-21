@@ -22,6 +22,7 @@ B<openssl> B<ciphers>
 [B<-stdname>]
 [B<-convert> I<name>]
 [B<-ciphersuites> I<val>]
+[B<-version_mask> I<val>]
 [I<cipherlist>]
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
@@ -98,11 +99,24 @@ default this value is:
 
  TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
 
+If at least one valid TLSv1.3 ciphersuite is in the cipherlist, or parameter
+B<version_mask> is used, all ciphers entered here will be erased
+(B<ciphersuites> will be set to empty string).
+
+=item B<version_mask> I<val>
+
+Sets the list of versions. This list will be used as mask for cipher strings
+where no version is specified. The format for this list is a simple vertical bar
+("|") separated list of version names. By default this value is:
+
+ SSLv3|TLSv1|TLSv1.2
+
 =item B<cipherlist>
 
-A cipher list of TLSv1.2 and below ciphersuites to convert to a cipher
-preference list. This list will be combined with any TLSv1.3 ciphersuites that
-have been configured. If it is not included then the default cipher list will be
+A cipher list of ciphersuites will be converted to a cipher preference list. If there
+are no TLSv1.3 ciphersuites and B<-version_mask> is not used, this list will be
+combined with any TLSv1.3 ciphersuites that have been configured using
+B<-ciphersuites>. If it is not included then the default cipher list will be
 used. The format is described below.
 
 =back
@@ -126,8 +140,9 @@ B<+> character. This is used as a logical B<and> operation. For example
 B<SHA1+DES> represents all cipher suites containing the SHA1 B<and> the DES
 algorithms.
 
-Each cipher string can be optionally preceded by the characters B<!>,
-B<-> or B<+>.
+Each cipher string can optionally be preceded by the characters B<!>,
+B<->, B<+>, B<^>, B<*> or can be closed by brackets B<[> B<]> into
+equal-preference group.
 
 If B<!> is used then the ciphers are permanently deleted from the list.
 The ciphers deleted can never reappear in the list even if they are
@@ -136,8 +151,17 @@ explicitly stated.
 If B<-> is used then the ciphers are deleted from the list, but some or
 all of the ciphers can be added again by later options.
 
-If B<+> is used then the ciphers are moved to the end of the list. This
+If B<+> is used then the ciphers are moved to the bottom of the list. This
 option doesn't add any new ciphers it just moves matching existing ones.
+Can't be used within groups and doesn't affect ciphersuites within groups.
+
+If B<^> is used then the ciphers are moved to the top of the list. This
+option doesn't add any new ciphers it just moves matching existing ones.
+Can't be used within groups and doesn't affect ciphersuites within groups.
+
+If B<*> is used then the cipher preference flag is set. This option doesn't
+add any new ciphers it just sets the flag. Can be used within or outside of the group.
+If it is used within a group, it is only applied to the ciphersuites within the currrent group.
 
 If none of these characters is present then the string is just interpreted
 as a list of ciphers to be appended to the current preference list. If the
@@ -145,19 +169,71 @@ list includes any ciphers already present they will be ignored: that is they
 will not moved to the end of the list.
 
 The cipher string B<@STRENGTH> can be used at any point to sort the current
-cipher list in order of encryption algorithm key length.
+cipher list in order of encryption algorithm key length. Can't be used with
+equal-preference groups.
 
 The cipher string B<@SECLEVEL>=I<n> can be used at any point to set the security
 level to I<n>, which should be a number between zero and five, inclusive.
 See L<SSL_CTX_set_security_level(3)> for a description of what each level means.
+Can't be used with equal-preference groups.
 
 The cipher list can be prefixed with the B<DEFAULT> keyword, which enables
-the default cipher list as defined below.  Unlike cipher strings,
-this prefix may not be combined with other strings using B<+> character.
-For example, B<DEFAULT+DES> is not valid.
+the default cipher list as defined below. Unlike cipher strings,
+this prefix must not be combined with other strings using B<+> character, but can
+be used vith version strings. For example, B<DEFAULT+DES> is not valid,
+but B<DEFAULT|ALL> or B<DEFAULT|TLSv1.2|TLSv1.3> is alloved.
 
 The content of the default list is determined at compile time and normally
 corresponds to B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
+
+=head1 CIPHER PREFERENCE
+
+If cipher has priority flag in server list set and it's the first common cipher in
+client list, this cipher will be selected.
+
+e.g. (suppose only TLSv1.3 ciphersuites):
+
+server: TLSv1.3:+TLS_CHACHA20_POLY1305_SHA256:*CHACHA20|ALL
+ TLS_AES_256_GCM_SHA384
+ TLS_AES_128_GCM_SHA256
+ TLS_AES_128_CCM_8_SHA256
+ TLS_AES_128_CCM_SHA256
+ *TLS_CHACHA20_POLY1305_SHA256
+
+client: DEFAULT|TLSv1.3:^CHACHA20|ALL
+ TLS_CHACHA20_POLY1305_SHA256
+ TLS_AES_256_GCM_SHA384
+ TLS_AES_128_GCM_SHA256
+
+This will result into selecting B<TLS_CHACHA20_POLY1305_SHA256> because it's at
+the top of the client's list and has priority flag in the server list.
+
+
+
+If some ciphersuites in server cipher list are in an equal-preference group,
+these ciphersuites receive the same preference and are ordered according to
+the client's preference.
+
+e.g. (suppose only TLSv1.3 ciphersuites):
+
+server: [TLSv1.3:-CHACHA20|ALL]:CHACHA20|ALL
+ TLS_AES_256_GCM_SHA384
+ TLS_AES_128_GCM_SHA256
+ TLS_AES_128_CCM_8_SHA256
+ TLS_AES_128_CCM_SHA256
+ TLS_CHACHA20_POLY1305_SHA256
+
+client: DEFAULT|TLSv1.3:^AES128|ALL:^CHACHA20|ALL
+ TLS_CHACHA20_POLY1305_SHA256
+ TLS_AES_128_GCM_SHA256
+ TLS_AES_256_GCM_SHA384
+
+First four ciphersuites have equal preference, so the selection depends on the
+client's order. In this case B<TLS_AES_128_GCM_SHA256> will be selected,
+because B<TLS_CHACHA20_POLY1305_SHA256> is not in equal-preference group.
+
+These preference options take effect only in the server cipher list when server
+preference is turned on.
 
 =head1 CIPHER STRINGS
 
@@ -272,10 +348,10 @@ All these cipher suites have been removed in OpenSSL 1.1.0.
 Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
+=item B<TLSv1.3>, B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-Lists cipher suites which are only supported in at least TLS v1.2, TLS v1.0 or
-SSL v3.0 respectively.
+Lists cipher suites which are only supported in at least TLS v1.3, TLS v1.2,
+TLS v1.0 or SSL v3.0 respectively.
 Note: there are no cipher suites specific to TLS v1.1.
 Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
 then both TLSv1.0 and SSLv3.0 cipher suites are available.
@@ -283,19 +359,22 @@ then both TLSv1.0 and SSLv3.0 cipher suites are available.
 Note: these cipher strings B<do not> change the negotiated version of SSL or
 TLS, they only affect the list of available cipher suites.
 
+=item B<AEAD>
+
+cipher suites using Authenticated Encryption with Associated Data (AEAD).
+
 =item B<AES128>, B<AES256>, B<AES>
 
 cipher suites using 128 bit AES, 256 bit AES or either 128 or 256 bit AES.
 
 =item B<AESGCM>
 
-AES in Galois Counter Mode (GCM): these cipher suites are only supported
-in TLS v1.2.
+AES in Galois Counter Mode (GCM).
 
 =item B<AESCCM>, B<AESCCM8>
 
-AES in Cipher Block Chaining - Message Authentication Mode (CCM): these
-cipher suites are only supported in TLS v1.2. B<AESCCM> references CCM
+AES in Cipher Block Chaining - Message Authentication Mode (CCM).
+B<AESCCM> references CCM
 cipher suites using both 16 and 8 octet Integrity Check Value (ICV)
 while B<AESCCM8> only references 8 octet ICV.
 
@@ -400,6 +479,16 @@ used and only the two suite B compliant cipher suites
 permissible.
 
 =back
+
+=head1 VERSION NAMES
+
+The following list gives the SSL and TLS their version names.
+
+ All versions                            ALL
+ SSL v3.0                                SSLv3
+ TLS v1.0                                TLSv1
+ TLS v1.2                                TLSv1.2
+ TLS v1.3                                TLSv1.3
 
 =head1 CIPHER SUITE NAMES
 
