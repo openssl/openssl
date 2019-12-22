@@ -3254,10 +3254,10 @@ long ssl3_default_timeout(void)
 SSL_CIPHER_FLAGS *SSL_get_ciphers_flags(const SSL *s)
 {
     if (s != NULL) {
-        if (s->cipher_list_flags != NULL)
-            return s->cipher_list_flags;
-        else if ((s->ctx != NULL) && (s->ctx->cipher_list_flags != NULL))
-            return s->ctx->cipher_list_flags;
+        if (s->ciphf_list != NULL)
+            return s->ciphf_list;
+        else if ((s->ctx != NULL) && (s->ctx->ciphf_list != NULL))
+            return s->ctx->ciphf_list;
     }
     return NULL;
 }

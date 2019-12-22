@@ -215,10 +215,6 @@ static const SSL_VERSION ssl_version_table[] = {
         TLS1_VERSION,
     }, {
         1,
-        SSL_TXT_TLSV1_1,
-        TLS1_1_VERSION,
-    }, {
-        1,
         SSL_TXT_TLSV1_2,
         TLS1_2_VERSION,
     }, {
@@ -1019,7 +1015,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 }
 
 /*
- * Process version string and save it to the bitvise version mask.
+ * Process version string and save it to the bitwise version mask.
  * If at least one valid version string was found, return processed length,
  * otherwise return 0. If an empty string is provided, set version mask to
  * default versions.
@@ -1552,7 +1548,7 @@ static int update_cipher_list_by_id(STACK_OF(SSL_CIPHER) **cipher_list_by_id,
     return 1;
 }
 
-static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
+static int update_cipher_list(SSL_CIPHER_FLAGS **ciphf_list,
                               STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                               STACK_OF(SSL_CIPHER) *tls13_ciphersuites)
 {
@@ -1561,30 +1557,30 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
     uint8_t *flags, *tmp_flags;
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *tmp_cipher_list;
-    SSL_CIPHER_FLAGS *tmp_cipher_list_flags;
+    SSL_CIPHER_FLAGS *tmp_ciphf_list;
 
-    if (*cipher_list_flags == NULL)
+    if (*ciphf_list == NULL)
         return 0;
 
-    tmp_cipher_list_flags = ssl_cipher_list_flags_new(NULL);
-    if (tmp_cipher_list_flags == NULL)
+    tmp_ciphf_list = ssl_ciphf_list_new(NULL);
+    if (tmp_ciphf_list == NULL)
         return 0;
 
-    flags = (*cipher_list_flags)->flags;
-    cipher_list = (*cipher_list_flags)->cipher_list;
+    flags = (*ciphf_list)->flags;
+    cipher_list = (*ciphf_list)->cipher_list;
     tmp_cipher_list = sk_SSL_CIPHER_dup(cipher_list);
     if (tmp_cipher_list == NULL) {
-        OPENSSL_free(tmp_cipher_list_flags);
+        OPENSSL_free(tmp_ciphf_list);
         return 0;
     }
-    tmp_cipher_list_flags->cipher_list = tmp_cipher_list;
+    tmp_ciphf_list->cipher_list = tmp_cipher_list;
 
     num_of_ciphers = sk_SSL_CIPHER_num(cipher_list);
     num_of_tls13_ciphersuites = sk_SSL_CIPHER_num(tls13_ciphersuites);
 
     /*
      * Delete any existing TLSv1.3 ciphersuites, which were entered using
-     * ciphersiute interface. These are always first in the list.
+     * ciphersuite interface. These are always first in the list.
      */
     while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
            && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_tls
@@ -1598,11 +1594,11 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
     tmp_flags = OPENSSL_malloc(
         (num_of_ciphers + num_of_tls13_ciphersuites) * sizeof(uint8_t));
     if (tmp_flags == NULL) {
-        ssl_cipher_list_flags_free(tmp_cipher_list_flags);
+        ssl_ciphf_list_free(tmp_ciphf_list);
         sk_SSL_CIPHER_free(tmp_cipher_list);
         return 0;
     }
-    tmp_cipher_list_flags->flags = tmp_flags;
+    tmp_ciphf_list->flags = tmp_flags;
 
     memcpy(tmp_flags + num_of_tls13_ciphersuites, flags,
            num_of_ciphers * sizeof(uint8_t));
@@ -1615,12 +1611,12 @@ static int update_cipher_list(SSL_CIPHER_FLAGS **cipher_list_flags,
     }
 
     if (!update_cipher_list_by_id(cipher_list_by_id, tmp_cipher_list)) {
-        ssl_cipher_list_flags_free(tmp_cipher_list_flags);
+        ssl_ciphf_list_free(tmp_ciphf_list);
         return 0;
     }
 
-    ssl_cipher_list_flags_free(*cipher_list_flags);
-    *cipher_list_flags = tmp_cipher_list_flags;
+    ssl_ciphf_list_free(*ciphf_list);
+    *ciphf_list = tmp_ciphf_list;
 
     return 1;
 }
@@ -1629,8 +1625,8 @@ int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
 {
     int ret = set_ciphersuites(&(ctx->tls13_ciphersuites), str);
 
-    if (ret && ctx->cipher_list_flags != NULL)
-        return update_cipher_list(&ctx->cipher_list_flags,
+    if (ret && ctx->ciphf_list != NULL)
+        return update_cipher_list(&ctx->ciphf_list,
                                   &ctx->cipher_list_by_id,
                                   ctx->tls13_ciphersuites);
 
@@ -1639,17 +1635,17 @@ int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
 
 int SSL_set_ciphersuites(SSL *s, const char *str)
 {
-    SSL_CIPHER_FLAGS * cipher_list_flags;
+    SSL_CIPHER_FLAGS * ciphf_list;
     int ret = set_ciphersuites(&(s->tls13_ciphersuites), str);
 
-    if (s->cipher_list_flags == NULL) {
+    if (s->ciphf_list == NULL) {
         if (s->ctx != NULL
-            && (cipher_list_flags = SSL_get_ciphers_flags(s)) != NULL)
-            s->cipher_list_flags = ssl_cipher_list_flags_dup(cipher_list_flags);
+            && (ciphf_list = SSL_get_ciphers_flags(s)) != NULL)
+            s->ciphf_list = ssl_ciphf_list_dup(ciphf_list);
 
     }
-    if (ret && s->cipher_list_flags != NULL)
-        return update_cipher_list(&s->cipher_list_flags, &s->cipher_list_by_id,
+    if (ret && s->ciphf_list != NULL)
+        return update_cipher_list(&s->ciphf_list, &s->cipher_list_by_id,
                                   s->tls13_ciphersuites);
 
     return ret;
@@ -1657,7 +1653,7 @@ int SSL_set_ciphersuites(SSL *s, const char *str)
 
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                              STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
-                                             SSL_CIPHER_FLAGS **cipher_list_flags,
+                                             SSL_CIPHER_FLAGS **ciphf_list,
                                              STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                              const char *rule_str,
                                              CERT *c, int default_version_mask)
@@ -1665,7 +1661,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases, i;
     uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac;
     STACK_OF(SSL_CIPHER) *cipherstack;
-    SSL_CIPHER_FLAGS *tmp_cipher_list_flags;
+    SSL_CIPHER_FLAGS *tmp_ciphf_list;
     const char *rule_p;
     CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
     const SSL_CIPHER **ca_list = NULL;
@@ -1676,7 +1672,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     /*
      * Return with error if nothing to do.
      */
-    if (rule_str == NULL || cipher_list_flags == NULL
+    if (rule_str == NULL || ciphf_list == NULL
         || cipher_list_by_id == NULL)
         return NULL;
 #ifndef OPENSSL_NO_EC
@@ -1783,7 +1779,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
     /*
      * Irrespective of strength, enforce the following order:
-     * TLSv1.3 > (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
+     * (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
      * Within each group, ciphers remain sorted by strength and previous
      * preference, i.e.,
      * 1) ECDHE > DHE
@@ -1921,31 +1917,31 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     OPENSSL_free(co_list);      /* Not needed any longer */
     OSSL_TRACE_END(TLS_CIPHER);
 
-    tmp_cipher_list_flags = ssl_cipher_list_flags_new(NULL);
-    if (tmp_cipher_list_flags == NULL) {
+    tmp_ciphf_list = ssl_ciphf_list_new(NULL);
+    if (tmp_ciphf_list == NULL) {
         sk_SSL_CIPHER_free(cipherstack);
         OPENSSL_free(tmp_flags);
         return NULL;
     }
-    tmp_cipher_list_flags->cipher_list = cipherstack;
+    tmp_ciphf_list->cipher_list = cipherstack;
     ciphers_cnt = sk_SSL_CIPHER_num(cipherstack) * sizeof(uint8_t);
-    tmp_cipher_list_flags->flags = OPENSSL_malloc(ciphers_cnt);
-    if (tmp_cipher_list_flags->flags == NULL) {
-        ssl_cipher_list_flags_free(tmp_cipher_list_flags);
+    tmp_ciphf_list->flags = OPENSSL_malloc(ciphers_cnt);
+    if (tmp_ciphf_list->flags == NULL) {
+        ssl_ciphf_list_free(tmp_ciphf_list);
         OPENSSL_free(tmp_flags);
         return NULL;
     }
-    memcpy(tmp_cipher_list_flags->flags, tmp_flags, ciphers_cnt);
+    memcpy(tmp_ciphf_list->flags, tmp_flags, ciphers_cnt);
     OPENSSL_free(tmp_flags);
     tmp_flags = NULL;
-    if (*cipher_list_flags != NULL) {
-        ssl_cipher_list_flags_free(*cipher_list_flags);
+    if (*ciphf_list != NULL) {
+        ssl_ciphf_list_free(*ciphf_list);
     }
-    *cipher_list_flags = tmp_cipher_list_flags;
+    *ciphf_list = tmp_ciphf_list;
 
     if (!update_cipher_list_by_id(cipher_list_by_id, cipherstack)) {
-        ssl_cipher_list_flags_free(*cipher_list_flags);
-        *cipher_list_flags = NULL;
+        ssl_ciphf_list_free(*ciphf_list);
+        *ciphf_list = NULL;
         return NULL;
     }
 
@@ -1954,7 +1950,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf, int len)
 {
-    SSL_CIPHER_FLAGS *cipher_list_flags = SSL_get_ciphers_flags(s);
+    SSL_CIPHER_FLAGS *ciphf_list = SSL_get_ciphers_flags(s);
     uint8_t *flags;
     char *group = " ";
     char prefer = ' ';
@@ -1963,18 +1959,20 @@ char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf, int len)
     if (buf == NULL) {
         len = 8;
         if ((buf = OPENSSL_malloc(len)) == NULL) {
-            SSLerr(SSL_F_SSL_CIPHER_DESCRIPTION, ERR_R_MALLOC_FAILURE);
+            SSLerr(0, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     } else if (len < 8) {
         return NULL;
     }
 
-    if (cipher_list_flags && (flags = cipher_list_flags->flags) != NULL) {
+    if (ciphf_list && (flags = ciphf_list->flags) != NULL) {
         if (flags[i] & CIPHER_IN_GROUP) {
             group = i == 0 || (flags[i - 1] & CIPHER_IN_GROUP) == 0 ? "┍" : "│";
         } else if (i && (flags[i - 1] & CIPHER_IN_GROUP)) {
             group = "┕";
+        } else if (flags[i] & CIPHER_FLAG_FROM_CIPHERRSUITE) {
+            group = "S";
         }
         prefer = flags[i] & CIPHER_FLAG_PREFER ? '*' : ' ';
     }

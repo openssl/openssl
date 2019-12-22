@@ -755,14 +755,14 @@ typedef struct ssl_ctx_ext_secure_st {
  */
 #define CIPHER_IN_GROUP                 4
 
-struct ssl_cipher_list_flags_st {
+struct ssl_ciphf_list_st {
     STACK_OF(SSL_CIPHER) *cipher_list;
     uint8_t *flags;
 };
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
-    SSL_CIPHER_FLAGS *cipher_list_flags;
+    SSL_CIPHER_FLAGS *ciphf_list;
     /* same as above but sorted for lookup */
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
     /* TLSv1.3 specific ciphersuites */
@@ -1337,7 +1337,7 @@ struct ssl_st {
     SSL_DANE dane;
     /* crypto */
     STACK_OF(SSL_CIPHER) *peer_ciphers;
-    SSL_CIPHER_FLAGS *cipher_list_flags;
+    SSL_CIPHER_FLAGS *ciphf_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
     /* TLSv1.3 specific ciphersuites */
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
@@ -2310,14 +2310,14 @@ __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
 __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
-                                                    SSL_CIPHER_FLAGS **cipher_list_flags,
+                                                    SSL_CIPHER_FLAGS **ciphf_list,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
                                                     CERT *c,
                                                     int default_version_mask);
-__owur SSL_CIPHER_FLAGS *ssl_cipher_list_flags_new(STACK_OF(SSL_CIPHER) *cipher_list);
-__owur SSL_CIPHER_FLAGS *ssl_cipher_list_flags_dup(SSL_CIPHER_FLAGS *cipher_list_flags);
-void ssl_cipher_list_flags_free(SSL_CIPHER_FLAGS *cipher_list_flags);
+__owur SSL_CIPHER_FLAGS *ssl_ciphf_list_new(STACK_OF(SSL_CIPHER) *cipher_list);
+__owur SSL_CIPHER_FLAGS *ssl_ciphf_list_dup(SSL_CIPHER_FLAGS *ciphf_list);
+void ssl_ciphf_list_free(SSL_CIPHER_FLAGS *ciphf_list);
 __owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
 __owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
                                 STACK_OF(SSL_CIPHER) **skp,

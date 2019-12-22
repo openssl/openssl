@@ -166,7 +166,7 @@ int ERR_load_SSL_strings(void);
 #  define SSL_F_SSL_CTX_MAKE_PROFILES                      0
 #  define SSL_F_SSL_CTX_NEW                                0
 #  define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    0
-#  define SSL_F_SSL_CTX_SET_CIPHER_LIST                    0
+#  define SSL_F_SSL_CTX_SET_CIPHER_LIST_AND_MASK           0
 #  define SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE             0
 #  define SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK         0
 #  define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT             0
@@ -233,7 +233,7 @@ int ERR_load_SSL_strings(void);
 #  define SSL_F_SSL_SET_ALPN_PROTOS                        0
 #  define SSL_F_SSL_SET_CERT                               0
 #  define SSL_F_SSL_SET_CERT_AND_KEY                       0
-#  define SSL_F_SSL_SET_CIPHER_LIST                        0
+#  define SSL_F_SSL_SET_CIPHER_LIST_AND_MASK               0
 #  define SSL_F_SSL_SET_CT_VALIDATION_CALLBACK             0
 #  define SSL_F_SSL_SET_FD                                 0
 #  define SSL_F_SSL_SET_PKEY                               0

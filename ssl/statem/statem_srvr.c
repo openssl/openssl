@@ -1942,9 +1942,9 @@ static int tls_early_post_process_client_hello(SSL *s)
             }
 
             s->session->cipher = pref_cipher;
-            ssl_cipher_list_flags_free(s->cipher_list_flags);
-            s->cipher_list_flags = ssl_cipher_list_flags_new(s->peer_ciphers);
-            if (s->cipher_list_flags == NULL)
+            ssl_ciphf_list_free(s->ciphf_list);
+            s->ciphf_list = ssl_ciphf_list_new(s->peer_ciphers);
+            if (s->ciphf_list == NULL)
                 goto err;
             sk_SSL_CIPHER_free(s->cipher_list_by_id);
             s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->peer_ciphers);
