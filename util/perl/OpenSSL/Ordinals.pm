@@ -242,7 +242,7 @@ block.
 
 =item B<< filter => FILTERFUNCTION >>
 
-FILTERFUNTION is a reference to a function that takes one argument, which
+FILTERFUNCTION is a reference to a function that takes one argument, which
 is every OpenSSL::Ordinals::Item element available.
 
 =back

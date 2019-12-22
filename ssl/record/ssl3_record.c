@@ -870,7 +870,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
  * SSLfatal() for internal errors, but not otherwise.
  *
  * Returns:
- *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *   0: (in non-constant time) if the record is publicly invalid (i.e. too
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding is invalid or, if sending, an internal error
@@ -961,7 +961,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
  * internal errors, but not otherwise.
  *
  * Returns:
- *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *   0: (in non-constant time) if the record is publicly invalid (i.e. too
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
@@ -1108,7 +1108,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             } else if ((bs != 1) && sending) {
                 padnum = bs - (reclen[ctr] % bs);
 
-                /* Add weird padding of upto 256 bytes */
+                /* Add weird padding of up to 256 bytes */
 
                 if (padnum > MAX_PADDING) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
@@ -1688,7 +1688,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0);
     /*-
      * enc_err is:
-     *    0: (in non-constant time) if the record is publically invalid.
+     *    0: (in non-constant time) if the record is publicly invalid.
      *    1: if the padding is valid
      *   -1: if the padding is invalid
      */

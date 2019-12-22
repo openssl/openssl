@@ -1150,6 +1150,8 @@ RAND_F_RAND_POOL_ATTACH:124:rand_pool_attach
 RAND_F_RAND_POOL_BYTES_NEEDED:115:rand_pool_bytes_needed
 RAND_F_RAND_POOL_GROW:127:
 RAND_F_RAND_POOL_NEW:116:rand_pool_new
+RAND_F_RAND_PRIV_BYTES_EX:128:
+RAND_F_RAND_PSEUDO_BYTES:129:
 RAND_F_RAND_WRITE_FILE:112:RAND_write_file
 RSA_F_CHECK_PADDING_MD:140:check_padding_md
 RSA_F_ENCODE_PKCS1:146:encode_pkcs1
@@ -2064,13 +2066,43 @@ BN_R_PRIVATE_KEY_TOO_LARGE:117:private key too large
 BN_R_P_IS_NOT_PRIME:112:p is not prime
 BN_R_TOO_MANY_ITERATIONS:113:too many iterations
 BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
+CMP_R_BAD_REQUEST_ID:108:bad request id
+CMP_R_CERTID_NOT_FOUND:109:certid not found
+CMP_R_CERTIFICATE_NOT_FOUND:112:certificate not found
+CMP_R_CERTRESPONSE_NOT_FOUND:113:certresponse not found
+CMP_R_CERT_AND_KEY_DO_NOT_MATCH:114:cert and key do not match
+CMP_R_ERROR_CALCULATING_PROTECTION:115:error calculating protection
+CMP_R_ERROR_CREATING_CERTCONF:116:error creating certconf
+CMP_R_ERROR_CREATING_CERTREP:117:error creating certrep
+CMP_R_ERROR_CREATING_ERROR:118:error creating error
+CMP_R_ERROR_CREATING_GENM:119:error creating genm
+CMP_R_ERROR_CREATING_GENP:120:error creating genp
+CMP_R_ERROR_CREATING_P10CR:121:error creating p10cr
+CMP_R_ERROR_CREATING_PKICONF:122:error creating pkiconf
+CMP_R_ERROR_CREATING_POLLREP:123:error creating pollrep
+CMP_R_ERROR_CREATING_POLLREQ:124:error creating pollreq
+CMP_R_ERROR_CREATING_RP:125:error creating rp
+CMP_R_ERROR_CREATING_RR:126:error creating rr
 CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
+CMP_R_ERROR_PROTECTING_MESSAGE:127:error protecting message
+CMP_R_ERROR_SETTING_CERTHASH:128:error setting certhash
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
+CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
 CMP_R_INVALID_ARGS:100:invalid args
-CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
+CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
+	missing key input for creating protection
+CMP_R_MISSING_PRIVATE_KEY:131:missing private key
 CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
+CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
 CMP_R_NO_STDIO:194:no stdio
 CMP_R_NULL_ARGUMENT:103:null argument
+CMP_R_PKISTATUSINFO_NOT_FOUND:132:pkistatusinfo not found
+CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
+CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
+CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
+CMP_R_UNSUPPORTED_ALGORITHM:136:unsupported algorithm
+CMP_R_UNSUPPORTED_KEY_TYPE:137:unsupported key type
+CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
 CMS_R_ATTRIBUTE_ERROR:161:attribute error
 CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
@@ -2675,7 +2707,7 @@ PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not an hexadecimal digit
 PROP_R_NOT_AN_IDENTIFIER:103:not an identifier
 PROP_R_NOT_AN_OCTAL_DIGIT:104:not an octal digit
 PROP_R_NOT_A_DECIMAL_DIGIT:105:not a decimal digit
-PROP_R_NO_MATCHING_STRING_DELIMETER:106:no matching string delimeter
+PROP_R_NO_MATCHING_STRING_DELIMITER:106:no matching string delimiter
 PROP_R_NO_VALUE:107:no value
 PROP_R_PARSE_FAILED:108:parse failed
 PROP_R_STRING_TOO_LONG:109:string too long

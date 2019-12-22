@@ -29,6 +29,10 @@ typedef void (*cbc128_f) (const unsigned char *in, unsigned char *out,
                           size_t len, const void *key,
                           unsigned char ivec[16], int enc);
 
+typedef void (*ecb128_f) (const unsigned char *in, unsigned char *out,
+                          size_t len, const void *key,
+                          int enc);
+
 typedef void (*ctr128_f) (const unsigned char *in, unsigned char *out,
                           size_t blocks, const void *key,
                           const unsigned char ivec[16]);

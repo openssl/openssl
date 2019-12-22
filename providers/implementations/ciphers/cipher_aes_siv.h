@@ -8,7 +8,8 @@
  */
 
 #include "prov/ciphercommon.h"
-#include "include/crypto/siv.h"
+#include "crypto/aes_platform.h"
+#include "crypto/siv.h"
 
 typedef struct prov_cipher_hw_aes_siv_st {
     int (*initkey)(void *ctx, const uint8_t *key, size_t keylen);

@@ -9,8 +9,7 @@
 
 /* Dispatch functions for AES GCM mode */
 
-#include "prov/ciphercommon.h"
-#include "prov/cipher_gcm.h"
+#include "cipher_aes_gcm.h"
 
 static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                                    size_t keylen)
@@ -69,6 +68,8 @@ static const PROV_GCM_HW aes_gcm = {
 # include "cipher_aes_gcm_hw_aesni.inc"
 #elif defined(SPARC_AES_CAPABLE)
 # include "cipher_aes_gcm_hw_t4.inc"
+#elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
+# include "cipher_aes_gcm_hw_armv8.inc"
 #else
 const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
 {

@@ -22,6 +22,7 @@
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include <openssl/dsa.h>
+#include <openssl/dh.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
@@ -1412,6 +1413,41 @@ static int test_decrypt_null_chunks(void)
 }
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
+static int test_EVP_PKEY_set1_DH(void)
+{
+    DH *x942dh, *pkcs3dh;
+    EVP_PKEY *pkey1, *pkey2;
+    int ret = 0;
+
+    x942dh = DH_get_2048_256();
+    pkcs3dh = DH_new_by_nid(NID_ffdhe2048);
+    pkey1 = EVP_PKEY_new();
+    pkey2 = EVP_PKEY_new();
+    if (!TEST_ptr(x942dh)
+            || !TEST_ptr(pkcs3dh)
+            || !TEST_ptr(pkey1)
+            || !TEST_ptr(pkey2))
+        goto err;
+
+    if(!TEST_true(EVP_PKEY_set1_DH(pkey1, x942dh))
+            || !TEST_int_eq(EVP_PKEY_id(pkey1), EVP_PKEY_DHX))
+        goto err;
+
+
+    if(!TEST_true(EVP_PKEY_set1_DH(pkey2, pkcs3dh))
+            || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DH))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey1);
+    EVP_PKEY_free(pkey2);
+    DH_free(x942dh);
+    DH_free(pkcs3dh);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 4);
@@ -1447,5 +1483,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
+    ADD_TEST(test_EVP_PKEY_set1_DH);
+
     return 1;
 }

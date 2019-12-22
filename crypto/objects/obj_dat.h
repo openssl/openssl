@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7837] = {
+static const unsigned char so[7845] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1085,9 +1085,10 @@ static const unsigned char so[7837] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7812] OBJ_id_on_SmtpUTF8Mailbox */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x05,       /* [ 7820] OBJ_XmppAddr */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x07,       /* [ 7828] OBJ_SRVName */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7836] OBJ_NAIRealm */
 };
 
-#define NUM_NID 1211
+#define NUM_NID 1212
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2300,9 +2301,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7812]},
     {"id-on-xmppAddr", "XmppAddr", NID_XmppAddr, 8, &so[7820]},
     {"id-on-dnsSRV", "SRVName", NID_SRVName, 8, &so[7828]},
+    {"id-on-NAIRealm", "NAIRealm", NID_NAIRealm, 8, &so[7836]},
 };
 
-#define NUM_SN 1202
+#define NUM_SN 1203
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2957,6 +2959,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      279,    /* "id-mod-qualified-cert-93" */
      281,    /* "id-mod-timestamp-protocol" */
      264,    /* "id-on" */
+    1211,    /* "id-on-NAIRealm" */
     1208,    /* "id-on-SmtpUTF8Mailbox" */
     1210,    /* "id-on-dnsSRV" */
      858,    /* "id-on-permanentIdentifier" */
@@ -3508,7 +3511,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1202
+#define NUM_LN 1203
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3622,6 +3625,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      648,    /* "Microsoft Smartcard Login" */
      136,    /* "Microsoft Trust List Signing" */
      649,    /* "Microsoft User Principal Name" */
+    1211,    /* "NAIRealm" */
      393,    /* "NULL" */
      404,    /* "NULL" */
       72,    /* "Netscape Base Url" */
@@ -4714,7 +4718,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1080
+#define NUM_OBJ 1081
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5366,6 +5370,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      858,    /* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
     1209,    /* OBJ_XmppAddr                     1 3 6 1 5 5 7 8 5 */
     1210,    /* OBJ_SRVName                      1 3 6 1 5 5 7 8 7 */
+    1211,    /* OBJ_NAIRealm                     1 3 6 1 5 5 7 8 8 */
     1208,    /* OBJ_id_on_SmtpUTF8Mailbox        1 3 6 1 5 5 7 8 9 */
      348,    /* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
      349,    /* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */

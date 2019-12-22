@@ -29,7 +29,7 @@ extern "C" {
  * Names:
  * for any function base name 'foo' (uppercase form 'FOO'), we will have
  * the following:
- * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivates
+ * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivatives
  *   thereof (to be specified further down)
  * - a function signature typedef with the name OSSL_'foo'_fn
  * - a function pointer extractor function with the name OSSL_'foo'
@@ -119,8 +119,6 @@ OSSL_CORE_MAKE_FUNC(int,
 #define OSSL_FUNC_OPENSSL_CLEANSE             21
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
-#define OSSL_FUNC_CRYPTO_MEM_CTRL             22
-OSSL_CORE_MAKE_FUNC(int, CRYPTO_mem_ctrl, (int mode))
 
 /* Bio functions provided by the core */
 #define OSSL_FUNC_BIO_NEW_FILE                23

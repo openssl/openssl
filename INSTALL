@@ -344,19 +344,11 @@
                    work if the zlib or zlib-dynamic options are also chosen.
 
   enable-crypto-mdebug
-                   Build support for debugging memory allocated via
-                   OPENSSL_malloc() or OPENSSL_zalloc().
+                   This now only enables the failed-malloc feature.
 
   enable-crypto-mdebug-backtrace
-                   As for crypto-mdebug, but additionally provide backtrace
-                   information for allocated memory.
-                   TO BE USED WITH CARE: this uses GNU C functionality, and
-                   is therefore not usable for non-GNU config targets.  If
-                   your build complains about the use of '-rdynamic' or the
-                   lack of header file execinfo.h, this option is not for you.
-                   ALSO NOTE that even though execinfo.h is available on your
-                   system (through Gnulib), the functions might just be stubs
-                   that do nothing.
+                   This is a no-op; the project uses the compiler's
+                   address/leak sanitizer instead.
 
   no-ct
                    Don't build support for Certificate Transparency.
@@ -836,8 +828,8 @@
 
      Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
      and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
-     and defines various macros in include/openssl/opensslconf.h (generated from
-     include/openssl/opensslconf.h.in).
+     and defines various macros in include/openssl/configuration.h (generated
+     from include/openssl/configuration.h.in).
 
  1c. Configure OpenSSL for building outside of the source tree.
 
@@ -1129,7 +1121,7 @@
 
  HASHBANGPERL
                 The command string for the Perl executable to insert in the
-                #! line of perl scripts that will be publically installed.
+                #! line of perl scripts that will be publicly installed.
                 Default: /usr/bin/env perl
                 Note: the value of this variable is added to the same scripts
                 on all platforms, but it's only relevant on Unix-like platforms.

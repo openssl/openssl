@@ -108,7 +108,6 @@ provider):
  CRYPTO_secure_free             OSSL_FUNC_CRYPTO_SECURE_FREE
  CRYPTO_secure_clear_free       OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE
  CRYPTO_secure_allocated        OSSL_FUNC_CRYPTO_SECURE_ALLOCATED
- CRYPTO_mem_ctrl                OSSL_FUNC_CRYPTO_MEM_CTRL
  BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
  BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
  BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
@@ -159,7 +158,7 @@ This corresponds to the OpenSSL function L<ERR_new(3)>.
 sets debugging information in the current thread specific error
 record.
 The debugging information includes the name of the file I<file>, the
-line I<line> and the function name I<func> where the error occured.
+line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
@@ -173,7 +172,7 @@ The additional data is given as a format string I<fmt> and a set of
 arguments I<args>, which are treated in the same manner as with
 BIO_vsnprintf().
 I<file> and I<line> may also be passed to indicate exactly where the
-error occured or was reported.
+error occurred or was reported.
 
 This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
@@ -183,7 +182,7 @@ CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
 CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
-CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(), CRYPTO_mem_ctrl(),
+CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_free(),
 BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
 correspond exactly to the public functions with the same name.

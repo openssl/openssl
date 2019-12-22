@@ -7,29 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <openssl/md2.h>
+#include "crypto/evp.h"
+#include "legacy_meth.h"
 
-#ifndef OPENSSL_NO_MD2
-
-# include <openssl/md2.h>
-# include "crypto/evp.h"
+IMPLEMENT_LEGACY_EVP_MD_METH(md2, MD2)
 
 static const EVP_MD md2_md = {
     NID_md2,
     NID_md2WithRSAEncryption,
     MD2_DIGEST_LENGTH,
     0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    MD2_BLOCK,
+    LEGACY_EVP_MD_METH_TABLE(md2_init, md2_update, md2_final, NULL, MD2_BLOCK)
 };
 
 const EVP_MD *EVP_md2(void)
 {
     return &md2_md;
 }
-
-#endif /* OPENSSL_NO_MD2 */

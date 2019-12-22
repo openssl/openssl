@@ -1,9 +1,5 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
@@ -15,9 +11,9 @@ B<openssl> B<x509>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-CAform> B<DER>|B<PEM>]
-[B<-CAkeyform> B<DER>|B<PEM>]
+[B<-CAkeyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-serial>]

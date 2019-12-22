@@ -217,7 +217,7 @@ struct ossl_crmf_pbmparameter_st {
     ASN1_INTEGER *iterationCount;
     X509_ALGOR *mac;
 } /* OSSL_CRMF_PBMPARAMETER */;
-#define OSSL_CRMF_PBM_MAX_ITERATION_COUNT 100000 /* if too large allows DoS */
+# define OSSL_CRMF_PBM_MAX_ITERATION_COUNT 100000 /* if too large allows DoS */
 
 /*-
  * POPOSigningKeyInput ::= SEQUENCE {
@@ -232,7 +232,7 @@ struct ossl_crmf_pbmparameter_st {
  *   -- on the DER-encoded value of publicKey
  * publicKey      SubjectPublicKeyInfo  -- from CertTemplate
  * }
-*/
+ */
 typedef struct ossl_crmf_poposigningkeyinput_authinfo_st {
     int type;
     union {

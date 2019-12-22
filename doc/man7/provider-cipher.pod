@@ -288,7 +288,7 @@ that varies with every record.
 Setting a TLS fixed IV changes a cipher to encrypt/decrypt TLS records.
 TLS records are encrypted/decrypted using a single OP_cipher_cipher call per
 record.
-For a record decryption the first bytes of the input buffer will be the explict
+For a record decryption the first bytes of the input buffer will be the explicit
 part of the IV and the final bytes of the input buffer will be the AEAD tag.
 The length of the explicit part of the IV and the tag length will depend on the
 cipher in use and will be defined in the RFC for the relevant ciphersuite.

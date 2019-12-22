@@ -130,3 +130,11 @@ $OpenSSL::safe::opt_s_item = ""
 . "B<-record_padding> I<padding>, B<-debug_broken_protocol>, B<-no_middlebox>\n"
 . "\n"
 . "See L<SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> for details.";
+
+package OpenSSL::safe;
+sub output_do_not_edit_headers {
+    return "\n=begin comment\n\n"
+        . join("\n", @autowarntext)
+        . "\n\n=end comment";
+}
+1;

@@ -311,6 +311,9 @@ int RAND_poll(void)
 
     const RAND_METHOD *meth = RAND_get_rand_method();
 
+    if (meth == NULL)
+        return 0;
+
     if (meth == RAND_OpenSSL()) {
         /* fill random pool and seed the master DRBG */
         RAND_DRBG *drbg = RAND_DRBG_get0_master();
@@ -831,7 +834,7 @@ void RAND_seed(const void *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->seed != NULL)
+    if (meth != NULL && meth->seed != NULL)
         meth->seed(buf, num);
 }
 
@@ -839,7 +842,7 @@ void RAND_add(const void *buf, int num, double randomness)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->add != NULL)
+    if (meth != NULL && meth->add != NULL)
         meth->add(buf, num, randomness);
 }
 
@@ -851,18 +854,20 @@ void RAND_add(const void *buf, int num, double randomness)
 int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
     RAND_DRBG *drbg;
-    int ret;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth != RAND_OpenSSL())
-        return meth->bytes(buf, num);
+    if (meth != NULL && meth != RAND_OpenSSL()) {
+        if (meth->bytes != NULL)
+            return meth->bytes(buf, num);
+        RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        return -1;
+    }
 
     drbg = OPENSSL_CTX_get0_private_drbg(ctx);
-    if (drbg == NULL)
-        return 0;
+    if (drbg != NULL)
+        return RAND_DRBG_bytes(drbg, buf, num);
 
-    ret = RAND_DRBG_bytes(drbg, buf, num);
-    return ret;
+    return 0;
 }
 
 int RAND_priv_bytes(unsigned char *buf, int num)
@@ -873,10 +878,9 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
     RAND_DRBG *drbg;
-    int ret;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth != RAND_OpenSSL()) {
+    if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
         RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
@@ -884,11 +888,10 @@ int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
     }
 
     drbg = OPENSSL_CTX_get0_public_drbg(ctx);
-    if (drbg == NULL)
-        return 0;
+    if (drbg != NULL)
+        return RAND_DRBG_bytes(drbg, buf, num);
 
-    ret = RAND_DRBG_bytes(drbg, buf, num);
-    return ret;
+    return 0;
 }
 
 int RAND_bytes(unsigned char *buf, int num)
@@ -901,8 +904,9 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->pseudorand != NULL)
+    if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
+    RANDerr(RAND_F_RAND_PSEUDO_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
     return -1;
 }
 #endif
@@ -911,7 +915,7 @@ int RAND_status(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth->status != NULL)
+    if (meth != NULL && meth->status != NULL)
         return meth->status();
     return 0;
 }

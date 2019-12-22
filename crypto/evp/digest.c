@@ -165,7 +165,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
     if (type->prov == NULL) {
 #ifdef FIPS_MODE
-        /* We only do explict fetches inside the FIPS module */
+        /* We only do explicit fetches inside the FIPS module */
         EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else

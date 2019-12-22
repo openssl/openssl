@@ -336,19 +336,25 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
     size_t blocksize;
     size_t cipherlen;
     size_t osize;
+#ifndef OPENSSL_NO_DES
     int des3_no_fixup = 0;
+#endif
     int ret;
 
     if (key_len != okey_len) {
+#ifndef OPENSSL_NO_DES
         /* special case for 3des, where the caller may be requesting
          * the random raw key, instead of the fixed up key  */
         if (EVP_CIPHER_nid(cipher) == NID_des_ede3_cbc &&
             key_len == 24 && okey_len == 21) {
                 des3_no_fixup = 1;
         } else {
+#endif
             ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);
             return 0;
+#ifndef OPENSSL_NO_DES
         }
+#endif
     }
 
     ctx = EVP_CIPHER_CTX_new();

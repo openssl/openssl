@@ -9,7 +9,7 @@
 
 /*-
  * AES-NI support for AES GCM.
- * This file is included by cipher_gcm_hw.c
+ * This file is included by cipher_aes_gcm_hw.c
  */
 
 static int aesni_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,

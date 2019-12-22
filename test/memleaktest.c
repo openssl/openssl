@@ -13,44 +13,47 @@
 
 #include "testutil.h"
 
+/* __has_feature is a clang-ism, while __SANITIZE_ADDRESS__ is a gcc-ism */
+#if defined(__has_feature)
+# if __has_feature(address_sanitizer)
+#  define __SANITIZE_ADDRESS__ 1
+# endif
+#endif
+/* If __SANITIZE_ADDRESS__ isn't defined, define it to be false */
+#ifndef __SANITIZE_ADDRESS__
+# define __SANITIZE_ADDRESS__ 0
+#endif
+
 /*
  * We use a proper main function here instead of the custom main from the
- * test framework because the CRYPTO_mem_leaks_fp function cannot be called
- * a second time without trying to use a null pointer.  The test framework
- * calls this function as part of its close down.
- *
- * A work around is to call putenv("OPENSSL_DEBUG_MEMORY=0"); before exiting
- * but that is worse than avoiding the test framework's main.
+ * test framework to avoid CRYPTO_mem_leaks stuff.
  */
 
 int main(int argc, char *argv[])
 {
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    char *p;
+#if __SANITIZE_ADDRESS__
+    int exitcode = EXIT_SUCCESS;
+#else
+    /*
+     * When we don't sanitize, we set the exit code to what we would expect
+     * to get when we are sanitizing.  This makes it easy for wrapper scripts
+     * to detect that we get the result we expect.
+     */
+    int exitcode = EXIT_FAILURE;
+#endif
     char *lost;
-    int noleak;
-
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     lost = OPENSSL_malloc(3);
     if (!TEST_ptr(lost))
         return EXIT_FAILURE;
 
+    strcpy(lost, "ab");
+
     if (argv[1] && strcmp(argv[1], "freeit") == 0) {
         OPENSSL_free(lost);
-        lost = NULL;
+        exitcode = EXIT_SUCCESS;
     }
 
-    noleak = CRYPTO_mem_leaks_fp(stderr);
-    /* If -1 return value something bad happened */
-    if (!TEST_int_ne(noleak, -1))
-        return EXIT_FAILURE;
-
-    return TEST_int_eq(lost != NULL, noleak == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
-#else
-    return EXIT_SUCCESS;
-#endif
+    lost = NULL;
+    return exitcode;
 }

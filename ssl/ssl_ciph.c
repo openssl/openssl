@@ -491,7 +491,6 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
     SSL_COMP *comp = NULL;
     COMP_METHOD *method = COMP_zlib();
 
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 
     if (COMP_get_type(method) != NID_undef && ssl_comp_methods != NULL) {
@@ -504,7 +503,6 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
             sk_SSL_COMP_sort(ssl_comp_methods);
         }
     }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return 1;
 }
 
@@ -2327,10 +2325,8 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 1;
     }
 
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     comp = OPENSSL_malloc(sizeof(*comp));
     if (comp == NULL) {
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return 1;
     }
@@ -2340,18 +2336,15 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     load_builtin_compressions();
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
                SSL_R_DUPLICATE_COMPRESSION_ID);
         return 1;
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return 1;
     }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return 0;
 }
 #endif

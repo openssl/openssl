@@ -16,6 +16,11 @@ before_install:
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
+    - eval "${MATRIX_EVAL}"
+
+arch:
+    - amd64
+    - arm64
 
 os:
     - linux
@@ -27,15 +32,33 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    # Note: This CONFIG_OPTS entry must match the value in the exclude: table below that contains env: CONFIG_OPTS , otherwise it will not find a match.
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
 matrix:
     include:
         - os: linux
           arch: arm64
-          compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings"
+          dist: bionic
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
         - os: linux
           arch: s390x
           compiler: gcc
@@ -126,6 +149,16 @@ matrix:
           compiler: clang
         - os: osx
           compiler: gcc
+        - arch: arm64
+          os: osx
+        # arm64 times out when using -fsanitize=address
+        # The amd64 build should be sufficient to test this.
+        # Note: the env line must exactly match the env line from the build
+        # matrix above which contains the `-fsanitize=address` option.
+        # TODO: come up with a better way of doing this that is less error prone.
+        - arch: arm64
+          env: CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
+
 
 before_script:
     - env
@@ -178,7 +211,7 @@ script:
           travis_terminate 1;
       fi
     - if ! git diff --exit-code; then
-          echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITED';
+          echo -e '\052\052 FAILED -- UPDATED FILES NOT COMMITTED';
           travis_terminate 1;
       fi
     - if test -n "$GENERATE" && ! $make build_all_generated; then

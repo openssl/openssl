@@ -317,7 +317,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     if (cipher->prov == NULL) {
 #ifdef FIPS_MODE
-        /* We only do explict fetches inside the FIPS module */
+        /* We only do explicit fetches inside the FIPS module */
         EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else

@@ -2,6 +2,8 @@
 
 =head1 NAME
 
+=for openssl names: openssl-cmds
+
 asn1parse,
 ca,
 ciphers,
@@ -52,6 +54,8 @@ verify,
 version,
 x509
 - OpenSSL application commands
+
+=for comment foreign manuals: apropos(1)
 
 =head1 SYNOPSIS
 

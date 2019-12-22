@@ -15,6 +15,26 @@
      API functions according to the above changes.
      [Otto Hollmann]
 
+  *) Removed include/openssl/opensslconf.h.in and replaced it with
+     include/openssl/configuration.h.in, which differs in not including
+     <openssl/macros.h>.  A short header include/openssl/opensslconf.h
+     was added to include both.
+
+     This allows internal hacks where one might need to modify the set
+     of configured macros, for example this if deprecated symbols are
+     still supposed to be available internally:
+
+         #include <openssl/configuration.h>
+
+         #undef OPENSSL_NO_DEPRECATED
+         #define OPENSSL_SUPPRESS_DEPRECATED
+
+         #include <openssl/macros.h>
+
+     This should not be used by applications that use the exported
+     symbols, as that will lead to linking errors.
+     [Richard Levitte]
+
   *) Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
      used in exponentiation with 512-bit moduli. No EC algorithms are
      affected. Analysis suggests that attacks against 2-prime RSA1024,
@@ -26,6 +46,10 @@
      affected if they use BN_FLG_CONSTTIME.
      (CVE-2019-1551)
      [Andy Polyakov]
+
+  *) Most memory-debug features have been deprecated, and the functionality
+     replaced with no-ops.
+     [Rich Salz]
 
   *) Introduced a new method type and API, OSSL_SERIALIZER, to
      represent generic serializers.  An implementation is expected to
@@ -135,6 +159,10 @@
      EVP_DigestVerifyUpdate() have been converted to functions. See the man
      pages for further details.
      [Matt Caswell]
+
+  *) Most common options (such as -rand/-writerand, TLS version control, etc)
+     were refactored and point to newly-enhanced descriptions in openssl.pod
+     [Rich Salz]
 
   *) Over two thousand fixes were made to the documentation, including:
      adding missing command flags, better style conformance, documentation

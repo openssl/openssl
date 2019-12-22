@@ -60,20 +60,18 @@ OPENSSL_MALLOC_FD
 
  void CRYPTO_get_alloc_counts(int *m, int *r, int *f)
 
- int CRYPTO_set_mem_debug(int onoff)
-
  env OPENSSL_MALLOC_FAILURES=... <application>
  env OPENSSL_MALLOC_FD=... <application>
 
- int CRYPTO_mem_ctrl(int mode);
+Deprecated:
 
  int CRYPTO_mem_leaks(BIO *b);
  int CRYPTO_mem_leaks_fp(FILE *fp);
  int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
                          void *u);
 
-Deprecated:
-
+ int CRYPTO_set_mem_debug(int onoff)
+ int CRYPTO_mem_ctrl(int mode);
  int OPENSSL_mem_debug_push(const char *info)
  int OPENSSL_mem_debug_pop(void);
  int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
@@ -115,37 +113,15 @@ OPENSSL_strlcat() and OPENSSL_strnlen() are equivalents of the common C
 library functions and are provided for portability.
 
 If no allocations have been done, it is possible to "swap out" the default
-implementations for OPENSSL_malloc(), OPENSSL_realloc and OPENSSL_free()
-and replace them with alternate versions (hooks).
+implementations for OPENSSL_malloc(), OPENSSL_realloc() and OPENSSL_free()
+and replace them with alternate versions.
 CRYPTO_get_mem_functions() function fills in the given arguments with the
 function pointers for the current implementations.
 With CRYPTO_set_mem_functions(), you can specify a different set of functions.
 If any of B<m>, B<r>, or B<f> are NULL, then the function is not changed.
-
-The default implementation can include some debugging capability (if enabled
-at build-time).
-This adds some overhead by keeping a list of all memory allocations, and
-removes items from the list when they are free'd.
-This is most useful for identifying memory leaks.
-CRYPTO_set_mem_debug() turns this tracking on and off.  In order to have
-any effect, is must be called before any of the allocation functions
-(e.g., CRYPTO_malloc()) are called, and is therefore normally one of the
-first lines of main() in an application.
-CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
-To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
-the B<CRYPTO_MEM_CHECK_ON>.
-To disable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
-the B<CRYPTO_MEM_CHECK_OFF>.
-
-At the end of the program, calling CRYPTO_mem_leaks() or
-CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
-to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
-there are no leaks, 0 if there are leaks and -1 if an error occurred.
-
-CRYPTO_mem_leaks_cb() does the same as CRYPTO_mem_leaks(), but instead
-of writing to a given BIO, the callback function is called for each
-output string with the string, length, and userdata B<u> as the callback
-parameters.
+While it's permitted to swap out only a few and not all the functions
+with CRYPTO_set_mem_functions(), it's recommended to swap them all out
+at once.
 
 If the library is built with the C<crypto-mdebug> option, then one
 function, CRYPTO_get_alloc_counts(), and two additional environment
@@ -180,18 +156,11 @@ to use this (will not work on all platforms):
   export OPENSSL_MALLOC_FD
   ...app invocation... 3>/tmp/log$$
 
-OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
-CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
-have been deprecated and replaced with functions that only return zero.
-
 =head1 RETURN VALUES
 
 OPENSSL_malloc_init(), OPENSSL_free(), OPENSSL_clear_free()
 CRYPTO_free(), CRYPTO_clear_free() and CRYPTO_get_mem_functions()
 return no value.
-
-CRYPTO_mem_leaks(), CRYPTO_mem_leaks_fp() and CRYPTO_mem_leaks_cb() return 1 if
-there are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
@@ -200,25 +169,24 @@ CRYPTO_clear_realloc(),
 OPENSSL_strdup(), and OPENSSL_strndup()
 return a pointer to allocated memory or NULL on error.
 
-CRYPTO_set_mem_functions() and CRYPTO_set_mem_debug()
-return 1 on success or 0 on failure (almost
+CRYPTO_set_mem_functions() returns 1 on success or 0 on failure (almost
 always because allocations have already happened).
 
-CRYPTO_mem_ctrl() returns -1 if an error occurred, otherwise the
-previous value of the mode.
-
-=head1 NOTES
-
-While it's permitted to swap out only a few and not all the functions
-with CRYPTO_set_mem_functions(), it's recommended to swap them all out
-at once, especially if OpenSSL was built with the
-configuration option> C<crypto-mdebug>.
+CRYPTO_mem_leaks(), CRYPTO_mem_leaks_fp(), CRYPTO_mem_leaks_cb(),
+CRYPTO_set_mem_debug(), and CRYPTO_mem_ctrl() are deprecated and return -1.
+OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
+CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
+are deprecated and return 0.
 
 =head1 HISTORY
 
 OPENSSL_mem_debug_push(), OPENSSL_mem_debug_pop(),
-CRYPTO_mem_debug_push(), and CRYPTO_mem_debug_pop()
+CRYPTO_mem_debug_push(), CRYPTO_mem_debug_pop(),
+CRYPTO_mem_leaks(), CRYPTO_mem_leaks_fp(),
+CRYPTO_mem_leaks_cb(), CRYPTO_set_mem_debug(), CRYPTO_mem_ctrl()
 were deprecated in OpenSSL 3.0.
+The memory-leak checking has been deprecated in OpenSSL 3.0 in favor of
+clang's memory and leak sanitizer.
 
 
 =head1 COPYRIGHT

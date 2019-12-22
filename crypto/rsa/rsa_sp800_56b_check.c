@@ -101,7 +101,7 @@ int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
     if (shift >= 0) {
         /*
          * We don't have all the bits. bn_inv_sqrt_2 contains a rounded up
-         * value, so there is a very low probabilty that we'll reject a valid
+         * value, so there is a very low probability that we'll reject a valid
          * value.
          */
         if (!BN_lshift(low, low, shift))

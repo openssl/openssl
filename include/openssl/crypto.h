@@ -121,8 +121,6 @@ DEFINE_STACK_OF(void)
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
 
-int CRYPTO_mem_ctrl(int mode);
-
 # define OPENSSL_malloc(num) \
         CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_zalloc(num) \
@@ -303,7 +301,6 @@ int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
         void *(*r) (void *, size_t, const char *, int),
         void (*f) (void *, const char *, int));
-int CRYPTO_set_mem_debug(int flag);
 void CRYPTO_get_mem_functions(
         void *(**m) (size_t, const char *, int),
         void *(**r) (void *, size_t, const char *, int),
@@ -335,37 +332,34 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #    define OPENSSL_mem_debug_push(info) \
          CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
 #    define OPENSSL_mem_debug_pop() \
          CRYPTO_mem_debug_pop()
 #  endif
+DEPRECATEDIN_3_0(int CRYPTO_set_mem_debug(int flag))
+DEPRECATEDIN_3_0(int CRYPTO_mem_ctrl(int mode))
 DEPRECATEDIN_3_0(int CRYPTO_mem_debug_push(const char *info,
                                            const char *file, int line))
 DEPRECATEDIN_3_0(int CRYPTO_mem_debug_pop(void))
 
-void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_malloc(void *addr, size_t num,
+                                              int flag,
+                                              const char *file, int line))
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_realloc(void *addr1, void *addr2,
+                                               size_t num, int flag,
+                                               const char *file, int line))
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_free(void *addr, int flag,
+                                            const char *file, int line))
 
-/*-
- * Debugging functions (enabled by CRYPTO_set_mem_debug(1))
- * The flag argument has the following significance:
- *   0:   called before the actual memory allocation has taken place
- *   1:   called after the actual memory allocation has taken place
- */
-void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
-        const char *file, int line);
-void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
-        const char *file, int line);
-void CRYPTO_mem_debug_free(void *addr, int flag,
-        const char *file, int line);
-
-int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
-                        void *u);
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_cb(
+                      int (*cb)(const char *str, size_t len, void *u), void *u))
 #  ifndef OPENSSL_NO_STDIO
-int CRYPTO_mem_leaks_fp(FILE *);
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_fp(FILE *))
 #  endif
-int CRYPTO_mem_leaks(BIO *bio);
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks(BIO *bio))
 # endif
 
 /* die if we have to */

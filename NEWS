@@ -7,6 +7,8 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o enable-crypto-mdebug and enable-crypto-mdebug-backtrace were mostly
+        disabled; the project uses address sanitize/leak-detect instead.
       o Added OSSL_SERIALIZER, a generic serializer API.
       o Added error raising macros, ERR_raise() and ERR_raise_data().
       o Deprecated ERR_put_error().

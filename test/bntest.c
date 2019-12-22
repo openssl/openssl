@@ -2054,7 +2054,7 @@ static int test_rand_range(void)
         n_success += test_rand_range_single(i);
     if (TEST_int_ge(n_success, binomial_critical))
         return 1;
-    TEST_note("This test is expeced to fail by chance 0.01%% of the time.");
+    TEST_note("This test is expected to fail by chance 0.01%% of the time.");
     return 0;
 }
 
