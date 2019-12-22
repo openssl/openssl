@@ -1273,8 +1273,6 @@ static int run_benchmark(int async_jobs,
     OSSL_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
 
-    run = 1;
-
     if (async_jobs == 0) {
         return loop_function((void *)&loopargs);
     }
@@ -2508,7 +2506,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_128_CML], c[D_CBC_128_CML][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_128_CML][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_128_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                      (size_t)lengths[testnum], &camellia_ks[0],
                                      iv, CAMELLIA_ENCRYPT);
@@ -2530,7 +2528,7 @@ int speed_main(int argc, char **argv)
                 exit(1);
             }
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_192_CML][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_192_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                      (size_t)lengths[testnum], &camellia_ks[1],
                                      iv, CAMELLIA_ENCRYPT);
@@ -2548,7 +2546,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_256_CML], c[D_CBC_256_CML][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_256_CML][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_256_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                      (size_t)lengths[testnum], &camellia_ks[2],
                                      iv, CAMELLIA_ENCRYPT);
@@ -2568,7 +2566,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_IDEA], c[D_CBC_IDEA][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_IDEA][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_IDEA][testnum]); count++)
                 IDEA_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                  (size_t)lengths[testnum], &idea_ks,
                                  iv, IDEA_ENCRYPT);
@@ -2588,7 +2586,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_SEED], c[D_CBC_SEED][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_SEED][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_SEED][testnum]); count++)
                 SEED_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                  (size_t)lengths[testnum], &seed_ks, iv, 1);
             d = Time_F(STOP);
@@ -2611,7 +2609,7 @@ int speed_main(int argc, char **argv)
                 exit(1);
             }
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_RC2][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_RC2][testnum]); count++)
                 RC2_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                 (size_t)lengths[testnum], &rc2_ks,
                                 iv, RC2_ENCRYPT);
@@ -2635,7 +2633,7 @@ int speed_main(int argc, char **argv)
                 exit(1);
             }
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_RC5][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_RC5][testnum]); count++)
                 RC5_32_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                    (size_t)lengths[testnum], &rc5_ks,
                                    iv, RC5_ENCRYPT);
@@ -2655,7 +2653,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_BF], c[D_CBC_BF][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_BF][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_BF][testnum]); count++)
                 BF_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                (size_t)lengths[testnum], &bf_ks,
                                iv, BF_ENCRYPT);
@@ -2675,7 +2673,7 @@ int speed_main(int argc, char **argv)
             print_message(names[D_CBC_CAST], c[D_CBC_CAST][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
-            for (count = 0, run = 1; COND(c[D_CBC_CAST][testnum]); count++)
+            for (count = 0; COND(c[D_CBC_CAST][testnum]); count++)
                 CAST_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                  (size_t)lengths[testnum], &cast_ks,
                                  iv, CAST_ENCRYPT);
@@ -3718,6 +3716,7 @@ static void print_message(const char *s, long num, int length, int tm)
                mr ? "+DT:%s:%d:%d\n"
                : "Doing %s for %ds on %d size blocks: ", s, tm, length);
     (void)BIO_flush(bio_err);
+    run = 1;
     alarm(tm);
 #else
     BIO_printf(bio_err,
@@ -3983,7 +3982,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     for (j = 0; j < num; j++) {
         print_message(alg_name, 0, mblengths[j], seconds->sym);
         Time_F(START);
-        for (count = 0, run = 1; run && count < 0x7fffffff; count++) {
+        for (count = 0; run && count < 0x7fffffff; count++) {
             unsigned char aad[EVP_AEAD_TLS1_AAD_LEN];
             EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
             size_t len = mblengths[j];
