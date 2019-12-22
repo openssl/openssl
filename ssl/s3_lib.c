@@ -21,7 +21,7 @@
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
-#define min(a,b)                ((a) > (b) ? (b) : (a))
+#define MIN(a,b)                (((a) > (b)) ? (b) : (a))
 
 /* TLSv1.3 downgrade protection sentinel values */
 const unsigned char tls11downgrade[] = {
@@ -3269,12 +3269,10 @@ int ssl3_num_ciphers(void)
 
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 {
-    if (u < SSL3_NUM_CIPHERS) {
+    if (u < SSL3_NUM_CIPHERS)
         return &(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]);
-    } else {
+    else
         return NULL;
-    }
-
 }
 
 int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
@@ -4343,9 +4341,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif
 
                 if (pass) {
-                    min_index = min(min_index, ii);
+                    min_index = MIN(min_index, ii);
                     if (prefer_sha256 && ssl_md(c->algorithm2) == mdsha256)
-                        min_index_sha256 = min(min_index_sha256, ii);
+                        min_index_sha256 = MIN(min_index_sha256, ii);
                 }
             }
 

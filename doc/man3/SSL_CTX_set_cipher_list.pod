@@ -123,8 +123,8 @@ return 1 if any cipher could be selected and 0 on complete failure.
 SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites() return 1 if the requested
 ciphersuite list was configured, and 0 otherwise.
 
-OPENSSL_version_list() returns number of characters that were suscessfully
-procesed and 0 when no versin name was recognized.
+OPENSSL_version_list() returns number of characters that were successfully
+procesed and 0 when no version name was recognized.
 
 =head1 SEE ALSO
 

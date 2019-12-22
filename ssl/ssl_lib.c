@@ -580,7 +580,7 @@ SSL_CIPHER_FLAGS *ssl_ciphf_list_new(STACK_OF(SSL_CIPHER) *cipher_list)
     SSL_CIPHER_FLAGS *ret;
     size_t cnt;
 
-    ret = OPENSSL_malloc(sizeof(SSL_CIPHER_FLAGS));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (!ret)
         return NULL;
 
@@ -607,7 +607,7 @@ SSL_CIPHER_FLAGS *ssl_ciphf_list_dup(SSL_CIPHER_FLAGS *ciphf_list)
     SSL_CIPHER_FLAGS *ret;
     size_t cnt;
 
-    ret = OPENSSL_malloc(sizeof(SSL_CIPHER_FLAGS));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (!ret)
         return NULL;
 

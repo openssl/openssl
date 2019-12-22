@@ -257,6 +257,7 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
+
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CIPHERSTRING);
     if (cctx->ctx) {
         rv = SSL_CTX_set_cipher_list_and_mask(cctx->ctx, value,
