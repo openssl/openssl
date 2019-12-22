@@ -453,6 +453,7 @@ $code.=<<___;
 .type	RC4_set_key,\@function,3
 .align	16
 RC4_set_key:
+.cfi_startproc
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -519,6 +520,7 @@ RC4_set_key:
 	mov	%eax,-8($dat)
 	mov	%eax,-4($dat)
 	ret
+.cfi_endproc
 .size	RC4_set_key,.-RC4_set_key
 
 .globl	RC4_options
