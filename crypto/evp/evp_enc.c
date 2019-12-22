@@ -1184,7 +1184,14 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     case EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE:
         params[0] = OSSL_PARAM_construct_size_t(
+                OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT, &sz);
+        ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
+        if (ret <= 0)
+            return 0;
+
+        params[0] = OSSL_PARAM_construct_size_t(
                 OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE, &sz);
+        params[1] = OSSL_PARAM_construct_end();
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             return 0;

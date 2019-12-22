@@ -43,10 +43,13 @@ static OSSL_OP_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, NULL, 0),
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_END
 };
@@ -73,6 +76,14 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         hw->init_mac_key(ctx, p->data, p->data_size);
     }
 
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    p = OSSL_PARAM_locate_const(params,
+            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT);
+    if (p != NULL
+            && !OSSL_PARAM_get_size_t(p, &ctx->multiblock_max_send_fragment)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
     /*
      * The inputs to tls1_multiblock_aad are:
      *   mb_param->inp
@@ -127,6 +138,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (hw->tls1_multiblock_encrypt(vctx, &mb_param) <= 0)
             return 0;
     }
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
@@ -161,16 +173,11 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
        (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
     OSSL_PARAM *p;
 
+# if !defined(OPENSSL_NO_MULTIBLOCK)
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE);
     if (p != NULL) {
-        size_t len;
+        size_t len = hw->tls1_multiblock_max_bufsize(ctx);
 
-        /* This parameter passes in a value and then returns a value */
-        if (!OSSL_PARAM_get_size_t(p, &len)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        len = hw->tls1_multiblock_max_bufsize(ctx, len);
         if (!OSSL_PARAM_set_size_t(p, len)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
@@ -194,6 +201,7 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad)) {
@@ -220,10 +228,12 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
+# if !defined(OPENSSL_NO_MULTIBLOCK)
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN, NULL),
+# endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),

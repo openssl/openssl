@@ -73,6 +73,8 @@ extern "C" {
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALG_ID             "alg_id_param" /* octet_string */
 
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT                    \
+    "tls1multi_maxsndfrag" /* uint */
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE                          \
     "tls1multi_maxbufsz"   /* size_t */
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE                           \

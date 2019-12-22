@@ -687,9 +687,13 @@ static int aesni_cbc_hmac_sha1_set_tls1_aad(void *vctx,
 # if !defined(OPENSSL_NO_MULTIBLOCK)
 
 /* EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE */
-static int aesni_cbc_hmac_sha1_tls1_multiblock_max_bufsize(void *ctx, int len)
+static int aesni_cbc_hmac_sha1_tls1_multiblock_max_bufsize(void *vctx)
 {
-    return (int)(5 + 16 + ((len + 20 + 16) & -16));
+    PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
+
+    OPENSSL_assert(ctx->multiblock_max_send_fragment != 0);
+    return (int)(5 + 16
+                 + (((int)ctx->multiblock_max_send_fragment + 20 + 16) & -16));
 }
 
 /* EVP_CTRL_TLS1_1_MULTIBLOCK_AAD */

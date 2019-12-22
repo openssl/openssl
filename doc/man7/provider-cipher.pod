@@ -372,6 +372,12 @@ cipher operation (either 4 or 8 records).
 
 Supplies the data to encrypt for a tls1 multiblock cipher operation.
 
+=item "tls1multi_maxsndfrag" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT>) <unsigned integer>
+
+Sets the maximum send fragment size for a tls1 multiblock cipher operation.
+It must be set before using "tls1multi_maxbufsz".
+The length of the "tls1multi_maxsndfrag" parameter should not exceed that of a B<size_t>.
+
 =item "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
 
 Gets the maximum record length for a tls1 multiblock cipher operation.

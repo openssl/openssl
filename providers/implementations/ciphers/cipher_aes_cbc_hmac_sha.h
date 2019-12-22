@@ -21,7 +21,7 @@ typedef struct prov_cipher_hw_aes_hmac_sha_ctx_st {
     void (*init_mac_key)(void *ctx, const unsigned char *inkey, size_t inlen);
     int (*set_tls1_aad)(void *ctx, unsigned char *aad_rec, int aad_len);
 # if !defined(OPENSSL_NO_MULTIBLOCK)
-    int (*tls1_multiblock_max_bufsize)(void *ctx, int len);
+    int (*tls1_multiblock_max_bufsize)(void *ctx);
     int (*tls1_multiblock_aad)(
         void *vctx, EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param);
     int (*tls1_multiblock_encrypt)(
@@ -41,6 +41,7 @@ typedef struct prov_aes_hmac_sha_ctx_st {
     /* some value that are setup by set methods - that can be retrieved */
     unsigned int multiblock_interleave;
     unsigned int multiblock_aad_packlen;
+    size_t multiblock_max_send_fragment;
     size_t multiblock_encrypt_len;
     size_t tls_aad_pad;
 } PROV_AES_HMAC_SHA_CTX;
