@@ -284,7 +284,7 @@ static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_VersionMask(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_CiphVersionMask(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
 
@@ -693,9 +693,13 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #ifndef OPENSSL_NO_EC
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve", SSL_CONF_FLAG_SERVER),
 #endif
+    /*
+     * Must be specified before CipherString. For use in config file, must be
+     * alphabetically lower then CipherString.
+     */
+    SSL_CONF_CMD_STRING(CiphVersionMask, "version_mask", 0),
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Ciphersuites, "ciphersuites", 0),
-    SSL_CONF_CMD_STRING(VersionMask, "version_mask", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
     SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", 0),
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),

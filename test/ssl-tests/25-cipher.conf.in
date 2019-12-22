@@ -133,6 +133,21 @@ our @tests = (
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
         },
     },
+    {
+        name => "cipher-server-preference-flag",
+        server => {
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "[DH]:AES:*AES256-SHA",
+            "Options" => "ServerPreference",
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "DEFAULT:^AES256-SHA",
+        },
+        test => {
+            "ExpectedCipher" => "AES256-SHA",
+        },
+    },
 );
 
 my @tests_poly1305 = (
@@ -151,6 +166,41 @@ my @tests_poly1305 = (
             "ExpectedCipher" => "ECDHE-RSA-CHACHA20-POLY1305",
         },
     },
+    {
+        name => "cipher-server-pref-mobile3",
+        server => {
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305:*CHACHA20",
+            "Options" => "ServerPreference",
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+        },
+        test => {
+            "ExpectedCipher" => "ECDHE-RSA-CHACHA20-POLY1305",
+        },
+    },
+);
+
+my @tests_tls1_3 = (
+    {
+        name => "cipher-server-equal-preference-groups",
+        server => {
+            "MaxProtocol" => "TLSv1.3",
+            "CipherString" => "[TLSv1.3]:DH",
+            "Options" => "ServerPreference",
+    },
+        client => {
+            "MaxProtocol" => "TLSv1.3",
+            "CiphVersionMask" => "ALL",
+            "CipherString" => "DEFAULT:^TLS_AES_128_GCM_SHA256",
+        },
+        test => {
+            "ExpectedCipher" => "TLS_AES_128_GCM_SHA256",
+        },
+    },
 );
 
 push @tests, @tests_poly1305 unless disabled("poly1305") || disabled("chacha");
+push @tests, @tests_tls1_3 unless disabled("tls1_3");

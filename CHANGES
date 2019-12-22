@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added support for equal-preference groups, preference flag (similar to
+     the -prioritize_chacha option) in server cipher list, and allow to specify
+     TLSv1.3 ciphersuites within a cipher list interface. Also have been added
+     API functions according to the above changes.
+     [Otto Hollmann]
+
   *) Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
      used in exponentiation with 512-bit moduli. No EC algorithms are
      affected. Analysis suggests that attacks against 2-prime RSA1024,

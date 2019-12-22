@@ -252,10 +252,18 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 
 =over 4
 
+=item B<CiphVersionMask>
+
+Sets the list of versions. This list will be used as the mask for cipher strings
+where no version was specified. The format for this list is a simple vertical bar
+("|") separated list of version names. This option, if used, will set
+B<Ciphersuites> to empty string. See L<openssl-ciphers(1)> for more information.
+
 =item B<CipherString>
 
-Sets the ciphersuite list for TLSv1.2 and below to B<value>. This list will be
-combined with any configured TLSv1.3 ciphersuites. Note: syntax
+Sets the ciphersuite list to B<value>. If there are no TLSv1.3 ciphersuites and
+B<CiphVersionMask> is not used, this list will be combined with any TLSv1.3
+ciphersuites that have been configured using B<Ciphersuites>. Note: syntax
 checking of B<value> is currently not performed unless an B<SSL> or B<SSL_CTX>
 structure is associated with B<cctx>.
 
@@ -265,6 +273,10 @@ Sets the available ciphersuites for TLSv1.3 to B<value>. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
 See L<openssl-ciphers(1)> for more information.
+
+If at least one valid TLSv1.3 ciphersuite is in the B<CipherString>, or parameter
+B<CiphVersionMask> is used, all ciphers entered here will be erased
+(B<Ciphersuites> will be set to empty string).
 
 =item B<Certificate>
 
