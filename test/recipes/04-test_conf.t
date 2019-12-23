@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use OpenSSL::Test qw(:DEFAULT data_file);
+use OpenSSL::Test::Utils;
 use File::Compare qw(compare_text);
 
 setup('test_conf');
@@ -18,6 +19,9 @@ my %input_result = (
     'dollarid_on.conf'  => 'dollarid_on.txt',
     'dollarid_off.conf' => 'dollarid_off.txt',
 );
+
+plan skip_all => 'This is unsupported for cross compiled configurations'
+    if config('CROSS_COMPILE');
 
 plan tests => 2 * scalar(keys %input_result);
 
