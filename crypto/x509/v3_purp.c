@@ -14,6 +14,7 @@
 #include <openssl/x509_vfy.h>
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
+#include "x509_local.h"
 
 DEFINE_STACK_OF(GENERAL_NAME)
 DEFINE_STACK_OF(DIST_POINT)
@@ -344,6 +345,21 @@ static int setup_crldp(X509 *x)
             return 0;
     }
     return 1;
+}
+
+/* Check that issuer public key algorithm matches subject signature algorithm */
+static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
+{
+    int pkey_nid;
+
+    if (pkey == NULL)
+        return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
+                            NULL, &pkey_nid) == 0)
+        return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
+    if (EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
+        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
+    return X509_V_OK;
 }
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
@@ -815,39 +831,47 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * Returns 0 for OK, or positive for reason for mismatch
  * where reason codes match those for X509_verify_cert().
  */
-
-int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
-                          const char *propq)
+int x509_check_issued_int(X509 *issuer, X509 *subject,
+                          OPENSSL_CTX *libctx, const char *propq)
 {
+    int ret;
+
+    if ((ret = x509_likely_issued(issuer, subject, libctx, propq)) != X509_V_OK)
+        return ret;
+    return x509_signing_allowed(issuer, subject);
+}
+
+/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
+int x509_likely_issued(X509 *issuer, X509 *subject,
+                       OPENSSL_CTX *libctx, const char *propq)
+{
+    int ret;
+
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
-                      X509_get_issuer_name(subject)))
+                      X509_get_issuer_name(subject)) != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     if (!X509v3_cache_extensions(issuer, libctx, propq)
             || !X509v3_cache_extensions(subject, libctx, propq))
         return X509_V_ERR_UNSPECIFIED;
 
-    if (subject->akid) {
-        int ret = X509_check_akid(issuer, subject->akid);
-        if (ret != X509_V_OK)
-            return ret;
-    }
+    ret = X509_check_akid(issuer, subject->akid);
+    if (ret != X509_V_OK)
+        return ret;
 
     /* check if the subject signature alg matches the issuer's PUBKEY alg */
-    {
-        EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
-        X509_ALGOR *s_algor = &subject->cert_info.signature;
-        int s_pknid = NID_undef, s_mdnid = NID_undef;
+    return check_sig_alg_match(X509_get0_pubkey(issuer), subject);
+}
 
-        if (i_pkey == NULL)
-            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-
-        if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                                 &s_mdnid, &s_pknid)
-            || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
-            return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
-    }
-
+/*-
+ * Check if certificate I<issuer> is allowed to issue certificate I<subject>
+ * according to the B<keyUsage> field of I<issuer> if present
+ * depending on any proxyCertInfo extension of I<subject>.
+ * Returns 0 for OK, or positive for reason for rejection
+ * where reason codes match those for X509_verify_cert().
+ */
+int x509_signing_allowed(const X509 *issuer, const X509 *subject)
+{
     if (subject->ex_flags & EXFLAG_PROXY) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
             return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
@@ -863,8 +887,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 {
-
-    if (!akid)
+    if (akid == NULL)
         return X509_V_OK;
 
     /* Check key ids (if present) */
@@ -894,7 +917,7 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
                 break;
             }
         }
-        if (nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
+        if (nm != NULL && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)) != 0)
             return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     }
     return X509_V_OK;
