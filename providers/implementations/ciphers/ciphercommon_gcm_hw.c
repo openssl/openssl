@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement provider AES ciphers.
+ */
+#include "internal/deprecated.h"
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
-
+#include "crypto/aes_platform.h"
 
 int gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv, size_t ivlen)
 {
