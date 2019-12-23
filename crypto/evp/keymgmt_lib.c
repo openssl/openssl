@@ -172,8 +172,27 @@ void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
         ? keymgmt->importdomparams(provctx, params)
         : keymgmt->importkey(provctx, params);
 
-    evp_keymgmt_clear_pkey_cache(target);
     if (provdata != NULL) {
+        evp_keymgmt_clear_pkey_cache(target);
+        EVP_KEYMGMT_up_ref(keymgmt);
+        target->pkeys[0].keymgmt = keymgmt;
+        target->pkeys[0].provdata = provdata;
+        target->pkeys[0].domainparams = domainparams;
+    }
+
+    return provdata;
+}
+
+void *evp_keymgmt_fromid(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                         const void *id, size_t idlen, int domainparams)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provdata = domainparams
+        ? keymgmt->loaddomparams(provctx, id, idlen)
+        : keymgmt->loadkey(provctx, id, idlen);
+
+    if (provdata != NULL) {
+        evp_keymgmt_clear_pkey_cache(target);
         EVP_KEYMGMT_up_ref(keymgmt);
         target->pkeys[0].keymgmt = keymgmt;
         target->pkeys[0].provdata = provdata;

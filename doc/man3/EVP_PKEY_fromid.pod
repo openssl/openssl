@@ -1,0 +1,59 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY_param_fromid, EVP_PKEY_key_fromid
+- functions to create domain parameters and keys from an identity
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ int EVP_PKEY_param_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                           void *id, size_t idlen);
+ int EVP_PKEY_key_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                         void *id, size_t idlen);
+
+=head1 DESCRIPTION
+
+EVP_PKEY_param_fromid() creates domain parameters, given an identity
+I<id> of length I<idlen>.  The result is written to I<*ppkey>.
+
+EVP_PKEY_key_fromid() creates domain parameters, given an identity
+I<id> of length I<idlen>.  The result is written to I<*ppkey>.
+
+In both cases, the identity is a byte string.  Exactly what that byte
+string contains is undefined here.  This depends on the provider and
+what it handles.
+
+=head1 NOTES
+
+These functions only work with key management methods coming from a
+provider.
+
+=head1 RETURN VALUES
+
+EVP_PKEY_key_fromid() and EVP_PKEY_param_fromid() return 1 for success
+and 0 or a negative value for failure.  In particular a return value
+of -2 indicates the operation is not supported by the public key
+algorithm.
+
+=head1 SEE ALSO
+
+L<EVP_PKEY_CTX_new(3)>, L<provider(7)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
+

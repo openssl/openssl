@@ -592,6 +592,8 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            const OSSL_PARAM params[], int domainparams);
+void *evp_keymgmt_fromid(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                         const void *id, size_t idlen, int domainparams);
 
 
 /* KEYMGMT provider interface functions */

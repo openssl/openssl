@@ -1377,14 +1377,16 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 # define EVP_PKEY_OP_KEYGEN              (1<<2)
 # define EVP_PKEY_OP_PARAMFROMDATA       (1<<3)
 # define EVP_PKEY_OP_KEYFROMDATA         (1<<4)
-# define EVP_PKEY_OP_SIGN                (1<<5)
-# define EVP_PKEY_OP_VERIFY              (1<<6)
-# define EVP_PKEY_OP_VERIFYRECOVER       (1<<7)
-# define EVP_PKEY_OP_SIGNCTX             (1<<8)
-# define EVP_PKEY_OP_VERIFYCTX           (1<<9)
-# define EVP_PKEY_OP_ENCRYPT             (1<<10)
-# define EVP_PKEY_OP_DECRYPT             (1<<11)
-# define EVP_PKEY_OP_DERIVE              (1<<12)
+# define EVP_PKEY_OP_PARAMFROMID         (1<<5)
+# define EVP_PKEY_OP_KEYFROMID           (1<<6)
+# define EVP_PKEY_OP_SIGN                (1<<7)
+# define EVP_PKEY_OP_VERIFY              (1<<8)
+# define EVP_PKEY_OP_VERIFYRECOVER       (1<<9)
+# define EVP_PKEY_OP_SIGNCTX             (1<<10)
+# define EVP_PKEY_OP_VERIFYCTX           (1<<11)
+# define EVP_PKEY_OP_ENCRYPT             (1<<12)
+# define EVP_PKEY_OP_DECRYPT             (1<<13)
+# define EVP_PKEY_OP_DERIVE              (1<<14)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1578,6 +1580,10 @@ int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM param[]);
 const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx);
 const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_param_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                          const void *id, size_t idlen);
+int EVP_PKEY_key_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                        const void *id, size_t idlen);
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);

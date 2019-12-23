@@ -100,6 +100,48 @@ const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
     return NULL;
 }
 
+static int fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                  const void *id, size_t idlen, int operation)
+{
+    void *provdata = NULL;
+    int ret;
+
+    if ((ret = fromdata_init(ctx, operation)) <= 0)
+        return ret;
+
+    if (ppkey == NULL)
+        return -1;
+
+    if (*ppkey == NULL)
+        *ppkey = EVP_PKEY_new();
+
+    if (*ppkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    provdata =
+        evp_keymgmt_fromid(*ppkey, ctx->keymgmt, id, idlen,
+                           operation == EVP_PKEY_OP_PARAMFROMID);
+
+    if (provdata == NULL)
+        return 0;
+    /* provdata is cached in *ppkey, so we need not bother with it further */
+    return 1;
+}
+
+int EVP_PKEY_param_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                          const void *id, size_t idlen)
+{
+    return fromid(ctx, ppkey, id, idlen, EVP_PKEY_OP_PARAMFROMID);
+}
+
+int EVP_PKEY_key_fromid(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey,
+                        const void *id, size_t idlen)
+{
+    return fromid(ctx, ppkey, id, idlen, EVP_PKEY_OP_KEYFROMID);
+}
+
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
     int ret;
