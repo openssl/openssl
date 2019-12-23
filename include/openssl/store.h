@@ -217,6 +217,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search);
 
 typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
+int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
 const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader);
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader);
 /* struct ossl_store_loader_ctx_st is defined differently by each loader */
@@ -257,6 +258,19 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
 
 int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader);
 OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
+
+const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *
+                                                loader);
+const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader);
+int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
+int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader, const char *name);
+void OSSL_STORE_LOADER_do_all_provided(OPENSSL_CTX *libctx,
+                                       void (*fn)(OSSL_STORE_LOADER *loader,
+                                                  void *arg),
+                                       void *arg);
+void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                    void (*fn)(const char *name, void *data),
+                                    void *data);
 
 /*-
  *  Functions to list STORE loaders

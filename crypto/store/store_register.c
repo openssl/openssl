@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include "store_local.h"
+#include "internal/provider.h"
 
 static CRYPTO_RWLOCK *registry_lock;
 static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;
@@ -52,6 +53,15 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
     res->engine = e;
     res->scheme = scheme;
     return res;
+}
+
+int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
+{
+    int ref = 0;
+
+    if (loader->prov != NULL)
+        CRYPTO_UP_REF(&loader->refcnt, &ref, loader->lock);
+    return 1;
 }
 
 const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader)
@@ -122,6 +132,15 @@ int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *loader,
 
 void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
 {
+    if (loader != NULL && loader->prov != NULL) {
+        int i;
+
+        CRYPTO_DOWN_REF(&loader->refcnt, &i, loader->lock);
+        if (i > 0)
+            return;
+        ossl_provider_free(loader->prov);
+        CRYPTO_THREAD_lock_free(loader->lock);
+    }
     OPENSSL_free(loader);
 }
 

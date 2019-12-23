@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_numbers.h>
 #include "internal/thread_once.h"
+#include "internal/refcount.h"
 #include <openssl/dsa.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
@@ -99,6 +101,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme);
 
 /* loader stuff */
 struct ossl_store_loader_st {
+    /* Legacy stuff */
     const char *scheme;
     ENGINE *engine;
     OSSL_STORE_open_fn open;
@@ -109,6 +112,20 @@ struct ossl_store_loader_st {
     OSSL_STORE_eof_fn eof;
     OSSL_STORE_error_fn error;
     OSSL_STORE_close_fn close;
+
+    /* Provider stuff */
+    OSSL_PROVIDER *prov;
+    int scheme_id;
+    const char *propdef;
+
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    OSSL_OP_store_open_fn *o_open;
+    OSSL_OP_store_set_params_fn *set_params;
+    OSSL_OP_store_load_fn *o_load;
+    OSSL_OP_store_eof_fn *o_eof;
+    OSSL_OP_store_close_fn *o_close;
 };
 DEFINE_LHASH_OF(OSSL_STORE_LOADER);
 
@@ -130,3 +147,14 @@ int ossl_store_file_loader_init(void);
 
 OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
 int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
+
+/*-
+ * Provider stuff
+ * -------------------
+ */
+OSSL_STORE_LOADER *ossl_store_loader_fetch(OPENSSL_CTX *libctx,
+                                           const char *scheme,
+                                           const char *properties);
+OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OPENSSL_CTX *libctx,
+                                                     int scheme_id,
+                                                     const char *properties);
