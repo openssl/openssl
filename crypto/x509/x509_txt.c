@@ -178,6 +178,9 @@ const char *X509_verify_cert_error_string(long n)
         return "subject signature algorithm and issuer public key algorithm mismatch";
     case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
         return "issuer certificate doesn't have a public key";
+    case X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM:
+        return "Cannot find certificate signature algorithm";
+
     default:
         /* Printing an error number into a static buffer is not thread-safe */
         return "unknown certificate verification error";
