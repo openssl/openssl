@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 139;
+plan tests => 143;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -369,12 +369,24 @@ ok(verify("root-cert-rsa2", "sslserver", ["root-cert-rsa2"], [], "-check_ss_sig"
     "Public Key Algorithm rsa instead of rsaEncryption");
 
 SKIP: {
-    skip "Ed25519 is not supported by this OpenSSL build", 1
+    skip "Ed25519 is not supported by this OpenSSL build", 5
 	      if disabled("ec");
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
        "accept X25519 EE cert issued by trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("root-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail Ed25519 CA and EE certs swapped");
+
+    ok(verify("root-ed25519", "sslserver", ["root-ed25519"], []),
+       "accept trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail trusted Ed25519-signed self-issued X25519 cert");
+
+    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], [], "-partial_chain"),
+       "accept last-resort direct leaf match Ed25519-signed self-issued cert");
 
 }
 
