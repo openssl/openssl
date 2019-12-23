@@ -374,7 +374,7 @@ SKIP: {
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
-       "ED25519 signature");
+       "accept X25519 EE cert issued by trusted Ed25519 self-signed CA cert");
 
 }
 

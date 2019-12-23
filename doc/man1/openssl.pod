@@ -829,44 +829,55 @@ command handles errors are documented on the specific command page.
 Verification is a complicated process, consisting of a number of separate
 steps that are detailed in the following paragraphs.
 
-First, a certificate chain is built up starting from the supplied certificate
-and ending in a root CA.  It is an error if the whole chain cannot be
-built up.  The chain is built up by looking up the certificate that
-signed (or issued) the certificate. It then repeats the process, until
-it gets to a certificate that is self-issued.
+First, a certificate chain is built up starting from the target certificate
+and typically ending in a self-signed "root" CA certificate.
+It is an error if the whole chain cannot be built up
+unless the B<-partial_chain> option is given.
+The chain is built up iteratively, looking up in turn
+the certificate of the signer ("issuer") of the current certificate.
+If a certificate is found that appears to be its own issuer
+it is assumed to be the self-signed root, which must be trusted.
 
 The process of looking up the issuer's certificate itself involves a number
-of steps.  After all certificates whose subject name matches the issuer
-name of the current certificate are subject to further tests.  The relevant
-authority key identifier components of the current certificate (if present)
-must match the subject key identifier (if present) and issuer and serial
-number of the candidate issuer, in addition the keyUsage extension of the
-candidate issuer (if present) must permit certificate signing.
+of steps.
+All available certificates with a subject name that matches the issuer
+name of the current certificate are subject to further tests.
+The relevant authority key identifier components of the current certificate
+(if present) must match the subject key identifier (if present)
+and issuer and serial number of the candidate issuer; in addition the keyUsage
+extension of the candidate issuer (if present) must permit certificate signing.
 
-The lookup first looks in the list of untrusted certificates and if no match
-is found the remaining lookups are from the trusted certificates. The root CA
-is always looked up in the trusted certificate list: if the certificate to
-verify is a root certificate then an exact match must be found in the trusted
-list.
+The lookup first searches for issuer certificates in the trust store.
+If it does not find a match there it consults
+the list of untrusted "intermediate" CA certificates (if provided).
+The last certificate (which typically is of a root CA) is always looked up
+in the trusted certificate list; an exact match must be found there.
 
-The second step is to check every untrusted certificate's extensions
-for consistency with the supplied purpose. If the B<-purpose> option is
-not included then no checks are done. The supplied or "leaf" certificate
-must have extensions compatible with the supplied purpose and all other
-certificates must also be valid CA certificates. The precise extensions
-required are described in more detail in
+The second step is to check the extensions of every untrusted certificate
+for consistency with the supplied purpose.
+If the B<-purpose> option is not included then no checks are done.
+The target or "leaf" certificate must have extensions compatible with the
+supplied purpose and all other certificates must also be valid CA certificates.
+The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
-The third step is to check the trust settings on the root CA. The root
-CA should be trusted for the supplied purpose.  For compatibility with
-previous versions of OpenSSL, a certificate with no trust settings is
-considered to be valid for all purposes.
+The third step is to check the trust settings on the last certficate,
+typically of a root CA.
+It should be trusted for the supplied purpose.
+For compatibility with previous versions of OpenSSL,
+a certificate with no trust settings is considered to be valid for all purposes.
 
-The fourth, and final, step is to check the validity of the certificate
-chain. The validity period is checked against the system time
-and the C<notBefore> and C<notAfter> dates in the certificate. The certificate
-signatures are also checked at this point. The B<-attime> flag may be
-used to specify a time other than "now."
+The fourth, and final, step is to check the validity of the certificate chain.
+The validity period is checked against the system time
+and the C<notBefore> and C<notAfter> dates in each certificate.
+The B<-attime> flag may be used to specify a time other than "now."
+The certificate signatures are also checked at this point
+(except for the signature of the self-signed "root CA" certificate,
+which is verified only if the B<-check_ss_sig> option is given).
+When verifying a certificate signature
+the keyUsage extension (if present) of the candidate issuer certificate
+is checked to permit digitalSignature for signing proxy certificates or
+keyCertSign for signing other certificates, respectively.
 
 If all operations complete successfully then certificate is considered
 valid. If any operation fails then the certificate is not valid.
@@ -898,7 +909,7 @@ This disables non-compliant workarounds for broken certificates.
 
 =item B<-ignore_critical>
 
-Normally if an unhandled critical extension is present which is not
+Normally if an unhandled critical extension is present that is not
 supported by OpenSSL the certificate is rejected (as required by RFC5280).
 If this option is set critical extensions are ignored.
 
@@ -954,11 +965,14 @@ keys shorter than 1024 bits.
 Allow verification to succeed even if a I<complete> chain cannot be built to a
 self-signed trust-anchor, provided it is possible to construct a chain to a
 trusted certificate that might not be self-signed.
+This certificate may be self-issued or belong to an intermediate CA.
 
 =item B<-check_ss_sig>
 
-Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+Verify the signature on the last certificate in a chain
+even when it is a self-signed (root CA) certificate.
+By default in this case the check is disabled
+because it does not add any security.
 
 =item B<-allow_proxy_certs>
 
@@ -967,6 +981,10 @@ Allow the verification of proxy certificates.
 =item B<-trusted_first>
 
 As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+
+When constructing the certificate chain, the trusted certificates specified
+via B<-CAfile>, B<-CApath>, B<-CAstore> or B<-trusted> are always used
+before any certificates specified via B<-untrusted>.
 
 =item B<-no_alt_chains>
 
@@ -986,7 +1004,8 @@ This option may be used multiple times.
 =item B<-untrusted> I<file>
 
 Parse I<file> as a set of one or more certificates in PEM format.
-All certificates are untrusted certificates that may be used to
+All certificates are untrusted certificates (typically of intermedate CAs)
+that may be used to
 construct a certificate chain from the subject certificate to a trust anchor.
 This option may be used multiple times.
 

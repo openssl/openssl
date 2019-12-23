@@ -356,7 +356,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
             policies_print(ctx);
             /* fall thru */
         case X509_V_ERR_CERT_HAS_EXPIRED:
-            /* Continue even if the leaf is a self signed cert */
+            /* Continue even if the leaf is a self-signed cert */
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             /* Continue after extension errors too */
         case X509_V_ERR_INVALID_CA:
