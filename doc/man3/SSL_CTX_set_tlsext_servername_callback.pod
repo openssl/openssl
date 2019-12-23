@@ -153,23 +153,18 @@ L<SSL_get0_alpn_selected(3)>, L<SSL_CTX_set_client_hello_cb(3)>
 =head1 HISTORY
 
 SSL_get_servername() historically provided some unexpected results in certain
-corner cases. This has been fixed from OpenSSL 1.1.1e. Prior to that version
-the following occurred:
+corner cases. This has been fixed from OpenSSL 1.1.1e.
 
-If the client requests a servername in an initial TLSv1.2 handshake, the
-server accepts it, and then the client successfully resumes but sets a different
-explict servername in the second handshake we would expect SSL_get_servername()
-called by the client to return the servername from the original handshake. This
-is because a TLSv1.2 resumption was successful and therefore the servername that
-has been agreed for the connection is the one from the original handshake.
-However historically it returned the servername from the second handshake.
+Prior to 1.1.1e, when the client requested a servername in an initial TLSv1.2
+handshake, the server accepted it, and then the client successfully resumed but
+set a different explict servername in the second handshake it returned the
+servername from the second handshake. This has now been changed to the
+servername from the original handshake.
 
-If the client sends a servername in the first handshake but the server does not
-accept it, and then a second handshake occurs where TLSv1.2 resumption is
-successful then we would expect SSL_get_servername() called by the server to
-return NULL. This is because there was no servername negotiated for the session.
-However historically it returned the servername from the original handshake even
-though the server did not accept it.
+Also prior to 1.1.1e, if the client sent a servername in the first handshake but
+the server did not accept it, and then a second handshake occured where TLSv1.2
+resumption was successful then it returned the servername from the original
+handshake. This has now been changed to NULL.
 
 =head1 COPYRIGHT
 
