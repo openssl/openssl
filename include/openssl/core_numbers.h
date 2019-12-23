@@ -325,6 +325,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
  * - by importing the domain parameter material via an OSSL_PARAM array.
  * - by generating key domain parameters, given input via an OSSL_PARAM
  *   array.
+ * - by loading internal domain parameters, given a binary blob that forms
+ *   an identity.
+ *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
  *
  * Key references can be created in several manners:
  * - by importing the key material via an OSSL_PARAM array.
@@ -342,15 +345,18 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 /* Key domain parameter creation and destruction */
 # define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS          1
 # define OSSL_FUNC_KEYMGMT_GENDOMPARAMS             2
-# define OSSL_FUNC_KEYMGMT_FREEDOMPARAMS            3
+# define OSSL_FUNC_KEYMGMT_LOADDOMPARAMS            3
+# define OSSL_FUNC_KEYMGMT_FREEDOMPARAMS            4
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importdomparams,
                     (void *provctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gendomparams,
                     (void *provctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loaddomparams,
+                    (void *provctx, const void *id, size_t idlen))
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomparams, (void *domparams))
 
 /* Key domain parameter export */
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS          4
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS          5
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
                     (void *domparams, OSSL_CALLBACK *param_cb, void *cbarg))
 
@@ -359,8 +365,8 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
  * TODO(v3.0) investigate if we need OP_keymgmt_exportdomparam_types.
  * 'openssl provider' may be a caller...
  */
-# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     5
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES     6
+# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     6
+# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES     7
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
                     (void))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
@@ -377,7 +383,7 @@ OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
                     (void *provctx,
                      void *domparams, const OSSL_PARAM genkeyparams[]))
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loadkey,
-                    (void *provctx, void *id, size_t idlen))
+                    (void *provctx, const void *id, size_t idlen))
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
 
 /* Key export */

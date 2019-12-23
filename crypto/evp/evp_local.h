@@ -76,6 +76,7 @@ struct evp_keymgmt_st {
     /* Domain parameter routines */
     OSSL_OP_keymgmt_importdomparams_fn *importdomparams;
     OSSL_OP_keymgmt_gendomparams_fn *gendomparams;
+    OSSL_OP_keymgmt_loaddomparams_fn *loaddomparams;
     OSSL_OP_keymgmt_freedomparams_fn *freedomparams;
     OSSL_OP_keymgmt_exportdomparams_fn *exportdomparams;
     OSSL_OP_keymgmt_importdomparam_types_fn *importdomparam_types;

@@ -598,23 +598,22 @@ void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
                                   const OSSL_PARAM params[]);
 void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
+                               const OSSL_PARAM params[]);
+void *evp_keymgmt_loaddomparams(const EVP_KEYMGMT *keymgmt,
+                                const OSSL_PARAM params[]);
 void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
                                void *provdomparams);
 int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
                                 void *provdomparams,
                                 OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *
-evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *
-evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
                             const OSSL_PARAM params[]);
 void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
                          const OSSL_PARAM params[]);
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen);
+void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt, void *id, size_t idlen);
 void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
 int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
                           OSSL_CALLBACK *param_cb, void *cbarg);

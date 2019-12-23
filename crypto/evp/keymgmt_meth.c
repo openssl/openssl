@@ -58,6 +58,11 @@ static void *keymgmt_from_dispatch(int name_id,
                 break;
             keymgmt->gendomparams = OSSL_get_OP_keymgmt_gendomparams(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_LOADDOMPARAMS:
+            if (keymgmt->loaddomparams != NULL)
+                break;
+            keymgmt->loaddomparams = OSSL_get_OP_keymgmt_loaddomparams(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_FREEDOMPARAMS:
             if (keymgmt->freedomparams != NULL)
                 break;

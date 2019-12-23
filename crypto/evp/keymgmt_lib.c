@@ -201,6 +201,14 @@ void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
     return keymgmt->gendomparams(provctx, params);
 }
 
+void *evp_keymgmt_loaddomparams(const EVP_KEYMGMT *keymgmt,
+                                const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->gendomparams(provctx, params);
+}
+
 void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
                                void *provdomparams)
 {
@@ -245,8 +253,7 @@ void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
     return keymgmt->genkey(provctx, domparams, params);
 }
 
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen)
+void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt, void *id, size_t idlen)
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
