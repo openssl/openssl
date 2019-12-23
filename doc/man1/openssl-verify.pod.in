@@ -97,9 +97,9 @@ with a B<->.
 
 =item I<certificate> ...
 
-One or more certificates to verify. If no certificates are given,
+One or more target certificates to verify. If no certificates are given,
 this command will attempt to read a certificate from standard input.
-If a certificate chain has multiple problems, this program tries to
+If a certificate chain has multiple problems, this program attempts to
 display all of them.
 
 =back
@@ -115,9 +115,9 @@ general form of the error message is:
 The first line contains the name of the certificate being verified followed by
 the subject name of the certificate. The second line contains the error number
 and the depth. The depth is number of the certificate being verified when a
-problem was detected starting with zero for the certificate being verified itself
-then 1 for the CA that signed the certificate and so on. Finally a text version
-of the error number is presented.
+problem was detected starting with zero for the target ("leaf") certificate
+itself then 1 for the CA that signed the target certificate and so on.
+Finally a textual version of the error number is presented.
 
 A list of the error codes and messages can be found in
 L<X509_STORE_CTX_get_error(3)>; the full list is defined in the header file

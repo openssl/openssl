@@ -354,6 +354,7 @@ static int setup_crldp(X509 *x)
 #define ns_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
+/* this caches also further information, e.g., if the cert is self-issued */
 int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
 {
     BASIC_CONSTRAINTS *bs;
@@ -502,11 +503,10 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
         x->ex_flags |= EXFLAG_INVALID;
     /* Does subject name match issuer ? */
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
-        x->ex_flags |= EXFLAG_SI;
-        /* If SKID matches AKID also indicate self signed */
-        if (X509_check_akid(x, x->akid) == X509_V_OK &&
-            !ku_reject(x, KU_KEY_CERT_SIGN))
-            x->ex_flags |= EXFLAG_SS;
+        x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
+        if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
+            && !ku_reject(x, KU_KEY_CERT_SIGN))
+            x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, &i, NULL);
     if (x->altname == NULL && i != -1)
@@ -559,7 +559,7 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
  * 1 is a CA
  * 2 Only possible in older versions of openSSL when basicConstraints are absent
  *   new versions will not return this value. May be a CA
- * 3 basicConstraints absent but self signed V1.
+ * 3 basicConstraints absent but self-signed V1.
  * 4 basicConstraints absent but keyUsage present and keyCertSign asserted.
  * 5 Netscape specific CA Flags present
  */
@@ -803,17 +803,17 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 }
 
 /*-
- * Various checks to see if one certificate issued the second.
- * This can be used to prune a set of possible issuer certificates
- * which have been looked up using some simple method such as by
- * subject name.
+ * Various checks to see if one certificate potentially issued the second.
+ * This can be used to prune a set of possible issuer certificates which
+ * have been looked up using some simple method such as by subject name.
  * These are:
  * 1. Check issuer_name(subject) == subject_name(issuer)
  * 2. If akid(subject) exists, check that it matches issuer
  * 3. Check that issuer public key algorithm matches subject signature algorithm
- * 4. If key_usage(issuer) exists, check that it supports certificate signing
- * returns 0 for OK, positive for reason for mismatch, reasons match
- * codes for X509_verify_cert()
+ * 4. Check that any key_usage(issuer) allows certificate signing
+ * Note that this does not include actually checking the signature.
+ * Returns 0 for OK, or positive for reason for mismatch
+ * where reason codes match those for X509_verify_cert().
  */
 
 int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
@@ -833,11 +833,8 @@ int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
             return ret;
     }
 
+    /* check if the subject signature alg matches the issuer's PUBKEY alg */
     {
-        /*
-         * Check if the subject signature algorithm matches the issuer's PUBKEY
-         * algorithm
-         */
         EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
         X509_ALGOR *s_algor = &subject->cert_info.signature;
         int s_pknid = NID_undef, s_mdnid = NID_undef;

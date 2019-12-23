@@ -111,7 +111,13 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/* Return 1 is a certificate is self signed, 0 if not, or -1 on error */
+/*
+ * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
+ * This does not verify self-signedness but relies on x509v3_cache_extensions()
+ * matching issuer and subject names (i.e., the cert being self-issued) and any
+ * present authority key identifier matching the subject key identifier, etc.
+ * Moreover the key usage (if present) must allow certificate signing - TODO correct this wrong semantics of x509v3_cache_extensions()
+ */
 static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x)
 {
     if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq))
@@ -356,7 +362,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         if (ss < 0)
             return 0;
 
-        /* Special case: single self signed certificate */
+        /* Special case: single (likely) self-signed certificate */
         if (ss > 0 && sk_X509_num(ctx->chain) == 1)
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
@@ -562,7 +568,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             if (!verify_cb_cert(ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED))
                 return 0;
         }
-        /* Increment path length if not a self issued intermediate CA */
+        /* Increment path length if not a self-issued intermediate CA */
         if (i > 0 && (x->ex_flags & EXFLAG_SI) == 0)
             plen++;
         /*
@@ -628,7 +634,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         X509 *x = sk_X509_value(ctx->chain, i);
         int j;
 
-        /* Ignore self issued certs unless last in chain */
+        /* Ignore self-issued certs unless last in chain */
         if (i && (x->ex_flags & EXFLAG_SI))
             continue;
 
@@ -1527,7 +1533,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     int cnum = ctx->error_depth;
     int chnum = sk_X509_num(ctx->chain) - 1;
 
-    /* if we have an alternative CRL issuer cert use that */
+    /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer)
         issuer = ctx->current_issuer;
     /*
@@ -1538,7 +1544,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         issuer = sk_X509_value(ctx->chain, cnum + 1);
     else {
         issuer = sk_X509_value(ctx->chain, chnum);
-        /* If not self signed, can't check signature */
+        /* If not self-issued, can't check signature */
         if (!ctx->check_issued(ctx, issuer, issuer) &&
             !verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER))
             return 0;
@@ -1753,7 +1759,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         goto check_cert;
     }
 
-    if (ctx->check_issued(ctx, xi, xi))
+    if (ctx->check_issued(ctx, xi, xi)) /* the last cert appears self-signed */
         xs = xi;
     else {
         if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
@@ -1776,9 +1782,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
         EVP_PKEY *pkey;
 
         /*
-         * Skip signature check for self signed certificates unless explicitly
-         * asked for.  It doesn't add any security and just wastes time.  If
-         * the issuer's public key is unusable, report the issuer certificate
+         * Skip signature check for self-signed certificates unless explicitly
+         * asked for because it does not add any security and just wastes time.
+         * If the issuer's public key is unusable, report the issuer certificate
          * and its depth (rather than the depth of the subject).
          */
         if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
@@ -2803,7 +2809,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
         return  X509_TRUST_UNTRUSTED;
 
     /*
-     * Record any DANE trust-anchor matches, for the first depth to test, if
+     * Record any DANE trust anchor matches, for the first depth to test, if
      * there's one at that depth. (This'll be false for length 1 chains looking
      * for an exact match for the leaf certificate).
      */
@@ -2889,7 +2895,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
      * When testing the leaf certificate, if we match a DANE-EE(3) record,
      * dane_match() returns 1 and we're done.  If however we match a PKIX-EE(1)
      * record, the match depth and matching TLSA record are recorded, but the
-     * return value is 0, because we still need to find a PKIX trust-anchor.
+     * return value is 0, because we still need to find a PKIX trust anchor.
      * Therefore, when DANE authentication is enabled (required), we're done
      * if:
      *   + matched < 0, internal error.
@@ -3012,7 +3018,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     }
 
     /*
-     * If we got any "DANE-TA(2) Cert(0) Full(0)" trust-anchors from DNS, add
+     * If we got any "DANE-TA(2) Cert(0) Full(0)" trust anchors from DNS, add
      * them to our working copy of the untrusted certificate stack.  Since the
      * caller of X509_STORE_CTX_init() may have provided only a leaf cert with
      * no corresponding stack of untrusted certificates, we may need to create
@@ -3045,7 +3051,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         ctx->param->depth = INT_MAX/2;
 
     /*
-     * Try to Extend the chain until we reach an ultimately trusted issuer.
+     * Try to extend the chain until we reach an ultimately trusted issuer.
      * Build chains up to one longer the limit, later fail if we hit the limit,
      * with an X509_V_ERR_CERT_CHAIN_TOO_LONG error code.
      */
@@ -3059,7 +3065,7 @@ static int build_chain(X509_STORE_CTX *ctx)
          * Look in the trust store if enabled for first lookup, or we've run
          * out of untrusted issuers and search here is not disabled.  When we
          * reach the depth limit, we stop extending the chain, if by that point
-         * we've not found a trust-anchor, any trusted chain would be too long.
+         * we've not found a trust anchor, any trusted chain would be too long.
          *
          * The error reported to the application verify callback is at the
          * maximal valid depth with the current certificate equal to the last
@@ -3105,8 +3111,8 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * Alternative trusted issuer for a mid-chain untrusted cert?
                  * Pop the untrusted cert's successors and retry.  We might now
                  * be able to complete a valid chain via the trust store.  Note
-                 * that despite the current trust-store match we might still
-                 * fail complete the chain to a suitable trust-anchor, in which
+                 * that despite the current trust store match we might still
+                 * fail complete the chain to a suitable trust anchor, in which
                  * case we may prune some more untrusted certificates and try
                  * again.  Thus the S_DOALTERNATE bit may yet be turned on
                  * again with an even shorter untrusted chain!
@@ -3163,7 +3169,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                     /*
                      * We have a self-signed certificate that has the same
                      * subject name (and perhaps keyid and/or serial number) as
-                     * a trust-anchor.  We must have an exact match to avoid
+                     * a trust anchor.  We must have an exact match to avoid
                      * possible impersonation via key substitution etc.
                      */
                     if (X509_cmp(x, xtmp) != 0) {

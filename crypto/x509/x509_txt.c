@@ -58,9 +58,9 @@ const char *X509_verify_cert_error_string(long n)
     case X509_V_ERR_OUT_OF_MEM:
         return "out of memory";
     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-        return "self signed certificate";
+        return "self-signed certificate";
     case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-        return "self signed certificate in certificate chain";
+        return "self-signed certificate in certificate chain";
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
         return "unable to get local issuer certificate";
     case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
