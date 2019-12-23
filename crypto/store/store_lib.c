@@ -17,16 +17,19 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
 #include <openssl/store.h>
+#include "internal/param_build.h"
 #include "internal/thread_once.h"
 #include "crypto/store.h"
 #include "store_local.h"
 
 struct ossl_store_ctx_st {
-    const OSSL_STORE_LOADER *loader;
+    const OSSL_STORE_LOADER *loader; /* legacy */
+    OSSL_STORE_LOADER *fetched_loader;
     OSSL_STORE_LOADER_CTX *loader_ctx;
-    const UI_METHOD *ui_method;
-    void *ui_data;
+    const UI_METHOD *ui_method;  /* legacy */
+    void *ui_data;               /* legacy */
     OSSL_STORE_post_process_info_fn post_process;
     void *post_process_data;
     int expected_type;
@@ -35,12 +38,23 @@ struct ossl_store_ctx_st {
     int loading;
 };
 
-OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
-                                void *ui_data,
+OSSL_STORE_CTX *OSSL_STORE_open(const char *uri,
+                                const UI_METHOD *ui_method, void *ui_data,
                                 OSSL_STORE_post_process_info_fn post_process,
                                 void *post_process_data)
 {
+    return OSSL_STORE_open_ex(NULL, uri, NULL, ui_method, ui_data,
+                              post_process, post_process_data);
+}
+
+OSSL_STORE_CTX *OSSL_STORE_open_ex(OPENSSL_CTX *libctx,
+                                   const char *uri, const char *properties,
+                                   const UI_METHOD *ui_method, void *ui_data,
+                                   OSSL_STORE_post_process_info_fn post_process,
+                                   void *post_process_data)
+{
     const OSSL_STORE_LOADER *loader = NULL;
+    OSSL_STORE_LOADER *fetched_loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
     OSSL_STORE_CTX *ctx = NULL;
     char scheme_copy[256], *p, *schemes[2];
@@ -76,15 +90,26 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
     /* Try each scheme until we find one that could open the URI */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
         OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
-            OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
+        if ((fetched_loader = ossl_store_loader_fetch(libctx, schemes[i],
+                                                      properties)) != NULL) {
+            loader_ctx = fetched_loader->o_open(uri);
+            if (loader_ctx == NULL) {
+                OSSL_STORE_LOADER_free(fetched_loader);
+                fetched_loader = NULL;
+            }
+            loader = fetched_loader;
+        } else if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
             loader_ctx = loader->open(loader, uri, ui_method, ui_data);
-            OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
         }
     }
 
+    if (loader != NULL)
+        OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
+
     if (loader_ctx == NULL)
         goto err;
+
+    OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_OPEN, ERR_R_MALLOC_FAILURE);
@@ -115,7 +140,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
          * this case, so if something goes wrong when closing, that'll simply
          * just add another entry on the error stack.
          */
-        (void)loader->close(loader_ctx);
+        (void)OSSL_STORE_close(ctx);
     }
     return NULL;
 }
@@ -134,8 +159,28 @@ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
 
 int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args)
 {
-    if (ctx->loader->ctrl != NULL)
+    if (ctx->fetched_loader != NULL
+        && ctx->fetched_loader->set_params != NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        switch (cmd) {
+        case OSSL_STORE_C_USE_SECMEM:
+            {
+                int on = *(va_arg(args, int *));
+
+                params[0] = OSSL_PARAM_construct_int("use_secmem", &on);
+            }
+            break;
+        default:
+            break;
+        }
+
+        if (params[0].key != NULL)
+            return ctx->fetched_loader->set_params(ctx->loader_ctx, params);
+        return 1;
+    } else if (ctx->loader->ctrl != NULL) {
         return ctx->loader->ctrl(ctx->loader_ctx, cmd, args);
+    }
     return 0;
 }
 
@@ -148,7 +193,14 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     }
 
     ctx->expected_type = expected_type;
-    if (ctx->loader->expect != NULL)
+    if (ctx->fetched_loader != NULL
+        && ctx->fetched_loader->set_params != NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] =
+            OSSL_PARAM_construct_int(OSSL_STORE_PARAM_EXPECT, &expected_type);
+        return ctx->fetched_loader->set_params(ctx->loader_ctx, params);
+    } else if (ctx->loader->expect != NULL)
         return ctx->loader->expect(ctx->loader_ctx, expected_type);
     return 1;
 }
@@ -160,13 +212,236 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
                       OSSL_STORE_R_LOADING_STARTED);
         return 0;
     }
-    if (ctx->loader->find == NULL) {
+    if ((ctx->fetched_loader == NULL
+         || ctx->fetched_loader->set_params == NULL)
+        && ctx->loader->find == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
                       OSSL_STORE_R_UNSUPPORTED_OPERATION);
         return 0;
     }
 
+    if (ctx->fetched_loader != NULL
+        && ctx->fetched_loader->set_params != NULL) {
+        OSSL_PARAM_BLD bld;
+        OSSL_PARAM *params;
+        int ret = 1;
+        /* OSSL_STORE_SEARCH_BY_NAME, OSSL_STORE_SEARCH_BY_ISSUER_SERIAL*/
+        void *name_der = NULL;
+        int name_der_sz;
+        /* OSSL_STORE_SEARCH_BY_ISSUER_SERIAL */
+        BIGNUM *number = NULL;
+
+        ossl_param_bld_init(&bld);
+        switch (search->search_type) {
+        case OSSL_STORE_SEARCH_BY_NAME:
+            if ((name_der_sz = i2d_X509_NAME(search->name,
+                                             (unsigned char **)&name_der)) < 0)
+                return 0;        /* Nothing allocated yet */
+            ossl_param_bld_push_octet_string(&bld, OSSL_STORE_PARAM_SUBJECT,
+                                             name_der, name_der_sz);
+            break;
+        case OSSL_STORE_SEARCH_BY_ISSUER_SERIAL:
+            if ((name_der_sz = i2d_X509_NAME(search->name,
+                                             (unsigned char **)&name_der)) < 0)
+                return 0;        /* Nothing allocated yet */
+            number = ASN1_INTEGER_to_BN(search->serial, NULL);
+            ossl_param_bld_push_octet_string(&bld, OSSL_STORE_PARAM_ISSUER,
+                                             name_der, name_der_sz);
+            ossl_param_bld_push_BN(&bld, OSSL_STORE_PARAM_SERIAL, number);
+            break;
+        case OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT:
+            ossl_param_bld_push_utf8_string(&bld, OSSL_STORE_PARAM_DIGEST,
+                                            EVP_MD_name(search->digest), 0);
+            ossl_param_bld_push_octet_string(&bld, OSSL_STORE_PARAM_FINGERPRINT,
+                                             search->string,
+                                             search->stringlength);
+            break;
+        case OSSL_STORE_SEARCH_BY_ALIAS:
+            ossl_param_bld_push_utf8_string(&bld, OSSL_STORE_PARAM_ALIAS,
+                                            (char *)search->string,
+                                            search->stringlength);
+            break;
+        }
+        params = ossl_param_bld_to_param(&bld);
+        ret = ctx->fetched_loader->set_params(ctx->loader_ctx, params);
+        OPENSSL_free(params);
+
+        return ret;
+
+    }
     return ctx->loader->find(ctx->loader_ctx, search);
+}
+
+static OSSL_CALLBACK load_result;
+static int load_result(const OSSL_PARAM params[], void *cbarg)
+{
+    OSSL_STORE_INFO **v = cbarg;
+    const OSSL_PARAM *p;
+    int type = -1;
+
+    /*
+     * We expect the implementation to hold all the data to the next load,
+     * so just get pointers to the different params.
+     */
+
+    /* The TYPE parameter *must* be present and *must* be correct */
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_TYPE)) == NULL
+        || !OSSL_PARAM_get_int(p, &type))
+        return 0;
+
+    switch (type) {
+    case OSSL_STORE_INFO_NAME:
+        {
+            const char *name = NULL, *desc = NULL;
+            char *newname = NULL, *newdesc = NULL;
+
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_NAME);
+            if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &name))
+                break;
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_DESC);
+            if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &desc))
+                break;
+            if (name == NULL)
+                break;
+            if ((name != NULL && (newname = OPENSSL_strdup(name)) == NULL)
+                || (desc != NULL && (newdesc = OPENSSL_strdup(desc)) == NULL)
+                || (*v = OSSL_STORE_INFO_new_NAME(newname)) == NULL) {
+                OPENSSL_free(newname);
+                OPENSSL_free(newdesc);
+                break;           /* ERROR */
+                }
+            OSSL_STORE_INFO_set0_NAME_description(*v, newdesc);
+            break;
+        }
+    case OSSL_STORE_INFO_PARAMS:
+    case OSSL_STORE_INFO_PKEY:
+        {
+            const char *algorithm = NULL;
+            const void *reference = NULL;
+            size_t reference_sz = 0;
+            EVP_PKEY_CTX *pkctx;
+            EVP_PKEY *pk = NULL;
+
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_ALGORITHM);
+            if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &algorithm))
+                break;
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_REFERENCE);
+            if (p != NULL
+                && !OSSL_PARAM_get_octet_ptr(p, &reference, &reference_sz))
+                break;
+
+            if (algorithm == NULL
+                || reference == NULL
+                || (pkctx =
+                    EVP_PKEY_CTX_new_provided(NULL /* libctx */,
+                                              algorithm,
+                                              NULL /* propquery */)) == NULL)
+                break;   /* ERROR */
+
+            switch (type) {
+            case OSSL_STORE_INFO_PARAMS:
+                (void)EVP_PKEY_param_fromid(pkctx, &pk,
+                                            reference, reference_sz);
+                break;
+            case OSSL_STORE_INFO_PKEY:
+                (void)EVP_PKEY_key_fromid(pkctx, &pk, reference, reference_sz);
+                break;
+            }
+            if (pk != NULL)
+                *v = OSSL_STORE_INFO_new_PKEY(pk);
+            if (*v == NULL)
+                EVP_PKEY_free(pk);
+
+            EVP_PKEY_CTX_free(pkctx);
+        }
+        break;
+    case OSSL_STORE_INFO_CERT:
+    case OSSL_STORE_INFO_CRL:
+        {
+            const char *rawenc = NULL, *desc = NULL;
+            const void *rawdata = NULL;
+            size_t rawdata_len = 0;
+
+            /* If the loader gives us a description, it's the PEM label */
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_DESC);
+            if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &desc))
+                break;
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_RAWDATA);
+            if (p != NULL) {
+                if (!OSSL_PARAM_get_octet_ptr(p, &rawdata, &rawdata_len))
+                    break;
+                rawdata_len = p->data_size;
+            }
+            p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_RAWENC);
+            if (p != NULL && !OSSL_PARAM_get_utf8_ptr(p, &rawenc))
+                break;
+
+            if (rawdata == NULL)
+                break;   /* ERROR */
+            if (rawenc == NULL)
+                rawenc = "DER";
+
+            /* We only support DER for now */
+            if (strcasecmp(rawenc, "DER") != 0)
+                break;   /* ERROR */
+
+            switch (type) {
+            case OSSL_STORE_INFO_CERT:
+                {
+                    X509 *cert;
+                    /*
+                     * In most cases, we can try to interpret the serialized
+                     * data as a trusted cert (X509 + X509_AUX) and fall back
+                     * to reading it as a normal cert (just X509), but if
+                     * |desc| (the PEM name) specifically declares it as a
+                     * trusted cert, then no fallback should be engaged.
+                     * |ignore_trusted| tells if the fallback can be used (1)
+                     * or not (0).
+                     */
+                    int ignore_trusted = 1;
+
+                    if (desc != NULL
+                        && (strcasecmp(desc, PEM_STRING_X509_TRUSTED)
+                            == 0))
+                        ignore_trusted = 0;
+
+                    cert = d2i_X509_AUX(NULL, (const unsigned char **)&rawdata,
+                                        rawdata_len);
+                    if (cert == NULL && ignore_trusted)
+                        cert = d2i_X509(NULL, (const unsigned char **)&rawdata,
+                                        rawdata_len);
+
+                    if (cert != NULL)
+                        *v = OSSL_STORE_INFO_new_CERT(cert);
+                    if (*v == NULL)
+                        X509_free(cert);
+                }
+                break;
+            case OSSL_STORE_INFO_CRL:
+                {
+                    X509_CRL *crl;
+
+                    crl = d2i_X509_CRL(NULL, (const unsigned char **)&rawdata,
+                                       rawdata_len);
+                    if (crl != NULL)
+                        *v = OSSL_STORE_INFO_new_CRL(crl);
+                    if (*v == NULL)
+                        X509_CRL_free(crl);
+                }
+                break;
+            default:
+                break;   /* ERROR */
+            }
+        }
+    default:
+        break;           /* ERROR */
+    }
+
+    /*
+     * Oddly enough, we return success here.  The value of |*v| will
+     * determine what needs to be done.
+     */
+    return 1;
 }
 
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
@@ -178,8 +453,15 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     if (OSSL_STORE_eof(ctx))
         return NULL;
 
-    OSSL_TRACE(STORE, "Loading next object\n");
-    v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
+    if (ctx->loader != NULL)
+        OSSL_TRACE(STORE, "Loading next object\n");
+
+    if (ctx->fetched_loader != NULL) {
+        if (!ctx->fetched_loader->o_load(ctx->loader_ctx, load_result, &v))
+            return NULL;
+    } else {
+        v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
+    }
 
     if (ctx->post_process != NULL && v != NULL) {
         v = ctx->post_process(v, ctx->post_process_data);
