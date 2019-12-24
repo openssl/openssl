@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_check_issued - checks if certificate is likely issued by another
+X509_check_issued - checks if certificate is apparently issued by another
 certificate
 
 =head1 SYNOPSIS
@@ -14,8 +14,8 @@ certificate
 
 =head1 DESCRIPTION
 
-X509_check_issued() checks if certificate I<subject> was likely issued using CA
-certificate I<issuer>. This function takes into account not only
+X509_check_issued() checks if certificate I<subject> was apparently issued
+using (CA) certificate I<issuer>. This function takes into account not only
 matching of the issuer field of I<subject> with the subject field of I<issuer>,
 but also compares all sub-fields of the B<authorityKeyIdentifier> extension of
 I<subject>, as far as present, with the respective B<subjectKeyIdentifier>,
