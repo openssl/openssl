@@ -25,8 +25,9 @@ B<openssl> B<pkcs12>
 [B<-nokeys>]
 [B<-info>]
 [B<-des> B<-des3> B<-idea> B<-aes128> B<-aes192> B<-aes256> B<-aria128> B<-aria192> B<-aria256> B<-camellia128> B<-camellia192> B<-camellia256> B<-nodes>]
-[B<-noiter>]
-[B<-maciter> | B<-nomaciter> | B<-nomac>]
+[B<-iter> I<count> | B<-noiter> | B<-nomaciter>]
+[B<-maciter>]
+[B<-nomac>]
 [B<-twopass>]
 [B<-descert>]
 [B<-certpbe> I<cipher>]
@@ -233,17 +234,19 @@ the use of signing only keys for SSL client authentication.
 
 Specify the MAC digest algorithm. If not included them SHA1 will be used.
 
-=item B<-nomaciter>, B<-noiter>
+=item B<-iter> I<count>
 
-These options affect the iteration counts on the MAC and key algorithms.
-Unless you wish to produce files compatible with MSIE 4.0 you should leave
-these options alone.
+This option specifies the iteration count for the encryption key and MAC. The
+default value is 2048.
 
 To discourage attacks by using large dictionaries of common passwords the
 algorithm that derives keys from passwords can have an iteration count applied
 to it: this causes a certain part of the algorithm to be repeated and slows it
 down. The MAC is used to check the file integrity but since it will normally
 have the same password as the keys and certificates it could also be attacked.
+
+=item B<-nomaciter>, B<-noiter>
+
 By default both MAC and encryption iteration counts are set to 2048, using
 these options the MAC and encryption iteration counts can be set to 1, since
 this reduces the file security you should not use these options unless you
