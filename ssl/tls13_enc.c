@@ -49,7 +49,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
      * prefix and label + bytes for the label itself + 1 byte length of hash
      * + bytes for the hash itself
      */
-    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t) +
+    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t)
                             + (sizeof(label_prefix) - 1) + TLS13_MAX_LABEL_LEN
                             + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
