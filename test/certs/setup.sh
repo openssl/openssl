@@ -185,6 +185,9 @@ OPENSSL_SIGALG=md5 \
 OPENSSL_KEYBITS=768 \
 ./mkcert.sh genee server.example ee-key-768 ee-cert-768 ca-key ca-cert
 
+# self-signed end-entity cert with explicit keyUsage not including KeyCertSign
+openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature
+
 # Proxy certificates, off of ee-client
 # Start with some good ones
 ./mkcert.sh req pc1-key "0.CN = server.example" "1.CN = proxy 1" | \
