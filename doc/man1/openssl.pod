@@ -844,8 +844,7 @@ All available certificates with a subject name that matches the issuer
 name of the current certificate are subject to further tests.
 The relevant authority key identifier components of the current certificate
 (if present) must match the subject key identifier (if present)
-and issuer and serial number of the candidate issuer; in addition the keyUsage
-extension of the candidate issuer (if present) must permit certificate signing.
+and issuer and serial number of the candidate issuer certificate.
 
 The lookup first searches for issuer certificates in the trust store.
 If it does not find a match there it consults
@@ -876,9 +875,8 @@ The certificate signatures are also checked at this point
 which is verified only if the B<-check_ss_sig> option is given).
 When verifying a certificate signature
 the keyUsage extension (if present) of the candidate issuer certificate
-is checked to permit digitalSignature for signing proxy certificates or
-keyCertSign for signing other certificates, respectively.
-
+is checked to permit digitalSignature for signing proxy certificates
+or to permit keyCertSign for signing other certificates, respectively.
 If all operations complete successfully then certificate is considered
 valid. If any operation fails then the certificate is not valid.
 

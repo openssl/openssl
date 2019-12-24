@@ -521,7 +521,8 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
         if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
-            && !ku_reject(x, KU_KEY_CERT_SIGN))
+                /* .. and the signature alg matches the PUBKEY alg: */
+                && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, &i, NULL);

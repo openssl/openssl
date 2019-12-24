@@ -116,7 +116,6 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * This does not verify self-signedness but relies on x509v3_cache_extensions()
  * matching issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier matching the subject key identifier, etc.
- * Moreover the key usage (if present) must allow certificate signing - TODO correct this wrong semantics of x509v3_cache_extensions()
  */
 static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x)
 {
@@ -343,36 +342,26 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
     return rv;
 }
 
-/* Given a possible certificate and issuer check them */
-
+/*
+ * Check that the given certificate 'x' is issued by the certificate 'issuer'
+ * and the issuer is not yet in ctx->chain, where the exceptional case
+ * that 'x' is self-issued and ctx->chain has just one element is allowed.
+ */
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    int ret;
-
-    if (x == issuer)
-        return cert_self_signed(ctx, x) == 1;
-    ret = x509_check_issued_int(issuer, x, ctx->libctx, ctx->propq);
-    if (ret == X509_V_OK) {
+    if (x509_likely_issued(issuer, x, ctx->libctx, ctx->propq) != X509_V_OK)
+        return 0;
+    if ((x->ex_flags & EXFLAG_SI) == 0 || sk_X509_num(ctx->chain) != 1) {
         int i;
         X509 *ch;
 
-        ss = cert_self_signed(ctx, x);
-        if (ss < 0)
-            return 0;
-
-        /* Special case: single (likely) self-signed certificate */
-        if (ss > 0 && sk_X509_num(ctx->chain) == 1)
-            return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
-            if (ch == issuer || X509_cmp(ch, issuer) == 0) {
-                ret = X509_V_ERR_PATH_LOOP;
-                break;
-            }
+            if (ch == issuer || X509_cmp(ch, issuer) == 0)
+                return 0;
         }
     }
-
-    return (ret == X509_V_OK);
+    return 1;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
@@ -1780,13 +1769,17 @@ static int internal_verify(X509_STORE_CTX *ctx)
         /*
          * Skip signature check for self-signed certificates unless explicitly
          * asked for because it does not add any security and just wastes time.
-         * If the issuer's public key is unusable, report the issuer certificate
+         * If the issuer's public key is not available or its key usage does
+         * not support issuing the subject cert, report the issuer certificate
          * and its depth (rather than the depth of the subject).
          */
         if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
             EVP_PKEY *pkey;
             int issuer_depth = n + (xi == xs ? 0 : 1);
+            int ret = x509_signing_allowed(xi, xs);
 
+            if (ret != X509_V_OK && !verify_cb_cert(ctx, xi, issuer_depth, ret))
+                return 0;
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 if (!verify_cb_cert(ctx, xi, issuer_depth,
                                     X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
