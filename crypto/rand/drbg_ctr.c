@@ -334,10 +334,14 @@ __owur static int drbg_ctr_generate(RAND_DRBG *drbg,
                 || outl != AES_BLOCK_SIZE)
                 return 0;
             memcpy(out, ctr->K, outlen);
+            if (!drbg_cprng_test(drbg, ctr->K, AES_BLOCK_SIZE))
+                return 0;
             break;
         }
         if (!EVP_CipherUpdate(ctr->ctx, out, &outl, ctr->V, AES_BLOCK_SIZE)
             || outl != AES_BLOCK_SIZE)
+            return 0;
+        if (!drbg_cprng_test(drbg, out, AES_BLOCK_SIZE))
             return 0;
         out += 16;
         outlen -= 16;

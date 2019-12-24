@@ -190,9 +190,13 @@ static int hash_gen(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
             if (!EVP_DigestFinal(hash->ctx, hash->vtmp, NULL))
                 return 0;
             memcpy(out, hash->vtmp, outlen);
+            if (!drbg_cprng_test(drbg, hash->vtmp, hash->blocklen))
+                return 0;
             return 1;
         } else {
             if (!EVP_DigestFinal(hash->ctx, out, NULL))
+                return 0;
+            if (!drbg_cprng_test(drbg, out, hash->blocklen))
                 return 0;
             outlen -= hash->blocklen;
             if (outlen == 0)

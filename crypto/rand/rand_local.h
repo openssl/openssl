@@ -326,6 +326,7 @@ struct rand_drbg_st {
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     RAND_DRBG_get_nonce_fn get_nonce;
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+    unsigned char lb[EVP_MAX_MD_SIZE];
 };
 
 /* The global RAND method, and the global buffer and DRBG instance. */
@@ -357,4 +358,5 @@ extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, RAND_POOL *pool,
                                 unsigned char *buf, unsigned char *md,
                                 unsigned int *md_size);
 
+int drbg_cprng_test(RAND_DRBG *drbg, const unsigned char *out, size_t blocklen);
 #endif

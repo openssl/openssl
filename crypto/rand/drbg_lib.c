@@ -1408,3 +1408,14 @@ RAND_METHOD *RAND_OpenSSL(void)
     return NULL;
 #endif
 }
+
+int drbg_cprng_test(RAND_DRBG *drbg, const unsigned char *out ,size_t blocklen)
+{
+    if (!memcmp(drbg->lb, out, blocklen)) 
+	    return 0;
+
+    memcpy(drbg->lb, out, blocklen);
+    return 1;
+
+}
+

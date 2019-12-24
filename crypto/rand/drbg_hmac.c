@@ -165,9 +165,13 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
         if (outlen > hmac->blocklen) {
             if (!HMAC_Final(ctx, out, NULL))
                 return 0;
+            if (!drbg_cprng_test(drbg, out, hmac->blocklen))
+                return 0;
             temp = out;
         } else {
             if (!HMAC_Final(ctx, hmac->V, NULL))
+                return 0;
+            if (!drbg_cprng_test(drbg, hmac->V, hmac->blocklen))
                 return 0;
             memcpy(out, hmac->V, outlen);
             break;
