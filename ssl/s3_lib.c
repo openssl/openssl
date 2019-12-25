@@ -4181,7 +4181,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                                      SSL_CIPHER_FLAGS *srvr_flags)
 {
     STACK_OF(SSL_CIPHER) *srvr;
-    const SSL_CIPHER *c, *ret = NULL;
+    const SSL_CIPHER *c = NULL, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii = -1, prefer_sha256 = 0;
     unsigned long alg_mask;
@@ -4190,7 +4190,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
 #endif
     uint8_t *flags;
-    int found = 0;
+    int found;
     int group_flag, min_index, min_index_sha256, ret_index, pass;
     if (srvr_flags == NULL)
         return 0;
@@ -4239,7 +4239,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             if (c->algorithm_enc == SSL_CHACHA20POLY1305) {
                 /* ChaCha20 is client preferred, check server... */
                 int num = sk_SSL_CIPHER_num(srvr);
-                int found = 0;
+                found = 0;
                 for (i = 0; i < num; i++) {
                     c = sk_SSL_CIPHER_value(srvr, i);
                     if (c->algorithm_enc == SSL_CHACHA20POLY1305) {
@@ -4303,6 +4303,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     }
 
     /* Check clients first common cipher for preference flag */
+    found = 0;
     if (flags != NULL) {
         for (i = 0; i < sk_SSL_CIPHER_num(allow); i++) {
             c = sk_SSL_CIPHER_value(allow, i);

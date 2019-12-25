@@ -811,7 +811,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     CIPHER_ORDER *head, *tail, *curr, *next, *last;
     const SSL_CIPHER *cp;
     int reverse = 0;
-    int i, found, version;
+    unsigned long int i;
+    int found, version;
 
     OSSL_TRACE_BEGIN(TLS_CIPHER){
         BIO_printf(trc_out,
@@ -1021,7 +1022,8 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 int OPENSSL_version_list(const char *str, int *version_mask)
 {
     const char *l, *buf;
-    int i, found, buflen, processed_len;
+    unsigned long int i;
+    int found, buflen, processed_len;
     char ch;
     if (str == NULL) {
         *version_mask = 0;

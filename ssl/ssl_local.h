@@ -2410,6 +2410,10 @@ __owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             SSL_CIPHER_FLAGS *srvr);
+__owur int ssl3_check_cipher(SSL *s, const SSL_CIPHER *c,
+                             unsigned long *alg_mask);
+__owur int count_ciphers_by_version(const SSL_CIPHER_FLAGS *ciphf_list,
+                                    int version);
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
