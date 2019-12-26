@@ -140,6 +140,7 @@ typedef enum OPTION_choice {
     OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
     OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_RSIGOPT, OPT_HEADER,
+    OPT_PASSIN,
     OPT_RCID,
     OPT_V_ENUM,
     OPT_MD,
@@ -186,6 +187,7 @@ const OPTIONS ocsp_options[] = {
     {"rsigner", OPT_RSIGNER, '<',
      "Responder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
+    {"passin", OPT_PASSIN, 's', "Responder key pass phrase source"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
     {"rsigopt", OPT_RSIGOPT, 's', "OCSP response signature parameter in n:v form"},
@@ -266,6 +268,7 @@ int ocsp_main(int argc, char **argv)
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
     char *rsignfile = NULL, *rkeyfile = NULL;
+    char *passinarg = NULL, *passin = NULL;
     char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
     char *signfile = NULL, *keyfile = NULL;
     char *thost = NULL, *tport = NULL, *tpath = NULL;
@@ -495,6 +498,9 @@ int ocsp_main(int argc, char **argv)
         case OPT_RKEY:
             rkeyfile = opt_arg();
             break;
+        case OPT_PASSIN:
+            passinarg = opt_arg();
+            break;
         case OPT_ROTHER:
             rcertfile = opt_arg();
             break;
@@ -597,7 +603,11 @@ int ocsp_main(int argc, char **argv)
                             "responder other certificates"))
                 goto end;
         }
-        rkey = load_key(rkeyfile, FORMAT_PEM, 0, NULL, NULL,
+        if (!app_passwd(passinarg, NULL, &passin, NULL)) {
+            BIO_printf(bio_err, "Error getting password\n");
+            goto end;
+        }
+        rkey = load_key(rkeyfile, FORMAT_PEM, 0, passin, NULL,
                         "responder private key");
         if (rkey == NULL)
             goto end;
