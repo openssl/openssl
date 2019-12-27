@@ -3734,6 +3734,7 @@ static void pkey_print_message(const char *str, const char *str2, long num,
                mr ? "+DTP:%d:%s:%s:%d\n"
                : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
+    run = 1;
     alarm(tm);
 #else
     BIO_printf(bio_err,
