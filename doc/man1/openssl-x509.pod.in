@@ -490,14 +490,6 @@ This option can be used in conjunction with the B<-force_pubkey> option
 to create a certificate even without providing an input certificate
 or certificate request.
 
-=item B<-utf8>
-
-This option causes field values to be interpreted as UTF8 strings, by
-default they are interpreted as ASCII. This means that the field
-values, whether prompted from a terminal or obtained from a
-configuration file, must be valid UTF8 strings. Applies to the
-value set by the B<-subj> and B<-subject> flags.
-
 =item B<-multivalue-rdn>
 
 This option causes the B<-subj> argument to be interpreted with full

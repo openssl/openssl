@@ -54,7 +54,7 @@ typedef enum OPTION_choice {
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
     OPT_C, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
-    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_UTF8, OPT_MULTIVALUE_RDN,
+    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_MULTIVALUE_RDN,
     OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
@@ -85,8 +85,6 @@ const OPTIONS x509_options[] = {
     OPT_SECTION("Output"),
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
-    {"utf8", OPT_UTF8, '-',
-     "Input characters in subject set/modify are UTF8 (default ASCII)"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs in subject set/modify"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
@@ -309,9 +307,6 @@ int x509_main(int argc, char **argv)
         case OPT_SUBJ:
             subj = opt_arg();
             break;
-        case OPT_UTF8:
-             chtype = MBSTRING_UTF8;
-             break;
         case OPT_MULTIVALUE_RDN:
              multirdn = 1;
              break;
