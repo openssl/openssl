@@ -218,7 +218,7 @@ int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
 }
 
 int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                                int no_self_issued, int no_dups, int prepend)
+                                int no_self_signed, int no_dups, int prepend)
 /* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
 {
     int i;
@@ -230,7 +230,7 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
     for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
         X509 *cert = sk_X509_value(certs, i);
 
-        if (!no_self_issued || X509_check_issued(cert, cert) != X509_V_OK) {
+        if (!no_self_signed || X509_self_signed(cert, 0) != 1) {
             if (!ossl_cmp_sk_X509_add1_cert(sk, cert, no_dups, prepend))
                 return 0;
         }
@@ -239,7 +239,7 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
 }
 
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-                                   int only_self_issued)
+                                   int only_self_signed)
 {
     int i;
 
@@ -252,7 +252,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     for (i = 0; i < sk_X509_num(certs); i++) {
         X509 *cert = sk_X509_value(certs, i);
 
-        if (!only_self_issued || X509_check_issued(cert, cert) == X509_V_OK)
+        if (!only_self_signed || X509_self_signed(cert, 0) == 1)
             if (!X509_STORE_add_cert(store, cert)) /* ups cert ref counter */
                 return 0;
     }
