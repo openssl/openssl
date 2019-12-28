@@ -345,6 +345,7 @@ const char *X509_verify_cert_error_string(long n);
 
 int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq);
 int X509_verify(X509 *a, EVP_PKEY *r);
+int X509_self_signed(X509 *cert, int verify_signature);
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
                        const char *propq);

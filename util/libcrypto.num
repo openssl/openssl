@@ -4681,6 +4681,7 @@ ERR_set_error                           ?	3_0_0	EXIST::FUNCTION:
 ERR_vset_error                          ?	3_0_0	EXIST::FUNCTION:
 X509_get0_authority_issuer              ?	3_0_0	EXIST::FUNCTION:
 X509_get0_authority_serial              ?	3_0_0	EXIST::FUNCTION:
+X509_self_signed                        ?	3_0_0	EXIST::FUNCTION:
 EC_GROUP_new_by_curve_name_ex           ?	3_0_0	NOEXIST::FUNCTION:EC
 EC_KEY_new_ex                           ?	3_0_0	NOEXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_ex             ?	3_0_0	NOEXIST::FUNCTION:EC

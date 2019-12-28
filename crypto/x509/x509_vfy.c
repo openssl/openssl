@@ -111,20 +111,43 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/* Return 1 is a certificate is self signed, 0 if not, or -1 on error */
-static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x)
+/*-
+ * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
+ * This actually verifies self-signedness only if requested.
+ * It calls X509v3_cache_extensions()
+ * to match issuer and subject names (i.e., the cert being self-issued) and any
+ * present authority key identifier to match the subject key identifier, etc.
+ */
+static int x509_self_signed_ex(X509 *cert, int verify_signature,
+                               OPENSSL_CTX *libctx, const char *propq)
 {
-    if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq))
-        return -1;
+    EVP_PKEY *pkey;
 
-    if (x->ex_flags & EXFLAG_SS)
-        return 1;
-    else
+    if ((pkey = X509_get0_pubkey(cert)) == NULL) { /* handles cert == NULL */
+        X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+        return -1;
+    }
+    if (!X509v3_cache_extensions(cert, libctx, propq))
+        return -1;
+    if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
+    if (!verify_signature)
+        return 1;
+    return X509_verify_ex(cert, pkey, libctx, propq);
+}
+
+/* wrapper for internal use */
+static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x, int verify_signature)
+{
+    return x509_self_signed_ex(x, verify_signature, ctx->libctx, ctx->propq);
+}
+
+int X509_self_signed(X509 *cert, int verify_signature)
+{
+    return x509_self_signed_ex(cert, verify_signature, NULL, NULL);
 }
 
 /* Given a certificate try and find an exact match in the store */
-
 static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 {
     STACK_OF(X509) *certs;
@@ -341,7 +364,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
     int ss;
 
     if (x == issuer) {
-        ss = cert_self_signed(ctx, x);
+        ss = cert_self_signed(ctx, x, 0);
         if (ss < 0)
             return 0;
         return ss;
@@ -352,7 +375,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         int i;
         X509 *ch;
 
-        ss = cert_self_signed(ctx, x);
+        ss = cert_self_signed(ctx, x, 0);
         if (ss < 0)
             return 0;
 
@@ -372,7 +395,6 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
-
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     *issuer = find_issuer(ctx, ctx->other_ctx, x);
@@ -2974,7 +2996,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     }
 
-    ss = cert_self_signed(ctx, cert);
+    ss = cert_self_signed(ctx, cert, 0);
     if (ss < 0) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -3153,7 +3175,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    ss = cert_self_signed(ctx, x);
+                    ss = cert_self_signed(ctx, x, 0);
                     if (ss < 0) {
                         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -3279,7 +3301,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             x = xtmp;
             ++ctx->num_untrusted;
-            ss = cert_self_signed(ctx, xtmp);
+            ss = cert_self_signed(ctx, xtmp, 0);
             if (ss < 0) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                 ctx->error = X509_V_ERR_UNSPECIFIED;
