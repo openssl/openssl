@@ -114,7 +114,8 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
+          # External test pyca-cryptography temporarily disabled due to long term travis failures
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS="test_external_boringssl test_external_krb5"
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
