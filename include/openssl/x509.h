@@ -343,8 +343,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_lookup) (X509_CRL *crl,
                                                         X509_REVOKED **ret,
                                                         const ASN1_INTEGER *ser,
-                                                        const
-                                                        X509_NAME *issuer),
+                                                        const X509_NAME *issuer),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk));
 void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
@@ -556,7 +555,7 @@ DECLARE_ASN1_FUNCTIONS(X509_NAME_ENTRY)
 
 DECLARE_ASN1_FUNCTIONS(X509_NAME)
 
-int X509_NAME_set(const X509_NAME **xn, const X509_NAME *name);
+int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
@@ -609,7 +608,7 @@ DECLARE_ASN1_FUNCTIONS(X509_CRL)
 
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
 int X509_CRL_get0_by_serial(X509_CRL *crl,
-                            X509_REVOKED **ret, ASN1_INTEGER *serial);
+                            X509_REVOKED **ret, const ASN1_INTEGER *serial);
 int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 
 X509_PKEY *X509_PKEY_new(void);
@@ -657,9 +656,9 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *X509_get_serialNumber(X509 *x);
 const ASN1_INTEGER *X509_get0_serialNumber(const X509 *x);
 int X509_set_issuer_name(X509 *x, const X509_NAME *name);
-const X509_NAME *X509_get_issuer_name(const X509 *a);
+X509_NAME *X509_get_issuer_name(const X509 *a); /* should be: get0_ */
 int X509_set_subject_name(X509 *x, const X509_NAME *name);
-const X509_NAME *X509_get_subject_name(const X509 *a);
+X509_NAME *X509_get_subject_name(const X509 *a); /* should be: get0_ */
 const ASN1_TIME * X509_get0_notBefore(const X509 *x);
 ASN1_TIME *X509_getm_notBefore(const X509 *x);
 int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
@@ -695,7 +694,7 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
-const X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
+X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
 int X509_REQ_set_subject_name(X509_REQ *req, const X509_NAME *name);
 void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
                              const X509_ALGOR **palg);
@@ -746,7 +745,7 @@ const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
 DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl))
 DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl))
-const X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
+X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,

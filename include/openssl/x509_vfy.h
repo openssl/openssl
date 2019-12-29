@@ -316,8 +316,7 @@ void X509_STORE_set_get_issuer(X509_STORE *ctx,
 X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE *ctx);
 void X509_STORE_set_check_issued(X509_STORE *ctx,
                                  X509_STORE_CTX_check_issued_fn check_issued);
-X509_STORE_CTX_check_issued_fn
-    X509_STORE_get_check_issued(const X509_STORE *ctx);
+X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *ctx);
 void X509_STORE_set_check_revocation(X509_STORE *ctx,
                                      X509_STORE_CTX_check_revocation_fn check_revocation);
 X509_STORE_CTX_check_revocation_fn
@@ -333,12 +332,10 @@ void X509_STORE_set_cert_crl(X509_STORE *ctx,
 X509_STORE_CTX_cert_crl_fn X509_STORE_get_cert_crl(const X509_STORE *ctx);
 void X509_STORE_set_check_policy(X509_STORE *ctx,
                                  X509_STORE_CTX_check_policy_fn check_policy);
-X509_STORE_CTX_check_policy_fn
-    X509_STORE_get_check_policy(const X509_STORE *ctx);
+X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const X509_STORE *ctx);
 void X509_STORE_set_lookup_certs(X509_STORE *ctx,
                                  X509_STORE_CTX_lookup_certs_fn lookup_certs);
-X509_STORE_CTX_lookup_certs_fn
-    X509_STORE_get_lookup_certs(const X509_STORE *ctx);
+X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *ctx);
 void X509_STORE_set_lookup_crls(X509_STORE *ctx,
                                 X509_STORE_CTX_lookup_crls_fn lookup_crls);
 #define X509_STORE_set_lookup_crls_cb(ctx, func) \
@@ -369,26 +366,17 @@ STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
                                   X509_STORE_CTX_verify_cb verify);
-X509_STORE_CTX_verify_cb
-    X509_STORE_CTX_get_verify_cb(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_get_issuer_fn
-    X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_issued_fn
-    X509_STORE_CTX_get_check_issued(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_revocation_fn
-    X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_check_issued_fn X509_STORE_CTX_get_check_issued(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_crl_fn
-    X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_cert_crl_fn
-    X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_check_policy_fn
-    X509_STORE_CTX_get_check_policy(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_lookup_certs_fn
-    X509_STORE_CTX_get_lookup_certs(const X509_STORE_CTX *ctx);
-X509_STORE_CTX_lookup_crls_fn
-    X509_STORE_CTX_get_lookup_crls(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_check_policy_fn X509_STORE_CTX_get_check_policy(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(const X509_STORE_CTX *ctx);
+X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(const X509_STORE_CTX *ctx);
 X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(const X509_STORE_CTX *ctx);
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0

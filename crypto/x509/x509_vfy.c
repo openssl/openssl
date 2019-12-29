@@ -2460,8 +2460,7 @@ X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx)
     return ctx->verify;
 }
 
-X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const
-                                                           X509_STORE_CTX *ctx)
+X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx)
 {
     return ctx->get_issuer;
 }
@@ -2483,14 +2482,12 @@ X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx)
     return ctx->get_crl;
 }
 
-X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const
-                                                         X509_STORE_CTX *ctx)
+X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->check_crl;
 }
 
-X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const
-                                                       X509_STORE_CTX *ctx)
+X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->cert_crl;
 }

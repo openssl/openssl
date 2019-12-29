@@ -241,7 +241,7 @@ static int add_lengths(int *out, int a, int b)
 int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i, name_count, constraint_count;
-    const X509_NAME *nm;
+    X509_NAME *nm;
 
     nm = X509_get_subject_name(x);
 

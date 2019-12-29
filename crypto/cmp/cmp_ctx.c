@@ -162,7 +162,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
     X509_free(ctx->srvCert);
     X509_free(ctx->validatedSrvCert);
-    X509_NAME_free(ctx->expected_sender);
+    X509_NAME_free((X509_NAME *)ctx->expected_sender);
     X509_STORE_free(ctx->trusted);
     sk_X509_pop_free(ctx->untrusted_certs, X509_free);
 
@@ -173,7 +173,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
     ASN1_OCTET_STRING_free(ctx->secretValue);
 
-    X509_NAME_free(ctx->recipient);
+    X509_NAME_free((X509_NAME *)ctx->recipient);
     ASN1_OCTET_STRING_free(ctx->transactionID);
     ASN1_OCTET_STRING_free(ctx->senderNonce);
     ASN1_OCTET_STRING_free(ctx->recipNonce);
@@ -181,8 +181,8 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     sk_X509_pop_free(ctx->extraCertsOut, X509_free);
 
     EVP_PKEY_free(ctx->newPkey);
-    X509_NAME_free(ctx->issuer);
-    X509_NAME_free(ctx->subjectName);
+    X509_NAME_free((X509_NAME *)ctx->issuer);
+    X509_NAME_free((X509_NAME *)ctx->subjectName);
     sk_GENERAL_NAME_pop_free(ctx->subjectAltNames, GENERAL_NAME_free);
     sk_X509_EXTENSION_pop_free(ctx->reqExtensions, X509_EXTENSION_free);
     sk_POLICYINFO_pop_free(ctx->policies, POLICYINFO_free);
@@ -590,7 +590,7 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
     \
     if (val != NULL && (val_dup = TYPE##_dup(val)) == NULL) \
         return 0; \
-    TYPE##_free(ctx->FIELD); \
+    TYPE##_free((TYPE *)ctx->FIELD);                  \
     ctx->FIELD = val_dup; \
     return 1; \
 }

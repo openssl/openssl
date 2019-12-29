@@ -197,7 +197,7 @@ int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type)
 
 int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
                                         ASN1_OCTET_STRING **keyid,
-                                        const X509_NAME **issuer,
+                                        X509_NAME **issuer,
                                         ASN1_INTEGER **sno)
 {
     if (sid->type == CMS_SIGNERINFO_ISSUER_SERIAL) {
@@ -501,7 +501,7 @@ void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 
 int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
                                   ASN1_OCTET_STRING **keyid,
-                                  const X509_NAME **issuer, ASN1_INTEGER **sno)
+                                  X509_NAME **issuer, ASN1_INTEGER **sno)
 {
     return cms_SignerIdentifier_get0_signer_id(si->sid, keyid, issuer, sno);
 }

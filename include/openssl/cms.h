@@ -173,7 +173,7 @@ int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
                                      X509_ALGOR **palg);
 int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
                                           ASN1_OCTET_STRING **keyid,
-                                          const X509_NAME **issuer,
+                                          X509_NAME **issuer,
                                           ASN1_INTEGER **sno);
 
 CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
@@ -238,7 +238,7 @@ STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
 int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
                                   ASN1_OCTET_STRING **keyid,
-                                  const X509_NAME **issuer, ASN1_INTEGER **sno);
+                                  X509_NAME **issuer, ASN1_INTEGER **sno);
 int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert);
 int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
                            unsigned int flags);
@@ -317,8 +317,8 @@ int CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri,
                                         X509_ALGOR **pubalg,
                                         ASN1_BIT_STRING **pubkey,
                                         ASN1_OCTET_STRING **keyid,
-                                        const X509_NAME **issuer,
-                                        const ASN1_INTEGER **sno);
+                                        X509_NAME **issuer,
+                                        ASN1_INTEGER **sno);
 
 int CMS_RecipientInfo_kari_orig_id_cmp(CMS_RecipientInfo *ri, X509 *cert);
 
@@ -326,8 +326,7 @@ int CMS_RecipientEncryptedKey_get0_id(CMS_RecipientEncryptedKey *rek,
                                       ASN1_OCTET_STRING **keyid,
                                       ASN1_GENERALIZEDTIME **tm,
                                       CMS_OtherKeyAttribute **other,
-                                      const X509_NAME **issuer,
-                                      const ASN1_INTEGER **sno);
+                                      X509_NAME **issuer, ASN1_INTEGER **sno);
 int CMS_RecipientEncryptedKey_cert_cmp(CMS_RecipientEncryptedKey *rek,
                                        X509 *cert);
 int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk);

@@ -272,7 +272,7 @@ long X509_REQ_get_version(const X509_REQ *req)
     return ASN1_INTEGER_get(req->req_info.version);
 }
 
-const X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req)
+X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req)
 {
     return req->req_info.subject;
 }

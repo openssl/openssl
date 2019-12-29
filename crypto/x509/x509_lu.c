@@ -484,11 +484,11 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     switch (type) {
     case X509_LU_X509:
         stmp.data.x509 = &x509_s;
-        x509_s.cert_info.subject = (X509_NAME *)name; /* name is not modified */
+        x509_s.cert_info.subject = (X509_NAME *)name; /* won't modify it */
         break;
     case X509_LU_CRL:
         stmp.data.crl = &crl_s;
-        crl_s.crl.issuer = (X509_NAME *)name; /* name is not modified */
+        crl_s.crl.issuer = (X509_NAME *)name; /* won't modify it, promised. */
         break;
     case X509_LU_NONE:
         /* abort(); */
@@ -626,8 +626,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     return sk;
 }
 
-STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx,
-                                             const X509_NAME *nm)
+STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, const X509_NAME *nm)
 {
     int i, idx, cnt;
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
@@ -851,21 +850,18 @@ void X509_STORE_set_check_issued(X509_STORE *ctx,
     ctx->check_issued = check_issued;
 }
 
-X509_STORE_CTX_check_issued_fn
-    X509_STORE_get_check_issued(const X509_STORE *ctx)
+X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(const X509_STORE *ctx)
 {
     return ctx->check_issued;
 }
 
 void X509_STORE_set_check_revocation(X509_STORE *ctx,
-                                     X509_STORE_CTX_check_revocation_fn
-                                     check_revocation)
+                                     X509_STORE_CTX_check_revocation_fn check_revocation)
 {
     ctx->check_revocation = check_revocation;
 }
 
-X509_STORE_CTX_check_revocation_fn
-    X509_STORE_get_check_revocation(const X509_STORE *ctx)
+X509_STORE_CTX_check_revocation_fn X509_STORE_get_check_revocation(const X509_STORE *ctx)
 {
     return ctx->check_revocation;
 }
@@ -909,8 +905,7 @@ void X509_STORE_set_check_policy(X509_STORE *ctx,
     ctx->check_policy = check_policy;
 }
 
-X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const
-                                                           X509_STORE *ctx)
+X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(const X509_STORE *ctx)
 {
     return ctx->check_policy;
 }
@@ -921,8 +916,7 @@ void X509_STORE_set_lookup_certs(X509_STORE *ctx,
     ctx->lookup_certs = lookup_certs;
 }
 
-X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const
-                                                           X509_STORE *ctx)
+X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(const X509_STORE *ctx)
 {
     return ctx->lookup_certs;
 }

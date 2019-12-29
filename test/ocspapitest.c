@@ -182,7 +182,7 @@ err:
 
 static int test_ocsp_url_svcloc_new(void)
 {
-    static const char *  urls[] = {
+    static const char *urls[] = {
         "www.openssl.org",
         "www.openssl.net",
         NULL

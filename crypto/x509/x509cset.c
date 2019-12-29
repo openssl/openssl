@@ -103,7 +103,7 @@ ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl)
 }
 #endif
 
-const X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl)
+X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl)
 {
     return crl->crl.issuer;
 }

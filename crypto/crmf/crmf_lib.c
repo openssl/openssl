@@ -600,9 +600,9 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if (subject != NULL && !X509_NAME_set(&tmpl->subject, subject))
+    if (subject != NULL && !X509_NAME_set((X509_NAME **)&tmpl->subject, subject))
         return 0;
-    if (issuer != NULL && !X509_NAME_set(&tmpl->issuer, issuer))
+    if (issuer != NULL && !X509_NAME_set((X509_NAME **)&tmpl->issuer, issuer))
         return 0;
     if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);

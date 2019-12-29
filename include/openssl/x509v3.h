@@ -143,7 +143,7 @@ typedef struct GENERAL_NAME_st {
         ASN1_IA5STRING *rfc822Name;
         ASN1_IA5STRING *dNSName;
         ASN1_TYPE *x400Address;
-        const X509_NAME *directoryName;
+        X509_NAME *directoryName;
         EDIPARTYNAME *ediPartyName;
         ASN1_IA5STRING *uniformResourceIdentifier;
         ASN1_OCTET_STRING *iPAddress;

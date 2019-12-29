@@ -52,8 +52,8 @@ int CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri,
                                         X509_ALGOR **pubalg,
                                         ASN1_BIT_STRING **pubkey,
                                         ASN1_OCTET_STRING **keyid,
-                                        const X509_NAME **issuer,
-                                        const ASN1_INTEGER **sno)
+                                        X509_NAME **issuer,
+                                        ASN1_INTEGER **sno)
 {
     CMS_OriginatorIdentifierOrKey *oik;
     if (ri->type != CMS_RECIPINFO_AGREE) {
@@ -110,8 +110,7 @@ int CMS_RecipientEncryptedKey_get0_id(CMS_RecipientEncryptedKey *rek,
                                       ASN1_OCTET_STRING **keyid,
                                       ASN1_GENERALIZEDTIME **tm,
                                       CMS_OtherKeyAttribute **other,
-                                      const X509_NAME **issuer,
-                                      const ASN1_INTEGER **sno)
+                                      X509_NAME **issuer, ASN1_INTEGER **sno)
 {
     CMS_KeyAgreeRecipientIdentifier *rid = rek->rid;
     if (rid->type == CMS_REK_ISSUER_SERIAL) {

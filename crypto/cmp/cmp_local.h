@@ -56,7 +56,7 @@ struct ossl_cmp_ctx_st {
     int unprotectedErrors;
     X509 *srvCert; /* certificate used to identify the server */
     X509 *validatedSrvCert; /* caches any already validated server cert */
-    X509_NAME *expected_sender; /* expected sender in pkiheader of response */
+    const X509_NAME *expected_sender; /* expected sender in header of response */
     X509_STORE *trusted; /* trust store maybe w CRLs and cert verify callback */
     STACK_OF(X509) *untrusted_certs; /* untrusted (intermediate) certs */
     int ignore_keyusage; /* ignore key usage entry when validating certs */
@@ -79,7 +79,7 @@ struct ossl_cmp_ctx_st {
     int pbm_mac; /* NID of MAC algorithm, default: HMAC-SHA1 as per RFC 4210 */
 
     /* CMP message header and extra certificates */
-    X509_NAME *recipient; /* to set in recipient in pkiheader */
+    const X509_NAME *recipient; /* to set in recipient in pkiheader */
     int digest; /* NID of digest used in MSG_SIG_ALG and POPO, default SHA256 */
     ASN1_OCTET_STRING *transactionID; /* the current transaction ID */
     ASN1_OCTET_STRING *senderNonce; /* last nonce sent */
@@ -93,9 +93,9 @@ struct ossl_cmp_ctx_st {
     /* certificate template */
     EVP_PKEY *newPkey; /* explicit new private/public key for cert enrollment */
     int newPkey_priv; /* flag indicating if newPkey contains private key */
-    X509_NAME *issuer; /* issuer name to used in cert template */
+    const X509_NAME *issuer; /* issuer name to used in cert template */
     int days; /* Number of days new certificates are asked to be valid for */
-    X509_NAME *subjectName; /* subject name to be used in the cert template */
+    const X509_NAME *subjectName; /* subject name to be used in cert template */
     STACK_OF(GENERAL_NAME) *subjectAltNames; /* to add to the cert template */
     int SubjectAltName_nodefault;
     int setSubjectAltNameCritical;

@@ -482,15 +482,7 @@ static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
     return len;
 }
 
-/*
- * The use of 'const' for, e.g., the subject and issuer fields of X509 and
- * X509_CRL structures etc. pointed to by *xn, as well as the cast to
- * non-const 'X509_NAME *' in the below call of X509_NAME_free(), should be okay
- * because due to the modification of the pointer value of the field
- * the original pointer value has been invalidated anyway, such that any aliases
- * are not usable any more, neither for reading nor for writing name contents.
- */
-int X509_NAME_set(const X509_NAME **xn, const X509_NAME *name)
+int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
 {
     X509_NAME *name_copy;
 
@@ -498,7 +490,7 @@ int X509_NAME_set(const X509_NAME **xn, const X509_NAME *name)
         return *xn != NULL;
     if ((name_copy = X509_NAME_dup(name)) == NULL)
         return 0;
-    X509_NAME_free((X509_NAME *)*xn);
+    X509_NAME_free(*xn);
     *xn = name_copy;
     return 1;
 }
