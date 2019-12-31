@@ -26,8 +26,15 @@ int f(void)
     if (1)
         if (2)
             c;
-        else /* TODO correct indent = 8 != 4 for stmt/decl */
-            e; /* TODO correct indent = 12 != 8 for hanging stmt/expr */
+        else /* TODO correct false positive: indent = 8 != 4 for stmt/decl */
+            e; /* TODO correct false: indent = 12 != 8 for hanging stmt/expr */
+    else
+        f;
+    do
+        do
+            2;
+        while (1); /* TODO correct false posititive */
+    while (2);
 
     if (1)
         f(a, b);
@@ -35,9 +42,20 @@ int f(void)
         1;
     while (2);
     if (1)
+        f(a, b);
+    else
+        do
+            1;
+        while (2); /* TODO correct false posititive */
+    if (1)
+        f(a, b);
+    else do /*@ (non-brace) code before 'do' just to construct case */
+             1; /* TODO correct false posititive */
+        while (2); /* TODO correct false posititive */
+    if (1)
         f(a,
           b); do /*@ (non-brace) code before 'do' just to construct case */
-                  1; /* TODO correct indent = 18 != 4 for stmt/decl */
+                  1; /* TODO correct false po: indent = 18 != 4 for stmt/decl */
     while (2);
 
     if (1)
@@ -49,7 +67,7 @@ int f(void)
           b); else /*@ (non-brace) code before 'else' just to construct case */
         do
             1;
-        while (2); /* TODO correct indent = 8 != 4 for stmt/decl */
+        while (2); /* TODO correct false pos: indent = 8 != 4 for stmt/decl */
 
     if (1)
         {

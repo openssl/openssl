@@ -34,6 +34,8 @@
 #
 # There are non-trivial false positives and negatives such as the following.
 #
+# * When a line contains several issues of the same kind only one is reported.
+#
 # * There is the special OpenSSL rule not to unnecessarily use braces around
 #   single statements:
 #   {
@@ -123,6 +125,7 @@ my $block_indent;          # currently required normal indentation at block/stat
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
 my @nested_block_indents;  # stack of indentations at block/statement level, needed due to hanging statements
 my @nested_hanging_offsets;# stack of nested $hanging_offset values, in parallel to @nested_block_indents
+my @nested_in_typedecl;    # stack of nested $in_typedecl values, partly in parallel to @nested_block_indents
 my @nested_indents;        # stack of hanging indents due to parentheses, braces, brackets, or conditionals
 my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in parallel to @nested_indents
 my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' .. ':')
@@ -193,6 +196,7 @@ sub check_indent { # used for lines outside multi-line string literals
     }
 
     my $stmt_indent = $block_indent + $hanging_offset + $local_offset;
+    $stmt_indent = 0 if $stmt_indent < 0; # TODO maybe give warning/error
     my $stmt_desc = $contents =~
         m/^\s*\/\*/ ? "intra-line comment" :
         $has_label ? "label" :
@@ -247,21 +251,22 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
     my $terminator_position = -1;
     for(my $i = $start; $i < length($str); $i++) {
         my $c = substr($str, $i, 1);
-        $c = ";" if substr($str, $i) =~ m/^\w*ASN1_[A-Z_]+END\w*/; # *ASN1_*END* macros are defined with leading ';'
+        $c = ";" if substr($str, $i) =~ m/^\w*ASN1_[A-Z_]+END\w*/;# *ASN1_*END* macros are defined with leading ';'
         # stop at terminator outside 'for(..;..;..)', assuming that 'for' is followed by '('
         return $i if $c eq ";" && (!$in_paren_expr || @nested_indents == 0);
 
-        my $in_stmt = $in_expr || @nested_symbols > 0;
+        my $in_stmt = $in_expr || @nested_symbols > 0; # not: || $in_typedecl != 0
         if ($c =~ m/[{([?]/) { # $c is '{', '(', '[', or '?'
-            if ($c eq "{") { # '{' at block level but also inside stmt/expr/decl
+            if ($c eq "{") { # '{' anywhere
                 # cancel newly hanging_offset if opening brace '{' is after non-whitespace:
                 $hanging_offset -= INDENT_LEVEL if $hanging_offset > 0 && substr($str, 0, $i) =~ m/\S/;
                 push @nested_block_indents, $block_indent;
                 push @nested_hanging_offsets, $in_expr ? $hanging_offset : 0;
+                push @nested_in_typedecl, $in_typedecl if $in_typedecl != 0;
                 $block_indent += INDENT_LEVEL + $hanging_offset;
                 $hanging_offset = 0;
             }
-            if ($c ne "{" || $in_stmt) { # for '{' inside stmt/expr/decl, '(', '[', or '?'
+            if ($c ne "{" || $in_stmt) { # for '{' inside stmt/expr (not: decl), for '(', '[', or '?' anywhere
                 substr($str, $i + 1) =~ m/^(\s*)(\S)/;
                 push @nested_indents, defined $2 ? $i + 1 + length $1 # actual indentation of following non-space
                                       : $c ne "{" ? $i + 1 # just after '(' or '[' if only whitespace thereafter
@@ -277,7 +282,7 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
                 #      substr($str, 0, $i) =~ m/^(\s*)(case\W.*$|\w+$)/ || # this matching would not work for
                 #                                                          # multi-line expr after 'case'
                 #      # bitfield length within unsigned type decl
-                #      substr($str, $i + 1) =~ m/^\s*\d+/                  # this matching would need to be improved
+                #      substr($str, $i + 1) =~ m/^\s*\d+/                  # this matching would need improvement
                 #     )
                 )) {
                 if ($c ne "}" || $in_stmt) { # for '}' inside stmt/expr/decl, ')', ']', or ':'
@@ -297,13 +302,14 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
                     } else {
                         $block_indent = pop @nested_block_indents;
                         $hanging_offset = pop @nested_hanging_offsets;
+                        $in_typedecl = pop @nested_in_typedecl if @nested_in_typedecl > 0;
                     }
                 }
                 if($in_paren_expr && !grep(/\(/, @nested_symbols)) { # end of (expr)
                     check_nested_nonblock_indents("(expr)");
                     $in_paren_expr = $in_expr = 0;
                     report("code after (expr)")
-                        if substr($str, $i + 1) =~ m/^([^{]*)/ && $1 =~ m/[^\s;]/; # non-space non-; before any '{'
+                        if substr($str, $i+1) =~ m/^([^{]*)/ && $1 =~ m/[^\s;]/; # non-space non-';' before any '{'
                 }
             }
         }
@@ -319,6 +325,7 @@ sub check_nested_nonblock_indents {
         if ($symbol eq "{") { # repair stack of blocks
             $block_indent = pop @nested_block_indents;
             $hanging_offset = pop @nested_hanging_offsets;
+            $in_typedecl = pop @nested_in_typedecl if @nested_in_typedecl > 0;
         }
     }
     @nested_indents = ();
@@ -331,6 +338,7 @@ sub reset_file_state {
     $line_before2 = 0;
     @nested_block_indents = ();
     @nested_hanging_offsets = ();
+    @nested_in_typedecl = ();
     @nested_symbols = ();
     @nested_indents = ();
     @nested_conds_indents = ();
@@ -365,7 +373,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # check for whitespace at EOL
-    report("whitespace at EOL") if m/\s\n$/;
+    report("trailing whitespace at EOL") if m/\s\n$/;
 
     # assign to $count the actual indentation level of the current line
     chomp; # remove trailing \n
@@ -399,14 +407,14 @@ while(<>) { # loop over all lines of all input files
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if (m/^(.*?)\*\/(.*)$/ && $1 ne '/') { # ending comment: '*/'
         my ($head, $tail) = ($1, $2);
-        report("no SPC nor '*' before '*/'") if $head =~ m/[^\s*]$/;
-        report("no SPC nor alphanumeric char after '*/'") if $tail =~ m/^\w/;
+        report("no SPC nor '*' before '*/'") if $head =~ m/[^*\s]$/;
+        report("no SPC after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
         if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("unexpected '*/' outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
             } else {
-                report("non-SPC text before '*/' in multi-line comment") if $head =~ m/\S/; # head contains non-space
+                report("non-SPC text before '*/' in multi-line comment") if $head =~ m/\S/; # contains non-space
                 my $cmt_text = $head;
                 $_ = blind_nonspace($cmt_text)."@@".$tail;
                 $in_comment = -1; # indicate that multi-line comment ends on current line
@@ -431,7 +439,9 @@ while(<>) { # loop over all lines of all input files
             if ($head =~ m/\S/ && # not leading comment: non-whitespace before
                 $rest =~ m/^\s*\\?\s*$/) { # trailing comment: only whitespace (apart from any '\') after it
                 report("dbl SPC in intra-line comment") if $opt_minus ne "-" && $cmt_text =~ m/(^|[^.])\s\s\S/;
-                # blind trailing comment as space - TODO replace by @ after improving matching of trailing items
+                # blind trailing comment as space
+                # - TODO also for multiple trailing comments
+                # - TODO replace by @ after improving matching of trailing items
                 $_ = "$head  ".($cmt_text =~ tr/ / /cr)."  $rest";
             } else { # leading or intra-line comment
                 $_ = "$head@@".blind_nonspace($cmt_text)."@@".$rest;
@@ -515,9 +525,9 @@ while(<>) { # loop over all lines of all input files
             report_flexibly($line_before, $dbl_SPC, $contents_before) if $intra_line1 =~ m/\s\s\S/ && !
                 (    column_alignments_only($head1, $intra_line1, $_                )    # compare with $line
                  || ($line_before2 > 0 &&
-                     column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare with $line_before2
+                     column_alignments_only($head1, $intra_line1, $contents_before_2))); # compare w/ $line_before2
             report($dbl_SPC) if $intra_line  =~ m/\s\s\S/ && eof
-                && ! column_alignments_only($head , $intra_line , $contents_before_ )  ; # compare with $line_before
+                && ! column_alignments_only($head , $intra_line , $contents_before_ )  ; # compare w/ $line_before
         } elsif(eof) { # special case: just one line exists
             report($dbl_SPC) if $intra_line  =~ m/\s\s\S/;
         }
@@ -537,23 +547,36 @@ while(<>) { # loop over all lines of all input files
         $intra_line =~ s/(for\s*\();;(\))/"$1$2"/eg; # strip ';;' in for (;;)
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
+        report("SPC before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
+        report("SPC after '$1'")  if $intra_line =~ m/(\+\+|--)\s+[a-zA-Z_(]/; # prefix ++/-- with following space
+        $intra_line =~ s/\.\.\./@/g;                 # blind '...'
+        report("SPC before '$1'") if $intra_line =~ m/\s(\.|->)/;            # '.' or '->' with preceding space
+        report("SPC after '$1'")  if $intra_line =~ m/(\.|->)\s/;            # '.' or '->' with following space
         $intra_line =~ s/\-\>|\+\+|\-\-/@/g;         # blind '->,', '++', and '--'
-        $intra_line =~ s/:\s;/:;/g;                  # strip any SPC between 'label:' and ';'
-        report("SPC before '$1'")     if $intra_line =~ m/\s([,;)\]])/;      # space before ,;)]
-        report("SPC after '$1'")      if $intra_line =~ m/([(\[])\s/;        # space after ([
-        report("no SPC before '$1'")  if $intra_line =~ m/\S([=|+\/%<>])/;   # =|+/%<> without preceding space
-        report("no SPC before '$1'")  if $intra_line =~ m/[^\s()]([-])/;     # '-' without preceding space or '('
-                                                                             # or ')' (which is used for type casts)
+        report("SPC before '$2'")     if $intra_line =~ m/[^:]\s+(;)/;       # space before ';' but not after ':'
+        report("SPC before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
+        report("SPC after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
+        report("SPC after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
+        report("no SPC before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
+        report("no SPC before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
+        # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
+        report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
+                                                                             # or ')' (which is used f type casts)
         report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
         report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
-        report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>])\S/;  # ,;=|/% without following space
-        report("no SPC nor name after '$1'") if $intra_line=~m/([*])[^\s\w()*]/;# '*' w/o following space or \w()*
-        report("no SPC nor name after '$1'") if $intra_line=~m/([&])[^\s\w(]/;  # '&' without following space or \w(
-        report("no SPC nor digit after '$1'")if $intra_line=~m/([+\-])[^\s\d]/;  # +- without following space or \d
-        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch)[^\w\s]/;  # if etc. w/o SPC
+        report("no SPC after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
+        report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
+        report("no SPC after binary '$1'") if $intra_line=~m/([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
+        # TODO unary '*' must not be followed by SPC
+        report("no SPC after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
+        # TODO unary '&' must not be followed by SPC
+        report("no SPC after binary '$1'") if $intra_line=~m/([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
+        # TODO unary '+' and '-' must not be followed by SPC
+        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
+        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
         report("SPC after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
-       && !($1 =~ m/^(if|while|for|switch|return|typedef|void|char|unsigned|int|long|float|double)$/) # not: keyword
+       && !($1 =~ m/^(if|while|for|switch|return|typedef|void|char|unsigned|int|long|float|double)$/) # not keyword
                                     && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
                                     # without parameters but with body starting with '(', e.g., '#define X (1)',
                                     # would lead to false positives - TODO also check for macros with parameters
@@ -602,7 +625,7 @@ while(<>) { # loop over all lines of all input files
     my $nested_indents_position = 0;
 
     # update indents according to leading closing brace(s) '}' or label or switch case
-    my $in_stmt = $in_expr || @nested_symbols > 0;
+    my $in_stmt = $in_expr || @nested_symbols > 0 || $in_typedecl != 0;
     if ($in_stmt) { # expr/stmt/type decl/var def/fn hdr, i.e., not at block level
         if(m/^(\s*\})/) { # leading '}', any preceding blinded comment must not be matched
             my $head = $1;
@@ -614,21 +637,24 @@ while(<>) { # loop over all lines of all input files
             } else { # typically end of initialiizer expr or enum
                 $expr_indent = 0;
             }
-        } elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) { # special handling for ASN1 macro indented as '}'
+        } elsif(m/^(\s*)(static_)?ASN1_ITEM_TEMPLATE_END(\W|$)/) {# special handling for ASN1 macro indented as '}'
             $local_offset = -INDENT_LEVEL;
             $expr_indent = 0;
+        } elsif (m/;.*?\}/) { # expr ends with ';' before '}'
+            report("code before '}'");
         }
     } else { # at block level, i.e., outside expr/stmt/type decl/var def/fn hdr
-        if(m/^(\s*([^{}]*)\})/) { # leading closing '}', but possibly with non-whitespace non-'{' before
-            my $head = $1;
-            if ($2 ne "") { # non-whitespace non-'{' before '}'
+        if(m/^(\s*([^{}]*)\})\s*(.*)$/) { # leading closing '}', but possibly with non-whitespace non-'{' before
+            (my $head, my $before, my $tail) = ($1, $2, $3);
+            report("code after '}'") unless $tail eq "" || $tail =~ m/(else|while|OSSL_TRACE_END)(\W|$)/;
+            if ($before ne "") { # non-whitespace non-'{' before '}'
                 report("code before '}'");
             } else { # leading '}', any preceding blinded comment must not be matched
                 $local_offset = $block_indent + $hanging_offset - INDENT_LEVEL;
                 update_nested_indents($head);
                 $nested_indents_position = length $head;
                 $local_offset -= ($block_indent + $hanging_offset);
-                # in effect, $local_offset = -INDENT_LEVEL relative to $block_indent + $hanging_offset values before
+                # in effect $local_offset = -INDENT_LEVEL relative to $block_indent + $hanging_offset values before
             }
         }
         if (m/^\s*(case|default)(\W|$)/) {
@@ -697,12 +723,12 @@ while(<>) { # loop over all lines of all input files
     my $return_enum_start = 0;
     my $assignment_start = 0;
     s/[\!<>=]=/@@/g; # blind (in-)equality symbols like '<=' as '@@' to prevent matching them as '=' below
-    if      (m/^((^|.*\W)(if|while|for|switch))(\W.*|$)$/) { # (first) if/for/while/switch
+    if      (m/^((^|.*\W)(if|while|for|switch))(\W.*|$)$/) { # (last) if/for/while/switch
         $paren_expr_start = 1;
-    } elsif (m/^((^|.*\W)(return|enum))(\W.*|$)/             # (first) return/enum
+    } elsif (m/^((^|.*\W)(return|enum))(\W.*|$)/             # (last) return/enum
         && !$in_expr && @nested_indents == 0 && parens_balance($1) == 0) { # not nested enum
         $return_enum_start = 1;
-    } elsif (m/^(([^=]*)(=))(.*)$/                           # (first) '=', i.e., assignment
+    } elsif (m/^(([^=]*)(=))(.*)$/                           # (last) '=', i.e., assignment
         && !$in_expr && @nested_indents == 0 && parens_balance($1) == 0) { # not nested assignment
         $assignment_start = 1;
     }
@@ -722,7 +748,7 @@ while(<>) { # loop over all lines of all input files
     }
 
     # set $hanging_offset and $keyword_opening_brace for do/else
-    if (m/(^|^.*\W)(else|do)(\W.*|$)$/) {
+    if (m/(^|^.*\W)(else|do)(\W.*|$)$/) { # last else/do
         (my $head, my $mid, my $tail) = ($1, $2, $3);
         my $code_before = $head =~ m/[^\s}]/; # leading non-whitespace non-'}'
         report("code before '$mid'") if $code_before;
@@ -763,7 +789,7 @@ while(<>) { # loop over all lines of all input files
         my $tail = substr($_, $terminator_position + 1);
         $hanging_offset =  # normal end, or cancel after 'do .. while' - TODO properly handle dangling 'else'
             $tail =~ m/\s*else(\W|$)/ ? $hanging_offset - INDENT_LEVEL : 0;
-        $in_typedecl-- if $in_typedecl > 0; # TODO also handle multiple type decls per line
+        $in_typedecl-- if $in_typedecl > 0 && @nested_in_typedecl == 0; # TODO also handle multiple type decls per line
         m/(;[^;]*)$/; # match last ';'
         $terminator_position = length($_) - length($1) if $1;
         # new $terminator_position value may be after the earlier one in case multiple terminators on current line
@@ -873,4 +899,4 @@ my $num_other_reports = $num_reports - $num_indent_reports - $num_nesting_issues
     - $num_syntax_issues - $num_SPC_reports - $num_length_reports;
 print "$num_reports ($num_indent_reports indentation, $num_nesting_issues directive nesting, ".
     "$num_syntax_issues syntax, $num_SPC_reports whitespace, $num_length_reports length, $num_other_reports other)".
-    " issues have been found by $0\n" unless $self_test;
+    " issues have been found by $0\n" if $num_reports != 0 && !$self_test;

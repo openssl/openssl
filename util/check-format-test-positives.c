@@ -54,17 +54,18 @@ typedef struct  {   /*@0 double space, reported unless sloppy-spc */
              && 1,  /*@ hanging expr indent off by 3, or -1 for leading '&&' */
          x = 1,     /*@ hanging expr indent off by -1 */
           y,z       /*@ no space after ',', reported unless sloppy-spc */
-    } e_type ;      /*@ space before ';', reported unless sloppy-spc */
+    } e_member ;    /*@ space before ';', reported unless sloppy-spc */
     int v[1;        /*@ unclosed bracket in type declaration */
    union {          /*@ statement/type declaration indent off by -1 */
         struct{} s; /*@ no space before '{', reported unless sloppy-spc */
-    }u_type;        /*@ no space after '}', reported unless sloppy-spc */
+    }u_member;      /*@ no space after '}', reported unless sloppy-spc */
     } s_type;       /*@ statement/type declaration indent off by 4 */
 int* somefunc();    /*@ no space before '*' in type declaration */
 void main(int n) {  /*@ opening brace at end of function definition header */
     for (;;n++) {   /*@ no space after ';', reported unless sloppy-spc */
         return;     /*@0 (1-line) single statement in braces */
-    }}}             /*@2 unexpected closing brace (too many '}') outside expr */
+    }}              /*@2 code after '}' outside expr */
+}                   /*@ unexpected closing brace (too many '}') outside expr */
 )                   /*@ unexpected closing paren outside expr */
 #endif              /*@ unexpected #endif */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
@@ -72,36 +73,41 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
 { int               /*@ code after '{' opening a block */
     xx = 1) +       /*@ unexpected closing parenthesis */
         2] -        /*@ unexpected closing bracket */
-        3} *        /*@ unexpected closing brace within expression */
-        4:;         /*@ unexpected ':' (without preceding '?') within expr */
+        3: *        /*@ unexpected ':' (without preceding '?') within expr */
+        4};         /*@ unexpected closing brace within expression */
     char y[] = {    /*@0 unclosed brace within initializer/enum expression */
         1* 1,       /*@ no space or name, '(', ')', '*' after '*' */
          2,         /*@ hanging expr indent (for lines after '{') off by 1 */
         (xx         /*@0 unclosed parenthesis in expression */
          ? y        /*@0 unclosed '? (conditional expression) */
          [0;        /*@4 unclosed bracket in expression */
+   s_type s;        /*@ local variable declaration indent off by -1 */
    somefunc(a,      /*@ statement indent off by -1 */
-          "aligned" /*@ expr indent off by -2 accepted if sloppy-hang */"right",
-           b,       /*@ expr indent off by -1 */
+          "aligned" /*@ expr indent off by -2 accepted if sloppy-hang */ "right"
+           , b,     /*@ expr indent off by -1 */
            b,       /*@ expr indent again off -1, accepted if sloppy-hang */
         b,  /*@ expr indent off -4 but @ extra indent accepted if sloppy-hang */
-   "again aligned" /*@ expr indent off by -9 (left of stmt indent, .. */"right",
+   "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
             123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
     if(a            /*@ no space after 'if', reported unless sloppy-spc */
+       && ! 0       /*@ space after '!', reported unless sloppy-spc */
          || b ==    /*@ hanging expr indent off by 2, or -2 for leading '||' */
-       (xx^= 2) +   /*@ no space before '^', reported unless sloppy-spc */
+       (xx+= 2) +   /*@ no space before '+=', reported unless sloppy-spc */
+       a ++ -       /*@ space before postfix '++', reported unless sloppy-spc */
+       (a^ 1) +     /*@ no space before '^', reported unless sloppy-spc */
        a %2 /       /*@ no space after '%', reported unless sloppy-spc */
        1 +/* */     /*@ no space before comment, reported unless sloppy-spc */
-       /* */b)      /*@ no space after comment, reported unless sloppy-spc */
+       /* */+       /*@ no space after comment, reported unless sloppy-spc */
+       s. e_member) /*@ space after '.', reported unless sloppy-spc */
          xx = a + b /*@ extra single-statement indent off by 1 */
                + 0; /*@ double extra single-statement indent off by 3 */
     if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
              b); else /*@ (non-brace) code before 'else' */
-        do 1;       /*@ (non-brace) code after 'do' */
-        while ( 2); /*@ space after '(', reported unless sloppy-spc */
+        do f(c, c); /*@ (non-brace) code after 'do' */
+        while ( 2); /*@ space after '(', reported unless sloppy-spc */ /* TODO false positive: indent = 8 != 4 for stmt/decl */
     b; c;           /*@ more than one statement per line */
     do{             /*@ no space before '{', reported unless sloppy-spc */
         f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
@@ -109,10 +115,12 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     } while (a+ 0); /*@ no space before '+', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
+    case(2):        /*@ no space after 'case' */
      default: ;     /*@ 'default' special statement indent off by 1 */
 }                   /*@ statement indent off by -4 */
   label:            /*@ label special statement indent off by 1 */
-    return x; }     /*@ block-level '}' has code before, should go next line */
+    return(         /*@ no space after 'return' with expression */
+           x); }    /*@ block-level '}' has code before */
 /* Here the tool should stop complaining apart from the below issues at EOF */
 
 #if 0               /*@0 unclosed #if */
