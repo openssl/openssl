@@ -36,8 +36,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
                      hex, OSSL_trace_get_category_name(category));
         OPENSSL_free(hex);
-        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
-                 strlen(buffer), buffer);
+        BIO_set_prefix(trace_data->bio, buffer);
         break;
     case OSSL_TRACE_CTRL_WRITE:
         ret = BIO_write(trace_data->bio, buf, cnt);
@@ -45,7 +44,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
     case OSSL_TRACE_CTRL_END:
         trace_data->ingroup = 0;
 
-        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX, 0, NULL);
+        BIO_set_prefix(trace_data->bio, NULL);
         break;
     }
 
@@ -76,7 +75,7 @@ static void setup_trace_category(int category)
     if (OSSL_trace_enabled(category))
         return;
 
-    channel = BIO_push(BIO_new(apps_bf_prefix()),
+    channel = BIO_push(BIO_new(BIO_f_prefix()),
                        BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
