@@ -825,7 +825,7 @@ while (<>) { # loop over all lines of all input files
         my ($head, $tail) = ($1, $2);
         if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) {
-                if (!$assignment_start &&
+                if (!$assignment_start && !$bak_in_expr &&
                     # at end of function definition header (or stmt or var definition)
                     !($head =~ m/^$/)) { # check if opening brace '{' is at the beginning of the next line
                     report("'{' not at beginning");
