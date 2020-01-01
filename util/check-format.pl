@@ -139,7 +139,7 @@ my $directive_nesting;     # currently required indentation of preprocessor dire
 my $directive_offset;      # indent offset within multi-line preprocessor directive, if $in_directive > 0
 my $in_macro_header;       # number of open parentheses + 1 in (multi-line) header of #define, if $in_directive > 0
 my $in_comment;            # number of lines so far within multi-line comment, or -1 when end is on current line
-my $in_formatted_comment;  # in multi-line comment started with "/*-", which indicates/allows special formatting
+my $in_formatted_comment;  # in multi-line comment beginning with "/*-", which indicates/allows special formatting
 my $comment_indent;        # comment indent, if $in_comment != 0
 my $num_reports_line = 0;  # number of issues found on current line
 my $num_reports = 0;       # total number of issues found
@@ -176,16 +176,16 @@ sub parens_balance { # count balance of opening parentheses - closing parenthese
     return $str =~ tr/\(// - $str =~ tr/\)//;
 }
 
-sub blind_nonspace { # blind non-space text of comment as @, preserving length
+sub blind_nonspace { # blind non-space text of comment as @, preserving length and spaces
     # the @ character is used because it cannot occur in normal program code so there is no confusion
-    # comment text is not blinded to whitespace in order to be able to check dbl SPC also in comments
+    # comment text is not blinded to whitespace in order to be able to check double SPC also in comments
     my $comment_text = shift;
-    $comment_text =~ s/\.\s\s/.. /g; # in dbl SPC checks allow one extra space after period '.' in comments
+    $comment_text =~ s/\.\s\s/.. /g; # in double SPC checks allow one extra space after period '.' in comments
     return $comment_text =~ tr/ /@/cr;
 }
 
 sub check_indent { # used for lines outside multi-line string literals
-    if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line starting with comment
+    if ($sloppy_cmt && substr($_, $count, 1) eq "@" && # line beginning with comment
         ($in_comment == 0 || $in_comment == 1)) { # normal or first line of multi-line comment
         return;
     }
@@ -319,7 +319,7 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
                     check_nested_nonblock_indents("(expr)");
                     $in_paren_expr = $in_expr = 0;
                     report("code after (expr)")
-                        if $tail =~ m/^([^{]*)/ && $1 =~ m/[^\s;]/; # non-space non-';' before any '{'
+                        if $tail =~ m/^([^{]*)/ && $1 =~ m/[^\s@;]/; # non-space non-';' before any '{'
                 }
             }
         }
@@ -394,7 +394,7 @@ while (<>) { # loop over all lines of all input files
 
     # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    # blind contents of character and string literals as @, preserving length
+    # blind contents of character and string literals as @, preserving length (but not spaces)
     # this prevents confusing any of the matching below, e.g., on SPC and comment delimiters
     s/\\"/@@/g; # blind all '\"' (typically within character literals or string literals)
     s#("[^"]*")#$1 =~ tr/"/@/cr#eg;
@@ -417,7 +417,7 @@ while (<>) { # loop over all lines of all input files
     if ((my ($head, $tail) = m/^(.*?)\*\/(.*)$/) && $1 ne '/') { # ending comment: '*/'
         report("no SPC nor '*' before '*/'") if $head =~ m/[^*\s]$/;
         report("no SPC after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
-        if (!($head =~ m/\/\*/)) { # not starting comment '/*', which is is handled below
+        if (!($head =~ m/\/\*/)) { # not begin of comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("unexpected '*/' outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
@@ -430,10 +430,10 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
-    # detect start of comment, check if it is followed by non-space text
+    # detect begin of comment, check if it is followed by non-space text
   MATCH_COMMENT:
-    if (my ($head, $opt_minus, $tail) = m/^(.*?)\/\*(-?)(.*)$/) { # starting comment: '/*'
-        report("no SPC before '/*'") if $head =~ m/[^\s*]$/; # no space before comment start delimiter;
+    if (my ($head, $opt_minus, $tail) = m/^(.*?)\/\*(-?)(.*)$/) { # begin of comment: '/*'
+        report("no SPC before '/*'") if $head =~ m/[^\s*]$/; # no space before comment delimiter;
                                                              # a '-' is allowed anyway due to the above matching
         report("no SPC nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
         my $cmt_text = $opt_minus.$tail; # preliminary
@@ -442,20 +442,11 @@ while (<>) { # loop over all lines of all input files
             report("unexpected '/*' inside multi-line comment");
         } elsif ($tail =~ m/^(.*?)\*\/(.*)$/) { # comment end: */ on same line
             report("unexpected '/*' inside intra-line comment") if $1 =~ /\/\*/;
-            # blind comment text, preserving length
+            # blind comment text, preserving length and spaces
             ($cmt_text, my $rest) = ($opt_minus.$1, $2);
-            if ($head =~ m/\S/ && # not leading comment: non-whitespace before
-                $rest =~ m/^\s*\\?\s*$/) { # trailing comment: only whitespace (apart from any '\') after it
-                report("dbl SPC in intra-line comment") if $opt_minus ne "-" && $cmt_text =~ m/(^|[^.])\s\s\S/;
-                # blind trailing comment as space
-                # - TODO also for multiple trailing comments
-                # - TODO replace by @ after improving matching of trailing items
-                $_ = "$head  ".($cmt_text =~ tr/ / /cr)."  $rest";
-            } else { # leading or intra-line comment
-                $_ = "$head@@".blind_nonspace($cmt_text)."@@".$rest;
-            }
+            $_ = "$head@@".blind_nonspace($cmt_text)."@@".$rest;
             goto MATCH_COMMENT;
-        } else { # start of multi-line comment
+        } else { # begin of multi-line comment
             report("non-SPC text after '/*' in multi-line comment") unless $tail =~ m/^.?\s*\\?\s*$/;
             # tail not essentially empty, first char already checked
             # adapt to actual indentation of first line
@@ -466,7 +457,7 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
-    if ($in_comment > 1) { # still inside multi-line comment (not at its start or end)
+    if ($in_comment > 1) { # still inside multi-line comment (not at its begin or end)
         m/^(\s*)\*?(\s*)(.*)$/;
         $_ = $1."@".$2.blind_nonspace($3);
     }
@@ -484,34 +475,31 @@ while (<>) { # loop over all lines of all input files
     if ($len > $max_length &&
         !(m/^(.*)"[^"]*("|\\)\s*(,|[\)\}\]]*[,;]?)\s*$/ # string literal terminated by '"' or '\\', then maybe ,)}];
           && length($1) < $max_length)
-        # this allows over-long trailing string literal with starting col before $max_length
+        # this allows over-long trailing string literal with beginning col before $max_length
         ) {
         report("line length = $len > $max_length");
     }
 
     # handle C++ / C99 - style end-of-line comments
-    if (m|(.*?)//(.*$)|) {
+    if (my ($head, $cmt_text) = m|^(.*?)//(.*$)|) {
         report("'//' end-of-line comment");  # the '//' comment style is not allowed for C90
-        report("dbl SPC in end-of-line comment") if $2 =~ m/(^|[^.])\s\s\S/;
-        # sacrifycing multi-line column alignment for this line -
-        # TODO blind by @ after improving matching of trailing items
-        $_ = $1; # anyway ignore comment text (not preserving length)
+        # blind comment text, preserving length and spaces
+        $_ = "$head@@".blind_nonspace($cmt_text);
     }
 
-    # at this point comment text has been removed/ignored (after checking dbl SPC)
-    # or at least the non-space portions of commment text have been blinded as @
+    # at this point all non-space portions of any types of comments have been blinded as @
 
     goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace any maybe a single backslash)
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if (!$sloppy_SPC && !$in_formatted_comment) {
-        my $dbl_SPC = "dbl SPC".($in_comment != 0 ? " in multi-line comment" : "");
+        my $dbl_SPC = "double SPC".($in_comment != 0 ? " in multi-line comment" : "");
         sub split_line_head {
             my $comment_symbol =
                 $in_comment != 0 ? "@" : ""; # '@' will match the blinded leading '*' in multi-line comment
                                              # $in_comment may pertain to the following line due to delayed check
-            # do not check for dbl SPC in leading spaces including any '#' (or '*' within multi-line comment)
+            # do not check for double SPC in leading spaces including any '#' (or '*' within multi-line comment)
             shift =~ m/^(\s*([#$comment_symbol]\s*)?)(.*?)\s*$/;
             return ($1, $3 =~ s/\s*\\([\s@]*)$/$1/r); # strip any trailing '\' and any whitespace before
         }
@@ -523,7 +511,7 @@ while (<>) { # loop over all lines of all input files
                 my $head = shift;
                 my $intra = shift;
                 my $contents = shift;
-                # check if all dbl SPC in $intra is used only for multi-line column alignment with $contents
+                # check if all double SPC in $intra is used only for multi-line column alignment with $contents
                 my $offset = length($head);
                 for (my $col = 0; $col < length($intra) - 2; $col++) {
                    return 0 if substr($intra   , $col, 3) =~ m/\s\s\S/ # double space (after leading space)
@@ -551,7 +539,7 @@ while (<>) { # loop over all lines of all input files
         # remove blinded comments etc. directly before ,;)}
         while ($intra_line =~ s/\s*@+([,;)}\]])/$1/e) {} # /g does not work here
         # treat remaining blinded comments and string literals as (single) space during matching below
-        $intra_line =~ s/@+/ /g; # note that dbl SPC has already been handled above
+        $intra_line =~ s/@+/ /g;                     # note that double SPC has already been handled above
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
         $intra_line =~ s/(for\s*\();;(\))/"$1$2"/eg; # strip ';;' in for (;;)
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
@@ -587,7 +575,7 @@ while (<>) { # loop over all lines of all input files
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
        && !($1 =~ m/^(if|while|for|switch|return|typedef|void|char|unsigned|int|long|float|double)$/) # not keyword
                                     && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
-                                    # without parameters but with body starting with '(', e.g., '#define X (1)',
+                                    # without parameters but with body beginning with '(', e.g., '#define X (1)',
                                     # would lead to false positives - TODO also check for macros with parameters
         report("no SPC before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
         report("no SPC after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
@@ -596,7 +584,7 @@ while (<>) { # loop over all lines of all input files
     # preprocessor directives and characters/string iterals @@@@@@@@@@@@@@@@@@@@
 
     # handle preprocessor directives
-    if (m/^\s*#(\s*)(\w+)/) { # line starting with '#'
+    if (m/^\s*#(\s*)(\w+)/) { # line beginning with '#'
         my $space_count = length($1); # maybe could also use indentation before '#'
         my $directive = $2;
         report("indent = $count != 0 for '#'") if $count != 0;
@@ -680,9 +668,9 @@ while (<>) { # loop over all lines of all input files
     if ($in_directive > 0 && $in_macro_header > 0) {
         if ($in_macro_header > 1) { # still in macro definition header
             $in_macro_header += parens_balance($_);
-        } else { # start of macro body
+        } else { # begin of macro body
             $in_macro_header = 0;
-            if ($count == $block_indent - $directive_offset # body started with same indentation as preceding code
+            if ($count == $block_indent - $directive_offset # body began with same indentation as preceding code
                 && $sloppy_macro) { # workaround for this situation is enabled
                 $block_indent -= $directive_offset;
                 $directive_offset = 0;
@@ -841,12 +829,12 @@ while (<>) { # loop over all lines of all input files
     }
 
   POSTPROCESS_DIRECTIVE:
-    # on start of multi-line preprocessor directive, adapt indent
+    # on begin of multi-line preprocessor directive, adapt indent
     # need to use original line contents because trailing '\' may have been stripped above
     if ($contents =~ m/^(.*?)\s*\\[\s@]*$/) { # trailing '\',
         # typically used in macro definitions (or other preprocessor directives)
         if ($in_directive == 0) {
-            $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is starting
+            $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is beginning
             $directive_offset = INDENT_LEVEL;
             $block_indent += $directive_offset;
         }
