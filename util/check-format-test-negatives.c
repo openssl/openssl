@@ -39,8 +39,7 @@ int f(void)
     if (1)
         f(a, b);
     do
-        1;
-    while (2);
+        1; while (2);
     if (1)
         f(a, b);
     else

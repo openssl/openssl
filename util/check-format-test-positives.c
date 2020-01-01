@@ -107,7 +107,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
              b); else /*@ (non-brace) code before 'else' */
         do f(c, c); /*@ (non-brace) code after 'do' */
-        while ( 2); /*@ space after '(', reported unless sloppy-spc */ /* TODO false positive: indent = 8 != 4 for stmt/decl */
+        while ( 2); /*@ space after '(', reported unless sloppy-spc */
     b; c;           /*@ more than one statement per line */
     do{             /*@ no space before '{', reported unless sloppy-spc */
         f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
