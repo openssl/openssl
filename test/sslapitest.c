@@ -6929,7 +6929,7 @@ end:
  * Test 6: Client sets servername and server does not acknowledge it (TLSv1.3)
  * Test 7: Client sets inconsistent servername on resumption (TLSv1.3)
  * Test 8: Client does not set servername on initial handshake(TLSv1.3)
- * Test 9: Client does not set servername on resumption handshake (TLSv1.2)
+ * Test 9: Client does not set servername on resumption handshake (TLSv1.3)
  */
 static int test_servername(int tst)
 {
@@ -7056,11 +7056,6 @@ static int test_servername(int tst)
             || !TEST_str_eq(SSL_get_servername(clientssl,
                                                TLSEXT_NAMETYPE_host_name),
                             cexpectedhost)
-               /*
-                * In TLSv1.2 we return the hostname from the original session -
-                * if we didn't acknowledge it will be empty.
-                * In TLSv1.3 we return the hostname from this handshake.
-                */
             || !TEST_str_eq(SSL_get_servername(serverssl,
                                                TLSEXT_NAMETYPE_host_name),
                             sexpectedhost))
