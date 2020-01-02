@@ -9,6 +9,12 @@
 
 /* Dispatch functions for Blowfish cipher modes ecb, cbc, ofb, cfb */
 
+/*
+ * BF low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_blowfish.h"
 #include "prov/implementations.h"
 

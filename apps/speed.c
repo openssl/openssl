@@ -384,7 +384,7 @@ static const OPT_PAIR doit_choices[] = {
     {"seed-cbc", D_CBC_SEED},
     {"seed", D_CBC_SEED},
 #endif
-#ifndef OPENSSL_NO_BF
+#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"bf-cbc", D_CBC_BF},
     {"blowfish", D_CBC_BF},
     {"bf", D_CBC_BF},
@@ -1461,7 +1461,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SEED
     SEED_KEY_SCHEDULE seed_ks;
 #endif
-#ifndef OPENSSL_NO_BF
+#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     BF_KEY bf_ks;
 #endif
 #ifndef OPENSSL_NO_CAST
@@ -1986,7 +1986,7 @@ int speed_main(int argc, char **argv)
             goto end;
         }
 #endif
-#ifndef OPENSSL_NO_BF
+#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_BF])
         BF_set_key(&bf_ks, 16, key16);
 #endif
@@ -2650,7 +2650,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_BF
+#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_BF]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -3502,7 +3502,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
         printf("%s ", IDEA_options());
 #endif
-#ifndef OPENSSL_NO_BF
+#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", BF_options());
 #endif
         printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
