@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) All of the low level Blowfish functions have been deprecated including:
+     BF_set_key, BF_encrypt, BF_decrypt, BF_ecb_encrypt, BF_cbc_encrypt,
+     BF_cfb64_encrypt, BF_ofb64_encrypt, and BF_options.
+     Use of these low level functions has been informally discouraged for a long
+     time. Instead applications should use the high level EVP APIs, e.g.
+     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
+     equivalently named decrypt functions.
+     [Matt Caswell]
+
   *) Removed include/openssl/opensslconf.h.in and replaced it with
      include/openssl/configuration.h.in, which differs in not including
      <openssl/macros.h>.  A short header include/openssl/opensslconf.h
