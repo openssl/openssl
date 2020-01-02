@@ -9,6 +9,17 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) X509 certificates signed using SHA1 are no longer allowed at security
+     level 1, the highest security level it's accepted at is 0.
+     When used in TLS/SSL the default security level is 1. It can be set either
+     using the cipher string with @SECLEVEL, or calling
+     SSL_CTX_set_security_level(). A call to SSL_CTX_use_certificate() will
+     fail if the security level is not lowered first.
+     Outside TLS/SSL, the default security level is -1. It can be set using
+     X509_VERIFY_PARAM_set_auth_level() or using the -auth_level options of the
+     apps.
+     [Kurt Roeckx]
+
   *) Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
      and EVP_PKEY_decrypt() instead.
      Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()

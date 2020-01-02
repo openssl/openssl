@@ -859,6 +859,7 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     uint32_t flags;
     const EVP_MD *mgf1md = NULL, *md = NULL;
     RSA_PSS_PARAMS *pss;
+    int secbits;
 
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS)
@@ -878,7 +879,24 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     else
         flags = 0;
     /* Note: security bits half number of digest bits */
-    X509_SIG_INFO_set(siginf, mdnid, EVP_PKEY_RSA_PSS, EVP_MD_size(md) * 4,
+    secbits = EVP_MD_size(md) * 4;
+    /*
+     * SHA1 and MD5 are known to be broken. Reduce security bits so that
+     * they're no longer accepted at security level 1. The real values don't
+     * really matter as long as they're lower than 80, which is our security
+     * level 1.
+     * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack for SHA1 at
+     * 2^63.4
+     * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+     * puts a chosen-prefix attack for MD5 at 2^39.
+     */
+    if (mdnid == NID_sha1)
+        secbits = 64;
+    else if (mdnid == NID_md5_sha1)
+        secbits = 68;
+    else if (mdnid == NID_md5)
+        secbits = 39;
+    X509_SIG_INFO_set(siginf, mdnid, EVP_PKEY_RSA_PSS, secbits,
                       flags);
     rv = 1;
     err:
