@@ -56,7 +56,8 @@ SKIP: {
     #        handshake
     $proxy->clear();
     $proxy->filter(undef);
-    $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("DEFAULT:\@SECLEVEL=0");
+    $proxy->clientflags("-no_tls1_3 -cipher AES128-SHA:\@SECLEVEL=0");
     $proxy->serverflags("-no_tls1_3 -no_tls1_2");
     $proxy->reneg(1);
     $proxy->start();

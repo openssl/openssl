@@ -79,6 +79,7 @@ SKIP: {
     $proxy->clear();
     $proxy->filter(undef);
     $proxy->clientflags("-no_tls1_2");
+    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $proxy->start();
     ok(TLSProxy::Message->success(), "TLSv1.2 client-side protocol hole");
 

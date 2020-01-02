@@ -328,7 +328,7 @@ client = 8-ECDSA Signature Algorithm Selection SHA1-client
 
 [8-ECDSA Signature Algorithm Selection SHA1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
 ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
 Ed25519.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed25519-cert.pem
@@ -339,7 +339,7 @@ MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-ECDSA Signature Algorithm Selection SHA1-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 SignatureAlgorithms = ECDSA+SHA1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1209,7 +1209,7 @@ client = 37-TLS 1.3 ECDSA Signature Algorithm Selection SHA1-client
 
 [37-TLS 1.3 ECDSA Signature Algorithm Selection SHA1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
 ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
 Ed25519.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed25519-cert.pem
@@ -1221,7 +1221,7 @@ MinProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [37-TLS 1.3 ECDSA Signature Algorithm Selection SHA1-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 SignatureAlgorithms = ECDSA+SHA1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer

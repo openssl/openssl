@@ -1413,8 +1413,26 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
         return 0;
     if (md != NULL)
     {
+        int md_type = EVP_MD_type(md);
+
         /* Security bits: half digest bits */
         secbits = EVP_MD_size(md) * 4;
+        /*
+         * SHA1 and MD5 are known to be broken. Reduce security bits so that
+         * they're no longer accepted at security level 1. The real values don't
+         * really matter as long as they're lower than 80, which is our
+         * security level 1.
+         * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack for
+         * SHA1 at 2^63.4 and MD5+SHA1 at 2^67.2
+         * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+         * puts a chosen-prefix attack for MD5 at 2^39.
+	 */
+        if (md_type == NID_sha1)
+            secbits = 64;
+        else if (md_type == NID_md5_sha1)
+            secbits = 67;
+        else if (md_type == NID_md5)
+            secbits = 39;
     } else {
         /* Values from https://tools.ietf.org/html/rfc8032#section-8.5 */
         if (lu->sigalg == TLSEXT_SIGALG_ed25519)

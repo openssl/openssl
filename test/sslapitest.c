@@ -5567,6 +5567,10 @@ static int test_export_key_mat(int tst)
     OPENSSL_assert(tst >= 0 && (size_t)tst < OSSL_NELEM(protocols));
     SSL_CTX_set_max_proto_version(cctx, protocols[tst]);
     SSL_CTX_set_min_proto_version(cctx, protocols[tst]);
+    if ((protocols[tst] < TLS1_2_VERSION) &&
+        (!SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")
+        || !SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL))

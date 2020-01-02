@@ -119,6 +119,14 @@ OpenSSL 3.0
 
    *Paul Dale*
 
+ * The security strength of SHA1 and MD5 based signatures in TLS has been
+   reduced. This results in SSL 3, TLS 1.0, TLS 1.1 and DTLS 1.0 no longer
+   working at the default security level of 1 and instead requires security
+   level 0. The security level can be changed either using the cipher string
+   with @SECLEVEL, or calling SSL_CTX_set_security_level().
+
+   *Kurt Roeckx*
+
  * EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH(), and
    EVP_PKEY_get0_EC_KEY() can now handle EVP_PKEYs with provider side
    internal keys, if they correspond to one of those built in types.
