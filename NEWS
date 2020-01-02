@@ -7,6 +7,10 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o X509 certificates signed using SHA1 are no longer allowed at security
+        level 1 or higher. The default security level for TLS is 1, so
+        certificates signed using SHA1 are by default no longer trusted to
+        authenticate servers or clients.
       o enable-crypto-mdebug and enable-crypto-mdebug-backtrace were mostly
         disabled; the project uses address sanitize/leak-detect instead.
       o Added OSSL_SERIALIZER, a generic serializer API.

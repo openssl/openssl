@@ -9,6 +9,18 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) X509 certificates signed using SHA1 are no longer allowed at security
+     level 1 and above.
+     In TLS/SSL the default security level is 1. It can be set either
+     using the cipher string with @SECLEVEL, or calling
+     SSL_CTX_set_security_level(). If the leaf certificate is signed with SHA-1,
+     a call to SSL_CTX_use_certificate() will fail if the security level is not
+     lowered first.
+     Outside TLS/SSL, the default security level is -1 (effectively 0). It can
+     be set using X509_VERIFY_PARAM_set_auth_level() or using the -auth_level
+     options of the apps.
+     [Kurt Roeckx]
+
   *) Reworked the treatment of EC EVP_PKEYs with the SM2 curve to
      automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC.
      This means that applications don't have to look at the curve NID and

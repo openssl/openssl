@@ -222,6 +222,20 @@ static void x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         return;
     /* Security bits: half number of bits in digest */
     siginf->secbits = EVP_MD_size(md) * 4;
+    /*
+     * SHA1 and MD5 are known to be broken. Reduce security bits so that
+     * they're no longer accepted at security level 1. The real values don't
+     * really matter as long as they're lower than 80, which is our security
+     * level 1.
+     * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack for SHA1 at
+     * 2^63.4
+     * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+     * puts a chosen-prefix attack for MD5 at 2^39.
+     */
+    if (mdnid == NID_sha1)
+        siginf->secbits = 63;
+    else if (mdnid == NID_md5)
+        siginf->secbits = 39;
     switch (mdnid) {
         case NID_sha1:
         case NID_sha256:
