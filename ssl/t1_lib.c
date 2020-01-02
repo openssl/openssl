@@ -22,6 +22,7 @@
 #include <openssl/ct.h>
 
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -928,8 +929,11 @@ static int rsa_pss_check_min_key_size(const RSA *rsa, const SIGALG_LOOKUP *lu)
 }
 
 /*
- * Return a signature algorithm for TLS < 1.2 where the signature type
- * is fixed by the certificate type.
+ * Returns a signature algorithm when the peer did not send a list of supported
+ * signature algorithms. The signature algorithm is fixed for the certificate
+ * type. |idx| is a certificate type index (SSL_PKEY_*). When |idx| is -1 the
+ * certificate type from |s| will be used.
+ * Returns the signature algorithm to use, or NULL on error.
  */
 static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 {
@@ -972,8 +976,12 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 
         if (!tls1_lookup_md(lu, NULL))
             return NULL;
+        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+            return NULL;
         return lu;
     }
+    if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, &legacy_rsa_sigalg))
+        return NULL;
     return &legacy_rsa_sigalg;
 }
 /* Set peer sigalg based key type */
@@ -1255,7 +1263,7 @@ int ssl_set_client_disabled(SSL *s)
  *
  * Returns 1 when it's disabled, 0 when enabled.
  */
-int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
+int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
 {
     if (c->algorithm_mkey & s->s3.tmp.mask_k
         || c->algorithm_auth & s->s3.tmp.mask_a)
@@ -1635,7 +1643,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 }
 
 /* Check to see if a signature algorithm is allowed */
-static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
 {
     unsigned char sigalgstr[2];
     int secbits;
