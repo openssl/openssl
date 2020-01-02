@@ -206,6 +206,7 @@ SKIP: {
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
     $proxy->filter(\&extension_filter);
+    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $proxy->start();
     ok(TLSProxy::Message->success, "Zero extension length test");
 

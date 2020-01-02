@@ -284,11 +284,11 @@ server2 = 8-SNI-clienthello-disable-v12-server
 
 [8-SNI-clienthello-disable-v12-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-SNI-clienthello-disable-v12-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
