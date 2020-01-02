@@ -37,7 +37,7 @@ IF[{- !$disabled{tests} -}]
           hmactest \
           rc2test rc4test rc5test \
           destest mdc2test \
-          dhtest enginetest casttest \
+          dhtest enginetest \
           ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
           v3nametest v3ext \
@@ -152,10 +152,6 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[enginetest]=../include ../apps/include
   DEPEND[enginetest]=../libcrypto libtestutil.a
 
-  SOURCE[casttest]=casttest.c
-  INCLUDE[casttest]=../include ../apps/include
-  DEPEND[casttest]=../libcrypto libtestutil.a
-
   SOURCE[ssltest_old]=ssltest_old.c
   INCLUDE[ssltest_old]=.. ../include ../apps/include
   DEPEND[ssltest_old]=../libcrypto ../libssl
@@ -212,7 +208,8 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{"deprecated"}
         || (defined $config{"api"} && $config{"api"} < 30000) -}]
-    PROGRAMS{noinst}=igetest bftest
+    PROGRAMS{noinst}=igetest bftest casttest
+
     SOURCE[igetest]=igetest.c
     INCLUDE[igetest]=../include ../apps/include
     DEPEND[igetest]=../libcrypto libtestutil.a
@@ -220,6 +217,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[bftest]=bftest.c
     INCLUDE[bftest]=../include ../apps/include
     DEPEND[bftest]=../libcrypto libtestutil.a
+
+    SOURCE[casttest]=casttest.c
+    INCLUDE[casttest]=../include ../apps/include
+    DEPEND[casttest]=../libcrypto libtestutil.a
   ENDIF
 
   SOURCE[v3nametest]=v3nametest.c

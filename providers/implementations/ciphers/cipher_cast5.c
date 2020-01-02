@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * CAST low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_cast.h"

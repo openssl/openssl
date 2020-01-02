@@ -389,7 +389,7 @@ static const OPT_PAIR doit_choices[] = {
     {"blowfish", D_CBC_BF},
     {"bf", D_CBC_BF},
 #endif
-#ifndef OPENSSL_NO_CAST
+#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"cast-cbc", D_CBC_CAST},
     {"cast", D_CBC_CAST},
     {"cast5", D_CBC_CAST},
@@ -1464,7 +1464,7 @@ int speed_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     BF_KEY bf_ks;
 #endif
-#ifndef OPENSSL_NO_CAST
+#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     CAST_KEY cast_ks;
 #endif
     static const unsigned char key16[16] = {
@@ -1990,7 +1990,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_CBC_BF])
         BF_set_key(&bf_ks, 16, key16);
 #endif
-#ifndef OPENSSL_NO_CAST
+#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_CAST]) 
         CAST_set_key(&cast_ks, 16, key16);
 #endif
@@ -2670,7 +2670,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_CAST
+#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_CAST]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
