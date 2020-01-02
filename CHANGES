@@ -18,6 +18,15 @@
      equivalently named decrypt functions.
      [Matt Caswell]
 
+  *) All of the low level CAST functions have been deprecated including:
+     CAST_set_key, CAST_ecb_encrypt, CAST_encrypt, CAST_decrypt,
+     CAST_cbc_encrypt, CAST_cfb64_encrypt and CAST_ofb64_encrypt
+     Use of these low level functions has been informally discouraged for a long
+     time. Instead applications should use the high level EVP APIs, e.g.
+     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
+     equivalently named decrypt functions.
+     [Matt Caswell]
+
   *) All of the low level Camelllia functions have been deprecated including:
      Camellia_set_key, Camellia_encrypt, Camellia_decrypt, Camellia_ecb_encrypt,
      Camellia_cbc_encrypt, Camellia_cfb128_encrypt, Camellia_cfb1_encrypt,

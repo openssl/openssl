@@ -712,7 +712,7 @@ DSA_sign_setup                          730	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 OPENSSL_sk_new_null                     731	3_0_0	EXIST::FUNCTION:
 PEM_read_PKCS8                          732	3_0_0	EXIST::FUNCTION:STDIO
 BN_mod_sqr                              733	3_0_0	EXIST::FUNCTION:
-CAST_ofb64_encrypt                      734	3_0_0	EXIST::FUNCTION:CAST
+CAST_ofb64_encrypt                      734	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 TXT_DB_write                            735	3_0_0	EXIST::FUNCTION:
 OCSP_REQUEST_get1_ext_d2i               736	3_0_0	EXIST::FUNCTION:OCSP
 CMS_unsigned_add1_attr_by_NID           737	3_0_0	EXIST::FUNCTION:CMS
@@ -1684,7 +1684,7 @@ EVP_PKEY_type                           1722	3_0_0	EXIST::FUNCTION:
 ENGINE_ctrl                             1723	3_0_0	EXIST::FUNCTION:ENGINE
 EVP_cast5_ecb                           1724	3_0_0	EXIST::FUNCTION:CAST
 BIO_nwrite0                             1725	3_0_0	EXIST::FUNCTION:
-CAST_encrypt                            1726	3_0_0	EXIST::FUNCTION:CAST
+CAST_encrypt                            1726	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 a2d_ASN1_OBJECT                         1727	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_delete_ext                  1728	3_0_0	EXIST::FUNCTION:OCSP
 UI_method_get_reader                    1729	3_0_0	EXIST::FUNCTION:
@@ -2068,7 +2068,7 @@ X509_REQ_set_version                    2113	3_0_0	EXIST::FUNCTION:
 d2i_ASN1_GENERALSTRING                  2114	3_0_0	EXIST::FUNCTION:
 i2d_ASIdentifiers                       2115	3_0_0	EXIST::FUNCTION:RFC3779
 X509V3_EXT_cleanup                      2116	3_0_0	EXIST::FUNCTION:
-CAST_ecb_encrypt                        2117	3_0_0	EXIST::FUNCTION:CAST
+CAST_ecb_encrypt                        2117	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 BIO_s_file                              2118	3_0_0	EXIST::FUNCTION:
 RSA_X931_derive_ex                      2119	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_decrypt_init                   2120	3_0_0	EXIST::FUNCTION:
@@ -2449,7 +2449,7 @@ AES_cfb128_encrypt                      2499	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 ENGINE_set_EC                           2500	3_0_0	EXIST::FUNCTION:ENGINE
 d2i_ECPKParameters                      2501	3_0_0	EXIST::FUNCTION:EC
 IDEA_ofb64_encrypt                      2502	3_0_0	EXIST::FUNCTION:IDEA
-CAST_decrypt                            2503	3_0_0	EXIST::FUNCTION:CAST
+CAST_decrypt                            2503	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 TS_STATUS_INFO_get0_failure_info        2504	3_0_0	EXIST::FUNCTION:TS
 ENGINE_unregister_pkey_meths            2506	3_0_0	EXIST::FUNCTION:ENGINE
 DISPLAYTEXT_new                         2507	3_0_0	EXIST::FUNCTION:
@@ -2862,7 +2862,7 @@ EVP_des_cfb1                            2923	3_0_0	EXIST::FUNCTION:DES
 OBJ_NAME_cleanup                        2924	3_0_0	EXIST::FUNCTION:
 OCSP_BASICRESP_get1_ext_d2i             2925	3_0_0	EXIST::FUNCTION:OCSP
 DES_cfb64_encrypt                       2926	3_0_0	EXIST::FUNCTION:DES
-CAST_cfb64_encrypt                      2927	3_0_0	EXIST::FUNCTION:CAST
+CAST_cfb64_encrypt                      2927	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 EVP_PKEY_asn1_set_param                 2928	3_0_0	EXIST::FUNCTION:
 BN_RECP_CTX_free                        2929	3_0_0	EXIST::FUNCTION:
 BN_with_flags                           2930	3_0_0	EXIST::FUNCTION:
@@ -2979,7 +2979,7 @@ PKCS12_item_pack_safebag                3043	3_0_0	EXIST::FUNCTION:
 i2d_OCSP_RESPDATA                       3044	3_0_0	EXIST::FUNCTION:OCSP
 i2d_X509_PUBKEY                         3045	3_0_0	EXIST::FUNCTION:
 EVP_DecryptUpdate                       3046	3_0_0	EXIST::FUNCTION:
-CAST_cbc_encrypt                        3047	3_0_0	EXIST::FUNCTION:CAST
+CAST_cbc_encrypt                        3047	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 BN_BLINDING_invert                      3048	3_0_0	EXIST::FUNCTION:
 SHA512_Update                           3049	3_0_0	EXIST::FUNCTION:
 ESS_ISSUER_SERIAL_new                   3050	3_0_0	EXIST::FUNCTION:
@@ -3588,7 +3588,7 @@ TS_X509_ALGOR_print_bio                 3666	3_0_0	EXIST::FUNCTION:TS
 d2i_PKCS7_ENVELOPE                      3667	3_0_0	EXIST::FUNCTION:
 ESS_CERT_ID_new                         3669	3_0_0	EXIST::FUNCTION:
 EC_POINT_invert                         3670	3_0_0	EXIST::FUNCTION:EC
-CAST_set_key                            3671	3_0_0	EXIST::FUNCTION:CAST
+CAST_set_key                            3671	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 ENGINE_get_pkey_meth                    3672	3_0_0	EXIST::FUNCTION:ENGINE
 BIO_ADDRINFO_free                       3673	3_0_0	EXIST::FUNCTION:SOCK
 DES_ede3_cbc_encrypt                    3674	3_0_0	EXIST::FUNCTION:DES
