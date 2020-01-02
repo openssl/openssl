@@ -17,7 +17,7 @@ PKCS12_it                               16	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_OCTET_STRING                   17	3_0_0	EXIST::FUNCTION:
 EC_KEY_set_private_key                  18	3_0_0	EXIST::FUNCTION:EC
 SRP_VBASE_get_by_user                   19	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SRP
-Camellia_cfb128_encrypt                 21	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_cfb128_encrypt                 21	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 DES_ncbc_encrypt                        22	3_0_0	EXIST::FUNCTION:DES
 TS_REQ_get_ext_count                    23	3_0_0	EXIST::FUNCTION:TS
 EVP_aes_128_ocb                         24	3_0_0	EXIST::FUNCTION:OCB
@@ -1305,7 +1305,7 @@ i2d_ASN1_OBJECT                         1333	3_0_0	EXIST::FUNCTION:
 d2i_PKCS8_PRIV_KEY_INFO_bio             1334	3_0_0	EXIST::FUNCTION:
 X509V3_add_value_int                    1335	3_0_0	EXIST::FUNCTION:
 TS_REQ_set_nonce                        1336	3_0_0	EXIST::FUNCTION:TS
-Camellia_ctr128_encrypt                 1337	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_ctr128_encrypt                 1337	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 X509_LOOKUP_new                         1338	3_0_0	EXIST::FUNCTION:
 AUTHORITY_INFO_ACCESS_new               1339	3_0_0	EXIST::FUNCTION:
 CRYPTO_mem_leaks_fp                     1340	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3_0,STDIO
@@ -1883,7 +1883,7 @@ EVP_camellia_128_ofb                    1928	3_0_0	EXIST::FUNCTION:CAMELLIA
 PEM_write_X509_AUX                      1929	3_0_0	EXIST::FUNCTION:STDIO
 X509_LOOKUP_by_subject                  1930	3_0_0	EXIST::FUNCTION:
 X509_REQ_add_extensions                 1931	3_0_0	EXIST::FUNCTION:
-Camellia_cbc_encrypt                    1932	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_cbc_encrypt                    1932	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 EC_KEY_METHOD_new                       1933	3_0_0	EXIST::FUNCTION:EC
 RSA_flags                               1934	3_0_0	EXIST::FUNCTION:RSA
 X509_NAME_add_entry                     1935	3_0_0	EXIST::FUNCTION:
@@ -1923,7 +1923,7 @@ PKCS12_PBE_keyivgen                     1968	3_0_0	EXIST::FUNCTION:
 BIO_test_flags                          1969	3_0_0	EXIST::FUNCTION:
 EC_POINT_get_affine_coordinates_GF2m    1970	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC,EC2M
 EVP_ENCODE_CTX_num                      1971	3_0_0	EXIST::FUNCTION:
-Camellia_cfb1_encrypt                   1972	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_cfb1_encrypt                   1972	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 NCONF_load_fp                           1973	3_0_0	EXIST::FUNCTION:STDIO
 i2d_OCSP_REQINFO                        1974	3_0_0	EXIST::FUNCTION:OCSP
 EVP_PKEY_sign                           1975	3_0_0	EXIST::FUNCTION:
@@ -2280,7 +2280,7 @@ PEM_write_bio                           2327	3_0_0	EXIST::FUNCTION:
 CMS_signed_get_attr_by_OBJ              2329	3_0_0	EXIST::FUNCTION:CMS
 X509_REVOKED_add_ext                    2330	3_0_0	EXIST::FUNCTION:
 EVP_CipherUpdate                        2331	3_0_0	EXIST::FUNCTION:
-Camellia_cfb8_encrypt                   2332	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_cfb8_encrypt                   2332	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 EVP_aes_256_xts                         2333	3_0_0	EXIST::FUNCTION:
 EVP_DigestSignFinal                     2334	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_cmp                         2335	3_0_0	EXIST::FUNCTION:
@@ -2316,7 +2316,7 @@ X509at_add1_attr_by_txt                 2364	3_0_0	EXIST::FUNCTION:
 PKCS7_SIGN_ENVELOPE_free                2365	3_0_0	EXIST::FUNCTION:
 BIO_dgram_is_sctp                       2366	3_0_0	EXIST::FUNCTION:DGRAM,SCTP
 DH_check                                2367	3_0_0	EXIST::FUNCTION:DH
-Camellia_set_key                        2368	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_set_key                        2368	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 X509_LOOKUP_by_issuer_serial            2369	3_0_0	EXIST::FUNCTION:
 ASN1_BMPSTRING_free                     2370	3_0_0	EXIST::FUNCTION:
 BIO_new_accept                          2371	3_0_0	EXIST::FUNCTION:SOCK
@@ -2412,7 +2412,7 @@ SXNET_add_id_asc                        2462	3_0_0	EXIST::FUNCTION:
 X509_print_fp                           2463	3_0_0	EXIST::FUNCTION:STDIO
 TS_REQ_set_version                      2464	3_0_0	EXIST::FUNCTION:TS
 OCSP_REQINFO_new                        2465	3_0_0	EXIST::FUNCTION:OCSP
-Camellia_decrypt                        2466	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_decrypt                        2466	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 X509_signature_print                    2467	3_0_0	EXIST::FUNCTION:
 EVP_camellia_128_ecb                    2468	3_0_0	EXIST::FUNCTION:CAMELLIA
 MD2_Final                               2469	3_0_0	EXIST::FUNCTION:MD2
@@ -3034,7 +3034,7 @@ BIO_ADDR_rawaddress                     3098	3_0_0	EXIST::FUNCTION:SOCK
 PKCS7_ENCRYPT_new                       3099	3_0_0	EXIST::FUNCTION:
 i2d_PKCS8PrivateKey_fp                  3100	3_0_0	EXIST::FUNCTION:STDIO
 SRP_user_pwd_free                       3101	3_0_0	EXIST::FUNCTION:SRP
-Camellia_encrypt                        3102	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_encrypt                        3102	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 BIO_ADDR_hostname_string                3103	3_0_0	EXIST::FUNCTION:SOCK
 USERNOTICE_new                          3104	3_0_0	EXIST::FUNCTION:
 POLICY_MAPPING_new                      3105	3_0_0	EXIST::FUNCTION:
@@ -3572,7 +3572,7 @@ ASN1_const_check_infinite_end           3650	3_0_0	EXIST::FUNCTION:
 RSA_null_method                         3651	3_0_0	EXIST::FUNCTION:RSA
 TS_REQ_ext_free                         3652	3_0_0	EXIST::FUNCTION:TS
 EVP_PKEY_meth_get_encrypt               3653	3_0_0	EXIST::FUNCTION:
-Camellia_ecb_encrypt                    3654	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_ecb_encrypt                    3654	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 ENGINE_set_default_RSA                  3655	3_0_0	EXIST::FUNCTION:ENGINE
 EVP_EncodeBlock                         3656	3_0_0	EXIST::FUNCTION:
 SXNETID_free                            3657	3_0_0	EXIST::FUNCTION:
@@ -3700,7 +3700,7 @@ X509_STORE_CTX_get_error_depth          3780	3_0_0	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_set_string         3781	3_0_0	EXIST::FUNCTION:
 EC_GROUP_new_curve_GFp                  3782	3_0_0	EXIST::FUNCTION:EC
 UI_new_method                           3783	3_0_0	EXIST::FUNCTION:
-Camellia_ofb128_encrypt                 3784	3_0_0	EXIST::FUNCTION:CAMELLIA
+Camellia_ofb128_encrypt                 3784	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 X509_new                                3785	3_0_0	EXIST::FUNCTION:
 EC_KEY_get_conv_form                    3786	3_0_0	EXIST::FUNCTION:EC
 CTLOG_STORE_get0_log_by_id              3787	3_0_0	EXIST::FUNCTION:CT
