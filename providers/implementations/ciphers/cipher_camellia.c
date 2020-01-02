@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Camellia low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 /* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_camellia.h"
