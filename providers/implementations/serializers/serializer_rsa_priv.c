@@ -77,11 +77,9 @@ static void *rsa_priv_newctx(void *provctx)
 
     if (ctx != NULL) {
         ctx->provctx = provctx;
+        /* -1 is the "whatever" indicator, i.e. the PKCS8 library default PBE */
+        ctx->sc.pbe_nid = -1;
     }
-
-    /* -1 is the "whatever" indicator, i.e. the PKCS8 library default PBE */
-    ctx->sc.pbe_nid = -1;
-
     return ctx;
 }
 
