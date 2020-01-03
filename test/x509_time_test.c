@@ -327,10 +327,11 @@ static int test_X509_cmp_timeframe(void)
     ASN1_TIME *asn1_before = ASN1_TIME_adj(NULL, now, -1, 0);
     ASN1_TIME *asn1_after = ASN1_TIME_adj(NULL, now, 1, 0);
     X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
-    int res;
+    int res = 0;
 
-    res = vpm != NULL
-        && test_X509_cmp_timeframe_vpm(NULL, asn1_before, asn1_mid, asn1_after)
+    if (vpm == NULL)
+        goto finish;
+    res = test_X509_cmp_timeframe_vpm(NULL, asn1_before, asn1_mid, asn1_after)
         && test_X509_cmp_timeframe_vpm(vpm, asn1_before, asn1_mid, asn1_after);
 
     X509_VERIFY_PARAM_set_time(vpm, now);
@@ -340,6 +341,7 @@ static int test_X509_cmp_timeframe(void)
         && test_X509_cmp_timeframe_vpm(vpm, asn1_before, asn1_mid, asn1_after);
 
     X509_VERIFY_PARAM_free(vpm);
+finish:
     ASN1_TIME_free(asn1_mid);
     ASN1_TIME_free(asn1_before);
     ASN1_TIME_free(asn1_after);
