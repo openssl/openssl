@@ -274,6 +274,7 @@ CROSS_COMPILE={- $config{CROSS_COMPILE} -}
 CC=$(CROSS_COMPILE){- $config{CC} -}
 CXX={- $config{CXX} ? "\$(CROSS_COMPILE)$config{CXX}" : '' -}
 CPPFLAGS={- our $cppflags1 = join(" ",
+                                  ("-DOPENSSL_BUILDING_OPENSSL"),
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
                                   (map { "-I".$_} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}

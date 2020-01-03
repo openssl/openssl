@@ -204,6 +204,7 @@ libdir={- file_name_is_absolute($libdir)
 CC="{- $config{CC} -}"
 CPP="{- $config{CPP} -}"
 CPPFLAGS={- our $cppflags1 = join(" ",
+                                  ("-D\"OPENSSL_BUILDING_OPENSSL\""),
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
                                   (map { " -I ".$_} @{$config{CPPINCLUDES}}),
                                   @{$config{CPPFLAGS}}) -}

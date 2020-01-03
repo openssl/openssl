@@ -179,7 +179,8 @@ MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointe
 
 CC={- $config{CC} -}
 CPP={- $config{CPP} -}
-DEFINES={- our $defines1 = join('', map { ",$_" } @{$config{CPPDEFINES}}) -}
+DEFINES={- our $defines1 = join('', map { ",$_" } ('OPENSSL_BUILDING_OPENSSL',
+                                                   @{$config{CPPDEFINES}})) -}
 INCLUDES={- our $includes1 = join(',', @{$config{CPPINCLUDES}}) -}
 CPPFLAGS={- our $cppflags1 = join('', @{$config{CPPFLAGS}}) -}
 CFLAGS={- join('', @{$config{CFLAGS}}) -}
