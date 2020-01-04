@@ -332,8 +332,15 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
                           $target{shared_cppflag} || (),
                           (map { '-D'.$_ }
+                               @{$target{lib_defines} || ()},
+                               @{$target{shared_defines} || ()},
                                @{$config{lib_defines} || ()},
                                @{$config{shared_defines} || ()}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{lib_includes}},
+                               @{$target{shared_includes}},
+                               @{$config{lib_includes}},
+                               @{$config{shared_includes}}),
                           @{$config{lib_cppflags}},
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
@@ -359,8 +366,15 @@ LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
                           $target{module_cppflags} || (),
                           (map { '-D'.$_ }
+                               @{$target{dso_defines}},
+                               @{$target{module_defines}},
                                @{$config{dso_defines} || ()},
                                @{$config{module_defines} || ()}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{dso_includes}},
+                               @{$target{module_includes}},
+                               @{$config{dso_includes}},
+                               @{$config{module_includes}}),
                           @{$config{dso_cppflags}},
                           @{$config{module_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
