@@ -334,6 +334,7 @@ BIN_ASFLAGS={- join(' ', $target{bin_asflags} || (),
                          @{$config{bin_asflags}},
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
 BIN_CPPFLAGS={- join(' ', $target{bin_cppflags} || (),
+                          (map { '-D'.$_ } @{$config{bin_defines} || ()}),
                           @{$config{bin_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 BIN_CFLAGS={- join(' ', $target{bin_cflags} || (),
