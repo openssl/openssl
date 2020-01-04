@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,7 +59,8 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     X509_check_purpose(cert, -1, 0);
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;
-    X509_digest(cert, EVP_sha1(), cert_sha1, NULL);
+    if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
+        goto err;
     if (!ASN1_OCTET_STRING_set(cid->hash, cert_sha1, SHA_DIGEST_LENGTH))
         goto err;
 
