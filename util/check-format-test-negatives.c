@@ -14,6 +14,28 @@
  * There are some known false positives, though, which are marked below.
  */
 
+#define DEFINE_SET_GET_BASE_TEST(PREFIX, SETN, GETN, DUP, FIELD, TYPE, ERR, \
+                                 DEFAULT, NEW, FREE) \
+    static int execute_CTX_##SETN##_##GETN##_##FIELD( \
+                                                     TEST_FIXTURE *fixture) \
+    { \
+        CTX *ctx = fixture->ctx; \
+        int (*set_fn)(CTX *ctx, TYPE) = \
+            (int (*)(CTX *ctx, TYPE))PREFIX##_##SETN##_##FIELD; \
+        /* comment */ \
+    }
+
+/*-
+ * allow double space  in format-tagged multi-line comment
+ */
+struct s {
+    int f; /*-
+            * allow any indentation in non-leading multi-line comment
+            */
+
+    /* allow indent of trailing comment like for normal code of this line */
+};
+
 int f(void)
 {
 #if X
@@ -39,7 +61,7 @@ int f(void)
     if (1)
         f(a, b);
     do
-        1; while (2);
+        1; while (2); /*@ more than one stmt just to construct case */
     if (1)
         f(a, b);
     else
@@ -182,3 +204,9 @@ struct
 #define X  1          + 1
 #define Y  /* .. */ 2 + 2
 #define Z  3          + 3
+
+static varref cmp_vars[] = { /* comment */
+    {&opt_config}, {&opt_section},
+
+    {&opt_server}, {&opt_proxy}, {&opt_path},
+};

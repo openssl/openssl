@@ -28,29 +28,29 @@
 /*@ non-printable ASCII character:  */
 /*@ non-ASCII character: ä */
 /*@ whitespace at EOL: */ 
-// /*@ end-of-line comment style not allowed for C90 */
-/*X */ /*@ no space after comment start, reported unless sloppy-spc */
+// /*@ end-of-line comment style not allowed (for C90 compatibility) */
+ /*@0 intra-line comment indent off by 1, reported unless sloppy-cmt */
+/*X */ /*@2 no space nor '*' after comment start, reported unless sloppy-spc */
 /* X*/ /*@ no space before comment end , reported unless sloppy-spc */
 /*@ comment starting delimiter: /* inside intra-line comment */
- /*@ normal comment indent off by 1, reported unless sloppy-cmt */
- /*@
+ /*@0
   *@ above multi-line comment start indent off by 1, reported unless sloppy-cmt; this comment line is too long
    *@ multi-line comment further off by 1 relative to comment start
-*/ /*@ multi-line comment end indent off by -2 relative to comment start */
-/*@ multi-line comment starting with text on first line
+  *@ multi-line comment ending with text on last line */
+/*@2 multi-line comment starting with text on first line
  *@ comment starting delimiter: /* inside multi-line comment
 *@ multi-line comment indent off by -1
  *X*@ no spc after leading'*' in multi-line comment, reported unless sloppy-spc
- *@0 more than double space after '.'   in comment, reported unless sloppy-spc
- *@2 multi-line comment ending with text on last line */
-*/ /*@ unexpected comment end symbol outside comment */
+ *@0 more than two spaces after .   in comment, reported unless sloppy-spc
+*/ /*@2 multi-line comment end indent off by -1 (relative to comment start) */
+*/ /*@ unexpected comment ending delimiter outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
-#define X   1       /*@0 dbl space false negative due to coincidental match */
+#define X   1       /*@0 double space false negative due to coincidence */
  #define Y  2       /*@ indent of preprocessor directive off by 1 (must be 0) */
-typedef struct  {   /*@0 double space, reported unless sloppy-spc */
-    enum {          /*@2 double space  in comment, reported unless sloppy-spc */
-           w = 0   /*@ hanging expr indent off by 1, or 3 for lines after '{' */
+typedef struct  {   /*@0 double space in code, reported unless sloppy-spc */
+    enum {          /*@1 double space  in comment, reported unless sloppy-spc */
+           w = 0 /*@2 hanging expr indent off by 1, or 3 for lines after '{' */
              && 1,  /*@ hanging expr indent off by 3, or -1 for leading '&&' */
          x = 1,     /*@ hanging expr indent off by -1 */
           y,z       /*@ no space after ',', reported unless sloppy-spc */
@@ -60,7 +60,7 @@ typedef struct  {   /*@0 double space, reported unless sloppy-spc */
         struct{} s; /*@ no space before '{', reported unless sloppy-spc */
     }u_member;      /*@ no space after '}', reported unless sloppy-spc */
     } s_type;       /*@ statement/type declaration indent off by 4 */
-int* somefunc();    /*@ no space before '*' in type declaration */
+int* somefunc();    /*@ no space before '*' in type declaration (!sloppy-spc) */
 void main(int n) {  /*@ opening brace at end of function definition header */
     for (;;n++) {   /*@ no space after ';', reported unless sloppy-spc */
         return;     /*@0 (1-line) single statement in braces */
@@ -76,7 +76,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
         3: *        /*@ unexpected ':' (without preceding '?') within expr */
         4};         /*@ unexpected closing brace within expression */
     char y[] = {    /*@0 unclosed brace within initializer/enum expression */
-        1* 1,       /*@ no space or name, '(', ')', '*' after '*' */
+        1* 1,       /*@ no space etc. before '*', reported unless sloppy-spc */
          2,         /*@ hanging expr indent (for lines after '{') off by 1 */
         (xx         /*@0 unclosed parenthesis in expression */
          ? y        /*@0 unclosed '? (conditional expression) */
@@ -86,14 +86,15 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
           "aligned" /*@ expr indent off by -2 accepted if sloppy-hang */ "right"
            , b,     /*@ expr indent off by -1 */
            b,       /*@ expr indent again off -1, accepted if sloppy-hang */
-        b,  /*@ expr indent off -4 but @ extra indent accepted if sloppy-hang */
+        b, /*@ expr indent off -4 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
             123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
     if(a            /*@ no space after 'if', reported unless sloppy-spc */
-       && ! 0       /*@ space after '!', reported unless sloppy-spc */
+          /*@0 intra-line comment indent off by -1 (not: by 3 due to '&&') */
+           && ! 0   /*@2 space after '!', reported unless sloppy-spc */
          || b ==    /*@ hanging expr indent off by 2, or -2 for leading '||' */
        (xx+= 2) +   /*@ no space before '+=', reported unless sloppy-spc */
        a ++ -       /*@ space before postfix '++', reported unless sloppy-spc */
@@ -103,7 +104,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
        /* */+       /*@ no space after comment, reported unless sloppy-spc */
        s. e_member) /*@ space after '.', reported unless sloppy-spc */
          xx = a + b /*@ extra single-statement indent off by 1 */
-               + 0; /*@ double extra single-statement indent off by 3 */
+               + 0; /*@ two times extra single-statement indent off by 3 */
     if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
              b); else /*@ (non-brace) code before 'else' */
         do f(c, c); /*@ (non-brace) code after 'do' */
@@ -115,11 +116,11 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     } while (a+ 0); /*@ no space before '+', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
-    case(2):        /*@ no space after 'case' */
+    case(2):        /*@ no space after 'case', reported unless sloppy-spc */
      default: ;     /*@ 'default' special statement indent off by 1 */
 }                   /*@ statement indent off by -4 */
   label:            /*@ label special statement indent off by 1 */
-    return(         /*@ no space after 'return' with expression */
+    return(         /*@ no space after 'return', reported unless sloppy-spc */
            x); }    /*@ block-level '}' has code before */
 /* Here the tool should stop complaining apart from the below issues at EOF */
 
