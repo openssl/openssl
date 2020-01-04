@@ -3151,6 +3151,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
+    EVP_PKEY *public_key;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
 #ifndef OPENSSL_NO_COMP
@@ -3175,6 +3176,19 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 BIO_puts(bio, "\n");
                 BIO_printf(bio, "   i:");
                 X509_NAME_print_ex(bio, X509_get_issuer_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
+                public_key = X509_get_pubkey(sk_X509_value(sk, i));
+                if (public_key != NULL) {
+                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
+                               OBJ_nid2sn(EVP_PKEY_base_id(public_key)),
+                               EVP_PKEY_bits(public_key),
+                               OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
+                    EVP_PKEY_free(public_key);
+                }
+                BIO_printf(bio, "   v:NotBefore: ");
+                ASN1_TIME_print(bio, X509_get_notBefore(sk_X509_value(sk, i)));
+                BIO_printf(bio, "; NotAfter: ");
+                ASN1_TIME_print(bio, X509_get_notAfter(sk_X509_value(sk, i)));
                 BIO_puts(bio, "\n");
                 if (c_showcerts)
                     PEM_write_bio_X509(bio, sk_X509_value(sk, i));
