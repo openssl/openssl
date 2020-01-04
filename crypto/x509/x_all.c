@@ -520,7 +520,8 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
 int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
                 unsigned int *len)
 {
-    if (type == EVP_sha1() && (data->ex_flags & EXFLAG_SET) != 0) {
+    if (type == EVP_sha1() && (data->ex_flags & EXFLAG_SET) != 0
+            && (data->ex_flags & EXFLAG_INVALID) == 0) {
         /* Asking for SHA1 and we already computed it. */
         if (len != NULL)
             *len = sizeof(data->sha1_hash);

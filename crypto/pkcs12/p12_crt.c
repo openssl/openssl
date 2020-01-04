@@ -62,7 +62,8 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
     if (pkey && cert) {
         if (!X509_check_private_key(cert, pkey))
             return NULL;
-        X509_digest(cert, EVP_sha1(), keyid, &keyidlen);
+        if (!X509_digest(cert, EVP_sha1(), keyid, &keyidlen))
+            return NULL;
     }
 
     if (cert) {

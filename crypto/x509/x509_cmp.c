@@ -136,8 +136,10 @@ int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv;
     /* ensure hash is valid */
-    X509_check_purpose((X509 *)a, -1, 0);
-    X509_check_purpose((X509 *)b, -1, 0);
+    if (X509_check_purpose((X509 *)a, -1, 0) != 1)
+        return -2;
+    if (X509_check_purpose((X509 *)b, -1, 0) != 1)
+        return -2;
 
     rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
     if (rv)
