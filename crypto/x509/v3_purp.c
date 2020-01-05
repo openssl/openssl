@@ -812,10 +812,10 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     x509v3_cache_extensions(issuer);
-    if(issuer->ex_flags & EXFLAG_INVALID)
+    if (issuer->ex_flags & EXFLAG_INVALID)
         return X509_V_ERR_UNSPECIFIED;
     x509v3_cache_extensions(subject);
-    if(subject->ex_flags & EXFLAG_INVALID)
+    if (subject->ex_flags & EXFLAG_INVALID)
         return X509_V_ERR_UNSPECIFIED;
 
     if (subject->akid) {
