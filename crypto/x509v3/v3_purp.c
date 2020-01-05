@@ -306,6 +306,7 @@ static int setup_dp(X509 *x, DIST_POINT *dp)
 {
     X509_NAME *iname = NULL;
     int i;
+
     if (dp->reasons) {
         if (dp->reasons->length > 0)
             dp->dp_reasons = dp->reasons->data[0];
@@ -332,6 +333,7 @@ static int setup_dp(X509 *x, DIST_POINT *dp)
 static int setup_crldp(X509 *x)
 {
     int i;
+
     x->crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &i, NULL);
     if (x->crldp == NULL && i != -1)
         return 0;
