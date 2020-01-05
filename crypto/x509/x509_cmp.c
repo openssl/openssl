@@ -134,6 +134,7 @@ unsigned long X509_subject_name_hash_old(X509 *x)
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv;
+
     /* ensure hash is valid */
     if (X509_check_purpose((X509 *)a, -1, 0) != 1)
         return -2;
