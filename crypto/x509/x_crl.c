@@ -274,6 +274,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 {
     int idp_only = 0;
+
     /* Set various flags according to IDP */
     crl->idp_flags |= IDP_PRESENT;
     if (idp->onlyuser > 0) {
