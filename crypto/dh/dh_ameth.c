@@ -295,8 +295,8 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     else
         ktype = "DH Parameters";
 
-    BIO_indent(bp, indent, 128);
-    if (BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p)) <= 0)
+    if (!BIO_indent(bp, indent, 128)
+            || BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p)) <= 0)
         goto err;
     indent += 4;
 
@@ -315,8 +315,10 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
         goto err;
     if (x->seed) {
         int i;
-        BIO_indent(bp, indent, 128);
-        BIO_puts(bp, "seed:");
+
+        if (!BIO_indent(bp, indent, 128)
+                || BIO_puts(bp, "seed:") <= 0)
+            goto err;
         for (i = 0; i < x->seedlen; i++) {
             if ((i % 15) == 0) {
                 if (BIO_puts(bp, "\n") <= 0
@@ -333,9 +335,9 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     if (x->counter && !ASN1_bn_print(bp, "counter:", x->counter, NULL, indent))
         goto err;
     if (x->length != 0) {
-        BIO_indent(bp, indent, 128);
-        if (BIO_printf(bp, "recommended-private-length: %d bits\n",
-                       (int)x->length) <= 0)
+        if (!BIO_indent(bp, indent, 128)
+                || BIO_printf(bp, "recommended-private-length: %d bits\n",
+                              (int)x->length) <= 0)
             goto err;
     }
 
