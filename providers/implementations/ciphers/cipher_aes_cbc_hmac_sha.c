@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Dispatch functions for AES_CBC_HMAC_SHA ciphers */
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
 
+/* Dispatch functions for AES_CBC_HMAC_SHA ciphers */
 
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
