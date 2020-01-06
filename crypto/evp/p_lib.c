@@ -694,10 +694,9 @@ static int print_set_indent(BIO **out, int *pop_f_prefix, long *saved_indent,
 static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
                      const char *kstr)
 {
-    BIO_indent(out, indent, 128);
-    BIO_printf(out, "%s algorithm \"%s\" unsupported\n",
-               kstr, OBJ_nid2ln(pkey->type));
-    return 1;
+    return BIO_indent(out, indent, 128)
+        && BIO_printf(out, "%s algorithm \"%s\" unsupported\n",
+                      kstr, OBJ_nid2ln(pkey->type)) > 0;
 }
 
 static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
