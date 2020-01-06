@@ -23,21 +23,16 @@ user defined macros.
 
 =item B<OPENSSL_API_COMPAT>
 
-The value is a version number similar to the
-L<OPENSSL_VERSION_NUMBER(3)> macro.  Any symbol that is deprecated in
-versions up to and including the version given in this macro will not
-be declared.
-
-The version number assigned to this macro can take one of two forms:
+The value is a version number, given in one of the following two forms:
 
 =over 4
 
 =item C<0xMNNFF000L>
 
-This is the form supported for all versions up 1.1.x, where C<M>
+This is the form supported for all versions up to 1.1.x, where C<M>
 represents the major number, C<NN> represents the minor number, and
-C<FF> represents the fix number.  For version 1.1.0, that's
-C<0x10100000L>.
+C<FF> represents the fix number, as a hexadecimal number.  For version
+1.1.0, that's C<0x10100000L>.
 
 Any version number may be given, but these numbers are
 the current known major deprecation points, making them the most
@@ -57,31 +52,38 @@ For convenience, higher numbers are accepted as well, as long as
 feasible.  For example, C<0x60000000L> will work as expected.
 However, it is recommended to start using the second form instead:
 
-=item C<m>
+=item C<mmnnpp>
 
-This form is a simple number that represents the major version number
-and is supported for version 3.0 and up.  For extra convenience,
-these numbers are also available:
+This form is a simple decimal number calculated with this formula:
+
+I<major> * 10000 + I<minor> * 100 + I<patch>
+
+where I<major>, I<minor> and I<patch> are the desired major,
+minor and patch components of the version number.  For example:
 
 =over 4
 
-=item Z<>0 (C<0x00908000L>, i.e. version 0.9.8)
+=item 30000 corresponds to version 3.0.0
 
-=item Z<>1 (C<0x10000000L>, i.e. version 1.0.0)
+=item 10002 corresponds to version 1.0.2
 
-=item Z<>2 (C<0x10100000L>, i.e. version 1.1.0)
+=item 420101 corresponds to version 42.1.1
 
 =back
-
-For all other numbers C<m>, they are equivalent to version m.0.0.
 
 =back
 
 If not set, this macro will default to
 C<{- join('', map { my @x = split /=/,$_; $x[1] }
-              grep /^OPENSSL_MIN_API=/, @{$config{openssl_api_defines} // []})
+              grep /^OPENSSL_CONFIGURED_API=/, @{$config{openssl_api_defines} // []})
      || '0x00000000L'
   -}>.
+
+=item B<OPENSSL_NO_DEPRECATED>
+
+If this macro is defined, all deprecated public symbols in all OpenSSL
+versions up to and including the version given by B<OPENSSL_API_COMPAT>
+will be hidden.
 
 =back
 
