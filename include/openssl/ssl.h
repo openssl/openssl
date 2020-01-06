@@ -1956,11 +1956,13 @@ __owur const SSL_METHOD *DTLS_client_method(void); /* DTLS 1.0 and 1.2 */
 __owur size_t DTLS_get_data_mtu(const SSL *s);
 
 __owur STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
+__owur uint8_t *SSL_get_flags(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
 __owur int SSL_CTX_count_ciphers_by_version(const SSL_CTX *ctx, int version);
 __owur int SSL_count_ciphers_by_version(const SSL *ssl, int version);
 __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
+__owur uint8_t *SSL_get1_supported_flags(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
 int SSL_key_update(SSL *s, int updatetype);
@@ -2006,8 +2008,8 @@ __owur long SSL_get_default_timeout(const SSL *s);
 # endif
 
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
-__owur char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf,
-                                          int size);
+__owur char *SSL_CIPHER_flags_description(const uint8_t *flags, int i,
+                                          char * buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
 __owur SSL *SSL_dup(SSL *ssl);

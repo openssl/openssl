@@ -113,6 +113,7 @@ int ciphers_main(int argc, char **argv)
     char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
+    uint8_t *flags;
 
     prog = opt_init(argc, argv, ciphers_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -240,10 +241,14 @@ int ciphers_main(int argc, char **argv)
     if (ssl == NULL)
         goto err;
 
-    if (use_supported)
+    if (use_supported) {
         sk = SSL_get1_supported_ciphers(ssl);
-    else
+        flags = SSL_get1_supported_flags(ssl);
+    } else {
         sk = SSL_get_ciphers(ssl);
+        flags = SSL_get_flags(ssl);
+    }
+
 
     if (!verbose) {
         for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
@@ -282,7 +287,7 @@ int ciphers_main(int argc, char **argv)
                     nm = "UNKNOWN";
                 BIO_printf(bio_out, "%-45s - ", nm);
             }
-            BIO_puts(bio_out, SSL_CIPHER_flags_description(ssl, i, buf, sizeof(buf)));
+            BIO_puts(bio_out, SSL_CIPHER_flags_description(flags, i, buf, sizeof(buf)));
             BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
         }
     }
@@ -292,8 +297,10 @@ int ciphers_main(int argc, char **argv)
  err:
     ERR_print_errors(bio_err);
  end:
-    if (use_supported)
+    if (use_supported) {
         sk_SSL_CIPHER_free(sk);
+        OPENSSL_free(flags);
+    }
     SSL_CTX_free(ctx);
     SSL_free(ssl);
     return ret;

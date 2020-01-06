@@ -2706,6 +2706,46 @@ STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
     return NULL;
 }
 
+/* return an array of flags for ciphers available in the SSL. */
+uint8_t *SSL_get_flags(const SSL *s)
+{
+    SSL_CIPHER_FLAGS *ciphf_list = SSL_get_ciphers_flags(s);
+    return ciphf_list ? ciphf_list->flags : NULL;
+}
+
+/** return an array of flags for ciphers available in the SSL which have not
+ * been disabled.
+ */
+uint8_t *SSL_get1_supported_flags(SSL *s)
+{
+    SSL_CIPHER_FLAGS *ciphf_list = SSL_get_ciphers_flags(s);
+    uint8_t *supported_flags = NULL, *flags;
+    STACK_OF(SSL_CIPHER) *sk;
+    int i, cnt, curr = 0;
+
+    if (!ciphf_list && !ciphf_list->flags)
+        return NULL;
+
+    sk = ciphf_list->cipher_list;
+    cnt = sk_SSL_CIPHER_num(sk);
+    flags = ciphf_list->flags;
+
+    for (i = 0; i < cnt; i++) {
+        const SSL_CIPHER *c = sk_SSL_CIPHER_value(sk, i);
+        if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {
+            if (!supported_flags)
+                supported_flags = OPENSSL_malloc(cnt * sizeof(uint8_t));
+            if (!supported_flags)
+                return NULL;
+            supported_flags[curr++] = flags[i];
+        } else {
+            if (!(flags[i] & CIPHER_IN_GROUP) && curr >= 1)
+                supported_flags[curr - 1] &= ~CIPHER_IN_GROUP;
+        }
+    }
+    return supported_flags;
+}
+
 /* 
  * return number of ciphers matching "version", which were entered using
  * cipher_list interface.

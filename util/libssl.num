@@ -517,3 +517,5 @@ SSL_set_cipher_list_and_mask            ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_count_ciphers_by_version        ?	3_0_0	EXIST::FUNCTION:
 SSL_count_ciphers_by_version            ?	3_0_0	EXIST::FUNCTION:
 SSL_CIPHER_flags_description            ?	3_0_0	EXIST::FUNCTION:
+SSL_get_flags                           ?	3_0_0	EXIST::FUNCTION:
+SSL_get1_supported_flags                ?	3_0_0	EXIST::FUNCTION:

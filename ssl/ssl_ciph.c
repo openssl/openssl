@@ -1948,10 +1948,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     return cipherstack;
 }
 
-char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf, int len)
+char *SSL_CIPHER_flags_description(const uint8_t *flags, int i, char * buf,
+                                   int len)
 {
-    SSL_CIPHER_FLAGS *ciphf_list = SSL_get_ciphers_flags(s);
-    uint8_t *flags;
     char *group = " ";
     char prefer = ' ';
     static const char *format = "%s %c ";
@@ -1966,7 +1965,7 @@ char *SSL_CIPHER_flags_description(const SSL *s, int i, char * buf, int len)
         return NULL;
     }
 
-    if (ciphf_list && (flags = ciphf_list->flags) != NULL) {
+    if (flags != NULL) {
         if (flags[i] & CIPHER_IN_GROUP) {
             group = i == 0 || (flags[i - 1] & CIPHER_IN_GROUP) == 0 ? "┍" : "│";
         } else if (i && (flags[i - 1] & CIPHER_IN_GROUP)) {

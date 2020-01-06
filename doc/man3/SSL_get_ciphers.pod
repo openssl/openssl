@@ -8,8 +8,10 @@ SSL_get_ciphers,
 SSL_CTX_get_ciphers,
 SSL_bytes_to_cipher_list,
 SSL_get_cipher_list,
-SSL_get_shared_ciphers
-- get list of available SSL_CIPHERs
+SSL_get_shared_ciphers,
+SSL_get_flags,
+SSL_get1_supported_flags
+- get list of available SSL_CIPHERs or their flags
 
 =head1 SYNOPSIS
 
@@ -23,7 +25,9 @@ SSL_get_shared_ciphers
                               int isv2format, STACK_OF(SSL_CIPHER) **sk,
                               STACK_OF(SSL_CIPHER) **scsvs);
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
- char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size);
+ char *SSL_get_shared_ciphers(const SSL *ssl, char *buf, int size);
+ uint8_t *SSL_get_flags(const SSL *ssl);
+ uint8_t *SSL_get1_supported_flags(SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -76,6 +80,14 @@ available shared ciphersuites whether or not they are enabled. This is a server
 side function only and must only be called after the completion of the initial
 handshake.
 
+SSL_get_flags() returns array of flags for ciphers available for B<ssl>
+If B<ssl> is NULL or no ciphers are available, NULL is returned. This array of
+flags should be passed to function SSL_CIPHER_flags_description() for
+interpret meaning of each flags.
+
+SSL_get1_supported_flags() returns simillar array of flags like function
+SSL_get_flags() but only for ciphers, which have not been disabled.
+
 =head1 NOTES
 
 The details of the ciphers obtained by SSL_get_ciphers(), SSL_CTX_get_ciphers()
@@ -92,6 +104,9 @@ free the return value itself.
 
 The stack returned by SSL_get1_supported_ciphers() should be freed using
 sk_SSL_CIPHER_free().
+
+The array returned by SSL_get1_supported_flags() should be freed using
+OPENSSL_free().
 
 The stacks returned by SSL_bytes_to_cipher_list() should be freed using
 sk_SSL_CIPHER_free().
