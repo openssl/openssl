@@ -68,8 +68,6 @@ SOURCE[../../providers/libfips.a]=$COMMON
 DEFINE[../../libcrypto]=$AESDEF
 DEFINE[../../providers/libfips.a]=$AESDEF
 DEFINE[../../providers/libimplementations.a]=$AESDEF
-# fipsprov.c needs access to AESNI.
-DEFINE[../../providers/fips]=$AESDEF
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 

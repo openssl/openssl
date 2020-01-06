@@ -6820,6 +6820,103 @@ static int test_ca_names(int tst)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_2
+static const char *multiblock_cipherlist_data[]=
+{
+    "AES128-SHA",
+    "AES128-SHA256",
+    "AES256-SHA",
+    "AES256-SHA256",
+};
+
+/* Reduce the fragment size - so the multiblock test buffer can be small */
+# define MULTIBLOCK_FRAGSIZE 512
+
+static int test_multiblock_write(int test_index)
+{
+    static const char *fetchable_ciphers[]=
+    {
+        "AES-128-CBC-HMAC-SHA1",
+        "AES-128-CBC-HMAC-SHA256",
+        "AES-256-CBC-HMAC-SHA1",
+        "AES-256-CBC-HMAC-SHA256"
+    };
+    const char *cipherlist = multiblock_cipherlist_data[test_index];
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
+    int min_version = TLS1_VERSION;
+    int max_version = TLS1_2_VERSION; /* Don't select TLS1_3 */
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    /*
+     * Choose a buffer large enough to perform a multi-block operation
+     * i.e: write_len >= 4 * frag_size
+     * 9 * is chosen so that multiple multiblocks are used + some leftover.
+     */
+    unsigned char msg[MULTIBLOCK_FRAGSIZE * 9];
+    unsigned char buf[sizeof(msg)], *p = buf;
+    size_t readbytes, written, len;
+    EVP_CIPHER *ciph = NULL;
+
+    /*
+     * Check if the cipher exists before attempting to use it since it only has
+     * a hardware specific implementation.
+     */
+    ciph = EVP_CIPHER_fetch(NULL, fetchable_ciphers[test_index], "");
+    if (ciph == NULL) {
+        TEST_skip("Multiblock cipher is not available for %s", cipherlist);
+        return 1;
+    }
+    EVP_CIPHER_free(ciph);
+
+    /* Set up a buffer with some data that will be sent to the client */
+    RAND_bytes(msg, sizeof(msg));
+
+    if (!TEST_true(create_ssl_ctx_pair(smeth, cmeth, min_version, max_version,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_max_send_fragment(sctx, MULTIBLOCK_FRAGSIZE)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+            goto end;
+
+    /* settings to force it to use AES-CBC-HMAC_SHA */
+    SSL_set_options(serverssl, SSL_OP_NO_ENCRYPT_THEN_MAC);
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipherlist)))
+       goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+
+    len = written;
+    while (len > 0) {
+        if (!TEST_true(SSL_read_ex(clientssl, p, MULTIBLOCK_FRAGSIZE, &readbytes)))
+            goto end;
+        p += readbytes;
+        len -= readbytes;
+    }
+    if (!TEST_mem_eq(msg, sizeof(msg), buf, sizeof(buf)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_TLS1_2 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
@@ -6968,6 +7065,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
+#endif
     return 1;
 }
 

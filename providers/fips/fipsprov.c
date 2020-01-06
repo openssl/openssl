@@ -25,11 +25,16 @@
 
 #include "internal/cryptlib.h"
 #include "internal/property.h"
+#include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/provider_util.h"
 #include "selftest.h"
+
+#define ALGC(NAMES, FUNC, CHECK) { { NAMES, "fips=yes", FUNC }, CHECK }
+#define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_core_thread_start_fn *c_thread_start;
 
@@ -300,6 +305,14 @@ const char *ossl_prov_util_nid_to_name(int nid)
         return "DES-EDE3";
     case NID_des_ede3_cbc:
         return "DES-EDE3-CBC";
+    case NID_aes_256_cbc_hmac_sha256:
+        return "AES-256-CBC-HMAC-SHA256";
+    case NID_aes_128_cbc_hmac_sha256:
+        return "AES-128-CBC-HMAC-SHA256";
+    case NID_aes_256_cbc_hmac_sha1:
+        return "AES-256-CBC-HMAC-SHA1";
+    case NID_aes_128_cbc_hmac_sha1:
+        return "AES-128-CBC-HMAC-SHA1";
     default:
         break;
     }
@@ -358,43 +371,49 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM fips_ciphers[] = {
+static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
-    { "AES-256-ECB", "fips=yes", aes256ecb_functions },
-    { "AES-192-ECB", "fips=yes", aes192ecb_functions },
-    { "AES-128-ECB", "fips=yes", aes128ecb_functions },
-    { "AES-256-CBC", "fips=yes", aes256cbc_functions },
-    { "AES-192-CBC", "fips=yes", aes192cbc_functions },
-    { "AES-128-CBC", "fips=yes", aes128cbc_functions },
-    { "AES-256-CTR", "fips=yes", aes256ctr_functions },
-    { "AES-192-CTR", "fips=yes", aes192ctr_functions },
-    { "AES-128-CTR", "fips=yes", aes128ctr_functions },
-    { "AES-256-XTS", "fips=yes", aes256xts_functions },
-    { "AES-128-XTS", "fips=yes", aes128xts_functions },
-    { "AES-256-GCM:id-aes256-GCM", "fips=yes", aes256gcm_functions },
-    { "AES-192-GCM:id-aes192-GCM", "fips=yes", aes192gcm_functions },
-    { "AES-128-GCM:id-aes128-GCM", "fips=yes", aes128gcm_functions },
-    { "AES-256-CCM:id-aes256-CCM", "fips=yes", aes256ccm_functions },
-    { "AES-192-CCM:id-aes192-CCM", "fips=yes", aes192ccm_functions },
-    { "AES-128-CCM:id-aes128-CCM", "fips=yes", aes128ccm_functions },
-    { "AES-256-WRAP:id-aes256-wrap:AES256-WRAP", "fips=yes",
-      aes256wrap_functions },
-    { "AES-192-WRAP:id-aes192-wrap:AES192-WRAP", "fips=yes",
-      aes192wrap_functions },
-    { "AES-128-WRAP:id-aes128-wrap:AES128-WRAP", "fips=yes",
-      aes128wrap_functions },
-    { "AES-256-WRAP-PAD:id-aes256-wrap-pad:AES256-WRAP-PAD", "fips=yes",
-      aes256wrappad_functions },
-    { "AES-192-WRAP-PAD:id-aes192-wrap-pad:AES192-WRAP-PAD", "fips=yes",
-      aes192wrappad_functions },
-    { "AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD", "fips=yes",
-      aes128wrappad_functions },
+    ALG("AES-256-ECB", aes256ecb_functions),
+    ALG("AES-192-ECB", aes192ecb_functions),
+    ALG("AES-128-ECB", aes128ecb_functions),
+    ALG("AES-256-CBC", aes256cbc_functions),
+    ALG("AES-192-CBC", aes192cbc_functions),
+    ALG("AES-128-CBC", aes128cbc_functions),
+    ALG("AES-256-CTR", aes256ctr_functions),
+    ALG("AES-192-CTR", aes192ctr_functions),
+    ALG("AES-128-CTR", aes128ctr_functions),
+    ALG("AES-256-XTS", aes256xts_functions),
+    ALG("AES-128-XTS", aes128xts_functions),
+    ALG("AES-256-GCM:id-aes256-GCM", aes256gcm_functions),
+    ALG("AES-192-GCM:id-aes192-GCM", aes192gcm_functions),
+    ALG("AES-128-GCM:id-aes128-GCM", aes128gcm_functions),
+    ALG("AES-256-CCM:id-aes256-CCM", aes256ccm_functions),
+    ALG("AES-192-CCM:id-aes192-CCM", aes192ccm_functions),
+    ALG("AES-128-CCM:id-aes128-CCM", aes128ccm_functions),
+    ALG("AES-256-WRAP:id-aes256-wrap:AES256-WRAP", aes256wrap_functions),
+    ALG("AES-192-WRAP:id-aes192-wrap:AES192-WRAP", aes192wrap_functions),
+    ALG("AES-128-WRAP:id-aes128-wrap:AES128-WRAP", aes128wrap_functions),
+    ALG("AES-256-WRAP-PAD:id-aes256-wrap-pad:AES256-WRAP-PAD",
+        aes256wrappad_functions),
+    ALG("AES-192-WRAP-PAD:id-aes192-wrap-pad:AES192-WRAP-PAD",
+        aes192wrappad_functions),
+    ALG("AES-128-WRAP-PAD:id-aes128-wrap-pad:AES128-WRAP-PAD",
+        aes128wrappad_functions),
+    ALGC("AES-128-CBC-HMAC-SHA1", aes128cbc_hmac_sha1_functions,
+         cipher_capable_aes_cbc_hmac_sha1),
+    ALGC("AES-256-CBC-HMAC-SHA1", aes256cbc_hmac_sha1_functions,
+         cipher_capable_aes_cbc_hmac_sha1),
+    ALGC("AES-128-CBC-HMAC-SHA256", aes128cbc_hmac_sha256_functions,
+         cipher_capable_aes_cbc_hmac_sha256),
+    ALGC("AES-256-CBC-HMAC-SHA256", aes256cbc_hmac_sha256_functions,
+         cipher_capable_aes_cbc_hmac_sha256),
 #ifndef OPENSSL_NO_DES
-    { "DES-EDE3-ECB:DES-EDE3", "fips=yes", tdes_ede3_ecb_functions },
-    { "DES-EDE3-CBC:DES3", "fips=yes", tdes_ede3_cbc_functions },
+    ALG("DES-EDE3-ECB:DES-EDE3", tdes_ede3_ecb_functions),
+    ALG("DES-EDE3-CBC:DES3", tdes_ede3_cbc_functions),
 #endif  /* OPENSSL_NO_DES */
-    { NULL, NULL, NULL }
+    { { NULL, NULL, NULL }, NULL }
 };
+static OSSL_ALGORITHM exported_fips_ciphers[OSSL_NELEM(fips_ciphers)];
 
 static const OSSL_ALGORITHM fips_macs[] = {
 #ifndef OPENSSL_NO_CMAC
@@ -416,6 +435,7 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+
 static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
@@ -425,7 +445,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
     case OSSL_OP_DIGEST:
         return fips_digests;
     case OSSL_OP_CIPHER:
-        return fips_ciphers;
+        ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
+        return exported_fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
     case OSSL_OP_KDF:

@@ -121,6 +121,13 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
+# if     defined(AES_ASM) &&     ( \
+         defined(__x86_64)       || defined(__x86_64__)  || \
+         defined(_M_AMD64)       || defined(_M_X64)      )
+#  define AES_CBC_HMAC_SHA_CAPABLE 1
+#  define AESNI_CBC_HMAC_SHA_CAPABLE (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
+# endif
+
 # if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
          ((defined(__i386)       || defined(__i386__)    || \
            defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \

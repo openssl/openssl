@@ -237,3 +237,17 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
     *macctx = NULL;
     return 0;
 }
+
+void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
+                                         OSSL_ALGORITHM *out)
+{
+    int i, j;
+
+    if (out[0].algorithm_names == NULL) {
+        for (i = j = 0; in[i].alg.algorithm_names != NULL; ++i) {
+            if (in[i].capable == NULL || in[i].capable())
+                out[j++] = in[i].alg;
+        }
+        out[j++] = in[i].alg;
+    }
+}
