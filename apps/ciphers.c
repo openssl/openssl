@@ -113,7 +113,7 @@ int ciphers_main(int argc, char **argv)
     char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
-    uint8_t *flags;
+    uint8_t *flags = NULL;
 
     prog = opt_init(argc, argv, ciphers_options);
     while ((o = opt_next()) != OPT_EOF) {
