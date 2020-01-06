@@ -65,6 +65,15 @@ my @opensslcpphandlers = (
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
+    { regexp   => qr/#if defined\(OPENSSL_BUILDING_OPENSSL\) \|\| (.*)/,
+      massager => sub {
+          print STDERR "FOUND IT!!!";
+          return (<<"EOF");
+#$1
+EOF
+      }
+    },
+
     # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of
     # OPENSSL_NO_DEPRECATEDIN_x_y[_z].  That's due to <openssl/macros.h>
     # creating OPENSSL_NO_DEPRECATED_x_y[_z], but the ordinals files using
@@ -75,7 +84,15 @@ my @opensslcpphandlers = (
 #if$1 OPENSSL_NO_DEPRECATEDIN_$2
 EOF
       }
-   }
+    },
+    { regexp   =>
+qr/#if defined.OPENSSL_BUILDING_OPENSSL. .. defined.OPENSSL_NO_DEPRECATED_3_0./,
+      massager => sub {
+          return (<<"EOF");
+#ifdef OPENSSL_NO_DEPRECATEDIN_3_0
+EOF
+      }
+    }
 );
 my @cpphandlers = (
     ##################################################################
