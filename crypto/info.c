@@ -76,7 +76,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
                 const char **p;                                         \
                 int first = 1;                                          \
                                                                         \
-                for (p=dev; *p != NULL; p++) {                          \
+                for (p = dev; *p != NULL; p++) {                        \
                     if (!first)                                         \
                         OPENSSL_strlcat(seeds, " ", sizeof(seeds));     \
                     first = 0;                                          \
