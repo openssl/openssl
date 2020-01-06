@@ -23,7 +23,7 @@ static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
-static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
+static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
 {
     const EC_GROUP *group;
     int nid;
@@ -57,7 +57,7 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 
 static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-    EC_KEY *ec_key = pkey->pkey.ec;
+    const EC_KEY *ec_key = pkey->pkey.ec;
     void *pval = NULL;
     int ptype;
     unsigned char *penc = NULL, *p;
