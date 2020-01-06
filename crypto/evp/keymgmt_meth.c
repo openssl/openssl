@@ -144,6 +144,30 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->query_operation_name =
                 OSSL_get_OP_keymgmt_query_operation_name(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS:
+            if (keymgmt->validatedomparams != NULL)
+                break;
+            keymgmt->validatedomparams =
+                OSSL_get_OP_keymgmt_validate_domparams(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC:
+            if (keymgmt->validatepublic != NULL)
+                break;
+            keymgmt->validatepublic =
+                OSSL_get_OP_keymgmt_validate_public(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE:
+            if (keymgmt->validateprivate != NULL)
+                break;
+            keymgmt->validateprivate =
+                OSSL_get_OP_keymgmt_validate_private(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE:
+            if (keymgmt->validatepairwise != NULL)
+                break;
+            keymgmt->validatepairwise =
+                OSSL_get_OP_keymgmt_validate_pairwise(fns);
+            break;
         }
     }
     /*
