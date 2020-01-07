@@ -85,7 +85,6 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}

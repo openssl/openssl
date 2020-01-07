@@ -37,7 +37,6 @@ B<openssl> B<smime>
 [B<-noindef>]
 [B<-stream>]
 [B<-md> I<digest>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}

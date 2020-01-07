@@ -129,7 +129,6 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}

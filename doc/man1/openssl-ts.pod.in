@@ -47,7 +47,6 @@ B<-verify>
 [B<-queryfile> I<request.tsq>]
 [B<-in> I<response.tsr>]
 [B<-token_in>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 

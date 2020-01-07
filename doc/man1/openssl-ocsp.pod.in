@@ -59,7 +59,6 @@ B<openssl> B<ocsp>
 [B<-nrequest> I<n>]
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 

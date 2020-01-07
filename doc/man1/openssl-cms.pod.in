@@ -68,7 +68,6 @@ B<openssl> B<cms>
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
-[B<-verbose>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
