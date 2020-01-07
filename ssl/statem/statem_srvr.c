@@ -74,12 +74,9 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
                 return 1;
             }
             break;
-        } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+        } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+                   && !SSL_IS_QUIC(s)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
-#ifndef OPENSSL_NO_QUIC
-                if (s->quic_method != NULL)
-                    return 0;
-#endif
                 st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
                 return 1;
             }
