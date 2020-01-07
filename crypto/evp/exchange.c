@@ -208,10 +208,9 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     if (ctx->pkey != NULL) {
         provkey = evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
-        if (provkey == NULL) {
-            EVPerr(0, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        /* If export failed, legacy may be able to pick it up */
+        if (provkey == NULL)
+            goto legacy;
     }
     ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
     if (ctx->op.kex.exchprovctx == NULL) {
@@ -227,7 +226,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     return 0;
 
  legacy:
-    if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
+    if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
@@ -261,10 +260,9 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     }
 
     provkey = evp_keymgmt_export_to_provider(peer, ctx->keymgmt, 0);
-    if (provkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    /* If export failed, legacy may be able to pick it up */
+    if (provkey == NULL)
+        goto legacy;
     return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
 
  legacy:

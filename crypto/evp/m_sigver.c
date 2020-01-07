@@ -104,6 +104,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     locpctx->op.sig.signature = signature;
 
+    provkey =
+        evp_keymgmt_export_to_provider(locpctx->pkey, locpctx->keymgmt, 0);
+    /* If export failed, legacy may be able to pick it up */
+    if (provkey == NULL)
+        goto legacy;
+
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
                              : EVP_PKEY_OP_SIGNCTX;
 
@@ -113,13 +119,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         ERR_raise(ERR_LIB_EVP,  EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    provkey =
-        evp_keymgmt_export_to_provider(locpctx->pkey, locpctx->keymgmt, 0);
-    if (provkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        goto err;
-    }
-
     if (type != NULL) {
         ctx->reqdigest = type;
     } else {
@@ -156,6 +155,11 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     return 0;
 
  legacy:
+    if (ctx->pctx->pmeth == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
     if (!(ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)) {
 
         if (type == NULL) {
