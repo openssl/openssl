@@ -288,7 +288,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
     return 0;
 }
 
@@ -300,7 +300,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unknown message digest: %s\n", prog, name);
     return 0;
 }
 
@@ -762,7 +762,7 @@ int opt_next(void)
         dunno = p;
         return unknown->retval;
     }
-    opt_printf_stderr("%s: Option unknown option -%s\n", prog, p);
+    opt_printf_stderr("%s: Unknown option: -%s\n", prog, p);
     return -1;
 }
 
