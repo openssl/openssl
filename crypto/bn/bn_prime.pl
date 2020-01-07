@@ -6,8 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Output year depends on the year of the script.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 print <<"EOF";
 /*
  * WARNING: do not edit!
