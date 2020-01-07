@@ -57,7 +57,7 @@ in two threads.
 
 We mention "key type" in this manual, which is the same
 as "algorithm" in most cases, allowing either term to be used
-interchangeably.  There are algorithms when the I<key type> and the
+interchangeably.  There are algorithms where the I<key type> and the
 I<algorithm> of the operations that use the keys are not the same,
 such as EC keys being used for ECDSA and ECDH operations.
 
