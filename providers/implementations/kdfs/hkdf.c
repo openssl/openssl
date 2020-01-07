@@ -30,7 +30,7 @@
 #include "prov/provider_util.h"
 #include "e_os.h"
 
-#define HKDF_MAXBUF 1024
+#define HKDF_MAXBUF 2048
 
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_new;
 static OSSL_FUNC_kdf_freectx_fn kdf_hkdf_free;
