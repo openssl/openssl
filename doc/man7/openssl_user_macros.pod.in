@@ -31,8 +31,8 @@ The value is a version number, given in one of the following two forms:
 
 This is the form supported for all versions up 1.1.x, where C<M>
 represents the major number, C<NN> represents the minor number, and
-C<FF> represents the fix number, as a hexadecimal numbers.
-For version 1.1.0, that's C<0x10100000L>.
+C<FF> represents the fix number, as a hexadecimal number.  For version
+1.1.0, that's C<0x10100000L>.
 
 Any version number may be given, but these numbers are
 the current known major deprecation points, making them the most
@@ -59,7 +59,7 @@ This form is a simple decimal number calculated with this formula:
 I<major> * 10000 + I<minor> * 100 + I<patch>
 
 where I<major>, I<minor> and I<patch> are the desired major,
-minor and patch numbers of the major number.  For example:
+minor and patch components of the version number.  For example:
 
 =over 4
 
