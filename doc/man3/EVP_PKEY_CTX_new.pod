@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_new_provided,
-EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
+EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_new_from_name,
+EVP_PKEY_CTX_new_from_pkey, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
 - public key algorithm context functions
 
 =head1 SYNOPSIS
@@ -12,9 +12,11 @@ EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
 
  EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
  EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
- EVP_PKEY_CTX *EVP_PKEY_CTX_new_provided(OPENSSL_CTX *libctx,
-                                         const char *name,
-                                         const char *propquery);
+ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
+                                          const char *name,
+                                          const char *propquery);
+ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx,
+                                          EVP_PKEY *pkey);
  EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
  void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
@@ -26,13 +28,19 @@ the I<pkey> key type and ENGINE I<e>.
 The EVP_PKEY_CTX_new_id() function allocates public key algorithm context
 using the key type specified by I<id> and ENGINE I<e>.
 
-The EVP_PKEY_CTX_new_provided() function allocates a public key algorithm
+The EVP_PKEY_CTX_new_from_name() function allocates a public key algorithm
 context using the library context I<libctx> (see L<OPENSSL_CTX(3)>), the
 key type specified by I<name> and the property query I<propquery>.  None
 of the arguments are duplicated, so they  must remain unchanged for the
 lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.
 
-EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_provided() are normally
+The EVP_PKEY_CTX_new_from_pkey() function allocates a public key algorithm
+context using the library context I<libctx> (see L<OPENSSL_CTX(3)>) and the
+algorithm specified by I<pkey> . None of the arguments are duplicated, so they
+must remain unchanged for the lifetime of the returned B<EVP_PKEY_CTX> or of
+any of its duplicates.
+
+EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_from_name() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
 for example during parameter generation or key generation for some
 algorithms.
@@ -76,7 +84,11 @@ L<EVP_PKEY_new(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+The EVP_PKEY_CTX_new(), EVP_PKEY_CTX_new_id(), EVP_PKEY_CTX_dup() and
+EVP_PKEY_CTX_free() functions were added in OpenSSL 1.0.0.
+
+The EVP_PKEY_CTX_new_from_name() and EVP_PKEY_CTX_new_from_pkey() functions were
+added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

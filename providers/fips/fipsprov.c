@@ -298,14 +298,14 @@ static int dummy_evp_call(void *provctx)
                                    dsa_priv, dsa_priv_len);
     *p = OSSL_PARAM_construct_end();
 
-    kctx = EVP_PKEY_CTX_new_provided(libctx, SN_dsa, "");
+    kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
     if (kctx == NULL)
         goto err;
     if (EVP_PKEY_key_fromdata_init(kctx) <= 0
             || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
         goto err;
 
-    sctx = evp_pkey_ctx_new_int(libctx, pkey, NULL, NULL, NULL, -1);
+    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
     if (sctx == NULL)
         goto err;;
 

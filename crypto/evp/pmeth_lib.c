@@ -134,6 +134,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *name, const char *propquery,
                                  int id)
+
 {
     EVP_PKEY_CTX *ret;
     const EVP_PKEY_METHOD *pmeth = NULL;
@@ -149,7 +150,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If the key doesn't contain anything legacy, then it must be provided,
      * so we extract the necessary information and use that.
      */
-    if (pkey != NULL && pkey->ameth == NULL) {
+    if (pkey != NULL && pkey->pkey.ptr == NULL) {
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;
@@ -265,7 +266,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
                                          const char *name,
                                          const char *propquery)
 {
-    return evp_pkey_ctx_new_int(libctx, NULL, NULL, name, propquery, -1);
+    return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey)
@@ -298,6 +299,24 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         ctx->op.ciph.cipher = NULL;
     }
 #endif
+}
+
+void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
+{
+    if (ctx == NULL)
+        return;
+    if (ctx->pmeth && ctx->pmeth->cleanup)
+        ctx->pmeth->cleanup(ctx);
+
+    evp_pkey_ctx_free_old_ops(ctx);
+    EVP_KEYMGMT_free(ctx->keymgmt);
+
+    EVP_PKEY_free(ctx->pkey);
+    EVP_PKEY_free(ctx->peerkey);
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+    ENGINE_finish(ctx->engine);
+#endif
+    OPENSSL_free(ctx);
 }
 
 #ifndef FIPS_MODE
