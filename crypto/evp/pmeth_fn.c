@@ -367,10 +367,9 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx->pkey != NULL) {
         provkey =
             evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
-        if (provkey == NULL) {
-            EVPerr(0, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        /* If export failed, legacy may be able to pick it up */
+        if (provkey == NULL)
+            goto legacy;
     }
     ctx->op.sig.sigprovctx = signature->newctx(ossl_provider_ctx(signature->prov));
     if (ctx->op.sig.sigprovctx == NULL) {
@@ -617,10 +616,9 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx->pkey != NULL) {
         provkey = evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
-        if (provkey == NULL) {
-            EVPerr(0, EVP_R_INITIALIZATION_ERROR);
-            goto err;
-        }
+        /* If export failed, legacy may be able to pick it up */
+        if (provkey == NULL)
+            goto legacy;
     }
     ctx->op.ciph.ciphprovctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
     if (ctx->op.ciph.ciphprovctx == NULL) {
