@@ -82,8 +82,6 @@ A file of untrusted certificates.
 
 {- $OpenSSL::safe::opt_name_item -}
 
-{- $OpenSSL::safe::opt_trust_item -}
-
 {- $OpenSSL::safe::opt_engine_item -}
 To load certificates or CRLs that require engine support, specify the
 B<-engine> option before any of the

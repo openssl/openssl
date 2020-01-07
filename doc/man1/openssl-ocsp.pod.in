@@ -31,10 +31,6 @@ B<openssl> B<ocsp>
 [B<-multi> I<process-count>]
 [B<-header>]
 [B<-path>]
-[B<-CApath> I<dir>]
-[B<-CAfile> I<file>]
-[B<-no-CAfile>]
-[B<-no-CApath>]
 [B<-VAfile> I<file>]
 [B<-validity_period> I<n>]
 [B<-status_age> I<n>]
@@ -183,10 +179,6 @@ When running as a responder B<-timeout> option is recommended to limit the time
 each child is willing to wait for the client's OCSP response.
 This option is available on POSIX systems (that support the fork() and other
 required unix system-calls).
-
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
 
 =item B<-verify_other> I<file>
 
