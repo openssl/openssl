@@ -6,6 +6,17 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Collect all compiler flags.
+$cflags="";
+for($i=1;$i<$#ARGV;$i++) {
+    if ($ARGV[$i] eq "386") {
+	last;
+    }
+    $cflags.=" $ARGV[$i]";
+}
+
+# Check if Intel CET is enabled at compile time.
+$endbr32=(`echo "#ifdef __CET__\n#error CET is enabled\n#endif" | $ENV{CC} $cflags -c -o /dev/null -x c - 2>&1` =~ /CET is enabled/)?"endbr32":"";
 
 # void des_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 # des_cblock (*input);
@@ -165,21 +176,28 @@ sub cbc
 	&jmp_ptr($count);
 
 &set_label("ej7");
+	&endbranch()		if ($endbr32);
 	&movb(&HB("edx"),	&BP(6,$in,"",0));
 	&shl("edx",8);
 &set_label("ej6");
+	&endbranch()		if ($endbr32);
 	&movb(&HB("edx"),	&BP(5,$in,"",0));
 &set_label("ej5");
+	&endbranch()		if ($endbr32);
 	&movb(&LB("edx"),	&BP(4,$in,"",0));
 &set_label("ej4");
+	&endbranch()		if ($endbr32);
 	&mov("ecx",		&DWP(0,$in,"",0));
 	&jmp(&label("ejend"));
 &set_label("ej3");
+	&endbranch()		if ($endbr32);
 	&movb(&HB("ecx"),	&BP(2,$in,"",0));
 	&shl("ecx",8);
 &set_label("ej2");
+	&endbranch()		if ($endbr32);
 	&movb(&HB("ecx"),	&BP(1,$in,"",0));
 &set_label("ej1");
+	&endbranch()		if ($endbr32);
 	&movb(&LB("ecx"),	&BP(0,$in,"",0));
 &set_label("ejend");
 
