@@ -114,17 +114,17 @@ Known answer test for a Deterministic Random Bit Generator.
 
 Conditional test that is run during the generation of key pairs.
 
-The "Module_Integrity" self_test is always run at startup.
-The "Install_Integrity" self_test is used to check if the self_tests have
+=back
+
+The "Module_Integrity" self test is always run at startup.
+The "Install_Integrity" self test is used to check if the self tests have
 already been run at installation time. If they have already run then the
-self_tests are not run on subsequent startups.
-All other self_test categories are run once at installation time, except for the
+self tests are not run on subsequent startups.
+All other self test categories are run once at installation time, except for the
 "Pairwise_Consistency_Test".
 
 There is only one instance of the "Module_Integrity" and "Install_Integrity"
-self tests. All other self_tests may have multiple self tests.
-
-=back
+self tests. All other self tests may have multiple instances.
 
 =item "st-desc" (B<OSSL_PROV_PARAM_SELF_TEST_DESC>) <UTF8 string>
 
