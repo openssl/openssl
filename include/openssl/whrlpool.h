@@ -26,8 +26,11 @@ extern "C" {
 #  endif
 
 #  define WHIRLPOOL_DIGEST_LENGTH (512/8)
-#  define WHIRLPOOL_BBLOCK        512
-#  define WHIRLPOOL_COUNTER       (256/8)
+
+#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+
+#   define WHIRLPOOL_BBLOCK        512
+#   define WHIRLPOOL_COUNTER       (256/8)
 
 typedef struct {
     union {
@@ -39,15 +42,21 @@ typedef struct {
     unsigned int bitoff;
     size_t bitlen[WHIRLPOOL_COUNTER / sizeof(size_t)];
 } WHIRLPOOL_CTX;
+#  endif
 
-int WHIRLPOOL_Init(WHIRLPOOL_CTX *c);
-int WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *inp, size_t bytes);
-void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *inp, size_t bits);
-int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c);
-unsigned char *WHIRLPOOL(const void *inp, size_t bytes, unsigned char *md);
+DEPRECATEDIN_3_0(int WHIRLPOOL_Init(WHIRLPOOL_CTX *c))
+DEPRECATEDIN_3_0(int WHIRLPOOL_Update(WHIRLPOOL_CTX *c,
+                                      const void *inp, size_t bytes))
+DEPRECATEDIN_3_0(void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *inp,
+                                          size_t bits))
+DEPRECATEDIN_3_0(int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c))
+DEPRECATEDIN_3_0(unsigned char *WHIRLPOOL(const void *inp, size_t bytes,
+                                          unsigned char *md))
 
-#  ifdef __cplusplus
+#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+#   ifdef __cplusplus
 }
+#   endif
 #  endif
 # endif
 
