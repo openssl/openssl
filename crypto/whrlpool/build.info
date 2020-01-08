@@ -17,12 +17,20 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-SOURCE[../../libcrypto]=wp_dgst.c $WPASM
-
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
-DEFINE[../../libcrypto]=$WPDEF
 DEFINE[../../providers/libimplementations.a]=$WPDEF
+
+SOURCE[../../libcrypto]=wp_dgst.c $WPASM
+DEFINE[../../libcrypto]=$WPDEF
+
+# When all deprecated symbols are removed, libcrypto doesn't export the
+# WHIRLPOOL functions, so we must include them directly in liblegacy.a
+IF[{- $disabled{"deprecated"}
+      && (defined $config{"api"} && $config{"api"} >= 30000) -}]
+  SOURCE[../../providers/liblegacy.a]=wp_dgst.c $WPASM
+  DEFINE[../../providers/liblegacy.a]=$WPDEF
+ENDIF
 
 GENERATE[wp-mmx.s]=asm/wp-mmx.pl
 DEPEND[wp-mmx.s]=../perlasm/x86asm.pl
