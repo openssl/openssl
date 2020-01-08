@@ -138,6 +138,7 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 };
 
 static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
+    ALG("NULL", null_functions),
     ALG("AES-256-ECB", aes256ecb_functions),
     ALG("AES-192-ECB", aes192ecb_functions),
     ALG("AES-128-ECB", aes128ecb_functions),

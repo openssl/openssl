@@ -142,6 +142,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     if (tmpcipher->prov == NULL) {
         switch(tmpcipher->nid) {
+        case NID_undef:
         case NID_aes_256_ecb:
         case NID_aes_192_ecb:
         case NID_aes_128_ecb:
@@ -326,7 +327,10 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
 #else
         EVP_CIPHER *provciph =
-            EVP_CIPHER_fetch(NULL, OBJ_nid2sn(cipher->nid), "");
+            EVP_CIPHER_fetch(NULL,
+                             cipher->nid == NID_undef ? "NULL"
+                                                      : OBJ_nid2sn(cipher->nid),
+                             "");
 
         if (provciph == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
