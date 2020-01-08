@@ -126,7 +126,10 @@ static int test_fromdata_rsa(void)
         goto err;
 
     if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params)))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+        || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
+        || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
+        || !TEST_int_eq(EVP_PKEY_size(pk), 4))
         goto err;
 
     ret = test_print_key_using_pem(pk)
@@ -176,7 +179,10 @@ static int test_fromdata_dh(void)
         goto err;
 
     if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params)))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+        || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
+        || !TEST_int_eq(EVP_PKEY_security_bits(pk), 0) /* Missing Q */
+        || !TEST_int_eq(EVP_PKEY_size(pk), 4))
         goto err;
 
     ret = test_print_key_using_pem(pk)
