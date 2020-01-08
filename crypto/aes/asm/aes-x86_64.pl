@@ -48,6 +48,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+my $endbr=&endbr64();
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -609,6 +611,7 @@ $code.=<<___;
 asm_AES_encrypt:
 AES_encrypt:
 .cfi_startproc
+	$endbr
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1229,6 +1232,7 @@ $code.=<<___;
 asm_AES_decrypt:
 AES_decrypt:
 .cfi_startproc
+	$endbr
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1346,6 +1350,7 @@ $code.=<<___;
 .align	16
 AES_set_encrypt_key:
 .cfi_startproc
+	$endbr
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1626,6 +1631,7 @@ $code.=<<___;
 .align	16
 AES_set_decrypt_key:
 .cfi_startproc
+	$endbr
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1740,6 +1746,7 @@ $code.=<<___;
 asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 .cfi_startproc
+	$endbr
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_epilogue
 	pushfq
