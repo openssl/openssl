@@ -26,63 +26,11 @@ int gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                       size_t len, unsigned char *out)
 {
     if (ctx->enc) {
-        if (ctx->ctr != NULL) {
-#if defined(AES_GCM_ASM)
-            size_t bulk = 0;
-
-            if (len >= AES_GCM_ENC_BYTES && AES_GCM_ASM(ctx)) {
-                size_t res = (16 - ctx->gcm.mres) % 16;
-
-                if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, res))
-                    return 0;
-
-                bulk = AES_gcm_encrypt(in + res, out + res, len - res,
-                                       ctx->gcm.key,
-                                       ctx->gcm.Yi.c, ctx->gcm.Xi.u);
-
-                ctx->gcm.len.u[1] += bulk;
-                bulk += res;
-            }
-            if (CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
-                                            len - bulk, ctx->ctr))
-                return 0;
-#else
-            if (CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
-                return 0;
-#endif /* AES_GCM_ASM */
-        } else {
-            if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
-                return 0;
-        }
+        if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
+            return 0;
     } else {
-        if (ctx->ctr != NULL) {
-#if defined(AES_GCM_ASM)
-            size_t bulk = 0;
-
-            if (len >= AES_GCM_DEC_BYTES && AES_GCM_ASM(ctx)) {
-                size_t res = (16 - ctx->gcm.mres) % 16;
-
-                if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, res))
-                    return -1;
-
-                bulk = AES_gcm_decrypt(in + res, out + res, len - res,
-                                       ctx->gcm.key,
-                                       ctx->gcm.Yi.c, ctx->gcm.Xi.u);
-
-                ctx->gcm.len.u[1] += bulk;
-                bulk += res;
-            }
-            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
-                                            len - bulk, ctx->ctr))
-                return 0;
-#else
-            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in, out, len, ctx->ctr))
-                return 0;
-#endif /* AES_GCM_ASM */
-        } else {
-            if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
-                return 0;
-        }
+        if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
+            return 0;
     }
     return 1;
 }

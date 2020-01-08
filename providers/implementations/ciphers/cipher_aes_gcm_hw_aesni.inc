@@ -26,7 +26,7 @@ static const PROV_GCM_HW aesni_gcm = {
     aesni_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
-    gcm_cipher_update,
+    generic_aes_gcm_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };
