@@ -39,6 +39,12 @@
  * words reasonable performance even with not so modern compilers.
  */
 
+/*
+ * Camellia low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/camellia.h>
 #include "cmll_local.h"
 #include <string.h>
