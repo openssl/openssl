@@ -112,6 +112,8 @@ die "can't locate x86_64-xlate.pl";
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86_64asm.pl";
 
+$endbr=&endbr64();
+
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
@@ -1619,6 +1621,7 @@ $code.=<<___;
 .align	16
 bsaes_cbc_encrypt:
 .cfi_startproc
+	$endbr
 ___
 $code.=<<___ if ($win64);
 	mov	48(%rsp),$arg6		# pull direction flag
@@ -1924,6 +1927,7 @@ $code.=<<___;
 .align	16
 bsaes_ctr32_encrypt_blocks:
 .cfi_startproc
+	$endbr
 	mov	%rsp, %rax
 .Lctr_enc_prologue:
 	push	%rbp
