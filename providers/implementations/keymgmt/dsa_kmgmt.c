@@ -19,8 +19,10 @@
 
 static OSSL_OP_keymgmt_importdomparams_fn dsa_importdomparams;
 static OSSL_OP_keymgmt_exportdomparams_fn dsa_exportdomparams;
+static OSSL_OP_keymgmt_get_domparam_params_fn dsa_get_domparam_params;
 static OSSL_OP_keymgmt_importkey_fn dsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn dsa_exportkey;
+static OSSL_OP_keymgmt_get_key_params_fn dsa_get_key_params;
 
 static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 {
@@ -191,16 +193,50 @@ static int dsa_exportkey(void *key, OSSL_CALLBACK *param_cb, void *cbarg)
     return ret;
 }
 
+/*
+ * Same function for domain parameters and for keys.
+ * "dpk" = "domain parameters & keys"
+ */
+static ossl_inline int dsa_get_dpk_params(void *key, OSSL_PARAM params[])
+{
+    DSA *dsa = key;
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
+        && !OSSL_PARAM_set_int(p, DSA_bits(dsa)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
+        && !OSSL_PARAM_set_int(p, DSA_security_bits(dsa)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
+        && !OSSL_PARAM_set_int(p, DSA_size(dsa)))
+        return 0;
+    return 1;
+}
+
+/*
+ * We have wrapper functions to make sure we get signatures right, see
+ * the forward declarations at the beginning of this file.
+ */
+static int dsa_get_domparam_params(void *domparams, OSSL_PARAM params[])
+{
+    return dsa_get_dpk_params(domparams, params);
+}
+
+static int dsa_get_key_params(void *key, OSSL_PARAM params[])
+{
+    return dsa_get_dpk_params(key, params);
+}
+
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
-    /*
-     * TODO(3.0) When implementing OSSL_FUNC_KEYMGMT_GENKEY, remember to also
-     * implement OSSL_FUNC_KEYMGMT_EXPORTKEY.
-     */
     { OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS, (void (*)(void))dsa_importdomparams },
     { OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS, (void (*)(void))dsa_exportdomparams },
     { OSSL_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DSA_free },
+    { OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS,
+      (void (*) (void))dsa_get_domparam_params },
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dsa_importkey },
     { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dsa_exportkey },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DSA_free },
+    { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))dsa_get_key_params },
     { 0, NULL }
 };
