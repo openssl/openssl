@@ -29,7 +29,7 @@ The value is a version number, given in one of the following two forms:
 
 =item C<0xMNNFF000L>
 
-This is the form supported for all versions up 1.1.x, where C<M>
+This is the form supported for all versions up to 1.1.x, where C<M>
 represents the major number, C<NN> represents the minor number, and
 C<FF> represents the fix number, as a hexadecimal number.  For version
 1.1.0, that's C<0x10100000L>.
@@ -82,7 +82,7 @@ C<{- join('', map { my @x = split /=/,$_; $x[1] }
 =item B<OPENSSL_NO_DEPRECATED>
 
 If this macro is defined, all deprecated public symbols in all OpenSSL
-versions up to and including the version given with B<OPENSSL_API_COMPAT>
+versions up to and including the version given by B<OPENSSL_API_COMPAT>
 will be hidden.
 
 =back
