@@ -381,7 +381,7 @@ OPENSSL_strlcpy                         388	3_0_0	EXIST::FUNCTION:
 BIO_get_port                            389	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SOCK
 DISPLAYTEXT_free                        390	3_0_0	EXIST::FUNCTION:
 BN_div                                  391	3_0_0	EXIST::FUNCTION:
-RIPEMD160_Update                        392	3_0_0	EXIST::FUNCTION:RMD160
+RIPEMD160_Update                        392	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RMD160
 PEM_write_bio_CMS                       393	3_0_0	EXIST::FUNCTION:CMS
 ASN1_OBJECT_new                         394	3_0_0	EXIST::FUNCTION:
 EVP_des_ede3_cfb8                       395	3_0_0	EXIST::FUNCTION:DES
@@ -412,7 +412,7 @@ d2i_EXTENDED_KEY_USAGE                  419	3_0_0	EXIST::FUNCTION:
 ASYNC_unblock_pause                     420	3_0_0	EXIST::FUNCTION:
 i2d_X509_VAL                            421	3_0_0	EXIST::FUNCTION:
 ASN1_SCTX_get_flags                     422	3_0_0	EXIST::FUNCTION:
-RIPEMD160                               423	3_0_0	EXIST::FUNCTION:RMD160
+RIPEMD160                               423	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RMD160
 CRYPTO_ocb128_setiv                     424	3_0_0	EXIST::FUNCTION:OCB
 X509_CRL_digest                         425	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_cbc_hmac_sha1               426	3_0_0	EXIST::FUNCTION:
@@ -3399,7 +3399,7 @@ EVP_PKEY_meth_set_init                  3469	3_0_0	EXIST::FUNCTION:
 X509_REQ_extension_nid                  3470	3_0_0	EXIST::FUNCTION:
 ENGINE_up_ref                           3471	3_0_0	EXIST::FUNCTION:ENGINE
 BN_BLINDING_invert_ex                   3472	3_0_0	EXIST::FUNCTION:
-RIPEMD160_Init                          3473	3_0_0	EXIST::FUNCTION:RMD160
+RIPEMD160_Init                          3473	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RMD160
 ASYNC_WAIT_CTX_get_changed_fds          3474	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_save_parameters                3475	3_0_0	EXIST::FUNCTION:
 SCT_set_source                          3476	3_0_0	EXIST::FUNCTION:CT
@@ -3744,7 +3744,7 @@ X509_supported_extension                3825	3_0_0	EXIST::FUNCTION:
 ECDSA_sign_setup                        3826	3_0_0	EXIST::FUNCTION:EC
 EVP_camellia_192_cfb128                 3827	3_0_0	EXIST::FUNCTION:CAMELLIA
 d2i_AUTHORITY_KEYID                     3828	3_0_0	EXIST::FUNCTION:
-RIPEMD160_Transform                     3829	3_0_0	EXIST::FUNCTION:RMD160
+RIPEMD160_Transform                     3829	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RMD160
 DES_random_key                          3830	3_0_0	EXIST::FUNCTION:DES
 i2d_PKCS12_MAC_DATA                     3831	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_EC_KEY                    3832	3_0_0	EXIST::FUNCTION:EC
@@ -3766,7 +3766,7 @@ OCSP_REQ_CTX_get0_mem_bio               3847	3_0_0	EXIST::FUNCTION:OCSP
 i2d_PKCS8PrivateKeyInfo_bio             3848	3_0_0	EXIST::FUNCTION:
 d2i_OCSP_CERTID                         3849	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_meth_set_init                3850	3_0_0	EXIST::FUNCTION:
-RIPEMD160_Final                         3851	3_0_0	EXIST::FUNCTION:RMD160
+RIPEMD160_Final                         3851	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RMD160
 NETSCAPE_SPKI_free                      3852	3_0_0	EXIST::FUNCTION:
 BIO_asn1_get_prefix                     3853	3_0_0	EXIST::FUNCTION:
 d2i_OCSP_ONEREQ                         3854	3_0_0	EXIST::FUNCTION:OCSP
