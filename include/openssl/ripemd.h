@@ -18,18 +18,18 @@
 
 # include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_RMD160
-# include <openssl/e_os2.h>
-# include <stddef.h>
-# ifdef  __cplusplus
+# ifndef OPENSSL_NO_RMD160
+#  include <openssl/e_os2.h>
+#  include <stddef.h>
+#  ifdef  __cplusplus
 extern "C" {
-# endif
+#  endif
 
-# define RIPEMD160_LONG unsigned int
+#  define RIPEMD160_LONG unsigned int
 
-# define RIPEMD160_CBLOCK        64
-# define RIPEMD160_LBLOCK        (RIPEMD160_CBLOCK/4)
-# define RIPEMD160_DIGEST_LENGTH 20
+#  define RIPEMD160_CBLOCK        64
+#  define RIPEMD160_LBLOCK        (RIPEMD160_CBLOCK/4)
+#  define RIPEMD160_DIGEST_LENGTH 20
 
 typedef struct RIPEMD160state_st {
     RIPEMD160_LONG A, B, C, D, E;
@@ -44,10 +44,8 @@ int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 unsigned char *RIPEMD160(const unsigned char *d, size_t n, unsigned char *md);
 void RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *b);
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
+#  endif
 # endif
-# endif
-
-
 #endif
