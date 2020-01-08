@@ -394,8 +394,7 @@ static void x509v3_cache_extensions(X509 *x)
             x->ex_pathlen = -1;
         BASIC_CONSTRAINTS_free(bs);
         x->ex_flags |= EXFLAG_BCONS;
-    }
-    else if (i != -1) {
+    } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
     /* Handle proxy certificates */
@@ -411,8 +410,7 @@ static void x509v3_cache_extensions(X509 *x)
             x->ex_pcpathlen = -1;
         PROXY_CERT_INFO_EXTENSION_free(pci);
         x->ex_flags |= EXFLAG_PROXY;
-    }
-    else if (i != -1) {
+    } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
     /* Handle key usage */
@@ -425,8 +423,7 @@ static void x509v3_cache_extensions(X509 *x)
             x->ex_kusage = 0;
         x->ex_flags |= EXFLAG_KUSAGE;
         ASN1_BIT_STRING_free(usage);
-    }
-    else if (i != -1) {
+    } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
     x->ex_xkusage = 0;
@@ -473,8 +470,7 @@ static void x509v3_cache_extensions(X509 *x)
             }
         }
         sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);
-    }
-    else if (i != -1) {
+    } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
 
@@ -485,8 +481,7 @@ static void x509v3_cache_extensions(X509 *x)
             x->ex_nscert = 0;
         x->ex_flags |= EXFLAG_NSCERT;
         ASN1_BIT_STRING_free(ns);
-    }
-    else if (i != -1) {
+    } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
     x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &i, NULL);
