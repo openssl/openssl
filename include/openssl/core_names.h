@@ -154,6 +154,11 @@ extern "C" {
 #define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
 /* PKEY parameters */
+/* Common PKEY parameters */
+#define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
+#define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
+#define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
+
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P        "p"
 #define OSSL_PKEY_PARAM_FFC_G        "g"

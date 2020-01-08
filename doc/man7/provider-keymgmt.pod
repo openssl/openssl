@@ -26,6 +26,10 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OP_keymgmt_importdomparam_types(void);
  const OSSL_PARAM *OP_keymgmt_exportdomparam_types(void);
 
+ /* Key domain parameter information */
+ int OP_keymgmt_get_domparam_params(void *domparams, OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keymgmt_gettable_domparam_params(void);
+
  /* Key creation and destruction */
  void *OP_keymgmt_importkey(void *provctx, const OSSL_PARAM params[]);
  void *OP_keymgmt_genkey(void *provctx,
@@ -39,6 +43,10 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key discovery */
  const OSSL_PARAM *OP_keymgmt_importkey_types(void);
  const OSSL_PARAM *OP_keymgmt_exportkey_types(void);
+
+ /* Key information */
+ int OP_keymgmt_get_key_params(void *key, OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keymgmt_gettable_key_params(void);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -84,6 +92,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_exportdomparams      OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS
  OP_keymgmt_importdomparam_types OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES
  OP_keymgmt_exportdomparam_types OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES
+ OP_keymgmt_get_domparam_params  OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS
+ OP_keymgmt_gettable_domparam_params
+                                 OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS
 
  OP_keymgmt_importkey            OSSL_FUNC_KEYMGMT_IMPORTKEY
  OP_keymgmt_genkey               OSSL_FUNC_KEYMGMT_GENKEY
@@ -92,6 +103,10 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_exportkey            OSSL_FUNC_KEYMGMT_EXPORTKEY
  OP_keymgmt_importkey_types      OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES
  OP_keymgmt_exportkey_types      OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES
+ OP_keymgmt_get_key_params       OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS
+ OP_keymgmt_gettable_key_params  OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS
+
+ OP_keymgmt_query_operation_name OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME
 
 =head2 Domain Parameter Functions
 
@@ -116,12 +131,17 @@ OP_keymgmt_importdomparam_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_importdomparams()
 can handle.
 
-=for comment There should be one corresponding to OP_keymgmt_gendomparams()
-as well...
-
 OP_keymgmt_exportdomparam_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that can be exported with
 OP_keymgmt_exportdomparams().
+
+OP_keymgmt_get_domparam_params() should extract information data
+associated with the given I<domparams>,
+see L</Information Parameters>.
+
+OP_keymgmt_gettable_domparam_params() should return a constant array
+of descriptor B<OSSL_PARAM>, for parameters that
+OP_keymgmt_get_domparam_params() can handle.
 
 =head2 Key functions
 
@@ -154,12 +174,16 @@ OP_keymgmt_importkey_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_importkey()
 can handle.
 
-=for comment There should be one corresponding to OP_keymgmt_genkey()
-as well...
-
 OP_keymgmt_exportkey_types() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that can be exported with
 OP_keymgmt_exportkeys().
+
+OP_keymgmt_get_key_params() should extract information data associated
+with the given I<key>, see L</Information Parameters>.
+
+OP_keymgmt_gettable_key_params() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that
+OP_keymgmt_get_key_params() can handle.
 
 =head2 Supported operations
 
@@ -170,6 +194,42 @@ but only works as an advisory.  If this function is not present, or
 returns NULL, the caller is free to assume that there's an algorithm
 from the same provider, of the same name as the one used to fetch the
 keymgmt and try to use that.
+
+=head2 Information Parameters
+
+See L<OSSL_PARAM(3)> for further details on the parameters structure.
+
+Parameters currently recognised by built-in keymgmt algorithms'
+OP_keymgmt_get_domparams_params() and OP_keymgmt_get_key_params()
+are:
+
+=over 4
+
+=item "bits" (B<OSSL_PKEY_PARAM_BITS>) <integer>
+
+The value should be the cryptographic length of the cryptosystem to
+which the key belongs, in bits.  The definition of cryptographic
+length is specific to the key cryptosystem.
+
+=item "max-size" (B<OSSL_PKEY_PARAM_MAX_SIZE>) <integer>
+
+The value should be the maximum size that a caller should allocate to
+safely store a signature (called I<sig> in L<provider-signature(7)>),
+the result of asymmmetric encryption / decryption (I<out> in
+L<provider-asym_cipher(7)>, a derived secret (I<secret> in
+L<provider-keyexch(7)>, and similar data).
+
+Because an EVP_KEYMGMT method is always tightly bound to another method
+(signature, asymmetric cipher, key exchange, ...) and must be of the
+same provider, this number only needs to be synchronised with the
+dimensions handled in the rest of the same provider.
+
+=item "security-bits" (B<OSSL_PKEY_PARAM_SECURITY_BITS>) <integer>
+
+The value should be the number of security bits of the given key.
+Bits of security is defined in SP800-57.
+
+=back
 
 =head1 SEE ALSO
 
