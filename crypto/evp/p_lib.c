@@ -34,8 +34,12 @@ static void evp_pkey_free_it(EVP_PKEY *key);
 
 int EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
-    if (pkey && pkey->ameth && pkey->ameth->pkey_bits)
-        return pkey->ameth->pkey_bits(pkey);
+    if (pkey != NULL) {
+        if (pkey->ameth == NULL)
+            return pkey->cache.bits;
+        else if (pkey->ameth->pkey_bits)
+            return pkey->ameth->pkey_bits(pkey);
+    }
     return 0;
 }
 
@@ -43,9 +47,22 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return 0;
-    if (pkey->ameth == NULL || pkey->ameth->pkey_security_bits == NULL)
+    if (pkey->ameth == NULL)
+        return pkey->cache.security_bits;
+    if (pkey->ameth->pkey_security_bits == NULL)
         return -2;
     return pkey->ameth->pkey_security_bits(pkey);
+}
+
+int EVP_PKEY_size(const EVP_PKEY *pkey)
+{
+    if (pkey != NULL) {
+        if (pkey->ameth == NULL)
+            return pkey->cache.size;
+        else if (pkey->ameth->pkey_size != NULL)
+            return pkey->ameth->pkey_size(pkey);
+    }
+    return 0;
 }
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)

@@ -371,6 +371,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
                     (void))
 
+/* Key domain parameter information */
+#define OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS       7
+#define OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS  8
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_domparam_params,
+                    (void *domparam, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_domparam_params,
+                    (void))
+
 /* Key creation and destruction */
 # define OSSL_FUNC_KEYMGMT_IMPORTKEY               10
 # define OSSL_FUNC_KEYMGMT_GENKEY                  11
@@ -400,8 +408,15 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 
+/* Key information */
+#define OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS            17
+#define OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS       18
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_key_params,
+                    (void *key, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_key_params, (void))
+
 /* Discovery of supported operations */
-# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME    17
+# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME     20
 OSSL_CORE_MAKE_FUNC(const char *,OP_keymgmt_query_operation_name,
                     (int operation_id))
 

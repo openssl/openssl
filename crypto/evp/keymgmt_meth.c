@@ -81,6 +81,16 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->exportdomparam_types =
                 OSSL_get_OP_keymgmt_exportdomparam_types(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS:
+            if (keymgmt->get_domparam_params == NULL)
+                keymgmt->get_domparam_params =
+                    OSSL_get_OP_keymgmt_get_domparam_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS:
+            if (keymgmt->gettable_domparam_params == NULL)
+                keymgmt->gettable_domparam_params =
+                    OSSL_get_OP_keymgmt_gettable_domparam_params(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_IMPORTKEY:
             if (keymgmt->importkey != NULL)
                 break;
@@ -118,6 +128,16 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->exportkey_types =
                 OSSL_get_OP_keymgmt_exportkey_types(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS:
+            if (keymgmt->get_key_params == NULL)
+                keymgmt->get_key_params =
+                    OSSL_get_OP_keymgmt_get_key_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS:
+            if (keymgmt->gettable_key_params == NULL)
+                keymgmt->gettable_key_params =
+                    OSSL_get_OP_keymgmt_gettable_key_params(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
             if (keymgmt->query_operation_name != NULL)
                 break;
@@ -143,10 +163,14 @@ static void *keymgmt_from_dispatch(int name_id,
             && keymgmt->importdomparams == NULL)
         || (keymgmt->exportdomparam_types != NULL
             && keymgmt->exportdomparams == NULL)
+        || (keymgmt->gettable_domparam_params != NULL
+            && keymgmt->get_domparam_params == NULL)
         || (keymgmt->importkey_types != NULL
             && keymgmt->importkey == NULL)
         || (keymgmt->exportkey_types != NULL
-            && keymgmt->exportkey == NULL)) {
+            && keymgmt->exportkey == NULL)
+        || (keymgmt->gettable_key_params != NULL
+            && keymgmt->get_key_params == NULL)) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
