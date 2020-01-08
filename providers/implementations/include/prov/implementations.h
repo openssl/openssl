@@ -35,6 +35,7 @@ extern const OSSL_DISPATCH wp_functions[];
 extern const OSSL_DISPATCH ripemd160_functions[];
 
 /* Ciphers */
+extern const OSSL_DISPATCH null_functions[];
 extern const OSSL_DISPATCH aes256ecb_functions[];
 extern const OSSL_DISPATCH aes192ecb_functions[];
 extern const OSSL_DISPATCH aes128ecb_functions[];

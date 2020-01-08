@@ -7,6 +7,7 @@
 
 $COMMON_GOAL=../../libcommon.a
 
+$NULL_GOAL=../../libimplementations.a
 $AES_GOAL=../../libimplementations.a
 $TDES_1_GOAL=../../libimplementations.a
 $TDES_2_GOAL=../../libimplementations.a
@@ -34,6 +35,9 @@ SOURCE[$COMMON_GOAL]=\
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_hw.c
 ENDIF
+
+SOURCE[$NULL_GOAL]=\
+        cipher_null.c
 
 SOURCE[$AES_GOAL]=\
         cipher_aes.c cipher_aes_hw.c \
