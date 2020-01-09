@@ -342,9 +342,11 @@ static const OPT_PAIR doit_choices[] = {
     {"md5", D_MD5},
     {"hmac", D_HMAC},
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"sha1", D_SHA1},
     {"sha256", D_SHA256},
     {"sha512", D_SHA512},
+#endif
 #if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"whirlpool", D_WHIRLPOOL},
 #endif
@@ -650,6 +652,7 @@ static int HMAC_loop(void *args)
 }
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int SHA1_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -682,6 +685,7 @@ static int SHA512_loop(void *args)
         SHA512(buf, lengths[testnum], sha512);
     return count;
 }
+#endif
 
 #if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int WHIRLPOOL_loop(void *args)
@@ -2322,6 +2326,7 @@ int speed_main(int argc, char **argv)
             HMAC_CTX_free(loopargs[i].hctx);
     }
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_SHA1]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_SHA1], c[D_SHA1][testnum], lengths[testnum],
@@ -2352,6 +2357,7 @@ int speed_main(int argc, char **argv)
             print_result(D_SHA512, testnum, count, d);
         }
     }
+#endif
 #if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_WHIRLPOOL]) {
         for (testnum = 0; testnum < size_num; testnum++) {

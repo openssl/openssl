@@ -13,6 +13,15 @@
  * used for any purpose except testing
  */
 
+/*
+ * SHA low level APIs are deprecated for public use, but still ok for
+ * internal use.  Note, that due to symbols not being exported, only the
+ * #defines and type definitions can be accessed, function calls are not
+ * available.  The digest lengths, block sizes and sizeof(CTX) are used herein
+ * for several different digests.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -134,10 +143,13 @@ static const EVP_MD *digest_sha256(void)
 
 /* SHA384/SHA512 */
 static int digest_sha384_init(EVP_MD_CTX *ctx);
+static int digest_sha384_update(EVP_MD_CTX *ctx, const void *data,
+                                size_t count);
+static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md);
+
 static int digest_sha512_init(EVP_MD_CTX *ctx);
 static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
                                 size_t count);
-static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md);
 static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md);
 
 static EVP_MD *_hidden_sha384_md = NULL;
@@ -153,7 +165,7 @@ static const EVP_MD *digest_sha384(void)
                                              sizeof(EVP_MD *) + sizeof(SHA512_CTX))
             || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
             || !EVP_MD_meth_set_init(md, digest_sha384_init)
-            || !EVP_MD_meth_set_update(md, digest_sha512_update)
+            || !EVP_MD_meth_set_update(md, digest_sha384_update)
             || !EVP_MD_meth_set_final(md, digest_sha384_final)) {
             EVP_MD_meth_free(md);
             md = NULL;
@@ -454,23 +466,20 @@ static void fill_known_data(unsigned char *md, unsigned int len)
  * value, so that all "MD5" digests using the test engine always end up with
  * the same value.
  */
-#undef data
-#define data(ctx) ((MD5_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_md5_init(EVP_MD_CTX *ctx)
 {
-    return MD5_Init(data(ctx));
+   return EVP_MD_meth_get_init(EVP_md5())(ctx);
 }
 
 static int digest_md5_update(EVP_MD_CTX *ctx, const void *data,
                              size_t count)
 {
-    return MD5_Update(data(ctx), data, (size_t)count);
+    return EVP_MD_meth_get_update(EVP_md5())(ctx, data, count);
 }
 
 static int digest_md5_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    int ret;
-    ret = MD5_Final(md, data(ctx));
+    int ret = EVP_MD_meth_get_final(EVP_md5())(ctx, md);
 
     if (ret > 0) {
         fill_known_data(md, MD5_DIGEST_LENGTH);
@@ -481,23 +490,20 @@ static int digest_md5_final(EVP_MD_CTX *ctx, unsigned char *md)
 /*
  * SHA1 implementation.
  */
-#undef data
-#define data(ctx) ((SHA_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha1_init(EVP_MD_CTX *ctx)
 {
-    return SHA1_Init(data(ctx));
+    return EVP_MD_meth_get_init(EVP_sha1())(ctx);
 }
 
 static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
                               size_t count)
 {
-    return SHA1_Update(data(ctx), data, (size_t)count);
+    return EVP_MD_meth_get_update(EVP_sha1())(ctx, data, count);
 }
 
 static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    int ret;
-    ret = SHA1_Final(md, data(ctx));
+    int ret = EVP_MD_meth_get_final(EVP_sha1())(ctx, md);
 
     if (ret > 0) {
         fill_known_data(md, SHA_DIGEST_LENGTH);
@@ -508,23 +514,20 @@ static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 /*
  * SHA256 implementation.
  */
-#undef data
-#define data(ctx) ((SHA256_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha256_init(EVP_MD_CTX *ctx)
 {
-    return SHA256_Init(data(ctx));
+    return EVP_MD_meth_get_init(EVP_sha256())(ctx);
 }
 
 static int digest_sha256_update(EVP_MD_CTX *ctx, const void *data,
                                 size_t count)
 {
-    return SHA256_Update(data(ctx), data, (size_t)count);
+    return EVP_MD_meth_get_update(EVP_sha256())(ctx, data, count);
 }
 
 static int digest_sha256_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    int ret;
-    ret = SHA256_Final(md, data(ctx));
+    int ret = EVP_MD_meth_get_final(EVP_sha256())(ctx, md);
 
     if (ret > 0) {
         fill_known_data(md, SHA256_DIGEST_LENGTH);
@@ -533,31 +536,22 @@ static int digest_sha256_final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 /*
- * SHA384/512 implementation.
+ * SHA384 implementation.
  */
-#undef data
-#define data(ctx) ((SHA512_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha384_init(EVP_MD_CTX *ctx)
 {
-    return SHA384_Init(data(ctx));
+    return EVP_MD_meth_get_init(EVP_sha384())(ctx);
 }
 
-static int digest_sha512_init(EVP_MD_CTX *ctx)
-{
-    return SHA512_Init(data(ctx));
-}
-
-static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
+static int digest_sha384_update(EVP_MD_CTX *ctx, const void *data,
                                 size_t count)
 {
-    return SHA512_Update(data(ctx), data, (size_t)count);
+    return EVP_MD_meth_get_update(EVP_sha384())(ctx, data, count);
 }
 
 static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    int ret;
-    /* Actually uses SHA512_Final! */
-    ret = SHA512_Final(md, data(ctx));
+    int ret = EVP_MD_meth_get_final(EVP_sha384())(ctx, md);
 
     if (ret > 0) {
         fill_known_data(md, SHA384_DIGEST_LENGTH);
@@ -565,10 +559,23 @@ static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md)
     return ret;
 }
 
+/*
+ * SHA512 implementation.
+ */
+static int digest_sha512_init(EVP_MD_CTX *ctx)
+{
+    return EVP_MD_meth_get_init(EVP_sha512())(ctx);
+}
+
+static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
+                                size_t count)
+{
+    return EVP_MD_meth_get_update(EVP_sha512())(ctx, data, count);
+}
+
 static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    int ret;
-    ret = SHA512_Final(md, data(ctx));
+    int ret = EVP_MD_meth_get_final(EVP_sha512())(ctx, md);
 
     if (ret > 0) {
         fill_known_data(md, SHA512_DIGEST_LENGTH);

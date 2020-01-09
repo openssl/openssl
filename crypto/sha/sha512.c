@@ -7,6 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA512 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+#include <stdio.h>
 #include <openssl/opensslconf.h>
 /*-
  * IMPLEMENTATION NOTES.

@@ -76,14 +76,14 @@ static int ct_v1_log_id_from_pkey(EVP_PKEY *pkey,
     int ret = 0;
     unsigned char *pkey_der = NULL;
     int pkey_der_len = i2d_PUBKEY(pkey, &pkey_der);
+    unsigned int len;
 
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, CT_R_LOG_KEY_INVALID);
         goto err;
     }
 
-    SHA256(pkey_der, pkey_der_len, log_id);
-    ret = 1;
+    ret = EVP_Digest(pkey_der, pkey_der_len, log_id, &len, EVP_sha256(), NULL);
 err:
     OPENSSL_free(pkey_der);
     return ret;

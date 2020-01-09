@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA-1 low level APIs are deprecated for public use, but still ok for
+ * internal use.  Note, that due to symbols not being exported, only the
+ * #defines and strucures can be accessed, in this case SHA_CBLOCK and
+ * sizeof(SHA_CTX).
+ */
+#include "internal/deprecated.h"
+
 #if defined(_WIN32)
 # include <windows.h>
 #endif
@@ -492,13 +500,11 @@ static void dummy_pause_job(void) {
  * SHA1 implementation. At the moment we just defer to the standard
  * implementation
  */
-#undef data
-#define data(ctx) ((SHA_CTX *)EVP_MD_CTX_md_data(ctx))
 static int dasync_sha1_init(EVP_MD_CTX *ctx)
 {
     dummy_pause_job();
 
-    return SHA1_Init(data(ctx));
+    return EVP_MD_meth_get_init(EVP_sha1())(ctx);
 }
 
 static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
@@ -506,14 +512,14 @@ static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
 {
     dummy_pause_job();
 
-    return SHA1_Update(data(ctx), data, (size_t)count);
+    return EVP_MD_meth_get_update(EVP_sha1())(ctx, data, count);
 }
 
 static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     dummy_pause_job();
 
-    return SHA1_Final(md, data(ctx));
+    return EVP_MD_meth_get_final(EVP_sha1())(ctx, md);
 }
 
 /*
