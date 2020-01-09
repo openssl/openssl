@@ -303,7 +303,9 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         return 0;
     }
 
-    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+    if (ctx->digest == NULL
+            || ctx->digest->prov == NULL
+            || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0)
         goto legacy;
 
     if (ctx->digest->dupdate == NULL) {
@@ -422,7 +424,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
-    if (in->digest->prov == NULL)
+    if (in->digest->prov == NULL
+            || (in->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0)
         goto legacy;
 
     if (in->digest->dupctx == NULL) {
