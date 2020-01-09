@@ -3146,6 +3146,29 @@ top:
         if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
             return 0;
         key->name = take_value(pp);
+
+        /* Hack to detect SM2 keys */
+        if(pkey != NULL && strstr(key->name, "SM2") != NULL) {
+#ifdef OPENSSL_NO_SM2
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
+#else
+            EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+#endif
+        }
+
+        /*
+         * Let's try to make it provider only.  Note that if no provider
+         * wants to care for this key, the legacy assignment should remain.
+         */
+        if (EVP_PKEY_deassign(pkey)) {
+            TEST_info("Successfully deassigned the legacy portion of %s",
+                      key->name);
+        } else {
+            TEST_info("Did not deassign the legacy portion of %s",
+                      key->name);
+        }
+
         key->key = pkey;
         key->next = *klist;
         *klist = key;

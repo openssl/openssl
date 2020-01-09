@@ -414,7 +414,8 @@ static EVP_PKEY *load_example_rsa_key(void)
         return NULL;
 
     if (!TEST_ptr(pkey = EVP_PKEY_new())
-            || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa)))
+            || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa))
+            || !TEST_true(EVP_PKEY_deassign(pkey)))
         goto end;
 
     ret = pkey;
@@ -439,7 +440,8 @@ static EVP_PKEY *load_example_dsa_key(void)
         return NULL;
 
     if (!TEST_ptr(pkey = EVP_PKEY_new())
-            || !TEST_true(EVP_PKEY_set1_DSA(pkey, dsa)))
+            || !TEST_true(EVP_PKEY_set1_DSA(pkey, dsa))
+            || !TEST_true(EVP_PKEY_deassign(pkey)))
         goto end;
 
     ret = pkey;
@@ -813,6 +815,10 @@ static int test_EVP_SM2_verify(void)
         goto done;
 
     if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)))
+        goto done;
+
+    /* TODO(v3.0) We do not have a provider implementation of SM2 yet */
+    if (!TEST_false(EVP_PKEY_deassign(pkey)))
         goto done;
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -1370,6 +1376,9 @@ static int test_DSA_get_set_params(void)
 
     dsa = NULL;
 
+    if (!TEST_true(EVP_PKEY_deassign(pkey)))
+        goto err;
+
     ret = test_EVP_PKEY_CTX_get_set_params(pkey);
 
  err:
@@ -1414,6 +1423,9 @@ static int test_RSA_get_set_params(void)
         goto err;
 
     rsa = NULL;
+
+    if (!TEST_true(EVP_PKEY_deassign(pkey)))
+        goto err;
 
     ret = test_EVP_PKEY_CTX_get_set_params(pkey);
 
