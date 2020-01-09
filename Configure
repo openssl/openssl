@@ -590,7 +590,7 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
 
 &usage if ($#ARGV < 0);
 
-# For the "make variables" CINCLUDES and CDEFINES, we support lists with
+# For the "make variables" CPPINCLUDES and CPPDEFINES, we support lists with
 # platform specific list separators.  Users from those platforms should
 # recognise those separators from how you set up the PATH to find executables.
 # The default is the Unix like separator, :, but as an exception, we also
@@ -1030,7 +1030,11 @@ foreach (keys %user) {
 
     if (defined $value) {
         if (ref $user{$_} eq 'ARRAY') {
-            $user{$_} = [ split /$list_separator_re/, $value ];
+            if ($_ eq 'CPPDEFINES' || $_ eq 'CPPINCLUDES') {
+                $user{$_} = [ split /$list_separator_re/, $value ];
+            } else {
+                $user{$_} = [ $value ];
+            }
         } elsif (!defined $user{$_}) {
             $user{$_} = $value;
         }
