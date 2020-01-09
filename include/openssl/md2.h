@@ -24,10 +24,13 @@
 extern "C" {
 #  endif
 
+#  define MD2_DIGEST_LENGTH       16
+
+#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+
 typedef unsigned char MD2_INT;
 
-#  define MD2_DIGEST_LENGTH       16
-#  define MD2_BLOCK               16
+#   define MD2_BLOCK               16
 
 typedef struct MD2state_st {
     unsigned int num;
@@ -35,16 +38,18 @@ typedef struct MD2state_st {
     MD2_INT cksm[MD2_BLOCK];
     MD2_INT state[MD2_BLOCK];
 } MD2_CTX;
+#  endif
 
-const char *MD2_options(void);
-int MD2_Init(MD2_CTX *c);
-int MD2_Update(MD2_CTX *c, const unsigned char *data, size_t len);
-int MD2_Final(unsigned char *md, MD2_CTX *c);
-unsigned char *MD2(const unsigned char *d, size_t n, unsigned char *md);
+DEPRECATEDIN_3_0(const char *MD2_options(void))
+DEPRECATEDIN_3_0(int MD2_Init(MD2_CTX *c))
+DEPRECATEDIN_3_0(int MD2_Update(MD2_CTX *c, const unsigned char *data,
+                                size_t len))
+DEPRECATEDIN_3_0(int MD2_Final(unsigned char *md, MD2_CTX *c))
+DEPRECATEDIN_3_0(unsigned char *MD2(const unsigned char *d, size_t n,
+                 unsigned char *md))
 
 #  ifdef  __cplusplus
 }
 #  endif
 # endif
-
 #endif
