@@ -624,15 +624,15 @@ IF[{- !$disabled{tests} -}]
     SOURCE[keymgmt_internal_test]=keymgmt_internal_test.c
     INCLUDE[keymgmt_internal_test]=.. ../include ../apps/include
     DEPEND[keymgmt_internal_test]=../libcrypto.a libtestutil.a
-  ENDIF
 
-  IF[{- !$disabled{mdc2} -}]
-    PROGRAMS{noinst}=mdc2_internal_test
-  ENDIF
+    IF[{- !$disabled{mdc2} -}]
+      PROGRAMS{noinst}=mdc2_internal_test
+    ENDIF
 
-  SOURCE[mdc2_internal_test]=mdc2_internal_test.c
-  INCLUDE[mdc2_internal_test]=.. ../include ../apps/include
-  DEPEND[mdc2_internal_test]=../libcrypto libtestutil.a
+    SOURCE[mdc2_internal_test]=mdc2_internal_test.c
+    INCLUDE[mdc2_internal_test]=.. ../include ../apps/include
+    DEPEND[mdc2_internal_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   PROGRAMS{noinst}=asn1_time_test
   SOURCE[asn1_time_test]=asn1_time_test.c

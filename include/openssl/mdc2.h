@@ -25,8 +25,11 @@
 extern "C" {
 #  endif
 
-#  define MDC2_BLOCK              8
 #  define MDC2_DIGEST_LENGTH      16
+
+#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+
+#   define MDC2_BLOCK              8
 
 typedef struct mdc2_ctx_st {
     unsigned int num;
@@ -34,11 +37,14 @@ typedef struct mdc2_ctx_st {
     DES_cblock h, hh;
     unsigned int pad_type;   /* either 1 or 2, default 1 */
 } MDC2_CTX;
+#  endif
 
-int MDC2_Init(MDC2_CTX *c);
-int MDC2_Update(MDC2_CTX *c, const unsigned char *data, size_t len);
-int MDC2_Final(unsigned char *md, MDC2_CTX *c);
-unsigned char *MDC2(const unsigned char *d, size_t n, unsigned char *md);
+DEPRECATEDIN_3_0(int MDC2_Init(MDC2_CTX *c))
+DEPRECATEDIN_3_0(int MDC2_Update(MDC2_CTX *c, const unsigned char *data,
+                 size_t len))
+DEPRECATEDIN_3_0(int MDC2_Final(unsigned char *md, MDC2_CTX *c))
+DEPRECATEDIN_3_0(unsigned char *MDC2(const unsigned char *d, size_t n,
+                 unsigned char *md))
 
 #  ifdef  __cplusplus
 }
