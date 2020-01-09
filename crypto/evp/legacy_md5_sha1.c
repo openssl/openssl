@@ -7,6 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA-1 low level APIs are deprecated for public use, but still ok for
+ * internal use.  The prov/md5_sha1.h include requires this, but this must
+ * be the first include loaded.
+ */
+#include "internal/deprecated.h"
+
 #include "crypto/evp.h"
 #include "prov/md5_sha1.h"   /* diverse MD5_SHA1 macros */
 #include "legacy_meth.h"

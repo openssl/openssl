@@ -34,7 +34,6 @@ IF[{- !$disabled{tests} -}]
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
           hmactest \
-          rc2test rc4test rc5test \
           destest mdc2test \
           dhtest enginetest \
           ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
@@ -508,6 +507,7 @@ IF[{- !$disabled{tests} -}]
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdrand_sanitytest property_test \
                      rsa_sp800_56b_test bn_internal_test \
+                     rc2test rc4test rc5test \
                      asn1_dsa_internal_test
 
     IF[{- !$disabled{poly1305} -}]
@@ -600,6 +600,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[curve448_internal_test]=curve448_internal_test.c
     INCLUDE[curve448_internal_test]=.. ../include ../apps/include ../crypto/ec/curve448
     DEPEND[curve448_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[rc4test]=rc4test.c
+    INCLUDE[rc4test]=../include ../apps/include
+    DEPEND[rc4test]=../libcrypto.a libtestutil.a
 
     SOURCE[rdrand_sanitytest]=rdrand_sanitytest.c
     INCLUDE[rdrand_sanitytest]=../include ../apps/include

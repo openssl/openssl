@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "ec_local.h"
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
@@ -5436,39 +5437,50 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
     uint8_t nonce[SHA512_DIGEST_LENGTH];
     ge_p3 R;
     uint8_t hram[SHA512_DIGEST_LENGTH];
-    SHA512_CTX hash_ctx;
+    EVP_MD *sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
+    EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
+    unsigned int sz;
+    int res = 0;
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, private_key, 32);
-    SHA512_Final(az, &hash_ctx);
+    if (sha512 == NULL || hash_ctx == NULL)
+        goto err;
+
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, private_key, 32)
+        || !EVP_DigestFinal_ex(hash_ctx, az, &sz))
+        goto err;
 
     az[0] &= 248;
     az[31] &= 63;
     az[31] |= 64;
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, az + 32, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(nonce, &hash_ctx);
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, az + 32, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, nonce, &sz))
+        goto err;
 
     x25519_sc_reduce(nonce);
     ge_scalarmult_base(&R, nonce);
     ge_p3_tobytes(out_sig, &R);
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, out_sig, 32);
-    SHA512_Update(&hash_ctx, public_key, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(hram, &hash_ctx);
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, out_sig, 32)
+        || !EVP_DigestUpdate(hash_ctx, public_key, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, hram, &sz))
+        goto err;
 
     x25519_sc_reduce(hram);
     sc_muladd(out_sig + 32, hram, az, nonce);
 
-    OPENSSL_cleanse(&hash_ctx, sizeof(hash_ctx));
+    res = 1;
+err:
     OPENSSL_cleanse(nonce, sizeof(nonce));
     OPENSSL_cleanse(az, sizeof(az));
-
-    return 1;
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
+    return res;
 }
 
 static const char allzeroes[15];
@@ -5479,7 +5491,10 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
     int i;
     ge_p3 A;
     const uint8_t *r, *s;
-    SHA512_CTX hash_ctx;
+    EVP_MD *sha512;
+    EVP_MD_CTX *hash_ctx = NULL;
+    unsigned int sz;
+    int res = 0;
     ge_p2 R;
     uint8_t rcheck[32];
     uint8_t h[SHA512_DIGEST_LENGTH];
@@ -5526,11 +5541,19 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
     fe_neg(A.X, A.X);
     fe_neg(A.T, A.T);
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, r, 32);
-    SHA512_Update(&hash_ctx, public_key, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(h, &hash_ctx);
+    sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
+    if (sha512 == NULL)
+        return 0;
+    hash_ctx = EVP_MD_CTX_new();
+    if (hash_ctx == NULL)
+        goto err;
+
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, r, 32)
+        || !EVP_DigestUpdate(hash_ctx, public_key, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, h, &sz))
+        goto err;
 
     x25519_sc_reduce(h);
 
@@ -5538,7 +5561,11 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
 
     ge_tobytes(rcheck, &R);
 
-    return CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
+    res = CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
+err:
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
+    return res;
 }
 
 void ED25519_public_from_private(uint8_t out_public_key[32],
