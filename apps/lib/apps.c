@@ -584,6 +584,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
         ERR_print_errors(bio_err);
     }
+    EVP_PKEY_deassign(pkey);
     return pkey;
 }
 
@@ -671,6 +672,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
     BIO_free(key);
     if (pkey == NULL)
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
+    EVP_PKEY_deassign(pkey);
     return pkey;
 }
 
