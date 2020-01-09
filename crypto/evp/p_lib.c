@@ -535,6 +535,37 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
     return (key != NULL);
 }
 
+int EVP_PKEY_deassign(EVP_PKEY *pkey)
+{
+    if (pkey == NULL)
+        return 1;
+
+    /* If it was downgraded, we refuse to make it provider only again */
+    if (pkey->downgraded)
+        return 1;
+
+    /* Make sure it's exported to a provider */
+    {
+        void *keydata = NULL;
+        EVP_KEYMGMT *keymgmt = NULL;
+        size_t i = 0;
+
+        keydata = evp_pkey_export_to_provider(pkey, NULL, &keymgmt, NULL);
+        if (keydata == NULL || keymgmt == NULL)
+            return 0;
+
+        /* Here, we hack ferociously */
+        i = evp_keymgmt_util_find_operation_cache_index(pkey, keymgmt);
+        pkey->keymgmt = keymgmt;
+        pkey->keydata = keydata;
+        pkey->operation_cache[i].keymgmt = NULL;
+        pkey->operation_cache[i].keydata = NULL;
+    }
+
+    evp_pkey_free_legacy(pkey);
+    return 1;
+}
+
 void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
@@ -1556,6 +1587,8 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 
             /* Synchronize the dirty count */
             pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+
+            pk->downgraded = 1;  /* Mark it */
             return 1;
         }
 

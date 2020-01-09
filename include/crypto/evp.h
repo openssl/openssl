@@ -557,6 +557,7 @@ struct evp_pkey_st {
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
+    int downgraded;    /* Set to 1 if evp_pkey_downgrade was called */
 
     /* == Provider attributes == */
 

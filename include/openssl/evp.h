@@ -1121,6 +1121,7 @@ int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e);
 ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
 # endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
+int EVP_PKEY_deassign(EVP_PKEY *pkey);
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
 # ifndef OPENSSL_NO_POLY1305
