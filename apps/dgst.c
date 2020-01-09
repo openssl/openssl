@@ -541,11 +541,16 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     }
     if (key != NULL) {
         EVP_MD_CTX *ctx;
-        int pkey_len;
+        size_t tmplen;
+
         BIO_get_md_ctx(bp, &ctx);
-        pkey_len = EVP_PKEY_size(key);
-        if (pkey_len > BUFSIZE) {
-            len = pkey_len;
+        if (!EVP_DigestSignFinal(ctx, NULL, &tmplen)) {
+            BIO_printf(bio_err, "Error Signing Data\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (tmplen > BUFSIZE) {
+            len = tmplen;
             sigbuf = app_malloc(len, "Signature buffer");
             buf = sigbuf;
         }
