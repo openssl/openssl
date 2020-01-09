@@ -451,6 +451,22 @@ end:
 }
 #endif
 
+static EVP_PKEY *load_example_hmac_key(void)
+{
+    EVP_PKEY *pkey = NULL;
+    unsigned char key[] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+    };
+
+    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, sizeof(key));
+    if (!TEST_ptr(pkey))
+        return NULL;
+
+    return pkey;
+}
+
 static int test_EVP_Enveloped(void)
 {
     int ret = 0;
@@ -495,10 +511,15 @@ err:
 }
 
 /*
- * Test 0: Standard calls to EVP_DigestSignInit/Update/Final (RSA)
- * Test 1: Standard calls to EVP_DigestSignInit/Update/Final (DSA)
- * Test 2: Use an MD BIO to do the Update calls instead (RSA)
- * Test 3: Use an MD BIO to do the Update calls instead (DSA)
+ * Test 0: Standard calls to EVP_DigestSignInit/Update/Final (Implicit fetch digest, RSA)
+ * Test 1: Standard calls to EVP_DigestSignInit/Update/Final (Implicit fetch digest, DSA)
+ * Test 2: Standard calls to EVP_DigestSignInit/Update/Final (Implicit fetch digest, HMAC)
+ * Test 3: Standard calls to EVP_DigestSignInit/Update/Final (Explicit fetch digest, RSA)
+ * Test 4: Standard calls to EVP_DigestSignInit/Update/Final (Explicit fetch digest, DSA)
+ * Test 5: Standard calls to EVP_DigestSignInit/Update/Final (Explicit fetch diegst, HMAC)
+ * Test 6: Use an MD BIO to do the Update calls instead (RSA)
+ * Test 7: Use an MD BIO to do the Update calls instead (DSA)
+ * Test 8: Use an MD BIO to do the Update calls instead (HMAC)
  */
 static int test_EVP_DigestSignInit(int tst)
 {
@@ -510,8 +531,10 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_MD_CTX *a_md_ctx = NULL, *a_md_ctx_verify = NULL;
     BIO *mdbio = NULL, *membio = NULL;
     size_t written;
+    const EVP_MD *md;
+    EVP_MD *mdexp = NULL;
 
-    if (tst >= 2) {
+    if (tst >= 6) {
         membio = BIO_new(BIO_s_mem());
         mdbio = BIO_new(BIO_f_md());
         if (!TEST_ptr(membio) || !TEST_ptr(mdbio))
@@ -525,10 +548,10 @@ static int test_EVP_DigestSignInit(int tst)
             goto out;
     }
 
-    if (tst == 0 || tst == 2) {
+    if (tst == 0 || tst == 3 || tst == 6) {
         if (!TEST_ptr(pkey = load_example_rsa_key()))
                 goto out;
-    } else {
+    } else if (tst == 1 || tst == 4 || tst == 7) {
 #ifndef OPENSSL_NO_DSA
         if (!TEST_ptr(pkey = load_example_dsa_key()))
                 goto out;
@@ -536,12 +559,20 @@ static int test_EVP_DigestSignInit(int tst)
         ret = 1;
         goto out;
 #endif
+    } else {
+        if (!TEST_ptr(pkey = load_example_hmac_key()))
+                goto out;
     }
 
-    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sha256(), NULL, pkey)))
+    if (tst >= 3 && tst <= 5)
+        md = mdexp = EVP_MD_fetch(NULL, "SHA256", NULL);
+    else
+        md = EVP_sha256();
+
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, md, NULL, pkey)))
         goto out;
 
-    if (tst >= 2) {
+    if (tst >= 6) {
         if (!BIO_write_ex(mdbio, kMsg, sizeof(kMsg), &written))
             goto out;
     } else {
@@ -551,34 +582,39 @@ static int test_EVP_DigestSignInit(int tst)
 
     /* Determine the size of the signature. */
     if (!TEST_true(EVP_DigestSignFinal(md_ctx, NULL, &sig_len))
-            || !TEST_size_t_eq(sig_len, (size_t)EVP_PKEY_size(pkey)))
+            || !TEST_size_t_le(sig_len, (size_t)EVP_PKEY_size(pkey)))
         goto out;
 
     if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
             || !TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto out;
 
-    if (tst >= 2) {
+    if (tst >= 6) {
         if (!TEST_int_gt(BIO_reset(mdbio), 0)
                 || !TEST_int_gt(BIO_get_md_ctx(mdbio, &md_ctx_verify), 0))
             goto out;
     }
 
-    /* Ensure that the signature round-trips. */
-    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sha256(),
-                                        NULL, pkey)))
-        goto out;
-
-    if (tst >= 2) {
-        if (!BIO_write_ex(mdbio, kMsg, sizeof(kMsg), &written))
+    /*
+     * Ensure that the signature round-trips (Verification isn't supported for
+     * HMAC via EVP_DigestVerify*)
+     */
+    if (tst != 2 && tst != 5 && tst != 8) {
+        if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, md,
+                                            NULL, pkey)))
             goto out;
-    } else {
-        if (!TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify, kMsg,
-                                              sizeof(kMsg))))
+
+        if (tst >= 6) {
+            if (!TEST_true(BIO_write_ex(mdbio, kMsg, sizeof(kMsg), &written)))
+                goto out;
+        } else {
+            if (!TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify, kMsg,
+                                                  sizeof(kMsg))))
+                goto out;
+        }
+        if (!TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
             goto out;
     }
-    if (!TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
-        goto out;
 
     ret = 1;
 
@@ -589,6 +625,7 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_MD_CTX_free(a_md_ctx_verify);
     EVP_PKEY_free(pkey);
     OPENSSL_free(sig);
+    EVP_MD_free(mdexp);
 
     return ret;
 }
@@ -1452,7 +1489,7 @@ static int test_EVP_PKEY_set1_DH(void)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_EVP_DigestSignInit, 4);
+    ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
