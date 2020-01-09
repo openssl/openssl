@@ -59,8 +59,8 @@ static int generic_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int generic_aes_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                                     size_t len, unsigned char *out)
+static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                                         size_t len, unsigned char *out)
 {
     if (ctx->enc) {
         if (ctx->ctr != NULL) {
@@ -128,7 +128,7 @@ static const PROV_GCM_HW aes_gcm = {
     generic_aes_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
-    generic_aes_cipher_update,
+    generic_aes_gmc_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };
