@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * MD2 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/crypto.h>
 #include <openssl/md2.h>
 #include "prov/digestcommon.h"

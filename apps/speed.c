@@ -329,7 +329,7 @@ static const char *names[ALGOR_NUM] = {
 
 /* list of configured algorithm (remaining), with some few alias */
 static const OPT_PAIR doit_choices[] = {
-#ifndef OPENSSL_NO_MD2
+#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md2", D_MD2},
 #endif
 #ifndef OPENSSL_NO_MDC2
@@ -570,7 +570,7 @@ static unsigned int testnum;
 /* Nb of iterations to do per algorithm and key-size */
 static long c[ALGOR_NUM][SIZE_NUM];
 
-#ifndef OPENSSL_NO_MD2
+#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int EVP_Digest_MD2_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -2241,7 +2241,7 @@ int speed_main(int argc, char **argv)
     signal(SIGALRM, alarmed);
 #endif                          /* SIGALRM */
 
-#ifndef OPENSSL_NO_MD2
+#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD2]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD2], c[D_MD2][testnum], lengths[testnum],
@@ -3487,7 +3487,7 @@ int speed_main(int argc, char **argv)
         printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
-#ifndef OPENSSL_NO_MD2
+#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", MD2_options());
 #endif
 #ifndef OPENSSL_NO_RC4
