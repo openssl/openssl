@@ -589,6 +589,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
 {
     const EVP_MD *sigmd, *mgf1md;
     EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkctx);
+    RSA *rsa = EVP_PKEY_get0_RSA(pk);
     int saltlen;
 
     if (EVP_PKEY_CTX_get_signature_md(pkctx, &sigmd) <= 0)
@@ -600,7 +601,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
     if (saltlen == -1) {
         saltlen = EVP_MD_size(sigmd);
     } else if (saltlen == -2 || saltlen == -3) {
-        saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
+        saltlen = RSA_size(rsa) - EVP_MD_size(sigmd) - 2;
         if ((EVP_PKEY_bits(pk) & 0x7) == 1)
             saltlen--;
         if (saltlen < 0)

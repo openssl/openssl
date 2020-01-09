@@ -216,7 +216,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         goto err;
     }
     inl = buf_len;
-    outll = outl = EVP_PKEY_size(pkey);
+    if (!EVP_DigestSign(ctx, NULL, &outll, buf_in, inl)) {
+        outl = 0;
+        ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
+        goto err;
+    }
+    outl = outll;
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
