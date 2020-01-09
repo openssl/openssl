@@ -60,7 +60,7 @@ extern "C" {
 }
 # endif
 
-void OSSL_SELF_TEST_set_callback(OSSL_CALLBACK *cb);
-OSSL_CALLBACK *OSSL_SELF_TEST_get_callback(void);
+void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK *cb);
+OSSL_CALLBACK *OSSL_SELF_TEST_get_callback(OPENSSL_CTX *libctx);
 
 #endif /* OPENSSL_SELF_TEST_H */

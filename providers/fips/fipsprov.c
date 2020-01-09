@@ -649,9 +649,14 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 {
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *ctx;
+    OSSL_self_test_cb_fn *stfn = NULL;
+    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
+        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
+            c_get_libctx = OSSL_get_core_get_library_context(in);
+            break;
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             c_gettable_params = OSSL_get_core_gettable_params(in);
             break;
@@ -716,9 +721,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
             break;
         case OSSL_FUNC_SELF_TEST_CB: {
-            OSSL_self_test_cb_fn *fn = OSSL_get_self_test_cb(in);
-
-            selftest_params.event_cb = (fn != NULL) ? fn() : NULL;
+            stfn = OSSL_get_self_test_cb(in);
             break;
         }
         default:
@@ -726,6 +729,11 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             break;
         }
     }
+
+    if (stfn != NULL && c_get_libctx != NULL)
+        selftest_params.event_cb = stfn(c_get_libctx(provider));
+    else
+        selftest_params.event_cb = NULL;
 
     if (!c_get_params(provider, core_params))
         return 0;

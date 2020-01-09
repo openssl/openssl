@@ -8,13 +8,48 @@
  */
 
 #include <openssl/self_test.h>
+#include "internal/cryptlib.h"
 
-static OSSL_CALLBACK *ossl_self_test_cb = NULL;
-void OSSL_SELF_TEST_set_callback(OSSL_CALLBACK *cb)
+typedef struct self_test_cb_st
 {
-    ossl_self_test_cb = cb;
+    OSSL_CALLBACK *cb;
+} SELF_TEST_CB;
+
+static void *self_test_set_callback_new(OPENSSL_CTX *ctx)
+{
+    SELF_TEST_CB *stcb;
+
+    stcb = OPENSSL_zalloc(sizeof(*stcb));
+    return stcb;
 }
-OSSL_CALLBACK *OSSL_SELF_TEST_get_callback(void)
+
+static void self_test_set_callback_free(void *stcb)
 {
-    return ossl_self_test_cb;
+    OPENSSL_free(stcb);
+}
+
+static const OPENSSL_CTX_METHOD self_test_set_callback_method = {
+    self_test_set_callback_new,
+    self_test_set_callback_free,
+};
+
+
+static SELF_TEST_CB *get_self_test_callback(OPENSSL_CTX *libctx)
+{
+    return openssl_ctx_get_data(libctx, OPENSSL_CTX_SELF_TEST_CB_INDEX,
+                                &self_test_set_callback_method);
+}
+
+void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK *cb)
+{
+    SELF_TEST_CB *stcb = get_self_test_callback(libctx);
+
+    if (stcb != NULL)
+        stcb->cb = cb;
+}
+
+OSSL_CALLBACK *OSSL_SELF_TEST_get_callback(OPENSSL_CTX *libctx)
+{
+    SELF_TEST_CB *stcb = get_self_test_callback(libctx);
+    return stcb != NULL ? stcb->cb : NULL;
 }

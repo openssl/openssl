@@ -137,7 +137,7 @@ OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
                                        va_list args))
 
 #define OSSL_FUNC_SELF_TEST_CB                28
-OSSL_CORE_MAKE_FUNC(OSSL_CALLBACK *, self_test_cb, (void))
+OSSL_CORE_MAKE_FUNC(OSSL_CALLBACK *, self_test_cb, (OPENSSL_CTX *ctx))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
