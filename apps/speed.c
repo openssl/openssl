@@ -335,7 +335,7 @@ static const OPT_PAIR doit_choices[] = {
 #ifndef OPENSSL_NO_MDC2
     {"mdc2", D_MDC2},
 #endif
-#ifndef OPENSSL_NO_MD4
+#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md4", D_MD4},
 #endif
 #ifndef OPENSSL_NO_MD5
@@ -604,7 +604,7 @@ static int EVP_Digest_MDC2_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_MD4
+#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int EVP_Digest_MD4_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -2268,7 +2268,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-#ifndef OPENSSL_NO_MD4
+#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD4], c[D_MD4][testnum], lengths[testnum],
