@@ -1089,12 +1089,13 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void *data);
 
 /* PKEY stuff */
-int EVP_PKEY_decrypt_old(unsigned char *dec_key,
-                         const unsigned char *enc_key, int enc_key_len,
-                         EVP_PKEY *private_key);
-int EVP_PKEY_encrypt_old(unsigned char *enc_key,
-                         const unsigned char *key, int key_len,
-                         EVP_PKEY *pub_key);
+DEPRECATEDIN_3_0(int EVP_PKEY_decrypt_old(unsigned char *dec_key,
+                                          const unsigned char *enc_key,
+                                          int enc_key_len,
+                                          EVP_PKEY *private_key))
+DEPRECATEDIN_3_0(int EVP_PKEY_encrypt_old(unsigned char *enc_key,
+                                          const unsigned char *key,
+                                          int key_len, EVP_PKEY *pub_key))
 int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);

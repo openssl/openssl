@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
+     and EVP_PKEY_decrypt() instead.
+     Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()
+     and EVP_PKEY_encrypt() instead.
+     [Richard Levitte]
+
   *) Enhanced the documentation of EVP_PKEY_size(), EVP_PKEY_bits()
      and EVP_PKEY_security_bits().  Especially EVP_PKEY_size() needed
      a new formulation to include all the things it can be used for,
