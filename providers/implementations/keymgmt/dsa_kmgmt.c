@@ -20,9 +20,15 @@
 static OSSL_OP_keymgmt_importdomparams_fn dsa_importdomparams;
 static OSSL_OP_keymgmt_exportdomparams_fn dsa_exportdomparams;
 static OSSL_OP_keymgmt_get_domparam_params_fn dsa_get_domparam_params;
+static OSSL_OP_keymgmt_isdomparams_fn dsa_isdomparams;
+static OSSL_OP_keymgmt_cmpdomparams_fn dsa_cmpdomparams;
+static OSSL_OP_keymgmt_dupdomparams_fn dsa_dupdomparams;
 static OSSL_OP_keymgmt_importkey_fn dsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn dsa_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn dsa_get_key_params;
+static OSSL_OP_keymgmt_iskey_fn dsa_iskey;
+static OSSL_OP_keymgmt_cmpkey_fn dsa_cmpkey;
+static OSSL_OP_keymgmt_dupkey_fn dsa_dupkey;
 
 #define DSA_DEFAULT_MD "SHA256"
 
@@ -166,6 +172,38 @@ static int dsa_exportdomparams(void *domparams,
     return ret;
 }
 
+static int dsa_isdomparams(const void *domparams)
+{
+    /*
+     * dsa should always contain the domain parameters, so we could as well
+     * return 1 here and be done with it.  However, future development might
+     * change this, so we make this future proof and test for real.
+     */
+    return DSA_get0_p(domparams) != NULL
+        && DSA_get0_q(domparams) != NULL
+        && DSA_get0_g(domparams) != NULL;
+}
+
+static int dsa_cmpdomparams(const void *domparams1, const void *domparams2)
+{
+    if (BN_cmp(DSA_get0_p(domparams1), DSA_get0_p(domparams2)) != 0
+        && BN_cmp(DSA_get0_q(domparams1), DSA_get0_q(domparams2)) != 0
+        && BN_cmp(DSA_get0_g(domparams1), DSA_get0_g(domparams2)) != 0)
+        return 0;
+    return 1;
+}
+
+static void *dsa_dupdomparams(void *domparams, int do_copy)
+{
+    DSA *new = domparams;
+
+    if (do_copy)
+        new = DSAparams_dup(domparams);
+    else
+        DSA_up_ref(new);
+    return new;
+}
+
 static void *dsa_importkey(void *provctx, const OSSL_PARAM params[])
 {
     DSA *dsa;
@@ -233,15 +271,48 @@ static int dsa_get_key_params(void *key, OSSL_PARAM params[])
     return dsa_get_dpk_params(key, params);
 }
 
+static int dsa_iskey(const void *key)
+{
+    return DSA_get0_pub_key(key) != NULL;
+}
+
+static int dsa_cmpkey(const void *key1, const void *key2)
+{
+    if (BN_cmp(DSA_get0_pub_key(key1), DSA_get0_pub_key(key2)) != 0)
+        return 0;
+    return 1;
+}
+
+static void *dsa_dupkey(void *key, int do_copy)
+{
+    if (do_copy)
+        /*
+         * the EVP library currently only supports copying domain params,
+         * so we don't need to care...  besides, if we want to support
+         * copying DSA keys, there should be a function in the low level
+         * DSA library.
+         */
+        return NULL;
+    else
+        DSA_up_ref(key);
+    return key;
+}
+
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS, (void (*)(void))dsa_importdomparams },
     { OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS, (void (*)(void))dsa_exportdomparams },
     { OSSL_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DSA_free },
     { OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS,
       (void (*) (void))dsa_get_domparam_params },
+    { OSSL_FUNC_KEYMGMT_ISDOMPARAMS, (void (*)(void))dsa_isdomparams },
+    { OSSL_FUNC_KEYMGMT_CMPDOMPARAMS, (void (*)(void))dsa_cmpdomparams },
+    { OSSL_FUNC_KEYMGMT_DUPDOMPARAMS, (void (*)(void))dsa_dupdomparams },
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dsa_importkey },
     { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dsa_exportkey },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DSA_free },
     { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))dsa_get_key_params },
+    { OSSL_FUNC_KEYMGMT_ISKEY, (void (*)(void))dsa_iskey },
+    { OSSL_FUNC_KEYMGMT_CMPKEY, (void (*)(void))dsa_cmpkey },
+    { OSSL_FUNC_KEYMGMT_DUPKEY, (void (*)(void))dsa_dupkey },
     { 0, NULL }
 };
