@@ -32,7 +32,7 @@
 #                      indentation must be as for normal code, while in case it
 #                      also has no normal code to its right it is considered to
 #                      refer to the following line and may be indented equally.
-#  -c | --sloppy-macro allows missing extra indentation of macro bodies
+#  -m | --sloppy-macro allows missing extra indentation of macro bodies
 #  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
 #                      * same indentation as on line before
 #                      * same indentation as non-hanging indent level
@@ -123,9 +123,9 @@ my $contents_before;       # contents of $line_before, if $line_before > 0
 my $contents_before_;      # contents of $line_before after blinding comments etc., if $line_before > 0
 my $contents_before2;      # contents of $line_before2, if $line_before2 > 0
 my $contents_before_2;     # contents of $line_before2 after blinding comments etc., if $line_before2 > 0
-my $multiline_string;      # accumulator for lines containing multi-line string
-my $count;                 # number of leading whitespace characters (except newline) in current line, which
-                           # should be $block_indent+hanging_offset+$local_offset or $expr_indent, respectively
+my $in_multiline_string;   # line starts within multi-line string literal
+my $count;                 # -1 or number of leading whitespace characters (except newline) in current line,
+                           # which should be $block_indent + $hanging_offset + $local_offset or $expr_indent
 my $count_before;          # number of leading whitespace characters (except line ending chars) in $contents_before
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
@@ -413,7 +413,7 @@ sub reset_file_state {
     $if_maybe_terminated = 0;
     $block_indent = 0;
     $ifdef__cplusplus = 0;
-    undef $multiline_string;
+    $in_multiline_string = 0;
     $line_opening_brace = 0;
     $in_typedecl = 0;
     $in_directive = 0;
@@ -448,12 +448,31 @@ while (<>) { # loop over all lines of all input files
 
     # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+    s/\\["']/@@/g; # blind all '\"' and "\'" (typically within character literals or string literals)
+
+    # handle multi-line string literals to avoid confusion on trailing '\' -
+    # this is not done for other uses of trailing '\' in order to be able
+    # to check layout of multi-line preprocessor directives
+    if ($in_multiline_string) {
+        if (s#^([^"]*)"#($1 =~ tr/"/@/cr).'@'#e) { # string literal terminated by '"'
+            # string contents and its terminating '"' have been blinded as '@'
+            $count = -1; # do not check indentation
+        } else {
+            report("multi-line string literal not terminated by '\"' and trailing '\' is missing")
+                unless m#^([^\\]*)\\\s*$#; # unless string literal continued by '\'
+            goto LINE_FINISHED;
+        }
+    }
+
     # blind contents of character and string literals as @, preserving length (but not spaces)
-    # this prevents confusing any of the matching below, e.g., on SPC and comment delimiters
-    s/\\"/@@/g; # blind all '\"' (typically within character literals or string literals)
-    s#("[^"]*")#$1 =~ tr/"/@/cr#eg;
-    s#('[^']*')#$1 =~ tr/'/@/cr#eg;
-    # note that multi-line string literals are handled below
+    # this prevents confusing any of the matching below, e.g., of whitespace and comment delimiters
+    s#('[^']*')#$1 =~ tr/'/@/cr#eg; # handle all intra-line character literals
+    s#("[^"]*")#$1 =~ tr/"/@/cr#eg; # handle all intra-line string literals
+    $in_multiline_string = # trailing string literal terminated by '\'
+        s#^(([^"]*"[^"]*")*[^"]*)("[^"]*)\\(\s*)$#$1.($2 =~ tr/"/@/cr).'"'.$3#e;
+        # its contents have been blinded and the trailing '\' replaced by '"'
+
+    # character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
@@ -537,9 +556,9 @@ while (<>) { # loop over all lines of all input files
     if ($len > $max_length &&
         !(m/^(.*)"[^"]*("|\\)\s*(,|[\)\}\]]*[,;]?)\s*$/ # string literal terminated by '"' or '\', then maybe ,)}];
           && length($1) < $max_length)
-        # this allows over-long trailing string literal with beginning col before $max_length
+        # this allows over-long trailing string literals with beginning col before $max_length
         ) {
-        report("line length = $len > $max_length");
+        report("line length = $len > ".MAX_LENGTH);
     }
 
     # handle C++ / C99 - style end-of-line comments
@@ -606,7 +625,7 @@ while (<>) { # loop over all lines of all input files
         $intra_line =~ s/(&&|\|\||<<|>>)/substr($1, 0, 1)/eg;
         # remove blinded comments etc. directly before ,;)}
         while ($intra_line =~ s/\s*@+([,;)}\]])/$1/e) {} # /g does not work here
-        # treat remaining blinded comments and string literals as (single) space during matching below
+        # treat remaining blinded comments and string literal contents as (single) space during matching below
         $intra_line =~ s/@+/ /g;                     # note that double SPC has already been handled above
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
         $intra_line =~ s/(for\s*\();;(\))/"$1$2"/eg; # strip ';;' in for (;;)
@@ -649,7 +668,7 @@ while (<>) { # loop over all lines of all input files
         report("no SPC after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }
 
-    # preprocessor directives and characters/string iterals @@@@@@@@@@@@@@@@@@@@
+    # preprocessor directives @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # handle preprocessor directives
     if (m/^\s*#(\s*)(\w+)/) { # line beginning with '#'
@@ -666,28 +685,16 @@ while (<>) { # loop over all lines of all input files
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code handling except for #define
         # TODO improve current mix of handling indents for normal C code and preprocessor directives
-    }
-
-    # handle multi-line string literals to avoid confusion on trailing '\' -
-    # this is not done for other uses of trailing '\' in order to be able
-    # to check layout of multi-line preprocessor directives
-    if (defined $multiline_string) {
-        $_ = $multiline_string.$_;
-        undef $multiline_string;
-        m/^(\s*)/; $count = length($1); # re-calculate $count, like done above
-    }
-    if (m/^(([^"]*"[^"]*")*[^"]*"[^"]*)\\[\s@]*$/) { # trailing '\' in last string literal
-        $multiline_string = $1;
-        goto LINE_FINISHED; # TODO check indents not only for first line of multi-line string
+        $count = -1; # do not check indentation of #define
     }
 
     # trailing '\' is typically used in multi-line macro definitions;
     # strip it along with any preceding whitespace such that it does not interfere with various matching done below
     $_ = $1 if (m/^(.*?)\s*\\[\s@]*$/); # trailing '\'
 
-    s/(\w*ASN1_[A-Z_]+END\w*([^(]|\(.*?\)|$))/$1;/g; # treat *ASN1_*END*(..) macro calls as if followed by ';'
-
     # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    s/(\w*ASN1_[A-Z_]+END\w*([^(]|\(.*?\)|$))/$1;/g; # treat *ASN1_*END*(..) macro calls as if followed by ';'
 
     my $nested_indents_position = 0;
 
@@ -768,7 +775,7 @@ while (<>) { # loop over all lines of all input files
 
     # check required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    check_indent() unless $contents =~ m/^\s*#\s*define(\W|$)/; # indent of #define has been handled above
+    check_indent() if $count >= 0; # not for #define and not if multi-line string literal is continued
 
     $in_comment = 0 if $in_comment < 0; # multi-line comment has ended
 

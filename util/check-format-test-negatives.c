@@ -14,11 +14,6 @@
  * There are some known false positives, though, which are marked below.
  */
 
-struct s {
-    int f;
-    double g;
-};
-
 /*-
  * allow double space  in format-tagged multi-line comment
  */
@@ -227,7 +222,7 @@ static int f(struct pem_pass_data *pass_data)
         return 0;
 }
 
-static OSSL_STORE_INFO *try_decode_PKCS12(void)
+static void *fun(void)
 {
     if (pem_name != NULL)
         /* comment */
@@ -238,6 +233,12 @@ static OSSL_STORE_INFO *try_decode_PKCS12(void)
         const char *curr = txt, *next = txt;
         char *tmp;
     } while (1);
+
+    char *intraline_string_with_comment_delimiters_and_dbl_space = "1  /*1";
+    char *multiline_string_with_comment_delimiters_and_dbl_space = "1  /*1\
+2222222\'22222222222222222\"222222222" "33333  /*3333333333" "44  /*44444444444\
+55555555555555\
+6666";
 }
 
 ASN1_CHOICE(OSSL_CRMF_POPO) = {
