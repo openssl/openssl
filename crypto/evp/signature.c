@@ -376,6 +376,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
          * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         EVP_SIGNATURE_free(signature);
+        ERR_clear_error();
         goto legacy;
     }
 

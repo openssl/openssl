@@ -73,6 +73,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
          * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         EVP_ASYM_CIPHER_free(cipher);
+        ERR_clear_error();
         goto legacy;
     }
 

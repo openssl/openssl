@@ -217,6 +217,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
          * operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         EVP_KEYEXCH_free(exchange);
+        ERR_clear_error();
         goto legacy;
     }
 
