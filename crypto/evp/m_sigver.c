@@ -302,34 +302,42 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                                                      sigret, siglen, SIZE_MAX);
 
  legacy:
+    if (pctx == NULL || pctx->pmeth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
     if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
-        if (!sigret)
+        if (sigret == NULL)
             return pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE)
             r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
         else {
-            EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_dup(ctx->pctx);
-            if (!dctx)
+            EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_dup(pctx);
+
+            if (dctx == NULL)
                 return 0;
             r = dctx->pmeth->signctx(dctx, sigret, siglen, ctx);
             EVP_PKEY_CTX_free(dctx);
         }
         return r;
     }
-    if (pctx->pmeth->signctx)
+    if (pctx->pmeth->signctx != NULL)
         sctx = 1;
     else
         sctx = 0;
-    if (sigret) {
+    if (sigret != NULL) {
         unsigned char md[EVP_MAX_MD_SIZE];
         unsigned int mdlen = 0;
+
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
             if (sctx)
-                r = ctx->pctx->pmeth->signctx(ctx->pctx, sigret, siglen, ctx);
+                r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
             else
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
             EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
+
             if (tmp_ctx == NULL)
                 return 0;
             if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
@@ -345,7 +353,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         }
         if (sctx || !r)
             return r;
-        if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
+        if (EVP_PKEY_sign(pctx, sigret, siglen, md, mdlen) <= 0)
             return 0;
     } else {
         if (sctx) {
@@ -353,6 +361,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                 return 0;
         } else {
             int s = EVP_MD_size(ctx->digest);
+
             if (s < 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
                 return 0;
         }
@@ -363,7 +372,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
                    const unsigned char *tbs, size_t tbslen)
 {
-    if (ctx->pctx->pmeth->digestsign != NULL)
+    if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestsign != NULL)
         return ctx->pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
     if (sigret != NULL && EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
         return 0;
@@ -389,13 +398,18 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                                                        sig, siglen);
 
  legacy:
-    if (ctx->pctx->pmeth->verifyctx)
+    if (pctx == NULL || pctx->pmeth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
+
+    if (pctx->pmeth->verifyctx != NULL)
         vctx = 1;
     else
         vctx = 0;
     if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
         if (vctx)
-            r = ctx->pctx->pmeth->verifyctx(ctx->pctx, sig, siglen, ctx);
+            r = pctx->pmeth->verifyctx(pctx, sig, siglen, ctx);
         else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
@@ -415,13 +429,13 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     }
     if (vctx || !r)
         return r;
-    return EVP_PKEY_verify(ctx->pctx, sig, siglen, md, mdlen);
+    return EVP_PKEY_verify(pctx, sig, siglen, md, mdlen);
 }
 
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                      size_t siglen, const unsigned char *tbs, size_t tbslen)
 {
-    if (ctx->pctx->pmeth->digestverify != NULL)
+    if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestverify != NULL)
         return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
