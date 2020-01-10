@@ -35,12 +35,12 @@
 /*@ comment starting delimiter: /* inside intra-line comment */
  /*@0
   *@ above multi-line comment start indent off by 1, reported unless sloppy-cmt; this comment line is too long
-   *@ multi-line comment further off by 1 relative to comment start
+   *@ multi-line comment indent further off by 1 relative to comment start
   *@ multi-line comment ending with text on last line */
 /*@2 multi-line comment starting with text on first line
  *@ comment starting delimiter: /* inside multi-line comment
 *@ multi-line comment indent off by -1
- *X*@ no spc after leading'*' in multi-line comment, reported unless sloppy-spc
+ *X*@ no spc after leading '*' in multi-line comment, reported unless sloppy-spc
  *@0 more than two spaces after .   in comment, reported unless sloppy-spc
 */ /*@2 multi-line comment end indent off by -1 (relative to comment start) */
 */ /*@ unexpected comment ending delimiter outside comment */
@@ -60,7 +60,7 @@ typedef struct  {   /*@0 double space in code, reported unless sloppy-spc */
         struct{} s; /*@ no space before '{', reported unless sloppy-spc */
     }u_member;      /*@ no space after '}', reported unless sloppy-spc */
     } s_type;       /*@ statement/type declaration indent off by 4 */
-int* somefunc();    /*@ no space before '*' in type declaration (!sloppy-spc) */
+int* somefunc();    /*@ no space before '*' in type decl, r unless sloppy-spc */
 void main(int n) {  /*@ opening brace at end of function definition header */
     for (;;n++) {   /*@ no space after ';', reported unless sloppy-spc */
         return;     /*@0 (1-line) single statement in braces */
@@ -85,8 +85,8 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
    somefunc(a,      /*@ statement indent off by -1 */
           "aligned" /*@ expr indent off by -2 accepted if sloppy-hang */ "right"
            , b,     /*@ expr indent off by -1 */
-           b,       /*@ expr indent again off -1, accepted if sloppy-hang */
-        b, /*@ expr indent off -4 but @ extra indent accepted if sloppy-hang */
+           b,       /*@ expr indent as on line above, accepted if sloppy-hang */
+    b, /*@ expr indent off -8 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
             123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
@@ -97,7 +97,6 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
            && ! 0   /*@2 space after '!', reported unless sloppy-spc */
          || b ==    /*@ hanging expr indent off by 2, or -2 for leading '||' */
        (xx+= 2) +   /*@ no space before '+=', reported unless sloppy-spc */
-       a ++ -       /*@ space before postfix '++', reported unless sloppy-spc */
        (a^ 1) +     /*@ no space before '^', reported unless sloppy-spc */
        a %2 /       /*@ no space after '%', reported unless sloppy-spc */
        1 +/* */     /*@ no space before comment, reported unless sloppy-spc */
@@ -105,6 +104,11 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
        s. e_member) /*@ space after '.', reported unless sloppy-spc */
          xx = a + b /*@ extra single-statement indent off by 1 */
                + 0; /*@ two times extra single-statement indent off by 3 */
+    if (a ++) {     /*@ space before postfix '++', reported unless sloppy-spc */
+        c;          /*@0 single stmt in braces, reported on 1-stmt */
+    }else {         /*@ no space after '}', reported unless sloppy-spc */
+        d;          /*@0 single stmt in braces, reported on 1-stmt */
+          }         /*@ statement indent off by 6 */
     if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
              b); else /*@ (non-brace) code before 'else' */
         do f(c, c); /*@ (non-brace) code after 'do' */
