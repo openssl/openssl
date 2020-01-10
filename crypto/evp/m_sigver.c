@@ -308,26 +308,28 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     }
 
     if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
-        if (!sigret)
+        if (sigret == NULL)
             return pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE)
             r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
         else {
             EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_dup(pctx);
-            if (!dctx)
+
+            if (dctx == NULL)
                 return 0;
             r = dctx->pmeth->signctx(dctx, sigret, siglen, ctx);
             EVP_PKEY_CTX_free(dctx);
         }
         return r;
     }
-    if (pctx->pmeth->signctx)
+    if (pctx->pmeth->signctx != NULL)
         sctx = 1;
     else
         sctx = 0;
-    if (sigret) {
+    if (sigret != NULL) {
         unsigned char md[EVP_MAX_MD_SIZE];
         unsigned int mdlen = 0;
+
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
             if (sctx)
                 r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
@@ -335,6 +337,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
             EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
+
             if (tmp_ctx == NULL)
                 return 0;
             if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
@@ -358,6 +361,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                 return 0;
         } else {
             int s = EVP_MD_size(ctx->digest);
+
             if (s < 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
                 return 0;
         }
@@ -399,7 +403,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         return 0;
     }
 
-    if (pctx->pmeth->verifyctx)
+    if (pctx->pmeth->verifyctx != NULL)
         vctx = 1;
     else
         vctx = 0;
