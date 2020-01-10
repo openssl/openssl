@@ -128,7 +128,7 @@ static const PROV_GCM_HW aes_gcm = {
     aes_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
-    generic_aes_gmc_cipher_update,
+    generic_aes_gcm_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };
