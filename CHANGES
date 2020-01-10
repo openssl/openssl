@@ -9,6 +9,25 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
+     SHA384, SHA512 and Whirlpool digest functions have been deprecated.
+     These include:
+         MD2, MD2_options, MD2_Init, MD2_Update, MD2_Final, MD4, MD4_Init,
+         MD4_Update, MD4_Final, MD4_Transform, MD5, MD5_Init, MD5_Update,
+         MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
+         RIPEMD160, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
+         RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final,
+         SHA1_Transform, SHA224_Init, SHA224_Update, SHA224_Final,
+         SHA224_Transform, SHA256_Init, SHA256_Update, SHA256_Final,
+         SHA256_Transform, SHA384, SHA384_Init, SHA384_Update, SHA384_Final,
+         SHA512, SHA512_Init, SHA512_Update, SHA512_Final, SHA512_Transform,
+         WHIRLPOOL, WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_BitUpdate
+         and WHIRLPOOL_Final.
+     Use of these low level functions has been informally discouraged for a long
+     time.  Instead applications should instead use the EVP_DigestInit_ex,
+     EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions.
+     [Paul Dale]
+
   *) Corrected the documentation of the return values from the EVP_DigestSign*
      set of functions.  The documentation mentioned negative values for some
      errors, but this was never the case, so the mention of negative values
