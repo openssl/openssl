@@ -601,6 +601,10 @@ void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
                             void *provdata, int domainparams);
 void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            const OSSL_PARAM params[], int domainparams);
+int evp_keymgmt_is(const EVP_PKEY *pkey, int domainparams);
+int evp_keymgmt_cmp(const EVP_PKEY *pkey1, const EVP_PKEY *pkey2,
+                    int domainparams);
+int evp_keymgmt_copy(EVP_PKEY *to, const EVP_PKEY *from, int domainparams);
 
 
 /* KEYMGMT provider interface functions */

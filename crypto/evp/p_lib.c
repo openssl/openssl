@@ -80,12 +80,32 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
-    if (to->type == EVP_PKEY_NONE) {
-        if (EVP_PKEY_set_type(to, from->type) == 0)
-            return 0;
-    } else if (to->type != from->type) {
-        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
-        goto err;
+    int is_provided = 0;
+
+    if (from->ameth == NULL) {
+        /*
+         * It's fine if the destination hasn't cached anything yet, that
+         * simply makes it a blank page to be filled in with the
+         * evp_keymgmt_copy() call below.
+         * That call will also detect |from->pkeys[0].keymgmt == NULL|,
+         * so we don't bother making an error here.
+         */
+        if (to->pkeys[0].keymgmt != NULL
+            && from->pkeys[0].keymgmt != NULL
+            && (EVP_KEYMGMT_number(to->pkeys[0].keymgmt)
+                != EVP_KEYMGMT_number(from->pkeys[0].keymgmt))) {
+            EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
+            goto err;
+        }
+        is_provided = 1;
+    } else {
+        if (to->type == EVP_PKEY_NONE) {
+            if (EVP_PKEY_set_type(to, from->type) == 0)
+                return 0;
+        } else if (to->type != from->type) {
+            EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
+            goto err;
+        }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
@@ -94,27 +114,44 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     }
 
     if (!EVP_PKEY_missing_parameters(to)) {
+        /*
+         * TODO(3.0) EVP_PKEY_cmp_parameters() may be inefficient for
+         * comparison of provided domain parameters, can we make it better?
+         */
         if (EVP_PKEY_cmp_parameters(to, from) == 1)
             return 1;
         EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_PARAMETERS);
         return 0;
     }
 
-    if (from->ameth && from->ameth->param_copy)
-        return from->ameth->param_copy(to, from);
+    if (is_provided) {
+        return evp_keymgmt_copy(to, from, 1);
+    } else {
+        if (from->ameth->param_copy == NULL)
+            return from->ameth->param_copy(to, from);
+    }
  err:
     return 0;
 }
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey != NULL && pkey->ameth && pkey->ameth->param_missing)
-        return pkey->ameth->param_missing(pkey);
+    if (pkey == NULL) {
+        if (pkey->ameth == NULL)
+            return !evp_keymgmt_is(pkey, 1);
+        if (pkey->ameth->param_missing != NULL)
+            return pkey->ameth->param_missing(pkey);
+    }
     return 0;
 }
 
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    if (a->ameth == NULL || b->ameth == NULL)
+        /* at least provided EVP_PKEY */
+        return evp_keymgmt_cmp(a, b, 1);
+
+    /* All legacy keys */
     if (a->type != b->type)
         return -1;
     if (a->ameth && a->ameth->param_cmp)
@@ -124,6 +161,10 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    if (a->ameth == NULL || b->ameth == NULL)
+        /* at least one of the EVP_PKEYs is provided */
+        return evp_keymgmt_cmp(a, b, 0);
+
     if (a->type != b->type)
         return -1;
 
@@ -171,6 +212,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         ENGINE_finish(pkey->pmeth_engine);
         pkey->pmeth_engine = NULL;
 # endif
+        evp_keymgmt_clear_pkey_cache(pkey);
     }
     if (str)
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);

@@ -32,11 +32,89 @@ static int try_import(const OSSL_PARAM params[], void *arg)
     return data->provdata != NULL;
 }
 
+/*
+ * This only creates a new provider side key, unconditionally.  The returned
+ * pointer must be handled by the caller.
+ */
+static void *evp_keymgmt_export_to_provdata(const EVP_PKEY *pk,
+                                            EVP_KEYMGMT *keymgmt,
+                                            int want_domainparams)
+{
+    void *provdata = NULL;
+    size_t i;
+
+    if (pk->pkey.ptr != NULL) {
+        /* There is a legacy key, try to export that one to the provider */
+
+        /* If the legacy key doesn't have an export function, give up */
+        if (pk->ameth->export_to == NULL)
+            return NULL;
+
+        /* Otherwise, simply use it. */
+        provdata = pk->ameth->export_to(pk, keymgmt, want_domainparams);
+    } else {
+        /*
+         * Here, there is no legacy key, so we look at the already cached
+         * provider keys, and import from the first that supports it
+         * (i.e. use its export function), and export the imported data to
+         * the new provider.
+         */
+
+        /* Setup for the export callback */
+        struct import_data_st import_data;
+
+        import_data.importfn =
+            want_domainparams ? keymgmt->importdomparams : keymgmt->importkey;
+        import_data.provdata = NULL;
+
+        /*
+         * If the given keymgmt doesn't have an import function, give up
+         */
+        if (import_data.importfn == NULL)
+            return NULL;
+
+        for (i = 0;
+             i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
+             i++) {
+            int (*exportfn)(void *provctx, OSSL_CALLBACK *cb, void *cbarg) =
+                want_domainparams
+                ? pk->pkeys[i].keymgmt->exportdomparams
+                : pk->pkeys[i].keymgmt->exportkey;
+
+            if (exportfn != NULL) {
+                import_data.provctx =
+                    ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+                /*
+                 * The export function calls the callback (try_import), which
+                 * does the import for us.
+                 * Even though we got a success return, we double check that
+                 * we actually got something, just in case some implementation
+                 * forgets to check the return value.
+
+                 */
+                if (exportfn(pk->pkeys[i].provdata, &try_import, &import_data)
+                    && (provdata = import_data.provdata) != NULL)
+                    break;
+            }
+        }
+
+        /*
+         * TODO(3.0) Right now, we assume we have ample space.  We will
+         * have to think about a cache aging scheme, though, if |i| indexes
+         * outside the array.
+         */
+        i = ossl_assert(i < OSSL_NELEM(pk->pkeys));
+    }
+
+    return provdata;
+}
+
 void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                      int want_domainparams)
 {
     void *provdata = NULL;
-    size_t i, j;
+    size_t i;
 
     /*
      * If there is an underlying legacy key and it has changed, invalidate
@@ -66,72 +144,11 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return pk->pkeys[i].provdata;
     }
 
-    if (pk->pkey.ptr != NULL) {
-        /* There is a legacy key, try to export that one to the provider */
+    provdata = evp_keymgmt_export_to_provdata(pk, keymgmt, want_domainparams);
 
-        /* If the legacy key doesn't have an export function, give up */
-        if (pk->ameth->export_to == NULL)
-            return NULL;
-
-        /* Otherwise, simply use it. */
-        provdata = pk->ameth->export_to(pk, keymgmt, want_domainparams);
-
-        /* Synchronize the dirty count, but only if we exported successfully */
-        if (provdata != NULL)
-            pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
-
-    } else {
-        /*
-         * Here, there is no legacy key, so we look at the already cached
-         * provider keys, and import from the first that supports it
-         * (i.e. use its export function), and export the imported data to
-         * the new provider.
-         */
-
-        /* Setup for the export callback */
-        struct import_data_st import_data;
-
-        import_data.importfn =
-            want_domainparams ? keymgmt->importdomparams : keymgmt->importkey;
-        import_data.provdata = NULL;
-
-        /*
-         * If the given keymgmt doesn't have an import function, give up
-         */
-        if (import_data.importfn == NULL)
-            return NULL;
-
-        for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            int (*exportfn)(void *provctx, OSSL_CALLBACK *cb, void *cbarg) =
-                want_domainparams
-                ? pk->pkeys[j].keymgmt->exportdomparams
-                : pk->pkeys[j].keymgmt->exportkey;
-
-            if (exportfn != NULL) {
-                import_data.provctx =
-                    ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-                /*
-                 * The export function calls the callback (try_import), which
-                 * does the import for us.
-                 * Even though we got a success return, we double check that
-                 * we actually got something, just in case some implementation
-                 * forgets to check the return value.
-
-                 */
-                if (exportfn(pk->pkeys[j].provdata, &try_import, &import_data)
-                    && (provdata = import_data.provdata) != NULL)
-                    break;
-            }
-        }
-    }
-
-    /*
-     * TODO(3.0) Right now, we assume we have ample space.  We will
-     * have to think about a cache aging scheme, though, if |i| indexes
-     * outside the array.
-     */
-    j = ossl_assert(i < OSSL_NELEM(pk->pkeys));
+    /* Synchronize the dirty count, but only if we exported successfully */
+    if (pk->pkey.ptr != NULL && provdata != NULL)
+        pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
 
     evp_keymgmt_cache_pkey(pk, i, keymgmt, provdata, want_domainparams);
 
@@ -215,6 +232,124 @@ void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
     evp_keymgmt_cache_pkey(target, 0, keymgmt, provdata, domainparams);
 
     return provdata;
+}
+
+int evp_keymgmt_is(const EVP_PKEY *pkey, int domainparams)
+{
+    EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
+
+    if (keymgmt == NULL)
+        return 0;          /* There's no one to ask, so assume "no" */
+    return pkey->pkeys[0].domainparams
+        ? evp_keymgmt_isdomparams(keymgmt, pkey->pkeys[0].provdata)
+        : evp_keymgmt_iskey(keymgmt, pkey->pkeys[0].provdata);
+}
+
+/*
+ * This function adheres to EVP_PKEY_cmp() / EVP_PKEY_cmp_parameters()
+ * return values, i.e.:
+ *
+ *  1   same key
+ *  0   not same key
+ * -1   not same key type
+ * -2   unsupported operation
+ */
+int evp_keymgmt_cmp(const EVP_PKEY *pkey1, const EVP_PKEY *pkey2,
+                    int domainparams)
+{
+    EVP_KEYMGMT *keymgmt1 = pkey1->pkeys[0].keymgmt;
+    EVP_KEYMGMT *keymgmt2 = pkey2->pkeys[0].keymgmt;
+    void *provdata1 = NULL;
+    void *provdata2 = NULL;
+    void *exported_provdata2 = NULL;
+    int rv = 0;                  /* Assume the worst */
+
+    if (keymgmt1 == NULL && keymgmt2 == NULL)
+        return -2;   /* No support without at least one key manager */
+
+    if (keymgmt1 == NULL) {
+        EVP_KEYMGMT *swaptmp = keymgmt1;
+        keymgmt1 = keymgmt2;
+        keymgmt2 = swaptmp;
+    }
+
+    if (keymgmt1 != NULL && keymgmt2 != NULL
+        && EVP_KEYMGMT_number(keymgmt1) != EVP_KEYMGMT_number(keymgmt2))
+        return -1;               /* key type mismatch */
+
+    provdata1 = pkey1->pkeys[0].provdata;
+    provdata2 = pkey2->pkeys[0].provdata;
+
+    if (pkey1->pkeys[0].domainparams != domainparams
+        || pkey2->pkeys[0].domainparams != domainparams)
+        return -2;      /* No support for comparing stuff not asked */
+
+    /*
+     * If the two keys belong with different providers or the second key
+     * isn't provided, try to export the second provdata to the first
+     * provider and use that for comparing.
+     */
+    if (keymgmt1 != keymgmt2)
+        provdata2 = exported_provdata2 =
+            evp_keymgmt_export_to_provdata(pkey2, keymgmt1, domainparams);
+
+    /* TODO(3.0) Investigate if this should be -2, i.e unsupported */
+    if (provdata2 == NULL)
+        return -1;               /* Key type mismatch */
+
+    /*
+     * From here on, we will only return 0 or 1, because we know that
+     * the comparing functions are present in the EVP_KEYMGMT structure.
+     */
+    if (provdata1 != NULL && provdata2 != NULL)
+        rv = domainparams
+            ? evp_keymgmt_cmpdomparams(keymgmt1, provdata1, provdata2)
+            : evp_keymgmt_cmpkey(keymgmt1, provdata1, provdata2);
+
+    if (domainparams)
+        evp_keymgmt_freedomparams(keymgmt1, exported_provdata2);
+    else
+        evp_keymgmt_freekey(keymgmt1, exported_provdata2);
+
+    return rv;
+}
+
+int evp_keymgmt_copy(EVP_PKEY *to, const EVP_PKEY *from, int domainparams)
+{
+    EVP_KEYMGMT *keymgmt_to = to->pkeys[0].keymgmt;
+    EVP_KEYMGMT *keymgmt_from = from->pkeys[0].keymgmt;
+    void *provdata_to = NULL;
+
+    if (keymgmt_from == NULL || from->pkeys[0].domainparams != domainparams)
+        return 0;
+
+    if (keymgmt_to != NULL)
+        EVP_KEYMGMT_up_ref(keymgmt_to); /* ref++ */
+    evp_keymgmt_clear_pkey_cache(to);
+
+    if (keymgmt_to == NULL || keymgmt_to == keymgmt_from) {
+        if (keymgmt_to != NULL)
+            EVP_KEYMGMT_free(keymgmt_to); /* ref-- */
+        keymgmt_to = keymgmt_from;
+        EVP_KEYMGMT_up_ref(keymgmt_to); /* ref++ */
+        provdata_to = domainparams
+            ? evp_keymgmt_dupdomparams(keymgmt_from, from->pkeys[0].provdata, 1)
+            : evp_keymgmt_dupkey(keymgmt_from, from->pkeys[0].provdata, 1);
+    } else {
+        provdata_to =
+            evp_keymgmt_export_to_provdata(from, keymgmt_to, domainparams);
+    }
+
+    if (provdata_to == NULL) {
+        if (keymgmt_to != NULL)
+            EVP_KEYMGMT_free(keymgmt_to); /* ref-- */
+    } else {
+        to->pkeys[0].keymgmt = keymgmt_to;
+        to->pkeys[0].provdata = provdata_to;
+        to->pkeys[0].domainparams = domainparams;
+    }
+
+    return (provdata_to != NULL);
 }
 
 /* internal functions */
