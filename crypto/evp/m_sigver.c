@@ -54,6 +54,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     locpctx = ctx->pctx;
     evp_pkey_ctx_free_old_ops(locpctx);
 
+    /*
+     * TODO when we stop falling back to legacy, this and the ERR_pop_to_mark()
+     * calls can be removed.
+     */
+    ERR_set_mark();
+
     if (locpctx->keytype == NULL)
         goto legacy;
 
@@ -80,6 +86,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -108,14 +115,19 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         || (EVP_KEYMGMT_provider(locpctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
-         * We don't have the full support we need with provided methods,
-         * let's go see if legacy does.  Also, we don't need to free
-         * ctx->keymgmt here, as it's not necessarily tied to this
-         * operation.  It will be freed by EVP_PKEY_CTX_free().
+         * We don't need to free ctx->keymgmt here, as it's not necessarily
+         * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         EVP_SIGNATURE_free(signature);
         goto legacy;
     }
+
+    /*
+     * TODO remove this when legacy is gone
+     * If we don't have the full support we need with provided methods,
+     * let's go see if legacy does.
+     */
+    ERR_pop_to_mark();
 
     /* No more legacy from here down to legacy: */
 
@@ -164,6 +176,13 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     return 0;
 
  legacy:
+    /*
+     * TODO remove this when legacy is gone
+     * If we don't have the full support we need with provided methods,
+     * let's go see if legacy does.
+     */
+    ERR_pop_to_mark();
+
     if (ctx->pctx->pmeth == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;

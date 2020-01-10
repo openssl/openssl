@@ -333,6 +333,12 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
+    /*
+     * TODO when we stop falling back to legacy, this and the ERR_pop_to_mark()
+     * calls can be removed.
+     */
+    ERR_set_mark();
+
     if (ctx->keytype == NULL)
         goto legacy;
 
@@ -343,6 +349,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
@@ -370,14 +377,21 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
-         * We don't have the full support we need with provided methods,
-         * let's go see if legacy does.  Also, we don't need to free
-         * ctx->keymgmt here, as it's not necessarily tied to this
-         * operation.  It will be freed by EVP_PKEY_CTX_free().
+         * We don't need to free ctx->keymgmt here, as it's not necessarily
+         * tied to this operation.  It will be freed by EVP_PKEY_CTX_free().
          */
         EVP_SIGNATURE_free(signature);
         goto legacy;
     }
+
+    /*
+     * TODO remove this when legacy is gone
+     * If we don't have the full support we need with provided methods,
+     * let's go see if legacy does.
+     */
+    ERR_pop_to_mark();
+
+    /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
     ctx->op.sig.sigprovctx = signature->newctx(ossl_provider_ctx(signature->prov));
@@ -425,6 +439,13 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     return 1;
 
  legacy:
+    /*
+     * TODO remove this when legacy is gone
+     * If we don't have the full support we need with provided methods,
+     * let's go see if legacy does.
+     */
+    ERR_pop_to_mark();
+
     if (ctx->pmeth == NULL
             || (operation == EVP_PKEY_OP_SIGN && ctx->pmeth->sign == NULL)
             || (operation == EVP_PKEY_OP_VERIFY && ctx->pmeth->verify == NULL)
