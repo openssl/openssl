@@ -24,6 +24,10 @@ static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn rsa_get_key_params;
 
+static OSSL_OP_keymgmt_iskey_fn rsa_iskey;
+static OSSL_OP_keymgmt_cmpkey_fn rsa_cmpkey;
+static OSSL_OP_keymgmt_dupkey_fn rsa_dupkey;
+
 #define RSA_DEFAULT_MD "SHA256"
 
 DEFINE_STACK_OF(BIGNUM)
@@ -288,6 +292,36 @@ static int rsa_get_key_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
+static int rsa_iskey(const void *key)
+{
+    return key != NULL;
+}
+
+static int rsa_cmpkey(const void *key1, const void *key2)
+{
+    const RSA *rsa1 = key1;
+    const RSA *rsa2 = key2;
+
+    return (BN_cmp(RSA_get0_n(rsa1), RSA_get0_n(rsa2)) == 0
+            && BN_cmp(RSA_get0_e(rsa1), RSA_get0_e(rsa2)) == 0);
+}
+
+static void *rsa_dupkey(void *key, int do_copy)
+{
+    if (do_copy) {
+        /*
+         * the EVP library currently only supports copying domain params,
+         * so we don't need to care...  besides, if we want to support
+         * copying RSA keys, there should be a function in the low level
+         * RSA library.
+         */
+        return NULL;
+    } else {
+        RSA_up_ref(key);
+    }
+    return key;
+}
+
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))rsa_importkey },
     { OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES, (void (*)(void))rsa_importkey_types },
@@ -295,5 +329,8 @@ const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES, (void (*)(void))rsa_exportkey_types },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))RSA_free },
     { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))rsa_get_key_params },
+    { OSSL_FUNC_KEYMGMT_ISKEY, (void (*)(void))rsa_iskey },
+    { OSSL_FUNC_KEYMGMT_CMPKEY, (void (*)(void))rsa_cmpkey },
+    { OSSL_FUNC_KEYMGMT_DUPKEY, (void (*)(void))rsa_dupkey },
     { 0, NULL }
 };
