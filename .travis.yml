@@ -79,6 +79,10 @@ matrix:
           compiler: clang
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
         - os: linux
+          arch: arm64
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings enable-trace" BUILDONLY="yes"
+        - os: linux
           addons:
               apt:
                   packages:
