@@ -386,6 +386,15 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_domparam_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_domparam_params,
                     (void))
 
+# define OSSL_FUNC_KEYMGMT_ISDOMPARAMS               9
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_isdomparams, (const void *domparams))
+# define OSSL_FUNC_KEYMGMT_CMPDOMPARAMS             10
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_cmpdomparams,
+                    (const void *domparams1, const void *domparams2))
+# define OSSL_FUNC_KEYMGMT_DUPDOMPARAMS             11
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_dupdomparams,
+                    (void *domparams, int do_copy))
+
 /* Key creation and destruction */
 # define OSSL_FUNC_KEYMGMT_IMPORTKEY                20
 # define OSSL_FUNC_KEYMGMT_GENKEY                   21
@@ -421,6 +430,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_key_params,
                     (void *key, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_key_params, (void))
+
+# define OSSL_FUNC_KEYMGMT_ISKEY                    29
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_iskey, (const void *key))
+# define OSSL_FUNC_KEYMGMT_CMPKEY                   30
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_cmpkey,
+                    (const void *key1, const void *key2))
+# define OSSL_FUNC_KEYMGMT_DUPKEY                   31
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_dupkey, (void *key, int do_copy))
 
 /* Discovery of supported operations */
 # define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME     40

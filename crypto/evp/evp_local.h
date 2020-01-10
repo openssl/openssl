@@ -82,6 +82,9 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_exportdomparam_types_fn *exportdomparam_types;
     OSSL_OP_keymgmt_get_domparam_params_fn *get_domparam_params;
     OSSL_OP_keymgmt_gettable_domparam_params_fn *gettable_domparam_params;
+    OSSL_OP_keymgmt_isdomparams_fn *isdomparams;
+    OSSL_OP_keymgmt_cmpdomparams_fn *cmpdomparams;
+    OSSL_OP_keymgmt_dupdomparams_fn *dupdomparams;
 
     /* Key routines */
     OSSL_OP_keymgmt_importkey_fn *importkey;
@@ -93,6 +96,9 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_exportkey_types_fn *exportkey_types;
     OSSL_OP_keymgmt_get_key_params_fn *get_key_params;
     OSSL_OP_keymgmt_gettable_key_params_fn *gettable_key_params;
+    OSSL_OP_keymgmt_iskey_fn *iskey;
+    OSSL_OP_keymgmt_cmpkey_fn *cmpkey;
+    OSSL_OP_keymgmt_dupkey_fn *dupkey;
 
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
 } /* EVP_KEYMGMT */ ;

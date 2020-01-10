@@ -30,6 +30,11 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OP_keymgmt_get_domparam_params(void *domparams, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_domparam_params(void);
 
+ /* Key domain parameter status and duplication */
+ int OP_keymgmt_isdomparams(const void *domparams);
+ int OP_keymgmt_cmpdomparams(const void *domparams1, const void *domparams2);
+ void *OP_keymgmt_dupdomparams(void *domparams, int do_copy);
+
  /* Key creation and destruction */
  void *OP_keymgmt_importkey(void *provctx, const OSSL_PARAM params[]);
  void *OP_keymgmt_genkey(void *provctx,
@@ -47,6 +52,11 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key information */
  int OP_keymgmt_get_key_params(void *key, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_key_params(void);
+
+ /* Key status and duplication */
+ int OP_keymgmt_iskey(const void *key);
+ int OP_keymgmt_cmpkey(const void *key1, const void *key2);
+ void *OP_keymgmt_dupkey(void *key, int do_copy);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -95,6 +105,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_get_domparam_params  OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS
  OP_keymgmt_gettable_domparam_params
                                  OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS
+ OP_keymgmt_isdomparams          OSSL_FUNC_KEYMGMT_ISDOMPARAMS
+ OP_keymgmt_cmpdomparams         OSSL_FUNC_KEYMGMT_CMPDOMPARAMS
+ OP_keymgmt_dupdomparams         OSSL_FUNC_KEYMGMT_DUPDOMPARAMS
 
  OP_keymgmt_importkey            OSSL_FUNC_KEYMGMT_IMPORTKEY
  OP_keymgmt_genkey               OSSL_FUNC_KEYMGMT_GENKEY
@@ -105,6 +118,9 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_exportkey_types      OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES
  OP_keymgmt_get_key_params       OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS
  OP_keymgmt_gettable_key_params  OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS
+ OP_keymgmt_iskey                OSSL_FUNC_KEYMGMT_ISKEY
+ OP_keymgmt_cmpkey               OSSL_FUNC_KEYMGMT_CMPKEY
+ OP_keymgmt_dupkey               OSSL_FUNC_KEYMGMT_DUPKEY
 
  OP_keymgmt_query_operation_name OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME
 
@@ -142,6 +158,22 @@ see L</Information Parameters>.
 OP_keymgmt_gettable_domparam_params() should return a constant array
 of descriptor B<OSSL_PARAM>, for parameters that
 OP_keymgmt_get_domparam_params() can handle.
+
+OP_keymgmt_isdomparams() should check if the structure I<domparams> is
+or contains domain parameters, and return 1 if it is, otherwise 0.
+
+OP_keymgmt_cmpdomparams() should check if the structures I<domparams1>
+and I<domainparams2> contain the same domain parameters, and return 1
+if they do, otherwise 0.
+
+OP_keymgmt_dupdomparams() should make a new reference to an existing
+provider side domain parameter structure I<domparams>.
+If I<do_copy> is false (zero), it's sufficient but not mandatory to
+return a pointer to the same structure, and the implementation must
+take precautions to ensure freeing it later will not cause an error
+(such as reference counting).
+If I<do_copy> is true (one), the implementation must make an actual
+separate copy.
 
 =head2 Key functions
 
@@ -184,6 +216,21 @@ with the given I<key>, see L</Information Parameters>.
 OP_keymgmt_gettable_key_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that
 OP_keymgmt_get_key_params() can handle.
+
+OP_keymgmt_iskey() should check if the structure I<key> is or contains
+a key pair, and return 1 if it is, otherwise 0.
+
+OP_keymgmt_cmpkey() should check if the structures I<key1> and I<key2>
+contain the same public key, and return 1 if they do, otherwise 0.
+
+OP_keymgmt_dupkey() should make a new reference to an existing
+provider side key structure I<key>.
+If I<do_copy> is false (zero), it's sufficient but not mandatory to
+return a pointer to the same structure, and the implementation must
+take precautions to ensure freeing it later will not cause an error
+(such as reference counting).
+If I<do_copy> is true (one), the implementation must make an actual
+separate copy.
 
 =head2 Supported operations
 
@@ -230,6 +277,18 @@ The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
 
 =back
+
+=head1 NOTES
+
+A provider side key should be able to hold at least the public key,
+and domain parameters as well when the key type supports them.  The
+implementation must be able to import and export them, even if they're
+independent from anything else that the implementation supports.
+
+Functions such as OP_keymgmt_cmpkey() depend on this, in case
+EVP_PKEY_cmp() wants to compare two domain parameter sets or two keys
+that only differ in coming from two different providers, but have the
+same data.
 
 =head1 SEE ALSO
 

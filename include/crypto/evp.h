@@ -621,6 +621,12 @@ int evp_keymgmt_get_domparam_params(const EVP_KEYMGMT *keymgmt,
                                     void *provdomparam, OSSL_PARAM params[]);
 const OSSL_PARAM *
 evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_isdomparams(const EVP_KEYMGMT *keymgmt,
+                            const void *domparams);
+int evp_keymgmt_cmpdomparams(const EVP_KEYMGMT *keymgmt,
+                             const void *domparams1, const void *domparams2);
+void *evp_keymgmt_dupdomparams(const EVP_KEYMGMT *keymgmt, void *domparams,
+                               int do_copy);
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
                             const OSSL_PARAM params[]);
@@ -636,6 +642,10 @@ const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
 int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
                                void *provkey, OSSL_PARAM params[]);
 const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_iskey(const EVP_KEYMGMT *keymgmt, const void *key);
+int evp_keymgmt_cmpkey(const EVP_KEYMGMT *keymgmt,
+                       const void *key1, const void *key2);
+void *evp_keymgmt_dupkey(const EVP_KEYMGMT *keymgmt, void *key, int do_copy);
 
 /* Pulling defines out of C source files */
 

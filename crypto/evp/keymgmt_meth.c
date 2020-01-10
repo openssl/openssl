@@ -91,6 +91,24 @@ static void *keymgmt_from_dispatch(int name_id,
                 keymgmt->gettable_domparam_params =
                     OSSL_get_OP_keymgmt_gettable_domparam_params(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_ISDOMPARAMS:
+            if (keymgmt->isdomparams != NULL)
+                break;
+            keymgmt->isdomparams =
+                OSSL_get_OP_keymgmt_isdomparams(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_CMPDOMPARAMS:
+            if (keymgmt->cmpdomparams != NULL)
+                break;
+            keymgmt->cmpdomparams =
+                OSSL_get_OP_keymgmt_cmpdomparams(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_DUPDOMPARAMS:
+            if (keymgmt->dupdomparams != NULL)
+                break;
+            keymgmt->dupdomparams =
+                OSSL_get_OP_keymgmt_dupdomparams(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_IMPORTKEY:
             if (keymgmt->importkey != NULL)
                 break;
@@ -138,6 +156,24 @@ static void *keymgmt_from_dispatch(int name_id,
                 keymgmt->gettable_key_params =
                     OSSL_get_OP_keymgmt_gettable_key_params(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_ISKEY:
+            if (keymgmt->iskey != NULL)
+                break;
+            keymgmt->iskey =
+                OSSL_get_OP_keymgmt_iskey(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_CMPKEY:
+            if (keymgmt->cmpkey != NULL)
+                break;
+            keymgmt->cmpkey =
+                OSSL_get_OP_keymgmt_cmpkey(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_DUPKEY:
+            if (keymgmt->dupkey != NULL)
+                break;
+            keymgmt->dupkey =
+                OSSL_get_OP_keymgmt_dupkey(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
             if (keymgmt->query_operation_name != NULL)
                 break;
@@ -155,10 +191,6 @@ static void *keymgmt_from_dispatch(int name_id,
     if ((keymgmt->freedomparams != NULL
          && (keymgmt->importdomparams == NULL
              && keymgmt->gendomparams == NULL))
-        || (keymgmt->freekey != NULL
-            && (keymgmt->importkey == NULL
-                && keymgmt->genkey == NULL
-                && keymgmt->loadkey == NULL))
         || (keymgmt->importdomparam_types != NULL
             && keymgmt->importdomparams == NULL)
         || (keymgmt->exportdomparam_types != NULL
@@ -170,7 +202,23 @@ static void *keymgmt_from_dispatch(int name_id,
         || (keymgmt->exportkey_types != NULL
             && keymgmt->exportkey == NULL)
         || (keymgmt->gettable_key_params != NULL
-            && keymgmt->get_key_params == NULL)) {
+            && keymgmt->get_key_params == NULL)
+        || (keymgmt->freedomparams == NULL
+            && !(keymgmt->isdomparams == NULL
+                 && keymgmt->cmpdomparams == NULL
+                 && keymgmt->dupdomparams == NULL))
+        || (keymgmt->freedomparams != NULL
+            && !(keymgmt->isdomparams != NULL
+                 && keymgmt->cmpdomparams != NULL
+                 && keymgmt->dupdomparams != NULL))
+        /* Fundamentals, some things simply *must* be present */
+        || keymgmt->freekey == NULL
+        || (keymgmt->importkey == NULL
+            && keymgmt->genkey == NULL
+            && keymgmt->loadkey == NULL)
+        || keymgmt->iskey == NULL
+        || keymgmt->cmpkey == NULL
+        || keymgmt->dupkey == NULL) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;

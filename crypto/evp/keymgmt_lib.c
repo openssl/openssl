@@ -278,6 +278,24 @@ evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt)
     return keymgmt->gettable_domparam_params();
 }
 
+int evp_keymgmt_isdomparams(const EVP_KEYMGMT *keymgmt,
+                            const void *domparams)
+{
+    return keymgmt->isdomparams(domparams);
+}
+
+int evp_keymgmt_cmpdomparams(const EVP_KEYMGMT *keymgmt,
+                             const void *domparams1, const void *domparams2)
+{
+    return keymgmt->cmpdomparams(domparams1, domparams2);
+}
+
+void *evp_keymgmt_dupdomparams(const EVP_KEYMGMT *keymgmt,
+                               void *domparams, int do_copy)
+{
+    return keymgmt->dupdomparams(domparams, do_copy);
+}
+
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
                             const OSSL_PARAM params[])
@@ -341,4 +359,20 @@ const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt)
     if (keymgmt->gettable_key_params == NULL)
         return NULL;
     return keymgmt->gettable_key_params();
+}
+
+int evp_keymgmt_iskey(const EVP_KEYMGMT *keymgmt, const void *key)
+{
+    return keymgmt->iskey(key);
+}
+
+int evp_keymgmt_cmpkey(const EVP_KEYMGMT *keymgmt,
+                       const void *key1, const void *key2)
+{
+    return keymgmt->cmpkey(key1, key2);
+}
+
+void *evp_keymgmt_dupkey(const EVP_KEYMGMT *keymgmt, void *key, int do_copy)
+{
+    return keymgmt->dupkey(key, do_copy);
 }
