@@ -2762,8 +2762,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         EVP_PKEY *pkey = s->s3.tmp.cert->privatekey;
         const EVP_MD *md;
         unsigned char *sigbytes1, *sigbytes2, *tbs;
-        size_t siglen, tbslen;
-        int rv;
+        size_t siglen = 0, tbslen;
 
         if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
             /* Should never happen */
@@ -2786,15 +2785,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        /*
-         * Create the signature. We don't know the actual length of the sig
-         * until after we've created it, so we reserve enough bytes for it
-         * up front, and then properly allocate them in the WPACKET
-         * afterwards.
-         */
-        siglen = EVP_PKEY_size(pkey);
-        if (!WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
-            || EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
+
+        if (EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
@@ -2816,15 +2808,19 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
-        rv = EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen);
-        OPENSSL_free(tbs);
-        if (rv <= 0 || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
-            || sigbytes1 != sigbytes2) {
+
+        if (EVP_DigestSign(md_ctx, NULL, &siglen, tbs, tbslen) <=0
+                || !WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
+                || EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen) <= 0
+                || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
+                || sigbytes1 != sigbytes2) {
+            OPENSSL_free(tbs);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        OPENSSL_free(tbs);
     }
 
     EVP_MD_CTX_free(md_ctx);
@@ -3007,19 +3003,6 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
                      SSL_R_LENGTH_MISMATCH);
             return 0;
         }
-    }
-
-    /*
-     * We want to be sure that the plaintext buffer size makes it safe to
-     * iterate over the entire size of a premaster secret
-     * (SSL_MAX_MASTER_KEY_LENGTH). Reject overly short RSA keys because
-     * their ciphertext cannot accommodate a premaster secret anyway.
-     */
-    if (EVP_PKEY_size(rsa) < RSA_PKCS1_PADDING_SIZE
-                             + SSL_MAX_MASTER_KEY_LENGTH) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 RSA_R_KEY_SIZE_TOO_SMALL);
-        return 0;
     }
 
     outlen = SSL_MAX_MASTER_KEY_LENGTH;
