@@ -2301,7 +2301,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     /* if it was signed, check the signature */
     if (pkey != NULL) {
         PACKET params;
-        int maxsig;
         const EVP_MD *md = NULL;
         unsigned char *tbs;
         size_t tbslen;
@@ -2350,22 +2349,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-        maxsig = EVP_PKEY_size(pkey);
-        if (maxsig < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                     ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        /*
-         * Check signature length
-         */
-        if (PACKET_remaining(&signature) > (size_t)maxsig) {
-            /* wrong packet length */
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                   SSL_R_WRONG_SIGNATURE_LENGTH);
             goto err;
         }
 
