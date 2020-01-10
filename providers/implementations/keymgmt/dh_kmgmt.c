@@ -19,9 +19,15 @@
 static OSSL_OP_keymgmt_importdomparams_fn dh_importdomparams;
 static OSSL_OP_keymgmt_exportdomparams_fn dh_exportdomparams;
 static OSSL_OP_keymgmt_get_key_params_fn dh_get_domparam_params;
+static OSSL_OP_keymgmt_isdomparams_fn dh_isdomparams;
+static OSSL_OP_keymgmt_cmpdomparams_fn dh_cmpdomparams;
+static OSSL_OP_keymgmt_dupdomparams_fn dh_dupdomparams;
 static OSSL_OP_keymgmt_importkey_fn dh_importkey;
 static OSSL_OP_keymgmt_exportkey_fn dh_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn dh_get_key_params;
+static OSSL_OP_keymgmt_iskey_fn dh_iskey;
+static OSSL_OP_keymgmt_cmpkey_fn dh_cmpkey;
+static OSSL_OP_keymgmt_dupkey_fn dh_dupkey;
 
 static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
 {
@@ -158,6 +164,44 @@ static int dh_exportdomparams(void *domparams, OSSL_CALLBACK *param_cb,
     return ret;
 }
 
+static int dh_isdomparams(const void *domparams)
+{
+    /*
+     * dh should always contain the domain parameters, so we could as well
+     * return 1 here and be done with it.  However, future development might
+     * change this, so we make this future proof and test for real.
+     */
+    return DH_get0_p(domparams) != NULL && DH_get0_g(domparams) != NULL;
+}
+
+static int dh_cmpdomparams(const void *domparams1, const void *domparams2)
+{
+    const BIGNUM *q1, *q2;
+
+    if (BN_cmp(DH_get0_p(domparams1), DH_get0_p(domparams2)) != 0
+        && BN_cmp(DH_get0_g(domparams1), DH_get0_g(domparams2)) != 0)
+        return 0;
+    /* Support DHX, compare Q if available */
+    q1 = DH_get0_q(domparams1);
+    q2 = DH_get0_q(domparams2);
+    if (q1 == NULL && q2 == NULL)
+        return 1;
+    if (q1 == NULL || q2 == NULL)
+        return 0;
+    return (BN_cmp(q1, q1) == 0);
+}
+
+static void *dh_dupdomparams(void *domparams, int do_copy)
+{
+    DH *new = domparams;
+
+    if (do_copy)
+        new = DHparams_dup(domparams);
+    else
+        DH_up_ref(new);
+    return new;
+}
+
 static void *dh_importkey(void *provctx, const OSSL_PARAM params[])
 {
     DH *dh;
@@ -222,6 +266,33 @@ static int dh_get_key_params(void *key, OSSL_PARAM params[])
     return dh_get_dpk_params(key, params);
 }
 
+static int dh_iskey(const void *key)
+{
+    return DH_get0_pub_key(key) != NULL;
+}
+
+static int dh_cmpkey(const void *key1, const void *key2)
+{
+    if (BN_cmp(DH_get0_pub_key(key1), DH_get0_pub_key(key2)) != 0)
+        return 0;
+    return 1;
+}
+
+static void *dh_dupkey(void *key, int do_copy)
+{
+    if (do_copy)
+        /*
+         * the EVP library currently only supports copying domain params,
+         * so we don't need to care...  besides, if we want to support
+         * copying DH keys, there should be a function in the low level
+         * DH library.
+         */
+        return NULL;
+    else
+        DH_up_ref(key);
+    return key;
+}
+
 const OSSL_DISPATCH dh_keymgmt_functions[] = {
     /*
      * TODO(3.0) When implementing OSSL_FUNC_KEYMGMT_GENKEY, remember to also
@@ -232,9 +303,15 @@ const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS,
       (void (*) (void))dh_get_domparam_params },
     { OSSL_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DH_free },
+    { OSSL_FUNC_KEYMGMT_ISDOMPARAMS, (void (*)(void))dh_isdomparams },
+    { OSSL_FUNC_KEYMGMT_CMPDOMPARAMS, (void (*)(void))dh_cmpdomparams },
+    { OSSL_FUNC_KEYMGMT_DUPDOMPARAMS, (void (*)(void))dh_dupdomparams },
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dh_importkey },
     { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dh_exportkey },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DH_free },
     { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))dh_get_key_params },
+    { OSSL_FUNC_KEYMGMT_ISKEY, (void (*)(void))dh_iskey },
+    { OSSL_FUNC_KEYMGMT_CMPKEY, (void (*)(void))dh_cmpkey },
+    { OSSL_FUNC_KEYMGMT_DUPKEY, (void (*)(void))dh_dupkey },
     { 0, NULL }
 };
