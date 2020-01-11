@@ -87,6 +87,8 @@ use POSIX;
 use constant INDENT_LEVEL => 4;
 use constant MAX_LENGTH => 80;
 
+# global variables @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 # command-line options
 my $max_length = MAX_LENGTH;
 my $sloppy_SPC = 0;
@@ -114,6 +116,7 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     }
 }
 
+# status variables
 my $self_test;             # whether the current input file is regarded to contain (positive/negative) self-tests
 my $line;                  # current line number
 my $line_before;           # number of previous not essentially empty line (containing at most whitespace and '\')
@@ -164,6 +167,35 @@ my $num_syntax_issues = 0; # total number of syntax issues found during sanity c
 my $num_SPC_reports = 0;   # total number of whitespace issues found
 my $num_length_reports = 0;# total number of line length issues found
 
+sub reset_file_state {
+    $line = 0;
+    $line_before = 0;
+    $line_before2 = 0;
+    @nested_block_indents = ();
+    @nested_hanging_offsets = ();
+    @nested_in_typedecl = ();
+    @nested_symbols = ();
+    @nested_indents = ();
+    @nested_conds_indents = ();
+    $expr_indent = 0;
+    $in_paren_expr = 0;
+    $in_expr = 0;
+    $hanging_offset = 0;
+    @in_do_hanging_offsets = ();
+    @in_if_hanging_offsets = ();
+    $if_maybe_terminated = 0;
+    $block_indent = 0;
+    $ifdef__cplusplus = 0;
+    $in_multiline_string = 0;
+    $line_opening_brace = 0;
+    $in_typedecl = 0;
+    $in_directive = 0;
+    $directive_nesting = 0;
+    $in_comment = 0;
+}
+
+# auxiliary submodules @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 sub report_flexibly {
     my $line = shift;
     my $msg = shift;
@@ -198,6 +230,8 @@ sub blind_nonspace { # blind non-space text of comment as @, preserving length a
     $comment_text =~ s/\.\s\s/.. /g; # in double SPC checks allow one extra space after period '.' in comments
     return $comment_text =~ tr/ /@/cr;
 }
+
+# submodule for indentation checking/reporting @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 sub check_indent { # used for lines outside multi-line string literals
     my $stmt_indent = $block_indent + $hanging_offset + $local_offset;
@@ -256,13 +290,13 @@ sub check_indent { # used for lines outside multi-line string literals
     # ... w.r.t. indent of the following line by delayed check for the line before
     if (($in_comment == 0 || $in_comment == 1) # no comment, intra-line comment, or begin of multi-line comment
         && $line_before > 0 # there is a line before
-        && $contents_before_ =~ m/^(\s*)@[\s@\\]*$/) { # line before begins with '@', no code follows (except '\')
+        && $contents_before_ =~ m/^(\s*)@[\s@]*$/) { # line before begins with '@', no code follows (except '\')
         report_flexibly($line_before, "entire-line comment indent = $count_before != $count (of following line)",
             $contents_before) if !$sloppy_cmt && $count_before != $count;
     }
     # ... but allow normal indentation for the current line, else above check will be done for the line before
     if (($in_comment == 0 || $in_comment < 0) # (no commment,) intra-line comment or end of multi-line comment
-        && m/^(\s*)@[\s@\\]*$/) { # line begins with '@', no code follows (except '\')
+        && m/^(\s*)@[\s@]*$/) { # line begins with '@', no code follows (except '\')
         if ($count == $ref_indent) { # indentation is like for (normal) code in this line
             s/^(\s*)@/$1*/; # blind first '@' as '*' to prevent above delayed check for the line before
             return;
@@ -297,6 +331,8 @@ sub check_indent { # used for lines outside multi-line string literals
             ? "" : " or $alt_indent for $alt_desc"))
         if $count != $ref_indent && $count != $alt_indent;
 }
+
+# submodules handling indentation within expressions @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 sub update_nested_indents { # may reset $in_paren_expr and in this case also resets $in_expr
     my $str = shift;
@@ -394,32 +430,7 @@ sub check_nested_nonblock_indents {
     @nested_conds_indents = ();
 }
 
-sub reset_file_state {
-    $line = 0;
-    $line_before = 0;
-    $line_before2 = 0;
-    @nested_block_indents = ();
-    @nested_hanging_offsets = ();
-    @nested_in_typedecl = ();
-    @nested_symbols = ();
-    @nested_indents = ();
-    @nested_conds_indents = ();
-    $expr_indent = 0;
-    $in_paren_expr = 0;
-    $in_expr = 0;
-    $hanging_offset = 0;
-    @in_do_hanging_offsets = ();
-    @in_if_hanging_offsets = ();
-    $if_maybe_terminated = 0;
-    $block_indent = 0;
-    $ifdef__cplusplus = 0;
-    $in_multiline_string = 0;
-    $line_opening_brace = 0;
-    $in_typedecl = 0;
-    $in_directive = 0;
-    $directive_nesting = 0;
-    $in_comment = 0;
-}
+# start of main program @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 reset_file_state();
 
@@ -446,20 +457,18 @@ while (<>) { # loop over all lines of all input files
     $has_label = 0;
     $local_offset = 0;
 
-    # comments and character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    s/\\["']/@@/g; # blind all '\"' and "\'" (typically within character literals or string literals)
+    s/\\["']/@@/g; # blind all '"' and "'" escaped by '\' (typically within character literals or string literals)
 
-    # handle multi-line string literals to avoid confusion on trailing '\' -
-    # this is not done for other uses of trailing '\' in order to be able
-    # to check layout of multi-line preprocessor directives
+    # handle multi-line string literals to avoid confusion on starting/ending '"' and trailing '\'
     if ($in_multiline_string) {
         if (s#^([^"]*)"#($1 =~ tr/"/@/cr).'@'#e) { # string literal terminated by '"'
             # string contents and its terminating '"' have been blinded as '@'
             $count = -1; # do not check indentation
         } else {
             report("multi-line string literal not terminated by '\"' and trailing '\' is missing")
-                unless m#^([^\\]*)\\\s*$#; # unless string literal continued by '\'
+                unless s#^([^\\]*)\s*\\\s*$#$1#; # strip trailing '\' plus any whitespace around
             goto LINE_FINISHED;
         }
     }
@@ -468,11 +477,15 @@ while (<>) { # loop over all lines of all input files
     # this prevents confusing any of the matching below, e.g., of whitespace and comment delimiters
     s#('[^']*')#$1 =~ tr/'/@/cr#eg; # handle all intra-line character literals
     s#("[^"]*")#$1 =~ tr/"/@/cr#eg; # handle all intra-line string literals
-    $in_multiline_string = # trailing string literal terminated by '\'
-        s#^(([^"]*"[^"]*")*[^"]*)("[^"]*)\\(\s*)$#$1.($2 =~ tr/"/@/cr).'"'.$3#e;
+    $in_multiline_string =          # handle trailing string literal terminated by '\'
+        s#^(([^"]*"[^"]*")*[^"]*)("[^"]*)\\(\s*)$#$1.($3 =~ tr/"/@/cr).'"'.$4#e;
         # its contents have been blinded and the trailing '\' replaced by '"'
 
-    # character/string literals @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    # strip any other trailing '\' along with any whitespace around it such that it does not interfere with various
+    # matching below; the later handling of multi-line macro definitions uses $contents where it is not stripped
+    s#^(.*?)\s*\\\s*$#$1#; # trailing '\' possibly preceded and/or followed by whitespace
+
+    # comments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # do/prepare checks within multi-line comments
     my $self_test_exception = $self_test ? "@" : "";
@@ -527,7 +540,7 @@ while (<>) { # loop over all lines of all input files
         } else { # begin of multi-line comment
             my $self_test_exception = $self_test ? "(@\d?)?" : "";
             report("text after '/*' in multi-line comment")
-                unless $tail =~ m/^$self_test_exception.?\s*\\?\s*$/;
+                unless $tail =~ m/^$self_test_exception.?\s*$/;
             # tail not essentially empty, first char already checked
             # adapt to actual indentation of first line
             $comment_indent = length($head) + 1;
@@ -554,7 +567,7 @@ while (<>) { # loop over all lines of all input files
     # while allowing trailing (also multi-line) string literals to go past $max_length
     my $len = length; # total line length (without trailing \n)
     if ($len > $max_length &&
-        !(m/^(.*)"[^"]*("|\\)\s*(,|[\)\}\]]*[,;]?)\s*$/ # string literal terminated by '"' or '\', then maybe ,)}];
+        !(m/^(.*)"[^"]*"\s*[\)\}\]]*[,;]?\s*$/ # string literal terminated by '"' (or '\'), then maybe )}],;
           && length($1) < $max_length)
         # this allows over-long trailing string literals with beginning col before $max_length
         ) {
@@ -570,7 +583,7 @@ while (<>) { # loop over all lines of all input files
 
     # at this point all non-space portions of any types of comments have been blinded as @
 
-    goto LINE_FINISHED if m/^\s*\\?\s*$/; # essentially empty line (just whitespace and maybe a single '\')
+    goto LINE_FINISHED if m/^\s*$/; # essentially empty line: just whitespace (and maybe a trailing '\')
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -588,7 +601,7 @@ while (<>) { # loop over all lines of all input files
                                              # $in_comment may pertain to the following line due to delayed check
             # do not check for double SPC in leading spaces including any '#' (or '*' within multi-line comment)
             shift =~ m/^(\s*([#$comment_symbol]\s*)?)(.*?)\s*$/;
-            return ($1, $3 =~ s/\s*\\([\s@]*)$/$1/r); # strip any trailing '\' and any whitespace before
+            return ($1, $3);
         }
         my ($head , $intra_line ) = split_line_head($_);
         my ($head1, $intra_line1) = split_line_head($contents_before_ ) if $line_before > 0;
@@ -684,13 +697,9 @@ while (<>) { # loop over all lines of all input files
         $directive_nesting++ if $directive =~ m/^if|ifdef|ifndef|else|elif$/;
         $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
         goto POSTPROCESS_DIRECTIVE unless $directive =~ m/^define$/; # skip normal code handling except for #define
-        # TODO improve current mix of handling indents for normal C code and preprocessor directives
+        # TODO improve handling of indents of preprocessor directives ('\', $in_directive != 0) vs. normal C code
         $count = -1; # do not check indentation of #define
     }
-
-    # trailing '\' is typically used in multi-line macro definitions;
-    # strip it along with any preceding whitespace such that it does not interfere with various matching done below
-    $_ = $1 if (m/^(.*?)\s*\\[\s@]*$/); # trailing '\'
 
     # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -848,7 +857,7 @@ while (<>) { # loop over all lines of all input files
     if (my ($head, $mid, $tail) = m/(^|^.*\W)(else|do)(\W.*|$)$/) { # last else/do, where 'do' is preferred
         my $code_before = $head =~ m/[^\s\@}]/; # leading non-whitespace non-comment non-'}'
         report("code before '$mid'") if $code_before;
-        report("code after '$mid'" ) if $tail =~ m/[^\s\@{\\]/# trailing non-whitespace non-comment non-'{' non-'\'
+        report("code after '$mid'" ) if $tail =~ m/[^\s\@{]/# trailing non-whitespace non-comment non-'{' (non-'\')
                                                     && !($mid eq "else" && $tail =~ m/[\s@]*if(\W|$)/);
         if ($mid eq "do") { # workarounds for code before 'do'
             if ($head =~ m/(^|^.*\W)(else)(\W.*$|$)/) { # 'else' .. 'do'
@@ -946,7 +955,7 @@ while (<>) { # loop over all lines of all input files
                 # The following helps detecting the exception when handling multiple 'if .. else' branches:
                     !($keyword_opening_brace eq "else" && $line_opening_brace < $line_before2);
             }
-            report("code after '{'") if $tail=~ m/[^\s\@\\]/ && # trailing non-whitespace non-comment non-'\'
+            report("code after '{'") if $tail=~ m/[^\s\@]/ && # trailing non-whitespace non-comment (non-'\')
                                       !($tail=~ m/\}/);  # no '}' after last '{'
         }
     }
@@ -954,15 +963,17 @@ while (<>) { # loop over all lines of all input files
   POSTPROCESS_DIRECTIVE:
     # on begin of multi-line preprocessor directive, adapt indent
     # need to use original line contents because trailing '\' may have been stripped above
-    if ($contents =~ m/^(.*?)[\s@]*\\[\s@]*$/) { # trailing '\',
+    if ($contents =~ m/^(.*?)[\s@]*\\[\s@]*$/) { # trailing '\' (which is not stripped from $contents),
         # typically used in macro definitions (or other preprocessor directives)
         if ($in_directive == 0) {
-            $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # #define is beginning
+            $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # '#define' is beginning
             $directive_offset = INDENT_LEVEL;
             $block_indent += $directive_offset;
         }
         $in_directive += 1;
     }
+
+    # post-processing at end of line @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
   LINE_FINISHED:
     # on end of multi-line preprocessor directive, adapt indent
@@ -975,7 +986,7 @@ while (<>) { # loop over all lines of all input files
         $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
     }
 
-    unless (m/^\s*\\?\s*$/) { # essentially empty line (just whitespace and maybe a single '\')
+    unless (m/^\s*$/) { # essentially empty line: just whitespace (and maybe a '\')
         $line_before2      = $line_before;
         $contents_before2  = $contents_before;
         $contents_before_2 = $contents_before_;
@@ -996,9 +1007,9 @@ while (<>) { # loop over all lines of all input files
     # post-processing at end of file @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if (eof) {
-        # check for essentially empty line (which may include a single '\') just before EOF
-        report(($contents eq "\n" ? "empty line" : $2 ne "" ? "'\\'" : "whitespace").
-               " at EOF") if $contents =~ m/^(\s*(\\?)\s*)$/;
+        # check for essentially empty line (which may include a '\') just before EOF
+        report(($1 eq "\n" ? "empty line" : $2 ne "" ? "'\\'" : "whitespace")." at EOF")
+            if $contents =~ m/^(\s*(\\?)\s*)$/;
 
         # report unclosed expression-level nesting
         check_nested_nonblock_indents("expr at EOF"); # also adapts @nested_block_indents
@@ -1012,6 +1023,8 @@ while (<>) { # loop over all lines of all input files
         reset_file_state();
     }
 }
+
+# final summary report @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 my $num_other_reports = $num_reports - $num_indent_reports - $num_nesting_issues
     - $num_syntax_issues - $num_SPC_reports - $num_length_reports;
