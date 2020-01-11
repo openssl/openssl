@@ -7,6 +7,11 @@ INCLUDE[libcrypto]=. include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
 
+# Marker to show that we're building the OpenSSL libraries.  This is usefull
+# for source that has multiple usage (specifically, header files).
+DEFINE[libcrypto]=OPENSSL_BUILDING_OPENSSL
+DEFINE[libssl]=OPENSSL_BUILDING_OPENSSL
+
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
 DEPEND[]=include/openssl/configuration.h include/openssl/opensslv.h \
