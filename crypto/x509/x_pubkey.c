@@ -16,6 +16,7 @@
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/serializer.h>
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -69,26 +70,50 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     if ((pk = X509_PUBKEY_new()) == NULL)
         goto error;
 
-    if (pkey != NULL && pkey->ameth) {
-        if (pkey->ameth->pub_encode) {
-            if (!pkey->ameth->pub_encode(pk, pkey)) {
-                X509err(X509_F_X509_PUBKEY_SET,
-                        X509_R_PUBLIC_KEY_ENCODE_ERROR);
+    if (pkey != NULL) {
+        if (pkey->ameth != NULL) {
+            if (pkey->ameth->pub_encode != NULL) {
+                if (!pkey->ameth->pub_encode(pk, pkey)) {
+                    X509err(X509_F_X509_PUBKEY_SET,
+                            X509_R_PUBLIC_KEY_ENCODE_ERROR);
+                    goto error;
+                }
+            } else {
+                X509err(X509_F_X509_PUBKEY_SET, X509_R_METHOD_NOT_SUPPORTED);
                 goto error;
             }
+        } else if (pkey->pkeys[0].keymgmt != NULL) {
+            BIO *bmem = BIO_new(BIO_s_mem());
+            const char *serprop = "format=der,type=public";
+            OSSL_SERIALIZER_CTX *sctx =
+                OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, serprop);
+
+            if (OSSL_SERIALIZER_to_bio(sctx, bmem)) {
+                const unsigned char *der = NULL;
+                long derlen = BIO_get_mem_data(bmem, (char **)&der);
+
+                pk = d2i_X509_PUBKEY(NULL, &der, derlen);
+            }
+
+            OSSL_SERIALIZER_CTX_free(sctx);
+            BIO_free(bmem);
+
+            if (pk == NULL)
+                goto unsupported;
         } else {
-            X509err(X509_F_X509_PUBKEY_SET, X509_R_METHOD_NOT_SUPPORTED);
-            goto error;
+            goto unsupported;
         }
     } else {
-        X509err(X509_F_X509_PUBKEY_SET, X509_R_UNSUPPORTED_ALGORITHM);
-        goto error;
+        goto unsupported;
     }
 
     X509_PUBKEY_free(*x);
     *x = pk;
     pk->pkey = pkey;
     return EVP_PKEY_up_ref(pkey);
+
+ unsupported:
+    X509err(X509_F_X509_PUBKEY_SET, X509_R_UNSUPPORTED_ALGORITHM);
 
  error:
     X509_PUBKEY_free(pk);
