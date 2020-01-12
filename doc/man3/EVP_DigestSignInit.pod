@@ -103,9 +103,7 @@ EVP_DigestSignFinal().
 =head1 RETURN VALUES
 
 EVP_DigestSignInit(), EVP_DigestSignUpdate(), EVP_DigestSignaFinal() and
-EVP_DigestSign() return 1 for success and 0 or a negative value for failure. In
-particular, a return value of -2 indicates the operation is not supported by the
-public key algorithm.
+EVP_DigestSign() return 1 for success and 0 for failure.
 
 The error codes can be obtained from L<ERR_get_error(3)>.
 
