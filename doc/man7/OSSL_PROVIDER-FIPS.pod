@@ -201,7 +201,7 @@ A simple self test callback is shown below for illustrative purposes.
   {
     int ret = 0;
     const OSSL_PARAM *p = NULL;
-    const char *phase = NULL, *type= NULL, *desc = NULL;
+    const char *phase = NULL, *type = NULL, *desc = NULL;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)

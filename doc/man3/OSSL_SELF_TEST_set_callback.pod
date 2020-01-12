@@ -14,10 +14,11 @@ OSSL_SELF_TEST_get_callback - specify a callback for processing self tests
 
 =head1 DESCRIPTION
 
-OSSL_SELF_TEST_set_callback() sets the function B<cb> that is called during
-self testing that is associated with a given library context B<ctx>.
-The callback function receives information about a running self test and may
-return a result.
+Set or gets the optional application callback that is called during self testing.
+The application callback B<OSSL_CALLBACK> is associated with a B<OPENSSL_CTX>.
+The application callback function receives information about a running self test,
+and may return a result to the calling self test.
+See L<openssl-core.h(7)> for further information on the callback.
 
 =head1 RETURN VALUES
 
@@ -29,6 +30,7 @@ It returns NULL by default.
 
 L<openssl-core.h(7)>,
 L<OSSL_PROVIDER-FIPS(7)>
+L<OPENSSL_CTX(3)>
 
 =head1 HISTORY
 

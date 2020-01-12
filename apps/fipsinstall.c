@@ -449,7 +449,7 @@ end:
 static int self_test_events(const OSSL_PARAM params[], void *arg)
 {
     const OSSL_PARAM *p = NULL;
-    const char *phase = NULL, *type= NULL, *desc = NULL;
+    const char *phase = NULL, *type = NULL, *desc = NULL;
     int ret = 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
