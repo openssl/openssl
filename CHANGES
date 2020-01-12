@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Enhanced the documentation of EVP_PKEY_size(), EVP_PKEY_bits()
+     and EVP_PKEY_security_bits().  Especially EVP_PKEY_size() needed
+     a new formulation to include all the things it can be used for,
+     as well as words of caution.
+     [Richard Levitte]
+
   *) Corrected the documentation of the return values from the EVP_DigestSign*
      set of functions.  The documentation mentioned negative values for some
      errors, but this was never the case, so the mention of negative values
