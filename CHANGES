@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Corrected the documentation of the return values from the EVP_DigestSign*
+     set of functions.  The documentation mentioned negative values for some
+     errors, but this was never the case, so the mention of negative values
+     was removed.
+
+     Code that followed the documentation and thereby check with something
+     like 'EVP_DigestSignInit(...) <= 0' will continue to work undisturbed.
+     [Richard Levitte]
+
   *) All of the low level Blowfish functions have been deprecated including:
      BF_set_key, BF_encrypt, BF_decrypt, BF_ecb_encrypt, BF_cbc_encrypt,
      BF_cfb64_encrypt, BF_ofb64_encrypt, and BF_options.
