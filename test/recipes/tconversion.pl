@@ -38,6 +38,10 @@ sub tconversion {
 	+ 1			# comparing original test file to p form of A
 	+ $n*($n-1);		# comparing first conversion to each fom in A with B
     $totaltests-- if ($testtype eq "p7d"); # no comparison of original test file
+
+    plan skip_all => "tconversion.pl doesn't support legacy keys"
+        unless scalar @openssl_args > 0 && $openssl_args[0] eq "pkey";
+
     plan tests => $totaltests;
 
     my @cmd = ("openssl", @openssl_args);
