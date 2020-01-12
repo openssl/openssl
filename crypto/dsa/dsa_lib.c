@@ -15,154 +15,13 @@
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
+#include "crypto/dsa.h"
+
+#ifndef FIPS_MODE
 
 DSA *DSA_new(void)
 {
     return DSA_new_method(NULL);
-}
-
-int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
-{
-    /*
-     * NB: The caller is specifically setting a method, so it's not up to us
-     * to deal with which ENGINE it comes from.
-     */
-    const DSA_METHOD *mtmp;
-    mtmp = dsa->meth;
-    if (mtmp->finish)
-        mtmp->finish(dsa);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(dsa->engine);
-    dsa->engine = NULL;
-#endif
-    dsa->meth = meth;
-    if (meth->init)
-        meth->init(dsa);
-    return 1;
-}
-
-const DSA_METHOD *DSA_get_method(DSA *d)
-{
-    return d->meth;
-}
-
-DSA *DSA_new_method(ENGINE *engine)
-{
-    DSA *ret = OPENSSL_zalloc(sizeof(*ret));
-
-    if (ret == NULL) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    ret->references = 1;
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
-    }
-
-    ret->meth = DSA_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
-    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
-    if (engine) {
-        if (!ENGINE_init(engine)) {
-            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else
-        ret->engine = ENGINE_get_default_DSA();
-    if (ret->engine) {
-        ret->meth = ENGINE_get_DSA(ret->engine);
-        if (ret->meth == NULL) {
-            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
-
-    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
-
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
-        goto err;
-
-    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
-        goto err;
-    }
-
-    return ret;
-
- err:
-    DSA_free(ret);
-    return NULL;
-}
-
-void DSA_free(DSA *r)
-{
-    int i;
-
-    if (r == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
-    REF_PRINT_COUNT("DSA", r);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
-
-    if (r->meth != NULL && r->meth->finish != NULL)
-        r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(r->engine);
-#endif
-
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
-
-    CRYPTO_THREAD_lock_free(r->lock);
-
-    BN_clear_free(r->p);
-    BN_clear_free(r->q);
-    BN_clear_free(r->g);
-    BN_clear_free(r->pub_key);
-    BN_clear_free(r->priv_key);
-    OPENSSL_free(r);
-}
-
-int DSA_up_ref(DSA *r)
-{
-    int i;
-
-    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
-        return 0;
-
-    REF_PRINT_COUNT("DSA", r);
-    REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
-}
-
-int DSA_size(const DSA *r)
-{
-    int ret, i;
-    ASN1_INTEGER bs;
-    unsigned char buf[4];       /* 4 bytes looks really small. However,
-                                 * i2d_ASN1_INTEGER() will not look beyond
-                                 * the first byte, as long as the second
-                                 * parameter is NULL. */
-
-    i = BN_num_bits(r->q);
-    bs.length = (i + 7) / 8;
-    bs.data = buf;
-    bs.type = V_ASN1_INTEGER;
-    /* If the top bit is set the asn1 encoding is 1 larger. */
-    buf[0] = 0xff;
-
-    i = i2d_ASN1_INTEGER(&bs, NULL);
-    i += i;                     /* r and s */
-    ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
-    return ret;
 }
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
@@ -240,6 +99,190 @@ DH *DSA_dup_DH(const DSA *r)
 }
 #endif
 
+const BIGNUM *DSA_get0_p(const DSA *d)
+{
+    return d->p;
+}
+
+const BIGNUM *DSA_get0_q(const DSA *d)
+{
+    return d->q;
+}
+
+const BIGNUM *DSA_get0_g(const DSA *d)
+{
+    return d->g;
+}
+
+const BIGNUM *DSA_get0_pub_key(const DSA *d)
+{
+    return d->pub_key;
+}
+
+const BIGNUM *DSA_get0_priv_key(const DSA *d)
+{
+    return d->priv_key;
+}
+
+void DSA_clear_flags(DSA *d, int flags)
+{
+    d->flags &= ~flags;
+}
+
+int DSA_test_flags(const DSA *d, int flags)
+{
+    return d->flags & flags;
+}
+
+void DSA_set_flags(DSA *d, int flags)
+{
+    d->flags |= flags;
+}
+
+ENGINE *DSA_get0_engine(DSA *d)
+{
+    return d->engine;
+}
+
+int DSA_bits(const DSA *dsa)
+{
+    return BN_num_bits(dsa->p);
+}
+
+int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
+{
+    /*
+     * NB: The caller is specifically setting a method, so it's not up to us
+     * to deal with which ENGINE it comes from.
+     */
+    const DSA_METHOD *mtmp;
+    mtmp = dsa->meth;
+    if (mtmp->finish)
+        mtmp->finish(dsa);
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE_finish(dsa->engine);
+    dsa->engine = NULL;
+#endif
+    dsa->meth = meth;
+    if (meth->init)
+        meth->init(dsa);
+    return 1;
+}
+#endif /* FIPS_MODE */
+
+
+const DSA_METHOD *DSA_get_method(DSA *d)
+{
+    return d->meth;
+}
+
+static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
+{
+    DSA *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    ret->meth = DSA_get_default_method();
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
+    if (engine) {
+        if (!ENGINE_init(engine)) {
+            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            goto err;
+        }
+        ret->engine = engine;
+    } else
+        ret->engine = ENGINE_get_default_DSA();
+    if (ret->engine) {
+        ret->meth = ENGINE_get_DSA(ret->engine);
+        if (ret->meth == NULL) {
+            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            goto err;
+        }
+    }
+#endif
+
+    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
+
+    if (!crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
+        goto err;
+
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
+        goto err;
+    }
+
+    return ret;
+
+ err:
+    DSA_free(ret);
+    return NULL;
+}
+
+DSA *DSA_new_method(ENGINE *engine)
+{
+    return dsa_new_method(NULL, engine);
+}
+
+DSA *dsa_new(OPENSSL_CTX *libctx)
+{
+    return dsa_new_method(libctx, NULL);
+}
+
+void DSA_free(DSA *r)
+{
+    int i;
+
+    if (r == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
+    REF_PRINT_COUNT("DSA", r);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
+    if (r->meth != NULL && r->meth->finish != NULL)
+        r->meth->finish(r);
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+    ENGINE_finish(r->engine);
+#endif
+
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
+
+    CRYPTO_THREAD_lock_free(r->lock);
+
+    BN_clear_free(r->p);
+    BN_clear_free(r->q);
+    BN_clear_free(r->g);
+    BN_clear_free(r->pub_key);
+    BN_clear_free(r->priv_key);
+    OPENSSL_free(r);
+}
+
+int DSA_up_ref(DSA *r)
+{
+    int i;
+
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("DSA", r);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
+}
+
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
@@ -309,52 +352,3 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     return 1;
 }
 
-const BIGNUM *DSA_get0_p(const DSA *d)
-{
-    return d->p;
-}
-
-const BIGNUM *DSA_get0_q(const DSA *d)
-{
-    return d->q;
-}
-
-const BIGNUM *DSA_get0_g(const DSA *d)
-{
-    return d->g;
-}
-
-const BIGNUM *DSA_get0_pub_key(const DSA *d)
-{
-    return d->pub_key;
-}
-
-const BIGNUM *DSA_get0_priv_key(const DSA *d)
-{
-    return d->priv_key;
-}
-
-void DSA_clear_flags(DSA *d, int flags)
-{
-    d->flags &= ~flags;
-}
-
-int DSA_test_flags(const DSA *d, int flags)
-{
-    return d->flags & flags;
-}
-
-void DSA_set_flags(DSA *d, int flags)
-{
-    d->flags |= flags;
-}
-
-ENGINE *DSA_get0_engine(DSA *d)
-{
-    return d->engine;
-}
-
-int DSA_bits(const DSA *dsa)
-{
-    return BN_num_bits(dsa->p);
-}

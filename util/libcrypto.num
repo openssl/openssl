@@ -4819,7 +4819,6 @@ EVP_DigestSignUpdate                    ?	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyInit_ex                 ?	3_0_0	EXIST::FUNCTION:
 EVP_DigestVerifyUpdate                  ?	3_0_0	EXIST::FUNCTION:
 BN_check_prime                          ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_CTX_new_provided               ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_is_a                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_do_all_provided             ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_is_a                        ?	3_0_0	EXIST::FUNCTION:
@@ -4912,3 +4911,5 @@ RSA_get0_pss_params                     ?	3_0_0	EXIST::FUNCTION:RSA
 X509_cmp_timeframe                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_MSG_get0_header                ?	3_0_0	EXIST::FUNCTION:CMP
 BIO_f_prefix                            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_new_from_name              ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_new_from_pkey              ?	3_0_0	EXIST::FUNCTION:

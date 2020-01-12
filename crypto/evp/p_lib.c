@@ -28,7 +28,9 @@
 #include "crypto/evp.h"
 #include "internal/provider.h"
 
-static void EVP_PKEY_free_it(EVP_PKEY *x);
+static void evp_pkey_free_it(EVP_PKEY *key);
+
+#ifndef FIPS_MODE
 
 int EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
@@ -46,16 +48,9 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
     return pkey->ameth->pkey_security_bits(pkey);
 }
 
-int EVP_PKEY_size(const EVP_PKEY *pkey)
-{
-    if (pkey && pkey->ameth && pkey->ameth->pkey_size)
-        return pkey->ameth->pkey_size(pkey);
-    return 0;
-}
-
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 {
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
     if (pkey->type == EVP_PKEY_DSA) {
         int ret = pkey->save_parameters;
 
@@ -63,8 +58,8 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
             pkey->save_parameters = mode;
         return ret;
     }
-#endif
-#ifndef OPENSSL_NO_EC
+# endif
+# ifndef OPENSSL_NO_EC
     if (pkey->type == EVP_PKEY_EC) {
         int ret = pkey->save_parameters;
 
@@ -72,7 +67,7 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
             pkey->save_parameters = mode;
         return ret;
     }
-#endif
+# endif
     return 0;
 }
 
@@ -141,38 +136,6 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-EVP_PKEY *EVP_PKEY_new(void)
-{
-    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
-
-    if (ret == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    ret->type = EVP_PKEY_NONE;
-    ret->save_type = EVP_PKEY_NONE;
-    ret->references = 1;
-    ret->save_parameters = 1;
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
-    }
-    return ret;
-}
-
-int EVP_PKEY_up_ref(EVP_PKEY *pkey)
-{
-    int i;
-
-    if (CRYPTO_UP_REF(&pkey->references, &i, pkey->lock) <= 0)
-        return 0;
-
-    REF_PRINT_COUNT("EVP_PKEY", pkey);
-    REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
-}
 
 /*
  * Setup a public key ASN1 method and ENGINE from a NID or a string. If pkey
@@ -187,29 +150,29 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 
     if (pkey) {
         if (pkey->pkey.ptr)
-            EVP_PKEY_free_it(pkey);
+            evp_pkey_free_it(pkey);
         /*
          * If key type matches and a method exists then this lookup has
          * succeeded once so just indicate success.
          */
         if ((type == pkey->save_type) && pkey->ameth)
             return 1;
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
         /* If we have ENGINEs release them */
         ENGINE_finish(pkey->engine);
         pkey->engine = NULL;
         ENGINE_finish(pkey->pmeth_engine);
         pkey->pmeth_engine = NULL;
-#endif
+# endif
     }
     if (str)
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else
         ameth = EVP_PKEY_asn1_find(eptr, type);
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
     if (pkey == NULL && eptr != NULL)
         ENGINE_finish(e);
-#endif
+# endif
     if (ameth == NULL) {
         EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
         return 0;
@@ -321,10 +284,10 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
-#ifndef OPENSSL_NO_CMAC
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_CMAC
+#  ifndef OPENSSL_NO_ENGINE
     const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
-# endif
+#  endif
     const char *cipher_name = EVP_CIPHER_name(cipher);
     const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
     OPENSSL_CTX *libctx =
@@ -342,11 +305,11 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-# ifndef OPENSSL_NO_ENGINE
+#  ifndef OPENSSL_NO_ENGINE
     if (engine_id != NULL)
         params[paramsn++] =
             OSSL_PARAM_construct_utf8_string("engine", (char *)engine_id, 0);
-# endif
+#  endif
 
     params[paramsn++] =
         OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
@@ -369,11 +332,11 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
     EVP_MAC_CTX_free(cmctx);
     EVP_MAC_free(cmac);
     return NULL;
-#else
+# else
     EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
            EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return NULL;
-#endif
+# endif
 }
 
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
@@ -405,7 +368,7 @@ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
     return 1;
 }
 
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
 {
     if (e != NULL) {
@@ -428,7 +391,7 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 {
     return pkey->engine;
 }
-#endif
+# endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
@@ -454,7 +417,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
     return os->data;
 }
 
-#ifndef OPENSSL_NO_POLY1305
+# ifndef OPENSSL_NO_POLY1305
 const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
@@ -466,9 +429,9 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
     *len = os->length;
     return os->data;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_SIPHASH
+# ifndef OPENSSL_NO_SIPHASH
 const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
@@ -481,9 +444,9 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
     *len = os->length;
     return os->data;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_RSA
+# ifndef OPENSSL_NO_RSA
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret = EVP_PKEY_assign_RSA(pkey, key);
@@ -508,9 +471,9 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
         RSA_up_ref(ret);
     return ret;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
     int ret = EVP_PKEY_assign_DSA(pkey, key);
@@ -535,9 +498,9 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
         DSA_up_ref(ret);
     return ret;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
 
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
@@ -563,9 +526,9 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
         EC_KEY_up_ref(ret);
     return ret;
 }
-#endif
+# endif
 
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
@@ -593,7 +556,7 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
         DH_up_ref(ret);
     return ret;
 }
-#endif
+# endif
 
 int EVP_PKEY_type(int type)
 {
@@ -605,9 +568,9 @@ int EVP_PKEY_type(int type)
         ret = ameth->pkey_id;
     else
         ret = NID_undef;
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(e);
-#endif
+# endif
     return ret;
 }
 
@@ -621,41 +584,6 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
     return EVP_PKEY_type(pkey->type);
 }
 
-void EVP_PKEY_free(EVP_PKEY *x)
-{
-    int i;
-
-    if (x == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&x->references, &i, x->lock);
-    REF_PRINT_COUNT("EVP_PKEY", x);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
-    EVP_PKEY_free_it(x);
-    CRYPTO_THREAD_lock_free(x->lock);
-    sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
-    OPENSSL_free(x);
-}
-
-static void EVP_PKEY_free_it(EVP_PKEY *x)
-{
-    /* internal function; x is never NULL */
-
-    evp_keymgmt_clear_pkey_cache(x);
-
-    if (x->ameth && x->ameth->pkey_free) {
-        x->ameth->pkey_free(x);
-        x->pkey.ptr = NULL;
-    }
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(x->engine);
-    x->engine = NULL;
-    ENGINE_finish(x->pmeth_engine);
-    x->pmeth_engine = NULL;
-#endif
-}
 
 static int print_reset_indent(BIO **out, int pop_f_prefix, long saved_indent)
 {
@@ -807,3 +735,87 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
         return 0;
     return rv;
 }
+
+#endif /* FIPS_MODE */
+
+/*- All methods below can also be used in FIPS_MODE */
+
+EVP_PKEY *EVP_PKEY_new(void)
+{
+    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    ret->type = EVP_PKEY_NONE;
+    ret->save_type = EVP_PKEY_NONE;
+    ret->references = 1;
+    ret->save_parameters = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+int EVP_PKEY_up_ref(EVP_PKEY *pkey)
+{
+    int i;
+
+    if (CRYPTO_UP_REF(&pkey->references, &i, pkey->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("EVP_PKEY", pkey);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
+}
+
+static void evp_pkey_free_it(EVP_PKEY *x)
+{
+    /* internal function; x is never NULL */
+
+    evp_keymgmt_clear_pkey_cache(x);
+
+    if (x->ameth && x->ameth->pkey_free) {
+        x->ameth->pkey_free(x);
+        x->pkey.ptr = NULL;
+    }
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+    ENGINE_finish(x->engine);
+    x->engine = NULL;
+    ENGINE_finish(x->pmeth_engine);
+    x->pmeth_engine = NULL;
+#endif
+}
+
+void EVP_PKEY_free(EVP_PKEY *x)
+{
+    int i;
+
+    if (x == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&x->references, &i, x->lock);
+    REF_PRINT_COUNT("EVP_PKEY", x);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+    evp_pkey_free_it(x);
+    CRYPTO_THREAD_lock_free(x->lock);
+#ifndef FIPS_MODE
+    sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
+#endif
+    OPENSSL_free(x);
+}
+
+/* TODO (3.0) : Needs to call getparams fo non legacy case */
+int EVP_PKEY_size(const EVP_PKEY *pkey)
+{
+    if (pkey && pkey->ameth && pkey->ameth->pkey_size)
+        return pkey->ameth->pkey_size(pkey);
+    return 0;
+}
+

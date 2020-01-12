@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "crypto/dsa.h"
 
 static OSSL_OP_signature_newctx_fn dsa_newctx;
 static OSSL_OP_signature_sign_init_fn dsa_signature_init;
@@ -95,8 +96,8 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     if (pdsactx->mdsize != 0 && tbslen != pdsactx->mdsize)
         return 0;
 
-    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa);
-
+    ret = dsa_sign_int(pdsactx->libctx, 0, tbs, tbslen, sig, &sltmp,
+                       pdsactx->dsa);
     if (ret <= 0)
         return 0;
 
