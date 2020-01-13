@@ -15,17 +15,8 @@
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h>
-#endif
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_IDEA
-# include <openssl/idea.h>
-#endif
-#ifndef OPENSSL_NO_BF
-# include <openssl/blowfish.h>
 #endif
 
 typedef enum OPTION_choice {
@@ -128,9 +119,6 @@ opthelp:
         printf(" %s", BN_options());
 #ifndef OPENSSL_NO_DES
         printf(" %s", DES_options());
-#endif
-#ifndef OPENSSL_NO_IDEA
-        printf(" %s", IDEA_options());
 #endif
         printf("\n");
     }
