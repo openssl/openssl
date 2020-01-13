@@ -13,7 +13,8 @@ ASN1_TIME_print, ASN1_UTCTIME_print, ASN1_GENERALIZEDTIME_print,
 ASN1_TIME_diff,
 ASN1_TIME_cmp_time_t, ASN1_UTCTIME_cmp_time_t,
 ASN1_TIME_compare,
-ASN1_TIME_to_generalizedtime - ASN.1 Time functions
+ASN1_TIME_to_generalizedtime,
+ASN1_TIME_dup, ASN1_UTCTIME_dup, ASN1_GENERALIZEDTIME_dup - ASN.1 Time functions
 
 =head1 SYNOPSIS
 
@@ -57,6 +58,10 @@ ASN1_TIME_to_generalizedtime - ASN.1 Time functions
 
  ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t,
                                                     ASN1_GENERALIZEDTIME **out);
+
+ ASN1_TIME *ASN1_TIME_dup(const ASN1_TIME *t);
+ ASN1_UTCTIME *ASN1_UTCTIME_dup(const ASN1_UTCTIME *t);
+ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_dup(const ASN1_GENERALIZEDTIME *t);
 
 =head1 DESCRIPTION
 
@@ -130,6 +135,10 @@ time structures I<a> and I<b>.
 The ASN1_TIME_to_generalizedtime() function converts an B<ASN1_TIME> to an
 B<ASN1_GENERALIZEDTIME>, regardless of year. If either I<out> or
 I<*out> are NULL, then a new object is allocated and must be freed after use.
+
+The ASN1_TIME_dup(), ASN1_UTCTIME_dup() and ASN1_GENERALIZEDTIME_dup() functions
+duplicate the time structure I<t> and return the duplicated result
+correspondingly.
 
 =head1 NOTES
 
@@ -209,6 +218,9 @@ or 1 if I<a> is after I<b>. -2 is returned on error.
 
 ASN1_TIME_to_generalizedtime() returns a pointer to the appropriate time
 structure on success or NULL if an error occurred.
+
+ASN1_TIME_dup(), ASN1_UTCTIME_dup() and ASN1_GENERALIZEDTIME_dup() return a
+pointer to a time structure or NULL if an error occurred.
 
 =head1 EXAMPLES
 
