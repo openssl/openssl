@@ -256,6 +256,9 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      */
     ERR_pop_to_mark();
 
+#ifdef FIPS_MODE
+    return 0;
+#else
     if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
@@ -267,11 +270,12 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     if (ret <= 0)
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
+#endif
 }
 
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 {
-    int ret;
+    int ret = 0;
     void *provkey = NULL;
 
     if (ctx == NULL) {
@@ -296,6 +300,9 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
 
  legacy:
+#ifdef FIPS_MODE
+    return ret;
+#else
     if (ctx->pmeth == NULL
         || !(ctx->pmeth->derive != NULL
              || ctx->pmeth->encrypt != NULL
@@ -356,6 +363,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 
     EVP_PKEY_up_ref(peer);
     return 1;
+#endif
 }
 
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)

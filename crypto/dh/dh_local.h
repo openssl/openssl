@@ -35,9 +35,9 @@ struct dh_st {
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODE
     CRYPTO_EX_DATA ex_data;
+    ENGINE *engine;
 #endif
     const DH_METHOD *meth;
-    ENGINE *engine;
     CRYPTO_RWLOCK *lock;
 
     /* Provider data */

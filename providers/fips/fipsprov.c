@@ -131,8 +131,8 @@ static OSSL_PARAM core_params[] =
  * The array of hexdata is to get around compilers that dont like
  * strings longer than 509 bytes,
  */
-static int rawnative_fromhex(const char *hex_data[],
-                             unsigned char **native, size_t *nativelen)
+static int hextobin(const char *hex_data[], int native,
+                    unsigned char **out, size_t *outlen)
 {
     int ret = 0;
     unsigned char *data = NULL;
@@ -149,23 +149,178 @@ static int rawnative_fromhex(const char *hex_data[],
         strcat(str, hex_data[i]);
 
     if (BN_hex2bn(&bn, str) <= 0)
-        return 0;
+        goto err;
 
     datalen = slen / 2;
     data = (unsigned char *)str; /* reuse the str buffer */
 
-    sz = BN_bn2nativepad(bn, data, datalen);
+    if (native)
+        sz = BN_bn2nativepad(bn, data, datalen);
+    else
+        sz = BN_bn2binpad(bn, data, datalen);
     if (sz <= 0)
         goto err;
     ret = 1;
-    *native = data;
-    *nativelen = datalen;
-    data = NULL; /* so it does not get freed */
+    *out = data;
+    *outlen = datalen;
 err:
     BN_free(bn);
-    OPENSSL_free(data);
+    if (ret == 0)
+        OPENSSL_free(str);
     return ret;
 }
+
+#ifndef OPENSSL_NO_DH
+static int dh_key_exchange_test(OPENSSL_CTX *libctx)
+{
+    int ret = 0;
+    unsigned char *dh_p = NULL, *dh_q = NULL, *dh_g = NULL;
+    unsigned char *dh_pub = NULL, *dh_priv = NULL;
+    unsigned char *dh_peer_pub = NULL;
+    unsigned char *kat_secret = NULL;
+    size_t dh_p_len, dh_q_len, dh_g_len;
+    size_t dh_pub_len, dh_priv_len;
+    size_t dh_peer_pub_len;
+    EVP_PKEY_CTX *kactx = NULL, *dctx = NULL;
+    EVP_PKEY *pkey = NULL, *peerkey = NULL;
+    OSSL_PARAM params[6];
+    unsigned char secret[256];
+    size_t secret_len, kat_secret_len;
+
+    /* DH KAT */
+    static const char *dh_p_hex[] = {
+        "dcca1511b2313225f52116e1542789e001f0425bccc7f366f7406407f1c9fa8b"
+        "e610f1778bb170be39dbb76f85bf24ce6880adb7629f7c6d015e61d43fa3ee4d"
+        "e185f2cfd041ffde9d418407e15138bb021daeb35f762d1782acc658d32bd4b0"
+        "232c927dd38fa097b3d1859fa8acafb98f066608fc644ec7ddb6f08599f92ac1",
+        "b59825da8432077def695646063c20823c9507ab6f0176d4730d990dbbe6361c"
+        "d8b2b94d3d2f329b82099bd661f42950f403df3ede62a33188b02798ba823f44"
+        "b946fe9df677a0c5a1238eaa97b70f80da8cac88e092b1127060ffbf45579994"
+        "011dc2faa5e7f6c76245e1cc312231c17d1ca6b19007ef0db99f9cb60e1d5f69",
+        NULL
+    };
+    static const char *dh_q_hex[] = {
+        "898b226717ef039e603e82e5c7afe48374ac5f625c54f1ea11acb57d",
+        NULL
+    };
+    static const char *dh_g_hex[] = {
+        "5ef7b88f2df60139351dfbfe1266805fdf356cdfd13a4da0050c7ede"
+        "246df59f6abf96ade5f2b28ffe88d6bce7f7894a3d535fc82126ddd4"
+        "24872e16b838df8c51e9016f889c7c203e98a8b631f9c72563d38a49"
+        "589a0753d358e783318cefd9677c7b2dbb77d6dce2a1963795ca64b9",
+        "2d1c9aac6d0e8d431de5e50060dff78689c9eca1c1248c16ed09c7ad",
+        "412a17406d2b525aa1cabb237b9734ec7b8ce3fae02f29c5efed30d6"
+        "9187da109c2c9fe2aadbb0c22af54c616655000c431c6b4a379763b0"
+        "a91658efc84e8b06358c8b4f213710fd10172cf39b830c2dd84a0c8a"
+        "b82516ecab995fa4215e023e4ecf8074c39d6c88b70d1ee4e96fdc20",
+        "ea115c32",
+        NULL
+    };
+    static const char *dh_priv_hex[] = {
+        "1433e0b5a917b60a3023f2f8aa2c2d70d2968aba9aeac81540b8fce6",
+        NULL
+    };
+    static const char *dh_pub_hex[] = {
+        "95dd338d29e5710492b918317b72a36936e1951a2ee5a5591699c048"
+        "6d0d4f9bdd6d5a3f6b98890c62b37652d36e712111e68a7355372506"
+        "99efe330537391fbc2c548bc5ac3e5b23386c3eef5eb43c099d70a52"
+        "02687e83964248fca91f40908e8fb3319315f6d2606d7f7cd52cc6e7",
+        "c5843afb22519cf0f0f9d3a0a4e8c88899efede7364351fb6a363ee7"
+        "17e5445adab4c931a6483997b87dad83677e4d1d3a7775e0f6d00fdf"
+        "73c7ad801e665a0e5a796d0a0380a19fa182efc8a04f5e4db90d1a86"
+        "37f95db16436bdc8f3fc096c4ff7f234be8fef479ac4b0dc4b77263e",
+        "07d9959de0f1bf3f0ae3d9d50e4b89c99e3ea1217343dd8c6581acc4"
+        "959c91d3",
+        NULL
+    };
+    static const char *dh_peer_pub_hex[] = {
+        "1fc1da341d1a846a96b7be24340f877dd010aa0356d5ad58aae9c7b0"
+        "8f749a32235110b5d88eb5dbfa978d27ecc530f02d3114005b64b1c0"
+        "e024cb8ae21698bca9e60d42808622f181c56e1de7a96e6efee9d665"
+        "67e91b977042c7e3d0448f05fb77f522b9bfc8d33cc3c31ed3b31f0f",
+        "ecb6db4f6ea311e77afdbcd47aee1bb150f216873578fb96468e8f9f"
+        "3de8efbfce75624b1df05322a34f1463e839e8984c4ad0a96e1ac842"
+        "e5318cc23c062a8ca171b8d575980dde7fc56f1536523820d43192bf"
+        "d51e8e228978aca5b94472f339caeb9931b42be301268bc99789c9b2",
+        "5571c3c0e4cb3f007f1a511cbb53c8519cdd1302abca6c0f34f96739"
+        "f17ff48b",
+        NULL
+    };
+    static const char *dh_secret_exptd_hex[] = {
+        "08ff33bb2ecff49a7d4a7912aeb1bb6ab511641b4a76770c8cc1bcc2"
+        "33343dfe700d11813d2c9ed23b211ca9e8786921edca283c68b16153"
+        "fa01e91ab82c90ddab4a95816770a98710e14c92ab83b6e46e1e426e"
+        "e852430d6187daa3720a6bcd73235c6b0f941f3364f50420551a4bfe",
+        "afe2bc438505a59a4a40daca7a895a73db575c74c13a23ad8832957d"
+        "582d38f0a6165fb0d7e9b8799e42fd3220e332e98185a0c9429757b2"
+        "d0d02c17dbaa1ff6ed93d7e73e241eaed90caf394d2bc6570f18c81f"
+        "2be5d01a2ca99ff142b5d963f9f500325e7556f95849b3ffc7479486",
+        "be1d4596a3106bd5cb4f61c57ec5f100fb7a0c82a10b82526a97d1d9",
+        "7d98eaf6",
+        NULL
+    };
+
+    if (!hextobin(dh_p_hex, 1, &dh_p, &dh_p_len)
+        || !hextobin(dh_q_hex, 1, &dh_q, &dh_q_len)
+        || !hextobin(dh_g_hex, 1, &dh_g, &dh_g_len)
+        || !hextobin(dh_pub_hex, 1, &dh_pub, &dh_pub_len)
+        || !hextobin(dh_priv_hex, 1, &dh_priv, &dh_priv_len)
+        || !hextobin(dh_peer_pub_hex, 1, &dh_peer_pub, &dh_peer_pub_len)
+        || !hextobin(dh_secret_exptd_hex, 0, &kat_secret, &kat_secret_len))
+        goto err;
+
+    params[0] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_P, dh_p, dh_p_len);
+    params[1] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_Q, dh_q, dh_q_len);
+    params[2] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_G, dh_g, dh_g_len);
+    params[3] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DH_PUB_KEY,
+                                        dh_pub, dh_pub_len);
+    params[4] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DH_PRIV_KEY,
+                                        dh_priv, dh_priv_len);
+    params[5] = OSSL_PARAM_construct_end();
+
+    kactx = EVP_PKEY_CTX_new_from_name(libctx, "DH", "");
+    if (kactx == NULL)
+        goto err;
+    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &pkey, params) <= 0)
+        goto err;
+
+    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
+    if (dctx == NULL)
+        goto err;
+
+    params[3] = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DH_PUB_KEY,
+                                        dh_peer_pub, dh_peer_pub_len);
+    params[4] = OSSL_PARAM_construct_end();
+
+    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &peerkey, params) <= 0)
+        goto err;
+
+    if (EVP_PKEY_derive_init(dctx) <= 0
+        || EVP_PKEY_derive_set_peer(dctx, peerkey) <= 0
+        || EVP_PKEY_derive(dctx, secret, &secret_len) <= 0)
+        goto err;
+
+    if (secret_len != kat_secret_len
+        || memcmp(secret, kat_secret, secret_len) != 0)
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_free(dh_p);
+    OPENSSL_free(dh_q);
+    OPENSSL_free(dh_g);
+    OPENSSL_free(dh_pub);
+    OPENSSL_free(dh_priv);
+    OPENSSL_free(dh_peer_pub);
+    OPENSSL_free(kat_secret);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(peerkey);
+    EVP_PKEY_CTX_free(kactx);
+    EVP_PKEY_CTX_free(dctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_DH */
 
 /* TODO(3.0): To be removed */
 static int dummy_evp_call(void *provctx)
@@ -284,11 +439,11 @@ static int dummy_evp_call(void *provctx)
     if (!EC_KEY_generate_key(key))
         goto err;
 #endif
-    if (!rawnative_fromhex(dsa_p_hex, &dsa_p, &dsa_p_len)
-            || !rawnative_fromhex(dsa_q_hex, &dsa_q, &dsa_q_len)
-            || !rawnative_fromhex(dsa_g_hex, &dsa_g, &dsa_g_len)
-            || !rawnative_fromhex(dsa_pub_hex, &dsa_pub, &dsa_pub_len)
-            || !rawnative_fromhex(dsa_priv_hex, &dsa_priv, &dsa_priv_len))
+    if (!hextobin(dsa_p_hex, 1, &dsa_p, &dsa_p_len)
+        || !hextobin(dsa_q_hex, 1, &dsa_q, &dsa_q_len)
+        || !hextobin(dsa_g_hex, 1, &dsa_g, &dsa_g_len)
+        || !hextobin(dsa_pub_hex, 1, &dsa_pub, &dsa_pub_len)
+        || !hextobin(dsa_priv_hex, 1, &dsa_priv, &dsa_priv_len))
         goto err;
 
     p = params;
@@ -305,12 +460,12 @@ static int dummy_evp_call(void *provctx)
     if (kctx == NULL)
         goto err;
     if (EVP_PKEY_key_fromdata_init(kctx) <= 0
-            || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
+        || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
         goto err;
 
     sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
     if (sctx == NULL)
-        goto err;;
+        goto err;
 
     if (EVP_PKEY_sign_init(sctx) <= 0)
         goto err;
@@ -329,9 +484,15 @@ static int dummy_evp_call(void *provctx)
         goto err;
 
     if (EVP_PKEY_sign(sctx, sig, &siglen, dgst, sizeof(dgst)) <= 0
-            || EVP_PKEY_verify_init(sctx) <= 0
-            || EVP_PKEY_verify(sctx, sig, siglen, dgst, sizeof(dgst)) <= 0)
+        || EVP_PKEY_verify_init(sctx) <= 0
+        || EVP_PKEY_verify(sctx, sig, siglen, dgst, sizeof(dgst)) <= 0)
         goto err;
+
+#ifndef OPENSSL_NO_DH
+    if (!dh_key_exchange_test(libctx))
+        goto err;
+#endif /* OPENSSL_NO_DH */
+
     ret = 1;
  err:
     BN_CTX_end(bnctx);
@@ -588,6 +749,13 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_keyexch[] = {
+#ifndef OPENSSL_NO_DH
+    { "DH:dhKeyAgreement", "fips=yes", dh_keyexch_functions },
+#endif
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "fips=yes", dsa_signature_functions },
@@ -596,6 +764,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
 };
 
 static const OSSL_ALGORITHM fips_keymgmt[] = {
+#ifndef OPENSSL_NO_DH
+    { "DH:dhKeyAgreement", "fips=yes", dh_keymgmt_functions },
+#endif
 #ifndef OPENSSL_NO_DSA
     { "DSA", "fips=yes", dsa_keymgmt_functions },
 #endif
@@ -619,6 +790,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
         return fips_kdfs;
     case OSSL_OP_KEYMGMT:
         return fips_keymgmt;
+    case OSSL_OP_KEYEXCH:
+        return fips_keyexch;
     case OSSL_OP_SIGNATURE:
         return fips_signature;
     }
