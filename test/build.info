@@ -33,7 +33,6 @@ IF[{- !$disabled{tests} -}]
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
-          md2test \
           hmactest \
           rc2test rc4test rc5test \
           destest mdc2test \
@@ -115,10 +114,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ideatest]=ideatest.c
   INCLUDE[ideatest]=../include ../apps/include
   DEPEND[ideatest]=../libcrypto libtestutil.a
-
-  SOURCE[md2test]=md2test.c
-  INCLUDE[md2test]=../include ../apps/include
-  DEPEND[md2test]=../libcrypto libtestutil.a
 
   SOURCE[hmactest]=hmactest.c
   INCLUDE[hmactest]=../include ../apps/include
