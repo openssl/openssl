@@ -54,17 +54,6 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
     return pkey->ameth->pkey_security_bits(pkey);
 }
 
-int EVP_PKEY_size(const EVP_PKEY *pkey)
-{
-    if (pkey != NULL) {
-        if (pkey->ameth == NULL)
-            return pkey->cache.size;
-        else if (pkey->ameth->pkey_size != NULL)
-            return pkey->ameth->pkey_size(pkey);
-    }
-    return 0;
-}
-
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 {
 # ifndef OPENSSL_NO_DSA
@@ -828,11 +817,13 @@ void EVP_PKEY_free(EVP_PKEY *x)
     OPENSSL_free(x);
 }
 
-/* TODO (3.0) : Needs to call getparams fo non legacy case */
 int EVP_PKEY_size(const EVP_PKEY *pkey)
 {
-    if (pkey && pkey->ameth && pkey->ameth->pkey_size)
-        return pkey->ameth->pkey_size(pkey);
+    if (pkey != NULL) {
+        if (pkey->ameth == NULL)
+            return pkey->cache.size;
+        else if (pkey->ameth->pkey_size != NULL)
+            return pkey->ameth->pkey_size(pkey);
+    }
     return 0;
 }
-
