@@ -1,15 +1,15 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Mike Hamburg
  */
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "word.h"
 #include "field.h"
 
@@ -87,7 +87,7 @@ void curve448_point_double(curve448_point_t p, const curve448_point_t q)
 }
 
 /* Operations on [p]niels */
-static ossl_inline void cond_neg_niels(niels_t n, mask_t neg)
+static otls_inline void cond_neg_niels(niels_t n, mask_t neg)
 {
     gf_cond_swap(n->a, n->b, neg);
     gf_cond_neg(n->c, neg);
@@ -217,7 +217,7 @@ c448_bool_t curve448_point_valid(const curve448_point_t p)
     return mask_to_bool(out);
 }
 
-static ossl_inline void constant_time_lookup_niels(niels_s * RESTRICT ni,
+static otls_inline void constant_time_lookup_niels(niels_s * RESTRICT ni,
                                                    const niels_t * table,
                                                    int nelts, int idx)
 {
@@ -267,8 +267,8 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
         }
     }
 
-    OPENSSL_cleanse(ni, sizeof(ni));
-    OPENSSL_cleanse(scalar1x, sizeof(scalar1x));
+    OPENtls_cleanse(ni, sizeof(ni));
+    OPENtls_cleanse(scalar1x, sizeof(scalar1x));
 }
 
 void curve448_point_mul_by_ratio_and_encode_like_eddsa(
@@ -298,7 +298,7 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
         gf_mul(x, t, y);
         gf_mul(y, z, u);
         gf_mul(z, u, t);
-        OPENSSL_cleanse(u, sizeof(u));
+        OPENtls_cleanse(u, sizeof(u));
     }
 
     /* Affinize */
@@ -311,10 +311,10 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
     gf_serialize(enc, x, 1);
     enc[EDDSA_448_PRIVATE_BYTES - 1] |= 0x80 & gf_lobit(t);
 
-    OPENSSL_cleanse(x, sizeof(x));
-    OPENSSL_cleanse(y, sizeof(y));
-    OPENSSL_cleanse(z, sizeof(z));
-    OPENSSL_cleanse(t, sizeof(t));
+    OPENtls_cleanse(x, sizeof(x));
+    OPENtls_cleanse(y, sizeof(y));
+    OPENtls_cleanse(z, sizeof(z));
+    OPENtls_cleanse(t, sizeof(t));
     curve448_point_destroy(q);
 }
 
@@ -364,13 +364,13 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
         gf_mul(p->z, p->t, a);
         gf_mul(p->y, p->t, d);
         gf_mul(p->t, b, d);
-        OPENSSL_cleanse(a, sizeof(a));
-        OPENSSL_cleanse(b, sizeof(b));
-        OPENSSL_cleanse(c, sizeof(c));
-        OPENSSL_cleanse(d, sizeof(d));
+        OPENtls_cleanse(a, sizeof(a));
+        OPENtls_cleanse(b, sizeof(b));
+        OPENtls_cleanse(c, sizeof(c));
+        OPENtls_cleanse(d, sizeof(d));
     }
 
-    OPENSSL_cleanse(enc2, sizeof(enc2));
+    OPENtls_cleanse(enc2, sizeof(enc2));
     assert(curve448_point_valid(p) || ~succ);
 
     return c448_succeed_if(mask_to_bool(succ));
@@ -444,13 +444,13 @@ c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
     gf_serialize(out, x1, 1);
     nz = ~gf_eq(x1, ZERO);
 
-    OPENSSL_cleanse(x1, sizeof(x1));
-    OPENSSL_cleanse(x2, sizeof(x2));
-    OPENSSL_cleanse(z2, sizeof(z2));
-    OPENSSL_cleanse(x3, sizeof(x3));
-    OPENSSL_cleanse(z3, sizeof(z3));
-    OPENSSL_cleanse(t1, sizeof(t1));
-    OPENSSL_cleanse(t2, sizeof(t2));
+    OPENtls_cleanse(x1, sizeof(x1));
+    OPENtls_cleanse(x2, sizeof(x2));
+    OPENtls_cleanse(z2, sizeof(z2));
+    OPENtls_cleanse(x3, sizeof(x3));
+    OPENtls_cleanse(z3, sizeof(z3));
+    OPENtls_cleanse(t1, sizeof(t1));
+    OPENtls_cleanse(t2, sizeof(t2));
 
     return c448_succeed_if(mask_to_bool(nz));
 }
@@ -621,7 +621,7 @@ static void prepare_wnaf_table(pniels_t * output,
     }
 
     curve448_point_destroy(tmp);
-    OPENSSL_cleanse(twop, sizeof(twop));
+    OPENtls_cleanse(twop, sizeof(twop));
 }
 
 void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
@@ -698,9 +698,9 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
     }
 
     /* This function is non-secret, but whatever this is cheap. */
-    OPENSSL_cleanse(control_var, sizeof(control_var));
-    OPENSSL_cleanse(control_pre, sizeof(control_pre));
-    OPENSSL_cleanse(precmp_var, sizeof(precmp_var));
+    OPENtls_cleanse(control_var, sizeof(control_var));
+    OPENtls_cleanse(control_pre, sizeof(control_pre));
+    OPENtls_cleanse(precmp_var, sizeof(precmp_var));
 
     assert(contv == ncb_var);
     (void)ncb_var;
@@ -710,7 +710,7 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
 
 void curve448_point_destroy(curve448_point_t point)
 {
-    OPENSSL_cleanse(point, sizeof(curve448_point_t));
+    OPENtls_cleanse(point, sizeof(curve448_point_t));
 }
 
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],

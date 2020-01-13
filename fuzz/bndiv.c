@@ -1,10 +1,10 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -14,8 +14,8 @@
  */
 
 #include <stdio.h>
-#include <openssl/bn.h>
-#include <openssl/err.h>
+#include <opentls/bn.h>
+#include <opentls/err.h>
 #include "fuzzer.h"
 
 /* 256 kB */
@@ -37,7 +37,7 @@ int FuzzerInitialize(int *argc, char ***argv)
     b5 = BN_new();
     ctx = BN_CTX_new();
 
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
 
     return 1;
@@ -69,9 +69,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         ++buf;
         l2 = len - l1;
     }
-    OPENSSL_assert(BN_bin2bn(buf, l1, b1) == b1);
+    OPENtls_assert(BN_bin2bn(buf, l1, b1) == b1);
     BN_set_negative(b1, s1);
-    OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
+    OPENtls_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
     BN_set_negative(b2, s2);
 
     /* divide by 0 is an error */
@@ -80,7 +80,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         goto done;
     }
 
-    OPENSSL_assert(BN_div(b3, b4, b1, b2, ctx));
+    OPENtls_assert(BN_div(b3, b4, b1, b2, ctx));
     if (BN_is_zero(b1))
         success = BN_is_zero(b3) && BN_is_zero(b4);
     else if (BN_is_negative(b1))
@@ -89,8 +89,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     else
         success = (BN_is_negative(b3) == BN_is_negative(b2)  || BN_is_zero(b3))
             && (!BN_is_negative(b4) || BN_is_zero(b4));
-    OPENSSL_assert(BN_mul(b5, b3, b2, ctx));
-    OPENSSL_assert(BN_add(b5, b5, b4));
+    OPENtls_assert(BN_mul(b5, b3, b2, ctx));
+    OPENtls_assert(BN_add(b5, b5, b4));
 
     success = success && BN_cmp(b5, b1) == 0;
     if (!success) {
@@ -114,7 +114,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
  done:
-    OPENSSL_assert(success);
+    OPENtls_assert(success);
     ERR_clear_error();
 
     return 0;

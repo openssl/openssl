@@ -1,11 +1,11 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::Test::Utils;
+package Opentls::Test::Utils;
 
 use strict;
 use warnings;
@@ -19,11 +19,11 @@ $VERSION = "0.1";
 
 =head1 NAME
 
-OpenSSL::Test::Utils - test utility functions
+Opentls::Test::Utils - test utility functions
 
 =head1 SYNOPSIS
 
-  use OpenSSL::Test::Utils;
+  use Opentls::Test::Utils;
 
   my @tls = available_protocols("tls");
   my @dtls = available_protocols("dtls");
@@ -41,13 +41,13 @@ This module provides utility functions for the testing framework.
 
 =cut
 
-use OpenSSL::Test qw/:DEFAULT bldtop_file/;
+use Opentls::Test qw/:DEFAULT bldtop_file/;
 
 =over 4
 
 =item B<available_protocols STRING>
 
-Returns a list of strings for all the available SSL/TLS versions if
+Returns a list of strings for all the available tls/TLS versions if
 STRING is "tls", or for all the available DTLS versions if STRING is
 "dtls".  Otherwise, it returns the empty list.  The strings in the
 returned list can be used with B<alldisabled> and B<anydisabled>.
@@ -229,12 +229,12 @@ sub have_IPv6 {
 
 =head1 SEE ALSO
 
-L<OpenSSL::Test>
+L<Opentls::Test>
 
 =head1 AUTHORS
 
-Stephen Henson E<lt>steve@openssl.orgE<gt> and
-Richard Levitte E<lt>levitte@openssl.orgE<gt>
+Stephen Henson E<lt>steve@opentls.orgE<gt> and
+Richard Levitte E<lt>levitte@opentls.orgE<gt>
 
 =cut
 

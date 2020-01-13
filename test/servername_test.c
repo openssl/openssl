@@ -1,28 +1,28 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
 #include <time.h>
 
 #include "internal/packet.h"
 
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 
 #define CLIENT_VERSION_LEN      2
 
@@ -48,12 +48,12 @@ static int get_sni_from_client_hello(BIO *bio, char **sni)
     len = BIO_get_mem_data(bio, (char **)&data);
     if (!TEST_true(PACKET_buf_init(&pkt, data, len))
                /* Skip the record header */
-            || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
+            || !PACKET_forward(&pkt, tls3_RT_HEADER_LENGTH)
                /* Skip the handshake message header */
-            || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+            || !TEST_true(PACKET_forward(&pkt, tls3_HM_HEADER_LENGTH))
                /* Skip client version and random */
             || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
-                                               + SSL3_RANDOM_SIZE))
+                                               + tls3_RANDOM_SIZE))
                /* Skip session id */
             || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
                /* Skip ciphers */
@@ -89,24 +89,24 @@ end:
 
 static int client_setup_sni_before_state(void)
 {
-    SSL_CTX *ctx;
-    SSL *con = NULL;
+    tls_CTX *ctx;
+    tls *con = NULL;
     BIO *rbio;
     BIO *wbio;
     char *hostname = NULL;
     int ret = 0;
 
     /* use TLS_method to blur 'side' */
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = tls_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 
-    con = SSL_new(ctx);
+    con = tls_new(ctx);
     if (!TEST_ptr(con))
         goto end;
 
     /* set SNI before 'client side' is set */
-    SSL_set_tlsext_host_name(con, host);
+    tls_set_tlsext_host_name(con, host);
 
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
@@ -116,9 +116,9 @@ static int client_setup_sni_before_state(void)
         goto end;
     }
 
-    SSL_set_bio(con, rbio, wbio);
+    tls_set_bio(con, rbio, wbio);
 
-    if (!TEST_int_le(SSL_connect(con), 0))
+    if (!TEST_int_le(tls_connect(con), 0))
         /* This shouldn't succeed because we don't have a server! */
         goto end;
     if (!TEST_true(get_sni_from_client_hello(wbio, &hostname)))
@@ -129,27 +129,27 @@ static int client_setup_sni_before_state(void)
         goto end;
     ret = 1;
 end:
-    OPENSSL_free(hostname);
-    SSL_free(con);
-    SSL_CTX_free(ctx);
+    OPENtls_free(hostname);
+    tls_free(con);
+    tls_CTX_free(ctx);
     return ret;
 }
 
 static int client_setup_sni_after_state(void)
 {
-    SSL_CTX *ctx;
-    SSL *con = NULL;
+    tls_CTX *ctx;
+    tls *con = NULL;
     BIO *rbio;
     BIO *wbio;
     char *hostname = NULL;
     int ret = 0;
 
     /* use TLS_method to blur 'side' */
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = tls_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 
-    con = SSL_new(ctx);
+    con = tls_new(ctx);
     if (!TEST_ptr(con))
         goto end;
 
@@ -161,13 +161,13 @@ static int client_setup_sni_after_state(void)
         goto end;
     }
 
-    SSL_set_bio(con, rbio, wbio);
-    SSL_set_connect_state(con);
+    tls_set_bio(con, rbio, wbio);
+    tls_set_connect_state(con);
 
     /* set SNI after 'client side' is set */
-    SSL_set_tlsext_host_name(con, host);
+    tls_set_tlsext_host_name(con, host);
 
-    if (!TEST_int_le(SSL_connect(con), 0))
+    if (!TEST_int_le(tls_connect(con), 0))
         /* This shouldn't succeed because we don't have a server! */
         goto end;
     if (!TEST_true(get_sni_from_client_hello(wbio, &hostname)))
@@ -178,33 +178,33 @@ static int client_setup_sni_after_state(void)
         goto end;
     ret = 1;
 end:
-    OPENSSL_free(hostname);
-    SSL_free(con);
-    SSL_CTX_free(ctx);
+    OPENtls_free(hostname);
+    tls_free(con);
+    tls_CTX_free(ctx);
     return ret;
 }
 
 static int server_setup_sni(void)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientssl = NULL, *serverssl = NULL;
+    tls_CTX *cctx = NULL, *sctx = NULL;
+    tls *clienttls = NULL, *servertls = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            || !TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                              NULL, NULL)))
         goto end;
 
     /* set SNI at server side */
-    SSL_set_tlsext_host_name(serverssl, host);
+    tls_set_tlsext_host_name(servertls, host);
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(servertls, clienttls, tls_ERROR_NONE)))
         goto end;
 
-    if (!TEST_ptr_null(SSL_get_servername(serverssl,
+    if (!TEST_ptr_null(tls_get_servername(servertls,
                                           TLSEXT_NAMETYPE_host_name))) {
         /* SNI should have been cleared during handshake */
         goto end;
@@ -212,10 +212,10 @@ static int server_setup_sni(void)
 
     testresult = 1;
 end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }
@@ -231,7 +231,7 @@ static sni_test_fn sni_test_fns[3] = {
 static int test_servername(int test)
 {
     /*
-     * For each test set up an SSL_CTX and SSL and see
+     * For each test set up an tls_CTX and tls and see
      * what SNI behaves.
      */
     return sni_test_fns[test]();
@@ -243,6 +243,6 @@ int setup_tests(void)
             || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
 
-    ADD_ALL_TESTS(test_servername, OSSL_NELEM(sni_test_fns));
+    ADD_ALL_TESTS(test_servername, Otls_NELEM(sni_test_fns));
     return 1;
 }

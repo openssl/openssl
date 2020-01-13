@@ -1,29 +1,29 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <opentls/rsa.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
 
 int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,
                          int key_len, EVP_PKEY *pubk)
 {
     int ret = 0;
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     if (EVP_PKEY_id(pubk) != EVP_PKEY_RSA) {
 #endif
         EVPerr(EVP_F_EVP_PKEY_ENCRYPT_OLD, EVP_R_PUBLIC_KEY_NOT_RSA);
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         goto err;
     }
     ret =

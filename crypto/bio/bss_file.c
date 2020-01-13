@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #if defined(__linux) || defined(__sun) || defined(__hpux)
@@ -28,9 +28,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
-#include <openssl/err.h>
+#include <opentls/err.h>
 
-#if !defined(OPENSSL_NO_STDIO)
+#if !defined(OPENtls_NO_STDIO)
 
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
@@ -59,7 +59,7 @@ static const BIO_METHOD methods_filep = {
 BIO *BIO_new_file(const char *filename, const char *mode)
 {
     BIO  *ret;
-    FILE *file = openssl_fopen(filename, mode);
+    FILE *file = opentls_fopen(filename, mode);
     int fp_flags = BIO_CLOSE;
 
     if (strchr(mode, 'b') == NULL)
@@ -169,7 +169,7 @@ static int file_write(BIO *b, const char *in, int inl)
             ret = inl;
         /* ret=fwrite(in,1,(int)inl,(FILE *)b->ptr); */
         /*
-         * according to Tim Hudson <tjh@openssl.org>, the commented out
+         * according to Tim Hudson <tjh@opentls.org>, the commented out
          * version above can cause 'inl' write calls under some stupid stdio
          * implementations (VMS)
          */
@@ -231,13 +231,13 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
 # endif
         {
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
             int fd = _fileno((FILE *)ptr);
             if (num & BIO_FP_TEXT)
                 _setmode(fd, _O_TEXT);
             else
                 _setmode(fd, _O_BINARY);
-# elif defined(OPENSSL_SYS_MSDOS)
+# elif defined(OPENtls_SYS_MSDOS)
             int fd = fileno((FILE *)ptr);
             /* Set correct text/binary mode */
             if (num & BIO_FP_TEXT)
@@ -250,7 +250,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 } else
                     _setmode(fd, _O_BINARY);
             }
-# elif defined(OPENSSL_SYS_WIN32_CYGWIN)
+# elif defined(OPENtls_SYS_WIN32_CYGWIN)
             int fd = fileno((FILE *)ptr);
             if (!(num & BIO_FP_TEXT))
                 setmode(fd, O_BINARY);
@@ -262,30 +262,30 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num & BIO_CLOSE;
         if (num & BIO_FP_APPEND) {
             if (num & BIO_FP_READ)
-                OPENSSL_strlcpy(p, "a+", sizeof(p));
+                OPENtls_strlcpy(p, "a+", sizeof(p));
             else
-                OPENSSL_strlcpy(p, "a", sizeof(p));
+                OPENtls_strlcpy(p, "a", sizeof(p));
         } else if ((num & BIO_FP_READ) && (num & BIO_FP_WRITE))
-            OPENSSL_strlcpy(p, "r+", sizeof(p));
+            OPENtls_strlcpy(p, "r+", sizeof(p));
         else if (num & BIO_FP_WRITE)
-            OPENSSL_strlcpy(p, "w", sizeof(p));
+            OPENtls_strlcpy(p, "w", sizeof(p));
         else if (num & BIO_FP_READ)
-            OPENSSL_strlcpy(p, "r", sizeof(p));
+            OPENtls_strlcpy(p, "r", sizeof(p));
         else {
             BIOerr(BIO_F_FILE_CTRL, BIO_R_BAD_FOPEN_MODE);
             ret = 0;
             break;
         }
-# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_MSDOS) || defined(OPENtls_SYS_WINDOWS)
         if (!(num & BIO_FP_TEXT))
-            OPENSSL_strlcat(p, "b", sizeof(p));
+            OPENtls_strlcat(p, "b", sizeof(p));
         else
-            OPENSSL_strlcat(p, "t", sizeof(p));
-# elif defined(OPENSSL_SYS_WIN32_CYGWIN)
+            OPENtls_strlcat(p, "t", sizeof(p));
+# elif defined(OPENtls_SYS_WIN32_CYGWIN)
         if (!(num & BIO_FP_TEXT))
-            OPENSSL_strlcat(p, "b", sizeof(p));
+            OPENtls_strlcat(p, "b", sizeof(p));
 # endif
-        fp = openssl_fopen(ptr, p);
+        fp = opentls_fopen(ptr, p);
         if (fp == NULL) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fopen(%s, %s)",
@@ -422,4 +422,4 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     return NULL;
 }
 
-#endif                         /* OPENSSL_NO_STDIO */
+#endif                         /* OPENtls_NO_STDIO */

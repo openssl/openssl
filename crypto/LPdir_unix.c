@@ -1,10 +1,10 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -131,7 +131,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
         return 0;
     }
 
-    OPENSSL_strlcpy((*ctx)->entry_name, direntry->d_name,
+    OPENtls_strlcpy((*ctx)->entry_name, direntry->d_name,
                     sizeof((*ctx)->entry_name));
 #ifdef __VMS
     if ((*ctx)->expect_file_generations) {

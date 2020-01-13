@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #ifdef _WIN32
@@ -13,8 +13,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/async.h>
-#include <openssl/crypto.h>
+#include <opentls/async.h>
+#include <opentls/crypto.h>
 
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
@@ -43,7 +43,7 @@ static int save_current(void *args)
     return 1;
 }
 
-#define MAGIC_WAIT_FD   ((OSSL_ASYNC_FD)99)
+#define MAGIC_WAIT_FD   ((Otls_ASYNC_FD)99)
 static int waitfd(void *args)
 {
     ASYNC_JOB *job;
@@ -220,7 +220,7 @@ static int test_ASYNC_WAIT_CTX_get_all_fds(void)
     ASYNC_JOB *job = NULL;
     int funcret;
     ASYNC_WAIT_CTX *waitctx = NULL;
-    OSSL_ASYNC_FD fd = OSSL_BAD_ASYNC_FD, delfd = OSSL_BAD_ASYNC_FD;
+    Otls_ASYNC_FD fd = Otls_BAD_ASYNC_FD, delfd = Otls_BAD_ASYNC_FD;
     size_t numfds, numdelfds;
 
     if (       !ASYNC_init_thread(1, 0)
@@ -241,7 +241,7 @@ static int test_ASYNC_WAIT_CTX_get_all_fds(void)
             || numfds != 1
             || !ASYNC_WAIT_CTX_get_all_fds(waitctx, &fd, &numfds)
             || fd != MAGIC_WAIT_FD
-            || (fd = OSSL_BAD_ASYNC_FD, 0) /* Assign to something else */
+            || (fd = Otls_BAD_ASYNC_FD, 0) /* Assign to something else */
             || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, NULL, &numfds, NULL,
                                                &numdelfds)
             || numfds != 1
@@ -310,7 +310,7 @@ int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
         fprintf(stderr,
-                "OpenSSL build is not ASYNC capable - skipping async tests\n");
+                "Opentls build is not ASYNC capable - skipping async tests\n");
     } else {
         if (!test_ASYNC_init_thread()
                 || !test_ASYNC_callback_status()

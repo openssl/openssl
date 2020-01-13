@@ -1,10 +1,10 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -51,7 +51,7 @@ typedef struct prefix_ctx_st {
 
 static int prefix_create(BIO *b)
 {
-    PREFIX_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PREFIX_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return 0;
@@ -68,8 +68,8 @@ static int prefix_destroy(BIO *b)
 {
     PREFIX_CTX *ctx = BIO_get_data(b);
 
-    OPENSSL_free(ctx->prefix);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx->prefix);
+    OPENtls_free(ctx);
     return 1;
 }
 
@@ -158,12 +158,12 @@ static long prefix_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     switch (cmd) {
     case BIO_CTRL_SET_PREFIX:
-        OPENSSL_free(ctx->prefix);
+        OPENtls_free(ctx->prefix);
         if (ptr == NULL) {
             ctx->prefix = NULL;
             ret = 1;
         } else {
-            ctx->prefix = OPENSSL_strdup((const char *)ptr);
+            ctx->prefix = OPENtls_strdup((const char *)ptr);
             ret = ctx->prefix != NULL;
         }
         break;

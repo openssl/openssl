@@ -13,7 +13,7 @@ BIO_lookup
 =head1 SYNOPSIS
 
  #include <sys/types.h>
- #include <openssl/bio.h>
+ #include <opentls/bio.h>
 
  typedef union bio_addrinfo_st BIO_ADDRINFO;
 
@@ -84,7 +84,7 @@ with the given one.
 =head1 RETURN VALUES
 
 BIO_lookup_ex() and BIO_lookup() return 1 on success and 0 when an error
-occurred, and will leave an error indication on the OpenSSL error stack in that
+occurred, and will leave an error indication on the Opentls error stack in that
 case.
 
 All other functions described here return 0 or B<NULL> when the
@@ -100,15 +100,15 @@ explicitly set to IPPROTO_SCTP. The same may be true on other platforms.
 
 =head1 HISTORY
 
-The BIO_lookup_ex() function was added in OpenSSL 1.1.1.
+The BIO_lookup_ex() function was added in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

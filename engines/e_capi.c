@@ -1,10 +1,10 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #ifdef _WIN32
@@ -22,14 +22,14 @@
 #  define alloca _alloca
 # endif
 
-# include <openssl/crypto.h>
+# include <opentls/crypto.h>
 
-# ifndef OPENSSL_NO_CAPIENG
+# ifndef OPENtls_NO_CAPIENG
 
-#  include <openssl/buffer.h>
-#  include <openssl/bn.h>
-#  include <openssl/rsa.h>
-#  include <openssl/dsa.h>
+#  include <opentls/buffer.h>
+#  include <opentls/bn.h>
+#  include <opentls/rsa.h>
+#  include <opentls/dsa.h>
 
 /*
  * This module uses several "new" interfaces, among which is
@@ -41,14 +41,14 @@
  * defines CERT_STORE_PROV_SYSTEM_A and CERT_STORE_READONLY_FLAG,
  * so we check for these too and avoid compiling.
  * Yes, it's rather "weak" test and if compilation fails,
- * then re-configure with -DOPENSSL_NO_CAPIENG.
+ * then re-configure with -DOPENtls_NO_CAPIENG.
  */
 #  if defined(CERT_KEY_PROV_INFO_PROP_ID) && \
     defined(CERT_STORE_PROV_SYSTEM_A) && \
     defined(CERT_STORE_READONLY_FLAG)
 #   define __COMPILE_CAPIENG
 #  endif                        /* CERT_KEY_PROV_INFO_PROP_ID */
-# endif                         /* OPENSSL_NO_CAPIENG */
+# endif                         /* OPENtls_NO_CAPIENG */
 #endif                          /* _WIN32 */
 
 #ifdef __COMPILE_CAPIENG
@@ -92,9 +92,9 @@
 #  define PROV_RSA_AES 24
 # endif
 
-# include <openssl/engine.h>
-# include <openssl/pem.h>
-# include <openssl/x509v3.h>
+# include <opentls/engine.h>
+# include <opentls/pem.h>
+# include <opentls/x509v3.h>
 
 # include "e_capi_err.h"
 # include "e_capi_err.c"
@@ -131,21 +131,21 @@ static int capi_rsa_priv_dec(int flen, const unsigned char *from,
                              unsigned char *to, RSA *rsa, int padding);
 static int capi_rsa_free(RSA *rsa);
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
                                  DSA *dsa);
 static int capi_dsa_free(DSA *dsa);
 # endif
 
-static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+static int capi_load_tls_client_cert(ENGINE *e, tls *tls,
                                      STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
                                      EVP_PKEY **pkey, STACK_OF(X509) **pother,
                                      UI_METHOD *ui_method,
                                      void *callback_data);
 
-static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
-# ifdef OPENSSL_CAPIENG_DIALOG
-static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
+static int cert_select_simple(ENGINE *e, tls *tls, STACK_OF(X509) *certs);
+# ifdef OPENtls_CAPIENG_DIALOG
+static int cert_select_dialog(ENGINE *e, tls *tls, STACK_OF(X509) *certs);
 # endif
 
 void engine_load_capi_int(void);
@@ -171,7 +171,7 @@ struct CAPI_CTX_st {
     DWORD csptype;
     /* Certificate store name to use */
     LPSTR storename;
-    LPSTR ssl_client_store;
+    LPSTR tls_client_store;
     /* System store flags */
     DWORD store_flags;
 /* Lookup string meanings in load_private_key */
@@ -187,7 +187,7 @@ struct CAPI_CTX_st {
 # define CAPI_DMP_PSKEY          0x10   /* Dump pseudo key (if possible) */
 # define CAPI_DMP_PKEYINFO       0x20   /* Dump key info (if possible) */
     DWORD dump_flags;
-    int (*client_cert_select) (ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
+    int (*client_cert_select) (ENGINE *e, tls *tls, STACK_OF(X509) *certs);
     CERTDLG certselectdlg;
     GETCONSWIN getconswindow;
 };
@@ -314,9 +314,9 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_STORE_NAME:
-        tmpstr = OPENSSL_strdup(p);
+        tmpstr = OPENtls_strdup(p);
         if (tmpstr != NULL) {
-            OPENSSL_free(ctx->storename);
+            OPENtls_free(ctx->storename);
             ctx->storename = tmpstr;
             CAPI_trace(ctx, "Setting store name to %s\n", p);
         } else {
@@ -342,7 +342,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_DEBUG_FILE:
-        tmpstr = OPENSSL_strdup(p);
+        tmpstr = OPENtls_strdup(p);
         if (tmpstr != NULL) {
             ctx->debug_file = tmpstr;
             CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
@@ -393,7 +393,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 }
 
 static RSA_METHOD *capi_rsa_method = NULL;
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 static DSA_METHOD *capi_dsa_method = NULL;
 # endif
 
@@ -406,9 +406,9 @@ static const WCHAR rsa_enh_cspname[] =
 static int capi_init(ENGINE *e)
 {
     CAPI_CTX *ctx;
-    const RSA_METHOD *ossl_rsa_meth;
-# ifndef OPENSSL_NO_DSA
-    const DSA_METHOD *ossl_dsa_meth;
+    const RSA_METHOD *otls_rsa_meth;
+# ifndef OPENtls_NO_DSA
+    const DSA_METHOD *otls_dsa_meth;
 # endif
     HCRYPTPROV hprov;
 
@@ -421,34 +421,34 @@ static int capi_init(ENGINE *e)
 
         /* Setup RSA_METHOD */
         rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-        ossl_rsa_meth = RSA_PKCS1_OpenSSL();
+        otls_rsa_meth = RSA_PKCS1_Opentls();
         if (   !RSA_meth_set_pub_enc(capi_rsa_method,
-                                     RSA_meth_get_pub_enc(ossl_rsa_meth))
+                                     RSA_meth_get_pub_enc(otls_rsa_meth))
             || !RSA_meth_set_pub_dec(capi_rsa_method,
-                                     RSA_meth_get_pub_dec(ossl_rsa_meth))
+                                     RSA_meth_get_pub_dec(otls_rsa_meth))
             || !RSA_meth_set_priv_enc(capi_rsa_method, capi_rsa_priv_enc)
             || !RSA_meth_set_priv_dec(capi_rsa_method, capi_rsa_priv_dec)
             || !RSA_meth_set_mod_exp(capi_rsa_method,
-                                     RSA_meth_get_mod_exp(ossl_rsa_meth))
+                                     RSA_meth_get_mod_exp(otls_rsa_meth))
             || !RSA_meth_set_bn_mod_exp(capi_rsa_method,
-                                        RSA_meth_get_bn_mod_exp(ossl_rsa_meth))
+                                        RSA_meth_get_bn_mod_exp(otls_rsa_meth))
             || !RSA_meth_set_finish(capi_rsa_method, capi_rsa_free)
             || !RSA_meth_set_sign(capi_rsa_method, capi_rsa_sign)) {
             goto memerr;
         }
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         /* Setup DSA Method */
         dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-        ossl_dsa_meth = DSA_OpenSSL();
+        otls_dsa_meth = DSA_Opentls();
         if (   !DSA_meth_set_sign(capi_dsa_method, capi_dsa_do_sign)
             || !DSA_meth_set_verify(capi_dsa_method,
-                                    DSA_meth_get_verify(ossl_dsa_meth))
+                                    DSA_meth_get_verify(otls_dsa_meth))
             || !DSA_meth_set_finish(capi_dsa_method, capi_dsa_free)
             || !DSA_meth_set_mod_exp(capi_dsa_method,
-                                     DSA_meth_get_mod_exp(ossl_dsa_meth))
+                                     DSA_meth_get_mod_exp(otls_dsa_meth))
             || !DSA_meth_set_bn_mod_exp(capi_dsa_method,
-                                    DSA_meth_get_bn_mod_exp(ossl_dsa_meth))) {
+                                    DSA_meth_get_bn_mod_exp(otls_dsa_meth))) {
             goto memerr;
         }
 # endif
@@ -460,7 +460,7 @@ static int capi_init(ENGINE *e)
 
     ENGINE_set_ex_data(e, capi_idx, ctx);
 
-# ifdef OPENSSL_CAPIENG_DIALOG
+# ifdef OPENtls_CAPIENG_DIALOG
     {
         HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
         HMODULE kernel = GetModuleHandle(TEXT("KERNEL32.DLL"));
@@ -471,7 +471,7 @@ static int capi_init(ENGINE *e)
         if (kernel)
             ctx->getconswindow =
                 (GETCONSWIN) GetProcAddress(kernel, "GetConsoleWindow");
-        if (cryptui && !OPENSSL_isservice())
+        if (cryptui && !OPENtls_isservice())
             ctx->client_cert_select = cert_select_dialog;
     }
 # endif
@@ -496,7 +496,7 @@ static int capi_destroy(ENGINE *e)
 {
     RSA_meth_free(capi_rsa_method);
     capi_rsa_method = NULL;
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     DSA_meth_free(capi_dsa_method);
     capi_dsa_method = NULL;
 # endif
@@ -532,7 +532,7 @@ static int bind_capi(ENGINE *e)
     capi_rsa_method = RSA_meth_new("CryptoAPI RSA method", 0);
     if (capi_rsa_method == NULL)
         return 0;
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     capi_dsa_method = DSA_meth_new("CryptoAPI DSA method", 0);
     if (capi_dsa_method == NULL)
         goto memerr;
@@ -544,12 +544,12 @@ static int bind_capi(ENGINE *e)
         || !ENGINE_set_finish_function(e, capi_finish)
         || !ENGINE_set_destroy_function(e, capi_destroy)
         || !ENGINE_set_RSA(e, capi_rsa_method)
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         || !ENGINE_set_DSA(e, capi_dsa_method)
 # endif
         || !ENGINE_set_load_privkey_function(e, capi_load_privkey)
-        || !ENGINE_set_load_ssl_client_cert_function(e,
-                                                     capi_load_ssl_client_cert)
+        || !ENGINE_set_load_tls_client_cert_function(e,
+                                                     capi_load_tls_client_cert)
         || !ENGINE_set_cmd_defns(e, capi_cmd_defns)
         || !ENGINE_set_ctrl_function(e, capi_ctrl))
         goto memerr;
@@ -559,14 +559,14 @@ static int bind_capi(ENGINE *e)
  memerr:
     RSA_meth_free(capi_rsa_method);
     capi_rsa_method = NULL;
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     DSA_meth_free(capi_dsa_method);
     capi_dsa_method = NULL;
 # endif
     return 0;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# ifndef OPENtls_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 {
     if (id && (strcmp(id, engine_capi_id) != 0))
@@ -593,7 +593,7 @@ static ENGINE *engine_capi(void)
 
 void engine_load_capi_int(void)
 {
-    /* Copied from eng_[openssl|dyn].c */
+    /* Copied from eng_[opentls|dyn].c */
     ENGINE *toadd = engine_capi();
     if (!toadd)
         return;
@@ -639,7 +639,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
         return NULL;
     }
 
-    pubkey = OPENSSL_malloc(len);
+    pubkey = OPENtls_malloc(len);
 
     if (pubkey == NULL)
         goto memerr;
@@ -700,7 +700,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
         EVP_PKEY_assign_RSA(ret, rkey);
         rkey = NULL;
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     } else if (bh->aiKeyAlg == CALG_DSS_SIGN) {
         DSSPUBKEY *dp;
         DWORD dsa_plen;
@@ -764,10 +764,10 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
     }
 
  err:
-    OPENSSL_free(pubkey);
+    OPENtls_free(pubkey);
     if (!ret) {
         RSA_free(rkey);
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         DSA_free(dkey);
 # endif
     }
@@ -858,7 +858,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
         break;
 
     case NID_md5_sha1:
-        alg = CALG_SSL3_SHAMD5;
+        alg = CALG_tls3_SHAMD5;
         break;
     default:
         {
@@ -953,7 +953,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
     }
 
     /* Create temp reverse order version of input */
-    if ((tmpbuf = OPENSSL_malloc(flen)) == NULL) {
+    if ((tmpbuf = OPENtls_malloc(flen)) == NULL) {
         CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_MALLOC_FAILURE);
         return -1;
     }
@@ -965,14 +965,14 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
     if (!CryptDecrypt(capi_key->key, 0, TRUE, flags, tmpbuf, &dlen)) {
         CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_DECRYPT_ERROR);
         capi_addlasterror();
-        OPENSSL_cleanse(tmpbuf, dlen);
-        OPENSSL_free(tmpbuf);
+        OPENtls_cleanse(tmpbuf, dlen);
+        OPENtls_free(tmpbuf);
         return -1;
     } else {
         memcpy(to, tmpbuf, (flen = (int)dlen));
     }
-    OPENSSL_cleanse(tmpbuf, flen);
-    OPENSSL_free(tmpbuf);
+    OPENtls_cleanse(tmpbuf, flen);
+    OPENtls_free(tmpbuf);
 
     return flen;
 }
@@ -986,7 +986,7 @@ static int capi_rsa_free(RSA *rsa)
     return 1;
 }
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 /* CryptoAPI DSA operations */
 
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
@@ -1052,7 +1052,7 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
     /* Now cleanup */
 
  err:
-    OPENSSL_cleanse(csigbuf, 40);
+    OPENtls_cleanse(csigbuf, 40);
     CryptDestroyHash(hash);
     return ret;
 }
@@ -1116,13 +1116,13 @@ static char *wide_to_asc(LPCWSTR wstr)
         CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_WIN32_ERROR);
         return NULL;
     }
-    str = OPENSSL_malloc(sz);
+    str = OPENtls_malloc(sz);
     if (str == NULL) {
         CAPIerr(CAPI_F_WIDE_TO_ASC, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (!WideCharToMultiByte(CP_ACP, 0, wstr, len_0, str, sz, NULL, NULL)) {
-        OPENSSL_free(str);
+        OPENtls_free(str);
         CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_WIN32_ERROR);
         return NULL;
     }
@@ -1143,14 +1143,14 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype,
         capi_adderror(err);
         return 0;
     }
-    name = OPENSSL_malloc(len);
+    name = OPENtls_malloc(len);
     if (name == NULL) {
         CAPIerr(CAPI_F_CAPI_GET_PROVNAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len)) {
         err = GetLastError();
-        OPENSSL_free(name);
+        OPENtls_free(name);
         if (err == ERROR_NO_MORE_ITEMS)
             return 2;
         CAPIerr(CAPI_F_CAPI_GET_PROVNAME, CAPI_R_CRYPTENUMPROVIDERS_ERROR);
@@ -1159,7 +1159,7 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype,
     }
     if (sizeof(TCHAR) != sizeof(char)) {
         *pname = wide_to_asc((WCHAR *)name);
-        OPENSSL_free(name);
+        OPENtls_free(name);
         if (*pname == NULL)
             return 0;
     } else {
@@ -1185,7 +1185,7 @@ static int capi_list_providers(CAPI_CTX *ctx, BIO *out)
         if (ret == 0)
             break;
         BIO_printf(out, "%lu. %s, type %lu\n", idx, provname, ptype);
-        OPENSSL_free(provname);
+        OPENtls_free(provname);
     }
     return 1;
 }
@@ -1230,7 +1230,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
     CAPI_trace(ctx, "Got max container len %d\n", buflen);
     if (buflen == 0)
         buflen = 1024;
-    cname = OPENSSL_malloc(buflen);
+    cname = OPENtls_malloc(buflen);
     if (cname == NULL) {
         CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -1266,7 +1266,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
     ret = 0;
 
  done:
-    OPENSSL_free(cname);
+    OPENtls_free(cname);
     CryptReleaseContext(hprov, 0);
 
     return ret;
@@ -1281,7 +1281,7 @@ static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX *ctx,
     if (!CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID,
                                            NULL, &len))
         return NULL;
-    pinfo = OPENSSL_malloc(len);
+    pinfo = OPENtls_malloc(len);
     if (pinfo == NULL) {
         CAPIerr(CAPI_F_CAPI_GET_PROV_INFO, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -1291,7 +1291,7 @@ static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX *ctx,
         CAPIerr(CAPI_F_CAPI_GET_PROV_INFO,
                 CAPI_R_ERROR_GETTING_KEY_PROVIDER_INFO);
         capi_addlasterror();
-        OPENSSL_free(pinfo);
+        OPENtls_free(pinfo);
         return NULL;
     }
     return pinfo;
@@ -1317,8 +1317,8 @@ static void capi_dump_prov_info(CAPI_CTX *ctx, BIO *out,
     BIO_printf(out, "    Container Name: %s, Key Type %lu\n", contname,
                pinfo->dwKeySpec);
  err:
-    OPENSSL_free(provname);
-    OPENSSL_free(contname);
+    OPENtls_free(provname);
+    OPENtls_free(contname);
 }
 
 static char *capi_cert_get_fname(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
@@ -1330,19 +1330,19 @@ static char *capi_cert_get_fname(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
     if (!CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID,
                                            NULL, &dlen))
         return NULL;
-    wfname = OPENSSL_malloc(dlen);
+    wfname = OPENtls_malloc(dlen);
     if (wfname == NULL)
         return NULL;
     if (CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID,
                                           wfname, &dlen)) {
         char *fname = wide_to_asc(wfname);
-        OPENSSL_free(wfname);
+        OPENtls_free(wfname);
         return fname;
     }
     CAPIerr(CAPI_F_CAPI_CERT_GET_FNAME, CAPI_R_ERROR_GETTING_FRIENDLY_NAME);
     capi_addlasterror();
 
-    OPENSSL_free(wfname);
+    OPENtls_free(wfname);
     return NULL;
 }
 
@@ -1356,7 +1356,7 @@ static void capi_dump_cert(CAPI_CTX *ctx, BIO *out, PCCERT_CONTEXT cert)
         fname = capi_cert_get_fname(ctx, cert);
         if (fname) {
             BIO_printf(out, "  Friendly Name \"%s\"\n", fname);
-            OPENSSL_free(fname);
+            OPENtls_free(fname);
         } else {
             BIO_printf(out, "  <No Friendly Name>\n");
         }
@@ -1380,7 +1380,7 @@ static void capi_dump_cert(CAPI_CTX *ctx, BIO *out, PCCERT_CONTEXT cert)
         CRYPT_KEY_PROV_INFO *pinfo;
         pinfo = capi_get_prov_info(ctx, cert);
         capi_dump_prov_info(ctx, out, pinfo);
-        OPENSSL_free(pinfo);
+        OPENtls_free(pinfo);
     }
 
     if (flags & CAPI_DMP_PEM)
@@ -1466,7 +1466,7 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id,
                     match = 0;
                 else
                     match = 1;
-                OPENSSL_free(fname);
+                OPENtls_free(fname);
                 if (match)
                     return cert;
             }
@@ -1481,7 +1481,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const WCHAR *contname,
                               DWORD keyspec)
 {
     DWORD dwFlags = 0;
-    CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
+    CAPI_KEY *key = OPENtls_malloc(sizeof(*key));
 
     if (key == NULL)
         return NULL;
@@ -1501,8 +1501,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const WCHAR *contname,
 
         CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
                    _contname, _provname, ptype);
-        OPENSSL_free(_provname);
-        OPENSSL_free(_contname);
+        OPENtls_free(_provname);
+        OPENtls_free(_contname);
     }
     if (ctx->store_flags & CERT_SYSTEM_STORE_LOCAL_MACHINE)
         dwFlags = CRYPT_MACHINE_KEYSET;
@@ -1523,7 +1523,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const WCHAR *contname,
     return key;
 
  err:
-    OPENSSL_free(key);
+    OPENtls_free(key);
     return NULL;
 }
 
@@ -1538,7 +1538,7 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
         key = capi_get_key(ctx, pinfo->pwszContainerName, pinfo->pwszProvName,
                            pinfo->dwProvType, pinfo->dwKeySpec);
 
-    OPENSSL_free(pinfo);
+    OPENtls_free(pinfo);
     return key;
 }
 
@@ -1592,14 +1592,14 @@ void capi_free_key(CAPI_KEY *key)
     CryptReleaseContext(key->hprov, 0);
     if (key->pcert)
         CertFreeCertificateContext(key->pcert);
-    OPENSSL_free(key);
+    OPENtls_free(key);
 }
 
 /* Initialize a CAPI_CTX structure */
 
 static CAPI_CTX *capi_ctx_new(void)
 {
-    CAPI_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    CAPI_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
         CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -1620,11 +1620,11 @@ static void capi_ctx_free(CAPI_CTX *ctx)
     CAPI_trace(ctx, "Calling capi_ctx_free with %lx\n", ctx);
     if (!ctx)
         return;
-    OPENSSL_free(ctx->cspname);
-    OPENSSL_free(ctx->debug_file);
-    OPENSSL_free(ctx->storename);
-    OPENSSL_free(ctx->ssl_client_store);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx->cspname);
+    OPENtls_free(ctx->debug_file);
+    OPENtls_free(ctx->storename);
+    OPENtls_free(ctx->tls_client_store);
+    OPENtls_free(ctx);
 }
 
 static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type,
@@ -1651,12 +1651,12 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type,
         }
         CryptReleaseContext(hprov, 0);
     }
-    tmpcspname = OPENSSL_strdup(pname);
+    tmpcspname = OPENtls_strdup(pname);
     if (tmpcspname == NULL) {
         CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    OPENSSL_free(ctx->cspname);
+    OPENtls_free(ctx->cspname);
     ctx->cspname = tmpcspname;
     ctx->csptype = type;
     return 1;
@@ -1670,7 +1670,7 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx)
     if (capi_get_provname(ctx, &pname, &type, idx) != 1)
         return 0;
     res = capi_ctx_set_provname(ctx, pname, type, 0);
-    OPENSSL_free(pname);
+    OPENtls_free(pname);
     return res;
 }
 
@@ -1689,7 +1689,7 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
     return 0;
 }
 
-static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+static int capi_load_tls_client_cert(ENGINE *e, tls *tls,
                                      STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
                                      EVP_PKEY **pkey, STACK_OF(X509) **pother,
                                      UI_METHOD *ui_method,
@@ -1709,7 +1709,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     *pcert = NULL;
     *pkey = NULL;
 
-    storename = ctx->ssl_client_store;
+    storename = ctx->tls_client_store;
     if (!storename)
         storename = "MY";
 
@@ -1728,7 +1728,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
             continue;
         }
         if (cert_issuer_match(ca_dn, x)
-            && X509_check_purpose(x, X509_PURPOSE_SSL_CLIENT, 0)) {
+            && X509_check_purpose(x, X509_PURPOSE_tls_CLIENT, 0)) {
             key = capi_get_cert_key(ctx, cert);
             if (!key) {
                 X509_free(x);
@@ -1761,7 +1761,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
     /* Select the appropriate certificate */
 
-    client_cert_idx = ctx->client_cert_select(e, ssl, certs);
+    client_cert_idx = ctx->client_cert_select(e, tls, certs);
 
     /* Set the selected certificate and free the rest */
 
@@ -1793,12 +1793,12 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
 /* Simple client cert selection function: always select first */
 
-static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+static int cert_select_simple(ENGINE *e, tls *tls, STACK_OF(X509) *certs)
 {
     return 0;
 }
 
-# ifdef OPENSSL_CAPIENG_DIALOG
+# ifdef OPENtls_CAPIENG_DIALOG
 
 /*
  * More complex cert selection function, using standard function
@@ -1815,12 +1815,12 @@ static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 #   define CRYPTUI_SELECT_INTENDEDUSE_COLUMN                0x000000004
 #  endif
 
-#  define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
+#  define dlg_title L"Opentls Application tls Client Certificate Selection"
 #  define dlg_prompt L"Select a certificate to use for authentication"
 #  define dlg_columns      CRYPTUI_SELECT_LOCATION_COLUMN \
                         |CRYPTUI_SELECT_INTENDEDUSE_COLUMN
 
-static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+static int cert_select_dialog(ENGINE *e, tls *tls, STACK_OF(X509) *certs)
 {
     X509 *x;
     HCERTSTORE dstore;
@@ -1885,11 +1885,11 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 # endif
 
 #else                           /* !__COMPILE_CAPIENG */
-# include <openssl/engine.h>
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-OPENSSL_EXPORT
+# include <opentls/engine.h>
+# ifndef OPENtls_NO_DYNAMIC_ENGINE
+OPENtls_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
-OPENSSL_EXPORT
+OPENtls_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
 {
     return 0;

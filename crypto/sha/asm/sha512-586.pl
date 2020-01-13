@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA512 block transform for x86. September 2007.
@@ -64,9 +64,9 @@ $output=pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $sse2=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
-&external_label("OPENSSL_ia32cap_P") if ($sse2);
+&external_label("OPENtls_ia32cap_P") if ($sse2);
 
 $Tlo=&DWP(0,"esp");	$Thi=&DWP(4,"esp");
 $Alo=&DWP(8,"esp");	$Ahi=&DWP(8+4,"esp");
@@ -313,7 +313,7 @@ sub BODY_00_15_x86 {
 	&mov	(&DWP(12,"esp"),"ebx");	# saved sp
 
 if ($sse2) {
-	&picmeup("edx","OPENSSL_ia32cap_P",$K512,&label("K512"));
+	&picmeup("edx","OPENtls_ia32cap_P",$K512,&label("K512"));
 	&mov	("ecx",&DWP(0,"edx"));
 	&test	("ecx",1<<26);
 	&jz	(&label("loop_x86"));
@@ -917,7 +917,7 @@ sub BODY_00_15_ssse3 {		# "phase-less" copy of BODY_00_15_sse2
 	&data_word(0x04050607,0x00010203);	# byte swap
 	&data_word(0x0c0d0e0f,0x08090a0b);	# mask
 &function_end_B("sha512_block_data_order");
-&asciz("SHA512 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("SHA512 block transform for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

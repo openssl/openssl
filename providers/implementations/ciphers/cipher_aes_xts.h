@@ -1,13 +1,13 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/aes.h>
+#include <opentls/aes.h>
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
 
@@ -25,11 +25,11 @@ PROV_CIPHER_FUNC(void, xts_stream,
 typedef struct prov_aes_xts_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks1, ks2;                /* AES key schedules to use */
     XTS128_CONTEXT xts;
-    OSSL_xts_stream_fn stream;
+    Otls_xts_stream_fn stream;
 } PROV_AES_XTS_CTX;
 
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits);

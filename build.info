@@ -1,36 +1,36 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
-SUBDIRS=crypto ssl apps test util tools fuzz engines providers doc
+SUBDIRS=crypto tls apps test util tools fuzz engines providers doc
 
-LIBS=libcrypto libssl
+LIBS=libcrypto libtls
 INCLUDE[libcrypto]=. include
-INCLUDE[libssl]=. include
-DEPEND[libssl]=libcrypto
+INCLUDE[libtls]=. include
+DEPEND[libtls]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
-DEPEND[]=include/openssl/configuration.h include/openssl/opensslv.h \
+DEPEND[]=include/opentls/configuration.h include/opentls/opentlsv.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
-         doc/man7/openssl_user_macros.pod
+         doc/man7/opentls_user_macros.pod
 
-GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
-GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
+GENERATE[include/opentls/configuration.h]=include/opentls/configuration.h.in
+GENERATE[include/opentls/opentlsv.h]=include/opentls/opentlsv.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
-GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
+GENERATE[doc/man7/opentls_user_macros.pod]=doc/man7/opentls_user_macros.pod.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
-  SHARED_SOURCE[libssl]=libssl.ld
+  SHARED_SOURCE[libtls]=libtls.ld
 
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
-  GENERATE[libssl.ld]=util/libssl.num libssl
+  GENERATE[libtls.ld]=util/libtls.num libtls
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
   GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
-  GENERATE[libssl.rc]=util/mkrc.pl libssl
+  GENERATE[libtls.rc]=util/mkrc.pl libtls
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
-  SHARED_SOURCE[libssl]=libssl.rc
+  SHARED_SOURCE[libtls]=libtls.rc
 ENDIF

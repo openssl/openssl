@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
-#include <openssl/asn1.h>
-#include <openssl/objects.h>
-#include <openssl/err.h>
-#include <openssl/asn1t.h>
+#include <opentls/asn1.h>
+#include <opentls/objects.h>
+#include <opentls/err.h>
+#include <opentls/asn1t.h>
 #include <string.h>
 #include "asn1_local.h"
 
@@ -87,7 +87,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         if (embed) {
             memset(*pval, 0, it->size);
         } else {
-            *pval = OPENSSL_zalloc(it->size);
+            *pval = OPENtls_zalloc(it->size);
             if (*pval == NULL)
                 goto memerr;
         }
@@ -109,14 +109,14 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         if (embed) {
             memset(*pval, 0, it->size);
         } else {
-            *pval = OPENSSL_zalloc(it->size);
+            *pval = OPENtls_zalloc(it->size);
             if (*pval == NULL)
                 goto memerr;
         }
         /* 0 : init. lock */
         if (asn1_do_lock(pval, 0, it) < 0) {
             if (!embed) {
-                OPENSSL_free(*pval);
+                OPENtls_free(*pval);
                 *pval = NULL;
             }
             goto memerr;
@@ -273,7 +273,7 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
         return 1;
 
     case V_ASN1_ANY:
-        if ((typ = OPENSSL_malloc(sizeof(*typ))) == NULL) {
+        if ((typ = OPENtls_malloc(sizeof(*typ))) == NULL) {
             ASN1err(ASN1_F_ASN1_PRIMITIVE_NEW, ERR_R_MALLOC_FAILURE);
             return 0;
         }

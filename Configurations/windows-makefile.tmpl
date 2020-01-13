@@ -1,5 +1,5 @@
 ##
-## Makefile for OpenSSL
+## Makefile for Opentls
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
@@ -130,40 +130,40 @@ HTMLDOCS5_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS5;
 HTMLDOCS7_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS7;
                      join(' ', sort keys %dirs) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                "\"".catfile("apps","openssl")."\"" -}
+APPS_OPENtls={- use File::Spec::Functions;
+                "\"".catfile("apps","opentls")."\"" -}
 
-# Do not edit these manually. Use Configure with --prefix or --openssldir
+# Do not edit these manually. Use Configure with --prefix or --opentlsdir
 # to change this!  Short explanation in the top comment in Configure
-INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
+INSTALLTOP_dev={- # $prefix is used in the OPENtlsDIR perl snippet
                   #
                   use File::Spec::Functions qw(:DEFAULT splitpath);
                   our $prefix = canonpath($config{prefix}
-                                          || "$win_installroot\\OpenSSL");
+                                          || "$win_installroot\\Opentls");
                   our ($prefix_dev, $prefix_dir, $prefix_file) =
                       splitpath($prefix, 1);
                   $prefix_dev -}
 INSTALLTOP_dir={- canonpath($prefix_dir) -}
-OPENSSLDIR_dev={- #
-                  # The logic here is that if no --openssldir was given,
-                  # OPENSSLDIR will get the value "$win_commonroot\\SSL".
-                  # If --openssldir was given and the value is an absolute
-                  # path, OPENSSLDIR will get its value without change.
-                  # If the value from --openssldir is a relative path,
-                  # OPENSSLDIR will get $prefix with the --openssldir
+OPENtlsDIR_dev={- #
+                  # The logic here is that if no --opentlsdir was given,
+                  # OPENtlsDIR will get the value "$win_commonroot\\tls".
+                  # If --opentlsdir was given and the value is an absolute
+                  # path, OPENtlsDIR will get its value without change.
+                  # If the value from --opentlsdir is a relative path,
+                  # OPENtlsDIR will get $prefix with the --opentlsdir
                   # value appended as a subdirectory.
                   #
                   use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $openssldir =
-                      $config{openssldir} ?
-                          (file_name_is_absolute($config{openssldir}) ?
-                               canonpath($config{openssldir})
-                               : catdir($prefix, $config{openssldir}))
-                          : canonpath("$win_commonroot\\SSL");
-                  our ($openssldir_dev, $openssldir_dir, $openssldir_file) =
-                      splitpath($openssldir, 1);
-                  $openssldir_dev -}
-OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
+                  our $opentlsdir =
+                      $config{opentlsdir} ?
+                          (file_name_is_absolute($config{opentlsdir}) ?
+                               canonpath($config{opentlsdir})
+                               : catdir($prefix, $config{opentlsdir}))
+                          : canonpath("$win_commonroot\\tls");
+                  our ($opentlsdir_dev, $opentlsdir_dir, $opentlsdir_file) =
+                      splitpath($opentlsdir, 1);
+                  $opentlsdir_dev -}
+OPENtlsDIR_dir={- canonpath($opentlsdir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
 MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
@@ -173,7 +173,7 @@ MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
                       splitpath($modulesprefix, 1);
                   our $modulesdir_dev = $modulesprefix_dev;
                   our $modulesdir_dir =
-                      catdir($modulesprefix_dir, "ossl-modules");
+                      catdir($modulesprefix_dir, "otls-modules");
                   our $modulesdir = catpath($modulesdir_dev, $modulesdir_dir);
                   our $enginesdir_dev = $modulesprefix_dev;
                   our $enginesdir_dir =
@@ -185,12 +185,12 @@ ENGINESDIR_dev={- $enginesdir_dev -}
 ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
-OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
+OPENtlsDIR=$(DESTDIR)$(OPENtlsDIR_dir)
 ENGINESDIR=$(DESTDIR)$(ENGINESDIR_dir)
 MODULESDIR=$(DESTDIR)$(MODULESDIR_dir)
 !ELSE
 INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
-OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
+OPENtlsDIR=$(OPENtlsDIR_dev)$(OPENtlsDIR_dir)
 ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 MODULESDIR=$(MODULESDIR_dev)$(MODULESDIR_dir)
 !ENDIF
@@ -230,13 +230,13 @@ ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
 
 ##### Special command flags ##########################################
 
-COUTFLAG={- $target{coutflag} -}$(OSSL_EMPTY)
-LDOUTFLAG={- $target{ldoutflag} -}$(OSSL_EMPTY)
-AROUTFLAG={- $target{aroutflag} -}$(OSSL_EMPTY)
-MTINFLAG={- $target{mtinflag} -}$(OSSL_EMPTY)
-MTOUTFLAG={- $target{mtoutflag} -}$(OSSL_EMPTY)
-ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
-RCOUTFLAG={- $target{rcoutflag} -}$(OSSL_EMPTY)
+COUTFLAG={- $target{coutflag} -}$(Otls_EMPTY)
+LDOUTFLAG={- $target{ldoutflag} -}$(Otls_EMPTY)
+AROUTFLAG={- $target{aroutflag} -}$(Otls_EMPTY)
+MTINFLAG={- $target{mtinflag} -}$(Otls_EMPTY)
+MTOUTFLAG={- $target{mtoutflag} -}$(Otls_EMPTY)
+ASOUTFLAG={- $target{asoutflag} -}$(Otls_EMPTY)
+RCOUTFLAG={- $target{rcoutflag} -}$(Otls_EMPTY)
 
 ##### Project flags ##################################################
 
@@ -286,7 +286,7 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
                           (map { '-D'.quotify1($_) }
-                               "OPENSSLDIR=\"$openssldir\"",
+                               "OPENtlsDIR=\"$opentlsdir\"",
                                "ENGINESDIR=\"$enginesdir\"",
                                "MODULESDIR=\"$modulesdir\""),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -392,8 +392,8 @@ test: tests
 	set BLDTOP=$(BLDDIR)
 	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
-	set OPENSSL_ENGINES=$(MAKEDIR)\engines
-	set OPENSSL_MODULES=$(MAKEDIR)\providers
+	set OPENtls_ENGINES=$(MAKEDIR)\engines
+	set OPENtls_MODULES=$(MAKEDIR)\providers
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
@@ -407,13 +407,13 @@ list-tests:
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "" -}
 
-install: install_sw install_ssldirs install_docs
+install: install_sw install_tlsdirs install_docs
 
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)
-	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
+	-del /Q /F $(LIBS) libcrypto.* libtls.* otls_static.pdb
 
 clean: libclean
 	-rmdir /Q /S $(HTMLDOCS1_BLDDIRS)
@@ -450,41 +450,41 @@ install_docs: install_html_docs
 
 uninstall_docs: uninstall_html_docs
 
-install_ssldirs:
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\private"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\misc"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
-                                        "$(OPENSSLDIR)\openssl.cnf.dist"
-	@IF NOT EXIST "$(OPENSSLDIR)\openssl.cnf" \
-         "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
-                                        "$(OPENSSLDIR)\openssl.cnf"
+install_tlsdirs:
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENtlsDIR)\certs"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENtlsDIR)\private"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENtlsDIR)\misc"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\opentls.cnf" \
+                                        "$(OPENtlsDIR)\opentls.cnf.dist"
+	@IF NOT EXIST "$(OPENtlsDIR)\opentls.cnf" \
+         "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\opentls.cnf" \
+                                        "$(OPENtlsDIR)\opentls.cnf"
 	@if not "$(MISC_SCRIPTS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
-                                        "$(OPENSSLDIR)\misc"
+                                        "$(OPENtlsDIR)\misc"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\ct_log_list.cnf" \
-                                        "$(OPENSSLDIR)\ct_log_list.cnf.dist"
-	@IF NOT EXIST "$(OPENSSLDIR)\ct_log_list.cnf" \
+                                        "$(OPENtlsDIR)\ct_log_list.cnf.dist"
+	@IF NOT EXIST "$(OPENtlsDIR)\ct_log_list.cnf" \
          "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\ct_log_list.cnf" \
-                                        "$(OPENSSLDIR)\ct_log_list.cnf"
+                                        "$(OPENtlsDIR)\ct_log_list.cnf"
 
 install_dev: install_runtime_libs
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing development files"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
-	@{- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\opentls"
+	@{- output_off() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
-				       "$(INSTALLTOP)\include\openssl"
-	@{- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+				       "$(INSTALLTOP)\include\opentls"
+	@{- output_on() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "-exclude_re=/__DECC_" \
-				       "$(SRCDIR)\include\openssl\*.h" \
-				       "$(INSTALLTOP)\include\openssl"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
-				       "$(INSTALLTOP)\include\openssl"
+				       "$(SRCDIR)\include\opentls\*.h" \
+				       "$(INSTALLTOP)\include\opentls"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\opentls\*.h" \
+				       "$(INSTALLTOP)\include\opentls"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@if "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" otls_static.pdb "$(libdir)"
 
 uninstall_dev:
 

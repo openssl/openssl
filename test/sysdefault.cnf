@@ -1,15 +1,15 @@
-# Configuration file to test system default SSL configuration
+# Configuration file to test system default tls configuration
 
-openssl_conf = default_conf
+opentls_conf = default_conf
 
 [ default_conf ]
 
-ssl_conf = ssl_sect
+tls_conf = tls_sect
 
-[ssl_sect]
+[tls_sect]
 
-system_default = ssl_default_sect
+system_default = tls_default_sect
 
-[ssl_default_sect]
+[tls_default_sect]
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2

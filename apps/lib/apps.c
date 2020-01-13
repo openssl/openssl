@@ -1,13 +1,13 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
+#if !defined(_POSIX_C_SOURCE) && defined(OPENtls_SYS_VMS)
 /*
  * On VMS, you need to define this to get the declaration of fileno().  The
  * value 2 is to make sure no function defined in POSIX-2 is left undefined.
@@ -19,27 +19,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
 #endif
 #include <ctype.h>
 #include <errno.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/pem.h>
-#include <openssl/pkcs12.h>
-#include <openssl/ui.h>
-#include <openssl/safestack.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
+#include <opentls/err.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/pem.h>
+#include <opentls/pkcs12.h>
+#include <opentls/ui.h>
+#include <opentls/safestack.h>
+#ifndef OPENtls_NO_ENGINE
+# include <opentls/engine.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 #endif
-#include <openssl/bn.h>
-#include <openssl/ssl.h>
+#include <opentls/bn.h>
+#include <opentls/tls.h>
 #include "apps.h"
 
 #ifdef _WIN32
@@ -47,11 +47,11 @@ static int WIN32_rename(const char *from, const char *to);
 # define rename(from,to) WIN32_rename((from),(to))
 #endif
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_MSDOS)
 # include <conio.h>
 #endif
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
+#if defined(OPENtls_SYS_MSDOS) && !defined(_WIN32)
 # define _kbhit kbhit
 #endif
 
@@ -92,7 +92,7 @@ int chopup_args(ARGS *arg, char *buf)
         if (arg->argc >= arg->size) {
             char **tmp;
             arg->size += 20;
-            tmp = OPENSSL_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
+            tmp = OPENtls_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
             if (tmp == NULL)
                 return 0;
             arg->argv = tmp;
@@ -125,39 +125,39 @@ int app_init(long mesgwin)
 }
 #endif
 
-int ctx_set_verify_locations(SSL_CTX *ctx,
+int ctx_set_verify_locations(tls_CTX *ctx,
                              const char *CAfile, int noCAfile,
                              const char *CApath, int noCApath,
                              const char *CAstore, int noCAstore)
 {
     if (CAfile == NULL && CApath == NULL && CAstore == NULL) {
-        if (!noCAfile && SSL_CTX_set_default_verify_file(ctx) <= 0)
+        if (!noCAfile && tls_CTX_set_default_verify_file(ctx) <= 0)
             return 0;
-        if (!noCApath && SSL_CTX_set_default_verify_dir(ctx) <= 0)
+        if (!noCApath && tls_CTX_set_default_verify_dir(ctx) <= 0)
             return 0;
-        if (!noCAstore && SSL_CTX_set_default_verify_store(ctx) <= 0)
+        if (!noCAstore && tls_CTX_set_default_verify_store(ctx) <= 0)
             return 0;
 
         return 1;
     }
 
-    if (CAfile != NULL && !SSL_CTX_load_verify_file(ctx, CAfile))
+    if (CAfile != NULL && !tls_CTX_load_verify_file(ctx, CAfile))
         return 0;
-    if (CApath != NULL && !SSL_CTX_load_verify_dir(ctx, CApath))
+    if (CApath != NULL && !tls_CTX_load_verify_dir(ctx, CApath))
         return 0;
-    if (CAstore != NULL && !SSL_CTX_load_verify_store(ctx, CAstore))
+    if (CAstore != NULL && !tls_CTX_load_verify_store(ctx, CAstore))
         return 0;
     return 1;
 }
 
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
 
-int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
+int ctx_set_ctlog_list_file(tls_CTX *ctx, const char *path)
 {
     if (path == NULL)
-        return SSL_CTX_set_default_ctlog_list_file(ctx);
+        return tls_CTX_set_default_ctlog_list_file(ctx);
 
-    return SSL_CTX_set_ctlog_list_file(ctx, path);
+    return tls_CTX_set_ctlog_list_file(ctx, path);
 }
 
 #endif
@@ -227,14 +227,14 @@ static char *app_get_pass(const char *arg, int keepbio)
 
     /* PASS_SOURCE_SIZE_MAX = max number of chars before ':' in below strings */
     if (strncmp(arg, "pass:", 5) == 0)
-        return OPENSSL_strdup(arg + 5);
+        return OPENtls_strdup(arg + 5);
     if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (tmp == NULL) {
             BIO_printf(bio_err, "No environment variable %s\n", arg + 4);
             return NULL;
         }
-        return OPENSSL_strdup(tmp);
+        return OPENtls_strdup(tmp);
     }
     if (!keepbio || pwdbio == NULL) {
         if (strncmp(arg, "file:", 5) == 0) {
@@ -299,7 +299,7 @@ static char *app_get_pass(const char *arg, int keepbio)
     tmp = strchr(tpass, '\n');
     if (tmp != NULL)
         *tmp = 0;
-    return OPENSSL_strdup(tpass);
+    return OPENtls_strdup(tpass);
 }
 
 CONF *app_load_config_bio(BIO *in, const char *filename)
@@ -366,7 +366,7 @@ int app_load_modules(const CONF *config)
         return 1;
 
     if (CONF_modules_load(config, NULL, 0) <= 0) {
-        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        BIO_printf(bio_err, "Error configuring Opentls modules\n");
         ERR_print_errors(bio_err);
         NCONF_free(to_free);
         return 0;
@@ -441,16 +441,16 @@ static int load_pkcs12(BIO *in, const char *desc,
     return ret;
 }
 
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
+#if !defined(OPENtls_NO_OCSP) && !defined(OPENtls_NO_SOCK)
 static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 {
     char *host = NULL, *port = NULL, *path = NULL;
     BIO *bio = NULL;
     OCSP_REQ_CTX *rctx = NULL;
-    int use_ssl, rv = 0;
-    if (!OCSP_parse_url(url, &host, &port, &path, &use_ssl))
+    int use_tls, rv = 0;
+    if (!OCSP_parse_url(url, &host, &port, &path, &use_tls))
         goto err;
-    if (use_ssl) {
+    if (use_tls) {
         BIO_puts(bio_err, "https not supported\n");
         goto err;
     }
@@ -475,9 +475,9 @@ static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
     }
 
  err:
-    OPENSSL_free(host);
-    OPENSSL_free(path);
-    OPENSSL_free(port);
+    OPENtls_free(host);
+    OPENtls_free(path);
+    OPENtls_free(port);
     BIO_free_all(bio);
     OCSP_REQ_CTX_free(rctx);
     if (rv != 1) {
@@ -495,7 +495,7 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
     BIO *cert;
 
     if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
+#if !defined(OPENtls_NO_OCSP) && !defined(OPENtls_NO_SOCK)
         load_cert_crl_http(file, &x, NULL);
 #endif
         return x;
@@ -537,7 +537,7 @@ X509_CRL *load_crl(const char *infile, int format)
     BIO *in = NULL;
 
     if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
+#if !defined(OPENtls_NO_OCSP) && !defined(OPENtls_NO_SOCK)
         load_cert_crl_http(infile, NULL, &x);
 #endif
         return x;
@@ -583,7 +583,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         if (e == NULL) {
             BIO_printf(bio_err, "no engine specified\n");
         } else {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
             if (ENGINE_init(e)) {
                 pkey = ENGINE_load_private_key(e, file,
                                                (UI_METHOD *)get_ui_method(),
@@ -616,7 +616,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         if (!load_pkcs12(key, key_descrip, wrap_password_callback, &cb_data,
                          &pkey, NULL, NULL))
             goto end;
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
+#if !defined(OPENtls_NO_RSA) && !defined(OPENtls_NO_DSA) && !defined (OPENtls_NO_RC4)
     } else if (format == FORMAT_MSBLOB) {
         pkey = b2i_PrivateKey_bio(key);
     } else if (format == FORMAT_PVK) {
@@ -653,7 +653,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         if (e == NULL) {
             BIO_printf(bio_err, "no engine specified\n");
         } else {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
             pkey = ENGINE_load_public_key(e, file, (UI_METHOD *)get_ui_method(),
                                           &cb_data);
             if (pkey == NULL) {
@@ -677,7 +677,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
     if (format == FORMAT_ASN1) {
         pkey = d2i_PUBKEY_bio(key, NULL);
     } else if (format == FORMAT_ASN1RSA) {
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         RSA *rsa;
         rsa = d2i_RSAPublicKey_bio(key, NULL);
         if (rsa) {
@@ -691,7 +691,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 #endif
             pkey = NULL;
     } else if (format == FORMAT_PEMRSA) {
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         RSA *rsa;
         rsa = PEM_read_bio_RSAPublicKey(key, NULL,
                                         (pem_password_cb *)password_callback,
@@ -710,7 +710,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         pkey = PEM_read_bio_PUBKEY(key, NULL,
                                    (pem_password_cb *)password_callback,
                                    &cb_data);
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
+#if !defined(OPENtls_NO_RSA) && !defined(OPENtls_NO_DSA)
     } else if (format == FORMAT_MSBLOB) {
         pkey = b2i_PublicKey_bio(key);
 #endif
@@ -806,7 +806,7 @@ static int load_certs_crls(const char *file, int format,
 
 void* app_malloc(int sz, const char *what)
 {
-    void *vp = OPENSSL_malloc(sz);
+    void *vp = OPENtls_malloc(sz);
 
     if (vp == NULL) {
         BIO_printf(bio_err, "%s: Could not allocate %d bytes for %s\n",
@@ -1033,7 +1033,7 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
         buf = X509_NAME_oneline(nm, 0, 0);
         BIO_puts(out, buf);
         BIO_puts(out, "\n");
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
     } else {
         if (mline)
             BIO_puts(out, "\n");
@@ -1135,7 +1135,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     return NULL;
 }
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
 /* Try to load an engine in a shareable library */
 static ENGINE *try_load_engine(const char *engine)
 {
@@ -1155,7 +1155,7 @@ ENGINE *setup_engine(const char *engine, int debug)
 {
     ENGINE *e = NULL;
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     if (engine != NULL) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(bio_err, "enabling auto ENGINE support\n");
@@ -1188,25 +1188,25 @@ ENGINE *setup_engine(const char *engine, int debug)
 
 void release_engine(ENGINE *e)
 {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     if (e != NULL)
         /* Free our "structural" reference. */
         ENGINE_free(e);
 #endif
 }
 
-static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
+static unsigned long index_serial_hash(const OPENtls_CSTRING *a)
 {
     const char *n;
 
     n = a[DB_serial];
     while (*n == '0')
         n++;
-    return OPENSSL_LH_strhash(n);
+    return OPENtls_LH_strhash(n);
 }
 
-static int index_serial_cmp(const OPENSSL_CSTRING *a,
-                            const OPENSSL_CSTRING *b)
+static int index_serial_cmp(const OPENtls_CSTRING *a,
+                            const OPENtls_CSTRING *b)
 {
     const char *aa, *bb;
 
@@ -1220,20 +1220,20 @@ static int index_name_qual(char **a)
     return (a[0][0] == 'V');
 }
 
-static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
+static unsigned long index_name_hash(const OPENtls_CSTRING *a)
 {
-    return OPENSSL_LH_strhash(a[DB_name]);
+    return OPENtls_LH_strhash(a[DB_name]);
 }
 
-int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
+int index_name_cmp(const OPENtls_CSTRING *a, const OPENtls_CSTRING *b)
 {
     return strcmp(a[DB_name], b[DB_name]);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
-static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
-static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
-static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENtls_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENtls_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_name, OPENtls_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_name, OPENtls_CSTRING)
 #undef BSIZE
 #define BSIZE 256
 BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
@@ -1300,9 +1300,9 @@ int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial
     }
 
     if (suffix == NULL)
-        OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
+        OPENtls_strlcpy(buf[0], serialfile, BSIZE);
     else {
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
         j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, suffix);
 #else
         j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, suffix);
@@ -1345,7 +1345,7 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
         BIO_printf(bio_err, "file name too long\n");
         goto err;
     }
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, new_suffix);
     j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.%s", serialfile, old_suffix);
 #else
@@ -1405,7 +1405,7 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     BIO *in;
     CONF *dbattr_conf = NULL;
     char buf[BSIZE];
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     FILE *dbfp;
     struct stat dbst;
 #endif
@@ -1416,7 +1416,7 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         goto err;
     }
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     BIO_get_fp(in, &dbfp);
     if (fstat(fileno(dbfp), &dbst) == -1) {
         ERR_raise_data(ERR_LIB_SYS, errno,
@@ -1429,7 +1429,7 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
         goto err;
 
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     BIO_snprintf(buf, sizeof(buf), "%s.attr", dbfile);
 #else
     BIO_snprintf(buf, sizeof(buf), "%s-attr", dbfile);
@@ -1452,8 +1452,8 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         }
     }
 
-    retdb->dbfname = OPENSSL_strdup(dbfile);
-#ifndef OPENSSL_NO_POSIX_IO
+    retdb->dbfname = OPENtls_strdup(dbfile);
+#ifndef OPENtls_NO_POSIX_IO
     retdb->dbst = dbst;
 #endif
 
@@ -1500,7 +1500,7 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
         BIO_printf(bio_err, "file name too long\n");
         goto err;
     }
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr", dbfile);
     j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.attr.%s", dbfile, suffix);
     j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, suffix);
@@ -1549,7 +1549,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         BIO_printf(bio_err, "file name too long\n");
         goto err;
     }
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     j = BIO_snprintf(buf[4], sizeof(buf[4]), "%s.attr", dbfile);
     j = BIO_snprintf(buf[3], sizeof(buf[3]), "%s.attr.%s", dbfile, old_suffix);
     j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr.%s", dbfile, new_suffix);
@@ -1605,8 +1605,8 @@ void free_index(CA_DB *db)
 {
     if (db) {
         TXT_DB_free(db->db);
-        OPENSSL_free(db->dbfname);
-        OPENSSL_free(db);
+        OPENtls_free(db->dbfname);
+        OPENtls_free(db);
     }
 }
 
@@ -1653,7 +1653,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
     n = X509_NAME_new();
     if (n == NULL)
         return NULL;
-    work = OPENSSL_strdup(cp);
+    work = OPENtls_strdup(cp);
     if (work == NULL) {
         BIO_printf(bio_err, "%s: Error copying name input\n", opt_getprog());
         goto err;
@@ -1721,12 +1721,12 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         }
     }
 
-    OPENSSL_free(work);
+    OPENtls_free(work);
     return n;
 
  err:
     X509_NAME_free(n);
-    OPENSSL_free(work);
+    OPENtls_free(work);
     return NULL;
 }
 
@@ -1775,7 +1775,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 {
     int rv;
     char *stmp, *vtmp = NULL;
-    stmp = OPENSSL_strdup(value);
+    stmp = OPENtls_strdup(value);
     if (!stmp)
         return -1;
     vtmp = strchr(stmp, ':');
@@ -1784,7 +1784,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
         vtmp++;
     }
     rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
-    OPENSSL_free(stmp);
+    OPENtls_free(stmp);
     return rv;
 }
 
@@ -1821,7 +1821,7 @@ void policies_print(X509_STORE_CTX *ctx)
 
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
- * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
+ * in a format suitable for passing to tls_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.
  *   in: a NUL terminated string like "abc,def,ghi"
@@ -1857,7 +1857,7 @@ unsigned char *next_protos_parse(size_t *outlen, const char *in)
                 continue;
             }
             if (i - start > 255) {
-                OPENSSL_free(out);
+                OPENtls_free(out);
                 return NULL;
             }
             out[start-skipped] = (unsigned char)(i - start);
@@ -1868,7 +1868,7 @@ unsigned char *next_protos_parse(size_t *outlen, const char *in)
     }
 
     if (len <= skipped) {
-        OPENSSL_free(out);
+        OPENtls_free(out);
         return NULL;
     }
 
@@ -2094,7 +2094,7 @@ double app_tminterval(int stop, int usertime)
 
     return ret;
 }
-#elif defined(OPENSSL_SYS_VXWORKS)
+#elif defined(OPENtls_SYS_VXWORKS)
 # include <time.h>
 
 double app_tminterval(int stop, int usertime)
@@ -2131,7 +2131,7 @@ double app_tminterval(int stop, int usertime)
     return ret;
 }
 
-#elif defined(OPENSSL_SYSTEM_VMS)
+#elif defined(OPENtls_SYSTEM_VMS)
 # include <time.h>
 # include <times.h>
 
@@ -2317,13 +2317,13 @@ BIO *dup_bio_out(int format)
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
     void *prefix = NULL;
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
 
     if (FMT_istext(format)
-        && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+        && (prefix = getenv("HARNESS_Otls_PREFIX")) != NULL) {
         b = BIO_push(BIO_new(BIO_f_prefix()), b);
         BIO_set_prefix(b, prefix);
     }
@@ -2335,7 +2335,7 @@ BIO *dup_bio_err(int format)
 {
     BIO *b = BIO_new_fp(stderr,
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
@@ -2351,19 +2351,19 @@ void unbuffer(FILE *fp)
  * above the first 4 GB of memory, so we simply turn off the warning
  * temporarily.
  */
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma environment save
 # pragma message disable maylosedata2
 #endif
     setbuf(fp, NULL);
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma environment restore
 #endif
 }
 
 static const char *modestr(char mode, int format)
 {
-    OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
+    OPENtls_assert(mode == 'a' || mode == 'r' || mode == 'w');
 
     switch (mode) {
     case 'a':
@@ -2418,7 +2418,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #endif
     }
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
      * it still needs to know that we're going binary, or fdopen()
      * will fail with "invalid argument"...  so we tell VMS what the
@@ -2495,23 +2495,23 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
     return bio_open_default_(filename, mode, format, 1);
 }
 
-void wait_for_async(SSL *s)
+void wait_for_async(tls *s)
 {
     /* On Windows select only works for sockets, so we simply don't wait  */
-#ifndef OPENSSL_SYS_WINDOWS
+#ifndef OPENtls_SYS_WINDOWS
     int width = 0;
     fd_set asyncfds;
-    OSSL_ASYNC_FD *fds;
+    Otls_ASYNC_FD *fds;
     size_t numfds;
     size_t i;
 
-    if (!SSL_get_all_async_fds(s, NULL, &numfds))
+    if (!tls_get_all_async_fds(s, NULL, &numfds))
         return;
     if (numfds == 0)
         return;
-    fds = app_malloc(sizeof(OSSL_ASYNC_FD) * numfds, "allocate async fds");
-    if (!SSL_get_all_async_fds(s, fds, &numfds)) {
-        OPENSSL_free(fds);
+    fds = app_malloc(sizeof(Otls_ASYNC_FD) * numfds, "allocate async fds");
+    if (!tls_get_all_async_fds(s, fds, &numfds)) {
+        OPENtls_free(fds);
         return;
     }
 
@@ -2519,18 +2519,18 @@ void wait_for_async(SSL *s)
     for (i = 0; i < numfds; i++) {
         if (width <= (int)fds[i])
             width = (int)fds[i] + 1;
-        openssl_fdset((int)fds[i], &asyncfds);
+        opentls_fdset((int)fds[i], &asyncfds);
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
-    OPENSSL_free(fds);
+    OPENtls_free(fds);
 #endif
 }
 
-/* if OPENSSL_SYS_WINDOWS is defined then so is OPENSSL_SYS_MSDOS */
-#if defined(OPENSSL_SYS_MSDOS)
+/* if OPENtls_SYS_WINDOWS is defined then so is OPENtls_SYS_MSDOS */
+#if defined(OPENtls_SYS_MSDOS)
 int has_stdin_waiting(void)
 {
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
     HANDLE inhand = GetStdHandle(STD_INPUT_HANDLE);
     DWORD events = 0;
     INPUT_RECORD inputrec;
@@ -2600,52 +2600,52 @@ int opt_printf_stderr(const char *fmt, ...)
     return ret;
 }
 
-OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
-                                     const OSSL_PARAM *paramdefs)
+Otls_PARAM *app_params_new_from_opts(STACK_OF(OPENtls_STRING) *opts,
+                                     const Otls_PARAM *paramdefs)
 {
-    OSSL_PARAM *params = NULL;
-    size_t sz = (size_t)sk_OPENSSL_STRING_num(opts);
+    Otls_PARAM *params = NULL;
+    size_t sz = (size_t)sk_OPENtls_STRING_num(opts);
     size_t params_n;
     char *opt = "", *stmp, *vtmp = NULL;
 
     if (opts == NULL)
         return NULL;
 
-    params = OPENSSL_zalloc(sizeof(OSSL_PARAM) * (sz + 1));
+    params = OPENtls_zalloc(sizeof(Otls_PARAM) * (sz + 1));
     if (params == NULL)
         return NULL;
 
     for (params_n = 0; params_n < sz; params_n++) {
-        opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
-        if ((stmp = OPENSSL_strdup(opt)) == NULL
+        opt = sk_OPENtls_STRING_value(opts, (int)params_n);
+        if ((stmp = OPENtls_strdup(opt)) == NULL
             || (vtmp = strchr(stmp, ':')) == NULL)
             goto err;
         /* Replace ':' with 0 to terminate the string pointed to by stmp */
         *vtmp = 0;
         /* Skip over the separator so that vmtp points to the value */
         vtmp++;
-        if (!OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
+        if (!Otls_PARAM_allocate_from_text(&params[params_n], paramdefs,
                                            stmp, vtmp, strlen(vtmp)))
             goto err;
-        OPENSSL_free(stmp);
+        OPENtls_free(stmp);
     }
-    params[params_n] = OSSL_PARAM_construct_end();
+    params[params_n] = Otls_PARAM_construct_end();
     return params;
 err:
-    OPENSSL_free(stmp);
+    OPENtls_free(stmp);
     BIO_printf(bio_err, "Parameter error '%s'\n", opt);
     ERR_print_errors(bio_err);
     app_params_free(params);
     return NULL;
 }
 
-void app_params_free(OSSL_PARAM *params)
+void app_params_free(Otls_PARAM *params)
 {
     int i;
 
     if (params != NULL) {
         for (i = 0; params[i].key != NULL; ++i)
-            OPENSSL_free(params[i].data);
-        OPENSSL_free(params);
+            OPENtls_free(params[i].data);
+        OPENtls_free(params);
     }
 }

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -17,12 +17,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_CAST is defined */
+#include <opentls/opentlsconf.h> /* To see if OPENtls_NO_CAST is defined */
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_CAST
-# include <openssl/cast.h>
+#ifndef OPENtls_NO_CAST
+# include <opentls/cast.h>
 
 static unsigned char k[16] = {
     0x01, 0x23, 0x45, 0x67, 0x12, 0x34, 0x56, 0x78,
@@ -110,8 +110,8 @@ static int cast_test_iterations(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_CAST
-    ADD_ALL_TESTS(cast_test_vector, OSSL_NELEM(k_len));
+#ifndef OPENtls_NO_CAST
+    ADD_ALL_TESTS(cast_test_vector, Otls_NELEM(k_len));
     ADD_TEST(cast_test_iterations);
 #endif
     return 1;

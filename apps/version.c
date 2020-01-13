@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,23 +12,23 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/evp.h>
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h>
+#include <opentls/evp.h>
+#include <opentls/crypto.h>
+#include <opentls/bn.h>
+#ifndef OPENtls_NO_MD2
+# include <opentls/md2.h>
 #endif
-#ifndef OPENSSL_NO_RC4
-# include <openssl/rc4.h>
+#ifndef OPENtls_NO_RC4
+# include <opentls/rc4.h>
 #endif
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
+#ifndef OPENtls_NO_DES
+# include <opentls/des.h>
 #endif
-#ifndef OPENSSL_NO_IDEA
-# include <openssl/idea.h>
+#ifndef OPENtls_NO_IDEA
+# include <opentls/idea.h>
 #endif
-#ifndef OPENSSL_NO_BF
-# include <openssl/blowfish.h>
+#ifndef OPENtls_NO_BF
+# include <opentls/blowfish.h>
 #endif
 
 typedef enum OPTION_choice {
@@ -121,39 +121,39 @@ opthelp:
 
     if (version)
         printf("%s (Library: %s)\n",
-               OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
+               OPENtls_VERSION_TEXT, Opentls_version(OPENtls_VERSION));
     if (date)
-        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("%s\n", Opentls_version(OPENtls_BUILT_ON));
     if (platform)
-        printf("%s\n", OpenSSL_version(OPENSSL_PLATFORM));
+        printf("%s\n", Opentls_version(OPENtls_PLATFORM));
     if (options) {
         printf("options: ");
         printf(" %s", BN_options());
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
         printf(" %s", RC4_options());
 #endif
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         printf(" %s", DES_options());
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
         printf(" %s", IDEA_options());
 #endif
         printf("\n");
     }
     if (cflags)
-        printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
+        printf("%s\n", Opentls_version(OPENtls_CFLAGS));
     if (dir)
-        printf("%s\n", OpenSSL_version(OPENSSL_DIR));
+        printf("%s\n", Opentls_version(OPENtls_DIR));
     if (engdir)
-        printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
+        printf("%s\n", Opentls_version(OPENtls_ENGINES_DIR));
     if (moddir)
-        printf("%s\n", OpenSSL_version(OPENSSL_MODULES_DIR));
+        printf("%s\n", Opentls_version(OPENtls_MODULES_DIR));
     if (seed) {
-        const char *src = OPENSSL_info(OPENSSL_INFO_SEED_SOURCE);
+        const char *src = OPENtls_info(OPENtls_INFO_SEED_SOURCE);
         printf("Seeding source: %s\n", src ? src : "N/A");
     }
     if (cpuinfo)
-        printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
+        printf("%s\n", Opentls_version(OPENtls_CPU_INFO));
     ret = 0;
  end:
     return ret;

@@ -1,10 +1,10 @@
 #
-# Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
@@ -14,7 +14,7 @@
 
 # BLAKE2 tests, using same inputs as MD5
 # There are no official BLAKE2 test vectors we can use since they all use a key
-# Which is currently unsupported by OpenSSL.  They were generated using the
+# Which is currently unsupported by Opentls.  They were generated using the
 # reference implementation.  RFC7693 also mentions the 616263 / "abc" values.
 
 Title = BLAKE tests
@@ -589,7 +589,7 @@ Availablein = default
 Input = 61626364616263646162636461626364616263646162636461626364616263646162636461626364616263646162636461626364616263646162636461626364
 Output = DEBE9FF92275B8A138604889C18E5A4D6FDB70E5387E5765293dCbA39C0C5732
 
-# From GmSSL test suite
+# From Gmtls test suite
 
 Digest = SM3
 Availablein = default

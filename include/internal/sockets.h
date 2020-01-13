@@ -1,30 +1,30 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 
-#ifndef OSSL_INTERNAL_SOCKETS_H
-# define OSSL_INTERNAL_SOCKETS_H
+#ifndef Otls_INTERNAL_SOCKETS_H
+# define Otls_INTERNAL_SOCKETS_H
 
-# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
+# if defined(OPENtls_SYS_VXWORKS) || defined(OPENtls_SYS_UEFI)
 #  define NO_SYS_PARAM_H
 # endif
 # ifdef WIN32
 #  define NO_SYS_UN_H
 # endif
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
 #  define NO_SYS_PARAM_H
 #  define NO_SYS_UN_H
 # endif
 
-# ifdef OPENSSL_NO_SOCK
+# ifdef OPENtls_NO_SOCK
 
-# elif defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+# elif defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_MSDOS)
 #  if defined(__DJGPP__)
 #   include <sys/socket.h>
 #   include <sys/un.h>
@@ -60,12 +60,12 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  ifndef NO_SYS_PARAM_H
 #   include <sys/param.h>
 #  endif
-#  ifdef OPENSSL_SYS_VXWORKS
+#  ifdef OPENtls_SYS_VXWORKS
 #   include <time.h>
 #  endif
 
 #  include <netdb.h>
-#  if defined(OPENSSL_SYS_VMS_NODECC)
+#  if defined(OPENtls_SYS_VMS_NODECC)
 #   include <socket.h>
 #   include <in.h>
 #   include <inet.h>
@@ -85,7 +85,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <netinet/tcp.h>
 #  endif
 
-#  ifdef OPENSSL_SYS_AIX
+#  ifdef OPENtls_SYS_AIX
 #   include <sys/select.h>
 #  endif
 
@@ -111,18 +111,18 @@ struct servent *PASCAL getservbyname(const char *, const char *);
  * Some IPv6 implementations are broken, you can disable them in known
  * bad versions.
  */
-# if !defined(OPENSSL_USE_IPV6)
+# if !defined(OPENtls_USE_IPV6)
 #  if defined(AF_INET6)
-#   define OPENSSL_USE_IPV6 1
+#   define OPENtls_USE_IPV6 1
 #  else
-#   define OPENSSL_USE_IPV6 0
+#   define OPENtls_USE_IPV6 0
 #  endif
 # endif
 
 # define get_last_socket_error() errno
 # define clear_socket_error()    errno=0
 
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
 #  undef get_last_socket_error
 #  undef clear_socket_error
 #  define get_last_socket_error() WSAGetLastError()
@@ -135,12 +135,12 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define closesocket(s)          close_s(s)
 #  define readsocket(s,b,n)       read_s(s,b,n)
 #  define writesocket(s,b,n)      send(s,b,n,0)
-# elif defined(OPENSSL_SYS_VMS)
+# elif defined(OPENtls_SYS_VMS)
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       recv((s),(b),(n),0)
 #  define writesocket(s,b,n)      send((s),(b),(n),0)
-# elif defined(OPENSSL_SYS_VXWORKS)
+# elif defined(OPENtls_SYS_VXWORKS)
 #  define ioctlsocket(a,b,c)          ioctl((a),(b),(int)(c))
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))

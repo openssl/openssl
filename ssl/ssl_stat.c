@@ -1,88 +1,88 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include "ssl_local.h"
+#include "tls_local.h"
 
-const char *SSL_state_string_long(const SSL *s)
+const char *tls_state_string_long(const tls *s)
 {
-    if (ossl_statem_in_error(s))
+    if (otls_statem_in_error(s))
         return "error";
 
-    switch (SSL_get_state(s)) {
+    switch (tls_get_state(s)) {
     case TLS_ST_CR_CERT_STATUS:
-        return "SSLv3/TLS read certificate status";
+        return "tlsv3/TLS read certificate status";
     case TLS_ST_CW_NEXT_PROTO:
-        return "SSLv3/TLS write next proto";
+        return "tlsv3/TLS write next proto";
     case TLS_ST_SR_NEXT_PROTO:
-        return "SSLv3/TLS read next proto";
+        return "tlsv3/TLS read next proto";
     case TLS_ST_SW_CERT_STATUS:
-        return "SSLv3/TLS write certificate status";
+        return "tlsv3/TLS write certificate status";
     case TLS_ST_BEFORE:
-        return "before SSL initialization";
+        return "before tls initialization";
     case TLS_ST_OK:
-        return "SSL negotiation finished successfully";
+        return "tls negotiation finished successfully";
     case TLS_ST_CW_CLNT_HELLO:
-        return "SSLv3/TLS write client hello";
+        return "tlsv3/TLS write client hello";
     case TLS_ST_CR_SRVR_HELLO:
-        return "SSLv3/TLS read server hello";
+        return "tlsv3/TLS read server hello";
     case TLS_ST_CR_CERT:
-        return "SSLv3/TLS read server certificate";
+        return "tlsv3/TLS read server certificate";
     case TLS_ST_CR_KEY_EXCH:
-        return "SSLv3/TLS read server key exchange";
+        return "tlsv3/TLS read server key exchange";
     case TLS_ST_CR_CERT_REQ:
-        return "SSLv3/TLS read server certificate request";
+        return "tlsv3/TLS read server certificate request";
     case TLS_ST_CR_SESSION_TICKET:
-        return "SSLv3/TLS read server session ticket";
+        return "tlsv3/TLS read server session ticket";
     case TLS_ST_CR_SRVR_DONE:
-        return "SSLv3/TLS read server done";
+        return "tlsv3/TLS read server done";
     case TLS_ST_CW_CERT:
-        return "SSLv3/TLS write client certificate";
+        return "tlsv3/TLS write client certificate";
     case TLS_ST_CW_KEY_EXCH:
-        return "SSLv3/TLS write client key exchange";
+        return "tlsv3/TLS write client key exchange";
     case TLS_ST_CW_CERT_VRFY:
-        return "SSLv3/TLS write certificate verify";
+        return "tlsv3/TLS write certificate verify";
     case TLS_ST_CW_CHANGE:
     case TLS_ST_SW_CHANGE:
-        return "SSLv3/TLS write change cipher spec";
+        return "tlsv3/TLS write change cipher spec";
     case TLS_ST_CW_FINISHED:
     case TLS_ST_SW_FINISHED:
-        return "SSLv3/TLS write finished";
+        return "tlsv3/TLS write finished";
     case TLS_ST_CR_CHANGE:
     case TLS_ST_SR_CHANGE:
-        return "SSLv3/TLS read change cipher spec";
+        return "tlsv3/TLS read change cipher spec";
     case TLS_ST_CR_FINISHED:
     case TLS_ST_SR_FINISHED:
-        return "SSLv3/TLS read finished";
+        return "tlsv3/TLS read finished";
     case TLS_ST_SR_CLNT_HELLO:
-        return "SSLv3/TLS read client hello";
+        return "tlsv3/TLS read client hello";
     case TLS_ST_SW_HELLO_REQ:
-        return "SSLv3/TLS write hello request";
+        return "tlsv3/TLS write hello request";
     case TLS_ST_SW_SRVR_HELLO:
-        return "SSLv3/TLS write server hello";
+        return "tlsv3/TLS write server hello";
     case TLS_ST_SW_CERT:
-        return "SSLv3/TLS write certificate";
+        return "tlsv3/TLS write certificate";
     case TLS_ST_SW_KEY_EXCH:
-        return "SSLv3/TLS write key exchange";
+        return "tlsv3/TLS write key exchange";
     case TLS_ST_SW_CERT_REQ:
-        return "SSLv3/TLS write certificate request";
+        return "tlsv3/TLS write certificate request";
     case TLS_ST_SW_SESSION_TICKET:
-        return "SSLv3/TLS write session ticket";
+        return "tlsv3/TLS write session ticket";
     case TLS_ST_SW_SRVR_DONE:
-        return "SSLv3/TLS write server done";
+        return "tlsv3/TLS write server done";
     case TLS_ST_SR_CERT:
-        return "SSLv3/TLS read client certificate";
+        return "tlsv3/TLS read client certificate";
     case TLS_ST_SR_KEY_EXCH:
-        return "SSLv3/TLS read client key exchange";
+        return "tlsv3/TLS read client key exchange";
     case TLS_ST_SR_CERT_VRFY:
-        return "SSLv3/TLS read certificate verify";
+        return "tlsv3/TLS read certificate verify";
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
         return "DTLS1 read hello verify request";
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
@@ -96,7 +96,7 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_SW_CERT_VRFY:
         return "TLSv1.3 write server certificate verify";
     case TLS_ST_CR_HELLO_REQ:
-        return "SSLv3/TLS read hello request";
+        return "tlsv3/TLS read hello request";
     case TLS_ST_SW_KEY_UPDATE:
         return "TLSv1.3 write server key update";
     case TLS_ST_CW_KEY_UPDATE:
@@ -118,12 +118,12 @@ const char *SSL_state_string_long(const SSL *s)
     }
 }
 
-const char *SSL_state_string(const SSL *s)
+const char *tls_state_string(const tls *s)
 {
-    if (ossl_statem_in_error(s))
-        return "SSLERR";
+    if (otls_statem_in_error(s))
+        return "tlsERR";
 
-    switch (SSL_get_state(s)) {
+    switch (tls_get_state(s)) {
     case TLS_ST_SR_NEXT_PROTO:
         return "TRNP";
     case TLS_ST_SW_SESSION_TICKET:
@@ -139,7 +139,7 @@ const char *SSL_state_string(const SSL *s)
     case TLS_ST_BEFORE:
         return "PINIT ";
     case TLS_ST_OK:
-        return "SSLOK ";
+        return "tlsOK ";
     case TLS_ST_CW_CLNT_HELLO:
         return "TWCH";
     case TLS_ST_CR_SRVR_HELLO:
@@ -225,56 +225,56 @@ const char *SSL_state_string(const SSL *s)
     }
 }
 
-const char *SSL_alert_type_string_long(int value)
+const char *tls_alert_type_string_long(int value)
 {
     switch (value >> 8) {
-    case SSL3_AL_WARNING:
+    case tls3_AL_WARNING:
         return "warning";
-    case SSL3_AL_FATAL:
+    case tls3_AL_FATAL:
         return "fatal";
     default:
         return "unknown";
     }
 }
 
-const char *SSL_alert_type_string(int value)
+const char *tls_alert_type_string(int value)
 {
     switch (value >> 8) {
-    case SSL3_AL_WARNING:
+    case tls3_AL_WARNING:
         return "W";
-    case SSL3_AL_FATAL:
+    case tls3_AL_FATAL:
         return "F";
     default:
         return "U";
     }
 }
 
-const char *SSL_alert_desc_string(int value)
+const char *tls_alert_desc_string(int value)
 {
     switch (value & 0xff) {
-    case SSL3_AD_CLOSE_NOTIFY:
+    case tls3_AD_CLOSE_NOTIFY:
         return "CN";
-    case SSL3_AD_UNEXPECTED_MESSAGE:
+    case tls3_AD_UNEXPECTED_MESSAGE:
         return "UM";
-    case SSL3_AD_BAD_RECORD_MAC:
+    case tls3_AD_BAD_RECORD_MAC:
         return "BM";
-    case SSL3_AD_DECOMPRESSION_FAILURE:
+    case tls3_AD_DECOMPRESSION_FAILURE:
         return "DF";
-    case SSL3_AD_HANDSHAKE_FAILURE:
+    case tls3_AD_HANDSHAKE_FAILURE:
         return "HF";
-    case SSL3_AD_NO_CERTIFICATE:
+    case tls3_AD_NO_CERTIFICATE:
         return "NC";
-    case SSL3_AD_BAD_CERTIFICATE:
+    case tls3_AD_BAD_CERTIFICATE:
         return "BC";
-    case SSL3_AD_UNSUPPORTED_CERTIFICATE:
+    case tls3_AD_UNSUPPORTED_CERTIFICATE:
         return "UC";
-    case SSL3_AD_CERTIFICATE_REVOKED:
+    case tls3_AD_CERTIFICATE_REVOKED:
         return "CR";
-    case SSL3_AD_CERTIFICATE_EXPIRED:
+    case tls3_AD_CERTIFICATE_EXPIRED:
         return "CE";
-    case SSL3_AD_CERTIFICATE_UNKNOWN:
+    case tls3_AD_CERTIFICATE_UNKNOWN:
         return "CU";
-    case SSL3_AD_ILLEGAL_PARAMETER:
+    case tls3_AD_ILLEGAL_PARAMETER:
         return "IP";
     case TLS1_AD_DECRYPTION_FAILED:
         return "DC";
@@ -317,32 +317,32 @@ const char *SSL_alert_desc_string(int value)
     }
 }
 
-const char *SSL_alert_desc_string_long(int value)
+const char *tls_alert_desc_string_long(int value)
 {
     switch (value & 0xff) {
-    case SSL3_AD_CLOSE_NOTIFY:
+    case tls3_AD_CLOSE_NOTIFY:
         return "close notify";
-    case SSL3_AD_UNEXPECTED_MESSAGE:
+    case tls3_AD_UNEXPECTED_MESSAGE:
         return "unexpected_message";
-    case SSL3_AD_BAD_RECORD_MAC:
+    case tls3_AD_BAD_RECORD_MAC:
         return "bad record mac";
-    case SSL3_AD_DECOMPRESSION_FAILURE:
+    case tls3_AD_DECOMPRESSION_FAILURE:
         return "decompression failure";
-    case SSL3_AD_HANDSHAKE_FAILURE:
+    case tls3_AD_HANDSHAKE_FAILURE:
         return "handshake failure";
-    case SSL3_AD_NO_CERTIFICATE:
+    case tls3_AD_NO_CERTIFICATE:
         return "no certificate";
-    case SSL3_AD_BAD_CERTIFICATE:
+    case tls3_AD_BAD_CERTIFICATE:
         return "bad certificate";
-    case SSL3_AD_UNSUPPORTED_CERTIFICATE:
+    case tls3_AD_UNSUPPORTED_CERTIFICATE:
         return "unsupported certificate";
-    case SSL3_AD_CERTIFICATE_REVOKED:
+    case tls3_AD_CERTIFICATE_REVOKED:
         return "certificate revoked";
-    case SSL3_AD_CERTIFICATE_EXPIRED:
+    case tls3_AD_CERTIFICATE_EXPIRED:
         return "certificate expired";
-    case SSL3_AD_CERTIFICATE_UNKNOWN:
+    case tls3_AD_CERTIFICATE_UNKNOWN:
         return "certificate unknown";
-    case SSL3_AD_ILLEGAL_PARAMETER:
+    case tls3_AD_ILLEGAL_PARAMETER:
         return "illegal parameter";
     case TLS1_AD_DECRYPTION_FAILED:
         return "decryption failed";

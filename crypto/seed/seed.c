@@ -1,10 +1,10 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef OPENSSL_NO_SEED
+#ifndef OPENtls_NO_SEED
 
 # include <stdio.h>
 # include <stdlib.h>
@@ -41,7 +41,7 @@
 #  include <memory.h>
 # endif
 
-# include <openssl/seed.h>
+# include <opentls/seed.h>
 # include "seed_local.h"
 
 # ifdef SS                      /* can get defined on Solaris by inclusion of
@@ -49,7 +49,7 @@
 #  undef SS
 # endif
 
-# if !defined(OPENSSL_SMALL_FOOTPRINT)
+# if !defined(OPENtls_SMALL_FOOTPRINT)
 
 #  define G_FUNC(v)       \
         SS[0][(unsigned char)      (v) & 0xff] ^ \
@@ -430,7 +430,7 @@ static unsigned int G_FUNC(unsigned int v)
 # define KC14    0xde6e678d
 # define KC15    0xbcdccf1b
 
-# if defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(OPENtls_SMALL_FOOTPRINT)
 static const seed_word KC[] = {
     KC0, KC1, KC2, KC3, KC4, KC5, KC6, KC7,
     KC8, KC9, KC10, KC11, KC12, KC13, KC14, KC15
@@ -454,7 +454,7 @@ void SEED_set_key(const unsigned char rawkey[SEED_KEY_LENGTH],
     KEYSCHEDULE_UPDATE1(t0, t1, x1, x2, x3, x4, KC1);
     KEYUPDATE_TEMP(t0, t1, &ks->data[2]);
 
-# if !defined(OPENSSL_SMALL_FOOTPRINT)
+# if !defined(OPENtls_SMALL_FOOTPRINT)
     KEYSCHEDULE_UPDATE0(t0, t1, x1, x2, x3, x4, KC2);
     KEYUPDATE_TEMP(t0, t1, &ks->data[4]);
     KEYSCHEDULE_UPDATE1(t0, t1, x1, x2, x3, x4, KC3);
@@ -508,7 +508,7 @@ void SEED_encrypt(const unsigned char s[SEED_BLOCK_SIZE],
     char2word(s + 8, x3);
     char2word(s + 12, x4);
 
-# if !defined(OPENSSL_SMALL_FOOTPRINT)
+# if !defined(OPENtls_SMALL_FOOTPRINT)
     E_SEED(t0, t1, x1, x2, x3, x4, 0);
     E_SEED(t0, t1, x3, x4, x1, x2, 2);
     E_SEED(t0, t1, x1, x2, x3, x4, 4);
@@ -553,7 +553,7 @@ void SEED_decrypt(const unsigned char s[SEED_BLOCK_SIZE],
     char2word(s + 8, x3);
     char2word(s + 12, x4);
 
-# if !defined(OPENSSL_SMALL_FOOTPRINT)
+# if !defined(OPENtls_SMALL_FOOTPRINT)
     E_SEED(t0, t1, x1, x2, x3, x4, 30);
     E_SEED(t0, t1, x3, x4, x1, x2, 28);
     E_SEED(t0, t1, x1, x2, x3, x4, 26);
@@ -587,4 +587,4 @@ void SEED_decrypt(const unsigned char s[SEED_BLOCK_SIZE],
     word2char(x2, d + 12);
 }
 
-#endif                          /* OPENSSL_NO_SEED */
+#endif                          /* OPENtls_NO_SEED */

@@ -1,57 +1,57 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
- * A minimal TLS server it ses SSL_CTX_config and a configuration file to
+ * A minimal TLS server it ses tls_CTX_config and a configuration file to
  * set most server parameters.
  */
 
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/conf.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
+#include <opentls/conf.h>
 
 int main(int argc, char *argv[])
 {
     unsigned char buf[512];
     char *port = "*:4433";
     BIO *in = NULL;
-    BIO *ssl_bio, *tmp;
-    SSL_CTX *ctx;
+    BIO *tls_bio, *tmp;
+    tls_CTX *ctx;
     int ret = EXIT_FAILURE, i;
 
-    ctx = SSL_CTX_new(TLS_server_method());
+    ctx = tls_CTX_new(TLS_server_method());
 
     if (CONF_modules_load_file("cmod.cnf", "testapp", 0) <= 0) {
         fprintf(stderr, "Error processing config file\n");
         goto err;
     }
 
-    if (SSL_CTX_config(ctx, "server") == 0) {
+    if (tls_CTX_config(ctx, "server") == 0) {
         fprintf(stderr, "Error configuring server.\n");
         goto err;
     }
 
-    /* Setup server side SSL bio */
-    ssl_bio = BIO_new_ssl(ctx, 0);
+    /* Setup server side tls bio */
+    tls_bio = BIO_new_tls(ctx, 0);
 
     if ((in = BIO_new_accept(port)) == NULL)
         goto err;
 
     /*
-     * This means that when a new connection is accepted on 'in', The ssl_bio
+     * This means that when a new connection is accepted on 'in', The tls_bio
      * will be 'duplicated' and have the new socket BIO push into it.
-     * Basically it means the SSL BIO will be automatically setup
+     * Basically it means the tls BIO will be automatically setup
      */
-    BIO_set_accept_bios(in, ssl_bio);
+    BIO_set_accept_bios(in, tls_bio);
 
  again:
     /*

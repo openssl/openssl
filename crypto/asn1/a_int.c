@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include <limits.h>
-#include <openssl/asn1.h>
-#include <openssl/bn.h>
+#include <opentls/asn1.h>
+#include <opentls/bn.h>
 #include "asn1_local.h"
 
 ASN1_INTEGER *ASN1_INTEGER_dup(const ASN1_INTEGER *x)
@@ -414,10 +414,10 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     }
 
     /*
-     * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
+     * We must OPENtls_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.
      */
-    s = OPENSSL_malloc((int)len + 1);
+    s = OPENtls_malloc((int)len + 1);
     if (s == NULL) {
         i = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -432,7 +432,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         p += len;
     }
 
-    OPENSSL_free(ret->data);
+    OPENtls_free(ret->data);
     ret->data = s;
     ret->length = (int)len;
     if (a != NULL)

@@ -6,7 +6,7 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/pkcs7.h>
+ #include <opentls/pkcs7.h>
 
  int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
                   BIO *indata, BIO *out, int flags);
@@ -40,7 +40,7 @@ not detached and B<indata> is not B<NULL>, then the structure has both
 embedded and external content. To treat this as an error, use the flag
 B<PKCS7_NO_DUAL_CONTENT>.
 The default behavior allows this, for compatibility with older
-versions of OpenSSL.
+versions of Opentls.
 
 An attempt is made to locate all the signer's certificates, first looking in
 the B<certs> parameter (if it is not B<NULL>) and then looking in any certificates
@@ -119,11 +119,11 @@ L<ERR_get_error(3)>, L<PKCS7_sign(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

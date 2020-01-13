@@ -7,7 +7,7 @@ EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
 
 =head1 SYNOPSIS
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
  int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                              const char *mdname, const char *props,
@@ -41,8 +41,8 @@ algorithm implementation will be implicitly fetched based on the type of key in
 use. See L<provider(7)> for further information about providers and fetching
 algorithms.
 
-The OpenSSL default and legacy providers support fetching digests and can fetch
-those digests from any available provider. The OpenSSL fips provider also
+The Opentls default and legacy providers support fetching digests and can fetch
+those digests from any available provider. The Opentls fips provider also
 supports fetching digests but will only fetch digests that are themselves
 implemented inside the fips provider.
 
@@ -140,13 +140,13 @@ to calling EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal(). For
 algorithms which do not support streaming (e.g. PureEdDSA) it is the only way
 to verify data.
 
-In previous versions of OpenSSL there was a link between message digest types
+In previous versions of Opentls there was a link between message digest types
 and public key algorithms. This meant that "clone" digests such as EVP_dss1()
 needed to be used to sign using SHA1 and DSA. This is no longer necessary and
 the use of clone digest is now discouraged.
 
 For some key types and parameters the random number generator must be seeded.
-If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+If the automatic seeding or reseeding of the Opentls CSPRNG fails due to
 external circumstances (see L<RAND(7)>), the operation will fail.
 
 The call to EVP_DigestVerifyFinal() internally finalizes a copy of the digest
@@ -163,26 +163,26 @@ L<EVP_DigestSignInit(3)>,
 L<EVP_DigestInit(3)>,
 L<evp(7)>, L<HMAC(3)>, L<MD2(3)>,
 L<MD5(3)>, L<MDC2(3)>, L<RIPEMD160(3)>,
-L<SHA1(3)>, L<openssl-dgst(1)>,
+L<SHA1(3)>, L<opentls-dgst(1)>,
 L<RAND(7)>
 
 =head1 HISTORY
 
 EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal()
-were added in OpenSSL 1.0.0.
+were added in Opentls 1.0.0.
 
-EVP_DigestVerifyInit_ex() was added in OpenSSL 3.0.
+EVP_DigestVerifyInit_ex() was added in Opentls 3.0.
 
-EVP_DigestVerifyUpdate() was converted from a macro to a function in OpenSSL
+EVP_DigestVerifyUpdate() was converted from a macro to a function in Opentls
 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,14 +13,14 @@
 #include <limits.h>
 #include <errno.h>
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/conf.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
+#include <opentls/conf.h>
+#ifndef OPENtls_NO_ENGINE
+#include <opentls/engine.h>
 #endif
 #include "testutil.h"
 
@@ -36,7 +36,7 @@ static const char *tlsafile;
  * Forward declaration, of function that uses internal interfaces, from headers
  * included at the end of this module.
  */
-static void store_ctx_dane_init(X509_STORE_CTX *, SSL *);
+static void store_ctx_dane_init(X509_STORE_CTX *, tls *);
 
 static int saved_errno;
 
@@ -52,38 +52,38 @@ static int restore_errno(void)
     return ret;
 }
 
-static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
+static int verify_chain(tls *tls, STACK_OF(X509) *chain)
 {
     X509_STORE_CTX *store_ctx = NULL;
-    SSL_CTX *ssl_ctx = NULL;
+    tls_CTX *tls_ctx = NULL;
     X509_STORE *store = NULL;
     X509 *cert = NULL;
     int ret = 0;
-    int store_ctx_idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    int store_ctx_idx = tls_get_ex_data_X509_STORE_CTX_idx();
 
     if (!TEST_ptr(store_ctx = X509_STORE_CTX_new())
-            || !TEST_ptr(ssl_ctx = SSL_get_SSL_CTX(ssl))
-            || !TEST_ptr(store = SSL_CTX_get_cert_store(ssl_ctx))
+            || !TEST_ptr(tls_ctx = tls_get_tls_CTX(tls))
+            || !TEST_ptr(store = tls_CTX_get_cert_store(tls_ctx))
             || !TEST_ptr(cert = sk_X509_value(chain, 0))
             || !TEST_true(X509_STORE_CTX_init(store_ctx, store, cert, chain))
             || !TEST_true(X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx,
-                                                     ssl)))
+                                                     tls)))
         goto end;
 
     X509_STORE_CTX_set_default(store_ctx,
-            SSL_is_server(ssl) ? "ssl_client" : "ssl_server");
+            tls_is_server(tls) ? "tls_client" : "tls_server");
     X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(store_ctx),
-            SSL_get0_param(ssl));
-    store_ctx_dane_init(store_ctx, ssl);
+            tls_get0_param(tls));
+    store_ctx_dane_init(store_ctx, tls);
 
-    if (SSL_get_verify_callback(ssl) != NULL)
-        X509_STORE_CTX_set_verify_cb(store_ctx, SSL_get_verify_callback(ssl));
+    if (tls_get_verify_callback(tls) != NULL)
+        X509_STORE_CTX_set_verify_cb(store_ctx, tls_get_verify_callback(tls));
 
     /* Mask "internal failures" (-1) from our return value. */
     if (!TEST_int_ge(ret = X509_verify_cert(store_ctx), 0))
         ret = 0;
 
-    SSL_set_verify_result(ssl, X509_STORE_CTX_get_error(store_ctx));
+    tls_set_verify_result(tls, X509_STORE_CTX_get_error(store_ctx));
     X509_STORE_CTX_cleanup(store_ctx);
 
 end:
@@ -130,9 +130,9 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
             goto err;
         }
 
-        OPENSSL_free(name);
-        OPENSSL_free(header);
-        OPENSSL_free(data);
+        OPENtls_free(name);
+        OPENtls_free(header);
+        OPENtls_free(data);
         name = header = NULL;
         data = NULL;
     }
@@ -143,9 +143,9 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
     }
 
 err:
-    OPENSSL_free(name);
-    OPENSSL_free(header);
-    OPENSSL_free(data);
+    OPENtls_free(name);
+    OPENtls_free(header);
+    OPENtls_free(data);
     sk_X509_pop_free(chain, X509_free);
     return NULL;
 }
@@ -177,7 +177,7 @@ static char *read_to_eol(BIO *f)
 /*
  * Hex decoder that tolerates optional whitespace
  */
-static ossl_ssize_t hexdecode(const char *in, void *result)
+static otls_ssize_t hexdecode(const char *in, void *result)
 {
     unsigned char **out = (unsigned char **)result;
     unsigned char *ret;
@@ -185,7 +185,7 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
     uint8_t byte;
     int nibble = 0;
 
-    if (!TEST_ptr(ret = OPENSSL_malloc(strlen(in) / 2)))
+    if (!TEST_ptr(ret = OPENtls_malloc(strlen(in) / 2)))
         return -1;
     cp = ret;
 
@@ -194,9 +194,9 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
 
         if (isspace(_UC(*in)))
             continue;
-        x = OPENSSL_hexchar2int(*in);
+        x = OPENtls_hexchar2int(*in);
         if (x < 0) {
-            OPENSSL_free(ret);
+            OPENtls_free(ret);
             return 0;
         }
         byte |= (char)x;
@@ -208,14 +208,14 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
         }
     }
     if (nibble != 0) {
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return 0;
     }
 
     return cp - (*out = ret);
 }
 
-static ossl_ssize_t checked_uint8(const char *in, void *out)
+static otls_ssize_t checked_uint8(const char *in, void *out)
 {
     uint8_t *result = (uint8_t *)out;
     const char *cp = in;
@@ -240,10 +240,10 @@ static ossl_ssize_t checked_uint8(const char *in, void *out)
 struct tlsa_field {
     void *var;
     const char *name;
-    ossl_ssize_t (*parser)(const char *, void *);
+    otls_ssize_t (*parser)(const char *, void *);
 };
 
-static int tlsa_import_rr(SSL *ssl, const char *rrdata)
+static int tlsa_import_rr(tls *tls, const char *rrdata)
 {
     static uint8_t usage;
     static uint8_t selector;
@@ -259,7 +259,7 @@ static int tlsa_import_rr(SSL *ssl, const char *rrdata)
     int ret;
     struct tlsa_field *f;
     const char *cp = rrdata;
-    ossl_ssize_t len = 0;
+    otls_ssize_t len = 0;
 
     for (f = tlsa_fields; f->var; ++f) {
         if ((len = f->parser(cp += len, f->var)) <= 0) {
@@ -268,8 +268,8 @@ static int tlsa_import_rr(SSL *ssl, const char *rrdata)
         }
     }
 
-    ret = SSL_dane_tlsa_add(ssl, usage, selector, mtype, data, len);
-    OPENSSL_free(data);
+    ret = tls_dane_tlsa_add(tls, usage, selector, mtype, data, len);
+    OPENtls_free(data);
     if (ret == 0) {
         TEST_info("unusable TLSA rrdata: %s", rrdata);
         return 0;
@@ -290,13 +290,13 @@ static int allws(const char *cp)
     return 1;
 }
 
-static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
+static int test_tlsafile(tls_CTX *ctx, const char *base_name,
                          BIO *f, const char *path)
 {
     char *line;
     int testno = 0;
     int ret = 1;
-    SSL *ssl;
+    tls *tls;
 
     while (ret > 0 && (line = read_to_eol(f)) != NULL) {
         STACK_OF(X509) *chain;
@@ -322,19 +322,19 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
             return 0;
         }
 
-        if (!TEST_ptr(ssl = SSL_new(ctx)))
+        if (!TEST_ptr(tls = tls_new(ctx)))
             return 0;
-        SSL_set_connect_state(ssl);
-        if (SSL_dane_enable(ssl, base_name) <= 0) {
-            SSL_free(ssl);
+        tls_set_connect_state(tls);
+        if (tls_dane_enable(tls, base_name) <= 0) {
+            tls_free(tls);
             return 0;
         }
         if (noncheck)
-            SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
+            tls_dane_set_flags(tls, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
 
         for (i = 0; i < ntlsa; ++i) {
-            if ((line = read_to_eol(f)) == NULL || !tlsa_import_rr(ssl, line)) {
-                SSL_free(ssl);
+            if ((line = read_to_eol(f)) == NULL || !tlsa_import_rr(tls, line)) {
+                tls_free(tls);
                 return 0;
             }
         }
@@ -342,23 +342,23 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
         /* Don't report old news */
         ERR_clear_error();
         if (!TEST_ptr(chain = load_chain(f, ncert))) {
-            SSL_free(ssl);
+            tls_free(tls);
             return 0;
         }
 
-        ok = verify_chain(ssl, chain);
+        ok = verify_chain(tls, chain);
         sk_X509_pop_free(chain, X509_free);
-        err = SSL_get_verify_result(ssl);
+        err = tls_get_verify_result(tls);
         /*
          * Peek under the hood, normally TLSA match data is hidden when
          * verification fails, we can obtain any suppressed data by setting the
          * verification result to X509_V_OK before looking.
          */
-        SSL_set_verify_result(ssl, X509_V_OK);
-        mdpth = SSL_get0_dane_authority(ssl, NULL, NULL);
+        tls_set_verify_result(tls, X509_V_OK);
+        mdpth = tls_get0_dane_authority(tls, NULL, NULL);
         /* Not needed any more, but lead by example and put the error back. */
-        SSL_set_verify_result(ssl, err);
-        SSL_free(ssl);
+        tls_set_verify_result(tls, err);
+        tls_free(tls);
 
         if (!TEST_int_eq(err, want)) {
             if (want == X509_V_OK)
@@ -386,17 +386,17 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
 
 static int run_tlsatest(void)
 {
-    SSL_CTX *ctx = NULL;
+    tls_CTX *ctx = NULL;
     BIO *f = NULL;
     int ret = 0;
 
     if (!TEST_ptr(f = BIO_new_file(tlsafile, "r"))
-            || !TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
-            || !TEST_int_gt(SSL_CTX_dane_enable(ctx), 0)
-            || !TEST_true(SSL_CTX_load_verify_file(ctx, CAfile))
-            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1),
+            || !TEST_ptr(ctx = tls_CTX_new(TLS_client_method()))
+            || !TEST_int_gt(tls_CTX_dane_enable(ctx), 0)
+            || !TEST_true(tls_CTX_load_verify_file(ctx, CAfile))
+            || !TEST_int_gt(tls_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1),
                             0)
-            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2),
+            || !TEST_int_gt(tls_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2),
                             0)
             || !TEST_int_gt(test_tlsafile(ctx, basedomain, f, tlsafile), 0))
         goto end;
@@ -404,7 +404,7 @@ static int run_tlsatest(void)
 
 end:
     BIO_free(f);
-    SSL_CTX_free(ctx);
+    tls_CTX_free(ctx);
 
     return ret;
 }
@@ -424,7 +424,7 @@ int setup_tests(void)
 
 #include "internal/dane.h"
 
-static void store_ctx_dane_init(X509_STORE_CTX *store_ctx, SSL *ssl)
+static void store_ctx_dane_init(X509_STORE_CTX *store_ctx, tls *tls)
 {
-    X509_STORE_CTX_set0_dane(store_ctx, SSL_get0_dane(ssl));
+    X509_STORE_CTX_set0_dane(store_ctx, tls_get0_dane(tls));
 }

@@ -1,7 +1,7 @@
 {- use platform -}
-openssl_conf = openssl_init
+opentls_conf = opentls_init
 
-[openssl_init]
+[opentls_init]
 providers = providers
 
 [providers]
@@ -10,4 +10,4 @@ p_test_configured = p_test_configured
 [p_test_configured]
 module = {- platform->dso('p_test') -}
 activate = 1
-greeting = Hello OpenSSL, greetings from Test Provider
+greeting = Hello Opentls, greetings from Test Provider

@@ -1,18 +1,18 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include "../ssl_local.h"
+#include "../tls_local.h"
 #include "record_local.h"
 #include "internal/cryptlib.h"
 
 /*-
- * tls13_enc encrypts/decrypts |n_recs| in |recs|. Will call SSLfatal() for
+ * tls13_enc encrypts/decrypts |n_recs| in |recs|. Will call tlsfatal() for
  * internal errors, but not otherwise.
  *
  * Returns:
@@ -22,22 +22,22 @@
  *   -1: if the record's AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
+int tls13_enc(tls *s, tls3_RECORD *recs, size_t n_recs, int sending)
 {
     EVP_CIPHER_CTX *ctx;
-    unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH], recheader[tls3_RT_HEADER_LENGTH];
     size_t ivlen, taglen, offset, loop, hdrlen;
     unsigned char *staticiv;
     unsigned char *seq;
     int lenu, lenf;
-    SSL3_RECORD *rec = &recs[0];
+    tls3_RECORD *rec = &recs[0];
     uint32_t alg_enc;
     WPACKET wpkt;
 
     if (n_recs != 1) {
         /* Should not happen */
         /* TODO(TLS1.3): Support pipelining */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+        tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                  ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -58,7 +58,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
      * plaintext alerts at certain points in the handshake. If we've got this
      * far then we have already validated that a plaintext alert is ok here.
      */
-    if (ctx == NULL || rec->type == SSL3_RT_ALERT) {
+    if (ctx == NULL || rec->type == tls3_RT_ALERT) {
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
         return 1;
@@ -66,14 +66,14 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
 
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITING
-            || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+    if (s->early_data_state == tls_EARLY_DATA_WRITING
+            || s->early_data_state == tls_EARLY_DATA_WRITE_RETRY) {
         if (s->session != NULL && s->session->ext.max_early_data > 0) {
             alg_enc = s->session->cipher->algorithm_enc;
         } else {
-            if (!ossl_assert(s->psksession != NULL
+            if (!otls_assert(s->psksession != NULL
                              && s->psksession->ext.max_early_data > 0)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                          ERR_R_INTERNAL_ERROR);
                 return -1;
             }
@@ -84,31 +84,31 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
          * To get here we must have selected a ciphersuite - otherwise ctx would
          * be NULL
          */
-        if (!ossl_assert(s->s3.tmp.new_cipher != NULL)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+        if (!otls_assert(s->s3.tmp.new_cipher != NULL)) {
+            tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                      ERR_R_INTERNAL_ERROR);
             return -1;
         }
         alg_enc = s->s3.tmp.new_cipher->algorithm_enc;
     }
 
-    if (alg_enc & SSL_AESCCM) {
-        if (alg_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
+    if (alg_enc & tls_AESCCM) {
+        if (alg_enc & (tls_AES128CCM8 | tls_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
          if (sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
                                          NULL) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+            tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                      ERR_R_INTERNAL_ERROR);
             return -1;
         }
-    } else if (alg_enc & SSL_AESGCM) {
+    } else if (alg_enc & tls_AESGCM) {
         taglen = EVP_GCM_TLS_TAG_LEN;
-    } else if (alg_enc & SSL_CHACHA20) {
+    } else if (alg_enc & tls_CHACHA20) {
         taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
     } else {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+        tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                  ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -126,7 +126,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     /* Set up IV */
     if (ivlen < SEQ_NUM_SIZE) {
         /* Should not happen */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+        tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                  ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -160,7 +160,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             || !WPACKET_put_bytes_u16(&wpkt, rec->rec_version)
             || !WPACKET_put_bytes_u16(&wpkt, rec->length + taglen)
             || !WPACKET_get_total_written(&wpkt, &hdrlen)
-            || hdrlen != SSL3_RT_HEADER_LENGTH
+            || hdrlen != tls3_RT_HEADER_LENGTH
             || !WPACKET_finish(&wpkt)) {
         WPACKET_cleanup(&wpkt);
         return -1;
@@ -170,7 +170,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
      * For CCM we must explicitly set the total plaintext length before we add
      * any AAD.
      */
-    if (((alg_enc & SSL_AESCCM) != 0
+    if (((alg_enc & tls_AESCCM) != 0
                  && EVP_CipherUpdate(ctx, NULL, &lenu, NULL,
                                      (unsigned int)rec->length) <= 0)
             || EVP_CipherUpdate(ctx, NULL, &lenu, recheader,
@@ -185,7 +185,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
         /* Add the tag */
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
                                 rec->data + rec->length) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+            tlsfatal(s, tls_AD_INTERNAL_ERROR, tls_F_TLS13_ENC,
                      ERR_R_INTERNAL_ERROR);
             return -1;
         }

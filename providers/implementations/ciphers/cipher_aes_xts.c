@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -28,15 +28,15 @@
 #define AES_XTS_BLOCK_BITS 8
 
 /* forward declarations */
-static OSSL_OP_cipher_encrypt_init_fn aes_xts_einit;
-static OSSL_OP_cipher_decrypt_init_fn aes_xts_dinit;
-static OSSL_OP_cipher_update_fn aes_xts_stream_update;
-static OSSL_OP_cipher_final_fn aes_xts_stream_final;
-static OSSL_OP_cipher_cipher_fn aes_xts_cipher;
-static OSSL_OP_cipher_freectx_fn aes_xts_freectx;
-static OSSL_OP_cipher_dupctx_fn aes_xts_dupctx;
-static OSSL_OP_cipher_set_ctx_params_fn aes_xts_set_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn aes_xts_settable_ctx_params;
+static Otls_OP_cipher_encrypt_init_fn aes_xts_einit;
+static Otls_OP_cipher_decrypt_init_fn aes_xts_dinit;
+static Otls_OP_cipher_update_fn aes_xts_stream_update;
+static Otls_OP_cipher_final_fn aes_xts_stream_final;
+static Otls_OP_cipher_cipher_fn aes_xts_cipher;
+static Otls_OP_cipher_freectx_fn aes_xts_freectx;
+static Otls_OP_cipher_dupctx_fn aes_xts_dupctx;
+static Otls_OP_cipher_set_ctx_params_fn aes_xts_set_ctx_params;
+static Otls_OP_cipher_settable_ctx_params_fn aes_xts_settable_ctx_params;
 
 /*
  * Verify that the two keys are different.
@@ -107,7 +107,7 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
 static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
                             size_t kbits, size_t blkbits, size_t ivbits)
 {
-    PROV_AES_XTS_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_XTS_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode, flags,
@@ -120,7 +120,7 @@ static void aes_xts_freectx(void *vctx)
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *aes_xts_dupctx(void *vctx)
@@ -136,7 +136,7 @@ static void *aes_xts_dupctx(void *vctx)
         if (in->xts.key2 != &in->ks2)
             return NULL;
     }
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENtls_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -205,30 +205,30 @@ static int aes_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static const OSSL_PARAM aes_xts_known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_END
+static const Otls_PARAM aes_xts_known_settable_ctx_params[] = {
+    Otls_PARAM_size_t(Otls_CIPHER_PARAM_KEYLEN, NULL),
+    Otls_PARAM_END
 };
 
-static const OSSL_PARAM *aes_xts_settable_ctx_params(void)
+static const Otls_PARAM *aes_xts_settable_ctx_params(void)
 {
     return aes_xts_known_settable_ctx_params;
 }
 
-static int aes_xts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int aes_xts_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
 
     /*
      * TODO(3.0) We need a general solution for handling missing parameters
      * inside set_params and get_params methods.
      */
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         size_t keylen;
 
-        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
+        if (!Otls_PARAM_get_size_t(p, &keylen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -241,39 +241,39 @@ static int aes_xts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 #define IMPLEMENT_cipher(lcmode, UCMODE, kbits, flags)                         \
-static OSSL_OP_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params;       \
-static int aes_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])            \
+static Otls_OP_cipher_get_params_fn aes_##kbits##_##lcmode##_get_params;       \
+static int aes_##kbits##_##lcmode##_get_params(Otls_PARAM params[])            \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,         \
                                      flags, 2 * kbits, AES_XTS_BLOCK_BITS,     \
                                      AES_XTS_IV_BITS);                         \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn aes_##kbits##_xts_newctx;                      \
+static Otls_OP_cipher_newctx_fn aes_##kbits##_xts_newctx;                      \
 static void *aes_##kbits##_xts_newctx(void *provctx)                           \
 {                                                                              \
     return aes_xts_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, flags, 2 * kbits, \
                           AES_XTS_BLOCK_BITS, AES_XTS_IV_BITS);                \
 }                                                                              \
-const OSSL_DISPATCH aes##kbits##xts_functions[] = {                            \
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##kbits##_xts_newctx },     \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_xts_einit },          \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_xts_dinit },          \
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))aes_xts_stream_update },        \
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))aes_xts_stream_final },          \
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))aes_xts_cipher },               \
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))aes_xts_freectx },             \
-    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_xts_dupctx },               \
-    { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
+const Otls_DISPATCH aes##kbits##xts_functions[] = {                            \
+    { Otls_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##kbits##_xts_newctx },     \
+    { Otls_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_xts_einit },          \
+    { Otls_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_xts_dinit },          \
+    { Otls_FUNC_CIPHER_UPDATE, (void (*)(void))aes_xts_stream_update },        \
+    { Otls_FUNC_CIPHER_FINAL, (void (*)(void))aes_xts_stream_final },          \
+    { Otls_FUNC_CIPHER_CIPHER, (void (*)(void))aes_xts_cipher },               \
+    { Otls_FUNC_CIPHER_FREECTX, (void (*)(void))aes_xts_freectx },             \
+    { Otls_FUNC_CIPHER_DUPCTX, (void (*)(void))aes_xts_dupctx },               \
+    { Otls_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void))aes_##kbits##_##lcmode##_get_params },                   \
-    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
+    { Otls_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
       (void (*)(void))cipher_generic_gettable_params },                        \
-    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
+    { Otls_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
       (void (*)(void))cipher_generic_get_ctx_params },                         \
-    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
+    { Otls_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))cipher_generic_gettable_ctx_params },                    \
-    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
+    { Otls_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
       (void (*)(void))aes_xts_set_ctx_params },                                \
-    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
+    { Otls_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))aes_xts_settable_ctx_params },                            \
     { 0, NULL }                                                                \
 }

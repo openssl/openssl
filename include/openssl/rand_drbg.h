@@ -1,24 +1,24 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_RAND_DRBG_H
-# define OPENSSL_RAND_DRBG_H
+#ifndef OPENtls_RAND_DRBG_H
+# define OPENtls_RAND_DRBG_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_DRBG_RAND_H
 # endif
 
 # include <time.h>
-# include <openssl/types.h>
-# include <openssl/obj_mac.h>
+# include <opentls/types.h>
+# include <opentls/obj_mac.h>
 
 /*
  * RAND_DRBG  flags
@@ -42,7 +42,7 @@
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
 # define RAND_DRBG_FLAG_PRIVATE              0x10
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 /* This #define was replaced by an internal constant and should not be used. */
 #  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
 # endif
@@ -78,9 +78,9 @@ extern "C" {
 /*
  * Object lifetime functions.
  */
-RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
+RAND_DRBG *RAND_DRBG_new_ex(OPENtls_CTX *ctx, int type, unsigned int flags,
                             RAND_DRBG *parent);
-RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx, int type,
+RAND_DRBG *RAND_DRBG_secure_new_ex(OPENtls_CTX *ctx, int type,
                                    unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
@@ -112,9 +112,9 @@ int RAND_DRBG_set_reseed_defaults(
                                   time_t slave_reseed_time_interval
                                   );
 
-RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
-RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
-RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENtls_CTX_get0_master_drbg(OPENtls_CTX *ctx);
+RAND_DRBG *OPENtls_CTX_get0_public_drbg(OPENtls_CTX *ctx);
+RAND_DRBG *OPENtls_CTX_get0_private_drbg(OPENtls_CTX *ctx);
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);

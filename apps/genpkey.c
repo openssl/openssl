@@ -1,21 +1,21 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
+#include <opentls/pem.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#ifndef OPENtls_NO_ENGINE
+# include <opentls/engine.h>
 #endif
 
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e);
@@ -30,7 +30,7 @@ typedef enum OPTION_choice {
 const OPTIONS genpkey_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"paramfile", OPT_PARAMFILE, '<', "Parameters file"},
@@ -206,7 +206,7 @@ int genpkey_main(int argc, char **argv)
     BIO_free_all(out);
     BIO_free(in);
     release_engine(e);
-    OPENSSL_free(pass);
+    OPENtls_free(pass);
     return ret;
 }
 
@@ -267,7 +267,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
 
     ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     if (!ameth && e)
         ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
 #endif
@@ -280,7 +280,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     ERR_clear_error();
 
     EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(tmpeng);
 #endif
     ctx = EVP_PKEY_CTX_new_id(pkey_id, e);

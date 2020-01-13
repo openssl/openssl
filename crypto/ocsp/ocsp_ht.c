@@ -1,10 +1,10 @@
 /*
- * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -12,10 +12,10 @@
 #include <stdlib.h>
 #include "crypto/ctype.h"
 #include <string.h>
-#include <openssl/asn1.h>
-#include <openssl/ocsp.h>
-#include <openssl/err.h>
-#include <openssl/buffer.h>
+#include <opentls/asn1.h>
+#include <opentls/ocsp.h>
+#include <opentls/err.h>
+#include <opentls/buffer.h>
 
 /* Stateful OCSP request code, supporting non-blocking I/O */
 
@@ -63,7 +63,7 @@ static int parse_http_line1(char *line);
 
 OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 {
-    OCSP_REQ_CTX *rctx = OPENSSL_zalloc(sizeof(*rctx));
+    OCSP_REQ_CTX *rctx = OPENtls_zalloc(sizeof(*rctx));
 
     if (rctx == NULL)
         return NULL;
@@ -75,7 +75,7 @@ OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
         rctx->iobuflen = maxline;
     else
         rctx->iobuflen = OCSP_MAX_LINE_LEN;
-    rctx->iobuf = OPENSSL_malloc(rctx->iobuflen);
+    rctx->iobuf = OPENtls_malloc(rctx->iobuflen);
     if (rctx->iobuf == NULL || rctx->mem == NULL) {
         OCSP_REQ_CTX_free(rctx);
         return NULL;
@@ -88,8 +88,8 @@ void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
     if (!rctx)
         return;
     BIO_free(rctx->mem);
-    OPENSSL_free(rctx->iobuf);
-    OPENSSL_free(rctx);
+    OPENtls_free(rctx->iobuf);
+    OPENtls_free(rctx);
 }
 
 BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx)
@@ -209,7 +209,7 @@ static int parse_http_line1(char *line)
     char *p, *q, *r;
     /* Skip to first white space (passed protocol info) */
 
-    for (p = line; *p && !ossl_isspace(*p); p++)
+    for (p = line; *p && !otls_isspace(*p); p++)
         continue;
     if (*p == '\0') {
         OCSPerr(OCSP_F_PARSE_HTTP_LINE1, OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
@@ -217,7 +217,7 @@ static int parse_http_line1(char *line)
     }
 
     /* Skip past white space to start of response code */
-    while (*p && ossl_isspace(*p))
+    while (*p && otls_isspace(*p))
         p++;
 
     if (*p == '\0') {
@@ -226,7 +226,7 @@ static int parse_http_line1(char *line)
     }
 
     /* Find end of response code: first whitespace after start of code */
-    for (q = p; *q && !ossl_isspace(*q); q++)
+    for (q = p; *q && !otls_isspace(*q); q++)
         continue;
 
     if (*q == '\0') {
@@ -244,7 +244,7 @@ static int parse_http_line1(char *line)
         return 0;
 
     /* Skip over any leading white space in message */
-    while (*q && ossl_isspace(*q))
+    while (*q && otls_isspace(*q))
         q++;
 
     if (*q) {
@@ -253,7 +253,7 @@ static int parse_http_line1(char *line)
          */
 
         /* We know q has a non white space character so this is OK */
-        for (r = q + strlen(q) - 1; ossl_isspace(*r); r--)
+        for (r = q + strlen(q) - 1; otls_isspace(*r); r--)
             *r = 0;
     }
     if (retcode != 200) {

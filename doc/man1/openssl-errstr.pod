@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-openssl-errstr - lookup error codes
+opentls-errstr - lookup error codes
 
 =head1 SYNOPSIS
 
-B<openssl errstr> I<error_code>
+B<opentls errstr> I<error_code>
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ The error code:
 
 can be displayed with:
 
- openssl errstr 2006D080
+ opentls errstr 2006D080
 
 to produce the error message:
 
@@ -35,11 +35,11 @@ to produce the error message:
 
 =head1 COPYRIGHT
 
-Copyright 2004-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

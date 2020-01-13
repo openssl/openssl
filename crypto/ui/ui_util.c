@@ -1,14 +1,14 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/pem.h>         /* PEM_def_callback() */
+#include <opentls/pem.h>         /* PEM_def_callback() */
 #include "internal/thread_once.h"
 #include "ui_local.h"
 
@@ -25,7 +25,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
     ret =
         UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
                         prompt, verify);
-    OPENSSL_cleanse(buff, BUFSIZ);
+    OPENtls_cleanse(buff, BUFSIZ);
     return ret;
 }
 
@@ -75,14 +75,14 @@ static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
 {
     void **pptr = (void **)from_d;
     if (*pptr != NULL)
-        *pptr = OPENSSL_memdup(*pptr, sizeof(struct pem_password_cb_data));
+        *pptr = OPENtls_memdup(*pptr, sizeof(struct pem_password_cb_data));
     return 1;
 }
 
 static void ui_free_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                                 int idx, long argl, void *argp)
 {
-    OPENSSL_free(ptr);
+    OPENtls_free(ptr);
 }
 
 static CRYPTO_ONCE get_index_once = CRYPTO_ONCE_STATIC_INIT;
@@ -144,7 +144,7 @@ UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag)
     struct pem_password_cb_data *data = NULL;
     UI_METHOD *ui_method = NULL;
 
-    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
+    if ((data = OPENtls_zalloc(sizeof(*data))) == NULL
         || (ui_method = UI_create_method("PEM password callback wrapper")) == NULL
         || UI_method_set_opener(ui_method, ui_open) < 0
         || UI_method_set_reader(ui_method, ui_read) < 0
@@ -153,7 +153,7 @@ UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag)
         || !RUN_ONCE(&get_index_once, ui_method_data_index_init)
         || UI_method_set_ex_data(ui_method, ui_method_data_index, data) < 0) {
         UI_destroy_method(ui_method);
-        OPENSSL_free(data);
+        OPENtls_free(data);
         return NULL;
     }
     data->rwflag = rwflag;

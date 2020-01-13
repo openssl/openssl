@@ -1,13 +1,13 @@
 #! /bin/bash
 #
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
-# Copyright (c) 2016 Viktor Dukhovni <openssl-users@dukhovni.org>.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
+# Copyright (c) 2016 Viktor Dukhovni <opentls-users@dukhovni.org>.
 # All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # This file is dual-licensed and is also available under other terms.
 # Please contact the author.
@@ -17,8 +17,8 @@ if [ -z "$DAYS" ]; then
     DAYS=36525
 fi
 
-if [ -z "$OPENSSL_SIGALG" ]; then
-    OPENSSL_SIGALG=sha256
+if [ -z "$OPENtls_SIGALG" ]; then
+    OPENtls_SIGALG=sha256
 fi
 
 if [ -z "$REQMASK" ]; then
@@ -38,13 +38,13 @@ key() {
     local key=$1; shift
 
     local alg=rsa
-    if [ -n "$OPENSSL_KEYALG" ]; then
-        alg=$OPENSSL_KEYALG
+    if [ -n "$OPENtls_KEYALG" ]; then
+        alg=$OPENtls_KEYALG
     fi
 
     local bits=2048
-    if [ -n "$OPENSSL_KEYBITS" ]; then
-        bits=$OPENSSL_KEYBITS
+    if [ -n "$OPENtls_KEYBITS" ]; then
+        bits=$OPENtls_KEYBITS
     fi
 
     if [ ! -f "${key}.pem" ]; then
@@ -59,7 +59,7 @@ key() {
         *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
         esac
         stderr_onerror \
-            openssl genpkey "${args[@]}" -out "${key}.pem"
+            opentls genpkey "${args[@]}" -out "${key}.pem"
     fi
 }
 
@@ -71,7 +71,7 @@ req() {
     local errs
 
     stderr_onerror \
-        openssl req -new -"${OPENSSL_SIGALG}" -key "${key}.pem" \
+        opentls req -new -"${OPENtls_SIGALG}" -key "${key}.pem" \
             -config <(printf "string_mask=%s\n[req]\n%s\n%s\n[dn]\n" \
               "$REQMASK" "prompt = no" "distinguished_name = dn"
                       for dn in "$@"; do echo "$dn"; done)
@@ -82,7 +82,7 @@ req_nocn() {
 
     key "$key"
     stderr_onerror \
-        openssl req -new -"${OPENSSL_SIGALG}" -subj / -key "${key}.pem" \
+        opentls req -new -"${OPENtls_SIGALG}" -subj / -key "${key}.pem" \
             -config <(printf "[req]\n%s\n[dn]\nCN_default =\n" \
 		      "distinguished_name = dn")
 }
@@ -92,7 +92,7 @@ cert() {
     local exts=$1; shift
 
     stderr_onerror \
-        openssl x509 -req -"${OPENSSL_SIGALG}" -out "${cert}.pem" \
+        opentls x509 -req -"${OPENtls_SIGALG}" -out "${cert}.pem" \
             -extfile <(printf "%s\n" "$exts") "$@"
 }
 

@@ -68,11 +68,11 @@ EVP_CIPHER_do_all_provided
 
 =head1 SYNOPSIS
 
-=for openssl generic
+=for opentls generic
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
- EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_CIPHER *EVP_CIPHER_fetch(OPENtls_CTX *ctx, const char *algorithm,
                               const char *properties);
  int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
  void EVP_CIPHER_free(EVP_CIPHER *cipher);
@@ -129,7 +129,7 @@ EVP_CIPHER_do_all_provided
                               void (*fn)(const char *name, void *data),
                               void *data);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
- const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
+ const Otls_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
  int EVP_CIPHER_key_length(const EVP_CIPHER *e);
  int EVP_CIPHER_iv_length(const EVP_CIPHER *e);
@@ -141,12 +141,12 @@ EVP_CIPHER_do_all_provided
  int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
  const char *EVP_CIPHER_CTX_name(const EVP_CIPHER_CTX *ctx);
 
- int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[]);
- int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[]);
- int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
- const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher);
- const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher);
+ int EVP_CIPHER_get_params(EVP_CIPHER *cipher, Otls_PARAM params[]);
+ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const Otls_PARAM params[]);
+ int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, Otls_PARAM params[]);
+ const Otls_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
+ const Otls_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher);
+ const Otls_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher);
  int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
@@ -159,7 +159,7 @@ EVP_CIPHER_do_all_provided
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
- void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_CIPHER_do_all_provided(OPENtls_CTX *libctx,
                                  void (*fn)(EVP_CIPHER *cipher, void *arg),
                                  void *arg);
 
@@ -298,11 +298,11 @@ EVP_CIPHER_CTX_get_params() retrieves the requested list of operation
 B<params> from CIPHER context B<ctx>.
 
 EVP_CIPHER_gettable_params(), EVP_CIPHER_gettable_ctx_params(), and
-EVP_CIPHER_settable_ctx_params() get a constant B<OSSL_PARAM> array
+EVP_CIPHER_settable_ctx_params() get a constant B<Otls_PARAM> array
 that describes the retrievable and settable parameters, i.e. parameters
 that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params(), respectively.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+See L<Otls_PARAM(3)> for the use of B<Otls_PARAM> as parameter descriptor.
 
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
@@ -351,7 +351,7 @@ EVP_CIPHER_names_do_all() traverses all names for the I<cipher>, and
 calls I<fn> with each name and I<data>.  This is only useful with
 fetched B<EVP_CIPHER>s.
 
-EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
+EVP_CIPHER_provider() returns an B<Otls_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.
 
 EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
@@ -742,10 +742,10 @@ Encrypt a string using IDEA:
      return 1;
  }
 
-The ciphertext from the above example can be decrypted using the B<openssl>
+The ciphertext from the above example can be decrypted using the B<opentls>
 utility with the command line (shown on two lines for clarity):
 
- openssl idea -d \
+ opentls idea -d \
      -K 000102030405060708090A0B0C0D0E0F -iv 0102030405060708 <filename
 
 General encryption and decryption function example using FILE I/O and AES128
@@ -768,8 +768,8 @@ with a 128-bit key:
      ctx = EVP_CIPHER_CTX_new();
      EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
                        do_encrypt);
-     OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
-     OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);
+     OPENtls_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
+     OPENtls_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);
 
      /* Now we can set key and IV */
      EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
@@ -820,9 +820,9 @@ L<EVP_sm4_cbc(3)>
 
 =head1 HISTORY
 
-Support for OCB mode was added in OpenSSL 1.1.0.
+Support for OCB mode was added in Opentls 1.1.0.
 
-B<EVP_CIPHER_CTX> was made opaque in OpenSSL 1.1.0.  As a result,
+B<EVP_CIPHER_CTX> was made opaque in Opentls 1.1.0.  As a result,
 EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
@@ -833,11 +833,11 @@ were added in 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

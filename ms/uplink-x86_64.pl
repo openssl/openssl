@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # $output is the last argument if it looks like a file (it has an extension)
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -21,8 +21,8 @@ $prefix="_lazy";
 
 print <<___;
 .text
-.extern	OPENSSL_Uplink
-.globl	OPENSSL_UplinkTable
+.extern	OPENtls_Uplink
+.globl	OPENtls_UplinkTable
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;
@@ -34,14 +34,14 @@ $prefix${i}:
 	mov	%rdx,56(%rsp)
 	mov	%r8,64(%rsp)
 	mov	%r9,72(%rsp)
-	lea	OPENSSL_UplinkTable(%rip),%rcx
+	lea	OPENtls_UplinkTable(%rip),%rcx
 	mov	\$$i,%rdx
-	call	OPENSSL_Uplink
+	call	OPENtls_Uplink
 	mov	48(%rsp),%rcx
 	mov	56(%rsp),%rdx
 	mov	64(%rsp),%r8
 	mov	72(%rsp),%r9
-	lea	OPENSSL_UplinkTable(%rip),%rax
+	lea	OPENtls_UplinkTable(%rip),%rax
 	add	\$40,%rsp
 	jmp	*8*$i(%rax)
 $prefix${i}_end:
@@ -50,7 +50,7 @@ ___
 }
 print <<___;
 .data
-OPENSSL_UplinkTable:
+OPENtls_UplinkTable:
         .quad   $N
 ___
 for ($i=1;$i<=$N;$i++) {   print "      .quad   $prefix$i\n";   }

@@ -1,28 +1,28 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_E_OS_H
-# define OSSL_E_OS_H
+#ifndef Otls_E_OS_H
+# define Otls_E_OS_H
 
 # include <limits.h>
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# include <openssl/e_os2.h>
-# include <openssl/crypto.h>
+# include <opentls/e_os2.h>
+# include <opentls/crypto.h>
 # include "internal/nelem.h"
 
 /*
- * <openssl/e_os2.h> contains what we can justify to make visible to the
+ * <opentls/e_os2.h> contains what we can justify to make visible to the
  * outside; this file e_os.h is not part of the exported interface.
  */
 
-# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
+# if defined(OPENtls_SYS_VXWORKS) || defined(OPENtls_SYS_UEFI)
 #  define NO_CHMOD
 #  define NO_SYSLOG
 # endif
@@ -34,13 +34,13 @@
 /********************************************************************
  The Microsoft section
  ********************************************************************/
-# if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
+# if defined(OPENtls_SYS_WIN32) && !defined(WIN32)
 #  define WIN32
 # endif
-# if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS) && !defined(WINDOWS)
 #  define WINDOWS
 # endif
-# if defined(OPENSSL_SYS_MSDOS) && !defined(MSDOS)
+# if defined(OPENtls_SYS_MSDOS) && !defined(MSDOS)
 #  define MSDOS
 # endif
 
@@ -161,8 +161,8 @@ extern FILE *_imp___iob;
 #  include <io.h>
 #  include <fcntl.h>
 
-#  ifdef OPENSSL_SYS_WINCE
-#   define OPENSSL_NO_POSIX_IO
+#  ifdef OPENtls_SYS_WINCE
+#   define OPENtls_NO_POSIX_IO
 #  endif
 
 #  define EXIT(n) exit(n)
@@ -173,7 +173,7 @@ extern FILE *_imp___iob;
 #  ifndef R_OK
 #   define R_OK        4
 #  endif
-#  ifdef OPENSSL_SYS_WINCE
+#  ifdef OPENtls_SYS_WINCE
 #   define DEFAULT_HOME  ""
 #  else
 #   define DEFAULT_HOME  "C:"
@@ -190,13 +190,13 @@ extern FILE *_imp___iob;
 
 # else                          /* The non-microsoft world */
 
-#  if defined(OPENSSL_SYS_VXWORKS)
+#  if defined(OPENtls_SYS_VXWORKS)
 #   include <time.h>
 #  else
 #   include <sys/time.h>
 #  endif
 
-#  ifdef OPENSSL_SYS_VMS
+#  ifdef OPENtls_SYS_VMS
 #   define VMS 1
   /*
    * some programs don't include stdlib, so exit() and others give implicit
@@ -243,7 +243,7 @@ extern FILE *_imp___iob;
      /* !defined VMS */
 #   include <unistd.h>
 #   include <sys/types.h>
-#   ifdef OPENSSL_SYS_WIN32_CYGWIN
+#   ifdef OPENtls_SYS_WIN32_CYGWIN
 #    include <io.h>
 #    include <fcntl.h>
 #   endif
@@ -256,7 +256,7 @@ extern FILE *_imp___iob;
 
 /***********************************************/
 
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
 #  if (_MSC_VER >= 1310)
@@ -274,7 +274,7 @@ extern FILE *_imp___iob;
 # endif
 
 /* vxworks */
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
 #  include <ioLib.h>
 #  include <tickLib.h>
 #  include <sysLib.h>
@@ -301,10 +301,10 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 
 /* unistd.h defines _POSIX_VERSION */
-# if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
+# if !defined(OPENtls_NO_SECURE_MEMORY) && defined(OPENtls_SYS_UNIX) \
      && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
           || defined(__sun) || defined(__hpux) || defined(__sgi)      \
           || defined(__osf__) )
-#  define OPENSSL_SECURE_MEMORY  /* secure memory is implemented */
+#  define OPENtls_SECURE_MEMORY  /* secure memory is implemented */
 # endif
 #endif

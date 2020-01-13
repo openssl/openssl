@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
-int do_ex_data_init(OPENSSL_CTX *ctx)
+int do_ex_data_init(OPENtls_CTX *ctx)
 {
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return 0;
@@ -25,17 +25,17 @@ int do_ex_data_init(OPENSSL_CTX *ctx)
  * Return the EX_CALLBACKS from the |ex_data| array that corresponds to
  * a given class.  On success, *holds the lock.*
  */
-static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
+static EX_CALLBACKS *get_and_lock(OPENtls_CTX *ctx, int class_index)
 {
     EX_CALLBACKS *ip;
-    OSSL_EX_DATA_GLOBAL *global = NULL;
+    Otls_EX_DATA_GLOBAL *global = NULL;
 
     if (class_index < 0 || class_index >= CRYPTO_EX_INDEX__COUNT) {
         CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
-    global = openssl_ctx_get_ex_data_global(ctx);
+    global = opentls_ctx_get_ex_data_global(ctx);
     if (global == NULL || global->ex_data_lock == NULL) {
         /*
          * If we get here, someone (who?) cleaned up the lock, so just
@@ -51,7 +51,7 @@ static EX_CALLBACKS *get_and_lock(OPENSSL_CTX *ctx, int class_index)
 
 static void cleanup_cb(EX_CALLBACK *funcs)
 {
-    OPENSSL_free(funcs);
+    OPENtls_free(funcs);
 }
 
 /*
@@ -60,10 +60,10 @@ static void cleanup_cb(EX_CALLBACK *funcs)
  * called under potential race-conditions anyway (it's for program shutdown
  * after all).
  */
-void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx)
+void crypto_cleanup_all_ex_data_int(OPENtls_CTX *ctx)
 {
     int i;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return;
@@ -101,12 +101,12 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 1;
 }
 
-int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
+int crypto_free_ex_index_ex(OPENtls_CTX *ctx, int class_index, int idx)
 {
     EX_CALLBACKS *ip;
     EX_CALLBACK *a;
     int toret = 0;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return 0;
@@ -136,7 +136,7 @@ int CRYPTO_free_ex_index(int class_index, int idx)
 /*
  * Register a new index.
  */
-int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
+int crypto_get_ex_new_index_ex(OPENtls_CTX *ctx, int class_index, long argl,
                                void *argp, CRYPTO_EX_new *new_func,
                                CRYPTO_EX_dup *dup_func,
                                CRYPTO_EX_free *free_func)
@@ -144,7 +144,7 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
     int toret = -1;
     EX_CALLBACK *a;
     EX_CALLBACKS *ip;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return -1;
@@ -155,7 +155,7 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
 
     if (ip->meth == NULL) {
         ip->meth = sk_EX_CALLBACK_new_null();
-        /* We push an initial value on the stack because the SSL
+        /* We push an initial value on the stack because the tls
          * "app_data" routines use ex_data index zero.  See RT 3710. */
         if (ip->meth == NULL
             || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
@@ -164,7 +164,7 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
         }
     }
 
-    a = (EX_CALLBACK *)OPENSSL_malloc(sizeof(*a));
+    a = (EX_CALLBACK *)OPENtls_malloc(sizeof(*a));
     if (a == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -177,7 +177,7 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
 
     if (!sk_EX_CALLBACK_push(ip->meth, NULL)) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(a);
+        OPENtls_free(a);
         goto err;
     }
     toret = sk_EX_CALLBACK_num(ip->meth) - 1;
@@ -203,7 +203,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
  * in the lock, then using them outside the lock. Note this only applies
  * to the global "ex_data" state (ie. class definitions), not 'ad' itself.
  */
-int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
+int crypto_new_ex_data_ex(OPENtls_CTX *ctx, int class_index, void *obj,
                           CRYPTO_EX_DATA *ad)
 {
     int mx, i;
@@ -211,7 +211,7 @@ int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
     EX_CALLBACK **storage = NULL;
     EX_CALLBACK *stack[10];
     EX_CALLBACKS *ip;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ctx);
 
     if (global == NULL)
         return 0;
@@ -225,10 +225,10 @@ int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
 
     mx = sk_EX_CALLBACK_num(ip->meth);
     if (mx > 0) {
-        if (mx < (int)OSSL_NELEM(stack))
+        if (mx < (int)Otls_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = OPENtls_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
@@ -247,7 +247,7 @@ int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
         }
     }
     if (storage != stack)
-        OPENSSL_free(storage);
+        OPENtls_free(storage);
     return 1;
 }
 
@@ -269,7 +269,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     EX_CALLBACK **storage = NULL;
     EX_CALLBACKS *ip;
     int toret = 0;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(from->ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(from->ctx);
 
     if (global == NULL)
         return 0;
@@ -286,10 +286,10 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     if (j < mx)
         mx = j;
     if (mx > 0) {
-        if (mx < (int)OSSL_NELEM(stack))
+        if (mx < (int)Otls_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = OPENtls_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
@@ -323,7 +323,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     toret = 1;
  err:
     if (storage != stack)
-        OPENSSL_free(storage);
+        OPENtls_free(storage);
     return toret;
 }
 
@@ -340,20 +340,20 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     EX_CALLBACK *f;
     EX_CALLBACK *stack[10];
     EX_CALLBACK **storage = NULL;
-    OSSL_EX_DATA_GLOBAL *global;
+    Otls_EX_DATA_GLOBAL *global;
 
     if ((ip = get_and_lock(ad->ctx, class_index)) == NULL)
         goto err;
-    global = openssl_ctx_get_ex_data_global(ad->ctx);
+    global = opentls_ctx_get_ex_data_global(ad->ctx);
     if (global == NULL)
         goto err;
 
     mx = sk_EX_CALLBACK_num(ip->meth);
     if (mx > 0) {
-        if (mx < (int)OSSL_NELEM(stack))
+        if (mx < (int)Otls_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = OPENtls_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
@@ -375,7 +375,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     }
 
     if (storage != stack)
-        OPENSSL_free(storage);
+        OPENtls_free(storage);
  err:
     sk_void_free(ad->sk);
     ad->sk = NULL;
@@ -392,7 +392,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
     EX_CALLBACK *f;
     EX_CALLBACKS *ip;
     void *curval;
-    OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ad->ctx);
+    Otls_EX_DATA_GLOBAL *global = opentls_ctx_get_ex_data_global(ad->ctx);
 
     if (global == NULL)
         return 0;
@@ -457,7 +457,7 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
     return sk_void_value(ad->sk, idx);
 }
 
-OPENSSL_CTX *crypto_ex_data_get_openssl_ctx(const CRYPTO_EX_DATA *ad)
+OPENtls_CTX *crypto_ex_data_get_opentls_ctx(const CRYPTO_EX_DATA *ad)
 {
     return ad->ctx;
 }

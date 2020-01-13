@@ -1,10 +1,10 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../e_os.h"
@@ -16,11 +16,11 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <openssl/conf.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/engine.h>
-#include <openssl/objects.h>
+#include <opentls/conf.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/engine.h>
+#include <opentls/objects.h>
 #include <crypto/cryptodev.h>
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
@@ -66,7 +66,7 @@ struct driver_info_st {
     char *driver_name;
 };
 
-#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#ifdef OPENtls_NO_DYNAMIC_ENGINE
 void engine_load_devcrypto_int(void);
 #endif
 
@@ -107,20 +107,20 @@ static const struct cipher_data_st {
     int flags;
     int devcryptoid;
 } cipher_data[] = {
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     { NID_des_cbc, 8, 8, 8, EVP_CIPH_CBC_MODE, CRYPTO_DES_CBC },
     { NID_des_ede3_cbc, 8, 24, 8, EVP_CIPH_CBC_MODE, CRYPTO_3DES_CBC },
 #endif
-#ifndef OPENSSL_NO_BF
+#ifndef OPENtls_NO_BF
     { NID_bf_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_BLF_CBC },
 #endif
-#ifndef OPENSSL_NO_CAST
+#ifndef OPENtls_NO_CAST
     { NID_cast5_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_CAST_CBC },
 #endif
     { NID_aes_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
     { NID_aes_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
     { NID_aes_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
     { NID_rc4, 1, 16, 0, EVP_CIPH_STREAM_CIPHER, CRYPTO_ARC4 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_CTR)
@@ -142,7 +142,7 @@ static const struct cipher_data_st {
     { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
     { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
 #endif
-#ifndef OPENSSL_NO_CAMELLIA
+#ifndef OPENtls_NO_CAMELLIA
     { NID_camellia_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE,
       CRYPTO_CAMELLIA_CBC },
     { NID_camellia_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE,
@@ -156,7 +156,7 @@ static size_t find_cipher_data_index(int nid)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(cipher_data); i++)
+    for (i = 0; i < Otls_NELEM(cipher_data); i++)
         if (nid == cipher_data[i].nid)
             return i;
     return (size_t)-1;
@@ -184,7 +184,7 @@ static const struct cipher_data_st *get_cipher_data(int nid)
 }
 
 /*
- * Following are the three necessary functions to map OpenSSL functionality
+ * Following are the three necessary functions to map Opentls functionality
  * with cryptodev.
  */
 
@@ -381,11 +381,11 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
  * Note that known_cipher_nids[] isn't necessarily indexed the same way as
  * cipher_data[] above, which the other tables are.
  */
-static int known_cipher_nids[OSSL_NELEM(cipher_data)];
+static int known_cipher_nids[Otls_NELEM(cipher_data)];
 static int known_cipher_nids_amount = -1; /* -1 indicates not yet initialised */
-static EVP_CIPHER *known_cipher_methods[OSSL_NELEM(cipher_data)] = { NULL, };
-static int selected_ciphers[OSSL_NELEM(cipher_data)];
-static struct driver_info_st cipher_driver_info[OSSL_NELEM(cipher_data)];
+static EVP_CIPHER *known_cipher_methods[Otls_NELEM(cipher_data)] = { NULL, };
+static int selected_ciphers[Otls_NELEM(cipher_data)];
+static struct driver_info_st cipher_driver_info[Otls_NELEM(cipher_data)];
 
 
 static int devcrypto_test_cipher(size_t cipher_data_index)
@@ -415,7 +415,7 @@ static void prepare_cipher_methods(void)
     sess.key = (void *)"01234567890123456789012345678901234567890123456789";
 
     for (i = 0, known_cipher_nids_amount = 0;
-         i < OSSL_NELEM(cipher_data); i++) {
+         i < Otls_NELEM(cipher_data); i++) {
 
         selected_ciphers[i] = 1;
         /*
@@ -463,7 +463,7 @@ static void prepare_cipher_methods(void)
                 cipher_driver_info[i].accelerated = DEVCRYPTO_ACCELERATION_UNKNOWN;
             } else {
                 cipher_driver_info[i].driver_name =
-                    OPENSSL_strndup(siop.cipher_info.cra_driver_name,
+                    OPENtls_strndup(siop.cipher_info.cra_driver_name,
                                     CRYPTODEV_MAX_ALG_NAME);
                 if (!(siop.flags & SIOP_FLAG_KERNEL_DRIVER_ONLY))
                     cipher_driver_info[i].accelerated = DEVCRYPTO_NOT_ACCELERATED;
@@ -484,7 +484,7 @@ static void rebuild_known_cipher_nids(ENGINE *e)
 {
     size_t i;
 
-    for (i = 0, known_cipher_nids_amount = 0; i < OSSL_NELEM(cipher_data); i++) {
+    for (i = 0, known_cipher_nids_amount = 0; i < Otls_NELEM(cipher_data); i++) {
         if (devcrypto_test_cipher(i))
             known_cipher_nids[known_cipher_nids_amount++] = cipher_data[i].nid;
     }
@@ -519,9 +519,9 @@ static void destroy_all_cipher_methods(void)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(cipher_data); i++) {
+    for (i = 0; i < Otls_NELEM(cipher_data); i++) {
         destroy_cipher_method(cipher_data[i].nid);
-        OPENSSL_free(cipher_driver_info[i].driver_name);
+        OPENtls_free(cipher_driver_info[i].driver_name);
         cipher_driver_info[i].driver_name = NULL;
     }
 }
@@ -541,7 +541,7 @@ static void devcrypto_select_all_ciphers(int *cipher_list)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(cipher_data); i++)
+    for (i = 0; i < Otls_NELEM(cipher_data); i++)
         cipher_list[i] = 1;
 }
 
@@ -554,7 +554,7 @@ static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
 
     if (len == 0)
         return 1;
-    if (usr == NULL || (name = OPENSSL_strndup(str, len)) == NULL)
+    if (usr == NULL || (name = OPENtls_strndup(str, len)) == NULL)
         return 0;
     EVP = EVP_get_cipherbyname(name);
     if (EVP == NULL)
@@ -563,7 +563,7 @@ static int cryptodev_select_cipher_cb(const char *str, int len, void *usr)
         cipher_list[i] = 1;
     else
         fprintf(stderr, "devcrypto: cipher %s not available\n", name);
-    OPENSSL_free(name);
+    OPENtls_free(name);
     return 1;
 }
 
@@ -577,7 +577,7 @@ static void dump_cipher_info(void)
 #ifndef CIOCGSESSINFO
     fprintf(stderr, "CIOCGSESSINFO (session info call) unavailable\n");
 #endif
-    for (i = 0; i < OSSL_NELEM(cipher_data); i++) {
+    for (i = 0; i < Otls_NELEM(cipher_data); i++) {
         name = OBJ_nid2sn(cipher_data[i].nid);
         fprintf (stderr, "Cipher %s, NID=%d, /dev/crypto info: id=%d, ",
                  name ? name : "unknown", cipher_data[i].nid,
@@ -605,7 +605,7 @@ static void dump_cipher_info(void)
  * We only support digests if the cryptodev implementation supports multiple
  * data updates and session copying.  Otherwise, we would be forced to maintain
  * a cache, which is perilous if there's a lot of data coming in (if someone
- * wants to checksum an OpenSSL tarball, for example).
+ * wants to checksum an Opentls tarball, for example).
  */
 #if defined(CIOCCPHASH) && defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
 #define IMPLEMENT_DIGEST
@@ -633,11 +633,11 @@ static const struct digest_data_st {
     int digestlen;
     int devcryptoid;
 } digest_data[] = {
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     { NID_md5, /* MD5_CBLOCK */ 64, 16, CRYPTO_MD5 },
 #endif
     { NID_sha1, SHA_CBLOCK, 20, CRYPTO_SHA1 },
-#ifndef OPENSSL_NO_RMD160
+#ifndef OPENtls_NO_RMD160
 # if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_RIPEMD160)
     { NID_ripemd160, /* RIPEMD160_CBLOCK */ 64, 20, CRYPTO_RIPEMD160 },
 # endif
@@ -660,7 +660,7 @@ static size_t find_digest_data_index(int nid)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(digest_data); i++)
+    for (i = 0; i < Otls_NELEM(digest_data); i++)
         if (nid == digest_data[i].nid)
             return i;
     return (size_t)-1;
@@ -688,7 +688,7 @@ static const struct digest_data_st *get_digest_data(int nid)
 }
 
 /*
- * Following are the five necessary functions to map OpenSSL functionality
+ * Following are the five necessary functions to map Opentls functionality
  * with cryptodev: init, update, final, cleanup, and copy.
  */
 
@@ -807,11 +807,11 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
  * Note that known_digest_nids[] isn't necessarily indexed the same way as
  * digest_data[] above, which the other tables are.
  */
-static int known_digest_nids[OSSL_NELEM(digest_data)];
+static int known_digest_nids[Otls_NELEM(digest_data)];
 static int known_digest_nids_amount = -1; /* -1 indicates not yet initialised */
-static EVP_MD *known_digest_methods[OSSL_NELEM(digest_data)] = { NULL, };
-static int selected_digests[OSSL_NELEM(digest_data)];
-static struct driver_info_st digest_driver_info[OSSL_NELEM(digest_data)];
+static EVP_MD *known_digest_methods[Otls_NELEM(digest_data)] = { NULL, };
+static int selected_digests[Otls_NELEM(digest_data)];
+static struct driver_info_st digest_driver_info[Otls_NELEM(digest_data)];
 
 static int devcrypto_test_digest(size_t digest_data_index)
 {
@@ -829,7 +829,7 @@ static void rebuild_known_digest_nids(ENGINE *e)
 {
     size_t i;
 
-    for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data); i++) {
+    for (i = 0, known_digest_nids_amount = 0; i < Otls_NELEM(digest_data); i++) {
         if (devcrypto_test_digest(i))
             known_digest_nids[known_digest_nids_amount++] = digest_data[i].nid;
     }
@@ -851,7 +851,7 @@ static void prepare_digest_methods(void)
     memset(&sess1, 0, sizeof(sess1));
     memset(&sess2, 0, sizeof(sess2));
 
-    for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data);
+    for (i = 0, known_digest_nids_amount = 0; i < Otls_NELEM(digest_data);
          i++) {
 
         selected_digests[i] = 1;
@@ -873,7 +873,7 @@ static void prepare_digest_methods(void)
             digest_driver_info[i].accelerated = DEVCRYPTO_ACCELERATION_UNKNOWN;
         } else {
             digest_driver_info[i].driver_name =
-                OPENSSL_strndup(siop.hash_info.cra_driver_name,
+                OPENtls_strndup(siop.hash_info.cra_driver_name,
                                 CRYPTODEV_MAX_ALG_NAME);
             if (siop.flags & SIOP_FLAG_KERNEL_DRIVER_ONLY)
                 digest_driver_info[i].accelerated = DEVCRYPTO_ACCELERATED;
@@ -949,9 +949,9 @@ static void destroy_all_digest_methods(void)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(digest_data); i++) {
+    for (i = 0; i < Otls_NELEM(digest_data); i++) {
         destroy_digest_method(digest_data[i].nid);
-        OPENSSL_free(digest_driver_info[i].driver_name);
+        OPENtls_free(digest_driver_info[i].driver_name);
         digest_driver_info[i].driver_name = NULL;
     }
 }
@@ -971,7 +971,7 @@ static void devcrypto_select_all_digests(int *digest_list)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(digest_data); i++)
+    for (i = 0; i < Otls_NELEM(digest_data); i++)
         digest_list[i] = 1;
 }
 
@@ -984,7 +984,7 @@ static int cryptodev_select_digest_cb(const char *str, int len, void *usr)
 
     if (len == 0)
         return 1;
-    if (usr == NULL || (name = OPENSSL_strndup(str, len)) == NULL)
+    if (usr == NULL || (name = OPENtls_strndup(str, len)) == NULL)
         return 0;
     EVP = EVP_get_digestbyname(name);
     if (EVP == NULL)
@@ -993,7 +993,7 @@ static int cryptodev_select_digest_cb(const char *str, int len, void *usr)
         digest_list[i] = 1;
     else
         fprintf(stderr, "devcrypto: digest %s not available\n", name);
-    OPENSSL_free(name);
+    OPENtls_free(name);
     return 1;
 }
 
@@ -1008,7 +1008,7 @@ static void dump_digest_info(void)
     fprintf(stderr, "CIOCGSESSINFO (session info call) unavailable\n");
 #endif
 
-    for (i = 0; i < OSSL_NELEM(digest_data); i++) {
+    for (i = 0; i < Otls_NELEM(digest_data); i++) {
         name = OBJ_nid2sn(digest_data[i].nid);
         fprintf (stderr, "Digest %s, NID=%d, /dev/crypto info: id=%d, driver=%s",
                  name ? name : "unknown", digest_data[i].nid,
@@ -1052,11 +1052,11 @@ static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
    {DEVCRYPTO_CMD_USE_SOFTDRIVERS,
     "USE_SOFTDRIVERS",
     "specifies whether to use software (not accelerated) drivers ("
-        OPENSSL_MSTR(DEVCRYPTO_REQUIRE_ACCELERATED) "=use only accelerated drivers, "
-        OPENSSL_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, "
-        OPENSSL_MSTR(DEVCRYPTO_REJECT_SOFTWARE)
+        OPENtls_MSTR(DEVCRYPTO_REQUIRE_ACCELERATED) "=use only accelerated drivers, "
+        OPENtls_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, "
+        OPENtls_MSTR(DEVCRYPTO_REJECT_SOFTWARE)
         "=use if acceleration can't be determined) [default="
-        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
+        OPENtls_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
     ENGINE_CMD_FLAG_NUMERIC},
 #endif
 
@@ -1074,7 +1074,7 @@ static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
 
    {DEVCRYPTO_CMD_DUMP_INFO,
     "DUMP_INFO",
-    "dump info about each algorithm to stderr; use 'openssl engine -pre DUMP_INFO devcrypto'",
+    "dump info about each algorithm to stderr; use 'opentls engine -pre DUMP_INFO devcrypto'",
     ENGINE_CMD_FLAG_NO_INPUT},
 
    {0, NULL, NULL, 0}
@@ -1113,13 +1113,13 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         } else if (strcasecmp((const char*)p, "NONE") == 0) {
             memset(selected_ciphers, 0, sizeof(selected_ciphers));
         } else {
-            new_list=OPENSSL_zalloc(sizeof(selected_ciphers));
+            new_list=OPENtls_zalloc(sizeof(selected_ciphers));
             if (!CONF_parse_list(p, ',', 1, cryptodev_select_cipher_cb, new_list)) {
-                OPENSSL_free(new_list);
+                OPENtls_free(new_list);
                 return 0;
             }
             memcpy(selected_ciphers, new_list, sizeof(selected_ciphers));
-            OPENSSL_free(new_list);
+            OPENtls_free(new_list);
         }
         rebuild_known_cipher_nids(e);
         return 1;
@@ -1133,13 +1133,13 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         } else if (strcasecmp((const char*)p, "NONE") == 0) {
             memset(selected_digests, 0, sizeof(selected_digests));
         } else {
-            new_list=OPENSSL_zalloc(sizeof(selected_digests));
+            new_list=OPENtls_zalloc(sizeof(selected_digests));
             if (!CONF_parse_list(p, ',', 1, cryptodev_select_digest_cb, new_list)) {
-                OPENSSL_free(new_list);
+                OPENtls_free(new_list);
                 return 0;
             }
             memcpy(selected_digests, new_list, sizeof(selected_digests));
-            OPENSSL_free(new_list);
+            OPENtls_free(new_list);
         }
         rebuild_known_digest_nids(e);
         return 1;
@@ -1249,23 +1249,23 @@ static int bind_devcrypto(ENGINE *e) {
  * /Richard Levitte, 2017-05-11
  */
 #if 0
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
         && ENGINE_set_RSA(e, devcrypto_rsa)
 # endif
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         && ENGINE_set_DSA(e, devcrypto_dsa)
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
         && ENGINE_set_DH(e, devcrypto_dh)
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
         && ENGINE_set_EC(e, devcrypto_ec)
 # endif
 #endif
         );
 }
 
-#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#ifdef OPENtls_NO_DYNAMIC_ENGINE
 /*
  * In case this engine is built into libcrypto, then it doesn't offer any
  * ability to be dynamically loadable.

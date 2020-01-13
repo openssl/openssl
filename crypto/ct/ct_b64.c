@@ -1,18 +1,18 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <limits.h>
 #include <string.h>
 
-#include <openssl/ct.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
 
 #include "ct_local.h"
 
@@ -33,7 +33,7 @@ static int ct_base64_decode(const char *in, unsigned char **out)
     }
 
     outlen = (inlen / 4) * 3;
-    outbuf = OPENSSL_malloc(outlen);
+    outbuf = OPENtls_malloc(outlen);
     if (outbuf == NULL) {
         CTerr(CT_F_CT_BASE64_DECODE, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -56,7 +56,7 @@ static int ct_base64_decode(const char *in, unsigned char **out)
     *out = outbuf;
     return outlen;
 err:
-    OPENSSL_free(outbuf);
+    OPENtls_free(outbuf);
     return -1;
 }
 
@@ -110,7 +110,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     p = dec;
     if (o2i_SCT_signature(sct, &p, declen) <= 0)
         goto err;
-    OPENSSL_free(dec);
+    OPENtls_free(dec);
     dec = NULL;
 
     SCT_set_timestamp(sct, timestamp);
@@ -121,7 +121,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     return sct;
 
  err:
-    OPENSSL_free(dec);
+    OPENtls_free(dec);
     SCT_free(sct);
     return NULL;
 }
@@ -152,7 +152,7 @@ int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *n
 
     p = pkey_der;
     pkey = d2i_PUBKEY(NULL, &p, pkey_der_len);
-    OPENSSL_free(pkey_der);
+    OPENtls_free(pkey_der);
     if (pkey == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
         return 0;

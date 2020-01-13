@@ -1,15 +1,15 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#include <opentls/tls.h>
 #include <string.h>
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 #include "internal/packet.h"
 
@@ -21,7 +21,7 @@ static int chseen = 0, shseen = 0, sccsseen = 0, ccsaftersh = 0;
 static int ccsbeforesh = 0, sappdataseen = 0, cappdataseen = 0, badccs = 0;
 static int badvers = 0, badsessid = 0;
 
-static unsigned char chsessid[SSL_MAX_SSL_SESSION_ID_LENGTH];
+static unsigned char chsessid[tls_MAX_tls_SESSION_ID_LENGTH];
 static size_t chsessidlen = 0;
 
 static int watchccs_new(BIO *bi);
@@ -112,11 +112,11 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
 
         expectedrecvers = TLS1_2_VERSION;
 
-        if (rectype == SSL3_RT_HANDSHAKE) {
+        if (rectype == tls3_RT_HANDSHAKE) {
             if (!PACKET_get_1(&msg, &msgtype)
                     || !PACKET_get_length_prefixed_3(&msg, &msgbody))
                 return 0;
-            if (msgtype == SSL3_MT_CLIENT_HELLO) {
+            if (msgtype == tls3_MT_CLIENT_HELLO) {
                 chseen++;
 
                 /*
@@ -145,7 +145,7 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
                                           chsessidlen) != 0))
                         badsessid = 1;
                 }
-            } else if (msgtype == SSL3_MT_SERVER_HELLO) {
+            } else if (msgtype == tls3_MT_SERVER_HELLO) {
                 shseen++;
                 /*
                  * Skip legacy_version (2 bytes) and Random (32 bytes) to read
@@ -165,7 +165,7 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
                                       chsessidlen) != 0))
                     badsessid = 1;
             }
-        } else if (rectype == SSL3_RT_CHANGE_CIPHER_SPEC) {
+        } else if (rectype == tls3_RT_CHANGE_CIPHER_SPEC) {
             if (bio == s_to_c_fbio) {
                 /*
                  * Server writing. We shouldn't have written any app data
@@ -193,7 +193,7 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
             } else {
                 badccs = 1;
             }
-        } else if(rectype == SSL3_RT_APPLICATION_DATA) {
+        } else if(rectype == tls3_RT_APPLICATION_DATA) {
             if (bio == s_to_c_fbio)
                 sappdataseen = 1;
             else
@@ -242,23 +242,23 @@ static int watchccs_puts(BIO *bio, const char *str)
 
 static int test_tls13ccs(int tst)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *sssl = NULL, *cssl = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *stls = NULL, *ctls = NULL;
     int ret = 0;
     const char msg[] = "Dummy data";
     char buf[80];
     size_t written, readbytes;
-    SSL_SESSION *sess = NULL;
+    tls_SESSION *sess = NULL;
 
     chseen = shseen = sccsseen = ccsaftersh = ccsbeforesh = 0;
     sappdataseen = cappdataseen = badccs = badvers = badsessid = 0;
     chsessidlen = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey))
-        || !TEST_true(SSL_CTX_set_max_early_data(sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH)))
+        || !TEST_true(tls_CTX_set_max_early_data(sctx,
+                                                 tls3_RT_MAX_PLAIN_LENGTH)))
         goto err;
 
     /*
@@ -285,13 +285,13 @@ static int test_tls13ccs(int tst)
     case 4:
     case 7:
     case 10:
-        SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        tls_CTX_clear_options(cctx, tls_OP_ENABLE_MIDDLEBOX_COMPAT);
         break;
     case 2:
     case 5:
     case 8:
     case 11:
-        SSL_CTX_clear_options(sctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        tls_CTX_clear_options(sctx, tls_OP_ENABLE_MIDDLEBOX_COMPAT);
         break;
     default:
         TEST_error("Invalid test value");
@@ -300,28 +300,28 @@ static int test_tls13ccs(int tst)
 
     if (tst >= 6) {
         /* Get a session suitable for early_data */
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL))
-                || !TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        if (!TEST_true(create_tls_objects(sctx, cctx, &stls, &ctls, NULL, NULL))
+                || !TEST_true(create_tls_connection(stls, ctls, tls_ERROR_NONE)))
             goto err;
-        sess = SSL_get1_session(cssl);
+        sess = tls_get1_session(ctls);
         if (!TEST_ptr(sess))
             goto err;
-        SSL_shutdown(cssl);
-        SSL_shutdown(sssl);
-        SSL_free(sssl);
-        SSL_free(cssl);
-        sssl = cssl = NULL;
+        tls_shutdown(ctls);
+        tls_shutdown(stls);
+        tls_free(stls);
+        tls_free(ctls);
+        stls = ctls = NULL;
     }
 
     if ((tst >= 3 && tst <= 5) || tst >= 9) {
         /* HRR handshake */
-#if defined(OPENSSL_NO_EC)
-# if !defined(OPENSSL_NO_DH)
-        if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "ffdhe3072")))
+#if defined(OPENtls_NO_EC)
+# if !defined(OPENtls_NO_DH)
+        if (!TEST_true(tls_CTX_set1_groups_list(sctx, "ffdhe3072")))
             goto err;
 # endif
 #else
-        if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "P-256")))
+        if (!TEST_true(tls_CTX_set1_groups_list(sctx, "P-256")))
             goto err;
 #endif
     }
@@ -336,35 +336,35 @@ static int test_tls13ccs(int tst)
     }
 
     /* BIOs get freed on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, s_to_c_fbio,
+    if (!TEST_true(create_tls_objects(sctx, cctx, &stls, &ctls, s_to_c_fbio,
                                       c_to_s_fbio)))
         goto err;
 
     if (tst >= 6) {
         /* Early data */
-        if (!TEST_true(SSL_set_session(cssl, sess))
-                || !TEST_true(SSL_write_early_data(cssl, msg, strlen(msg),
+        if (!TEST_true(tls_set_session(ctls, sess))
+                || !TEST_true(tls_write_early_data(ctls, msg, strlen(msg),
                                                    &written))
                 || (tst <= 8
-                    && !TEST_int_eq(SSL_read_early_data(sssl, buf,  sizeof(buf),
+                    && !TEST_int_eq(tls_read_early_data(stls, buf,  sizeof(buf),
                                                 &readbytes),
-                                                SSL_READ_EARLY_DATA_SUCCESS)))
+                                                tls_READ_EARLY_DATA_SUCCESS)))
             goto err;
         if (tst <= 8) {
-            if (!TEST_int_gt(SSL_connect(cssl), 0))
+            if (!TEST_int_gt(tls_connect(ctls), 0))
                 goto err;
         } else {
-            if (!TEST_int_le(SSL_connect(cssl), 0))
+            if (!TEST_int_le(tls_connect(ctls), 0))
                 goto err;
         }
-        if (!TEST_int_eq(SSL_read_early_data(sssl, buf,  sizeof(buf),
+        if (!TEST_int_eq(tls_read_early_data(stls, buf,  sizeof(buf),
                                              &readbytes),
-                         SSL_READ_EARLY_DATA_FINISH))
+                         tls_READ_EARLY_DATA_FINISH))
             goto err;
     }
 
     /* Perform handshake (or complete it if doing early data ) */
-    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(stls, ctls, tls_ERROR_NONE)))
         goto err;
 
     /*
@@ -479,11 +479,11 @@ static int test_tls13ccs(int tst)
 
     ret = 1;
  err:
-    SSL_SESSION_free(sess);
-    SSL_free(sssl);
-    SSL_free(cssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_SESSION_free(sess);
+    tls_free(stls);
+    tls_free(ctls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return ret;
 }

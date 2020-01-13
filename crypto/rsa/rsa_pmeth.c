@@ -1,23 +1,23 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/constant_time.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/x509v3.h>
-#include <openssl/cms.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/rsa.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/x509v3.h>
+#include <opentls/cms.h>
 #include "crypto/evp.h"
 #include "rsa_local.h"
 
@@ -52,7 +52,7 @@ typedef struct {
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
-    RSA_PKEY_CTX *rctx = OPENSSL_zalloc(sizeof(*rctx));
+    RSA_PKEY_CTX *rctx = OPENtls_zalloc(sizeof(*rctx));
 
     if (rctx == NULL)
         return 0;
@@ -91,8 +91,8 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->mgf1md = sctx->mgf1md;
     dctx->saltlen = sctx->saltlen;
     if (sctx->oaep_label) {
-        OPENSSL_free(dctx->oaep_label);
-        dctx->oaep_label = OPENSSL_memdup(sctx->oaep_label, sctx->oaep_labellen);
+        OPENtls_free(dctx->oaep_label);
+        dctx->oaep_label = OPENtls_memdup(sctx->oaep_label, sctx->oaep_labellen);
         if (!dctx->oaep_label)
             return 0;
         dctx->oaep_labellen = sctx->oaep_labellen;
@@ -104,7 +104,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey))) == NULL) {
+    if ((ctx->tbuf = OPENtls_malloc(EVP_PKEY_size(pk->pkey))) == NULL) {
         RSAerr(RSA_F_SETUP_TBUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -116,9 +116,9 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
     RSA_PKEY_CTX *rctx = ctx->data;
     if (rctx) {
         BN_free(rctx->pub_exp);
-        OPENSSL_free(rctx->tbuf);
-        OPENSSL_free(rctx->oaep_label);
-        OPENSSL_free(rctx);
+        OPENtls_free(rctx->tbuf);
+        OPENtls_free(rctx->oaep_label);
+        OPENtls_free(rctx);
     }
 }
 
@@ -542,7 +542,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
-        OPENSSL_free(rctx->oaep_label);
+        OPENtls_free(rctx->oaep_label);
         if (p2 && p1 > 0) {
             rctx->oaep_label = p2;
             rctx->oaep_labellen = p1;
@@ -562,14 +562,14 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DIGESTINIT:
     case EVP_PKEY_CTRL_PKCS7_SIGN:
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     case EVP_PKEY_CTRL_CMS_SIGN:
 #endif
     return 1;
 
     case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
     case EVP_PKEY_CTRL_PKCS7_DECRYPT:
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     case EVP_PKEY_CTRL_CMS_DECRYPT:
     case EVP_PKEY_CTRL_CMS_ENCRYPT:
 #endif
@@ -599,8 +599,8 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
         if (strcmp(value, "pkcs1") == 0) {
             pm = RSA_PKCS1_PADDING;
-        } else if (strcmp(value, "sslv23") == 0) {
-            pm = RSA_SSLV23_PADDING;
+        } else if (strcmp(value, "tlsv23") == 0) {
+            pm = RSA_tlsV23_PADDING;
         } else if (strcmp(value, "none") == 0) {
             pm = RSA_NO_PADDING;
         } else if (strcmp(value, "oeap") == 0) {
@@ -687,12 +687,12 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         long lablen;
         int ret;
 
-        lab = OPENSSL_hexstr2buf(value, &lablen);
+        lab = OPENtls_hexstr2buf(value, &lablen);
         if (!lab)
             return 0;
         ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);
         if (ret <= 0)
-            OPENSSL_free(lab);
+            OPENtls_free(lab);
         return ret;
     }
 

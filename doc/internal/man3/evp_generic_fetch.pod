@@ -10,21 +10,21 @@ evp_generic_fetch, evp_generic_fetch_by_number
  /* Only for EVP source */
  #include "evp_local.h"
 
- void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+ void *evp_generic_fetch(OPENtls_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
                          void *(*new_method)(int name_id,
-                                             const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov,
+                                             const Otls_DISPATCH *fns,
+                                             Otls_PROVIDER *prov,
                                              void *method_data),
                          void *method_data,
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
- void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
+ void *evp_generic_fetch_by_number(OPENtls_CTX *ctx, int operation_id,
                                    int name_id, const char *properties,
                                    void *(*new_method)(int name_id,
-                                                       const OSSL_DISPATCH *fns,
-                                                       OSSL_PROVIDER *prov,
+                                                       const Otls_DISPATCH *fns,
+                                                       Otls_PROVIDER *prov,
                                                        void *method_data),
                                    void *method_data,
                                    int (*up_ref_method)(void *),
@@ -32,7 +32,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
 
 =head1 DESCRIPTION
 
-evp_generic_fetch() calls ossl_method_construct() with the given
+evp_generic_fetch() calls otls_method_construct() with the given
 I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
 it to create an EVP method with the help of the functions
 I<new_method>, I<up_ref_method>, and I<free_method>.
@@ -78,75 +78,75 @@ This is a short example of the fictitious EVP API and operation called
 B<EVP_FOO>.
 
 To begin with, let's assume something like this in
-F<include/openssl/core_numbers.h>:
+F<include/opentls/core_numbers.h>:
 
-    #define OSSL_OP_FOO                         100
+    #define Otls_OP_FOO                         100
 
-    #define OSSL_OP_FOO_NEWCTX_FUNC            2001
-    #define OSSL_OP_FOO_INIT                   2002
-    #define OSSL_OP_FOO_OPERATE                2003
-    #define OSSL_OP_FOO_CLEANCTX_FUNC          2004
-    #define OSSL_OP_FOO_FREECTX_FUNC           2005
-    OSSL_CORE_MAKE_FUNC(void *,OP_foo_newctx,(void))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_init,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_operate,(void *vctx,
+    #define Otls_OP_FOO_NEWCTX_FUNC            2001
+    #define Otls_OP_FOO_INIT                   2002
+    #define Otls_OP_FOO_OPERATE                2003
+    #define Otls_OP_FOO_CLEANCTX_FUNC          2004
+    #define Otls_OP_FOO_FREECTX_FUNC           2005
+    Otls_CORE_MAKE_FUNC(void *,OP_foo_newctx,(void))
+    Otls_CORE_MAKE_FUNC(int,OP_foo_init,(void *vctx))
+    Otls_CORE_MAKE_FUNC(int,OP_foo_operate,(void *vctx,
                                             unsigned char *out, size_t *out_l,
                                             unsigned char *in, size_t in_l))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_cleanctx,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_freectx,(void *vctx))
+    Otls_CORE_MAKE_FUNC(void,OP_foo_cleanctx,(void *vctx))
+    Otls_CORE_MAKE_FUNC(void,OP_foo_freectx,(void *vctx))
 
 And here's the implementation of the FOO method fetcher:
 
     /* typedef struct evp_foo_st EVP_FOO */
     struct evp_foo_st {
-        OSSL_PROVIDER *prov;
+        Otls_PROVIDER *prov;
         int name_id;
 	CRYPTO_REF_COUNT refcnt;
-        OSSL_OP_foo_newctx_fn *newctx;
-        OSSL_OP_foo_init_fn *init;
-        OSSL_OP_foo_operate_fn *operate;
-        OSSL_OP_foo_cleanctx_fn *cleanctx;
-        OSSL_OP_foo_freectx_fn *freectx;
+        Otls_OP_foo_newctx_fn *newctx;
+        Otls_OP_foo_init_fn *init;
+        Otls_OP_foo_operate_fn *operate;
+        Otls_OP_foo_cleanctx_fn *cleanctx;
+        Otls_OP_foo_freectx_fn *freectx;
     };
 
     /*
      * In this example, we have a public method creator and destructor.
-     * It's not absolutely necessary, but is in the spirit of OpenSSL.
+     * It's not absolutely necessary, but is in the spirit of Opentls.
      */
     EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
-                                        const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov,
+                                        const Otls_DISPATCH *fns,
+                                        Otls_PROVIDER *prov,
                                         void *data)
     {
         EVP_FOO *foo = NULL;
 
-        if ((foo = OPENSSL_zalloc(sizeof(*foo))) == NULL)
+        if ((foo = OPENtls_zalloc(sizeof(*foo))) == NULL)
             return NULL;
 
         foo->name_id = name_id;
 
         for (; fns->function_id != 0; fns++) {
             switch (fns->function_id) {
-            case OSSL_OP_FOO_NEWCTX_FUNC:
-                foo->newctx = OSSL_get_OP_foo_newctx(fns);
+            case Otls_OP_FOO_NEWCTX_FUNC:
+                foo->newctx = Otls_get_OP_foo_newctx(fns);
                 break;
-            case OSSL_OP_FOO_INIT:
-                foo->init = OSSL_get_OP_foo_init(fns);
+            case Otls_OP_FOO_INIT:
+                foo->init = Otls_get_OP_foo_init(fns);
                 break;
-            case OSSL_OP_FOO_OPERATE:
-                foo->operate = OSSL_get_OP_foo_operate(fns);
+            case Otls_OP_FOO_OPERATE:
+                foo->operate = Otls_get_OP_foo_operate(fns);
                 break;
-            case OSSL_OP_FOO_CLEANCTX_FUNC:
-                foo->cleanctx = OSSL_get_OP_foo_cleanctx(fns);
+            case Otls_OP_FOO_CLEANCTX_FUNC:
+                foo->cleanctx = Otls_get_OP_foo_cleanctx(fns);
                 break;
-            case OSSL_OP_FOO_FREECTX_FUNC:
-                foo->freectx = OSSL_get_OP_foo_freectx(fns);
+            case Otls_OP_FOO_FREECTX_FUNC:
+                foo->freectx = Otls_get_OP_foo_freectx(fns);
                 break;
             }
         }
         foo->prov = prov;
         if (prov)
-            ossl_provider_up_ref(prov);
+            otls_provider_up_ref(prov);
 
         return foo;
     }
@@ -154,15 +154,15 @@ And here's the implementation of the FOO method fetcher:
     EVP_FOO_meth_free(EVP_FOO *foo)
     {
         if (foo != NULL) {
-            OSSL_PROVIDER *prov = foo->prov;
+            Otls_PROVIDER *prov = foo->prov;
 
-            OPENSSL_free(foo);
-            ossl_provider_free(prov);
+            OPENtls_free(foo);
+            otls_provider_free(prov);
         }
     }
 
-    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+    static void *foo_from_dispatch(const Otls_DISPATCH *fns,
+                                   Otls_PROVIDER *prov)
     {
         return EVP_FOO_meth_from_dispatch(fns, prov);
     }
@@ -181,12 +181,12 @@ And here's the implementation of the FOO method fetcher:
         EVP_FOO_meth_free(vfoo);
     }
 
-    EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
+    EVP_FOO *EVP_FOO_fetch(OPENtls_CTX *ctx,
                            const char *name,
                            const char *properties)
     {
         EVP_FOO *foo =
-            evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
+            evp_generic_fetch(ctx, Otls_OP_FOO, name, properties,
                               foo_from_dispatch, foo_up_ref, foo_free);
 
         /*
@@ -218,14 +218,14 @@ And finally, the library functions:
 
     EVP_FOO_CTX *EVP_FOO_CTX_new(void)
     {
-        return OPENSSL_zalloc(sizeof(EVP_FOO_CTX));
+        return OPENtls_zalloc(sizeof(EVP_FOO_CTX));
     }
 
     void EVP_FOO_CTX_free(EVP_FOO_CTX *c)
     {
         EVP_FOO_CTX_reset(c);
         c->foo->freectx(c->provctx);
-        OPENSSL_free(c);
+        OPENtls_free(c);
     }
 
     int EVP_FooInit(EVP_FOO_CTX *c, const EVP_FOO *foo)
@@ -252,19 +252,19 @@ And finally, the library functions:
 
 =head1 SEE ALSO
 
-L<ossl_method_construct(3)>
+L<otls_method_construct(3)>
 
 =head1 HISTORY
 
-The functions described here were all added in OpenSSL 3.0.
+The functions described here were all added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

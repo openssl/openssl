@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*****************************************************************************
@@ -95,18 +95,18 @@ typedef enum {
  *                                                                           *
  *****************************************************************************/
 
-struct ossl_statem_st {
+struct otls_statem_st {
     MSG_FLOW_STATE state;
     WRITE_STATE write_state;
     WORK_STATE write_state_work;
     READ_STATE read_state;
     WORK_STATE read_state_work;
-    OSSL_HANDSHAKE_STATE hand_state;
+    Otls_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
-    OSSL_HANDSHAKE_STATE request_state;
+    Otls_HANDSHAKE_STATE request_state;
     int in_init;
     int read_state_first_init;
-    /* true when we are actually in SSL_accept() or SSL_connect() */
+    /* true when we are actually in tls_accept() or tls_connect() */
     int in_handshake;
     /*
      * True when are processing a "real" handshake that needs cleaning up (not
@@ -119,39 +119,39 @@ struct ossl_statem_st {
     ENC_WRITE_STATES enc_write_state;
     ENC_READ_STATES enc_read_state;
 };
-typedef struct ossl_statem_st OSSL_STATEM;
+typedef struct otls_statem_st Otls_STATEM;
 
 /*****************************************************************************
  *                                                                           *
- * The following macros/functions represent the libssl internal API to the   *
- * state machine. Any libssl code may call these functions/macros            *
+ * The following macros/functions represent the libtls internal API to the   *
+ * state machine. Any libtls code may call these functions/macros            *
  *                                                                           *
  *****************************************************************************/
 
-__owur int ossl_statem_accept(SSL *s);
-__owur int ossl_statem_connect(SSL *s);
-void ossl_statem_clear(SSL *s);
-void ossl_statem_set_renegotiate(SSL *s);
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+__owur int otls_statem_accept(tls *s);
+__owur int otls_statem_connect(tls *s);
+void otls_statem_clear(tls *s);
+void otls_statem_set_renegotiate(tls *s);
+void otls_statem_fatal(tls *s, int al, int func, int reason, const char *file,
                        int line);
-# define SSL_AD_NO_ALERT    -1
-# ifndef OPENSSL_NO_ERR
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), \
-                                                   OPENSSL_FILE, OPENSSL_LINE)
+# define tls_AD_NO_ALERT    -1
+# ifndef OPENtls_NO_ERR
+#  define tlsfatal(s, al, f, r)  otls_statem_fatal((s), (al), (0), (r), \
+                                                   OPENtls_FILE, OPENtls_LINE)
 # else
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), NULL, 0)
+#  define tlsfatal(s, al, f, r)  otls_statem_fatal((s), (al), (0), (r), NULL, 0)
 # endif
 
-int ossl_statem_in_error(const SSL *s);
-void ossl_statem_set_in_init(SSL *s, int init);
-int ossl_statem_get_in_handshake(SSL *s);
-void ossl_statem_set_in_handshake(SSL *s, int inhand);
-__owur int ossl_statem_skip_early_data(SSL *s);
-void ossl_statem_check_finish_init(SSL *s, int send);
-void ossl_statem_set_hello_verify_done(SSL *s);
-__owur int ossl_statem_app_data_allowed(SSL *s);
-__owur int ossl_statem_export_allowed(SSL *s);
-__owur int ossl_statem_export_early_allowed(SSL *s);
+int otls_statem_in_error(const tls *s);
+void otls_statem_set_in_init(tls *s, int init);
+int otls_statem_get_in_handshake(tls *s);
+void otls_statem_set_in_handshake(tls *s, int inhand);
+__owur int otls_statem_skip_early_data(tls *s);
+void otls_statem_check_finish_init(tls *s, int send);
+void otls_statem_set_hello_verify_done(tls *s);
+__owur int otls_statem_app_data_allowed(tls *s);
+__owur int otls_statem_export_allowed(tls *s);
+__owur int otls_statem_export_early_allowed(tls *s);
 
 /* Flush the write BIO */
-int statem_flush(SSL *s);
+int statem_flush(tls *s);

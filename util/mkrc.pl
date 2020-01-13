@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
@@ -18,10 +18,10 @@ my $version = "$config{full_version}";
 $cversion =~ s|\.|,|g;
 
 my $filename = $ARGV[0];
-my $description = "OpenSSL library";
+my $description = "Opentls library";
 my $vft = "VFT_DLL";
-if ( $filename =~ /openssl/i ) {
-    $description = "OpenSSL application";
+if ( $filename =~ /opentls/i ) {
+    $description = "Opentls application";
     $vft = "VFT_APP";
 }
 
@@ -49,16 +49,16 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             // Required:
-            VALUE "CompanyName", "The OpenSSL Project, https://www.openssl.org/\\0"
+            VALUE "CompanyName", "The Opentls Project, https://www.opentls.org/\\0"
             VALUE "FileDescription", "$description\\0"
             VALUE "FileVersion", "$version\\0"
             VALUE "InternalName", "$filename\\0"
             VALUE "OriginalFilename", "$filename\\0"
-            VALUE "ProductName", "The OpenSSL Toolkit\\0"
+            VALUE "ProductName", "The Opentls Toolkit\\0"
             VALUE "ProductVersion", "$version\\0"
             // Optional:
             //VALUE "Comments", "\\0"
-            VALUE "LegalCopyright", "Copyright 1998-$YEAR The OpenSSL Authors. All rights reserved.\\0"
+            VALUE "LegalCopyright", "Copyright 1998-$YEAR The Opentls Authors. All rights reserved.\\0"
             //VALUE "LegalTrademarks", "\\0"
             //VALUE "PrivateBuild", "\\0"
             //VALUE "SpecialBuild", "\\0"

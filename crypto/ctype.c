@@ -1,16 +1,16 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include <stdio.h>
 #include "crypto/ctype.h"
-#include "openssl/ebcdic.h"
+#include "opentls/ebcdic.h"
 
 /*
  * Define the character classes for each character in the seven bit ASCII
@@ -224,7 +224,7 @@ static const unsigned short ctype_char_map[128] = {
 };
 
 #ifdef CHARSET_EBCDIC
-int ossl_toascii(int c)
+int otls_toascii(int c)
 {
     if (c < -128 || c > 256 || c == EOF)
         return c;
@@ -239,7 +239,7 @@ int ossl_toascii(int c)
     return os_toascii[c];
 }
 
-int ossl_fromascii(int c)
+int otls_fromascii(int c)
 {
     if (c < -128 || c > 256 || c == EOF)
         return c;
@@ -249,10 +249,10 @@ int ossl_fromascii(int c)
 }
 #endif
 
-int ossl_ctype_check(int c, unsigned int mask)
+int otls_ctype_check(int c, unsigned int mask)
 {
     const int max = sizeof(ctype_char_map) / sizeof(*ctype_char_map);
-    const int a = ossl_toascii(c);
+    const int a = otls_toascii(c);
 
     return a >= 0 && a < max && (ctype_char_map[a] & mask) != 0;
 }
@@ -263,14 +263,14 @@ static const int case_change = 0x40;
 static const int case_change = 0x20;
 #endif
 
-int ossl_tolower(int c)
+int otls_tolower(int c)
 {
-    return ossl_isupper(c) ? c ^ case_change : c;
+    return otls_isupper(c) ? c ^ case_change : c;
 }
 
-int ossl_toupper(int c)
+int otls_toupper(int c)
 {
-    return ossl_islower(c) ? c ^ case_change : c;
+    return otls_islower(c) ? c ^ case_change : c;
 }
 
 int ascii_isdigit(const char inchar) {

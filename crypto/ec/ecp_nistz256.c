@@ -1,12 +1,12 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
  * Copyright (c) 2015, CloudFlare, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1, 3)
  * (1) Intel Corporation, Israel Development Center, Haifa, Israel
@@ -625,12 +625,12 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
     P256_POINT (*table)[16] = NULL;
     void *table_storage = NULL;
 
-    if ((num * 16 + 6) > OPENSSL_MALLOC_MAX_NELEMS(P256_POINT)
+    if ((num * 16 + 6) > OPENtls_MALLOC_MAX_NELEMS(P256_POINT)
         || (table_storage =
-            OPENSSL_malloc((num * 16 + 5) * sizeof(P256_POINT) + 64)) == NULL
+            OPENtls_malloc((num * 16 + 5) * sizeof(P256_POINT) + 64)) == NULL
         || (p_str =
-            OPENSSL_malloc(num * 33 * sizeof(unsigned char))) == NULL
-        || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
+            OPENtls_malloc(num * 33 * sizeof(unsigned char))) == NULL
+        || (scalars = OPENtls_malloc(num * sizeof(BIGNUM *))) == NULL) {
         ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -775,9 +775,9 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
 
     ret = 1;
  err:
-    OPENSSL_free(table_storage);
-    OPENSSL_free(p_str);
-    OPENSSL_free(scalars);
+    OPENtls_free(table_storage);
+    OPENtls_free(p_str);
+    OPENtls_free(scalars);
     return ret;
 }
 
@@ -863,7 +863,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     w = 7;
 
     if ((precomp_storage =
-         OPENSSL_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL) {
+         OPENtls_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL) {
         ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -923,7 +923,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     BN_CTX_free(new_ctx);
 
     EC_nistz256_pre_comp_free(pre_comp);
-    OPENSSL_free(precomp_storage);
+    OPENtls_free(precomp_storage);
     EC_POINT_free(P);
     EC_POINT_free(T);
     return ret;
@@ -1169,7 +1169,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     } t, p;
     BIGNUM *tmp_scalar;
 
-    if ((num + 1) == 0 || (num + 1) > OPENSSL_MALLOC_MAX_NELEMS(void *)) {
+    if ((num + 1) == 0 || (num + 1) > OPENtls_MALLOC_MAX_NELEMS(void *)) {
         ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -1324,13 +1324,13 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
          * Without a precomputed table for the generator, it has to be
          * handled like a normal point.
          */
-        new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
+        new_scalars = OPENtls_malloc((num + 1) * sizeof(BIGNUM *));
         if (new_scalars == NULL) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
-        new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
+        new_points = OPENtls_malloc((num + 1) * sizeof(EC_POINT *));
         if (new_points == NULL) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -1370,8 +1370,8 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
 
 err:
     BN_CTX_end(ctx);
-    OPENSSL_free(new_points);
-    OPENSSL_free(new_scalars);
+    OPENtls_free(new_points);
+    OPENtls_free(new_scalars);
     return ret;
 }
 
@@ -1426,7 +1426,7 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     if (!group)
         return NULL;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -1440,7 +1440,7 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -1467,9 +1467,9 @@ void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    OPENSSL_free(pre->precomp_storage);
+    OPENtls_free(pre->precomp_storage);
     CRYPTO_THREAD_lock_free(pre->lock);
-    OPENSSL_free(pre);
+    OPENtls_free(pre);
 }
 
 

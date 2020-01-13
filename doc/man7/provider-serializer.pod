@@ -12,33 +12,33 @@ Future development will also include deserializing functions.
 
 =end comment
 
- #include <openssl/core_numbers.h>
+ #include <opentls/core_numbers.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
   * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * pointers in Otls_DISPATCH arrays.
   */
 
  /* Functions to construct / destruct / manipulate the serializer context */
  void *OP_serializer_newctx(void *provctx);
  void OP_serializer_freectx(void *ctx);
- int OP_serializer_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OP_serializer_settable_ctx_params(void)
+ int OP_serializer_set_ctx_params(void *ctx, const Otls_PARAM params[]);
+ const Otls_PARAM *OP_serializer_settable_ctx_params(void)
 
  /* Functions to serialize object data */
- int OP_serializer_serialize_data(void *ctx, const OSSL_PARAM *data,
+ int OP_serializer_serialize_data(void *ctx, const Otls_PARAM *data,
                                   BIO *out,
-                                  OSSL_PASSPHRASE_CALLBACK *cb,
+                                  Otls_PASSPHRASE_CALLBACK *cb,
                                   void *cbarg);
  int OP_serializer_serialize_object(void *ctx, void *obj, BIO *out,
-                                    OSSL_PASSPHRASE_CALLBACK *cb,
+                                    Otls_PASSPHRASE_CALLBACK *cb,
                                     void *cbarg);
 
 =head1 DESCRIPTION
 
 The SERIALIZER is a generic method to serialize any set of object data
-in L<OSSL_PARAM(3)> array form, or any provider side object into
+in L<Otls_PARAM(3)> array form, or any provider side object into
 serialized form, and write it to the given BIO.  If the caller wants
 to get the serialized stream to memory, it should provide a
 L<BIO_s_membuf(3)>.
@@ -47,7 +47,7 @@ The serializer doesn't need to know more about the B<BIO> pointer than
 being able to pass it to the appropriate BIO upcalls (see
 L<provider-base(7)/Core functions>).
 
-The serialization using the L<OSSL_PARAM(3)> array form allows a
+The serialization using the L<Otls_PARAM(3)> array form allows a
 serializer to be used for data that's been exported from another
 provider, and thereby allow them to exist independently of each
 other.
@@ -57,34 +57,34 @@ with provider data coming from the same provider, for example keys
 with the L<KEYMGMT|provider-keymgmt(7)> provider.
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the provider's
+F<libcrypto> and the provider in B<Otls_DISPATCH> arrays via
+B<Otls_ALGORITHM> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+named B<Otls_{name}_fn>, and a helper function to retrieve the
+function pointer from a B<Otls_DISPATCH> element named
+B<Otls_get_{name}>.
 For example, the "function" OP_serializer_serialize_data() has these:
 
  typedef int
-     (OSSL_OP_serializer_serialize_data_fn)(void *provctx,
-                                            const OSSL_PARAM params[],
+     (Otls_OP_serializer_serialize_data_fn)(void *provctx,
+                                            const Otls_PARAM params[],
                                             BIO *out);
- static ossl_inline OSSL_OP_serializer_serialize_data_fn
-     OSSL_get_OP_serializer_serialize_data(const OSSL_DISPATCH *opf);
+ static otls_inline Otls_OP_serializer_serialize_data_fn
+     Otls_get_OP_serializer_serialize_data(const Otls_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+B<Otls_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<opentls-core_numbers.h(7)>, as follows:
 
- OP_serializer_newctx              OSSL_FUNC_SERIALIZER_NEWCTX
- OP_serializer_freectx             OSSL_FUNC_SERIALIZER_FREECTX
- OP_serializer_set_ctx_params      OSSL_FUNC_SERIALIZER_SET_CTX_PARAMS
- OP_serializer_settable_ctx_params OSSL_FUNC_SERIALIZER_SETTABLE_CTX_PARAMS
+ OP_serializer_newctx              Otls_FUNC_SERIALIZER_NEWCTX
+ OP_serializer_freectx             Otls_FUNC_SERIALIZER_FREECTX
+ OP_serializer_set_ctx_params      Otls_FUNC_SERIALIZER_SET_CTX_PARAMS
+ OP_serializer_settable_ctx_params Otls_FUNC_SERIALIZER_SETTABLE_CTX_PARAMS
 
- OP_serializer_serialize_data      OSSL_FUNC_SERIALIZER_SERIALIZE_DATA
- OP_serializer_serialize_object    OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT
+ OP_serializer_serialize_data      Otls_FUNC_SERIALIZER_SERIALIZE_DATA
+ OP_serializer_serialize_object    Otls_FUNC_SERIALIZER_SERIALIZE_OBJECT
 
 =head2 Names and properties
 
@@ -109,7 +109,7 @@ implementation produces.  Currently known formats are:
 
 An implementation with that format property value outputs human
 readable text, making that implementation suitable for C<-text> output
-in diverse L<openssl(1)> commands.
+in diverse L<opentls(1)> commands.
 
 =item pem
 
@@ -166,18 +166,18 @@ OP_serializer_set_ctx_params() sets context data according to
 parameters from I<params> that it recognises.  Unrecognised parameters
 should be ignored.
 
-OP_serializer_settable_ctx_params() returns a constant B<OSSL_PARAM>
+OP_serializer_settable_ctx_params() returns a constant B<Otls_PARAM>
 array describing the parameters that OP_serializer_set_ctx_params()
 can handle.
 
-See L<OSSL_PARAM(3)> for further details on the parameters structure used
+See L<Otls_PARAM(3)> for further details on the parameters structure used
 by OP_serializer_set_ctx_params() and OP_serializer_settable_ctx_params().
 
 =head2 Serializing functions
 
 =for comment There will be a "Deserializing functions" title as well
 
-OP_serializer_serialize_data() should take an array of B<OSSL_PARAM>,
+OP_serializer_serialize_data() should take an array of B<Otls_PARAM>,
 I<data>, and if it contains the data necessary for the object type
 that the implementation handles, it should output the object in
 serialized form to the B<BIO>.
@@ -189,7 +189,7 @@ with a pointer that the provider of this function is familiar with.
 It is not suitable to use with object pointers coming from other
 providers.
 
-Both serialization functions also take an B<OSSL_PASSPHRASE_CALLBACK>
+Both serialization functions also take an B<Otls_PASSPHRASE_CALLBACK>
 function pointer along with a pointer to application data I<cbarg>,
 which should be used when a pass phrase prompt is needed.
 
@@ -200,7 +200,7 @@ follows:
 
 =over 4
 
-=item "cipher" (B<OSSL_SERIALIZER_PARAM_CIPHER>) <UTF8 string>
+=item "cipher" (B<Otls_SERIALIZER_PARAM_CIPHER>) <UTF8 string>
 
 The name of the encryption cipher to be used when generating encrypted
 serialization.  This is used when serializing private keys, as well as
@@ -211,7 +211,7 @@ implementation should refuse to perform the serialization, i.e.
 OP_serializer_serialize_data() and OP_serializer_serialize_object()
 should return an error.
 
-=item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<Otls_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
 
 The properties to be queried when trying to fetch the algorithm given
 with the "cipher" parameter.
@@ -223,7 +223,7 @@ However, it is recommended that implementations that do not handle
 property strings return an error on receiving this parameter unless
 its value NULL or the empty string.
 
-=item "passphrase" (B<OSSL_SERIALIZER_PARAM_PASS>) <octet string>
+=item "passphrase" (B<Otls_SERIALIZER_PARAM_PASS>) <octet string>
 
 A pass phrase provided by the application.  When this is given, the
 built-in serializers will not attempt to use the passphrase callback.
@@ -234,7 +234,7 @@ Parameters currently recognised by the built-in pass phrase callback:
 
 =over 4
 
-=item "info" (B<OSSL_PASSPHRASE_PARAM_INFO>) <UTF8 string>
+=item "info" (B<Otls_PASSPHRASE_PARAM_INFO>) <UTF8 string>
 
 A string of information that will become part of the pass phrase
 prompt.  This could be used to give the user information on what kind
@@ -251,7 +251,7 @@ OP_serializer_set_ctx_params() returns 1, unless a recognised
 parameters was invalid or caused an error, for which 0 is returned.
 
 OP_serializer_settable_ctx_params() returns a pointer to an array of
-constant B<OSSL_PARAM> elements.
+constant B<Otls_PARAM> elements.
 
 OP_serializer_serialize_data() and OP_serializer_serialize_object()
 return 1 on success, or 0 on failure.
@@ -262,15 +262,15 @@ L<provider(7)>
 
 =head1 HISTORY
 
-The SERIALIZER interface was introduced in OpenSSL 3.0.
+The SERIALIZER interface was introduced in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

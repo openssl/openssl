@@ -1,25 +1,25 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
+#include <opentls/buffer.h>
+#include <opentls/asn1.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/ocsp.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/x509v3.h>
+#include <opentls/ocsp.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
+#include <opentls/x509v3.h>
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
 
 # include "crypto/asn1.h"
 # include "crypto/evp.h"
@@ -127,7 +127,7 @@ static int common_verify_sm2(void *data, EVP_PKEY *pkey,
     }
     ret = 1;
  err:
-    OPENSSL_clear_free(buf_in, inll);
+    OPENtls_clear_free(buf_in, inll);
     EVP_MD_CTX_free(ctx);
     EVP_PKEY_CTX_free(pctx);
     return ret;
@@ -148,14 +148,14 @@ static int x509_req_verify_sm2(X509_REQ *x, EVP_PKEY *pkey,
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     int mdnid, pknid;
 #endif
 
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     /* Convert signature OID into digest and public key OIDs */
     if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
                              &mdnid, &pknid)) {
@@ -173,7 +173,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     int mdnid, pknid;
 
     /* Convert signature OID into digest and public key OIDs */
@@ -213,7 +213,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
                               &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
 int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
 {
     return OCSP_REQ_CTX_nbio_d2i(rctx,
@@ -249,7 +249,7 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
                               &x->crl, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
 int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl)
 {
     return OCSP_REQ_CTX_nbio_d2i(rctx,
@@ -264,7 +264,7 @@ int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
                            x->signature, x->spkac, pkey, md));
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509), fp, x509);
@@ -286,7 +286,7 @@ int i2d_X509_bio(BIO *bp, const X509 *x509)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509), bp, x509);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_CRL), fp, crl);
@@ -308,7 +308,7 @@ int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
@@ -330,7 +330,7 @@ int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_REQ), fp, req);
@@ -352,9 +352,9 @@ int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(RSAPrivateKey), fp, rsa);
@@ -419,8 +419,8 @@ int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa)
 }
 #endif
 
-#ifndef OPENSSL_NO_DSA
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_DSA
+# ifndef OPENtls_NO_STDIO
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 {
     return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSAPrivateKey, fp, dsa);
@@ -464,8 +464,8 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa)
 
 #endif
 
-#ifndef OPENSSL_NO_EC
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_EC
+# ifndef OPENtls_NO_STDIO
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 {
     return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, fp, eckey);
@@ -567,7 +567,7 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                              (char *)data, md, len));
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 {
     return ASN1_d2i_fp_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, fp, p8);
@@ -589,7 +589,7 @@ int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8)
     return ASN1_i2d_bio_of(X509_SIG, i2d_X509_SIG, bp, p8);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 X509_PUBKEY *d2i_X509_PUBKEY_fp(FILE *fp, X509_PUBKEY **xpk)
 {
     return ASN1_d2i_fp_of(X509_PUBKEY, X509_PUBKEY_new, d2i_X509_PUBKEY,
@@ -613,7 +613,7 @@ int i2d_X509_PUBKEY_bio(BIO *bp, const X509_PUBKEY *xpk)
     return ASN1_i2d_bio_of(X509_PUBKEY, i2d_X509_PUBKEY, bp, xpk);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
                                                 PKCS8_PRIV_KEY_INFO **p8inf)
 {

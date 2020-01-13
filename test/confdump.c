@@ -1,38 +1,38 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/conf.h>
-#include <openssl/safestack.h>
-#include <openssl/err.h>
+#include <opentls/bio.h>
+#include <opentls/conf.h>
+#include <opentls/safestack.h>
+#include <opentls/err.h>
 
-static STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
+static STACK_OF(OPENtls_CSTRING) *section_names = NULL;
 
 static void collect_section_name(CONF_VALUE *v)
 {
     /* A section is a CONF_VALUE with name == NULL */
     if (v->name == NULL)
-        sk_OPENSSL_CSTRING_push(section_names, v->section);
+        sk_OPENtls_CSTRING_push(section_names, v->section);
 }
 
-static int section_name_cmp(OPENSSL_CSTRING const *a, OPENSSL_CSTRING const *b)
+static int section_name_cmp(OPENtls_CSTRING const *a, OPENtls_CSTRING const *b)
 {
     return strcmp(*a, *b);
 }
 
 static void collect_all_sections(const CONF *cnf)
 {
-    section_names = sk_OPENSSL_CSTRING_new(section_name_cmp);
+    section_names = sk_OPENtls_CSTRING_new(section_name_cmp);
     lh_CONF_VALUE_doall(cnf->data, collect_section_name);
-    sk_OPENSSL_CSTRING_sort(section_names);
+    sk_OPENtls_CSTRING_sort(section_names);
 }
 
 static void dump_section(const char *name, const CONF *cnf)
@@ -58,10 +58,10 @@ int main(int argc, char **argv)
         int i;
 
         collect_all_sections(conf);
-        for (i = 0; i < sk_OPENSSL_CSTRING_num(section_names); i++) {
-            dump_section(sk_OPENSSL_CSTRING_value(section_names, i), conf);
+        for (i = 0; i < sk_OPENtls_CSTRING_num(section_names); i++) {
+            dump_section(sk_OPENtls_CSTRING_value(section_names, i), conf);
         }
-        sk_OPENSSL_CSTRING_free(section_names);
+        sk_OPENtls_CSTRING_free(section_names);
         ret = 0;
     } else {
         ERR_print_errors_fp(stderr);

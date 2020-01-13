@@ -1,25 +1,25 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 static BIT_STRING_BITNAME ns_cert_type_table[] = {
-    {0, "SSL Client", "client"},
-    {1, "SSL Server", "server"},
+    {0, "tls Client", "client"},
+    {1, "tls Server", "server"},
     {2, "S/MIME", "email"},
     {3, "Object Signing", "objsign"},
     {4, "Unused", "reserved"},
-    {5, "SSL CA", "sslCA"},
+    {5, "tls CA", "tlsCA"},
     {6, "S/MIME CA", "emailCA"},
     {7, "Object Signing CA", "objCA"},
     {-1, NULL, NULL}

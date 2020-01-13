@@ -1,17 +1,17 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
 #include "rand_local.h"
@@ -186,7 +186,7 @@ static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
 {
     EVP_MD_free(drbg->data.hmac.md);
     HMAC_CTX_free(drbg->data.hmac.ctx);
-    OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
+    OPENtls_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
     return 1;
 }
 
@@ -207,7 +207,7 @@ int drbg_hmac_init(RAND_DRBG *drbg)
      * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
      * digests.
      */
-    md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
+    md = EVP_MD_fetch(drbg->libctx, otls_prov_util_nid_to_name(drbg->type), "");
     if (md == NULL)
         return 0;
 

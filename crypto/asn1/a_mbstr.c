@@ -1,16 +1,16 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
                            int (*rfunc) (unsigned long value, void *in),
@@ -141,7 +141,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     if (*out) {
         free_out = 0;
         dest = *out;
-        OPENSSL_free(dest->data);
+        OPENtls_free(dest->data);
         dest->data = NULL;
         dest->length = 0;
         dest->type = str_type;
@@ -186,7 +186,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         cpyfunc = cpy_utf8;
         break;
     }
-    if ((p = OPENSSL_malloc(outlen + 1)) == NULL) {
+    if ((p = OPENtls_malloc(outlen + 1)) == NULL) {
         if (free_out)
             ASN1_STRING_free(dest);
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
@@ -270,14 +270,14 @@ static int out_utf8(unsigned long value, void *arg)
 static int type_str(unsigned long value, void *arg)
 {
     unsigned long types = *((unsigned long *)arg);
-    const int native = value > INT_MAX ? INT_MAX : ossl_fromascii(value);
+    const int native = value > INT_MAX ? INT_MAX : otls_fromascii(value);
 
-    if ((types & B_ASN1_NUMERICSTRING) && !(ossl_isdigit(native)
+    if ((types & B_ASN1_NUMERICSTRING) && !(otls_isdigit(native)
                                             || native == ' '))
         types &= ~B_ASN1_NUMERICSTRING;
-    if ((types & B_ASN1_PRINTABLESTRING) && !ossl_isasn1print(native))
+    if ((types & B_ASN1_PRINTABLESTRING) && !otls_isasn1print(native))
         types &= ~B_ASN1_PRINTABLESTRING;
-    if ((types & B_ASN1_IA5STRING) && !ossl_isascii(native))
+    if ((types & B_ASN1_IA5STRING) && !otls_isascii(native))
         types &= ~B_ASN1_IA5STRING;
     if ((types & B_ASN1_T61STRING) && (value > 0xff))
         types &= ~B_ASN1_T61STRING;

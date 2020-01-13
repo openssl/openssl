@@ -1,5 +1,5 @@
 #
-# OpenSSL example configuration file for automated certificate creation.
+# Opentls example configuration file for automated certificate creation.
 #
 
 # This definition stops the following lines choking if HOME or CN
@@ -23,7 +23,7 @@ string_mask = utf8only
 [ req_distinguished_name ]
 countryName			= UK
 
-organizationName		= OpenSSL Group
+organizationName		= Opentls Group
 # Take CN from environment so it can come from a script.
 commonName			= $ENV::CN
 
@@ -36,7 +36,7 @@ basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
 
 # This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
+nsComment			= "Opentls Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
@@ -48,7 +48,7 @@ basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
 
 # This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
+nsComment			= "Opentls Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash

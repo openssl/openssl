@@ -1,21 +1,21 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
 #include <string.h>
 
 #include "bio_local.h"
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
-#ifndef OPENSSL_NO_SOCK
-#include <openssl/err.h>
-#include <openssl/buffer.h>
+#ifndef OPENtls_NO_SOCK
+#include <opentls/err.h>
+#include <opentls/buffer.h>
 #include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;
@@ -37,7 +37,7 @@ static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 BIO_ADDR *BIO_ADDR_new(void)
 {
-    BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+    BIO_ADDR *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         BIOerr(BIO_F_BIO_ADDR_NEW, ERR_R_MALLOC_FAILURE);
@@ -50,7 +50,7 @@ BIO_ADDR *BIO_ADDR_new(void)
 
 void BIO_ADDR_free(BIO_ADDR *ap)
 {
-    OPENSSL_free(ap);
+    OPENtls_free(ap);
 }
 
 void BIO_ADDR_clear(BIO_ADDR *ap)
@@ -231,28 +231,28 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
         }
 
         if (hostname != NULL)
-            *hostname = OPENSSL_strdup(host);
+            *hostname = OPENtls_strdup(host);
         if (service != NULL)
-            *service = OPENSSL_strdup(serv);
+            *service = OPENtls_strdup(serv);
     } else {
 #endif
         if (hostname != NULL)
-            *hostname = OPENSSL_strdup(inet_ntoa(ap->s_in.sin_addr));
+            *hostname = OPENtls_strdup(inet_ntoa(ap->s_in.sin_addr));
         if (service != NULL) {
             char serv[6];        /* port is 16 bits => max 5 decimal digits */
             BIO_snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
-            *service = OPENSSL_strdup(serv);
+            *service = OPENtls_strdup(serv);
         }
     }
 
     if ((hostname != NULL && *hostname == NULL)
             || (service != NULL && *service == NULL)) {
         if (hostname != NULL) {
-            OPENSSL_free(*hostname);
+            OPENtls_free(*hostname);
             *hostname = NULL;
         }
         if (service != NULL) {
-            OPENSSL_free(*service);
+            OPENtls_free(*service);
             *service = NULL;
         }
         BIOerr(BIO_F_ADDR_STRINGS, ERR_R_MALLOC_FAILURE);
@@ -286,7 +286,7 @@ char *BIO_ADDR_path_string(const BIO_ADDR *ap)
 {
 #ifdef AF_UNIX
     if (ap->sa.sa_family == AF_UNIX)
-        return OPENSSL_strdup(ap->s_un.sun_path);
+        return OPENtls_strdup(ap->s_un.sun_path);
 #endif
     return NULL;
 }
@@ -434,8 +434,8 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
      */
     while (bai != NULL) {
         BIO_ADDRINFO *next = bai->bai_next;
-        OPENSSL_free(bai->bai_addr);
-        OPENSSL_free(bai);
+        OPENtls_free(bai->bai_addr);
+        OPENtls_free(bai);
         bai = next;
     }
 }
@@ -524,7 +524,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
             || (hl == 1 && h[0] == '*')) {
             *host = NULL;
         } else {
-            *host = OPENSSL_strndup(h, hl);
+            *host = OPENtls_strndup(h, hl);
             if (*host == NULL)
                 goto memerr;
         }
@@ -534,7 +534,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
             || (pl == 1 && p[0] == '*')) {
             *service = NULL;
         } else {
-            *service = OPENSSL_strndup(p, pl);
+            *service = OPENtls_strndup(p, pl);
             if (*service == NULL)
                 goto memerr;
         }
@@ -566,7 +566,7 @@ static int addrinfo_wrap(int family, int socktype,
                          unsigned short port,
                          BIO_ADDRINFO **bai)
 {
-    if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL) {
+    if ((*bai = OPENtls_zalloc(sizeof(**bai))) == NULL) {
         BIOerr(BIO_F_ADDRINFO_WRAP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -604,7 +604,7 @@ static int addrinfo_wrap(int family, int socktype,
 
 DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
+    if (!OPENtls_init_crypto(0, NULL))
         return 0;
     bio_lookup_lock = CRYPTO_THREAD_lock_new();
     return bio_lookup_lock != NULL;
@@ -737,12 +737,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
  * VMS C, we need to make sure that '&he_fallback_address' and
  * '&he_fallback_addresses' are 32-bit pointers
  */
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size save
 # pragma pointer_size 32
 #endif
         /* Windows doesn't seem to have in_addr_t */
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENtls_SYS_WINDOWS
         static uint32_t he_fallback_address;
         static const char *he_fallback_addresses[] =
             { (char *)&he_fallback_address, NULL };
@@ -754,7 +754,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         static const struct hostent he_fallback =
             { NULL, NULL, AF_INET, sizeof(he_fallback_address),
               (char **)&he_fallback_addresses };
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size restore
 #endif
 
@@ -794,7 +794,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             he = gethostbyname(host);
 
             if (he == NULL) {
-#ifndef OPENSSL_SYS_WINDOWS
+#ifndef OPENtls_SYS_WINDOWS
                 /*
                  * This might be misleading, because h_errno is used as if
                  * it was errno. To minimize mixup add 1000. Underlying
@@ -806,7 +806,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  * anyway [above getaddrinfo/gai_strerror is]. We just let
                  * system administrator figure this out...
                  */
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
                 ERR_raise_data(ERR_LIB_SYS, 1000,
                                "calling gethostbyname()");
@@ -835,12 +835,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
  * Because struct servent is defined for 32-bit pointers only with
  * VMS C, we need to make sure that 'proto' is a 32-bit pointer.
  */
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size save
 # pragma pointer_size 32
 #endif
             char *proto = NULL;
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size restore
 #endif
 
@@ -880,12 +880,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
  * we must make sure our iterator designates the same element type, hence
  * the pointer size dance.
  */
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size save
 # pragma pointer_size 32
 #endif
             char **addrlistp;
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma pointer_size restore
 #endif
             size_t addresses;
@@ -923,4 +923,4 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
     return ret;
 }
 
-#endif /* OPENSSL_NO_SOCK */
+#endif /* OPENtls_NO_SOCK */

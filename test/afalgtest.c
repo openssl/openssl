@@ -1,30 +1,30 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 #include <string.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+#include <opentls/engine.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
 #include "testutil.h"
 
 /* Use a buffer size which is not aligned to block size */
 #define BUFFER_SIZE     17
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
 static ENGINE *e;
 #endif
 
 
-#ifndef OPENSSL_NO_AFALGENG
+#ifndef OPENtls_NO_AFALGENG
 # include <linux/version.h>
 # define K_MAJ   4
 # define K_MIN1  1
@@ -36,11 +36,11 @@ static ENGINE *e;
  * afalg support, but then skipped it in e_afalg.c. As far as this test is
  * concerned we behave as if we had been configured without support
  */
-#  define OPENSSL_NO_AFALGENG
+#  define OPENtls_NO_AFALGENG
 # endif
 #endif
 
-#ifndef OPENSSL_NO_AFALGENG
+#ifndef OPENtls_NO_AFALGENG
 static int test_afalg_aes_cbc(int keysize_idx)
 {
     EVP_CIPHER_CTX *ctx;
@@ -114,12 +114,12 @@ static int test_afalg_aes_cbc(int keysize_idx)
 }
 #endif
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
 int global_init(void)
 {
     ENGINE_load_builtin_engines();
-# ifndef OPENSSL_NO_STATIC_ENGINE
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL);
+# ifndef OPENtls_NO_STATIC_ENGINE
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_AFALG, NULL);
 # endif
     return 1;
 }
@@ -127,12 +127,12 @@ int global_init(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     if ((e = ENGINE_by_id("afalg")) == NULL) {
         /* Probably a platform env issue, not a test failure. */
         TEST_info("Can't load AFALG engine");
     } else {
-# ifndef OPENSSL_NO_AFALGENG
+# ifndef OPENtls_NO_AFALGENG
         ADD_ALL_TESTS(test_afalg_aes_cbc, 3);
 # endif
     }
@@ -141,7 +141,7 @@ int setup_tests(void)
     return 1;
 }
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
 void cleanup_tests(void)
 {
     ENGINE_free(e);

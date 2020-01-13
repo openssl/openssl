@@ -1,4 +1,4 @@
-package OpenSSL::Glob;
+package Opentls::Glob;
 
 use strict;
 use warnings;

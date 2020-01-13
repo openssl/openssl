@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* chacha20_poly1305 cipher implementation */
@@ -95,7 +95,7 @@ static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
     return ret;
 }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
 
 # if defined(POLY1305_ASM) && (defined(__x86_64) || defined(__x86_64__) \
      || defined(_M_AMD64) || defined(_M_X64))
@@ -238,7 +238,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
     tohash_len += POLY1305_BLOCK_SIZE;
 
     Poly1305_Update(poly, tohash, tohash_len);
-    OPENSSL_cleanse(buf, buf_len);
+    OPENtls_cleanse(buf, buf_len);
     Poly1305_Final(poly, bctx->enc ? ctx->tag : tohash);
 
     ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
@@ -259,7 +259,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
 }
 #else
 static const unsigned char zero[CHACHA_BLK_SIZE] = { 0 };
-#endif /* OPENSSL_SMALL_FOOTPRINT */
+#endif /* OPENtls_SMALL_FOOTPRINT */
 
 static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
                                          unsigned char *out, size_t *outl,
@@ -277,7 +277,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     } is_endian = { 1 };
 
     if (!ctx->mac_inited) {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
         if (plen != NO_TLS_PAYLOAD_LENGTH && out != NULL) {
             return chacha20_poly1305_tls_cipher(bctx, out, outl, in, inl);
         }

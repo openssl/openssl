@@ -1,27 +1,27 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs12.h>
-#include <openssl/pem.h>
+#include <opentls/buffer.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/pkcs12.h>
+#include <opentls/pem.h>
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
                       const char *kstr, int klen,
                       pem_password_cb *cb, void *u);
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 static int do_pk8pkey_fp(FILE *bp, const EVP_PKEY *x, int isder,
                          int nid, const EVP_CIPHER *enc,
                          const char *kstr, int klen,
@@ -91,7 +91,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         }
         p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
         if (kstr == buf)
-            OPENSSL_cleanse(buf, klen);
+            OPENtls_cleanse(buf, klen);
         PKCS8_PRIV_KEY_INFO_free(p8inf);
         if (p8 == NULL)
             return 0;
@@ -134,7 +134,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     }
     p8inf = PKCS8_decrypt(p8, psbuf, klen);
     X509_SIG_free(p8);
-    OPENSSL_cleanse(psbuf, klen);
+    OPENtls_cleanse(psbuf, klen);
     if (p8inf == NULL)
         return NULL;
     ret = EVP_PKCS82PKEY(p8inf);
@@ -148,7 +148,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     return ret;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 
 int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                            const char *kstr, int klen,

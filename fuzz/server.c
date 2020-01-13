@@ -1,25 +1,25 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
-/* Shamelessly copied from BoringSSL and converted to C. */
+/* Shameletlsy copied from Boringtls and converted to C. */
 
-/* Test first part of SSL server handshake. */
+/* Test first part of tls server handshake. */
 
 #include <time.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/ec.h>
-#include <openssl/dh.h>
-#include <openssl/err.h>
+#include <opentls/rand.h>
+#include <opentls/tls.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
+#include <opentls/ec.h>
+#include <opentls/dh.h>
+#include <opentls/err.h>
 #include "fuzzer.h"
 
 #include "rand.inc"
@@ -196,7 +196,7 @@ static const uint8_t kRSAPrivateKeyDER[] = {
 };
 
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 /*
  *  -----BEGIN EC PRIVATE KEY-----
  *  MHcCAQEEIJLyl7hJjpQL/RhP1x2zS79xdiPJQB683gWeqcqHPeZkoAoGCCqGSM49
@@ -287,7 +287,7 @@ static const char ECDSACertPEM[] = {
 };
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 /*
  * -----BEGIN DSA PRIVATE KEY-----
  * MIIBuwIBAAKBgQDdkFKzNABLOha7Eqj7004+p5fhtR6bxpujToMmSZTYi8igVVXP
@@ -487,39 +487,39 @@ time_t time(time_t *t) TIME_IMPL(t)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    STACK_OF(SSL_COMP) *comp_methods;
+    STACK_OF(tls_COMP) *comp_methods;
 
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
-    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS | OPENtls_INIT_ASYNC, NULL);
+    OPENtls_init_tls(OPENtls_INIT_LOAD_tls_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    idx = tls_get_ex_data_X509_STORE_CTX_idx();
     FuzzerSetRand();
-    comp_methods = SSL_COMP_get_compression_methods();
+    comp_methods = tls_COMP_get_compression_methods();
     if (comp_methods != NULL)
-        sk_SSL_COMP_sort(comp_methods);
+        sk_tls_COMP_sort(comp_methods);
 
     return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    SSL *server;
+    tls *server;
     BIO *in;
     BIO *out;
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)
+#if !defined(OPENtls_NO_EC) || !defined(OPENtls_NO_DSA)
     BIO *bio_buf;
 #endif
-    SSL_CTX *ctx;
+    tls_CTX *ctx;
     int ret;
     RSA *privkey;
     const uint8_t *bufp;
     EVP_PKEY *pkey;
     X509 *cert;
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     EC_KEY *ecdsakey = NULL;
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     DSA *dsakey = NULL;
 #endif
     uint8_t opt;
@@ -528,119 +528,119 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     /*
-     * TODO: use the ossltest engine (optionally?) to disable crypto checks.
+     * TODO: use the otlstest engine (optionally?) to disable crypto checks.
      */
 
     /* This only fuzzes the initial flow from the client so far. */
-    ctx = SSL_CTX_new(SSLv23_method());
+    ctx = tls_CTX_new(tlsv23_method());
 
-    ret = SSL_CTX_set_min_proto_version(ctx, 0);
-    OPENSSL_assert(ret == 1);
-    ret = SSL_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_set_min_proto_version(ctx, 0);
+    OPENtls_assert(ret == 1);
+    ret = tls_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
+    OPENtls_assert(ret == 1);
 
     /* RSA */
     bufp = kRSAPrivateKeyDER;
     privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
-    OPENSSL_assert(privkey != NULL);
+    OPENtls_assert(privkey != NULL);
     pkey = EVP_PKEY_new();
     EVP_PKEY_assign_RSA(pkey, privkey);
-    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_use_PrivateKey(ctx, pkey);
+    OPENtls_assert(ret == 1);
     EVP_PKEY_free(pkey);
 
     bufp = kCertificateDER;
     cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
-    OPENSSL_assert(cert != NULL);
-    ret = SSL_CTX_use_certificate(ctx, cert);
-    OPENSSL_assert(ret == 1);
+    OPENtls_assert(cert != NULL);
+    ret = tls_CTX_use_certificate(ctx, cert);
+    OPENtls_assert(ret == 1);
     X509_free(cert);
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     /* ECDSA */
     bio_buf = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(bio_buf, ECDSAPrivateKeyPEM, sizeof(ECDSAPrivateKeyPEM)) == sizeof(ECDSAPrivateKeyPEM));
+    OPENtls_assert((size_t)BIO_write(bio_buf, ECDSAPrivateKeyPEM, sizeof(ECDSAPrivateKeyPEM)) == sizeof(ECDSAPrivateKeyPEM));
     ecdsakey = PEM_read_bio_ECPrivateKey(bio_buf, NULL, NULL, NULL);
     ERR_print_errors_fp(stderr);
-    OPENSSL_assert(ecdsakey != NULL);
+    OPENtls_assert(ecdsakey != NULL);
     BIO_free(bio_buf);
     pkey = EVP_PKEY_new();
     EVP_PKEY_assign_EC_KEY(pkey, ecdsakey);
-    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_use_PrivateKey(ctx, pkey);
+    OPENtls_assert(ret == 1);
     EVP_PKEY_free(pkey);
 
     bio_buf = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(bio_buf, ECDSACertPEM, sizeof(ECDSACertPEM)) == sizeof(ECDSACertPEM));
+    OPENtls_assert((size_t)BIO_write(bio_buf, ECDSACertPEM, sizeof(ECDSACertPEM)) == sizeof(ECDSACertPEM));
     cert = PEM_read_bio_X509(bio_buf, NULL, NULL, NULL);
-    OPENSSL_assert(cert != NULL);
+    OPENtls_assert(cert != NULL);
     BIO_free(bio_buf);
-    ret = SSL_CTX_use_certificate(ctx, cert);
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_use_certificate(ctx, cert);
+    OPENtls_assert(ret == 1);
     X509_free(cert);
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     /* DSA */
     bio_buf = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(bio_buf, DSAPrivateKeyPEM, sizeof(DSAPrivateKeyPEM)) == sizeof(DSAPrivateKeyPEM));
+    OPENtls_assert((size_t)BIO_write(bio_buf, DSAPrivateKeyPEM, sizeof(DSAPrivateKeyPEM)) == sizeof(DSAPrivateKeyPEM));
     dsakey = PEM_read_bio_DSAPrivateKey(bio_buf, NULL, NULL, NULL);
     ERR_print_errors_fp(stderr);
-    OPENSSL_assert(dsakey != NULL);
+    OPENtls_assert(dsakey != NULL);
     BIO_free(bio_buf);
     pkey = EVP_PKEY_new();
     EVP_PKEY_assign_DSA(pkey, dsakey);
-    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_use_PrivateKey(ctx, pkey);
+    OPENtls_assert(ret == 1);
     EVP_PKEY_free(pkey);
 
     bio_buf = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(bio_buf, DSACertPEM, sizeof(DSACertPEM)) == sizeof(DSACertPEM));
+    OPENtls_assert((size_t)BIO_write(bio_buf, DSACertPEM, sizeof(DSACertPEM)) == sizeof(DSACertPEM));
     cert = PEM_read_bio_X509(bio_buf, NULL, NULL, NULL);
-    OPENSSL_assert(cert != NULL);
+    OPENtls_assert(cert != NULL);
     BIO_free(bio_buf);
-    ret = SSL_CTX_use_certificate(ctx, cert);
-    OPENSSL_assert(ret == 1);
+    ret = tls_CTX_use_certificate(ctx, cert);
+    OPENtls_assert(ret == 1);
     X509_free(cert);
 #endif
 
     /* TODO: Set up support for SRP and PSK */
 
-    server = SSL_new(ctx);
+    server = tls_new(ctx);
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
-    SSL_set_bio(server, in, out);
-    SSL_set_accept_state(server);
+    tls_set_bio(server, in, out);
+    tls_set_accept_state(server);
 
     opt = (uint8_t)buf[len-1];
     len--;
 
-    OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+    OPENtls_assert((size_t)BIO_write(in, buf, len) == len);
 
     if ((opt & 0x01) != 0)
     {
         do {
             char early_buf[16384];
             size_t early_len;
-            ret = SSL_read_early_data(server, early_buf, sizeof(early_buf), &early_len);
+            ret = tls_read_early_data(server, early_buf, sizeof(early_buf), &early_len);
 
-            if (ret != SSL_READ_EARLY_DATA_SUCCESS)
+            if (ret != tls_READ_EARLY_DATA_SUCCESS)
                 break;
         } while (1);
     }
 
-    if (SSL_do_handshake(server) == 1) {
+    if (tls_do_handshake(server) == 1) {
         /* Keep reading application data until error or EOF. */
         uint8_t tmp[1024];
         for (;;) {
-            if (SSL_read(server, tmp, sizeof(tmp)) <= 0) {
+            if (tls_read(server, tmp, sizeof(tmp)) <= 0) {
                 break;
             }
         }
     }
-    SSL_free(server);
+    tls_free(server);
     ERR_clear_error();
-    SSL_CTX_free(ctx);
+    tls_CTX_free(ctx);
 
     return 0;
 }

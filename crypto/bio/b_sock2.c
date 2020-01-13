@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,9 +13,9 @@
 
 #include "bio_local.h"
 
-#include <openssl/err.h>
+#include <opentls/err.h>
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 # ifdef SO_MAXCONN
 #  define MAX_LISTEN  SO_MAXCONN
 # elif defined(SOMAXCONN)
@@ -35,7 +35,7 @@
  * of BIO_connect and BIO_listen.
  *
  * Returns the file descriptor on success or INVALID_SOCKET on failure.  On
- * failure errno is set, and a status is added to the OpenSSL error stack.
+ * failure errno is set, and a status is added to the Opentls error stack.
  */
 int BIO_socket(int domain, int socktype, int protocol, int options)
 {
@@ -73,7 +73,7 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
  * until the connection is successful.
  *
  * Returns 1 on success or 0 on failure.  On failure errno is set
- * and an error status is added to the OpenSSL error stack.
+ * and an error status is added to the Opentls error stack.
  */
 int BIO_connect(int sock, const BIO_ADDR *addr, int options)
 {
@@ -137,7 +137,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
  */
 int BIO_bind(int sock, const BIO_ADDR *addr, int options)
 {
-# ifndef OPENSSL_SYS_WINDOWS
+# ifndef OPENtls_SYS_WINDOWS
     int on = 1;
 # endif
 
@@ -146,7 +146,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
         return 0;
     }
 
-# ifndef OPENSSL_SYS_WINDOWS
+# ifndef OPENtls_SYS_WINDOWS
     /*
      * SO_REUSEADDR has different behavior on Windows than on
      * other operating systems, don't set it there.

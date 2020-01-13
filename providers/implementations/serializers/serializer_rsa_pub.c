@@ -1,31 +1,31 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/core_numbers.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/types.h>
-#include <openssl/params.h>
+#include <opentls/core_numbers.h>
+#include <opentls/pem.h>
+#include <opentls/rsa.h>
+#include <opentls/types.h>
+#include <opentls/params.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn rsa_pub_newctx;
-static OSSL_OP_serializer_freectx_fn rsa_pub_freectx;
-static OSSL_OP_serializer_serialize_data_fn rsa_pub_der_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_pub_der;
-static OSSL_OP_serializer_serialize_data_fn rsa_pub_pem_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_pub_pem;
+static Otls_OP_serializer_newctx_fn rsa_pub_newctx;
+static Otls_OP_serializer_freectx_fn rsa_pub_freectx;
+static Otls_OP_serializer_serialize_data_fn rsa_pub_der_data;
+static Otls_OP_serializer_serialize_object_fn rsa_pub_der;
+static Otls_OP_serializer_serialize_data_fn rsa_pub_pem_data;
+static Otls_OP_serializer_serialize_object_fn rsa_pub_pem;
 
-static OSSL_OP_serializer_serialize_data_fn rsa_pub_print_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_pub_print;
+static Otls_OP_serializer_serialize_data_fn rsa_pub_print_data;
+static Otls_OP_serializer_serialize_object_fn rsa_pub_print;
 
 /* Public key : context */
 
@@ -42,11 +42,11 @@ static void rsa_pub_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
-                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int rsa_pub_der_data(void *ctx, const Otls_PARAM params[], BIO *out,
+                            Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    Otls_OP_keymgmt_importkey_fn *rsa_importkey =
+        otls_prov_get_rsa_importkey();
     int ok = 0;
 
     if (rsa_importkey != NULL) {
@@ -59,17 +59,17 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 }
 
 static int rsa_pub_der(void *ctx, void *rsa, BIO *out,
-                       OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                       Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     return i2d_RSA_PUBKEY_bio(out, rsa);
 }
 
 /* Public key : PEM */
-static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
-                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int rsa_pub_pem_data(void *ctx, const Otls_PARAM params[], BIO *out,
+                            Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    Otls_OP_keymgmt_importkey_fn *rsa_importkey =
+        otls_prov_get_rsa_importkey();
     int ok = 0;
 
     if (rsa_importkey != NULL) {
@@ -82,16 +82,16 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 }
 
 static int rsa_pub_pem(void *ctx, void *rsa, BIO *out,
-                       OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                       Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     return PEM_write_bio_RSA_PUBKEY(out, rsa);
 }
 
-static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
-                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int rsa_pub_print_data(void *ctx, const Otls_PARAM params[], BIO *out,
+                              Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    Otls_OP_keymgmt_importkey_fn *rsa_importkey =
+        otls_prov_get_rsa_importkey();
     int ok = 0;
 
     if (rsa_importkey != NULL) {
@@ -104,32 +104,32 @@ static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 }
 
 static int rsa_pub_print(void *ctx, void *rsa, BIO *out,
-                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                         Otls_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_rsa(out, rsa, 0);
+    return otls_prov_print_rsa(out, rsa, 0);
 }
 
-const OSSL_DISPATCH rsa_pub_der_serializer_functions[] = {
-    { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
-    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_der_data },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_der },
+const Otls_DISPATCH rsa_pub_der_serializer_functions[] = {
+    { Otls_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { Otls_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_der_data },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_der },
     { 0, NULL }
 };
 
-const OSSL_DISPATCH rsa_pub_pem_serializer_functions[] = {
-    { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
-    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_pem_data },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_pem },
+const Otls_DISPATCH rsa_pub_pem_serializer_functions[] = {
+    { Otls_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { Otls_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_DATA, (void (*)(void))rsa_pub_pem_data },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_pem },
     { 0, NULL }
 };
 
-const OSSL_DISPATCH rsa_pub_text_serializer_functions[] = {
-    { OSSL_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
-    { OSSL_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_print },
-    { OSSL_FUNC_SERIALIZER_SERIALIZE_DATA,
+const Otls_DISPATCH rsa_pub_text_serializer_functions[] = {
+    { Otls_FUNC_SERIALIZER_NEWCTX, (void (*)(void))rsa_pub_newctx },
+    { Otls_FUNC_SERIALIZER_FREECTX, (void (*)(void))rsa_pub_freectx },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_OBJECT, (void (*)(void))rsa_pub_print },
+    { Otls_FUNC_SERIALIZER_SERIALIZE_DATA,
       (void (*)(void))rsa_pub_print_data },
     { 0, NULL }
 };

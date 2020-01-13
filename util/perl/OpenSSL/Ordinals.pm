@@ -1,18 +1,18 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::Ordinals;
+package Opentls::Ordinals;
 
 use strict;
 use warnings;
 use Carp;
 use Scalar::Util qw(blessed);
-use OpenSSL::Util;
+use Opentls::Util;
 
 use constant {
     # "magic" filters, see the filters at the end of the file
@@ -22,15 +22,15 @@ use constant {
 
 =head1 NAME
 
-OpenSSL::Ordinals - a private module to read and walk through ordinals
+Opentls::Ordinals - a private module to read and walk through ordinals
 
 =head1 SYNOPSIS
 
-  use OpenSSL::Ordinals;
+  use Opentls::Ordinals;
 
-  my $ordinals = OpenSSL::Ordinals->new(from => "foo.num");
+  my $ordinals = Opentls::Ordinals->new(from => "foo.num");
   # or alternatively
-  my $ordinals = OpenSSL::Ordinals->new();
+  my $ordinals = Opentls::Ordinals->new();
   $ordinals->load("foo.num");
 
   foreach ($ordinals->items(comparator => by_name()) {
@@ -39,7 +39,7 @@ OpenSSL::Ordinals - a private module to read and walk through ordinals
 
 =head1 DESCRIPTION
 
-This is a OpenSSL private module to load an ordinals (F<.num>) file and
+This is a Opentls private module to load an ordinals (F<.num>) file and
 write out the data you want, sorted and filtered according to your rules.
 
 An ordinals file is a file that enumerates all the symbols that a shared
@@ -63,7 +63,7 @@ on different platforms.
 
 =item B<new> I<%options>
 
-Creates a new instance of the C<OpenSSL::Ordinals> class.  It takes options
+Creates a new instance of the C<Opentls::Ordinals> class.  It takes options
 in keyed pair form, i.e. a series of C<< key => value >> pairs.  Available
 options are:
 
@@ -130,7 +130,7 @@ sub load {
         s|#.*||;
         next if /^\s*$/;
 
-        my $item = OpenSSL::Ordinals::Item->new(from => $_);
+        my $item = Opentls::Ordinals::Item->new(from => $_);
 
         my $num = $item->number();
         if ($num eq '?') {
@@ -161,7 +161,7 @@ sub load {
     foreach my $i (1..$max_num) {
         if ($tmp_contents[$i]) {
             $self->{loaded_contents}->[$i] =
-                [ map { OpenSSL::Ordinals::Item->new($_) }
+                [ map { Opentls::Ordinals::Item->new($_) }
                   @{$tmp_contents[$i]} ];
         }
     }
@@ -243,7 +243,7 @@ block.
 =item B<< filter => FILTERFUNCTION >>
 
 FILTERFUNCTION is a reference to a function that takes one argument, which
-is every OpenSSL::Ordinals::Item element available.
+is every Opentls::Ordinals::Item element available.
 
 =back
 
@@ -373,7 +373,7 @@ sub _parse_platforms {
 #       if ($def =~ m{^__DragonFly__$})             { $platforms{$&} = $op; }
 #       if ($def =~ m{^__OpenBSD__$})               { $platforms{$&} = $op; }
 #       if ($def =~ m{^__NetBSD__$})                { $platforms{$&} = $op; }
-        if ($def =~ m{^OPENSSL_SYS_})               { $platforms{$'} = $op; }
+        if ($def =~ m{^OPENtls_SYS_})               { $platforms{$'} = $op; }
     }
 
     return %platforms;
@@ -390,8 +390,8 @@ sub _parse_features {
         my $def = $';
 
         if ($def =~ m{^ZLIB$})                      { $features{$&} =  $op; }
-        if ($def =~ m{^OPENSSL_USE_})               { $features{$'} =  $op; }
-        if ($def =~ m{^OPENSSL_NO_})                { $features{$'} = !$op; }
+        if ($def =~ m{^OPENtls_USE_})               { $features{$'} =  $op; }
+        if ($def =~ m{^OPENtls_NO_})                { $features{$'} = !$op; }
         if ($def =~ m{^DEPRECATEDIN_(.*)$})         { $features{$&} = !$op; }
     }
 
@@ -448,7 +448,7 @@ sub add {
     @items = grep { $_->exists() } @items;
 
     my $new_item =
-        OpenSSL::Ordinals::Item->new( name          => $name,
+        Opentls::Ordinals::Item->new( name          => $name,
                                       type          => $type,
                                       number        => $number,
                                       intnum        => $intnum,
@@ -538,7 +538,7 @@ sub add_alias {
 
         my $number =
             $items[0]->number() =~ m|^\?| ? '?+' : $items[0]->number();
-        my $alias_item = OpenSSL::Ordinals::Item->new(
+        my $alias_item = Opentls::Ordinals::Item->new(
             name          => $alias,
             type          => $items[0]->type(),
             number        => $number,
@@ -700,13 +700,13 @@ sub stats {
 =head2 Data elements
 
 Data elements, which is each line in an ordinals file, are instances
-of a separate class, OpenSSL::Ordinals::Item, with its own methods:
+of a separate class, Opentls::Ordinals::Item, with its own methods:
 
 =over 4
 
 =cut
 
-package OpenSSL::Ordinals::Item;
+package Opentls::Ordinals::Item;
 
 use strict;
 use warnings;
@@ -714,7 +714,7 @@ use Carp;
 
 =item B<new> I<%options>
 
-Creates a new instance of the C<OpenSSL::Ordinals::Item> class.  It takes
+Creates a new instance of the C<Opentls::Ordinals::Item> class.  It takes
 options in keyed pair form, i.e. a series of C<< key => value >> pairs.
 Available options are:
 
@@ -941,13 +941,13 @@ comparators based on specific data:
 =cut
 
 # Go back to the main package to create comparators and filters
-package OpenSSL::Ordinals;
+package Opentls::Ordinals;
 
 # Comparators...
 
 =item B<by_name>
 
-Returns a comparator that will compare the names of two OpenSSL::Ordinals::Item
+Returns a comparator that will compare the names of two Opentls::Ordinals::Item
 objects.
 
 =cut
@@ -959,7 +959,7 @@ sub by_name {
 =item B<by_number>
 
 Returns a comparator that will compare the ordinal numbers of two
-OpenSSL::Ordinals::Item objects.
+Opentls::Ordinals::Item objects.
 
 =cut
 
@@ -970,13 +970,13 @@ sub by_number {
 =item B<by_version>
 
 Returns a comparator that will compare the version of two
-OpenSSL::Ordinals::Item objects.
+Opentls::Ordinals::Item objects.
 
 =cut
 
 sub by_version {
     return sub {
-        # cmp_versions comes from OpenSSL::Util
+        # cmp_versions comes from Opentls::Util
         return cmp_versions($_[0]->version(), $_[1]->version());
     }
 }
@@ -1051,7 +1051,7 @@ sub f_name {
 
 =head1 AUTHORS
 
-Richard Levitte E<lt>levitte@openssl.orgE<gt>.
+Richard Levitte E<lt>levitte@opentls.orgE<gt>.
 
 =cut
 

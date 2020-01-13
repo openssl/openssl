@@ -1,18 +1,18 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/core_names.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
+#include <opentls/core_names.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/params.h>
+#include <opentls/err.h>
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
@@ -23,25 +23,25 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_digest_init_fn keccak_init;
-static OSSL_OP_digest_update_fn keccak_update;
-static OSSL_OP_digest_final_fn keccak_final;
-static OSSL_OP_digest_freectx_fn keccak_freectx;
-static OSSL_OP_digest_dupctx_fn keccak_dupctx;
-static OSSL_OP_digest_set_ctx_params_fn shake_set_ctx_params;
-static OSSL_OP_digest_settable_ctx_params_fn shake_settable_ctx_params;
+static Otls_OP_digest_init_fn keccak_init;
+static Otls_OP_digest_update_fn keccak_update;
+static Otls_OP_digest_final_fn keccak_final;
+static Otls_OP_digest_freectx_fn keccak_freectx;
+static Otls_OP_digest_dupctx_fn keccak_dupctx;
+static Otls_OP_digest_set_ctx_params_fn shake_set_ctx_params;
+static Otls_OP_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
+#if defined(OPENtls_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
 /*
  * IBM S390X support
  */
 # include "s390x_arch.h"
 # define S390_SHA3 1
 # define S390_SHA3_CAPABLE(name) \
-    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && \
-     (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
+    ((OPENtls_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && \
+     (OPENtls_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
 
 #endif
 
@@ -182,10 +182,10 @@ static PROV_SHA3_METHOD shake_s390x_md =
 #endif /* S390_SHA3 */
 
 #define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
-static OSSL_OP_digest_newctx_fn name##_newctx;                                 \
+static Otls_OP_digest_newctx_fn name##_newctx;                                 \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -195,10 +195,10 @@ static void *name##_newctx(void *provctx)                                      \
 }
 
 #define KMAC_newctx(uname, bitlen, pad)                                        \
-static OSSL_OP_digest_newctx_fn uname##_newctx;                                \
+static Otls_OP_digest_newctx_fn uname##_newctx;                                \
 static void *uname##_newctx(void *provctx)                                     \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -209,13 +209,13 @@ static void *uname##_newctx(void *provctx)                                     \
 
 #define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)   \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
-const OSSL_DISPATCH name##_functions[] = {                                     \
-    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
-    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))keccak_update },                \
-    { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))keccak_final },                  \
-    { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
-    { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },                \
+const Otls_DISPATCH name##_functions[] = {                                     \
+    { Otls_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
+    { Otls_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
+    { Otls_FUNC_DIGEST_UPDATE, (void (*)(void))keccak_update },                \
+    { Otls_FUNC_DIGEST_FINAL, (void (*)(void))keccak_final },                  \
+    { Otls_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
+    { Otls_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },                \
     PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
 
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
@@ -224,8 +224,8 @@ const OSSL_DISPATCH name##_functions[] = {                                     \
 
 #define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
+    { Otls_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
+    { Otls_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
@@ -233,36 +233,36 @@ static void keccak_freectx(void *vctx)
 {
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *keccak_dupctx(void *ctx)
 {
     KECCAK1600_CTX *in = (KECCAK1600_CTX *)ctx;
-    KECCAK1600_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    KECCAK1600_CTX *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret != NULL)
         *ret = *in;
     return ret;
 }
 
-static const OSSL_PARAM known_shake_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-    OSSL_PARAM_END
+static const Otls_PARAM known_shake_settable_ctx_params[] = {
+    {Otls_DIGEST_PARAM_tls3_MS, Otls_PARAM_OCTET_STRING, NULL, 0, 0},
+    Otls_PARAM_END
 };
-static const OSSL_PARAM *shake_settable_ctx_params(void)
+static const Otls_PARAM *shake_settable_ctx_params(void)
 {
     return known_shake_settable_ctx_params;
 }
 
-static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int shake_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
     if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
-        if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
+        p = Otls_PARAM_locate_const(params, Otls_DIGEST_PARAM_XOFLEN);
+        if (p != NULL && !Otls_PARAM_get_size_t(p, &ctx->md_size)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }

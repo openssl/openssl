@@ -1,21 +1,21 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 #include "internal/constant_time.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
-#ifndef OPENSSL_NO_DEPRECATED_0_9_8
+#ifndef OPENtls_NO_DEPRECATED_0_9_8
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -136,7 +136,7 @@ int BN_num_bits_word(BN_ULONG l)
  * This function still leaks `a->dmax`: it's caller's responsibility to
  * expand the input `a` in advance to a public length.
  */
-static ossl_inline
+static otls_inline
 int bn_num_bits_consttime(const BIGNUM *a)
 {
     int j, ret;
@@ -189,11 +189,11 @@ int BN_num_bits(const BIGNUM *a)
 static void bn_free_d(BIGNUM *a, int clear)
 {
     if (BN_get_flags(a, BN_FLG_SECURE))
-        OPENSSL_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
+        OPENtls_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else if (clear != 0)
-        OPENSSL_clear_free(a->d, a->dmax * sizeof(a->d[0]));
+        OPENtls_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else
-        OPENSSL_free(a->d);
+        OPENtls_free(a->d);
 }
 
 
@@ -204,8 +204,8 @@ void BN_clear_free(BIGNUM *a)
     if (a->d != NULL && !BN_get_flags(a, BN_FLG_STATIC_DATA))
         bn_free_d(a, 1);
     if (BN_get_flags(a, BN_FLG_MALLOCED)) {
-        OPENSSL_cleanse(a, sizeof(*a));
-        OPENSSL_free(a);
+        OPENtls_cleanse(a, sizeof(*a));
+        OPENtls_free(a);
     }
 }
 
@@ -216,7 +216,7 @@ void BN_free(BIGNUM *a)
     if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
         bn_free_d(a, 0);
     if (a->flags & BN_FLG_MALLOCED)
-        OPENSSL_free(a);
+        OPENtls_free(a);
 }
 
 void bn_init(BIGNUM *a)
@@ -231,7 +231,7 @@ BIGNUM *BN_new(void)
 {
     BIGNUM *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -263,9 +263,9 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = OPENSSL_secure_zalloc(words * sizeof(*a));
+        a = OPENtls_secure_zalloc(words * sizeof(*a));
     else
-        a = OPENSSL_zalloc(words * sizeof(*a));
+        a = OPENtls_zalloc(words * sizeof(*a));
     if (a == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -384,7 +384,7 @@ void BN_clear(BIGNUM *a)
         return;
     bn_check_top(a);
     if (a->d != NULL)
-        OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
+        OPENtls_cleanse(a->d, sizeof(*a->d) * a->dmax);
     a->neg = 0;
     a->top = 0;
     a->flags &= ~BN_FLG_FIXED_TOP;
@@ -488,7 +488,7 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
     /* Swipe through whole available data and don't give away padded zero. */
     atop = a->dmax * BN_BYTES;
     if (atop == 0) {
-        OPENSSL_cleanse(to, tolen);
+        OPENtls_cleanse(to, tolen);
         return tolen;
     }
 
@@ -948,7 +948,7 @@ BN_GENCB *BN_GENCB_new(void)
 {
     BN_GENCB *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_GENCB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -960,7 +960,7 @@ void BN_GENCB_free(BN_GENCB *cb)
 {
     if (cb == NULL)
         return;
-    OPENSSL_free(cb);
+    OPENtls_free(cb);
 }
 
 void BN_set_flags(BIGNUM *b, int n)

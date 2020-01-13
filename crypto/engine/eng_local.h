@@ -1,17 +1,17 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_ENGINE_ENG_LOCAL_H
-# define OSSL_CRYPTO_ENGINE_ENG_LOCAL_H
+#ifndef Otls_CRYPTO_ENGINE_ENG_LOCAL_H
+# define Otls_CRYPTO_ENGINE_ENG_LOCAL_H
 
-# include <openssl/trace.h>
+# include <opentls/trace.h>
 # include "internal/cryptlib.h"
 # include "crypto/engine.h"
 # include "internal/thread_once.h"
@@ -26,14 +26,14 @@ extern CRYPTO_RWLOCK *global_engine_lock;
  * statements must come *after* the change.
  */
 # define engine_ref_debug(e, isfunct, diff)                             \
-    OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
+    Otls_TRACE6(ENGINE_REF_COUNT,                                       \
                "engine: %p %s from %d to %d (%s:%d)\n",               \
                (void *)(e), (isfunct ? "funct" : "struct"),             \
                ((isfunct)                                               \
                 ? ((e)->funct_ref - (diff))                             \
                 : ((e)->struct_ref - (diff))),                          \
                ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
-               (OPENSSL_FILE), (OPENSSL_LINE))
+               (OPENtls_FILE), (OPENtls_LINE))
 
 /*
  * Any code that will need cleanup operations should use these functions to
@@ -65,7 +65,7 @@ void engine_table_cleanup(ENGINE_TABLE **table);
 ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
                                 int l);
 # define engine_table_select(t,n)                               \
-    engine_table_select_int(t,n,OPENSSL_FILE,OPENSSL_LINE)
+    engine_table_select_int(t,n,OPENtls_FILE,OPENtls_LINE)
 typedef void (engine_table_doall_cb) (int nid, STACK_OF(ENGINE) *sk,
                                       ENGINE *def, void *arg);
 void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
@@ -127,7 +127,7 @@ struct engine_st {
     ENGINE_CTRL_FUNC_PTR ctrl;
     ENGINE_LOAD_KEY_PTR load_privkey;
     ENGINE_LOAD_KEY_PTR load_pubkey;
-    ENGINE_SSL_CLIENT_CERT_PTR load_ssl_client_cert;
+    ENGINE_tls_CLIENT_CERT_PTR load_tls_client_cert;
     const ENGINE_CMD_DEFN *cmd_defns;
     int flags;
     /* reference count on the structure itself */
@@ -151,4 +151,4 @@ typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF(ENGINE_PILE);
 
-#endif                          /* OSSL_CRYPTO_ENGINE_ENG_LOCAL_H */
+#endif                          /* Otls_CRYPTO_ENGINE_ENG_LOCAL_H */

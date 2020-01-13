@@ -1,16 +1,16 @@
 #!/bin/sh
 
 HERE="`echo $0 | sed -e 's|[^/]*$||'`"
-OPENSSL="${HERE}../apps/openssl"
+OPENtls="${HERE}../apps/opentls"
 
-if [ -d "${HERE}../engines" -a "x$OPENSSL_ENGINES" = "x" ]; then
-	OPENSSL_ENGINES="${HERE}../engines"; export OPENSSL_ENGINES
+if [ -d "${HERE}../engines" -a "x$OPENtls_ENGINES" = "x" ]; then
+	OPENtls_ENGINES="${HERE}../engines"; export OPENtls_ENGINES
 fi
-if [ -d "${HERE}../providers" -a "x$OPENSSL_MODULES" = "x" ]; then
-	OPENSSL_MODULES="${HERE}../providers"; export OPENSSL_MODULES
+if [ -d "${HERE}../providers" -a "x$OPENtls_MODULES" = "x" ]; then
+	OPENtls_MODULES="${HERE}../providers"; export OPENtls_MODULES
 fi
 
-if [ -x "${OPENSSL}.exe" ]; then
+if [ -x "${OPENtls}.exe" ]; then
 	# The original reason for this script existence is to work around
 	# certain caveats in run-time linker behaviour. On Windows platforms
 	# adjusting $PATH used to be sufficient, but with introduction of
@@ -21,9 +21,9 @@ if [ -x "${OPENSSL}.exe" ]; then
 	if [ "$OSTYPE" != msdosdjgpp ]; then
 		PATH="${HERE}..:$PATH"; export PATH
 	fi
-	exec "${OPENSSL}.exe" "$@"
-elif [ -x "${OPENSSL}" -a -x "${HERE}shlib_wrap.sh" ]; then
-	exec "${HERE}shlib_wrap.sh" "${OPENSSL}" "$@"
+	exec "${OPENtls}.exe" "$@"
+elif [ -x "${OPENtls}" -a -x "${HERE}shlib_wrap.sh" ]; then
+	exec "${HERE}shlib_wrap.sh" "${OPENtls}" "$@"
 else
-	exec "${OPENSSL}" "$@"	# hope for the best...
+	exec "${OPENtls}" "$@"	# hope for the best...
 fi

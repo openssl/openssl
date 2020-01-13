@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # Version 4.3.
@@ -1191,7 +1191,7 @@ sub enclast()
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if (!$x86only);
+	&picmeup($s0,"OPENtls_ia32cap_P",$tbl,&label("pic_point")) if (!$x86only);
 	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
@@ -1982,7 +1982,7 @@ sub declast()
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
+	&picmeup($s0,"OPENtls_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
 	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
 
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
@@ -2053,7 +2053,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&call   (&label("pic_point"));		# make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
+	&picmeup($s0,"OPENtls_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
 
 	&cmp	(&wparam(5),0);
 	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
@@ -2327,7 +2327,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 #--------------------------- SLOW ROUTINE ---------------------------#
 &set_label("slow_way",16);
 
-	&mov	($s0,&DWP(0,$s0)) if (!$x86only);# load OPENSSL_ia32cap
+	&mov	($s0,&DWP(0,$s0)) if (!$x86only);# load OPENtls_ia32cap
 	&mov	($key,&wparam(3));	# load key
 
 	# pre-allocate aligned stack frame...
@@ -2353,7 +2353,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&add	("esp",4);		# reserve for return address!
 	&mov	($_tbl,$tbl);		# save %ebp
 	&mov	($_esp,$acc);		# save %esp
-	&mov	($_tmp,$s0);		# save OPENSSL_ia32cap
+	&mov	($_tmp,$s0);		# save OPENtls_ia32cap
 
 	&mov	($s0,&DWP(0,$s3));	# load inp
 	&mov	($s1,&DWP(4,$s3));	# load out
@@ -2991,7 +2991,7 @@ sub deckey()
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
-&asciz("AES for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("AES for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

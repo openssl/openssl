@@ -1,28 +1,28 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
-#include <openssl/x509v3.h>
-#include <openssl/x509_vfy.h>
+#include <opentls/x509v3.h>
+#include <opentls/x509_vfy.h>
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
-static int check_ssl_ca(const X509 *x);
-static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
+static int check_tls_ca(const X509 *x);
+static int check_purpose_tls_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);
-static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_tls_server(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);
-static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_ns_tls_server(const X509_PURPOSE *xp, const X509 *x,
                                        int ca);
 static int purpose_smime(const X509 *x, int ca);
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
@@ -40,12 +40,12 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
 
 static X509_PURPOSE xstandard[] = {
-    {X509_PURPOSE_SSL_CLIENT, X509_TRUST_SSL_CLIENT, 0,
-     check_purpose_ssl_client, "SSL client", "sslclient", NULL},
-    {X509_PURPOSE_SSL_SERVER, X509_TRUST_SSL_SERVER, 0,
-     check_purpose_ssl_server, "SSL server", "sslserver", NULL},
-    {X509_PURPOSE_NS_SSL_SERVER, X509_TRUST_SSL_SERVER, 0,
-     check_purpose_ns_ssl_server, "Netscape SSL server", "nssslserver", NULL},
+    {X509_PURPOSE_tls_CLIENT, X509_TRUST_tls_CLIENT, 0,
+     check_purpose_tls_client, "tls client", "tlsclient", NULL},
+    {X509_PURPOSE_tls_SERVER, X509_TRUST_tls_SERVER, 0,
+     check_purpose_tls_server, "tls server", "tlsserver", NULL},
+    {X509_PURPOSE_NS_tls_SERVER, X509_TRUST_tls_SERVER, 0,
+     check_purpose_ns_tls_server, "Netscape tls server", "nstlsserver", NULL},
     {X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign,
      "S/MIME signing", "smimesign", NULL},
     {X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0,
@@ -61,7 +61,7 @@ static X509_PURPOSE xstandard[] = {
      NULL},
 };
 
-#define X509_PURPOSE_COUNT OSSL_NELEM(xstandard)
+#define X509_PURPOSE_COUNT Otls_NELEM(xstandard)
 
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
@@ -162,7 +162,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     idx = X509_PURPOSE_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
+        if ((ptmp = OPENtls_malloc(sizeof(*ptmp))) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -170,14 +170,14 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     } else
         ptmp = X509_PURPOSE_get0(idx);
 
-    /* OPENSSL_free existing name if dynamic */
+    /* OPENtls_free existing name if dynamic */
     if (ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
-        OPENSSL_free(ptmp->name);
-        OPENSSL_free(ptmp->sname);
+        OPENtls_free(ptmp->name);
+        OPENtls_free(ptmp->sname);
     }
     /* dup supplied name */
-    ptmp->name = OPENSSL_strdup(name);
-    ptmp->sname = OPENSSL_strdup(sname);
+    ptmp->name = OPENtls_strdup(name);
+    ptmp->sname = OPENtls_strdup(sname);
     if (ptmp->name == NULL|| ptmp->sname == NULL) {
         X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -207,9 +207,9 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     return 1;
  err:
     if (idx == -1) {
-        OPENSSL_free(ptmp->name);
-        OPENSSL_free(ptmp->sname);
-        OPENSSL_free(ptmp);
+        OPENtls_free(ptmp->name);
+        OPENtls_free(ptmp->sname);
+        OPENtls_free(ptmp);
     }
     return 0;
 }
@@ -220,10 +220,10 @@ static void xptable_free(X509_PURPOSE *p)
         return;
     if (p->flags & X509_PURPOSE_DYNAMIC) {
         if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {
-            OPENSSL_free(p->name);
-            OPENSSL_free(p->sname);
+            OPENtls_free(p->name);
+            OPENtls_free(p->sname);
         }
-        OPENSSL_free(p);
+        OPENtls_free(p);
     }
 }
 
@@ -279,7 +279,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
         NID_certificate_policies, /* 89 */
         NID_crl_distribution_points, /* 103 */
         NID_ext_key_usage,      /* 126 */
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
         NID_sbgp_ipAddrBlock,   /* 290 */
         NID_sbgp_autonomousSysNum, /* 291 */
 #endif
@@ -295,7 +295,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
     if (ex_nid == NID_undef)
         return 0;
 
-    if (OBJ_bsearch_nid(&ex_nid, supported_nids, OSSL_NELEM(supported_nids)))
+    if (OBJ_bsearch_nid(&ex_nid, supported_nids, Otls_NELEM(supported_nids)))
         return 1;
     return 0;
 }
@@ -417,11 +417,11 @@ static void x509v3_cache_extensions(X509 *x)
         for (i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
             switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage, i))) {
             case NID_server_auth:
-                x->ex_xkusage |= XKU_SSL_SERVER;
+                x->ex_xkusage |= XKU_tls_SERVER;
                 break;
 
             case NID_client_auth:
-                x->ex_xkusage |= XKU_SSL_CLIENT;
+                x->ex_xkusage |= XKU_tls_CLIENT;
                 break;
 
             case NID_email_protect:
@@ -481,7 +481,7 @@ static void x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
     setup_crldp(x);
 
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     x->rfc3779_addr = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
     x->rfc3779_asid = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,
                                        NULL, NULL);
@@ -566,53 +566,53 @@ int X509_check_ca(X509 *x)
     return check_ca(x);
 }
 
-/* Check SSL CA: common checks for SSL client and server */
-static int check_ssl_ca(const X509 *x)
+/* Check tls CA: common checks for tls client and server */
+static int check_tls_ca(const X509 *x)
 {
     int ca_ret;
     ca_ret = check_ca(x);
     if (!ca_ret)
         return 0;
     /* check nsCertType if present */
-    if (ca_ret != 5 || x->ex_nscert & NS_SSL_CA)
+    if (ca_ret != 5 || x->ex_nscert & NS_tls_CA)
         return ca_ret;
     else
         return 0;
 }
 
-static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_tls_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
-    if (xku_reject(x, XKU_SSL_CLIENT))
+    if (xku_reject(x, XKU_tls_CLIENT))
         return 0;
     if (ca)
-        return check_ssl_ca(x);
+        return check_tls_ca(x);
     /* We need to do digital signatures or key agreement */
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_KEY_AGREEMENT))
         return 0;
-    /* nsCertType if present should allow SSL client use */
-    if (ns_reject(x, NS_SSL_CLIENT))
+    /* nsCertType if present should allow tls client use */
+    if (ns_reject(x, NS_tls_CLIENT))
         return 0;
     return 1;
 }
 
 /*
- * Key usage needed for TLS/SSL server: digital signature, encipherment or
- * key agreement. The ssl code can check this more thoroughly for individual
+ * Key usage needed for TLS/tls server: digital signature, encipherment or
+ * key agreement. The tls code can check this more thoroughly for individual
  * key types.
  */
 #define KU_TLS \
         KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT|KU_KEY_AGREEMENT
 
-static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_tls_server(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
-    if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
+    if (xku_reject(x, XKU_tls_SERVER | XKU_SGC))
         return 0;
     if (ca)
-        return check_ssl_ca(x);
+        return check_tls_ca(x);
 
-    if (ns_reject(x, NS_SSL_SERVER))
+    if (ns_reject(x, NS_tls_SERVER))
         return 0;
     if (ku_reject(x, KU_TLS))
         return 0;
@@ -621,11 +621,11 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 
 }
 
-static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_ns_tls_server(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
     int ret;
-    ret = check_purpose_ssl_server(xp, x, ca);
+    ret = check_purpose_tls_server(xp, x, ca);
     if (!ret || ca)
         return ret;
     /* We need to encipher or Netscape complains */
@@ -654,7 +654,7 @@ static int purpose_smime(const X509 *x, int ca)
         if (x->ex_nscert & NS_SMIME)
             return 1;
         /* Workaround for some buggy certificates */
-        if (x->ex_nscert & NS_SSL_CLIENT)
+        if (x->ex_nscert & NS_tls_CLIENT)
             return 2;
         return 0;
     }

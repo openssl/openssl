@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -13,12 +13,12 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir data_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT with pipe srctop_dir data_file/;
+use Opentls::Test::Utils;
 
 setup("test_ocsp");
 
-plan skip_all => "OCSP is not supported by this OpenSSL build"
+plan skip_all => "OCSP is not supported by this Opentls build"
     if disabled("ocsp");
 
 my $ocspdir=srctop_dir("test", "ocsp-tests");
@@ -35,11 +35,11 @@ sub test_ocsp {
     }
     my $expected_exit = shift;
 
-    run(app(["openssl", "base64", "-d",
+    run(app(["opentls", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
              "-out", "ocsp-resp-fff.dat"]));
     with({ exit_checker => sub { return shift == $expected_exit; } },
-         sub { ok(run(app(["openssl", "ocsp", "-respin", "ocsp-resp-fff.dat",
+         sub { ok(run(app(["opentls", "ocsp", "-respin", "ocsp-resp-fff.dat",
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
                            "-verify_other", catfile($ocspdir, $untrusted),

@@ -75,7 +75,7 @@ netscape_revocation_url		73
 netscape_ca_revocation_url		74
 netscape_renewal_url		75
 netscape_ca_policy_url		76
-netscape_ssl_server_name		77
+netscape_tls_server_name		77
 netscape_comment		78
 netscape_cert_sequence		79
 desx_cbc		80

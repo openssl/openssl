@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TEST_SHIM_TEST_CONFIG_H
-#define OSSL_TEST_SHIM_TEST_CONFIG_H
+#ifndef Otls_TEST_SHIM_TEST_CONFIG_H
+#define Otls_TEST_SHIM_TEST_CONFIG_H
 
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ struct TestConfig {
   bool no_tls12 = false;
   bool no_tls11 = false;
   bool no_tls1 = false;
-  bool no_ssl3 = false;
+  bool no_tls3 = false;
   bool shim_writes_first = false;
   std::string host_name;
   std::string advertise_alpn;
@@ -85,4 +85,4 @@ struct TestConfig {
 bool ParseConfig(int argc, char **argv, TestConfig *out_config);
 
 
-#endif  // OSSL_TEST_SHIM_TEST_CONFIG_H
+#endif  // Otls_TEST_SHIM_TEST_CONFIG_H

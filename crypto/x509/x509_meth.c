@@ -1,10 +1,10 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,17 +12,17 @@
 #include <errno.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/types.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/types.h>
 #include "x509_local.h"
 
 X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name)
 {
-    X509_LOOKUP_METHOD *method = OPENSSL_zalloc(sizeof(X509_LOOKUP_METHOD));
+    X509_LOOKUP_METHOD *method = OPENtls_zalloc(sizeof(X509_LOOKUP_METHOD));
 
     if (method != NULL) {
-        method->name = OPENSSL_strdup(name);
+        method->name = OPENtls_strdup(name);
         if (method->name == NULL) {
             X509err(X509_F_X509_LOOKUP_METH_NEW, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -32,15 +32,15 @@ X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name)
     return method;
 
 err:
-    OPENSSL_free(method);
+    OPENtls_free(method);
     return NULL;
 }
 
 void X509_LOOKUP_meth_free(X509_LOOKUP_METHOD *method)
 {
     if (method != NULL)
-        OPENSSL_free(method->name);
-    OPENSSL_free(method);
+        OPENtls_free(method->name);
+    OPENtls_free(method);
 }
 
 int X509_LOOKUP_meth_set_new_item(X509_LOOKUP_METHOD *method,

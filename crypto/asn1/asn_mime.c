@@ -1,19 +1,19 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
+#include <opentls/rand.h>
+#include <opentls/x509.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
 #include "crypto/evp.h"
 #include "internal/bio.h"
 #include "asn1_local.h"
@@ -168,7 +168,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
             rv = md->md_ctrl(NULL, EVP_MD_CTRL_MICALG, 0, &micstr);
             if (rv > 0) {
                 BIO_puts(out, micstr);
-                OPENSSL_free(micstr);
+                OPENtls_free(micstr);
                 continue;
             }
             if (rv != -2)
@@ -637,7 +637,7 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
         return NULL;
     while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
         /* If whitespace at line start then continuation line */
-        if (mhdr && ossl_isspace(linebuf[0]))
+        if (mhdr && otls_isspace(linebuf[0]))
             state = MIME_NAME;
         else
             state = MIME_START;
@@ -761,7 +761,7 @@ static char *strip_start(char *name)
             /* Else null string */
             return NULL;
         }
-        if (!ossl_isspace(c))
+        if (!otls_isspace(c))
             return p;
     }
     return NULL;
@@ -782,7 +782,7 @@ static char *strip_end(char *name)
             *p = 0;
             return name;
         }
-        if (ossl_isspace(c))
+        if (otls_isspace(c))
             *p = 0;
         else
             return name;
@@ -796,18 +796,18 @@ static MIME_HEADER *mime_hdr_new(const char *name, const char *value)
     char *tmpname = NULL, *tmpval = NULL, *p;
 
     if (name) {
-        if ((tmpname = OPENSSL_strdup(name)) == NULL)
+        if ((tmpname = OPENtls_strdup(name)) == NULL)
             return NULL;
         for (p = tmpname; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = otls_tolower(*p);
     }
     if (value) {
-        if ((tmpval = OPENSSL_strdup(value)) == NULL)
+        if ((tmpval = OPENtls_strdup(value)) == NULL)
             goto err;
         for (p = tmpval; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = otls_tolower(*p);
     }
-    mhdr = OPENSSL_malloc(sizeof(*mhdr));
+    mhdr = OPENtls_malloc(sizeof(*mhdr));
     if (mhdr == NULL)
         goto err;
     mhdr->name = tmpname;
@@ -817,9 +817,9 @@ static MIME_HEADER *mime_hdr_new(const char *name, const char *value)
     return mhdr;
 
  err:
-    OPENSSL_free(tmpname);
-    OPENSSL_free(tmpval);
-    OPENSSL_free(mhdr);
+    OPENtls_free(tmpname);
+    OPENtls_free(tmpval);
+    OPENtls_free(mhdr);
     return NULL;
 }
 
@@ -829,19 +829,19 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, const char *name, const char *va
     MIME_PARAM *mparam = NULL;
 
     if (name) {
-        tmpname = OPENSSL_strdup(name);
+        tmpname = OPENtls_strdup(name);
         if (!tmpname)
             goto err;
         for (p = tmpname; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = otls_tolower(*p);
     }
     if (value) {
-        tmpval = OPENSSL_strdup(value);
+        tmpval = OPENtls_strdup(value);
         if (!tmpval)
             goto err;
     }
     /* Parameter values are case sensitive so leave as is */
-    mparam = OPENSSL_malloc(sizeof(*mparam));
+    mparam = OPENtls_malloc(sizeof(*mparam));
     if (mparam == NULL)
         goto err;
     mparam->param_name = tmpname;
@@ -850,9 +850,9 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, const char *name, const char *va
         goto err;
     return 1;
  err:
-    OPENSSL_free(tmpname);
-    OPENSSL_free(tmpval);
-    OPENSSL_free(mparam);
+    OPENtls_free(tmpname);
+    OPENtls_free(tmpval);
+    OPENtls_free(mparam);
     return 0;
 }
 
@@ -903,18 +903,18 @@ static void mime_hdr_free(MIME_HEADER *hdr)
 {
     if (hdr == NULL)
         return;
-    OPENSSL_free(hdr->name);
-    OPENSSL_free(hdr->value);
+    OPENtls_free(hdr->name);
+    OPENtls_free(hdr->value);
     if (hdr->params)
         sk_MIME_PARAM_pop_free(hdr->params, mime_param_free);
-    OPENSSL_free(hdr);
+    OPENtls_free(hdr);
 }
 
 static void mime_param_free(MIME_PARAM *param)
 {
-    OPENSSL_free(param->param_name);
-    OPENSSL_free(param->param_value);
-    OPENSSL_free(param);
+    OPENtls_free(param->param_name);
+    OPENtls_free(param->param_value);
+    OPENtls_free(param);
 }
 
 /*-

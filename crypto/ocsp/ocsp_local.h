@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-  CertID ::= SEQUENCE {
@@ -183,7 +183,7 @@ struct ocsp_response_data_st {
    * 4.2.1) is open for interpretation.  I've done tests against another
    * responder, and found that it doesn't do the double hashing that the RFC
    * seems to say one should.  Therefore, all relevant functions take a flag
-   * saying which variant should be used.  -- Richard Levitte, OpenSSL team
+   * saying which variant should be used.  -- Richard Levitte, Opentls team
    * and CeloCom
    */
 struct ocsp_basic_response_st {

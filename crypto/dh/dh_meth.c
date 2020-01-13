@@ -1,28 +1,28 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "dh_local.h"
 #include <string.h>
-#include <openssl/err.h>
+#include <opentls/err.h>
 
 DH_METHOD *DH_meth_new(const char *name, int flags)
 {
-    DH_METHOD *dhm = OPENSSL_zalloc(sizeof(*dhm));
+    DH_METHOD *dhm = OPENtls_zalloc(sizeof(*dhm));
 
     if (dhm != NULL) {
         dhm->flags = flags;
 
-        dhm->name = OPENSSL_strdup(name);
+        dhm->name = OPENtls_strdup(name);
         if (dhm->name != NULL)
             return dhm;
 
-        OPENSSL_free(dhm);
+        OPENtls_free(dhm);
     }
 
     DHerr(DH_F_DH_METH_NEW, ERR_R_MALLOC_FAILURE);
@@ -32,23 +32,23 @@ DH_METHOD *DH_meth_new(const char *name, int flags)
 void DH_meth_free(DH_METHOD *dhm)
 {
     if (dhm != NULL) {
-        OPENSSL_free(dhm->name);
-        OPENSSL_free(dhm);
+        OPENtls_free(dhm->name);
+        OPENtls_free(dhm);
     }
 }
 
 DH_METHOD *DH_meth_dup(const DH_METHOD *dhm)
 {
-    DH_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
+    DH_METHOD *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, dhm, sizeof(*dhm));
 
-        ret->name = OPENSSL_strdup(dhm->name);
+        ret->name = OPENtls_strdup(dhm->name);
         if (ret->name != NULL)
             return ret;
 
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
     }
 
     DHerr(DH_F_DH_METH_DUP, ERR_R_MALLOC_FAILURE);
@@ -62,14 +62,14 @@ const char *DH_meth_get0_name(const DH_METHOD *dhm)
 
 int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
 {
-    char *tmpname = OPENSSL_strdup(name);
+    char *tmpname = OPENtls_strdup(name);
 
     if (tmpname == NULL) {
         DHerr(DH_F_DH_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    OPENSSL_free(dhm->name);
+    OPENtls_free(dhm->name);
     dhm->name = tmpname;
 
     return 1;

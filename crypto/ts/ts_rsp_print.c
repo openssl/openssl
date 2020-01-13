@@ -1,18 +1,18 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/bn.h>
-#include <openssl/x509v3.h>
-#include <openssl/ts.h>
+#include <opentls/objects.h>
+#include <opentls/bn.h>
+#include <opentls/x509v3.h>
+#include <opentls/ts.h>
 #include "ts_local.h"
 
 struct status_map_st {
@@ -74,7 +74,7 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
 
     BIO_printf(bio, "Status: ");
     status = ASN1_INTEGER_get(a->status);
-    if (0 <= status && status < (long)OSSL_NELEM(status_map))
+    if (0 <= status && status < (long)Otls_NELEM(status_map))
         BIO_printf(bio, "%s\n", status_map[status]);
     else
         BIO_printf(bio, "out of bounds\n");

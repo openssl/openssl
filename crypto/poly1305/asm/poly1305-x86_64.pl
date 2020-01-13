@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements Poly1305 hash for x86_64.
@@ -158,7 +158,7 @@ ___
 $code.=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	poly1305_init
 .hidden	poly1305_init
@@ -183,7 +183,7 @@ poly1305_init:
 	lea	poly1305_emit(%rip),%r11
 ___
 $code.=<<___	if ($avx);
-	mov	OPENSSL_ia32cap_P+4(%rip),%r9
+	mov	OPENtls_ia32cap_P+4(%rip),%r9
 	lea	poly1305_blocks_avx(%rip),%rax
 	lea	poly1305_emit_avx(%rip),%rcx
 	bt	\$`60-32`,%r9		# AVX?
@@ -1681,7 +1681,7 @@ poly1305_blocks_avx2:
 
 .Lproceed_avx2:
 	mov	%r15,$len			# restore $len
-	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
+	mov	OPENtls_ia32cap_P+8(%rip),%r10d
 	mov	\$`(1<<31|1<<30|1<<16)`,%r11d
 
 	mov	0(%rsp),%r15
@@ -1706,7 +1706,7 @@ poly1305_blocks_avx2:
 .align	32
 .Leven_avx2:
 .cfi_startproc
-	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
+	mov		OPENtls_ia32cap_P+8(%rip),%r10d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
 	vmovd		4*1($ctx),%x#$H1
 	vmovd		4*2($ctx),%x#$H2
@@ -3810,7 +3810,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	16
 ___
 

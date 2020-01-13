@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
-use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
@@ -30,7 +30,7 @@ if (disabled("rsa")) {
 }
 
 # Check for duplicate -addext parameters, and one "working" case.
-my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
+my @addext_args = ( "opentls", "req", "-new", "-out", "testreq.pem",
     "-config", srctop_file("test", "test.cnf"), @req_new );
 my $val = "subjectAltName=DNS:example.com";
 my $val2 = " " . $val;
@@ -46,16 +46,16 @@ subtest "generating certificate requests with RSA" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "RSA is not supported by this OpenSSL build", 2
+        skip "RSA is not supported by this Opentls build", 2
             if disabled("rsa");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "testrsa.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
@@ -66,16 +66,16 @@ subtest "generating certificate requests with DSA" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "DSA is not supported by this OpenSSL build", 2
+        skip "DSA is not supported by this Opentls build", 2
             if disabled("dsa");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "testdsa.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
@@ -86,16 +86,16 @@ subtest "generating certificate requests with ECDSA" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "ECDSA is not supported by this OpenSSL build", 2
+        skip "ECDSA is not supported by this Opentls build", 2
             if disabled("ec");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "testec-p256.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
@@ -106,16 +106,16 @@ subtest "generating certificate requests with Ed25519" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "Ed25519 is not supported by this OpenSSL build", 2
+        skip "Ed25519 is not supported by this Opentls build", 2
             if disabled("ec");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "tested25519.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
@@ -126,16 +126,16 @@ subtest "generating certificate requests with Ed448" => sub {
     plan tests => 2;
 
     SKIP: {
-        skip "Ed448 is not supported by this OpenSSL build", 2
+        skip "Ed448 is not supported by this Opentls build", 2
             if disabled("ec");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq.pem", "-utf8",
                     "-key", srctop_file("test", "tested448.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout"])),
            "Verifying signature on request");
@@ -145,11 +145,11 @@ subtest "generating certificate requests with Ed448" => sub {
 subtest "generating certificate requests" => sub {
     plan tests => 2;
 
-    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+    ok(run(app(["opentls", "req", "-config", srctop_file("test", "test.cnf"),
                 @req_new, "-out", "testreq.pem"])),
        "Generating request");
 
-    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+    ok(run(app(["opentls", "req", "-config", srctop_file("test", "test.cnf"),
                 "-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
 };
@@ -158,29 +158,29 @@ subtest "generating SM2 certificate requests" => sub {
     plan tests => 4;
 
     SKIP: {
-        skip "SM2 is not supported by this OpenSSL build", 4
+        skip "SM2 is not supported by this Opentls build", 4
         if disabled("sm2");
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file("test", "certs", "sm2.key"),
                     "-sigopt", "sm2_id:1234567812345678",
                     "-out", "testreq.pem", "-sm3"])),
            "Generating SM2 certificate request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout",
                     "-sm2-id", "1234567812345678", "-sm3"])),
            "Verifying signature on SM2 certificate request");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file("test", "certs", "sm2.key"),
                     "-sigopt", "sm2_hex_id:DEADBEEF",
                     "-out", "testreq.pem", "-sm3"])),
            "Generating SM2 certificate request with hex id");
 
-        ok(run(app(["openssl", "req",
+        ok(run(app(["opentls", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq.pem", "-noout",
                     "-sm2-hex-id", "DEADBEEF", "-sm3"])),
@@ -188,7 +188,7 @@ subtest "generating SM2 certificate requests" => sub {
     }
 };
 
-my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
+my @opentls_args = ("req", "-config", srctop_file("apps", "opentls.cnf"));
 
 run_conversion('req conversions',
                "testreq.pem");
@@ -202,7 +202,7 @@ sub run_conversion {
     my $reqfile = shift;
 
     subtest $title => sub {
-        run(app(["openssl", @openssl_args,
+        run(app(["opentls", @opentls_args,
                  "-in", $reqfile, "-inform", "p",
                  "-noout", "-text"],
                 stderr => "req-check.err", stdout => undef));
@@ -211,7 +211,7 @@ sub run_conversion {
             plan skip_all => "skipping req conversion test for $reqfile"
                 if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
 
-            tconversion("req", $reqfile, @openssl_args);
+            tconversion("req", $reqfile, @opentls_args);
         }
         close DATA;
         unlink "req-check.err";

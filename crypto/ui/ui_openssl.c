@@ -1,29 +1,29 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
-#include <openssl/e_os2.h>
-#include <openssl/err.h>
-#include <openssl/ui.h>
+#include <opentls/e_os2.h>
+#include <opentls/err.h>
+#include <opentls/ui.h>
 
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
 /*
  * need for #define _POSIX_C_SOURCE arises whenever you pass -ansi to gcc
  * [maybe others?], because it masks interfaces not discussed in standard,
  * sigaction and fileno included. -pedantic would be more appropriate for the
  * intended purposes, but we can't prevent users from adding -ansi.
  */
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
 #  include <sys/types.h>
 # endif
 
-# if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
+# if !defined(_POSIX_C_SOURCE) && defined(OPENtls_SYS_VMS)
 #  ifndef _POSIX_C_SOURCE
 #   define _POSIX_C_SOURCE 2
 #  endif
@@ -33,7 +33,7 @@
 # include <string.h>
 # include <errno.h>
 
-# if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
+# if !defined(OPENtls_SYS_MSDOS) && !defined(OPENtls_SYS_VMS)
 #  include <unistd.h>
 /*
  * If unistd.h defines _POSIX_VERSION, we conclude that we are on a POSIX
@@ -52,7 +52,7 @@
 # include "ui_local.h"
 # include "internal/cryptlib.h"
 
-# ifdef OPENSSL_SYS_VMS          /* prototypes for sys$whatever */
+# ifdef OPENtls_SYS_VMS          /* prototypes for sys$whatever */
 #  include <starlet.h>
 #  ifdef __DECC
 #   pragma message disable DOLLARID
@@ -61,7 +61,7 @@
 
 # ifdef WIN_CONSOLE_BUG
 #  include <windows.h>
-#  ifndef OPENSSL_SYS_WINCE
+#  ifndef OPENtls_SYS_WINCE
 #   include <wincon.h>
 #  endif
 # endif
@@ -87,9 +87,9 @@
 /*
  * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
  */
-#  elif !defined(OPENSSL_SYS_VMS) \
-        && !defined(OPENSSL_SYS_MSDOS) \
-        && !defined(OPENSSL_SYS_VXWORKS)
+#  elif !defined(OPENtls_SYS_VMS) \
+        && !defined(OPENtls_SYS_MSDOS) \
+        && !defined(OPENtls_SYS_VXWORKS)
 #   define TERMIOS
 #   undef  TERMIO
 #   undef  SGTTY
@@ -97,7 +97,7 @@
 
 # endif
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
 #  undef TERMIOS
 #  undef TERMIO
 #  undef SGTTY
@@ -127,15 +127,15 @@
 #  define TTY_set(tty,data)      ioctl(tty,TIOCSETP,data)
 # endif
 
-# if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
+# if !defined(_LIBC) && !defined(OPENtls_SYS_MSDOS) && !defined(OPENtls_SYS_VMS)
 #  include <sys/ioctl.h>
 # endif
 
-# ifdef OPENSSL_SYS_MSDOS
+# ifdef OPENtls_SYS_MSDOS
 #  include <conio.h>
 # endif
 
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
 #  include <ssdef.h>
 #  include <iodef.h>
 #  include <ttdef.h>
@@ -158,7 +158,7 @@ static struct sigaction savsig[NX509_SIG];
 static void (*savsig[NX509_SIG]) (int);
 # endif
 
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
 static struct IOSB iosb;
 static $DESCRIPTOR(terminal, "TT");
 static long tty_orig[3], tty_new[3]; /* XXX Is there any guarantee that this
@@ -169,7 +169,7 @@ static unsigned short channel = 0;
 # elif defined(_WIN32) && !defined(_WIN32_WCE)
 static DWORD tty_orig, tty_new;
 # else
-#  if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
+#  if !defined(OPENtls_SYS_MSDOS) || defined(__DJGPP__)
 static TTY_STRUCT tty_orig, tty_new;
 #  endif
 # endif
@@ -177,13 +177,13 @@ static FILE *tty_in, *tty_out;
 static int is_a_tty;
 
 /* Declare static functions */
-# if !defined(OPENSSL_SYS_WINCE)
+# if !defined(OPENtls_SYS_WINCE)
 static int read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
 # endif
-# if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
+# if defined(OPENtls_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 # endif
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
@@ -256,7 +256,7 @@ static int read_string(UI *ui, UI_STRING *uis)
     return 1;
 }
 
-# if !defined(OPENSSL_SYS_WINCE)
+# if !defined(OPENtls_SYS_WINCE)
 /* Internal functions to read a string without echoing */
 static int read_till_nl(FILE *in)
 {
@@ -279,7 +279,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     int ok;
     char result[BUFSIZ];
     int maxsize = BUFSIZ - 1;
-# if !defined(OPENSSL_SYS_WINCE)
+# if !defined(OPENtls_SYS_WINCE)
     char *p = NULL;
     int echo_eol = !echo;
 
@@ -299,7 +299,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     if (is_a_tty) {
         DWORD numread;
 #   if defined(CP_UTF8)
-        if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
+        if (GetEnvironmentVariableW(L"OPENtls_WIN32_UTF8", NULL, 0) != 0) {
             WCHAR wresult[BUFSIZ];
 
             if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
@@ -315,7 +315,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
                                         result, sizeof(result), NULL, 0) > 0)
                     p = result;
 
-                OPENSSL_cleanse(wresult, sizeof(wresult));
+                OPENtls_cleanse(wresult, sizeof(wresult));
             }
         } else
 #   endif
@@ -330,7 +330,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
             p = result;
         }
     } else
-#  elif defined(OPENSSL_SYS_MSDOS)
+#  elif defined(OPENtls_SYS_MSDOS)
     if (!echo) {
         noecho_fgets(result, maxsize, tty_in);
         p = result;             /* FIXME: noecho_fgets doesn't return errors */
@@ -365,7 +365,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     ok = 1;
 # endif
 
-    OPENSSL_cleanse(result, BUFSIZ);
+    OPENtls_cleanse(result, BUFSIZ);
     return ok;
 }
 
@@ -375,7 +375,7 @@ static int open_console(UI *ui)
     CRYPTO_THREAD_write_lock(ui->lock);
     is_a_tty = 1;
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
     tty_in = stdin;
     tty_out = stderr;
 # elif defined(_WIN32) && !defined(_WIN32_WCE)
@@ -390,7 +390,7 @@ static int open_console(UI *ui)
             tty_in = stdin;
     }
 # else
-#  ifdef OPENSSL_SYS_MSDOS
+#  ifdef OPENtls_SYS_MSDOS
 #   define DEV_TTY "con"
 #  else
 #   define DEV_TTY "/dev/tty"
@@ -401,7 +401,7 @@ static int open_console(UI *ui)
         tty_out = stderr;
 # endif
 
-# if defined(TTY_get) && !defined(OPENSSL_SYS_VMS)
+# if defined(TTY_get) && !defined(OPENtls_SYS_VMS)
     if (TTY_get(fileno(tty_in), &tty_orig) == -1) {
 #  ifdef ENOTTY
         if (errno == ENOTTY)
@@ -454,7 +454,7 @@ static int open_console(UI *ui)
             }
     }
 # endif
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
     status = sys$assign(&terminal, &channel, 0, 0);
 
     /* if there isn't a TT device, something is very wrong */
@@ -484,11 +484,11 @@ static int noecho_console(UI *ui)
     tty_new.TTY_FLAGS &= ~ECHO;
 # endif
 
-# if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
+# if defined(TTY_set) && !defined(OPENtls_SYS_VMS)
     if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
         return 0;
 # endif
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
     if (is_a_tty) {
         tty_new[0] = tty_orig[0];
         tty_new[1] = tty_orig[1] | TT$M_NOECHO;
@@ -521,12 +521,12 @@ static int noecho_console(UI *ui)
 
 static int echo_console(UI *ui)
 {
-# if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
+# if defined(TTY_set) && !defined(OPENtls_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
         return 0;
 # endif
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
     if (is_a_tty) {
         tty_new[0] = tty_orig[0];
         tty_new[1] = tty_orig[1];
@@ -562,7 +562,7 @@ static int close_console(UI *ui)
         fclose(tty_in);
     if (tty_out != stderr)
         fclose(tty_out);
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
     status = sys$dassgn(channel);
     if (status != SS$_NORMAL) {
         char tmp_num[12];
@@ -578,11 +578,11 @@ static int close_console(UI *ui)
     return 1;
 }
 
-# if !defined(OPENSSL_SYS_WINCE)
+# if !defined(OPENtls_SYS_WINCE)
 /* Internal functions to handle signals and act on them */
 static void pushsig(void)
 {
-#  ifndef OPENSSL_SYS_WIN32
+#  ifndef OPENtls_SYS_WIN32
     int i;
 #  endif
 #  ifdef SIGACTION
@@ -592,7 +592,7 @@ static void pushsig(void)
     sa.sa_handler = recsig;
 #  endif
 
-#  ifdef OPENSSL_SYS_WIN32
+#  ifdef OPENtls_SYS_WIN32
     savsig[SIGABRT] = signal(SIGABRT, recsig);
     savsig[SIGFPE] = signal(SIGFPE, recsig);
     savsig[SIGILL] = signal(SIGILL, recsig);
@@ -628,7 +628,7 @@ static void pushsig(void)
 
 static void popsig(void)
 {
-#  ifdef OPENSSL_SYS_WIN32
+#  ifdef OPENtls_SYS_WIN32
     signal(SIGABRT, savsig[SIGABRT]);
     signal(SIGFPE, savsig[SIGFPE]);
     signal(SIGILL, savsig[SIGILL]);
@@ -662,7 +662,7 @@ static void recsig(int i)
 # endif
 
 /* Internal functions specific for Windows */
-# if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
+# if defined(OPENtls_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty)
 {
     int i;
@@ -705,8 +705,8 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 }
 # endif
 
-static UI_METHOD ui_openssl = {
-    "OpenSSL default user interface",
+static UI_METHOD ui_opentls = {
+    "Opentls default user interface",
     open_console,
     write_string,
     NULL,                       /* No flusher is needed for command lines */
@@ -716,12 +716,12 @@ static UI_METHOD ui_openssl = {
 };
 
 /* The method with all the built-in console thingies */
-UI_METHOD *UI_OpenSSL(void)
+UI_METHOD *UI_Opentls(void)
 {
-    return &ui_openssl;
+    return &ui_opentls;
 }
 
-static const UI_METHOD *default_UI_meth = &ui_openssl;
+static const UI_METHOD *default_UI_meth = &ui_opentls;
 
 #else
 

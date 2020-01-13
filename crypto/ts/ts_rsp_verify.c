@@ -1,17 +1,17 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/ts.h>
-#include <openssl/pkcs7.h>
+#include <opentls/objects.h>
+#include <opentls/ts.h>
+#include <opentls/pkcs7.h>
 #include "ts_local.h"
 #include "crypto/ess.h"
 
@@ -57,7 +57,7 @@ static const char *ts_status_text[] = {
     "revocationNotification"
 };
 
-#define TS_STATUS_TEXT_SIZE     OSSL_NELEM(ts_status_text)
+#define TS_STATUS_TEXT_SIZE     Otls_NELEM(ts_status_text)
 
 static struct {
     int code;
@@ -439,7 +439,7 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
  err:
     X509_free(signer);
     X509_ALGOR_free(md_alg);
-    OPENSSL_free(imprint);
+    OPENtls_free(imprint);
     return ret;
 }
 
@@ -455,7 +455,7 @@ static int ts_check_status_info(TS_RESP *response)
         return 1;
 
     /* There was an error, get the description in status_text. */
-    if (0 <= status && status < (long) OSSL_NELEM(ts_status_text))
+    if (0 <= status && status < (long) Otls_NELEM(ts_status_text))
         status_text = ts_status_text[status];
     else
         status_text = "unknown code";
@@ -468,7 +468,7 @@ static int ts_check_status_info(TS_RESP *response)
     if (info->failure_info) {
         int i;
         int first = 1;
-        for (i = 0; i < (int)OSSL_NELEM(ts_failure_info); ++i) {
+        for (i = 0; i < (int)Otls_NELEM(ts_failure_info); ++i) {
             if (ASN1_BIT_STRING_get_bit(info->failure_info,
                                         ts_failure_info[i].code)) {
                 if (!first)
@@ -488,7 +488,7 @@ static int ts_check_status_info(TS_RESP *response)
                        ", status text: ", embedded_status_text ?
                        embedded_status_text : "unspecified",
                        ", failure codes: ", failure_text);
-    OPENSSL_free(embedded_status_text);
+    OPENtls_free(embedded_status_text);
 
     return 0;
 }
@@ -507,7 +507,7 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
         length += ASN1_STRING_length(current);
         length += 1;            /* separator character */
     }
-    if ((result = OPENSSL_malloc(length)) == NULL) {
+    if ((result = OPENtls_malloc(length)) == NULL) {
         TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -562,7 +562,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     if (length < 0)
         goto err;
     *imprint_len = length;
-    if ((*imprint = OPENSSL_malloc(*imprint_len)) == NULL) {
+    if ((*imprint = OPENtls_malloc(*imprint_len)) == NULL) {
         TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -586,7 +586,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
  err:
     EVP_MD_CTX_free(md_ctx);
     X509_ALGOR_free(*md_alg);
-    OPENSSL_free(*imprint);
+    OPENtls_free(*imprint);
     *imprint_len = 0;
     *imprint = 0;
     return 0;

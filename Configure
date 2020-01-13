@@ -1,13 +1,13 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-##  Configure -- OpenSSL source tree configuration script
+##  Configure -- Opentls source tree configuration script
 
 use 5.10.0;
 use strict;
@@ -17,31 +17,31 @@ use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
-use OpenSSL::fallback "$FindBin::Bin/external/perl/MODULES.txt";
-use OpenSSL::Glob;
-use OpenSSL::Template;
+use Opentls::fallback "$FindBin::Bin/external/perl/MODULES.txt";
+use Opentls::Glob;
+use Opentls::Template;
 
 # see INSTALL for instructions.
 
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--opentlsdir=OPENtlsDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
 # --config      add the given configuration file, which will be read after
 #               any "Configurations*" files that are found in the same
 #               directory as this script.
-# --prefix      prefix for the OpenSSL installation, which includes the
-#               directories bin, lib, include, share/man, share/doc/openssl
+# --prefix      prefix for the Opentls installation, which includes the
+#               directories bin, lib, include, share/man, share/doc/opentls
 #               This becomes the value of INSTALLTOP in Makefile
 #               (Default: /usr/local)
-# --openssldir  OpenSSL data area, such as openssl.cnf, certificates and keys.
+# --opentlsdir  Opentls data area, such as opentls.cnf, certificates and keys.
 #               If it's a relative directory, it will be added on the directory
 #               given with --prefix.
-#               This becomes the value of OPENSSLDIR in Makefile and in C.
-#               (Default: PREFIX/ssl)
+#               This becomes the value of OPENtlsDIR in Makefile and in C.
+#               (Default: PREFIX/tls)
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
@@ -49,10 +49,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               Define the public APIs as they were for that version
 #               including patch releases.  If 'no-deprecated' is also
 #               given, do not compile support for interfaces deprecated
-#               up to and including the specified OpenSSL version.
+#               up to and including the specified Opentls version.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
-#               Generic OpenSSL-style methods relating to this support
+#               Generic Opentls-style methods relating to this support
 #               are always compiled but return NULL if the hardware
 #               support isn't compiled.
 # no-hw         do not compile support for any crypto hardware.
@@ -66,10 +66,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
-#               library and will be loaded in run-time by the OpenSSL library.
+#               library and will be loaded in run-time by the Opentls library.
 # sctp          include SCTP support
 # no-uplink     Don't build support for UPLINK interface.
-# enable-weak-ssl-ciphers
+# enable-weak-tls-ciphers
 #               Enable weak ciphers that are disabled by default.
 # 386           generate 80386 code in assembly modules
 # no-sse2       disables IA-32 SSE2 code in assembly modules, the above
@@ -94,11 +94,11 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               libcrypto.a) is to eliminate dependency on specific run-time,
 #               a.k.a. libc version. The mentioned config options are meant
 #               to achieve just that. Unfortunately on Linux it's impossible
-#               to eliminate the dependency completely for openssl executable
+#               to eliminate the dependency completely for opentls executable
 #               because of getaddrinfo and gethostbyname calls, which can
 #               invoke dynamically loadable library facility anyway to meet
 #               the lookup requests. For this reason on Linux statically
-#               linked openssl executable has rather debugging value than
+#               linked opentls executable has rather debugging value than
 #               production quality.
 #
 # BN_LLONG      use the type 'long long' in crypto/bn/bn.h
@@ -112,7 +112,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # SHA512_ASM    sha512_block is implemented in assembler
 # AES_ASM       AES_[en|de]crypt is implemented in assembler
 
-# Minimum warning options... any contributions to OpenSSL should at least
+# Minimum warning options... any contributions to Opentls should at least
 # get past these.  Note that we only use these with C compilers, not with
 # C++ compilers.
 
@@ -148,7 +148,7 @@ my @gcc_devteam_warn = qw(
 );
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
-# TODO(openssl-team): fix problems and investigate if (at least) the
+# TODO(opentls-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wcast-align
 #       -Wunreachable-code -- no, too ugly/compiler-specific
@@ -234,7 +234,7 @@ my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
 my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
-my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
+my $local_config_envname = 'OPENtls_LOCAL_CONFIG_DIR';
 
 $config{sourcedir} = abs2rel($srcdir);
 $config{builddir} = abs2rel($blddir);
@@ -326,14 +326,14 @@ $config{perl_version} = $Config{version};
 $config{perl_archname} = $Config{archname};
 
 $config{prefix}="";
-$config{openssldir}="";
+$config{opentlsdir}="";
 $config{processor}="";
 $config{libdir}="";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
 # Known TLS and DTLS protocols
-my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
+my @tls = qw(tls3 tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
 
 # Explicitly known options that are possible to disable.  They can
@@ -423,8 +423,8 @@ my @disablables = (
     "srp",
     "srtp",
     "sse2",
-    "ssl",
-    "ssl-trace",
+    "tls",
+    "tls-trace",
     "static-engine",
     "stdio",
     "tests",
@@ -437,7 +437,7 @@ my @disablables = (
     "unit-test",
     "uplink",
     "whirlpool",
-    "weak-ssl-ciphers",
+    "weak-tls-ciphers",
     "zlib",
     "zlib-dynamic",
     );
@@ -456,7 +456,7 @@ my @disablables_int = qw(
     );
 
 my %deprecated_disablables = (
-    "ssl2" => undef,
+    "tls2" => undef,
     "buf-freelists" => undef,
     "crypto-mdebug-backtrace" => undef,
     "hw" => "hw",               # causes cascade, but no macro
@@ -483,13 +483,13 @@ our %disabled = ( # "what"         => "comment"
                   "msan"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
-                  "ssl-trace"           => "default",
-                  "ssl3"                => "default",
-                  "ssl3-method"         => "default",
+                  "tls-trace"           => "default",
+                  "tls3"                => "default",
+                  "tls3-method"         => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
-                  "weak-ssl-ciphers"    => "default",
+                  "weak-tls-ciphers"    => "default",
                   "zlib"                => "default",
                   "zlib-dynamic"        => "default",
                   "ktls"                => "default",
@@ -500,8 +500,8 @@ my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
-    "ssl"               => [ "ssl3" ],
-    "ssl3-method"       => [ "ssl3" ],
+    "tls"               => [ "tls3" ],
+    "tls3-method"       => [ "tls3" ],
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
     "ec"                => [ "ecdsa", "ecdh", "sm2" ],
@@ -673,9 +673,9 @@ $config{cxxflags} = [ env('__CNF_CXXFLAGS') || () ];
 $config{lflags} = [ env('__CNF_LDFLAGS') || () ];
 $config{ex_libs} = [ env('__CNF_LDLIBS') || () ];
 
-$config{openssl_api_defines}=[];
-$config{openssl_sys_defines}=[];
-$config{openssl_feature_defines}=[];
+$config{opentls_api_defines}=[];
+$config{opentls_sys_defines}=[];
+$config{opentls_feature_defines}=[];
 $config{options}="";
 $config{build_type} = "release";
 my $target="";
@@ -754,14 +754,14 @@ while (@argvcopy)
                                 }
                         $disabled{"dtls"} = "option(dtls)";
                         }
-                elsif ($1 eq "ssl")
+                elsif ($1 eq "tls")
                         {
                         # Last one of its kind
-                        $disabled{"ssl3"} = "option(ssl)";
+                        $disabled{"tls3"} = "option(tls)";
                         }
                 elsif ($1 eq "tls")
                         {
-                        # XXX: Tests will fail if all SSL/TLS
+                        # XXX: Tests will fail if all tls/TLS
                         # protocols are disabled.
                         foreach my $proto (@tls)
                                 {
@@ -819,7 +819,7 @@ while (@argvcopy)
                 {
                 # Pretend that our strict flags is a C flag, and replace it
                 # with the proper flags later on
-                push @{$useradd{CFLAGS}}, '--ossl-strict-warnings';
+                push @{$useradd{CFLAGS}}, '--otls-strict-warnings';
                 $strict_warnings=1;
                 }
         elsif (/^--debug$/)
@@ -865,9 +865,9 @@ while (@argvcopy)
                         {
                         $config{libdir}=$1;
                         }
-                elsif (/^--openssldir=(.*)$/)
+                elsif (/^--opentlsdir=(.*)$/)
                         {
-                        $config{openssldir}=$1;
+                        $config{opentlsdir}=$1;
                         }
                 elsif (/^--with-zlib-lib=(.*)$/)
                         {
@@ -1098,7 +1098,7 @@ if ($target eq "HASH") {
     exit 0;
 }
 
-print "Configuring OpenSSL version $config{full_version} ";
+print "Configuring Opentls version $config{full_version} ";
 print "for target $target\n";
 
 if (scalar(@seed_sources) == 0) {
@@ -1111,7 +1111,7 @@ if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
 
 ============================== WARNING ===============================
 You have selected the --with-rand-seed=none option, which effectively
-disables automatic reseeding of the OpenSSL random generator.
+disables automatic reseeding of the Opentls random generator.
 All operations depending on the random generator such as creating keys
 will not work unless the random generator is seeded manually by the
 application.
@@ -1122,8 +1122,8 @@ INSTALL instructions and the RAND_DRBG(7) manual page for more details.
 
 _____
 }
-push @{$config{openssl_feature_defines}},
-     map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
+push @{$config{opentls_feature_defines}},
+     map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENtls_RAND_SEED_$x" }
         @seed_sources;
 
 # Backward compatibility?
@@ -1337,7 +1337,7 @@ foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
+    push @{$config{opentls_feature_defines}}, "OPENtls_THREADS";
 }
 
 my $no_shared_warn=0;
@@ -1391,12 +1391,12 @@ if ($disabled{pic})
         }
 else
         {
-        push @{$config{lib_defines}}, "OPENSSL_PIC";
+        push @{$config{lib_defines}}, "OPENtls_PIC";
         }
 
 if ($target{sys_id} ne "")
         {
-        push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
+        push @{$config{opentls_sys_defines}}, "OPENtls_SYS_$target{sys_id}";
         }
 
 my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
@@ -1487,8 +1487,8 @@ $config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
 $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
-$config{openssl_api_defines} = [
-    "OPENSSL_CONFIGURED_API=".$config{api}
+$config{opentls_api_defines} = [
+    "OPENtls_CONFIGURED_API=".$config{api}
 ];
 
 my @strict_warnings_collection=();
@@ -1517,7 +1517,7 @@ if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
-$config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
+$config{CFLAGS} = [ map { $_ eq '--otls-strict-warnings'
                               ? @strict_warnings_collection
                               : ( $_ ) }
                     @{$config{CFLAGS}} ];
@@ -1584,7 +1584,7 @@ unless ($disabled{ktls}) {
     }
 }
 
-push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
+push @{$config{opentls_other_defines}}, "OPENtls_NO_KTLS" if ($disabled{ktls});
 
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.
@@ -1660,8 +1660,8 @@ foreach my $what (sort keys %disabled) {
         $skipdir = "ripemd" if $what eq "rmd160";
         $skipdir = "whrlpool" if $what eq "whirlpool";
 
-        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
-        push @{$config{openssl_feature_defines}}, $macro;
+        my $macro = $disabled_info{$what}->{macro} = "OPENtls_NO_$WHAT";
+        push @{$config{opentls_feature_defines}}, $macro;
 
         $skipdir{engines} = $what if $what eq 'engine';
         $skipdir{"crypto/$skipdir"} = $what
@@ -1670,9 +1670,9 @@ foreach my $what (sort keys %disabled) {
 }
 
 if ($disabled{"dynamic-engine"}) {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+    push @{$config{opentls_feature_defines}}, "OPENtls_NO_DYNAMIC_ENGINE";
 } else {
-    push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+    push @{$config{opentls_feature_defines}}, "OPENtls_NO_STATIC_ENGINE";
 }
 
 # If we use the unified build, collect information from build.info files
@@ -2527,7 +2527,7 @@ open CONFIGDATA, ">$configdata_outname.new"
             or die "Trying to create $configdata_outname.new: $!";
 my $configdata_tmplname = cleanfile($srcdir, "configdata.pm.in", $blddir);
 my $configdata_tmpl =
-    OpenSSL::Template->new(TYPE => 'FILE', SOURCE => $configdata_tmplname);
+    Opentls::Template->new(TYPE => 'FILE', SOURCE => $configdata_tmplname);
 $configdata_tmpl->fill_in(
     FILENAME => $configdata_tmplname,
     OUTPUT => \*CONFIGDATA,
@@ -2567,22 +2567,22 @@ The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
 platform, so we will pretend you gave the option 'no-pic', which also disables
 'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
 or position independent code, please let us know (but please first make sure
-you have tried with a current version of OpenSSL).
+you have tried with a current version of Opentls).
 EOF
 
 print <<"EOF";
 
 **********************************************************************
 ***                                                                ***
-***   OpenSSL has been successfully configured                     ***
+***   Opentls has been successfully configured                     ***
 ***                                                                ***
 ***   If you encounter a problem while building, please open an    ***
-***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
+***   issue on GitHub <https://github.com/opentls/opentls/issues>  ***
 ***   and include the output from the following command:           ***
 ***                                                                ***
 ***       perl configdata.pm --dump                                ***
 ***                                                                ***
-***   (If you are new to OpenSSL, you might want to consult the    ***
+***   (If you are new to Opentls, you might want to consult the    ***
 ***   'Troubleshooting' section in the INSTALL file first)         ***
 ***                                                                ***
 **********************************************************************

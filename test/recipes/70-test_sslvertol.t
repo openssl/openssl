@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 
-my $test_name = "test_sslextension";
+my $test_name = "test_tlsextension";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -26,10 +26,10 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"));
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&vers_tolerance_filter,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
@@ -53,7 +53,7 @@ foreach (available_protocols("tls")) {
 note("TLS versions we can expect: ", join(", ", @available_tls_versions));
 
 #This file does tests without the supported_versions extension.
-#See 70-test_sslversions.t for tests with supported versions.
+#See 70-test_tlsversions.t for tests with supported versions.
 
 #Test 1: Asking for TLS1.4 should pass and negotiate the maximum
 #available TLS version according to configuration below TLS1.3
@@ -91,10 +91,10 @@ SKIP: {
        "Version tolerance test, max version but not TLS 1.3");
 }
 
-#Test 3: Testing something below SSLv3 should fail.  We must disable TLS 1.3
+#Test 3: Testing something below tlsv3 should fail.  We must disable TLS 1.3
 #to avoid having the 'supported_versions' extension kick in and override our
 #desires.
-$client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
+$client_version = TLSProxy::Record::VERS_tls_3_0 - 1;
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
 $proxy->start();
@@ -102,7 +102,7 @@ my $record = pop @{$proxy->record_list};
 ok((note("Record version received: ".
          (defined $record ? $record->version() : "none")),
     TLSProxy::Message->fail()),
-   "Version tolerance test, SSL < 3.0");
+   "Version tolerance test, tls < 3.0");
 
 sub vers_tolerance_filter
 {
@@ -117,7 +117,7 @@ sub vers_tolerance_filter
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
             #Set the client version
             #Anything above the max supported version should succeed
-            #Anything below SSLv3 should fail
+            #Anything below tlsv3 should fail
             $message->client_version($client_version);
             $message->repack();
         }

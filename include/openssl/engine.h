@@ -1,39 +1,39 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_ENGINE_H
-# define OPENSSL_ENGINE_H
+#ifndef OPENtls_ENGINE_H
+# define OPENtls_ENGINE_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_ENGINE_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_ENGINE
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/bn.h>
-#  include <openssl/rsa.h>
-#  include <openssl/dsa.h>
-#  include <openssl/dh.h>
-#  include <openssl/ec.h>
-#  include <openssl/rand.h>
-#  include <openssl/ui.h>
-#  include <openssl/err.h>
+# ifndef OPENtls_NO_ENGINE
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/bn.h>
+#  include <opentls/rsa.h>
+#  include <opentls/dsa.h>
+#  include <opentls/dh.h>
+#  include <opentls/ec.h>
+#  include <opentls/rand.h>
+#  include <opentls/ui.h>
+#  include <opentls/err.h>
 # endif
-# include <openssl/types.h>
-# include <openssl/symhacks.h>
-# include <openssl/x509.h>
-# include <openssl/engineerr.h>
+# include <opentls/types.h>
+# include <opentls/symhacks.h>
+# include <opentls/x509.h>
+# include <opentls/engineerr.h>
 # ifdef  __cplusplus
 extern "C" {
 # endif
@@ -272,7 +272,7 @@ typedef int (*ENGINE_CTRL_FUNC_PTR) (ENGINE *, int, long, void *,
 typedef EVP_PKEY *(*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
                                          UI_METHOD *ui_method,
                                          void *callback_data);
-typedef int (*ENGINE_SSL_CLIENT_CERT_PTR) (ENGINE *, SSL *ssl,
+typedef int (*ENGINE_tls_CLIENT_CERT_PTR) (ENGINE *, tls *tls,
                                            STACK_OF(X509_NAME) *ca_dn,
                                            X509 **pcert, EVP_PKEY **pkey,
                                            STACK_OF(X509) **pother,
@@ -326,23 +326,23 @@ int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-# define ENGINE_load_openssl() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_OPENSSL, NULL)
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
+# define ENGINE_load_opentls() \
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_OPENtls, NULL)
 # define ENGINE_load_dynamic() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DYNAMIC, NULL)
-# ifndef OPENSSL_NO_STATIC_ENGINE
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_DYNAMIC, NULL)
+# ifndef OPENtls_NO_STATIC_ENGINE
 #  define ENGINE_load_padlock() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_PADLOCK, NULL)
 #  define ENGINE_load_capi() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_CAPI, NULL)
 #  define ENGINE_load_afalg() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_AFALG, NULL)
 # endif
 # define ENGINE_load_cryptodev() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_CRYPTODEV, NULL)
 # define ENGINE_load_rdrand() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_ENGINE_RDRAND, NULL)
 #endif
 void ENGINE_load_builtin_engines(void);
 
@@ -464,7 +464,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
  * These functions are useful for manufacturing new ENGINE structures. They
  * don't address reference counting at all - one uses them to populate an
  * ENGINE structure with personalised implementations of things prior to
- * using it directly or adding it to the builtin ENGINE list in OpenSSL.
+ * using it directly or adding it to the builtin ENGINE list in Opentls.
  * These are also here so that the ENGINE structure doesn't have to be
  * exposed and break binary compatibility!
  */
@@ -485,9 +485,9 @@ int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
 int ENGINE_set_load_privkey_function(ENGINE *e,
                                      ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
-int ENGINE_set_load_ssl_client_cert_function(ENGINE *e,
-                                             ENGINE_SSL_CLIENT_CERT_PTR
-                                             loadssl_f);
+int ENGINE_set_load_tls_client_cert_function(ENGINE *e,
+                                             ENGINE_tls_CLIENT_CERT_PTR
+                                             loadtls_f);
 int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
 int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
 int ENGINE_set_pkey_meths(ENGINE *e, ENGINE_PKEY_METHS_PTR f);
@@ -500,7 +500,7 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * This function previously cleaned up anything that needs it. Auto-deinit will
  * now take care of it so it is no longer required to call this function.
@@ -527,7 +527,7 @@ ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
 ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
-ENGINE_SSL_CLIENT_CERT_PTR ENGINE_get_ssl_client_cert_function(const ENGINE
+ENGINE_tls_CLIENT_CERT_PTR ENGINE_get_tls_client_cert_function(const ENGINE
                                                                *e);
 ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
 ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
@@ -581,7 +581,7 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data);
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                  UI_METHOD *ui_method, void *callback_data);
-int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
+int ENGINE_load_tls_client_cert(ENGINE *e, tls *s,
                                 STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
                                 EVP_PKEY **ppkey, STACK_OF(X509) **pother,
                                 UI_METHOD *ui_method, void *callback_data);
@@ -644,12 +644,12 @@ void ENGINE_add_conf_module(void);
 /**************************/
 
 /* Binary/behaviour compatibility levels */
-# define OSSL_DYNAMIC_VERSION            (unsigned long)0x00030000
+# define Otls_DYNAMIC_VERSION            (unsigned long)0x00030000
 /*
  * Binary versions older than this are too old for us (whether we're a loader
  * or a loadee)
  */
-# define OSSL_DYNAMIC_OLDEST             (unsigned long)0x00030000
+# define Otls_DYNAMIC_OLDEST             (unsigned long)0x00030000
 
 /*
  * When compiling an ENGINE entirely as an external shared library, loadable
@@ -682,7 +682,7 @@ typedef struct st_dynamic_fns {
 
 /*
  * The version checking function should be of this prototype. NB: The
- * ossl_version value passed in is the OSSL_DYNAMIC_VERSION of the loading
+ * otls_version value passed in is the Otls_DYNAMIC_VERSION of the loading
  * code. If this function returns zero, it indicates a (potential) version
  * incompatibility and the loaded library doesn't believe it can proceed.
  * Otherwise, the returned value is the (latest) version supported by the
@@ -692,11 +692,11 @@ typedef struct st_dynamic_fns {
  * implementation can be fully instantiated with
  * IMPLEMENT_DYNAMIC_CHECK_FN().
  */
-typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
+typedef unsigned long (*dynamic_v_check_fn) (unsigned long otls_version);
 # define IMPLEMENT_DYNAMIC_CHECK_FN() \
-        OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
-        OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
-                if (v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
+        OPENtls_EXPORT unsigned long v_check(unsigned long v); \
+        OPENtls_EXPORT unsigned long v_check(unsigned long v) { \
+                if (v >= Otls_DYNAMIC_OLDEST) return Otls_DYNAMIC_VERSION; \
                 return 0; }
 
 /*
@@ -720,9 +720,9 @@ typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
                                     const dynamic_fns *fns);
 # define IMPLEMENT_DYNAMIC_BIND_FN(fn) \
-        OPENSSL_EXPORT \
+        OPENtls_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
-        OPENSSL_EXPORT \
+        OPENtls_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
             if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
             CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \

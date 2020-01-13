@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_DH
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_DH
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -18,15 +18,15 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/dh.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/bn.h>
+# include <opentls/dh.h>
+# include <opentls/x509.h>
+# include <opentls/pem.h>
 
-# ifndef OPENSSL_NO_DSA
-#  include <openssl/dsa.h>
+# ifndef OPENtls_NO_DSA
+#  include <opentls/dsa.h>
 # endif
 
 # define DEFBITS 2048
@@ -47,11 +47,11 @@ const OPTIONS dhparam_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
 # endif
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
 
@@ -82,7 +82,7 @@ int dhparam_main(int argc, char **argv)
     DH *dh = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     int dsaparam = 0;
 #endif
     int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
@@ -125,7 +125,7 @@ int dhparam_main(int argc, char **argv)
             text = 1;
             break;
         case OPT_DSAPARAM:
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
             dsaparam = 1;
 #endif
             break;
@@ -159,7 +159,7 @@ int dhparam_main(int argc, char **argv)
     if (g && !num)
         num = DEFBITS;
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     if (dsaparam && g) {
         BIO_printf(bio_err,
                    "generator may not be chosen for DSA parameters\n");
@@ -186,7 +186,7 @@ int dhparam_main(int argc, char **argv)
 
         BN_GENCB_set(cb, dh_cb, bio_err);
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         if (dsaparam) {
             DSA *dsa = DSA_new();
 
@@ -230,7 +230,7 @@ int dhparam_main(int argc, char **argv)
         if (in == NULL)
             goto end;
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         if (dsaparam) {
             DSA *dsa;
 
@@ -349,7 +349,7 @@ int dhparam_main(int argc, char **argv)
                         "        return NULL;\n"
                         "    }\n", DH_get_length(dh));
         BIO_printf(out, "    return dh;\n}\n");
-        OPENSSL_free(data);
+        OPENtls_free(data);
     }
 
     if (!noout) {

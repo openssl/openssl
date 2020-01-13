@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA256 block transform for x86. September 2007.
@@ -78,7 +78,7 @@ $output=pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $xmm=$avx=0;
-for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $xmm=1 if (/-DOPENtls_IA32_SSE2/); }
 
 if ($xmm &&	`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
@@ -191,7 +191,7 @@ sub BODY_00_15() {
 	 &add	($A,$T);		# h += T
 }
 
-&external_label("OPENSSL_ia32cap_P")		if (!$i386);
+&external_label("OPENtls_ia32cap_P")		if (!$i386);
 
 &function_begin("sha256_block_data_order");
 	&mov	("esi",wparam(0));	# ctx
@@ -214,7 +214,7 @@ sub BODY_00_15() {
 	&mov	(&DWP(8,"esp"),"eax");	# inp+num*128
 	&mov	(&DWP(12,"esp"),"ebx");	# saved sp
 						if (!$i386 && $xmm) {
-	&picmeup("edx","OPENSSL_ia32cap_P",$K256,&label("K256"));
+	&picmeup("edx","OPENtls_ia32cap_P",$K256,&label("K256"));
 	&mov	("ecx",&DWP(0,"edx"));
 	&mov	("ebx",&DWP(4,"edx"));
 	&test	("ecx",1<<20);		# check for P4
@@ -367,7 +367,7 @@ my $suffix=shift;
 	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2	);
 &data_word(@K256);
 &data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);	# byte swap mask
-&asciz("SHA256 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("SHA256 block transform for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 ($a,$b,$c,$d,$e,$f,$g,$h)=(0..7);	# offsets
 sub off { &DWP(4*(((shift)-$i)&7),"esp"); }

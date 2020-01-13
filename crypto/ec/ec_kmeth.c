@@ -1,37 +1,37 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/ec.h>
-#include <openssl/engine.h>
-#include <openssl/err.h>
+#include <opentls/ec.h>
+#include <opentls/engine.h>
+#include <opentls/err.h>
 #include "ec_local.h"
 
 
-static const EC_KEY_METHOD openssl_ec_key_method = {
-    "OpenSSL EC_KEY method",
+static const EC_KEY_METHOD opentls_ec_key_method = {
+    "Opentls EC_KEY method",
     0,
     0,0,0,0,0,0,
-    ossl_ec_key_gen,
-    ossl_ecdh_compute_key,
-    ossl_ecdsa_sign,
-    ossl_ecdsa_sign_setup,
-    ossl_ecdsa_sign_sig,
-    ossl_ecdsa_verify,
-    ossl_ecdsa_verify_sig
+    otls_ec_key_gen,
+    otls_ecdh_compute_key,
+    otls_ecdsa_sign,
+    otls_ecdsa_sign_setup,
+    otls_ecdsa_sign_sig,
+    otls_ecdsa_verify,
+    otls_ecdsa_verify_sig
 };
 
-static const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
+static const EC_KEY_METHOD *default_ec_key_meth = &opentls_ec_key_method;
 
-const EC_KEY_METHOD *EC_KEY_OpenSSL(void)
+const EC_KEY_METHOD *EC_KEY_Opentls(void)
 {
-    return &openssl_ec_key_method;
+    return &opentls_ec_key_method;
 }
 
 const EC_KEY_METHOD *EC_KEY_get_default_method(void)
@@ -42,7 +42,7 @@ const EC_KEY_METHOD *EC_KEY_get_default_method(void)
 void EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
 {
     if (meth == NULL)
-        default_ec_key_meth = &openssl_ec_key_method;
+        default_ec_key_meth = &opentls_ec_key_method;
     else
         default_ec_key_meth = meth;
 }
@@ -59,7 +59,7 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     if (finish != NULL)
         finish(key);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(key->engine);
     key->engine = NULL;
 #endif
@@ -70,9 +70,9 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     return 1;
 }
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
+EC_KEY *ec_key_new_method_int(OPENtls_CTX *libctx, ENGINE *engine)
 {
-    EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
+    EC_KEY *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
@@ -85,12 +85,12 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
 
     ret->meth = EC_KEY_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
@@ -160,13 +160,13 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
             outlen = seclen;
         memcpy(out, sec, outlen);
     }
-    OPENSSL_clear_free(sec, seclen);
+    OPENtls_clear_free(sec, seclen);
     return outlen;
 }
 
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
 {
-    EC_KEY_METHOD *ret = OPENSSL_zalloc(sizeof(*meth));
+    EC_KEY_METHOD *ret = OPENtls_zalloc(sizeof(*meth));
 
     if (ret == NULL)
         return NULL;
@@ -179,7 +179,7 @@ EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
 void EC_KEY_METHOD_free(EC_KEY_METHOD *meth)
 {
     if (meth->flags & EC_KEY_METHOD_DYNAMIC)
-        OPENSSL_free(meth);
+        OPENtls_free(meth);
 }
 
 void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,

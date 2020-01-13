@@ -1,17 +1,17 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
-#ifndef OSSL_APPS_OPT_H
-#define OSSL_APPS_OPT_H
+#ifndef Otls_APPS_OPT_H
+#define Otls_APPS_OPT_H
 
 #include <sys/types.h>
-#include <openssl/e_os2.h>
-#include <openssl/types.h>
+#include <opentls/e_os2.h>
+#include <opentls/types.h>
 #include <stdarg.h>
 
 /*
@@ -146,12 +146,12 @@
         case OPT_X_KEYFORM
 
 /*
- * Common SSL options.
- * Any changes here must be coordinated with ../ssl/ssl_conf.c
+ * Common tls options.
+ * Any changes here must be coordinated with ../tls/tls_conf.c
  */
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
-        OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
+        OPT_S_NOtls3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
@@ -163,15 +163,15 @@
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
-        OPT_SECTION("TLS/SSL"), \
-        {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
+        OPT_SECTION("TLS/tls"), \
+        {"no_tls3", OPT_S_NOtls3, '-',"Just disable tlsv3" }, \
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
         {"no_tls1_3", OPT_S_NOTLS1_3, '-', "Just disable TLSv1.3"}, \
-        {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
-        {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
-        {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
+        {"bugs", OPT_S_BUGS, '-', "Turn on tls bug compatibility"}, \
+        {"no_comp", OPT_S_NO_COMP, '-', "Disable tls/TLS compression (default)" }, \
+        {"comp", OPT_S_COMP, '-', "Use tls/TLS-level compression" }, \
         {"no_ticket", OPT_S_NOTICKET, '-', \
             "Disable use of TLS session tickets"}, \
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
@@ -215,7 +215,7 @@
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
-        case OPT_S_NOSSL3: \
+        case OPT_S_NOtls3: \
         case OPT_S_NOTLS1: \
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
@@ -247,7 +247,7 @@
         case OPT_S_NO_MIDDLEBOX
 
 #define IS_NO_PROT_FLAG(o) \
- (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
+ (o == OPT_S_NOtls3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
   || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*
@@ -329,7 +329,7 @@ int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
+    !defined(OPENtls_NO_INTTYPES_H)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
 #else
@@ -354,4 +354,4 @@ int opt_format_error(const char *s, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 
-#endif /* OSSL_APPS_OPT_H */
+#endif /* Otls_APPS_OPT_H */

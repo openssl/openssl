@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements Poly1305 hash for s390x.
@@ -103,7 +103,7 @@ LABEL	("poly1305_init");
 
 	stmg	("%r2","%r3","32(%r5)");
 
-	larl	("%r1","OPENSSL_s390xcap_P");
+	larl	("%r1","OPENtls_s390xcap_P");
 	lg	("%r0","16(%r1)");
 	srlg	("%r0","%r0",62);
 	nill	("%r0",1);			# extract vx bit
@@ -979,6 +979,6 @@ LONG	(0xffffffff,0x00000000,0xffffffff,0xffffffff);
 LONG	(0xffffffff,0x00000000,0xffffffff,0x00000000);
 LONG	(0x00000000,0x00000000,0xffffffff,0x00000000);
 
-STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
+STRING	("\"Poly1305 for s390x, CRYPTOGAMS by <appro\@opentls.org>\"");
 
 PERLASM_END();

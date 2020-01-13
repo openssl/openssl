@@ -6,13 +6,13 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for openssl multiple includes
+=for opentls multiple includes
 
- #include <openssl/core_numbers.h>
- #include <openssl/core_names.h>
+ #include <opentls/core_numbers.h>
+ #include <opentls/core_names.h>
 
  /*
-  * Digests support the following function signatures in OSSL_DISPATCH arrays.
+  * Digests support the following function signatures in Otls_DISPATCH arrays.
   * (The function signatures are not actual functions).
   */
 
@@ -30,18 +30,18 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
                       unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameter descriptors */
- const OSSL_PARAM *OP_digest_gettable_params(void);
+ const Otls_PARAM *OP_digest_gettable_params(void);
 
  /* Digest operation parameter descriptors */
- const OSSL_PARAM *OP_digest_gettable_ctx_params(void);
- const OSSL_PARAM *OP_digest_settable_ctx_params(void);
+ const Otls_PARAM *OP_digest_gettable_ctx_params(void);
+ const Otls_PARAM *OP_digest_settable_ctx_params(void);
 
  /* Digest parameters */
- int OP_digest_get_params(OSSL_PARAM params[]);
+ int OP_digest_get_params(Otls_PARAM params[]);
 
  /* Digest operation parameters */
- int OP_digest_set_ctx_params(void *dctx, const OSSL_PARAM params[]);
- int OP_digest_get_ctx_params(void *dctx, OSSL_PARAM params[]);
+ int OP_digest_set_ctx_params(void *dctx, const Otls_PARAM params[]);
+ int OP_digest_get_ctx_params(void *dctx, Otls_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -53,40 +53,40 @@ them available to applications via the API functions L<EVP_DigestInit_ex(3)>,
 L<EVP_DigestUpdate(3)> and L<EVP_DigestFinal(3)> (and other related functions).
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the provider's
+F<libcrypto> and the provider in B<Otls_DISPATCH> arrays via
+B<Otls_ALGORITHM> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+named B<Otls_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<Otls_DISPATCH> element named
+B<Otls_get_{name}>.
 For example, the "function" OP_digest_newctx() has these:
 
- typedef void *(OSSL_OP_digest_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_digest_newctx_fn
-     OSSL_get_OP_digest_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(Otls_OP_digest_newctx_fn)(void *provctx);
+ static otls_inline Otls_OP_digest_newctx_fn
+     Otls_get_OP_digest_newctx(const Otls_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+B<Otls_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<opentls-core_numbers.h(7)>, as follows:
 
- OP_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
- OP_digest_freectx              OSSL_FUNC_DIGEST_FREECTX
- OP_digest_dupctx               OSSL_FUNC_DIGEST_DUPCTX
+ OP_digest_newctx               Otls_FUNC_DIGEST_NEWCTX
+ OP_digest_freectx              Otls_FUNC_DIGEST_FREECTX
+ OP_digest_dupctx               Otls_FUNC_DIGEST_DUPCTX
 
- OP_digest_init                 OSSL_FUNC_DIGEST_INIT
- OP_digest_update               OSSL_FUNC_DIGEST_UPDATE
- OP_digest_final                OSSL_FUNC_DIGEST_FINAL
- OP_digest_digest               OSSL_FUNC_DIGEST_DIGEST
+ OP_digest_init                 Otls_FUNC_DIGEST_INIT
+ OP_digest_update               Otls_FUNC_DIGEST_UPDATE
+ OP_digest_final                Otls_FUNC_DIGEST_FINAL
+ OP_digest_digest               Otls_FUNC_DIGEST_DIGEST
 
- OP_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
- OP_digest_get_ctx_params       OSSL_FUNC_DIGEST_GET_CTX_PARAMS
- OP_digest_set_ctx_params       OSSL_FUNC_DIGEST_SET_CTX_PARAMS
+ OP_digest_get_params           Otls_FUNC_DIGEST_GET_PARAMS
+ OP_digest_get_ctx_params       Otls_FUNC_DIGEST_GET_CTX_PARAMS
+ OP_digest_set_ctx_params       Otls_FUNC_DIGEST_SET_CTX_PARAMS
 
- OP_digest_gettable_params      OSSL_FUNC_DIGEST_GETTABLE_PARAMS
- OP_digest_gettable_ctx_params  OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
- OP_digest_settable_ctx_params  OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
+ OP_digest_gettable_params      Otls_FUNC_DIGEST_GETTABLE_PARAMS
+ OP_digest_gettable_ctx_params  Otls_FUNC_DIGEST_GETTABLE_CTX_PARAMS
+ OP_digest_settable_ctx_params  Otls_FUNC_DIGEST_SETTABLE_CTX_PARAMS
 
 A digest algorithm implementation may not implement all of these functions.
 In order to be usable all or none of OP_digest_newctx, OP_digest_freectx,
@@ -139,7 +139,7 @@ exceed I<outsz> bytes.
 
 =head2 Digest Parameters
 
-See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+See L<Otls_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
 OP_digest_get_params() gets details of the algorithm implementation
@@ -153,7 +153,7 @@ OP_digest_get_ctx_params() gets digest operation details details from
 the given provider side digest context I<dctx> and stores them in I<params>.
 
 OP_digest_gettable_params(), OP_digest_gettable_ctx_params(), and
-OP_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+OP_digest_settable_ctx_params() all return constant B<Otls_PARAM> arrays
 as descriptors of the parameters that OP_digest_get_params(),
 OP_digest_get_ctx_params(), and OP_digest_set_ctx_params() can handle,
 respectively.
@@ -164,17 +164,17 @@ by all digests:
 
 =over 4
 
-=item "blocksize" (B<OSSL_DIGEST_PARAM_BLOCK_SIZE>) <unsigned integer>
+=item "blocksize" (B<Otls_DIGEST_PARAM_BLOCK_SIZE>) <unsigned integer>
 
 The digest block size.
 The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
+=item "size" (B<Otls_DIGEST_PARAM_SIZE>) <unsigned integer>
 
 The digest output size.
 The length of the "size" parameter should not exceed that of a B<size_t>.
 
-=item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
+=item "flags" (B<Otls_DIGEST_PARAM_FLAGS>) <unsigned integer>
 
 Diverse flags that describe exceptional behaviour for the digest:
 
@@ -187,7 +187,7 @@ This digest method can only handle one block of input.
 =item B<EVP_MD_FLAG_XOF>
 
 This digest method is an extensible-output function (XOF) and supports
-setting the B<OSSL_DIGEST_PARAM_XOFLEN> parameter.
+setting the B<Otls_DIGEST_PARAM_XOFLEN> parameter.
 
 =item B<EVP_MD_FLAG_DIGALGID_NULL>
 
@@ -220,27 +220,27 @@ B<unsigned long int>.
 OP_digest_set_ctx_params() sets digest parameters associated with the
 given provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
-See L<OSSL_PARAM(3)> for further details on the parameters structure.
+See L<Otls_PARAM(3)> for further details on the parameters structure.
 
 OP_digest_get_ctx_params() gets details of currently set parameters
 values associated with the give provider side digest context I<dctx>
 and stores them in I<params>.
-See L<OSSL_PARAM(3)> for further details on the parameters structure.
+See L<Otls_PARAM(3)> for further details on the parameters structure.
 
 Parameters currently recognised by built-in digests are as follows. Not all
 parameters are relevant to, or are understood by all digests:
 
 =over 4
 
-=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
+=item "xoflen" (B<Otls_DIGEST_PARAM_XOFLEN>) <unsigned integer>
 
 Sets the digest length for extendable output functions.
 The length of the "xoflen" parameter should not exceed that of a B<size_t>.
 
-=item "ssl3-ms" (B<OSSL_DIGEST_PARAM_SSL3_MS>) <octet string>
+=item "tls3-ms" (B<Otls_DIGEST_PARAM_tls3_MS>) <octet string>
 
-This parameter is set by libssl in order to calculate a signature hash for an
-SSLv3 CertificateVerify message as per RFC6101.
+This parameter is set by libtls in order to calculate a signature hash for an
+tlsv3 CertificateVerify message as per RFC6101.
 It is only set after all handshake messages have already been digested via
 OP_digest_update() calls.
 The parameter provides the master secret value to be added to the digest.
@@ -249,7 +249,7 @@ section 5.6.8.
 The next call after setting this parameter will be OP_digest_final().
 This is only relevant for implementations of SHA1 or MD5_SHA1.
 
-=item "pad_type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
+=item "pad_type" (B<Otls_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
 Sets the pad type to be used.
 The only built-in digest that uses this is MDC2.
@@ -257,7 +257,7 @@ Normally the final MDC2 block is padded with 0s.
 If the pad type is set to 2 then the final block is padded with 0x80 followed by
 0s.
 
-=item "micalg" (B<OSSL_DIGEST_PARAM_MICALG>) <UTF8 string>
+=item "micalg" (B<Otls_DIGEST_PARAM_MICALG>) <UTF8 string>
 
 Gets the digest Message Integrity Check algorithm string.
 This is used when creating S/MIME multipart/signed messages, as specified in
@@ -285,15 +285,15 @@ L<provider(7)>
 
 =head1 HISTORY
 
-The provider DIGEST interface was introduced in OpenSSL 3.0.
+The provider DIGEST interface was introduced in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

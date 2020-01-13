@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -14,10 +14,10 @@
  */
 
 #include <stdio.h>
-#include <openssl/objects.h>
-#include "ssl_local.h"
+#include <opentls/objects.h>
+#include "tls_local.h"
 
-#ifndef OPENSSL_NO_SRTP
+#ifndef OPENtls_NO_SRTP
 
 static SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
     {
@@ -58,7 +58,7 @@ static int find_profile_by_name(char *profile_name,
     return 1;
 }
 
-static int ssl_ctx_make_profiles(const char *profiles_string,
+static int tls_ctx_make_profiles(const char *profiles_string,
                                  STACK_OF(SRTP_PROTECTION_PROFILE) **out)
 {
     STACK_OF(SRTP_PROTECTION_PROFILE) *profiles;
@@ -68,8 +68,8 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
     SRTP_PROTECTION_PROFILE *p;
 
     if ((profiles = sk_SRTP_PROTECTION_PROFILE_new_null()) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
-               SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
+        tlserr(tls_F_tls_CTX_MAKE_PROFILES,
+               tls_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
         return 1;
     }
 
@@ -79,19 +79,19 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
         if (!find_profile_by_name(ptr, &p, col ? (size_t)(col - ptr)
                                                : strlen(ptr))) {
             if (sk_SRTP_PROTECTION_PROFILE_find(profiles, p) >= 0) {
-                SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
-                       SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+                tlserr(tls_F_tls_CTX_MAKE_PROFILES,
+                       tls_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
                 goto err;
             }
 
             if (!sk_SRTP_PROTECTION_PROFILE_push(profiles, p)) {
-                SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
-                       SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
+                tlserr(tls_F_tls_CTX_MAKE_PROFILES,
+                       tls_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
                 goto err;
             }
         } else {
-            SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
-                   SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
+            tlserr(tls_F_tls_CTX_MAKE_PROFILES,
+                   tls_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
             goto err;
         }
 
@@ -109,17 +109,17 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
     return 1;
 }
 
-int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
+int tls_CTX_set_tlsext_use_srtp(tls_CTX *ctx, const char *profiles)
 {
-    return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);
+    return tls_ctx_make_profiles(profiles, &ctx->srtp_profiles);
 }
 
-int SSL_set_tlsext_use_srtp(SSL *s, const char *profiles)
+int tls_set_tlsext_use_srtp(tls *s, const char *profiles)
 {
-    return ssl_ctx_make_profiles(profiles, &s->srtp_profiles);
+    return tls_ctx_make_profiles(profiles, &s->srtp_profiles);
 }
 
-STACK_OF(SRTP_PROTECTION_PROFILE) *SSL_get_srtp_profiles(SSL *s)
+STACK_OF(SRTP_PROTECTION_PROFILE) *tls_get_srtp_profiles(tls *s)
 {
     if (s != NULL) {
         if (s->srtp_profiles != NULL) {
@@ -132,7 +132,7 @@ STACK_OF(SRTP_PROTECTION_PROFILE) *SSL_get_srtp_profiles(SSL *s)
     return NULL;
 }
 
-SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s)
+SRTP_PROTECTION_PROFILE *tls_get_selected_srtp_profile(tls *s)
 {
     return s->srtp_profile;
 }

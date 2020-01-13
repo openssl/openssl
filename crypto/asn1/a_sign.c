@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,11 +13,11 @@
 
 #include "internal/cryptlib.h"
 
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -76,9 +76,9 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         goto err;
     }
     inll = (size_t)inl;
-    buf_in = OPENSSL_malloc(inll);
+    buf_in = OPENtls_malloc(inll);
     outll = outl = EVP_PKEY_size(pkey);
-    buf_out = OPENSSL_malloc(outll);
+    buf_out = OPENtls_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
         ASN1err(ASN1_F_ASN1_SIGN, ERR_R_MALLOC_FAILURE);
@@ -95,7 +95,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         ASN1err(ASN1_F_ASN1_SIGN, ERR_R_EVP_LIB);
         goto err;
     }
-    OPENSSL_free(signature->data);
+    OPENtls_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
     signature->length = outl;
@@ -107,8 +107,8 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
     EVP_MD_CTX_free(ctx);
-    OPENSSL_clear_free((char *)buf_in, inll);
-    OPENSSL_clear_free((char *)buf_out, outll);
+    OPENtls_clear_free((char *)buf_in, inll);
+    OPENtls_clear_free((char *)buf_out, outll);
     return outl;
 }
 
@@ -186,7 +186,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         }
 
         pkey_id =
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
             EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
 #endif
         pkey->ameth->pkey_id;
@@ -217,7 +217,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     }
     inl = buf_len;
     outll = outl = EVP_PKEY_size(pkey);
-    buf_out = OPENSSL_malloc(outll);
+    buf_out = OPENtls_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_MALLOC_FAILURE);
@@ -229,7 +229,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
         goto err;
     }
-    OPENSSL_free(signature->data);
+    OPENtls_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
     signature->length = outl;
@@ -240,7 +240,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
-    OPENSSL_clear_free((char *)buf_in, inl);
-    OPENSSL_clear_free((char *)buf_out, outll);
+    OPENtls_clear_free((char *)buf_in, inl);
+    OPENtls_clear_free((char *)buf_out, outll);
     return outl;
 }

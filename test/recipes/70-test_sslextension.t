@@ -1,19 +1,19 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use feature 'state';
 
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 
-my $test_name = "test_sslextension";
+my $test_name = "test_tlsextension";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -41,10 +41,10 @@ use constant {
 my $testtype;
 my $fatal_alert = 0;    # set by filter on fatal alert
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&inject_duplicate_extension_clienthello,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );

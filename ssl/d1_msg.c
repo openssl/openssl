@@ -1,42 +1,42 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include "ssl_local.h"
+#include "tls_local.h"
 
-int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
+int dtls1_write_app_data_bytes(tls *s, int type, const void *buf_, size_t len,
                                size_t *written)
 {
     int i;
 
-    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
+    if (tls_in_init(s) && !otls_statem_get_in_handshake(s)) {
         i = s->handshake_func(s);
         if (i < 0)
             return i;
         if (i == 0) {
-            SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES,
-                   SSL_R_SSL_HANDSHAKE_FAILURE);
+            tlserr(tls_F_DTLS1_WRITE_APP_DATA_BYTES,
+                   tls_R_tls_HANDSHAKE_FAILURE);
             return -1;
         }
     }
 
-    if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
-        SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES, SSL_R_DTLS_MESSAGE_TOO_BIG);
+    if (len > tls3_RT_MAX_PLAIN_LENGTH) {
+        tlserr(tls_F_DTLS1_WRITE_APP_DATA_BYTES, tls_R_DTLS_MESSAGE_TOO_BIG);
         return -1;
     }
 
     return dtls1_write_bytes(s, type, buf_, len, written);
 }
 
-int dtls1_dispatch_alert(SSL *s)
+int dtls1_dispatch_alert(tls *s)
 {
     int i, j;
-    void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    void (*cb) (const tls *tls, int type, int val) = NULL;
     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
     unsigned char *ptr = &buf[0];
     size_t written;
@@ -47,7 +47,7 @@ int dtls1_dispatch_alert(SSL *s)
     *ptr++ = s->s3.send_alert[0];
     *ptr++ = s->s3.send_alert[1];
 
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
+    i = do_dtls1_write(s, tls3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf( stderr, "not done with alert\n" ); */
@@ -55,7 +55,7 @@ int dtls1_dispatch_alert(SSL *s)
         (void)BIO_flush(s->wbio);
 
         if (s->msg_callback)
-            s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
+            s->msg_callback(1, s->version, tls3_RT_ALERT, s->s3.send_alert,
                             2, s, s->msg_callback_arg);
 
         if (s->info_callback != NULL)
@@ -65,7 +65,7 @@ int dtls1_dispatch_alert(SSL *s)
 
         if (cb != NULL) {
             j = (s->s3.send_alert[0] << 8) | s->s3.send_alert[1];
-            cb(s, SSL_CB_WRITE_ALERT, j);
+            cb(s, tls_CB_WRITE_ALERT, j);
         }
     }
     return i;

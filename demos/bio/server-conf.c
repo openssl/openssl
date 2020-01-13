@@ -1,33 +1,33 @@
 /*
- * Copyright 2013-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
- * A minimal program to serve an SSL connection. It uses blocking. It uses
- * the SSL_CONF API with a configuration file. cc -I../../include saccept.c
- * -L../.. -lssl -lcrypto -ldl
+ * A minimal program to serve an tls connection. It uses blocking. It uses
+ * the tls_CONF API with a configuration file. cc -I../../include saccept.c
+ * -L../.. -ltls -lcrypto -ldl
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/conf.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
+#include <opentls/conf.h>
 
 int main(int argc, char *argv[])
 {
     char *port = "*:4433";
     BIO *in = NULL;
-    BIO *ssl_bio, *tmp;
-    SSL_CTX *ctx;
-    SSL_CONF_CTX *cctx = NULL;
+    BIO *tls_bio, *tmp;
+    tls_CTX *ctx;
+    tls_CONF_CTX *cctx = NULL;
     CONF *conf = NULL;
     STACK_OF(CONF_VALUE) *sect = NULL;
     CONF_VALUE *cnf;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     char buf[512];
     int ret = EXIT_FAILURE, i;
 
-    ctx = SSL_CTX_new(TLS_server_method());
+    ctx = tls_CTX_new(TLS_server_method());
 
     conf = NCONF_new(NULL);
 
@@ -54,15 +54,15 @@ int main(int argc, char *argv[])
         goto err;
     }
 
-    cctx = SSL_CONF_CTX_new();
-    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
-    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CERTIFICATE);
-    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_FILE);
-    SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+    cctx = tls_CONF_CTX_new();
+    tls_CONF_CTX_set_flags(cctx, tls_CONF_FLAG_SERVER);
+    tls_CONF_CTX_set_flags(cctx, tls_CONF_FLAG_CERTIFICATE);
+    tls_CONF_CTX_set_flags(cctx, tls_CONF_FLAG_FILE);
+    tls_CONF_CTX_set_tls_ctx(cctx, ctx);
     for (i = 0; i < sk_CONF_VALUE_num(sect); i++) {
         int rv;
         cnf = sk_CONF_VALUE_value(sect, i);
-        rv = SSL_CONF_cmd(cctx, cnf->name, cnf->value);
+        rv = tls_CONF_cmd(cctx, cnf->name, cnf->value);
         if (rv > 0)
             continue;
         if (rv != -2) {
@@ -79,24 +79,24 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!SSL_CONF_CTX_finish(cctx)) {
+    if (!tls_CONF_CTX_finish(cctx)) {
         fprintf(stderr, "Finish error\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }
 
-    /* Setup server side SSL bio */
-    ssl_bio = BIO_new_ssl(ctx, 0);
+    /* Setup server side tls bio */
+    tls_bio = BIO_new_tls(ctx, 0);
 
     if ((in = BIO_new_accept(port)) == NULL)
         goto err;
 
     /*
-     * This means that when a new connection is accepted on 'in', The ssl_bio
+     * This means that when a new connection is accepted on 'in', The tls_bio
      * will be 'duplicated' and have the new socket BIO push into it.
-     * Basically it means the SSL BIO will be automatically setup
+     * Basically it means the tls BIO will be automatically setup
      */
-    BIO_set_accept_bios(in, ssl_bio);
+    BIO_set_accept_bios(in, tls_bio);
 
  again:
     /*

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,11 +12,11 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/pem.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/pem.h>
 
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
@@ -39,7 +39,7 @@ const OPTIONS verify_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"verbose", OPT_VERBOSE, '-',
@@ -66,7 +66,7 @@ const OPTIONS verify_options[] = {
         "Display information about the certificate chain"},
 
     OPT_V_OPTIONS,
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     {"sm2-id", OPT_SM2ID, 's',
      "Specify an ID string to verify an SM2 certificate"},
     {"sm2-hex-id", OPT_SM2HEXID, 's',
@@ -203,7 +203,7 @@ int verify_main(int argc, char **argv)
             }
             /* try to parse the input as hex string first */
             sm2_free = 1;
-            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            sm2_id = OPENtls_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
             if (sm2_id == NULL) {
                 BIO_printf(bio_err, "Invalid hex string input\n");
                 goto end;
@@ -248,7 +248,7 @@ int verify_main(int argc, char **argv)
 
  end:
     if (sm2_free)
-        OPENSSL_free(sm2_id);
+        OPENtls_free(sm2_id);
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
@@ -274,7 +274,7 @@ static int check(X509_STORE *ctx, const char *file,
         goto end;
 
     if (sm2id != NULL) {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
         ASN1_OCTET_STRING *v;
 
         v = ASN1_OCTET_STRING_new();

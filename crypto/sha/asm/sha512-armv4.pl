@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 #
 # Permission to use under GPL terms is granted.
 # ====================================================================
@@ -43,7 +43,7 @@
 # terms it's 22.6 cycles per byte, which is disappointing result.
 # Technical writers asserted that 3-way S4 pipeline can sustain
 # multiple NEON instructions per cycle, but dual NEON issue could
-# not be observed, see http://www.openssl.org/~appro/Snapdragon-S4.html
+# not be observed, see http://www.opentls.org/~appro/Snapdragon-S4.html
 # for further details. On side note Cortex-A15 processes one byte in
 # 16 cycles.
 
@@ -278,11 +278,11 @@ WORD64(0x4cc5d4be,0xcb3e42b6, 0x597f299c,0xfc657e2a)
 WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .size	K512,.-K512
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
-.LOPENSSL_armcap:
+.LOPENtls_armcap:
 # ifdef	_WIN32
-.word	OPENSSL_armcap_P
+.word	OPENtls_armcap_P
 # else
-.word	OPENSSL_armcap_P-.Lsha512_block_data_order
+.word	OPENtls_armcap_P-.Lsha512_block_data_order
 # endif
 .skip	32-4
 #else
@@ -299,9 +299,9 @@ sha512_block_data_order:
 	adr	r3,.Lsha512_block_data_order
 #endif
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
-	ldr	r12,.LOPENSSL_armcap
+	ldr	r12,.LOPENtls_armcap
 # if !defined(_WIN32)
-	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
+	ldr	r12,[r3,r12]		@ OPENtls_armcap_P
 # endif
 # if defined(__APPLE__) || defined(_WIN32)
 	ldr	r12,[r12]
@@ -657,10 +657,10 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.asciz	"SHA512 block transform for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA512 block transform for ARMv4/NEON, CRYPTOGAMS by <appro\@opentls.org>"
 .align	2
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
-.comm	OPENSSL_armcap_P,4,4
+.comm	OPENtls_armcap_P,4,4
 #endif
 ___
 

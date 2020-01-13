@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # SHA256/512 block procedure for PA-RISC.
@@ -692,7 +692,7 @@ $code.=<<___;
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
-	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 # Explicitly encode PA-RISC 2.0 instructions used in this module, so

@@ -2,45 +2,45 @@
 
 =head1 NAME
 
-SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata,
-SSL_CTX_get_default_passwd_cb, SSL_CTX_get_default_passwd_cb_userdata,
-SSL_set_default_passwd_cb, SSL_set_default_passwd_cb_userdata,
-SSL_get_default_passwd_cb, SSL_get_default_passwd_cb_userdata - set or
+tls_CTX_set_default_passwd_cb, tls_CTX_set_default_passwd_cb_userdata,
+tls_CTX_get_default_passwd_cb, tls_CTX_get_default_passwd_cb_userdata,
+tls_set_default_passwd_cb, tls_set_default_passwd_cb_userdata,
+tls_get_default_passwd_cb, tls_get_default_passwd_cb_userdata - set or
 get passwd callback for encrypted PEM file handling
 
 =head1 SYNOPSIS
 
- #include <openssl/ssl.h>
+ #include <opentls/tls.h>
 
- void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
- void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
- pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx);
- void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx);
+ void tls_CTX_set_default_passwd_cb(tls_CTX *ctx, pem_password_cb *cb);
+ void tls_CTX_set_default_passwd_cb_userdata(tls_CTX *ctx, void *u);
+ pem_password_cb *tls_CTX_get_default_passwd_cb(tls_CTX *ctx);
+ void *tls_CTX_get_default_passwd_cb_userdata(tls_CTX *ctx);
 
- void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb);
- void SSL_set_default_passwd_cb_userdata(SSL *s, void *u);
- pem_password_cb *SSL_get_default_passwd_cb(SSL *s);
- void *SSL_get_default_passwd_cb_userdata(SSL *s);
+ void tls_set_default_passwd_cb(tls *s, pem_password_cb *cb);
+ void tls_set_default_passwd_cb_userdata(tls *s, void *u);
+ pem_password_cb *tls_get_default_passwd_cb(tls *s);
+ void *tls_get_default_passwd_cb_userdata(tls *s);
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_default_passwd_cb() sets the default password callback called
+tls_CTX_set_default_passwd_cb() sets the default password callback called
 when loading/storing a PEM certificate with encryption.
 
-SSL_CTX_set_default_passwd_cb_userdata() sets a pointer to userdata, B<u>,
+tls_CTX_set_default_passwd_cb_userdata() sets a pointer to userdata, B<u>,
 which will be provided to the password callback on invocation.
 
-SSL_CTX_get_default_passwd_cb() returns a function pointer to the password
+tls_CTX_get_default_passwd_cb() returns a function pointer to the password
 callback currently set in B<ctx>. If no callback was explicitly set, the
 NULL pointer is returned.
 
-SSL_CTX_get_default_passwd_cb_userdata() returns a pointer to the userdata
+tls_CTX_get_default_passwd_cb_userdata() returns a pointer to the userdata
 currently set in B<ctx>. If no userdata was explicitly set, the NULL pointer
 is returned.
 
-SSL_set_default_passwd_cb(), SSL_set_default_passwd_cb_userdata(),
-SSL_get_default_passwd_cb() and SSL_get_default_passwd_cb_userdata() perform
-the same function as their SSL_CTX counterparts, but using an SSL object.
+tls_set_default_passwd_cb(), tls_set_default_passwd_cb_userdata(),
+tls_get_default_passwd_cb() and tls_get_default_passwd_cb_userdata() perform
+the same function as their tls_CTX counterparts, but using an tls object.
 
 The password callback, which must be provided by the application, hands back the
 password to be used during decryption.
@@ -92,22 +92,22 @@ truncated.
 
 =head1 SEE ALSO
 
-L<ssl(7)>,
-L<SSL_CTX_use_certificate(3)>
+L<tls(7)>,
+L<tls_CTX_use_certificate(3)>
 
 =head1 HISTORY
 
-SSL_CTX_get_default_passwd_cb(), SSL_CTX_get_default_passwd_cb_userdata(),
-SSL_set_default_passwd_cb() and SSL_set_default_passwd_cb_userdata() were
-added in OpenSSL 1.1.0.
+tls_CTX_get_default_passwd_cb(), tls_CTX_get_default_passwd_cb_userdata(),
+tls_set_default_passwd_cb() and tls_set_default_passwd_cb_userdata() were
+added in Opentls 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

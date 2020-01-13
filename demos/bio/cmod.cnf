@@ -7,11 +7,11 @@ testapp = test_sect
 [test_sect]
 # list of configuration modules
 
-# SSL configuration module
-ssl_conf = ssl_sect
+# tls configuration module
+tls_conf = tls_sect
 
-[ssl_sect]
-# list of SSL configurations
+[tls_sect]
+# list of tls configurations
 server = server_sect
 
 [server_sect]

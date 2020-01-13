@@ -1,26 +1,26 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
 
-#ifndef OPENSSL_NO_SRP
+#ifndef OPENtls_NO_SRP
 # include "internal/cryptlib.h"
 # include "crypto/evp.h"
-# include <openssl/sha.h>
-# include <openssl/srp.h>
-# include <openssl/evp.h>
-# include <openssl/buffer.h>
-# include <openssl/rand.h>
-# include <openssl/txt_db.h>
-# include <openssl/err.h>
+# include <opentls/sha.h>
+# include <opentls/srp.h>
+# include <opentls/evp.h>
+# include <opentls/buffer.h>
+# include <opentls/rand.h>
+# include <opentls/txt_db.h>
+# include <opentls/err.h>
 
 # define SRP_RANDOM_SALT_LEN 20
 # define MAX_LEN 2500
@@ -31,7 +31,7 @@
  * the front with 0 bytes and subsequently strip off leading encoded padding.
  * This variant is used for compatibility with other SRP implementations -
  * notably libsrp, but also others. It is also required for backwards
- * compatibility in order to load verifier files from other OpenSSL versions.
+ * compatibility in order to load verifier files from other Opentls versions.
  */
 
 /*
@@ -179,16 +179,16 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
         return;
     BN_free(user_pwd->s);
     BN_clear_free(user_pwd->v);
-    OPENSSL_free(user_pwd->id);
-    OPENSSL_free(user_pwd->info);
-    OPENSSL_free(user_pwd);
+    OPENtls_free(user_pwd->id);
+    OPENtls_free(user_pwd->info);
+    OPENtls_free(user_pwd);
 }
 
 SRP_user_pwd *SRP_user_pwd_new(void)
 {
     SRP_user_pwd *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_malloc(sizeof(*ret))) == NULL) {
         /* SRPerr(SRP_F_SRP_USER_PWD_NEW, ERR_R_MALLOC_FAILURE); */ /*ckerr_ignore*/
         return NULL;
     }
@@ -211,11 +211,11 @@ void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
 int SRP_user_pwd_set1_ids(SRP_user_pwd *vinfo, const char *id,
                           const char *info)
 {
-    OPENSSL_free(vinfo->id);
-    OPENSSL_free(vinfo->info);
-    if (id != NULL && NULL == (vinfo->id = OPENSSL_strdup(id)))
+    OPENtls_free(vinfo->id);
+    OPENtls_free(vinfo->info);
+    if (id != NULL && NULL == (vinfo->id = OPENtls_strdup(id)))
         return 0;
-    return (info == NULL || NULL != (vinfo->info = OPENSSL_strdup(info)));
+    return (info == NULL || NULL != (vinfo->info = OPENtls_strdup(info)));
 }
 
 static int SRP_user_pwd_set_sv(SRP_user_pwd *vinfo, const char *s,
@@ -274,22 +274,22 @@ static SRP_user_pwd *srp_user_pwd_dup(SRP_user_pwd *src)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key)
 {
-    SRP_VBASE *vb = OPENSSL_malloc(sizeof(*vb));
+    SRP_VBASE *vb = OPENtls_malloc(sizeof(*vb));
 
     if (vb == NULL)
         return NULL;
     if ((vb->users_pwd = sk_SRP_user_pwd_new_null()) == NULL
         || (vb->gN_cache = sk_SRP_gN_cache_new_null()) == NULL) {
-        OPENSSL_free(vb);
+        OPENtls_free(vb);
         return NULL;
     }
     vb->default_g = NULL;
     vb->default_N = NULL;
     vb->seed_key = NULL;
-    if ((seed_key != NULL) && (vb->seed_key = OPENSSL_strdup(seed_key)) == NULL) {
+    if ((seed_key != NULL) && (vb->seed_key = OPENtls_strdup(seed_key)) == NULL) {
         sk_SRP_user_pwd_free(vb->users_pwd);
         sk_SRP_gN_cache_free(vb->gN_cache);
-        OPENSSL_free(vb);
+        OPENtls_free(vb);
         return NULL;
     }
     return vb;
@@ -301,15 +301,15 @@ void SRP_VBASE_free(SRP_VBASE *vb)
         return;
     sk_SRP_user_pwd_pop_free(vb->users_pwd, SRP_user_pwd_free);
     sk_SRP_gN_cache_free(vb->gN_cache);
-    OPENSSL_free(vb->seed_key);
-    OPENSSL_free(vb);
+    OPENtls_free(vb->seed_key);
+    OPENtls_free(vb);
 }
 
 static SRP_gN_cache *SRP_gN_new_init(const char *ch)
 {
     unsigned char tmp[MAX_LEN];
     int len;
-    SRP_gN_cache *newgN = OPENSSL_malloc(sizeof(*newgN));
+    SRP_gN_cache *newgN = OPENtls_malloc(sizeof(*newgN));
 
     if (newgN == NULL)
         return NULL;
@@ -318,15 +318,15 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
     if (len < 0)
         goto err;
 
-    if ((newgN->b64_bn = OPENSSL_strdup(ch)) == NULL)
+    if ((newgN->b64_bn = OPENtls_strdup(ch)) == NULL)
         goto err;
 
     if ((newgN->bn = BN_bin2bn(tmp, len, NULL)))
         return newgN;
 
-    OPENSSL_free(newgN->b64_bn);
+    OPENtls_free(newgN->b64_bn);
  err:
-    OPENSSL_free(newgN);
+    OPENtls_free(newgN);
     return NULL;
 }
 
@@ -334,9 +334,9 @@ static void SRP_gN_free(SRP_gN_cache *gN_cache)
 {
     if (gN_cache == NULL)
         return;
-    OPENSSL_free(gN_cache->b64_bn);
+    OPENtls_free(gN_cache->b64_bn);
     BN_free(gN_cache->bn);
-    OPENSSL_free(gN_cache);
+    OPENtls_free(gN_cache);
 }
 
 static SRP_gN *SRP_get_gN_by_id(const char *id, STACK_OF(SRP_gN) *gN_tab)
@@ -417,17 +417,17 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
     if (vb->seed_key) {
         last_index = SRP_get_default_gN(NULL)->id;
     }
-    for (i = 0; i < sk_OPENSSL_PSTRING_num(tmpdb->data); i++) {
-        pp = sk_OPENSSL_PSTRING_value(tmpdb->data, i);
+    for (i = 0; i < sk_OPENtls_PSTRING_num(tmpdb->data); i++) {
+        pp = sk_OPENtls_PSTRING_value(tmpdb->data, i);
         if (pp[DB_srptype][0] == DB_SRP_INDEX) {
             /*
              * we add this couple in the internal Stack
              */
 
-            if ((gN = OPENSSL_malloc(sizeof(*gN))) == NULL)
+            if ((gN = OPENtls_malloc(sizeof(*gN))) == NULL)
                 goto err;
 
-            if ((gN->id = OPENSSL_strdup(pp[DB_srpid])) == NULL
+            if ((gN->id = OPENtls_strdup(pp[DB_srpid])) == NULL
                 || (gN->N = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpverifier]))
                         == NULL
                 || (gN->g = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpsalt]))
@@ -486,8 +486,8 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
      */
 
     if (gN != NULL) {
-        OPENSSL_free(gN->id);
-        OPENSSL_free(gN);
+        OPENtls_free(gN->id);
+        OPENtls_free(gN);
     }
 
     SRP_user_pwd_free(user_pwd);
@@ -525,7 +525,7 @@ int SRP_VBASE_add0_user(SRP_VBASE *vb, SRP_user_pwd *user_pwd)
     return 1;
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * DEPRECATED: use SRP_VBASE_get1_by_user instead.
  * This method ignores the configured seed and fails for an unknown user.
@@ -652,7 +652,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     if (BN_bn2bin(v, tmp) < 0)
         goto err;
     vfsize = BN_num_bytes(v) * 2;
-    if (((vf = OPENSSL_malloc(vfsize)) == NULL))
+    if (((vf = OPENtls_malloc(vfsize)) == NULL))
         goto err;
     if (!t_tob64(vf, tmp, BN_num_bytes(v)))
         goto err;
@@ -660,11 +660,11 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     if (*salt == NULL) {
         char *tmp_salt;
 
-        if ((tmp_salt = OPENSSL_malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL) {
+        if ((tmp_salt = OPENtls_malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL) {
             goto err;
         }
         if (!t_tob64(tmp_salt, tmp2, SRP_RANDOM_SALT_LEN)) {
-            OPENSSL_free(tmp_salt);
+            OPENtls_free(tmp_salt);
             goto err;
         }
         *salt = tmp_salt;
@@ -677,7 +677,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
  err:
     BN_free(N_bn_alloc);
     BN_free(g_bn_alloc);
-    OPENSSL_clear_free(vf, vfsize);
+    OPENtls_clear_free(vf, vfsize);
     BN_clear_free(s);
     BN_clear_free(v);
     return result;

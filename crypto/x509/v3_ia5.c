@@ -1,17 +1,17 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/asn1.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
@@ -20,7 +20,7 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
     EXT_IA5STRING(NID_netscape_ca_revocation_url),
     EXT_IA5STRING(NID_netscape_renewal_url),
     EXT_IA5STRING(NID_netscape_ca_policy_url),
-    EXT_IA5STRING(NID_netscape_ssl_server_name),
+    EXT_IA5STRING(NID_netscape_tls_server_name),
     EXT_IA5STRING(NID_netscape_comment),
     EXT_END
 };
@@ -31,7 +31,7 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 
     if (!ia5 || !ia5->length)
         return NULL;
-    if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
+    if ((tmp = OPENtls_malloc(ia5->length + 1)) == NULL) {
         X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

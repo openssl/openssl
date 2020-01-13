@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,12 +12,12 @@
 #include <sys/types.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pem.h>
-#include <openssl/objects.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/pkcs7.h>
+#include <opentls/pem.h>
+#include <opentls/objects.h>
 
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 
@@ -48,7 +48,7 @@ int crl2pkcs7_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS7 *p7 = NULL;
     PKCS7_SIGNED *p7s = NULL;
-    STACK_OF(OPENSSL_STRING) *certflst = NULL;
+    STACK_OF(OPENtls_STRING) *certflst = NULL;
     STACK_OF(X509) *cert_stack = NULL;
     STACK_OF(X509_CRL) *crl_stack = NULL;
     X509_CRL *crl = NULL;
@@ -88,9 +88,9 @@ int crl2pkcs7_main(int argc, char **argv)
             break;
         case OPT_CERTFILE:
             if ((certflst == NULL)
-                && (certflst = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (certflst = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            if (!sk_OPENSSL_STRING_push(certflst, opt_arg()))
+            if (!sk_OPENtls_STRING_push(certflst, opt_arg()))
                 goto end;
             break;
         }
@@ -130,7 +130,7 @@ int crl2pkcs7_main(int argc, char **argv)
     p7s->crl = crl_stack;
     if (crl != NULL) {
         sk_X509_CRL_push(crl_stack, crl);
-        crl = NULL;             /* now part of p7 for OPENSSL_freeing */
+        crl = NULL;             /* now part of p7 for OPENtls_freeing */
     }
 
     if ((cert_stack = sk_X509_new_null()) == NULL)
@@ -138,8 +138,8 @@ int crl2pkcs7_main(int argc, char **argv)
     p7s->cert = cert_stack;
 
     if (certflst != NULL)
-        for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
-            certfile = sk_OPENSSL_STRING_value(certflst, i);
+        for (i = 0; i < sk_OPENtls_STRING_num(certflst); i++) {
+            certfile = sk_OPENtls_STRING_value(certflst, i);
             if (add_certs_from_file(cert_stack, certfile) < 0) {
                 BIO_printf(bio_err, "error loading certificates\n");
                 ERR_print_errors(bio_err);
@@ -162,7 +162,7 @@ int crl2pkcs7_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    sk_OPENSSL_STRING_free(certflst);
+    sk_OPENtls_STRING_free(certflst);
     BIO_free(in);
     BIO_free_all(out);
     PKCS7_free(p7);
@@ -215,7 +215,7 @@ static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile)
 
     ret = count;
  end:
-    /* never need to OPENSSL_free x */
+    /* never need to OPENtls_free x */
     BIO_free(in);
     sk_X509_INFO_free(sk);
     return ret;

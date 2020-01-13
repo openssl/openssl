@@ -1,24 +1,24 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
 #include "internal/refcount.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
 #include "evp_local.h"
 
-static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
+static EVP_KEYEXCH *evp_keyexch_new(Otls_PROVIDER *prov)
 {
-    EVP_KEYEXCH *exchange = OPENSSL_zalloc(sizeof(EVP_KEYEXCH));
+    EVP_KEYEXCH *exchange = OPENtls_zalloc(sizeof(EVP_KEYEXCH));
 
     if (exchange == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -28,19 +28,19 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     exchange->lock = CRYPTO_THREAD_lock_new();
     if (exchange->lock == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(exchange);
+        OPENtls_free(exchange);
         return NULL;
     }
     exchange->prov = prov;
-    ossl_provider_up_ref(prov);
+    otls_provider_up_ref(prov);
     exchange->refcnt = 1;
 
     return exchange;
 }
 
 static void *evp_keyexch_from_dispatch(int name_id,
-                                       const OSSL_DISPATCH *fns,
-                                       OSSL_PROVIDER *prov)
+                                       const Otls_DISPATCH *fns,
+                                       Otls_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, paramfncnt = 0;
@@ -54,51 +54,51 @@ static void *evp_keyexch_from_dispatch(int name_id,
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
-        case OSSL_FUNC_KEYEXCH_NEWCTX:
+        case Otls_FUNC_KEYEXCH_NEWCTX:
             if (exchange->newctx != NULL)
                 break;
-            exchange->newctx = OSSL_get_OP_keyexch_newctx(fns);
+            exchange->newctx = Otls_get_OP_keyexch_newctx(fns);
             fncnt++;
             break;
-        case OSSL_FUNC_KEYEXCH_INIT:
+        case Otls_FUNC_KEYEXCH_INIT:
             if (exchange->init != NULL)
                 break;
-            exchange->init = OSSL_get_OP_keyexch_init(fns);
+            exchange->init = Otls_get_OP_keyexch_init(fns);
             fncnt++;
             break;
-        case OSSL_FUNC_KEYEXCH_SET_PEER:
+        case Otls_FUNC_KEYEXCH_SET_PEER:
             if (exchange->set_peer != NULL)
                 break;
-            exchange->set_peer = OSSL_get_OP_keyexch_set_peer(fns);
+            exchange->set_peer = Otls_get_OP_keyexch_set_peer(fns);
             break;
-        case OSSL_FUNC_KEYEXCH_DERIVE:
+        case Otls_FUNC_KEYEXCH_DERIVE:
             if (exchange->derive != NULL)
                 break;
-            exchange->derive = OSSL_get_OP_keyexch_derive(fns);
+            exchange->derive = Otls_get_OP_keyexch_derive(fns);
             fncnt++;
             break;
-        case OSSL_FUNC_KEYEXCH_FREECTX:
+        case Otls_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
                 break;
-            exchange->freectx = OSSL_get_OP_keyexch_freectx(fns);
+            exchange->freectx = Otls_get_OP_keyexch_freectx(fns);
             fncnt++;
             break;
-        case OSSL_FUNC_KEYEXCH_DUPCTX:
+        case Otls_FUNC_KEYEXCH_DUPCTX:
             if (exchange->dupctx != NULL)
                 break;
-            exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
+            exchange->dupctx = Otls_get_OP_keyexch_dupctx(fns);
             break;
-        case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
+        case Otls_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
-            exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
+            exchange->set_ctx_params = Otls_get_OP_keyexch_set_ctx_params(fns);
             paramfncnt++;
             break;
-        case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
+        case Otls_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
             if (exchange->settable_ctx_params != NULL)
                 break;
             exchange->settable_ctx_params
-                = OSSL_get_OP_keyexch_settable_ctx_params(fns);
+                = Otls_get_OP_keyexch_settable_ctx_params(fns);
             paramfncnt++;
             break;
         }
@@ -131,9 +131,9 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
         CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
         if (i > 0)
             return;
-        ossl_provider_free(exchange->prov);
+        otls_provider_free(exchange->prov);
         CRYPTO_THREAD_lock_free(exchange->lock);
-        OPENSSL_free(exchange);
+        OPENtls_free(exchange);
     }
 }
 
@@ -145,15 +145,15 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
+Otls_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
 {
     return exchange->prov;
 }
 
-EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENtls_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+    return evp_generic_fetch(ctx, Otls_OP_KEYEXCH, algorithm, properties,
                              evp_keyexch_from_dispatch,
                              (int (*)(void *))EVP_KEYEXCH_up_ref,
                              (void (*)(void *))EVP_KEYEXCH_free);
@@ -184,7 +184,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
         if (ctx->keymgmt->query_operation_name != NULL)
             supported_exch =
-                ctx->keymgmt->query_operation_name(OSSL_OP_KEYEXCH);
+                ctx->keymgmt->query_operation_name(Otls_OP_KEYEXCH);
 
         /*
          * If we didn't get a supported exch, assume there is one with the
@@ -224,7 +224,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
         if (provkey == NULL)
             goto legacy;
     }
-    ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
+    ctx->op.kex.exchprovctx = exchange->newctx(otls_provider_ctx(exchange->prov));
     if (ctx->op.kex.exchprovctx == NULL) {
         /* The provider key can stay in the cache */
         EVPerr(0, EVP_R_INITIALIZATION_ERROR);
@@ -383,11 +383,11 @@ int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name)
     return evp_is_a(keyexch->prov, keyexch->name_id, name);
 }
 
-void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KEYEXCH_do_all_provided(OPENtls_CTX *libctx,
                                  void (*fn)(EVP_KEYEXCH *keyexch, void *arg),
                                  void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
+    evp_generic_do_all(libctx, Otls_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
                        evp_keyexch_from_dispatch,
                        (void (*)(void *))EVP_KEYEXCH_free);

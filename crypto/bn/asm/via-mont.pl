@@ -1,29 +1,29 @@
 #! /usr/bin/env perl
-# Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # Wrapper around 'rep montmul', VIA-specific instruction accessing
 # PadLock Montgomery Multiplier. The wrapper is designed as drop-in
-# replacement for OpenSSL bn_mul_mont [first implemented in 0.9.9].
+# replacement for Opentls bn_mul_mont [first implemented in 0.9.9].
 #
-# Below are interleaved outputs from 'openssl speed rsa dsa' for 4
+# Below are interleaved outputs from 'opentls speed rsa dsa' for 4
 # different software configurations on 1.5GHz VIA Esther processor.
 # Lines marked with "software integer" denote performance of hand-
-# coded integer-only assembler found in OpenSSL 0.9.7. "Software SSE2"
+# coded integer-only assembler found in Opentls 0.9.7. "Software SSE2"
 # refers to hand-coded SSE2 Montgomery multiplication procedure found
-# OpenSSL 0.9.9. "Hardware VIA SDK" refers to padlock_pmm routine from
+# Opentls 0.9.9. "Hardware VIA SDK" refers to padlock_pmm routine from
 # Padlock SDK 2.0.1 available for download from VIA, which naturally
 # utilizes the magic 'repz montmul' instruction. And finally "hardware
 # this" refers to *this* implementation which also uses 'repz montmul'
@@ -243,7 +243,7 @@ $sp=&DWP(28,"esp");
 &set_label("leave");
 &function_end($func);
 
-&asciz("Padlock Montgomery Multiplication, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("Padlock Montgomery Multiplication, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

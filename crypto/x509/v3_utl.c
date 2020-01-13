@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* X509 v3 extension utilities */
@@ -13,19 +13,19 @@
 #include "internal/cryptlib.h"
 #include <stdio.h>
 #include "crypto/ctype.h"
-#include <openssl/conf.h>
-#include <openssl/crypto.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/crypto.h>
+#include <opentls/x509v3.h>
 #include "crypto/x509.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "ext_dat.h"
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
-static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
+static STACK_OF(OPENtls_STRING) *get_email(X509_NAME *name,
                                            GENERAL_NAMES *gens);
-static void str_free(OPENSSL_STRING str);
-static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email);
+static void str_free(OPENtls_STRING str);
+static int append_ia5(STACK_OF(OPENtls_STRING) **sk, const ASN1_IA5STRING *email);
 
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
@@ -41,11 +41,11 @@ int X509V3_add_value(const char *name, const char *value,
     char *tname = NULL, *tvalue = NULL;
     int sk_allocated = (*extlist == NULL);
 
-    if (name && (tname = OPENSSL_strdup(name)) == NULL)
+    if (name && (tname = OPENtls_strdup(name)) == NULL)
         goto err;
-    if (value && (tvalue = OPENSSL_strdup(value)) == NULL)
+    if (value && (tvalue = OPENtls_strdup(value)) == NULL)
         goto err;
-    if ((vtmp = OPENSSL_malloc(sizeof(*vtmp))) == NULL)
+    if ((vtmp = OPENtls_malloc(sizeof(*vtmp))) == NULL)
         goto err;
     if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
@@ -61,9 +61,9 @@ int X509V3_add_value(const char *name, const char *value,
         sk_CONF_VALUE_free(*extlist);
         *extlist = NULL;
     }
-    OPENSSL_free(vtmp);
-    OPENSSL_free(tname);
-    OPENSSL_free(tvalue);
+    OPENtls_free(vtmp);
+    OPENtls_free(tname);
+    OPENtls_free(tvalue);
     return 0;
 }
 
@@ -79,10 +79,10 @@ void X509V3_conf_free(CONF_VALUE *conf)
 {
     if (!conf)
         return;
-    OPENSSL_free(conf->name);
-    OPENSSL_free(conf->value);
-    OPENSSL_free(conf->section);
-    OPENSSL_free(conf);
+    OPENtls_free(conf->name);
+    OPENtls_free(conf->value);
+    OPENtls_free(conf->section);
+    OPENtls_free(conf);
 }
 
 int X509V3_add_value_bool(const char *name, int asn1_bool,
@@ -119,22 +119,22 @@ static char *bignum_to_string(const BIGNUM *bn)
         return NULL;
 
     len = strlen(tmp) + 3;
-    ret = OPENSSL_malloc(len);
+    ret = OPENtls_malloc(len);
     if (ret == NULL) {
         X509V3err(X509V3_F_BIGNUM_TO_STRING, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(tmp);
+        OPENtls_free(tmp);
         return NULL;
     }
 
     /* Prepend "0x", but place it after the "-" if negative. */
     if (tmp[0] == '-') {
-        OPENSSL_strlcpy(ret, "-0x", len);
-        OPENSSL_strlcat(ret, tmp + 1, len);
+        OPENtls_strlcpy(ret, "-0x", len);
+        OPENtls_strlcat(ret, tmp + 1, len);
     } else {
-        OPENSSL_strlcpy(ret, "0x", len);
-        OPENSSL_strlcat(ret, tmp, len);
+        OPENtls_strlcpy(ret, "0x", len);
+        OPENtls_strlcat(ret, tmp, len);
     }
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     return ret;
 }
 
@@ -230,7 +230,7 @@ int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
     if ((strtmp = i2s_ASN1_INTEGER(NULL, aint)) == NULL)
         return 0;
     ret = X509V3_add_value(name, strtmp, extlist);
-    OPENSSL_free(strtmp);
+    OPENtls_free(strtmp);
     return ret;
 }
 
@@ -292,7 +292,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     char *linebuf;
     int state;
     /* We are going to modify the line so copy it first */
-    linebuf = OPENSSL_strdup(line);
+    linebuf = OPENtls_strdup(line);
     if (linebuf == NULL) {
         X509V3err(X509V3_F_X509V3_PARSE_LIST, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -362,11 +362,11 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
         }
         X509V3_add_value(ntmp, NULL, &values);
     }
-    OPENSSL_free(linebuf);
+    OPENtls_free(linebuf);
     return values;
 
  err:
-    OPENSSL_free(linebuf);
+    OPENtls_free(linebuf);
     sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
     return NULL;
 
@@ -378,12 +378,12 @@ static char *strip_spaces(char *name)
     char *p, *q;
     /* Skip over leading spaces */
     p = name;
-    while (*p && ossl_isspace(*p))
+    while (*p && otls_isspace(*p))
         p++;
     if (*p == '\0')
         return NULL;
     q = p + strlen(p) - 1;
-    while ((q != p) && ossl_isspace(*q))
+    while ((q != p) && otls_isspace(*q))
         q--;
     if (p != q)
         q[1] = 0;
@@ -415,10 +415,10 @@ static int sk_strcmp(const char *const *a, const char *const *b)
     return strcmp(*a, *b);
 }
 
-STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
+STACK_OF(OPENtls_STRING) *X509_get1_email(X509 *x)
 {
     GENERAL_NAMES *gens;
-    STACK_OF(OPENSSL_STRING) *ret;
+    STACK_OF(OPENtls_STRING) *ret;
 
     gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     ret = get_email(X509_get_subject_name(x), gens);
@@ -426,10 +426,10 @@ STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
     return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
+STACK_OF(OPENtls_STRING) *X509_get1_ocsp(X509 *x)
 {
     AUTHORITY_INFO_ACCESS *info;
-    STACK_OF(OPENSSL_STRING) *ret = NULL;
+    STACK_OF(OPENtls_STRING) *ret = NULL;
     int i;
 
     info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
@@ -449,11 +449,11 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
     return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
+STACK_OF(OPENtls_STRING) *X509_REQ_get1_email(X509_REQ *x)
 {
     GENERAL_NAMES *gens;
     STACK_OF(X509_EXTENSION) *exts;
-    STACK_OF(OPENSSL_STRING) *ret;
+    STACK_OF(OPENtls_STRING) *ret;
 
     exts = X509_REQ_get_extensions(x);
     gens = X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
@@ -463,10 +463,10 @@ STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
     return ret;
 }
 
-static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
+static STACK_OF(OPENtls_STRING) *get_email(X509_NAME *name,
                                            GENERAL_NAMES *gens)
 {
-    STACK_OF(OPENSSL_STRING) *ret = NULL;
+    STACK_OF(OPENtls_STRING) *ret = NULL;
     X509_NAME_ENTRY *ne;
     const ASN1_IA5STRING *email;
     GENERAL_NAME *gen;
@@ -491,12 +491,12 @@ static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
     return ret;
 }
 
-static void str_free(OPENSSL_STRING str)
+static void str_free(OPENtls_STRING str)
 {
-    OPENSSL_free(str);
+    OPENtls_free(str);
 }
 
-static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email)
+static int append_ia5(STACK_OF(OPENtls_STRING) **sk, const ASN1_IA5STRING *email)
 {
     char *emtmp;
     /* First some sanity checks */
@@ -505,15 +505,15 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
     if (!email->data || !email->length)
         return 1;
     if (*sk == NULL)
-        *sk = sk_OPENSSL_STRING_new(sk_strcmp);
+        *sk = sk_OPENtls_STRING_new(sk_strcmp);
     if (*sk == NULL)
         return 0;
     /* Don't add duplicates */
-    if (sk_OPENSSL_STRING_find(*sk, (char *)email->data) != -1)
+    if (sk_OPENtls_STRING_find(*sk, (char *)email->data) != -1)
         return 1;
-    emtmp = OPENSSL_strdup((char *)email->data);
-    if (emtmp == NULL || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
-        OPENSSL_free(emtmp);    /* free on push failure */
+    emtmp = OPENtls_strdup((char *)email->data);
+    if (emtmp == NULL || !sk_OPENtls_STRING_push(*sk, emtmp)) {
+        OPENtls_free(emtmp);    /* free on push failure */
         X509_email_free(*sk);
         *sk = NULL;
         return 0;
@@ -521,9 +521,9 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
     return 1;
 }
 
-void X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
+void X509_email_free(STACK_OF(OPENtls_STRING) *sk)
 {
-    sk_OPENSSL_STRING_pop_free(sk, str_free);
+    sk_OPENtls_STRING_pop_free(sk, str_free);
 }
 
 typedef int (*equal_fn) (const unsigned char *pattern, size_t pattern_len,
@@ -795,7 +795,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
         else if (a->length == (int)blen && !memcmp(a->data, b, blen))
             rv = 1;
         if (rv > 0 && peername)
-            *peername = OPENSSL_strndup((char *)a->data, a->length);
+            *peername = OPENtls_strndup((char *)a->data, a->length);
     } else {
         int astrlen;
         unsigned char *astr;
@@ -809,8 +809,8 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
         }
         rv = equal(astr, astrlen, (unsigned char *)b, blen, flags);
         if (rv > 0 && peername)
-            *peername = OPENSSL_strndup((char *)astr, astrlen);
-        OPENSSL_free(astr);
+            *peername = OPENtls_strndup((char *)astr, astrlen);
+        OPENtls_free(astr);
     }
     return rv;
 }
@@ -993,7 +993,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     p = strchr(ipasc, '/');
     if (p == NULL)
         return NULL;
-    iptmp = OPENSSL_strdup(ipasc);
+    iptmp = OPENtls_strdup(ipasc);
     if (iptmp == NULL)
         return NULL;
     p = iptmp + (p - ipasc);
@@ -1006,7 +1006,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 
     iplen2 = a2i_ipadd(ipout + iplen1, p);
 
-    OPENSSL_free(iptmp);
+    OPENtls_free(iptmp);
     iptmp = NULL;
 
     if (!iplen2 || (iplen1 != iplen2))
@@ -1021,7 +1021,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     return ret;
 
  err:
-    OPENSSL_free(iptmp);
+    OPENtls_free(iptmp);
     ASN1_OCTET_STRING_free(ret);
     return NULL;
 }
@@ -1181,7 +1181,7 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen)
     while (inlen--) {
         c = *in++;
         num <<= 4;
-        x = OPENSSL_hexchar2int(c);
+        x = OPENtls_hexchar2int(c);
         if (x < 0)
             return 0;
         num |= (char)x;

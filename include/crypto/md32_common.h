@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-
@@ -63,7 +63,7 @@
  *      #define HASH_BLOCK_DATA_ORDER   md5_block_data_order
  */
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 #if !defined(DATA_ORDER_IS_BIG_ENDIAN) && !defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 # error "DATA_ORDER must be defined!"
@@ -154,8 +154,8 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
             len -= n;
             c->num = 0;
             /*
-             * We use memset rather than OPENSSL_cleanse() here deliberately.
-             * Using OPENSSL_cleanse() here could be a performance issue. It
+             * We use memset rather than OPENtls_cleanse() here deliberately.
+             * Using OPENtls_cleanse() here could be a performance issue. It
              * will get properly cleansed on finalisation so this isn't a
              * security problem.
              */
@@ -214,7 +214,7 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
     p -= HASH_CBLOCK;
     HASH_BLOCK_DATA_ORDER(c, p, 1);
     c->num = 0;
-    OPENSSL_cleanse(p, HASH_CBLOCK);
+    OPENtls_cleanse(p, HASH_CBLOCK);
 
 #ifndef HASH_MAKE_STRING
 # error "HASH_MAKE_STRING must be defined!"

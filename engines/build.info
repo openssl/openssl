@@ -70,7 +70,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
 
-    MODULES{noinst,engine}=ossltest dasync
+    MODULES{noinst,engine}=otlstest dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include
@@ -78,12 +78,12 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[dasync]=dasync.ld
       GENERATE[dasync.ld]=../util/engines.num
     ENDIF
-    SOURCE[ossltest]=e_ossltest.c
-    DEPEND[ossltest]=../libcrypto
-    INCLUDE[ossltest]=../include
+    SOURCE[otlstest]=e_otlstest.c
+    DEPEND[otlstest]=../libcrypto
+    INCLUDE[otlstest]=../include
     IF[{- defined $target{shared_defflag} -}]
-      SOURCE[ossltest]=ossltest.ld
-      GENERATE[ossltest.ld]=../util/engines.num
+      SOURCE[otlstest]=otlstest.ld
+      GENERATE[otlstest.ld]=../util/engines.num
     ENDIF
   ENDIF
   GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl

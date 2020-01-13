@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,13 +12,13 @@
 #include <stdlib.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/hmac.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/hmac.h>
 #include <ctype.h>
 
 #undef BUFSIZE
@@ -51,7 +51,7 @@ const OPTIONS dgst_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List digests"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
     {"engine_impl", OPT_ENGINE_IMPL, '-',
      "Also use engine given by -engine for digest operations"},
@@ -79,7 +79,7 @@ const OPTIONS dgst_options[] = {
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
     {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
-     "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
+     "Compute HMAC with the key used in Opentls-FIPS fingerprint"},
 
     OPT_R_OPTIONS,
 
@@ -93,7 +93,7 @@ int dgst_main(int argc, char **argv)
     BIO *in = NULL, *inp, *bmd = NULL, *out = NULL;
     ENGINE *e = NULL, *impl = NULL;
     EVP_PKEY *sigkey = NULL;
-    STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
+    STACK_OF(OPENtls_STRING) *sigopts = NULL, *macopts = NULL;
     char *hmac_key = NULL;
     char *mac_name = NULL;
     char *passinarg = NULL, *passin = NULL;
@@ -193,14 +193,14 @@ int dgst_main(int argc, char **argv)
             break;
         case OPT_SIGOPT:
             if (!sigopts)
-                sigopts = sk_OPENSSL_STRING_new_null();
-            if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+                sigopts = sk_OPENtls_STRING_new_null();
+            if (!sigopts || !sk_OPENtls_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_MACOPT:
             if (!macopts)
-                macopts = sk_OPENSSL_STRING_new_null();
-            if (!macopts || !sk_OPENSSL_STRING_push(macopts, opt_arg()))
+                macopts = sk_OPENtls_STRING_new_null();
+            if (!macopts || !sk_OPENtls_STRING_push(macopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_DIGEST:
@@ -290,8 +290,8 @@ int dgst_main(int argc, char **argv)
             goto mac_end;
         if (macopts != NULL) {
             char *macopt;
-            for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
-                macopt = sk_OPENSSL_STRING_value(macopts, i);
+            for (i = 0; i < sk_OPENtls_STRING_num(macopts); i++) {
+                macopt = sk_OPENtls_STRING_value(macopts, i);
                 if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
                     BIO_printf(bio_err,
                                "MAC parameter error \"%s\"\n", macopt);
@@ -339,8 +339,8 @@ int dgst_main(int argc, char **argv)
         }
         if (sigopts != NULL) {
             char *sigopt;
-            for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-                sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+            for (i = 0; i < sk_OPENtls_STRING_num(sigopts); i++) {
+                sigopt = sk_OPENtls_STRING_value(sigopts, i);
                 if (pkey_ctrl_string(pctx, sigopt) <= 0) {
                     BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
                     ERR_print_errors(bio_err);
@@ -425,14 +425,14 @@ int dgst_main(int argc, char **argv)
         }
     }
  end:
-    OPENSSL_clear_free(buf, BUFSIZE);
+    OPENtls_clear_free(buf, BUFSIZE);
     BIO_free(in);
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     BIO_free_all(out);
     EVP_PKEY_free(sigkey);
-    sk_OPENSSL_STRING_free(sigopts);
-    sk_OPENSSL_STRING_free(macopts);
-    OPENSSL_free(sigbuf);
+    sk_OPENtls_STRING_free(sigopts);
+    sk_OPENtls_STRING_free(macopts);
+    OPENtls_free(sigbuf);
     BIO_free(bmd);
     release_engine(e);
     return ret;
@@ -574,7 +574,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
             BIO_printf(out, "%02x", buf[i]);
 
         BIO_printf(out, " *%s\n", file);
-        OPENSSL_free((char *)file);
+        OPENtls_free((char *)file);
     } else {
         if (sig_name != NULL) {
             BIO_puts(out, sig_name);
@@ -597,7 +597,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     ret = 0;
  end:
     if (sigbuf != NULL)
-        OPENSSL_clear_free(sigbuf, len);
+        OPENtls_clear_free(sigbuf, len);
 
     return ret;
 }

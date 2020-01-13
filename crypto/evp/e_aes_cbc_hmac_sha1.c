@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,12 +16,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/aes.h>
-#include <openssl/sha.h>
-#include <openssl/rand.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/aes.h>
+#include <opentls/sha.h>
+#include <opentls/rand.h>
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
 #include "crypto/evp.h"
@@ -135,7 +135,7 @@ static void sha1_update(SHA_CTX *c, const void *data, size_t len)
 # endif
 # define SHA1_Update sha1_update
 
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
 
 typedef struct {
     unsigned int A[8], B[8], C[8], D[8], E[8];
@@ -397,8 +397,8 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 
     aesni_multi_cbc_encrypt(ciph_d, &key->ks, n4x);
 
-    OPENSSL_cleanse(blocks, sizeof(blocks));
-    OPENSSL_cleanse(ctx, sizeof(*ctx));
+    OPENtls_cleanse(blocks, sizeof(blocks));
+    OPENtls_cleanse(ctx, sizeof(*ctx));
 
     return ret;
 }
@@ -801,7 +801,7 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             SHA1_Init(&key->tail);
             SHA1_Update(&key->tail, hmac_key, sizeof(hmac_key));
 
-            OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+            OPENtls_cleanse(hmac_key, sizeof(hmac_key));
 
             return 1;
         }
@@ -838,7 +838,7 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                 return SHA_DIGEST_LENGTH;
             }
         }
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
     case EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE:
         return (int)(5 + 16 + ((arg + 20 + 16) & -16));
     case EVP_CTRL_TLS1_1_MULTIBLOCK_AAD:
@@ -861,7 +861,7 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                     if (inp_len < 4096)
                         return 0; /* too short */
 
-                    if (inp_len >= 8192 && OPENSSL_ia32cap_P[2] & (1 << 5))
+                    if (inp_len >= 8192 && OPENtls_ia32cap_P[2] & (1 << 5))
                         n4x = 2; /* AVX2 */
                 } else if ((n4x = param->interleave / 4) && n4x <= 2)
                     inp_len = param->len;
@@ -947,13 +947,13 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
 
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void)
 {
-    return (OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+    return (OPENtls_ia32cap_P[1] & AESNI_CAPABLE ?
             &aesni_128_cbc_hmac_sha1_cipher : NULL);
 }
 
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void)
 {
-    return (OPENSSL_ia32cap_P[1] & AESNI_CAPABLE ?
+    return (OPENtls_ia32cap_P[1] & AESNI_CAPABLE ?
             &aesni_256_cbc_hmac_sha1_cipher : NULL);
 }
 #else

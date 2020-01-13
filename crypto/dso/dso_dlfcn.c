@@ -1,10 +1,10 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -48,7 +48,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz);
 static void *dlfcn_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dlfcn = {
-    "OpenSSL 'dlfcn' shared library method",
+    "Opentls 'dlfcn' shared library method",
     dlfcn_load,
     dlfcn_unload,
     dlfcn_bind_func,
@@ -61,7 +61,7 @@ static DSO_METHOD dso_meth_dlfcn = {
     dlfcn_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_openssl(void)
+DSO_METHOD *DSO_METHOD_opentls(void)
 {
     return &dso_meth_dlfcn;
 }
@@ -133,7 +133,7 @@ static int dlfcn_load(DSO *dso)
     return 1;
  err:
     /* Cleanup! */
-    OPENSSL_free(filename);
+    OPENtls_free(filename);
     if (ptr != NULL)
         dlclose(ptr);
     return 0;
@@ -206,7 +206,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
      * if the second file specification is missing.
      */
     if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/')) {
-        merged = OPENSSL_strdup(filespec1);
+        merged = OPENtls_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -216,7 +216,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
      * If the first file specification is missing, the second one rules.
      */
     else if (!filespec1) {
-        merged = OPENSSL_strdup(filespec2);
+        merged = OPENtls_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -238,7 +238,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
             spec2len--;
             len--;
         }
-        merged = OPENSSL_malloc(len + 2);
+        merged = OPENtls_malloc(len + 2);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -264,7 +264,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
             rsize += 3;         /* The length of "lib" */
     }
-    translated = OPENSSL_malloc(rsize);
+    translated = OPENtls_malloc(rsize);
     if (translated == NULL) {
         DSOerr(DSO_F_DLFCN_NAME_CONVERTER, DSO_R_NAME_TRANSLATION_FAILED);
         return NULL;
@@ -342,7 +342,7 @@ static int dladdr(void *ptr, Dl_info *dl)
     unsigned int found = 0;
     struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
-    if ((ldinfos = OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
+    if ((ldinfos = OPENtls_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
         errno = ENOMEM;
         dl->dli_fname = NULL;
         return 0;
@@ -355,7 +355,7 @@ static int dladdr(void *ptr, Dl_info *dl)
          *  EINVAL (invalid flags),
          *  EFAULT (invalid ldinfos ptr)
          */
-        OPENSSL_free((void *)ldinfos);
+        OPENtls_free((void *)ldinfos);
         dl->dli_fname = NULL;
         return 0;
     }
@@ -377,17 +377,17 @@ static int dladdr(void *ptr, Dl_info *dl)
             if ((member_len = strlen(member)) > 0)
                 buffer_sz += 1 + member_len + 1;
             found = 1;
-            if ((buffer = OPENSSL_malloc(buffer_sz)) != NULL) {
-                OPENSSL_strlcpy(buffer, this_ldi->ldinfo_filename, buffer_sz);
+            if ((buffer = OPENtls_malloc(buffer_sz)) != NULL) {
+                OPENtls_strlcpy(buffer, this_ldi->ldinfo_filename, buffer_sz);
                 if (member_len > 0) {
                     /*
                      * Need to respect a possible member name and not just
                      * returning the path name in this case. See docs:
                      * sys/ldr.h, loadquery() and dlopen()/RTLD_MEMBER.
                      */
-                    OPENSSL_strlcat(buffer, "(", buffer_sz);
-                    OPENSSL_strlcat(buffer, member, buffer_sz);
-                    OPENSSL_strlcat(buffer, ")", buffer_sz);
+                    OPENtls_strlcat(buffer, "(", buffer_sz);
+                    OPENtls_strlcat(buffer, member, buffer_sz);
+                    OPENtls_strlcat(buffer, ")", buffer_sz);
                 }
                 dl->dli_fname = buffer;
             } else {
@@ -398,7 +398,7 @@ static int dladdr(void *ptr, Dl_info *dl)
                                           this_ldi->ldinfo_next);
         }
     } while (this_ldi->ldinfo_next && !found);
-    OPENSSL_free((void *)ldinfos);
+    OPENtls_free((void *)ldinfos);
     return (found && dl->dli_fname != NULL);
 }
 # endif                         /* _AIX */
@@ -423,7 +423,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         len = (int)strlen(dli.dli_fname);
         if (sz <= 0) {
 #  ifdef _AIX
-            OPENSSL_free((void *)dli.dli_fname);
+            OPENtls_free((void *)dli.dli_fname);
 #  endif
             return len + 1;
         }
@@ -432,7 +432,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         memcpy(path, dli.dli_fname, len);
         path[len++] = 0;
 #  ifdef _AIX
-        OPENSSL_free((void *)dli.dli_fname);
+        OPENtls_free((void *)dli.dli_fname);
 #  endif
         return len;
     }

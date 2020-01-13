@@ -1,13 +1,13 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/des.h>
+#include <opentls/des.h>
 #include "crypto/des_platform.h"
 
 /* TODO(3.0) Figure out what flags need to be here */
@@ -16,7 +16,7 @@
 typedef struct prov_des_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         DES_key_schedule ks;
     } dks;
     union {

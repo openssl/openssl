@@ -1,14 +1,14 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include "ssl_local.h"
-#include <openssl/bn.h>
+#include "tls_local.h"
+#include <opentls/bn.h>
 
 struct pqueue_st {
     pitem *items;
@@ -17,10 +17,10 @@ struct pqueue_st {
 
 pitem *pitem_new(unsigned char *prio64be, void *data)
 {
-    pitem *item = OPENSSL_malloc(sizeof(*item));
+    pitem *item = OPENtls_malloc(sizeof(*item));
 
     if (item == NULL) {
-        SSLerr(SSL_F_PITEM_NEW, ERR_R_MALLOC_FAILURE);
+        tlserr(tls_F_PITEM_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -32,22 +32,22 @@ pitem *pitem_new(unsigned char *prio64be, void *data)
 
 void pitem_free(pitem *item)
 {
-    OPENSSL_free(item);
+    OPENtls_free(item);
 }
 
 pqueue *pqueue_new(void)
 {
-    pqueue *pq = OPENSSL_zalloc(sizeof(*pq));
+    pqueue *pq = OPENtls_zalloc(sizeof(*pq));
 
     if (pq == NULL)
-        SSLerr(SSL_F_PQUEUE_NEW, ERR_R_MALLOC_FAILURE);
+        tlserr(tls_F_PQUEUE_NEW, ERR_R_MALLOC_FAILURE);
 
     return pq;
 }
 
 void pqueue_free(pqueue *pq)
 {
-    OPENSSL_free(pq);
+    OPENtls_free(pq);
 }
 
 pitem *pqueue_insert(pqueue *pq, pitem *item)

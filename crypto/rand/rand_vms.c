@@ -1,19 +1,19 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
 
-#if defined(OPENSSL_SYS_VMS)
+#if defined(OPENtls_SYS_VMS)
 # define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
 # include <unistd.h>
 # include "internal/cryptlib.h"
-# include <openssl/rand.h>
+# include <opentls/rand.h>
 # include "crypto/rand.h"
 # include "rand_local.h"
 # include <descrip.h>
@@ -34,7 +34,7 @@
 
 # include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
 
-# ifndef OPENSSL_RAND_SEED_OS
+# ifndef OPENtls_RAND_SEED_OS
 #  error "Unsupported seeding method configured; must be os"
 # endif
 
@@ -343,21 +343,21 @@ static void massage_JPI(ILE3 *items)
 
 size_t data_collect_method(RAND_POOL *pool)
 {
-    ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
-    ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
-    ILE3 DVI_items[OSSL_NELEM(DVI_item_data) + 1];
-    ILE3 JPI_items[OSSL_NELEM(JPI_item_data) + 1];
-    ILE3 RMI_items[OSSL_NELEM(RMI_item_data) + 1];
-    ILE3 SYI_items[OSSL_NELEM(SYI_item_data) + 1];
+    ILE3 JPI_items_64bit[Otls_NELEM(JPI_item_data_64bit) + 1];
+    ILE3 RMI_items_64bit[Otls_NELEM(RMI_item_data_64bit) + 1];
+    ILE3 DVI_items[Otls_NELEM(DVI_item_data) + 1];
+    ILE3 JPI_items[Otls_NELEM(JPI_item_data) + 1];
+    ILE3 RMI_items[Otls_NELEM(RMI_item_data) + 1];
+    ILE3 SYI_items[Otls_NELEM(SYI_item_data) + 1];
     union {
         /* This ensures buffer starts at 64 bit boundary */
         uint64_t dummy;
-        uint32_t buffer[OSSL_NELEM(JPI_item_data_64bit) * 2
-                        + OSSL_NELEM(RMI_item_data_64bit) * 2
-                        + OSSL_NELEM(DVI_item_data)
-                        + OSSL_NELEM(JPI_item_data)
-                        + OSSL_NELEM(RMI_item_data)
-                        + OSSL_NELEM(SYI_item_data)
+        uint32_t buffer[Otls_NELEM(JPI_item_data_64bit) * 2
+                        + Otls_NELEM(RMI_item_data_64bit) * 2
+                        + Otls_NELEM(DVI_item_data)
+                        + Otls_NELEM(JPI_item_data)
+                        + Otls_NELEM(RMI_item_data)
+                        + Otls_NELEM(SYI_item_data)
                         + 4 /* For JPI$_FINALEXC */];
     } data;
     size_t total_elems = 0;
@@ -367,19 +367,19 @@ size_t data_collect_method(RAND_POOL *pool)
 
     /* Take all the 64-bit items first, to ensure proper alignment of data */
     total_elems +=
-        prepare_item_list(JPI_item_data_64bit, OSSL_NELEM(JPI_item_data_64bit),
+        prepare_item_list(JPI_item_data_64bit, Otls_NELEM(JPI_item_data_64bit),
                           JPI_items_64bit, &data.buffer[total_elems]);
     total_elems +=
-        prepare_item_list(RMI_item_data_64bit, OSSL_NELEM(RMI_item_data_64bit),
+        prepare_item_list(RMI_item_data_64bit, Otls_NELEM(RMI_item_data_64bit),
                           RMI_items_64bit, &data.buffer[total_elems]);
     /* Now the 32-bit items */
-    total_elems += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
+    total_elems += prepare_item_list(DVI_item_data, Otls_NELEM(DVI_item_data),
                                      DVI_items, &data.buffer[total_elems]);
-    total_elems += prepare_item_list(JPI_item_data, OSSL_NELEM(JPI_item_data),
+    total_elems += prepare_item_list(JPI_item_data, Otls_NELEM(JPI_item_data),
                                      JPI_items, &data.buffer[total_elems]);
-    total_elems += prepare_item_list(RMI_item_data, OSSL_NELEM(RMI_item_data),
+    total_elems += prepare_item_list(RMI_item_data, Otls_NELEM(RMI_item_data),
                                      RMI_items, &data.buffer[total_elems]);
-    total_elems += prepare_item_list(SYI_item_data, OSSL_NELEM(SYI_item_data),
+    total_elems += prepare_item_list(SYI_item_data, Otls_NELEM(SYI_item_data),
                                      SYI_items, &data.buffer[total_elems]);
     total_length = total_elems * sizeof(data.buffer[0]);
 
@@ -455,7 +455,7 @@ size_t data_collect_method(RAND_POOL *pool)
     /*
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
-    if (!ossl_assert(total_length >= bytes_needed)) {
+    if (!otls_assert(total_length >= bytes_needed)) {
         ERR_raise_data(ERR_LIB_RAND, RAND_R_RANDOM_POOL_UNDERFLOW,
                        "Needed: %zu, Available: %zu",
                        bytes_needed, total_length);

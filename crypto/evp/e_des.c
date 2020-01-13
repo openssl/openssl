@@ -1,24 +1,24 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_DES
-# include <openssl/evp.h>
-# include <openssl/objects.h>
+#ifndef OPENtls_NO_DES
+# include <opentls/evp.h>
+# include <opentls/objects.h>
 # include "crypto/evp.h"
-# include <openssl/des.h>
-# include <openssl/rand.h>
+# include <opentls/des.h>
+# include <opentls/rand.h>
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         DES_key_schedule ks;
     } ks;
     union {
@@ -32,9 +32,9 @@ typedef struct {
  * assembler support was in general requested... */
 #  include "sparc_arch.h"
 
-extern unsigned int OPENSSL_sparcv9cap_P[];
+extern unsigned int OPENtls_sparcv9cap_P[];
 
-#  define SPARC_DES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_DES)
+#  define SPARC_DES_CAPABLE       (OPENtls_sparcv9cap_P[1] & CFR_DES)
 
 void des_t4_key_expand(const void *key, DES_key_schedule *ks);
 void des_t4_cbc_encrypt(const void *inp, void *out, size_t len,

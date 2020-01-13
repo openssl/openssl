@@ -1,20 +1,20 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/lhash.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/lhash.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
 
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -31,8 +31,8 @@ DEFINE_LHASH_OF(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
                            -17, 16, 17, -23, 35, 37, 173, 11 };
-static const unsigned int n_int_tests = OSSL_NELEM(int_tests);
-static short int_found[OSSL_NELEM(int_tests)];
+static const unsigned int n_int_tests = Otls_NELEM(int_tests);
+static short int_found[Otls_NELEM(int_tests)];
 
 static unsigned long int int_hash(const int *p)
 {
@@ -79,7 +79,7 @@ static int test_int_lhash(void)
         { 1,        0 },
         { 34,       1 }
     };
-    const unsigned int n_dels = OSSL_NELEM(dels);
+    const unsigned int n_dels = Otls_NELEM(dels);
     LHASH_OF(int) *h = lh_int_new(&int_hash, &int_cmp);
     unsigned int i;
     int testresult = 0, j, *p;
@@ -176,7 +176,7 @@ static int test_stress(void)
 
     /* insert */
     for (i = 0; i < n; i++) {
-        p = OPENSSL_malloc(sizeof(i));
+        p = OPENtls_malloc(sizeof(i));
         if (!TEST_ptr(p)) {
             TEST_info("lhash stress out of memory %d", i);
             goto end;
@@ -190,9 +190,9 @@ static int test_stress(void)
             goto end;
 
     TEST_info("hash full statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    OPENtls_LH_stats_bio((OPENtls_LHASH *)h, bio_err);
     TEST_note("hash full node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    OPENtls_LH_node_usage_stats_bio((OPENtls_LHASH *)h, bio_err);
 
     /* delete in a different order */
     for (i = 0; i < n; i++) {
@@ -206,13 +206,13 @@ static int test_stress(void)
             TEST_info("lhash stress bad value %d", i);
             goto end;
         }
-        OPENSSL_free(p);
+        OPENtls_free(p);
     }
 
     TEST_info("hash empty statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    OPENtls_LH_stats_bio((OPENtls_LHASH *)h, bio_err);
     TEST_note("hash empty node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    OPENtls_LH_node_usage_stats_bio((OPENtls_LHASH *)h, bio_err);
 
     testresult = 1;
 end:

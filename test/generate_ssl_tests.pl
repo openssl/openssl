@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-## SSL testcase generator
+## tls testcase generator
 
 use strict;
 use warnings;
@@ -14,39 +14,39 @@ use warnings;
 use File::Basename;
 use File::Spec::Functions;
 
-use OpenSSL::Test qw/srctop_dir srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/srctop_dir srctop_file/;
+use Opentls::Test::Utils;
 
 # This block needs to run before 'use lib srctop_dir' directives.
 BEGIN {
-    OpenSSL::Test::setup("no_test_here");
+    Opentls::Test::setup("no_test_here");
 }
 
 use FindBin;
 use lib "$FindBin::Bin/../util/perl";
-use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
+use Opentls::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
 use Text::Template 1.46;
 
-use lib "$FindBin::Bin/ssl-tests";
+use lib "$FindBin::Bin/tls-tests";
 
 use vars qw/@ISA/;
 push (@ISA, qw/Text::Template/);
 
-use ssltests_base;
+use tlstests_base;
 
 sub print_templates {
-    my $source = srctop_file("test", "ssl_test.tmpl");
+    my $source = srctop_file("test", "tls_test.tmpl");
     my $template = Text::Template->new(TYPE => 'FILE', SOURCE => $source);
 
-    print "# Generated with generate_ssl_tests.pl\n\n";
+    print "# Generated with generate_tls_tests.pl\n\n";
 
-    my $num = scalar @ssltests::tests;
+    my $num = scalar @tlstests::tests;
 
     # Add the implicit base configuration.
-    foreach my $test (@ssltests::tests) {
-        $test->{"server"} = { (%ssltests::base_server, %{$test->{"server"}}) };
+    foreach my $test (@tlstests::tests) {
+        $test->{"server"} = { (%tlstests::base_server, %{$test->{"server"}}) };
         if (defined $test->{"server2"}) {
-            $test->{"server2"} = { (%ssltests::base_server, %{$test->{"server2"}}) };
+            $test->{"server2"} = { (%tlstests::base_server, %{$test->{"server2"}}) };
         } else {
             if ($test->{"server"}->{"extra"} &&
                 defined $test->{"server"}->{"extra"}->{"ServerNameCallback"}) {
@@ -57,7 +57,7 @@ sub print_templates {
             $test->{"server2"} = { };
         }
         if (defined $test->{"resume_server"}) {
-            $test->{"resume_server"} = { (%ssltests::base_server, %{$test->{"resume_server"}}) };
+            $test->{"resume_server"} = { (%tlstests::base_server, %{$test->{"resume_server"}}) };
         } else {
             if (defined $test->{"test"}->{"HandshakeMode"} &&
                  $test->{"test"}->{"HandshakeMode"} eq "Resume") {
@@ -67,9 +67,9 @@ sub print_templates {
             # Do not emit an empty/duplicate "resume-server" section.
             $test->{"resume_server"} = { };
         }
-        $test->{"client"} = { (%ssltests::base_client, %{$test->{"client"}}) };
+        $test->{"client"} = { (%tlstests::base_client, %{$test->{"client"}}) };
         if (defined $test->{"resume_client"}) {
-            $test->{"resume_client"} = { (%ssltests::base_client, %{$test->{"resume_client"}}) };
+            $test->{"resume_client"} = { (%tlstests::base_client, %{$test->{"resume_client"}}) };
         } else {
             if (defined $test->{"test"}->{"HandshakeMode"} &&
                  $test->{"test"}->{"HandshakeMode"} eq "Resume") {
@@ -81,7 +81,7 @@ sub print_templates {
         }
     }
 
-    # ssl_test expects to find a
+    # tls_test expects to find a
     #
     # num_tests = n
     #
@@ -91,7 +91,7 @@ sub print_templates {
     # test-n = test-section
     #
     # [test-section]
-    # (SSL modules for client and server configuration go here.)
+    # (tls modules for client and server configuration go here.)
     #
     # [test-n]
     # (Test configuration goes here.)
@@ -105,7 +105,7 @@ sub print_templates {
     # and you can't mix and match them with sections.
     my $idx = 0;
 
-    foreach my $test (@ssltests::tests) {
+    foreach my $test (@tlstests::tests) {
         my $testname = "${idx}-" . $test->{'name'};
         print "test-$idx = $testname\n";
         $idx++;
@@ -113,7 +113,7 @@ sub print_templates {
 
     $idx = 0;
 
-    foreach my $test (@ssltests::tests) {
+    foreach my $test (@tlstests::tests) {
         my $testname = "${idx}-" . $test->{'name'};
         my $text = $template->fill_in(
             HASH => [{ idx => $idx, testname => $testname } , $test],
@@ -124,7 +124,7 @@ sub print_templates {
     }
 }
 
-# Shamelessly copied from Configure.
+# Shameletlsy copied from Configure.
 sub read_config {
     my $fname = shift;
     open(INPUT, "< $fname") or die "Can't open input file '$fname'!\n";
@@ -136,7 +136,7 @@ sub read_config {
 }
 
 my $input_file = shift;
-# Reads the tests into ssltests::tests.
+# Reads the tests into tlstests::tests.
 read_config($input_file);
 print_templates();
 

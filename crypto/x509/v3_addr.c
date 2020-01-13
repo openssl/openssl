@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,18 +15,18 @@
 #include <stdlib.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/buffer.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/buffer.h>
+#include <opentls/x509v3.h>
 #include "crypto/x509.h"
 #include "ext_dat.h"
 
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
 
 /*
- * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
+ * Opentls ASN.1 template translation of RFC 3779 2.2.3.
  */
 
 ASN1_SEQUENCE(IPAddressRange) = {
@@ -876,7 +876,7 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
     }
     (void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
     sk_IPAddressFamily_sort(addr);
-    if (!ossl_assert(X509v3_addr_is_canonical(addr)))
+    if (!otls_assert(X509v3_addr_is_canonical(addr)))
         return 0;
     return 1;
 }
@@ -935,7 +935,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         length = length_from_afi(afi);
 
         /*
-         * Handle SAFI, if any, and OPENSSL_strdup() so we can null-terminate
+         * Handle SAFI, if any, and OPENtls_strdup() so we can null-terminate
          * the other input values.
          */
         if (safi != NULL) {
@@ -947,9 +947,9 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
                 goto err;
             }
             t += strspn(t, " \t");
-            s = OPENSSL_strdup(t);
+            s = OPENtls_strdup(t);
         } else {
-            s = OPENSSL_strdup(val->value);
+            s = OPENtls_strdup(val->value);
         }
         if (s == NULL) {
             X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
@@ -967,7 +967,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
                 X509V3_conf_err(val);
                 goto err;
             }
-            OPENSSL_free(s);
+            OPENtls_free(s);
             s = NULL;
             continue;
         }
@@ -1036,7 +1036,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             goto err;
         }
 
-        OPENSSL_free(s);
+        OPENtls_free(s);
         s = NULL;
     }
 
@@ -1048,13 +1048,13 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     return addr;
 
  err:
-    OPENSSL_free(s);
+    OPENtls_free(s);
     sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
     return NULL;
 }
 
 /*
- * OpenSSL dispatch
+ * Opentls dispatch
  */
 const X509V3_EXT_METHOD v3_addr = {
     NID_sbgp_ipAddrBlock,       /* nid */
@@ -1182,9 +1182,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     int i, j, ret = 1;
     X509 *x;
 
-    if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
-            || !ossl_assert(ctx != NULL || ext != NULL)
-            || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
+    if (!otls_assert(chain != NULL && sk_X509_num(chain) > 0)
+            || !otls_assert(ctx != NULL || ext != NULL)
+            || !otls_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -1312,4 +1312,4 @@ int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
     return addr_validate_path_internal(NULL, chain, ext);
 }
 
-#endif                          /* OPENSSL_NO_RFC3779 */
+#endif                          /* OPENtls_NO_RFC3779 */

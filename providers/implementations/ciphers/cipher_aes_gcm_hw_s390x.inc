@@ -1,10 +1,10 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-
@@ -90,7 +90,7 @@ static int s390x_aes_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
               actx->plat.s390x.fc | S390X_KMA_LAAD | S390X_KMA_LPC, kma);
 
     /* gctx->mres already returned to the caller */
-    OPENSSL_cleanse(out, actx->plat.s390x.mreslen);
+    OPENtls_cleanse(out, actx->plat.s390x.mreslen);
 
     if (ctx->enc) {
         ctx->taglen = GCM_TAG_MAX_SIZE;

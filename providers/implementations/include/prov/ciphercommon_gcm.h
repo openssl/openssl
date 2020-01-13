@@ -1,14 +1,14 @@
 
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/aes.h>
+#include <opentls/aes.h>
 #include "ciphercommon_aead.h"
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
@@ -17,7 +17,7 @@ typedef struct prov_gcm_hw_st PROV_GCM_HW;
 #define GCM_IV_MAX_SIZE     64
 #define GCM_TAG_MAX_SIZE    16
 
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+#if defined(OPENtls_CPUID_OBJ) && defined(__s390__)
 /*-
  * KMA-GCM-AES parameter block - begin
  * (see z/Architecture Principles of Operation >= SA22-7832-11)
@@ -72,7 +72,7 @@ typedef struct prov_gcm_ctx_st {
     unsigned char iv[GCM_IV_MAX_SIZE]; /* Buffer to use for IV's */
     unsigned char buf[AES_BLOCK_SIZE]; /* Buffer of partial blocks processed via update calls */
 
-    OPENSSL_CTX *libctx;    /* needed for rand calls */
+    OPENtls_CTX *libctx;    /* needed for rand calls */
     const PROV_GCM_HW *hw;  /* hardware specific methods */
     GCM128_CONTEXT gcm;
     ctr128_f ctr;
@@ -94,21 +94,21 @@ PROV_CIPHER_FUNC(int, GCM_oneshot, (PROV_GCM_CTX *ctx, unsigned char *aad,
                                     size_t in_len, unsigned char *out,
                                     unsigned char *tag, size_t taglen));
 struct prov_gcm_hw_st {
-  OSSL_GCM_setkey_fn setkey;
-  OSSL_GCM_setiv_fn setiv;
-  OSSL_GCM_aadupdate_fn aadupdate;
-  OSSL_GCM_cipherupdate_fn cipherupdate;
-  OSSL_GCM_cipherfinal_fn cipherfinal;
-  OSSL_GCM_oneshot_fn oneshot;
+  Otls_GCM_setkey_fn setkey;
+  Otls_GCM_setiv_fn setiv;
+  Otls_GCM_aadupdate_fn aadupdate;
+  Otls_GCM_cipherupdate_fn cipherupdate;
+  Otls_GCM_cipherfinal_fn cipherfinal;
+  Otls_GCM_oneshot_fn oneshot;
 };
 
-OSSL_OP_cipher_encrypt_init_fn gcm_einit;
-OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
-OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
-OSSL_OP_cipher_cipher_fn gcm_cipher;
-OSSL_OP_cipher_update_fn gcm_stream_update;
-OSSL_OP_cipher_final_fn gcm_stream_final;
+Otls_OP_cipher_encrypt_init_fn gcm_einit;
+Otls_OP_cipher_decrypt_init_fn gcm_dinit;
+Otls_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
+Otls_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
+Otls_OP_cipher_cipher_fn gcm_cipher;
+Otls_OP_cipher_update_fn gcm_stream_update;
+Otls_OP_cipher_final_fn gcm_stream_final;
 void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                  const PROV_GCM_HW *hw, size_t ivlen_min);
 

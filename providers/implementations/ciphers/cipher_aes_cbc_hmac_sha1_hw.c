@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -89,7 +89,7 @@ static void sha1_update(SHA_CTX *c, const void *data, size_t len)
         SHA1_Update(c, ptr, res);
 }
 
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
 
 typedef struct {
     unsigned int A[8], B[8], C[8], D[8], E[8];
@@ -353,13 +353,13 @@ static size_t tls1_multi_block_encrypt(void *vctx,
 
     aesni_multi_cbc_encrypt(ciph_d, &ctx->ks, n4x);
 
-    OPENSSL_cleanse(blocks, sizeof(blocks));
-    OPENSSL_cleanse(mctx, sizeof(*mctx));
+    OPENtls_cleanse(blocks, sizeof(blocks));
+    OPENtls_cleanse(mctx, sizeof(*mctx));
 
     ctx->multiblock_encrypt_len = ret;
     return ret;
 }
-# endif /* OPENSSL_NO_MULTIBLOCK */
+# endif /* OPENtls_NO_MULTIBLOCK */
 
 static int aesni_cbc_hmac_sha1_cipher(PROV_CIPHER_CTX *vctx,
                                       unsigned char *out,
@@ -650,7 +650,7 @@ static void aesni_cbc_hmac_sha1_set_mac_key(void *vctx,
     SHA1_Init(&ctx->tail);
     sha1_update(&ctx->tail, hmac_key, sizeof(hmac_key));
 
-    OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+    OPENtls_cleanse(hmac_key, sizeof(hmac_key));
 }
 
 /* EVP_CTRL_AEAD_TLS1_AAD */
@@ -691,14 +691,14 @@ static int aesni_cbc_hmac_sha1_set_tls1_aad(void *vctx,
     }
 }
 
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
 
 /* EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE */
 static int aesni_cbc_hmac_sha1_tls1_multiblock_max_bufsize(void *vctx)
 {
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
 
-    OPENSSL_assert(ctx->multiblock_max_send_fragment != 0);
+    OPENtls_assert(ctx->multiblock_max_send_fragment != 0);
     return (int)(5 + 16
                  + (((int)ctx->multiblock_max_send_fragment + 20 + 16) & -16));
 }
@@ -723,7 +723,7 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_aad(
             if (inp_len < 4096)
                 return 0; /* too short */
 
-            if (inp_len >= 8192 && OPENSSL_ia32cap_P[2] & (1 << 5))
+            if (inp_len >= 8192 && OPENtls_ia32cap_P[2] & (1 << 5))
                 n4x = 2; /* AVX2 */
         } else if ((n4x = param->interleave / 4) && n4x <= 2)
             inp_len = param->len;
@@ -765,7 +765,7 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_encrypt(
                                          param->interleave / 4);
 }
 
-#endif /* OPENSSL_NO_MULTIBLOCK */
+#endif /* OPENtls_NO_MULTIBLOCK */
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha1 = {
     {
@@ -774,7 +774,7 @@ static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha1 = {
     },
     aesni_cbc_hmac_sha1_set_mac_key,
     aesni_cbc_hmac_sha1_set_tls1_aad,
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
     aesni_cbc_hmac_sha1_tls1_multiblock_max_bufsize,
     aesni_cbc_hmac_sha1_tls1_multiblock_aad,
     aesni_cbc_hmac_sha1_tls1_multiblock_encrypt

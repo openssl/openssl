@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -14,11 +14,11 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
-#include <openssl/x509.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
 #include "x509_local.h"
 
@@ -73,7 +73,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
-            const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
+            const char *dir = otls_safe_getenv(X509_get_default_cert_dir_env());
 
             if (dir)
                 ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
@@ -92,7 +92,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 
 static int new_dir(X509_LOOKUP *lu)
 {
-    BY_DIR *a = OPENSSL_malloc(sizeof(*a));
+    BY_DIR *a = OPENtls_malloc(sizeof(*a));
 
     if (a == NULL) {
         X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
@@ -114,13 +114,13 @@ static int new_dir(X509_LOOKUP *lu)
     return 1;
 
  err:
-    OPENSSL_free(a);
+    OPENtls_free(a);
     return 0;
 }
 
 static void by_dir_hash_free(BY_DIR_HASH *hash)
 {
-    OPENSSL_free(hash);
+    OPENtls_free(hash);
 }
 
 static int by_dir_hash_cmp(const BY_DIR_HASH *const *a,
@@ -135,9 +135,9 @@ static int by_dir_hash_cmp(const BY_DIR_HASH *const *a,
 
 static void by_dir_entry_free(BY_DIR_ENTRY *ent)
 {
-    OPENSSL_free(ent->dir);
+    OPENtls_free(ent->dir);
     sk_BY_DIR_HASH_pop_free(ent->hashes, by_dir_hash_free);
-    OPENSSL_free(ent);
+    OPENtls_free(ent);
 }
 
 static void free_dir(X509_LOOKUP *lu)
@@ -147,7 +147,7 @@ static void free_dir(X509_LOOKUP *lu)
     sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
     BUF_MEM_free(a->buffer);
     CRYPTO_THREAD_lock_free(a->lock);
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
@@ -186,14 +186,14 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                     return 0;
                 }
             }
-            ent = OPENSSL_malloc(sizeof(*ent));
+            ent = OPENtls_malloc(sizeof(*ent));
             if (ent == NULL) {
                 X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             ent->dir_type = type;
             ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
-            ent->dir = OPENSSL_strndup(ss, len);
+            ent->dir = OPENtls_strndup(ss, len);
             if (ent->dir == NULL || ent->hashes == NULL) {
                 by_dir_entry_free(ent);
                 return 0;
@@ -277,7 +277,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         }
         for (;;) {
             char c = '/';
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
             c = ent->dir[strlen(ent->dir) - 1];
             if (c != ':' && c != '>' && c != ']') {
                 /*
@@ -302,7 +302,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 BIO_snprintf(b->data, b->max,
                              "%s%c%08lx.%s%d", ent->dir, c, h, postfix, k);
             }
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
 # ifdef _WIN32
 #  define stat _stat
 # endif
@@ -346,7 +346,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
             }
             if (hent == NULL) {
-                hent = OPENSSL_malloc(sizeof(*hent));
+                hent = OPENtls_malloc(sizeof(*hent));
                 if (hent == NULL) {
                     CRYPTO_THREAD_unlock(ctx->lock);
                     X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
@@ -357,7 +357,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 hent->suffix = k;
                 if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
                     CRYPTO_THREAD_unlock(ctx->lock);
-                    OPENSSL_free(hent);
+                    OPENtls_free(hent);
                     X509err(X509_F_GET_CERT_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
                     ok = 0;
                     goto finish;

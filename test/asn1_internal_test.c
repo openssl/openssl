@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Internal tests for the asn1 module */
@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
+#include <opentls/asn1.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -32,7 +32,7 @@ static int test_tbl_standard(void)
     int last_nid = -1;
     size_t i;
 
-    for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++) {
+    for (tmp = tbl_standard, i = 0; i < Otls_NELEM(tbl_standard); i++, tmp++) {
         if (tmp->nid < last_nid) {
             last_nid = 0;
             break;
@@ -46,7 +46,7 @@ static int test_tbl_standard(void)
     }
 
     TEST_info("asn1 tbl_standard: out of order");
-    for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
+    for (tmp = tbl_standard, i = 0; i < Otls_NELEM(tbl_standard); i++, tmp++)
         TEST_note("asn1 tbl_standard: Index %zu, NID %d, Name=%s",
                   i, tmp->nid, OBJ_nid2ln(tmp->nid));
 
@@ -69,7 +69,7 @@ static int test_standard_methods(void)
     size_t i;
     int ok = 1;
 
-    for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
+    for (tmp = standard_methods, i = 0; i < Otls_NELEM(standard_methods);
          i++, tmp++) {
         if ((*tmp)->pkey_id < last_pkey_id) {
             last_pkey_id = 0;
@@ -99,7 +99,7 @@ static int test_standard_methods(void)
     }
 
     TEST_note("asn1 standard methods: out of order");
-    for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
+    for (tmp = standard_methods, i = 0; i < Otls_NELEM(standard_methods);
          i++, tmp++)
         TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
                   i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));

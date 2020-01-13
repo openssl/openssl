@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Internal tests for the modes module */
@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/aes.h>
-#include <openssl/modes.h>
+#include <opentls/aes.h>
+#include <opentls/modes.h>
 #include "testutil.h"
 #include "crypto/modes.h"
 #include "internal/nelem.h"
@@ -891,8 +891,8 @@ static int test_gcm128(int idx)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_aes_cts128, OSSL_NELEM(aes_cts128_vectors));
-    ADD_ALL_TESTS(test_aes_cts128_nist, OSSL_NELEM(aes_cts128_vectors));
-    ADD_ALL_TESTS(test_gcm128, OSSL_NELEM(gcm128_vectors));
+    ADD_ALL_TESTS(test_aes_cts128, Otls_NELEM(aes_cts128_vectors));
+    ADD_ALL_TESTS(test_aes_cts128_nist, Otls_NELEM(aes_cts128_vectors));
+    ADD_ALL_TESTS(test_gcm128, Otls_NELEM(gcm128_vectors));
     return 1;
 }

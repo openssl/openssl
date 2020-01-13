@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # $output is the last argument if it looks like a file (it has an extension)
@@ -81,10 +81,10 @@ _armv8_sha512_probe:
 	ret
 .size	_armv8_sha512_probe,.-_armv8_sha512_probe
 
-.globl	OPENSSL_cleanse
-.type	OPENSSL_cleanse,%function
+.globl	OPENtls_cleanse
+.type	OPENtls_cleanse,%function
 .align	5
-OPENSSL_cleanse:
+OPENtls_cleanse:
 	cbz	x1,.Lret	// len==0?
 	cmp	x1,#15
 	b.hi	.Lot		// len>15
@@ -110,7 +110,7 @@ OPENSSL_cleanse:
 	b.ne	.Laligned	// len>=8
 	cbnz	x1,.Little	// len!=0?
 	ret
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+.size	OPENtls_cleanse,.-OPENtls_cleanse
 
 .globl	CRYPTO_memcmp
 .type	CRYPTO_memcmp,%function

@@ -1,15 +1,15 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_EC
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -19,12 +19,12 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/bn.h>
+# include <opentls/ec.h>
+# include <opentls/x509.h>
+# include <opentls/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -39,7 +39,7 @@ const OPTIONS ecparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -78,7 +78,7 @@ static OPT_PAIR forms[] = {
 };
 
 static OPT_PAIR encodings[] = {
-    {"named_curve", OPENSSL_EC_NAMED_CURVE},
+    {"named_curve", OPENtls_EC_NAMED_CURVE},
     {"explicit", 0},
     {NULL}
 };
@@ -95,7 +95,7 @@ int ecparam_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *prog;
     unsigned char *buffer = NULL;
     OPTION_CHOICE o;
-    int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_asn1_flag = 0;
+    int asn1_flag = OPENtls_EC_NAMED_CURVE, new_asn1_flag = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
@@ -194,7 +194,7 @@ int ecparam_main(int argc, char **argv)
 
         curves = app_malloc((int)sizeof(*curves) * crv_len, "list curves");
         if (!EC_get_builtin_curves(curves, crv_len)) {
-            OPENSSL_free(curves);
+            OPENtls_free(curves);
             goto end;
         }
 
@@ -212,7 +212,7 @@ int ecparam_main(int argc, char **argv)
             BIO_printf(out, "%s\n", comment);
         }
 
-        OPENSSL_free(curves);
+        OPENtls_free(curves);
         ret = 0;
         goto end;
     }
@@ -461,7 +461,7 @@ int ecparam_main(int argc, char **argv)
     BN_free(ec_gen);
     BN_free(ec_order);
     BN_free(ec_cofactor);
-    OPENSSL_free(buffer);
+    OPENtls_free(buffer);
     EC_GROUP_free(group);
     release_engine(e);
     BIO_free(in);

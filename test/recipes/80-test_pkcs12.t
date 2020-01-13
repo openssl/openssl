@@ -1,22 +1,22 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test::Utils;
 
 use Encode;
 
 setup("test_pkcs12");
 
-plan skip_all => "The PKCS12 command line utility is not supported by this OpenSSL build"
+plan skip_all => "The PKCS12 command line utility is not supported by this Opentls build"
     if disabled("des");
 
 my $pass = "σύνθημα γνώρισμα";
@@ -55,12 +55,12 @@ if (eval { require Win32::API; 1; }) {
         }
     }
 }
-$ENV{OPENSSL_WIN32_UTF8}=1;
+$ENV{OPENtls_WIN32_UTF8}=1;
 
 plan tests => 1;
 
 # just see that we can read shibboleth.pfx protected with $pass
-ok(run(app(["openssl", "pkcs12", "-noout",
+ok(run(app(["opentls", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
    "test_pkcs12");

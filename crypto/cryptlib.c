@@ -1,38 +1,38 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
 #include "crypto/cryptlib.h"
-#include <openssl/safestack.h>
+#include <opentls/safestack.h>
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
         defined(__x86_64) || defined(__x86_64__) || \
         defined(_M_AMD64) || defined(_M_X64)
 
-extern unsigned int OPENSSL_ia32cap_P[4];
+extern unsigned int OPENtls_ia32cap_P[4];
 
-# if defined(OPENSSL_CPUID_OBJ)
+# if defined(OPENtls_CPUID_OBJ)
 
 /*
  * Purpose of these minimalistic and character-type-agnostic subroutines
  * is to break dependency on MSVCRT (on Windows) and locale. This makes
- * OPENSSL_cpuid_setup safe to use as "constructor". "Character-type-
+ * OPENtls_cpuid_setup safe to use as "constructor". "Character-type-
  * agnostic" means that they work with either wide or 8-bit characters,
  * exploiting the fact that first 127 characters can be simply casted
- * between the sets, while the rest would be simply rejected by ossl_is*
+ * between the sets, while the rest would be simply rejected by otls_is*
  * subroutines.
  */
 #  ifdef _WIN32
 typedef WCHAR variant_char;
 
-static variant_char *ossl_getenv(const char *name)
+static variant_char *otls_getenv(const char *name)
 {
     /*
      * Since we pull only one environment variable, it's simpler to
@@ -40,36 +40,36 @@ static variant_char *ossl_getenv(const char *name)
      * As well as to ignore excessively long values...
      */
     static WCHAR value[48];
-    DWORD len = GetEnvironmentVariableW(L"OPENSSL_ia32cap", value, 48);
+    DWORD len = GetEnvironmentVariableW(L"OPENtls_ia32cap", value, 48);
 
     return (len > 0 && len < 48) ? value : NULL;
 }
 #  else
 typedef char variant_char;
-#   define ossl_getenv getenv
+#   define otls_getenv getenv
 #  endif
 
 #  include "crypto/ctype.h"
 
 static int todigit(variant_char c)
 {
-    if (ossl_isdigit(c))
+    if (otls_isdigit(c))
         return c - '0';
-    else if (ossl_isxdigit(c))
-        return ossl_tolower(c) - 'a' + 10;
+    else if (otls_isxdigit(c))
+        return otls_tolower(c) - 'a' + 10;
 
     /* return largest base value to make caller terminate the loop */
     return 16;
 }
 
-static uint64_t ossl_strtouint64(const variant_char *str)
+static uint64_t otls_strtouint64(const variant_char *str)
 {
     uint64_t ret = 0;
     unsigned int digit, base = 10;
 
     if (*str == '0') {
         base = 8, str++;
-        if (ossl_tolower(*str) == 'x')
+        if (otls_tolower(*str) == 'x')
             base = 16, str++;
     }
 
@@ -79,7 +79,7 @@ static uint64_t ossl_strtouint64(const variant_char *str)
     return ret;
 }
 
-static variant_char *ossl_strchr(const variant_char *str, char srch)
+static variant_char *otls_strchr(const variant_char *str, char srch)
 {   variant_char c;
 
     while((c = *str)) {
@@ -91,13 +91,13 @@ static variant_char *ossl_strchr(const variant_char *str, char srch)
     return NULL;
 }
 
-#  define OPENSSL_CPUID_SETUP
+#  define OPENtls_CPUID_SETUP
 typedef uint64_t IA32CAP;
 
-void OPENSSL_cpuid_setup(void)
+void OPENtls_cpuid_setup(void)
 {
     static int trigger = 0;
-    IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
+    IA32CAP OPENtls_ia32_cpuid(unsigned int *);
     IA32CAP vec;
     const variant_char *env;
 
@@ -105,14 +105,14 @@ void OPENSSL_cpuid_setup(void)
         return;
 
     trigger = 1;
-    if ((env = ossl_getenv("OPENSSL_ia32cap")) != NULL) {
+    if ((env = otls_getenv("OPENtls_ia32cap")) != NULL) {
         int off = (env[0] == '~') ? 1 : 0;
 
-        vec = ossl_strtouint64(env + off);
+        vec = otls_strtouint64(env + off);
 
         if (off) {
             IA32CAP mask = vec;
-            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~mask;
+            vec = OPENtls_ia32_cpuid(OPENtls_ia32cap_P) & ~mask;
             if (mask & (1<<24)) {
                 /*
                  * User disables FXSR bit, mask even other capabilities
@@ -125,28 +125,28 @@ void OPENSSL_cpuid_setup(void)
                 vec &= ~((IA32CAP)(1<<1|1<<11|1<<25|1<<28) << 32);
             }
         } else if (env[0] == ':') {
-            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+            vec = OPENtls_ia32_cpuid(OPENtls_ia32cap_P);
         }
 
-        if ((env = ossl_strchr(env, ':')) != NULL) {
+        if ((env = otls_strchr(env, ':')) != NULL) {
             IA32CAP vecx;
 
             env++;
             off = (env[0] == '~') ? 1 : 0;
-            vecx = ossl_strtouint64(env + off);
+            vecx = otls_strtouint64(env + off);
             if (off) {
-                OPENSSL_ia32cap_P[2] &= ~(unsigned int)vecx;
-                OPENSSL_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
+                OPENtls_ia32cap_P[2] &= ~(unsigned int)vecx;
+                OPENtls_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
             } else {
-                OPENSSL_ia32cap_P[2] = (unsigned int)vecx;
-                OPENSSL_ia32cap_P[3] = (unsigned int)(vecx >> 32);
+                OPENtls_ia32cap_P[2] = (unsigned int)vecx;
+                OPENtls_ia32cap_P[3] = (unsigned int)(vecx >> 32);
             }
         } else {
-            OPENSSL_ia32cap_P[2] = 0;
-            OPENSSL_ia32cap_P[3] = 0;
+            OPENtls_ia32cap_P[2] = 0;
+            OPENtls_ia32cap_P[3] = 0;
         }
     } else {
-        vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+        vec = OPENtls_ia32_cpuid(OPENtls_ia32cap_P);
     }
 
     /*
@@ -154,15 +154,15 @@ void OPENSSL_cpuid_setup(void)
      * was initialized already... This is to avoid interference
      * with cpuid snippets in ELF .init segment.
      */
-    OPENSSL_ia32cap_P[0] = (unsigned int)vec | (1 << 10);
-    OPENSSL_ia32cap_P[1] = (unsigned int)(vec >> 32);
+    OPENtls_ia32cap_P[0] = (unsigned int)vec | (1 << 10);
+    OPENtls_ia32cap_P[1] = (unsigned int)(vec >> 32);
 }
 # else
-unsigned int OPENSSL_ia32cap_P[4];
+unsigned int OPENtls_ia32cap_P[4];
 # endif
 #endif
-#if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
-void OPENSSL_cpuid_setup(void)
+#if !defined(OPENtls_CPUID_SETUP) && !defined(OPENtls_CPUID_OBJ)
+void OPENtls_cpuid_setup(void)
 {
 }
 #endif
@@ -182,15 +182,15 @@ void OPENSSL_cpuid_setup(void)
 # endif
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-#  ifdef OPENSSL_SYS_WIN_CORE
+#  ifdef OPENtls_SYS_WIN_CORE
 
-int OPENSSL_isservice(void)
+int OPENtls_isservice(void)
 {
     /* OneCore API cannot interact with GUI */
     return 1;
 }
 #  else
-int OPENSSL_isservice(void)
+int OPENtls_isservice(void)
 {
     HWINSTA h;
     DWORD len;
@@ -198,24 +198,24 @@ int OPENSSL_isservice(void)
     static union {
         void *p;
         FARPROC f;
-    } _OPENSSL_isservice = {
+    } _OPENtls_isservice = {
         NULL
     };
 
-    if (_OPENSSL_isservice.p == NULL) {
+    if (_OPENtls_isservice.p == NULL) {
         HANDLE mod = GetModuleHandle(NULL);
         FARPROC f = NULL;
 
         if (mod != NULL)
-            f = GetProcAddress(mod, "_OPENSSL_isservice");
+            f = GetProcAddress(mod, "_OPENtls_isservice");
         if (f == NULL)
-            _OPENSSL_isservice.p = (void *)-1;
+            _OPENtls_isservice.p = (void *)-1;
         else
-            _OPENSSL_isservice.f = f;
+            _OPENtls_isservice.f = f;
     }
 
-    if (_OPENSSL_isservice.p != (void *)-1)
-        return (*_OPENSSL_isservice.f) ();
+    if (_OPENtls_isservice.p != (void *)-1)
+        return (*_OPENtls_isservice.f) ();
 
     h = GetProcessWindowStation();
     if (h == NULL)
@@ -252,13 +252,13 @@ int OPENSSL_isservice(void)
 }
 #  endif
 # else
-int OPENSSL_isservice(void)
+int OPENtls_isservice(void)
 {
     return 0;
 }
 # endif
 
-void OPENSSL_showfatal(const char *fmta, ...)
+void OPENtls_showfatal(const char *fmta, ...)
 {
     va_list ap;
     TCHAR buf[256];
@@ -342,12 +342,12 @@ void OPENSSL_showfatal(const char *fmta, ...)
         } while (0);
 
     va_start(ap, fmta);
-    _vsntprintf(buf, OSSL_NELEM(buf) - 1, fmt, ap);
-    buf[OSSL_NELEM(buf) - 1] = _T('\0');
+    _vsntprintf(buf, Otls_NELEM(buf) - 1, fmt, ap);
+    buf[Otls_NELEM(buf) - 1] = _T('\0');
     va_end(ap);
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-#  ifdef OPENSSL_SYS_WIN_CORE
+#  ifdef OPENtls_SYS_WIN_CORE
     /* ONECORE is always NONGUI and NT >= 0x0601 */
 
     /*
@@ -366,8 +366,8 @@ void OPENSSL_showfatal(const char *fmta, ...)
 #   endif
 #  else
     /* this -------------v--- guards NT-specific calls */
-    if (check_winnt() && OPENSSL_isservice() > 0) {
-        HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
+    if (check_winnt() && OPENtls_isservice() > 0) {
+        HANDLE hEventLog = RegisterEventSource(NULL, _T("Opentls"));
 
         if (hEventLog != NULL) {
             const TCHAR *pmsg = buf;
@@ -388,17 +388,17 @@ void OPENSSL_showfatal(const char *fmta, ...)
             (void)DeregisterEventSource(hEventLog);
         }
     } else {
-        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+        MessageBox(NULL, buf, _T("Opentls: FATAL"), MB_OK | MB_ICONERROR);
     }
 #  endif
 # else
-    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    MessageBox(NULL, buf, _T("Opentls: FATAL"), MB_OK | MB_ICONERROR);
 # endif
 }
 #else
-void OPENSSL_showfatal(const char *fmta, ...)
+void OPENtls_showfatal(const char *fmta, ...)
 {
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
     va_list ap;
 
     va_start(ap, fmta);
@@ -407,15 +407,15 @@ void OPENSSL_showfatal(const char *fmta, ...)
 #endif
 }
 
-int OPENSSL_isservice(void)
+int OPENtls_isservice(void)
 {
     return 0;
 }
 #endif
 
-void OPENSSL_die(const char *message, const char *file, int line)
+void OPENtls_die(const char *message, const char *file, int line)
 {
-    OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
+    OPENtls_showfatal("%s:%d: Opentls internal error: %s\n",
                       file, line, message);
 #if !defined(_WIN32)
     abort();
@@ -430,7 +430,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 #endif
 }
 
-#if !defined(OPENSSL_CPUID_OBJ)
+#if !defined(OPENtls_CPUID_OBJ)
 /*
  * The volatile is used to to ensure that the compiler generates code that reads
  * all values from the array and doesn't try to optimize this away. The standard
@@ -456,17 +456,17 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len)
 /*
  * For systems that don't provide an instruction counter register or equivalent.
  */
-uint32_t OPENSSL_rdtsc(void)
+uint32_t OPENtls_rdtsc(void)
 {
     return 0;
 }
 
-size_t OPENSSL_instrument_bus(unsigned int *out, size_t cnt)
+size_t OPENtls_instrument_bus(unsigned int *out, size_t cnt)
 {
     return 0;
 }
 
-size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
+size_t OPENtls_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 {
     return 0;
 }

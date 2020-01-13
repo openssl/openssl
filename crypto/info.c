@@ -1,13 +1,13 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "crypto/rand.h"
 #include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
@@ -20,41 +20,41 @@
 #endif
 
 /* extern declaration to avoid warning */
-extern char ossl_cpu_info_str[];
+extern char otls_cpu_info_str[];
 
 static char *seed_sources = NULL;
 
-char ossl_cpu_info_str[128] = "";
+char otls_cpu_info_str[128] = "";
 #define CPUINFO_PREFIX "CPUINFO: "
 
 static CRYPTO_ONCE init_info = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(init_info_strings)
 {
-#if defined(OPENSSL_CPUID_OBJ)
+#if defined(OPENtls_CPUID_OBJ)
 # if defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
      defined(_M_AMD64) || defined(_M_X64)
     const char *env;
 
-    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
-                 CPUINFO_PREFIX "OPENSSL_ia32cap=0x%llx:0x%llx",
-                 (long long)OPENSSL_ia32cap_P[0] |
-                 (long long)OPENSSL_ia32cap_P[1] << 32,
-                 (long long)OPENSSL_ia32cap_P[2] |
-                 (long long)OPENSSL_ia32cap_P[3] << 32);
-    if ((env = getenv("OPENSSL_ia32cap")) != NULL)
-        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
-                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+    BIO_snprintf(otls_cpu_info_str, sizeof(otls_cpu_info_str),
+                 CPUINFO_PREFIX "OPENtls_ia32cap=0x%llx:0x%llx",
+                 (long long)OPENtls_ia32cap_P[0] |
+                 (long long)OPENtls_ia32cap_P[1] << 32,
+                 (long long)OPENtls_ia32cap_P[2] |
+                 (long long)OPENtls_ia32cap_P[3] << 32);
+    if ((env = getenv("OPENtls_ia32cap")) != NULL)
+        BIO_snprintf(otls_cpu_info_str + strlen(otls_cpu_info_str),
+                     sizeof(otls_cpu_info_str) - strlen(otls_cpu_info_str),
                      " env:%s", env);
 # elif defined(__arm__) || defined(__arm) || defined(__aarch64__)
     const char *env;
 
-    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
-                 CPUINFO_PREFIX "OPENSSL_armcap=0x%x", OPENSSL_armcap_P);
-    if ((env = getenv("OPENSSL_armcap")) != NULL)
-        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
-                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+    BIO_snprintf(otls_cpu_info_str, sizeof(otls_cpu_info_str),
+                 CPUINFO_PREFIX "OPENtls_armcap=0x%x", OPENtls_armcap_P);
+    if ((env = getenv("OPENtls_armcap")) != NULL)
+        BIO_snprintf(otls_cpu_info_str + strlen(otls_cpu_info_str),
+                     sizeof(otls_cpu_info_str) - strlen(otls_cpu_info_str),
                      " env:%s", env);
 # endif
 #endif
@@ -65,8 +65,8 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 #define add_seeds_string(str)                                           \
         do {                                                            \
             if (seeds[0] != '\0')                                       \
-                OPENSSL_strlcat(seeds, " ", sizeof(seeds));             \
-            OPENSSL_strlcat(seeds, str, sizeof(seeds));                 \
+                OPENtls_strlcat(seeds, " ", sizeof(seeds));             \
+            OPENtls_strlcat(seeds, str, sizeof(seeds));                 \
         } while (0)
 #define add_seeds_stringlist(label, strlist)                            \
         do {                                                            \
@@ -78,36 +78,36 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
                                                                         \
                 for (p = dev; *p != NULL; p++) {                        \
                     if (!first)                                         \
-                        OPENSSL_strlcat(seeds, " ", sizeof(seeds));     \
+                        OPENtls_strlcat(seeds, " ", sizeof(seeds));     \
                     first = 0;                                          \
-                    OPENSSL_strlcat(seeds, *p, sizeof(seeds));          \
+                    OPENtls_strlcat(seeds, *p, sizeof(seeds));          \
                 }                                                       \
             }                                                           \
-            OPENSSL_strlcat(seeds, ")", sizeof(seeds));                 \
+            OPENtls_strlcat(seeds, ")", sizeof(seeds));                 \
         } while (0)
 
-#ifdef OPENSSL_RAND_SEED_NONE
+#ifdef OPENtls_RAND_SEED_NONE
         add_seeds_string("none");
 #endif
-#ifdef OPENSSL_RAND_SEED_RTDSC
+#ifdef OPENtls_RAND_SEED_RTDSC
         add_seeds_string("stdsc");
 #endif
-#ifdef OPENSSL_RAND_SEED_RDCPU
+#ifdef OPENtls_RAND_SEED_RDCPU
         add_seeds_string("rdrand ( rdseed rdrand )");
 #endif
-#ifdef OPENSSL_RAND_SEED_LIBRANDOM
+#ifdef OPENtls_RAND_SEED_LIBRANDOM
         add_seeds_string("C-library-random");
 #endif
-#ifdef OPENSSL_RAND_SEED_GETRANDOM
+#ifdef OPENtls_RAND_SEED_GETRANDOM
         add_seeds_string("getrandom-syscall");
 #endif
-#ifdef OPENSSL_RAND_SEED_DEVRANDOM
+#ifdef OPENtls_RAND_SEED_DEVRANDOM
         add_seeds_stringlist("random-device", DEVRANDOM);
 #endif
-#ifdef OPENSSL_RAND_SEED_EGD
+#ifdef OPENtls_RAND_SEED_EGD
         add_seeds_stringlist("EGD", DEVRANDOM_EGD);
 #endif
-#ifdef OPENSSL_RAND_SEED_OS
+#ifdef OPENtls_RAND_SEED_OS
         add_seeds_string("os-specific");
 #endif
         seed_sources = seeds;
@@ -115,7 +115,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
     return 1;
 }
 
-const char *OPENSSL_info(int t)
+const char *OPENtls_info(int t)
 {
     /*
      * We don't care about the result.  Worst case scenario, the strings
@@ -125,15 +125,15 @@ const char *OPENSSL_info(int t)
     (void)RUN_ONCE(&init_info, init_info_strings);
 
     switch (t) {
-    case OPENSSL_INFO_CONFIG_DIR:
-        return OPENSSLDIR;
-    case OPENSSL_INFO_ENGINES_DIR:
+    case OPENtls_INFO_CONFIG_DIR:
+        return OPENtlsDIR;
+    case OPENtls_INFO_ENGINES_DIR:
         return ENGINESDIR;
-    case OPENSSL_INFO_MODULES_DIR:
+    case OPENtls_INFO_MODULES_DIR:
         return MODULESDIR;
-    case OPENSSL_INFO_DSO_EXTENSION:
+    case OPENtls_INFO_DSO_EXTENSION:
         return DSO_EXTENSION;
-    case OPENSSL_INFO_DIR_FILENAME_SEPARATOR:
+    case OPENtls_INFO_DIR_FILENAME_SEPARATOR:
 #if defined(_WIN32)
         return "\\";
 #elif defined(__VMS)
@@ -141,21 +141,21 @@ const char *OPENSSL_info(int t)
 #else  /* Assume POSIX */
         return "/";
 #endif
-    case OPENSSL_INFO_LIST_SEPARATOR:
+    case OPENtls_INFO_LIST_SEPARATOR:
         {
             static const char list_sep[] = { LIST_SEPARATOR_CHAR, '\0' };
             return list_sep;
         }
-    case OPENSSL_INFO_SEED_SOURCE:
+    case OPENtls_INFO_SEED_SOURCE:
         return seed_sources;
-    case OPENSSL_INFO_CPU_SETTINGS:
+    case OPENtls_INFO_CPU_SETTINGS:
         /*
-         * If successfully initialized, ossl_cpu_info_str will start
+         * If successfully initialized, otls_cpu_info_str will start
          * with CPUINFO_PREFIX, if failed it will be an empty string.
          * Strip away the CPUINFO_PREFIX which we don't need here.
          */
-        if (ossl_cpu_info_str[0] != '\0')
-            return ossl_cpu_info_str + strlen(CPUINFO_PREFIX);
+        if (otls_cpu_info_str[0] != '\0')
+            return otls_cpu_info_str + strlen(CPUINFO_PREFIX);
         break;
     default:
         break;

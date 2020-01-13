@@ -1,17 +1,17 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/rand.h>
 
 /* PKCS#5 password based encryption structure */
 
@@ -45,7 +45,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     if (!saltlen)
         saltlen = PKCS5_SALT_LEN;
 
-    sstr = OPENSSL_malloc(saltlen);
+    sstr = OPENtls_malloc(saltlen);
     if (sstr == NULL) {
         ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -70,7 +70,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
         return 1;
 
  err:
-    OPENSSL_free(sstr);
+    OPENtls_free(sstr);
     PBEPARAM_free(pbe);
     ASN1_STRING_free(pbe_str);
     return 0;

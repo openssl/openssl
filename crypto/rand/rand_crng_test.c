@@ -1,11 +1,11 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <string.h>
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 #include "crypto/rand.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
@@ -24,47 +24,47 @@ typedef struct crng_test_global_st {
     RAND_POOL *crngt_pool;
 } CRNG_TEST_GLOBAL;
 
-int (*crngt_get_entropy)(OPENSSL_CTX *, RAND_POOL *, unsigned char *,
+int (*crngt_get_entropy)(OPENtls_CTX *, RAND_POOL *, unsigned char *,
                          unsigned char *, unsigned int *)
     = &rand_crngt_get_entropy_cb;
 
-static void rand_crng_ossl_ctx_free(void *vcrngt_glob)
+static void rand_crng_otls_ctx_free(void *vcrngt_glob)
 {
     CRNG_TEST_GLOBAL *crngt_glob = vcrngt_glob;
 
     rand_pool_free(crngt_glob->crngt_pool);
-    OPENSSL_free(crngt_glob);
+    OPENtls_free(crngt_glob);
 }
 
-static void *rand_crng_ossl_ctx_new(OPENSSL_CTX *ctx)
+static void *rand_crng_otls_ctx_new(OPENtls_CTX *ctx)
 {
     unsigned char buf[CRNGT_BUFSIZ];
-    CRNG_TEST_GLOBAL *crngt_glob = OPENSSL_zalloc(sizeof(*crngt_glob));
+    CRNG_TEST_GLOBAL *crngt_glob = OPENtls_zalloc(sizeof(*crngt_glob));
 
     if (crngt_glob == NULL)
         return NULL;
 
     if ((crngt_glob->crngt_pool
          = rand_pool_new(0, 1, CRNGT_BUFSIZ, CRNGT_BUFSIZ)) == NULL) {
-        OPENSSL_free(crngt_glob);
+        OPENtls_free(crngt_glob);
         return NULL;
     }
     if (crngt_get_entropy(ctx, crngt_glob->crngt_pool, buf,
                           crngt_glob->crngt_prev, NULL)) {
-        OPENSSL_cleanse(buf, sizeof(buf));
+        OPENtls_cleanse(buf, sizeof(buf));
         return crngt_glob;
     }
     rand_pool_free(crngt_glob->crngt_pool);
-    OPENSSL_free(crngt_glob);
+    OPENtls_free(crngt_glob);
     return NULL;
 }
 
-static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
-    rand_crng_ossl_ctx_new,
-    rand_crng_ossl_ctx_free,
+static const OPENtls_CTX_METHOD rand_crng_otls_ctx_method = {
+    rand_crng_otls_ctx_new,
+    rand_crng_otls_ctx_free,
 };
 
-int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx,
+int rand_crngt_get_entropy_cb(OPENtls_CTX *ctx,
                               RAND_POOL *pool,
                               unsigned char *buf,
                               unsigned char *md,
@@ -104,8 +104,8 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
     size_t q, r = 0, s, t = 0;
     int attempts = 3;
     CRNG_TEST_GLOBAL *crngt_glob
-        = openssl_ctx_get_data(drbg->libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
-                               &rand_crng_ossl_ctx_method);
+        = opentls_ctx_get_data(drbg->libctx, OPENtls_CTX_RAND_CRNGT_INDEX,
+                               &rand_crng_otls_ctx_method);
 
     if (crngt_glob == NULL)
         return 0;
@@ -127,7 +127,7 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
     r = t;
     *pout = rand_pool_detach(pool);
 err:
-    OPENSSL_cleanse(buf, sizeof(buf));
+    OPENtls_cleanse(buf, sizeof(buf));
     rand_pool_free(pool);
     return r;
 }
@@ -135,5 +135,5 @@ err:
 void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
                                 unsigned char *out, size_t outlen)
 {
-    OPENSSL_secure_clear_free(out, outlen);
+    OPENtls_secure_clear_free(out, outlen);
 }

@@ -1,9 +1,9 @@
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 
@@ -116,9 +116,9 @@ use constant {
     SIG_ALG_DSA_SHA256 => 0x0402,
     SIG_ALG_DSA_SHA384 => 0x0502,
     SIG_ALG_DSA_SHA512 => 0x0602,
-    OSSL_SIG_ALG_RSA_PKCS1_SHA224 => 0x0301,
-    OSSL_SIG_ALG_DSA_SHA224 => 0x0302,
-    OSSL_SIG_ALG_ECDSA_SHA224 => 0x0303
+    Otls_SIG_ALG_RSA_PKCS1_SHA224 => 0x0301,
+    Otls_SIG_ALG_DSA_SHA224 => 0x0302,
+    Otls_SIG_ALG_ECDSA_SHA224 => 0x0303
 };
 
 use constant {
@@ -135,7 +135,7 @@ use constant {
 };
 
 my $payload = "";
-my $messlen = -1;
+my $metlsen = -1;
 my $mt;
 my $startoffset = -1;
 my $server = 0;
@@ -150,7 +150,7 @@ my $alert;
 sub clear
 {
     $payload = "";
-    $messlen = -1;
+    $metlsen = -1;
     $startoffset = -1;
     $server = 0;
     $success = 0;
@@ -201,14 +201,14 @@ sub get_messages
                 #message
                 push @message_rec_list, $record;
 
-                if ($messlen <= length($payload)) {
+                if ($metlsen <= length($payload)) {
                     #Shouldn't happen
-                    die "Internal error: invalid messlen: ".$messlen
+                    die "Internal error: invalid metlsen: ".$metlsen
                         ." payload length:".length($payload)."\n";
                 }
-                if (length($payload) + $record->decrypt_len >= $messlen) {
+                if (length($payload) + $record->decrypt_len >= $metlsen) {
                     #We can complete the message with this record
-                    $recoffset = $messlen - length($payload);
+                    $recoffset = $metlsen - length($payload);
                     $payload .= substr($record->decrypt_data, 0, $recoffset);
                     push @message_frag_lens, $recoffset;
                     $message = create_message($server, $mt, $payload,
@@ -237,21 +237,21 @@ sub get_messages
                 ($mt, $lenhi, $lenlo) = unpack('CnC',
                                                substr($record->decrypt_data,
                                                       $recoffset));
-                $messlen = ($lenhi << 8) | $lenlo;
+                $metlsen = ($lenhi << 8) | $lenlo;
                 print "  Message type: $message_type{$mt}\n";
-                print "  Message Length: $messlen\n";
+                print "  Message Length: $metlsen\n";
                 $startoffset = $recoffset;
                 $recoffset += 4;
                 $payload = "";
 
                 if ($recoffset <= $record->decrypt_len) {
                     #Some payload data is present in this record
-                    if ($record->decrypt_len - $recoffset >= $messlen) {
+                    if ($record->decrypt_len - $recoffset >= $metlsen) {
                         #We can complete the message with this record
                         $payload .= substr($record->decrypt_data, $recoffset,
-                                           $messlen);
-                        $recoffset += $messlen;
-                        push @message_frag_lens, $messlen;
+                                           $metlsen);
+                        $recoffset += $metlsen;
+                        push @message_frag_lens, $metlsen;
                         $message = create_message($server, $mt, $payload,
                                                   $startoffset);
                         push @messages, $message;
@@ -486,7 +486,7 @@ sub repack
         my $suffix = substr($recdata, $self->startoffset + $old_length);
 
         $rec->decrypt_data($prefix.($msgdata).($suffix));
-        # TODO(openssl-team): don't keep explicit lengths.
+        # TODO(opentls-team): don't keep explicit lengths.
         # (If a length override is ever needed to construct invalid packets,
         #  use an explicit override field instead.)
         $rec->decrypt_len(length($rec->decrypt_data));

@@ -9,7 +9,7 @@ X509_CRL_set1_nextUpdate - get or set certificate or CRL dates
 
 =head1 SYNOPSIS
 
- #include <openssl/x509.h>
+ #include <opentls/x509.h>
 
  const ASN1_TIME *X509_get0_notBefore(const X509 *x);
  const ASN1_TIME *X509_get0_notAfter(const X509 *x);
@@ -86,18 +86,18 @@ L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
-These functions are available in all versions of OpenSSL.
+These functions are available in all versions of Opentls.
 
-X509_get_notBefore() and X509_get_notAfter() were deprecated in OpenSSL
+X509_get_notBefore() and X509_get_notAfter() were deprecated in Opentls
 1.1.0
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

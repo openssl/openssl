@@ -1,19 +1,19 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
-#include <openssl/bn.h>
-#include <openssl/sha.h>
+#include <opentls/bn.h>
+#include <opentls/sha.h>
 #include "dsa_local.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
@@ -27,8 +27,8 @@ static int dsa_finish(DSA *dsa);
 static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
                                       BN_CTX *ctx);
 
-static DSA_METHOD openssl_dsa_meth = {
-    "OpenSSL DSA method",
+static DSA_METHOD opentls_dsa_meth = {
+    "Opentls DSA method",
     dsa_do_sign,
     dsa_sign_setup_no_digest,
     dsa_do_verify,
@@ -42,7 +42,7 @@ static DSA_METHOD openssl_dsa_meth = {
     NULL
 };
 
-static const DSA_METHOD *default_DSA_method = &openssl_dsa_meth;
+static const DSA_METHOD *default_DSA_method = &opentls_dsa_meth;
 
 #ifndef FIPS_MODE
 void DSA_set_default_method(const DSA_METHOD *meth)
@@ -56,12 +56,12 @@ const DSA_METHOD *DSA_get_default_method(void)
     return default_DSA_method;
 }
 
-const DSA_METHOD *DSA_OpenSSL(void)
+const DSA_METHOD *DSA_Opentls(void)
 {
-    return &openssl_dsa_meth;
+    return &opentls_dsa_meth;
 }
 
-DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
+DSA_SIG *dsa_do_sign_int(OPENtls_CTX *libctx, const unsigned char *dgst,
                          int dlen, DSA *dsa)
 {
     BIGNUM *kinv = NULL;
@@ -266,7 +266,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      *
      * There are some concerns about the efficacy of doing this.  More
      * specifically refer to the discussion starting with:
-     *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
+     *     https://github.com/opentls/opentls/pull/7486#discussion_r228323705
      * The fix is to rework BN so these gymnastics aren't required.
      */
     if (!BN_add(l, k, dsa->q)
@@ -325,7 +325,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
         return -1;
     }
 
-    if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dsa->p) > OPENtls_DSA_MAX_MODULUS_BITS) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MODULUS_TOO_LARGE);
         return -1;
     }

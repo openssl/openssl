@@ -1,21 +1,21 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/evp.h>
 #include "dh_local.h"
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/objects.h>
+#include <opentls/bn.h>
+#include <opentls/dsa.h>
+#include <opentls/objects.h>
 #include "crypto/evp.h"
 
 /* DH pkey context structure */
@@ -50,7 +50,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 {
     DH_PKEY_CTX *dctx;
 
-    if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
+    if ((dctx = OPENtls_zalloc(sizeof(*dctx))) == NULL) {
         DHerr(DH_F_PKEY_DH_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -70,9 +70,9 @@ static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 {
     DH_PKEY_CTX *dctx = ctx->data;
     if (dctx != NULL) {
-        OPENSSL_free(dctx->kdf_ukm);
+        OPENtls_free(dctx->kdf_ukm);
         ASN1_OBJECT_free(dctx->kdf_oid);
-        OPENSSL_free(dctx);
+        OPENtls_free(dctx);
     }
 }
 
@@ -100,7 +100,7 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
         return 0;
     dctx->kdf_md = sctx->kdf_md;
     if (sctx->kdf_ukm != NULL) {
-        dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        dctx->kdf_ukm = OPENtls_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
         if (dctx->kdf_ukm == NULL)
           return 0;
         dctx->kdf_ukmlen = sctx->kdf_ukmlen;
@@ -136,7 +136,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_TYPE:
-#ifdef OPENSSL_NO_DSA
+#ifdef OPENtls_NO_DSA
         if (p1 != 0)
             return -2;
 #else
@@ -165,7 +165,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DH_KDF_TYPE:
         if (p1 == -2)
             return dctx->kdf_type;
-#ifdef OPENSSL_NO_CMS
+#ifdef OPENtls_NO_CMS
         if (p1 != EVP_PKEY_DH_KDF_NONE)
 #else
         if (p1 != EVP_PKEY_DH_KDF_NONE && p1 != EVP_PKEY_DH_KDF_X9_42)
@@ -193,7 +193,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_KDF_UKM:
-        OPENSSL_free(dctx->kdf_ukm);
+        OPENtls_free(dctx->kdf_ukm);
         dctx->kdf_ukm = p2;
         if (p2)
             dctx->kdf_ukmlen = p1;
@@ -271,7 +271,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
     return -2;
 }
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 
 extern int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
                                 const EVP_MD *evpmd,
@@ -366,7 +366,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         evp_pkey_set_cb_translate(pcb, ctx);
     } else
         pcb = NULL;
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     if (dctx->use_dsa) {
         DSA *dsa_dh;
         dsa_dh = dsa_dh_generate(dctx, pcb);
@@ -445,7 +445,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         *keylen = ret;
         return 1;
     }
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     else if (dctx->kdf_type == EVP_PKEY_DH_KDF_X9_42) {
 
         unsigned char *Z = NULL;
@@ -460,7 +460,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
             return 0;
         ret = 0;
         Zlen = DH_size(dh);
-        Z = OPENSSL_malloc(Zlen);
+        Z = OPENtls_malloc(Zlen);
         if (Z == NULL) {
             goto err;
         }
@@ -472,7 +472,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         *keylen = dctx->kdf_outlen;
         ret = 1;
  err:
-        OPENSSL_clear_free(Z, Zlen);
+        OPENtls_clear_free(Z, Zlen);
         return ret;
     }
 #endif

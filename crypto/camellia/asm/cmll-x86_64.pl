@@ -1,25 +1,25 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Copyright (c) 2008 Andy Polyakov <appro@openssl.org>
+# Copyright (c) 2008 Andy Polyakov <appro@opentls.org>
 #
 # This module may be used under the terms of either the GNU General
 # Public License version 2 or later, the GNU Lesser General Public
 # License version 2.1 or later, the Mozilla Public License version
 # 1.1 or the BSD License. The exact terms of either license are
 # distributed along with this module. For further details see
-# http://www.openssl.org/~appro/camellia/.
+# http://www.opentls.org/~appro/camellia/.
 # ====================================================================
 
 # Performance in cycles per processed byte (less is better) in
-# 'openssl speed ...' benchmark:
+# 'opentls speed ...' benchmark:
 #
 #			AMD64	Core2	EM64T
 # -evp camellia-128-ecb	16.7	21.0	22.7
@@ -934,7 +934,7 @@ Camellia_cbc_encrypt:
 .cfi_endproc
 .size	Camellia_cbc_encrypt,.-Camellia_cbc_encrypt
 
-.asciz	"Camellia for x86_64 by <appro\@openssl.org>"
+.asciz	"Camellia for x86_64 by <appro\@opentls.org>"
 ___
 }
 

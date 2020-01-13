@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 #include "asn1_local.h"
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
@@ -281,7 +281,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
     }
     if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
-        str->data = OPENSSL_realloc(c, len + 1);
+        str->data = OPENtls_realloc(c, len + 1);
         if (str->data == NULL) {
             ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
             str->data = c;
@@ -299,7 +299,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
-    OPENSSL_free(str->data);
+    OPENtls_free(str->data);
     str->data = data;
     str->length = len;
 }
@@ -313,7 +313,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 {
     ASN1_STRING *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -327,9 +327,9 @@ void asn1_string_embed_free(ASN1_STRING *a, int embed)
     if (a == NULL)
         return;
     if (!(a->flags & ASN1_STRING_FLAG_NDEF))
-        OPENSSL_free(a->data);
+        OPENtls_free(a->data);
     if (embed == 0)
-        OPENSSL_free(a);
+        OPENtls_free(a);
 }
 
 void ASN1_STRING_free(ASN1_STRING *a)
@@ -344,7 +344,7 @@ void ASN1_STRING_clear_free(ASN1_STRING *a)
     if (a == NULL)
         return;
     if (a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
-        OPENSSL_cleanse(a->data, a->length);
+        OPENtls_cleanse(a->data, a->length);
     ASN1_STRING_free(a);
 }
 
@@ -383,7 +383,7 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
     return x->data;
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
     return x->data;

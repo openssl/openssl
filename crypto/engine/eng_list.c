@@ -1,11 +1,11 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "eng_local.h"
@@ -248,16 +248,16 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 {
     dest->id = src->id;
     dest->name = src->name;
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     dest->rsa_meth = src->rsa_meth;
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     dest->dsa_meth = src->dsa_meth;
 #endif
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     dest->dh_meth = src->dh_meth;
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     dest->ec_meth = src->ec_meth;
 #endif
     dest->rand_meth = src->rand_meth;
@@ -317,7 +317,7 @@ ENGINE *ENGINE_by_id(const char *id)
      * Prevent infinite recursion if we're looking for the dynamic engine.
      */
     if (strcmp(id, "dynamic")) {
-        if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == NULL)
+        if ((load_dir = otls_safe_getenv("OPENtls_ENGINES")) == NULL)
             load_dir = ENGINESDIR;
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||

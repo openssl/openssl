@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -14,7 +14,7 @@ use File::Spec::Functions qw/catfile/;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test qw/:DEFAULT srctop_file/;
 
 setup("test_enc");
 
@@ -25,7 +25,7 @@ my $testsrc = srctop_file("test","recipes",basename($0));
 
 my $test = catfile(".", "p");
 
-my $cmd = "openssl";
+my $cmd = "opentls";
 
 my $ciphersstatus = undef;
 my @ciphers =
@@ -37,7 +37,7 @@ plan tests => 2 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
-         unless ok($ciphersstatus, "Running 'openssl list -cipher-commands'");
+         unless ok($ciphersstatus, "Running 'opentls list -cipher-commands'");
      unless (ok(copy($testsrc, $test), "Copying $testsrc to $test")) {
          diag($!);
          skip "Not initialized, skipping...", scalar(@ciphers);

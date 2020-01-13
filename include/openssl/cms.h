@@ -1,27 +1,27 @@
 /*
- * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_CMS_H
-# define OPENSSL_CMS_H
+#ifndef OPENtls_CMS_H
+# define OPENtls_CMS_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CMS_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_CMS
-# include <openssl/x509.h>
-# include <openssl/x509v3.h>
-# include <openssl/cmserr.h>
+# ifndef OPENtls_NO_CMS
+# include <opentls/x509.h>
+# include <opentls/x509v3.h>
+# include <opentls/cmserr.h>
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -90,7 +90,7 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-# ifdef OPENSSL_PEM_H
+# ifdef OPENtls_PEM_H
 DECLARE_PEM_rw(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
@@ -154,7 +154,7 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
                          unsigned char *key, size_t keylen,
                          const unsigned char *id, size_t idlen);
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
-                              unsigned char *pass, ossl_ssize_t passlen);
+                              unsigned char *pass, otls_ssize_t patlsen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -194,13 +194,13 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
                                     unsigned char *pass,
-                                    ossl_ssize_t passlen);
+                                    otls_ssize_t patlsen);
 
 CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
                                                int iter, int wrap_nid,
                                                int pbe_nid,
                                                unsigned char *pass,
-                                               ossl_ssize_t passlen,
+                                               otls_ssize_t patlsen,
                                                const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);

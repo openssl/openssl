@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
 # Copyright (c) 2014, Intel Corporation. All Rights Reserved.
 # Copyright (c) 2015 CloudFlare, Inc.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 #
 # Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1, 3)
 # (1) Intel Corporation, Israel Development Center, Haifa, Israel
@@ -17,7 +17,7 @@
 # S.Gueron and V.Krasnov, "Fast Prime Field Elliptic Curve Cryptography with
 #                          256 Bit Primes"
 
-# Further optimization by <appro@openssl.org>:
+# Further optimization by <appro@opentls.org>:
 #
 #		this/original	with/without -DECP_NISTZ256_ASM(*)
 # Opteron	+15-49%		+150-195%
@@ -82,7 +82,7 @@ if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) (
 
 $code.=<<___;
 .text
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 # The polynomial
 .align 64
@@ -508,7 +508,7 @@ ecp_nistz256_ord_mul_mont:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 	cmp	\$0x80100, %ecx
 	je	.Lecp_nistz256_ord_mul_montx
 ___
@@ -838,7 +838,7 @@ ecp_nistz256_ord_sqr_mont:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 	cmp	\$0x80100, %ecx
 	je	.Lecp_nistz256_ord_sqr_montx
 ___
@@ -1585,7 +1585,7 @@ ecp_nistz256_to_mont:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 ___
 $code.=<<___;
 	lea	.LRR(%rip), $b_org
@@ -1607,7 +1607,7 @@ ecp_nistz256_mul_mont:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 ___
 $code.=<<___;
 .Lmul_mont:
@@ -1908,7 +1908,7 @@ ecp_nistz256_sqr_mont:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 ___
 $code.=<<___;
 	push	%rbp
@@ -2595,7 +2595,7 @@ ecp_nistz256_gather_w5:
 .cfi_startproc
 ___
 $code.=<<___	if ($avx>1);
-	mov	OPENSSL_ia32cap_P+8(%rip), %eax
+	mov	OPENtls_ia32cap_P+8(%rip), %eax
 	test	\$`1<<5`, %eax
 	jnz	.Lavx2_gather_w5
 ___
@@ -2715,7 +2715,7 @@ ecp_nistz256_gather_w7:
 .cfi_startproc
 ___
 $code.=<<___	if ($avx>1);
-	mov	OPENSSL_ia32cap_P+8(%rip), %eax
+	mov	OPENtls_ia32cap_P+8(%rip), %eax
 	test	\$`1<<5`, %eax
 	jnz	.Lavx2_gather_w7
 ___
@@ -3049,7 +3049,7 @@ ___
 # reloading them, pointers, would create undesired dependencies on
 # effective addresses calculation paths. In other words it's too done
 # to favour out-of-order execution logic.
-#						<appro@openssl.org>
+#						<appro@opentls.org>
 
 my ($r_ptr,$a_ptr,$b_org,$b_ptr)=("%rdi","%rsi","%rdx","%rbx");
 my ($acc0,$acc1,$acc2,$acc3,$acc4,$acc5,$acc6,$acc7)=map("%r$_",(8..15));
@@ -3237,7 +3237,7 @@ ecp_nistz256_point_double:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 	cmp	\$0x80100, %ecx
 	je	.Lpoint_doublex
 ___
@@ -3488,7 +3488,7 @@ ecp_nistz256_point_add:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 	cmp	\$0x80100, %ecx
 	je	.Lpoint_addx
 ___
@@ -3868,7 +3868,7 @@ ecp_nistz256_point_add_affine:
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
-	and	OPENSSL_ia32cap_P+8(%rip), %ecx
+	and	OPENtls_ia32cap_P+8(%rip), %ecx
 	cmp	\$0x80100, %ecx
 	je	.Lpoint_add_affinex
 ___

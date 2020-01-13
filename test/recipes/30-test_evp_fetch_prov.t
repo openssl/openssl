@@ -1,16 +1,16 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT bldtop_dir srctop_file srctop_dir bldtop_file);
-use OpenSSL::Test::Utils;
+use Opentls::Test qw(:DEFAULT bldtop_dir srctop_file srctop_dir bldtop_file);
+use Opentls::Test::Utils;
 
 BEGIN {
 setup("test_evp_fetch_prov");
@@ -24,8 +24,8 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 my @types = ( "digest", "cipher" );
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+$ENV{OPENtls_MODULES} = bldtop_dir("providers");
+$ENV{OPENtls_CONF_INCLUDE} = bldtop_dir("providers");
 
 my @setups = ();
 my @testdata = (
@@ -47,7 +47,7 @@ my @testdata = (
 
 unless ($no_fips) {
     push @setups, {
-        cmd     => app(['openssl', 'fipsinstall',
+        cmd     => app(['opentls', 'fipsinstall',
                         '-out', bldtop_file('providers', 'fipsinstall.conf'),
                         '-module', bldtop_file('providers', platform->dso('fips')),
                         '-provider_name', 'fips', '-mac_name', 'HMAC',
@@ -101,7 +101,7 @@ foreach my $setup (@setups) {
 
 foreach my $alg (@types) {
     foreach my $testcase (@testdata) {
-        $ENV{OPENSSL_CONF} = $testcase->{config};
+        $ENV{OPENtls_CONF} = $testcase->{config};
         foreach my $test (@{$testcase->{tests}}) {
             my @testproviders =
                 @{ $test->{providers} // $testcase->{providers} };

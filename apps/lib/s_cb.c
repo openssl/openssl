@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* callback functions used by s_client, s_server, and s_time */
@@ -12,13 +12,13 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
 #include "apps.h"
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/x509.h>
+#include <opentls/tls.h>
+#include <opentls/bn.h>
+#ifndef OPENtls_NO_DH
+# include <opentls/dh.h>
 #endif
 #include "s_apps.h"
 
@@ -26,7 +26,7 @@
 
 VERIFY_CB_ARGS verify_args = { -1, 0, X509_V_OK, 0 };
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
 #endif
@@ -103,11 +103,11 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     return ok;
 }
 
-int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
+int set_cert_stuff(tls_CTX *ctx, char *cert_file, char *key_file)
 {
     if (cert_file != NULL) {
-        if (SSL_CTX_use_certificate_file(ctx, cert_file,
-                                         SSL_FILETYPE_PEM) <= 0) {
+        if (tls_CTX_use_certificate_file(ctx, cert_file,
+                                         tls_FILETYPE_PEM) <= 0) {
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
                        cert_file);
             ERR_print_errors(bio_err);
@@ -115,7 +115,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
         }
         if (key_file == NULL)
             key_file = cert_file;
-        if (SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM) <= 0) {
+        if (tls_CTX_use_PrivateKey_file(ctx, key_file, tls_FILETYPE_PEM) <= 0) {
             BIO_printf(bio_err, "unable to get private key from '%s'\n",
                        key_file);
             ERR_print_errors(bio_err);
@@ -128,10 +128,10 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
          */
 
         /*
-         * Now we know that a key and cert have been set against the SSL
+         * Now we know that a key and cert have been set against the tls
          * context
          */
-        if (!SSL_CTX_check_private_key(ctx)) {
+        if (!tls_CTX_check_private_key(ctx)) {
             BIO_printf(bio_err,
                        "Private key does not match the certificate public key\n");
             return 0;
@@ -140,38 +140,38 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
     return 1;
 }
 
-int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
+int set_cert_key_stuff(tls_CTX *ctx, X509 *cert, EVP_PKEY *key,
                        STACK_OF(X509) *chain, int build_chain)
 {
-    int chflags = chain ? SSL_BUILD_CHAIN_FLAG_CHECK : 0;
+    int chflags = chain ? tls_BUILD_CHAIN_FLAG_CHECK : 0;
     if (cert == NULL)
         return 1;
-    if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
+    if (tls_CTX_use_certificate(ctx, cert) <= 0) {
         BIO_printf(bio_err, "error setting certificate\n");
         ERR_print_errors(bio_err);
         return 0;
     }
 
-    if (SSL_CTX_use_PrivateKey(ctx, key) <= 0) {
+    if (tls_CTX_use_PrivateKey(ctx, key) <= 0) {
         BIO_printf(bio_err, "error setting private key\n");
         ERR_print_errors(bio_err);
         return 0;
     }
 
     /*
-     * Now we know that a key and cert have been set against the SSL context
+     * Now we know that a key and cert have been set against the tls context
      */
-    if (!SSL_CTX_check_private_key(ctx)) {
+    if (!tls_CTX_check_private_key(ctx)) {
         BIO_printf(bio_err,
                    "Private key does not match the certificate public key\n");
         return 0;
     }
-    if (chain && !SSL_CTX_set1_chain(ctx, chain)) {
+    if (chain && !tls_CTX_set1_chain(ctx, chain)) {
         BIO_printf(bio_err, "error setting certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
     }
-    if (build_chain && !SSL_CTX_build_cert_chain(ctx, chflags)) {
+    if (build_chain && !tls_CTX_build_cert_chain(ctx, chflags)) {
         BIO_printf(bio_err, "error building certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
@@ -191,11 +191,11 @@ static STRINT_PAIR cert_type_list[] = {
     {NULL}
 };
 
-static void ssl_print_client_cert_types(BIO *bio, SSL *s)
+static void tls_print_client_cert_types(BIO *bio, tls *s)
 {
     const unsigned char *p;
     int i;
-    int cert_type_num = SSL_get0_certificate_types(s, &p);
+    int cert_type_num = tls_get0_certificate_types(s, &p);
     if (!cert_type_num)
         return;
     BIO_puts(bio, "Client Certificate Types: ");
@@ -248,14 +248,14 @@ static const char *get_sigtype(int nid)
     }
 }
 
-static int do_print_sigalgs(BIO *out, SSL *s, int shared)
+static int do_print_sigalgs(BIO *out, tls *s, int shared)
 {
     int i, nsig, client;
-    client = SSL_is_server(s) ? 0 : 1;
+    client = tls_is_server(s) ? 0 : 1;
     if (shared)
-        nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
+        nsig = tls_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
     else
-        nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+        nsig = tls_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
     if (nsig == 0)
         return 1;
 
@@ -270,10 +270,10 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
         unsigned char rhash, rsign;
         const char *sstr = NULL;
         if (shared)
-            SSL_get_shared_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
+            tls_get_shared_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
                                    &rsign, &rhash);
         else
-            SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
+            tls_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
         if (i)
             BIO_puts(out, ":");
         sstr = get_sigtype(sign_nid);
@@ -290,26 +290,26 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
     return 1;
 }
 
-int ssl_print_sigalgs(BIO *out, SSL *s)
+int tls_print_sigalgs(BIO *out, tls *s)
 {
     int nid;
-    if (!SSL_is_server(s))
-        ssl_print_client_cert_types(out, s);
+    if (!tls_is_server(s))
+        tls_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
     do_print_sigalgs(out, s, 1);
-    if (SSL_get_peer_signature_nid(s, &nid) && nid != NID_undef)
+    if (tls_get_peer_signature_nid(s, &nid) && nid != NID_undef)
         BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
-    if (SSL_get_peer_signature_type_nid(s, &nid))
+    if (tls_get_peer_signature_type_nid(s, &nid))
         BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
 
-#ifndef OPENSSL_NO_EC
-int ssl_print_point_formats(BIO *out, SSL *s)
+#ifndef OPENtls_NO_EC
+int tls_print_point_formats(BIO *out, tls *s)
 {
     int i, nformats;
     const char *pformats;
-    nformats = SSL_get0_ec_point_formats(s, &pformats);
+    nformats = tls_get0_ec_point_formats(s, &pformats);
     if (nformats <= 0)
         return 1;
     BIO_puts(out, "Supported Elliptic Curve Point Formats: ");
@@ -339,16 +339,16 @@ int ssl_print_point_formats(BIO *out, SSL *s)
     return 1;
 }
 
-int ssl_print_groups(BIO *out, SSL *s, int noshared)
+int tls_print_groups(BIO *out, tls *s, int noshared)
 {
     int i, ngroups, *groups, nid;
     const char *gname;
 
-    ngroups = SSL_get1_groups(s, NULL);
+    ngroups = tls_get1_groups(s, NULL);
     if (ngroups <= 0)
         return 1;
     groups = app_malloc(ngroups * sizeof(int), "groups to print");
-    SSL_get1_groups(s, groups);
+    tls_get1_groups(s, groups);
 
     BIO_puts(out, "Supported Elliptic Groups: ");
     for (i = 0; i < ngroups; i++) {
@@ -367,17 +367,17 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_printf(out, "%s", gname);
         }
     }
-    OPENSSL_free(groups);
+    OPENtls_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
     BIO_puts(out, "\nShared Elliptic groups: ");
-    ngroups = SSL_get_shared_group(s, -1);
+    ngroups = tls_get_shared_group(s, -1);
     for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = SSL_get_shared_group(s, i);
+        nid = tls_get_shared_group(s, i);
         /* TODO(TLS1.3): Convert for DH groups */
         gname = EC_curve_nid2nist(nid);
         if (gname == NULL)
@@ -391,11 +391,11 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 }
 #endif
 
-int ssl_print_tmp_key(BIO *out, SSL *s)
+int tls_print_tmp_key(BIO *out, tls *s)
 {
     EVP_PKEY *key;
 
-    if (!SSL_get_peer_tmp_key(s, &key))
+    if (!tls_get_peer_tmp_key(s, &key))
         return 1;
     BIO_puts(out, "Server Temp Key: ");
     switch (EVP_PKEY_id(key)) {
@@ -406,7 +406,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     case EVP_PKEY_DH:
         BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(key));
         break;
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     case EVP_PKEY_EC:
         {
             EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
@@ -451,40 +451,40 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
     return ret;
 }
 
-void apps_ssl_info_callback(const SSL *s, int where, int ret)
+void apps_tls_info_callback(const tls *s, int where, int ret)
 {
     const char *str;
     int w;
 
-    w = where & ~SSL_ST_MASK;
+    w = where & ~tls_ST_MASK;
 
-    if (w & SSL_ST_CONNECT)
-        str = "SSL_connect";
-    else if (w & SSL_ST_ACCEPT)
-        str = "SSL_accept";
+    if (w & tls_ST_CONNECT)
+        str = "tls_connect";
+    else if (w & tls_ST_ACCEPT)
+        str = "tls_accept";
     else
         str = "undefined";
 
-    if (where & SSL_CB_LOOP) {
-        BIO_printf(bio_err, "%s:%s\n", str, SSL_state_string_long(s));
-    } else if (where & SSL_CB_ALERT) {
-        str = (where & SSL_CB_READ) ? "read" : "write";
-        BIO_printf(bio_err, "SSL3 alert %s:%s:%s\n",
+    if (where & tls_CB_LOOP) {
+        BIO_printf(bio_err, "%s:%s\n", str, tls_state_string_long(s));
+    } else if (where & tls_CB_ALERT) {
+        str = (where & tls_CB_READ) ? "read" : "write";
+        BIO_printf(bio_err, "tls3 alert %s:%s:%s\n",
                    str,
-                   SSL_alert_type_string_long(ret),
-                   SSL_alert_desc_string_long(ret));
-    } else if (where & SSL_CB_EXIT) {
+                   tls_alert_type_string_long(ret),
+                   tls_alert_desc_string_long(ret));
+    } else if (where & tls_CB_EXIT) {
         if (ret == 0)
             BIO_printf(bio_err, "%s:failed in %s\n",
-                       str, SSL_state_string_long(s));
+                       str, tls_state_string_long(s));
         else if (ret < 0)
             BIO_printf(bio_err, "%s:error in %s\n",
-                       str, SSL_state_string_long(s));
+                       str, tls_state_string_long(s));
     }
 }
 
-static STRINT_PAIR ssl_versions[] = {
-    {"SSL 3.0", SSL3_VERSION},
+static STRINT_PAIR tls_versions[] = {
+    {"tls 3.0", tls3_VERSION},
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
@@ -532,41 +532,41 @@ static STRINT_PAIR alert_types[] = {
 };
 
 static STRINT_PAIR handshakes[] = {
-    {", HelloRequest", SSL3_MT_HELLO_REQUEST},
-    {", ClientHello", SSL3_MT_CLIENT_HELLO},
-    {", ServerHello", SSL3_MT_SERVER_HELLO},
+    {", HelloRequest", tls3_MT_HELLO_REQUEST},
+    {", ClientHello", tls3_MT_CLIENT_HELLO},
+    {", ServerHello", tls3_MT_SERVER_HELLO},
     {", HelloVerifyRequest", DTLS1_MT_HELLO_VERIFY_REQUEST},
-    {", NewSessionTicket", SSL3_MT_NEWSESSION_TICKET},
-    {", EndOfEarlyData", SSL3_MT_END_OF_EARLY_DATA},
-    {", EncryptedExtensions", SSL3_MT_ENCRYPTED_EXTENSIONS},
-    {", Certificate", SSL3_MT_CERTIFICATE},
-    {", ServerKeyExchange", SSL3_MT_SERVER_KEY_EXCHANGE},
-    {", CertificateRequest", SSL3_MT_CERTIFICATE_REQUEST},
-    {", ServerHelloDone", SSL3_MT_SERVER_DONE},
-    {", CertificateVerify", SSL3_MT_CERTIFICATE_VERIFY},
-    {", ClientKeyExchange", SSL3_MT_CLIENT_KEY_EXCHANGE},
-    {", Finished", SSL3_MT_FINISHED},
-    {", CertificateUrl", SSL3_MT_CERTIFICATE_URL},
-    {", CertificateStatus", SSL3_MT_CERTIFICATE_STATUS},
-    {", SupplementalData", SSL3_MT_SUPPLEMENTAL_DATA},
-    {", KeyUpdate", SSL3_MT_KEY_UPDATE},
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    {", NextProto", SSL3_MT_NEXT_PROTO},
+    {", NewSessionTicket", tls3_MT_NEWSESSION_TICKET},
+    {", EndOfEarlyData", tls3_MT_END_OF_EARLY_DATA},
+    {", EncryptedExtensions", tls3_MT_ENCRYPTED_EXTENSIONS},
+    {", Certificate", tls3_MT_CERTIFICATE},
+    {", ServerKeyExchange", tls3_MT_SERVER_KEY_EXCHANGE},
+    {", CertificateRequest", tls3_MT_CERTIFICATE_REQUEST},
+    {", ServerHelloDone", tls3_MT_SERVER_DONE},
+    {", CertificateVerify", tls3_MT_CERTIFICATE_VERIFY},
+    {", ClientKeyExchange", tls3_MT_CLIENT_KEY_EXCHANGE},
+    {", Finished", tls3_MT_FINISHED},
+    {", CertificateUrl", tls3_MT_CERTIFICATE_URL},
+    {", CertificateStatus", tls3_MT_CERTIFICATE_STATUS},
+    {", SupplementalData", tls3_MT_SUPPLEMENTAL_DATA},
+    {", KeyUpdate", tls3_MT_KEY_UPDATE},
+#ifndef OPENtls_NO_NEXTPROTONEG
+    {", NextProto", tls3_MT_NEXT_PROTO},
 #endif
-    {", MessageHash", SSL3_MT_MESSAGE_HASH},
+    {", MessageHash", tls3_MT_MESSAGE_HASH},
     {NULL}
 };
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
-            size_t len, SSL *ssl, void *arg)
+            size_t len, tls *tls, void *arg)
 {
     BIO *bio = arg;
     const char *str_write_p = write_p ? ">>>" : "<<<";
-    const char *str_version = lookup(version, ssl_versions, "???");
+    const char *str_version = lookup(version, tls_versions, "???");
     const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
-    if (version == SSL3_VERSION ||
+    if (version == tls3_VERSION ||
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
@@ -713,7 +713,7 @@ static STRINT_PAIR signature_tls12_hash_list[] = {
     {NULL}
 };
 
-void tlsext_cb(SSL *s, int client_server, int type,
+void tlsext_cb(tls *s, int client_server, int type,
                const unsigned char *data, int len, void *arg)
 {
     BIO *bio = arg;
@@ -725,8 +725,8 @@ void tlsext_cb(SSL *s, int client_server, int type,
     (void)BIO_flush(bio);
 }
 
-#ifndef OPENSSL_NO_SOCK
-int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+#ifndef OPENtls_NO_SOCK
+int generate_cookie_callback(tls *tls, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
     unsigned char *buffer;
@@ -743,7 +743,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         cookie_initialized = 1;
     }
 
-    if (SSL_is_dtls(ssl)) {
+    if (tls_is_dtls(tls)) {
         lpeer = peer = BIO_ADDR_new();
         if (peer == NULL) {
             BIO_printf(bio_err, "memory full\n");
@@ -751,7 +751,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         }
 
         /* Read peer information */
-        (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
+        (void)BIO_dgram_get_peer(tls_get_rbio(tls), peer);
     } else {
         peer = ourpeer;
     }
@@ -761,7 +761,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         BIO_printf(bio_err, "Failed getting peer address\n");
         return 0;
     }
-    OPENSSL_assert(length != 0);
+    OPENtls_assert(length != 0);
     port = BIO_ADDR_rawport(peer);
     length += sizeof(port);
     buffer = app_malloc(length, "cookie generate buffer");
@@ -773,13 +773,13 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
          buffer, length, cookie, cookie_len);
 
-    OPENSSL_free(buffer);
+    OPENtls_free(buffer);
     BIO_ADDR_free(lpeer);
 
     return 1;
 }
 
-int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
+int verify_cookie_callback(tls *tls, const unsigned char *cookie,
                            unsigned int cookie_len)
 {
     unsigned char result[EVP_MAX_MD_SIZE];
@@ -788,7 +788,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     /* Note: we check cookie_initialized because if it's not,
      * it cannot be valid */
     if (cookie_initialized
-        && generate_cookie_callback(ssl, result, &resultlength)
+        && generate_cookie_callback(tls, result, &resultlength)
         && cookie_len == resultlength
         && memcmp(result, cookie, resultlength) == 0)
         return 1;
@@ -796,19 +796,19 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     return 0;
 }
 
-int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+int generate_stateless_cookie_callback(tls *tls, unsigned char *cookie,
                                        size_t *cookie_len)
 {
     unsigned int temp;
-    int res = generate_cookie_callback(ssl, cookie, &temp);
+    int res = generate_cookie_callback(tls, cookie, &temp);
     *cookie_len = temp;
     return res;
 }
 
-int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+int verify_stateless_cookie_callback(tls *tls, const unsigned char *cookie,
                                      size_t cookie_len)
 {
-    return verify_cookie_callback(ssl, cookie, cookie_len);
+    return verify_cookie_callback(tls, cookie, cookie_len);
 }
 
 #endif
@@ -821,7 +821,7 @@ int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
  */
 
 /* Linked list of certificates, keys and chains */
-struct ssl_excert_st {
+struct tls_excert_st {
     int certform;
     const char *certfile;
     int keyform;
@@ -831,7 +831,7 @@ struct ssl_excert_st {
     EVP_PKEY *key;
     STACK_OF(X509) *chain;
     int build_chain;
-    struct ssl_excert_st *next, *prev;
+    struct tls_excert_st *next, *prev;
 };
 
 static STRINT_PAIR chain_flags[] = {
@@ -847,7 +847,7 @@ static STRINT_PAIR chain_flags[] = {
     {NULL}
 };
 
-static void print_chain_flags(SSL *s, int flags)
+static void print_chain_flags(tls *s, int flags)
 {
     STRINT_PAIR *pp;
 
@@ -856,7 +856,7 @@ static void print_chain_flags(SSL *s, int flags)
                    pp->name,
                    (flags & pp->retval) ? "OK" : "NOT OK");
     BIO_printf(bio_err, "\tSuite B: ");
-    if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
+    if (tls_set_cert_flags(s, 0) & tls_CERT_FLAG_SUITEB_128_LOS)
         BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
     else
         BIO_printf(bio_err, "not tested\n");
@@ -866,10 +866,10 @@ static void print_chain_flags(SSL *s, int flags)
  * Very basic selection callback: just use any certificate chain reported as
  * valid. More sophisticated could prioritise according to local policy.
  */
-static int set_cert_cb(SSL *ssl, void *arg)
+static int set_cert_cb(tls *tls, void *arg)
 {
     int i, rv;
-    SSL_EXCERT *exc = arg;
+    tls_EXCERT *exc = arg;
 #ifdef CERT_CB_TEST_RETRY
     static int retry_cnt;
     if (retry_cnt < 5) {
@@ -880,7 +880,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
         return -1;
     }
 #endif
-    SSL_certs_clear(ssl);
+    tls_certs_clear(tls);
 
     if (exc == NULL)
         return 1;
@@ -896,15 +896,15 @@ static int set_cert_cb(SSL *ssl, void *arg)
 
     while (exc != NULL) {
         i++;
-        rv = SSL_check_chain(ssl, exc->cert, exc->key, exc->chain);
+        rv = tls_check_chain(tls, exc->cert, exc->key, exc->chain);
         BIO_printf(bio_err, "Checking cert chain %d:\nSubject: ", i);
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
                            get_nameopt());
         BIO_puts(bio_err, "\n");
-        print_chain_flags(ssl, rv);
+        print_chain_flags(tls, rv);
         if (rv & CERT_PKEY_VALID) {
-            if (!SSL_use_certificate(ssl, exc->cert)
-                    || !SSL_use_PrivateKey(ssl, exc->key)) {
+            if (!tls_use_certificate(tls, exc->cert)
+                    || !tls_use_PrivateKey(tls, exc->key)) {
                 return 0;
             }
             /*
@@ -913,10 +913,10 @@ static int set_cert_cb(SSL *ssl, void *arg)
              * in advance.
              */
             if (exc->build_chain) {
-                if (!SSL_build_cert_chain(ssl, 0))
+                if (!tls_build_cert_chain(tls, 0))
                     return 0;
             } else if (exc->chain != NULL) {
-                SSL_set1_chain(ssl, exc->chain);
+                tls_set1_chain(tls, exc->chain);
             }
         }
         exc = exc->prev;
@@ -924,14 +924,14 @@ static int set_cert_cb(SSL *ssl, void *arg)
     return 1;
 }
 
-void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc)
+void tls_ctx_set_excert(tls_CTX *ctx, tls_EXCERT *exc)
 {
-    SSL_CTX_set_cert_cb(ctx, set_cert_cb, exc);
+    tls_CTX_set_cert_cb(ctx, set_cert_cb, exc);
 }
 
-static int ssl_excert_prepend(SSL_EXCERT **pexc)
+static int tls_excert_prepend(tls_EXCERT **pexc)
 {
-    SSL_EXCERT *exc = app_malloc(sizeof(*exc), "prepend cert");
+    tls_EXCERT *exc = app_malloc(sizeof(*exc), "prepend cert");
 
     memset(exc, 0, sizeof(*exc));
 
@@ -950,9 +950,9 @@ static int ssl_excert_prepend(SSL_EXCERT **pexc)
 
 }
 
-void ssl_excert_free(SSL_EXCERT *exc)
+void tls_excert_free(tls_EXCERT *exc)
 {
-    SSL_EXCERT *curr;
+    tls_EXCERT *curr;
 
     if (exc == NULL)
         return;
@@ -962,18 +962,18 @@ void ssl_excert_free(SSL_EXCERT *exc)
         sk_X509_pop_free(exc->chain, X509_free);
         curr = exc;
         exc = exc->next;
-        OPENSSL_free(curr);
+        OPENtls_free(curr);
     }
 }
 
-int load_excert(SSL_EXCERT **pexc)
+int load_excert(tls_EXCERT **pexc)
 {
-    SSL_EXCERT *exc = *pexc;
+    tls_EXCERT *exc = *pexc;
     if (exc == NULL)
         return 1;
     /* If nothing in list, free and set to NULL */
     if (exc->certfile == NULL && exc->next == NULL) {
-        ssl_excert_free(exc);
+        tls_excert_free(exc);
         *pexc = NULL;
         return 1;
     }
@@ -1006,15 +1006,15 @@ int load_excert(SSL_EXCERT **pexc)
 
 enum range { OPT_X_ENUM };
 
-int args_excert(int opt, SSL_EXCERT **pexc)
+int args_excert(int opt, tls_EXCERT **pexc)
 {
-    SSL_EXCERT *exc = *pexc;
+    tls_EXCERT *exc = *pexc;
 
     assert(opt > OPT_X__FIRST);
     assert(opt < OPT_X__LAST);
 
     if (exc == NULL) {
-        if (!ssl_excert_prepend(&exc)) {
+        if (!tls_excert_prepend(&exc)) {
             BIO_printf(bio_err, " %s: Error initialising xcert\n",
                        opt_getprog());
             goto err;
@@ -1027,7 +1027,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
     case OPT_X__LAST:
         return 0;
     case OPT_X_CERT:
-        if (exc->certfile != NULL && !ssl_excert_prepend(&exc)) {
+        if (exc->certfile != NULL && !tls_excert_prepend(&exc)) {
             BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
             goto err;
         }
@@ -1065,28 +1065,28 @@ int args_excert(int opt, SSL_EXCERT **pexc)
 
  err:
     ERR_print_errors(bio_err);
-    ssl_excert_free(exc);
+    tls_excert_free(exc);
     *pexc = NULL;
     return 0;
 }
 
-static void print_raw_cipherlist(SSL *s)
+static void print_raw_cipherlist(tls *s)
 {
     const unsigned char *rlist;
     static const unsigned char scsv_id[] = { 0, 0xFF };
     size_t i, rlistlen, num;
-    if (!SSL_is_server(s))
+    if (!tls_is_server(s))
         return;
-    num = SSL_get0_raw_cipherlist(s, NULL);
-    OPENSSL_assert(num == 2);
-    rlistlen = SSL_get0_raw_cipherlist(s, &rlist);
+    num = tls_get0_raw_cipherlist(s, NULL);
+    OPENtls_assert(num == 2);
+    rlistlen = tls_get0_raw_cipherlist(s, &rlist);
     BIO_puts(bio_err, "Client cipher list: ");
     for (i = 0; i < rlistlen; i += num, rlist += num) {
-        const SSL_CIPHER *c = SSL_CIPHER_find(s, rlist);
+        const tls_CIPHER *c = tls_CIPHER_find(s, rlist);
         if (i)
             BIO_puts(bio_err, ":");
         if (c != NULL) {
-            BIO_puts(bio_err, SSL_CIPHER_get_name(c));
+            BIO_puts(bio_err, tls_CIPHER_get_name(c));
         } else if (memcmp(rlist, scsv_id, num) == 0) {
             BIO_puts(bio_err, "SCSV");
         } else {
@@ -1125,14 +1125,14 @@ static char *hexencode(const unsigned char *data, size_t len)
     return out;
 }
 
-void print_verify_detail(SSL *s, BIO *bio)
+void print_verify_detail(tls *s, BIO *bio)
 {
     int mdpth;
     EVP_PKEY *mspki;
-    long verify_err = SSL_get_verify_result(s);
+    long verify_err = tls_get_verify_result(s);
 
     if (verify_err == X509_V_OK) {
-        const char *peername = SSL_get0_peername(s);
+        const char *peername = tls_get0_peername(s);
 
         BIO_printf(bio, "Verification: OK\n");
         if (peername != NULL)
@@ -1143,13 +1143,13 @@ void print_verify_detail(SSL *s, BIO *bio)
         BIO_printf(bio, "Verification error: %s\n", reason);
     }
 
-    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
+    if ((mdpth = tls_get0_dane_authority(s, NULL, &mspki)) >= 0) {
         uint8_t usage, selector, mtype;
         const unsigned char *data = NULL;
         size_t dlen = 0;
         char *hexdata;
 
-        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, &data, &dlen);
+        mdpth = tls_get0_dane_tlsa(s, &usage, &selector, &mtype, &data, &dlen);
 
         /*
          * The TLSA data field can be quite long when it is a certificate,
@@ -1169,21 +1169,21 @@ void print_verify_detail(SSL *s, BIO *bio)
                    (mspki != NULL) ? "signed the certificate" :
                    mdpth ? "matched TA certificate" : "matched EE certificate",
                    mdpth);
-        OPENSSL_free(hexdata);
+        OPENtls_free(hexdata);
     }
 }
 
-void print_ssl_summary(SSL *s)
+void print_tls_summary(tls *s)
 {
-    const SSL_CIPHER *c;
+    const tls_CIPHER *c;
     X509 *peer;
 
-    BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
+    BIO_printf(bio_err, "Protocol version: %s\n", tls_get_version(s));
     print_raw_cipherlist(s);
-    c = SSL_get_current_cipher(s);
-    BIO_printf(bio_err, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
+    c = tls_get_current_cipher(s);
+    BIO_printf(bio_err, "Ciphersuite: %s\n", tls_CIPHER_get_name(c));
     do_print_sigalgs(bio_err, s, 0);
-    peer = SSL_get_peer_certificate(s);
+    peer = tls_get_peer_certificate(s);
     if (peer != NULL) {
         int nid;
 
@@ -1191,37 +1191,37 @@ void print_ssl_summary(SSL *s)
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
                            0, get_nameopt());
         BIO_puts(bio_err, "\n");
-        if (SSL_get_peer_signature_nid(s, &nid))
+        if (tls_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
-        if (SSL_get_peer_signature_type_nid(s, &nid))
+        if (tls_get_peer_signature_type_nid(s, &nid))
             BIO_printf(bio_err, "Signature type: %s\n", get_sigtype(nid));
         print_verify_detail(s, bio_err);
     } else {
         BIO_puts(bio_err, "No peer certificate\n");
     }
     X509_free(peer);
-#ifndef OPENSSL_NO_EC
-    ssl_print_point_formats(bio_err, s);
-    if (SSL_is_server(s))
-        ssl_print_groups(bio_err, s, 1);
+#ifndef OPENtls_NO_EC
+    tls_print_point_formats(bio_err, s);
+    if (tls_is_server(s))
+        tls_print_groups(bio_err, s, 1);
     else
-        ssl_print_tmp_key(bio_err, s);
+        tls_print_tmp_key(bio_err, s);
 #else
-    if (!SSL_is_server(s))
-        ssl_print_tmp_key(bio_err, s);
+    if (!tls_is_server(s))
+        tls_print_tmp_key(bio_err, s);
 #endif
 }
 
-int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx)
+int config_ctx(tls_CONF_CTX *cctx, STACK_OF(OPENtls_STRING) *str,
+               tls_CTX *ctx)
 {
     int i;
 
-    SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
-    for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
-        const char *flag = sk_OPENSSL_STRING_value(str, i);
-        const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
-        if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
+    tls_CONF_CTX_set_tls_ctx(cctx, ctx);
+    for (i = 0; i < sk_OPENtls_STRING_num(str); i += 2) {
+        const char *flag = sk_OPENtls_STRING_value(str, i);
+        const char *arg = sk_OPENtls_STRING_value(str, i + 1);
+        if (tls_CONF_cmd(cctx, flag, arg) <= 0) {
             if (arg != NULL)
                 BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
                            flag, arg);
@@ -1231,7 +1231,7 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
             return 0;
         }
     }
-    if (!SSL_CONF_CTX_finish(cctx)) {
+    if (!tls_CONF_CTX_finish(cctx)) {
         BIO_puts(bio_err, "Error finishing context\n");
         ERR_print_errors(bio_err);
         return 0;
@@ -1250,17 +1250,17 @@ static int add_crls_store(X509_STORE *st, STACK_OF(X509_CRL) *crls)
     return 1;
 }
 
-int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls, int crl_download)
+int tls_ctx_add_crls(tls_CTX *ctx, STACK_OF(X509_CRL) *crls, int crl_download)
 {
     X509_STORE *st;
-    st = SSL_CTX_get_cert_store(ctx);
+    st = tls_CTX_get_cert_store(ctx);
     add_crls_store(st, crls);
     if (crl_download)
         store_setup_crl_download(st);
     return 1;
 }
 
-int ssl_load_stores(SSL_CTX *ctx,
+int tls_load_stores(tls_CTX *ctx,
                     const char *vfyCApath, const char *vfyCAfile,
                     const char *vfyCAstore,
                     const char *chCApath, const char *chCAfile,
@@ -1280,7 +1280,7 @@ int ssl_load_stores(SSL_CTX *ctx,
         if (vfyCAstore != NULL && !X509_STORE_load_store(vfy, vfyCAstore))
             goto err;
         add_crls_store(vfy, crls);
-        SSL_CTX_set1_verify_cert_store(ctx, vfy);
+        tls_CTX_set1_verify_cert_store(ctx, vfy);
         if (crl_download)
             store_setup_crl_download(vfy);
     }
@@ -1294,7 +1294,7 @@ int ssl_load_stores(SSL_CTX *ctx,
             goto err;
         if (chCAstore != NULL && !X509_STORE_load_store(ch, chCAstore))
             goto err;
-        SSL_CTX_set1_chain_cert_store(ctx, ch);
+        tls_CTX_set1_chain_cert_store(ctx, ch);
     }
     rv = 1;
  err:
@@ -1308,36 +1308,36 @@ int ssl_load_stores(SSL_CTX *ctx,
 typedef struct {
     BIO *out;
     int verbose;
-    int (*old_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
+    int (*old_cb) (const tls *s, const tls_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
 } security_debug_ex;
 
 static STRINT_PAIR callback_types[] = {
-    {"Supported Ciphersuite", SSL_SECOP_CIPHER_SUPPORTED},
-    {"Shared Ciphersuite", SSL_SECOP_CIPHER_SHARED},
-    {"Check Ciphersuite", SSL_SECOP_CIPHER_CHECK},
-#ifndef OPENSSL_NO_DH
-    {"Temp DH key bits", SSL_SECOP_TMP_DH},
+    {"Supported Ciphersuite", tls_SECOP_CIPHER_SUPPORTED},
+    {"Shared Ciphersuite", tls_SECOP_CIPHER_SHARED},
+    {"Check Ciphersuite", tls_SECOP_CIPHER_CHECK},
+#ifndef OPENtls_NO_DH
+    {"Temp DH key bits", tls_SECOP_TMP_DH},
 #endif
-    {"Supported Curve", SSL_SECOP_CURVE_SUPPORTED},
-    {"Shared Curve", SSL_SECOP_CURVE_SHARED},
-    {"Check Curve", SSL_SECOP_CURVE_CHECK},
-    {"Supported Signature Algorithm", SSL_SECOP_SIGALG_SUPPORTED},
-    {"Shared Signature Algorithm", SSL_SECOP_SIGALG_SHARED},
-    {"Check Signature Algorithm", SSL_SECOP_SIGALG_CHECK},
-    {"Signature Algorithm mask", SSL_SECOP_SIGALG_MASK},
-    {"Certificate chain EE key", SSL_SECOP_EE_KEY},
-    {"Certificate chain CA key", SSL_SECOP_CA_KEY},
-    {"Peer Chain EE key", SSL_SECOP_PEER_EE_KEY},
-    {"Peer Chain CA key", SSL_SECOP_PEER_CA_KEY},
-    {"Certificate chain CA digest", SSL_SECOP_CA_MD},
-    {"Peer chain CA digest", SSL_SECOP_PEER_CA_MD},
-    {"SSL compression", SSL_SECOP_COMPRESSION},
-    {"Session ticket", SSL_SECOP_TICKET},
+    {"Supported Curve", tls_SECOP_CURVE_SUPPORTED},
+    {"Shared Curve", tls_SECOP_CURVE_SHARED},
+    {"Check Curve", tls_SECOP_CURVE_CHECK},
+    {"Supported Signature Algorithm", tls_SECOP_SIGALG_SUPPORTED},
+    {"Shared Signature Algorithm", tls_SECOP_SIGALG_SHARED},
+    {"Check Signature Algorithm", tls_SECOP_SIGALG_CHECK},
+    {"Signature Algorithm mask", tls_SECOP_SIGALG_MASK},
+    {"Certificate chain EE key", tls_SECOP_EE_KEY},
+    {"Certificate chain CA key", tls_SECOP_CA_KEY},
+    {"Peer Chain EE key", tls_SECOP_PEER_EE_KEY},
+    {"Peer Chain CA key", tls_SECOP_PEER_CA_KEY},
+    {"Certificate chain CA digest", tls_SECOP_CA_MD},
+    {"Peer chain CA digest", tls_SECOP_PEER_CA_MD},
+    {"tls compression", tls_SECOP_COMPRESSION},
+    {"Session ticket", tls_SECOP_TICKET},
     {NULL}
 };
 
-static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
+static int security_callback_debug(const tls *s, const tls_CTX *ctx,
                                    int op, int bits, int nid,
                                    void *other, void *ex)
 {
@@ -1353,38 +1353,38 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     nm = lookup(op, callback_types, NULL);
     show_nm = nm != NULL;
     switch (op) {
-    case SSL_SECOP_TICKET:
-    case SSL_SECOP_COMPRESSION:
+    case tls_SECOP_TICKET:
+    case tls_SECOP_COMPRESSION:
         show_bits = 0;
         show_nm = 0;
         break;
-    case SSL_SECOP_VERSION:
-        BIO_printf(sdb->out, "Version=%s", lookup(nid, ssl_versions, "???"));
+    case tls_SECOP_VERSION:
+        BIO_printf(sdb->out, "Version=%s", lookup(nid, tls_versions, "???"));
         show_bits = 0;
         show_nm = 0;
         break;
-    case SSL_SECOP_CA_MD:
-    case SSL_SECOP_PEER_CA_MD:
+    case tls_SECOP_CA_MD:
+    case tls_SECOP_PEER_CA_MD:
         cert_md = 1;
         break;
-    case SSL_SECOP_SIGALG_SUPPORTED:
-    case SSL_SECOP_SIGALG_SHARED:
-    case SSL_SECOP_SIGALG_CHECK:
-    case SSL_SECOP_SIGALG_MASK:
+    case tls_SECOP_SIGALG_SUPPORTED:
+    case tls_SECOP_SIGALG_SHARED:
+    case tls_SECOP_SIGALG_CHECK:
+    case tls_SECOP_SIGALG_MASK:
         show_nm = 0;
         break;
     }
     if (show_nm)
         BIO_printf(sdb->out, "%s=", nm);
 
-    switch (op & SSL_SECOP_OTHER_TYPE) {
+    switch (op & tls_SECOP_OTHER_TYPE) {
 
-    case SSL_SECOP_OTHER_CIPHER:
-        BIO_puts(sdb->out, SSL_CIPHER_get_name(other));
+    case tls_SECOP_OTHER_CIPHER:
+        BIO_puts(sdb->out, tls_CIPHER_get_name(other));
         break;
 
-#ifndef OPENSSL_NO_EC
-    case SSL_SECOP_OTHER_CURVE:
+#ifndef OPENtls_NO_EC
+    case tls_SECOP_OTHER_CURVE:
         {
             const char *cname;
             cname = EC_curve_nid2nist(nid);
@@ -1394,15 +1394,15 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         }
         break;
 #endif
-#ifndef OPENSSL_NO_DH
-    case SSL_SECOP_OTHER_DH:
+#ifndef OPENtls_NO_DH
+    case tls_SECOP_OTHER_DH:
         {
             DH *dh = other;
             BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif
-    case SSL_SECOP_OTHER_CERT:
+    case tls_SECOP_OTHER_CERT:
         {
             if (cert_md) {
                 int sig_nid = X509_get_signature_nid(other);
@@ -1417,7 +1417,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             }
             break;
         }
-    case SSL_SECOP_OTHER_SIGALG:
+    case tls_SECOP_OTHER_SIGALG:
         {
             const unsigned char *salg = other;
             const char *sname = NULL;
@@ -1453,18 +1453,18 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     return rv;
 }
 
-void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
+void tls_ctx_security_debug(tls_CTX *ctx, int verbose)
 {
     static security_debug_ex sdb;
 
     sdb.out = bio_err;
     sdb.verbose = verbose;
-    sdb.old_cb = SSL_CTX_get_security_callback(ctx);
-    SSL_CTX_set_security_callback(ctx, security_callback_debug);
-    SSL_CTX_set0_security_ex_data(ctx, &sdb);
+    sdb.old_cb = tls_CTX_get_security_callback(ctx);
+    tls_CTX_set_security_callback(ctx, security_callback_debug);
+    tls_CTX_set0_security_ex_data(ctx, &sdb);
 }
 
-static void keylog_callback(const SSL *ssl, const char *line)
+static void keylog_callback(const tls *tls, const char *line)
 {
     if (bio_keylog == NULL) {
         BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
@@ -1479,7 +1479,7 @@ static void keylog_callback(const SSL *ssl, const char *line)
     (void)BIO_flush(bio_keylog);
 }
 
-int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
+int set_keylog_file(tls_CTX *ctx, const char *keylog_file)
 {
     /* Close any open files */
     BIO_free_all(bio_keylog);
@@ -1504,21 +1504,21 @@ int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
     /* Write a header for seekable, empty files (this excludes pipes). */
     if (BIO_tell(bio_keylog) == 0) {
         BIO_puts(bio_keylog,
-                 "# SSL/TLS secrets log file, generated by OpenSSL\n");
+                 "# tls/TLS secrets log file, generated by Opentls\n");
         (void)BIO_flush(bio_keylog);
     }
-    SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+    tls_CTX_set_keylog_callback(ctx, keylog_callback);
     return 0;
 }
 
-void print_ca_names(BIO *bio, SSL *s)
+void print_ca_names(BIO *bio, tls *s)
 {
-    const char *cs = SSL_is_server(s) ? "server" : "client";
-    const STACK_OF(X509_NAME) *sk = SSL_get0_peer_CA_list(s);
+    const char *cs = tls_is_server(s) ? "server" : "client";
+    const STACK_OF(X509_NAME) *sk = tls_get0_peer_CA_list(s);
     int i;
 
     if (sk == NULL || sk_X509_NAME_num(sk) == 0) {
-        if (!SSL_is_server(s))
+        if (!tls_is_server(s))
             BIO_printf(bio, "---\nNo %s certificate CA names sent\n", cs);
         return;
     }

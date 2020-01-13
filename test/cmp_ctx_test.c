@@ -1,37 +1,37 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "cmp_testlib.h"
 
-#include <openssl/x509_vfy.h>
+#include <opentls/x509_vfy.h>
 
 typedef struct test_fixture {
     const char *test_case_name;
-    OSSL_CMP_CTX *ctx;
-} OSSL_CMP_CTX_TEST_FIXTURE;
+    Otls_CMP_CTX *ctx;
+} Otls_CMP_CTX_TEST_FIXTURE;
 
-static void tear_down(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+static void tear_down(Otls_CMP_CTX_TEST_FIXTURE *fixture)
 {
     if (fixture != NULL)
-        OSSL_CMP_CTX_free(fixture->ctx);
-    OPENSSL_free(fixture);
+        Otls_CMP_CTX_free(fixture->ctx);
+    OPENtls_free(fixture);
 }
 
-static OSSL_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
+static Otls_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
-    OSSL_CMP_CTX_TEST_FIXTURE *fixture;
+    Otls_CMP_CTX_TEST_FIXTURE *fixture;
 
-    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+    if (!TEST_ptr(fixture = OPENtls_zalloc(sizeof(*fixture))))
         return NULL;
-    if (!TEST_ptr(fixture->ctx = OSSL_CMP_CTX_new())) {
+    if (!TEST_ptr(fixture->ctx = Otls_CMP_CTX_new())) {
         tear_down(fixture);
         return NULL;
     }
@@ -57,9 +57,9 @@ static void sk_X509_pop_X509_free(STACK_OF(X509) *sk)
     sk_X509_pop_free(sk, X509_free);
 }
 
-static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+static int execute_CTX_reinit_test(Otls_CMP_CTX_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_CTX *ctx = fixture->ctx;
+    Otls_CMP_CTX *ctx = fixture->ctx;
     ASN1_OCTET_STRING *bytes = NULL;
     STACK_OF(X509) *certs = NULL;
     int res = 0;
@@ -67,19 +67,19 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     /* set non-default values in all relevant fields */
     ctx->status = 1;
     ctx->failInfoCode = 1;
-    if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
-            || !ossl_cmp_ctx_set0_newCert(ctx, X509_new())
+    if (!otls_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
+            || !otls_cmp_ctx_set0_newCert(ctx, X509_new())
             || !TEST_ptr(certs = sk_X509_new_1())
-            || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
-            || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
-            || !ossl_cmp_ctx_set0_validatedSrvCert(ctx, X509_new())
+            || !otls_cmp_ctx_set1_caPubs(ctx, certs)
+            || !otls_cmp_ctx_set1_extraCertsIn(ctx, certs)
+            || !otls_cmp_ctx_set0_validatedSrvCert(ctx, X509_new())
             || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
-            || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
-            || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
-            || !ossl_cmp_ctx_set1_recipNonce(ctx, bytes))
+            || !Otls_CMP_CTX_set1_transactionID(ctx, bytes)
+            || !Otls_CMP_CTX_set1_senderNonce(ctx, bytes)
+            || !otls_cmp_ctx_set1_recipNonce(ctx, bytes))
         goto err;
 
-    if (!TEST_true(OSSL_CMP_CTX_reinit(ctx)))
+    if (!TEST_true(Otls_CMP_CTX_reinit(ctx)))
         goto err;
 
     /* check whether values have been reset to default in all relevant fields */
@@ -106,16 +106,16 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 
 static int test_CTX_reinit(void)
 {
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up);
     EXECUTE_TEST(execute_CTX_reinit_test, tear_down);
     return result;
 }
 
-#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
+#if !defined(OPENtls_NO_ERR) && !defined(OPENtls_NO_AUTOERRINIT)
 
 static int msg_total_size = 0;
 static int msg_total_size_log_cb(const char *func, const char *file, int line,
-                                 OSSL_CMP_severity level, const char *msg)
+                                 Otls_CMP_severity level, const char *msg)
 {
     msg_total_size += strlen(msg);
     return 1;
@@ -128,24 +128,24 @@ static int msg_total_size_log_cb(const char *func, const char *file, int line,
 static const char *const max_str_literal = STR509;
 # define STR_SEP "<SEP>"
 
-static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+static int execute_CTX_print_errors_test(Otls_CMP_CTX_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_CTX *ctx = fixture->ctx;
+    Otls_CMP_CTX *ctx = fixture->ctx;
     int base_err_msg_size, expected_size;
     int res = 1;
 
-    if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, NULL)))
+    if (!TEST_true(Otls_CMP_CTX_set_log_cb(ctx, NULL)))
         res = 0;
     if (!TEST_true(ctx->log_cb == NULL))
         res = 0;
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
     CMPerr(0, CMP_R_MULTIPLE_SAN_SOURCES);
-    OSSL_CMP_CTX_print_errors(ctx); /* should print above error to STDERR */
+    Otls_CMP_CTX_print_errors(ctx); /* should print above error to STDERR */
 # endif
 
-    /* this should work regardless of OPENSSL_NO_STDIO and OPENSSL_NO_TRACE: */
-    if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, msg_total_size_log_cb)))
+    /* this should work regardless of OPENtls_NO_STDIO and OPENtls_NO_TRACE: */
+    if (!TEST_true(Otls_CMP_CTX_set_log_cb(ctx, msg_total_size_log_cb)))
         res = 0;
     if (!TEST_true(ctx->log_cb == msg_total_size_log_cb)) {
         res = 0;
@@ -155,13 +155,13 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         base_err_msg_size += strlen("NULL_ARGUMENT");
         expected_size = base_err_msg_size;
-        ossl_cmp_add_error_data("data1"); /* should prepend separator " : " */
+        otls_cmp_add_error_data("data1"); /* should prepend separator " : " */
         expected_size += strlen(" : " "data1");
-        ossl_cmp_add_error_data("data2"); /* should prepend separator " : " */
+        otls_cmp_add_error_data("data2"); /* should prepend separator " : " */
         expected_size += strlen(" : " "data2");
-        ossl_cmp_add_error_line("new line"); /* should prepend separator "\n" */
+        otls_cmp_add_error_line("new line"); /* should prepend separator "\n" */
         expected_size += strlen("\n" "new line");
-        OSSL_CMP_CTX_print_errors(ctx);
+        Otls_CMP_CTX_print_errors(ctx);
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
 
@@ -169,12 +169,12 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         base_err_msg_size = strlen("INVALID_ARGS") + strlen(" : ");
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
-            ossl_cmp_add_error_txt(STR_SEP, max_str_literal);
+            otls_cmp_add_error_txt(STR_SEP, max_str_literal);
             expected_size += strlen(STR_SEP) + strlen(max_str_literal);
         }
         expected_size += base_err_msg_size - 2 * strlen(STR_SEP);
         msg_total_size = 0;
-        OSSL_CMP_CTX_print_errors(ctx);
+        Otls_CMP_CTX_print_errors(ctx);
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
     }
@@ -184,16 +184,16 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 
 static int test_CTX_print_errors(void)
 {
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up);
     EXECUTE_TEST(execute_CTX_print_errors_test, tear_down);
     return result;
 }
 #endif
 
 static int execute_CTX_reqExtensions_have_SAN_test(
-                                             OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+                                             Otls_CMP_CTX_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_CTX *ctx = fixture->ctx;
+    Otls_CMP_CTX *ctx = fixture->ctx;
     const int len = 16;
     unsigned char str[16 /* = len */ ];
     ASN1_OCTET_STRING *data = NULL;
@@ -201,7 +201,7 @@ static int execute_CTX_reqExtensions_have_SAN_test(
     X509_EXTENSIONS *exts = NULL;
     int res = 0;
 
-    if (!TEST_false(OSSL_CMP_CTX_reqExtensions_have_SAN(ctx)))
+    if (!TEST_false(Otls_CMP_CTX_reqExtensions_have_SAN(ctx)))
         return 0;
 
     if (!TEST_int_eq(1, RAND_bytes(str, len))
@@ -212,14 +212,14 @@ static int execute_CTX_reqExtensions_have_SAN_test(
     if (!TEST_ptr(ext)
             || !TEST_ptr(exts = sk_X509_EXTENSION_new_null())
             || !TEST_true(sk_X509_EXTENSION_push(exts, ext))
-            || !TEST_true(OSSL_CMP_CTX_set0_reqExtensions(ctx, exts))) {
+            || !TEST_true(Otls_CMP_CTX_set0_reqExtensions(ctx, exts))) {
         X509_EXTENSION_free(ext);
         sk_X509_EXTENSION_free(exts);
         goto err;
     }
-    if (TEST_int_eq(OSSL_CMP_CTX_reqExtensions_have_SAN(ctx), 1)) {
+    if (TEST_int_eq(Otls_CMP_CTX_reqExtensions_have_SAN(ctx), 1)) {
         ext = sk_X509_EXTENSION_pop(exts);
-        res = TEST_false(OSSL_CMP_CTX_reqExtensions_have_SAN(ctx));
+        res = TEST_false(Otls_CMP_CTX_reqExtensions_have_SAN(ctx));
         X509_EXTENSION_free(ext);
     }
  err:
@@ -229,98 +229,98 @@ static int execute_CTX_reqExtensions_have_SAN_test(
 
 static int test_CTX_reqExtensions_have_SAN(void)
 {
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up);
     EXECUTE_TEST(execute_CTX_reqExtensions_have_SAN_test, tear_down);
     return result;
 }
 
-#ifndef OPENSSL_NO_TRACE
+#ifndef OPENtls_NO_TRACE
 static int test_log_line;
 static int test_log_cb_res = 0;
 static int test_log_cb(const char *func, const char *file, int line,
-                       OSSL_CMP_severity level, const char *msg)
+                       Otls_CMP_severity level, const char *msg)
 {
     test_log_cb_res =
 # ifndef PEDANTIC
         (strcmp(func, "execute_cmp_ctx_log_cb_test") == 0
          || strcmp(func, "(unknown function)") == 0) &&
 # endif
-        (strcmp(file, OPENSSL_FILE) == 0 || strcmp(file, "(no file)") == 0)
+        (strcmp(file, OPENtls_FILE) == 0 || strcmp(file, "(no file)") == 0)
         && (line == test_log_line || line == 0)
-        && (level == OSSL_CMP_LOG_INFO || level == -1)
+        && (level == Otls_CMP_LOG_INFO || level == -1)
         && strcmp(msg, "ok\n") == 0;
     return 1;
 }
 #endif
 
-static int execute_cmp_ctx_log_cb_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+static int execute_cmp_ctx_log_cb_test(Otls_CMP_CTX_TEST_FIXTURE *fixture)
 {
     int res = 1;
-#if !defined OPENSSL_NO_TRACE && !defined OPENSSL_NO_STDIO
-    OSSL_CMP_CTX *ctx = fixture->ctx;
+#if !defined OPENtls_NO_TRACE && !defined OPENtls_NO_STDIO
+    Otls_CMP_CTX *ctx = fixture->ctx;
 
-    OSSL_TRACE(ALL, "this general trace message is not shown by default\n");
+    Otls_TRACE(ALL, "this general trace message is not shown by default\n");
 
-    OSSL_CMP_log_open();
-    OSSL_CMP_log_open(); /* multiple calls should be harmless */
+    Otls_CMP_log_open();
+    Otls_CMP_log_open(); /* multiple calls should be harmless */
 
-    if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, NULL))) {
+    if (!TEST_true(Otls_CMP_CTX_set_log_cb(ctx, NULL))) {
         res = 0;
     } else {
-        OSSL_CMP_err("this should be printed as CMP error message");
-        OSSL_CMP_warn("this should be printed as CMP warning message");
-        OSSL_CMP_debug("this should not be printed");
-        TEST_true(OSSL_CMP_CTX_set_log_verbosity(ctx, OSSL_CMP_LOG_DEBUG));
-        OSSL_CMP_debug("this should be printed as CMP debug message");
-        TEST_true(OSSL_CMP_CTX_set_log_verbosity(ctx, OSSL_CMP_LOG_INFO));
+        Otls_CMP_err("this should be printed as CMP error message");
+        Otls_CMP_warn("this should be printed as CMP warning message");
+        Otls_CMP_debug("this should not be printed");
+        TEST_true(Otls_CMP_CTX_set_log_verbosity(ctx, Otls_CMP_LOG_DEBUG));
+        Otls_CMP_debug("this should be printed as CMP debug message");
+        TEST_true(Otls_CMP_CTX_set_log_verbosity(ctx, Otls_CMP_LOG_INFO));
     }
-    if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, test_log_cb))) {
+    if (!TEST_true(Otls_CMP_CTX_set_log_cb(ctx, test_log_cb))) {
         res = 0;
     } else {
-        test_log_line = OPENSSL_LINE + 1;
-        OSSL_CMP_log2(INFO, "%s%c", "o", 'k');
+        test_log_line = OPENtls_LINE + 1;
+        Otls_CMP_log2(INFO, "%s%c", "o", 'k');
         if (!TEST_int_eq(test_log_cb_res, 1))
             res = 0;
-        OSSL_CMP_CTX_set_log_verbosity(ctx, OSSL_CMP_LOG_ERR);
+        Otls_CMP_CTX_set_log_verbosity(ctx, Otls_CMP_LOG_ERR);
         test_log_cb_res = -1; /* callback should not be called at all */
-        test_log_line = OPENSSL_LINE + 1;
-        OSSL_CMP_log2(INFO, "%s%c", "o", 'k');
+        test_log_line = OPENtls_LINE + 1;
+        Otls_CMP_log2(INFO, "%s%c", "o", 'k');
         if (!TEST_int_eq(test_log_cb_res, -1))
             res = 0;
     }
-    OSSL_CMP_log_close();
-    OSSL_CMP_log_close(); /* multiple calls should be harmless */
+    Otls_CMP_log_close();
+    Otls_CMP_log_close(); /* multiple calls should be harmless */
 #endif
     return res;
 }
 
 static int test_cmp_ctx_log_cb(void)
 {
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up);
     EXECUTE_TEST(execute_cmp_ctx_log_cb_test, tear_down);
     return result;
 }
 
-static BIO *test_http_cb(OSSL_CMP_CTX *ctx, BIO *hbio, unsigned long detail)
+static BIO *test_http_cb(Otls_CMP_CTX *ctx, BIO *hbio, unsigned long detail)
 {
     return NULL;
 }
 
-static int test_transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
-                            OSSL_CMP_MSG **res)
+static int test_transfer_cb(Otls_CMP_CTX *ctx, const Otls_CMP_MSG *req,
+                            Otls_CMP_MSG **res)
 {
     return 0;
 }
 
-static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
+static int test_certConf_cb(Otls_CMP_CTX *ctx, X509 *cert, int fail_info,
                             const char **txt)
 {
     return 0;
 }
 
-typedef OSSL_CMP_CTX CMP_CTX; /* prevents rewriting type name by below macro */
-#define OSSL_CMP_CTX 1 /* name prefix for exported setter functions */
-#define ossl_cmp_ctx 0 /* name prefix for internal setter functions */
+typedef Otls_CMP_CTX CMP_CTX; /* prevents rewriting type name by below macro */
+#define Otls_CMP_CTX 1 /* name prefix for exported setter functions */
+#define otls_cmp_ctx 0 /* name prefix for internal setter functions */
 #define set 0
 #define set0 0
 #define set1 1
@@ -331,13 +331,13 @@ typedef OSSL_CMP_CTX CMP_CTX; /* prevents rewriting type name by below macro */
 #define DEFINE_SET_GET_BASE_TEST(PREFIX, SETN, GETN, DUP, FIELD, TYPE, ERR, \
                                  DEFAULT, NEW, FREE) \
 static int execute_CTX_##SETN##_##GETN##_##FIELD( \
-    OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
+    Otls_CMP_CTX_TEST_FIXTURE *fixture) \
 { \
     CMP_CTX *ctx = fixture->ctx; \
     int (*set_fn)(CMP_CTX *ctx, TYPE) = \
         (int (*)(CMP_CTX *ctx, TYPE))PREFIX##_##SETN##_##FIELD; \
     /* need type cast in above assignment because TYPE arg sometimes is const */ \
-    TYPE (*get_fn)(const CMP_CTX *ctx) = OSSL_CMP_CTX_##GETN##_##FIELD; \
+    TYPE (*get_fn)(const CMP_CTX *ctx) = Otls_CMP_CTX_##GETN##_##FIELD; \
     TYPE val1_to_free = NEW; \
     TYPE val1 = val1_to_free; \
     TYPE val1_read = 0; /* 0 works for any type */ \
@@ -463,19 +463,19 @@ static int execute_CTX_##SETN##_##GETN##_##FIELD( \
 \
 static int test_CTX_##SETN##_##GETN##_##FIELD(void) \
 { \
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up); \
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up); \
     EXECUTE_TEST(execute_CTX_##SETN##_##GETN##_##FIELD, tear_down); \
     return result; \
 }
 
 static char *char_new(void)
 {
-    return OPENSSL_strdup("test");
+    return OPENtls_strdup("test");
 }
 
 static void char_free(char *val)
 {
-    OPENSSL_free(val);
+    OPENtls_free(val);
 }
 
 #define EMPTY_SK_X509(x) ((x) == NULL || sk_X509_num(x) == 0)
@@ -494,99 +494,99 @@ static X509_STORE *X509_STORE_new_1(void)
 
 #define IS_NEG(x) ((x) < 0)
 #define IS_0(x) ((x) == 0) /* for any type */
-#define IS_DEFAULT_PORT(x) ((x) == OSSL_CMP_DEFAULT_PORT)
+#define IS_DEFAULT_PORT(x) ((x) == Otls_CMP_DEFAULT_PORT)
 #define DROP(x) (void)(x) /* dummy free() for non-pointer and function types */
 
 #define ERR(x) (CMPerr(0, CMP_R_NULL_ARGUMENT), x)
 
-#define DEFINE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE) \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
+#define DEFINE_SET_GET_TEST(Otls_CMP, CTX, N, M, DUP, FIELD, TYPE) \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
                              TYPE*, NULL, IS_0, TYPE##_new(), TYPE##_free)
 
-#define DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
+#define DEFINE_SET_GET_SK_TEST_DEFAULT(Otls_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
                                        DEFAULT, NEW, FREE) \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, 1, FIELD, \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP##_##CTX, set##N, get##M, 1, FIELD, \
                              STACK_OF(ELEM_TYPE)*, NULL, DEFAULT, NEW, FREE)
-#define DEFINE_SET_GET_SK_TEST(OSSL_CMP, CTX, N, M, FIELD, T) \
-    DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, T, \
+#define DEFINE_SET_GET_SK_TEST(Otls_CMP, CTX, N, M, FIELD, T) \
+    DEFINE_SET_GET_SK_TEST_DEFAULT(Otls_CMP, CTX, N, M, FIELD, T, \
                                    IS_0, sk_##T##_new_null(), sk_##T##_free)
-#define DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, N, M, FNAME) \
-    DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FNAME, X509, \
+#define DEFINE_SET_GET_SK_X509_TEST(Otls_CMP, CTX, N, M, FNAME) \
+    DEFINE_SET_GET_SK_TEST_DEFAULT(Otls_CMP, CTX, N, M, FNAME, X509, \
                                    EMPTY_SK_X509, \
                                    sk_X509_new_1(), sk_X509_pop_X509_free)
 
-#define DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE, \
+#define DEFINE_SET_GET_TEST_DEFAULT(Otls_CMP, CTX, N, M, DUP, FIELD, TYPE, \
                                     DEFAULT) \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
                              TYPE*, NULL, DEFAULT, TYPE##_new(), TYPE##_free)
-#define DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
-    static TYPE *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
+#define DEFINE_SET_TEST_DEFAULT(Otls_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
+    static TYPE *Otls_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
     } \
-    DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, 0, DUP, FIELD, TYPE, DEFAULT)
-#define DEFINE_SET_TEST(OSSL_CMP, CTX, N, DUP, FIELD, TYPE) \
-    DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, IS_0)
+    DEFINE_SET_GET_TEST_DEFAULT(Otls_CMP, CTX, N, 0, DUP, FIELD, TYPE, DEFAULT)
+#define DEFINE_SET_TEST(Otls_CMP, CTX, N, DUP, FIELD, TYPE) \
+    DEFINE_SET_TEST_DEFAULT(Otls_CMP, CTX, N, DUP, FIELD, TYPE, IS_0)
 
-#define DEFINE_SET_SK_TEST(OSSL_CMP, CTX, N, FIELD, TYPE) \
-    static STACK_OF(TYPE) *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
+#define DEFINE_SET_SK_TEST(Otls_CMP, CTX, N, FIELD, TYPE) \
+    static STACK_OF(TYPE) *Otls_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
     } \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get0, 1, FIELD, \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP##_##CTX, set##N, get0, 1, FIELD, \
                              STACK_OF(TYPE)*, NULL, IS_0, \
                              sk_##TYPE##_new_null(), sk_##TYPE##_free)
 
 #define DEFINE_SET_CB_TEST(FIELD) \
-    static OSSL_cmp_##FIELD##_t OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
+    static Otls_cmp_##FIELD##_t Otls_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
         if (ctx == NULL) \
             CMPerr(0, CMP_R_NULL_ARGUMENT); \
         return ctx == NULL ? NULL /* cannot use ERR(NULL) here */ : ctx->FIELD;\
     } \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, \
-                             OSSL_cmp_##FIELD##_t, NULL, IS_0, \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP_CTX, set, get, 0, FIELD, \
+                             Otls_cmp_##FIELD##_t, NULL, IS_0, \
                              test_##FIELD, DROP)
 #define DEFINE_SET_GET_P_VOID_TEST(FIELD) \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, FIELD, void*, \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP_CTX, set, get, 0, FIELD, void*, \
                              NULL, IS_0, ((void *)1), DROP)
 
-#define DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, DEFAULT) \
-    DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set, get, 0, FIELD, int, -1, \
+#define DEFINE_SET_GET_INT_TEST_DEFAULT(Otls_CMP, CTX, FIELD, DEFAULT) \
+    DEFINE_SET_GET_BASE_TEST(Otls_CMP##_##CTX, set, get, 0, FIELD, int, -1, \
                              DEFAULT, 1, DROP)
-#define DEFINE_SET_GET_INT_TEST(OSSL_CMP, CTX, FIELD) \
-    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_NEG)
+#define DEFINE_SET_GET_INT_TEST(Otls_CMP, CTX, FIELD) \
+    DEFINE_SET_GET_INT_TEST_DEFAULT(Otls_CMP, CTX, FIELD, IS_NEG)
 #define DEFINE_SET_PORT_TEST(FIELD) \
-    static int OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
+    static int Otls_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(-1) : ctx->FIELD; \
     } \
-    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_DEFAULT_PORT)
+    DEFINE_SET_GET_INT_TEST_DEFAULT(Otls_CMP, CTX, FIELD, IS_DEFAULT_PORT)
 
 #define DEFINE_SET_GET_ARG_FN(SETN, GETN, FIELD, ARG, T) \
-    static int OSSL_CMP_CTX_##SETN##_##FIELD##_##ARG(CMP_CTX *ctx, T val) \
+    static int Otls_CMP_CTX_##SETN##_##FIELD##_##ARG(CMP_CTX *ctx, T val) \
     { \
-        return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, ARG, val); \
+        return Otls_CMP_CTX_##SETN##_##FIELD(ctx, ARG, val); \
     } \
     \
-    static T OSSL_CMP_CTX_##GETN##_##FIELD##_##ARG(const CMP_CTX *ctx) \
+    static T Otls_CMP_CTX_##GETN##_##FIELD##_##ARG(const CMP_CTX *ctx) \
     { \
-        return OSSL_CMP_CTX_##GETN##_##FIELD(ctx, ARG); \
+        return Otls_CMP_CTX_##GETN##_##FIELD(ctx, ARG); \
     }
 
 #define DEFINE_SET_GET1_STR_FN(SETN, FIELD) \
-    static int OSSL_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)\
+    static int Otls_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)\
     { \
-        return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val, \
+        return Otls_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val, \
                                             strlen(val)); \
     } \
     \
-    static char *OSSL_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx) \
+    static char *Otls_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx) \
     { \
         const ASN1_OCTET_STRING *bytes = ctx == NULL ? ERR(NULL) : ctx->FIELD; \
         \
         return bytes == NULL ? NULL : \
-            OPENSSL_strndup((char *)bytes->data, bytes->length); \
+            OPENtls_strndup((char *)bytes->data, bytes->length); \
     }
 
 #define push 0
@@ -599,11 +599,11 @@ static TYPE sk_top_##FIELD(const CMP_CTX *ctx) \
     return sk_##T##_value(ctx->FIELD, sk_##T##_num(ctx->FIELD) - 1); \
 } \
 \
-static int execute_CTX_##PUSHN##_##ELEM(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
+static int execute_CTX_##PUSHN##_##ELEM(Otls_CMP_CTX_TEST_FIXTURE *fixture) \
 { \
     CMP_CTX *ctx = fixture->ctx; \
     int (*push_fn)(CMP_CTX *ctx, TYPE) = \
-        (int (*)(CMP_CTX *ctx, TYPE))OSSL_CMP_CTX_##PUSHN##_##ELEM; \
+        (int (*)(CMP_CTX *ctx, TYPE))Otls_CMP_CTX_##PUSHN##_##ELEM; \
     /* \
      * need type cast in above assignment because TYPE arg sometimes is const \
      */ \
@@ -695,7 +695,7 @@ static int execute_CTX_##PUSHN##_##ELEM(OSSL_CMP_CTX_TEST_FIXTURE *fixture) \
 \
 static int test_CTX_##PUSHN##_##ELEM(void) \
 { \
-    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up); \
+    SETUP_TEST_FIXTURE(Otls_CMP_CTX_TEST_FIXTURE, set_up); \
     EXECUTE_TEST(execute_CTX_##PUSHN##_##ELEM, tear_down); \
     return result; \
 } \
@@ -710,98 +710,98 @@ void cleanup_tests(void)
 }
 
 DEFINE_SET_GET_ARG_FN(set, get, option, 16, int)
-/* option == OSSL_CMP_OPT_IGNORE_KEYUSAGE */
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
+/* option == Otls_CMP_OPT_IGNORE_KEYUSAGE */
+DEFINE_SET_GET_BASE_TEST(Otls_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
                          1 /* true */, DROP)
 
-#ifndef OPENSSL_NO_TRACE
+#ifndef OPENtls_NO_TRACE
 DEFINE_SET_CB_TEST(log_cb)
 #endif
 
-DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
+DEFINE_SET_TEST_DEFAULT(Otls_CMP, CTX, 1, 1, serverPath, char, IS_0)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, serverName, char)
 DEFINE_SET_PORT_TEST(serverPort)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxyName, char)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, proxyName, char)
 DEFINE_SET_PORT_TEST(proxyPort)
 DEFINE_SET_CB_TEST(http_cb)
 DEFINE_SET_GET_P_VOID_TEST(http_cb_arg)
 DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DEFINE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 0, srvCert, X509)
+DEFINE_SET_TEST(otls_cmp, ctx, 0, 0, validatedSrvCert, X509)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, expected_sender, X509_NAME)
+DEFINE_SET_GET_BASE_TEST(Otls_CMP_CTX, set0, get0, 0, trustedStore,
                          X509_STORE*, NULL,
                          DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
-DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
+DEFINE_SET_GET_SK_X509_TEST(Otls_CMP, CTX, 1, 0, untrusted_certs)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, clCert, X509)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 0, clCert, X509)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 0, pkey, EVP_PKEY)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
-DEFINE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, OSSL_CMP_ITAV)
-DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 1, extraCertsOut, X509)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, recipient, X509_NAME)
+DEFINE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, Otls_CMP_ITAV)
+DEFINE_SET_SK_TEST(Otls_CMP, CTX, 1, extraCertsOut, X509)
 DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 1, EVP_PKEY*) /* priv == 1 */
-DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
+DEFINE_SET_GET_TEST(Otls_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
 DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY*) /* priv == 0 */
-DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
+DEFINE_SET_GET_TEST(Otls_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
 DEFINE_SET_GET1_STR_FN(set1, referenceValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str, char,
+DEFINE_SET_GET_TEST_DEFAULT(Otls_CMP, CTX, 1, 1, 1, referenceValue_str, char,
                             IS_0)
 DEFINE_SET_GET1_STR_FN(set1, secretValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str, char, IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
+DEFINE_SET_GET_TEST_DEFAULT(Otls_CMP, CTX, 1, 1, 1, secretValue_str, char, IS_0)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, issuer, X509_NAME)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, subjectName, X509_NAME)
 #ifdef ISSUE_9504_RESOLVED
 DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
 #endif
-DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
+DEFINE_SET_SK_TEST(Otls_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
 DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 0, oldCert, X509)
 #ifdef ISSUE_9504_RESOLVED
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, p10CSR, X509_REQ)
 #endif
-DEFINE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, OSSL_CMP_ITAV)
+DEFINE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, Otls_CMP_ITAV)
 DEFINE_SET_CB_TEST(certConf_cb)
 DEFINE_SET_GET_P_VOID_TEST(certConf_cb_arg)
 
-DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
-DEFINE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
-DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
-DEFINE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
-DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
-DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
+DEFINE_SET_GET_INT_TEST(otls_cmp, ctx, status)
+DEFINE_SET_GET_SK_TEST(otls_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
+DEFINE_SET_GET_INT_TEST(otls_cmp, ctx, failInfoCode)
+DEFINE_SET_GET_TEST(otls_cmp, ctx, 0, 0, 0, newCert, X509)
+DEFINE_SET_GET_SK_X509_TEST(otls_cmp, ctx, 1, 1, caPubs)
+DEFINE_SET_GET_SK_X509_TEST(otls_cmp, ctx, 1, 1, extraCertsIn)
 
-DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID, ASN1_OCTET_STRING,
+DEFINE_SET_TEST_DEFAULT(Otls_CMP, CTX, 1, 1, transactionID, ASN1_OCTET_STRING,
                         IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
-DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
+DEFINE_SET_TEST(Otls_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
+DEFINE_SET_TEST(otls_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
 
 int setup_tests(void)
 {
-    /* OSSL_CMP_CTX_new() is tested by set_up() */
-    /* OSSL_CMP_CTX_free() is tested by tear_down() */
+    /* Otls_CMP_CTX_new() is tested by set_up() */
+    /* Otls_CMP_CTX_free() is tested by tear_down() */
     ADD_TEST(test_CTX_reinit);
 
     /* various CMP options: */
     ADD_TEST(test_CTX_set_get_option_16);
     /* CMP-specific callback for logging and outputting the error queue: */
-#ifndef OPENSSL_NO_TRACE
+#ifndef OPENtls_NO_TRACE
     ADD_TEST(test_CTX_set_get_log_cb);
 #endif
     /*
-     * also tests OSSL_CMP_log_open(), OSSL_CMP_CTX_set_log_verbosity(),
-     * OSSL_CMP_err(), OSSL_CMP_warn(), * OSSL_CMP_debug(),
-     * OSSL_CMP_log2(), ossl_cmp_log_parse_metadata(), and OSSL_CMP_log_close()
-     * with OSSL_CMP_severity OSSL_CMP_LOG_ERR/WARNING/DEBUG/INFO:
+     * also tests Otls_CMP_log_open(), Otls_CMP_CTX_set_log_verbosity(),
+     * Otls_CMP_err(), Otls_CMP_warn(), * Otls_CMP_debug(),
+     * Otls_CMP_log2(), otls_cmp_log_parse_metadata(), and Otls_CMP_log_close()
+     * with Otls_CMP_severity Otls_CMP_LOG_ERR/WARNING/DEBUG/INFO:
      */
     ADD_TEST(test_cmp_ctx_log_cb);
-#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
+#if !defined(OPENtls_NO_ERR) && !defined(OPENtls_NO_AUTOERRINIT)
     /*
-     * also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
-     * ossl_cmp_add_error_txt(), and the macros
-     * ossl_cmp_add_error_data and ossl_cmp_add_error_line:
+     * also tests Otls_CMP_CTX_set_log_cb(), Otls_CMP_print_errors_cb(),
+     * otls_cmp_add_error_txt(), and the macros
+     * otls_cmp_add_error_data and otls_cmp_add_error_line:
      */
     ADD_TEST(test_CTX_print_errors);
 #endif
@@ -824,7 +824,7 @@ int setup_tests(void)
     /* client authentication: */
     ADD_TEST(test_CTX_set1_get0_clCert);
     ADD_TEST(test_CTX_set1_get0_pkey);
-    /* the following two also test ossl_cmp_asn1_octet_string_set1_bytes(): */
+    /* the following two also test otls_cmp_asn1_octet_string_set1_bytes(): */
     ADD_TEST(test_CTX_set1_get1_referenceValue_str);
     ADD_TEST(test_CTX_set1_get1_secretValue_str);
     /* CMP message header and extra certificates: */
@@ -838,7 +838,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_subjectName);
 #ifdef ISSUE_9504_RESOLVED
     /*
-     * test currently fails, see https://github.com/openssl/openssl/issues/9504
+     * test currently fails, see https://github.com/opentls/opentls/issues/9504
      */
     ADD_TEST(test_CTX_push1_subjectAltName);
 #endif
@@ -848,7 +848,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_oldCert);
 #ifdef ISSUE_9504_RESOLVED
     /*
-     * test currently fails, see https://github.com/openssl/openssl/issues/9504
+     * test currently fails, see https://github.com/opentls/opentls/issues/9504
      */
     ADD_TEST(test_CTX_set1_get0_p10CSR);
 #endif
@@ -865,10 +865,10 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get1_caPubs);
     ADD_TEST(test_CTX_set1_get1_extraCertsIn);
     /* exported for testing and debugging purposes: */
-    /* the following three also test ossl_cmp_asn1_octet_string_set1(): */
+    /* the following three also test otls_cmp_asn1_octet_string_set1(): */
     ADD_TEST(test_CTX_set1_get0_transactionID);
     ADD_TEST(test_CTX_set1_get0_senderNonce);
     ADD_TEST(test_CTX_set1_get0_recipNonce);
-    /* ossl_cmp_build_cert_chain() is tested in cmp_protect.c */
+    /* otls_cmp_build_cert_chain() is tested in cmp_protect.c */
     return 1;
 }

@@ -1,30 +1,30 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_BIO_H
-# define OPENSSL_BIO_H
+#ifndef OPENtls_BIO_H
+# define OPENtls_BIO_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_BIO_H
 # endif
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 #  include <stdio.h>
 # endif
 # include <stdarg.h>
 
-# include <openssl/crypto.h>
-# include <openssl/bioerr.h>
+# include <opentls/crypto.h>
+# include <opentls/bioerr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -43,7 +43,7 @@ extern "C" {
 # define BIO_TYPE_FD             ( 4|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # define BIO_TYPE_SOCKET         ( 5|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # define BIO_TYPE_NULL           ( 6|BIO_TYPE_SOURCE_SINK)
-# define BIO_TYPE_SSL            ( 7|BIO_TYPE_FILTER)
+# define BIO_TYPE_tls            ( 7|BIO_TYPE_FILTER)
 # define BIO_TYPE_MD             ( 8|BIO_TYPE_FILTER)
 # define BIO_TYPE_BUFFER         ( 9|BIO_TYPE_FILTER)
 # define BIO_TYPE_CIPHER         (10|BIO_TYPE_FILTER)
@@ -58,7 +58,7 @@ extern "C" {
 # define BIO_TYPE_DGRAM          (21|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # define BIO_TYPE_ASN1           (22|BIO_TYPE_FILTER)
 # define BIO_TYPE_COMP           (23|BIO_TYPE_FILTER)
-# ifndef OPENSSL_NO_SCTP
+# ifndef OPENtls_NO_SCTP
 #  define BIO_TYPE_DGRAM_SCTP    (24|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # endif
 
@@ -129,9 +129,9 @@ extern "C" {
 
 # define BIO_CTRL_DGRAM_GET_MTU_OVERHEAD   49
 
-/* Deliberately outside of OPENSSL_NO_SCTP - used in bss_dgram.c */
+/* Deliberately outside of OPENtls_NO_SCTP - used in bss_dgram.c */
 #  define BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE    50
-# ifndef OPENSSL_NO_SCTP
+# ifndef OPENtls_NO_SCTP
 /* SCTP stuff */
 #  define BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY                51
 #  define BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY               52
@@ -165,7 +165,7 @@ extern "C" {
 # define BIO_CTRL_SET_INDENT                    80
 # define BIO_CTRL_GET_INDENT                    81
 
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
      BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL)
 #  define BIO_get_ktls_recv(b)         \
@@ -186,7 +186,7 @@ extern "C" {
 # define BIO_FLAGS_IO_SPECIAL    0x04
 # define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
 # define BIO_FLAGS_SHOULD_RETRY  0x08
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 /* This #define was replaced by an internal constant and should not be used. */
 #  define BIO_FLAGS_UPLINK       0
 # endif
@@ -238,9 +238,9 @@ void BIO_clear_flags(BIO *b, int flags);
  * the code.
  */
 /*
- * Returned from the SSL bio when the certificate retrieval code had an error
+ * Returned from the tls bio when the certificate retrieval code had an error
  */
-# define BIO_RR_SSL_X509_LOOKUP          0x01
+# define BIO_RR_tls_X509_LOOKUP          0x01
 /* Returned from the connect BIO when a connect would have blocked */
 # define BIO_RR_CONNECT                  0x02
 /* Returned from the accept BIO when an accept would have blocked */
@@ -294,7 +294,7 @@ typedef int asn1_ps_func (BIO *b, unsigned char **pbuf, int *plen,
 typedef void (*BIO_dgram_sctp_notification_handler_fn) (BIO *b,
                                                         void *context,
                                                         void *buf);
-# ifndef OPENSSL_NO_SCTP
+# ifndef OPENtls_NO_SCTP
 /* SCTP parameter structs */
 struct bio_dgram_sctp_sndinfo {
     uint16_t snd_sid;
@@ -332,8 +332,8 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_SET_FILE_PTR                      106
 # define BIO_C_GET_FILE_PTR                      107
 # define BIO_C_SET_FILENAME                      108
-# define BIO_C_SET_SSL                           109
-# define BIO_C_GET_SSL                           110
+# define BIO_C_SET_tls                           109
+# define BIO_C_GET_tls                           110
 # define BIO_C_SET_MD                            111
 # define BIO_C_GET_MD                            112
 # define BIO_C_GET_CIPHER_STATUS                 113
@@ -342,15 +342,15 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_GET_BUFF_NUM_LINES                116
 # define BIO_C_SET_BUFF_SIZE                     117
 # define BIO_C_SET_ACCEPT                        118
-# define BIO_C_SSL_MODE                          119
+# define BIO_C_tls_MODE                          119
 # define BIO_C_GET_MD_CTX                        120
 /* # define BIO_C_GET_PROXY_PARAM                   121 */
 # define BIO_C_SET_BUFF_READ_DATA                122/* data to read first */
 # define BIO_C_GET_CONNECT                       123
 # define BIO_C_GET_ACCEPT                        124
-# define BIO_C_SET_SSL_RENEGOTIATE_BYTES         125
-# define BIO_C_GET_SSL_NUM_RENEGOTIATES          126
-# define BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT       127
+# define BIO_C_SET_tls_RENEGOTIATE_BYTES         125
+# define BIO_C_GET_tls_NUM_RENEGOTIATES          126
+# define BIO_C_SET_tls_RENEGOTIATE_TIMEOUT       127
 # define BIO_C_FILE_SEEK                         128
 # define BIO_C_GET_CIPHER_CTX                    129
 # define BIO_C_SET_BUF_MEM_EOF_RETURN            130/* return end of input
@@ -390,7 +390,7 @@ struct bio_dgram_sctp_prinfo {
 
 # define BIO_set_nbio(b,n)             BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 /* IP families we support, for BIO_s_connect() and BIO_s_accept() */
 /* Note: the underlying operating system may not support some of them */
 #  define BIO_FAMILY_IPV4                         4
@@ -437,7 +437,7 @@ struct bio_dgram_sctp_prinfo {
 /* BIO_s_accept() and BIO_s_connect() */
 #  define BIO_do_connect(b)       BIO_do_handshake(b)
 #  define BIO_do_accept(b)        BIO_do_handshake(b)
-# endif /* OPENSSL_NO_SOCK */
+# endif /* OPENtls_NO_SOCK */
 
 # define BIO_do_handshake(b)     BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
 
@@ -475,20 +475,20 @@ int BIO_read_filename(BIO *b, const char *name);
                 BIO_CLOSE|BIO_FP_READ|BIO_FP_WRITE,name)
 
 /*
- * WARNING WARNING, this ups the reference count on the read bio of the SSL
- * structure.  This is because the ssl read BIO is now pointed to by the
+ * WARNING WARNING, this ups the reference count on the read bio of the tls
+ * structure.  This is because the tls read BIO is now pointed to by the
  * next_bio field in the bio.  So when you free the BIO, make sure you are
  * doing a BIO_free_all() to catch the underlying BIO.
  */
-# define BIO_set_ssl(b,ssl,c)    BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)(ssl))
-# define BIO_get_ssl(b,sslp)     BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)(sslp))
-# define BIO_set_ssl_mode(b,client)      BIO_ctrl(b,BIO_C_SSL_MODE,client,NULL)
-# define BIO_set_ssl_renegotiate_bytes(b,num) \
-        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL)
+# define BIO_set_tls(b,tls,c)    BIO_ctrl(b,BIO_C_SET_tls,c,(char *)(tls))
+# define BIO_get_tls(b,tlsp)     BIO_ctrl(b,BIO_C_GET_tls,0,(char *)(tlsp))
+# define BIO_set_tls_mode(b,client)      BIO_ctrl(b,BIO_C_tls_MODE,client,NULL)
+# define BIO_set_tls_renegotiate_bytes(b,num) \
+        BIO_ctrl(b,BIO_C_SET_tls_RENEGOTIATE_BYTES,num,NULL)
 # define BIO_get_num_renegotiates(b) \
-        BIO_ctrl(b,BIO_C_GET_SSL_NUM_RENEGOTIATES,0,NULL)
-# define BIO_set_ssl_renegotiate_timeout(b,seconds) \
-        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL)
+        BIO_ctrl(b,BIO_C_GET_tls_NUM_RENEGOTIATES,0,NULL)
+# define BIO_set_tls_renegotiate_timeout(b,seconds) \
+        BIO_ctrl(b,BIO_C_SET_tls_RENEGOTIATE_TIMEOUT,seconds,NULL)
 
 /* defined in evp.h */
 /* #define BIO_set_md(b,md)     BIO_ctrl(b,BIO_C_SET_MD,1,(char *)(md)) */
@@ -581,7 +581,7 @@ int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 
 const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # endif
 BIO *BIO_new(const BIO_METHOD *type);
@@ -627,7 +627,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
 const BIO_METHOD *BIO_s_mem(void);
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);
 const BIO_METHOD *BIO_s_accept(void);
@@ -641,11 +641,11 @@ const BIO_METHOD *BIO_f_buffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 const BIO_METHOD *BIO_f_prefix(void);
-# ifndef OPENSSL_NO_DGRAM
+# ifndef OPENtls_NO_DGRAM
 const BIO_METHOD *BIO_s_datagram(void);
 int BIO_dgram_non_fatal_error(int error);
 BIO *BIO_new_dgram(int fd, int close_flag);
-#  ifndef OPENSSL_NO_SCTP
+#  ifndef OPENtls_NO_SCTP
 const BIO_METHOD *BIO_s_datagram_sctp(void);
 BIO *BIO_new_dgram_sctp(int fd, int close_flag);
 int BIO_dgram_is_sctp(BIO *bio);
@@ -657,7 +657,7 @@ int BIO_dgram_sctp_msg_waiting(BIO *b);
 #  endif
 # endif
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
 # endif
@@ -670,14 +670,14 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                        void *u, const void *s, int len, int indent);
 int BIO_dump(BIO *b, const void *bytes, int len);
 int BIO_dump_indent(BIO *b, const void *bytes, int len, int indent);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int BIO_dump_fp(FILE *fp, const void *s, int len);
 int BIO_dump_indent_fp(FILE *fp, const void *s, int len, int indent);
 # endif
 int BIO_hex_string(BIO *out, int indent, int width, const void *data,
                    int datalen);
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 BIO_ADDR *BIO_ADDR_new(void);
 int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                      const void *where, size_t wherelen, unsigned short port);
@@ -715,7 +715,7 @@ int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
 int BIO_sock_init(void);
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define BIO_sock_cleanup() while(0) continue
 # endif
 int BIO_set_tcp_ndelay(int sock, int turn_on);
@@ -751,7 +751,7 @@ int BIO_closesocket(int sock);
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_connect(const char *host_port);
 BIO *BIO_new_accept(const char *host_port);
-# endif /* OPENSSL_NO_SOCK*/
+# endif /* OPENtls_NO_SOCK*/
 
 BIO *BIO_new_fd(int fd, int close_flag);
 
@@ -769,7 +769,7 @@ void BIO_copy_next_retry(BIO *b);
  * long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
  */
 
-# define ossl_bio__attr__(x)
+# define otls_bio__attr__(x)
 # if defined(__GNUC__) && defined(__STDC_VERSION__) \
     && !defined(__APPLE__)
     /*
@@ -777,25 +777,25 @@ void BIO_copy_next_retry(BIO *b);
      * we can't use __attribute__ with pre C99 dialects.
      */
 #  if __STDC_VERSION__ >= 199901L
-#   undef ossl_bio__attr__
-#   define ossl_bio__attr__ __attribute__
+#   undef otls_bio__attr__
+#   define otls_bio__attr__ __attribute__
 #   if __GNUC__*10 + __GNUC_MINOR__ >= 44
-#    define ossl_bio__printf__ __gnu_printf__
+#    define otls_bio__printf__ __gnu_printf__
 #   else
-#    define ossl_bio__printf__ __printf__
+#    define otls_bio__printf__ __printf__
 #   endif
 #  endif
 # endif
 int BIO_printf(BIO *bio, const char *format, ...)
-ossl_bio__attr__((__format__(ossl_bio__printf__, 2, 3)));
+otls_bio__attr__((__format__(otls_bio__printf__, 2, 3)));
 int BIO_vprintf(BIO *bio, const char *format, va_list args)
-ossl_bio__attr__((__format__(ossl_bio__printf__, 2, 0)));
+otls_bio__attr__((__format__(otls_bio__printf__, 2, 0)));
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
-ossl_bio__attr__((__format__(ossl_bio__printf__, 3, 4)));
+otls_bio__attr__((__format__(otls_bio__printf__, 3, 4)));
 int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
-ossl_bio__attr__((__format__(ossl_bio__printf__, 3, 0)));
-# undef ossl_bio__attr__
-# undef ossl_bio__printf__
+otls_bio__attr__((__format__(otls_bio__printf__, 3, 0)));
+# undef otls_bio__attr__
+# undef otls_bio__printf__
 
 
 BIO_METHOD *BIO_meth_new(int type, const char *name);

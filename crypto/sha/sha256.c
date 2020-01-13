@@ -1,20 +1,20 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/sha.h>
-#include <openssl/opensslv.h>
+#include <opentls/crypto.h>
+#include <opentls/sha.h>
+#include <opentls/opentlsv.h>
 
 int SHA224_Init(SHA256_CTX *c)
 {
@@ -56,7 +56,7 @@ unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
     SHA224_Init(&c);
     SHA256_Update(&c, d, n);
     SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
+    OPENtls_cleanse(&c, sizeof(c));
     return md;
 }
 
@@ -70,7 +70,7 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
     SHA256_Init(&c);
     SHA256_Update(&c, d, n);
     SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
+    OPENtls_cleanse(&c, sizeof(c));
     return md;
 }
 
@@ -163,7 +163,7 @@ static const SHA_LONG K256[64] = {
 # define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
 # define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-# ifdef OPENSSL_SMALL_FOOTPRINT
+# ifdef OPENtls_SMALL_FOOTPRINT
 
 static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
                                     size_t num)

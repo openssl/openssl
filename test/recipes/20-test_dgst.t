@@ -1,18 +1,18 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT with srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT with srctop_file/;
+use Opentls::Test::Utils;
 
 setup("test_dgst");
 
@@ -28,22 +28,22 @@ sub tsignverify {
 
     plan tests => 4;
 
-    ok(run(app(['openssl', 'dgst', '-sign', $privkey,
+    ok(run(app(['opentls', 'dgst', '-sign', $privkey,
                 '-out', 'testdgst.sig',
                 $data_to_sign])),
        $testtext.": Generating signature");
 
-    ok(run(app(['openssl', 'dgst', '-prverify', $privkey,
+    ok(run(app(['opentls', 'dgst', '-prverify', $privkey,
                 '-signature', 'testdgst.sig',
                 $data_to_sign])),
        $testtext.": Verify signature with private key");
 
-    ok(run(app(['openssl', 'dgst', '-verify', $pubkey,
+    ok(run(app(['opentls', 'dgst', '-verify', $pubkey,
                 '-signature', 'testdgst.sig',
                 $data_to_sign])),
        $testtext.": Verify signature with public key");
 
-    ok(!run(app(['openssl', 'dgst', '-verify', $pubkey,
+    ok(!run(app(['opentls', 'dgst', '-verify', $pubkey,
                  '-signature', 'testdgst.sig',
                  $other_data])),
        $testtext.": Expect failure verifying mismatching data");
@@ -52,7 +52,7 @@ sub tsignverify {
 }
 
 SKIP: {
-    skip "RSA is not supported by this OpenSSL build", 1
+    skip "RSA is not supported by this Opentls build", 1
         if disabled("rsa");
 
     subtest "RSA signature generation and verification with `dgst` CLI" => sub {
@@ -63,7 +63,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "DSA is not supported by this OpenSSL build", 1
+    skip "DSA is not supported by this Opentls build", 1
         if disabled("dsa");
 
     subtest "DSA signature generation and verification with `dgst` CLI" => sub {
@@ -74,7 +74,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "ECDSA is not supported by this OpenSSL build", 1
+    skip "ECDSA is not supported by this Opentls build", 1
         if disabled("ec");
 
     subtest "ECDSA signature generation and verification with `dgst` CLI" => sub {
@@ -85,7 +85,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EdDSA is not supported by this OpenSSL build", 2
+    skip "EdDSA is not supported by this Opentls build", 2
         if disabled("ec");
 
     skip "EdDSA is not supported with `dgst` CLI", 2;

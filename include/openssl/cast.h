@@ -1,24 +1,24 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_CAST_H
-# define OPENSSL_CAST_H
+#ifndef OPENtls_CAST_H
+# define OPENtls_CAST_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CAST_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_CAST
+# ifndef OPENtls_NO_CAST
 # ifdef  __cplusplus
 extern "C" {
 # endif
@@ -26,7 +26,7 @@ extern "C" {
 # define CAST_BLOCK      8
 # define CAST_KEY_LENGTH 16
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 
 #  define CAST_ENCRYPT    1
 #  define CAST_DECRYPT    0
@@ -38,7 +38,7 @@ typedef struct cast_key_st {
     int short_key;              /* Use reduced rounds for short key */
 } CAST_KEY;
 
-# endif /* OPENSSL_NO_DEPRECATED_3_0 */
+# endif /* OPENtls_NO_DEPRECATED_3_0 */
 
 DEPRECATEDIN_3_0(void CAST_set_key(CAST_KEY *key, int len,
                                    const unsigned char *data))

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "packeted_bio.h"
@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 
 namespace {
@@ -191,7 +191,7 @@ static int PacketedRead(BIO *bio, char *out, int outl) {
 
     uint32_t len = (len_bytes[0] << 24) | (len_bytes[1] << 16) |
         (len_bytes[2] << 8) | len_bytes[3];
-    uint8_t *buf = (uint8_t *)OPENSSL_malloc(len);
+    uint8_t *buf = (uint8_t *)OPENtls_malloc(len);
     if (buf == NULL) {
       return -1;
     }
@@ -205,7 +205,7 @@ static int PacketedRead(BIO *bio, char *out, int outl) {
       outl = len;
     }
     memcpy(out, buf, outl);
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return outl;
   }
 }
@@ -267,8 +267,8 @@ static const BIO_METHOD *PacketedMethod(void)
 }
 }  // namespace
 
-bssl::UniquePtr<BIO> PacketedBioCreate(bool advance_clock) {
-  bssl::UniquePtr<BIO> bio(BIO_new(PacketedMethod()));
+btls::UniquePtr<BIO> PacketedBioCreate(bool advance_clock) {
+  btls::UniquePtr<BIO> bio(BIO_new(PacketedMethod()));
   if (!bio) {
     return nullptr;
   }

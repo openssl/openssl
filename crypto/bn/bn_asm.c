@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
@@ -23,7 +23,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
     if (num <= 0)
         return c1;
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (num & ~3) {
         mul_add(rp[0], ap[0], w, c1);
         mul_add(rp[1], ap[1], w, c1);
@@ -52,7 +52,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
     if (num <= 0)
         return c1;
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (num & ~3) {
         mul(rp[0], ap[0], w, c1);
         mul(rp[1], ap[1], w, c1);
@@ -78,7 +78,7 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
     if (n <= 0)
         return;
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (n & ~3) {
         sqr(r[0], r[1], a[0]);
         sqr(r[2], r[3], a[1]);
@@ -113,7 +113,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
     bl = LBITS(w);
     bh = HBITS(w);
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (num & ~3) {
         mul_add(rp[0], ap[0], bl, bh, c);
         mul_add(rp[1], ap[1], bl, bh, c);
@@ -145,7 +145,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
     bl = LBITS(w);
     bh = HBITS(w);
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (num & ~3) {
         mul(rp[0], ap[0], bl, bh, carry);
         mul(rp[1], ap[1], bl, bh, carry);
@@ -171,7 +171,7 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
     if (n <= 0)
         return;
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (n & ~3) {
         sqr64(r[0], r[1], a[0]);
         sqr64(r[2], r[3], a[1]);
@@ -278,7 +278,7 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     if (n <= 0)
         return (BN_ULONG)0;
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (n & ~3) {
         ll += (BN_ULLONG) a[0] + b[0];
         r[0] = (BN_ULONG)ll & BN_MASK2;
@@ -320,7 +320,7 @@ BN_ULONG bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
         return (BN_ULONG)0;
 
     c = 0;
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
     while (n & ~3) {
         t = a[0];
         t = (t + c) & BN_MASK2;
@@ -378,7 +378,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     if (n <= 0)
         return (BN_ULONG)0;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
+#ifndef OPENtls_SMALL_FOOTPRINT
     while (n & ~3) {
         t1 = a[0];
         t2 = b[0];
@@ -420,7 +420,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     return c;
 }
 
-#if defined(BN_MUL_COMBA) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(BN_MUL_COMBA) && !defined(OPENtls_SMALL_FOOTPRINT)
 
 # undef bn_mul_comba8
 # undef bn_mul_comba4
@@ -828,8 +828,8 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
     r[7] = c2;
 }
 
-# ifdef OPENSSL_NO_ASM
-#  ifdef OPENSSL_BN_ASM_MONT
+# ifdef OPENtls_NO_ASM
+#  ifdef OPENtls_BN_ASM_MONT
 #   include <alloca.h>
 /*
  * This is essentially reference implementation, which may or may not
@@ -839,7 +839,7 @@ void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
  * by 10% and *worsens* rsa4096 sign by 15%. Once again, it's a
  * reference implementation, one to be used as starting point for
  * platform-specific assembler. Mentioned numbers apply to compiler
- * generated code compiled with and without -DOPENSSL_BN_ASM_MONT and
+ * generated code compiled with and without -DOPENtls_BN_ASM_MONT and
  * can vary not only from platform to platform, but even for compiler
  * versions. Assembler vs. assembler improvement coefficients can
  * [and are known to] differ and are to be documented elsewhere.
@@ -944,7 +944,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 {
     return 0;
 }
-#  endif                        /* OPENSSL_BN_ASM_MONT */
+#  endif                        /* OPENtls_BN_ASM_MONT */
 # endif
 
 #else                           /* !BN_MUL_COMBA */
@@ -984,8 +984,8 @@ void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
     r[15] = bn_mul_add_words(&(r[7]), a, 8, b[7]);
 }
 
-# ifdef OPENSSL_NO_ASM
-#  ifdef OPENSSL_BN_ASM_MONT
+# ifdef OPENtls_NO_ASM
+#  ifdef OPENtls_BN_ASM_MONT
 #   include <alloca.h>
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0p, int num)
@@ -1033,7 +1033,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 {
     return 0;
 }
-#  endif                        /* OPENSSL_BN_ASM_MONT */
+#  endif                        /* OPENtls_BN_ASM_MONT */
 # endif
 
 #endif                          /* !BN_MUL_COMBA */

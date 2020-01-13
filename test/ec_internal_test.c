@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/nelem.h"
 #include "testutil.h"
-#include <openssl/ec.h>
+#include <opentls/ec.h>
 #include "ec_local.h"
-#include <openssl/objects.h>
+#include <opentls/objects.h>
 
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
@@ -115,7 +115,7 @@ static const unsigned char params_p256[] = {
     0x3B, 0xCE, 0x3C, 0x3E, 0x27, 0xD2, 0x60, 0x4B
 };
 
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 /* NIST binary curve B-283 */
 static const unsigned char params_b283[] = {
     /* p */
@@ -149,7 +149,7 @@ static int field_tests_ecp_mont(void)
                        sizeof(params_p256) / 3);
 }
 
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 /* test EC_GF2m_simple_method directly */
 static int field_tests_ec2_simple(void)
 {
@@ -186,13 +186,13 @@ static int field_tests_default(int n)
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENtls_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 
     ADD_TEST(field_tests_ecp_simple);
     ADD_TEST(field_tests_ecp_mont);
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
     ADD_TEST(field_tests_ec2_simple);
 #endif
     ADD_ALL_TESTS(field_tests_default, crv_len);
@@ -201,5 +201,5 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    OPENSSL_free(curves);
+    OPENtls_free(curves);
 }

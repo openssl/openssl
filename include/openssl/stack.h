@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_STACK_H
-# define OPENSSL_STACK_H
+#ifndef OPENtls_STACK_H
+# define OPENtls_STACK_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_STACK_H
 # endif
 
@@ -20,66 +20,66 @@
 extern "C" {
 #endif
 
-typedef struct stack_st OPENSSL_STACK; /* Use STACK_OF(...) instead */
+typedef struct stack_st OPENtls_STACK; /* Use STACK_OF(...) instead */
 
-typedef int (*OPENSSL_sk_compfunc)(const void *, const void *);
-typedef void (*OPENSSL_sk_freefunc)(void *);
-typedef void *(*OPENSSL_sk_copyfunc)(const void *);
+typedef int (*OPENtls_sk_compfunc)(const void *, const void *);
+typedef void (*OPENtls_sk_freefunc)(void *);
+typedef void *(*OPENtls_sk_copyfunc)(const void *);
 
-int OPENSSL_sk_num(const OPENSSL_STACK *);
-void *OPENSSL_sk_value(const OPENSSL_STACK *, int);
+int OPENtls_sk_num(const OPENtls_STACK *);
+void *OPENtls_sk_value(const OPENtls_STACK *, int);
 
-void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data);
+void *OPENtls_sk_set(OPENtls_STACK *st, int i, const void *data);
 
-OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc cmp);
-OPENSSL_STACK *OPENSSL_sk_new_null(void);
-OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n);
-int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n);
-void OPENSSL_sk_free(OPENSSL_STACK *);
-void OPENSSL_sk_pop_free(OPENSSL_STACK *st, void (*func) (void *));
-OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *,
-                                    OPENSSL_sk_copyfunc c,
-                                    OPENSSL_sk_freefunc f);
-int OPENSSL_sk_insert(OPENSSL_STACK *sk, const void *data, int where);
-void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc);
-void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p);
-int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data);
-int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data);
-int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data);
-int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data);
-void *OPENSSL_sk_shift(OPENSSL_STACK *st);
-void *OPENSSL_sk_pop(OPENSSL_STACK *st);
-void OPENSSL_sk_zero(OPENSSL_STACK *st);
-OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
-                                            OPENSSL_sk_compfunc cmp);
-OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *st);
-void OPENSSL_sk_sort(OPENSSL_STACK *st);
-int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
+OPENtls_STACK *OPENtls_sk_new(OPENtls_sk_compfunc cmp);
+OPENtls_STACK *OPENtls_sk_new_null(void);
+OPENtls_STACK *OPENtls_sk_new_reserve(OPENtls_sk_compfunc c, int n);
+int OPENtls_sk_reserve(OPENtls_STACK *st, int n);
+void OPENtls_sk_free(OPENtls_STACK *);
+void OPENtls_sk_pop_free(OPENtls_STACK *st, void (*func) (void *));
+OPENtls_STACK *OPENtls_sk_deep_copy(const OPENtls_STACK *,
+                                    OPENtls_sk_copyfunc c,
+                                    OPENtls_sk_freefunc f);
+int OPENtls_sk_insert(OPENtls_STACK *sk, const void *data, int where);
+void *OPENtls_sk_delete(OPENtls_STACK *st, int loc);
+void *OPENtls_sk_delete_ptr(OPENtls_STACK *st, const void *p);
+int OPENtls_sk_find(OPENtls_STACK *st, const void *data);
+int OPENtls_sk_find_ex(OPENtls_STACK *st, const void *data);
+int OPENtls_sk_push(OPENtls_STACK *st, const void *data);
+int OPENtls_sk_unshift(OPENtls_STACK *st, const void *data);
+void *OPENtls_sk_shift(OPENtls_STACK *st);
+void *OPENtls_sk_pop(OPENtls_STACK *st);
+void OPENtls_sk_zero(OPENtls_STACK *st);
+OPENtls_sk_compfunc OPENtls_sk_set_cmp_func(OPENtls_STACK *sk,
+                                            OPENtls_sk_compfunc cmp);
+OPENtls_STACK *OPENtls_sk_dup(const OPENtls_STACK *st);
+void OPENtls_sk_sort(OPENtls_STACK *st);
+int OPENtls_sk_is_sorted(const OPENtls_STACK *st);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define _STACK OPENSSL_STACK
-#  define sk_num OPENSSL_sk_num
-#  define sk_value OPENSSL_sk_value
-#  define sk_set OPENSSL_sk_set
-#  define sk_new OPENSSL_sk_new
-#  define sk_new_null OPENSSL_sk_new_null
-#  define sk_free OPENSSL_sk_free
-#  define sk_pop_free OPENSSL_sk_pop_free
-#  define sk_deep_copy OPENSSL_sk_deep_copy
-#  define sk_insert OPENSSL_sk_insert
-#  define sk_delete OPENSSL_sk_delete
-#  define sk_delete_ptr OPENSSL_sk_delete_ptr
-#  define sk_find OPENSSL_sk_find
-#  define sk_find_ex OPENSSL_sk_find_ex
-#  define sk_push OPENSSL_sk_push
-#  define sk_unshift OPENSSL_sk_unshift
-#  define sk_shift OPENSSL_sk_shift
-#  define sk_pop OPENSSL_sk_pop
-#  define sk_zero OPENSSL_sk_zero
-#  define sk_set_cmp_func OPENSSL_sk_set_cmp_func
-#  define sk_dup OPENSSL_sk_dup
-#  define sk_sort OPENSSL_sk_sort
-#  define sk_is_sorted OPENSSL_sk_is_sorted
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  define _STACK OPENtls_STACK
+#  define sk_num OPENtls_sk_num
+#  define sk_value OPENtls_sk_value
+#  define sk_set OPENtls_sk_set
+#  define sk_new OPENtls_sk_new
+#  define sk_new_null OPENtls_sk_new_null
+#  define sk_free OPENtls_sk_free
+#  define sk_pop_free OPENtls_sk_pop_free
+#  define sk_deep_copy OPENtls_sk_deep_copy
+#  define sk_insert OPENtls_sk_insert
+#  define sk_delete OPENtls_sk_delete
+#  define sk_delete_ptr OPENtls_sk_delete_ptr
+#  define sk_find OPENtls_sk_find
+#  define sk_find_ex OPENtls_sk_find_ex
+#  define sk_push OPENtls_sk_push
+#  define sk_unshift OPENtls_sk_unshift
+#  define sk_shift OPENtls_sk_shift
+#  define sk_pop OPENtls_sk_pop
+#  define sk_zero OPENtls_sk_zero
+#  define sk_set_cmp_func OPENtls_sk_set_cmp_func
+#  define sk_dup OPENtls_sk_dup
+#  define sk_sort OPENtls_sk_sort
+#  define sk_is_sorted OPENtls_sk_is_sorted
 # endif
 
 #ifdef  __cplusplus

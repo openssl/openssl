@@ -10,7 +10,7 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
 
 =head1 SYNOPSIS
 
- #include <openssl/x509v3.h>
+ #include <opentls/x509v3.h>
 
  void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
                       int *idx);
@@ -152,7 +152,7 @@ The following are (largely obsolete) Netscape certificate extensions.
  Netscape CA Revocation Url         NID_netscape_ca_revocation_url
  Netscape Renewal Url               NID_netscape_renewal_url
  Netscape CA Policy Url             NID_netscape_ca_policy_url
- Netscape SSL Server Name           NID_netscape_ssl_server_name
+ Netscape tls Server Name           NID_netscape_tls_server_name
  Netscape Comment                   NID_netscape_comment
 
 =head2 Miscellaneous Certificate Extensions
@@ -231,11 +231,11 @@ L<X509_verify_cert(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

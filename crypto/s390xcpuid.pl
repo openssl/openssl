@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -30,12 +30,12 @@ $code=<<___;
 
 .text
 
-.globl	OPENSSL_s390x_facilities
-.type	OPENSSL_s390x_facilities,\@function
+.globl	OPENtls_s390x_facilities
+.type	OPENtls_s390x_facilities,\@function
 .align	16
-OPENSSL_s390x_facilities:
+OPENtls_s390x_facilities:
 	lghi	%r0,0
-	larl	%r4,OPENSSL_s390xcap_P
+	larl	%r4,OPENtls_s390xcap_P
 
 	stg	%r0,S390X_STFLE+8(%r4)	# wipe capability vectors
 	stg	%r0,S390X_STFLE+16(%r4)
@@ -50,14 +50,14 @@ OPENSSL_s390x_facilities:
 	.long	0xb2b04000		# stfle 0(%r4)
 .Ldone:
 	br	$ra
-.size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
+.size	OPENtls_s390x_facilities,.-OPENtls_s390x_facilities
 
-.globl	OPENSSL_s390x_functions
-.type	OPENSSL_s390x_functions,\@function
+.globl	OPENtls_s390x_functions
+.type	OPENtls_s390x_functions,\@function
 .align	16
-OPENSSL_s390x_functions:
+OPENtls_s390x_functions:
 	lghi	%r0,0
-	larl	%r4,OPENSSL_s390xcap_P
+	larl	%r4,OPENtls_s390xcap_P
 
 	stg	%r0,S390X_KIMD(%r4)	# wipe capability vectors
 	stg	%r0,S390X_KIMD+8(%r4)
@@ -156,13 +156,13 @@ OPENSSL_s390x_functions:
 
 .Lret:
 	br	$ra
-.size	OPENSSL_s390x_functions,.-OPENSSL_s390x_functions
+.size	OPENtls_s390x_functions,.-OPENtls_s390x_functions
 
-.globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,\@function
+.globl	OPENtls_rdtsc
+.type	OPENtls_rdtsc,\@function
 .align	16
-OPENSSL_rdtsc:
-	larl	%r4,OPENSSL_s390xcap_P
+OPENtls_rdtsc:
+	larl	%r4,OPENtls_s390xcap_P
 	tm	S390X_STFLE+3(%r4),0x40	# check for store-clock-fast facility
 	jz	.Lstck
 
@@ -173,25 +173,25 @@ OPENSSL_rdtsc:
 	stck	16($sp)
 	lg	%r2,16($sp)
 	br	$ra
-.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
+.size	OPENtls_rdtsc,.-OPENtls_rdtsc
 
-.globl	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,\@function
+.globl	OPENtls_atomic_add
+.type	OPENtls_atomic_add,\@function
 .align	16
-OPENSSL_atomic_add:
+OPENtls_atomic_add:
 	l	%r1,0(%r2)
 .Lspin:	lr	%r0,%r1
 	ar	%r0,%r3
 	cs	%r1,%r0,0(%r2)
 	brc	4,.Lspin
-	lgfr	%r2,%r0		# OpenSSL expects the new value
+	lgfr	%r2,%r0		# Opentls expects the new value
 	br	$ra
-.size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
+.size	OPENtls_atomic_add,.-OPENtls_atomic_add
 
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@function
+.globl	OPENtls_wipe_cpu
+.type	OPENtls_wipe_cpu,\@function
 .align	16
-OPENSSL_wipe_cpu:
+OPENtls_wipe_cpu:
 	xgr	%r0,%r0
 	xgr	%r1,%r1
 	lgr	%r2,$sp
@@ -206,12 +206,12 @@ OPENSSL_wipe_cpu:
 	lzdr	%f6
 	lzdr	%f7
 	br	$ra
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.size	OPENtls_wipe_cpu,.-OPENtls_wipe_cpu
 
-.globl	OPENSSL_cleanse
-.type	OPENSSL_cleanse,\@function
+.globl	OPENtls_cleanse
+.type	OPENtls_cleanse,\@function
 .align	16
-OPENSSL_cleanse:
+OPENtls_cleanse:
 #if !defined(__s390x__) && !defined(__s390x)
 	llgfr	%r3,%r3
 #endif
@@ -241,7 +241,7 @@ OPENSSL_cleanse:
 	ngr	%r3,%r4
 	jnz	.Little
 	br	$ra
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+.size	OPENtls_cleanse,.-OPENtls_cleanse
 
 .globl	CRYPTO_memcmp
 .type	CRYPTO_memcmp,\@function
@@ -270,29 +270,29 @@ CRYPTO_memcmp:
 	br	$ra
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
 
-.globl	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,\@function
+.globl	OPENtls_instrument_bus
+.type	OPENtls_instrument_bus,\@function
 .align	16
-OPENSSL_instrument_bus:
+OPENtls_instrument_bus:
 	lghi	%r2,0
 	br	%r14
-.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+.size	OPENtls_instrument_bus,.-OPENtls_instrument_bus
 
-.globl	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,\@function
+.globl	OPENtls_instrument_bus2
+.type	OPENtls_instrument_bus2,\@function
 .align	16
-OPENSSL_instrument_bus2:
+OPENtls_instrument_bus2:
 	lghi	%r2,0
 	br	$ra
-.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+.size	OPENtls_instrument_bus2,.-OPENtls_instrument_bus2
 
-.globl	OPENSSL_vx_probe
-.type	OPENSSL_vx_probe,\@function
+.globl	OPENtls_vx_probe
+.type	OPENtls_vx_probe,\@function
 .align	16
-OPENSSL_vx_probe:
+OPENtls_vx_probe:
 	.word	0xe700,0x0000,0x0044	# vzero %v0
 	br	$ra
-.size	OPENSSL_vx_probe,.-OPENSSL_vx_probe
+.size	OPENtls_vx_probe,.-OPENtls_vx_probe
 ___
 
 {
@@ -553,7 +553,7 @@ ___
 
 $code.=<<___;
 .section	.init
-	brasl	$ra,OPENSSL_cpuid_setup
+	brasl	$ra,OPENtls_cpuid_setup
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

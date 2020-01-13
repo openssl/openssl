@@ -1,15 +1,15 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/bn.h>
 #include "crypto/sparse_array.h"
 
 /*
@@ -29,16 +29,16 @@
  * at a cost in time.
  *
  * The library builder is also permitted to define other sizes in the closed
- * interval [2, sizeof(ossl_uintmax_t) * 8].
+ * interval [2, sizeof(otls_uintmax_t) * 8].
  */
-#ifndef OPENSSL_SA_BLOCK_BITS
-# ifdef OPENSSL_SMALL_FOOTPRINT
-#  define OPENSSL_SA_BLOCK_BITS           4
+#ifndef OPENtls_SA_BLOCK_BITS
+# ifdef OPENtls_SMALL_FOOTPRINT
+#  define OPENtls_SA_BLOCK_BITS           4
 # else
-#  define OPENSSL_SA_BLOCK_BITS           12
+#  define OPENtls_SA_BLOCK_BITS           12
 # endif
-#elif OPENSSL_SA_BLOCK_BITS < 2 || OPENSSL_SA_BLOCK_BITS > (BN_BITS2 - 1)
-# error OPENSSL_SA_BLOCK_BITS is out of range
+#elif OPENtls_SA_BLOCK_BITS < 2 || OPENtls_SA_BLOCK_BITS > (BN_BITS2 - 1)
+# error OPENtls_SA_BLOCK_BITS is out of range
 #endif
 
 /*
@@ -47,32 +47,32 @@
  *    a bit mask to quickly extract an index and
  *    the maximum depth of the tree structure.
   */
-#define SA_BLOCK_MAX            (1 << OPENSSL_SA_BLOCK_BITS)
+#define SA_BLOCK_MAX            (1 << OPENtls_SA_BLOCK_BITS)
 #define SA_BLOCK_MASK           (SA_BLOCK_MAX - 1)
-#define SA_BLOCK_MAX_LEVELS     (((int)sizeof(ossl_uintmax_t) * 8 \
-                                  + OPENSSL_SA_BLOCK_BITS - 1) \
-                                 / OPENSSL_SA_BLOCK_BITS)
+#define SA_BLOCK_MAX_LEVELS     (((int)sizeof(otls_uintmax_t) * 8 \
+                                  + OPENtls_SA_BLOCK_BITS - 1) \
+                                 / OPENtls_SA_BLOCK_BITS)
 
 struct sparse_array_st {
     int levels;
-    ossl_uintmax_t top;
+    otls_uintmax_t top;
     size_t nelem;
     void **nodes;
 };
 
-OPENSSL_SA *OPENSSL_SA_new(void)
+OPENtls_SA *OPENtls_SA_new(void)
 {
-    OPENSSL_SA *res = OPENSSL_zalloc(sizeof(*res));
+    OPENtls_SA *res = OPENtls_zalloc(sizeof(*res));
 
     return res;
 }
 
-static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
-                     void (*leaf)(ossl_uintmax_t, void *, void *), void *arg)
+static void sa_doall(const OPENtls_SA *sa, void (*node)(void **),
+                     void (*leaf)(otls_uintmax_t, void *, void *), void *arg)
 {
     int i[SA_BLOCK_MAX_LEVELS];
     void *nodes[SA_BLOCK_MAX_LEVELS];
-    ossl_uintmax_t idx = 0;
+    otls_uintmax_t idx = 0;
     int l = 0;
 
     i[0] = 0;
@@ -85,7 +85,7 @@ static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
             if (p != NULL && node != NULL)
                 (*node)(p);
             l--;
-            idx >>= OPENSSL_SA_BLOCK_BITS;
+            idx >>= OPENtls_SA_BLOCK_BITS;
         } else {
             i[l] = n + 1;
             if (p != NULL && p[n] != NULL) {
@@ -93,7 +93,7 @@ static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
                 if (l < sa->levels - 1) {
                     i[++l] = 0;
                     nodes[l] = p[n];
-                    idx <<= OPENSSL_SA_BLOCK_BITS;
+                    idx <<= OPENtls_SA_BLOCK_BITS;
                 } else if (leaf != NULL) {
                     (*leaf)(idx, p[n], arg);
                 }
@@ -104,37 +104,37 @@ static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
 
 static void sa_free_node(void **p)
 {
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
-static void sa_free_leaf(ossl_uintmax_t n, void *p, void *arg)
+static void sa_free_leaf(otls_uintmax_t n, void *p, void *arg)
 {
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
-void OPENSSL_SA_free(OPENSSL_SA *sa)
+void OPENtls_SA_free(OPENtls_SA *sa)
 {
     sa_doall(sa, &sa_free_node, NULL, NULL);
-    OPENSSL_free(sa);
+    OPENtls_free(sa);
 }
 
-void OPENSSL_SA_free_leaves(OPENSSL_SA *sa)
+void OPENtls_SA_free_leaves(OPENtls_SA *sa)
 {
     sa_doall(sa, &sa_free_node, &sa_free_leaf, NULL);
-    OPENSSL_free(sa);
+    OPENtls_free(sa);
 }
 
 /* Wrap this in a structure to avoid compiler warnings */
 struct trampoline_st {
-    void (*func)(ossl_uintmax_t, void *);
+    void (*func)(otls_uintmax_t, void *);
 };
 
-static void trampoline(ossl_uintmax_t n, void *l, void *arg)
+static void trampoline(otls_uintmax_t n, void *l, void *arg)
 {
     ((const struct trampoline_st *)arg)->func(n, l);
 }
 
-void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(ossl_uintmax_t,
+void OPENtls_SA_doall(const OPENtls_SA *sa, void (*leaf)(otls_uintmax_t,
                                                          void *))
 {
     struct trampoline_st tramp;
@@ -144,20 +144,20 @@ void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(ossl_uintmax_t,
         sa_doall(sa, NULL, &trampoline, &tramp);
 }
 
-void OPENSSL_SA_doall_arg(const OPENSSL_SA *sa,
-                          void (*leaf)(ossl_uintmax_t, void *, void *),
+void OPENtls_SA_doall_arg(const OPENtls_SA *sa,
+                          void (*leaf)(otls_uintmax_t, void *, void *),
                           void *arg)
 {
     if (sa != NULL)
         sa_doall(sa, NULL, leaf, arg);
 }
 
-size_t OPENSSL_SA_num(const OPENSSL_SA *sa)
+size_t OPENtls_SA_num(const OPENtls_SA *sa)
 {
     return sa == NULL ? 0 : sa->nelem;
 }
 
-void *OPENSSL_SA_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
+void *OPENtls_SA_get(const OPENtls_SA *sa, otls_uintmax_t n)
 {
     int level;
     void **p, *r = NULL;
@@ -168,29 +168,29 @@ void *OPENSSL_SA_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
     if (n <= sa->top) {
         p = sa->nodes;
         for (level = sa->levels - 1; p != NULL && level > 0; level--)
-            p = (void **)p[(n >> (OPENSSL_SA_BLOCK_BITS * level))
+            p = (void **)p[(n >> (OPENtls_SA_BLOCK_BITS * level))
                            & SA_BLOCK_MASK];
         r = p == NULL ? NULL : p[n & SA_BLOCK_MASK];
     }
     return r;
 }
 
-static ossl_inline void **alloc_node(void)
+static otls_inline void **alloc_node(void)
 {
-    return OPENSSL_zalloc(SA_BLOCK_MAX * sizeof(void *));
+    return OPENtls_zalloc(SA_BLOCK_MAX * sizeof(void *));
 }
 
-int OPENSSL_SA_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
+int OPENtls_SA_set(OPENtls_SA *sa, otls_uintmax_t posn, void *val)
 {
     int i, level = 1;
-    ossl_uintmax_t n = posn;
+    otls_uintmax_t n = posn;
     void **p;
 
     if (sa == NULL)
         return 0;
 
     for (level = 1; level < SA_BLOCK_MAX_LEVELS; level++)
-        if ((n >>= OPENSSL_SA_BLOCK_BITS) == 0)
+        if ((n >>= OPENtls_SA_BLOCK_BITS) == 0)
             break;
 
     for (;sa->levels < level; sa->levels++) {
@@ -205,7 +205,7 @@ int OPENSSL_SA_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
 
     p = sa->nodes;
     for (level = sa->levels - 1; level > 0; level--) {
-        i = (posn >> (OPENSSL_SA_BLOCK_BITS * level)) & SA_BLOCK_MASK;
+        i = (posn >> (OPENtls_SA_BLOCK_BITS * level)) & SA_BLOCK_MASK;
         if (p[i] == NULL && (p[i] = alloc_node()) == NULL)
             return 0;
         p = p[i];

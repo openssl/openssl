@@ -1,13 +1,13 @@
 =pod
-{- OpenSSL::safe::output_do_not_edit_headers(); -}
+{- Opentls::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-genrsa - generate an RSA private key
+opentls-genrsa - generate an RSA private key
 
 =head1 SYNOPSIS
 
-B<openssl> B<genrsa>
+B<opentls> B<genrsa>
 [B<-help>]
 [B<-out> I<filename>]
 [B<-passout> I<arg>]
@@ -26,11 +26,11 @@ B<openssl> B<genrsa>
 [B<-f4>|B<-3>]
 [B<-primes> I<num>]
 [B<-verbose>]
-{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $Opentls::safe::opt_r_synopsis -}
+{- $Opentls::safe::opt_engine_synopsis -}
 [B<numbits>]
 
-=for openssl ifdef engine
+=for opentls ifdef engine
 
 =head1 DESCRIPTION
 
@@ -52,7 +52,7 @@ standard output is used.
 =item B<-passout> I<arg>
 
 The output file password source. For more information about the format
-see L<openssl(1)/Pass Phrase Options>.
+see L<opentls(1)/Pass Phrase Options>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
@@ -76,9 +76,9 @@ RSA key, which is defined in RFC 8017.
 
 Print extra details about the operations being performed.
 
-{- $OpenSSL::safe::opt_r_item -}
+{- $Opentls::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
+{- $Opentls::safe::opt_engine_item -}
 
 =item B<numbits>
 
@@ -103,16 +103,16 @@ of a key.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-gendsa(1)>
+L<opentls(1)>,
+L<opentls-gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

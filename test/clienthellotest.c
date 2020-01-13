@@ -1,20 +1,20 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
 #include <time.h>
 
 #include "internal/packet.h"
@@ -27,7 +27,7 @@
 
 /*
  * Test that explicitly setting ticket data results in it appearing in the
- * ClientHello for a negotiated SSL/TLS version
+ * ClientHello for a negotiated tls/TLS version
  */
 #define TEST_SET_SESSION_TICK_DATA_VER_NEG      0
 /* Enable padding and make sure ClientHello is long enough to require it */
@@ -52,8 +52,8 @@ static const char alpn_prots[] =
 
 static int test_client_hello(int currtest)
 {
-    SSL_CTX *ctx;
-    SSL *con = NULL;
+    tls_CTX *ctx;
+    tls *con = NULL;
     BIO *rbio;
     BIO *wbio;
     long len;
@@ -64,9 +64,9 @@ static int test_client_hello(int currtest)
     int testresult = 0;
     size_t msglen;
     BIO *sessbio = NULL;
-    SSL_SESSION *sess = NULL;
+    tls_SESSION *sess = NULL;
 
-#ifdef OPENSSL_NO_TLS1_3
+#ifdef OPENtls_NO_TLS1_3
     if (currtest == TEST_ADD_PADDING_AND_PSK)
         return 1;
 #endif
@@ -76,24 +76,24 @@ static int test_client_hello(int currtest)
     memset(&pkt3, 0, sizeof(pkt3));
 
     /*
-     * For each test set up an SSL_CTX and SSL and see what ClientHello gets
+     * For each test set up an tls_CTX and tls and see what ClientHello gets
      * produced when we try to connect
      */
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = tls_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
-    if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, 0)))
+    if (!TEST_true(tls_CTX_set_max_proto_version(ctx, 0)))
         goto end;
 
     switch(currtest) {
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
-#if !defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
+#if !defined(OPENtls_NO_TLS1_3) && defined(OPENtls_NO_TLS1_2)
         /* TLSv1.3 is enabled and TLSv1.2 is disabled so can't do this test */
-        SSL_CTX_free(ctx);
+        tls_CTX_free(ctx);
         return 1;
 #else
         /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
-        if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
+        if (!TEST_true(tls_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
             goto end;
 #endif
         break;
@@ -104,22 +104,22 @@ static int test_client_hello(int currtest)
          * ClientHello is already going to be quite long. To avoid getting one
          * that is too long for this test we use a restricted ciphersuite list
          */
-        if (!TEST_false(SSL_CTX_set_cipher_list(ctx, "")))
+        if (!TEST_false(tls_CTX_set_cipher_list(ctx, "")))
             goto end;
         ERR_clear_error();
          /* Fall through */
     case TEST_ADD_PADDING:
     case TEST_PADDING_NOT_NEEDED:
-        SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
+        tls_CTX_set_options(ctx, tls_OP_TLSEXT_PADDING);
         /* Make sure we get a consistent size across TLS versions */
-        SSL_CTX_clear_options(ctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+        tls_CTX_clear_options(ctx, tls_OP_ENABLE_MIDDLEBOX_COMPAT);
         /*
          * Add some dummy ALPN protocols so that the ClientHello is at least
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
          * needed.
          */
         if (currtest == TEST_ADD_PADDING) {
-             if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
+             if (!TEST_false(tls_CTX_set_alpn_protos(ctx,
                                     (unsigned char *)alpn_prots,
                                     sizeof(alpn_prots) - 1)))
                 goto end;
@@ -127,9 +127,9 @@ static int test_client_hello(int currtest)
          * Otherwise we need to make sure we have a small enough message to
          * not need padding.
          */
-        } else if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
+        } else if (!TEST_true(tls_CTX_set_cipher_list(ctx,
                               "AES128-SHA"))
-                   || !TEST_true(SSL_CTX_set_ciphersuites(ctx,
+                   || !TEST_true(tls_CTX_set_ciphersuites(ctx,
                                  "TLS_AES_128_GCM_SHA256"))) {
             goto end;
         }
@@ -139,7 +139,7 @@ static int test_client_hello(int currtest)
         goto end;
     }
 
-    con = SSL_new(ctx);
+    con = tls_new(ctx);
     if (!TEST_ptr(con))
         goto end;
 
@@ -149,17 +149,17 @@ static int test_client_hello(int currtest)
             TEST_info("Unable to open session.pem");
             goto end;
         }
-        sess = PEM_read_bio_SSL_SESSION(sessbio, NULL, NULL, NULL);
+        sess = PEM_read_bio_tls_SESSION(sessbio, NULL, NULL, NULL);
         if (!TEST_ptr(sess)) {
-            TEST_info("Unable to load SSL_SESSION");
+            TEST_info("Unable to load tls_SESSION");
             goto end;
         }
         /*
          * We reset the creation time so that we don't discard the session as
          * too old.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, (long)time(NULL)))
-                || !TEST_true(SSL_set_session(con, sess)))
+        if (!TEST_true(tls_SESSION_set_time(sess, (long)time(NULL)))
+                || !TEST_true(tls_set_session(con, sess)))
             goto end;
     }
 
@@ -171,16 +171,16 @@ static int test_client_hello(int currtest)
         goto end;
     }
 
-    SSL_set_bio(con, rbio, wbio);
-    SSL_set_connect_state(con);
+    tls_set_bio(con, rbio, wbio);
+    tls_set_connect_state(con);
 
     if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-        if (!TEST_true(SSL_set_session_ticket_ext(con, dummytick,
+        if (!TEST_true(tls_set_session_ticket_ext(con, dummytick,
                                                   strlen(dummytick))))
             goto end;
     }
 
-    if (!TEST_int_le(SSL_connect(con), 0)) {
+    if (!TEST_int_le(tls_connect(con), 0)) {
         /* This shouldn't succeed because we don't have a server! */
         goto end;
     }
@@ -188,16 +188,16 @@ static int test_client_hello(int currtest)
     len = BIO_get_mem_data(wbio, (char **)&data);
     if (!TEST_true(PACKET_buf_init(&pkt, data, len))
                /* Skip the record header */
-            || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
+            || !PACKET_forward(&pkt, tls3_RT_HEADER_LENGTH))
         goto end;
 
     msglen = PACKET_remaining(&pkt);
 
     /* Skip the handshake message header */
-    if (!TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+    if (!TEST_true(PACKET_forward(&pkt, tls3_HM_HEADER_LENGTH))
                /* Skip client version and random */
             || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
-                                               + SSL3_RANDOM_SIZE))
+                                               + tls3_RANDOM_SIZE))
                /* Skip session id */
             || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
                /* Skip ciphers */
@@ -238,9 +238,9 @@ static int test_client_hello(int currtest)
         testresult = 1;
 
 end:
-    SSL_free(con);
-    SSL_CTX_free(ctx);
-    SSL_SESSION_free(sess);
+    tls_free(con);
+    tls_CTX_free(ctx);
+    tls_SESSION_free(sess);
     BIO_free(sessbio);
 
     return testresult;

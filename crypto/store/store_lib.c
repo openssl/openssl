@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -14,20 +14,20 @@
 
 #include "e_os.h"
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/trace.h>
-#include <openssl/store.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/trace.h>
+#include <opentls/store.h>
 #include "internal/thread_once.h"
 #include "crypto/store.h"
 #include "store_local.h"
 
-struct ossl_store_ctx_st {
-    const OSSL_STORE_LOADER *loader;
-    OSSL_STORE_LOADER_CTX *loader_ctx;
+struct otls_store_ctx_st {
+    const Otls_STORE_LOADER *loader;
+    Otls_STORE_LOADER_CTX *loader_ctx;
     const UI_METHOD *ui_method;
     void *ui_data;
-    OSSL_STORE_post_process_info_fn post_process;
+    Otls_STORE_post_process_info_fn post_process;
     void *post_process_data;
     int expected_type;
 
@@ -35,14 +35,14 @@ struct ossl_store_ctx_st {
     int loading;
 };
 
-OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
+Otls_STORE_CTX *Otls_STORE_open(const char *uri, const UI_METHOD *ui_method,
                                 void *ui_data,
-                                OSSL_STORE_post_process_info_fn post_process,
+                                Otls_STORE_post_process_info_fn post_process,
                                 void *post_process_data)
 {
-    const OSSL_STORE_LOADER *loader = NULL;
-    OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
-    OSSL_STORE_CTX *ctx = NULL;
+    const Otls_STORE_LOADER *loader = NULL;
+    Otls_STORE_LOADER_CTX *loader_ctx = NULL;
+    Otls_STORE_CTX *ctx = NULL;
     char scheme_copy[256], *p, *schemes[2];
     size_t schemes_n = 0;
     size_t i;
@@ -61,7 +61,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
      * check that this isn't actually the file scheme, as there's no point
      * going through that one twice!
      */
-    OPENSSL_strlcpy(scheme_copy, uri, sizeof(scheme_copy));
+    OPENtls_strlcpy(scheme_copy, uri, sizeof(scheme_copy));
     if ((p = strchr(scheme_copy, ':')) != NULL) {
         *p++ = '\0';
         if (strcasecmp(scheme_copy, "file") != 0) {
@@ -75,19 +75,19 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
 
     /* Try each scheme until we find one that could open the URI */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
-        OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
-            OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
+        Otls_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+        if ((loader = otls_store_get0_loader_int(schemes[i])) != NULL) {
+            Otls_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
             loader_ctx = loader->open(loader, uri, ui_method, ui_data);
-            OSSL_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
+            Otls_TRACE2(STORE, "Opened %s => %p\n", uri, (void *)loader_ctx);
         }
     }
 
     if (loader_ctx == NULL)
         goto err;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_OPEN, ERR_R_MALLOC_FAILURE);
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL) {
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_OPEN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -120,30 +120,30 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
     return NULL;
 }
 
-int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
+int Otls_STORE_ctrl(Otls_STORE_CTX *ctx, int cmd, ...)
 {
     va_list args;
     int ret;
 
     va_start(args, cmd);
-    ret = OSSL_STORE_vctrl(ctx, cmd, args);
+    ret = Otls_STORE_vctrl(ctx, cmd, args);
     va_end(args);
 
     return ret;
 }
 
-int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args)
+int Otls_STORE_vctrl(Otls_STORE_CTX *ctx, int cmd, va_list args)
 {
     if (ctx->loader->ctrl != NULL)
         return ctx->loader->ctrl(ctx->loader_ctx, cmd, args);
     return 0;
 }
 
-int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
+int Otls_STORE_expect(Otls_STORE_CTX *ctx, int expected_type)
 {
     if (ctx->loading) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_EXPECT,
-                      OSSL_STORE_R_LOADING_STARTED);
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_EXPECT,
+                      Otls_STORE_R_LOADING_STARTED);
         return 0;
     }
 
@@ -153,32 +153,32 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     return 1;
 }
 
-int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
+int Otls_STORE_find(Otls_STORE_CTX *ctx, const Otls_STORE_SEARCH *search)
 {
     if (ctx->loading) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
-                      OSSL_STORE_R_LOADING_STARTED);
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_FIND,
+                      Otls_STORE_R_LOADING_STARTED);
         return 0;
     }
     if (ctx->loader->find == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
-                      OSSL_STORE_R_UNSUPPORTED_OPERATION);
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_FIND,
+                      Otls_STORE_R_UNSUPPORTED_OPERATION);
         return 0;
     }
 
     return ctx->loader->find(ctx->loader_ctx, search);
 }
 
-OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
+Otls_STORE_INFO *Otls_STORE_load(Otls_STORE_CTX *ctx)
 {
-    OSSL_STORE_INFO *v = NULL;
+    Otls_STORE_INFO *v = NULL;
 
     ctx->loading = 1;
  again:
-    if (OSSL_STORE_eof(ctx))
+    if (Otls_STORE_eof(ctx))
         return NULL;
 
-    OSSL_TRACE(STORE, "Loading next object\n");
+    Otls_TRACE(STORE, "Loading next object\n");
     v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
 
     if (ctx->post_process != NULL && v != NULL) {
@@ -193,9 +193,9 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     }
 
     if (v != NULL && ctx->expected_type != 0) {
-        int returned_type = OSSL_STORE_INFO_get_type(v);
+        int returned_type = Otls_STORE_INFO_get_type(v);
 
-        if (returned_type != OSSL_STORE_INFO_NAME && returned_type != 0) {
+        if (returned_type != Otls_STORE_INFO_NAME && returned_type != 0) {
             /*
              * Soft assert here so those who want to harsly weed out faulty
              * loaders can do so using a debugging version of libcrypto.
@@ -204,50 +204,50 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
                 assert(ctx->expected_type == returned_type);
 
             if (ctx->expected_type != returned_type) {
-                OSSL_STORE_INFO_free(v);
+                Otls_STORE_INFO_free(v);
                 goto again;
             }
         }
     }
 
     if (v != NULL)
-        OSSL_TRACE1(STORE, "Got a %s\n",
-                    OSSL_STORE_INFO_type_string(OSSL_STORE_INFO_get_type(v)));
+        Otls_TRACE1(STORE, "Got a %s\n",
+                    Otls_STORE_INFO_type_string(Otls_STORE_INFO_get_type(v)));
 
     return v;
 }
 
-int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
+int Otls_STORE_error(Otls_STORE_CTX *ctx)
 {
     return ctx->loader->error(ctx->loader_ctx);
 }
 
-int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
+int Otls_STORE_eof(Otls_STORE_CTX *ctx)
 {
     return ctx->loader->eof(ctx->loader_ctx);
 }
 
-int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
+int Otls_STORE_close(Otls_STORE_CTX *ctx)
 {
     int loader_ret;
 
-    OSSL_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
+    Otls_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
     loader_ret = ctx->loader->close(ctx->loader_ctx);
 
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
     return loader_ret;
 }
 
 /*
- * Functions to generate OSSL_STORE_INFOs, one function for each type we
+ * Functions to generate Otls_STORE_INFOs, one function for each type we
  * support having in them as well as a generic constructor.
  *
- * In all cases, ownership of the object is transferred to the OSSL_STORE_INFO
- * and will therefore be freed when the OSSL_STORE_INFO is freed.
+ * In all cases, ownership of the object is transferred to the Otls_STORE_INFO
+ * and will therefore be freed when the Otls_STORE_INFO is freed.
  */
-static OSSL_STORE_INFO *store_info_new(int type, void *data)
+static Otls_STORE_INFO *store_info_new(int type, void *data)
 {
-    OSSL_STORE_INFO *info = OPENSSL_zalloc(sizeof(*info));
+    Otls_STORE_INFO *info = OPENtls_zalloc(sizeof(*info));
 
     if (info == NULL)
         return NULL;
@@ -257,12 +257,12 @@ static OSSL_STORE_INFO *store_info_new(int type, void *data)
     return info;
 }
 
-OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
+Otls_STORE_INFO *Otls_STORE_INFO_new_NAME(char *name)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_NAME, NULL);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_NAME, NULL);
 
     if (info == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_NAME,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_NAME,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -273,10 +273,10 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
     return info;
 }
 
-int OSSL_STORE_INFO_set0_NAME_description(OSSL_STORE_INFO *info, char *desc)
+int Otls_STORE_INFO_set0_NAME_description(Otls_STORE_INFO *info, char *desc)
 {
-    if (info->type != OSSL_STORE_INFO_NAME) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_SET0_NAME_DESCRIPTION,
+    if (info->type != Otls_STORE_INFO_NAME) {
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_SET0_NAME_DESCRIPTION,
                       ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -285,206 +285,206 @@ int OSSL_STORE_INFO_set0_NAME_description(OSSL_STORE_INFO *info, char *desc)
 
     return 1;
 }
-OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params)
+Otls_STORE_INFO *Otls_STORE_INFO_new_PARAMS(EVP_PKEY *params)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PARAMS, params);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_PARAMS, params);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_PARAMS,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_PARAMS,
                       ERR_R_MALLOC_FAILURE);
     return info;
 }
 
-OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
+Otls_STORE_INFO *Otls_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PKEY, pkey);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_PKEY, pkey);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_PKEY,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_PKEY,
                       ERR_R_MALLOC_FAILURE);
     return info;
 }
 
-OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
+Otls_STORE_INFO *Otls_STORE_INFO_new_CERT(X509 *x509)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CERT, x509);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_CERT, x509);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_CERT,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_CERT,
                       ERR_R_MALLOC_FAILURE);
     return info;
 }
 
-OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
+Otls_STORE_INFO *Otls_STORE_INFO_new_CRL(X509_CRL *crl)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CRL, crl);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_CRL, crl);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_CRL,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_CRL,
                       ERR_R_MALLOC_FAILURE);
     return info;
 }
 
 /*
- * Functions to try to extract data from a OSSL_STORE_INFO.
+ * Functions to try to extract data from a Otls_STORE_INFO.
  */
-int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info)
+int Otls_STORE_INFO_get_type(const Otls_STORE_INFO *info)
 {
     return info->type;
 }
 
-const char *OSSL_STORE_INFO_get0_NAME(const OSSL_STORE_INFO *info)
+const char *Otls_STORE_INFO_get0_NAME(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_NAME)
+    if (info->type == Otls_STORE_INFO_NAME)
         return info->_.name.name;
     return NULL;
 }
 
-char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info)
+char *Otls_STORE_INFO_get1_NAME(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_NAME) {
-        char *ret = OPENSSL_strdup(info->_.name.name);
+    if (info->type == Otls_STORE_INFO_NAME) {
+        char *ret = OPENtls_strdup(info->_.name.name);
 
         if (ret == NULL)
-            OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME,
+            Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_NAME,
                           ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME,
-                  OSSL_STORE_R_NOT_A_NAME);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_NAME,
+                  Otls_STORE_R_NOT_A_NAME);
     return NULL;
 }
 
-const char *OSSL_STORE_INFO_get0_NAME_description(const OSSL_STORE_INFO *info)
+const char *Otls_STORE_INFO_get0_NAME_description(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_NAME)
+    if (info->type == Otls_STORE_INFO_NAME)
         return info->_.name.desc;
     return NULL;
 }
 
-char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info)
+char *Otls_STORE_INFO_get1_NAME_description(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_NAME) {
-        char *ret = OPENSSL_strdup(info->_.name.desc
+    if (info->type == Otls_STORE_INFO_NAME) {
+        char *ret = OPENtls_strdup(info->_.name.desc
                                    ? info->_.name.desc : "");
 
         if (ret == NULL)
-            OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME_DESCRIPTION,
+            Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_NAME_DESCRIPTION,
                      ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME_DESCRIPTION,
-                  OSSL_STORE_R_NOT_A_NAME);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_NAME_DESCRIPTION,
+                  Otls_STORE_R_NOT_A_NAME);
     return NULL;
 }
 
-EVP_PKEY *OSSL_STORE_INFO_get0_PARAMS(const OSSL_STORE_INFO *info)
+EVP_PKEY *Otls_STORE_INFO_get0_PARAMS(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_PARAMS)
+    if (info->type == Otls_STORE_INFO_PARAMS)
         return info->_.params;
     return NULL;
 }
 
-EVP_PKEY *OSSL_STORE_INFO_get1_PARAMS(const OSSL_STORE_INFO *info)
+EVP_PKEY *Otls_STORE_INFO_get1_PARAMS(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_PARAMS) {
+    if (info->type == Otls_STORE_INFO_PARAMS) {
         EVP_PKEY_up_ref(info->_.params);
         return info->_.params;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_PARAMS,
-                  OSSL_STORE_R_NOT_PARAMETERS);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_PARAMS,
+                  Otls_STORE_R_NOT_PARAMETERS);
     return NULL;
 }
 
-EVP_PKEY *OSSL_STORE_INFO_get0_PKEY(const OSSL_STORE_INFO *info)
+EVP_PKEY *Otls_STORE_INFO_get0_PKEY(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_PKEY)
+    if (info->type == Otls_STORE_INFO_PKEY)
         return info->_.pkey;
     return NULL;
 }
 
-EVP_PKEY *OSSL_STORE_INFO_get1_PKEY(const OSSL_STORE_INFO *info)
+EVP_PKEY *Otls_STORE_INFO_get1_PKEY(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_PKEY) {
+    if (info->type == Otls_STORE_INFO_PKEY) {
         EVP_PKEY_up_ref(info->_.pkey);
         return info->_.pkey;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_PKEY,
-                  OSSL_STORE_R_NOT_A_KEY);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_PKEY,
+                  Otls_STORE_R_NOT_A_KEY);
     return NULL;
 }
 
-X509 *OSSL_STORE_INFO_get0_CERT(const OSSL_STORE_INFO *info)
+X509 *Otls_STORE_INFO_get0_CERT(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_CERT)
+    if (info->type == Otls_STORE_INFO_CERT)
         return info->_.x509;
     return NULL;
 }
 
-X509 *OSSL_STORE_INFO_get1_CERT(const OSSL_STORE_INFO *info)
+X509 *Otls_STORE_INFO_get1_CERT(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_CERT) {
+    if (info->type == Otls_STORE_INFO_CERT) {
         X509_up_ref(info->_.x509);
         return info->_.x509;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT,
-                  OSSL_STORE_R_NOT_A_CERTIFICATE);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_CERT,
+                  Otls_STORE_R_NOT_A_CERTIFICATE);
     return NULL;
 }
 
-X509_CRL *OSSL_STORE_INFO_get0_CRL(const OSSL_STORE_INFO *info)
+X509_CRL *Otls_STORE_INFO_get0_CRL(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_CRL)
+    if (info->type == Otls_STORE_INFO_CRL)
         return info->_.crl;
     return NULL;
 }
 
-X509_CRL *OSSL_STORE_INFO_get1_CRL(const OSSL_STORE_INFO *info)
+X509_CRL *Otls_STORE_INFO_get1_CRL(const Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_CRL) {
+    if (info->type == Otls_STORE_INFO_CRL) {
         X509_CRL_up_ref(info->_.crl);
         return info->_.crl;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_CRL,
-                  OSSL_STORE_R_NOT_A_CRL);
+    Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_GET1_CRL,
+                  Otls_STORE_R_NOT_A_CRL);
     return NULL;
 }
 
 /*
- * Free the OSSL_STORE_INFO
+ * Free the Otls_STORE_INFO
  */
-void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
+void Otls_STORE_INFO_free(Otls_STORE_INFO *info)
 {
     if (info != NULL) {
         switch (info->type) {
-        case OSSL_STORE_INFO_EMBEDDED:
+        case Otls_STORE_INFO_EMBEDDED:
             BUF_MEM_free(info->_.embedded.blob);
-            OPENSSL_free(info->_.embedded.pem_name);
+            OPENtls_free(info->_.embedded.pem_name);
             break;
-        case OSSL_STORE_INFO_NAME:
-            OPENSSL_free(info->_.name.name);
-            OPENSSL_free(info->_.name.desc);
+        case Otls_STORE_INFO_NAME:
+            OPENtls_free(info->_.name.name);
+            OPENtls_free(info->_.name.desc);
             break;
-        case OSSL_STORE_INFO_PARAMS:
+        case Otls_STORE_INFO_PARAMS:
             EVP_PKEY_free(info->_.params);
             break;
-        case OSSL_STORE_INFO_PKEY:
+        case Otls_STORE_INFO_PKEY:
             EVP_PKEY_free(info->_.pkey);
             break;
-        case OSSL_STORE_INFO_CERT:
+        case Otls_STORE_INFO_CERT:
             X509_free(info->_.x509);
             break;
-        case OSSL_STORE_INFO_CRL:
+        case Otls_STORE_INFO_CRL:
             X509_CRL_free(info->_.crl);
             break;
         }
-        OPENSSL_free(info);
+        OPENtls_free(info);
     }
 }
 
-int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
+int Otls_STORE_supports_search(Otls_STORE_CTX *ctx, int search_type)
 {
-    OSSL_STORE_SEARCH tmp_search;
+    Otls_STORE_SEARCH tmp_search;
 
     if (ctx->loader->find == NULL)
         return 0;
@@ -493,46 +493,46 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
 }
 
 /* Search term constructors */
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
+Otls_STORE_SEARCH *Otls_STORE_SEARCH_by_name(X509_NAME *name)
 {
-    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+    Otls_STORE_SEARCH *search = OPENtls_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_NAME,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_SEARCH_BY_NAME,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    search->search_type = OSSL_STORE_SEARCH_BY_NAME;
+    search->search_type = Otls_STORE_SEARCH_BY_NAME;
     search->name = name;
     return search;
 }
 
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
+Otls_STORE_SEARCH *Otls_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
                                                     const ASN1_INTEGER *serial)
 {
-    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+    Otls_STORE_SEARCH *search = OPENtls_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ISSUER_SERIAL,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_SEARCH_BY_ISSUER_SERIAL,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    search->search_type = OSSL_STORE_SEARCH_BY_ISSUER_SERIAL;
+    search->search_type = Otls_STORE_SEARCH_BY_ISSUER_SERIAL;
     search->name = name;
     search->serial = serial;
     return search;
 }
 
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
+Otls_STORE_SEARCH *Otls_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
                                                         const unsigned char
                                                         *bytes, size_t len)
 {
-    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+    Otls_STORE_SEARCH *search = OPENtls_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_SEARCH_BY_KEY_FINGERPRINT,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -542,127 +542,127 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
 
         BIO_snprintf(buf1, sizeof(buf1), "%d", EVP_MD_size(digest));
         BIO_snprintf(buf2, sizeof(buf2), "%zu", len);
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
-                      OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST);
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_SEARCH_BY_KEY_FINGERPRINT,
+                      Otls_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST);
         ERR_add_error_data(5, EVP_MD_name(digest), " size is ", buf1,
                            ", fingerprint size is ", buf2);
     }
 
-    search->search_type = OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT;
+    search->search_type = Otls_STORE_SEARCH_BY_KEY_FINGERPRINT;
     search->digest = digest;
     search->string = bytes;
     search->stringlength = len;
     return search;
 }
 
-OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias)
+Otls_STORE_SEARCH *Otls_STORE_SEARCH_by_alias(const char *alias)
 {
-    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+    Otls_STORE_SEARCH *search = OPENtls_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ALIAS,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_SEARCH_BY_ALIAS,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    search->search_type = OSSL_STORE_SEARCH_BY_ALIAS;
+    search->search_type = Otls_STORE_SEARCH_BY_ALIAS;
     search->string = (const unsigned char *)alias;
     search->stringlength = strlen(alias);
     return search;
 }
 
 /* Search term destructor */
-void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search)
+void Otls_STORE_SEARCH_free(Otls_STORE_SEARCH *search)
 {
-    OPENSSL_free(search);
+    OPENtls_free(search);
 }
 
 /* Search term accessors */
-int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
+int Otls_STORE_SEARCH_get_type(const Otls_STORE_SEARCH *criterion)
 {
     return criterion->search_type;
 }
 
-X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
+X509_NAME *Otls_STORE_SEARCH_get0_name(const Otls_STORE_SEARCH *criterion)
 {
     return criterion->name;
 }
 
-const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
+const ASN1_INTEGER *Otls_STORE_SEARCH_get0_serial(const Otls_STORE_SEARCH
                                                  *criterion)
 {
     return criterion->serial;
 }
 
-const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
+const unsigned char *Otls_STORE_SEARCH_get0_bytes(const Otls_STORE_SEARCH
                                                   *criterion, size_t *length)
 {
     *length = criterion->stringlength;
     return criterion->string;
 }
 
-const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion)
+const char *Otls_STORE_SEARCH_get0_string(const Otls_STORE_SEARCH *criterion)
 {
     return (const char *)criterion->string;
 }
 
-const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
+const EVP_MD *Otls_STORE_SEARCH_get0_digest(const Otls_STORE_SEARCH *criterion)
 {
     return criterion->digest;
 }
 
 /* Internal functions */
-OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
+Otls_STORE_INFO *otls_store_info_new_EMBEDDED(const char *new_pem_name,
                                               BUF_MEM *embedded)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_EMBEDDED, NULL);
+    Otls_STORE_INFO *info = store_info_new(Otls_STORE_INFO_EMBEDDED, NULL);
 
     if (info == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_EMBEDDED,
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     info->_.embedded.blob = embedded;
     info->_.embedded.pem_name =
-        new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
+        new_pem_name == NULL ? NULL : OPENtls_strdup(new_pem_name);
 
     if (new_pem_name != NULL && info->_.embedded.pem_name == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_INFO_NEW_EMBEDDED,
                       ERR_R_MALLOC_FAILURE);
-        OSSL_STORE_INFO_free(info);
+        Otls_STORE_INFO_free(info);
         info = NULL;
     }
 
     return info;
 }
 
-BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info)
+BUF_MEM *otls_store_info_get0_EMBEDDED_buffer(Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
+    if (info->type == Otls_STORE_INFO_EMBEDDED)
         return info->_.embedded.blob;
     return NULL;
 }
 
-char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
+char *otls_store_info_get0_EMBEDDED_pem_name(Otls_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
+    if (info->type == Otls_STORE_INFO_EMBEDDED)
         return info->_.embedded.pem_name;
     return NULL;
 }
 
-OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
+Otls_STORE_CTX *otls_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
                                           void *ui_data)
 {
-    OSSL_STORE_CTX *ctx = NULL;
-    const OSSL_STORE_LOADER *loader = NULL;
-    OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
+    Otls_STORE_CTX *ctx = NULL;
+    const Otls_STORE_LOADER *loader = NULL;
+    Otls_STORE_LOADER_CTX *loader_ctx = NULL;
 
-    if ((loader = ossl_store_get0_loader_int("file")) == NULL
-        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
+    if ((loader = otls_store_get0_loader_int("file")) == NULL
+        || ((loader_ctx = otls_store_file_attach_pem_bio_int(bp)) == NULL))
         goto done;
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL) {
+        Otls_STOREerr(Otls_STORE_F_Otls_STORE_ATTACH_PEM_BIO,
                      ERR_R_MALLOC_FAILURE);
         goto done;
     }
@@ -686,10 +686,10 @@ OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
     return ctx;
 }
 
-int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx)
+int otls_store_detach_pem_bio(Otls_STORE_CTX *ctx)
 {
-    int loader_ret = ossl_store_file_detach_pem_bio_int(ctx->loader_ctx);
+    int loader_ret = otls_store_file_detach_pem_bio_int(ctx->loader_ctx);
 
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
     return loader_ret;
 }

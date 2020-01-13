@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -126,12 +126,12 @@ static unsigned char conv_ascii2bin(unsigned char a, const unsigned char *table)
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
+    return OPENtls_zalloc(sizeof(EVP_ENCODE_CTX));
 }
 
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
 {
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, const EVP_ENCODE_CTX *sctx)
@@ -168,7 +168,7 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     *outl = 0;
     if (inl <= 0)
         return 0;
-    OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
+    OPENtls_assert(ctx->length <= (int)sizeof(ctx->enc_data));
     if (ctx->length - ctx->num > inl) {
         memcpy(&(ctx->enc_data[ctx->num]), in, inl);
         ctx->num += inl;
@@ -364,7 +364,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                 rv = -1;
                 goto end;
             }
-            OPENSSL_assert(n < (int)sizeof(ctx->enc_data));
+            OPENtls_assert(n < (int)sizeof(ctx->enc_data));
             d[n++] = tmp;
         }
 

@@ -1,15 +1,15 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -26,7 +26,7 @@ static char *privkey = NULL;
 
 static int write_record(BIO *b, size_t len, int rectype, int recversion)
 {
-    unsigned char header[SSL3_RT_HEADER_LENGTH];
+    unsigned char header[tls3_RT_HEADER_LENGTH];
     size_t written;
     unsigned char buf[256];
 
@@ -38,8 +38,8 @@ static int write_record(BIO *b, size_t len, int rectype, int recversion)
     header[3] = (len >> 8) & 0xff;
     header[4] = len & 0xff;
 
-    if (!BIO_write_ex(b, header, SSL3_RT_HEADER_LENGTH, &written)
-            || written != SSL3_RT_HEADER_LENGTH)
+    if (!BIO_write_ex(b, header, tls3_RT_HEADER_LENGTH, &written)
+            || written != tls3_RT_HEADER_LENGTH)
         return 0;
 
     while (len > 0) {
@@ -66,11 +66,11 @@ static int fail_due_to_record_overflow(int enc)
     int reason;
 
     if (enc)
-        reason = SSL_R_ENCRYPTED_LENGTH_TOO_LONG;
+        reason = tls_R_ENCRYPTED_LENGTH_TOO_LONG;
     else
-        reason = SSL_R_DATA_LENGTH_TOO_LONG;
+        reason = tls_R_DATA_LENGTH_TOO_LONG;
 
-    if (ERR_GET_LIB(err) == ERR_LIB_SSL
+    if (ERR_GET_LIB(err) == ERR_LIB_tls
             && ERR_GET_REASON(err) == reason)
         return 1;
 
@@ -79,8 +79,8 @@ static int fail_due_to_record_overflow(int enc)
 
 static int test_record_overflow(int idx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientssl = NULL, *serverssl = NULL;
+    tls_CTX *cctx = NULL, *sctx = NULL;
+    tls *clienttls = NULL, *servertls = NULL;
     int testresult = 0;
     size_t len = 0;
     size_t written;
@@ -89,12 +89,12 @@ static int test_record_overflow(int idx)
     BIO *serverbio;
     int recversion;
 
-#ifdef OPENSSL_NO_TLS1_2
+#ifdef OPENtls_NO_TLS1_2
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK)
         return 1;
 #endif
-#ifdef OPENSSL_NO_TLS1_3
+#ifdef OPENtls_NO_TLS1_3
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK)
         return 1;
@@ -102,41 +102,41 @@ static int test_record_overflow(int idx)
 
     ERR_clear_error();
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK) {
-        len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
-#ifndef OPENSSL_NO_COMP
-        len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+        len = tls3_RT_MAX_ENCRYPTED_LENGTH;
+#ifndef OPENtls_NO_COMP
+        len -= tls3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
-        SSL_CTX_set_max_proto_version(sctx, TLS1_2_VERSION);
+        tls_CTX_set_max_proto_version(sctx, TLS1_2_VERSION);
     } else if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
                || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK) {
-        len = SSL3_RT_MAX_TLS13_ENCRYPTED_LENGTH;
+        len = tls3_RT_MAX_TLS13_ENCRYPTED_LENGTH;
     }
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+    if (!TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                       NULL, NULL)))
         goto end;
 
-    serverbio = SSL_get_rbio(serverssl);
+    serverbio = tls_get_rbio(servertls);
 
     if (idx == TEST_PLAINTEXT_OVERFLOW_OK
             || idx == TEST_PLAINTEXT_OVERFLOW_NOT_OK) {
-        len = SSL3_RT_MAX_PLAIN_LENGTH;
+        len = tls3_RT_MAX_PLAIN_LENGTH;
 
         if (idx == TEST_PLAINTEXT_OVERFLOW_NOT_OK)
             len++;
 
         if (!TEST_true(write_record(serverbio, len,
-                                    SSL3_RT_HANDSHAKE, TLS1_VERSION)))
+                                    tls3_RT_HANDSHAKE, TLS1_VERSION)))
             goto end;
 
-        if (!TEST_int_le(SSL_accept(serverssl), 0))
+        if (!TEST_int_le(tls_accept(servertls), 0))
             goto end;
 
         overf_expected = (idx == TEST_PLAINTEXT_OVERFLOW_OK) ? 0 : 1;
@@ -146,8 +146,8 @@ static int test_record_overflow(int idx)
         goto success;
     }
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                         SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(servertls, clienttls,
+                                         tls_ERROR_NONE)))
         goto end;
 
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK
@@ -160,11 +160,11 @@ static int test_record_overflow(int idx)
 
     recversion = TLS1_2_VERSION;
 
-    if (!TEST_true(write_record(serverbio, len, SSL3_RT_APPLICATION_DATA,
+    if (!TEST_true(write_record(serverbio, len, tls3_RT_APPLICATION_DATA,
                                 recversion)))
         goto end;
 
-    if (!TEST_false(SSL_read_ex(serverssl, &buf, sizeof(buf), &written)))
+    if (!TEST_false(tls_read_ex(servertls, &buf, sizeof(buf), &written)))
         goto end;
 
     if (!TEST_int_eq(fail_due_to_record_overflow(1), overf_expected))
@@ -174,10 +174,10 @@ static int test_record_overflow(int idx)
     testresult = 1;
 
  end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
     return testresult;
 }
 

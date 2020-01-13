@@ -6,7 +6,7 @@ CMS_compress - create a CMS CompressedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <opentls/cms.h>
 
  CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
 
@@ -20,7 +20,7 @@ B<flags> is an optional set of flags.
 The only currently supported compression algorithm is zlib using the NID
 NID_zlib_compression.
 
-If zlib support is not compiled into OpenSSL then CMS_compress() will return
+If zlib support is not compiled into Opentls then CMS_compress() will return
 an error.
 
 If the B<CMS_TEXT> flag is set MIME headers for type B<text/plain> are
@@ -63,15 +63,15 @@ L<ERR_get_error(3)>, L<CMS_uncompress(3)>
 
 =head1 HISTORY
 
-The B<CMS_STREAM> flag was added in OpenSSL 1.0.0.
+The B<CMS_STREAM> flag was added in Opentls 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

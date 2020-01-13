@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 #			IALU(*)/gcc-4.4		NEON
@@ -86,7 +86,7 @@ poly1305_init:
 
 #if	__ARM_MAX_ARCH__>=7
 	adr	r11,.Lpoly1305_init
-	ldr	r12,.LOPENSSL_armcap
+	ldr	r12,.LOPENtls_armcap
 #endif
 	ldrb	r4,[$inp,#0]
 	mov	r10,#0x0fffffff
@@ -104,7 +104,7 @@ poly1305_init:
 
 #if	__ARM_MAX_ARCH__>=7
 # if !defined(_WIN32)
-	ldr	r12,[r11,r12]		@ OPENSSL_armcap_P
+	ldr	r12,[r11,r12]		@ OPENtls_armcap_P
 # endif
 # if defined(__APPLE__) || defined(_WIN32)
 	ldr	r12,[r12]
@@ -1226,20 +1226,20 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-.LOPENSSL_armcap:
+.LOPENtls_armcap:
 # ifdef	_WIN32
-.word	OPENSSL_armcap_P
+.word	OPENtls_armcap_P
 # else
-.word	OPENSSL_armcap_P-.Lpoly1305_init
+.word	OPENtls_armcap_P-.Lpoly1305_init
 # endif
 #endif
 ___
 }	}
 $code.=<<___;
-.asciz	"Poly1305 for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for ARMv4/NEON, CRYPTOGAMS by <appro\@opentls.org>"
 .align	2
 #if	__ARM_MAX_ARCH__>=7
-.comm   OPENSSL_armcap_P,4,4
+.comm   OPENtls_armcap_P,4,4
 #endif
 ___
 

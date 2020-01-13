@@ -1,72 +1,72 @@
-Running external test suites with OpenSSL
+Running external test suites with Opentls
 =========================================
 
-It is possible to integrate external test suites into OpenSSL's "make test".
+It is possible to integrate external test suites into Opentls's "make test".
 This capability is considered a developer option and does not work on all
 platforms.
 
 
 
-The BoringSSL test suite
+The Boringtls test suite
 ========================
 
-In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
+In order to run the Boringtls tests with Opentls, first checkout the Boringtls
 source code into an appropriate directory. This can be done in two ways:
 
-1) Separately from the OpenSSL checkout using:
+1) Separately from the Opentls checkout using:
 
-  $ git clone https://boringssl.googlesource.com/boringssl boringssl
+  $ git clone https://boringtls.googlesource.com/boringtls boringtls
 
-  The BoringSSL tests are only confirmed to work at a specific commit in the
-  BoringSSL repository. Later commits may or may not pass the test suite:
+  The Boringtls tests are only confirmed to work at a specific commit in the
+  Boringtls repository. Later commits may or may not pass the test suite:
 
-  $ cd boringssl
+  $ cd boringtls
   $ git checkout 490469f850e
 
-2) Using the already configured submodule settings in OpenSSL:
+2) Using the already configured submodule settings in Opentls:
 
   $ git submodule update --init
 
-Configure the OpenSSL source code to enable the external tests:
+Configure the Opentls source code to enable the external tests:
 
-$ cd ../openssl
-$ ./config enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers \
+$ cd ../opentls
+$ ./config enable-tls3 enable-tls3-method enable-weak-tls-ciphers \
   enable-external-tests
 
 Note that using other config options than those given above may cause the tests
 to fail.
 
-Run the OpenSSL tests by providing the path to the BoringSSL test runner in the
+Run the Opentls tests by providing the path to the Boringtls test runner in the
 BORING_RUNNER_DIR environment variable:
 
-$ BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make test
+$ BORING_RUNNER_DIR=/path/to/boringtls/tls/test/runner make test
 
 Note that the test suite may change directory while running so the path provided
 should be absolute and not relative to the current working directory.
 
-To see more detailed output you can run just the BoringSSL tests with the
+To see more detailed output you can run just the Boringtls tests with the
 verbose option:
 
-$ VERBOSE=1 BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make \
-  TESTS="test_external_boringssl" test
+$ VERBOSE=1 BORING_RUNNER_DIR=/path/to/boringtls/tls/test/runner make \
+  TESTS="test_external_boringtls" test
 
 
 Test failures and suppressions
 ------------------------------
 
-A large number of the BoringSSL tests are known to fail. A test could fail
+A large number of the Boringtls tests are known to fail. A test could fail
 because of many possible reasons. For example:
 
-- A bug in OpenSSL
+- A bug in Opentls
 - Different interpretations of standards
-- Assumptions about the way BoringSSL works that do not apply to OpenSSL
-- The test uses APIs added to BoringSSL that are not present in OpenSSL
+- Assumptions about the way Boringtls works that do not apply to Opentls
+- The test uses APIs added to Boringtls that are not present in Opentls
 - etc
 
 In order to provide a "clean" baseline run with all the tests passing a config
 file has been provided that suppresses the running of tests that are known to
-fail. These suppressions are held in the file "test/ossl_shim/ossl_config.json"
-within the OpenSSL source code.
+fail. These suppressions are held in the file "test/otls_shim/otls_config.json"
+within the Opentls source code.
 
 The community is encouraged to contribute patches which reduce the number of
 suppressions that are currently present.
@@ -75,14 +75,14 @@ suppressions that are currently present.
 Python PYCA/Cryptography test suite
 ===================================
 
-This python test suite runs cryptographic tests with a local OpenSSL build as
+This python test suite runs cryptographic tests with a local Opentls build as
 the implementation.
 
 First checkout the PYCA/Cryptography module into ./pyca-cryptography using:
 
 $ git submodule update --init
 
-Then configure/build OpenSSL compatible with the python module:
+Then configure/build Opentls compatible with the python module:
 
 $ ./config shared enable-external-tests
 $ make
@@ -103,7 +103,7 @@ krb5 test suite
 ===============
 
 Much like the PYCA/Cryptography test suite, this builds and runs the krb5
-tests against the local OpenSSL build.
+tests against the local Opentls build.
 
 You will need a git checkout of krb5 at the top level:
 
@@ -116,7 +116,7 @@ $ cd krb5
 $ git checkout krb5-1.15.1-final
 $ cd ..
 
-OpenSSL must be built with external tests enabled:
+Opentls must be built with external tests enabled:
 
 $ ./config enable-external-tests
 $ make

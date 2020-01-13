@@ -44,7 +44,7 @@ ENGINE_unregister_digests
 
 =head1 SYNOPSIS
 
- #include <openssl/engine.h>
+ #include <opentls/engine.h>
 
  ENGINE *ENGINE_get_first(void);
  ENGINE *ENGINE_get_last(void);
@@ -154,9 +154,9 @@ ENGINE_unregister_digests
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+Deprecated since Opentls 1.1.0, can be hidden entirely by defining
+B<OPENtls_API_COMPAT> with a suitable version value, see
+L<opentls_user_macros(7)>:
 
  void ENGINE_cleanup(void)
 
@@ -173,7 +173,7 @@ implementation includes the following abstractions;
 
  RSA_METHOD - for providing alternative RSA implementations
  DSA_METHOD, DH_METHOD, RAND_METHOD, ECDH_METHOD, ECDSA_METHOD,
-       - similarly for other OpenSSL APIs
+       - similarly for other Opentls APIs
  EVP_CIPHER - potentially multiple cipher algorithms (indexed by 'nid')
  EVP_DIGEST - potentially multiple hash algorithms (indexed by 'nid')
  key-loading - loading public and/or private EVP_PKEY keys
@@ -209,7 +209,7 @@ until after you have released your reference.
 I<Structural references>
 
 This basic type of reference is used for instantiating new ENGINEs,
-iterating across OpenSSL's internal linked-list of loaded
+iterating across Opentls's internal linked-list of loaded
 ENGINEs, reading information about an ENGINE, etc. Essentially a structural
 reference is sufficient if you only need to query or manipulate the data of
 an ENGINE implementation rather than use its functionality.
@@ -224,10 +224,10 @@ the last structural reference is released.
 
 It should also be noted that many ENGINE API function calls that accept a
 structural reference will internally obtain another reference - typically
-this happens whenever the supplied ENGINE will be needed by OpenSSL after
+this happens whenever the supplied ENGINE will be needed by Opentls after
 the function has returned. Eg. the function to add a new ENGINE to
-OpenSSL's internal list is ENGINE_add() - if this function returns success,
-then OpenSSL will have stored a new structural reference internally so the
+Opentls's internal list is ENGINE_add() - if this function returns success,
+then Opentls will have stored a new structural reference internally so the
 caller is still responsible for freeing their own reference with
 ENGINE_free() when they are finished with it. In a similar way, some
 functions will automatically release the structural reference passed to it
@@ -240,14 +240,14 @@ released on behalf of the caller.
 
 To clarify a particular function's handling of references, one should
 always consult that function's documentation "man" page, or failing that
-the openssl/engine.h header file includes some hints.
+the opentls/engine.h header file includes some hints.
 
 I<Functional references>
 
 As mentioned, functional references exist when the cryptographic
 functionality of an ENGINE is required to be available. A functional
 reference can be obtained in one of two ways; from an existing structural
-reference to the required ENGINE, or by asking OpenSSL for the default
+reference to the required ENGINE, or by asking Opentls for the default
 operational ENGINE for a given cryptographic purpose.
 
 To obtain a functional reference from an existing structural reference,
@@ -259,12 +259,12 @@ have allocated a new B<functional> reference to the ENGINE. All functional
 references are released by calling ENGINE_finish() (which removes the
 implicit structural reference as well).
 
-The second way to get a functional reference is by asking OpenSSL for a
+The second way to get a functional reference is by asking Opentls for a
 default implementation for a given task, eg. by ENGINE_get_default_RSA(),
 ENGINE_get_default_cipher_engine(), etc. These are discussed in the next
 section, though they are not usually required by application programmers as
 they are used automatically when creating and using the relevant
-algorithm-specific types in OpenSSL, such as RSA, DSA, EVP_CIPHER_CTX, etc.
+algorithm-specific types in Opentls, such as RSA, DSA, EVP_CIPHER_CTX, etc.
 
 =head2 Default implementations
 
@@ -284,7 +284,7 @@ ENGINE subsystem to process the corresponding state table and return a
 functional reference to an initialised ENGINE whose implementation should be
 used. If no ENGINE should (or can) be used, it will return NULL and the caller
 will operate with a NULL ENGINE handle - this usually equates to using the
-conventional software implementation. In the latter case, OpenSSL will from
+conventional software implementation. In the latter case, Opentls will from
 then on behave the way it used to before the ENGINE API existed.
 
 Each state table has a flag to note whether it has processed this
@@ -299,7 +299,7 @@ same iteration unless the state table changes. This behaviour can also be
 changed; if the ENGINE_TABLE_FLAG_NOINIT flag is set (using
 ENGINE_set_table_flags()), no attempted initialisations will take place,
 instead the only way for the state table to return a non-NULL ENGINE to the
-"get_default" query will be if one is expressly set in the table. Eg.
+"get_default" query will be if one is expretlsy set in the table. Eg.
 ENGINE_set_default_RSA() does the same job as ENGINE_register_RSA() except
 that it also sets the state table's cached response for the "get_default"
 query. In the case of abstractions like EVP_CIPHER, where implementations are
@@ -312,31 +312,31 @@ This section will explain the basic things an application programmer should
 support to make the most useful elements of the ENGINE functionality
 available to the user. The first thing to consider is whether the
 programmer wishes to make alternative ENGINE modules available to the
-application and user. OpenSSL maintains an internal linked list of
+application and user. Opentls maintains an internal linked list of
 "visible" ENGINEs from which it has to operate - at start-up, this list is
 empty and in fact if an application does not call any ENGINE API calls and
-it uses static linking against openssl, then the resulting application
+it uses static linking against opentls, then the resulting application
 binary will not contain any alternative ENGINE code at all. So the first
 consideration is whether any/all available ENGINE implementations should be
-made visible to OpenSSL - this is controlled by calling the various "load"
+made visible to Opentls - this is controlled by calling the various "load"
 functions.
 
-The fact that ENGINEs are made visible to OpenSSL (and thus are linked into
+The fact that ENGINEs are made visible to Opentls (and thus are linked into
 the program and loaded into memory at run-time) does not mean they are
-"registered" or called into use by OpenSSL automatically - that behaviour
+"registered" or called into use by Opentls automatically - that behaviour
 is something for the application to control. Some applications
 will want to allow the user to specify exactly which ENGINE they want used
 if any is to be used at all. Others may prefer to load all support and have
-OpenSSL automatically use at run-time any ENGINE that is able to
+Opentls automatically use at run-time any ENGINE that is able to
 successfully initialise - ie. to assume that this corresponds to
 acceleration hardware attached to the machine or some such thing. There are
 probably numerous other ways in which applications may prefer to handle
 things, so we will simply illustrate the consequences as they apply to a
 couple of simple cases and leave developers to consider these and the
-source code to openssl's built-in utilities as guides.
+source code to opentls's built-in utilities as guides.
 
-If no ENGINE API functions are called within an application, then OpenSSL
-will not allocate any internal resources.  Prior to OpenSSL 1.1.0, however,
+If no ENGINE API functions are called within an application, then Opentls
+will not allocate any internal resources.  Prior to Opentls 1.1.0, however,
 if any ENGINEs are loaded, even if not registered or used, it was necessary to
 call ENGINE_cleanup() before the program exits.
 
@@ -344,9 +344,9 @@ I<Using a specific ENGINE implementation>
 
 Here we'll assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
-OpenSSL the application was compiled with. If it is available, it should be
+Opentls the application was compiled with. If it is available, it should be
 used by default for all RSA, DSA, and symmetric cipher operations, otherwise
-OpenSSL should use its built-in software as per usual. The following code
+Opentls should use its built-in software as per usual. The following code
 illustrates how to approach this;
 
  ENGINE *e;
@@ -377,8 +377,8 @@ illustrates how to approach this;
 I<Automatically using built-in ENGINE implementations>
 
 Here we'll assume we want to load and register all ENGINE implementations
-bundled with OpenSSL, such that for any cryptographic algorithm required by
-OpenSSL - if there is an ENGINE that implements it and can be initialised,
+bundled with Opentls, such that for any cryptographic algorithm required by
+Opentls - if there is an ENGINE that implements it and can be initialised,
 it should be used. The following code illustrates how this can work;
 
  /* Load all bundled ENGINEs into memory and make them visible */
@@ -386,7 +386,7 @@ it should be used. The following code illustrates how this can work;
  /* Register all of them for every algorithm they collectively implement */
  ENGINE_register_all_complete();
 
-That's all that's required. Eg. the next time OpenSSL tries to set up an
+That's all that's required. Eg. the next time Opentls tries to set up an
 RSA key, any bundled ENGINEs that implement RSA_METHOD will be passed to
 ENGINE_init() and if any of those succeed, that ENGINE will be set as the
 default for RSA use from then on.
@@ -395,8 +395,8 @@ default for RSA use from then on.
 
 There is a mechanism supported by the ENGINE framework that allows each
 ENGINE implementation to define an arbitrary set of configuration
-"commands" and expose them to OpenSSL and any applications based on
-OpenSSL. This mechanism is entirely based on the use of name-value pairs
+"commands" and expose them to Opentls and any applications based on
+Opentls. This mechanism is entirely based on the use of name-value pairs
 and assumes ASCII input (no unicode or UTF for now!), so it is ideal if
 applications want to provide a transparent way for users to provide
 arbitrary configuration "directives" directly to such ENGINEs. It is also
@@ -488,13 +488,13 @@ I<Discovering supported control commands>
 
 It is possible to discover at run-time the names, numerical-ids, descriptions
 and input parameters of the control commands supported by an ENGINE using a
-structural reference. Note that some control commands are defined by OpenSSL
+structural reference. Note that some control commands are defined by Opentls
 itself and it will intercept and handle these control commands on behalf of the
 ENGINE, ie. the ENGINE's ctrl() handler is not used for the control command.
-openssl/engine.h defines an index, ENGINE_CMD_BASE, that all control commands
+opentls/engine.h defines an index, ENGINE_CMD_BASE, that all control commands
 implemented by ENGINEs should be numbered from. Any command value lower than
 this symbol is considered a "generic" command is handled directly by the
-OpenSSL core routines.
+Opentls core routines.
 
 It is using these "core" control commands that one can discover the control
 commands implemented by a given ENGINE, specifically the commands:
@@ -509,7 +509,7 @@ commands implemented by a given ENGINE, specifically the commands:
  ENGINE_CTRL_GET_DESC_FROM_CMD
  ENGINE_CTRL_GET_CMD_FLAGS
 
-Whilst these commands are automatically processed by the OpenSSL framework code,
+Whilst these commands are automatically processed by the Opentls framework code,
 they use various properties exposed by each ENGINE to process these
 queries. An ENGINE has 3 properties it exposes that can affect how this behaves;
 it can supply a ctrl() handler, it can specify ENGINE_FLAGS_MANUAL_CMD_CTRL in
@@ -518,7 +518,7 @@ If an ENGINE specifies the ENGINE_FLAGS_MANUAL_CMD_CTRL flag, then it will
 simply pass all these "core" control commands directly to the ENGINE's ctrl()
 handler (and thus, it must have supplied one), so it is up to the ENGINE to
 reply to these "discovery" commands itself. If that flag is not set, then the
-OpenSSL framework code will work with the following rules:
+Opentls framework code will work with the following rules:
 
  if no ctrl() handler supplied;
      ENGINE_HAS_CTRL_FUNCTION returns FALSE (zero),
@@ -565,7 +565,7 @@ extension).
 
 =over 4
 
-=item B<OPENSSL_ENGINES>
+=item B<OPENtls_ENGINES>
 
 The path to the engines directory.
 Ignored in set-user-ID and set-group-ID programs.
@@ -646,22 +646,22 @@ structure on success or NULL if an error occurred.
 
 =head1 SEE ALSO
 
-L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,
+L<OPENtls_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,
 L<RAND_bytes(3)>, L<config(5)>
 
 =head1 HISTORY
 
-ENGINE_cleanup() was deprecated in OpenSSL 1.1.0 by the automatic cleanup
-done by OPENSSL_cleanup()
+ENGINE_cleanup() was deprecated in Opentls 1.1.0 by the automatic cleanup
+done by OPENtls_cleanup()
 and should not be used.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

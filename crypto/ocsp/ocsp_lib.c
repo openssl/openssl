@@ -1,21 +1,21 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/ocsp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/ocsp.h>
 #include "ocsp_local.h"
-#include <openssl/asn1t.h>
+#include <opentls/asn1t.h>
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 
@@ -111,11 +111,11 @@ int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b)
 
 /*
  * Parse a URL and split it up into host, port and path components and
- * whether it is SSL.
+ * whether it is tls.
  */
 
 int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
-                   int *pssl)
+                   int *ptls)
 {
     char *p, *buf;
 
@@ -126,7 +126,7 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     *ppath = NULL;
 
     /* dup the buffer since we are going to mess with it */
-    buf = OPENSSL_strdup(url);
+    buf = OPENtls_strdup(url);
     if (!buf)
         goto mem_err;
 
@@ -138,10 +138,10 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     *(p++) = '\0';
 
     if (strcmp(buf, "http") == 0) {
-        *pssl = 0;
+        *ptls = 0;
         port = "80";
     } else if (strcmp(buf, "https") == 0) {
-        *pssl = 1;
+        *ptls = 1;
         port = "443";
     } else
         goto parse_err;
@@ -157,9 +157,9 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     /* Check for trailing part of path */
     p = strchr(p, '/');
     if (p == NULL)
-        *ppath = OPENSSL_strdup("/");
+        *ppath = OPENtls_strdup("/");
     else {
-        *ppath = OPENSSL_strdup(p);
+        *ppath = OPENtls_strdup(p);
         /* Set start of path to 0 so hostname is valid */
         *p = '\0';
     }
@@ -184,16 +184,16 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
         port = p + 1;
     }
 
-    *pport = OPENSSL_strdup(port);
+    *pport = OPENtls_strdup(port);
     if (*pport == NULL)
         goto mem_err;
 
-    *phost = OPENSSL_strdup(host);
+    *phost = OPENtls_strdup(host);
 
     if (*phost == NULL)
         goto mem_err;
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
 
     return 1;
 
@@ -205,12 +205,12 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
 
  err:
-    OPENSSL_free(buf);
-    OPENSSL_free(*ppath);
+    OPENtls_free(buf);
+    OPENtls_free(*ppath);
     *ppath = NULL;
-    OPENSSL_free(*pport);
+    OPENtls_free(*pport);
     *pport = NULL;
-    OPENSSL_free(*phost);
+    OPENtls_free(*phost);
     *phost = NULL;
     return 0;
 

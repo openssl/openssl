@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -44,8 +44,8 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     return rv + pad;
 }
 
-static DH_METHOD dh_ossl = {
-    "OpenSSL DH Method",
+static DH_METHOD dh_otls = {
+    "Opentls DH Method",
     generate_key,
     compute_key,
     dh_bn_mod_exp,
@@ -56,11 +56,11 @@ static DH_METHOD dh_ossl = {
     NULL
 };
 
-static const DH_METHOD *default_DH_method = &dh_ossl;
+static const DH_METHOD *default_DH_method = &dh_otls;
 
-const DH_METHOD *DH_OpenSSL(void)
+const DH_METHOD *DH_Opentls(void)
 {
-    return &dh_ossl;
+    return &dh_otls;
 }
 
 void DH_set_default_method(const DH_METHOD *meth)
@@ -82,7 +82,7 @@ static int generate_key(DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->p) > OPENtls_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
@@ -181,7 +181,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     int ret = -1;
     int check_result;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->p) > OPENtls_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_LARGE);
         goto err;
     }
@@ -295,7 +295,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
         DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
         return 0;
     }
-    if ((pbuf = OPENSSL_malloc(p_size)) == NULL) {
+    if ((pbuf = OPENtls_malloc(p_size)) == NULL) {
         DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -304,7 +304,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
      * key with zeros to the size of p
      */
     if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
-        OPENSSL_free(pbuf);
+        OPENtls_free(pbuf);
         DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
         return 0;
     }

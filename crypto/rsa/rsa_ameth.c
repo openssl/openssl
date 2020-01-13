@@ -1,26 +1,26 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/bn.h>
-#include <openssl/cms.h>
-#include <openssl/core_names.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/bn.h>
+#include <opentls/cms.h>
+#include <opentls/core_names.h>
 #include "internal/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
 static int rsa_cms_verify(CMS_SignerInfo *si);
 static int rsa_cms_decrypt(CMS_RecipientInfo *ri);
@@ -91,7 +91,7 @@ static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
                                strtype, str, penc, penclen))
         return 1;
 
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     return 0;
 }
 
@@ -478,7 +478,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (arg1 == 0)
             PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
         break;
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     case ASN1_PKEY_CTRL_CMS_SIGN:
         if (arg1 == 0)
             return rsa_cms_sign(arg2);
@@ -741,7 +741,7 @@ int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
     return 1;
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int rsa_cms_verify(CMS_SignerInfo *si)
 {
     int nid, nid2;
@@ -789,7 +789,7 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return -1;
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si)
 {
     int pad_mode = RSA_PKCS1_PADDING;
@@ -885,7 +885,7 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     return rv;
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
 {
     RSA_OAEP_PARAMS *oaep;
@@ -1059,12 +1059,12 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                 int want_domainparams)
 {
     RSA *rsa = pk->pkey.rsa;
-    OSSL_PARAM_BLD tmpl;
+    Otls_PARAM_BLD tmpl;
     const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
     const BIGNUM *d = RSA_get0_d(rsa);
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
     int numprimes = 0, numexps = 0, numcoeffs = 0;
-    OSSL_PARAM *params = NULL;
+    Otls_PARAM *params = NULL;
     void *provkey = NULL;
 
     /*
@@ -1096,28 +1096,28 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         if (numprimes < 2 || numexps < 2 || numcoeffs < 1)
             goto err;
 
-        /* assert that an OSSL_PARAM_BLD has enough space. */
-        if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
+        /* assert that an Otls_PARAM_BLD has enough space. */
+        if (!otls_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
                          + numprimes + numexps + numcoeffs
-                         <= OSSL_PARAM_BLD_MAX))
+                         <= Otls_PARAM_BLD_MAX))
             goto err;
     }
 
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+    otls_param_bld_init(&tmpl);
+    if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_N, n)
+        || !otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_E, e))
         goto err;
 
     if (d != NULL) {
         int i;
 
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+        if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_D, d))
             goto err;
 
         for (i = 0; i < numprimes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
+            if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_FACTOR,
                                         num))
                 goto err;
         }
@@ -1125,7 +1125,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         for (i = 0; i < numexps; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
+            if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_EXPONENT,
                                         num))
                 goto err;
         }
@@ -1133,13 +1133,13 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         for (i = 0; i < numcoeffs; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
+            if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_RSA_COEFFICIENT,
                                         num))
                 goto err;
         }
     }
 
-    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+    if ((params = otls_param_bld_to_param(&tmpl)) == NULL)
         goto err;
 
     /* We export, the provider imports */
@@ -1149,7 +1149,7 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
     sk_BIGNUM_const_free(primes);
     sk_BIGNUM_const_free(exps);
     sk_BIGNUM_const_free(coeffs);
-    ossl_param_bld_free(params);
+    otls_param_bld_free(params);
     return provkey;
 }
 
@@ -1160,7 +1160,7 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      ASN1_PKEY_SIGPARAM_NULL,
 
      "RSA",
-     "OpenSSL RSA method",
+     "Opentls RSA method",
 
      rsa_pub_decode,
      rsa_pub_encode,
@@ -1206,7 +1206,7 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      ASN1_PKEY_SIGPARAM_NULL,
 
      "RSA-PSS",
-     "OpenSSL RSA-PSS method",
+     "Opentls RSA-PSS method",
 
      rsa_pub_decode,
      rsa_pub_encode,

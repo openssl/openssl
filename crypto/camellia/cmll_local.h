@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* ====================================================================
@@ -19,11 +19,11 @@
  *
  * The Camellia Code included herein is developed by
  * NTT (Nippon Telegraph and Telephone Corporation), and is contributed
- * to the OpenSSL project.
+ * to the Opentls project.
  */
 
-#ifndef OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
-# define OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
+#ifndef Otls_CRYPTO_CAMELLIA_CMLL_LOCAL_H
+# define Otls_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 
 typedef unsigned int u32;
 typedef unsigned char u8;
@@ -40,4 +40,4 @@ void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
                            const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
 void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
                            const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
-#endif                          /* #ifndef OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H */
+#endif                          /* #ifndef Otls_CRYPTO_CAMELLIA_CMLL_LOCAL_H */

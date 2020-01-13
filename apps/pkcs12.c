@@ -1,14 +1,14 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#if defined(OPENSSL_NO_DES)
+#include <opentls/opentlsconf.h>
+#if defined(OPENtls_NO_DES)
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -17,10 +17,10 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/crypto.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/pkcs12.h>
+# include <opentls/crypto.h>
+# include <opentls/err.h>
+# include <opentls/pem.h>
+# include <opentls/pkcs12.h>
 
 # define NOKEYS          0x1
 # define NOCERTS         0x2
@@ -33,13 +33,13 @@ NON_EMPTY_TRANSLATION_UNIT
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12,
-                        const char *pass, int passlen, int options,
+                        const char *pass, int patlsen, int options,
                         char *pempass, const EVP_CIPHER *enc);
 int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
-                          const char *pass, int passlen, int options,
+                          const char *pass, int patlsen, int options,
                           char *pempass, const EVP_CIPHER *enc);
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
-                         const char *pass, int passlen,
+                         const char *pass, int patlsen,
                          int options, char *pempass, const EVP_CIPHER *enc);
 void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
@@ -64,7 +64,7 @@ typedef enum OPTION_choice {
 const OPTIONS pkcs12_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -112,7 +112,7 @@ const OPTIONS pkcs12_options[] = {
     {"keysig", OPT_KEYSIG, '-', "Set MS key signature type"},
 
     OPT_SECTION("Encryption"),
-# ifndef OPENSSL_NO_RC2
+# ifndef OPENtls_NO_RC2
     {"descert", OPT_DESCERT, '-',
      "Encrypt output with 3DES (default RC2-40)"},
     {"certpbe", OPT_CERTPBE, 's',
@@ -140,7 +140,7 @@ int pkcs12_main(int argc, char **argv)
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
-# ifndef OPENSSL_NO_RC2
+# ifndef OPENtls_NO_RC2
     int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 # else
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
@@ -156,7 +156,7 @@ int pkcs12_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
-    STACK_OF(OPENSSL_STRING) *canames = NULL;
+    STACK_OF(OPENtls_STRING) *canames = NULL;
     const EVP_CIPHER *enc = EVP_des_ede3_cbc();
     OPTION_CHOICE o;
 
@@ -267,9 +267,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_CANAME:
             if (canames == NULL
-                && (canames = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (canames = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(canames, opt_arg());
+            sk_OPENtls_STRING_push(canames, opt_arg());
             break;
         case OPT_IN:
             infile = opt_arg();
@@ -352,7 +352,7 @@ int pkcs12_main(int argc, char **argv)
     if (twopass) {
         /* To avoid bit rot */
         if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             if (EVP_read_pw_string(
                 macpass, sizeof(macpass), "Enter MAC Password:", export_cert)) {
                 BIO_printf(bio_err, "Can't read Password\n");
@@ -456,8 +456,8 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any CA names */
 
-        for (i = 0; i < sk_OPENSSL_STRING_num(canames); i++) {
-            catmp = (unsigned char *)sk_OPENSSL_STRING_value(canames, i);
+        for (i = 0; i < sk_OPENtls_STRING_num(canames); i++) {
+            catmp = (unsigned char *)sk_OPENtls_STRING_value(canames, i);
             X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
         }
 
@@ -472,7 +472,7 @@ int pkcs12_main(int argc, char **argv)
         if (!noprompt) {
             /* To avoid bit rot */
             if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
                 if (EVP_read_pw_string(pass, sizeof(pass),
                                        "Enter Export Password:", 1)) {
                     BIO_printf(bio_err, "Can't read Password\n");
@@ -486,7 +486,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (!twopass)
-            OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
+            OPENtls_strlcpy(macpass, pass, sizeof(macpass));
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
@@ -538,7 +538,7 @@ int pkcs12_main(int argc, char **argv)
 
     if (!noprompt) {
         if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             if (EVP_read_pw_string(pass, sizeof(pass), "Enter Import Password:",
                                    0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
@@ -552,7 +552,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!twopass)
-        OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
+        OPENtls_strlcpy(macpass, pass, sizeof(macpass));
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         const ASN1_INTEGER *tmaciter;
@@ -581,17 +581,17 @@ int pkcs12_main(int argc, char **argv)
                 cpass = NULL;
         } else if (!PKCS12_verify_mac(p12, mpass, -1)) {
             /*
-             * May be UTF8 from previous version of OpenSSL:
+             * May be UTF8 from previous version of Opentls:
              * convert to a UTF8 form which will translate
              * to the same Unicode password.
              */
             unsigned char *utmp;
             int utmplen;
-            utmp = OPENSSL_asc2uni(mpass, -1, NULL, &utmplen);
+            utmp = OPENtls_asc2uni(mpass, -1, NULL, &utmplen);
             if (utmp == NULL)
                 goto end;
-            badpass = OPENSSL_uni2utf8(utmp, utmplen);
-            OPENSSL_free(utmp);
+            badpass = OPENtls_uni2utf8(utmp, utmplen);
+            OPENtls_free(utmp);
             if (!PKCS12_verify_mac(p12, badpass, -1)) {
                 BIO_printf(bio_err, "Mac verify error: invalid password?\n");
                 ERR_print_errors(bio_err);
@@ -616,15 +616,15 @@ int pkcs12_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
-    sk_OPENSSL_STRING_free(canames);
-    OPENSSL_free(badpass);
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    sk_OPENtls_STRING_free(canames);
+    OPENtls_free(badpass);
+    OPENtls_free(passin);
+    OPENtls_free(passout);
     return ret;
 }
 
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
-                        int passlen, int options, char *pempass,
+                        int patlsen, int options, char *pempass,
                         const EVP_CIPHER *enc)
 {
     STACK_OF(PKCS7) *asafes = NULL;
@@ -647,13 +647,13 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
                 BIO_printf(bio_err, "PKCS7 Encrypted data: ");
                 alg_print(p7->d.encrypted->enc_data->algorithm);
             }
-            bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
+            bags = PKCS12_unpack_p7encdata(p7, pass, patlsen);
         } else {
             continue;
         }
         if (!bags)
             goto err;
-        if (!dump_certs_pkeys_bags(out, bags, pass, passlen,
+        if (!dump_certs_pkeys_bags(out, bags, pass, patlsen,
                                    options, pempass, enc)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             goto err;
@@ -669,21 +669,21 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
 }
 
 int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
-                          const char *pass, int passlen, int options,
+                          const char *pass, int patlsen, int options,
                           char *pempass, const EVP_CIPHER *enc)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!dump_certs_pkeys_bag(out,
                                   sk_PKCS12_SAFEBAG_value(bags, i),
-                                  pass, passlen, options, pempass, enc))
+                                  pass, patlsen, options, pempass, enc))
             return 0;
     }
     return 1;
 }
 
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
-                         const char *pass, int passlen, int options,
+                         const char *pass, int patlsen, int options,
                          char *pempass, const EVP_CIPHER *enc)
 {
     EVP_PKEY *pkey;
@@ -723,7 +723,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         if (options & NOKEYS)
             return 1;
         print_attribs(out, attrs, "Bag Attributes");
-        if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
+        if ((p8 = PKCS12_decrypt_skey(bag, pass, patlsen)) == NULL)
             return 0;
         if ((pkey = EVP_PKCS82PKEY(p8)) == NULL) {
             PKCS8_PRIV_KEY_INFO_free(p8);
@@ -760,7 +760,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
             BIO_printf(bio_err, "Safe Contents bag\n");
         print_attribs(out, attrs, "Bag Attributes");
         return dump_certs_pkeys_bags(out, PKCS12_SAFEBAG_get0_safes(bag),
-                                     pass, passlen, options, pempass, enc);
+                                     pass, patlsen, options, pempass, enc);
 
     default:
         BIO_printf(bio_err, "Warning unsupported bag type: ");
@@ -854,7 +854,7 @@ static int alg_print(const X509_ALGOR *alg)
             BIO_printf(bio_err, ", Iteration %ld, PRF %s",
                        ASN1_INTEGER_get(kdf->iter), OBJ_nid2sn(prfnid));
             PBKDF2PARAM_free(kdf);
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
         } else if (pbenid == NID_id_scrypt) {
             SCRYPT_PARAMS *kdf = NULL;
 
@@ -913,10 +913,10 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
 
     switch (av->type) {
     case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
+        value = OPENtls_uni2asc(av->value.bmpstring->data,
                                 av->value.bmpstring->length);
         BIO_printf(out, "%s\n", value);
-        OPENSSL_free(value);
+        OPENtls_free(value);
         break;
 
     case V_ASN1_OCTET_STRING:

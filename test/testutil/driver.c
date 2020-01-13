@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../testutil.h"
@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #include "internal/nelem.h"
-#include <openssl/bio.h>
+#include <opentls/bio.h>
 
 #include "platform.h"            /* From libapps */
 
@@ -56,7 +56,7 @@ static int process_shared_options(void);
 
 void add_test(const char *test_case_name, int (*test_fn) (void))
 {
-    assert(num_tests != OSSL_NELEM(all_tests));
+    assert(num_tests != Otls_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].test_fn = test_fn;
     all_tests[num_tests].num = -1;
@@ -67,7 +67,7 @@ void add_test(const char *test_case_name, int (*test_fn) (void))
 void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
                    int num, int subtest)
 {
-    assert(num_tests != OSSL_NELEM(all_tests));
+    assert(num_tests != Otls_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].param_test_fn = test_fn;
     all_tests[num_tests].num = num;
@@ -104,15 +104,15 @@ static void set_seed(int s)
 
 int setup_test_framework(int argc, char *argv[])
 {
-    char *test_seed = getenv("OPENSSL_TEST_RAND_ORDER");
-    char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
+    char *test_seed = getenv("OPENtls_TEST_RAND_ORDER");
+    char *TAP_levels = getenv("HARNESS_Otls_LEVEL");
 
     if (TAP_levels != NULL)
         level = 4 * atoi(TAP_levels);
     if (test_seed != NULL)
         set_seed(atoi(test_seed));
 
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
     /*
@@ -241,7 +241,7 @@ static void finalize(int success)
     if (success)
         ERR_clear_error();
     else
-        ERR_print_errors_cb(openssl_error_cb, NULL);
+        ERR_print_errors_cb(opentls_error_cb, NULL);
 }
 
 static char *test_title = NULL;
@@ -275,7 +275,7 @@ int run_tests(const char *test_prog_name)
     int num_failed = 0;
     int verdict = 1;
     int ii, i, jj, j, jstep;
-    int permute[OSSL_NELEM(all_tests)];
+    int permute[Otls_NELEM(all_tests)];
 
     i = process_shared_options();
     if (i == 0)
@@ -402,7 +402,7 @@ char *glue_strings(const char *list[], size_t *out_len)
     if (out_len != NULL)
         *out_len = len;
 
-    if (!TEST_ptr(ret = p = OPENSSL_malloc(len + 1)))
+    if (!TEST_ptr(ret = p = OPENtls_malloc(len + 1)))
         return NULL;
 
     for (i = 0; list[i] != NULL; i++)
@@ -413,18 +413,18 @@ char *glue_strings(const char *list[], size_t *out_len)
 
 char *test_mk_file_path(const char *dir, const char *file)
 {
-# ifndef OPENSSL_SYS_VMS
+# ifndef OPENtls_SYS_VMS
     const char *sep = "/";
 # else
     const char *sep = "";
 # endif
     size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
-    char *full_file = OPENSSL_zalloc(len);
+    char *full_file = OPENtls_zalloc(len);
 
     if (full_file != NULL) {
-        OPENSSL_strlcpy(full_file, dir, len);
-        OPENSSL_strlcat(full_file, sep, len);
-        OPENSSL_strlcat(full_file, file, len);
+        OPENtls_strlcpy(full_file, dir, len);
+        OPENtls_strlcat(full_file, sep, len);
+        OPENtls_strlcat(full_file, file, len);
     }
 
     return full_file;

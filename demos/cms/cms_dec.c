@@ -1,16 +1,16 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Simple S/MIME decryption example */
-#include <openssl/pem.h>
-#include <openssl/cms.h>
-#include <openssl/err.h>
+#include <opentls/pem.h>
+#include <opentls/cms.h>
+#include <opentls/err.h>
 
 int main(int argc, char **argv)
 {
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     CMS_ContentInfo *cms = NULL;
     int ret = 1;
 
-    OpenSSL_add_all_algorithms();
+    Opentls_add_all_algorithms();
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate and private key */

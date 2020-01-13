@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -14,7 +14,7 @@
 #include "fmt.h"
 #include "internal/nelem.h"
 #include <string.h>
-#if !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENtls_SYS_MSDOS)
 # include <unistd.h>
 #endif
 
@@ -22,8 +22,8 @@
 #include <errno.h>
 #include <ctype.h>
 #include <limits.h>
-#include <openssl/bio.h>
-#include <openssl/x509v3.h>
+#include <opentls/bio.h>
+#include <opentls/x509v3.h>
 
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "-H";
@@ -45,7 +45,7 @@ static char prog[40];
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
-#if defined(OPENSSL_SYS_WIN32)
+#if defined(OPENtls_SYS_WIN32)
 char *opt_progname(const char *argv0)
 {
     size_t i, n;
@@ -74,13 +74,13 @@ char *opt_progname(const char *argv0)
     return prog;
 }
 
-#elif defined(OPENSSL_SYS_VMS)
+#elif defined(OPENtls_SYS_VMS)
 
 char *opt_progname(const char *argv0)
 {
     const char *p, *q;
 
-    /* Find last special character sys:[foo.bar]openssl */
+    /* Find last special character sys:[foo.bar]opentls */
     for (p = argv0 + strlen(argv0); --p > argv0;)
         if (*p == ':' || *p == ']' || *p == '>') {
             p++;
@@ -144,15 +144,15 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         i = o->valtype;
 
         /* Make sure options are legit. */
-        OPENSSL_assert(o->name[0] != '-');
-        OPENSSL_assert(o->retval > 0);
+        OPENtls_assert(o->name[0] != '-');
+        OPENtls_assert(o->retval > 0);
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
         case 'u': case 'c': case ':':
             break;
         default:
-            OPENSSL_assert(0);
+            OPENtls_assert(0);
         }
 
         /* Make sure there are no duplicates. */
@@ -161,13 +161,13 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
              * Some compilers inline strcmp and the assert string is too long.
              */
             duplicated = strcmp(o->name, next->name) == 0;
-            OPENSSL_assert(!duplicated);
+            OPENtls_assert(!duplicated);
         }
 #endif
         if (o->name[0] == '\0') {
-            OPENSSL_assert(unknown == NULL);
+            OPENtls_assert(unknown == NULL);
             unknown = o;
-            OPENSSL_assert(unknown->valtype == 0 || unknown->valtype == '-');
+            OPENtls_assert(unknown->valtype == 0 || unknown->valtype == '-');
         }
     }
     return prog;
@@ -348,7 +348,7 @@ static void opt_number_error(const char *v)
         {"0", "an octal"}
     };
 
-    for (i = 0; i < OSSL_NELEM(b); i++) {
+    for (i = 0; i < Otls_NELEM(b); i++) {
         if (strncmp(v, b[i].prefix, strlen(b[i].prefix)) == 0) {
             opt_printf_stderr("%s: Can't parse \"%s\" as %s number\n",
                               prog, v, b[i].name);
@@ -383,7 +383,7 @@ int opt_long(const char *value, long *result)
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
+    !defined(OPENtls_NO_INTTYPES_H)
 
 /* Parse an intmax_t, put it into *result; return 0 on failure, else 1. */
 int opt_imax(const char *value, intmax_t *result)
@@ -464,14 +464,14 @@ enum range { OPT_V_ENUM };
 int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
 {
     int i;
-    ossl_intmax_t t = 0;
+    otls_intmax_t t = 0;
     ASN1_OBJECT *otmp;
     X509_PURPOSE *xptmp;
     const X509_VERIFY_PARAM *vtmp;
 
-    OPENSSL_assert(vpm != NULL);
-    OPENSSL_assert(opt > OPT_V__FIRST);
-    OPENSSL_assert(opt < OPT_V__LAST);
+    OPENtls_assert(vpm != NULL);
+    OPENtls_assert(opt > OPT_V__FIRST);
+    OPENtls_assert(opt < OPT_V__LAST);
 
     switch ((enum range)opt) {
     case OPT_V__FIRST:
@@ -634,8 +634,8 @@ int opt_next(void)
     int ival;
     long lval;
     unsigned long ulval;
-    ossl_intmax_t imval;
-    ossl_uintmax_t umval;
+    otls_intmax_t imval;
+    otls_uintmax_t umval;
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -914,7 +914,7 @@ void opt_help(const OPTIONS *list)
             i += 1 + strlen(valtype2param(o));
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
-        OPENSSL_assert(i < (int)sizeof(start));
+        OPENtls_assert(i < (int)sizeof(start));
     }
 
     if (standard_prolog) {

@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
@@ -79,7 +79,7 @@ $output = pop and open STDOUT,">$output";
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # AES_[en|de]crypt, AES_set_[en|de]crypt_key and AES_cbc_encrypt entry
-# points. These however are not fully compatible with openssl/aes.h,
+# points. These however are not fully compatible with opentls/aes.h,
 # because they expect AES_KEY to be aligned at 64-bit boundary. When
 # used through EVP, alignment is arranged at EVP layer. Second thing
 # that is arranged by EVP is at least 32-bit alignment of IV.

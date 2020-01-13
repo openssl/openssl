@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
@@ -158,7 +158,7 @@ static int bn_left_align(BIGNUM *num)
     return lshift;
 }
 
-# if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
+# if !defined(OPENtls_NO_ASM) && !defined(OPENtls_NO_INLINE_ASM) \
     && !defined(PEDANTIC) && !defined(BN_DIV3W)
 #  if defined(__GNUC__) && __GNUC__>=2
 #   if defined(__i386) || defined (__i386__)
@@ -196,7 +196,7 @@ static int bn_left_align(BIGNUM *num)
 #    define REMAINDER_IS_ALREADY_CALCULATED
 #   endif                       /* __<cpu> */
 #  endif                        /* __GNUC__ */
-# endif                         /* OPENSSL_NO_ASM */
+# endif                         /* OPENtls_NO_ASM */
 
 /*-
  * BN_div computes  dv := num / divisor, rounding towards

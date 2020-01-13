@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Simple PKCS#7 processing functions */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 
 
 #define BUFFERSIZE 4096
@@ -235,7 +235,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
          * This was originally "#if 0" because we thought that only old broken
          * Netscape did this.  It turns out that Authenticode uses this kind
          * of "extended" PKCS7 format, and things like UEFI secure boot and
-         * tools like osslsigncode need it.  In Authenticode the verification
+         * tools like otlssigncode need it.  In Authenticode the verification
          * process is different, but the existing PKCs7 verification works.
          */
         if (!PKCS7_get_detached(p7) && indata) {
@@ -322,7 +322,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         tmpout = out;
 
     /* We now have to 'read' from p7bio to calculate digests etc. */
-    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
+    if ((buf = OPENtls_malloc(BUFFERSIZE)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -359,7 +359,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
  err:
     X509_STORE_CTX_free(cert_ctx);
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     if (tmpin == indata) {
         if (indata)
             BIO_pop(p7bio);
@@ -523,7 +523,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         BIO_free_all(bread);
         return ret;
     }
-    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
+    if ((buf = OPENtls_malloc(BUFFERSIZE)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -543,7 +543,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         }
     }
 err:
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     BIO_free_all(tmpmem);
     return ret;
 }

@@ -1,14 +1,14 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
 #include "ec_local.h"
 
 BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
@@ -26,7 +26,7 @@ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
 
     ret = BN_bin2bn(buf, buf_len, ret);
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
 
     return ret;
 }
@@ -40,19 +40,19 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
 
     if ((buf_len = BN_num_bytes(bn)) == 0)
         buf_len = 1;
-    if ((buf = OPENSSL_malloc(buf_len)) == NULL) {
+    if ((buf = OPENtls_malloc(buf_len)) == NULL) {
         ECerr(EC_F_EC_POINT_BN2POINT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (!BN_bn2binpad(bn, buf, buf_len)) {
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
         return NULL;
     }
 
     if (point == NULL) {
         if ((ret = EC_POINT_new(group)) == NULL) {
-            OPENSSL_free(buf);
+            OPENtls_free(buf);
             return NULL;
         }
     } else
@@ -61,17 +61,17 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
     if (!EC_POINT_oct2point(group, ret, buf, buf_len, ctx)) {
         if (ret != point)
             EC_POINT_clear_free(ret);
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
         return NULL;
     }
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return ret;
 }
 
 static const char *HEX_DIGITS = "0123456789ABCDEF";
 
-/* the return value must be freed (using OPENSSL_free()) */
+/* the return value must be freed (using OPENtls_free()) */
 char *EC_POINT_point2hex(const EC_GROUP *group,
                          const EC_POINT *point,
                          point_conversion_form_t form, BN_CTX *ctx)
@@ -85,9 +85,9 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
     if (buf_len == 0)
         return NULL;
 
-    ret = OPENSSL_malloc(buf_len * 2 + 2);
+    ret = OPENtls_malloc(buf_len * 2 + 2);
     if (ret == NULL) {
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
         return NULL;
     }
     p = ret;
@@ -99,7 +99,7 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
     }
     *p = '\0';
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
 
     return ret;
 }

@@ -1,17 +1,17 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+#include <opentls/core_numbers.h>
+#include <opentls/core_names.h>
+#include <opentls/params.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
 
 #include "crypto/poly1305.h"
 
@@ -23,16 +23,16 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn poly1305_new;
-static OSSL_OP_mac_dupctx_fn poly1305_dup;
-static OSSL_OP_mac_freectx_fn poly1305_free;
-static OSSL_OP_mac_gettable_params_fn poly1305_gettable_params;
-static OSSL_OP_mac_get_params_fn poly1305_get_params;
-static OSSL_OP_mac_settable_ctx_params_fn poly1305_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn poly1305_set_ctx_params;
-static OSSL_OP_mac_init_fn poly1305_init;
-static OSSL_OP_mac_update_fn poly1305_update;
-static OSSL_OP_mac_final_fn poly1305_final;
+static Otls_OP_mac_newctx_fn poly1305_new;
+static Otls_OP_mac_dupctx_fn poly1305_dup;
+static Otls_OP_mac_freectx_fn poly1305_free;
+static Otls_OP_mac_gettable_params_fn poly1305_gettable_params;
+static Otls_OP_mac_get_params_fn poly1305_get_params;
+static Otls_OP_mac_settable_ctx_params_fn poly1305_settable_ctx_params;
+static Otls_OP_mac_set_ctx_params_fn poly1305_set_ctx_params;
+static Otls_OP_mac_init_fn poly1305_init;
+static Otls_OP_mac_update_fn poly1305_update;
+static Otls_OP_mac_final_fn poly1305_final;
 
 struct poly1305_data_st {
     void *provctx;
@@ -43,7 +43,7 @@ static size_t poly1305_size(void);
 
 static void *poly1305_new(void *provctx)
 {
-    struct poly1305_data_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    struct poly1305_data_st *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx != NULL)
         ctx->provctx = provctx;
@@ -52,7 +52,7 @@ static void *poly1305_new(void *provctx)
 
 static void poly1305_free(void *vmacctx)
 {
-    OPENSSL_free(vmacctx);
+    OPENtls_free(vmacctx);
 }
 
 static void *poly1305_dup(void *vsrc)
@@ -97,41 +97,41 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static const OSSL_PARAM known_gettable_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
-    OSSL_PARAM_END
+static const Otls_PARAM known_gettable_params[] = {
+    Otls_PARAM_size_t(Otls_MAC_PARAM_SIZE, NULL),
+    Otls_PARAM_END
 };
-static const OSSL_PARAM *poly1305_gettable_params(void)
+static const Otls_PARAM *poly1305_gettable_params(void)
 {
     return known_gettable_params;
 }
 
-static int poly1305_get_params(OSSL_PARAM params[])
+static int poly1305_get_params(Otls_PARAM params[])
 {
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, poly1305_size());
+    if ((p = Otls_PARAM_locate(params, Otls_MAC_PARAM_SIZE)) != NULL)
+        return Otls_PARAM_set_size_t(p, poly1305_size());
 
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
-    OSSL_PARAM_END
+static const Otls_PARAM known_settable_ctx_params[] = {
+    Otls_PARAM_octet_string(Otls_MAC_PARAM_KEY, NULL, 0),
+    Otls_PARAM_END
 };
-static const OSSL_PARAM *poly1305_settable_ctx_params(void)
+static const Otls_PARAM *poly1305_settable_ctx_params(void)
 {
     return known_settable_ctx_params;
 }
 
-static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
+static int poly1305_set_ctx_params(void *vmacctx, const Otls_PARAM *params)
 {
     struct poly1305_data_st *ctx = vmacctx;
-    const OSSL_PARAM *p = NULL;
+    const Otls_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING
+    if ((p = Otls_PARAM_locate_const(params, Otls_MAC_PARAM_KEY)) != NULL) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING
             || p->data_size != POLY1305_KEY_SIZE) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
@@ -141,17 +141,17 @@ static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-const OSSL_DISPATCH poly1305_functions[] = {
-    { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))poly1305_new },
-    { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))poly1305_dup },
-    { OSSL_FUNC_MAC_FREECTX, (void (*)(void))poly1305_free },
-    { OSSL_FUNC_MAC_INIT, (void (*)(void))poly1305_init },
-    { OSSL_FUNC_MAC_UPDATE, (void (*)(void))poly1305_update },
-    { OSSL_FUNC_MAC_FINAL, (void (*)(void))poly1305_final },
-    { OSSL_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))poly1305_gettable_params },
-    { OSSL_FUNC_MAC_GET_PARAMS, (void (*)(void))poly1305_get_params },
-    { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
+const Otls_DISPATCH poly1305_functions[] = {
+    { Otls_FUNC_MAC_NEWCTX, (void (*)(void))poly1305_new },
+    { Otls_FUNC_MAC_DUPCTX, (void (*)(void))poly1305_dup },
+    { Otls_FUNC_MAC_FREECTX, (void (*)(void))poly1305_free },
+    { Otls_FUNC_MAC_INIT, (void (*)(void))poly1305_init },
+    { Otls_FUNC_MAC_UPDATE, (void (*)(void))poly1305_update },
+    { Otls_FUNC_MAC_FINAL, (void (*)(void))poly1305_final },
+    { Otls_FUNC_MAC_GETTABLE_PARAMS, (void (*)(void))poly1305_gettable_params },
+    { Otls_FUNC_MAC_GET_PARAMS, (void (*)(void))poly1305_get_params },
+    { Otls_FUNC_MAC_SETTABLE_CTX_PARAMS,
       (void (*)(void))poly1305_settable_ctx_params },
-    { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
+    { Otls_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))poly1305_set_ctx_params },
     { 0, NULL }
 };

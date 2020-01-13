@@ -1,4 +1,4 @@
-;;; This Emacs Lisp file defines a C indentation style for OpenSSL.
+;;; This Emacs Lisp file defines a C indentation style for Opentls.
 ;;;
 ;;; This definition is for the "CC mode" package, which is the default
 ;;; mode for editing C source files in Emacs 20, not for the older
@@ -6,24 +6,24 @@
 ;;;
 ;;; Recommended use is to add this line in your .emacs:
 ;;;
-;;;   (load (expand-file-name "~/PATH/TO/openssl-c-indent.el"))
+;;;   (load (expand-file-name "~/PATH/TO/opentls-c-indent.el"))
 ;;;
 ;;; To activate this indentation style, visit a C file, type
 ;;; M-x c-set-style <RET> (or C-c . for short), and enter "eay".
 ;;; To toggle the auto-newline feature of CC mode, type C-c C-a.
 ;;;
-;;; If you're an OpenSSL developer, you might find it more comfortable
-;;; to have this style be permanent in your OpenSSL development
+;;; If you're an Opentls developer, you might find it more comfortable
+;;; to have this style be permanent in your Opentls development
 ;;; directory.  To have that, please perform this:
 ;;;
 ;;;    M-x add-dir-local-variable <RET> c-mode <RET> c-file-style <RET>
-;;;    "OpenSSL-II" <RET>
+;;;    "Opentls-II" <RET>
 ;;;
 ;;; A new buffer with .dir-locals.el will appear.  Save it (C-x C-s).
 ;;;
 ;;; Alternatively, have a look at dir-locals.example.el
 
-;;; For suggesting improvements, please send e-mail to levitte@openssl.org.
+;;; For suggesting improvements, please send e-mail to levitte@opentls.org.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Note, it could be easy to inherit from the "gnu" style...  however,
@@ -32,7 +32,7 @@
 ;; and mark them with a comment.                // RLevitte 2015-08-31
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(c-add-style "OpenSSL-II"
+(c-add-style "Opentls-II"
              '((c-basic-offset . 4)
                (indent-tabs-mode . nil)
                (fill-column . 78)

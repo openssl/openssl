@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "dh_local.h"
-#include <openssl/engine.h>
+#include <opentls/engine.h>
 
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
@@ -24,7 +24,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     mtmp = dh->meth;
     if (mtmp->finish)
         mtmp->finish(dh);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(dh->engine);
     dh->engine = NULL;
 #endif
@@ -41,7 +41,7 @@ DH *DH_new(void)
 
 DH *DH_new_method(ENGINE *engine)
 {
-    DH *ret = OPENSSL_zalloc(sizeof(*ret));
+    DH *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -52,12 +52,12 @@ DH *DH_new_method(ENGINE *engine)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
 
     ret->meth = DH_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -108,7 +108,7 @@ void DH_free(DH *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(r->engine);
 #endif
 
@@ -120,11 +120,11 @@ void DH_free(DH *r)
     BN_clear_free(r->g);
     BN_clear_free(r->q);
     BN_clear_free(r->j);
-    OPENSSL_free(r->seed);
+    OPENtls_free(r->seed);
     BN_clear_free(r->counter);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
-    OPENSSL_free(r);
+    OPENtls_free(r);
 }
 
 int DH_up_ref(DH *r)

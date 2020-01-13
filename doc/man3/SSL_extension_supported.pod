@@ -2,104 +2,104 @@
 
 =head1 NAME
 
-SSL_extension_supported,
-SSL_custom_ext_add_cb_ex,
-SSL_custom_ext_free_cb_ex,
-SSL_custom_ext_parse_cb_ex,
-SSL_CTX_add_custom_ext,
-SSL_CTX_add_client_custom_ext, SSL_CTX_add_server_custom_ext,
+tls_extension_supported,
+tls_custom_ext_add_cb_ex,
+tls_custom_ext_free_cb_ex,
+tls_custom_ext_parse_cb_ex,
+tls_CTX_add_custom_ext,
+tls_CTX_add_client_custom_ext, tls_CTX_add_server_custom_ext,
 custom_ext_add_cb, custom_ext_free_cb, custom_ext_parse_cb
 - custom TLS extension handling
 
 =head1 SYNOPSIS
 
- #include <openssl/ssl.h>
+ #include <opentls/tls.h>
 
- typedef int (*SSL_custom_ext_add_cb_ex)(SSL *s, unsigned int ext_type,
+ typedef int (*tls_custom_ext_add_cb_ex)(tls *s, unsigned int ext_type,
                                          unsigned int context,
                                          const unsigned char **out,
                                          size_t *outlen, X509 *x,
                                          size_t chainidx, int *al,
                                          void *add_arg);
 
- typedef void (*SSL_custom_ext_free_cb_ex)(SSL *s, unsigned int ext_type,
+ typedef void (*tls_custom_ext_free_cb_ex)(tls *s, unsigned int ext_type,
                                            unsigned int context,
                                            const unsigned char *out,
                                            void *add_arg);
 
- typedef int (*SSL_custom_ext_parse_cb_ex)(SSL *s, unsigned int ext_type,
+ typedef int (*tls_custom_ext_parse_cb_ex)(tls *s, unsigned int ext_type,
                                            unsigned int context,
                                            const unsigned char *in,
                                            size_t inlen, X509 *x,
                                            size_t chainidx, int *al,
                                            void *parse_arg);
 
- int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
+ int tls_CTX_add_custom_ext(tls_CTX *ctx, unsigned int ext_type,
                             unsigned int context,
-                            SSL_custom_ext_add_cb_ex add_cb,
-                            SSL_custom_ext_free_cb_ex free_cb,
+                            tls_custom_ext_add_cb_ex add_cb,
+                            tls_custom_ext_free_cb_ex free_cb,
                             void *add_arg,
-                            SSL_custom_ext_parse_cb_ex parse_cb,
+                            tls_custom_ext_parse_cb_ex parse_cb,
                             void *parse_arg);
 
- typedef int (*custom_ext_add_cb)(SSL *s, unsigned int ext_type,
+ typedef int (*custom_ext_add_cb)(tls *s, unsigned int ext_type,
                                   const unsigned char **out,
                                   size_t *outlen, int *al,
                                   void *add_arg);
 
- typedef void (*custom_ext_free_cb)(SSL *s, unsigned int ext_type,
+ typedef void (*custom_ext_free_cb)(tls *s, unsigned int ext_type,
                                     const unsigned char *out,
                                     void *add_arg);
 
- typedef int (*custom_ext_parse_cb)(SSL *s, unsigned int ext_type,
+ typedef int (*custom_ext_parse_cb)(tls *s, unsigned int ext_type,
                                     const unsigned char *in,
                                     size_t inlen, int *al,
                                     void *parse_arg);
 
- int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
+ int tls_CTX_add_client_custom_ext(tls_CTX *ctx, unsigned int ext_type,
                                    custom_ext_add_cb add_cb,
                                    custom_ext_free_cb free_cb, void *add_arg,
                                    custom_ext_parse_cb parse_cb,
                                    void *parse_arg);
 
- int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
+ int tls_CTX_add_server_custom_ext(tls_CTX *ctx, unsigned int ext_type,
                                    custom_ext_add_cb add_cb,
                                    custom_ext_free_cb free_cb, void *add_arg,
                                    custom_ext_parse_cb parse_cb,
                                    void *parse_arg);
 
- int SSL_extension_supported(unsigned int ext_type);
+ int tls_extension_supported(unsigned int ext_type);
 
 =head1 DESCRIPTION
 
-SSL_CTX_add_custom_ext() adds a custom extension for a TLS/DTLS client or server
+tls_CTX_add_custom_ext() adds a custom extension for a TLS/DTLS client or server
 for all supported protocol versions with extension type B<ext_type> and
 callbacks B<add_cb>, B<free_cb> and B<parse_cb> (see the
 L</EXTENSION CALLBACKS> section below). The B<context> value determines
 which messages and under what conditions the extension will be added/parsed (see
 the L</EXTENSION CONTEXTS> section below).
 
-SSL_CTX_add_client_custom_ext() adds a custom extension for a TLS/DTLS client
+tls_CTX_add_client_custom_ext() adds a custom extension for a TLS/DTLS client
 with extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and
-B<parse_cb>. This function is similar to SSL_CTX_add_custom_ext() except it only
+B<parse_cb>. This function is similar to tls_CTX_add_custom_ext() except it only
 applies to clients, uses the older style of callbacks, and implicitly sets the
 B<context> value to:
 
- SSL_EXT_TLS1_2_AND_BELOW_ONLY | SSL_EXT_CLIENT_HELLO
- | SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_IGNORE_ON_RESUMPTION
+ tls_EXT_TLS1_2_AND_BELOW_ONLY | tls_EXT_CLIENT_HELLO
+ | tls_EXT_TLS1_2_SERVER_HELLO | tls_EXT_IGNORE_ON_RESUMPTION
 
-SSL_CTX_add_server_custom_ext() adds a custom extension for a TLS/DTLS server
+tls_CTX_add_server_custom_ext() adds a custom extension for a TLS/DTLS server
 with extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and
-B<parse_cb>. This function is similar to SSL_CTX_add_custom_ext() except it
+B<parse_cb>. This function is similar to tls_CTX_add_custom_ext() except it
 only applies to servers, uses the older style of callbacks, and implicitly sets
-the B<context> value to the same as for SSL_CTX_add_client_custom_ext() above.
+the B<context> value to the same as for tls_CTX_add_client_custom_ext() above.
 
 The B<ext_type> parameter corresponds to the B<extension_type> field of
 RFC5246 et al. It is B<not> a NID. In all cases the extension type must not be
-handled by OpenSSL internally or an error occurs.
+handled by Opentls internally or an error occurs.
 
-SSL_extension_supported() returns 1 if the extension B<ext_type> is handled
-internally by OpenSSL and 0 otherwise.
+tls_extension_supported() returns 1 if the extension B<ext_type> is handled
+internally by Opentls and 0 otherwise.
 
 =head1 EXTENSION CALLBACKS
 
@@ -108,7 +108,7 @@ included in various TLS messages. The B<ext_type> parameter is set to the
 extension type which will be added and B<add_arg> to the value set when the
 extension handler was added. When using the new style callbacks the B<context>
 parameter will indicate which message is currently being constructed e.g. for
-the ClientHello it will be set to B<SSL_EXT_CLIENT_HELLO>.
+the ClientHello it will be set to B<tls_EXT_CLIENT_HELLO>.
 
 If the application wishes to include the extension B<ext_type> it should
 set B<*out> to the extension data, set B<*outlen> to the length of the
@@ -176,71 +176,71 @@ are:
 
 =over 4
 
-=item SSL_EXT_TLS_ONLY
+=item tls_EXT_TLS_ONLY
 
 The extension is only allowed in TLS
 
-=item SSL_EXT_DTLS_ONLY
+=item tls_EXT_DTLS_ONLY
 
 The extension is only allowed in DTLS
 
-=item SSL_EXT_TLS_IMPLEMENTATION_ONLY
+=item tls_EXT_TLS_IMPLEMENTATION_ONLY
 
 The extension is allowed in DTLS, but there is only a TLS implementation
 available (so it is ignored in DTLS).
 
-=item SSL_EXT_SSL3_ALLOWED
+=item tls_EXT_tls3_ALLOWED
 
-Extensions are not typically defined for SSLv3. Setting this value will allow
-the extension in SSLv3. Applications will not typically need to use this.
+Extensions are not typically defined for tlsv3. Setting this value will allow
+the extension in tlsv3. Applications will not typically need to use this.
 
-=item SSL_EXT_TLS1_2_AND_BELOW_ONLY
+=item tls_EXT_TLS1_2_AND_BELOW_ONLY
 
 The extension is only defined for TLSv1.2/DTLSv1.2 and below. Servers will
 ignore this extension if it is present in the ClientHello and TLSv1.3 is
 negotiated.
 
-=item SSL_EXT_TLS1_3_ONLY
+=item tls_EXT_TLS1_3_ONLY
 
 The extension is only defined for TLS1.3 and above. Servers will ignore this
 extension if it is present in the ClientHello and TLSv1.2 or below is
 negotiated.
 
-=item SSL_EXT_IGNORE_ON_RESUMPTION
+=item tls_EXT_IGNORE_ON_RESUMPTION
 
 The extension will be ignored during parsing if a previous session is being
 successfully resumed.
 
-=item SSL_EXT_CLIENT_HELLO
+=item tls_EXT_CLIENT_HELLO
 
 The extension may be present in the ClientHello message.
 
-=item SSL_EXT_TLS1_2_SERVER_HELLO
+=item tls_EXT_TLS1_2_SERVER_HELLO
 
 The extension may be present in a TLSv1.2 or below compatible ServerHello
 message.
 
-=item SSL_EXT_TLS1_3_SERVER_HELLO
+=item tls_EXT_TLS1_3_SERVER_HELLO
 
 The extension may be present in a TLSv1.3 compatible ServerHello message.
 
-=item SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+=item tls_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
 
 The extension may be present in an EncryptedExtensions message.
 
-=item SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+=item tls_EXT_TLS1_3_HELLO_RETRY_REQUEST
 
 The extension may be present in a HelloRetryRequest message.
 
-=item SSL_EXT_TLS1_3_CERTIFICATE
+=item tls_EXT_TLS1_3_CERTIFICATE
 
 The extension may be present in a TLSv1.3 compatible Certificate message.
 
-=item SSL_EXT_TLS1_3_NEW_SESSION_TICKET
+=item tls_EXT_TLS1_3_NEW_SESSION_TICKET
 
 The extension may be present in a TLSv1.3 compatible NewSessionTicket message.
 
-=item SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+=item tls_EXT_TLS1_3_CERTIFICATE_REQUEST
 
 The extension may be present in a TLSv1.3 compatible CertificateRequest message.
 
@@ -268,31 +268,31 @@ unsolicited extensions.
 
 =head1 RETURN VALUES
 
-SSL_CTX_add_custom_ext(), SSL_CTX_add_client_custom_ext() and
-SSL_CTX_add_server_custom_ext() return 1 for success and 0 for failure. A
+tls_CTX_add_custom_ext(), tls_CTX_add_client_custom_ext() and
+tls_CTX_add_server_custom_ext() return 1 for success and 0 for failure. A
 failure can occur if an attempt is made to add the same B<ext_type> more than
 once, if an attempt is made to use an extension type handled internally by
-OpenSSL or if an internal error occurs (for example a memory allocation
+Opentls or if an internal error occurs (for example a memory allocation
 failure).
 
-SSL_extension_supported() returns 1 if the extension B<ext_type> is handled
-internally by OpenSSL and 0 otherwise.
+tls_extension_supported() returns 1 if the extension B<ext_type> is handled
+internally by Opentls and 0 otherwise.
 
 =head1 SEE ALSO
 
-L<ssl(7)>
+L<tls(7)>
 
 =head1 HISTORY
 
-The SSL_CTX_add_custom_ext() function was added in OpenSSL 1.1.1.
+The tls_CTX_add_custom_ext() function was added in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2017 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

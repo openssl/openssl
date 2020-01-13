@@ -1,15 +1,15 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/engine.h>
+#include <opentls/engine.h>
 
-void engine_load_openssl_int(void);
+void engine_load_opentls_int(void);
 void engine_load_devcrypto_int(void);
 void engine_load_rdrand_int(void);
 void engine_load_dynamic_int(void);

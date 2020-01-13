@@ -1,10 +1,10 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -13,7 +13,7 @@
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 /*
  * Throughout this file and b_addr.c, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,
@@ -22,22 +22,22 @@
  */
 
 /*
- * It's imperative that these macros get defined before openssl/bio.h gets
+ * It's imperative that these macros get defined before opentls/bio.h gets
  * included.  Otherwise, the AI_PASSIVE hack will not work properly.
  * For clarity, we check for internal/cryptlib.h since it's a common header
  * that also includes bio.h.
  */
-# ifdef OSSL_INTERNAL_CRYPTLIB_H
+# ifdef Otls_INTERNAL_CRYPTLIB_H
 #  error internal/cryptlib.h included before bio_local.h
 # endif
-# ifdef OPENSSL_BIO_H
-#  error openssl/bio.h included before bio_local.h
+# ifdef OPENtls_BIO_H
+#  error opentls/bio.h included before bio_local.h
 # endif
 
 /*
  * Undefine AF_UNIX on systems that define it but don't support it.
  */
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VMS)
+# if defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_VMS)
 #  undef AF_UNIX
 # endif
 
@@ -50,7 +50,7 @@
  * size.  The easiest workaround is to force struct addrinfo to be the
  * 64-bit variant when compiling in P64 mode.
  */
-#  if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE == 64
+#  if defined(OPENtls_SYS_VMS) && __INITIAL_POINTER_SIZE == 64
 #   define addrinfo __addrinfo64
 #  endif
 
@@ -133,8 +133,8 @@ struct bio_st {
     CRYPTO_RWLOCK *lock;
 };
 
-#ifndef OPENSSL_NO_SOCK
-# ifdef OPENSSL_SYS_VMS
+#ifndef OPENtls_NO_SOCK
+# ifdef OPENtls_SYS_VMS
 typedef unsigned int socklen_t;
 # endif
 

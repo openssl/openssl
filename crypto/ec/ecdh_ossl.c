@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
@@ -13,17 +13,17 @@
 
 #include "internal/cryptlib.h"
 
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
-#include <openssl/ec.h>
+#include <opentls/err.h>
+#include <opentls/bn.h>
+#include <opentls/objects.h>
+#include <opentls/ec.h>
 #include "ec_local.h"
 
-int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
+int otls_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
                           const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     if (ecdh->group->meth->ecdh_compute_key == NULL) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
+        ECerr(EC_F_Otls_ECDH_COMPUTE_KEY, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
         return 0;
     }
 
@@ -94,7 +94,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if ((buf = OPENSSL_malloc(buflen)) == NULL) {
+    if ((buf = OPENtls_malloc(buflen)) == NULL) {
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -115,6 +115,6 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     EC_POINT_clear_free(tmp);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return ret;
 }

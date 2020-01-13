@@ -1,43 +1,43 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
-#include <openssl/dsa.h>
-#include <openssl/params.h>
-#include <openssl/evp.h>
+#include <opentls/crypto.h>
+#include <opentls/core_numbers.h>
+#include <opentls/core_names.h>
+#include <opentls/dsa.h>
+#include <opentls/params.h>
+#include <opentls/evp.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
 
-static OSSL_OP_signature_newctx_fn dsa_newctx;
-static OSSL_OP_signature_sign_init_fn dsa_signature_init;
-static OSSL_OP_signature_verify_init_fn dsa_signature_init;
-static OSSL_OP_signature_sign_fn dsa_sign;
-static OSSL_OP_signature_verify_fn dsa_verify;
-static OSSL_OP_signature_digest_sign_init_fn dsa_digest_signverify_init;
-static OSSL_OP_signature_digest_sign_update_fn dsa_digest_signverify_update;
-static OSSL_OP_signature_digest_sign_final_fn dsa_digest_sign_final;
-static OSSL_OP_signature_digest_verify_init_fn dsa_digest_signverify_init;
-static OSSL_OP_signature_digest_verify_update_fn dsa_digest_signverify_update;
-static OSSL_OP_signature_digest_verify_final_fn dsa_digest_verify_final;
-static OSSL_OP_signature_freectx_fn dsa_freectx;
-static OSSL_OP_signature_dupctx_fn dsa_dupctx;
-static OSSL_OP_signature_get_ctx_params_fn dsa_get_ctx_params;
-static OSSL_OP_signature_gettable_ctx_params_fn dsa_gettable_ctx_params;
-static OSSL_OP_signature_set_ctx_params_fn dsa_set_ctx_params;
-static OSSL_OP_signature_settable_ctx_params_fn dsa_settable_ctx_params;
-static OSSL_OP_signature_get_ctx_md_params_fn dsa_get_ctx_md_params;
-static OSSL_OP_signature_gettable_ctx_md_params_fn dsa_gettable_ctx_md_params;
-static OSSL_OP_signature_set_ctx_md_params_fn dsa_set_ctx_md_params;
-static OSSL_OP_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
+static Otls_OP_signature_newctx_fn dsa_newctx;
+static Otls_OP_signature_sign_init_fn dsa_signature_init;
+static Otls_OP_signature_verify_init_fn dsa_signature_init;
+static Otls_OP_signature_sign_fn dsa_sign;
+static Otls_OP_signature_verify_fn dsa_verify;
+static Otls_OP_signature_digest_sign_init_fn dsa_digest_signverify_init;
+static Otls_OP_signature_digest_sign_update_fn dsa_digest_signverify_update;
+static Otls_OP_signature_digest_sign_final_fn dsa_digest_sign_final;
+static Otls_OP_signature_digest_verify_init_fn dsa_digest_signverify_init;
+static Otls_OP_signature_digest_verify_update_fn dsa_digest_signverify_update;
+static Otls_OP_signature_digest_verify_final_fn dsa_digest_verify_final;
+static Otls_OP_signature_freectx_fn dsa_freectx;
+static Otls_OP_signature_dupctx_fn dsa_dupctx;
+static Otls_OP_signature_get_ctx_params_fn dsa_get_ctx_params;
+static Otls_OP_signature_gettable_ctx_params_fn dsa_gettable_ctx_params;
+static Otls_OP_signature_set_ctx_params_fn dsa_set_ctx_params;
+static Otls_OP_signature_settable_ctx_params_fn dsa_settable_ctx_params;
+static Otls_OP_signature_get_ctx_md_params_fn dsa_get_ctx_md_params;
+static Otls_OP_signature_gettable_ctx_md_params_fn dsa_gettable_ctx_md_params;
+static Otls_OP_signature_set_ctx_md_params_fn dsa_set_ctx_md_params;
+static Otls_OP_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -46,7 +46,7 @@ static OSSL_OP_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
     DSA *dsa;
     size_t mdsize;
     /* Should be big enough */
@@ -57,7 +57,7 @@ typedef struct {
 
 static void *dsa_newctx(void *provctx)
 {
-    PROV_DSA_CTX *pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
+    PROV_DSA_CTX *pdsactx = OPENtls_zalloc(sizeof(PROV_DSA_CTX));
 
     if (pdsactx == NULL)
         return NULL;
@@ -208,7 +208,7 @@ static void dsa_freectx(void *vpdsactx)
     EVP_MD_CTX_free(pdsactx->mdctx);
     EVP_MD_free(pdsactx->md);
 
-    OPENSSL_free(pdsactx);
+    OPENtls_free(pdsactx);
 }
 
 static void *dsa_dupctx(void *vpdsactx)
@@ -216,7 +216,7 @@ static void *dsa_dupctx(void *vpdsactx)
     PROV_DSA_CTX *srcctx = (PROV_DSA_CTX *)vpdsactx;
     PROV_DSA_CTX *dstctx;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    dstctx = OPENtls_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
         return NULL;
 
@@ -246,20 +246,20 @@ static void *dsa_dupctx(void *vpdsactx)
     return NULL;
 }
 
-static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
+static int dsa_get_ctx_params(void *vpdsactx, Otls_PARAM *params)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
     if (pdsactx == NULL || params == NULL)
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdsactx->mdsize))
+    p = Otls_PARAM_locate(params, Otls_SIGNATURE_PARAM_DIGEST_SIZE);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, pdsactx->mdsize))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, pdsactx->md == NULL
+    p = Otls_PARAM_locate(params, Otls_SIGNATURE_PARAM_DIGEST);
+    if (p != NULL && !Otls_PARAM_set_utf8_string(p, pdsactx->md == NULL
                                                     ? pdsactx->mdname
                                                     : EVP_MD_name(pdsactx->md)))
         return 0;
@@ -267,21 +267,21 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
     return 1;
 }
 
-static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
-    OSSL_PARAM_END
+static const Otls_PARAM known_gettable_ctx_params[] = {
+    Otls_PARAM_size_t(Otls_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
+    Otls_PARAM_utf8_string(Otls_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    Otls_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_ctx_params(void)
+static const Otls_PARAM *dsa_gettable_ctx_params(void)
 {
     return known_gettable_ctx_params;
 }
 
-static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
+static int dsa_set_ctx_params(void *vpdsactx, const Otls_PARAM params[])
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     char *mdname;
 
     if (pdsactx == NULL || params == NULL)
@@ -295,8 +295,8 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         return 1;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &pdsactx->mdsize))
+    p = Otls_PARAM_locate_const(params, Otls_SIGNATURE_PARAM_DIGEST_SIZE);
+    if (p != NULL && !Otls_PARAM_get_size_t(p, &pdsactx->mdsize))
         return 0;
 
     /*
@@ -304,22 +304,22 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
      * This can be useful for applications that want to know the MD that they
      * previously set.
      */
-    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
+    p = Otls_PARAM_locate_const(params, Otls_SIGNATURE_PARAM_DIGEST);
     mdname = pdsactx->mdname;
     if (p != NULL
-            && !OSSL_PARAM_get_utf8_string(p, &mdname, sizeof(pdsactx->mdname)))
+            && !Otls_PARAM_get_utf8_string(p, &mdname, sizeof(pdsactx->mdname)))
         return 0;
 
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
-    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
-    OSSL_PARAM_END
+static const Otls_PARAM known_settable_ctx_params[] = {
+    Otls_PARAM_size_t(Otls_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
+    Otls_PARAM_utf8_string(Otls_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    Otls_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_settable_ctx_params(void)
+static const Otls_PARAM *dsa_settable_ctx_params(void)
 {
     /*
      * TODO(3.0): Should this function return a different set of settable ctx
@@ -330,7 +330,7 @@ static const OSSL_PARAM *dsa_settable_ctx_params(void)
     return known_settable_ctx_params;
 }
 
-static int dsa_get_ctx_md_params(void *vpdsactx, OSSL_PARAM *params)
+static int dsa_get_ctx_md_params(void *vpdsactx, Otls_PARAM *params)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -340,7 +340,7 @@ static int dsa_get_ctx_md_params(void *vpdsactx, OSSL_PARAM *params)
     return EVP_MD_CTX_get_params(pdsactx->mdctx, params);
 }
 
-static const OSSL_PARAM *dsa_gettable_ctx_md_params(void *vpdsactx)
+static const Otls_PARAM *dsa_gettable_ctx_md_params(void *vpdsactx)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -350,7 +350,7 @@ static const OSSL_PARAM *dsa_gettable_ctx_md_params(void *vpdsactx)
     return EVP_MD_gettable_ctx_params(pdsactx->md);
 }
 
-static int dsa_set_ctx_md_params(void *vpdsactx, const OSSL_PARAM params[])
+static int dsa_set_ctx_md_params(void *vpdsactx, const Otls_PARAM params[])
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -360,7 +360,7 @@ static int dsa_set_ctx_md_params(void *vpdsactx, const OSSL_PARAM params[])
     return EVP_MD_CTX_set_params(pdsactx->mdctx, params);
 }
 
-static const OSSL_PARAM *dsa_settable_ctx_md_params(void *vpdsactx)
+static const Otls_PARAM *dsa_settable_ctx_md_params(void *vpdsactx)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -370,39 +370,39 @@ static const OSSL_PARAM *dsa_settable_ctx_md_params(void *vpdsactx)
     return EVP_MD_settable_ctx_params(pdsactx->md);
 }
 
-const OSSL_DISPATCH dsa_signature_functions[] = {
-    { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))dsa_newctx },
-    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_signature_init },
-    { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))dsa_sign },
-    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))dsa_signature_init },
-    { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))dsa_verify },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
+const Otls_DISPATCH dsa_signature_functions[] = {
+    { Otls_FUNC_SIGNATURE_NEWCTX, (void (*)(void))dsa_newctx },
+    { Otls_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_signature_init },
+    { Otls_FUNC_SIGNATURE_SIGN, (void (*)(void))dsa_sign },
+    { Otls_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))dsa_signature_init },
+    { Otls_FUNC_SIGNATURE_VERIFY, (void (*)(void))dsa_verify },
+    { Otls_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
       (void (*)(void))dsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE,
+    { Otls_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE,
       (void (*)(void))dsa_digest_signverify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL,
+    { Otls_FUNC_SIGNATURE_DIGEST_SIGN_FINAL,
       (void (*)(void))dsa_digest_sign_final },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
+    { Otls_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
       (void (*)(void))dsa_digest_signverify_init },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
+    { Otls_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
       (void (*)(void))dsa_digest_signverify_update },
-    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
+    { Otls_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
       (void (*)(void))dsa_digest_verify_final },
-    { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))dsa_freectx },
-    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))dsa_dupctx },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))dsa_get_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+    { Otls_FUNC_SIGNATURE_FREECTX, (void (*)(void))dsa_freectx },
+    { Otls_FUNC_SIGNATURE_DUPCTX, (void (*)(void))dsa_dupctx },
+    { Otls_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))dsa_get_ctx_params },
+    { Otls_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
       (void (*)(void))dsa_gettable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))dsa_set_ctx_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
+    { Otls_FUNC_SIGNATURE_SET_CTX_PARAMS, (void (*)(void))dsa_set_ctx_params },
+    { Otls_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,
       (void (*)(void))dsa_settable_ctx_params },
-    { OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,
+    { Otls_FUNC_SIGNATURE_GET_CTX_MD_PARAMS,
       (void (*)(void))dsa_get_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,
+    { Otls_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS,
       (void (*)(void))dsa_gettable_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,
+    { Otls_FUNC_SIGNATURE_SET_CTX_MD_PARAMS,
       (void (*)(void))dsa_set_ctx_md_params },
-    { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
+    { Otls_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS,
       (void (*)(void))dsa_settable_ctx_md_params },
     { 0, NULL }
 };

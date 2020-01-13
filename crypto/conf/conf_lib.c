@@ -1,10 +1,10 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -12,11 +12,11 @@
 #include <string.h>
 #include "internal/conf.h"
 #include "crypto/ctype.h"
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/conf.h>
-#include <openssl/conf_api.h>
-#include <openssl/lhash.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/conf.h>
+#include <opentls/conf_api.h>
+#include <opentls/lhash.h>
 
 static CONF_METHOD *default_CONF_method = NULL;
 
@@ -48,7 +48,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
     LHASH_OF(CONF_VALUE) *ltmp;
     BIO *in = NULL;
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     in = BIO_new_file(file, "r");
 #else
     in = BIO_new_file(file, "rb");
@@ -64,7 +64,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
     return ltmp;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
                                    long *eline)
 {
@@ -143,7 +143,7 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf)
     NCONF_free_data(&ctmp);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 {
     BIO *btmp;
@@ -214,7 +214,7 @@ int NCONF_load(CONF *conf, const char *file, long *eline)
     return conf->meth->load(conf, file, eline);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 {
     BIO *btmp;
@@ -277,7 +277,7 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
 
 static int default_is_number(const CONF *conf, char c)
 {
-    return ossl_isdigit(c);
+    return otls_isdigit(c);
 }
 
 static int default_to_int(const CONF *conf, char c)
@@ -323,7 +323,7 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
     return 1;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int NCONF_dump_fp(const CONF *conf, FILE *out)
 {
     BIO *btmp;
@@ -350,11 +350,11 @@ int NCONF_dump_bio(const CONF *conf, BIO *out)
 
 /*
  * These routines call the C malloc/free, to avoid intermixing with
- * OpenSSL function pointers before the library is initialized.
+ * Opentls function pointers before the library is initialized.
  */
-OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
+OPENtls_INIT_SETTINGS *OPENtls_INIT_new(void)
 {
-    OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
+    OPENtls_INIT_SETTINGS *ret = malloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;
@@ -366,8 +366,8 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 }
 
 
-#ifndef OPENSSL_NO_STDIO
-int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+#ifndef OPENtls_NO_STDIO
+int OPENtls_INIT_set_config_filename(OPENtls_INIT_SETTINGS *settings,
                                      const char *filename)
 {
     char *newfilename = NULL;
@@ -384,13 +384,13 @@ int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
     return 1;
 }
 
-void OPENSSL_INIT_set_config_file_flags(OPENSSL_INIT_SETTINGS *settings,
+void OPENtls_INIT_set_config_file_flags(OPENtls_INIT_SETTINGS *settings,
                                         unsigned long flags)
 {
     settings->flags = flags;
 }
 
-int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
+int OPENtls_INIT_set_config_appname(OPENtls_INIT_SETTINGS *settings,
                                     const char *appname)
 {
     char *newappname = NULL;
@@ -408,7 +408,7 @@ int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
 }
 #endif
 
-void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings)
+void OPENtls_INIT_free(OPENtls_INIT_SETTINGS *settings)
 {
     free(settings->filename);
     free(settings->appname);

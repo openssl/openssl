@@ -1,15 +1,15 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/pkcs12.h>
+#include <opentls/pkcs12.h>
 #include "p12_local.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
@@ -81,7 +81,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7)
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
 
-PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
+PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int patlsen,
                              unsigned char *salt, int saltlen, int iter,
                              STACK_OF(PKCS12_SAFEBAG) *bags)
 {
@@ -115,7 +115,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
     if (!(p7->d.encrypted->enc_data->enc_data =
           PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass,
-                                  passlen, bags, 1))) {
+                                  patlsen, bags, 1))) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, PKCS12_R_ENCRYPT_ERROR);
         goto err;
     }
@@ -128,20 +128,20 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 }
 
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
-                                                  int passlen)
+                                                  int patlsen)
 {
     if (!PKCS7_type_is_encrypted(p7))
         return NULL;
     return PKCS12_item_decrypt_d2i(p7->d.encrypted->enc_data->algorithm,
                                    ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
-                                   pass, passlen,
+                                   pass, patlsen,
                                    p7->d.encrypted->enc_data->enc_data, 1);
 }
 
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
-                                         const char *pass, int passlen)
+                                         const char *pass, int patlsen)
 {
-    return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
+    return PKCS8_decrypt(bag->value.shkeybag, pass, patlsen);
 }
 
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)

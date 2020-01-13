@@ -1,19 +1,19 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2015 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Mike Hamburg
  */
 
-#ifndef OSSL_CRYPTO_EC_CURVE448UTILS_H
-# define OSSL_CRYPTO_EC_CURVE448UTILS_H
+#ifndef Otls_CRYPTO_EC_CURVE448UTILS_H
+# define Otls_CRYPTO_EC_CURVE448UTILS_H
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 
 /*
  * Internal word types. Somewhat tricky.  This could be decided separately per
@@ -72,7 +72,7 @@ typedef enum {
 } c448_error_t;
 
 /* Return success if x is true */
-static ossl_inline c448_error_t c448_succeed_if(c448_bool_t x)
+static otls_inline c448_error_t c448_succeed_if(c448_bool_t x)
 {
     return (c448_error_t) x;
 }

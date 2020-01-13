@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,9 +12,9 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
@@ -57,11 +57,11 @@ int errstr_main(int argc, char **argv)
         if (sscanf(*argv, "%lx", &l) == 0) {
             ret++;
         } else {
-            /* We're not really an SSL application so this won't auto-init, but
-             * we're still interested in SSL error strings
+            /* We're not really an tls application so this won't auto-init, but
+             * we're still interested in tls error strings
              */
-            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS
-                             | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+            OPENtls_init_tls(OPENtls_INIT_LOAD_tls_STRINGS
+                             | OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
             ERR_error_string_n(l, buf, sizeof(buf));
             BIO_printf(bio_out, "%s\n", buf);
         }

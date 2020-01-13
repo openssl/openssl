@@ -1,20 +1,20 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_INTERNAL_SM3_H
-# define OSSL_INTERNAL_SM3_H
+#ifndef Otls_INTERNAL_SM3_H
+# define Otls_INTERNAL_SM3_H
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifdef OPENSSL_NO_SM3
+# ifdef OPENtls_NO_SM3
 #  error SM3 is disabled.
 # endif
 
@@ -35,4 +35,4 @@ int sm3_init(SM3_CTX *c);
 int sm3_update(SM3_CTX *c, const void *data, size_t len);
 int sm3_final(unsigned char *md, SM3_CTX *c);
 
-#endif /* OSSL_INTERNAL_SM3_H */
+#endif /* Otls_INTERNAL_SM3_H */

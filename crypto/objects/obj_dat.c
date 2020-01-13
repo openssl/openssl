@@ -1,20 +1,20 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include <limits.h>
 #include "internal/cryptlib.h"
-#include <openssl/lhash.h>
-#include <openssl/asn1.h>
+#include <opentls/lhash.h>
+#include <opentls/asn1.h>
 #include "crypto/objects.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "crypto/asn1.h"
 #include "obj_local.h"
 
@@ -68,10 +68,10 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
             ret ^= p[i] << ((i * 3) % 24);
         break;
     case ADDED_SNAME:
-        ret = OPENSSL_LH_strhash(a->sn);
+        ret = OPENtls_LH_strhash(a->sn);
         break;
     case ADDED_LNAME:
-        ret = OPENSSL_LH_strhash(a->ln);
+        ret = OPENtls_LH_strhash(a->ln);
         break;
     case ADDED_NID:
         ret = a->nid;
@@ -147,7 +147,7 @@ static void cleanup3_doall(ADDED_OBJ *a)
 {
     if (--a->obj->nid == 0)
         ASN1_OBJECT_free(a->obj);
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 void obj_cleanup_int(void)
@@ -182,16 +182,16 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             return 0;
     if ((o = OBJ_dup(obj)) == NULL)
         goto err;
-    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+    if ((ao[ADDED_NID] = OPENtls_malloc(sizeof(*ao[0]))) == NULL)
         goto err2;
     if ((o->length != 0) && (obj->data != NULL))
-        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_DATA] = OPENtls_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->sn != NULL)
-        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_SNAME] = OPENtls_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->ln != NULL)
-        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_LNAME] = OPENtls_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -200,7 +200,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             ao[i]->obj = o;
             aop = lh_ADDED_OBJ_insert(added, ao[i]);
             /* memory leak, but should not normally matter */
-            OPENSSL_free(aop);
+            OPENtls_free(aop);
         }
     }
     o->flags &=
@@ -212,7 +212,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
     OBJerr(OBJ_F_OBJ_ADD_OBJECT, ERR_R_MALLOC_FAILURE);
  err:
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
-        OPENSSL_free(ao[i]);
+        OPENtls_free(ao[i]);
     ASN1_OBJECT_free(o);
     return NID_undef;
 }
@@ -231,7 +231,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     }
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     if (added == NULL)
         return NULL;
@@ -261,7 +261,7 @@ const char *OBJ_nid2sn(int n)
     }
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     if (added == NULL)
         return NULL;
@@ -291,7 +291,7 @@ const char *OBJ_nid2ln(int n)
     }
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     if (added == NULL)
         return NULL;
@@ -337,7 +337,7 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
         return NID_undef;
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     if (added != NULL) {
         ad.type = ADDED_DATA;
@@ -388,7 +388,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     if (j < 0)
         return NULL;
 
-    if ((buf = OPENSSL_malloc(j)) == NULL) {
+    if ((buf = OPENtls_malloc(j)) == NULL) {
         OBJerr(OBJ_F_OBJ_TXT2OBJ, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -401,7 +401,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 
     cp = buf;
     op = d2i_ASN1_OBJECT(NULL, &cp, j);
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return op;
 }
 
@@ -427,7 +427,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             s = OBJ_nid2sn(nid);
         if (s) {
             if (buf)
-                OPENSSL_strlcpy(buf, s, buf_len);
+                OPENtls_strlcpy(buf, s, buf_len);
             n = strlen(s);
             return n;
         }
@@ -501,7 +501,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
                     *buf = '\0';
                     buf_len--;
                 }
-                OPENSSL_strlcpy(buf, bndec, buf_len);
+                OPENtls_strlcpy(buf, bndec, buf_len);
                 if (i > buf_len) {
                     buf += buf_len;
                     buf_len = 0;
@@ -512,12 +512,12 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             }
             n++;
             n += i;
-            OPENSSL_free(bndec);
+            OPENtls_free(bndec);
         } else {
             BIO_snprintf(tbuf, sizeof(tbuf), ".%lu", l);
             i = strlen(tbuf);
             if (buf && (buf_len > 0)) {
-                OPENSSL_strlcpy(buf, tbuf, buf_len);
+                OPENtls_strlcpy(buf, tbuf, buf_len);
                 if (i > buf_len) {
                     buf += buf_len;
                     buf_len = 0;
@@ -557,7 +557,7 @@ int OBJ_ln2nid(const char *s)
     const unsigned int *op;
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     o.ln = s;
     if (added != NULL) {
@@ -581,7 +581,7 @@ int OBJ_sn2nid(const char *s)
     const unsigned int *op;
 
     /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     o.sn = s;
     if (added != NULL) {
@@ -608,7 +608,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
                             int (*cmp) (const void *, const void *),
                             int flags)
 {
-    const char *p = ossl_bsearch(key, base, num, size, cmp, flags);
+    const char *p = otls_bsearch(key, base, num, size, cmp, flags);
 
 #ifdef CHARSET_EBCDIC
     /*
@@ -648,24 +648,24 @@ int OBJ_create_objects(BIO *in)
         if (i <= 0)
             return num;
         buf[i - 1] = '\0';
-        if (!ossl_isalnum(buf[0]))
+        if (!otls_isalnum(buf[0]))
             return num;
         o = s = buf;
-        while (ossl_isdigit(*s) || *s == '.')
+        while (otls_isdigit(*s) || *s == '.')
             s++;
         if (*s != '\0') {
             *(s++) = '\0';
-            while (ossl_isspace(*s))
+            while (otls_isspace(*s))
                 s++;
             if (*s == '\0') {
                 s = NULL;
             } else {
                 l = s;
-                while (*l != '\0' && !ossl_isspace(*l))
+                while (*l != '\0' && !otls_isspace(*l))
                     l++;
                 if (*l != '\0') {
                     *(l++) = '\0';
-                    while (ossl_isspace(*l))
+                    while (otls_isspace(*l))
                         l++;
                     if (*l == '\0') {
                         l = NULL;

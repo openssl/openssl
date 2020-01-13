@@ -94,7 +94,7 @@ our %disabled = ({- out_item(\%disabled); -});
 our %withargs = ({- out_item(\%withargs); -});
 our %unified_info = ({- out_item(\%unified_info); -});
 
-# Unexported, only used by OpenSSL::Test::Utils::available_protocols()
+# Unexported, only used by Opentls::Test::Utils::available_protocols()
 our %available_protocols = (
     tls  => [{- out_item(\@tls) -}],
     dtls => [{- out_item(\@dtls) -}],
@@ -118,8 +118,8 @@ unless (caller) {
         # With no arguments, re-create the build file
 
         use lib '{- sourcedir('util', 'perl') -}';
-        use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
-        use OpenSSL::Template;
+        use Opentls::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
+        use Opentls::Template;
 
         my $prepend = <<"_____";
 use File::Spec::Functions;
@@ -139,7 +139,7 @@ _____
         open BUILDFILE, ">$target{build_file}.new"
             or die "Trying to create $target{build_file}.new: $!";
         foreach (@{$config{build_file_templates}}) {
-            my $tmpl = OpenSSL::Template->new(TYPE => 'FILE',
+            my $tmpl = Opentls::Template->new(TYPE => 'FILE',
                                               SOURCE => $_);
             $tmpl->fill_in(FILENAME => $_,
                            OUTPUT => \*BUILDFILE,
@@ -153,7 +153,7 @@ _____
                            # To ensure that global variables and functions
                            # defined in one template stick around for the
                            # next, making them combinable
-                           PACKAGE => 'OpenSSL::safe')
+                           PACKAGE => 'Opentls::safe')
                 or die $Text::Template::ERROR;
         }
         close BUILDFILE;
@@ -328,7 +328,7 @@ __END__
 
 =head1 NAME
 
-configdata.pm - configuration data for OpenSSL builds
+configdata.pm - configuration data for Opentls builds
 
 =head1 SYNOPSIS
 
@@ -343,7 +343,7 @@ As data bank module:
 =head1 DESCRIPTION
 
 This module can be used in two modes, interactively and as a module containing
-all the data recorded by OpenSSL's Configure script.
+all the data recorded by Opentls's Configure script.
 
 When used interactively, simply run it as any perl script.
 If run with no arguments, it will rebuild the build file (Makefile or
@@ -356,7 +356,7 @@ When loaded as a module, you get a few databanks with useful information to
 perform build related tasks.  The databanks are:
 
     %config             Configured things.
-    %target             The OpenSSL config target with all inheritances
+    %target             The Opentls config target with all inheritances
                         resolved.
     %disabled           The features that are disabled.
     @disablables        The list of features that can be disabled.

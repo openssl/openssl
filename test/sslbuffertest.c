@@ -1,21 +1,21 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
+#include <opentls/tls.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
 
 #include "internal/packet.h"
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
 struct async_ctrs {
@@ -23,8 +23,8 @@ struct async_ctrs {
     unsigned int wctr;
 };
 
-static SSL_CTX *serverctx = NULL;
-static SSL_CTX *clientctx = NULL;
+static tls_CTX *serverctx = NULL;
+static tls_CTX *clientctx = NULL;
 
 #define MAX_ATTEMPTS    100
 
@@ -46,20 +46,20 @@ static SSL_CTX *clientctx = NULL;
 static int test_func(int test)
 {
     int result = 0;
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     int ret;
     size_t i, j;
     const char testdata[] = "Test data";
     char buf[sizeof(testdata)];
 
-    if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl, &clientssl,
+    if (!TEST_true(create_tls_objects(serverctx, clientctx, &servertls, &clienttls,
                                       NULL, NULL))) {
-        TEST_error("Test %d failed: Create SSL objects failed\n", test);
+        TEST_error("Test %d failed: Create tls objects failed\n", test);
         goto end;
     }
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))) {
-        TEST_error("Test %d failed: Create SSL connection failed\n", test);
+    if (!TEST_true(create_tls_connection(servertls, clienttls, tls_ERROR_NONE))) {
+        TEST_error("Test %d failed: Create tls connection failed\n", test);
         goto end;
     }
 
@@ -78,25 +78,25 @@ static int test_func(int test)
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
              i++) {
             /* test == 0 mean to free/allocate = control */
-            if (test >= 1 && !TEST_true(SSL_free_buffers(clientssl)))
+            if (test >= 1 && !TEST_true(tls_free_buffers(clienttls)))
                 goto end;
-            if (test >= 2 && !TEST_true(SSL_alloc_buffers(clientssl)))
+            if (test >= 2 && !TEST_true(tls_alloc_buffers(clienttls)))
                 goto end;
             /* allocate a second time */
-            if (test >= 3 && !TEST_true(SSL_alloc_buffers(clientssl)))
+            if (test >= 3 && !TEST_true(tls_alloc_buffers(clienttls)))
                 goto end;
-            if (test >= 4 && !TEST_true(SSL_free_buffers(clientssl)))
+            if (test >= 4 && !TEST_true(tls_free_buffers(clienttls)))
                 goto end;
 
-            ret = SSL_write(clientssl, testdata + len,
+            ret = tls_write(clienttls, testdata + len,
                             sizeof(testdata) - len);
             if (ret > 0) {
                 len += ret;
             } else {
-                int ssl_error = SSL_get_error(clientssl, ret);
+                int tls_error = tls_get_error(clienttls, ret);
 
-                if (ssl_error == SSL_ERROR_SYSCALL ||
-                    ssl_error == SSL_ERROR_SSL) {
+                if (tls_error == tls_ERROR_SYSCALL ||
+                    tls_error == tls_ERROR_tls) {
                     TEST_error("Test %d failed: Failed to write app data\n", test);
                     goto end;
                 }
@@ -112,24 +112,24 @@ static int test_func(int test)
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
                  i < MAX_ATTEMPTS; i++)
         {
-            if (test >= 5 && !TEST_true(SSL_free_buffers(serverssl)))
+            if (test >= 5 && !TEST_true(tls_free_buffers(servertls)))
                 goto end;
             /* free a second time */
-            if (test >= 6 && !TEST_true(SSL_free_buffers(serverssl)))
+            if (test >= 6 && !TEST_true(tls_free_buffers(servertls)))
                 goto end;
-            if (test >= 7 && !TEST_true(SSL_alloc_buffers(serverssl)))
+            if (test >= 7 && !TEST_true(tls_alloc_buffers(servertls)))
                 goto end;
-            if (test >= 8 && !TEST_true(SSL_free_buffers(serverssl)))
+            if (test >= 8 && !TEST_true(tls_free_buffers(servertls)))
                 goto end;
 
-            ret = SSL_read(serverssl, buf + len, sizeof(buf) - len);
+            ret = tls_read(servertls, buf + len, sizeof(buf) - len);
             if (ret > 0) {
                 len += ret;
             } else {
-                int ssl_error = SSL_get_error(serverssl, ret);
+                int tls_error = tls_get_error(servertls, ret);
 
-                if (ssl_error == SSL_ERROR_SYSCALL ||
-                    ssl_error == SSL_ERROR_SSL) {
+                if (tls_error == tls_ERROR_SYSCALL ||
+                    tls_error == tls_ERROR_tls) {
                     TEST_error("Test %d failed: Failed to read app data\n", test);
                     goto end;
                 }
@@ -144,8 +144,8 @@ static int test_func(int test)
     if (!result)
         ERR_print_errors_fp(stderr);
 
-    SSL_free(clientssl);
-    SSL_free(serverssl);
+    tls_free(clienttls);
+    tls_free(servertls);
 
     return result;
 }
@@ -160,10 +160,10 @@ int setup_tests(void)
             || !TEST_ptr(pkey = test_get_argument(1)))
         return 0;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!create_tls_ctx_pair(TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, 0,
                              &serverctx, &clientctx, cert, pkey)) {
-        TEST_error("Failed to create SSL_CTX pair\n");
+        TEST_error("Failed to create tls_CTX pair\n");
         return 0;
     }
 
@@ -173,6 +173,6 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    SSL_CTX_free(clientctx);
-    SSL_CTX_free(serverctx);
+    tls_CTX_free(clientctx);
+    tls_CTX_free(serverctx);
 }

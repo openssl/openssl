@@ -1,18 +1,18 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "apps.h"
 #include "progs.h"
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
+#include <opentls/err.h>
+#include <opentls/pem.h>
+#include <opentls/evp.h>
 #include <sys/stat.h>
 
 #define KEY_NONE        0
@@ -51,7 +51,7 @@ typedef enum OPTION_choice {
 const OPTIONS pkeyutl_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"engine_impl", OPT_ENGINE_IMPL, '-',
      "Also use engine given by -engine for crypto operations"},
@@ -114,8 +114,8 @@ int pkeyutl_main(int argc, char **argv)
     const char *peerkey = NULL;
     const char *kdfalg = NULL;
     int kdflen = 0;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
+    STACK_OF(OPENtls_STRING) *pkeyopts = NULL;
+    STACK_OF(OPENtls_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     const EVP_MD *md = NULL;
     int filesize = -1;
@@ -211,16 +211,16 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_PKEYOPT:
             if ((pkeyopts == NULL &&
-                 (pkeyopts = sk_OPENSSL_STRING_new_null()) == NULL) ||
-                sk_OPENSSL_STRING_push(pkeyopts, opt_arg()) == 0) {
+                 (pkeyopts = sk_OPENtls_STRING_new_null()) == NULL) ||
+                sk_OPENtls_STRING_push(pkeyopts, opt_arg()) == 0) {
                 BIO_puts(bio_err, "out of memory\n");
                 goto end;
             }
             break;
         case OPT_PKEYOPT_PASSIN:
             if ((pkeyopts_passin == NULL &&
-                 (pkeyopts_passin = sk_OPENSSL_STRING_new_null()) == NULL) ||
-                sk_OPENSSL_STRING_push(pkeyopts_passin, opt_arg()) == 0) {
+                 (pkeyopts_passin = sk_OPENtls_STRING_new_null()) == NULL) ||
+                sk_OPENtls_STRING_push(pkeyopts_passin, opt_arg()) == 0) {
                 BIO_puts(bio_err, "out of memory\n");
                 goto end;
             }
@@ -286,11 +286,11 @@ int pkeyutl_main(int argc, char **argv)
         goto end;
     }
     if (pkeyopts != NULL) {
-        int num = sk_OPENSSL_STRING_num(pkeyopts);
+        int num = sk_OPENtls_STRING_num(pkeyopts);
         int i;
 
         for (i = 0; i < num; ++i) {
-            const char *opt = sk_OPENSSL_STRING_value(pkeyopts, i);
+            const char *opt = sk_OPENtls_STRING_value(pkeyopts, i);
 
             if (pkey_ctrl_string(ctx, opt) <= 0) {
                 BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
@@ -301,11 +301,11 @@ int pkeyutl_main(int argc, char **argv)
         }
     }
     if (pkeyopts_passin != NULL) {
-        int num = sk_OPENSSL_STRING_num(pkeyopts_passin);
+        int num = sk_OPENtls_STRING_num(pkeyopts_passin);
         int i;
 
         for (i = 0; i < num; i++) {
-            char *opt = sk_OPENSSL_STRING_value(pkeyopts_passin, i);
+            char *opt = sk_OPENtls_STRING_value(pkeyopts_passin, i);
             char *passin = strchr(opt, ':');
             char *passwd;
 
@@ -315,7 +315,7 @@ int pkeyutl_main(int argc, char **argv)
                 BIO_snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
                 EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
                                    passwd_buf, 0);
-                passwd = OPENSSL_strdup(passwd_buf);
+                passwd = OPENtls_strdup(passwd_buf);
                 if (passwd == NULL) {
                     BIO_puts(bio_err, "out of memory\n");
                     goto end;
@@ -336,7 +336,7 @@ int pkeyutl_main(int argc, char **argv)
                            prog, opt);
                 goto end;
             }
-            OPENSSL_free(passwd);
+            OPENtls_free(passwd);
         }
     }
 
@@ -472,11 +472,11 @@ int pkeyutl_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
-    OPENSSL_free(buf_in);
-    OPENSSL_free(buf_out);
-    OPENSSL_free(sig);
-    sk_OPENSSL_STRING_free(pkeyopts);
-    sk_OPENSSL_STRING_free(pkeyopts_passin);
+    OPENtls_free(buf_in);
+    OPENtls_free(buf_out);
+    OPENtls_free(sig);
+    sk_OPENtls_STRING_free(pkeyopts);
+    sk_OPENtls_STRING_free(pkeyopts_passin);
     return ret;
 }
 
@@ -524,7 +524,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
     }
 
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     if (engine_impl)
         impl = e;
 #endif
@@ -545,7 +545,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (pkey == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         /* SM2 needs a special treatment */
         if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
             EC_KEY *eckey = NULL;
@@ -611,7 +611,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
 
  end:
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     return ctx;
 
 }
@@ -773,7 +773,7 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
     }
 
  end:
-    OPENSSL_free(mbuf);
+    OPENtls_free(mbuf);
     EVP_MD_CTX_free(mctx);
     return rv;
 }

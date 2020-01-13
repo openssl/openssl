@@ -1,20 +1,20 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #if defined(_WIN32)
 # include <windows.h>
 #endif
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "testutil.h"
 
-#if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
+#if !defined(OPENtls_THREADS) || defined(CRYPTO_TDEBUG)
 
 typedef unsigned int thread_t;
 
@@ -29,7 +29,7 @@ static int wait_for_thread(thread_t thread)
     return 1;
 }
 
-#elif defined(OPENSSL_SYS_WINDOWS)
+#elif defined(OPENtls_SYS_WINDOWS)
 
 typedef HANDLE thread_t;
 
@@ -167,13 +167,13 @@ static int test_thread_local(void)
         || !TEST_int_eq(thread_local_thread_cb_ok, 1))
         return 0;
 
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#if defined(OPENtls_THREADS) && !defined(CRYPTO_TDEBUG)
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
     if (!TEST_ptr_null(ptr))
         return 0;
 
-# if !defined(OPENSSL_SYS_WINDOWS)
+# if !defined(OPENtls_SYS_WINDOWS)
     if (!TEST_int_eq(destructor_run_count, 1))
         return 0;
 # endif

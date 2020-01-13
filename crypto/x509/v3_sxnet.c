@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 /* Support for Thawte strong extranet extension */
@@ -67,7 +67,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
         id = sk_SXNETID_value(sx->ids, i);
         tmp = i2s_ASN1_INTEGER(NULL, id->zone);
         BIO_printf(out, "\n%*sZone: %s, User: ", indent, "", tmp);
-        OPENSSL_free(tmp);
+        OPENtls_free(tmp);
         ASN1_STRING_print(out, id->user);
     }
     return 1;

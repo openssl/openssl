@@ -1,23 +1,23 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/x509.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/x509v3.h>
+#include <opentls/x509v3.h>
 #include "x509_local.h"
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
-    X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_LOOKUP *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(X509_F_X509_LOOKUP_NEW, ERR_R_MALLOC_FAILURE);
@@ -26,7 +26,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 
     ret->method = method;
     if (method->new_item != NULL && method->new_item(ret) == 0) {
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -38,7 +38,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
         return;
     if ((ctx->method != NULL) && (ctx->method->free != NULL))
         (*ctx->method->free) (ctx);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int X509_STORE_lock(X509_STORE *s)
@@ -159,7 +159,7 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
 
 X509_STORE *X509_STORE_new(void)
 {
-    X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_STORE *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
@@ -197,7 +197,7 @@ err:
     X509_VERIFY_PARAM_free(ret->param);
     sk_X509_OBJECT_free(ret->objs);
     sk_X509_LOOKUP_free(ret->get_cert_methods);
-    OPENSSL_free(ret);
+    OPENtls_free(ret);
     return NULL;
 }
 
@@ -227,7 +227,7 @@ void X509_STORE_free(X509_STORE *vfy)
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
     X509_VERIFY_PARAM_free(vfy->param);
     CRYPTO_THREAD_lock_free(vfy->lock);
-    OPENSSL_free(vfy);
+    OPENtls_free(vfy);
 }
 
 int X509_STORE_up_ref(X509_STORE *vfy)
@@ -417,7 +417,7 @@ X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a)
 
 X509_OBJECT *X509_OBJECT_new(void)
 {
-    X509_OBJECT *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_OBJECT *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(X509_F_X509_OBJECT_NEW, ERR_R_MALLOC_FAILURE);
@@ -468,7 +468,7 @@ int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
 void X509_OBJECT_free(X509_OBJECT *a)
 {
     x509_object_free_internal(a);
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,

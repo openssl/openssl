@@ -19,7 +19,7 @@ IF[{- !$disabled{uplink} -}]
 
   IF[$UPLINKSRC_{- $target{uplink_arch} -}]
     $UPLINKSRC=$UPLINKSRC_{- $target{uplink_arch} -}
-    $UPLINKDEF=OPENSSL_USE_APPLINK
+    $UPLINKDEF=OPENtls_USE_APPLINK
   ENDIF
 ENDIF
 
@@ -54,7 +54,7 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
   # appropriate one, and define the appropriate macros
   IF[$CPUIDASM_{- $target{asm_arch} -}]
     $CPUIDASM=$CPUIDASM_{- $target{asm_arch} -}
-    $CPUIDDEF=OPENSSL_CPUID_OBJ
+    $CPUIDDEF=OPENtls_CPUID_OBJ
   ENDIF
 ENDIF
 

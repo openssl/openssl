@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Adapted from the public domain code by D. Bernstein from SUPERCOP. */
@@ -79,18 +79,18 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
     size_t todo, i;
 
     /* sigma constant "expand 32-byte k" in little-endian encoding */
-    input[0] = ((u32)ossl_toascii('e')) | ((u32)ossl_toascii('x') << 8)
-               | ((u32)ossl_toascii('p') << 16)
-               | ((u32)ossl_toascii('a') << 24);
-    input[1] = ((u32)ossl_toascii('n')) | ((u32)ossl_toascii('d') << 8)
-               | ((u32)ossl_toascii(' ') << 16)
-               | ((u32)ossl_toascii('3') << 24);
-    input[2] = ((u32)ossl_toascii('2')) | ((u32)ossl_toascii('-') << 8)
-               | ((u32)ossl_toascii('b') << 16)
-               | ((u32)ossl_toascii('y') << 24);
-    input[3] = ((u32)ossl_toascii('t')) | ((u32)ossl_toascii('e') << 8)
-               | ((u32)ossl_toascii(' ') << 16)
-               | ((u32)ossl_toascii('k') << 24);
+    input[0] = ((u32)otls_toascii('e')) | ((u32)otls_toascii('x') << 8)
+               | ((u32)otls_toascii('p') << 16)
+               | ((u32)otls_toascii('a') << 24);
+    input[1] = ((u32)otls_toascii('n')) | ((u32)otls_toascii('d') << 8)
+               | ((u32)otls_toascii(' ') << 16)
+               | ((u32)otls_toascii('3') << 24);
+    input[2] = ((u32)otls_toascii('2')) | ((u32)otls_toascii('-') << 8)
+               | ((u32)otls_toascii('b') << 16)
+               | ((u32)otls_toascii('y') << 24);
+    input[3] = ((u32)otls_toascii('t')) | ((u32)otls_toascii('e') << 8)
+               | ((u32)otls_toascii(' ') << 16)
+               | ((u32)otls_toascii('k') << 24);
 
     input[4] = key[0];
     input[5] = key[1];

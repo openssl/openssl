@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # On PA-7100LC this module performs ~90-50% better, less for longer
@@ -19,7 +19,7 @@
 # that compiler utilized xmpyu instruction to perform 32x32=64-bit
 # multiplication, which in turn means that "baseline" performance was
 # optimal in respect to instruction set capabilities. Fair comparison
-# with vendor compiler is problematic, because OpenSSL doesn't define
+# with vendor compiler is problematic, because Opentls doesn't define
 # BN_LLONG [presumably] for historical reasons, which drives compiler
 # toward 4 times 16x16=32-bit multiplications [plus complementary
 # shifts and additions] instead. This means that you should observe
@@ -96,7 +96,7 @@ if ($flavour =~ /64/) {
 	$POP		="ldw";
 	$POPMB		="ldwm";
 	$BN_SZ		=$SIZE_T;
-	if (open CONF,"<${dir}../../opensslconf.h") {
+	if (open CONF,"<${dir}../../opentlsconf.h") {
 	    while(<CONF>) {
 		if (m/#\s*define\s+SIXTY_FOUR_BIT/) {
 		    $BN_SZ=8;
@@ -890,7 +890,7 @@ L\$abort
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
-	.STRINGZ "Montgomery Multiplication for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "Montgomery Multiplication for PA-RISC, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 # Explicitly encode PA-RISC 2.0 instructions used in this module, so

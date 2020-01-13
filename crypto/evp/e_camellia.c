@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -13,16 +13,16 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_CAMELLIA
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_CAMELLIA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include <openssl/evp.h>
-# include <openssl/err.h>
+# include <opentls/evp.h>
+# include <opentls/err.h>
 # include <string.h>
 # include <assert.h>
-# include <openssl/camellia.h>
+# include <opentls/camellia.h>
 # include "crypto/evp.h"
 # include "crypto/modes.h"
 # include "crypto/cmll_platform.h"

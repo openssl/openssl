@@ -1,24 +1,24 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/pkcs12.h>
-#include <openssl/bn.h>
-#include <openssl/trace.h>
+#include <opentls/pkcs12.h>
+#include <opentls/bn.h>
+#include <opentls/trace.h>
 
 /* PKCS12 compatible key/IV generation */
 #ifndef min
 # define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_asc(const char *pass, int patlsen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
 {
@@ -29,7 +29,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     if (pass == NULL) {
         unipass = NULL;
         uniplen = 0;
-    } else if (!OPENSSL_asc2uni(pass, passlen, &unipass, &uniplen)) {
+    } else if (!OPENtls_asc2uni(pass, patlsen, &unipass, &uniplen)) {
         PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -37,11 +37,11 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
                              id, iter, n, out, md_type);
     if (ret <= 0)
         return 0;
-    OPENSSL_clear_free(unipass, uniplen);
+    OPENtls_clear_free(unipass, uniplen);
     return ret;
 }
 
-int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_utf8(const char *pass, int patlsen, unsigned char *salt,
                         int saltlen, int id, int iter, int n,
                         unsigned char *out, const EVP_MD *md_type)
 {
@@ -52,7 +52,7 @@ int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
     if (pass == NULL) {
         unipass = NULL;
         uniplen = 0;
-    } else if (!OPENSSL_utf82uni(pass, passlen, &unipass, &uniplen)) {
+    } else if (!OPENtls_utf82uni(pass, patlsen, &unipass, &uniplen)) {
         PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UTF8, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -60,11 +60,11 @@ int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
                              id, iter, n, out, md_type);
     if (ret <= 0)
         return 0;
-    OPENSSL_clear_free(unipass, uniplen);
+    OPENtls_clear_free(unipass, uniplen);
     return ret;
 }
 
-int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_uni(unsigned char *pass, int patlsen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
 {
@@ -80,29 +80,29 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     if (ctx == NULL)
         goto err;
 
-    OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+    Otls_TRACE_BEGIN(PKCS12_KEYGEN) {
         BIO_printf(trc_out, "PKCS12_key_gen_uni(): ID %d, ITER %d\n", id, iter);
-        BIO_printf(trc_out, "Password (length %d):\n", passlen);
-        BIO_hex_string(trc_out, 0, passlen, pass, passlen);
+        BIO_printf(trc_out, "Password (length %d):\n", patlsen);
+        BIO_hex_string(trc_out, 0, patlsen, pass, patlsen);
         BIO_printf(trc_out, "\n");
         BIO_printf(trc_out, "Salt (length %d):\n", saltlen);
         BIO_hex_string(trc_out, 0, saltlen, salt, saltlen);
         BIO_printf(trc_out, "\n");
-    } OSSL_TRACE_END(PKCS12_KEYGEN);
+    } Otls_TRACE_END(PKCS12_KEYGEN);
     v = EVP_MD_block_size(md_type);
     u = EVP_MD_size(md_type);
     if (u < 0 || v <= 0)
         goto err;
-    D = OPENSSL_malloc(v);
-    Ai = OPENSSL_malloc(u);
-    B = OPENSSL_malloc(v + 1);
+    D = OPENtls_malloc(v);
+    Ai = OPENtls_malloc(u);
+    B = OPENtls_malloc(v + 1);
     Slen = v * ((saltlen + v - 1) / v);
-    if (passlen)
-        Plen = v * ((passlen + v - 1) / v);
+    if (patlsen)
+        Plen = v * ((patlsen + v - 1) / v);
     else
         Plen = 0;
     Ilen = Slen + Plen;
-    I = OPENSSL_malloc(Ilen);
+    I = OPENtls_malloc(Ilen);
     if (D == NULL || Ai == NULL || B == NULL || I == NULL)
         goto err;
     for (i = 0; i < v; i++)
@@ -111,7 +111,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     for (i = 0; i < Slen; i++)
         *p++ = salt[i % saltlen];
     for (i = 0; i < Plen; i++)
-        *p++ = pass[i % passlen];
+        *p++ = pass[i % patlsen];
     for (;;) {
         if (!EVP_DigestInit_ex(ctx, md_type, NULL)
             || !EVP_DigestUpdate(ctx, D, v)
@@ -126,11 +126,11 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
-            OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+            Otls_TRACE_BEGIN(PKCS12_KEYGEN) {
                 BIO_printf(trc_out, "Output KEY (length %d)\n", tmpn);
                 BIO_hex_string(trc_out, 0, tmpn, tmpout, tmpn);
                 BIO_printf(trc_out, "\n");
-            } OSSL_TRACE_END(PKCS12_KEYGEN);
+            } Otls_TRACE_END(PKCS12_KEYGEN);
             ret = 1;
             goto end;
         }
@@ -156,10 +156,10 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_MALLOC_FAILURE);
 
  end:
-    OPENSSL_free(Ai);
-    OPENSSL_free(B);
-    OPENSSL_free(D);
-    OPENSSL_free(I);
+    OPENtls_free(Ai);
+    OPENtls_free(B);
+    OPENtls_free(D);
+    OPENtls_free(I);
     EVP_MD_CTX_free(ctx);
     return ret;
 }

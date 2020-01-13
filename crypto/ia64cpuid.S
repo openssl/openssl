@@ -1,9 +1,9 @@
-// Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
+// Copyright 2004-2017 The Opentls Project Authors. All Rights Reserved.
 //
 // Licensed under the Apache License 2.0 (the "License").  You may not use
 // this file except in compliance with the License.  You can obtain a copy
 // in the file LICENSE in the source distribution or at
-// https://www.openssl.org/source/license.html
+// https://www.opentls.org/source/license.html
 // Works on all IA-64 platforms: Linux, HP-UX, Win64i...
 // On Win64i compile with ias.exe.
 .text
@@ -14,23 +14,23 @@
 #define	ADDP	add
 #endif
 
-.global	OPENSSL_cpuid_setup#
-.proc	OPENSSL_cpuid_setup#
-OPENSSL_cpuid_setup:
+.global	OPENtls_cpuid_setup#
+.proc	OPENtls_cpuid_setup#
+OPENtls_cpuid_setup:
 { .mib;	br.ret.sptk.many	b0		};;
-.endp	OPENSSL_cpuid_setup#
+.endp	OPENtls_cpuid_setup#
 
-.global	OPENSSL_rdtsc#
-.proc	OPENSSL_rdtsc#
-OPENSSL_rdtsc:
+.global	OPENtls_rdtsc#
+.proc	OPENtls_rdtsc#
+OPENtls_rdtsc:
 { .mib;	mov			r8=ar.itc
 	br.ret.sptk.many	b0		};;
-.endp   OPENSSL_rdtsc#
+.endp   OPENtls_rdtsc#
 
-.global	OPENSSL_atomic_add#
-.proc	OPENSSL_atomic_add#
+.global	OPENtls_atomic_add#
+.proc	OPENtls_atomic_add#
 .align	32
-OPENSSL_atomic_add:
+OPENtls_atomic_add:
 { .mii;	ld4		r2=[r32]
 	nop.i		0
 	nop.i		0		};;
@@ -47,7 +47,7 @@ OPENSSL_atomic_add:
 { .mib;	nop.m		0
 	sxt4		r8=r8
 	br.ret.sptk.many	b0	};;
-.endp	OPENSSL_atomic_add#
+.endp	OPENtls_atomic_add#
 
 // Returns a structure comprising pointer to the top of stack of
 // the caller and pointer beyond backing storage for the current
@@ -56,10 +56,10 @@ OPENSSL_atomic_add:
 // (as this procedure does), one might have to go further, toward
 // higher addresses to reach for whole "retroactively" saved
 // context...
-.global	OPENSSL_wipe_cpu#
-.proc	OPENSSL_wipe_cpu#
+.global	OPENtls_wipe_cpu#
+.proc	OPENtls_wipe_cpu#
 .align	32
-OPENSSL_wipe_cpu:
+OPENtls_wipe_cpu:
 	.prologue
 	.fframe	0
 	.save	ar.pfs,r2
@@ -137,11 +137,11 @@ OPENSSL_wipe_cpu:
 { .mib;	mov		r8=sp
 	mov		ar.lc=r3
 	br.ret.sptk	b0		};;
-.endp	OPENSSL_wipe_cpu#
+.endp	OPENtls_wipe_cpu#
 
-.global	OPENSSL_cleanse#
-.proc	OPENSSL_cleanse#
-OPENSSL_cleanse:
+.global	OPENtls_cleanse#
+.proc	OPENtls_cleanse#
+OPENtls_cleanse:
 { .mib;	cmp.eq		p6,p0=0,r33	    // len==0
 	ADDP		r32=0,r32
 (p6)	br.ret.spnt	b0		};;
@@ -174,7 +174,7 @@ OPENSSL_cleanse:
 { .mbb;	cmp.eq		p6,p7=r0,r33
 (p7)	br.cond.dpnt	.Little
 (p6)	br.ret.sptk.many	b0	};;
-.endp	OPENSSL_cleanse#
+.endp	OPENtls_cleanse#
 
 .global	CRYPTO_memcmp#
 .proc	CRYPTO_memcmp#
@@ -216,9 +216,9 @@ CRYPTO_memcmp:
 	br.ret.sptk.many	b0	};;
 .endp	CRYPTO_memcmp#
 
-.global	OPENSSL_instrument_bus#
-.proc	OPENSSL_instrument_bus#
-OPENSSL_instrument_bus:
+.global	OPENtls_instrument_bus#
+.proc	OPENtls_instrument_bus#
+OPENtls_instrument_bus:
 { .mmi;	mov		r2=r33
 	ADDP		r32=0,r32	}
 { .mmi;	mov		r8=ar.itc;;
@@ -249,11 +249,11 @@ OPENSSL_instrument_bus:
 
 { .mib;	sub		r8=r2,r33
 	br.ret.sptk.many	b0	};;
-.endp	OPENSSL_instrument_bus#
+.endp	OPENtls_instrument_bus#
 
-.global	OPENSSL_instrument_bus2#
-.proc	OPENSSL_instrument_bus2#
-OPENSSL_instrument_bus2:
+.global	OPENtls_instrument_bus2#
+.proc	OPENtls_instrument_bus2#
+OPENtls_instrument_bus2:
 { .mmi;	mov		r2=r33			// put aside cnt
 	ADDP		r32=0,r32	}
 { .mmi;	mov		r8=ar.itc;;
@@ -294,4 +294,4 @@ OPENSSL_instrument_bus2:
 .Ldone2:
 { .mib;	sub		r8=r2,r33
 	br.ret.sptk.many	b0	};;
-.endp	OPENSSL_instrument_bus2#
+.endp	OPENtls_instrument_bus2#

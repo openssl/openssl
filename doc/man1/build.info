@@ -1,84 +1,84 @@
 
 DEPEND[]= \
-         openssl-ca.pod \
-         openssl-cms.pod \
-         openssl-crl.pod \
-         openssl-dgst.pod \
-         openssl-dhparam.pod \
-         openssl-dsaparam.pod \
-         openssl-ecparam.pod \
-         openssl-enc.pod \
-         openssl-gendsa.pod \
-         openssl-genrsa.pod \
-         openssl-ocsp.pod \
-         openssl-passwd.pod \
-         openssl-pkcs12.pod \
-         openssl-pkcs8.pod \
-         openssl-pkeyutl.pod \
-         openssl-rand.pod \
-         openssl-req.pod \
-         openssl-rsautl.pod \
-         openssl-s_client.pod \
-         openssl-s_server.pod \
-         openssl-s_time.pod \
-         openssl-smime.pod \
-         openssl-speed.pod \
-         openssl-srp.pod \
-         openssl-ts.pod \
-         openssl-verify.pod \
-         openssl-x509.pod
+         opentls-ca.pod \
+         opentls-cms.pod \
+         opentls-crl.pod \
+         opentls-dgst.pod \
+         opentls-dhparam.pod \
+         opentls-dsaparam.pod \
+         opentls-ecparam.pod \
+         opentls-enc.pod \
+         opentls-gendsa.pod \
+         opentls-genrsa.pod \
+         opentls-ocsp.pod \
+         opentls-passwd.pod \
+         opentls-pkcs12.pod \
+         opentls-pkcs8.pod \
+         opentls-pkeyutl.pod \
+         opentls-rand.pod \
+         opentls-req.pod \
+         opentls-rsautl.pod \
+         opentls-s_client.pod \
+         opentls-s_server.pod \
+         opentls-s_time.pod \
+         opentls-smime.pod \
+         opentls-speed.pod \
+         opentls-srp.pod \
+         opentls-ts.pod \
+         opentls-verify.pod \
+         opentls-x509.pod
 
-DEPEND[openssl-ca.pod]=../perlvars.pm
-GENERATE[openssl-ca.pod]=openssl-ca.pod.in
-DEPEND[openssl-cms.pod]=../perlvars.pm
-GENERATE[openssl-cms.pod]=openssl-cms.pod.in
-DEPEND[openssl-crl.pod]=../perlvars.pm
-GENERATE[openssl-crl.pod]=openssl-crl.pod.in
-DEPEND[openssl-dgst.pod]=../perlvars.pm
-GENERATE[openssl-dgst.pod]=openssl-dgst.pod.in
-DEPEND[openssl-dhparam.pod]=../perlvars.pm
-GENERATE[openssl-dhparam.pod]=openssl-dhparam.pod.in
-DEPEND[openssl-dsaparam.pod]=../perlvars.pm
-GENERATE[openssl-dsaparam.pod]=openssl-dsaparam.pod.in
-DEPEND[openssl-ecparam.pod]=../perlvars.pm
-GENERATE[openssl-ecparam.pod]=openssl-ecparam.pod.in
-DEPEND[openssl-enc.pod]=../perlvars.pm
-GENERATE[openssl-enc.pod]=openssl-enc.pod.in
-DEPEND[openssl-gendsa.pod]=../perlvars.pm
-GENERATE[openssl-gendsa.pod]=openssl-gendsa.pod.in
-DEPEND[openssl-genrsa.pod]=../perlvars.pm
-GENERATE[openssl-genrsa.pod]=openssl-genrsa.pod.in
-DEPEND[openssl-ocsp.pod]=../perlvars.pm
-GENERATE[openssl-ocsp.pod]=openssl-ocsp.pod.in
-DEPEND[openssl-passwd.pod]=../perlvars.pm
-GENERATE[openssl-passwd.pod]=openssl-passwd.pod.in
-DEPEND[openssl-pkcs8.pod]=../perlvars.pm
-GENERATE[openssl-pkcs8.pod]=openssl-pkcs8.pod.in
-DEPEND[openssl-pkcs12.pod]=../perlvars.pm
-GENERATE[openssl-pkcs12.pod]=openssl-pkcs12.pod.in
-DEPEND[openssl-pkeyutl.pod]=../perlvars.pm
-GENERATE[openssl-pkeyutl.pod]=openssl-pkeyutl.pod.in
-DEPEND[openssl-rand.pod]=../perlvars.pm
-GENERATE[openssl-rand.pod]=openssl-rand.pod.in
-DEPEND[openssl-req.pod]=../perlvars.pm
-GENERATE[openssl-req.pod]=openssl-req.pod.in
-DEPEND[openssl-rsautl.pod]=../perlvars.pm
-GENERATE[openssl-rsautl.pod]=openssl-rsautl.pod.in
-DEPEND[openssl-s_client.pod]=../perlvars.pm
-GENERATE[openssl-s_client.pod]=openssl-s_client.pod.in
-DEPEND[openssl-s_server.pod]=../perlvars.pm
-GENERATE[openssl-s_server.pod]=openssl-s_server.pod.in
-DEPEND[openssl-s_time.pod]=../perlvars.pm
-GENERATE[openssl-s_time.pod]=openssl-s_time.pod.in
-DEPEND[openssl-smime.pod]=../perlvars.pm
-GENERATE[openssl-smime.pod]=openssl-smime.pod.in
-DEPEND[openssl-speed.pod]=../perlvars.pm
-GENERATE[openssl-speed.pod]=openssl-speed.pod.in
-DEPEND[openssl-srp.pod]=../perlvars.pm
-GENERATE[openssl-srp.pod]=openssl-srp.pod.in
-DEPEND[openssl-ts.pod]=../perlvars.pm
-GENERATE[openssl-ts.pod]=openssl-ts.pod.in
-DEPEND[openssl-verify.pod]=../perlvars.pm
-GENERATE[openssl-verify.pod]=openssl-verify.pod.in
-DEPEND[openssl-x509.pod]=../perlvars.pm
-GENERATE[openssl-x509.pod]=openssl-x509.pod.in
+DEPEND[opentls-ca.pod]=../perlvars.pm
+GENERATE[opentls-ca.pod]=opentls-ca.pod.in
+DEPEND[opentls-cms.pod]=../perlvars.pm
+GENERATE[opentls-cms.pod]=opentls-cms.pod.in
+DEPEND[opentls-crl.pod]=../perlvars.pm
+GENERATE[opentls-crl.pod]=opentls-crl.pod.in
+DEPEND[opentls-dgst.pod]=../perlvars.pm
+GENERATE[opentls-dgst.pod]=opentls-dgst.pod.in
+DEPEND[opentls-dhparam.pod]=../perlvars.pm
+GENERATE[opentls-dhparam.pod]=opentls-dhparam.pod.in
+DEPEND[opentls-dsaparam.pod]=../perlvars.pm
+GENERATE[opentls-dsaparam.pod]=opentls-dsaparam.pod.in
+DEPEND[opentls-ecparam.pod]=../perlvars.pm
+GENERATE[opentls-ecparam.pod]=opentls-ecparam.pod.in
+DEPEND[opentls-enc.pod]=../perlvars.pm
+GENERATE[opentls-enc.pod]=opentls-enc.pod.in
+DEPEND[opentls-gendsa.pod]=../perlvars.pm
+GENERATE[opentls-gendsa.pod]=opentls-gendsa.pod.in
+DEPEND[opentls-genrsa.pod]=../perlvars.pm
+GENERATE[opentls-genrsa.pod]=opentls-genrsa.pod.in
+DEPEND[opentls-ocsp.pod]=../perlvars.pm
+GENERATE[opentls-ocsp.pod]=opentls-ocsp.pod.in
+DEPEND[opentls-passwd.pod]=../perlvars.pm
+GENERATE[opentls-passwd.pod]=opentls-passwd.pod.in
+DEPEND[opentls-pkcs8.pod]=../perlvars.pm
+GENERATE[opentls-pkcs8.pod]=opentls-pkcs8.pod.in
+DEPEND[opentls-pkcs12.pod]=../perlvars.pm
+GENERATE[opentls-pkcs12.pod]=opentls-pkcs12.pod.in
+DEPEND[opentls-pkeyutl.pod]=../perlvars.pm
+GENERATE[opentls-pkeyutl.pod]=opentls-pkeyutl.pod.in
+DEPEND[opentls-rand.pod]=../perlvars.pm
+GENERATE[opentls-rand.pod]=opentls-rand.pod.in
+DEPEND[opentls-req.pod]=../perlvars.pm
+GENERATE[opentls-req.pod]=opentls-req.pod.in
+DEPEND[opentls-rsautl.pod]=../perlvars.pm
+GENERATE[opentls-rsautl.pod]=opentls-rsautl.pod.in
+DEPEND[opentls-s_client.pod]=../perlvars.pm
+GENERATE[opentls-s_client.pod]=opentls-s_client.pod.in
+DEPEND[opentls-s_server.pod]=../perlvars.pm
+GENERATE[opentls-s_server.pod]=opentls-s_server.pod.in
+DEPEND[opentls-s_time.pod]=../perlvars.pm
+GENERATE[opentls-s_time.pod]=opentls-s_time.pod.in
+DEPEND[opentls-smime.pod]=../perlvars.pm
+GENERATE[opentls-smime.pod]=opentls-smime.pod.in
+DEPEND[opentls-speed.pod]=../perlvars.pm
+GENERATE[opentls-speed.pod]=opentls-speed.pod.in
+DEPEND[opentls-srp.pod]=../perlvars.pm
+GENERATE[opentls-srp.pod]=opentls-srp.pod.in
+DEPEND[opentls-ts.pod]=../perlvars.pm
+GENERATE[opentls-ts.pod]=opentls-ts.pod.in
+DEPEND[opentls-verify.pod]=../perlvars.pm
+GENERATE[opentls-verify.pod]=opentls-verify.pod.in
+DEPEND[opentls-x509.pod]=../perlvars.pm
+GENERATE[opentls-x509.pod]=opentls-x509.pod.in

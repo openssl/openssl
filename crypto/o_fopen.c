@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 # if defined(__linux) || defined(__sun) || defined(__hpux)
@@ -28,14 +28,14 @@
 #include "e_os.h"
 #include "internal/cryptlib.h"
 
-#if !defined(OPENSSL_NO_STDIO)
+#if !defined(OPENtls_NO_STDIO)
 
 # include <stdio.h>
 # ifdef __DJGPP__
 #  include <unistd.h>
 # endif
 
-FILE *openssl_fopen(const char *filename, const char *mode)
+FILE *opentls_fopen(const char *filename, const char *mode)
 {
     FILE *file = NULL;
 # if defined(_WIN32) && defined(CP_UTF8)
@@ -66,7 +66,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
         if (MultiByteToWideChar(CP_UTF8, flags,
                                 filename, len_0, wfilename, sz) &&
             MultiByteToWideChar(CP_UTF8, 0, mode, strlen(mode) + 1,
-                                wmode, OSSL_NELEM(wmode)) &&
+                                wmode, Otls_NELEM(wmode)) &&
             (file = _wfopen(wfilename, wmode)) == NULL &&
             (errno == ENOENT || errno == EBADF)
             ) {
@@ -87,8 +87,8 @@ FILE *openssl_fopen(const char *filename, const char *mode)
             char *iterator;
             char lastchar;
 
-            if ((newname = OPENSSL_malloc(strlen(filename) + 1)) == NULL) {
-                CRYPTOerr(CRYPTO_F_OPENSSL_FOPEN, ERR_R_MALLOC_FAILURE);
+            if ((newname = OPENtls_malloc(strlen(filename) + 1)) == NULL) {
+                CRYPTOerr(CRYPTO_F_OPENtls_FOPEN, ERR_R_MALLOC_FAILURE);
                 return NULL;
             }
 
@@ -108,7 +108,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
         }
         file = fopen(filename, mode);
 
-        OPENSSL_free(newname);
+        OPENtls_free(newname);
     }
 # else
     file = fopen(filename, mode);
@@ -118,7 +118,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 
 #else
 
-void *openssl_fopen(const char *filename, const char *mode)
+void *opentls_fopen(const char *filename, const char *mode)
 {
     return NULL;
 }

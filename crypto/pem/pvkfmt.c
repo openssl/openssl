@@ -1,10 +1,10 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -13,12 +13,12 @@
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/pem.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
-# include <openssl/dsa.h>
-# include <openssl/rsa.h>
+#include <opentls/pem.h>
+#include <opentls/rand.h>
+#include <opentls/bn.h>
+#if !defined(OPENtls_NO_RSA) && !defined(OPENtls_NO_DSA)
+# include <opentls/dsa.h>
+# include <opentls/rsa.h>
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian
@@ -220,7 +220,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         PEMerr(PEM_F_DO_B2I_BIO, PEM_R_HEADER_TOO_LONG);
         return NULL;
     }
-    buf = OPENSSL_malloc(length);
+    buf = OPENtls_malloc(length);
     if (buf == NULL) {
         PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -237,7 +237,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         ret = b2i_rsa(&p, bitlen, ispub);
 
  err:
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return ret;
 }
 
@@ -447,7 +447,7 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
     if (*out)
         p = *out;
     else {
-        if ((p = OPENSSL_malloc(outlen)) == NULL) {
+        if ((p = OPENtls_malloc(outlen)) == NULL) {
             PEMerr(PEM_F_DO_I2B, ERR_R_MALLOC_FAILURE);
             return -1;
         }
@@ -481,7 +481,7 @@ static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
     if (outlen < 0)
         return -1;
     wrlen = BIO_write(out, tmp, outlen);
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     if (wrlen == outlen)
         return outlen;
     return -1;
@@ -609,7 +609,7 @@ int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk)
     return do_i2b_bio(out, pk, 1);
 }
 
-# ifndef OPENSSL_NO_RC4
+# ifndef OPENtls_NO_RC4
 
 static int do_PVK_header(const unsigned char **in, unsigned int length,
                          int skip_magic,
@@ -657,14 +657,14 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 
 static int derive_pvk_key(unsigned char *key,
                           const unsigned char *salt, unsigned int saltlen,
-                          const unsigned char *pass, int passlen)
+                          const unsigned char *pass, int patlsen)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     int rv = 1;
     if (mctx == NULL
         || !EVP_DigestInit_ex(mctx, EVP_sha1(), NULL)
         || !EVP_DigestUpdate(mctx, salt, saltlen)
-        || !EVP_DigestUpdate(mctx, pass, passlen)
+        || !EVP_DigestUpdate(mctx, pass, patlsen)
         || !EVP_DigestFinal_ex(mctx, key, NULL))
         rv = 0;
 
@@ -694,7 +694,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
             PEMerr(PEM_F_DO_PVK_BODY, PEM_R_BAD_PASSWORD_READ);
             goto err;
         }
-        enctmp = OPENSSL_malloc(keylen + 8);
+        enctmp = OPENtls_malloc(keylen + 8);
         if (enctmp == NULL) {
             PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -741,8 +741,8 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
  err:
     EVP_CIPHER_CTX_free(cctx);
     if (enctmp != NULL) {
-        OPENSSL_cleanse(keybuf, sizeof(keybuf));
-        OPENSSL_free(enctmp);
+        OPENtls_cleanse(keybuf, sizeof(keybuf));
+        OPENtls_free(enctmp);
     }
     return ret;
 }
@@ -763,7 +763,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     if (!do_PVK_header(&p, 24, 0, &saltlen, &keylen))
         return 0;
     buflen = (int)keylen + saltlen;
-    buf = OPENSSL_malloc(buflen);
+    buf = OPENtls_malloc(buflen);
     if (buf == NULL) {
         PEMerr(PEM_F_B2I_PVK_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -776,7 +776,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     ret = do_PVK_body(&p, saltlen, keylen, cb, u);
 
  err:
-    OPENSSL_clear_free(buf, buflen);
+    OPENtls_clear_free(buf, buflen);
     return ret;
 }
 
@@ -797,7 +797,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
     if (*out != NULL) {
         p = *out;
     } else {
-        start = p = OPENSSL_malloc(outlen);
+        start = p = OPENtls_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -844,7 +844,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
         p = salt + PVK_SALTLEN + 8;
         if (!EVP_EncryptInit_ex(cctx, EVP_rc4(), NULL, keybuf, NULL))
             goto error;
-        OPENSSL_cleanse(keybuf, 20);
+        OPENtls_cleanse(keybuf, 20);
         if (!EVP_DecryptUpdate(cctx, p, &enctmplen, p, pklen - 8))
             goto error;
         if (!EVP_DecryptFinal_ex(cctx, p + enctmplen, &enctmplen))
@@ -861,7 +861,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
  error:
     EVP_CIPHER_CTX_free(cctx);
     if (*out == NULL)
-        OPENSSL_free(start);
+        OPENtls_free(start);
     return -1;
 }
 
@@ -874,7 +874,7 @@ int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
     if (outlen < 0)
         return -1;
     wrlen = BIO_write(out, tmp, outlen);
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     if (wrlen == outlen) {
         PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);
         return outlen;

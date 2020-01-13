@@ -1,24 +1,24 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 #include "crypto/rand.h"
-#include <openssl/engine.h>
+#include <opentls/engine.h>
 #include "internal/thread_once.h"
 #include "rand_local.h"
 #include "e_os.h"
 
 #ifndef FIPS_MODE
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
 static CRYPTO_RWLOCK *rand_engine_lock;
@@ -30,7 +30,7 @@ static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 static int rand_inited = 0;
 #endif /* FIPS_MODE */
 
-#ifdef OPENSSL_RAND_SEED_RDTSC
+#ifdef OPENtls_RAND_SEED_RDTSC
 /*
  * IMPORTANT NOTE:  It is not currently possible to use this code
  * because we are not sure about the amount of randomness it provides.
@@ -53,9 +53,9 @@ size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool)
     unsigned char c;
     int i;
 
-    if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
+    if ((OPENtls_ia32cap_P[0] & (1 << 4)) != 0) {
         for (i = 0; i < TSC_READ_COUNT; i++) {
-            c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
+            c = (unsigned char)(OPENtls_rdtsc() & 0xFF);
             rand_pool_add(pool, &c, 1, 4);
         }
     }
@@ -63,9 +63,9 @@ size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool)
 }
 #endif
 
-#ifdef OPENSSL_RAND_SEED_RDCPU
-size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
-size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
+#ifdef OPENtls_RAND_SEED_RDCPU
+size_t OPENtls_ia32_rdseed_bytes(unsigned char *buf, size_t len);
+size_t OPENtls_ia32_rdrand_bytes(unsigned char *buf, size_t len);
 
 /*
  * Acquire entropy using Intel-specific cpu instructions
@@ -90,13 +90,13 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
 
         if (buffer != NULL) {
             /* Whichever comes first, use RDSEED, RDRAND or nothing */
-            if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
-                if (OPENSSL_ia32_rdseed_bytes(buffer, bytes_needed)
+            if ((OPENtls_ia32cap_P[2] & (1 << 18)) != 0) {
+                if (OPENtls_ia32_rdseed_bytes(buffer, bytes_needed)
                     == bytes_needed) {
                     rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
                 }
-            } else if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
-                if (OPENSSL_ia32_rdrand_bytes(buffer, bytes_needed)
+            } else if ((OPENtls_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
+                if (OPENtls_ia32_rdrand_bytes(buffer, bytes_needed)
                     == bytes_needed) {
                     rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
                 }
@@ -203,9 +203,9 @@ void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
 {
     if (drbg->seed_pool == NULL) {
         if (drbg->secure)
-            OPENSSL_secure_clear_free(out, outlen);
+            OPENtls_secure_clear_free(out, outlen);
         else
-            OPENSSL_clear_free(out, outlen);
+            OPENtls_clear_free(out, outlen);
     }
 }
 
@@ -217,7 +217,7 @@ void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
  * Returns 0 on failure.
  *
  * On success it allocates a buffer at |*pout| and returns the length of
- * the data. The buffer should get freed using OPENSSL_secure_clear_free().
+ * the data. The buffer should get freed using OPENtls_secure_clear_free().
  */
 size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout)
 {
@@ -241,7 +241,7 @@ void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
 #ifndef FIPS_MODE
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     rand_engine_lock = CRYPTO_THREAD_lock_new();
     if (rand_engine_lock == NULL)
         return 0;
@@ -260,7 +260,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
  err:
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
 # endif
@@ -278,7 +278,7 @@ void rand_cleanup_int(void)
         meth->cleanup();
     RAND_set_rand_method(NULL);
     rand_pool_cleanup();
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
 # endif
@@ -314,7 +314,7 @@ int RAND_poll(void)
     if (meth == NULL)
         return 0;
 
-    if (meth == RAND_OpenSSL()) {
+    if (meth == RAND_Opentls()) {
         /* fill random pool and seed the master DRBG */
         RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
@@ -363,7 +363,7 @@ int RAND_poll(void)
 RAND_POOL *rand_pool_new(int entropy_requested, int secure,
                          size_t min_len, size_t max_len)
 {
-    RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
+    RAND_POOL *pool = OPENtls_zalloc(sizeof(*pool));
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
 
     if (pool == NULL) {
@@ -379,9 +379,9 @@ RAND_POOL *rand_pool_new(int entropy_requested, int secure,
         pool->alloc_len = pool->max_len;
 
     if (secure)
-        pool->buffer = OPENSSL_secure_zalloc(pool->alloc_len);
+        pool->buffer = OPENtls_secure_zalloc(pool->alloc_len);
     else
-        pool->buffer = OPENSSL_zalloc(pool->alloc_len);
+        pool->buffer = OPENtls_zalloc(pool->alloc_len);
 
     if (pool->buffer == NULL) {
         RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
@@ -394,7 +394,7 @@ RAND_POOL *rand_pool_new(int entropy_requested, int secure,
     return pool;
 
 err:
-    OPENSSL_free(pool);
+    OPENtls_free(pool);
     return NULL;
 }
 
@@ -407,7 +407,7 @@ err:
 RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
                             size_t entropy)
 {
-    RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
+    RAND_POOL *pool = OPENtls_zalloc(sizeof(*pool));
 
     if (pool == NULL) {
         RANDerr(RAND_F_RAND_POOL_ATTACH, ERR_R_MALLOC_FAILURE);
@@ -446,12 +446,12 @@ void rand_pool_free(RAND_POOL *pool)
      */
     if (!pool->attached) {
         if (pool->secure)
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
+            OPENtls_secure_clear_free(pool->buffer, pool->alloc_len);
         else
-            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
+            OPENtls_clear_free(pool->buffer, pool->alloc_len);
     }
 
-    OPENSSL_free(pool);
+    OPENtls_free(pool);
 }
 
 /*
@@ -481,7 +481,7 @@ size_t rand_pool_length(RAND_POOL *pool)
 /*
  * Detach the |pool| buffer and return it to the caller.
  * It's the responsibility of the caller to free the buffer
- * using OPENSSL_secure_clear_free() or to re-attach it
+ * using OPENtls_secure_clear_free() or to re-attach it
  * again to the pool using rand_pool_reattach().
  */
 unsigned char *rand_pool_detach(RAND_POOL *pool)
@@ -499,7 +499,7 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
 {
     pool->buffer = buffer;
-    OPENSSL_cleanse(pool->buffer, pool->len);
+    OPENtls_cleanse(pool->buffer, pool->len);
     pool->len = 0;
 }
 
@@ -561,18 +561,18 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
         while (len > newlen - pool->len);
 
         if (pool->secure)
-            p = OPENSSL_secure_zalloc(newlen);
+            p = OPENtls_secure_zalloc(newlen);
         else
-            p = OPENSSL_zalloc(newlen);
+            p = OPENtls_zalloc(newlen);
         if (p == NULL) {
             RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         memcpy(p, pool->buffer, pool->len);
         if (pool->secure)
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
+            OPENtls_secure_clear_free(pool->buffer, pool->alloc_len);
         else
-            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
+            OPENtls_clear_free(pool->buffer, pool->alloc_len);
         pool->buffer = p;
         pool->alloc_len = newlen;
     }
@@ -760,7 +760,7 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
         return 0;
 
     CRYPTO_THREAD_write_lock(rand_meth_lock);
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     ENGINE_finish(funct_ref);
     funct_ref = NULL;
 # endif
@@ -782,7 +782,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 
     CRYPTO_THREAD_write_lock(rand_meth_lock);
     if (default_RAND_meth == NULL) {
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
         ENGINE *e;
 
         /* If we have an engine that can do RAND, use it. */
@@ -804,7 +804,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 #endif
 }
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
 int RAND_set_rand_engine(ENGINE *engine)
 {
     const RAND_METHOD *tmp_meth = NULL;
@@ -851,19 +851,19 @@ void RAND_add(const void *buf, int num, double randomness)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int rand_priv_bytes_ex(OPENtls_CTX *ctx, unsigned char *buf, int num)
 {
     RAND_DRBG *drbg;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth != NULL && meth != RAND_OpenSSL()) {
+    if (meth != NULL && meth != RAND_Opentls()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
         RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_private_drbg(ctx);
+    drbg = OPENtls_CTX_get0_private_drbg(ctx);
     if (drbg != NULL)
         return RAND_DRBG_bytes(drbg, buf, num);
 
@@ -875,19 +875,19 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     return rand_priv_bytes_ex(NULL, buf, num);
 }
 
-int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int rand_bytes_ex(OPENtls_CTX *ctx, unsigned char *buf, int num)
 {
     RAND_DRBG *drbg;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
-    if (meth != NULL && meth != RAND_OpenSSL()) {
+    if (meth != NULL && meth != RAND_Opentls()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
         RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_public_drbg(ctx);
+    drbg = OPENtls_CTX_get0_public_drbg(ctx);
     if (drbg != NULL)
         return RAND_DRBG_bytes(drbg, buf, num);
 
@@ -899,7 +899,7 @@ int RAND_bytes(unsigned char *buf, int num)
     return rand_bytes_ex(NULL, buf, num);
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();

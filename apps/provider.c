@@ -1,24 +1,24 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
 #include "names.h"
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/safestack.h>
-#include <openssl/provider.h>
-#include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/safestack.h>
+#include <opentls/provider.h>
+#include <opentls/core.h>
+#include <opentls/core_numbers.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -47,11 +47,11 @@ typedef struct info_st INFO;
 typedef struct meta_st META;
 
 struct info_st {
-    void (*collect_names_fn)(void *method, STACK_OF(OPENSSL_CSTRING) *names);
+    void (*collect_names_fn)(void *method, STACK_OF(OPENtls_CSTRING) *names);
     void *method;
-    const OSSL_PARAM *gettable_params;
-    const OSSL_PARAM *gettable_ctx_params;
-    const OSSL_PARAM *settable_ctx_params;
+    const Otls_PARAM *gettable_params;
+    const Otls_PARAM *gettable_ctx_params;
+    const Otls_PARAM *settable_ctx_params;
 };
 
 struct meta_st {
@@ -61,53 +61,53 @@ struct meta_st {
     int subindent;
     int verbose;
     const char *label;
-    OSSL_PROVIDER *prov;
+    Otls_PROVIDER *prov;
     void (*fn)(META *meta, INFO *info);
 };
 
 static void collect_cipher_names(void *method,
-                                 STACK_OF(OPENSSL_CSTRING) *names)
+                                 STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_CIPHER_names_do_all(method, collect_names, names);
 }
 
 static void collect_digest_names(void *method,
-                                 STACK_OF(OPENSSL_CSTRING) *names)
+                                 STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_MD_names_do_all(method, collect_names, names);
 }
 
 static void collect_mac_names(void *method,
-                              STACK_OF(OPENSSL_CSTRING) *names)
+                              STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_MAC_names_do_all(method, collect_names, names);
 }
 
 static void collect_keymgmt_names(void *method,
-                                  STACK_OF(OPENSSL_CSTRING) *names)
+                                  STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_KEYMGMT_names_do_all(method, collect_names, names);
 }
 
 static void collect_keyexch_names(void *method,
-                                  STACK_OF(OPENSSL_CSTRING) *names)
+                                  STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_KEYEXCH_names_do_all(method, collect_names, names);
 }
 
 static void collect_signature_names(void *method,
-                                  STACK_OF(OPENSSL_CSTRING) *names)
+                                  STACK_OF(OPENtls_CSTRING) *names)
 {
     EVP_SIGNATURE_names_do_all(method, collect_names, names);
 }
 
 static void print_method_names(BIO *out, INFO *info)
 {
-    STACK_OF(OPENSSL_CSTRING) *names = sk_OPENSSL_CSTRING_new(name_cmp);
+    STACK_OF(OPENtls_CSTRING) *names = sk_OPENtls_CSTRING_new(name_cmp);
 
     info->collect_names_fn(info->method, names);
     print_names(out, names);
-    sk_OPENSSL_CSTRING_free(names);
+    sk_OPENtls_CSTRING_free(names);
 }
 
 static void print_caps(META *meta, INFO *info)
@@ -145,10 +145,10 @@ static void print_caps(META *meta, INFO *info)
 
 static void do_method(void *method,
                       void (*collect_names_fn)(void *method,
-                                               STACK_OF(OPENSSL_CSTRING) *names),
-                      const OSSL_PARAM *gettable_params,
-                      const OSSL_PARAM *gettable_ctx_params,
-                      const OSSL_PARAM *settable_ctx_params,
+                                               STACK_OF(OPENtls_CSTRING) *names),
+                      const Otls_PARAM *gettable_params,
+                      const Otls_PARAM *gettable_ctx_params,
+                      const Otls_PARAM *settable_ctx_params,
                       META *meta)
 {
     INFO info;
@@ -241,7 +241,7 @@ int provider_main(int argc, char **argv)
 {
     int ret = 1, i;
     int verbose = 0;
-    STACK_OF(OPENSSL_CSTRING) *providers = sk_OPENSSL_CSTRING_new_null();
+    STACK_OF(OPENtls_CSTRING) *providers = sk_OPENtls_CSTRING_new_null();
     OPTION_CHOICE o;
     char *prog;
 
@@ -277,13 +277,13 @@ int provider_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         }
-        sk_OPENSSL_CSTRING_push(providers, *argv);
+        sk_OPENtls_CSTRING_push(providers, *argv);
     }
 
     ret = 0;
-    for (i = 0; i < sk_OPENSSL_CSTRING_num(providers); i++) {
-        const char *name = sk_OPENSSL_CSTRING_value(providers, i);
-        OSSL_PROVIDER *prov = OSSL_PROVIDER_load(NULL, name);
+    for (i = 0; i < sk_OPENtls_CSTRING_num(providers); i++) {
+        const char *name = sk_OPENtls_CSTRING_value(providers, i);
+        Otls_PROVIDER *prov = Otls_PROVIDER_load(NULL, name);
 
         if (prov != NULL) {
             BIO_printf(bio_out, verbose == 0 ? "%s\n" :  "[ %s ]\n", name);
@@ -352,7 +352,7 @@ int provider_main(int argc, char **argv)
                     break;
                 }
             }
-            OSSL_PROVIDER_unload(prov);
+            Otls_PROVIDER_unload(prov);
         } else {
             ERR_print_errors(bio_err);
             ret = 1;
@@ -366,6 +366,6 @@ int provider_main(int argc, char **argv)
  end:
 
     ERR_print_errors(bio_err);
-    sk_OPENSSL_CSTRING_free(providers);
+    sk_OPENtls_CSTRING_free(providers);
     return ret;
 }

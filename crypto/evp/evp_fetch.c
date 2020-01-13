@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
-#include <openssl/types.h>
-#include <openssl/evp.h>
-#include <openssl/core.h>
+#include <opentls/types.h>
+#include <opentls/evp.h>
+#include <opentls/core.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/property.h"
@@ -24,30 +24,30 @@
 
 static void evp_method_store_free(void *vstore)
 {
-    ossl_method_store_free(vstore);
+    otls_method_store_free(vstore);
 }
 
-static void *evp_method_store_new(OPENSSL_CTX *ctx)
+static void *evp_method_store_new(OPENtls_CTX *ctx)
 {
-    return ossl_method_store_new(ctx);
+    return otls_method_store_new(ctx);
 }
 
 
-static const OPENSSL_CTX_METHOD evp_method_store_method = {
+static const OPENtls_CTX_METHOD evp_method_store_method = {
     evp_method_store_new,
     evp_method_store_free,
 };
 
-/* Data to be passed through ossl_method_construct() */
+/* Data to be passed through otls_method_construct() */
 struct evp_method_data_st {
-    OPENSSL_CTX *libctx;
-    OSSL_METHOD_CONSTRUCT_METHOD *mcm;
+    OPENtls_CTX *libctx;
+    Otls_METHOD_CONSTRUCT_METHOD *mcm;
     int operation_id;            /* For get_evp_method_from_store() */
     int name_id;                 /* For get_evp_method_from_store() */
     const char *names;           /* For get_evp_method_from_store() */
     const char *propquery;       /* For get_evp_method_from_store() */
-    void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
-                                  OSSL_PROVIDER *);
+    void *(*method_from_dispatch)(int name_id, const Otls_DISPATCH *,
+                                  Otls_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -57,7 +57,7 @@ struct evp_method_data_st {
 static void get_legacy_evp_names(const char *main_name, const char *alias,
                                  void *arg)
 {
-    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+    int main_id = otls_namemap_add_name(arg, 0, main_name);
 
     /*
      * We could check that the returned value is the same as main_id,
@@ -70,7 +70,7 @@ static void get_legacy_evp_names(const char *main_name, const char *alias,
      * simply a no-op.
      */
     if (alias != NULL)
-        (void)ossl_namemap_add_name(arg, main_id, alias);
+        (void)otls_namemap_add_name(arg, main_id, alias);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
@@ -95,15 +95,15 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 }
 #endif
 
-static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
+static Otls_NAMEMAP *get_prepopulated_namemap(OPENtls_CTX *libctx)
 {
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
 
 #ifndef FIPS_MODE
-    if (namemap != NULL && ossl_namemap_empty(namemap)) {
+    if (namemap != NULL && otls_namemap_empty(namemap)) {
         /* Before pilfering, we make sure the legacy database is populated */
-        OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
-                            |OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+        OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_CIPHERS
+                            |OPENtls_INIT_ADD_ALL_DIGESTS, NULL);
 
         OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
                         get_legacy_cipher_names, namemap);
@@ -116,22 +116,22 @@ static OSSL_NAMEMAP *get_prepopulated_namemap(OPENSSL_CTX *libctx)
 }
 
 /*
- * Generic routines to fetch / create EVP methods with ossl_method_construct()
+ * Generic routines to fetch / create EVP methods with otls_method_construct()
  */
-static void *alloc_tmp_evp_method_store(OPENSSL_CTX *ctx)
+static void *alloc_tmp_evp_method_store(OPENtls_CTX *ctx)
 {
-    return ossl_method_store_new(ctx);
+    return otls_method_store_new(ctx);
 }
 
  static void dealloc_tmp_evp_method_store(void *store)
 {
     if (store != NULL)
-        ossl_method_store_free(store);
+        otls_method_store_free(store);
 }
 
-static OSSL_METHOD_STORE *get_evp_method_store(OPENSSL_CTX *libctx)
+static Otls_METHOD_STORE *get_evp_method_store(OPENtls_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_EVP_METHOD_STORE_INDEX,
+    return opentls_ctx_get_data(libctx, OPENtls_CTX_EVP_METHOD_STORE_INDEX,
                                 &evp_method_store_method);
 }
 
@@ -148,13 +148,13 @@ static OSSL_METHOD_STORE *get_evp_method_store(OPENSSL_CTX *libctx)
  */
 static uint32_t evp_method_id(unsigned int operation_id, int name_id)
 {
-    if (!ossl_assert(name_id < (1 << 24) || operation_id < (1 << 8))
-        || !ossl_assert(name_id > 0 && operation_id > 0))
+    if (!otls_assert(name_id < (1 << 24) || operation_id < (1 << 8))
+        || !otls_assert(name_id > 0 && operation_id > 0))
         return 0;
     return ((name_id << 8) & 0xFFFFFF00) | (operation_id & 0x000000FF);
 }
 
-static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
+static void *get_evp_method_from_store(OPENtls_CTX *libctx, void *store,
                                        void *data)
 {
     struct evp_method_data_st *methdata = data;
@@ -168,14 +168,14 @@ static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
      * as the name or name id are passed via methdata.
      */
     if ((name_id = methdata->name_id) == 0) {
-        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+        Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
         const char *names = methdata->names;
         const char *q = strchr(names, NAME_SEPARATOR);
         size_t l = (q == NULL ? strlen(names) : (size_t)(q - names));
 
         if (namemap == 0)
             return NULL;
-        name_id = ossl_namemap_name2num_n(namemap, names, l);
+        name_id = otls_namemap_name2num_n(namemap, names, l);
     }
 
     if (name_id == 0
@@ -186,19 +186,19 @@ static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_evp_method_store(libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
+    if (!otls_method_store_fetch(store, meth_id, methdata->propquery,
                                  &method))
         return NULL;
     return method;
 }
 
-static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
-                                   void *method, const OSSL_PROVIDER *prov,
+static int put_evp_method_in_store(OPENtls_CTX *libctx, void *store,
+                                   void *method, const Otls_PROVIDER *prov,
                                    int operation_id, const char *names,
                                    const char *propdef, void *data)
 {
     struct evp_method_data_st *methdata = data;
-    OSSL_NAMEMAP *namemap;
+    Otls_NAMEMAP *namemap;
     int name_id;
     uint32_t meth_id;
     size_t l = 0;
@@ -215,8 +215,8 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
         l = (q == NULL ? strlen(names) : (size_t)(q - names));
     }
 
-    if ((namemap = ossl_namemap_stored(libctx)) == NULL
-        || (name_id = ossl_namemap_name2num_n(namemap, names, l)) == 0
+    if ((namemap = otls_namemap_stored(libctx)) == NULL
+        || (name_id = otls_namemap_name2num_n(namemap, names, l)) == 0
         || (meth_id = evp_method_id(operation_id, name_id)) == 0)
         return 0;
 
@@ -224,7 +224,7 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_evp_method_store(libctx)) == NULL)
         return 0;
 
-    return ossl_method_store_add(store, prov, meth_id, propdef, method,
+    return otls_method_store_add(store, prov, meth_id, propdef, method,
                                  methdata->refcnt_up_method,
                                  methdata->destruct_method);
 }
@@ -233,21 +233,21 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
  * The core fetching functionality passes the name of the implementation.
  * This function is responsible to getting an identity number for it.
  */
-static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
-                                  OSSL_PROVIDER *prov, void *data)
+static void *construct_evp_method(const Otls_ALGORITHM *algodef,
+                                  Otls_PROVIDER *prov, void *data)
 {
     /*
      * This function is only called if get_evp_method_from_store() returned
      * NULL, so it's safe to say that of all the spots to create a new
      * namemap entry, this is it.  Should the name already exist there, we
-     * know that ossl_namemap_add_name() will return its corresponding
+     * know that otls_namemap_add_name() will return its corresponding
      * number.
      */
     struct evp_method_data_st *methdata = data;
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OPENtls_CTX *libctx = otls_provider_library_context(prov);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
-    int name_id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
+    int name_id = otls_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
 
     if (name_id == 0)
         return NULL;
@@ -263,17 +263,17 @@ static void destruct_evp_method(void *method, void *data)
 }
 
 static void *
-inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+inner_evp_generic_fetch(OPENtls_CTX *libctx, int operation_id,
                         int name_id, const char *name,
                         const char *properties,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
+                                            const Otls_DISPATCH *fns,
+                                            Otls_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
-    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
-    OSSL_NAMEMAP *namemap = get_prepopulated_namemap(libctx);
+    Otls_METHOD_STORE *store = get_evp_method_store(libctx);
+    Otls_NAMEMAP *namemap = get_prepopulated_namemap(libctx);
     uint32_t meth_id = 0;
     void *method = NULL;
 
@@ -284,19 +284,19 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
      * If there's ever an operation_id == 0 passed, we have an internal
      * programming error.
      */
-    if (!ossl_assert(operation_id > 0))
+    if (!otls_assert(operation_id > 0))
         return NULL;
 
     /*
      * If we have been passed neither a name_id or a name, we have an
      * internal programming error.
      */
-    if (!ossl_assert(name_id != 0 || name != NULL))
+    if (!otls_assert(name_id != 0 || name != NULL))
         return NULL;
 
     /* If we haven't received a name id yet, try to get one for the name */
     if (name_id == 0)
-        name_id = ossl_namemap_name2num(namemap, name);
+        name_id = otls_namemap_name2num(namemap, name);
 
     /*
      * If we have a name id, calculate a method id with evp_method_id().
@@ -309,8 +309,8 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         return NULL;
 
     if (meth_id == 0
-        || !ossl_method_store_cache_get(store, meth_id, properties, &method)) {
-        OSSL_METHOD_CONSTRUCT_METHOD mcm = {
+        || !otls_method_store_cache_get(store, meth_id, properties, &method)) {
+        Otls_METHOD_CONSTRUCT_METHOD mcm = {
             alloc_tmp_evp_method_store,
             dealloc_tmp_evp_method_store,
             get_evp_method_from_store,
@@ -329,7 +329,7 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.method_from_dispatch = new_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
-        if ((method = ossl_method_construct(libctx, operation_id,
+        if ((method = otls_method_construct(libctx, operation_id,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
             /*
@@ -339,9 +339,9 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
              * put_evp_method_in_store() above.
              */
             if (name_id == 0)
-                name_id = ossl_namemap_name2num(namemap, name);
+                name_id = otls_namemap_name2num(namemap, name);
             meth_id = evp_method_id(operation_id, name_id);
-            ossl_method_store_cache_set(store, meth_id, properties, method,
+            otls_method_store_cache_set(store, meth_id, properties, method,
                                         up_ref_method, free_method);
         }
     }
@@ -349,11 +349,11 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     return method;
 }
 
-void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+void *evp_generic_fetch(OPENtls_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
+                                            const Otls_DISPATCH *fns,
+                                            Otls_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
@@ -369,11 +369,11 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
  * This is meant to be used when one method needs to fetch an associated
  * other method.
  */
-void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
+void *evp_generic_fetch_by_number(OPENtls_CTX *libctx, int operation_id,
                                   int name_id, const char *properties,
                                   void *(*new_method)(int name_id,
-                                                      const OSSL_DISPATCH *fns,
-                                                      OSSL_PROVIDER *prov),
+                                                      const Otls_DISPATCH *fns,
+                                                      Otls_PROVIDER *prov),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
 {
@@ -382,12 +382,12 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
                                    new_method, up_ref_method, free_method);
 }
 
-int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
+int EVP_set_default_properties(OPENtls_CTX *libctx, const char *propq)
 {
-    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+    Otls_METHOD_STORE *store = get_evp_method_store(libctx);
 
     if (store != NULL)
-        return ossl_method_store_set_global_properties(store, propq);
+        return otls_method_store_set_global_properties(store, propq);
     EVPerr(EVP_F_EVP_SET_DEFAULT_PROPERTIES, ERR_R_INTERNAL_ERROR);
     return 0;
 }
@@ -395,18 +395,18 @@ int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
 struct do_all_data_st {
     void (*user_fn)(void *method, void *arg);
     void *user_arg;
-    void *(*new_method)(const int name_id, const OSSL_DISPATCH *fns,
-                        OSSL_PROVIDER *prov);
+    void *(*new_method)(const int name_id, const Otls_DISPATCH *fns,
+                        Otls_PROVIDER *prov);
     void (*free_method)(void *);
 };
 
-static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
+static void do_one(Otls_PROVIDER *provider, const Otls_ALGORITHM *algo,
                    int no_store, void *vdata)
 {
     struct do_all_data_st *data = vdata;
-    OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-    int name_id = ossl_namemap_add_names(namemap, 0, algo->algorithm_names,
+    OPENtls_CTX *libctx = otls_provider_library_context(provider);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
+    int name_id = otls_namemap_add_names(namemap, 0, algo->algorithm_names,
                                          NAME_SEPARATOR);
     void *method = NULL;
 
@@ -419,12 +419,12 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     }
 }
 
-void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
+void evp_generic_do_all(OPENtls_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
+                                            const Otls_DISPATCH *fns,
+                                            Otls_PROVIDER *prov),
                         void (*free_method)(void *))
 {
     struct do_all_data_st data;
@@ -433,31 +433,31 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
     data.free_method = free_method;
     data.user_fn = user_fn;
     data.user_arg = user_arg;
-    ossl_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
+    otls_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
 }
 
-const char *evp_first_name(OSSL_PROVIDER *prov, int name_id)
+const char *evp_first_name(Otls_PROVIDER *prov, int name_id)
 {
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OPENtls_CTX *libctx = otls_provider_library_context(prov);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
 
-    return ossl_namemap_num2name(namemap, name_id, 0);
+    return otls_namemap_num2name(namemap, name_id, 0);
 }
 
-int evp_is_a(OSSL_PROVIDER *prov, int number, const char *name)
+int evp_is_a(Otls_PROVIDER *prov, int number, const char *name)
 {
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OPENtls_CTX *libctx = otls_provider_library_context(prov);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
 
-    return ossl_namemap_name2num(namemap, name) == number;
+    return otls_namemap_name2num(namemap, name) == number;
 }
 
-void evp_names_do_all(OSSL_PROVIDER *prov, int number,
+void evp_names_do_all(Otls_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data)
 {
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+    OPENtls_CTX *libctx = otls_provider_library_context(prov);
+    Otls_NAMEMAP *namemap = otls_namemap_stored(libctx);
 
-    ossl_namemap_doall_names(namemap, number, fn, data);
+    otls_namemap_doall_names(namemap, number, fn, data);
 }

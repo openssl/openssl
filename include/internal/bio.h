@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_INTERNAL_BIO_H
-# define OSSL_INTERNAL_BIO_H
+#ifndef Otls_INTERNAL_BIO_H
+# define Otls_INTERNAL_BIO_H
 
-#include <openssl/bio.h>
+#include <opentls/bio.h>
 
 struct bio_method_st {
     int type;
@@ -35,7 +35,7 @@ void bio_cleanup(void);
 int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written);
 int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 
-/* Changes to these internal BIOs must also update include/openssl/bio.h */
+/* Changes to these internal BIOs must also update include/opentls/bio.h */
 # define BIO_CTRL_SET_KTLS                      72
 # define BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG     74
 # define BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG        75

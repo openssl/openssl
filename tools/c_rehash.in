@@ -1,21 +1,21 @@
 #!{- $config{HASHBANGPERL} -}
 
 # {- join("\n# ", @autowarntext) -}
-# Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Perl c_rehash script, scan all files in a directory
 # and add symbolic links to their hash values.
 
-my $dir = {- quotify1($config{openssldir}) -};
+my $dir = {- quotify1($config{opentlsdir}) -};
 my $prefix = {- quotify1($config{prefix}) -};
 
 my $errorcount = 0;
-my $openssl = $ENV{OPENSSL} || "openssl";
+my $opentls = $ENV{OPENtls} || "opentls";
 my $pwd;
 my $x509hash = "-subject_hash";
 my $crlhash = "-hash";
@@ -63,32 +63,32 @@ if (defined(&Cwd::getcwd)) {
 my $path_delim = ($pwd =~ /^[a-z]\:/i) ? ';' : ':';
 $ENV{PATH} = "$prefix/bin" . ($ENV{PATH} ? $path_delim . $ENV{PATH} : "");
 
-if (! -x $openssl) {
+if (! -x $opentls) {
 	my $found = 0;
 	foreach (split /$path_delim/, $ENV{PATH}) {
-		if (-x "$_/$openssl") {
+		if (-x "$_/$opentls") {
 			$found = 1;
-			$openssl = "$_/$openssl";
+			$opentls = "$_/$opentls";
 			last;
 		}	
 	}
 	if ($found == 0) {
-		print STDERR "c_rehash: rehashing skipped ('openssl' program not available)\n";
+		print STDERR "c_rehash: rehashing skipped ('opentls' program not available)\n";
 		exit 0;
 	}
 }
 
 if (@ARGV) {
 	@dirlist = @ARGV;
-} elsif ($ENV{SSL_CERT_DIR}) {
-	@dirlist = split /$path_delim/, $ENV{SSL_CERT_DIR};
+} elsif ($ENV{tls_CERT_DIR}) {
+	@dirlist = split /$path_delim/, $ENV{tls_CERT_DIR};
 } else {
 	$dirlist[0] = "$dir/certs";
 }
 
 if (-d $dirlist[0]) {
 	chdir $dirlist[0];
-	$openssl="$pwd/$openssl" if (!-x $openssl);
+	$opentls="$pwd/$opentls" if (!-x $opentls);
 	chdir $pwd;
 }
 
@@ -162,7 +162,7 @@ sub check_file {
 sub link_hash_cert {
 		my $fname = $_[0];
 		$fname =~ s/'/'\\''/g;
-		my ($hash, $fprint) = `"$openssl" x509 $x509hash -fingerprint -noout -in "$fname"`;
+		my ($hash, $fprint) = `"$opentls" x509 $x509hash -fingerprint -noout -in "$fname"`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;
@@ -203,7 +203,7 @@ sub link_hash_cert {
 sub link_hash_crl {
 		my $fname = $_[0];
 		$fname =~ s/'/'\\''/g;
-		my ($hash, $fprint) = `"$openssl" crl $crlhash -fingerprint -noout -in '$fname'`;
+		my ($hash, $fprint) = `"$opentls" crl $crlhash -fingerprint -noout -in '$fname'`;
 		chomp $hash;
 		chomp $fprint;
 		$fprint =~ s/^.*=//;

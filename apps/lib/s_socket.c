@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* socket-related functions used by s_client and s_server */
@@ -13,7 +13,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
@@ -21,19 +21,19 @@
  * that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which is
  * needed to have fileno() declared correctly...  So let's define u_int
  */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
+#if defined(OPENtls_SYS_VMS_DECC) && !defined(__U_INT)
 # define __U_INT
 typedef unsigned int u_int;
 #endif
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
 # include "apps.h"
 # include "s_apps.h"
 # include "internal/sockets.h"
 
-# include <openssl/bio.h>
-# include <openssl/err.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
 
 /* Keep track of our peer's address for the cookie callback */
 BIO_ADDR *ourpeer = NULL;
@@ -94,7 +94,7 @@ int init_client(int *sock, const char *host, const char *port,
         /* Admittedly, these checks are quite paranoid, we should not get
          * anything in the BIO_ADDRINFO chain that we haven't
          * asked for. */
-        OPENSSL_assert((family == AF_UNSPEC
+        OPENtls_assert((family == AF_UNSPEC
                         || family == BIO_ADDRINFO_family(ai))
                        && (type == 0 || type == BIO_ADDRINFO_socktype(ai))
                        && (protocol == 0
@@ -128,7 +128,7 @@ int init_client(int *sock, const char *host, const char *port,
             }
         }
 
-#ifndef OPENSSL_NO_SCTP
+#ifndef OPENtls_NO_SCTP
         if (protocol == IPPROTO_SCTP) {
             /*
              * For SCTP we have to set various options on the socket prior to
@@ -228,7 +228,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
 
     /* Admittedly, these checks are quite paranoid, we should not get
      * anything in the BIO_ADDRINFO chain that we haven't asked for */
-    OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
+    OPENtls_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res))
                    && (protocol == 0 || protocol == BIO_ADDRINFO_protocol(res)));
 
@@ -262,7 +262,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
         goto end;
     }
 
-#ifndef OPENSSL_NO_SCTP
+#ifndef OPENtls_NO_SCTP
     if (protocol == IPPROTO_SCTP) {
         /*
          * For SCTP we have to set various options on the socket prior to
@@ -305,8 +305,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
             success = 1;
 
         (void)BIO_flush(bio_s_out);
-        OPENSSL_free(hostname);
-        OPENSSL_free(service);
+        OPENtls_free(hostname);
+        OPENtls_free(service);
         BIO_ADDR_free(info.addr);
         if (!success) {
             BIO_closesocket(asock);
@@ -365,7 +365,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             timeout.tv_usec = 500000;  /* some extreme round-trip */
             do {
                 FD_ZERO(&readfds);
-                openssl_fdset(sock, &readfds);
+                opentls_fdset(sock, &readfds);
             } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
                      && readsocket(sock, sink, sizeof(sink)) > 0);
 
@@ -392,4 +392,4 @@ int do_server(int *accept_sock, const char *host, const char *port,
     return ret;
 }
 
-#endif  /* OPENSSL_NO_SOCK */
+#endif  /* OPENtls_NO_SOCK */

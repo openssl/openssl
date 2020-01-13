@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "des_local.h"
-#include <openssl/opensslv.h>
-#include <openssl/bio.h>
+#include <opentls/opentlsv.h>
+#include <opentls/bio.h>
 
 
 const char *DES_options(void)
@@ -19,9 +19,9 @@ const char *DES_options(void)
 
     if (init) {
         if (sizeof(DES_LONG) != sizeof(long))
-            OPENSSL_strlcpy(buf, "des(int)", sizeof(buf));
+            OPENtls_strlcpy(buf, "des(int)", sizeof(buf));
         else
-            OPENSSL_strlcpy(buf, "des(long)", sizeof(buf));
+            OPENtls_strlcpy(buf, "des(long)", sizeof(buf));
         init = 0;
     }
     return buf;

@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # July 2004
@@ -135,7 +135,7 @@ $out="%rcx";	    # arg4
 {
 $code=<<___;
 .text
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	RC4
 .type	RC4,\@function,4
@@ -174,7 +174,7 @@ $code.=<<___;
 	mov	-4($dat),$YY#b
 	cmpl	\$-1,256($dat)
 	je	.LRC4_CHAR
-	mov	OPENSSL_ia32cap_P(%rip),%r8d
+	mov	OPENtls_ia32cap_P(%rip),%r8d
 	xor	$TX[1],$TX[1]
 	inc	$XX[0]#b
 	sub	$XX[0],$TX[1]
@@ -465,7 +465,7 @@ RC4_set_key:
 	xor	%r10,%r10
 	xor	%r11,%r11
 
-	mov	OPENSSL_ia32cap_P(%rip),$idx#d
+	mov	OPENtls_ia32cap_P(%rip),$idx#d
 	bt	\$20,$idx#d	# RC4_CHAR?
 	jc	.Lc1stloop
 	jmp	.Lw1stloop
@@ -530,7 +530,7 @@ RC4_set_key:
 .align	16
 RC4_options:
 	lea	.Lopts(%rip),%rax
-	mov	OPENSSL_ia32cap_P(%rip),%edx
+	mov	OPENtls_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
 	jc	.L8xchar
 	bt	\$30,%edx
@@ -546,7 +546,7 @@ RC4_options:
 .asciz	"rc4(8x,int)"
 .asciz	"rc4(8x,char)"
 .asciz	"rc4(16x,int)"
-.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 .size	RC4_options,.-RC4_options
 ___

@@ -1,20 +1,20 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
-#include <openssl/ess.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
+#include <opentls/ess.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -626,27 +626,27 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         if (!EVP_DigestFinal_ex(mctx, md, &mdlen))
             goto err;
         siglen = EVP_PKEY_size(si->pkey);
-        sig = OPENSSL_malloc(siglen);
+        sig = OPENtls_malloc(siglen);
         if (sig == NULL) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0) {
-            OPENSSL_free(sig);
+            OPENtls_free(sig);
             goto err;
         }
         ASN1_STRING_set0(si->signature, sig, siglen);
     } else {
         unsigned char *sig;
         unsigned int siglen;
-        sig = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
+        sig = OPENtls_malloc(EVP_PKEY_size(si->pkey));
         if (sig == NULL) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (!EVP_SignFinal(mctx, sig, &siglen, si->pkey)) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_SIGNFINAL_ERROR);
-            OPENSSL_free(sig);
+            OPENtls_free(sig);
             goto err;
         }
         ASN1_STRING_set0(si->signature, sig, siglen);
@@ -732,8 +732,8 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         goto err;
     if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
         goto err;
-    OPENSSL_free(abuf);
-    abuf = OPENSSL_malloc(siglen);
+    OPENtls_free(abuf);
+    abuf = OPENtls_malloc(siglen);
     if (abuf == NULL)
         goto err;
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
@@ -764,7 +764,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     return 1;
 
  err:
-    OPENSSL_free(abuf);
+    OPENtls_free(abuf);
     EVP_MD_CTX_reset(mctx);
     return 0;
 }
@@ -803,7 +803,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (!abuf)
         goto err;
     r = EVP_DigestVerifyUpdate(mctx, abuf, alen);
-    OPENSSL_free(abuf);
+    OPENtls_free(abuf);
     if (r <= 0) {
         r = -1;
         goto err;
@@ -933,7 +933,7 @@ int CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
         return 0;
     r = CMS_signed_add1_attr_by_NID(si, NID_SMIMECapabilities,
                                     V_ASN1_SEQUENCE, smder, smderlen);
-    OPENSSL_free(smder);
+    OPENtls_free(smder);
     return r;
 }
 

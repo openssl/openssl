@@ -12,7 +12,7 @@ SRP_VBASE_get_by_user
 
 =head1 SYNOPSIS
 
- #include <openssl/srp.h>
+ #include <opentls/srp.h>
 
  SRP_VBASE *SRP_VBASE_new(char *seed_key);
  void SRP_VBASE_free(SRP_VBASE *vb);
@@ -43,7 +43,7 @@ The verifier file is a text file containing multiple entries, whose format is:
 flag base64(verifier) base64(salt) username gNid userinfo(optional)
 where the flag can be 'V' (valid) or 'R' (revoked).
 Note that the base64 encoding used here is non-standard so it is recommended
-to use L<openssl-srp(1)> to generate this file.
+to use L<opentls-srp(1)> to generate this file.
 
 The SRP_VBASE_add0_user() function adds the B<user_pwd> verifier information
 to the B<vb> structure. See L<SRP_user_pwd_new(3)> to create and populate this
@@ -76,24 +76,24 @@ SRP_VBASE_add0_user() returns 1 on success and 0 on failure.
 
 =head1 SEE ALSO
 
-L<openssl-srp(1)>,
+L<opentls-srp(1)>,
 L<SRP_create_verifier(3)>,
 L<SRP_user_pwd_new(3)>,
-L<SSL_CTX_set_srp_password(3)>
+L<tls_CTX_set_srp_password(3)>
 
 =head1 HISTORY
 
-The SRP_VBASE_add0_user() function was added in OpenSSL 3.0.
+The SRP_VBASE_add0_user() function was added in Opentls 3.0.
 
-All other functions were added in OpenSSL 1.0.1.
+All other functions were added in Opentls 1.0.1.
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

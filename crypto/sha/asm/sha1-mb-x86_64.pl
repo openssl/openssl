@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # Multi-buffer SHA1 procedure processes n buffers in parallel by
@@ -359,14 +359,14 @@ push(@Xi,shift(@Xi));
 $code.=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	sha1_multi_block
 .type	sha1_multi_block,\@function,3
 .align	32
 sha1_multi_block:
 .cfi_startproc
-	mov	OPENSSL_ia32cap_P+4(%rip),%rcx
+	mov	OPENtls_ia32cap_P+4(%rip),%rcx
 	bt	\$61,%rcx			# check SHA bit
 	jc	_shaext_shortcut
 ___
@@ -1370,7 +1370,7 @@ K_XX_XX:
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap
 	.byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
-	.asciz	"SHA1 multi-block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA1 multi-block transform for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 if ($win64) {

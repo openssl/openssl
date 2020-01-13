@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
+#include <opentls/tls.h>
+#include <opentls/evp.h>
 
-#include "../ssl/ssl_local.h"
+#include "../tls/tls_local.h"
 #include "testutil.h"
 
 #define IVLEN   12
@@ -126,7 +126,7 @@ static unsigned char server_ats_iv[] = {
 };
 
 /* Mocked out implementations of various functions */
-int ssl3_digest_cached_records(SSL *s, int keep)
+int tls3_digest_cached_records(tls *s, int keep)
 {
     return 1;
 }
@@ -134,7 +134,7 @@ int ssl3_digest_cached_records(SSL *s, int keep)
 static int full_hash = 0;
 
 /* Give a hash of the currently set handshake */
-int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
+int tls_handshake_hash(tls *s, unsigned char *out, size_t outlen,
                        size_t *hashlen)
 {
     if (sizeof(hs_start_hash) > outlen
@@ -152,7 +152,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
     return 1;
 }
 
-const EVP_MD *ssl_handshake_md(SSL *s)
+const EVP_MD *tls_handshake_md(tls *s)
 {
     return EVP_sha256();
 }
@@ -165,9 +165,9 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 {
 }
 
-int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
+int tls_cipher_get_evp(const tls_SESSION *s, const EVP_CIPHER **enc,
                        const EVP_MD **md, int *mac_pkey_type,
-                       size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
+                       size_t *mac_secret_size, tls_COMP **comp, int use_etm)
 
 {
     return 0;
@@ -178,7 +178,7 @@ int tls1_alert_code(int code)
     return code;
 }
 
-int ssl_log_secret(SSL *ssl,
+int tls_log_secret(tls *tls,
                    const char *label,
                    const uint8_t *secret,
                    size_t secret_len)
@@ -186,29 +186,29 @@ int ssl_log_secret(SSL *ssl,
     return 1;
 }
 
-const EVP_MD *ssl_md(int idx)
+const EVP_MD *tls_md(int idx)
 {
     return EVP_sha256();
 }
 
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+void otls_statem_fatal(tls *s, int al, int func, int reason, const char *file,
                            int line)
 {
 }
 
-int ossl_statem_export_allowed(SSL *s)
+int otls_statem_export_allowed(tls *s)
 {
     return 1;
 }
 
-int ossl_statem_export_early_allowed(SSL *s)
+int otls_statem_export_early_allowed(tls *s)
 {
     return 1;
 }
 
 /* End of mocked out code */
 
-static int test_secret(SSL *s, unsigned char *prk,
+static int test_secret(tls *s, unsigned char *prk,
                        const unsigned char *label, size_t labellen,
                        const unsigned char *ref_secret,
                        const unsigned char *ref_key, const unsigned char *ref_iv)
@@ -218,9 +218,9 @@ static int test_secret(SSL *s, unsigned char *prk,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char key[KEYLEN];
     unsigned char iv[IVLEN];
-    const EVP_MD *md = ssl_handshake_md(s);
+    const EVP_MD *md = tls_handshake_md(s);
 
-    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashsize)) {
+    if (!tls_handshake_hash(s, hash, sizeof(hash), &hashsize)) {
         TEST_error("Failed to get hash");
         return 0;
     }
@@ -255,26 +255,26 @@ static int test_secret(SSL *s, unsigned char *prk,
 
 static int test_handshake_secrets(void)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *s = NULL;
+    tls_CTX *ctx = NULL;
+    tls *s = NULL;
     int ret = 0;
     size_t hashsize;
     unsigned char out_master_secret[EVP_MAX_MD_SIZE];
     size_t master_secret_length;
 
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = tls_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
         goto err;
 
-    s = SSL_new(ctx);
+    s = tls_new(ctx);
     if (!TEST_ptr(s ))
         goto err;
 
-    s->session = SSL_SESSION_new();
+    s->session = tls_SESSION_new();
     if (!TEST_ptr(s->session))
         goto err;
 
-    if (!TEST_true(tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
+    if (!TEST_true(tls13_generate_secret(s, tls_handshake_md(s), NULL, NULL, 0,
                                          (unsigned char *)&s->early_secret))) {
         TEST_info("Early secret generation failed");
         goto err;
@@ -296,7 +296,7 @@ static int test_handshake_secrets(void)
                      handshake_secret, sizeof(handshake_secret)))
         goto err;
 
-    hashsize = EVP_MD_size(ssl_handshake_md(s));
+    hashsize = EVP_MD_size(tls_handshake_md(s));
     if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
         goto err;
     if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))
@@ -328,7 +328,7 @@ static int test_handshake_secrets(void)
     }
 
     /*
-     * Ensure the mocked out ssl_handshake_hash() returns the full handshake
+     * Ensure the mocked out tls_handshake_hash() returns the full handshake
      * hash.
      */
     full_hash = 1;
@@ -378,8 +378,8 @@ static int test_handshake_secrets(void)
 
     ret = 1;
  err:
-    SSL_free(s);
-    SSL_CTX_free(ctx);
+    tls_free(s);
+    tls_CTX_free(ctx);
     return ret;
 }
 

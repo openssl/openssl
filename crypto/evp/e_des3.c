@@ -1,25 +1,25 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_DES
-# include <openssl/evp.h>
-# include <openssl/objects.h>
+#ifndef OPENtls_NO_DES
+# include <opentls/evp.h>
+# include <opentls/objects.h>
 # include "crypto/evp.h"
-# include <openssl/des.h>
-# include <openssl/rand.h>
+# include <opentls/des.h>
+# include <opentls/rand.h>
 # include "evp_local.h"
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         DES_key_schedule ks[3];
     } ks;
     union {
@@ -36,9 +36,9 @@ typedef struct {
  * assembler support was in general requested... */
 #  include "sparc_arch.h"
 
-extern unsigned int OPENSSL_sparcv9cap_P[];
+extern unsigned int OPENtls_sparcv9cap_P[];
 
-#  define SPARC_DES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_DES)
+#  define SPARC_DES_CAPABLE       (OPENtls_sparcv9cap_P[1] & CFR_DES)
 
 void des_t4_key_expand(const void *key, DES_key_schedule *ks);
 void des_t4_ede3_cbc_encrypt(const void *inp, void *out, size_t len,
@@ -310,7 +310,7 @@ const EVP_CIPHER *EVP_des_ede3(void)
 }
 
 
-# include <openssl/sha.h>
+# include <opentls/sha.h>
 
 static const unsigned char wrap_iv[8] =
     { 0x4a, 0xdd, 0xa2, 0x2c, 0x79, 0xe8, 0x21, 0x05 };
@@ -351,12 +351,12 @@ static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (!CRYPTO_memcmp(sha1tmp, icv, 8))
         rv = inl - 16;
-    OPENSSL_cleanse(icv, 8);
-    OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
-    OPENSSL_cleanse(iv, 8);
-    OPENSSL_cleanse(EVP_CIPHER_CTX_iv_noconst(ctx), 8);
+    OPENtls_cleanse(icv, 8);
+    OPENtls_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
+    OPENtls_cleanse(iv, 8);
+    OPENtls_cleanse(EVP_CIPHER_CTX_iv_noconst(ctx), 8);
     if (rv == -1)
-        OPENSSL_cleanse(out, inl - 16);
+        OPENtls_cleanse(out, inl - 16);
 
     return rv;
 }
@@ -372,7 +372,7 @@ static int des_ede3_wrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* Work out ICV */
     SHA1(in, inl, sha1tmp);
     memcpy(out + inl + 8, sha1tmp, 8);
-    OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
+    OPENtls_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     /* Generate random IV */
     if (RAND_bytes(EVP_CIPHER_CTX_iv_noconst(ctx), 8) <= 0)
         return -1;

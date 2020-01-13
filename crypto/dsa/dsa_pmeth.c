@@ -1,18 +1,18 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/evp.h>
+#include <opentls/bn.h>
 #include "crypto/evp.h"
 #include "dsa_local.h"
 
@@ -31,7 +31,7 @@ typedef struct {
 
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
-    DSA_PKEY_CTX *dctx = OPENSSL_malloc(sizeof(*dctx));
+    DSA_PKEY_CTX *dctx = OPENtls_malloc(sizeof(*dctx));
 
     if (dctx == NULL)
         return 0;
@@ -65,7 +65,7 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx = ctx->data;
-    OPENSSL_free(dctx);
+    OPENtls_free(dctx);
 }
 
 static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,

@@ -1,13 +1,13 @@
 # -*- mode: perl; -*-
 
-## SSL test configurations
+## tls test configurations
 
 
 use strict;
 use warnings;
 
-package ssltests;
-use OpenSSL::Test::Utils;
+package tlstests;
+use Opentls::Test::Utils;
 
 my $server = {
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),

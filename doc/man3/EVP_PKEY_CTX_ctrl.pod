@@ -68,12 +68,12 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 
 =head1 SYNOPSIS
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
- int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
- const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx);
- int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
- const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, Otls_PARAM *params);
+ const Otls_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, Otls_PARAM *params);
+ const Otls_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx);
 
  int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                        int cmd, int p1, void *p2);
@@ -90,7 +90,7 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
                               int len);
 
- #include <openssl/rsa.h>
+ #include <opentls/rsa.h>
 
  int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad);
  int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad);
@@ -114,13 +114,13 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char *label, int len);
  int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);
 
- #include <openssl/dsa.h>
+ #include <opentls/dsa.h>
 
  int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
  int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits);
  int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
- #include <openssl/dh.h>
+ #include <opentls/dh.h>
 
  int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int len);
  int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int len);
@@ -141,7 +141,7 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
  int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
- #include <openssl/ec.h>
+ #include <opentls/ec.h>
 
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
@@ -165,8 +165,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 The EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params() functions get and
 send arbitrary parameters from and to the algorithm implementation respectively.
 Not all parameters may be supported by all providers.
-See L<OSSL_PROVIDER(3)> for more information on providers.
-See L<OSSL_PARAM(3)> for more information on parameters.
+See L<Otls_PROVIDER(3)> for more information on providers.
+See L<Otls_PARAM(3)> for more information on parameters.
 These functions must only be called after the EVP_PKEY_CTX has been initialised
 for use in an operation (for example by L<EVP_PKEY_sign_init_ex(3)>,
 L<EVP_PKEY_derive_init_ex(3)> or other similar functions).
@@ -175,20 +175,20 @@ The parameters currently supported by the default provider are:
 
 =over 4
 
-=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
+=item "pad" (B<Otls_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the DH padding mode.
-If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeros
+If B<Otls_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeros
 up to the size of the DH prime B<p>.
-If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
+If B<Otls_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
 performed.
 
-=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
+=item "digest" (B<Otls_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 Gets and sets the name of the digest algorithm used for the input to the
 signature functions.
 
-=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
+=item "digest-size" (B<Otls_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
 
 Gets and sets the output size of the digest algorithm used for the input to the
 signature functions.
@@ -198,11 +198,11 @@ The internal algorithm that supports this parameter is DSA.
 =back
 
 EVP_PKEY_CTX_gettable_params() and EVP_PKEY_CTX_settable_params() gets a
-constant B<OSSL_PARAM> array that describes the  gettable and
+constant B<Otls_PARAM> array that describes the  gettable and
 settable parameters for the current algorithm implementation, i.e. parameters
 that can be used with EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params()
 respectively.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+See L<Otls_PARAM(3)> for the use of B<Otls_PARAM> as parameter descriptor.
 These functions must only be called after the EVP_PKEY_CTX has been initialised
 for use in an operation (for example by L<EVP_PKEY_sign_init_ex(3)>,
 L<EVP_PKEY_derive_init_ex(3)> or other similar functions).
@@ -225,7 +225,7 @@ uint64 value as B<p2> to EVP_PKEY_CTX_ctrl().
 The function EVP_PKEY_CTX_ctrl_str() allows an application to send an algorithm
 specific control operation to a context B<ctx> in string form. This is
 intended to be used for options specified on the command line or in text
-files. The commands supported are documented in the openssl utility
+files. The commands supported are documented in the opentls utility
 command line pages for the option B<-pkeyopt> which is supported by the
 B<pkeyutl>, B<genpkey> and B<req> commands.
 
@@ -255,7 +255,7 @@ supported by the L<EVP_PKEY_new_raw_private_key(3)> function.
 
 The EVP_PKEY_CTX_set_rsa_padding() function sets the RSA padding mode for B<ctx>.
 The B<pad> parameter can take the value B<RSA_PKCS1_PADDING> for PKCS#1
-padding, B<RSA_SSLV23_PADDING> for SSLv23 padding, B<RSA_NO_PADDING> for
+padding, B<RSA_tlsV23_PADDING> for tlsv23 padding, B<RSA_NO_PADDING> for
 no padding, B<RSA_PKCS1_OAEP_PADDING> for OAEP padding (encrypt and
 decrypt only), B<RSA_X931_PADDING> for X9.31 padding (signature operations
 only), B<RSA_PKCS1_PSS_PADDING> (sign and verify only) and
@@ -363,14 +363,14 @@ decryption will fail. However, if the padding checks fail then decryption will
 still appear to succeed but a random TLS premaster secret will be returned
 instead. This padding mode accepts two parameters which can be set using the
 L<EVP_PKEY_CTX_set_params(3)> function. These are
-OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION and
-OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, both of which are expected to be
+Otls_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION and
+Otls_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, both of which are expected to be
 unsigned integers. Normally only the first of these will be set and represents
 the TLS protocol version that was first requested by the client (e.g. 0x0303 for
 TLSv1.2, 0x0302 for TLSv1.1 etc). Historically some buggy clients would use the
 negotiated protocol version instead of the protocol version first requested. If
 this behaviour should be tolerated then
-OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION should be set to the actual
+Otls_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION should be set to the actual
 negotiated protocol version. Otherwise it should be left unset.
 
 =head2 DSA parameters
@@ -456,7 +456,7 @@ library and should not be freed by the caller.
 
 The EVP_PKEY_CTX_set_dh_kdf_md() macro sets the key derivation function
 message digest to B<md> for DH key derivation. Note that RFC2631 specifies
-that this digest should be SHA1 but OpenSSL tolerates other digests.
+that this digest should be SHA1 but Opentls tolerates other digests.
 
 The EVP_PKEY_CTX_get_dh_kdf_md() macro gets the key derivation function
 message digest for B<ctx> used for DH key derivation.
@@ -470,7 +470,7 @@ output length for B<ctx> used for DH key derivation.
 The EVP_PKEY_CTX_set0_dh_kdf_ukm() macro sets the user key material to
 B<ukm> and its length to B<len> for DH key derivation. This parameter is optional
 and corresponds to the partyAInfo field in RFC2631 terms. The specification
-requires that it is 512 bits long but this is not enforced by OpenSSL.
+requires that it is 512 bits long but this is not enforced by Opentls.
 The library takes ownership of the user key material so the caller should not
 free the original memory pointed to by B<ukm>.
 
@@ -488,10 +488,10 @@ generating an EC key.
 
 The EVP_PKEY_CTX_set_ec_param_enc() macro sets the EC parameter encoding to
 B<param_enc> when generating EC parameters or an EC key. The encoding can be
-B<OPENSSL_EC_EXPLICIT_CURVE> for explicit parameters (the default in versions
-of OpenSSL before 1.1.0) or B<OPENSSL_EC_NAMED_CURVE> to use named curve form.
+B<OPENtls_EC_EXPLICIT_CURVE> for explicit parameters (the default in versions
+of Opentls before 1.1.0) or B<OPENtls_EC_NAMED_CURVE> to use named curve form.
 For maximum compatibility the named curve form should be used. Note: the
-B<OPENSSL_EC_NAMED_CURVE> value was added in OpenSSL 1.1.0; previous
+B<OPENtls_EC_NAMED_CURVE> value was added in Opentls 1.1.0; previous
 versions should use 0 instead.
 
 =head2 ECDH parameters
@@ -519,7 +519,7 @@ B<EVP_PKEY_ECDH_KDF_NONE> and B<EVP_PKEY_ECDH_KDF_X9_63>.
 
 The EVP_PKEY_CTX_set_ecdh_kdf_md() macro sets the key derivation function
 message digest to B<md> for ECDH key derivation. Note that X9.63 specifies
-that this digest should be SHA1 but OpenSSL tolerates other digests.
+that this digest should be SHA1 but Opentls tolerates other digests.
 
 The EVP_PKEY_CTX_get_ecdh_kdf_md() macro gets the key derivation function
 message digest for B<ctx> used for ECDH key derivation.
@@ -555,7 +555,7 @@ allocate adequate memory space for the B<id> before calling EVP_PKEY_CTX_get1_id
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_set_params() returns 1 for success or 0 otherwise.
-EVP_PKEY_CTX_settable_params() returns an OSSL_PARAM array on success or NULL on
+EVP_PKEY_CTX_settable_params() returns an Otls_PARAM array on success or NULL on
 error.
 It may also return NULL if there are no settable parameters available.
 
@@ -581,24 +581,24 @@ EVP_PKEY_CTX_set_dh_pad(), EVP_PKEY_CTX_set_rsa_padding(),
 EVP_PKEY_CTX_get_rsa_padding(), EVP_PKEY_CTX_get_rsa_mgf1_md(),
 EVP_PKEY_CTX_set_rsa_mgf1_md(), EVP_PKEY_CTX_set_rsa_oaep_md(),
 EVP_PKEY_CTX_get_rsa_oaep_md(), EVP_PKEY_CTX_set0_rsa_oaep_label(),
-EVP_PKEY_CTX_get0_rsa_oaep_label() were macros in OpenSSL 1.1.1 and below. From
-OpenSSL 3.0 they are functions.
+EVP_PKEY_CTX_get0_rsa_oaep_label() were macros in Opentls 1.1.1 and below. From
+Opentls 3.0 they are functions.
 
 EVP_PKEY_CTX_get_rsa_oaep_md_name(), EVP_PKEY_CTX_get_rsa_mgf1_md_name(),
 EVP_PKEY_CTX_set_rsa_mgf1_md_name() and EVP_PKEY_CTX_set_rsa_oaep_md_name() were
-added in OpenSSL 3.0.
+added in Opentls 3.0.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and
 EVP_PKEY_CTX_get1_id_len() macros were added in 1.1.1, other functions were
-added in OpenSSL 1.0.0.
+added in Opentls 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

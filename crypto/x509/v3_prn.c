@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 
 /* Extension printing routines */
 
@@ -54,11 +54,11 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             int len;
             char *tmp;
             len = strlen(nval->value) + 1;
-            tmp = OPENSSL_malloc(len);
+            tmp = OPENtls_malloc(len);
             if (tmp != NULL) {
                 ascii2ebcdic(tmp, nval->value, len);
                 BIO_printf(out, "%s:%s", nval->name, tmp);
-                OPENSSL_free(tmp);
+                OPENtls_free(tmp);
             }
         }
 #endif
@@ -105,11 +105,11 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
             int len;
             char *tmp;
             len = strlen(value) + 1;
-            tmp = OPENSSL_malloc(len);
+            tmp = OPENtls_malloc(len);
             if (tmp != NULL) {
                 ascii2ebcdic(tmp, value, len);
                 BIO_printf(out, "%*s%s", indent, "", tmp);
-                OPENSSL_free(tmp);
+                OPENtls_free(tmp);
             }
         }
 #endif
@@ -128,7 +128,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
 
  err:
     sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
-    OPENSSL_free(value);
+    OPENtls_free(value);
     if (method->it)
         ASN1_item_free(ext_str, ASN1_ITEM_ptr(method->it));
     else
@@ -196,7 +196,7 @@ static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
     }
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 {
     BIO *bio_tmp;

@@ -1,19 +1,19 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
+#include <opentls/rand.h>
 #include "rand_local.h"
 #include "crypto/rand.h"
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#if defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_WIN32)
 
-# ifndef OPENSSL_RAND_SEED_OS
+# ifndef OPENtls_RAND_SEED_OS
 #  error "Unsupported seeding method configured; must be os"
 # endif
 
@@ -50,13 +50,13 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     size_t entropy_available = 0;
 
 
-# ifdef OPENSSL_RAND_SEED_RDTSC
+# ifdef OPENtls_RAND_SEED_RDTSC
     entropy_available = rand_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 # endif
 
-# ifdef OPENSSL_RAND_SEED_RDCPU
+# ifdef OPENtls_RAND_SEED_RDCPU
     entropy_available = rand_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
@@ -163,7 +163,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-# if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
+# if !defined(OPENtls_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();

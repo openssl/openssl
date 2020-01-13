@@ -1,26 +1,26 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_DES_LOCAL_H
-# define OSSL_CRYPTO_DES_LOCAL_H
+#ifndef Otls_CRYPTO_DES_LOCAL_H
+# define Otls_CRYPTO_DES_LOCAL_H
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
 
-# include <openssl/des.h>
+# include <opentls/des.h>
 
-# ifdef OPENSSL_BUILD_SHLIBCRYPTO
-#  undef OPENSSL_EXTERN
-#  define OPENSSL_EXTERN OPENSSL_EXPORT
+# ifdef OPENtls_BUILD_SHLIBCRYPTO
+#  undef OPENtls_EXTERN
+#  define OPENtls_EXTERN OPENtls_EXPORT
 # endif
 
 # define ITERATIONS 16
@@ -100,7 +100,7 @@
 #  define ROTATE(a,n)     (_lrotr(a,n))
 # elif defined(__ICC)
 #  define ROTATE(a,n)     (_rotr(a,n))
-# elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
+# elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(OPENtls_NO_ASM) && !defined(OPENtls_NO_INLINE_ASM) && !defined(PEDANTIC)
 #  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #   define ROTATE(a,n)   ({ register unsigned int ret;   \
                                 asm ("rorl %1,%0"       \

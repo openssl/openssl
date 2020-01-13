@@ -11,7 +11,7 @@ CMS_RecipientInfo_decrypt, CMS_RecipientInfo_encrypt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <opentls/cms.h>
 
  STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
  int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -129,11 +129,11 @@ L<ERR_get_error(3)>, L<CMS_decrypt(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

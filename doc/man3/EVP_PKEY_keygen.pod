@@ -12,7 +12,7 @@ EVP_PKEY_param_check
 
 =head1 SYNOPSIS
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
  int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
@@ -94,8 +94,8 @@ The operation performed by key or parameter generation depends on the algorithm
 used. In some cases (e.g. EC with a supplied named curve) the "generation"
 option merely sets the appropriate fields in an EVP_PKEY structure.
 
-In OpenSSL an EVP_PKEY structure containing a private key also contains the
-public key components and parameters (if any). An OpenSSL private key is
+In Opentls an EVP_PKEY structure containing a private key also contains the
+public key components and parameters (if any). An Opentls private key is
 equivalent to what some libraries call a "key pair". A private key can be used
 in functions which require the use of a public key or parameters.
 
@@ -114,8 +114,8 @@ for the specific algorithm.
 
 Generate a 2048 bit RSA key:
 
- #include <openssl/evp.h>
- #include <openssl/rsa.h>
+ #include <opentls/evp.h>
+ #include <opentls/rsa.h>
 
  EVP_PKEY_CTX *ctx;
  EVP_PKEY *pkey = NULL;
@@ -134,8 +134,8 @@ Generate a 2048 bit RSA key:
 
 Generate a key from a set of parameters:
 
- #include <openssl/evp.h>
- #include <openssl/rsa.h>
+ #include <opentls/evp.h>
+ #include <opentls/rsa.h>
 
  EVP_PKEY_CTX *ctx;
  ENGINE *eng;
@@ -152,7 +152,7 @@ Generate a key from a set of parameters:
  if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
      /* Error */
 
-Example of generation callback for OpenSSL public key implementations:
+Example of generation callback for Opentls public key implementations:
 
  /* Application data is a BIO to output status to */
 
@@ -189,18 +189,18 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+These functions were added in Opentls 1.0.0.
 
 EVP_PKEY_check(), EVP_PKEY_public_check() and EVP_PKEY_param_check() were added
-in OpenSSL 1.1.1.
+in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

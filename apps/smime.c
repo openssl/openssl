@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* S/MIME utility function */
@@ -13,11 +13,11 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/crypto.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/x509_vfy.h>
-#include <openssl/x509v3.h>
+#include <opentls/crypto.h>
+#include <opentls/pem.h>
+#include <opentls/err.h>
+#include <opentls/x509_vfy.h>
+#include <opentls/x509v3.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
@@ -61,7 +61,7 @@ const OPTIONS smime_options[] = {
     {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
@@ -132,7 +132,7 @@ int smime_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *indata = NULL;
     EVP_PKEY *key = NULL;
     PKCS7 *p7 = NULL;
-    STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
+    STACK_OF(OPENtls_STRING) *sksigners = NULL, *skkeys = NULL;
     STACK_OF(X509) *encerts = NULL, *other = NULL;
     X509 *cert = NULL, *recip = NULL, *signer = NULL;
     X509_STORE *store = NULL;
@@ -263,15 +263,15 @@ int smime_main(int argc, char **argv)
             /* If previous -signer argument add signer to list */
             if (signerfile != NULL) {
                 if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
+                sk_OPENtls_STRING_push(sksigners, signerfile);
                 if (keyfile == NULL)
                     keyfile = signerfile;
                 if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
+                sk_OPENtls_STRING_push(skkeys, keyfile);
                 keyfile = NULL;
             }
             signerfile = opt_arg();
@@ -296,14 +296,14 @@ int smime_main(int argc, char **argv)
                     goto opthelp;
                 }
                 if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
+                sk_OPENtls_STRING_push(sksigners, signerfile);
                 signerfile = NULL;
                 if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
+                sk_OPENtls_STRING_push(skkeys, keyfile);
             }
             keyfile = opt_arg();
             break;
@@ -358,14 +358,14 @@ int smime_main(int argc, char **argv)
         }
         if (signerfile != NULL) {
             if (sksigners == NULL
-                && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(sksigners, signerfile);
-            if (!skkeys && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+            sk_OPENtls_STRING_push(sksigners, signerfile);
+            if (!skkeys && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
             if (!keyfile)
                 keyfile = signerfile;
-            sk_OPENSSL_STRING_push(skkeys, keyfile);
+            sk_OPENtls_STRING_push(skkeys, keyfile);
         }
         if (sksigners == NULL) {
             BIO_printf(bio_err, "No signer certificate specified\n");
@@ -410,7 +410,7 @@ int smime_main(int argc, char **argv)
 
     if (operation == SMIME_ENCRYPT) {
         if (cipher == NULL) {
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
             cipher = EVP_des_ede3_cbc();
 #else
             BIO_printf(bio_err, "No cipher selected\n");
@@ -537,9 +537,9 @@ int smime_main(int argc, char **argv)
         } else {
             flags |= PKCS7_REUSE_DIGEST;
         }
-        for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
-            signerfile = sk_OPENSSL_STRING_value(sksigners, i);
-            keyfile = sk_OPENSSL_STRING_value(skkeys, i);
+        for (i = 0; i < sk_OPENtls_STRING_num(sksigners); i++) {
+            signerfile = sk_OPENtls_STRING_value(sksigners, i);
+            keyfile = sk_OPENtls_STRING_value(skkeys, i);
             signer = load_cert(signerfile, FORMAT_PEM,
                                "signer certificate");
             if (signer == NULL)
@@ -622,8 +622,8 @@ int smime_main(int argc, char **argv)
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);
-    sk_OPENSSL_STRING_free(sksigners);
-    sk_OPENSSL_STRING_free(skkeys);
+    sk_OPENtls_STRING_free(sksigners);
+    sk_OPENtls_STRING_free(skkeys);
     X509_STORE_free(store);
     X509_free(cert);
     X509_free(recip);
@@ -634,7 +634,7 @@ int smime_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     return ret;
 }
 

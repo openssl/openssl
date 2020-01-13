@@ -1,23 +1,23 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/trace.h>
-#include <openssl/err.h>
-#include <openssl/conf.h>
-#include <openssl/safestack.h>
+#include <opentls/trace.h>
+#include <opentls/err.h>
+#include <opentls/conf.h>
+#include <opentls/safestack.h>
 #include "internal/provider.h"
 
 /* PROVIDER config module */
 
-DEFINE_STACK_OF(OSSL_PROVIDER)
-static STACK_OF(OSSL_PROVIDER) *activated_providers = NULL;
+DEFINE_STACK_OF(Otls_PROVIDER)
+static STACK_OF(Otls_PROVIDER) *activated_providers = NULL;
 
 static const char *skip_dot(const char *name)
 {
@@ -28,7 +28,7 @@ static const char *skip_dot(const char *name)
     return name;
 }
 
-static int provider_conf_params(OSSL_PROVIDER *prov,
+static int provider_conf_params(Otls_PROVIDER *prov,
                                 const char *name, const char *value,
                                 const CONF *cnf)
 {
@@ -41,11 +41,11 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
         char buffer[512];
         size_t buffer_len = 0;
 
-        OSSL_TRACE1(CONF, "Provider params: start section %s\n", value);
+        Otls_TRACE1(CONF, "Provider params: start section %s\n", value);
 
         if (name != NULL) {
-            OPENSSL_strlcpy(buffer, name, sizeof(buffer));
-            OPENSSL_strlcat(buffer, ".", sizeof(buffer));
+            OPENtls_strlcpy(buffer, name, sizeof(buffer));
+            OPENtls_strlcat(buffer, ".", sizeof(buffer));
             buffer_len = strlen(buffer);
         }
 
@@ -55,33 +55,33 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
             if (buffer_len + strlen(sectconf->name) >= sizeof(buffer))
                 return 0;
             buffer[buffer_len] = '\0';
-            OPENSSL_strlcat(buffer, sectconf->name, sizeof(buffer));
+            OPENtls_strlcat(buffer, sectconf->name, sizeof(buffer));
             if (!provider_conf_params(prov, buffer, sectconf->value, cnf))
                 return 0;
         }
 
-        OSSL_TRACE1(CONF, "Provider params: finish section %s\n", value);
+        Otls_TRACE1(CONF, "Provider params: finish section %s\n", value);
     } else {
-        OSSL_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
-        ok = ossl_provider_add_parameter(prov, name, value);
+        Otls_TRACE2(CONF, "Provider params: %s = %s\n", name, value);
+        ok = otls_provider_add_parameter(prov, name, value);
     }
 
     return ok;
 }
 
-static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
+static int provider_conf_load(OPENtls_CTX *libctx, const char *name,
                               const char *value, const CONF *cnf)
 {
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
     int soft = 0;
-    OSSL_PROVIDER *prov = NULL;
+    Otls_PROVIDER *prov = NULL;
     const char *path = NULL;
     long activate = 0;
     int ok = 0;
 
     name = skip_dot(name);
-    OSSL_TRACE1(CONF, "Configuring provider %s\n", name);
+    Otls_TRACE1(CONF, "Configuring provider %s\n", name);
     /* Value is a section containing PROVIDER commands */
     ecmds = NCONF_get_section(cnf, value);
 
@@ -96,7 +96,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
         const char *confname = skip_dot(ecmd->name);
         const char *confvalue = ecmd->value;
 
-        OSSL_TRACE2(CONF, "Provider command: %s = %s\n",
+        Otls_TRACE2(CONF, "Provider command: %s = %s\n",
                     confname, confvalue);
 
         /* First handle some special pseudo confs */
@@ -113,9 +113,9 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
             activate = 1;
     }
 
-    prov = ossl_provider_find(libctx, name, 1);
+    prov = otls_provider_find(libctx, name, 1);
     if (prov == NULL)
-        prov = ossl_provider_new(libctx, name, NULL, 1);
+        prov = otls_provider_new(libctx, name, NULL, 1);
     if (prov == NULL) {
         if (soft)
             ERR_clear_error();
@@ -123,23 +123,23 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
     }
 
     if (path != NULL)
-        ossl_provider_set_module_path(prov, path);
+        otls_provider_set_module_path(prov, path);
 
     ok = provider_conf_params(prov, NULL, value, cnf);
 
     if (ok && activate) {
-        if (!ossl_provider_activate(prov)) {
+        if (!otls_provider_activate(prov)) {
             ok = 0;
         } else {
             if (activated_providers == NULL)
-                activated_providers = sk_OSSL_PROVIDER_new_null();
-            sk_OSSL_PROVIDER_push(activated_providers, prov);
+                activated_providers = sk_Otls_PROVIDER_new_null();
+            sk_Otls_PROVIDER_push(activated_providers, prov);
             ok = 1;
         }
     }
 
     if (!(activate && ok))
-        ossl_provider_free(prov);
+        otls_provider_free(prov);
 
     return ok;
 }
@@ -150,7 +150,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     CONF_VALUE *cval;
     int i;
 
-    OSSL_TRACE1(CONF, "Loading providers module: section %s\n",
+    Otls_TRACE1(CONF, "Loading providers module: section %s\n",
                 CONF_imodule_get_value(md));
 
     /* Value is a section containing PROVIDERs to configure */
@@ -174,13 +174,13 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
 static void provider_conf_deinit(CONF_IMODULE *md)
 {
-    sk_OSSL_PROVIDER_pop_free(activated_providers, ossl_provider_free);
+    sk_Otls_PROVIDER_pop_free(activated_providers, otls_provider_free);
     activated_providers = NULL;
-    OSSL_TRACE(CONF, "Cleaned up providers\n");
+    Otls_TRACE(CONF, "Cleaned up providers\n");
 }
 
-void ossl_provider_add_conf_module(void)
+void otls_provider_add_conf_module(void)
 {
-    OSSL_TRACE(CONF, "Adding config module 'providers'\n");
+    Otls_TRACE(CONF, "Adding config module 'providers'\n");
     CONF_module_add("providers", provider_conf_init, provider_conf_deinit);
 }

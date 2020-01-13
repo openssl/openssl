@@ -1,31 +1,31 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement the padlock engine AES ciphers.
  */
-#define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENtls_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/crypto.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/modes.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/crypto.h>
+#include <opentls/engine.h>
+#include <opentls/evp.h>
+#include <opentls/aes.h>
+#include <opentls/rand.h>
+#include <opentls/err.h>
+#include <opentls/modes.h>
 
-#ifndef OPENSSL_NO_PADLOCKENG
+#ifndef OPENtls_NO_PADLOCKENG
 
 /*
  * VIA PadLock AES is available *ONLY* on some x86 CPUs. Not only that it
@@ -35,12 +35,12 @@
 # undef COMPILE_PADLOCKENG
 # if defined(PADLOCK_ASM)
 #  define COMPILE_PADLOCKENG
-#  ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#  ifdef OPENtls_NO_DYNAMIC_ENGINE
 static ENGINE *ENGINE_padlock(void);
 #  endif
 # endif
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
+# ifdef OPENtls_NO_DYNAMIC_ENGINE
 void engine_load_padlock_int(void);
 void engine_load_padlock_int(void)
 {
@@ -111,7 +111,7 @@ static int padlock_bind_helper(ENGINE *e)
     return 1;
 }
 
-#  ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#  ifdef OPENtls_NO_DYNAMIC_ENGINE
 /* Constructor */
 static ENGINE *ENGINE_padlock(void)
 {
@@ -140,7 +140,7 @@ static int padlock_init(ENGINE *e)
  * This stuff is needed if this ENGINE is being compiled into a
  * self-contained shared-library.
  */
-#  ifndef OPENSSL_NO_DYNAMIC_ENGINE
+#  ifndef OPENtls_NO_DYNAMIC_ENGINE
 static int padlock_bind_fn(ENGINE *e, const char *id)
 {
     if (id && (strcmp(id, padlock_id) != 0)) {
@@ -156,7 +156,7 @@ static int padlock_bind_fn(ENGINE *e, const char *id)
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
-#  endif                       /* !OPENSSL_NO_DYNAMIC_ENGINE */
+#  endif                       /* !OPENtls_NO_DYNAMIC_ENGINE */
 /* ===== Here comes the "real" engine ===== */
 
 /* Some AES-related constants */
@@ -633,7 +633,7 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             AES_set_encrypt_key(key, key_len, &cdata->ks);
 #  ifndef AES_ASM
         /*
-         * OpenSSL C functions use byte-swapped extended key.
+         * Opentls C functions use byte-swapped extended key.
          */
         padlock_key_bswap(&cdata->ks);
 #  endif
@@ -698,7 +698,7 @@ static int padlock_rand_bytes(unsigned char *output, int count)
         *output++ = (unsigned char)buf;
         count--;
     }
-    OPENSSL_cleanse(&buf, sizeof(buf));
+    OPENtls_cleanse(&buf, sizeof(buf));
 
     return 1;
 }
@@ -720,13 +720,13 @@ static RAND_METHOD padlock_rand = {
 };
 
 # endif                        /* COMPILE_PADLOCKENG */
-#endif                         /* !OPENSSL_NO_PADLOCKENG */
+#endif                         /* !OPENtls_NO_PADLOCKENG */
 
-#if defined(OPENSSL_NO_PADLOCKENG) || !defined(COMPILE_PADLOCKENG)
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
-OPENSSL_EXPORT
+#if defined(OPENtls_NO_PADLOCKENG) || !defined(COMPILE_PADLOCKENG)
+# ifndef OPENtls_NO_DYNAMIC_ENGINE
+OPENtls_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
-OPENSSL_EXPORT
+OPENtls_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
 {
     return 0;

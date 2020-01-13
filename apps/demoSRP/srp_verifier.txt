@@ -1,4 +1,4 @@
-# This is a file that will be filled by the openssl srp routine.
+# This is a file that will be filled by the opentls srp routine.
 # You can initialize the file with additional groups, these are
 # records starting with a I followed by the g and N values and the id.
 # The exact values ... you have to dig this out from the source of srp.c

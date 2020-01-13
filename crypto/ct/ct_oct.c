@@ -1,23 +1,23 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_NO_CT
+#ifdef OPENtls_NO_CT
 # error "CT is disabled"
 #endif
 
 #include <limits.h>
 #include <string.h>
 
-#include <openssl/asn1.h>
-#include <openssl/buffer.h>
-#include <openssl/ct.h>
-#include <openssl/err.h>
+#include <opentls/asn1.h>
+#include <opentls/buffer.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
 
 #include "ct_local.h"
 
@@ -101,7 +101,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         }
         len -= 43;
         p++;
-        sct->log_id = OPENSSL_memdup(p, CT_V1_HASHLEN);
+        sct->log_id = OPENtls_memdup(p, CT_V1_HASHLEN);
         if (sct->log_id == NULL)
             goto err;
         sct->log_id_len = CT_V1_HASHLEN;
@@ -115,7 +115,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
             goto err;
         }
         if (len2 > 0) {
-            sct->ext = OPENSSL_memdup(p, len2);
+            sct->ext = OPENtls_memdup(p, len2);
             if (sct->ext == NULL)
                 goto err;
         }
@@ -132,7 +132,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         *in = p + len;
     } else {
         /* If not V1 just cache encoding */
-        sct->sct = OPENSSL_memdup(p, len);
+        sct->sct = OPENtls_memdup(p, len);
         if (sct->sct == NULL)
             goto err;
         sct->sct_len = len;
@@ -177,7 +177,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
             p = *out;
             *out += len;
         } else {
-            pstart = p = OPENSSL_malloc(len);
+            pstart = p = OPENtls_malloc(len);
             if (p == NULL) {
                 CTerr(CT_F_I2O_SCT_SIGNATURE, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -193,7 +193,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
 
     return len;
 err:
-    OPENSSL_free(pstart);
+    OPENtls_free(pstart);
     return -1;
 }
 
@@ -224,7 +224,7 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
         p = *out;
         *out += len;
     } else {
-        pstart = p = OPENSSL_malloc(len);
+        pstart = p = OPENtls_malloc(len);
         if (p == NULL) {
             CTerr(CT_F_I2O_SCT, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -250,7 +250,7 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
 
     return len;
 err:
-    OPENSSL_free(pstart);
+    OPENtls_free(pstart);
     return -1;
 }
 
@@ -330,7 +330,7 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
                 CTerr(CT_F_I2O_SCT_LIST, CT_R_SCT_LIST_INVALID);
                 return -1;
             }
-            if ((*pp = OPENSSL_malloc(len)) == NULL) {
+            if ((*pp = OPENtls_malloc(len)) == NULL) {
                 CTerr(CT_F_I2O_SCT_LIST, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
@@ -367,7 +367,7 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
 
  err:
     if (is_pp_new) {
-        OPENSSL_free(*pp);
+        OPENtls_free(*pp);
         *pp = NULL;
     }
     return -1;
@@ -402,6 +402,6 @@ int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
         return -1;
 
     len = i2d_ASN1_OCTET_STRING(&oct, out);
-    OPENSSL_free(oct.data);
+    OPENtls_free(oct.data);
     return len;
 }

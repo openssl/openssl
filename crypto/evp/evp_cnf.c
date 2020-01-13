@@ -1,19 +1,19 @@
 /*
- * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/trace.h>
+#include <opentls/conf.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/trace.h>
 
 /* Algorithm configuration module. */
 
@@ -25,7 +25,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *oval;
 
-    OSSL_TRACE2(CONF, "Loading EVP module: name %s, value %s\n",
+    Otls_TRACE2(CONF, "Loading EVP module: name %s, value %s\n",
                 CONF_imodule_get_name(md), CONF_imodule_get_value(md));
 
     oid_section = CONF_imodule_get_value(md);
@@ -65,6 +65,6 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 
 void EVP_add_alg_module(void)
 {
-    OSSL_TRACE(CONF, "Adding config module 'alg_section'\n");
+    Otls_TRACE(CONF, "Adding config module 'alg_section'\n");
     CONF_module_add("alg_section", alg_module_init, 0);
 }

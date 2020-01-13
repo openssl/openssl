@@ -1,16 +1,16 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/objects.h>
+#include <opentls/asn1.h>
+#include <opentls/objects.h>
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
@@ -130,7 +130,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
     ASN1_STRING_TABLE fnd;
 
     /* "stable" can be impacted by config, so load the config file first */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     fnd.nid = nid;
     if (stable) {
@@ -138,7 +138,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
         if (idx >= 0)
             return sk_ASN1_STRING_TABLE_value(stable, idx);
     }
-    return OBJ_bsearch_table(&fnd, tbl_standard, OSSL_NELEM(tbl_standard));
+    return OBJ_bsearch_table(&fnd, tbl_standard, Otls_NELEM(tbl_standard));
 }
 
 /*
@@ -159,12 +159,12 @@ static ASN1_STRING_TABLE *stable_get(int nid)
     tmp = ASN1_STRING_TABLE_get(nid);
     if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
-    if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL) {
+    if ((rv = OPENtls_zalloc(sizeof(*rv))) == NULL) {
         ASN1err(ASN1_F_STABLE_GET, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
-        OPENSSL_free(rv);
+        OPENtls_free(rv);
         return NULL;
     }
     if (tmp != NULL) {
@@ -218,5 +218,5 @@ void ASN1_STRING_TABLE_cleanup(void)
 static void st_free(ASN1_STRING_TABLE *tbl)
 {
     if (tbl->flags & STABLE_FLAGS_MALLOC)
-        OPENSSL_free(tbl);
+        OPENtls_free(tbl);
 }

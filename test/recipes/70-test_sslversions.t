@@ -1,14 +1,14 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
 
@@ -24,7 +24,7 @@ use constant {
 
 my $testtype;
 
-my $test_name = "test_sslversions";
+my $test_name = "test_tlsversions";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -39,16 +39,16 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3, TLS1.2 and TLS1.1 enabled"
     if disabled("tls1_3") || disabled("tls1_2") || disabled("tls1_1");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-#We're just testing various negative and unusual scenarios here. ssltest with
+#We're just testing various negative and unusual scenarios here. tlstest with
 #02-protocol-version.conf should check all the various combinations of normal
 #version neg
 
@@ -112,11 +112,11 @@ ok(TLSProxy::Message->success()
    && TLSProxy::Proxy->is_tls13(),
    "TLS1.4 in supported versions extension");
 
-#Test 8: Set the legacy version to SSLv3 with supported versions. Should fail
+#Test 8: Set the legacy version to tlsv3 with supported versions. Should fail
 $proxy->clear();
 $testtype = BAD_LEGACY_VERSION;
 $proxy->start();
-ok(TLSProxy::Message->fail(), "Legacy version is SSLv3 with supported versions");
+ok(TLSProxy::Message->fail(), "Legacy version is tlsv3 with supported versions");
 
 sub modify_supported_versions_filter
 {
@@ -176,7 +176,7 @@ sub modify_supported_versions_filter
                     TLSProxy::Message::EXT_SUPPORTED_VERSIONS);
             } else {
                 # BAD_LEGACY_VERSION
-                $message->client_version(TLSProxy::Record::VERS_SSL_3_0);
+                $message->client_version(TLSProxy::Record::VERS_tls_3_0);
             }
 
             $message->repack();

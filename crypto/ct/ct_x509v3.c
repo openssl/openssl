@@ -1,13 +1,13 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_NO_CT
+#ifdef OPENtls_NO_CT
 # error "CT is disabled"
 #endif
 
@@ -15,7 +15,7 @@
 
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
-    return OPENSSL_strdup("NULL");
+    return OPENtls_strdup("NULL");
 }
 
 static void *s2i_poison(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)

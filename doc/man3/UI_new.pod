@@ -10,11 +10,11 @@ UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
 UI_add_user_data, UI_dup_user_data, UI_get0_user_data, UI_get0_result,
 UI_get_result_length,
 UI_process, UI_ctrl, UI_set_default_method, UI_get_default_method,
-UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
+UI_get_method, UI_set_method, UI_Opentls, UI_null - user interface
 
 =head1 SYNOPSIS
 
- #include <openssl/ui.h>
+ #include <opentls/ui.h>
 
  typedef struct ui_st UI;
 
@@ -62,7 +62,7 @@ UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
  const UI_METHOD *UI_get_method(UI *ui);
  const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 
- UI_METHOD *UI_OpenSSL(void);
+ UI_METHOD *UI_Opentls(void);
  const UI_METHOD *UI_null(void);
 
 =head1 DESCRIPTION
@@ -102,9 +102,9 @@ this UI, it should be freed using UI_free().
 UI_new_method() creates a new UI using the given UI method.  When done with
 this UI, it should be freed using UI_free().
 
-UI_OpenSSL() returns the built-in UI method (note: not necessarily the
+UI_Opentls() returns the built-in UI method (note: not necessarily the
 default one, since the default can be changed.  See further on).  This
-method is the most machine/OS dependent part of OpenSSL and normally
+method is the most machine/OS dependent part of Opentls and normally
 generates the most problems when porting.
 
 UI_null() returns a UI method that does nothing.  Its use is to avoid
@@ -184,13 +184,13 @@ and prompting and returns the final status, which is -2 on out-of-band events
 
 UI_ctrl() adds extra control for the application author.  For now, it
 understands two commands: B<UI_CTRL_PRINT_ERRORS>, which makes UI_process()
-print the OpenSSL error stack as part of processing the UI, and
+print the Opentls error stack as part of processing the UI, and
 B<UI_CTRL_IS_REDOABLE>, which returns a flag saying if the used UI can
 be used again or not.
 
 UI_set_default_method() changes the default UI method to the one given.
 This function is not thread-safe and should not be called at the same time
-as other OpenSSL functions.
+as other Opentls functions.
 
 UI_get_default_method() returns a pointer to the current default UI method.
 
@@ -200,13 +200,13 @@ UI_set_method() changes the UI method associated with a given UI.
 
 =head1 NOTES
 
-The resulting strings that the built in method UI_OpenSSL() generate
+The resulting strings that the built in method UI_Opentls() generate
 are assumed to be encoded according to the current locale or (for
 Windows) code page.
 For applications having different demands, these strings need to be
 converted appropriately by the caller.
-For Windows, if the B<OPENSSL_WIN32_UTF8> environment variable is set,
-the built-in method UI_OpenSSL() will produce UTF-8 encoded strings
+For Windows, if the B<OPENtls_WIN32_UTF8> environment variable is set,
+the built-in method UI_Opentls() will produce UTF-8 encoded strings
 instead.
 
 =head1 RETURN VALUES
@@ -233,21 +233,21 @@ UI_process() returns 0 on success or a negative value on error.
 
 UI_ctrl() returns a mask on success or -1 on error.
 
-UI_get_default_method(), UI_get_method(), UI_OpenSSL(), UI_null() and
+UI_get_default_method(), UI_get_method(), UI_Opentls(), UI_null() and
 UI_set_method() return either a valid B<UI_METHOD> structure or NULL
 respectively.
 
 =head1 HISTORY
 
-The UI_dup_user_data() function was added in OpenSSL 1.1.1.
+The UI_dup_user_data() function was added in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

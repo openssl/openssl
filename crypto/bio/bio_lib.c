@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
@@ -70,7 +70,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
 
 BIO *BIO_new(const BIO_METHOD *method)
 {
-    BIO *bio = OPENSSL_zalloc(sizeof(*bio));
+    BIO *bio = OPENtls_zalloc(sizeof(*bio));
 
     if (bio == NULL) {
         BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
@@ -103,7 +103,7 @@ BIO *BIO_new(const BIO_METHOD *method)
     return bio;
 
 err:
-    OPENSSL_free(bio);
+    OPENtls_free(bio);
     return NULL;
 }
 
@@ -135,7 +135,7 @@ int BIO_free(BIO *a)
 
     CRYPTO_THREAD_lock_free(a->lock);
 
-    OPENSSL_free(a);
+    OPENtls_free(a);
 
     return 1;
 }
@@ -709,7 +709,7 @@ BIO *BIO_dup_chain(BIO *in)
         new_bio->shutdown = bio->shutdown;
         new_bio->flags = bio->flags;
 
-        /* This will let SSL_s_sock() work with stdin/stdout */
+        /* This will let tls_s_sock() work with stdin/stdout */
         new_bio->num = bio->num;
 
         if (!BIO_dup_state(bio, (char *)new_bio)) {
@@ -776,7 +776,7 @@ void bio_free_ex_data(BIO *bio)
 
 void bio_cleanup(void)
 {
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
     bio_sock_cleanup_int();
     CRYPTO_THREAD_lock_free(bio_lookup_lock);
     bio_lookup_lock = NULL;

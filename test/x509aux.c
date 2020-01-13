@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -12,10 +12,10 @@
 #include <string.h>
 #include <errno.h>
 
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/conf.h>
-#include <openssl/err.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/conf.h>
+#include <opentls/err.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -69,7 +69,7 @@ static int test_certs(int num)
             err = 1;
             goto next;
         }
-        if ((buf = bufp = OPENSSL_malloc(len)) == NULL) {
+        if ((buf = bufp = OPENtls_malloc(len)) == NULL) {
             TEST_perror("malloc");
             err = 1;
             goto next;
@@ -99,7 +99,7 @@ static int test_certs(int num)
             err = 1;
             goto next;
         }
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
         buf = NULL;
 
         /* Test 1-pass encoding into library allocated buffer */
@@ -118,7 +118,7 @@ static int test_certs(int num)
 
         if (trusted) {
             /* Encode just the cert and compare with initial encoding */
-            OPENSSL_free(buf);
+            OPENtls_free(buf);
             buf = NULL;
 
             /* Test 1-pass encoding into library allocated buffer */
@@ -141,10 +141,10 @@ static int test_certs(int num)
          */
     next:
         X509_free(cert);
-        OPENSSL_free(buf);
-        OPENSSL_free(name);
-        OPENSSL_free(header);
-        OPENSSL_free(data);
+        OPENtls_free(buf);
+        OPENtls_free(name);
+        OPENtls_free(header);
+        OPENtls_free(data);
     }
     BIO_free(fp);
     X509_free(reuse);

@@ -1,25 +1,25 @@
 /*
- * Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
-#include <openssl/rand.h>
-#include <openssl/aes.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
+#include <opentls/rand.h>
+#include <opentls/aes.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
-                                    unsigned char *pass, ossl_ssize_t passlen)
+                                    unsigned char *pass, otls_ssize_t patlsen)
 {
     CMS_PasswordRecipientInfo *pwri;
     if (ri->type != CMS_RECIPINFO_PASS) {
@@ -29,9 +29,9 @@ int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
 
     pwri = ri->d.pwri;
     pwri->pass = pass;
-    if (pass && passlen < 0)
-        passlen = strlen((char *)pass);
-    pwri->passlen = passlen;
+    if (pass && patlsen < 0)
+        patlsen = strlen((char *)pass);
+    pwri->patlsen = patlsen;
     return 1;
 }
 
@@ -39,7 +39,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
                                                int iter, int wrap_nid,
                                                int pbe_nid,
                                                unsigned char *pass,
-                                               ossl_ssize_t passlen,
+                                               otls_ssize_t patlsen,
                                                const EVP_CIPHER *kekciph)
 {
     CMS_RecipientInfo *ri = NULL;
@@ -149,7 +149,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     if (pwri->keyDerivationAlgorithm == NULL)
         goto err;
 
-    CMS_RecipientInfo_set0_password(ri, pass, passlen);
+    CMS_RecipientInfo_set0_password(ri, pass, patlsen);
     pwri->version = 0;
 
     if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
@@ -188,7 +188,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         /* Invalid size */
         return 0;
     }
-    if ((tmp = OPENSSL_malloc(inlen)) == NULL) {
+    if ((tmp = OPENtls_malloc(inlen)) == NULL) {
         CMSerr(CMS_F_KEK_UNWRAP_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -223,7 +223,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     memcpy(out, tmp + 4, *outlen);
     rv = 1;
  err:
-    OPENSSL_clear_free(tmp, inlen);
+    OPENtls_clear_free(tmp, inlen);
     return rv;
 
 }
@@ -337,7 +337,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
     /* Finish password based key derivation to setup key in "ctx" */
 
     if (EVP_PBE_CipherInit(algtmp->algorithm,
-                           (char *)pwri->pass, pwri->passlen,
+                           (char *)pwri->pass, pwri->patlsen,
                            algtmp->parameter, kekctx, en_de) < 0) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_EVP_LIB);
         goto err;
@@ -350,7 +350,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
         if (!kek_wrap_key(NULL, &keylen, ec->key, ec->keylen, kekctx))
             goto err;
 
-        key = OPENSSL_malloc(keylen);
+        key = OPENtls_malloc(keylen);
 
         if (key == NULL)
             goto err;
@@ -360,7 +360,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
         pwri->encryptedKey->data = key;
         pwri->encryptedKey->length = keylen;
     } else {
-        key = OPENSSL_malloc(pwri->encryptedKey->length);
+        key = OPENtls_malloc(pwri->encryptedKey->length);
 
         if (key == NULL) {
             CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_MALLOC_FAILURE);
@@ -373,7 +373,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
             goto err;
         }
 
-        OPENSSL_clear_free(ec->key, ec->keylen);
+        OPENtls_clear_free(ec->key, ec->keylen);
         ec->key = key;
         ec->keylen = keylen;
 
@@ -386,7 +386,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *
     EVP_CIPHER_CTX_free(kekctx);
 
     if (!r)
-        OPENSSL_free(key);
+        OPENtls_free(key);
     X509_ALGOR_free(kekalg);
 
     return r;

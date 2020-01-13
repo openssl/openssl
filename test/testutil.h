@@ -1,20 +1,20 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TESTUTIL_H
-# define OSSL_TESTUTIL_H
+#ifndef Otls_TESTUTIL_H
+# define Otls_TESTUTIL_H
 
 #include <stdarg.h>
 
-#include <openssl/err.h>
-#include <openssl/e_os2.h>
-#include <openssl/bn.h>
+#include <opentls/err.h>
+#include <opentls/e_os2.h>
+#include <opentls/bn.h>
 #include "opt.h"
 
 /*-
@@ -349,7 +349,7 @@ void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
 int test_skip(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 int test_skip_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
-void test_openssl_errors(void);
+void test_opentls_errors(void);
 void test_perror(const char *s);
 
 /*
@@ -357,9 +357,9 @@ void test_perror(const char *s);
  * a default description that indicates the file and line number of the error.
  *
  * The following macros guarantee to evaluate each argument exactly once.
- * This allows constructs such as: if (!TEST_ptr(ptr = OPENSSL_malloc(..)))
+ * This allows constructs such as: if (!TEST_ptr(ptr = OPENtls_malloc(..)))
  * to produce better contextual output than:
- *      ptr = OPENSSL_malloc(..);
+ *      ptr = OPENtls_malloc(..);
  *      if (!TEST_ptr(ptr))
  */
 # define TEST_int_eq(a, b)    test_int_eq(__FILE__, __LINE__, #a, #b, a, b)
@@ -473,7 +473,7 @@ void test_perror(const char *s);
 #  define TEST_skip(...)     test_skip(__FILE__, __LINE__, __VA_ARGS__)
 # endif
 # define TEST_note           test_note
-# define TEST_openssl_errors test_openssl_errors
+# define TEST_opentls_errors test_opentls_errors
 # define TEST_perror         test_perror
 
 extern BIO *bio_out;
@@ -548,4 +548,4 @@ void test_random_seed(uint32_t sd);
 /* Create a file path from a directory and a filename */
 char *test_mk_file_path(const char *dir, const char *file);
 
-#endif                          /* OSSL_TESTUTIL_H */
+#endif                          /* Otls_TESTUTIL_H */

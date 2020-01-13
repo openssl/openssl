@@ -1,14 +1,14 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_S390X_ARCH_H
-# define OSSL_CRYPTO_S390X_ARCH_H
+#ifndef Otls_CRYPTO_S390X_ARCH_H
+# define Otls_CRYPTO_S390X_ARCH_H
 
 # ifndef __ASSEMBLER__
 
@@ -34,12 +34,12 @@ void s390x_flip_endian32(unsigned char dst[32], const unsigned char src[32]);
 void s390x_flip_endian64(unsigned char dst[64], const unsigned char src[64]);
 
 /*
- * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
+ * The field elements of OPENtls_s390xcap_P are the 64-bit words returned by
  * the STFLE instruction followed by the 64-bit word pairs returned by
  * instructions' QUERY functions. If STFLE returns fewer data or an instruction
  * is not supported, the corresponding field elements are zero.
  */
-struct OPENSSL_s390xcap_st {
+struct OPENtls_s390xcap_st {
     unsigned long long stfle[4];
     unsigned long long kimd[2];
     unsigned long long klmd[2];
@@ -55,7 +55,7 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kdsa[2];
 };
 
-extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
+extern struct OPENtls_s390xcap_st OPENtls_s390xcap_P;
 
 /* Max number of 64-bit words currently returned by STFLE */
 #  define S390X_STFLE_MAX       3
@@ -65,7 +65,7 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 # endif
 
-/* OPENSSL_s390xcap_P offsets [bytes] */
+/* OPENtls_s390xcap_P offsets [bytes] */
 # define S390X_STFLE            0x00
 # define S390X_KIMD             0x20
 # define S390X_KLMD             0x30

@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/provider.h>
-#include <openssl/safestack.h>
-#include <openssl/kdf.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/provider.h>
+#include <opentls/safestack.h>
+#include <opentls/kdf.h>
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
@@ -42,8 +42,8 @@ static int cipher_cmp(const EVP_CIPHER * const *a,
     int ret = EVP_CIPHER_number(*a) - EVP_CIPHER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_CIPHER_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_CIPHER_provider(*b)));
+        ret = strcmp(Otls_PROVIDER_name(EVP_CIPHER_provider(*a)),
+                     Otls_PROVIDER_name(EVP_CIPHER_provider(*b)));
 
     return ret;
 }
@@ -69,17 +69,17 @@ static void list_ciphers(void)
     sk_EVP_CIPHER_sort(ciphers);
     for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
         const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENtls_CSTRING) *names =
+            sk_OPENtls_CSTRING_new(name_cmp);
 
         EVP_CIPHER_names_do_all(c, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+                   Otls_PROVIDER_name(EVP_CIPHER_provider(c)));
 
-        sk_OPENSSL_CSTRING_free(names);
+        sk_OPENtls_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -113,8 +113,8 @@ static int md_cmp(const EVP_MD * const *a, const EVP_MD * const *b)
     int ret = EVP_MD_number(*a) - EVP_MD_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MD_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MD_provider(*b)));
+        ret = strcmp(Otls_PROVIDER_name(EVP_MD_provider(*a)),
+                     Otls_PROVIDER_name(EVP_MD_provider(*b)));
 
     return ret;
 }
@@ -140,17 +140,17 @@ static void list_digests(void)
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
         const EVP_MD *m = sk_EVP_MD_value(digests, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENtls_CSTRING) *names =
+            sk_OPENtls_CSTRING_new(name_cmp);
 
         EVP_MD_names_do_all(m, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_MD_provider(m)));
+                   Otls_PROVIDER_name(EVP_MD_provider(m)));
 
-        sk_OPENSSL_CSTRING_free(names);
+        sk_OPENtls_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -170,8 +170,8 @@ static int mac_cmp(const EVP_MAC * const *a, const EVP_MAC * const *b)
     int ret = EVP_MAC_number(*a) - EVP_MAC_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_MAC_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_MAC_provider(*b)));
+        ret = strcmp(Otls_PROVIDER_name(EVP_MAC_provider(*a)),
+                     Otls_PROVIDER_name(EVP_MAC_provider(*b)));
 
     return ret;
 }
@@ -194,17 +194,17 @@ static void list_macs(void)
     sk_EVP_MAC_sort(macs);
     for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
         const EVP_MAC *m = sk_EVP_MAC_value(macs, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENtls_CSTRING) *names =
+            sk_OPENtls_CSTRING_new(name_cmp);
 
         EVP_MAC_names_do_all(m, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+                   Otls_PROVIDER_name(EVP_MAC_provider(m)));
 
-        sk_OPENSSL_CSTRING_free(names);
+        sk_OPENtls_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -227,8 +227,8 @@ static int kdf_cmp(const EVP_KDF * const *a, const EVP_KDF * const *b)
     int ret = EVP_KDF_number(*a) - EVP_KDF_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(EVP_KDF_provider(*a)),
-                     OSSL_PROVIDER_name(EVP_KDF_provider(*b)));
+        ret = strcmp(Otls_PROVIDER_name(EVP_KDF_provider(*a)),
+                     Otls_PROVIDER_name(EVP_KDF_provider(*b)));
 
     return ret;
 }
@@ -251,17 +251,17 @@ static void list_kdfs(void)
     sk_EVP_KDF_sort(kdfs);
     for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
         const EVP_KDF *k = sk_EVP_KDF_value(kdfs, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENtls_CSTRING) *names =
+            sk_OPENtls_CSTRING_new(name_cmp);
 
         EVP_KDF_names_do_all(k, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_KDF_provider(k)));
+                   Otls_PROVIDER_name(EVP_KDF_provider(k)));
 
-        sk_OPENSSL_CSTRING_free(names);
+        sk_OPENtls_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -326,7 +326,7 @@ static void list_objects(void)
             break;               /* Error */
 
         if (n > oid_size) {
-            oid_buf = OPENSSL_realloc(oid_buf, n + 1);
+            oid_buf = OPENtls_realloc(oid_buf, n + 1);
             if (oid_buf == NULL) {
                 BIO_printf(bio_err, "ERROR: Memory allocation\n");
                 break;           /* Error */
@@ -341,7 +341,7 @@ static void list_objects(void)
             BIO_printf(bio_out, "%s = %s, %s\n", sn, ln, oid_buf);
     }
 
-    OPENSSL_free(oid_buf);
+    OPENtls_free(oid_buf);
 }
 
 static void list_options_for_command(const char *command)
@@ -449,7 +449,7 @@ static void list_pkey_meth(void)
 
 static void list_engines(void)
 {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE *e;
 
     BIO_puts(bio_out, "Engines:\n");
@@ -466,142 +466,142 @@ static void list_engines(void)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_ARIA
+#ifdef OPENtls_NO_ARIA
     BIO_puts(bio_out, "ARIA\n");
 #endif
-#ifdef OPENSSL_NO_BF
+#ifdef OPENtls_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
-#ifdef OPENSSL_NO_BLAKE2
+#ifdef OPENtls_NO_BLAKE2
     BIO_puts(bio_out, "BLAKE2\n");
 #endif
-#ifdef OPENSSL_NO_CAMELLIA
+#ifdef OPENtls_NO_CAMELLIA
     BIO_puts(bio_out, "CAMELLIA\n");
 #endif
-#ifdef OPENSSL_NO_CAST
+#ifdef OPENtls_NO_CAST
     BIO_puts(bio_out, "CAST\n");
 #endif
-#ifdef OPENSSL_NO_CMAC
+#ifdef OPENtls_NO_CMAC
     BIO_puts(bio_out, "CMAC\n");
 #endif
-#ifdef OPENSSL_NO_CMS
+#ifdef OPENtls_NO_CMS
     BIO_puts(bio_out, "CMS\n");
 #endif
-#ifdef OPENSSL_NO_COMP
+#ifdef OPENtls_NO_COMP
     BIO_puts(bio_out, "COMP\n");
 #endif
-#ifdef OPENSSL_NO_DES
+#ifdef OPENtls_NO_DES
     BIO_puts(bio_out, "DES\n");
 #endif
-#ifdef OPENSSL_NO_DGRAM
+#ifdef OPENtls_NO_DGRAM
     BIO_puts(bio_out, "DGRAM\n");
 #endif
-#ifdef OPENSSL_NO_DH
+#ifdef OPENtls_NO_DH
     BIO_puts(bio_out, "DH\n");
 #endif
-#ifdef OPENSSL_NO_DSA
+#ifdef OPENtls_NO_DSA
     BIO_puts(bio_out, "DSA\n");
 #endif
-#if defined(OPENSSL_NO_DTLS)
+#if defined(OPENtls_NO_DTLS)
     BIO_puts(bio_out, "DTLS\n");
 #endif
-#if defined(OPENSSL_NO_DTLS1)
+#if defined(OPENtls_NO_DTLS1)
     BIO_puts(bio_out, "DTLS1\n");
 #endif
-#if defined(OPENSSL_NO_DTLS1_2)
+#if defined(OPENtls_NO_DTLS1_2)
     BIO_puts(bio_out, "DTLS1_2\n");
 #endif
-#ifdef OPENSSL_NO_EC
+#ifdef OPENtls_NO_EC
     BIO_puts(bio_out, "EC\n");
 #endif
-#ifdef OPENSSL_NO_EC2M
+#ifdef OPENtls_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
-#ifdef OPENSSL_NO_ENGINE
+#ifdef OPENtls_NO_ENGINE
     BIO_puts(bio_out, "ENGINE\n");
 #endif
-#ifdef OPENSSL_NO_GOST
+#ifdef OPENtls_NO_GOST
     BIO_puts(bio_out, "GOST\n");
 #endif
-#ifdef OPENSSL_NO_IDEA
+#ifdef OPENtls_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif
-#ifdef OPENSSL_NO_MD2
+#ifdef OPENtls_NO_MD2
     BIO_puts(bio_out, "MD2\n");
 #endif
-#ifdef OPENSSL_NO_MD4
+#ifdef OPENtls_NO_MD4
     BIO_puts(bio_out, "MD4\n");
 #endif
-#ifdef OPENSSL_NO_MD5
+#ifdef OPENtls_NO_MD5
     BIO_puts(bio_out, "MD5\n");
 #endif
-#ifdef OPENSSL_NO_MDC2
+#ifdef OPENtls_NO_MDC2
     BIO_puts(bio_out, "MDC2\n");
 #endif
-#ifdef OPENSSL_NO_OCB
+#ifdef OPENtls_NO_OCB
     BIO_puts(bio_out, "OCB\n");
 #endif
-#ifdef OPENSSL_NO_OCSP
+#ifdef OPENtls_NO_OCSP
     BIO_puts(bio_out, "OCSP\n");
 #endif
-#ifdef OPENSSL_NO_PSK
+#ifdef OPENtls_NO_PSK
     BIO_puts(bio_out, "PSK\n");
 #endif
-#ifdef OPENSSL_NO_RC2
+#ifdef OPENtls_NO_RC2
     BIO_puts(bio_out, "RC2\n");
 #endif
-#ifdef OPENSSL_NO_RC4
+#ifdef OPENtls_NO_RC4
     BIO_puts(bio_out, "RC4\n");
 #endif
-#ifdef OPENSSL_NO_RC5
+#ifdef OPENtls_NO_RC5
     BIO_puts(bio_out, "RC5\n");
 #endif
-#ifdef OPENSSL_NO_RMD160
+#ifdef OPENtls_NO_RMD160
     BIO_puts(bio_out, "RMD160\n");
 #endif
-#ifdef OPENSSL_NO_RSA
+#ifdef OPENtls_NO_RSA
     BIO_puts(bio_out, "RSA\n");
 #endif
-#ifdef OPENSSL_NO_SCRYPT
+#ifdef OPENtls_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
-#ifdef OPENSSL_NO_SCTP
+#ifdef OPENtls_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
-#ifdef OPENSSL_NO_SEED
+#ifdef OPENtls_NO_SEED
     BIO_puts(bio_out, "SEED\n");
 #endif
-#ifdef OPENSSL_NO_SM2
+#ifdef OPENtls_NO_SM2
     BIO_puts(bio_out, "SM2\n");
 #endif
-#ifdef OPENSSL_NO_SM3
+#ifdef OPENtls_NO_SM3
     BIO_puts(bio_out, "SM3\n");
 #endif
-#ifdef OPENSSL_NO_SM4
+#ifdef OPENtls_NO_SM4
     BIO_puts(bio_out, "SM4\n");
 #endif
-#ifdef OPENSSL_NO_SOCK
+#ifdef OPENtls_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
 #endif
-#ifdef OPENSSL_NO_SRP
+#ifdef OPENtls_NO_SRP
     BIO_puts(bio_out, "SRP\n");
 #endif
-#ifdef OPENSSL_NO_SRTP
+#ifdef OPENtls_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
-#ifdef OPENSSL_NO_SSL3
-    BIO_puts(bio_out, "SSL3\n");
+#ifdef OPENtls_NO_tls3
+    BIO_puts(bio_out, "tls3\n");
 #endif
-#ifdef OPENSSL_NO_TLS1
+#ifdef OPENtls_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");
 #endif
-#ifdef OPENSSL_NO_TLS1_1
+#ifdef OPENtls_NO_TLS1_1
     BIO_puts(bio_out, "TLS1_1\n");
 #endif
-#ifdef OPENSSL_NO_TLS1_2
+#ifdef OPENtls_NO_TLS1_2
     BIO_puts(bio_out, "TLS1_2\n");
 #endif
-#ifdef OPENSSL_NO_WHIRLPOOL
+#ifdef OPENtls_NO_WHIRLPOOL
     BIO_puts(bio_out, "WHIRLPOOL\n");
 #endif
 #ifndef ZLIB

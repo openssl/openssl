@@ -1,10 +1,10 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "bn_local.h"
@@ -254,7 +254,7 @@ static void nist_cp_bn_0(BN_ULONG *dst, const BN_ULONG *src, int top, int max)
     int i;
 
 #ifdef BN_DEBUG
-    (void)ossl_assert(top <= max);
+    (void)otls_assert(top <= max);
 #endif
     for (i = 0; i < top; i++)
         dst[i] = src[i];
@@ -330,8 +330,8 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     PTR_SIZE_INT mask;
     static const BIGNUM _bignum_nist_p_192_sqr = {
         (BN_ULONG *)_nist_p_192_sqr,
-        OSSL_NELEM(_nist_p_192_sqr),
-        OSSL_NELEM(_nist_p_192_sqr),
+        Otls_NELEM(_nist_p_192_sqr),
+        Otls_NELEM(_nist_p_192_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -475,8 +475,8 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_224_sqr = {
         (BN_ULONG *)_nist_p_224_sqr,
-        OSSL_NELEM(_nist_p_224_sqr),
-        OSSL_NELEM(_nist_p_224_sqr),
+        Otls_NELEM(_nist_p_224_sqr),
+        Otls_NELEM(_nist_p_224_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -656,8 +656,8 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_256_sqr = {
         (BN_ULONG *)_nist_p_256_sqr,
-        OSSL_NELEM(_nist_p_256_sqr),
-        OSSL_NELEM(_nist_p_256_sqr),
+        Otls_NELEM(_nist_p_256_sqr),
+        Otls_NELEM(_nist_p_256_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -902,8 +902,8 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_384_sqr = {
         (BN_ULONG *)_nist_p_384_sqr,
-        OSSL_NELEM(_nist_p_384_sqr),
-        OSSL_NELEM(_nist_p_384_sqr),
+        Otls_NELEM(_nist_p_384_sqr),
+        Otls_NELEM(_nist_p_384_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -1160,8 +1160,8 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     PTR_SIZE_INT mask;
     static const BIGNUM _bignum_nist_p_521_sqr = {
         (BN_ULONG *)_nist_p_521_sqr,
-        OSSL_NELEM(_nist_p_521_sqr),
-        OSSL_NELEM(_nist_p_521_sqr),
+        Otls_NELEM(_nist_p_521_sqr),
+        Otls_NELEM(_nist_p_521_sqr),
         0, BN_FLG_STATIC_DATA
     };
 

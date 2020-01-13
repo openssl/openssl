@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ use File::Copy;
 use File::Path;
 use FindBin;
 use lib "$FindBin::Bin/perl";
-use OpenSSL::Glob;
+use Opentls::Glob;
 use Getopt::Long;
 use Pod::Usage;
 
@@ -25,7 +25,7 @@ use configdata;
 # We know we are in the 'util' directory and that our perl modules are
 # in util/perl
 use lib catdir(dirname($0), "perl");
-use OpenSSL::Util::Pod;
+use Opentls::Util::Pod;
 
 my %options = ();
 GetOptions(\%options,
@@ -103,7 +103,7 @@ foreach my $section (sort @{$options{section}}) {
                   html => ".html" } -> {$options{type}};
             my $generate =
                 { man  => <<"_____",
-pod2man --name=$name --section=$podinfo{section}  --center=OpenSSL --release=$config{version}  "$podpath"
+pod2man --name=$name --section=$podinfo{section}  --center=Opentls --release=$config{version}  "$podpath"
 _____
                   html => <<"_____",
 pod2html "--podroot=$sourcedir" --htmldir=$updir --podpath=man1:man3:man5:man7 "--infile=$podpath" "--title=$podname" --quiet
@@ -211,7 +211,7 @@ __END__
 
 =head1 NAME
 
-process_docs.pl - A script to process OpenSSL docs
+process_docs.pl - A script to process Opentls docs
 
 =head1 SYNOPSIS
 
@@ -227,9 +227,9 @@ B<--type>=B<man>|B<html>
 =head1 DESCRIPTION
 
 This script looks for .pod files in the subdirectories 'apps', 'crypto'
-and 'ssl' under the given source directory.
+and 'tls' under the given source directory.
 
-The OpenSSL configuration data file F<configdata.pm> I<must> reside in
+The Opentls configuration data file F<configdata.pm> I<must> reside in
 the current directory, I<or> perl must have the directory it resides in
 in its inclusion array.  For the latter variant, a call like this would
 work:
@@ -272,11 +272,11 @@ Print extra debugging output.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-https://www.openssl.org/source/license.html
+https://www.opentls.org/source/license.html
 
 =cut

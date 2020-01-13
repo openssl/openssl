@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -18,7 +18,7 @@
 /* This must be the first #include file */
 #include "async_local.h"
 
-#include <openssl/err.h>
+#include <opentls/err.h>
 #include "crypto/cryptlib.h"
 #include <string.h>
 
@@ -36,10 +36,10 @@ static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx;
 
-    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
+    if (!otls_init_thread_start(NULL, NULL, async_delete_thread_state))
         return NULL;
 
-    nctx = OPENSSL_malloc(sizeof(*nctx));
+    nctx = OPENtls_malloc(sizeof(*nctx));
     if (nctx == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -53,7 +53,7 @@ static async_ctx *async_ctx_new(void)
 
     return nctx;
 err:
-    OPENSSL_free(nctx);
+    OPENtls_free(nctx);
 
     return NULL;
 }
@@ -72,7 +72,7 @@ static int async_ctx_free(void)
     if (!CRYPTO_THREAD_set_local(&ctxkey, NULL))
         return 0;
 
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 
     return 1;
 }
@@ -81,7 +81,7 @@ static ASYNC_JOB *async_job_new(void)
 {
     ASYNC_JOB *job = NULL;
 
-    job = OPENSSL_zalloc(sizeof(*job));
+    job = OPENtls_zalloc(sizeof(*job));
     if (job == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -95,9 +95,9 @@ static ASYNC_JOB *async_job_new(void)
 static void async_job_free(ASYNC_JOB *job)
 {
     if (job != NULL) {
-        OPENSSL_free(job->funcargs);
+        OPENtls_free(job->funcargs);
         async_fibre_free(&job->fibrectx);
-        OPENSSL_free(job);
+        OPENtls_free(job);
     }
 }
 
@@ -138,7 +138,7 @@ static void async_release_job(ASYNC_JOB *job) {
     async_pool *pool;
 
     pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
-    OPENSSL_free(job->funcargs);
+    OPENtls_free(job->funcargs);
     job->funcargs = NULL;
     sk_ASYNC_JOB_push(pool->jobs, job);
 }
@@ -171,7 +171,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 {
     async_ctx *ctx;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return ASYNC_ERR;
 
     ctx = async_get_ctx();
@@ -226,7 +226,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             return ASYNC_NO_JOBS;
 
         if (args != NULL) {
-            ctx->currjob->funcargs = OPENSSL_malloc(size);
+            ctx->currjob->funcargs = OPENtls_malloc(size);
             if (ctx->currjob->funcargs == NULL) {
                 ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_MALLOC_FAILURE);
                 async_release_job(ctx->currjob);
@@ -325,13 +325,13 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return 0;
 
-    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
+    if (!otls_init_thread_start(NULL, NULL, async_delete_thread_state))
         return 0;
 
-    pool = OPENSSL_zalloc(sizeof(*pool));
+    pool = OPENtls_zalloc(sizeof(*pool));
     if (pool == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -340,7 +340,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(pool);
+        OPENtls_free(pool);
         return 0;
     }
 
@@ -372,7 +372,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
 err:
     async_empty_pool(pool);
     sk_ASYNC_JOB_free(pool->jobs);
-    OPENSSL_free(pool);
+    OPENtls_free(pool);
     return 0;
 }
 
@@ -384,7 +384,7 @@ static void async_delete_thread_state(void *arg)
     if (pool != NULL) {
         async_empty_pool(pool);
         sk_ASYNC_JOB_free(pool->jobs);
-        OPENSSL_free(pool);
+        OPENtls_free(pool);
         CRYPTO_THREAD_set_local(&poolkey, NULL);
     }
     async_local_cleanup();
@@ -393,7 +393,7 @@ static void async_delete_thread_state(void *arg)
 
 void ASYNC_cleanup_thread(void)
 {
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return;
 
     async_delete_thread_state(NULL);
@@ -403,7 +403,7 @@ ASYNC_JOB *ASYNC_get_current_job(void)
 {
     async_ctx *ctx;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return NULL;
 
     ctx = async_get_ctx();
@@ -422,7 +422,7 @@ void ASYNC_block_pause(void)
 {
     async_ctx *ctx;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return;
 
     ctx = async_get_ctx();
@@ -439,7 +439,7 @@ void ASYNC_unblock_pause(void)
 {
     async_ctx *ctx;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ASYNC, NULL))
         return;
 
     ctx = async_get_ctx();

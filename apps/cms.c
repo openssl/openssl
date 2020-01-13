@@ -1,10 +1,10 @@
 /*
- * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* CMS utility function */
@@ -14,23 +14,23 @@
 #include "apps.h"
 #include "progs.h"
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 
-# include <openssl/crypto.h>
-# include <openssl/pem.h>
-# include <openssl/err.h>
-# include <openssl/x509_vfy.h>
-# include <openssl/x509v3.h>
-# include <openssl/cms.h>
+# include <opentls/crypto.h>
+# include <opentls/pem.h>
+# include <opentls/err.h>
+# include <opentls/x509_vfy.h>
+# include <opentls/x509v3.h>
+# include <opentls/cms.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);
-static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
-                                                *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
+static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENtls_STRING)
+                                                *rr_to, int rr_allorfirst, STACK_OF(OPENtls_STRING)
                                                 *rr_from);
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
-                              STACK_OF(OPENSSL_STRING) *param);
+                              STACK_OF(OPENtls_STRING) *param);
 
 # define SMIME_OP        0x10
 # define SMIME_IP        0x20
@@ -58,7 +58,7 @@ typedef struct cms_key_param_st cms_key_param;
 
 struct cms_key_param_st {
     int idx;
-    STACK_OF(OPENSSL_STRING) *param;
+    STACK_OF(OPENtls_STRING) *param;
     cms_key_param *next;
 };
 
@@ -113,7 +113,7 @@ const OPTIONS cms_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
 
@@ -211,7 +211,7 @@ const OPTIONS cms_options[] = {
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
-# ifndef OPENSSL_NO_DES
+# ifndef OPENtls_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
 # endif
 
@@ -233,8 +233,8 @@ int cms_main(int argc, char **argv)
     EVP_PKEY *key = NULL;
     const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
     const EVP_MD *sign_md = NULL;
-    STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
-    STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
+    STACK_OF(OPENtls_STRING) *rr_to = NULL, *rr_from = NULL;
+    STACK_OF(OPENtls_STRING) *sksigners = NULL, *skkeys = NULL;
     STACK_OF(X509) *encerts = NULL, *other = NULL;
     X509 *cert = NULL, *recip = NULL, *signer = NULL;
     X509_STORE *store = NULL;
@@ -442,15 +442,15 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_RR_FROM:
             if (rr_from == NULL
-                && (rr_from = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (rr_from = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(rr_from, opt_arg());
+            sk_OPENtls_STRING_push(rr_from, opt_arg());
             break;
         case OPT_RR_TO:
             if (rr_to == NULL
-                && (rr_to = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (rr_to = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(rr_to, opt_arg());
+            sk_OPENtls_STRING_push(rr_to, opt_arg());
             break;
         case OPT_PRINT:
             noout = print = 1;
@@ -461,7 +461,7 @@ int cms_main(int argc, char **argv)
                            opt_arg());
                 goto opthelp;
             }
-            secret_key = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
+            secret_key = OPENtls_hexstr2buf(opt_arg(), &ltmp);
             if (secret_key == NULL) {
                 BIO_printf(bio_err, "Invalid key %s\n", opt_arg());
                 goto end;
@@ -474,7 +474,7 @@ int cms_main(int argc, char **argv)
                            opt_arg());
                 goto opthelp;
             }
-            secret_keyid = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
+            secret_keyid = OPENtls_hexstr2buf(opt_arg(), &ltmp);
             if (secret_keyid == NULL) {
                 BIO_printf(bio_err, "Invalid id %s\n", opt_arg());
                 goto opthelp;
@@ -522,15 +522,15 @@ int cms_main(int argc, char **argv)
             /* If previous -signer argument add signer to list */
             if (signerfile != NULL) {
                 if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
+                sk_OPENtls_STRING_push(sksigners, signerfile);
                 if (keyfile == NULL)
                     keyfile = signerfile;
                 if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
+                sk_OPENtls_STRING_push(skkeys, keyfile);
                 keyfile = NULL;
             }
             signerfile = opt_arg();
@@ -543,14 +543,14 @@ int cms_main(int argc, char **argv)
                     goto end;
                 }
                 if (sksigners == NULL
-                    && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(sksigners, signerfile);
+                sk_OPENtls_STRING_push(sksigners, signerfile);
                 signerfile = NULL;
                 if (skkeys == NULL
-                    && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+                    && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
-                sk_OPENSSL_STRING_push(skkeys, keyfile);
+                sk_OPENtls_STRING_push(skkeys, keyfile);
             }
             keyfile = opt_arg();
             break;
@@ -585,7 +585,7 @@ int cms_main(int argc, char **argv)
                 if (keyfile != NULL || signerfile != NULL)
                     keyidx++;
                 if (skkeys != NULL)
-                    keyidx += sk_OPENSSL_STRING_num(skkeys);
+                    keyidx += sk_OPENtls_STRING_num(skkeys);
             }
             if (keyidx < 0) {
                 BIO_printf(bio_err, "No key specified\n");
@@ -595,7 +595,7 @@ int cms_main(int argc, char **argv)
                 cms_key_param *nparam;
                 nparam = app_malloc(sizeof(*nparam), "key param buffer");
                 nparam->idx = keyidx;
-                if ((nparam->param = sk_OPENSSL_STRING_new_null()) == NULL)
+                if ((nparam->param = sk_OPENtls_STRING_new_null()) == NULL)
                     goto end;
                 nparam->next = NULL;
                 if (key_first == NULL)
@@ -604,7 +604,7 @@ int cms_main(int argc, char **argv)
                     key_param->next = nparam;
                 key_param = nparam;
             }
-            sk_OPENSSL_STRING_push(key_param->param, opt_arg());
+            sk_OPENtls_STRING_push(key_param->param, opt_arg());
             break;
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
@@ -616,7 +616,7 @@ int cms_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_3DES_WRAP:
-# ifndef OPENSSL_NO_DES
+# ifndef OPENtls_NO_DES
             wrap_cipher = EVP_des_ede3_wrap();
 # endif
             break;
@@ -664,14 +664,14 @@ int cms_main(int argc, char **argv)
         /* Check to see if any final signer needs to be appended */
         if (signerfile != NULL) {
             if (sksigners == NULL
-                && (sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+                && (sksigners = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
-            sk_OPENSSL_STRING_push(sksigners, signerfile);
-            if (skkeys == NULL && (skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+            sk_OPENtls_STRING_push(sksigners, signerfile);
+            if (skkeys == NULL && (skkeys = sk_OPENtls_STRING_new_null()) == NULL)
                 goto end;
             if (keyfile == NULL)
                 keyfile = signerfile;
-            sk_OPENSSL_STRING_push(skkeys, keyfile);
+            sk_OPENtls_STRING_push(skkeys, keyfile);
         }
         if (sksigners == NULL) {
             BIO_printf(bio_err, "No signer certificate specified\n");
@@ -717,7 +717,7 @@ int cms_main(int argc, char **argv)
 
     if (operation == SMIME_ENCRYPT) {
         if (!cipher) {
-# ifndef OPENSSL_NO_DES
+# ifndef OPENtls_NO_DES
             cipher = EVP_des_ede3_cbc();
 # else
             BIO_printf(bio_err, "No cipher selected\n");
@@ -913,7 +913,7 @@ int cms_main(int argc, char **argv)
             secret_keyid = NULL;
         }
         if (pwri_pass != NULL) {
-            pwri_tmp = (unsigned char *)OPENSSL_strdup((char *)pwri_pass);
+            pwri_tmp = (unsigned char *)OPENtls_strdup((char *)pwri_pass);
             if (pwri_tmp == NULL)
                 goto end;
             if (CMS_add0_recipient_password(cms,
@@ -973,12 +973,12 @@ int cms_main(int argc, char **argv)
         } else {
             flags |= CMS_REUSE_DIGEST;
         }
-        for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
+        for (i = 0; i < sk_OPENtls_STRING_num(sksigners); i++) {
             CMS_SignerInfo *si;
             cms_key_param *kparam;
             int tflags = flags;
-            signerfile = sk_OPENSSL_STRING_value(sksigners, i);
-            keyfile = sk_OPENSSL_STRING_value(skkeys, i);
+            signerfile = sk_OPENtls_STRING_value(sksigners, i);
+            keyfile = sk_OPENtls_STRING_value(skkeys, i);
 
             signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
             if (signer == NULL) {
@@ -1138,20 +1138,20 @@ int cms_main(int argc, char **argv)
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);
-    sk_OPENSSL_STRING_free(sksigners);
-    sk_OPENSSL_STRING_free(skkeys);
-    OPENSSL_free(secret_key);
-    OPENSSL_free(secret_keyid);
-    OPENSSL_free(pwri_tmp);
+    sk_OPENtls_STRING_free(sksigners);
+    sk_OPENtls_STRING_free(skkeys);
+    OPENtls_free(secret_key);
+    OPENtls_free(secret_keyid);
+    OPENtls_free(pwri_tmp);
     ASN1_OBJECT_free(econtent_type);
     CMS_ReceiptRequest_free(rr);
-    sk_OPENSSL_STRING_free(rr_to);
-    sk_OPENSSL_STRING_free(rr_from);
+    sk_OPENtls_STRING_free(rr_to);
+    sk_OPENtls_STRING_free(rr_from);
     for (key_param = key_first; key_param;) {
         cms_key_param *tparam;
-        sk_OPENSSL_STRING_free(key_param->param);
+        sk_OPENtls_STRING_free(key_param->param);
         tparam = key_param->next;
-        OPENSSL_free(key_param);
+        OPENtls_free(key_param);
         key_param = tparam;
     }
     X509_STORE_free(store);
@@ -1166,7 +1166,7 @@ int cms_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     return ret;
 }
 
@@ -1269,7 +1269,7 @@ static void receipt_request_print(CMS_ContentInfo *cms)
     }
 }
 
-static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
+static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENtls_STRING) *ns)
 {
     int i;
     STACK_OF(GENERAL_NAMES) *ret;
@@ -1278,8 +1278,8 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
     ret = sk_GENERAL_NAMES_new_null();
     if (ret == NULL)
         goto err;
-    for (i = 0; i < sk_OPENSSL_STRING_num(ns); i++) {
-        char *str = sk_OPENSSL_STRING_value(ns, i);
+    for (i = 0; i < sk_OPENtls_STRING_num(ns); i++) {
+        char *str = sk_OPENtls_STRING_value(ns, i);
         gen = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_EMAIL, str, 0);
         if (gen == NULL)
             goto err;
@@ -1303,8 +1303,8 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
     return NULL;
 }
 
-static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
-                                                *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
+static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENtls_STRING)
+                                                *rr_to, int rr_allorfirst, STACK_OF(OPENtls_STRING)
                                                 *rr_from)
 {
     STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
@@ -1328,14 +1328,14 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
 }
 
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
-                              STACK_OF(OPENSSL_STRING) *param)
+                              STACK_OF(OPENtls_STRING) *param)
 {
     char *keyopt;
     int i;
-    if (sk_OPENSSL_STRING_num(param) <= 0)
+    if (sk_OPENtls_STRING_num(param) <= 0)
         return 1;
-    for (i = 0; i < sk_OPENSSL_STRING_num(param); i++) {
-        keyopt = sk_OPENSSL_STRING_value(param, i);
+    for (i = 0; i < sk_OPENtls_STRING_num(param); i++) {
+        keyopt = sk_OPENtls_STRING_value(param, i);
         if (pkey_ctrl_string(pctx, keyopt) <= 0) {
             BIO_printf(bio_err, "parameter error \"%s\"\n", keyopt);
             ERR_print_errors(bio_err);

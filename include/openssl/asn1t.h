@@ -1,28 +1,28 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_ASN1T_H
-# define OPENSSL_ASN1T_H
+#ifndef OPENtls_ASN1T_H
+# define OPENtls_ASN1T_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_ASN1T_H
 # endif
 
 # include <stddef.h>
-# include <openssl/e_os2.h>
-# include <openssl/asn1.h>
+# include <opentls/e_os2.h>
+# include <opentls/asn1.h>
 
-# ifdef OPENSSL_BUILD_SHLIBCRYPTO
-#  undef OPENSSL_EXTERN
-#  define OPENSSL_EXTERN OPENSSL_EXPORT
+# ifdef OPENtls_BUILD_SHLIBCRYPTO
+#  undef OPENtls_EXTERN
+#  define OPENtls_EXTERN OPENtls_EXPORT
 # endif
 
 /* ASN1 template defines, structures and functions */
@@ -870,7 +870,7 @@ DECLARE_ASN1_ITEM(ZINT64)
 DECLARE_ASN1_ITEM(UINT64)
 DECLARE_ASN1_ITEM(ZUINT64)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 /*
  * LONG and ZLONG are strongly discouraged for use as stored data, as the
  * underlying C type (long) differs in size depending on the architecture.

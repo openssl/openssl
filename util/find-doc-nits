@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2019 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 require 5.10.0;
@@ -17,7 +17,7 @@ use File::Basename;
 use File::Spec::Functions;
 use Getopt::Std;
 use lib catdir(dirname($0), "perl");
-use OpenSSL::Util::Pod;
+use Opentls::Util::Pod;
 
 # Set to 1 for debug output
 my $debug = 0;
@@ -471,7 +471,7 @@ sub check {
     # Check for proper links to commands.
     while ( $contents =~ /L<([^>]*)\(1\)(?:\/.*)?>/g ) {
         my $target = $1;
-        next if $target =~ /openssl-?/;
+        next if $target =~ /opentls-?/;
         next if -f "doc/man1/$target.pod";
         # TODO: Filter out "foreign manual" links.
         next if $target =~ /ps|apropos|sha1sum|procmail|perl/;
@@ -484,7 +484,7 @@ sub check {
             unless $target =~ /^[_[:alpha:]][_[:alnum:]]*$/
     }
 
-    unless ( $contents =~ /=for openssl generic/ ) {
+    unless ( $contents =~ /=for opentls generic/ ) {
         if ( $filename =~ m|man3/| ) {
             name_synopsis($id, $filename, $contents);
             functionname_check($id, $filename, $contents);
@@ -506,7 +506,7 @@ sub check {
     err($id, "WARNING not WARNINGS section.")
         if $contents =~ /=head1 WARNING[^S]/;
     err($id, "missing copyright")
-        if $contents !~ /Copyright .* The OpenSSL Project Authors/;
+        if $contents !~ /Copyright .* The Opentls Project Authors/;
     err($id, "copyright not last")
         if $contents =~ /head1 COPYRIGHT.*=head/ms;
     err($id, "head2 in All uppercase")
@@ -520,15 +520,15 @@ sub check {
     err($id, "Bad =over $1")
         if $contents =~ /=over([^ ][^24])/;
     err($id, "Possible version style issue")
-        if $contents =~ /OpenSSL version [019]/;
+        if $contents =~ /Opentls version [019]/;
 
-    if ( $contents !~ /=for openssl multiple includes/ ) {
-        # Look for multiple consecutive openssl #include lines
+    if ( $contents !~ /=for opentls multiple includes/ ) {
+        # Look for multiple consecutive opentls #include lines
         # (non-consecutive lines are okay; see man3/MD5.pod).
         if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {
             my $count = 0;
             foreach my $line ( split /\n+/, $1 ) {
-                if ( $line =~ m@include <openssl/@ ) {
+                if ( $line =~ m@include <opentls/@ ) {
                     err($id, "has multiple includes")
                         if ++$count == 2;
                 } else {
@@ -626,11 +626,11 @@ sub checkmacros {
         @missing = loadmissing('util/missingmacro.txt');
     }
 
-    foreach my $f ( glob('include/openssl/*.h') ) {
+    foreach my $f ( glob('include/opentls/*.h') ) {
         # Skip some internals we don't want to document yet.
-        next if $f eq 'include/openssl/asn1.h';
-        next if $f eq 'include/openssl/asn1t.h';
-        next if $f eq 'include/openssl/err.h';
+        next if $f eq 'include/opentls/asn1.h';
+        next if $f eq 'include/opentls/asn1t.h';
+        next if $f eq 'include/opentls/err.h';
         open(IN, $f) || die "Can't open $f, $!";
         while ( <IN> ) {
             next unless /^#\s*define\s*(\S+)\(/;
@@ -718,7 +718,7 @@ sub collectnames {
 
     my @foreign_names =
         map { map { s/\s+//g; $_ } split(/,/, $_) }
-        $podinfo{contents} =~ /=for\s+openssl\s+foreign\s+manuals:\s*(.*)\n\n/;
+        $podinfo{contents} =~ /=for\s+opentls\s+foreign\s+manuals:\s*(.*)\n\n/;
     foreach ( @foreign_names ) {
         $name_map{$_} = undef; # It still exists!
     }
@@ -751,7 +751,7 @@ sub publicize {
     foreach my $name ( parsenum('util/libcrypto.num') ) {
         $public{$name} = 1;
     }
-    foreach my $name ( parsenum('util/libssl.num') ) {
+    foreach my $name ( parsenum('util/libtls.num') ) {
         $public{$name} = 1;
     }
     foreach my $name ( parsenum('util/other.syms') ) {
@@ -787,7 +787,7 @@ sub checkflags {
     my %localskips;
 
     # Get the list of options in the command.
-    open CFH, "./apps/openssl list --options $cmd|"
+    open CFH, "./apps/opentls list --options $cmd|"
         || die "Can list options for $cmd, $!";
     while ( <CFH> ) {
         chop;
@@ -802,7 +802,7 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
-        if ( /=for openssl ifdef (.*)/ ) {
+        if ( /=for opentls ifdef (.*)/ ) {
             foreach my $f ( split / /, $1 ) {
                 $localskips{$f} = 1;
             }
@@ -841,7 +841,7 @@ if ( $opt_c ) {
     my @commands = ();
 
     # Get list of commands.
-    open FH, "./apps/openssl list -1 -commands|"
+    open FH, "./apps/opentls list -1 -commands|"
         || die "Can't list commands, $!";
     while ( <FH> ) {
         chop;
@@ -853,7 +853,7 @@ if ( $opt_c ) {
     foreach my $cmd ( @commands ) {
         next if $cmd eq 'help' || $cmd eq 'exit';
         my $doc = "doc/man1/$cmd.pod";
-        $doc = "doc/man1/openssl-$cmd.pod" if -f "doc/man1/openssl-$cmd.pod";
+        $doc = "doc/man1/opentls-$cmd.pod" if -f "doc/man1/opentls-$cmd.pod";
         if ( ! -f "$doc" ) {
             err("$doc does not exist");
         } else {
@@ -862,7 +862,7 @@ if ( $opt_c ) {
     }
 
     # See what help is missing.
-    open FH, "./apps/openssl list --missing-help |"
+    open FH, "./apps/opentls list --missing-help |"
         || die "Can't list missing help, $!";
     while ( <FH> ) {
         chop;
@@ -894,8 +894,8 @@ if ( $opt_n ) {
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
         foreach (glob('doc/man1/*.pod')) {
-            next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
-            err("$_ doesn't start with openssl-") unless /openssl-/;
+            next if /CA.pl/ || /opentls\.pod/ || /tsget\.pod/;
+            err("$_ doesn't start with opentls-") unless /opentls-/;
         }
     }
 }
@@ -903,10 +903,10 @@ if ( $opt_n ) {
 if ( $opt_u || $opt_v) {
     if ( $opt_o ) {
         printem('crypto', 'util/libcrypto.num', 'util/missingcrypto111.txt');
-        printem('ssl', 'util/libssl.num', 'util/missingssl111.txt');
+        printem('tls', 'util/libtls.num', 'util/missingtls111.txt');
     } else {
         printem('crypto', 'util/libcrypto.num', 'util/missingcrypto.txt');
-        printem('ssl', 'util/libssl.num', 'util/missingssl.txt');
+        printem('tls', 'util/libtls.num', 'util/missingtls.txt');
     }
     checkmacros();
 }

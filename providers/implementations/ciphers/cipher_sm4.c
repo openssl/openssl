@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
@@ -12,20 +12,20 @@
 #include "cipher_sm4.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn sm4_freectx;
-static OSSL_OP_cipher_dupctx_fn sm4_dupctx;
+static Otls_OP_cipher_freectx_fn sm4_freectx;
+static Otls_OP_cipher_dupctx_fn sm4_dupctx;
 
 static void sm4_freectx(void *vctx)
 {
     PROV_SM4_CTX *ctx = (PROV_SM4_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *sm4_dupctx(void *ctx)
 {
     PROV_SM4_CTX *in = (PROV_SM4_CTX *)ctx;
-    PROV_SM4_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_SM4_CTX *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);

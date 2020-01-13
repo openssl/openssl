@@ -1,13 +1,13 @@
 =pod
-{- OpenSSL::safe::output_do_not_edit_headers(); -}
+{- Opentls::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-verify - Utility to verify certificates
+opentls-verify - Utility to verify certificates
 
 =head1 SYNOPSIS
 
-B<openssl> B<verify>
+B<opentls> B<verify>
 [B<-help>]
 [B<-allow_proxy_certs>]
 [B<-attime> I<timestamp>]
@@ -46,13 +46,13 @@ B<openssl> B<verify>
 [B<-show_chain>]
 [B<-sm2-id> I<string>]
 [B<-sm2-hex-id> I<hex-string>]
-{- $OpenSSL::safe::opt_name_synopsis -}
-{- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $Opentls::safe::opt_name_synopsis -}
+{- $Opentls::safe::opt_trust_synopsis -}
+{- $Opentls::safe::opt_engine_synopsis -}
 [B<-->]
 [I<certificate> ...]
 
-=for openssl ifdef engine sm2-id sm2-hex-id
+=for opentls ifdef engine sm2-id sm2-hex-id
 
 =head1 DESCRIPTION
 
@@ -113,7 +113,7 @@ signing keys.
 =item B<-ignore_critical>
 
 Normally if an unhandled critical extension is present which is not
-supported by OpenSSL the certificate is rejected (as required by RFC5280).
+supported by Opentls the certificate is rejected (as required by RFC5280).
 If this option is set critical extensions are ignored.
 
 =item B<-inhibit_any>
@@ -155,7 +155,7 @@ Print out diagnostics related to policy processing.
 The intended use for the certificate. If this option is not specified,
 this command will not consider certificate purpose during chain
 verification.
-Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
+Currently accepted uses are B<tlsclient>, B<tlsserver>, B<nstlsserver>,
 B<smimesign>, B<smimeencrypt>. See the L</VERIFY OPERATION> section for more
 information.
 
@@ -173,15 +173,15 @@ When constructing the certificate chain, use the trusted certificates specified
 via B<-CAfile>, B<-CApath>, B<-CAstore> or B<-trusted> before any certificates
 specified via B<-untrusted>.
 This can be useful in environments with Bridge or Cross-Certified CAs.
-As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+As of Opentls 1.1.0 this option is on by default and cannot be disabled.
 
 =item B<-no_alt_chains>
 
 By default, unless B<-trusted_first> is specified, when building a certificate
-chain, if the first certificate chain found is not trusted, then OpenSSL will
+chain, if the first certificate chain found is not trusted, then Opentls will
 attempt to replace untrusted issuer certificates with certificates from the
 trust store to see if an alternative chain can be found that is trusted.
-As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
+As of Opentls 1.1.0, with B<-trusted_first> always on, this option has no
 effect.
 
 =item B<-untrusted> I<file>
@@ -224,7 +224,7 @@ must meet the specified security I<level>.
 The signature algorithm security level is enforced for all the certificates in
 the chain except for the chain's I<trust anchor>, which is either directly
 trusted or validated by means other than its signature.
-See L<SSL_CTX_set_security_level(3)> for the definitions of the available
+See L<tls_CTX_set_security_level(3)> for the definitions of the available
 levels.
 The default security level is -1, or "not set".
 At security level 0 or lower all algorithms are acceptable.
@@ -260,12 +260,12 @@ Use default verification policies like trust model and required certificate
 policies identified by I<name>.
 The trust model determines which auxiliary trust or reject OIDs are applicable
 to verifying the given certificate chain.
-See the B<-addtrust> and B<-addreject> options for L<openssl-x509(1)>.
+See the B<-addtrust> and B<-addreject> options for L<opentls-x509(1)>.
 Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
-B<ssl_client>, B<ssl_server>.
-These mimics the combinations of purpose and trust settings used in SSL, CMS
+B<tls_client>, B<tls_server>.
+These mimics the combinations of purpose and trust settings used in tls, CMS
 and S/MIME.
-As of OpenSSL 1.1.0, the trust model is inferred from the purpose when not
+As of Opentls 1.1.0, the trust model is inferred from the purpose when not
 specified, so the B<-verify_name> options are functionally equivalent to the
 corresponding B<-purpose> settings.
 
@@ -290,11 +290,11 @@ required by the SM2 signature algorithm for signing and verification.
 Specify a binary ID string to use when signing or verifying using an SM2
 certificate. The argument for this option is string of hexadecimal digits.
 
-{- $OpenSSL::safe::opt_name_item -}
+{- $Opentls::safe::opt_name_item -}
 
-{- $OpenSSL::safe::opt_trust_item -}
+{- $Opentls::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
+{- $Opentls::safe::opt_engine_item -}
 To load certificates or CRLs that require engine support, specify the
 B<-engine> option before any of the
 B<-trusted>, B<-untrusted> or B<-CRLfile> options.
@@ -315,7 +315,7 @@ Certificates must be in PEM format.
 
 =head1 VERIFY OPERATION
 
-This command uses the same functions as the internal SSL
+This command uses the same functions as the internal tls
 and S/MIME verification, therefore this description applies to these verify
 operations too.
 
@@ -355,11 +355,11 @@ consistency with the supplied purpose. If the B<-purpose> option is not included
 then no checks are done. The supplied or "leaf" certificate must have extensions
 compatible with the supplied purpose and all other certificates must also be
 valid CA certificates. The precise extensions required are described in more
-detail in L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
+detail in L<opentls-x509(1)/CERTIFICATE EXTENSIONS>.
 
 The third operation is to check the trust settings on the root CA. The root CA
 should be trusted for the supplied purpose.
-For compatibility with previous versions of OpenSSL, a certificate with no
+For compatibility with previous versions of Opentls, a certificate with no
 trust settings is considered to be valid for all purposes.
 
 The final operation is to check the validity of the certificate chain. The
@@ -387,7 +387,7 @@ of the error number is presented.
 
 A partial list of the error codes and messages is shown below, this also
 includes the name of the error code as defined in the header file
-F<< <openssl/x509_vfy.h> >>.
+F<< <opentls/x509_vfy.h> >>.
 Some of the error codes are defined but never returned: these are described
 as "unused".
 
@@ -524,22 +524,22 @@ The root CA is marked to reject the specified purpose.
 
 =item B<X509_V_ERR_SUBJECT_ISSUER_MISMATCH>
 
-Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+Not used as of Opentls 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
 =item B<X509_V_ERR_AKID_SKID_MISMATCH>
 
-Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+Not used as of Opentls 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
 =item B<X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH>
 
-Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+Not used as of Opentls 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
 =item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN>
 
-Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+Not used as of Opentls 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER>
@@ -679,7 +679,7 @@ IP address mismatch.
 
 DANE TLSA authentication is enabled, but no TLSA records matched the
 certificate chain.
-This error is only possible in L<openssl-s_client(1)>.
+This error is only possible in L<opentls-s_client(1)>.
 
 =item B<X509_V_ERR_EE_KEY_TOO_SMALL>
 
@@ -734,7 +734,7 @@ option), a directory (as specified by B<-CApath>), or a store (as specified
 by B<-CAstore>). If they occur in more than one location then only the
 certificates in the file will be recognised.
 
-Previous versions of OpenSSL assume certificates with matching subject
+Previous versions of Opentls assume certificates with matching subject
 name are identical and mishandled them.
 
 Previous versions of this documentation swapped the meaning of the
@@ -743,26 +743,26 @@ B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-x509(1)>,
-L<ossl_store-file(7)>
+L<opentls(1)>,
+L<opentls-x509(1)>,
+L<otls_store-file(7)>
 
 =head1 HISTORY
 
-The B<-show_chain> option was added in OpenSSL 1.1.0.
+The B<-show_chain> option was added in Opentls 1.1.0.
 
-The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
+The B<-issuer_checks> option is deprecated as of Opentls 1.1.0 and
 is silently ignored.
 
-The B<-sm2-id> and B<-sm2-hex-id> options were added in OpenSSL 3.0.
+The B<-sm2-id> and B<-sm2-hex-id> options were added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -21,7 +21,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[asn1]=asn1.c driver.c
   INCLUDE[asn1]=../include {- $ex_inc -}
-  DEPEND[asn1]=../libcrypto ../libssl {- $ex_lib -}
+  DEPEND[asn1]=../libcrypto ../libtls {- $ex_lib -}
 
   SOURCE[asn1parse]=asn1parse.c driver.c
   INCLUDE[asn1parse]=../include {- $ex_inc -}
@@ -37,7 +37,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[client]=client.c driver.c
   INCLUDE[client]=../include {- $ex_inc -}
-  DEPEND[client]=../libcrypto ../libssl {- $ex_lib -}
+  DEPEND[client]=../libcrypto ../libtls {- $ex_lib -}
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
@@ -57,7 +57,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[server]=server.c driver.c
   INCLUDE[server]=../include {- $ex_inc -}
-  DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
+  DEPEND[server]=../libcrypto ../libtls {- $ex_lib -}
 
   SOURCE[x509]=x509.c driver.c
   INCLUDE[x509]=../include {- $ex_inc -}
@@ -77,7 +77,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[asn1-test]=asn1.c test-corpus.c
   INCLUDE[asn1-test]=../include
-  DEPEND[asn1-test]=../libcrypto ../libssl
+  DEPEND[asn1-test]=../libcrypto ../libtls
 
   SOURCE[asn1parse-test]=asn1parse.c test-corpus.c
   INCLUDE[asn1parse-test]=../include
@@ -93,7 +93,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[client-test]=client.c test-corpus.c
   INCLUDE[client-test]=../include
-  DEPEND[client-test]=../libcrypto ../libssl
+  DEPEND[client-test]=../libcrypto ../libtls
 
   SOURCE[cms-test]=cms.c test-corpus.c
   INCLUDE[cms-test]=../include
@@ -113,7 +113,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[server-test]=server.c test-corpus.c
   INCLUDE[server-test]=../include
-  DEPEND[server-test]=../libcrypto ../libssl
+  DEPEND[server-test]=../libcrypto ../libtls
 
   SOURCE[x509-test]=x509.c test-corpus.c
   INCLUDE[x509-test]=../include

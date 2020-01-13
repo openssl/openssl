@@ -1,10 +1,10 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,13 +15,13 @@
 
 #include <string.h>
 #include <assert.h>
-#include <openssl/opensslconf.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/aes.h>
-#include <openssl/rand.h>
-#include <openssl/cmac.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/aes.h>
+#include <opentls/rand.h>
+#include <opentls/cmac.h>
 #include "crypto/evp.h"
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
@@ -31,7 +31,7 @@
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks;
     block128_f block;
@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks;                       /* AES key schedule to use */
     int key_set;                /* Set if key initialised */
@@ -61,7 +61,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks1, ks2;                 /* AES key schedules to use */
     XTS128_CONTEXT xts;
@@ -79,7 +79,7 @@ static const int allow_insecure_decrypt = 1;
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks;                       /* AES key schedule to use */
     int key_set;                /* Set if key initialised */
@@ -92,14 +92,14 @@ typedef struct {
     ccm128_f str;
 } EVP_AES_CCM_CTX;
 
-#ifndef OPENSSL_NO_OCB
+#ifndef OPENtls_NO_OCB
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ksenc;                    /* AES key schedule to use for encryption */
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ksdec;                    /* AES key schedule to use for decryption */
     int key_set;                /* Set if key initialised */
@@ -336,7 +336,7 @@ static int aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 
-# ifndef OPENSSL_NO_OCB
+# ifndef OPENtls_NO_OCB
 static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
@@ -390,7 +390,7 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #  define aesni_ocb_cipher aes_ocb_cipher
 static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
-# endif                        /* OPENSSL_NO_OCB */
+# endif                        /* OPENtls_NO_OCB */
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
@@ -686,7 +686,7 @@ static int aes_t4_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aes_t4_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                              const unsigned char *in, size_t len);
 
-# ifndef OPENSSL_NO_OCB
+# ifndef OPENtls_NO_OCB
 static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
@@ -739,12 +739,12 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #  define aes_t4_ocb_cipher aes_ocb_cipher
 static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                              const unsigned char *in, size_t len);
-# endif                        /* OPENSSL_NO_OCB */
+# endif                        /* OPENtls_NO_OCB */
 
-# ifndef OPENSSL_NO_SIV
+# ifndef OPENtls_NO_SIV
 #  define aes_t4_siv_init_key aes_siv_init_key
 #  define aes_t4_siv_cipher aes_siv_cipher
-# endif /* OPENSSL_NO_SIV */
+# endif /* OPENtls_NO_SIV */
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
@@ -795,7 +795,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 /* IBM S390X support */
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         /*-
          * KM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-06)
@@ -810,7 +810,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         /*-
          * KMO-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-08)
@@ -828,7 +828,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         /*-
          * KMF-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-08)
@@ -846,7 +846,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         /*-
          * KMA-GCM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-11)
@@ -895,7 +895,7 @@ typedef struct {
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         /*-
          * Padding is chosen so that ccm.kmac_param.k overlaps with key.k and
          * ccm.fc with key.k.rounds. Remember that on s390x, an AES_KEY's
@@ -1364,9 +1364,9 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             /* Allocate memory for iv if needed. */
             if (gctx->ivlen == 12 || len > S390X_gcm_ivpadlen(gctx->ivlen)) {
                 if (gctx->iv != iv)
-                    OPENSSL_free(gctx->iv);
+                    OPENtls_free(gctx->iv);
 
-                if ((gctx->iv = OPENSSL_malloc(len)) == NULL) {
+                if ((gctx->iv = OPENtls_malloc(len)) == NULL) {
                     EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
@@ -1486,7 +1486,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         } else {
             len = S390X_gcm_ivpadlen(gctx->ivlen);
 
-            if ((gctx_out->iv = OPENSSL_malloc(len)) == NULL) {
+            if ((gctx_out->iv = OPENtls_malloc(len)) == NULL) {
                 EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -1587,7 +1587,7 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     } else {
         if (CRYPTO_memcmp(gctx->kma.param.t.b, in + len,
                           EVP_GCM_TLS_TAG_LEN)) {
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
             goto err;
         }
         rv = len;
@@ -1636,7 +1636,7 @@ static int s390x_aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                   gctx->fc | S390X_KMA_LAAD | S390X_KMA_LPC, &gctx->kma.param);
         /* recall that we already did en-/decrypt gctx->mres
          * and returned it to caller... */
-        OPENSSL_cleanse(tmp, gctx->mreslen);
+        OPENtls_cleanse(tmp, gctx->mreslen);
         gctx->iv_set = 0;
 
         enc = EVP_CIPHER_CTX_encrypting(ctx);
@@ -1664,9 +1664,9 @@ static int s390x_aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 
     iv = EVP_CIPHER_CTX_iv(c);
     if (iv != gctx->iv)
-        OPENSSL_free(gctx->iv);
+        OPENtls_free(gctx->iv);
 
-    OPENSSL_cleanse(gctx, sizeof(*gctx));
+    OPENtls_cleanse(gctx, sizeof(*gctx));
     return 1;
 }
 
@@ -1902,7 +1902,7 @@ static int s390x_aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 return len;
         }
 
-        OPENSSL_cleanse(out, len);
+        OPENtls_cleanse(out, len);
         return -1;
     }
 }
@@ -2030,7 +2030,7 @@ static int s390x_aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
 
         if (rv == -1)
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
 
         cctx->aes.ccm.iv_set = 0;
         cctx->aes.ccm.tag_set = 0;
@@ -2157,7 +2157,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
 # define s390x_aes_ccm_cleanup aes_ccm_cleanup
 
-# ifndef OPENSSL_NO_OCB
+# ifndef OPENtls_NO_OCB
 #  define S390X_AES_OCB_CTX             EVP_AES_OCB_CTX
 
 #  define s390x_aes_ocb_init_key aes_ocb_init_key
@@ -2172,7 +2172,7 @@ static int s390x_aes_ocb_cleanup(EVP_CIPHER_CTX *);
 static int s390x_aes_ocb_ctrl(EVP_CIPHER_CTX *, int type, int arg, void *ptr);
 # endif
 
-# ifndef OPENSSL_NO_SIV
+# ifndef OPENtls_NO_SIV
 #  define S390X_AES_SIV_CTX             EVP_AES_SIV_CTX
 
 #  define s390x_aes_siv_init_key aes_siv_init_key
@@ -2535,9 +2535,9 @@ static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,c);
     if (gctx == NULL)
         return 0;
-    OPENSSL_cleanse(&gctx->gcm, sizeof(gctx->gcm));
+    OPENtls_cleanse(&gctx->gcm, sizeof(gctx->gcm));
     if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
-        OPENSSL_free(gctx->iv);
+        OPENtls_free(gctx->iv);
     return 1;
 }
 
@@ -2565,8 +2565,8 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         /* Allocate memory for IV if needed */
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != c->iv)
-                OPENSSL_free(gctx->iv);
-            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+                OPENtls_free(gctx->iv);
+            if ((gctx->iv = OPENtls_malloc(arg)) == NULL) {
                 EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -2676,7 +2676,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == c->iv)
                 gctx_out->iv = out->iv;
             else {
-                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                if ((gctx_out->iv = OPENtls_malloc(gctx->ivlen)) == NULL) {
                     EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
@@ -2889,7 +2889,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, EVP_GCM_TLS_TAG_LEN);
         /* If tag mismatch wipe buffer */
         if (CRYPTO_memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN)) {
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
             goto err;
         }
         rv = len;
@@ -3451,7 +3451,7 @@ static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     return len;
             }
         }
-        OPENSSL_cleanse(out, len);
+        OPENtls_cleanse(out, len);
         return -1;
     }
 }
@@ -3521,7 +3521,7 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
         }
         if (rv == -1)
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
         cctx->iv_set = 0;
         cctx->tag_set = 0;
         cctx->len_set = 0;
@@ -3540,7 +3540,7 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM,
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         AES_KEY ks;
     } ks;
     /* Indicates if IV has been set */
@@ -3717,7 +3717,7 @@ const EVP_CIPHER *EVP_aes_256_wrap_pad(void)
     return &aes_256_wrap_pad;
 }
 
-#ifndef OPENSSL_NO_OCB
+#ifndef OPENtls_NO_OCB
 static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
     EVP_AES_OCB_CTX *octx = EVP_C_DATA(EVP_AES_OCB_CTX,c);
@@ -4023,10 +4023,10 @@ BLOCK_CIPHER_custom(NID_aes, 192, 16, 12, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
-#endif                         /* OPENSSL_NO_OCB */
+#endif                         /* OPENtls_NO_OCB */
 
 /* AES-SIV mode */
-#ifndef OPENSSL_NO_SIV
+#ifndef OPENtls_NO_SIV
 
 typedef SIV128_CONTEXT EVP_AES_SIV_CTX;
 

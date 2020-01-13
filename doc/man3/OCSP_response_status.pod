@@ -9,7 +9,7 @@ OCSP_basic_sign, OCSP_basic_sign_ctx - OCSP response functions
 
 =head1 SYNOPSIS
 
- #include <openssl/ocsp.h>
+ #include <opentls/ocsp.h>
 
  int OCSP_response_status(OCSP_RESPONSE *resp);
  OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
@@ -101,17 +101,17 @@ L<OCSP_RESPID_free(3)>
 =head1 HISTORY
 
 The OCSP_RESPID_set_by_name(), OCSP_RESPID_set_by_key() and OCSP_RESPID_match()
-functions were added in OpenSSL 1.1.0a.
+functions were added in Opentls 1.1.0a.
 
-The OCSP_basic_sign_ctx() function was added in OpenSSL 1.1.1.
+The OCSP_basic_sign_ctx() function was added in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,13 +1,13 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -34,11 +34,11 @@ static struct {
 /* Test that we never negotiate TLSv1.3 if using GOST */
 static int test_tls13(int idx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientssl = NULL, *serverssl = NULL;
+    tls_CTX *cctx = NULL, *sctx = NULL;
+    tls *clienttls = NULL, *servertls = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION,
                                        0,
@@ -49,20 +49,20 @@ static int test_tls13(int idx)
                                                                  : privkey2)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, ciphers[idx].cipher))
-            || !TEST_true(SSL_CTX_set_cipher_list(sctx, ciphers[idx].cipher))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+    if (!TEST_true(tls_CTX_set_cipher_list(cctx, ciphers[idx].cipher))
+            || !TEST_true(tls_CTX_set_cipher_list(sctx, ciphers[idx].cipher))
+            || !TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                              NULL, NULL)))
         goto end;
 
     if (ciphers[idx].expected_prot == 0) {
-        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
-                                              SSL_ERROR_NONE)))
+        if (!TEST_false(create_tls_connection(servertls, clienttls,
+                                              tls_ERROR_NONE)))
             goto end;
     } else {
-        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                             SSL_ERROR_NONE))
-                || !TEST_int_eq(SSL_version(clientssl),
+        if (!TEST_true(create_tls_connection(servertls, clienttls,
+                                             tls_ERROR_NONE))
+                || !TEST_int_eq(tls_version(clienttls),
                                 ciphers[idx].expected_prot))
         goto end;
     }
@@ -70,10 +70,10 @@ static int test_tls13(int idx)
     testresult = 1;
 
  end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }
@@ -88,6 +88,6 @@ int setup_tests(void)
             || !TEST_ptr(privkey2 = test_get_argument(3)))
         return 0;
 
-    ADD_ALL_TESTS(test_tls13, OSSL_NELEM(ciphers));
+    ADD_ALL_TESTS(test_tls13, Otls_NELEM(ciphers));
     return 1;
 }

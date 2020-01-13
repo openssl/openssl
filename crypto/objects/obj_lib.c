@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
 #include "crypto/asn1.h"
 
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
@@ -35,16 +35,16 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
                            ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
                            ASN1_OBJECT_FLAG_DYNAMIC_DATA);
 
-    if (o->length > 0 && (r->data = OPENSSL_memdup(o->data, o->length)) == NULL)
+    if (o->length > 0 && (r->data = OPENtls_memdup(o->data, o->length)) == NULL)
         goto err;
 
     r->length = o->length;
     r->nid = o->nid;
 
-    if (o->ln != NULL && (r->ln = OPENSSL_strdup(o->ln)) == NULL)
+    if (o->ln != NULL && (r->ln = OPENtls_strdup(o->ln)) == NULL)
         goto err;
 
-    if (o->sn != NULL && (r->sn = OPENSSL_strdup(o->sn)) == NULL)
+    if (o->sn != NULL && (r->sn = OPENtls_strdup(o->sn)) == NULL)
         goto err;
 
     return r;

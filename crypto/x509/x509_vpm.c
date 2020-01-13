@@ -1,19 +1,19 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/crypto.h>
+#include <opentls/buffer.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 #include "crypto/x509.h"
 
 #include "x509_local.h"
@@ -25,12 +25,12 @@
 
 static char *str_copy(const char *s)
 {
-    return OPENSSL_strdup(s);
+    return OPENtls_strdup(s);
 }
 
 static void str_free(char *s)
 {
-    OPENSSL_free(s);
+    OPENtls_free(s);
 }
 
 static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
@@ -50,26 +50,26 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
         --namelen;
 
     if (mode == SET_HOST) {
-        sk_OPENSSL_STRING_pop_free(vpm->hosts, str_free);
+        sk_OPENtls_STRING_pop_free(vpm->hosts, str_free);
         vpm->hosts = NULL;
     }
     if (name == NULL || namelen == 0)
         return 1;
 
-    copy = OPENSSL_strndup(name, namelen);
+    copy = OPENtls_strndup(name, namelen);
     if (copy == NULL)
         return 0;
 
     if (vpm->hosts == NULL &&
-        (vpm->hosts = sk_OPENSSL_STRING_new_null()) == NULL) {
-        OPENSSL_free(copy);
+        (vpm->hosts = sk_OPENtls_STRING_new_null()) == NULL) {
+        OPENtls_free(copy);
         return 0;
     }
 
-    if (!sk_OPENSSL_STRING_push(vpm->hosts, copy)) {
-        OPENSSL_free(copy);
-        if (sk_OPENSSL_STRING_num(vpm->hosts) == 0) {
-            sk_OPENSSL_STRING_free(vpm->hosts);
+    if (!sk_OPENtls_STRING_push(vpm->hosts, copy)) {
+        OPENtls_free(copy);
+        if (sk_OPENtls_STRING_num(vpm->hosts) == 0) {
+            sk_OPENtls_STRING_free(vpm->hosts);
             vpm->hosts = NULL;
         }
         return 0;
@@ -83,7 +83,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 {
     X509_VERIFY_PARAM *param;
 
-    param = OPENSSL_zalloc(sizeof(*param));
+    param = OPENtls_zalloc(sizeof(*param));
     if (param == NULL) {
         X509err(X509_F_X509_VERIFY_PARAM_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -100,11 +100,11 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     if (param == NULL)
         return;
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
-    OPENSSL_free(param->peername);
-    OPENSSL_free(param->email);
-    OPENSSL_free(param->ip);
-    OPENSSL_free(param);
+    sk_OPENtls_STRING_pop_free(param->hosts, str_free);
+    OPENtls_free(param->peername);
+    OPENtls_free(param->email);
+    OPENtls_free(param->ip);
+    OPENtls_free(param);
 }
 
 /*-
@@ -112,10 +112,10 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
  * to another. There are several different ways this can happen.
  *
  * 1. If a child structure needs to have its values initialized from a parent
- *    they are simply copied across. For example SSL_CTX copied to SSL.
+ *    they are simply copied across. For example tls_CTX copied to tls.
  * 2. If the structure should take on values only if they are currently unset.
- *    For example the values in an SSL structure will take appropriate value
- *    for SSL servers or clients but only if the application has not set new
+ *    For example the values in an tls structure will take appropriate value
+ *    for tls servers or clients but only if the application has not set new
  *    ones.
  *
  * The "inh_flags" field determines how this function behaves.
@@ -201,11 +201,11 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 
     /* Copy the host flags if and only if we're copying the host list */
     if (test_x509_verify_param_copy(hosts, NULL)) {
-        sk_OPENSSL_STRING_pop_free(dest->hosts, str_free);
+        sk_OPENtls_STRING_pop_free(dest->hosts, str_free);
         dest->hosts = NULL;
         if (src->hosts) {
             dest->hosts =
-                sk_OPENSSL_STRING_deep_copy(src->hosts, str_copy, str_free);
+                sk_OPENtls_STRING_deep_copy(src->hosts, str_copy, str_free);
             if (dest->hosts == NULL)
                 return 0;
             dest->hostflags = src->hostflags;
@@ -244,14 +244,14 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
         if (srclen == 0)
             srclen = strlen(src);
 
-        tmp = OPENSSL_memdup(src, srclen);
+        tmp = OPENtls_memdup(src, srclen);
         if (tmp == NULL)
             return 0;
     } else {
         tmp = NULL;
         srclen = 0;
     }
-    OPENSSL_free(*pdest);
+    OPENtls_free(*pdest);
     *pdest = tmp;
     if (pdestlen != NULL)
         *pdestlen = srclen;
@@ -260,8 +260,8 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
 
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 {
-    OPENSSL_free(param->name);
-    param->name = OPENSSL_strdup(name);
+    OPENtls_free(param->name);
+    param->name = OPENtls_strdup(name);
     if (param->name)
         return 1;
     return 0;
@@ -414,7 +414,7 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
     char *peername = (from != NULL) ? from->peername : NULL;
 
     if (to->peername != peername) {
-        OPENSSL_free(to->peername);
+        OPENtls_free(to->peername);
         to->peername = peername;
     }
     if (from)
@@ -506,23 +506,23 @@ static const X509_VERIFY_PARAM default_table[] = {
      NULL,                      /* policies */
      vpm_empty_id},
     {
-     "ssl_client",              /* SSL/TLS client parameters */
+     "tls_client",              /* tls/TLS client parameters */
      0,                         /* Check time */
      0,                         /* internal flags */
      0,                         /* flags */
-     X509_PURPOSE_SSL_CLIENT,   /* purpose */
-     X509_TRUST_SSL_CLIENT,     /* trust */
+     X509_PURPOSE_tls_CLIENT,   /* purpose */
+     X509_TRUST_tls_CLIENT,     /* trust */
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
-     "ssl_server",              /* SSL/TLS server parameters */
+     "tls_server",              /* tls/TLS server parameters */
      0,                         /* Check time */
      0,                         /* internal flags */
      0,                         /* flags */
-     X509_PURPOSE_SSL_SERVER,   /* purpose */
-     X509_TRUST_SSL_SERVER,     /* trust */
+     X509_PURPOSE_tls_SERVER,   /* purpose */
+     X509_TRUST_tls_SERVER,     /* trust */
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
@@ -567,7 +567,7 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 
 int X509_VERIFY_PARAM_get_count(void)
 {
-    int num = OSSL_NELEM(default_table);
+    int num = Otls_NELEM(default_table);
     if (param_table)
         num += sk_X509_VERIFY_PARAM_num(param_table);
     return num;
@@ -575,7 +575,7 @@ int X509_VERIFY_PARAM_get_count(void)
 
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
 {
-    int num = OSSL_NELEM(default_table);
+    int num = Otls_NELEM(default_table);
     if (id < num)
         return default_table + id;
     return sk_X509_VERIFY_PARAM_value(param_table, id - num);
@@ -592,7 +592,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
         if (idx >= 0)
             return sk_X509_VERIFY_PARAM_value(param_table, idx);
     }
-    return OBJ_bsearch_table(&pm, default_table, OSSL_NELEM(default_table));
+    return OBJ_bsearch_table(&pm, default_table, Otls_NELEM(default_table));
 }
 
 void X509_VERIFY_PARAM_table_cleanup(void)

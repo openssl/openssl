@@ -10,7 +10,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
 =head1 SYNOPSIS
 
- #include <openssl/bio.h>
+ #include <opentls/bio.h>
 
  const BIO_METHOD * BIO_s_connect(void);
 
@@ -66,10 +66,10 @@ BIO_set_conn_port() sets the port to B<port>. B<port> can be the
 numerical form or a string such as "http". A string will be looked
 up first using getservbyname() on the host platform but if that
 fails a standard table of port names will be used. This internal
-list is http, telnet, socks, https, ssl, ftp, and gopher.
+list is http, telnet, socks, https, tls, ftp, and gopher.
 
 BIO_set_conn_address() sets the address and port information using
-a BIO_ADDR(3ssl).
+a BIO_ADDR(3tls).
 
 BIO_set_conn_ip_family() sets the IP family.
 
@@ -198,16 +198,16 @@ L<BIO_ADDR(3)>
 =head1 HISTORY
 
 BIO_set_conn_int_port(), BIO_get_conn_int_port(), BIO_set_conn_ip(), and BIO_get_conn_ip()
-were removed in OpenSSL 1.1.0.
+were removed in Opentls 1.1.0.
 Use BIO_set_conn_address() and BIO_get_conn_address() instead.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

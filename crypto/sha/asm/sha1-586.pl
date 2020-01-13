@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# [Re]written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# [Re]written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # "[Re]written" was achieved in two major overhauls. In 2004 BODY_*
@@ -54,7 +54,7 @@
 #
 # Add SSSE3, Supplemental[!] SSE3, implementation. The idea behind it
 # is to offload message schedule denoted by Wt in NIST specification,
-# or Xupdate in OpenSSL source, to SIMD unit. The idea is not novel,
+# or Xupdate in Opentls source, to SIMD unit. The idea is not novel,
 # and in SSE2 context was first explored by Dean Gaudet in 2004, see
 # http://arctic.org/~dean/crypto/sha1.html. Since then several things
 # have changed that made it interesting again:
@@ -128,7 +128,7 @@ $output=pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $xmm=$ymm=0;
-for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $xmm=1 if (/-DOPENtls_IA32_SSE2/); }
 
 $ymm=1 if ($xmm &&
 		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
@@ -148,7 +148,7 @@ $ymm=1 if ($xmm && !$ymm && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|base
 
 $shaext=$xmm;	### set to zero if compiling for 1.0.1
 
-&external_label("OPENSSL_ia32cap_P") if ($xmm);
+&external_label("OPENtls_ia32cap_P") if ($xmm);
 
 
 $A="eax";
@@ -335,7 +335,7 @@ if ($xmm) {
 	&call	(&label("pic_point"));	# make it PIC!
   &set_label("pic_point");
 	&blindpop($tmp1);
-	&picmeup($T,"OPENSSL_ia32cap_P",$tmp1,&label("pic_point"));
+	&picmeup($T,"OPENtls_ia32cap_P",$tmp1,&label("pic_point"));
 	&lea	($tmp1,&DWP(&label("K_XX_XX")."-".&label("pic_point"),$tmp1));
 
 	&mov	($A,&DWP(0,$T));
@@ -1483,7 +1483,7 @@ sub Xtail_avx()
 &data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);	# pbswap mask
 &data_byte(0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0);
 }
-&asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

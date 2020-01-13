@@ -1,38 +1,38 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
  * Header for dynamic hash table routines Author - Eric Young
  */
 
-#ifndef OPENSSL_LHASH_H
-# define OPENSSL_LHASH_H
+#ifndef OPENtls_LHASH_H
+# define OPENtls_LHASH_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_LHASH_H
 # endif
 
-# include <openssl/e_os2.h>
-# include <openssl/bio.h>
+# include <opentls/e_os2.h>
+# include <opentls/bio.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-typedef struct lhash_node_st OPENSSL_LH_NODE;
-typedef int (*OPENSSL_LH_COMPFUNC) (const void *, const void *);
-typedef unsigned long (*OPENSSL_LH_HASHFUNC) (const void *);
-typedef void (*OPENSSL_LH_DOALL_FUNC) (void *);
-typedef void (*OPENSSL_LH_DOALL_FUNCARG) (void *, void *);
-typedef struct lhash_st OPENSSL_LHASH;
+typedef struct lhash_node_st OPENtls_LH_NODE;
+typedef int (*OPENtls_LH_COMPFUNC) (const void *, const void *);
+typedef unsigned long (*OPENtls_LH_HASHFUNC) (const void *);
+typedef void (*OPENtls_LH_DOALL_FUNC) (void *);
+typedef void (*OPENtls_LH_DOALL_FUNCARG) (void *, void *);
+typedef struct lhash_st OPENtls_LHASH;
 
 /*
  * Macros for declaring and implementing type-safe wrappers for LHASH
@@ -75,50 +75,50 @@ typedef struct lhash_st OPENSSL_LHASH;
 
 # define LH_LOAD_MULT    256
 
-int OPENSSL_LH_error(OPENSSL_LHASH *lh);
-OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c);
-void OPENSSL_LH_free(OPENSSL_LHASH *lh);
-void OPENSSL_LH_flush(OPENSSL_LHASH *lh);
-void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data);
-void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data);
-void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data);
-void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func);
-void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void *arg);
-unsigned long OPENSSL_LH_strhash(const char *c);
-unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh);
-unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
-void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
+int OPENtls_LH_error(OPENtls_LHASH *lh);
+OPENtls_LHASH *OPENtls_LH_new(OPENtls_LH_HASHFUNC h, OPENtls_LH_COMPFUNC c);
+void OPENtls_LH_free(OPENtls_LHASH *lh);
+void OPENtls_LH_flush(OPENtls_LHASH *lh);
+void *OPENtls_LH_insert(OPENtls_LHASH *lh, void *data);
+void *OPENtls_LH_delete(OPENtls_LHASH *lh, const void *data);
+void *OPENtls_LH_retrieve(OPENtls_LHASH *lh, const void *data);
+void OPENtls_LH_doall(OPENtls_LHASH *lh, OPENtls_LH_DOALL_FUNC func);
+void OPENtls_LH_doall_arg(OPENtls_LHASH *lh, OPENtls_LH_DOALL_FUNCARG func, void *arg);
+unsigned long OPENtls_LH_strhash(const char *c);
+unsigned long OPENtls_LH_num_items(const OPENtls_LHASH *lh);
+unsigned long OPENtls_LH_get_down_load(const OPENtls_LHASH *lh);
+void OPENtls_LH_set_down_load(OPENtls_LHASH *lh, unsigned long down_load);
 
-# ifndef OPENSSL_NO_STDIO
-void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
-void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
-void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
+# ifndef OPENtls_NO_STDIO
+void OPENtls_LH_stats(const OPENtls_LHASH *lh, FILE *fp);
+void OPENtls_LH_node_stats(const OPENtls_LHASH *lh, FILE *fp);
+void OPENtls_LH_node_usage_stats(const OPENtls_LHASH *lh, FILE *fp);
 # endif
-void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+void OPENtls_LH_stats_bio(const OPENtls_LHASH *lh, BIO *out);
+void OPENtls_LH_node_stats_bio(const OPENtls_LHASH *lh, BIO *out);
+void OPENtls_LH_node_usage_stats_bio(const OPENtls_LHASH *lh, BIO *out);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define _LHASH OPENSSL_LHASH
-#  define LHASH_NODE OPENSSL_LH_NODE
-#  define lh_error OPENSSL_LH_error
-#  define lh_new OPENSSL_LH_new
-#  define lh_free OPENSSL_LH_free
-#  define lh_insert OPENSSL_LH_insert
-#  define lh_delete OPENSSL_LH_delete
-#  define lh_retrieve OPENSSL_LH_retrieve
-#  define lh_doall OPENSSL_LH_doall
-#  define lh_doall_arg OPENSSL_LH_doall_arg
-#  define lh_strhash OPENSSL_LH_strhash
-#  define lh_num_items OPENSSL_LH_num_items
-#  ifndef OPENSSL_NO_STDIO
-#   define lh_stats OPENSSL_LH_stats
-#   define lh_node_stats OPENSSL_LH_node_stats
-#   define lh_node_usage_stats OPENSSL_LH_node_usage_stats
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  define _LHASH OPENtls_LHASH
+#  define LHASH_NODE OPENtls_LH_NODE
+#  define lh_error OPENtls_LH_error
+#  define lh_new OPENtls_LH_new
+#  define lh_free OPENtls_LH_free
+#  define lh_insert OPENtls_LH_insert
+#  define lh_delete OPENtls_LH_delete
+#  define lh_retrieve OPENtls_LH_retrieve
+#  define lh_doall OPENtls_LH_doall
+#  define lh_doall_arg OPENtls_LH_doall_arg
+#  define lh_strhash OPENtls_LH_strhash
+#  define lh_num_items OPENtls_LH_num_items
+#  ifndef OPENtls_NO_STDIO
+#   define lh_stats OPENtls_LH_stats
+#   define lh_node_stats OPENtls_LH_node_stats
+#   define lh_node_usage_stats OPENtls_LH_node_usage_stats
 #  endif
-#  define lh_stats_bio OPENSSL_LH_stats_bio
-#  define lh_node_stats_bio OPENSSL_LH_node_stats_bio
-#  define lh_node_usage_stats_bio OPENSSL_LH_node_usage_stats_bio
+#  define lh_stats_bio OPENtls_LH_stats_bio
+#  define lh_node_stats_bio OPENtls_LH_node_stats_bio
+#  define lh_node_usage_stats_bio OPENtls_LH_node_usage_stats_bio
 # endif
 
 /* Type checking... */
@@ -127,65 +127,65 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
 # define DEFINE_LHASH_OF(type) \
     LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
-    static ossl_inline LHASH_OF(type) * \
+    static otls_inline LHASH_OF(type) * \
         lh_##type##_new(unsigned long (*hfn)(const type *), \
                         int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
-            OPENSSL_LH_new((OPENSSL_LH_HASHFUNC)hfn, (OPENSSL_LH_COMPFUNC)cfn); \
+            OPENtls_LH_new((OPENtls_LH_HASHFUNC)hfn, (OPENtls_LH_COMPFUNC)cfn); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_free(LHASH_OF(type) *lh) \
+    static otls_unused otls_inline void lh_##type##_free(LHASH_OF(type) *lh) \
     { \
-        OPENSSL_LH_free((OPENSSL_LHASH *)lh); \
+        OPENtls_LH_free((OPENtls_LHASH *)lh); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_flush(LHASH_OF(type) *lh) \
+    static otls_unused otls_inline void lh_##type##_flush(LHASH_OF(type) *lh) \
     { \
-        OPENSSL_LH_flush((OPENSSL_LHASH *)lh); \
+        OPENtls_LH_flush((OPENtls_LHASH *)lh); \
     } \
-    static ossl_unused ossl_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
+    static otls_unused otls_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
     { \
-        return (type *)OPENSSL_LH_insert((OPENSSL_LHASH *)lh, d); \
+        return (type *)OPENtls_LH_insert((OPENtls_LHASH *)lh, d); \
     } \
-    static ossl_unused ossl_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
+    static otls_unused otls_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
     { \
-        return (type *)OPENSSL_LH_delete((OPENSSL_LHASH *)lh, d); \
+        return (type *)OPENtls_LH_delete((OPENtls_LHASH *)lh, d); \
     } \
-    static ossl_unused ossl_inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
+    static otls_unused otls_inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
     { \
-        return (type *)OPENSSL_LH_retrieve((OPENSSL_LHASH *)lh, d); \
+        return (type *)OPENtls_LH_retrieve((OPENtls_LHASH *)lh, d); \
     } \
-    static ossl_unused ossl_inline int lh_##type##_error(LHASH_OF(type) *lh) \
+    static otls_unused otls_inline int lh_##type##_error(LHASH_OF(type) *lh) \
     { \
-        return OPENSSL_LH_error((OPENSSL_LHASH *)lh); \
+        return OPENtls_LH_error((OPENtls_LHASH *)lh); \
     } \
-    static ossl_unused ossl_inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
+    static otls_unused otls_inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
     { \
-        return OPENSSL_LH_num_items((OPENSSL_LHASH *)lh); \
+        return OPENtls_LH_num_items((OPENtls_LHASH *)lh); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static otls_unused otls_inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_node_stats_bio((const OPENSSL_LHASH *)lh, out); \
+        OPENtls_LH_node_stats_bio((const OPENtls_LHASH *)lh, out); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static otls_unused otls_inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_node_usage_stats_bio((const OPENSSL_LHASH *)lh, out); \
+        OPENtls_LH_node_usage_stats_bio((const OPENtls_LHASH *)lh, out); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static otls_unused otls_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_stats_bio((const OPENSSL_LHASH *)lh, out); \
+        OPENtls_LH_stats_bio((const OPENtls_LHASH *)lh, out); \
     } \
-    static ossl_unused ossl_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
+    static otls_unused otls_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \
-        return OPENSSL_LH_get_down_load((OPENSSL_LHASH *)lh); \
+        return OPENtls_LH_get_down_load((OPENtls_LHASH *)lh); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
+    static otls_unused otls_inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
     { \
-        OPENSSL_LH_set_down_load((OPENSSL_LHASH *)lh, dl); \
+        OPENtls_LH_set_down_load((OPENtls_LHASH *)lh, dl); \
     } \
-    static ossl_unused ossl_inline void lh_##type##_doall(LHASH_OF(type) *lh, \
+    static otls_unused otls_inline void lh_##type##_doall(LHASH_OF(type) *lh, \
                                                           void (*doall)(type *)) \
     { \
-        OPENSSL_LH_doall((OPENSSL_LHASH *)lh, (OPENSSL_LH_DOALL_FUNC)doall); \
+        OPENtls_LH_doall((OPENtls_LHASH *)lh, (OPENtls_LH_DOALL_FUNC)doall); \
     } \
     LHASH_OF(type)
 
@@ -196,16 +196,16 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     int_implement_lhash_doall(type, argtype, type)
 
 #define int_implement_lhash_doall(type, argtype, cbargtype) \
-    static ossl_unused ossl_inline void \
+    static otls_unused otls_inline void \
         lh_##type##_doall_##argtype(LHASH_OF(type) *lh, \
                                    void (*fn)(cbargtype *, argtype *), \
                                    argtype *arg) \
     { \
-        OPENSSL_LH_doall_arg((OPENSSL_LHASH *)lh, (OPENSSL_LH_DOALL_FUNCARG)fn, (void *)arg); \
+        OPENtls_LH_doall_arg((OPENtls_LHASH *)lh, (OPENtls_LH_DOALL_FUNCARG)fn, (void *)arg); \
     } \
     LHASH_OF(type)
 
-DEFINE_LHASH_OF(OPENSSL_STRING);
+DEFINE_LHASH_OF(OPENtls_STRING);
 # ifdef _MSC_VER
 /*
  * push and pop this warning:
@@ -215,7 +215,7 @@ DEFINE_LHASH_OF(OPENSSL_STRING);
 #  pragma warning (disable: 4090)
 # endif
 
-DEFINE_LHASH_OF(OPENSSL_CSTRING);
+DEFINE_LHASH_OF(OPENtls_CSTRING);
 
 # ifdef _MSC_VER
 #  pragma warning (pop)
@@ -227,23 +227,23 @@ DEFINE_LHASH_OF(OPENSSL_CSTRING);
  * above.
  * This would later lead to the linker complaining about missing symbols when
  * this header file is included but the resulting object is not linked against
- * the Crypto library (openssl#6912).
+ * the Crypto library (opentls#6912).
  */
 # ifdef __SUNPRO_C
-#  pragma weak OPENSSL_LH_new
-#  pragma weak OPENSSL_LH_free
-#  pragma weak OPENSSL_LH_insert
-#  pragma weak OPENSSL_LH_delete
-#  pragma weak OPENSSL_LH_retrieve
-#  pragma weak OPENSSL_LH_error
-#  pragma weak OPENSSL_LH_num_items
-#  pragma weak OPENSSL_LH_node_stats_bio
-#  pragma weak OPENSSL_LH_node_usage_stats_bio
-#  pragma weak OPENSSL_LH_stats_bio
-#  pragma weak OPENSSL_LH_get_down_load
-#  pragma weak OPENSSL_LH_set_down_load
-#  pragma weak OPENSSL_LH_doall
-#  pragma weak OPENSSL_LH_doall_arg
+#  pragma weak OPENtls_LH_new
+#  pragma weak OPENtls_LH_free
+#  pragma weak OPENtls_LH_insert
+#  pragma weak OPENtls_LH_delete
+#  pragma weak OPENtls_LH_retrieve
+#  pragma weak OPENtls_LH_error
+#  pragma weak OPENtls_LH_num_items
+#  pragma weak OPENtls_LH_node_stats_bio
+#  pragma weak OPENtls_LH_node_usage_stats_bio
+#  pragma weak OPENtls_LH_stats_bio
+#  pragma weak OPENtls_LH_get_down_load
+#  pragma weak OPENtls_LH_set_down_load
+#  pragma weak OPENtls_LH_doall
+#  pragma weak OPENtls_LH_doall_arg
 # endif /* __SUNPRO_C */
 
 #ifdef  __cplusplus

@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "ciphercommon_aead.h"
 
 typedef struct prov_ccm_hw_st PROV_CCM_HW;
 
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+#if defined(OPENtls_CPUID_OBJ) && defined(__s390__)
 /*-
  * KMAC-AES parameter block - begin
  * (see z/Architecture Principles of Operation >= SA22-7832-08)
@@ -70,21 +70,21 @@ PROV_CIPHER_FUNC(int, CCM_gettag, (PROV_CCM_CTX *ctx,                          \
  * (and different algorithms).
  */
 struct prov_ccm_hw_st {
-    OSSL_CCM_setkey_fn setkey;
-    OSSL_CCM_setiv_fn setiv;
-    OSSL_CCM_setaad_fn setaad;
-    OSSL_CCM_auth_encrypt_fn auth_encrypt;
-    OSSL_CCM_auth_decrypt_fn auth_decrypt;
-    OSSL_CCM_gettag_fn gettag;
+    Otls_CCM_setkey_fn setkey;
+    Otls_CCM_setiv_fn setiv;
+    Otls_CCM_setaad_fn setaad;
+    Otls_CCM_auth_encrypt_fn auth_encrypt;
+    Otls_CCM_auth_decrypt_fn auth_decrypt;
+    Otls_CCM_gettag_fn gettag;
 };
 
-OSSL_OP_cipher_encrypt_init_fn ccm_einit;
-OSSL_OP_cipher_decrypt_init_fn ccm_dinit;
-OSSL_OP_cipher_get_ctx_params_fn ccm_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn ccm_set_ctx_params;
-OSSL_OP_cipher_update_fn ccm_stream_update;
-OSSL_OP_cipher_final_fn ccm_stream_final;
-OSSL_OP_cipher_cipher_fn ccm_cipher;
+Otls_OP_cipher_encrypt_init_fn ccm_einit;
+Otls_OP_cipher_decrypt_init_fn ccm_dinit;
+Otls_OP_cipher_get_ctx_params_fn ccm_get_ctx_params;
+Otls_OP_cipher_set_ctx_params_fn ccm_set_ctx_params;
+Otls_OP_cipher_update_fn ccm_stream_update;
+Otls_OP_cipher_final_fn ccm_stream_final;
+Otls_OP_cipher_cipher_fn ccm_cipher;
 void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw);
 
 int ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,

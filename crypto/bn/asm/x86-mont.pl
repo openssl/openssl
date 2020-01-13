@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # October 2005
@@ -42,9 +42,9 @@ $output = pop and open STDOUT,">$output";
 &asm_init($ARGV[0]);
 
 $sse2=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
-&external_label("OPENSSL_ia32cap_P") if ($sse2);
+&external_label("OPENtls_ia32cap_P") if ($sse2);
 
 &function_begin("bn_mul_mont");
 
@@ -146,7 +146,7 @@ $mul1="mm5";
 $temp="mm6";
 $mask="mm7";
 
-	&picmeup("eax","OPENSSL_ia32cap_P");
+	&picmeup("eax","OPENtls_ia32cap_P");
 	&bt	(&DWP(0,"eax"),26);
 	&jnc	(&label("non_sse2"));
 
@@ -623,7 +623,7 @@ $sbit=$num;
 &set_label("just_leave");
 &function_end("bn_mul_mont");
 
-&asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

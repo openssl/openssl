@@ -1,21 +1,21 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2016 VMS Software, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #ifdef __VMS
-# define OPENSSL_SYS_VMS
+# define OPENtls_SYS_VMS
 # pragma message disable DOLLARID
 
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
+# if !defined(_POSIX_C_SOURCE) && defined(OPENtls_SYS_VMS)
 /*
  * On VMS, you need to define this to get the declaration of fileno().  The
  * value 2 is to make sure no function defined in POSIX-2 is left undefined.

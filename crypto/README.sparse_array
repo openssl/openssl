@@ -7,19 +7,19 @@ to another node.
 
 There are a number of parameters used to define the block size:
 
-    OPENSSL_SA_BLOCK_BITS   Specifies the number of bits covered by each block
+    OPENtls_SA_BLOCK_BITS   Specifies the number of bits covered by each block
     SA_BLOCK_MAX            Specifies the number of pointers in each block
     SA_BLOCK_MASK           Specifies a bit mask to perform modulo block size
     SA_BLOCK_MAX_LEVELS     Indicates the maximum possible height of the tree
 
 These constants are inter-related:
-    SA_BLOCK_MAX        = 2 ^ OPENSSL_SA_BLOCK_BITS
+    SA_BLOCK_MAX        = 2 ^ OPENtls_SA_BLOCK_BITS
     SA_BLOCK_MASK       = SA_BLOCK_MAX - 1
     SA_BLOCK_MAX_LEVELS = number of bits in size_t divided by
-                          OPENSSL_SA_BLOCK_BITS rounded up to the next multiple
-                          of OPENSSL_SA_BLOCK_BITS
+                          OPENtls_SA_BLOCK_BITS rounded up to the next multiple
+                          of OPENtls_SA_BLOCK_BITS
 
-OPENSSL_SA_BLOCK_BITS can be defined at compile time and this overrides the
+OPENtls_SA_BLOCK_BITS can be defined at compile time and this overrides the
 built in setting.
 
 As a space and performance optimisation, the height of the tree is usually

@@ -1,15 +1,15 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509v3.h>
+#include <opentls/x509v3.h>
 #include "crypto/x509.h"
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
@@ -30,9 +30,9 @@ static int (*default_trust) (int id, X509 *x, int flags) = obj_trust;
 
 static X509_TRUST trstandard[] = {
     {X509_TRUST_COMPAT, 0, trust_compat, "compatible", 0, NULL},
-    {X509_TRUST_SSL_CLIENT, 0, trust_1oidany, "SSL Client", NID_client_auth,
+    {X509_TRUST_tls_CLIENT, 0, trust_1oidany, "tls Client", NID_client_auth,
      NULL},
-    {X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Server", NID_server_auth,
+    {X509_TRUST_tls_SERVER, 0, trust_1oidany, "tls Server", NID_server_auth,
      NULL},
     {X509_TRUST_EMAIL, 0, trust_1oidany, "S/MIME email", NID_email_protect,
      NULL},
@@ -45,7 +45,7 @@ static X509_TRUST trstandard[] = {
     {X509_TRUST_TSA, 0, trust_1oidany, "TSA server", NID_time_stamp, NULL}
 };
 
-#define X509_TRUST_COUNT        OSSL_NELEM(trstandard)
+#define X509_TRUST_COUNT        Otls_NELEM(trstandard)
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
@@ -135,7 +135,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     idx = X509_TRUST_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if ((trtmp = OPENSSL_malloc(sizeof(*trtmp))) == NULL) {
+        if ((trtmp = OPENtls_malloc(sizeof(*trtmp))) == NULL) {
             X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -143,11 +143,11 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     } else
         trtmp = X509_TRUST_get0(idx);
 
-    /* OPENSSL_free existing name if dynamic */
+    /* OPENtls_free existing name if dynamic */
     if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
-        OPENSSL_free(trtmp->name);
+        OPENtls_free(trtmp->name);
     /* dup supplied name */
-    if ((trtmp->name = OPENSSL_strdup(name)) == NULL) {
+    if ((trtmp->name = OPENtls_strdup(name)) == NULL) {
         X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -176,8 +176,8 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     return 1;
  err:
     if (idx == -1) {
-        OPENSSL_free(trtmp->name);
-        OPENSSL_free(trtmp);
+        OPENtls_free(trtmp->name);
+        OPENtls_free(trtmp);
     }
     return 0;
 }
@@ -188,8 +188,8 @@ static void trtable_free(X509_TRUST *p)
         return;
     if (p->flags & X509_TRUST_DYNAMIC) {
         if (p->flags & X509_TRUST_DYNAMIC_NAME)
-            OPENSSL_free(p->name);
-        OPENSSL_free(p);
+            OPENtls_free(p->name);
+        OPENtls_free(p);
     }
 }
 
@@ -219,7 +219,7 @@ static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
     /*
      * Declare the chain verified if the desired trust OID is not rejected in
      * any auxiliary trust info for this certificate, and the OID is either
-     * expressly trusted, or else either "anyEKU" is trusted, or the
+     * expretlsy trusted, or else either "anyEKU" is trusted, or the
      * certificate is self-signed.
      */
     flags |= X509_TRUST_DO_SS_COMPAT | X509_TRUST_OK_ANY_EKU;
@@ -230,7 +230,7 @@ static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 {
     /*
      * Declare the chain verified only if the desired trust OID is not
-     * rejected and is expressly trusted.  Neither "anyEKU" nor "compat"
+     * rejected and is expretlsy trusted.  Neither "anyEKU" nor "compat"
      * trust in self-signed certificates apply.
      */
     flags &= ~(X509_TRUST_DO_SS_COMPAT | X509_TRUST_OK_ANY_EKU);

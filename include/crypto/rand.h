@@ -1,24 +1,24 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
-#ifndef OSSL_CRYPTO_RAND_H
-# define OSSL_CRYPTO_RAND_H
+#ifndef Otls_CRYPTO_RAND_H
+# define Otls_CRYPTO_RAND_H
 
-# include <openssl/rand.h>
+# include <opentls/rand.h>
 
 /* forward declaration */
 typedef struct rand_pool_st RAND_POOL;
@@ -56,14 +56,14 @@ typedef struct rand_pool_st RAND_POOL;
  * Define the shared memory identifier used to indicate if the operating
  * system has properly seeded the DEVRANDOM source.
  */
-#  ifndef OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID
-#   define OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID 114
+#  ifndef OPENtls_RAND_SEED_DEVRANDOM_SHM_ID
+#   define OPENtls_RAND_SEED_DEVRANDOM_SHM_ID 114
 #  endif
 
 # endif
 #endif
 
-#if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
+#if !defined(OPENtls_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
  * set this to a comma-separated list of 'egd' sockets to try out. These
  * sockets will be tried in the order listed in case accessing the device
@@ -186,10 +186,10 @@ void rand_pool_cleanup(void);
  */
 void rand_pool_keep_random_devices_open(int keep);
 
-/* Equivalent of RAND_priv_bytes() but additionally taking an OPENSSL_CTX */
-int rand_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+/* Equivalent of RAND_priv_bytes() but additionally taking an OPENtls_CTX */
+int rand_priv_bytes_ex(OPENtls_CTX *ctx, unsigned char *buf, int num);
 
-/* Equivalent of RAND_bytes() but additionally taking an OPENSSL_CTX */
-int rand_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+/* Equivalent of RAND_bytes() but additionally taking an OPENtls_CTX */
+int rand_bytes_ex(OPENtls_CTX *ctx, unsigned char *buf, int num);
 
 #endif

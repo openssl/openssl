@@ -1,21 +1,21 @@
 # -*- mode: perl; -*-
 
-## SSL test configurations
+## tls test configurations
 
-package ssltests;
+package tlstests;
 
 use strict;
 use warnings;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils qw(anydisabled disabled);
+use Opentls::Test;
+use Opentls::Test::Utils qw(anydisabled disabled);
 setup("no_test_here");
 
 # We test version-flexible negotiation (undef) and each protocol version.
-my @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
+my @protocols = (undef, "tlsv3", "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
 
 my @is_disabled = (0);
-push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
+push @is_disabled, anydisabled("tls3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
 
 our @tests = ();
 
@@ -27,7 +27,7 @@ sub generate_tests() {
         my $method;
         my $sctpenabled = 0;
         if (!$is_disabled[$_]) {
-            if ($protocol_name eq "SSLv3") {
+            if ($protocol_name eq "tlsv3") {
                 $caalert = "BadCertificate";
             } else {
                 $caalert = "UnknownCA";

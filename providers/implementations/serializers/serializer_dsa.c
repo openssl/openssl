@@ -1,25 +1,25 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/dsa.h>
-#include <openssl/err.h>
-#include "prov/bio.h"             /* ossl_prov_bio_printf() */
+#include <opentls/dsa.h>
+#include <opentls/err.h>
+#include "prov/bio.h"             /* otls_prov_bio_printf() */
 #include "prov/implementations.h" /* rsa_keymgmt_functions */
 #include "prov/providercommonerr.h" /* PROV_R_BN_ERROR */
 #include "serializer_local.h"
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dsa_importkey(void)
+Otls_OP_keymgmt_importkey_fn *otls_prov_get_dsa_importkey(void)
 {
-    return ossl_prov_get_importkey(dsa_keymgmt_functions);
+    return otls_prov_get_importkey(dsa_keymgmt_functions);
 }
 
-int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
+int otls_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
 {
     const char *type_label = NULL;
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
@@ -57,20 +57,20 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
     if (p == NULL || q == NULL || g == NULL)
         goto null_err;
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
+    if (otls_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
         <= 0)
         goto err;
     if (priv_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "priv:", priv_key))
+        && !otls_prov_print_labeled_bignum(out, "priv:", priv_key))
         goto err;
     if (pub_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "pub: ", pub_key))
+        && !otls_prov_print_labeled_bignum(out, "pub: ", pub_key))
         goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "P:   ", p))
+    if (!otls_prov_print_labeled_bignum(out, "P:   ", p))
         goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "Q:   ", q))
+    if (!otls_prov_print_labeled_bignum(out, "Q:   ", q))
         goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "G:   ", g))
+    if (!otls_prov_print_labeled_bignum(out, "G:   ", g))
         goto err;
 
     return 1;
@@ -81,7 +81,7 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
     goto err;
 }
 
-int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
+int otls_prov_prepare_dsa_params(const void *dsa, int nid,
                                 ASN1_STRING **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
@@ -104,7 +104,7 @@ int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
     return 1;
 }
 
-int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
+int otls_prov_prepare_all_dsa_params(const void *dsa, int nid,
                                      ASN1_STRING **pstr, int *pstrtype)
 {
     const BIGNUM *p = DSA_get0_p(dsa);
@@ -112,14 +112,14 @@ int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
     const BIGNUM *g = DSA_get0_g(dsa);
 
     if (p != NULL && q != NULL && g != NULL)
-        return ossl_prov_prepare_dsa_params(dsa, nid, pstr, pstrtype);
+        return otls_prov_prepare_dsa_params(dsa, nid, pstr, pstrtype);
 
     *pstr = NULL;
     *pstrtype = V_ASN1_UNDEF;
     return 1;
 }
 
-int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder)
+int otls_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder)
 {
     ASN1_INTEGER *pub_key = BN_to_ASN1_INTEGER(DSA_get0_pub_key(dsa), NULL);
     int ret;
@@ -135,7 +135,7 @@ int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder)
     return ret;
 }
 
-int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder)
+int otls_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder)
 {
     ASN1_INTEGER *priv_key = BN_to_ASN1_INTEGER(DSA_get0_priv_key(dsa), NULL);
     int ret;

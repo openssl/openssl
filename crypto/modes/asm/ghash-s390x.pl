@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # September 2010.
@@ -91,7 +91,7 @@ $code.=<<___;
 gcm_gmult_4bit:
 ___
 $code.=<<___ if(!$softonly && 0);	# hardware is slow for single block...
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	lghi	%r0,0
 	lg	%r1,S390X_KIMD+8(%r1)	# load second word of kimd capabilities
 					#  vector
@@ -127,7 +127,7 @@ $code.=<<___;
 gcm_ghash_4bit:
 ___
 $code.=<<___ if(!$softonly);
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	lg	%r0,S390X_KIMD+8(%r1)	# load second word of kimd capabilities
 					#  vector
 	tmhh	%r0,0x4000	# check for function 65
@@ -256,7 +256,7 @@ rem_4bit:
 	.long	`0x9180<<12`,0,`0x8DA0<<12`,0,`0xA9C0<<12`,0,`0xB5E0<<12`,0
 .type	rem_4bit,\@object
 .size	rem_4bit,(.-rem_4bit)
-.string	"GHASH for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"GHASH for s390x, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

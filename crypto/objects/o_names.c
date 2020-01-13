@@ -1,21 +1,21 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/err.h>
-#include <openssl/lhash.h>
-#include <openssl/objects.h>
-#include <openssl/safestack.h>
-#include <openssl/e_os2.h>
+#include <opentls/err.h>
+#include <opentls/lhash.h>
+#include <opentls/objects.h>
+#include <opentls/safestack.h>
+#include <opentls/e_os2.h>
 #include "internal/thread_once.h"
 #include "crypto/lhash.h"
 #include "obj_local.h"
@@ -29,7 +29,7 @@
  * actually an external function with the Microsoft ABI, so we can't
  * transparently assign function pointers to it.
  */
-#if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
+#if defined(OPENtls_SYS_VMS_DECC) || defined(OPENtls_SYS_UEFI)
 static int obj_strcasecmp(const char *a, const char *b)
 {
     return strcasecmp(a, b);
@@ -97,19 +97,19 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     ret = names_type_num;
     names_type_num++;
     for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
-        name_funcs = OPENSSL_zalloc(sizeof(*name_funcs));
+        name_funcs = OPENtls_zalloc(sizeof(*name_funcs));
         if (name_funcs == NULL) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             ret = 0;
             goto out;
         }
-        name_funcs->hash_func = openssl_lh_strcasehash;
+        name_funcs->hash_func = opentls_lh_strcasehash;
         name_funcs->cmp_func = obj_strcasecmp;
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
 
         if (!push) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
-            OPENSSL_free(name_funcs);
+            OPENtls_free(name_funcs);
             ret = 0;
             goto out;
         }
@@ -153,7 +153,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = openssl_lh_strcasehash(a->name);
+        ret = opentls_lh_strcasehash(a->name);
     }
     ret ^= a->type;
     return ret;
@@ -206,7 +206,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
 
-    onp = OPENSSL_malloc(sizeof(*onp));
+    onp = OPENtls_malloc(sizeof(*onp));
     if (onp == NULL) {
         /* ERROR */
         goto unlock;
@@ -232,11 +232,11 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
                                 ret->type)->free_func(ret->name, ret->type,
                                                       ret->data);
         }
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
     } else {
         if (lh_OBJ_NAME_error(names_lh)) {
             /* ERROR */
-            OPENSSL_free(onp);
+            OPENtls_free(onp);
             goto unlock;
         }
     }
@@ -274,7 +274,7 @@ int OBJ_NAME_remove(const char *name, int type)
                                 ret->type)->free_func(ret->name, ret->type,
                                                       ret->data);
         }
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         ok = 1;
     }
 
@@ -341,7 +341,7 @@ void OBJ_NAME_do_all_sorted(int type,
 
     d.type = type;
     d.names =
-        OPENSSL_malloc(sizeof(*d.names) * lh_OBJ_NAME_num_items(names_lh));
+        OPENtls_malloc(sizeof(*d.names) * lh_OBJ_NAME_num_items(names_lh));
     /* Really should return an error if !d.names...but its a void function! */
     if (d.names != NULL) {
         d.n = 0;
@@ -352,7 +352,7 @@ void OBJ_NAME_do_all_sorted(int type,
         for (n = 0; n < d.n; ++n)
             fn(d.names[n], arg);
 
-        OPENSSL_free((void *)d.names);
+        OPENtls_free((void *)d.names);
     }
 }
 
@@ -369,7 +369,7 @@ static void names_lh_free_doall(OBJ_NAME *onp)
 
 static void name_funcs_free(NAME_FUNCS *ptr)
 {
-    OPENSSL_free(ptr);
+    OPENtls_free(ptr);
 }
 
 void OBJ_NAME_cleanup(int type)

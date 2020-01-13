@@ -1,19 +1,19 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_ARIA
-# include <openssl/evp.h>
-# include <openssl/modes.h>
-# include <openssl/rand.h>
-# include <openssl/rand_drbg.h>
+#ifndef OPENtls_NO_ARIA
+# include <opentls/evp.h>
+# include <opentls/modes.h>
+# include <opentls/rand.h>
+# include <opentls/rand_drbg.h>
 # include "crypto/aria.h"
 # include "crypto/evp.h"
 # include "crypto/modes.h"
@@ -27,7 +27,7 @@ typedef struct {
 /* ARIA GCM context */
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         ARIA_KEY ks;
     } ks;                       /* ARIA subkey to use */
     int key_set;                /* Set if key initialised */
@@ -43,7 +43,7 @@ typedef struct {
 /* ARIA CCM context */
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         ARIA_KEY ks;
     } ks;                       /* ARIA key schedule to use */
     int key_set;                /* Set if key initialised */
@@ -269,8 +269,8 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         /* Allocate memory for IV if needed */
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
-                OPENSSL_free(gctx->iv);
-            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+                OPENtls_free(gctx->iv);
+            if ((gctx->iv = OPENtls_malloc(arg)) == NULL) {
                 EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -375,7 +375,7 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == EVP_CIPHER_CTX_iv_noconst(c))
                 gctx_out->iv = EVP_CIPHER_CTX_iv_noconst(out);
             else {
-                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                if ((gctx_out->iv = OPENtls_malloc(gctx->ivlen)) == NULL) {
                     EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
@@ -434,7 +434,7 @@ static int aria_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         /* If tag mismatch wipe buffer */
         if (CRYPTO_memcmp(EVP_CIPHER_CTX_buf_noconst(ctx), in + len,
                           EVP_GCM_TLS_TAG_LEN)) {
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
             goto err;
         }
         rv = len;
@@ -495,7 +495,7 @@ static int aria_gcm_cleanup(EVP_CIPHER_CTX *ctx)
     EVP_ARIA_GCM_CTX *gctx = EVP_C_DATA(EVP_ARIA_GCM_CTX, ctx);
 
     if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(ctx))
-        OPENSSL_free(gctx->iv);
+        OPENtls_free(gctx->iv);
 
     return 1;
 }
@@ -670,7 +670,7 @@ static int aria_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     return len;
             }
         }
-        OPENSSL_cleanse(out, len);
+        OPENtls_cleanse(out, len);
         return -1;
     }
 }
@@ -740,7 +740,7 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
         }
         if (rv == -1)
-            OPENSSL_cleanse(out, len);
+            OPENtls_cleanse(out, len);
         cctx->iv_set = 0;
         cctx->tag_set = 0;
         cctx->len_set = 0;

@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC, "${dir}perlasm", "perlasm");
@@ -14,9 +14,9 @@ $output = pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0]);
 
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
-&function_begin("OPENSSL_ia32_cpuid");
+&function_begin("OPENtls_ia32_cpuid");
 	&xor	("edx","edx");
 	&pushf	();
 	&pop	("eax");
@@ -159,26 +159,26 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax","esi");
 	&mov	("edx","ebp");
 &set_label("nocpuid");
-&function_end("OPENSSL_ia32_cpuid");
+&function_end("OPENtls_ia32_cpuid");
 
-&external_label("OPENSSL_ia32cap_P");
+&external_label("OPENtls_ia32cap_P");
 
-&function_begin_B("OPENSSL_rdtsc","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
+&function_begin_B("OPENtls_rdtsc","EXTRN\t_OPENtls_ia32cap_P:DWORD");
 	&xor	("eax","eax");
 	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
+	&picmeup("ecx","OPENtls_ia32cap_P");
 	&bt	(&DWP(0,"ecx"),4);
 	&jnc	(&label("notsc"));
 	&rdtsc	();
 &set_label("notsc");
 	&ret	();
-&function_end_B("OPENSSL_rdtsc");
+&function_end_B("OPENtls_rdtsc");
 
 # This works in Ring 0 only [read DJGPP+MS-DOS+privileged DPMI host],
 # but it's safe to call it on any [supported] 32-bit platform...
 # Just check for [non-]zero return value...
-&function_begin_B("OPENSSL_instrument_halt","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
+&function_begin_B("OPENtls_instrument_halt","EXTRN\t_OPENtls_ia32cap_P:DWORD");
+	&picmeup("ecx","OPENtls_ia32cap_P");
 	&bt	(&DWP(0,"ecx"),4);
 	&jnc	(&label("nohalt"));	# no TSC
 
@@ -206,17 +206,17 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("eax","eax");
 	&xor	("edx","edx");
 	&ret	();
-&function_end_B("OPENSSL_instrument_halt");
+&function_end_B("OPENtls_instrument_halt");
 
 # Essentially there is only one use for this function. Under DJGPP:
 #
 #	#include <go32.h>
 #	...
-#	i=OPENSSL_far_spin(_dos_ds,0x46c);
+#	i=OPENtls_far_spin(_dos_ds,0x46c);
 #	...
 # to obtain the number of spins till closest timer interrupt.
 
-&function_begin_B("OPENSSL_far_spin");
+&function_begin_B("OPENtls_far_spin");
 	&pushf	();
 	&pop	("eax");
 	&bt	("eax",9);
@@ -242,12 +242,12 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("eax","eax");
 	&xor	("edx","edx");
 	&ret	();
-&function_end_B("OPENSSL_far_spin");
+&function_end_B("OPENtls_far_spin");
 
-&function_begin_B("OPENSSL_wipe_cpu","EXTRN\t_OPENSSL_ia32cap_P:DWORD");
+&function_begin_B("OPENtls_wipe_cpu","EXTRN\t_OPENtls_ia32cap_P:DWORD");
 	&xor	("eax","eax");
 	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
+	&picmeup("ecx","OPENtls_ia32cap_P");
 	&mov	("ecx",&DWP(0,"ecx"));
 	&bt	(&DWP(0,"ecx"),1);
 	&jnc	(&label("no_x87"));
@@ -270,9 +270,9 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("no_x87");
 	&lea	("eax",&DWP(4,"esp"));
 	&ret	();
-&function_end_B("OPENSSL_wipe_cpu");
+&function_end_B("OPENtls_wipe_cpu");
 
-&function_begin_B("OPENSSL_atomic_add");
+&function_begin_B("OPENtls_atomic_add");
 	&mov	("edx",&DWP(4,"esp"));	# fetch the pointer, 1st arg
 	&mov	("ecx",&DWP(8,"esp"));	# fetch the increment, 2nd arg
 	&push	("ebx");
@@ -283,12 +283,12 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&nop	();
 	&data_word(0x1ab10ff0);	# lock;	cmpxchg	%ebx,(%edx)	# %eax is involved and is always reloaded
 	&jne	(&label("spin"));
-	&mov	("eax","ebx");	# OpenSSL expects the new value
+	&mov	("eax","ebx");	# Opentls expects the new value
 	&pop	("ebx");
 	&ret	();
-&function_end_B("OPENSSL_atomic_add");
+&function_end_B("OPENtls_atomic_add");
 
-&function_begin_B("OPENSSL_cleanse");
+&function_begin_B("OPENtls_cleanse");
 	&mov	("edx",&wparam(0));
 	&mov	("ecx",&wparam(1));
 	&xor	("eax","eax");
@@ -320,7 +320,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&cmp	("ecx",0);
 	&jne	(&label("little"));
 	&ret	();
-&function_end_B("OPENSSL_cleanse");
+&function_end_B("OPENtls_cleanse");
 
 &function_begin_B("CRYPTO_memcmp");
 	&push	("esi");
@@ -354,10 +354,10 @@ my $out = "edi";
 my $cnt = "ecx";
 my $max = "ebp";
 
-&function_begin("OPENSSL_instrument_bus");
+&function_begin("OPENtls_instrument_bus");
     &mov	("eax",0);
     if ($sse2) {
-	&picmeup("edx","OPENSSL_ia32cap_P");
+	&picmeup("edx","OPENtls_ia32cap_P");
 	&bt	(&DWP(0,"edx"),4);
 	&jnc	(&label("nogo"));	# no TSC
 	&bt	(&DWP(0,"edx"),19);
@@ -391,12 +391,12 @@ my $max = "ebp";
 	&mov	("eax",&wparam(1));
 &set_label("nogo");
     }
-&function_end("OPENSSL_instrument_bus");
+&function_end("OPENtls_instrument_bus");
 
-&function_begin("OPENSSL_instrument_bus2");
+&function_begin("OPENtls_instrument_bus2");
     &mov	("eax",0);
     if ($sse2) {
-	&picmeup("edx","OPENSSL_ia32cap_P");
+	&picmeup("edx","OPENtls_ia32cap_P");
 	&bt	(&DWP(0,"edx"),4);
 	&jnc	(&label("nogo"));	# no TSC
 	&bt	(&DWP(0,"edx"),19);
@@ -446,12 +446,12 @@ my $max = "ebp";
 	&sub	("eax",$cnt);
 &set_label("nogo");
     }
-&function_end("OPENSSL_instrument_bus2");
+&function_end("OPENtls_instrument_bus2");
 }
 
 sub gen_random {
 my $rdop = shift;
-&function_begin_B("OPENSSL_ia32_${rdop}_bytes");
+&function_begin_B("OPENtls_ia32_${rdop}_bytes");
 	&push	("edi");
 	&push	("ebx");
 	&xor	("eax","eax");		# return value
@@ -492,15 +492,15 @@ my $rdop = shift;
 	&pop	("ebx");
 	&pop	("edi");
 	&ret	();
-&function_end_B("OPENSSL_ia32_${rdop}_bytes");
+&function_end_B("OPENtls_ia32_${rdop}_bytes");
 }
 &gen_random("rdrand");
 &gen_random("rdseed");
 
-&initseg("OPENSSL_cpuid_setup");
+&initseg("OPENtls_cpuid_setup");
 
-&hidden("OPENSSL_cpuid_setup");
-&hidden("OPENSSL_ia32cap_P");
+&hidden("OPENtls_cpuid_setup");
+&hidden("OPENtls_ia32cap_P");
 
 &asm_finish();
 

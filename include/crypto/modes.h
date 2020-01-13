@@ -1,14 +1,14 @@
 /*
- * Copyright 2010-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#include <openssl/modes.h>
+#include <opentls/modes.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 typedef __int64 i64;
@@ -38,7 +38,7 @@ typedef unsigned char u8;
 # endif
 #endif
 
-#if !defined(PEDANTIC) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if !defined(PEDANTIC) && !defined(OPENtls_NO_ASM) && !defined(OPENtls_NO_INLINE_ASM)
 # if defined(__GNUC__) && __GNUC__>=2
 #  if defined(__x86_64) || defined(__x86_64__)
 #   define BSWAP8(x) ({ u64 ret_=(x);                   \
@@ -129,7 +129,7 @@ struct gcm128_context {
     unsigned int mres, ares;
     block128_f block;
     void *key;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     unsigned char Xn[48];
 #endif
 };
@@ -155,7 +155,7 @@ struct ccm128_context {
     void *key;
 };
 
-#ifndef OPENSSL_NO_OCB
+#ifndef OPENtls_NO_OCB
 
 typedef union {
     u64 a[2];
@@ -194,9 +194,9 @@ struct ocb128_context {
         OCB_BLOCK checksum;
     } sess;
 };
-#endif                          /* OPENSSL_NO_OCB */
+#endif                          /* OPENtls_NO_OCB */
 
-#ifndef OPENSSL_NO_SIV
+#ifndef OPENtls_NO_SIV
 
 #define SIV_LEN 16
 
@@ -217,4 +217,4 @@ struct siv128_context {
     int crypto_ok;
 };
 
-#endif /* OPENSSL_NO_SIV */
+#endif /* OPENtls_NO_SIV */

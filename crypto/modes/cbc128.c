@@ -1,14 +1,14 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "crypto/modes.h"
 
 #if !defined(STRICT_ALIGNMENT) && !defined(PEDANTIC)
@@ -25,7 +25,7 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
     if (len == 0)
         return;
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     if (STRICT_ALIGNMENT &&
         ((size_t)in | (size_t)out | (size_t)ivec) % sizeof(size_t) != 0) {
         while (len >= 16) {
@@ -79,7 +79,7 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
     if (len == 0)
         return;
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     if (in != out) {
         const unsigned char *iv = ivec;
 

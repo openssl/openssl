@@ -1,15 +1,15 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "dso_local.h"
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
 
 # pragma message disable DOLLARID
 # include <errno.h>
@@ -42,7 +42,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
                         const char *filespec2);
 
 static DSO_METHOD dso_meth_vms = {
-    "OpenSSL 'VMS' shared library method",
+    "Opentls 'VMS' shared library method",
     vms_load,
     NULL,                       /* unload */
     vms_bind_func,
@@ -76,7 +76,7 @@ typedef struct dso_internal_st {
     char imagename[NAMX_MAXRSS + 1];
 } DSO_VMS_INTERNAL;
 
-DSO_METHOD *DSO_METHOD_openssl(void)
+DSO_METHOD *DSO_METHOD_opentls(void)
 {
     return &dso_meth_vms;
 }
@@ -93,7 +93,7 @@ static int vms_load(DSO *dso)
 #  pragma pointer_size save
 #  pragma pointer_size 32
 # else                          /* __INITIAL_POINTER_SIZE == 64 */
-#  define DSO_MALLOC OPENSSL_malloc
+#  define DSO_MALLOC OPENtls_malloc
 # endif                         /* __INITIAL_POINTER_SIZE == 64 [else] */
 
     DSO_VMS_INTERNAL *p = NULL;
@@ -210,8 +210,8 @@ static int vms_load(DSO *dso)
     return 1;
  err:
     /* Cleanup! */
-    OPENSSL_free(p);
-    OPENSSL_free(filename);
+    OPENtls_free(p);
+    OPENtls_free(filename);
     return 0;
 }
 
@@ -235,7 +235,7 @@ static int vms_unload(DSO *dso)
         return 0;
     }
     /* Cleanup */
-    OPENSSL_free(p);
+    OPENtls_free(p);
     return 1;
 }
 
@@ -444,7 +444,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
         return NULL;
     }
 
-    merged = OPENSSL_malloc(nam.NAMX_ESL + 1);
+    merged = OPENtls_malloc(nam.NAMX_ESL + 1);
     if (merged == NULL)
         goto malloc_err;
     strncpy(merged, nam.NAMX_ESA, nam.NAMX_ESL);
@@ -457,10 +457,10 @@ static char *vms_merger(DSO *dso, const char *filespec1,
 static char *vms_name_converter(DSO *dso, const char *filename)
 {
     int len = strlen(filename);
-    char *not_translated = OPENSSL_malloc(len + 1);
+    char *not_translated = OPENtls_malloc(len + 1);
     if (not_translated != NULL)
         strcpy(not_translated, filename);
     return not_translated;
 }
 
-#endif                          /* OPENSSL_SYS_VMS */
+#endif                          /* OPENtls_SYS_VMS */

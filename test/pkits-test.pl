@@ -1,26 +1,26 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Perl utility to run PKITS tests for RFC3280 compliance.
 
-my $ossl_path;
+my $otls_path;
 
-if ( -f "../apps/openssl" ) {
-    $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
+if ( -f "../apps/opentls" ) {
+    $otls_path = "../util/shlib_wrap.sh ../apps/opentls";
 }
-elsif ( -f "..\\out32dll\\openssl.exe" ) {
-    $ossl_path = "..\\out32dll\\openssl.exe";
+elsif ( -f "..\\out32dll\\opentls.exe" ) {
+    $otls_path = "..\\out32dll\\opentls.exe";
 }
-elsif ( -f "..\\out32\\openssl.exe" ) {
-    $ossl_path = "..\\out32\\openssl.exe";
+elsif ( -f "..\\out32\\opentls.exe" ) {
+    $otls_path = "..\\out32\\opentls.exe";
 }
 else {
-    die "Can't find OpenSSL executable";
+    die "Can't find Opentls executable";
 }
 
 my $pkitsdir = "pkits/smime";
@@ -736,22 +736,22 @@ my $verbose = 1;
 my $numtest = 0;
 my $numfail = 0;
 
-my $ossl = "ossl/apps/openssl";
+my $otls = "otls/apps/opentls";
 
-my $ossl_cmd = "$ossl_path cms -verify -verify_retcode ";
-$ossl_cmd .= "-CAfile pkitsta.pem -crl_check_all -x509_strict ";
+my $otls_cmd = "$otls_path cms -verify -verify_retcode ";
+$otls_cmd .= "-CAfile pkitsta.pem -crl_check_all -x509_strict ";
 
 # Check for expiry of trust anchor
-system "$ossl_path x509 -inform DER -in $pkitsta -checkend 0";
+system "$otls_path x509 -inform DER -in $pkitsta -checkend 0";
 if ($? == 256)
 	{
 	print STDERR "WARNING: using older expired data\n";
-	$ossl_cmd .= "-attime 1291940972 ";
+	$otls_cmd .= "-attime 1291940972 ";
 	}
 
-$ossl_cmd .= "-policy_check -extended_crl -use_deltas -out /dev/null 2>&1 ";
+$otls_cmd .= "-policy_check -extended_crl -use_deltas -out /dev/null 2>&1 ";
 
-system "$ossl_path x509 -inform DER -in $pkitsta -out pkitsta.pem";
+system "$otls_path x509 -inform DER -in $pkitsta -out pkitsta.pem";
 
 die "Can't create trust anchor file" if $?;
 
@@ -776,12 +776,12 @@ foreach (@testlists) {
             my $ret;
             my $test_fail = 0;
             my $errmsg    = "";
-            my $cmd       = $ossl_cmd;
+            my $cmd       = $otls_cmd;
             $cmd .= "-in $pkitsdir/$filename -policy anyPolicy";
             my $cmdout = `$cmd`;
             $ret = $? >> 8;
             if ( $? & 0xff ) {
-                $errmsg .= "Abnormal OpenSSL termination\n";
+                $errmsg .= "Abnormal Opentls termination\n";
                 $test_fail = 1;
             }
             if ( $exp_ret != $ret ) {
@@ -818,13 +818,13 @@ foreach (@testlists) {
             my $uset      = "";
             my $pol       = -1;
             my $test_fail = 0;
-            my $cmd       = $ossl_cmd;
+            my $cmd       = $otls_cmd;
             $cmd .= "-in $pkitsdir/$filename $exargs -policy_print";
             @oparr = `$cmd`;
             $ret   = $? >> 8;
 
             if ( $? & 0xff ) {
-                $errmsg .= "Abnormal OpenSSL termination\n";
+                $errmsg .= "Abnormal Opentls termination\n";
                 $test_fail = 1;
             }
             foreach (@oparr) {

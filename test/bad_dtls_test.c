@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,7 +16,7 @@
  * which have frequently been affected by regressions in DTLS1_BAD_VER
  * support.
  *
- * Note that unlike other SSL tests, we don't test against our own SSL
+ * Note that unlike other tls tests, we don't test against our own tls
  * server method. Firstly because we don't have one; we *only* support
  * DTLS1_BAD_VER as a client. And secondly because even if that were
  * fixed up it's the wrong thing to test against - because if changes
@@ -29,14 +29,14 @@
  */
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/kdf.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/kdf.h>
 #include "internal/packet.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -44,8 +44,8 @@
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */
 #define MAC_OFFSET (DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH)
 
-static unsigned char client_random[SSL3_RANDOM_SIZE];
-static unsigned char server_random[SSL3_RANDOM_SIZE];
+static unsigned char client_random[tls3_RANDOM_SIZE];
+static unsigned char server_random[tls3_RANDOM_SIZE];
 
 /* These are all generated locally, sized purely according to our own whim */
 static unsigned char session_id[32];
@@ -80,11 +80,11 @@ static int do_PRF(const void *seed1, int seed1_len,
     return 1;
 }
 
-static SSL_SESSION *client_session(void)
+static tls_SESSION *client_session(void)
 {
     static unsigned char session_asn1[] = {
         0x30, 0x5F,              /* SEQUENCE, length 0x5F */
-        0x02, 0x01, 0x01,        /* INTEGER, SSL_SESSION_ASN1_VERSION */
+        0x02, 0x01, 0x01,        /* INTEGER, tls_SESSION_ASN1_VERSION */
         0x02, 0x02, 0x01, 0x00,  /* INTEGER, DTLS1_BAD_VER */
         0x04, 0x02, 0x00, 0x2F,  /* OCTET_STRING, AES128-SHA */
         0x04, 0x20,              /* OCTET_STRING, session id */
@@ -108,7 +108,7 @@ static SSL_SESSION *client_session(void)
     memcpy(session_asn1 + SS_SESSID_OFS, session_id, sizeof(session_id));
     memcpy(session_asn1 + SS_SECRET_OFS, master_secret, sizeof(master_secret));
 
-    return d2i_SSL_SESSION(NULL, &p, sizeof(session_asn1));
+    return d2i_tls_SESSION(NULL, &p, sizeof(session_asn1));
 }
 
 /* Returns 1 for initial ClientHello, 2 for ClientHello with cookie */
@@ -125,7 +125,7 @@ static int validate_client_hello(BIO *wbio)
         return 0;
 
     /* Check record header type */
-    if (!PACKET_get_1(&pkt, &u) || u != SSL3_RT_HANDSHAKE)
+    if (!PACKET_get_1(&pkt, &u) || u != tls3_RT_HANDSHAKE)
         return 0;
     /* Version */
     if (!PACKET_get_net_2(&pkt, &u) || u != DTLS1_BAD_VER)
@@ -135,7 +135,7 @@ static int validate_client_hello(BIO *wbio)
         return 0;
 
     /* Check it's a ClientHello */
-    if (!PACKET_get_1(&pkt, &u) || u != SSL3_MT_CLIENT_HELLO)
+    if (!PACKET_get_1(&pkt, &u) || u != tls3_MT_CLIENT_HELLO)
         return 0;
     /* Skip the rest of the handshake message header */
     if (!PACKET_forward(&pkt, DTLS1_HM_HEADER_LENGTH - 1))
@@ -146,7 +146,7 @@ static int validate_client_hello(BIO *wbio)
         return 0;
 
     /* Store random */
-    if (!PACKET_copy_bytes(&pkt, client_random, SSL3_RANDOM_SIZE))
+    if (!PACKET_copy_bytes(&pkt, client_random, tls3_RANDOM_SIZE))
         return 0;
 
     /* Check session id length and content */
@@ -292,7 +292,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     seq[5] = seqnr & 0xff;
 
     pad = 15 - ((len + SHA_DIGEST_LENGTH) % 16);
-    enc = OPENSSL_malloc(len + SHA_DIGEST_LENGTH + 1 + pad);
+    enc = OPENtls_malloc(len + SHA_DIGEST_LENGTH + 1 + pad);
     if (enc == NULL)
         return 0;
 
@@ -338,11 +338,11 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     BIO_write(rbio, iv, sizeof(iv));
     BIO_write(rbio, enc, len);
 
-    OPENSSL_free(enc);
+    OPENtls_free(enc);
     return 1;
 }
 
-static int send_finished(SSL *s, BIO *rbio)
+static int send_finished(tls *s, BIO *rbio)
 {
     static unsigned char finished_msg[DTLS1_HM_HEADER_LENGTH +
                                       TLS1_FINISH_MAC_LENGTH] = {
@@ -357,8 +357,8 @@ static int send_finished(SSL *s, BIO *rbio)
 
     /* Derive key material */
     do_PRF(TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
-           server_random, SSL3_RANDOM_SIZE,
-           client_random, SSL3_RANDOM_SIZE,
+           server_random, tls3_RANDOM_SIZE,
+           client_random, tls3_RANDOM_SIZE,
            key_block, sizeof(key_block));
 
     /* Generate Finished MAC */
@@ -370,7 +370,7 @@ static int send_finished(SSL *s, BIO *rbio)
            NULL, 0,
            finished_msg + DTLS1_HM_HEADER_LENGTH, TLS1_FINISH_MAC_LENGTH);
 
-    return send_record(rbio, SSL3_RT_HANDSHAKE, 0,
+    return send_record(rbio, tls3_RT_HANDSHAKE, 0,
                        finished_msg, sizeof(finished_msg));
 }
 
@@ -386,7 +386,7 @@ static int validate_ccs(BIO *wbio)
         return 0;
 
     /* Check record header type */
-    if (!PACKET_get_1(&pkt, &u) || u != SSL3_RT_CHANGE_CIPHER_SPEC)
+    if (!PACKET_get_1(&pkt, &u) || u != tls3_RT_CHANGE_CIPHER_SPEC)
         return 0;
     /* Version */
     if (!PACKET_get_net_2(&pkt, &u) || u != DTLS1_BAD_VER)
@@ -396,7 +396,7 @@ static int validate_ccs(BIO *wbio)
         return 0;
 
     /* Check ChangeCipherSpec message */
-    if (!PACKET_get_1(&pkt, &u) || u != SSL3_MT_CCS)
+    if (!PACKET_get_1(&pkt, &u) || u != tls3_MT_CCS)
         return 0;
     /* A DTLS1_BAD_VER ChangeCipherSpec also contains the
      * handshake sequence number (which is 2 here) */
@@ -404,7 +404,7 @@ static int validate_ccs(BIO *wbio)
         return 0;
 
     /* Now check the Finished packet */
-    if (!PACKET_get_1(&pkt, &u) || u != SSL3_RT_HANDSHAKE)
+    if (!PACKET_get_1(&pkt, &u) || u != tls3_RT_HANDSHAKE)
         return 0;
     if (!PACKET_get_net_2(&pkt, &u) || u != DTLS1_BAD_VER)
         return 0;
@@ -413,7 +413,7 @@ static int validate_ccs(BIO *wbio)
     if (!PACKET_get_net_2(&pkt, &u) || u != 0x0001)
         return 0;
 
-    /* That'll do for now. If OpenSSL accepted *our* Finished packet
+    /* That'll do for now. If Opentls accepted *our* Finished packet
      * then it's evidently remembered that DTLS1_BAD_VER doesn't
      * include the handshake header in the MAC. There's not a lot of
      * point in implementing decryption here, just to check that it
@@ -443,9 +443,9 @@ static struct {
 
 static int test_bad_dtls(void)
 {
-    SSL_SESSION *sess = NULL;
-    SSL_CTX *ctx = NULL;
-    SSL *con = NULL;
+    tls_SESSION *sess = NULL;
+    tls_CTX *ctx = NULL;
+    tls *con = NULL;
     BIO *rbio = NULL;
     BIO *wbio = NULL;
     time_t now = 0;
@@ -471,18 +471,18 @@ static int test_bad_dtls(void)
                                             NULL)))
         goto end;
 
-    ctx = SSL_CTX_new(DTLS_client_method());
+    ctx = tls_CTX_new(DTLS_client_method());
     if (!TEST_ptr(ctx)
-            || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER))
-            || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER))
-            || !TEST_true(SSL_CTX_set_cipher_list(ctx, "AES128-SHA")))
+            || !TEST_true(tls_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER))
+            || !TEST_true(tls_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER))
+            || !TEST_true(tls_CTX_set_cipher_list(ctx, "AES128-SHA")))
         goto end;
 
-    con = SSL_new(ctx);
+    con = tls_new(ctx);
     if (!TEST_ptr(con)
-            || !TEST_true(SSL_set_session(con, sess)))
+            || !TEST_true(tls_set_session(con, sess)))
         goto end;
-    SSL_SESSION_free(sess);
+    tls_SESSION_free(sess);
 
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
@@ -491,7 +491,7 @@ static int test_bad_dtls(void)
             || !TEST_ptr(wbio))
         goto end;
 
-    SSL_set_bio(con, rbio, wbio);
+    tls_set_bio(con, rbio, wbio);
 
     if (!TEST_true(BIO_up_ref(rbio))) {
         /*
@@ -507,30 +507,30 @@ static int test_bad_dtls(void)
         goto end;
     }
 
-    SSL_set_connect_state(con);
+    tls_set_connect_state(con);
 
     /* Send initial ClientHello */
-    ret = SSL_do_handshake(con);
+    ret = tls_do_handshake(con);
     if (!TEST_int_le(ret, 0)
-            || !TEST_int_eq(SSL_get_error(con, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(tls_get_error(con, ret), tls_ERROR_WANT_READ)
             || !TEST_int_eq(validate_client_hello(wbio), 1)
             || !TEST_true(send_hello_verify(rbio)))
         goto end;
 
-    ret = SSL_do_handshake(con);
+    ret = tls_do_handshake(con);
     if (!TEST_int_le(ret, 0)
-            || !TEST_int_eq(SSL_get_error(con, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(tls_get_error(con, ret), tls_ERROR_WANT_READ)
             || !TEST_int_eq(validate_client_hello(wbio), 2)
             || !TEST_true(send_server_hello(rbio)))
         goto end;
 
-    ret = SSL_do_handshake(con);
+    ret = tls_do_handshake(con);
     if (!TEST_int_le(ret, 0)
-            || !TEST_int_eq(SSL_get_error(con, ret), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(tls_get_error(con, ret), tls_ERROR_WANT_READ)
             || !TEST_true(send_finished(con, rbio)))
         goto end;
 
-    ret = SSL_do_handshake(con);
+    ret = tls_do_handshake(con);
     if (!TEST_int_gt(ret, 0)
             || !TEST_true(validate_ccs(wbio)))
         goto end;
@@ -540,10 +540,10 @@ static int test_bad_dtls(void)
        specific but useful anyway for the general case. It's been broken
        before, and in fact was broken even for a basic 0, 2, 1 test case
        when this test was first added.... */
-    for (i = 0; i < (int)OSSL_NELEM(tests); i++) {
+    for (i = 0; i < (int)Otls_NELEM(tests); i++) {
         uint64_t recv_buf[2];
 
-        if (!TEST_true(send_record(rbio, SSL3_RT_APPLICATION_DATA, tests[i].seq,
+        if (!TEST_true(send_record(rbio, tls3_RT_APPLICATION_DATA, tests[i].seq,
                                    &tests[i].seq, sizeof(uint64_t)))) {
             TEST_error("Failed to send data seq #0x%x%08x (%d)\n",
                        (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
@@ -553,9 +553,9 @@ static int test_bad_dtls(void)
         if (tests[i].drop)
             continue;
 
-        ret = SSL_read(con, recv_buf, 2 * sizeof(uint64_t));
+        ret = tls_read(con, recv_buf, 2 * sizeof(uint64_t));
         if (!TEST_int_eq(ret, (int)sizeof(uint64_t))) {
-            TEST_error("SSL_read failed or wrong size on seq#0x%x%08x (%d)\n",
+            TEST_error("tls_read failed or wrong size on seq#0x%x%08x (%d)\n",
                        (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
             goto end;
         }
@@ -572,8 +572,8 @@ static int test_bad_dtls(void)
  end:
     BIO_free(rbio);
     BIO_free(wbio);
-    SSL_free(con);
-    SSL_CTX_free(ctx);
+    tls_free(con);
+    tls_CTX_free(ctx);
     EVP_MD_CTX_free(handshake_md);
 
     return testresult;

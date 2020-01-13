@@ -5,11 +5,11 @@ IF[{- !$disabled{asm} -}]
   # Define source files and macros per asm architecture
   # Known macros are:
   #
-  # OPENSSL_BN_ASM_PART_WORDS     For any collection with /-586/ file names
-  # OPENSSL_BN_ASM_MONT           For any collection with /-mont/ file names
-  # OPENSSL_BN_ASM_MONT5          For any collection with /-mont5/ file names
-  # OPENSSL_BN_ASM_GF2m           For any collection with /-gf2m/ file names
-  # OPENSSL_IA32_SSE2             For any collection with /86/ file names
+  # OPENtls_BN_ASM_PART_WORDS     For any collection with /-586/ file names
+  # OPENtls_BN_ASM_MONT           For any collection with /-mont/ file names
+  # OPENtls_BN_ASM_MONT5          For any collection with /-mont5/ file names
+  # OPENtls_BN_ASM_GF2m           For any collection with /-gf2m/ file names
+  # OPENtls_IA32_SSE2             For any collection with /86/ file names
   #                               when sse2 is enabled
   # BN_DIV3W                      For any collection with /-div3w/ file names
   #
@@ -18,9 +18,9 @@ IF[{- !$disabled{asm} -}]
 
   $BNASM_x86=bn-586.s co-586.s x86-mont.s x86-gf2m.s
   # bn-586 is the only one implementing bn_*_part_words
-  # => OPENSSL_BN_ASM_PART_WORDS
-  $BNDEF_x86=OPENSSL_BN_ASM_PART_WORDS OPENSSL_BN_ASM_MONT OPENSSL_BN_ASM_GF2m
-  $BNDEF_x86_sse2=OPENSSL_IA32_SSE2
+  # => OPENtls_BN_ASM_PART_WORDS
+  $BNDEF_x86=OPENtls_BN_ASM_PART_WORDS OPENtls_BN_ASM_MONT OPENtls_BN_ASM_GF2m
+  $BNDEF_x86_sse2=OPENtls_IA32_SSE2
 
   $BNASM_x86_64=\
           x86_64-mont.s x86_64-mont5.s x86_64-gf2m.s rsaz_exp.c rsaz-x86_64.s \
@@ -30,8 +30,8 @@ IF[{- !$disabled{asm} -}]
   ELSE
     $BNASM_x86_64=bn_asm.c $BNASM_x86_64
   ENDIF
-  $BNDEF_x86_64=OPENSSL_BN_ASM_MONT OPENSSL_BN_ASM_MONT5 OPENSSL_BN_ASM_GF2m
-  $BNDEF_x86_64_sse2=OPENSSL_IA32_SSE2
+  $BNDEF_x86_64=OPENtls_BN_ASM_MONT OPENtls_BN_ASM_MONT5 OPENtls_BN_ASM_GF2m
+  $BNDEF_x86_64_sse2=OPENtls_IA32_SSE2
 
   IF[{- $config{target} !~ /^VC/ -}]
     $BNASM_ia64=bn-ia64.s ia64-mont.s
@@ -41,17 +41,17 @@ IF[{- !$disabled{asm} -}]
 
   $BNASM_sparcv9=asm/sparcv8plus.S sparcv9-mont.S sparcv9a-mont.S vis3-mont.S \
           sparct4-mont.S
-  $BNDEF_sparcv9=OPENSSL_BN_ASM_MONT
+  $BNDEF_sparcv9=OPENtls_BN_ASM_MONT
   $BNASM_sparcv9_ec2m=sparcv9-gf2m.S
-  $BNDEF_sparcv9_ec2m=OPENSSL_BN_ASM_GF2m
+  $BNDEF_sparcv9_ec2m=OPENtls_BN_ASM_GF2m
 
   $BNASM_sparcv8=asm/sparcv8.S
 
   $BNASM_alpha=bn_asm.c alpha-mont.S
-  $BNDEF_alpha=OPENSSL_BN_ASM_MONT
+  $BNDEF_alpha=OPENtls_BN_ASM_MONT
 
   $BNASM_mips32=bn-mips.S mips-mont.S
-  $BNDEF_mips32=OPENSSL_BN_ASM_MONT
+  $BNDEF_mips32=OPENtls_BN_ASM_MONT
   $BNASM_mips64=$BNASM_mips32
   $BNDEF_mips64=$BNDEF_mips32
 
@@ -60,31 +60,31 @@ IF[{- !$disabled{asm} -}]
   ELSE
     $BNASM_s390x=asm/s390x.S s390x-mont.S
   ENDIF
-  $BNDEF_s390x=OPENSSL_BN_ASM_MONT
+  $BNDEF_s390x=OPENtls_BN_ASM_MONT
   $BNASM_s390x_ec2m=s390x-gf2m.s
-  $BNDEF_s390x_ec2m=OPENSSL_BN_ASM_GF2m
+  $BNDEF_s390x_ec2m=OPENtls_BN_ASM_GF2m
 
   $BNASM_armv4=bn_asm.c armv4-mont.S
-  $BNDEF_armv4=OPENSSL_BN_ASM_MONT
+  $BNDEF_armv4=OPENtls_BN_ASM_MONT
   $BNASM_armv4_ec2m=armv4-gf2m.S
-  $BNDEF_armv4_ec2m=OPENSSL_BN_ASM_GF2m
+  $BNDEF_armv4_ec2m=OPENtls_BN_ASM_GF2m
 
   $BNASM_aarch64=bn_asm.c armv8-mont.S
-  $BNDEF_aarch64=OPENSSL_BN_ASM_MONT
+  $BNDEF_aarch64=OPENtls_BN_ASM_MONT
 
   $BNASM_parisc11=bn_asm.c parisc-mont.s
-  $BNDEF_parisc11=OPENSSL_BN_ASM_MONT
+  $BNDEF_parisc11=OPENtls_BN_ASM_MONT
   $BNASM_parisc20_64=$BNASM_parisc11
   $BNDEF_parisc20_64=$BNDEF_parisc11
 
   $BNASM_ppc32=bn-ppc.s ppc-mont.s
-  $BNDEF_ppc32=OPENSSL_BN_ASM_MONT
+  $BNDEF_ppc32=OPENtls_BN_ASM_MONT
   $BNASM_ppc64=$BNASM_ppc32
   $BNDEF_ppc64=$BNDEF_ppc32
 
   $BNASM_c64xplus=asm/bn-c64xplus.asm
   $BNASM_c64xplus_ec2m=c64xplus-gf2m.s
-  $BNDEF_c64xplus_ec2m=OPENSSL_BN_ASM_GF2m
+  $BNDEF_c64xplus_ec2m=OPENtls_BN_ASM_GF2m
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate ones, and define the appropriate macros

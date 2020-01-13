@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,15 +13,15 @@
 #include <limits.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
-#include <openssl/pem.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/rand.h>
+#include <opentls/pem.h>
+#ifndef OPENtls_NO_COMP
+# include <opentls/comp.h>
 #endif
 #include <ctype.h>
 
@@ -52,14 +52,14 @@ const OPTIONS enc_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list", OPT_LIST, '-', "List ciphers"},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     {"ciphers", OPT_LIST, '-', "Alias for -list"},
 #endif
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},
     {"P", OPT_UPPER_P, '-', "Print the iv/key and exit"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
 
@@ -348,7 +348,7 @@ int enc_main(int argc, char **argv)
 
     if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
         if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             for (;;) {
                 char prompt[200];
 
@@ -505,9 +505,9 @@ int enc_main(int argc, char **argv)
              * line.
              */
             if (str == strbuf)
-                OPENSSL_cleanse(str, SIZE);
+                OPENtls_cleanse(str, SIZE);
             else
-                OPENSSL_cleanse(str, str_len);
+                OPENtls_cleanse(str, str_len);
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_iv_length(cipher);
@@ -533,7 +533,7 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
             /* wiping secret data as we no longer need it */
-            OPENSSL_cleanse(hkey, strlen(hkey));
+            OPENtls_cleanse(hkey, strlen(hkey));
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
@@ -619,8 +619,8 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
-    OPENSSL_free(strbuf);
-    OPENSSL_free(buff);
+    OPENtls_free(strbuf);
+    OPENtls_free(buff);
     BIO_free(in);
     BIO_free_all(out);
     BIO_free(benc);
@@ -629,7 +629,7 @@ int enc_main(int argc, char **argv)
     BIO_free(bzl);
 #endif
     release_engine(e);
-    OPENSSL_free(pass);
+    OPENtls_free(pass);
     return ret;
 }
 
@@ -677,7 +677,7 @@ static int set_hex(const char *in, unsigned char *out, int size)
             BIO_printf(bio_err, "non-hex digit\n");
             return 0;
         }
-        j = (unsigned char)OPENSSL_hexchar2int(j);
+        j = (unsigned char)OPENtls_hexchar2int(j);
         if (i & 1)
             out[i / 2] |= j;
         else

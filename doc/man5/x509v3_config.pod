@@ -6,7 +6,7 @@ x509v3_config - X509 V3 certificate extension configuration format
 
 =head1 DESCRIPTION
 
-Several of the OpenSSL utilities can add extensions to a certificate or
+Several of the Opentls utilities can add extensions to a certificate or
 certificate request based on the contents of a configuration file.
 
 Typically the application will contain an option to point to an extension
@@ -108,8 +108,8 @@ following PKIX, NS and MS values are meaningful:
 
  Value                  Meaning
  -----                  -------
- serverAuth             SSL/TLS Web Server Authentication.
- clientAuth             SSL/TLS Web Client Authentication.
+ serverAuth             tls/TLS Web Server Authentication.
+ clientAuth             tls/TLS Web Client Authentication.
  codeSigning            Code signing.
  emailProtection        E-mail Protection (S/MIME).
  timeStamping           Trusted Timestamping
@@ -435,7 +435,7 @@ Example:
 
 Other supported extensions in this category are: B<nsBaseUrl>,
 B<nsRevocationUrl>, B<nsCaRevocationUrl>, B<nsRenewalUrl>, B<nsCaPolicyUrl>
-and B<nsSslServerName>.
+and B<nstlsServerName>.
 
 
 =head2 Netscape Certificate Type
@@ -446,12 +446,12 @@ be used. The basicConstraints, keyUsage and extended key usage extensions are
 now used instead.
 
 Acceptable values for nsCertType are: B<client>, B<server>, B<email>,
-B<objsign>, B<reserved>, B<sslCA>, B<emailCA>, B<objCA>.
+B<objsign>, B<reserved>, B<tlsCA>, B<emailCA>, B<objCA>.
 
 
 =head1 ARBITRARY EXTENSIONS
 
-If an extension is not supported by the OpenSSL code then it must be encoded
+If an extension is not supported by the Opentls code then it must be encoded
 using the arbitrary extension format. It is also possible to use the arbitrary
 format for supported extensions. Extreme care should be taken to ensure that
 the data is formatted correctly for the given extension type.
@@ -510,7 +510,7 @@ will produce an error but the equivalent form:
 
 is valid.
 
-Due to the behaviour of the OpenSSL B<conf> library the same field name
+Due to the behaviour of the Opentls B<conf> library the same field name
 can only occur once in a section. This means that:
 
  subjectAltName=@alt_section
@@ -529,16 +529,16 @@ will only recognize the last value. This can be worked around by using the form:
 
 =head1 SEE ALSO
 
-L<openssl-req(1)>, L<openssl-ca(1)>, L<openssl-x509(1)>,
+L<opentls-req(1)>, L<opentls-ca(1)>, L<opentls-x509(1)>,
 L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

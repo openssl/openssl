@@ -1,18 +1,18 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test::Utils;
 
 setup("test_out_option");
 
@@ -31,14 +31,14 @@ SKIP: {
     # Note that directories must end with a slash here, because of how
     # File::Spec massages them into directory specs on some platforms.
     my $path = File::Spec->canonpath('./');
-    ok(!run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+    ok(!run(app([ 'opentls', 'rand', '-out', $path, '1'])),
        "invalid output path: $path");
 }
 
 # Test 2
 {
     my $path = File::Spec->canonpath('randomname.bin');
-    ok(run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+    ok(run(app([ 'opentls', 'rand', '-out', $path, '1'])),
        "valid output path: $path");
 }
 
@@ -53,7 +53,7 @@ SKIP: {
     $rand_path .= "/randomname.bin";
 
     my $path = File::Spec->canonpath($rand_path);
-    ok(!run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+    ok(!run(app([ 'opentls', 'rand', '-out', $path, '1'])),
        "invalid output path: $path");
 }
 
@@ -63,7 +63,7 @@ SKIP: {
         unless (config('CROSS_COMPILE') // '') eq '';
 
     my $path = File::Spec->canonpath(File::Spec->devnull());
-    ok(run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+    ok(run(app([ 'opentls', 'rand', '-out', $path, '1'])),
        "valid output path: $path");
 }
 

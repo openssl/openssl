@@ -1,18 +1,18 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "dh_local.h"
-#include <openssl/objects.h>
-#include <openssl/asn1t.h>
+#include <opentls/objects.h>
+#include <opentls/asn1t.h>
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -109,11 +109,11 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
         dh->counter = dhx->vparams->counter;
         dhx->vparams->seed->data = NULL;
         ASN1_BIT_STRING_free(dhx->vparams->seed);
-        OPENSSL_free(dhx->vparams);
+        OPENtls_free(dhx->vparams);
         dhx->vparams = NULL;
     }
 
-    OPENSSL_free(dhx);
+    OPENtls_free(dhx);
     return dh;
 }
 

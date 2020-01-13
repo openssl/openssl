@@ -13,7 +13,7 @@ ASYNC_STATUS_EAGAIN
 
 =head1 SYNOPSIS
 
- #include <openssl/async.h>
+ #include <opentls/async.h>
 
  #define ASYNC_STATUS_UNSUPPORTED    0
  #define ASYNC_STATUS_ERR            1
@@ -23,16 +23,16 @@ ASYNC_STATUS_EAGAIN
  ASYNC_WAIT_CTX *ASYNC_WAIT_CTX_new(void);
  void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx);
  int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                                OSSL_ASYNC_FD fd,
+                                Otls_ASYNC_FD fd,
                                 void *custom_data,
                                 void (*cleanup)(ASYNC_WAIT_CTX *, const void *,
-                                                OSSL_ASYNC_FD, void *));
+                                                Otls_ASYNC_FD, void *));
  int ASYNC_WAIT_CTX_get_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                           OSSL_ASYNC_FD *fd, void **custom_data);
- int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
+                           Otls_ASYNC_FD *fd, void **custom_data);
+ int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *fd,
                                 size_t *numfds);
- int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
-                                    size_t *numaddfds, OSSL_ASYNC_FD *delfd,
+ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *addfd,
+                                    size_t *numaddfds, Otls_ASYNC_FD *delfd,
                                     size_t *numdelfds);
  int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key);
  int ASYNC_WAIT_CTX_set_callback(ASYNC_WAIT_CTX *ctx,
@@ -47,17 +47,17 @@ ASYNC_STATUS_EAGAIN
 
 =head1 DESCRIPTION
 
-For an overview of how asynchronous operations are implemented in OpenSSL see
+For an overview of how asynchronous operations are implemented in Opentls see
 L<ASYNC_start_job(3)>. An B<ASYNC_WAIT_CTX> object represents an asynchronous
-"session", i.e. a related set of crypto operations. For example in SSL terms
-this would have a one-to-one correspondence with an SSL connection.
+"session", i.e. a related set of crypto operations. For example in tls terms
+this would have a one-to-one correspondence with an tls connection.
 
 Application code must create an B<ASYNC_WAIT_CTX> using the ASYNC_WAIT_CTX_new()
 function prior to calling ASYNC_start_job() (see L<ASYNC_start_job(3)>). When
 the job is started it is associated with the B<ASYNC_WAIT_CTX> for the duration
 of that job. An B<ASYNC_WAIT_CTX> should only be used for one B<ASYNC_JOB> at
 any one time, but can be reused after an B<ASYNC_JOB> has finished for a
-subsequent B<ASYNC_JOB>. When the session is complete (e.g. the SSL connection
+subsequent B<ASYNC_JOB>. When the session is complete (e.g. the tls connection
 is closed), application code cleans up with ASYNC_WAIT_CTX_free().
 
 B<ASYNC_WAIT_CTX>s can have "wait" file descriptors associated with them.
@@ -192,7 +192,7 @@ ASYNC_WAIT_CTX_get_status() returns the engine status.
 
 =head1 NOTES
 
-On Windows platforms the openssl/async.h header is dependent on some
+On Windows platforms the opentls/async.h header is dependent on some
 of the types customarily made available by including windows.h. The
 application developer is likely to require control over when the latter
 is included, commonly as one of the first included headers. Therefore
@@ -208,19 +208,19 @@ L<crypto(7)>, L<ASYNC_start_job(3)>
 ASYNC_WAIT_CTX_new(), ASYNC_WAIT_CTX_free(), ASYNC_WAIT_CTX_set_wait_fd(),
 ASYNC_WAIT_CTX_get_fd(), ASYNC_WAIT_CTX_get_all_fds(),
 ASYNC_WAIT_CTX_get_changed_fds() and ASYNC_WAIT_CTX_clear_fd()
-were added in OpenSSL 1.1.0.
+were added in Opentls 1.1.0.
 
 ASYNC_WAIT_CTX_set_callback(), ASYNC_WAIT_CTX_get_callback(),
 ASYNC_WAIT_CTX_set_status(), and ASYNC_WAIT_CTX_get_status()
-were added in OpenSSL 3.0.
+were added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

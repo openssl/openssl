@@ -10,9 +10,9 @@ ${-
 $       ! Create a local environment with the shared library logical names
 $       ! properly set.  Undo this with unlocal_shlib.com
 $
-$       OPENSSL_NAMES := OPENSSL_NAMES_'F$GETJPI("","PID")'
-$       CREATE/NAME_TABLE/PARENT_TABLE=LNM$PROCESS_DIRECTORY 'OPENSSL_NAMES'
-$       DEFINE/TABLE='OPENSSL_NAMES' OSSL_FLAG YES
+$       OPENtls_NAMES := OPENtls_NAMES_'F$GETJPI("","PID")'
+$       CREATE/NAME_TABLE/PARENT_TABLE=LNM$PROCESS_DIRECTORY 'OPENtls_NAMES'
+$       DEFINE/TABLE='OPENtls_NAMES' Otls_FLAG YES
 $
 $       NAMES := {- join(",", keys %names); -}
 {-
@@ -25,7 +25,7 @@ $           I = I + 1
 $           IF E .EQS. "," THEN GOTO ENDLOOP
 $           EV = __'E'
 $           OLDV = F$TRNLNM(E,"LNM$PROCESS")
-$           IF OLDV .NES. "" THEN DEFINE/TABLE='OPENSSL_NAMES' 'E' 'OLDV'
+$           IF OLDV .NES. "" THEN DEFINE/TABLE='OPENtls_NAMES' 'E' 'OLDV'
 $           DEFINE 'E' 'EV'
 $           GOTO LOOP
 $       ENDLOOP:

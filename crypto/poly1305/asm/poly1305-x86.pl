@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements Poly1305 hash for x86.
@@ -52,13 +52,13 @@ $output=pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $sse2=$avx=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
 if ($sse2) {
 	&static_label("const_sse2");
 	&static_label("enter_blocks");
 	&static_label("enter_emit");
-	&external_label("OPENSSL_ia32cap_P");
+	&external_label("OPENtls_ia32cap_P");
 
 	if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
@@ -107,7 +107,7 @@ if ($sse2) {
 	&lea	("eax",&DWP("poly1305_blocks-".&label("pic_point"),"ebx"));
 	&lea	("edx",&DWP("poly1305_emit-".&label("pic_point"),"ebx"));
 
-	&picmeup("edi","OPENSSL_ia32cap_P","ebx",&label("pic_point"));
+	&picmeup("edi","OPENtls_ia32cap_P","ebx",&label("pic_point"));
 	&mov	("ecx",&DWP(0,"edi"));
 	&and	("ecx",1<<26|1<<24);
 	&cmp	("ecx",1<<26|1<<24);		# SSE2 and XMM?
@@ -1806,7 +1806,7 @@ sub vlazy_reduction {
 	&data_word(0x03ffffff,0,0x03ffffff,0,	0x03ffffff,0,	0x03ffffff,0);
 	&data_word(0x0fffffff,0x0ffffffc,0x0ffffffc,0x0ffffffc);
 }
-&asciz	("Poly1305 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("Poly1305 for x86, CRYPTOGAMS by <appro\@opentls.org>");
 &align	(4);
 
 &asm_finish();

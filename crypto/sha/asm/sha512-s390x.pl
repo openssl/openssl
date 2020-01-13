@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # SHA256/512 block procedures for s390x.
@@ -247,7 +247,7 @@ $Func:
 	sllg	$len,$len,`log(16*$SZ)/log(2)`
 ___
 $code.=<<___ if ($kimdfunc);
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	lg	%r0,S390X_KIMD(%r1)	# check kimd capabilities
 	tmhh	%r0,`0x8000>>$kimdfunc`
 	jz	.Lsoftware
@@ -315,7 +315,7 @@ $code.=<<___;
 	lm${g}	%r6,%r15,`$frame+6*$SIZE_T`($sp)
 	br	%r14
 .size	$Func,.-$Func
-.string	"SHA${label} block transform for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"SHA${label} block transform for s390x, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

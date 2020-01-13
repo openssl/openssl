@@ -1,21 +1,21 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/conf.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <opentls/conf.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
 
 #include "handshake_helper.h"
-#include "ssl_test_ctx.h"
+#include "tls_test_ctx.h"
 #include "testutil.h"
 
 static CONF *conf = NULL;
@@ -25,21 +25,21 @@ static CONF *conf = NULL;
 
 static const char *print_alert(int alert)
 {
-    return alert ? SSL_alert_desc_string_long(alert) : "no alert";
+    return alert ? tls_alert_desc_string_long(alert) : "no alert";
 }
 
-static int check_result(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_result(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->result, test_ctx->expected_result)) {
         TEST_info("ExpectedResult mismatch: expected %s, got %s.",
-                  ssl_test_result_name(test_ctx->expected_result),
-                  ssl_test_result_name(result->result));
+                  tls_test_result_name(test_ctx->expected_result),
+                  tls_test_result_name(result->result));
         return 0;
     }
     return 1;
 }
 
-static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_alerts(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->client_alert_sent,
                      result->client_alert_received)) {
@@ -97,12 +97,12 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
-static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_protocol(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->client_protocol, result->server_protocol)) {
         TEST_info("Client has protocol %s but server has %s.",
-                  ssl_protocol_name(result->client_protocol),
-                  ssl_protocol_name(result->server_protocol));
+                  tls_protocol_name(result->client_protocol),
+                  tls_protocol_name(result->server_protocol));
         return 0;
     }
 
@@ -110,60 +110,60 @@ static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         if (!TEST_int_eq(result->client_protocol,
                          test_ctx->expected_protocol)) {
             TEST_info("Protocol mismatch: expected %s, got %s.\n",
-                      ssl_protocol_name(test_ctx->expected_protocol),
-                      ssl_protocol_name(result->client_protocol));
+                      tls_protocol_name(test_ctx->expected_protocol),
+                      tls_protocol_name(result->client_protocol));
             return 0;
         }
     }
     return 1;
 }
 
-static int check_servername(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_servername(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->servername, test_ctx->expected_servername)) {
       TEST_info("Client ServerName mismatch, expected %s, got %s.",
-                ssl_servername_name(test_ctx->expected_servername),
-                ssl_servername_name(result->servername));
+                tls_servername_name(test_ctx->expected_servername),
+                tls_servername_name(result->servername));
       return 0;
     }
   return 1;
 }
 
-static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_session_ticket(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
-    if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_IGNORE)
+    if (test_ctx->session_ticket_expected == tls_TEST_SESSION_TICKET_IGNORE)
         return 1;
     if (!TEST_int_eq(result->session_ticket,
                      test_ctx->session_ticket_expected)) {
         TEST_info("Client SessionTicketExpected mismatch, expected %s, got %s.",
-                  ssl_session_ticket_name(test_ctx->session_ticket_expected),
-                  ssl_session_ticket_name(result->session_ticket));
+                  tls_session_ticket_name(test_ctx->session_ticket_expected),
+                  tls_session_ticket_name(result->session_ticket));
         return 0;
     }
     return 1;
 }
 
-static int check_session_id(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_session_id(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
-    if (test_ctx->session_id_expected == SSL_TEST_SESSION_ID_IGNORE)
+    if (test_ctx->session_id_expected == tls_TEST_SESSION_ID_IGNORE)
         return 1;
     if (!TEST_int_eq(result->session_id, test_ctx->session_id_expected)) {
         TEST_info("Client SessionIdExpected mismatch, expected %s, got %s\n.",
-                ssl_session_id_name(test_ctx->session_id_expected),
-                ssl_session_id_name(result->session_id));
+                tls_session_id_name(test_ctx->session_id_expected),
+                tls_session_id_name(result->session_id));
         return 0;
     }
     return 1;
 }
 
-static int check_compression(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_compression(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->compression, test_ctx->compression_expected))
         return 0;
     return 1;
 }
-#ifndef OPENSSL_NO_NEXTPROTONEG
-static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+#ifndef OPENtls_NO_NEXTPROTONEG
+static int check_npn(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     int ret = 1;
     if (!TEST_str_eq(result->client_npn_negotiated,
@@ -176,7 +176,7 @@ static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 }
 #endif
 
-static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_alpn(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     int ret = 1;
     if (!TEST_str_eq(result->client_alpn_negotiated,
@@ -189,7 +189,7 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 }
 
 static int check_session_ticket_app_data(HANDSHAKE_RESULT *result,
-                                         SSL_TEST_CTX *test_ctx)
+                                         tls_TEST_CTX *test_ctx)
 {
     size_t result_len = 0;
     size_t expected_len = 0;
@@ -209,7 +209,7 @@ static int check_session_ticket_app_data(HANDSHAKE_RESULT *result,
     return 1;
 }
 
-static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_resumption(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->client_resumed, result->server_resumed))
         return 0;
@@ -275,35 +275,35 @@ err:
     return 0;
 }
 
-static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_tmp_key(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     return check_nid("Tmp key", test_ctx->expected_tmp_key_type,
                      result->tmp_key_type);
 }
 
 static int check_server_cert_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Server certificate", test_ctx->expected_server_cert_type,
                      result->server_cert_type);
 }
 
 static int check_server_sign_hash(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Server signing hash", test_ctx->expected_server_sign_hash,
                      result->server_sign_hash);
 }
 
 static int check_server_sign_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Server signing", test_ctx->expected_server_sign_type,
                      result->server_sign_type);
 }
 
 static int check_server_ca_names(HANDSHAKE_RESULT *result,
-                                 SSL_TEST_CTX *test_ctx)
+                                 tls_TEST_CTX *test_ctx)
 {
     return check_ca_names("Server CA names",
                           test_ctx->expected_server_ca_names,
@@ -311,35 +311,35 @@ static int check_server_ca_names(HANDSHAKE_RESULT *result,
 }
 
 static int check_client_cert_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Client certificate", test_ctx->expected_client_cert_type,
                      result->client_cert_type);
 }
 
 static int check_client_sign_hash(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Client signing hash", test_ctx->expected_client_sign_hash,
                      result->client_sign_hash);
 }
 
 static int check_client_sign_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
+                                  tls_TEST_CTX *test_ctx)
 {
     return check_nid("Client signing", test_ctx->expected_client_sign_type,
                      result->client_sign_type);
 }
 
 static int check_client_ca_names(HANDSHAKE_RESULT *result,
-                                 SSL_TEST_CTX *test_ctx)
+                                 tls_TEST_CTX *test_ctx)
 {
     return check_ca_names("Client CA names",
                           test_ctx->expected_client_ca_names,
                           result->client_ca_names);
 }
 
-static int check_cipher(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_cipher(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     if (test_ctx->expected_cipher == NULL)
         return 1;
@@ -356,19 +356,19 @@ static int check_cipher(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
  * HANDSHAKE_RESULT, and implementing comparison methods for
  * its fields.
  */
-static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+static int check_test(HANDSHAKE_RESULT *result, tls_TEST_CTX *test_ctx)
 {
     int ret = 1;
     ret &= check_result(result, test_ctx);
     ret &= check_alerts(result, test_ctx);
-    if (result->result == SSL_TEST_SUCCESS) {
+    if (result->result == tls_TEST_SUCCESS) {
         ret &= check_protocol(result, test_ctx);
         ret &= check_servername(result, test_ctx);
         ret &= check_session_ticket(result, test_ctx);
         ret &= check_compression(result, test_ctx);
         ret &= check_session_id(result, test_ctx);
         ret &= (result->session_ticket_do_not_call == 0);
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
         ret &= check_npn(result, test_ctx);
 #endif
         ret &= check_cipher(result, test_ctx);
@@ -391,37 +391,37 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 static int test_handshake(int idx)
 {
     int ret = 0;
-    SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL,
+    tls_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL,
         *resume_server_ctx = NULL, *resume_client_ctx = NULL;
-    SSL_TEST_CTX *test_ctx = NULL;
+    tls_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT *result = NULL;
     char test_app[MAX_TESTCASE_NAME_LENGTH];
 
     BIO_snprintf(test_app, sizeof(test_app), "test-%d", idx);
 
-    test_ctx = SSL_TEST_CTX_create(conf, test_app);
+    test_ctx = tls_TEST_CTX_create(conf, test_app);
     if (!TEST_ptr(test_ctx))
         goto err;
 
-#ifndef OPENSSL_NO_DTLS
-    if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
-        server_ctx = SSL_CTX_new(DTLS_server_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
+#ifndef OPENtls_NO_DTLS
+    if (test_ctx->method == tls_TEST_METHOD_DTLS) {
+        server_ctx = tls_CTX_new(DTLS_server_method());
+        if (!TEST_true(tls_CTX_set_max_proto_version(server_ctx, 0)))
             goto err;
         if (test_ctx->extra.server.servername_callback !=
-            SSL_TEST_SERVERNAME_CB_NONE) {
-            if (!TEST_ptr(server2_ctx = SSL_CTX_new(DTLS_server_method())))
+            tls_TEST_SERVERNAME_CB_NONE) {
+            if (!TEST_ptr(server2_ctx = tls_CTX_new(DTLS_server_method())))
                 goto err;
         }
-        client_ctx = SSL_CTX_new(DTLS_client_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, 0)))
+        client_ctx = tls_CTX_new(DTLS_client_method());
+        if (!TEST_true(tls_CTX_set_max_proto_version(client_ctx, 0)))
             goto err;
-        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
-            resume_server_ctx = SSL_CTX_new(DTLS_server_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0)))
+        if (test_ctx->handshake_mode == tls_TEST_HANDSHAKE_RESUME) {
+            resume_server_ctx = tls_CTX_new(DTLS_server_method());
+            if (!TEST_true(tls_CTX_set_max_proto_version(resume_server_ctx, 0)))
                 goto err;
-            resume_client_ctx = SSL_CTX_new(DTLS_client_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, 0)))
+            resume_client_ctx = tls_CTX_new(DTLS_client_method());
+            if (!TEST_true(tls_CTX_set_max_proto_version(resume_client_ctx, 0)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                     || !TEST_ptr(resume_client_ctx))
@@ -429,28 +429,28 @@ static int test_handshake(int idx)
         }
     }
 #endif
-    if (test_ctx->method == SSL_TEST_METHOD_TLS) {
-        server_ctx = SSL_CTX_new(TLS_server_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
+    if (test_ctx->method == tls_TEST_METHOD_TLS) {
+        server_ctx = tls_CTX_new(TLS_server_method());
+        if (!TEST_true(tls_CTX_set_max_proto_version(server_ctx, 0)))
             goto err;
         /* SNI on resumption isn't supported/tested yet. */
         if (test_ctx->extra.server.servername_callback !=
-            SSL_TEST_SERVERNAME_CB_NONE) {
-            if (!TEST_ptr(server2_ctx = SSL_CTX_new(TLS_server_method())))
+            tls_TEST_SERVERNAME_CB_NONE) {
+            if (!TEST_ptr(server2_ctx = tls_CTX_new(TLS_server_method())))
                 goto err;
-            if (!TEST_true(SSL_CTX_set_max_proto_version(server2_ctx, 0)))
+            if (!TEST_true(tls_CTX_set_max_proto_version(server2_ctx, 0)))
                 goto err;
         }
-        client_ctx = SSL_CTX_new(TLS_client_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, 0)))
+        client_ctx = tls_CTX_new(TLS_client_method());
+        if (!TEST_true(tls_CTX_set_max_proto_version(client_ctx, 0)))
             goto err;
 
-        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
-            resume_server_ctx = SSL_CTX_new(TLS_server_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0)))
+        if (test_ctx->handshake_mode == tls_TEST_HANDSHAKE_RESUME) {
+            resume_server_ctx = tls_CTX_new(TLS_server_method());
+            if (!TEST_true(tls_CTX_set_max_proto_version(resume_server_ctx, 0)))
                 goto err;
-            resume_client_ctx = SSL_CTX_new(TLS_client_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, 0)))
+            resume_client_ctx = tls_CTX_new(TLS_client_method());
+            if (!TEST_true(tls_CTX_set_max_proto_version(resume_client_ctx, 0)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                     || !TEST_ptr(resume_client_ctx))
@@ -458,8 +458,8 @@ static int test_handshake(int idx)
         }
     }
 
-#ifdef OPENSSL_NO_AUTOLOAD_CONFIG
-    if (!TEST_true(OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL)))
+#ifdef OPENtls_NO_AUTOLOAD_CONFIG
+    if (!TEST_true(OPENtls_init_tls(OPENtls_INIT_LOAD_CONFIG, NULL)))
         goto err;
 #endif
 
@@ -468,18 +468,18 @@ static int test_handshake(int idx)
             || !TEST_int_gt(CONF_modules_load(conf, test_app, 0),  0))
         goto err;
 
-    if (!SSL_CTX_config(server_ctx, "server")
-        || !SSL_CTX_config(client_ctx, "client")) {
+    if (!tls_CTX_config(server_ctx, "server")
+        || !tls_CTX_config(client_ctx, "client")) {
         goto err;
     }
 
-    if (server2_ctx != NULL && !SSL_CTX_config(server2_ctx, "server2"))
+    if (server2_ctx != NULL && !tls_CTX_config(server2_ctx, "server2"))
         goto err;
     if (resume_server_ctx != NULL
-        && !SSL_CTX_config(resume_server_ctx, "resume-server"))
+        && !tls_CTX_config(resume_server_ctx, "resume-server"))
         goto err;
     if (resume_client_ctx != NULL
-        && !SSL_CTX_config(resume_client_ctx, "resume-client"))
+        && !tls_CTX_config(resume_client_ctx, "resume-client"))
         goto err;
 
     result = do_handshake(server_ctx, server2_ctx, client_ctx,
@@ -490,12 +490,12 @@ static int test_handshake(int idx)
 
 err:
     CONF_modules_unload(0);
-    SSL_CTX_free(server_ctx);
-    SSL_CTX_free(server2_ctx);
-    SSL_CTX_free(client_ctx);
-    SSL_CTX_free(resume_server_ctx);
-    SSL_CTX_free(resume_client_ctx);
-    SSL_TEST_CTX_free(test_ctx);
+    tls_CTX_free(server_ctx);
+    tls_CTX_free(server2_ctx);
+    tls_CTX_free(client_ctx);
+    tls_CTX_free(resume_server_ctx);
+    tls_CTX_free(resume_client_ctx);
+    tls_TEST_CTX_free(test_ctx);
     HANDSHAKE_RESULT_free(result);
     return ret;
 }

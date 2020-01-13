@@ -1,10 +1,10 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Tests for X509 time functions */
@@ -12,8 +12,8 @@
 #include <string.h>
 #include <time.h>
 
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -538,9 +538,9 @@ int setup_tests(void)
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_TEST(test_X509_cmp_timeframe);
-    ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
-    ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
-    ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
-    ADD_ALL_TESTS(test_x509_time_print, OSSL_NELEM(x509_print_tests));
+    ADD_ALL_TESTS(test_x509_cmp_time, Otls_NELEM(x509_cmp_tests));
+    ADD_ALL_TESTS(test_x509_time, Otls_NELEM(x509_format_tests));
+    ADD_ALL_TESTS(test_days, Otls_NELEM(day_of_week_tests));
+    ADD_ALL_TESTS(test_x509_time_print, Otls_NELEM(x509_print_tests));
     return 1;
 }

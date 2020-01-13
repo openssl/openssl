@@ -1,33 +1,33 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
 
-#ifndef OPENSSL_SRP_H
-# define OPENSSL_SRP_H
+#ifndef OPENtls_SRP_H
+# define OPENtls_SRP_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_SRP_H
 # endif
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
-#ifndef OPENSSL_NO_SRP
+#ifndef OPENtls_NO_SRP
 # include <stdio.h>
 # include <string.h>
-# include <openssl/safestack.h>
-# include <openssl/bn.h>
-# include <openssl/crypto.h>
+# include <opentls/safestack.h>
+# include <opentls/bn.h>
+# include <opentls/crypto.h>
 
 # ifdef  __cplusplus
 extern "C" {

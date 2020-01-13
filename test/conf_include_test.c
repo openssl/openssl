@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/conf.h>
-#include <openssl/err.h>
+#include <opentls/conf.h>
+#include <opentls/err.h>
 #include "testutil.h"
 
 #ifdef _WIN32
@@ -18,9 +18,9 @@
 # define DIRSEP "/\\"
 # define chdir _chdir
 # define DIRSEP_PRESERVE 0
-#elif !defined(OPENSSL_NO_POSIX_IO)
+#elif !defined(OPENtls_NO_POSIX_IO)
 # include <unistd.h>
-# ifndef OPENSSL_SYS_VMS
+# ifndef OPENtls_SYS_VMS
 #  define DIRSEP "/"
 #  define DIRSEP_PRESERVE 0
 # else
@@ -37,7 +37,7 @@
 /* changes path to that of the filename */
 static int change_path(const char *file)
 {
-    char *s = OPENSSL_strdup(file);
+    char *s = OPENtls_strdup(file);
     char *p = s;
     char *last = NULL;
     int ret;
@@ -54,7 +54,7 @@ static int change_path(const char *file)
 
     TEST_note("changing path to %s", s);
     ret = chdir(s);
-    OPENSSL_free(s);
+    OPENtls_free(s);
     return ret;
 }
 

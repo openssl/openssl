@@ -14,7 +14,7 @@ DSA_meth_set_keygen - Routines to build up DSA methods
 
 =head1 SYNOPSIS
 
- #include <openssl/dsa.h>
+ #include <opentls/dsa.h>
 
  DSA_METHOD *DSA_meth_new(const char *name, int flags);
 
@@ -87,7 +87,7 @@ DSA_meth_set_keygen - Routines to build up DSA methods
 =head1 DESCRIPTION
 
 The B<DSA_METHOD> type is a structure used for the provision of custom DSA
-implementations. It provides a set of functions used by OpenSSL for the
+implementations. It provides a set of functions used by Opentls for the
 implementation of the various DSA capabilities.
 
 DSA_meth_new() creates a new B<DSA_METHOD> structure. It should be given a
@@ -138,7 +138,7 @@ for computing the following value:
 
  rr = a1^p1 * a2^p2 mod m
 
-This function will be called by the default OpenSSL method during verification
+This function will be called by the default Opentls method during verification
 of a DSA signature. The result is stored in the B<rr> parameter. This function
 may be NULL.
 
@@ -147,7 +147,7 @@ used for computing the following value:
 
  r = a ^ p mod m
 
-This function will be called by the default OpenSSL function for
+This function will be called by the default Opentls function for
 DSA_sign_setup(). The result is stored in the B<r> parameter. This function
 may be NULL.
 
@@ -200,15 +200,15 @@ L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_get0_pqg(3)>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL 1.1.0.
+The functions described here were added in Opentls 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,35 +1,35 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_PROVIDER_H
-# define OPENSSL_PROVIDER_H
+#ifndef OPENtls_PROVIDER_H
+# define OPENtls_PROVIDER_H
 
-# include <openssl/core.h>
+# include <opentls/core.h>
 
 # ifdef __cplusplus
 extern "C" {
 # endif
 
 /* Load and unload a provider */
-OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
-int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
-int OSSL_PROVIDER_available(OPENSSL_CTX *, const char *name);
+Otls_PROVIDER *Otls_PROVIDER_load(OPENtls_CTX *, const char *name);
+int Otls_PROVIDER_unload(Otls_PROVIDER *prov);
+int Otls_PROVIDER_available(OPENtls_CTX *, const char *name);
 
-const OSSL_PARAM *OSSL_PROVIDER_gettable_params(const OSSL_PROVIDER *prov);
-int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+const Otls_PARAM *Otls_PROVIDER_gettable_params(const Otls_PROVIDER *prov);
+int Otls_PROVIDER_get_params(const Otls_PROVIDER *prov, Otls_PARAM params[]);
 
 /* Add a built in providers */
-int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
-                              OSSL_provider_init_fn *init_fn);
+int Otls_PROVIDER_add_builtin(OPENtls_CTX *, const char *name,
+                              Otls_provider_init_fn *init_fn);
 
 /* Information */
-const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);
+const char *Otls_PROVIDER_name(const Otls_PROVIDER *prov);
 
 # ifdef __cplusplus
 }

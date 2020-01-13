@@ -1,28 +1,28 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_NO_CT
+#ifdef OPENtls_NO_CT
 # error "CT is disabled"
 #endif
 
 #include <stddef.h>
 #include <string.h>
 
-#include <openssl/err.h>
-#include <openssl/obj_mac.h>
-#include <openssl/x509.h>
+#include <opentls/err.h>
+#include <opentls/obj_mac.h>
+#include <opentls/x509.h>
 
 #include "ct_local.h"
 
 SCT_CTX *SCT_CTX_new(void)
 {
-    SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
+    SCT_CTX *sctx = OPENtls_zalloc(sizeof(*sctx));
 
     if (sctx == NULL)
         CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -35,11 +35,11 @@ void SCT_CTX_free(SCT_CTX *sctx)
     if (sctx == NULL)
         return;
     EVP_PKEY_free(sctx->pkey);
-    OPENSSL_free(sctx->pkeyhash);
-    OPENSSL_free(sctx->ihash);
-    OPENSSL_free(sctx->certder);
-    OPENSSL_free(sctx->preder);
-    OPENSSL_free(sctx);
+    OPENtls_free(sctx->pkeyhash);
+    OPENtls_free(sctx->ihash);
+    OPENtls_free(sctx->certder);
+    OPENtls_free(sctx->preder);
+    OPENtls_free(sctx);
 }
 
 /*
@@ -175,18 +175,18 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
 
     X509_free(pretmp);
 
-    OPENSSL_free(sctx->certder);
+    OPENtls_free(sctx->certder);
     sctx->certder = certder;
     sctx->certderlen = certderlen;
 
-    OPENSSL_free(sctx->preder);
+    OPENtls_free(sctx->preder);
     sctx->preder = preder;
     sctx->prederlen = prederlen;
 
     return 1;
 err:
-    OPENSSL_free(certder);
-    OPENSSL_free(preder);
+    OPENtls_free(certder);
+    OPENtls_free(preder);
     X509_free(pretmp);
     return 0;
 }
@@ -203,7 +203,7 @@ __owur static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
     if (*hash != NULL && *hash_len >= SHA256_DIGEST_LENGTH) {
         md = *hash;
     } else {
-        md = OPENSSL_malloc(SHA256_DIGEST_LENGTH);
+        md = OPENtls_malloc(SHA256_DIGEST_LENGTH);
         if (md == NULL)
             goto err;
     }
@@ -217,7 +217,7 @@ __owur static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
         goto err;
 
     if (md != *hash) {
-        OPENSSL_free(*hash);
+        OPENtls_free(*hash);
         *hash = md;
         *hash_len = SHA256_DIGEST_LENGTH;
     }
@@ -225,8 +225,8 @@ __owur static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
     md = NULL;
     ret = 1;
  err:
-    OPENSSL_free(md);
-    OPENSSL_free(der);
+    OPENtls_free(md);
+    OPENtls_free(der);
     return ret;
 }
 

@@ -1,27 +1,27 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/crypto.h>
-#include <openssl/ocsp.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/pem.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/crypto.h>
+#include <opentls/ocsp.h>
+#include <opentls/x509.h>
+#include <opentls/asn1.h>
+#include <opentls/pem.h>
 
 #include "testutil.h"
 
 static const char *certstr;
 static const char *privkeystr;
 
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
 static int get_cert_and_key(X509 **cert_out, EVP_PKEY **key_out)
 {
     BIO *certbio, *keybio;
@@ -67,7 +67,7 @@ static int get_cert(X509 **cert_out)
 
 static OCSP_BASICRESP *make_dummy_resp(void)
 {
-    const unsigned char namestr[] = "openssl.example.com";
+    const unsigned char namestr[] = "opentls.example.com";
     unsigned char keybytes[128] = {7};
     OCSP_BASICRESP *bs = OCSP_BASICRESP_new();
     OCSP_BASICRESP *bs_out = NULL;
@@ -183,8 +183,8 @@ err:
 static int test_ocsp_url_svcloc_new(void)
 {
     static const char *  urls[] = {
-        "www.openssl.org",
-        "www.openssl.net",
+        "www.opentls.org",
+        "www.opentls.net",
         NULL
     };
 
@@ -209,7 +209,7 @@ err:
     return ret;
 }
 
-#endif /* OPENSSL_NO_OCSP */
+#endif /* OPENtls_NO_OCSP */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
@@ -218,7 +218,7 @@ int setup_tests(void)
     if (!TEST_ptr(certstr = test_get_argument(0))
         || !TEST_ptr(privkeystr = test_get_argument(1)))
         return 0;
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     ADD_TEST(test_resp_signer);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);

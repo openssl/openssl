@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -112,17 +112,17 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
 
 static int mem_init(BIO *bi, unsigned long flags)
 {
-    BIO_BUF_MEM *bb = OPENSSL_zalloc(sizeof(*bb));
+    BIO_BUF_MEM *bb = OPENtls_zalloc(sizeof(*bb));
 
     if (bb == NULL)
         return 0;
     if ((bb->buf = BUF_MEM_new_ex(flags)) == NULL) {
-        OPENSSL_free(bb);
+        OPENtls_free(bb);
         return 0;
     }
-    if ((bb->readp = OPENSSL_zalloc(sizeof(*bb->readp))) == NULL) {
+    if ((bb->readp = OPENtls_zalloc(sizeof(*bb->readp))) == NULL) {
         BUF_MEM_free(bb->buf);
-        OPENSSL_free(bb);
+        OPENtls_free(bb);
         return 0;
     }
     *bb->readp = *bb->buf;
@@ -153,8 +153,8 @@ static int mem_free(BIO *a)
     bb = (BIO_BUF_MEM *)a->ptr;
     if (!mem_buf_free(a))
         return 0;
-    OPENSSL_free(bb->readp);
-    OPENSSL_free(bb);
+    OPENtls_free(bb->readp);
+    OPENtls_free(bb);
     return 1;
 }
 

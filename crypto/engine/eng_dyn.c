@@ -1,15 +1,15 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "eng_local.h"
 #include "internal/dso.h"
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 /*
  * Shared libraries implementing ENGINEs for use by the "dynamic" ENGINE
@@ -108,7 +108,7 @@ struct st_dynamic_data_ctx {
      */
     int dir_load;
     /* A stack of directories from which ENGINEs could be loaded */
-    STACK_OF(OPENSSL_STRING) *dirs;
+    STACK_OF(OPENtls_STRING) *dirs;
 };
 
 /*
@@ -119,7 +119,7 @@ static int dynamic_ex_data_idx = -1;
 
 static void int_free_str(char *s)
 {
-    OPENSSL_free(s);
+    OPENtls_free(s);
 }
 
 /*
@@ -138,10 +138,10 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
     if (ptr) {
         dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
         DSO_free(ctx->dynamic_dso);
-        OPENSSL_free(ctx->DYNAMIC_LIBNAME);
-        OPENSSL_free(ctx->engine_id);
-        sk_OPENSSL_STRING_pop_free(ctx->dirs, int_free_str);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx->DYNAMIC_LIBNAME);
+        OPENtls_free(ctx->engine_id);
+        sk_OPENtls_STRING_pop_free(ctx->dirs, int_free_str);
+        OPENtls_free(ctx);
     }
 }
 
@@ -153,17 +153,17 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
  */
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
-    dynamic_data_ctx *c = OPENSSL_zalloc(sizeof(*c));
+    dynamic_data_ctx *c = OPENtls_zalloc(sizeof(*c));
     int ret = 1;
 
     if (c == NULL) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    c->dirs = sk_OPENSSL_STRING_new_null();
+    c->dirs = sk_OPENtls_STRING_new_null();
     if (c->dirs == NULL) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(c);
+        OPENtls_free(c);
         return 0;
     }
     c->DYNAMIC_F1 = "v_check";
@@ -186,8 +186,8 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
      * context of the thread that won.
      */
     if (c)
-        sk_OPENSSL_STRING_free(c->dirs);
-    OPENSSL_free(c);
+        sk_OPENtls_STRING_free(c->dirs);
+    OPENtls_free(c);
     return ret;
 }
 
@@ -306,9 +306,9 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         /* a NULL 'p' or a string of zero-length is the same thing */
         if (p && (strlen((const char *)p) < 1))
             p = NULL;
-        OPENSSL_free(ctx->DYNAMIC_LIBNAME);
+        OPENtls_free(ctx->DYNAMIC_LIBNAME);
         if (p)
-            ctx->DYNAMIC_LIBNAME = OPENSSL_strdup(p);
+            ctx->DYNAMIC_LIBNAME = OPENtls_strdup(p);
         else
             ctx->DYNAMIC_LIBNAME = NULL;
         return (ctx->DYNAMIC_LIBNAME ? 1 : 0);
@@ -319,9 +319,9 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         /* a NULL 'p' or a string of zero-length is the same thing */
         if (p && (strlen((const char *)p) < 1))
             p = NULL;
-        OPENSSL_free(ctx->engine_id);
+        OPENtls_free(ctx->engine_id);
         if (p)
-            ctx->engine_id = OPENSSL_strdup(p);
+            ctx->engine_id = OPENtls_strdup(p);
         else
             ctx->engine_id = NULL;
         return (ctx->engine_id ? 1 : 0);
@@ -348,13 +348,13 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             return 0;
         }
         {
-            char *tmp_str = OPENSSL_strdup(p);
+            char *tmp_str = OPENtls_strdup(p);
             if (tmp_str == NULL) {
                 ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
-            if (!sk_OPENSSL_STRING_push(ctx->dirs, tmp_str)) {
-                OPENSSL_free(tmp_str);
+            if (!sk_OPENtls_STRING_push(ctx->dirs, tmp_str)) {
+                OPENtls_free(tmp_str);
                 ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -376,19 +376,19 @@ static int int_load(dynamic_data_ctx *ctx)
                                           0)) != NULL)
         return 1;
     /* If we're not allowed to use 'dirs' or we have none, fail */
-    if (!ctx->dir_load || (num = sk_OPENSSL_STRING_num(ctx->dirs)) < 1)
+    if (!ctx->dir_load || (num = sk_OPENtls_STRING_num(ctx->dirs)) < 1)
         return 0;
     for (loop = 0; loop < num; loop++) {
-        const char *s = sk_OPENSSL_STRING_value(ctx->dirs, loop);
+        const char *s = sk_OPENtls_STRING_value(ctx->dirs, loop);
         char *merge = DSO_merge(ctx->dynamic_dso, ctx->DYNAMIC_LIBNAME, s);
         if (!merge)
             return 0;
         if (DSO_load(ctx->dynamic_dso, merge, NULL, 0)) {
             /* Found what we're looking for */
-            OPENSSL_free(merge);
+            OPENtls_free(merge);
             return 1;
         }
-        OPENSSL_free(merge);
+        OPENtls_free(merge);
     }
     return 0;
 }
@@ -438,13 +438,13 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
             (dynamic_v_check_fn) DSO_bind_func(ctx->dynamic_dso,
                                                ctx->DYNAMIC_F1);
         if (ctx->v_check)
-            vcheck_res = ctx->v_check(OSSL_DYNAMIC_VERSION);
+            vcheck_res = ctx->v_check(Otls_DYNAMIC_VERSION);
         /*
          * We fail if the version checker veto'd the load *or* if it is
          * deferring to us (by returning its version) and we think it is too
          * old.
          */
-        if (vcheck_res < OSSL_DYNAMIC_OLDEST) {
+        if (vcheck_res < Otls_DYNAMIC_OLDEST) {
             /* Fail */
             ctx->bind_engine = NULL;
             ctx->v_check = NULL;

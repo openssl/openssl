@@ -1,19 +1,19 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
-#include <openssl/evp.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
+#include <opentls/evp.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -331,7 +331,7 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
-    ek = OPENSSL_malloc(eklen);
+    ek = OPENtls_malloc(eklen);
 
     if (ek == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -349,7 +349,7 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
  err:
     EVP_PKEY_CTX_free(pctx);
     ktri->pctx = NULL;
-    OPENSSL_free(ek);
+    OPENtls_free(ek);
     return ret;
 
 }
@@ -407,7 +407,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
                          ktri->encryptedKey->length) <= 0)
         goto err;
 
-    ek = OPENSSL_malloc(eklen);
+    ek = OPENtls_malloc(eklen);
 
     if (ek == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, ERR_R_MALLOC_FAILURE);
@@ -425,7 +425,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     ret = 1;
 
-    OPENSSL_clear_free(ec->key, ec->keylen);
+    OPENtls_clear_free(ec->key, ec->keylen);
     ec->key = ek;
     ec->keylen = eklen;
 
@@ -433,7 +433,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     EVP_PKEY_CTX_free(ktri->pctx);
     ktri->pctx = NULL;
     if (!ret)
-        OPENSSL_free(ek);
+        OPENtls_free(ek);
 
     return ret;
 }
@@ -672,7 +672,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
     }
 
     /* 8 byte prefix for AES wrap ciphers */
-    wkey = OPENSSL_malloc(ec->keylen + 8);
+    wkey = OPENtls_malloc(ec->keylen + 8);
     if (wkey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -692,7 +692,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
     wkeylen += outlen;
-    if (!ossl_assert((size_t)wkeylen == ec->keylen + 8)) {
+    if (!otls_assert((size_t)wkeylen == ec->keylen + 8)) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, CMS_R_WRAP_ERROR);
         goto err;
     }
@@ -703,7 +703,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
 
  err:
     if (!r)
-        OPENSSL_free(wkey);
+        OPENtls_free(wkey);
     EVP_CIPHER_CTX_free(ctx);
 
     return r;
@@ -754,7 +754,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey = OPENtls_malloc(kekri->encryptedKey->length - 8);
     if (ukey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -783,7 +783,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
  err:
     if (!r)
-        OPENSSL_free(ukey);
+        OPENtls_free(ukey);
     EVP_CIPHER_CTX_free(ctx);
 
     return r;
@@ -930,7 +930,7 @@ BIO *cms_EnvelopedData_init_bio(const CMS_ContentInfo *cms)
 
  err:
     ec->cipher = NULL;
-    OPENSSL_clear_free(ec->key, ec->keylen);
+    OPENtls_clear_free(ec->key, ec->keylen);
     ec->key = NULL;
     ec->keylen = 0;
     if (ok)

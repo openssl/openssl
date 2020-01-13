@@ -1,10 +1,10 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
@@ -12,12 +12,12 @@
 
 #include "testutil.h"
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
+#ifndef OPENtls_NO_DSA
+#include <opentls/dsa.h>
 
 static DSA *dsakey;
 
@@ -128,8 +128,8 @@ static int sign_and_verify(int len)
     int digestlen = BN_num_bytes(DSA_get0_q(dsakey));
     int ok = 0;
 
-    unsigned char *dataToSign = OPENSSL_malloc(len);
-    unsigned char *paddedData = OPENSSL_malloc(digestlen);
+    unsigned char *dataToSign = OPENtls_malloc(len);
+    unsigned char *paddedData = OPENtls_malloc(digestlen);
     unsigned char *signature = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
@@ -159,7 +159,7 @@ static int sign_and_verify(int len)
         goto end;
     }
 
-    if (!TEST_ptr(signature = OPENSSL_malloc(sigLength)))
+    if (!TEST_ptr(signature = OPENtls_malloc(sigLength)))
         goto end;
 
     if (EVP_PKEY_sign(ctx, signature, &sigLength, dataToSign, len) != 1) {
@@ -199,9 +199,9 @@ end:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
 
-    OPENSSL_free(signature);
-    OPENSSL_free(paddedData);
-    OPENSSL_free(dataToSign);
+    OPENtls_free(signature);
+    OPENtls_free(paddedData);
+    OPENtls_free(dataToSign);
 
     return ok;
 }
@@ -228,11 +228,11 @@ void cleanup_tests(void)
     DSA_free(dsakey);
 }
 
-#endif /* OPENSSL_NO_DSA */
+#endif /* OPENtls_NO_DSA */
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     if (!genkeys())
         return 0;
 

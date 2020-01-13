@@ -1,15 +1,15 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/err.h>
-#include <openssl/symhacks.h>
+#include <opentls/err.h>
+#include <opentls/symhacks.h>
 
 #include "ec_local.h"
 
@@ -1224,7 +1224,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
     if (tmp_Z == NULL)
         goto err;
 
-    prod_Z = OPENSSL_malloc(num * sizeof(prod_Z[0]));
+    prod_Z = OPENtls_malloc(num * sizeof(prod_Z[0]));
     if (prod_Z == NULL)
         goto err;
     for (i = 0; i < num; i++) {
@@ -1354,7 +1354,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
                 break;
             BN_clear_free(prod_Z[i]);
         }
-        OPENSSL_free(prod_Z);
+        OPENtls_free(prod_Z);
     }
     return ret;
 }

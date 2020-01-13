@@ -1,13 +1,13 @@
 =pod
-{- OpenSSL::safe::output_do_not_edit_headers(); -}
+{- Opentls::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-x509 - Certificate display and signing utility
+opentls-x509 - Certificate display and signing utility
 
 =head1 SYNOPSIS
 
-B<openssl> B<x509>
+B<opentls> B<x509>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
@@ -64,11 +64,11 @@ B<openssl> B<x509>
 [B<-extensions> I<section>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-preserve_dates>]
-{- $OpenSSL::safe::opt_name_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $Opentls::safe::opt_name_synopsis -}
+{- $Opentls::safe::opt_r_synopsis -}
+{- $Opentls::safe::opt_engine_synopsis -}
 
-=for openssl ifdef engine subject_hash_old issuer_hash_old
+=for opentls ifdef engine subject_hash_old issuer_hash_old
 
 =head1 DESCRIPTION
 
@@ -93,7 +93,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 The input is normally an X.509 certificate, but this can change if other
 options such as B<-req> are used.
@@ -113,7 +113,7 @@ default.
 The digest to use.
 This affects any signing or display option that uses a message
 digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
-Any digest supported by the L<openssl-dgst(1)> command can be used.
+Any digest supported by the L<opentls-dgst(1)> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
 
@@ -123,9 +123,9 @@ When signing a certificate, preserve the "notBefore" and "notAfter" dates
 instead of adjusting them to current time and duration.
 Cannot be used with the B<-days> option.
 
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $Opentls::safe::opt_r_synopsis -}
 
-{- $OpenSSL::safe::opt_engine_item -}
+{- $Opentls::safe::opt_engine_item -}
 
 =back
 
@@ -174,7 +174,7 @@ Outputs the certificate serial number.
 
 =item B<-subject_hash>
 
-Outputs the "hash" of the certificate subject name. This is used in OpenSSL to
+Outputs the "hash" of the certificate subject name. This is used in Opentls to
 form an index to allow certificates in a directory to be looked up by subject
 name.
 
@@ -193,12 +193,12 @@ Synonym for "-subject_hash" for backward compatibility reasons.
 =item B<-subject_hash_old>
 
 Outputs the "hash" of the certificate subject name using the older algorithm
-as used by OpenSSL before version 1.0.0.
+as used by Opentls before version 1.0.0.
 
 =item B<-issuer_hash_old>
 
 Outputs the "hash" of the certificate issuer name using the older algorithm
-as used by OpenSSL before version 1.0.0.
+as used by Opentls before version 1.0.0.
 
 =item B<-subject>
 
@@ -208,7 +208,7 @@ Outputs the subject name.
 
 Outputs the issuer name.
 
-{- $OpenSSL::safe::opt_name_item -}
+{- $Opentls::safe::opt_name_item -}
 
 =item B<-email>
 
@@ -262,12 +262,12 @@ is then usable for any purpose.
 
 Trust settings currently are only used with a root CA. They allow a finer
 control over the purposes the root CA can be used for. For example a CA
-may be trusted for SSL client but not SSL server use.
+may be trusted for tls client but not tls server use.
 
-See the description in L<openssl-verify(1)> for more information
+See the description in L<opentls-verify(1)> for more information
 on the meaning of trust settings.
 
-Future versions of OpenSSL will recognize trust settings on any
+Future versions of Opentls will recognize trust settings on any
 certificate: not just root CAs.
 
 
@@ -301,12 +301,12 @@ Clears all the prohibited or rejected uses of the certificate.
 =item B<-addtrust> I<arg>
 
 Adds a trusted certificate use.
-Any object name can be used here but currently only B<clientAuth> (SSL client
-use), B<serverAuth> (SSL server use), B<emailProtection> (S/MIME email) and
+Any object name can be used here but currently only B<clientAuth> (tls client
+use), B<serverAuth> (tls server use), B<emailProtection> (S/MIME email) and
 B<anyExtendedKeyUsage> are used.
-As of OpenSSL 1.1.0, the last of these blocks all purposes when rejected or
+As of Opentls 1.1.0, the last of these blocks all purposes when rejected or
 enables all purposes when trusted.
-Other OpenSSL applications may define additional uses.
+Other Opentls applications may define additional uses.
 
 =item B<-addreject> I<arg>
 
@@ -348,7 +348,7 @@ Names and values of these options are algorithm-specific.
 =item B<-passin> I<arg>
 
 The key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<opentls(1)/Pass Phrase Options>.
 
 =item B<-clrext>
 
@@ -360,12 +360,12 @@ retained.
 =item B<-keyform> B<DER>|B<PEM>
 
 The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 =item B<-CAform> B<DER>|B<PEM>, B<-CAkeyform> B<DER>|B<PEM>
 
 The format for the CA certificate and key; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 =item B<-days> I<arg>
 
@@ -554,7 +554,7 @@ Hex dump unsupported extensions.
 
 =item B<ca_default>
 
-The value used by L<openssl-ca(1)>, equivalent to B<no_issuer>, B<no_pubkey>,
+The value used by L<opentls-ca(1)>, equivalent to B<no_issuer>, B<no_pubkey>,
 B<no_header>, and B<no_version>.
 
 =back
@@ -566,62 +566,62 @@ line.
 
 Display the contents of a certificate:
 
- openssl x509 -in cert.pem -noout -text
+ opentls x509 -in cert.pem -noout -text
 
 Display the "Subject Alternative Name" extension of a certificate:
 
- openssl x509 -in cert.pem -noout -ext subjectAltName
+ opentls x509 -in cert.pem -noout -ext subjectAltName
 
 Display more extensions of a certificate:
 
- openssl x509 -in cert.pem -noout -ext subjectAltName,nsCertType
+ opentls x509 -in cert.pem -noout -ext subjectAltName,nsCertType
 
 Display the certificate serial number:
 
- openssl x509 -in cert.pem -noout -serial
+ opentls x509 -in cert.pem -noout -serial
 
 Display the certificate subject name:
 
- openssl x509 -in cert.pem -noout -subject
+ opentls x509 -in cert.pem -noout -subject
 
 Display the certificate subject name in RFC2253 form:
 
- openssl x509 -in cert.pem -noout -subject -nameopt RFC2253
+ opentls x509 -in cert.pem -noout -subject -nameopt RFC2253
 
 Display the certificate subject name in oneline form on a terminal
 supporting UTF8:
 
- openssl x509 -in cert.pem -noout -subject -nameopt oneline,-esc_msb
+ opentls x509 -in cert.pem -noout -subject -nameopt oneline,-esc_msb
 
 Display the certificate SHA1 fingerprint:
 
- openssl x509 -sha1 -in cert.pem -noout -fingerprint
+ opentls x509 -sha1 -in cert.pem -noout -fingerprint
 
 Convert a certificate from PEM to DER format:
 
- openssl x509 -in cert.pem -inform PEM -out cert.der -outform DER
+ opentls x509 -in cert.pem -inform PEM -out cert.der -outform DER
 
 Convert a certificate to a certificate request:
 
- openssl x509 -x509toreq -in cert.pem -out req.pem -signkey key.pem
+ opentls x509 -x509toreq -in cert.pem -out req.pem -signkey key.pem
 
 Convert a certificate request into a self signed certificate using
 extensions for a CA:
 
- openssl x509 -req -in careq.pem -extfile openssl.cnf -extensions v3_ca \
+ opentls x509 -req -in careq.pem -extfile opentls.cnf -extensions v3_ca \
         -signkey key.pem -out cacert.pem
 
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
 
- openssl x509 -req -in req.pem -extfile openssl.cnf -extensions v3_usr \
+ opentls x509 -req -in req.pem -extfile opentls.cnf -extensions v3_usr \
         -CA cacert.pem -CAkey key.pem -CAcreateserial
 
 
-Set a certificate to be trusted for SSL client use and change set its alias to
+Set a certificate to be trusted for tls client use and change set its alias to
 "Steve's Class 1 CA"
 
- openssl x509 -in cert.pem -addtrust clientAuth \
+ opentls x509 -in cert.pem -addtrust clientAuth \
         -setalias "Steve's Class 1 CA" -out trust.pem
 
 =head1 NOTES
@@ -676,47 +676,47 @@ CA certificates.
 
 =over 4
 
-=item B<SSL Client>
+=item B<tls Client>
 
 The extended key usage extension must be absent or include the "web client
 authentication" OID.  keyUsage must be absent or it must have the
 digitalSignature bit set. Netscape certificate type must be absent or it must
-have the SSL client bit set.
+have the tls client bit set.
 
-=item B<SSL Client CA>
+=item B<tls Client CA>
 
 The extended key usage extension must be absent or include the "web client
 authentication" OID. Netscape certificate type must be absent or it must have
-the SSL CA bit set: this is used as a work around if the basicConstraints
+the tls CA bit set: this is used as a work around if the basicConstraints
 extension is absent.
 
-=item B<SSL Server>
+=item B<tls Server>
 
 The extended key usage extension must be absent or include the "web server
 authentication" and/or one of the SGC OIDs.  keyUsage must be absent or it
 must have the digitalSignature, the keyEncipherment set or both bits set.
-Netscape certificate type must be absent or have the SSL server bit set.
+Netscape certificate type must be absent or have the tls server bit set.
 
-=item B<SSL Server CA>
+=item B<tls Server CA>
 
 The extended key usage extension must be absent or include the "web server
 authentication" and/or one of the SGC OIDs.  Netscape certificate type must
-be absent or the SSL CA bit must be set: this is used as a work around if the
+be absent or the tls CA bit must be set: this is used as a work around if the
 basicConstraints extension is absent.
 
-=item B<Netscape SSL Server>
+=item B<Netscape tls Server>
 
-For Netscape SSL clients to connect to an SSL server it must have the
+For Netscape tls clients to connect to an tls server it must have the
 keyEncipherment bit set if the keyUsage extension is present. This isn't
 always valid because some cipher suites use the key for digital signing.
-Otherwise it is the same as a normal SSL server.
+Otherwise it is the same as a normal tls server.
 
 =item B<Common S/MIME Client Tests>
 
 The extended key usage extension must be absent or include the "email
 protection" OID. Netscape certificate type must be absent or should have the
 S/MIME bit set. If the S/MIME bit is not set in Netscape certificate type
-then the SSL client bit is tolerated as an alternative but a warning is shown:
+then the tls client bit is tolerated as an alternative but a warning is shown:
 this is because some Verisign certificates don't set the S/MIME bit.
 
 =item B<S/MIME Signing>
@@ -762,29 +762,29 @@ dates rather than an offset from the current time.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-req(1)>,
-L<openssl-ca(1)>,
-L<openssl-genrsa(1)>,
-L<openssl-gendsa(1)>,
-L<openssl-verify(1)>,
+L<opentls(1)>,
+L<opentls-req(1)>,
+L<opentls-ca(1)>,
+L<opentls-genrsa(1)>,
+L<opentls-gendsa(1)>,
+L<opentls-verify(1)>,
 L<x509v3_config(5)>
 
 =head1 HISTORY
 
 The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
-before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
-of the distinguished name. In OpenSSL 1.0.0 and later it is based on a canonical
+before Opentls 1.0.0 was based on the deprecated MD5 algorithm and the encoding
+of the distinguished name. In Opentls 1.0.0 and later it is based on a canonical
 version of the DN using SHA1. This means that any directories using the old
-form must have their links rebuilt using L<openssl-rehash(1)> or similar.
+form must have their links rebuilt using L<opentls-rehash(1)> or similar.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

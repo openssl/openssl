@@ -1,20 +1,20 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/asn1.h>
+#include <opentls/buffer.h>
+#include <opentls/asn1.h>
 
 #ifndef NO_OLD_ASN1
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x)
 {
     BIO *b;
@@ -41,7 +41,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
     if (n <= 0)
         return 0;
 
-    b = OPENSSL_malloc(n);
+    b = OPENtls_malloc(n);
     if (b == NULL) {
         ASN1err(ASN1_F_ASN1_I2D_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -61,13 +61,13 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
         j += i;
         n -= i;
     }
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return ret;
 }
 
 #endif
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, const void *x)
 {
     BIO *b;
@@ -106,6 +106,6 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
         j += i;
         n -= i;
     }
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return ret;
 }

@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # June 2015
@@ -134,7 +134,7 @@ my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
 $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
-.extern	OPENSSL_armcap_P
+.extern	OPENtls_armcap_P
 #endif
 
 .text
@@ -157,8 +157,8 @@ ChaCha20_ctr32:
 	b.lo	.Lshort
 
 #ifndef	__KERNEL__
-	adrp	x17,OPENSSL_armcap_P
-	ldr	w17,[x17,#:lo12:OPENSSL_armcap_P]
+	adrp	x17,OPENtls_armcap_P
+	ldr	w17,[x17,#:lo12:OPENtls_armcap_P]
 	tst	w17,#ARMV7_NEON
 	b.ne	.LChaCha20_neon
 #endif

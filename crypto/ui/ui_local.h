@@ -1,17 +1,17 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_UI_LOCAL_H
-# define OSSL_CRYPTO_UI_LOCAL_H
+#ifndef Otls_CRYPTO_UI_LOCAL_H
+# define Otls_CRYPTO_UI_LOCAL_H
 
-# include <openssl/ui.h>
-# include <openssl/crypto.h>
+# include <opentls/ui.h>
+# include <opentls/crypto.h>
 
 # ifdef _
 #  undef _
@@ -48,7 +48,7 @@ struct ui_method_st {
      * short description of the object, for example "pass phrase", and
      * object_name is the name of the object (might be a card name or a file
      * name. The returned string shall always be allocated on the heap with
-     * OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
+     * OPENtls_malloc(), and need to be free'd with OPENtls_free().
      */
     char *(*ui_construct_prompt) (UI *ui, const char *object_desc,
                                   const char *object_name);

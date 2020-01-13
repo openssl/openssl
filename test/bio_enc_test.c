@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <stdio.h>
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/rand.h>
+#include <opentls/evp.h>
+#include <opentls/bio.h>
+#include <opentls/rand.h>
 
 #include "testutil.h"
 
@@ -202,13 +202,13 @@ static int test_bio_enc_aes_256_ofb(int idx)
     return do_test_bio_cipher(EVP_aes_256_ofb(), idx);
 }
 
-# ifndef OPENSSL_NO_CHACHA
+# ifndef OPENtls_NO_CHACHA
 static int test_bio_enc_chacha20(int idx)
 {
     return do_test_bio_cipher(EVP_chacha20(), idx);
 }
 
-#  ifndef OPENSSL_NO_POLY1305
+#  ifndef OPENtls_NO_POLY1305
 static int test_bio_enc_chacha20_poly1305(int idx)
 {
     return do_test_bio_cipher(EVP_chacha20_poly1305(), idx);
@@ -222,9 +222,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_bio_enc_aes_128_ctr, 2);
     ADD_ALL_TESTS(test_bio_enc_aes_256_cfb, 2);
     ADD_ALL_TESTS(test_bio_enc_aes_256_ofb, 2);
-# ifndef OPENSSL_NO_CHACHA
+# ifndef OPENtls_NO_CHACHA
     ADD_ALL_TESTS(test_bio_enc_chacha20, 2);
-#  ifndef OPENSSL_NO_POLY1305
+#  ifndef OPENtls_NO_POLY1305
     ADD_ALL_TESTS(test_bio_enc_chacha20_poly1305, 2);
 #  endif
 # endif

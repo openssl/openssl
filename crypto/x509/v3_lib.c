@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 
 #include "ext_dat.h"
 
@@ -92,7 +92,7 @@ int X509V3_EXT_add_alias(int nid_to, int nid_from)
         X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, X509V3_R_EXTENSION_NOT_FOUND);
         return 0;
     }
-    if ((tmpext = OPENSSL_malloc(sizeof(*tmpext))) == NULL) {
+    if ((tmpext = OPENtls_malloc(sizeof(*tmpext))) == NULL) {
         X509V3err(X509V3_F_X509V3_EXT_ADD_ALIAS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -111,7 +111,7 @@ void X509V3_EXT_cleanup(void)
 static void ext_list_free(X509V3_EXT_METHOD *ext)
 {
     if (ext->ext_flags & X509V3_EXT_DYNAMIC)
-        OPENSSL_free(ext);
+        OPENtls_free(ext);
 }
 
 /*

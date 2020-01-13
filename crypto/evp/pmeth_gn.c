@@ -1,17 +1,17 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/evp.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
 #include "crypto/bn.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -275,7 +275,7 @@ int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx)
     return fromdata_init(ctx, EVP_PKEY_OP_KEYFROMDATA);
 }
 
-int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
+int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, Otls_PARAM params[])
 {
     void *provdata = NULL;
 
@@ -312,7 +312,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
  * EVP_PKEY_param_settable()
  * EVP_PKEY_param_gettable()
  */
-const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
+const Otls_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
@@ -320,7 +320,7 @@ const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
     return NULL;
 }
 
-const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
+const Otls_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))

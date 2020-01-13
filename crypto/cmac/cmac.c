@@ -1,18 +1,18 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/cmac.h>
-#include <openssl/err.h>
+#include <opentls/cmac.h>
+#include <opentls/err.h>
 
 struct CMAC_CTX_st {
     /* Cipher context to use */
@@ -47,13 +47,13 @@ CMAC_CTX *CMAC_CTX_new(void)
 {
     CMAC_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENtls_malloc(sizeof(*ctx))) == NULL) {
         CRYPTOerr(CRYPTO_F_CMAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ctx->cctx = EVP_CIPHER_CTX_new();
     if (ctx->cctx == NULL) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return NULL;
     }
     ctx->nlast_block = -1;
@@ -63,10 +63,10 @@ CMAC_CTX *CMAC_CTX_new(void)
 void CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
     EVP_CIPHER_CTX_reset(ctx->cctx);
-    OPENSSL_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
-    OPENSSL_cleanse(ctx->k1, EVP_MAX_BLOCK_LENGTH);
-    OPENSSL_cleanse(ctx->k2, EVP_MAX_BLOCK_LENGTH);
-    OPENSSL_cleanse(ctx->last_block, EVP_MAX_BLOCK_LENGTH);
+    OPENtls_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
+    OPENtls_cleanse(ctx->k1, EVP_MAX_BLOCK_LENGTH);
+    OPENtls_cleanse(ctx->k2, EVP_MAX_BLOCK_LENGTH);
+    OPENtls_cleanse(ctx->last_block, EVP_MAX_BLOCK_LENGTH);
     ctx->nlast_block = -1;
 }
 
@@ -81,7 +81,7 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
         return;
     CMAC_CTX_cleanup(ctx);
     EVP_CIPHER_CTX_free(ctx->cctx);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
@@ -137,7 +137,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
             return 0;
         make_kn(ctx->k1, ctx->tbl, bl);
         make_kn(ctx->k2, ctx->k1, bl);
-        OPENSSL_cleanse(ctx->tbl, bl);
+        OPENtls_cleanse(ctx->tbl, bl);
         /* Reset context again ready for first data block */
         if (!EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, NULL, zero_iv))
             return 0;
@@ -216,7 +216,7 @@ int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
             out[i] = ctx->last_block[i] ^ ctx->k2[i];
     }
     if (!EVP_Cipher(ctx->cctx, out, out, bl)) {
-        OPENSSL_cleanse(out, bl);
+        OPENtls_cleanse(out, bl);
         return 0;
     }
     return 1;

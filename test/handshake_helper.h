@@ -1,19 +1,19 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TEST_HANDSHAKE_HELPER_H
-#define OSSL_TEST_HANDSHAKE_HELPER_H
+#ifndef Otls_TEST_HANDSHAKE_HELPER_H
+#define Otls_TEST_HANDSHAKE_HELPER_H
 
-#include "ssl_test_ctx.h"
+#include "tls_test_ctx.h"
 
 typedef struct handshake_result {
-    ssl_test_result_t result;
+    tls_test_result_t result;
     /* These alerts are in the 2-byte format returned by the info_callback. */
     /* (Latest) alert sent by the client; 0 if no alert. */
     int client_alert_sent;
@@ -31,9 +31,9 @@ typedef struct handshake_result {
     int server_protocol;
     int client_protocol;
     /* Server connection */
-    ssl_servername_t servername;
+    tls_servername_t servername;
     /* Session ticket status */
-    ssl_session_ticket_t session_ticket;
+    tls_session_ticket_t session_ticket;
     int compression;
     /* Was this called on the second context? */
     int session_ticket_do_not_call;
@@ -63,7 +63,7 @@ typedef struct handshake_result {
     /* Client CA names */
     STACK_OF(X509_NAME) *client_ca_names;
     /* Session id status */
-    ssl_session_id_t session_id;
+    tls_session_id_t session_id;
     char *cipher;
     /* session ticket application data */
     char *result_session_ticket_app_data;
@@ -73,9 +73,9 @@ HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);
 void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result);
 
 /* Do a handshake and report some information about the result. */
-HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
-                               SSL_CTX *client_ctx, SSL_CTX *resume_server_ctx,
-                               SSL_CTX *resume_client_ctx,
-                               const SSL_TEST_CTX *test_ctx);
+HANDSHAKE_RESULT *do_handshake(tls_CTX *server_ctx, tls_CTX *server2_ctx,
+                               tls_CTX *client_ctx, tls_CTX *resume_server_ctx,
+                               tls_CTX *resume_client_ctx,
+                               const tls_TEST_CTX *test_ctx);
 
-#endif  /* OSSL_TEST_HANDSHAKE_HELPER_H */
+#endif  /* Otls_TEST_HANDSHAKE_HELPER_H */

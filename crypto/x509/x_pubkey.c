@@ -1,21 +1,21 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -225,7 +225,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 /*
  * The following are equivalents but which return RSA and DSA keys
  */
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
 {
     EVP_PKEY *pkey;
@@ -267,7 +267,7 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
 }
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
 {
     EVP_PKEY *pkey;
@@ -309,7 +309,7 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
 {
     EVP_PKEY *pkey;
@@ -358,7 +358,7 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
     if (!X509_ALGOR_set0(pub->algor, aobj, ptype, pval))
         return 0;
     if (penc) {
-        OPENSSL_free(pub->public_key->data);
+        OPENtls_free(pub->public_key->data);
         pub->public_key->data = penc;
         pub->public_key->length = penclen;
         /* Set number of unused bits to zero */

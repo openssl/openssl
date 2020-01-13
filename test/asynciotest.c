@@ -1,21 +1,21 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
+#include <opentls/tls.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
 
 #include "internal/packet.h"
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
 /* Should we fragment records or not? 0 = no, !0 = yes*/
@@ -63,7 +63,7 @@ static int async_new(BIO *bio)
 {
     struct async_ctrs *ctrs;
 
-    ctrs = OPENSSL_zalloc(sizeof(struct async_ctrs));
+    ctrs = OPENtls_zalloc(sizeof(struct async_ctrs));
     if (ctrs == NULL)
         return 0;
 
@@ -79,7 +79,7 @@ static int async_free(BIO *bio)
     if (bio == NULL)
         return 0;
     ctrs = BIO_get_data(bio);
-    OPENSSL_free(ctrs);
+    OPENtls_free(ctrs);
     BIO_set_data(bio, NULL);
     BIO_set_init(bio, 0);
 
@@ -157,16 +157,16 @@ static int async_write(BIO *bio, const char *in, int inl)
                     return -1;
 
                 /* Pretend we wrote out the record header */
-                written += SSL3_RT_HEADER_LENGTH;
+                written += tls3_RT_HEADER_LENGTH;
 
                 wholebody = payload;
-                if (contenttype == SSL3_RT_HANDSHAKE
+                if (contenttype == tls3_RT_HANDSHAKE
                         && !PACKET_get_1(&wholebody, &msgtype))
                     return -1;
 
-                if (msgtype == SSL3_MT_SERVER_HELLO) {
+                if (msgtype == tls3_MT_SERVER_HELLO) {
                     if (!PACKET_forward(&wholebody,
-                                            SSL3_HM_HEADER_LENGTH - 1)
+                                            tls3_HM_HEADER_LENGTH - 1)
                             || !PACKET_get_net_2(&wholebody, &negversion)
                                /* Skip random (32 bytes) */
                             || !PACKET_forward(&wholebody, 32)
@@ -228,9 +228,9 @@ static int async_write(BIO *bio, const char *in, int inl)
                  * We can't fragment anything after the ServerHello (or CCS <=
                  * TLS1.2), otherwise we get a bad record MAC
                  */
-                if (contenttype == SSL3_RT_CHANGE_CIPHER_SPEC
+                if (contenttype == tls3_RT_CHANGE_CIPHER_SPEC
                         || (negversion == TLS1_3_VERSION
-                            && msgtype == SSL3_MT_SERVER_HELLO)) {
+                            && msgtype == tls3_MT_SERVER_HELLO)) {
                     fragment = 0;
                     break;
                 }
@@ -288,15 +288,15 @@ static int async_puts(BIO *bio, const char *str)
 
 static int test_asyncio(int test)
 {
-    SSL_CTX *serverctx = NULL, *clientctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls_CTX *serverctx = NULL, *clientctx = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     BIO *s_to_c_fbio = NULL, *c_to_s_fbio = NULL;
     int testresult = 0, ret;
     size_t i, j;
     const char testdata[] = "Test data";
     char buf[sizeof(testdata)];
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &serverctx, &clientctx, cert, privkey)))
         goto end;
@@ -321,10 +321,10 @@ static int test_asyncio(int test)
     }
 
     /* BIOs get freed on error */
-    if (!TEST_true(create_ssl_objects(serverctx, clientctx, &serverssl,
-                                      &clientssl, s_to_c_fbio, c_to_s_fbio))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                          SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_objects(serverctx, clientctx, &servertls,
+                                      &clienttls, s_to_c_fbio, c_to_s_fbio))
+            || !TEST_true(create_tls_connection(servertls, clienttls,
+                          tls_ERROR_NONE)))
         goto end;
 
     /*
@@ -340,15 +340,15 @@ static int test_asyncio(int test)
          */
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
             i++) {
-            ret = SSL_write(clientssl, testdata + len,
+            ret = tls_write(clienttls, testdata + len,
                 sizeof(testdata) - len);
             if (ret > 0) {
                 len += ret;
             } else {
-                int ssl_error = SSL_get_error(clientssl, ret);
+                int tls_error = tls_get_error(clienttls, ret);
 
-                if (!TEST_false(ssl_error == SSL_ERROR_SYSCALL ||
-                                ssl_error == SSL_ERROR_SSL))
+                if (!TEST_false(tls_error == tls_ERROR_SYSCALL ||
+                                tls_error == tls_ERROR_tls))
                     goto end;
             }
         }
@@ -362,14 +362,14 @@ static int test_asyncio(int test)
          */
         for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
                 i < MAX_ATTEMPTS; i++) {
-            ret = SSL_read(serverssl, buf + len, sizeof(buf) - len);
+            ret = tls_read(servertls, buf + len, sizeof(buf) - len);
             if (ret > 0) {
                 len += ret;
             } else {
-                int ssl_error = SSL_get_error(serverssl, ret);
+                int tls_error = tls_get_error(servertls, ret);
 
-                if (!TEST_false(ssl_error == SSL_ERROR_SYSCALL ||
-                                ssl_error == SSL_ERROR_SSL))
+                if (!TEST_false(tls_error == tls_ERROR_SYSCALL ||
+                                tls_error == tls_ERROR_tls))
                     goto end;
             }
         }
@@ -378,17 +378,17 @@ static int test_asyncio(int test)
     }
 
     /* Also frees the BIOs */
-    SSL_free(clientssl);
-    SSL_free(serverssl);
-    clientssl = serverssl = NULL;
+    tls_free(clienttls);
+    tls_free(servertls);
+    clienttls = servertls = NULL;
 
     testresult = 1;
 
  end:
-    SSL_free(clientssl);
-    SSL_free(serverssl);
-    SSL_CTX_free(clientctx);
-    SSL_CTX_free(serverctx);
+    tls_free(clienttls);
+    tls_free(servertls);
+    tls_CTX_free(clientctx);
+    tls_CTX_free(serverctx);
 
     return testresult;
 }

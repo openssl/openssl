@@ -1,15 +1,15 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 #include "internal/packet.h"
-#include <openssl/sslerr.h>
+#include <opentls/tlserr.h>
 
 #define DEFAULT_BUF_SIZE    256
 
@@ -43,7 +43,7 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
 int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL && len != 0))
+    if (!otls_assert(pkt->subs != NULL && len != 0))
         return 0;
 
     if (pkt->maxsize - pkt->written < len)
@@ -98,8 +98,8 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
     pkt->curr = 0;
     pkt->written = 0;
 
-    if ((pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs))) == NULL) {
-        SSLerr(SSL_F_WPACKET_INTERN_INIT_LEN, ERR_R_MALLOC_FAILURE);
+    if ((pkt->subs = OPENtls_zalloc(sizeof(*pkt->subs))) == NULL) {
+        tlserr(tls_F_WPACKET_INTERN_INIT_LEN, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -110,7 +110,7 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
     pkt->subs->lenbytes = lenbytes;
 
     if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars)) {
-        OPENSSL_free(pkt->subs);
+        OPENtls_free(pkt->subs);
         pkt->subs = NULL;
         return 0;
     }
@@ -125,7 +125,7 @@ int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
     size_t max = maxmaxsize(lenbytes);
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(buf != NULL && len > 0))
+    if (!otls_assert(buf != NULL && len > 0))
         return 0;
 
     pkt->staticbuf = buf;
@@ -138,7 +138,7 @@ int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(buf != NULL))
+    if (!otls_assert(buf != NULL))
         return 0;
 
     pkt->staticbuf = NULL;
@@ -165,7 +165,7 @@ int WPACKET_init_null(WPACKET *pkt, size_t lenbytes)
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (!otls_assert(pkt->subs != NULL))
         return 0;
 
     pkt->subs->flags = flags;
@@ -236,7 +236,7 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
 
     if (doclose) {
         pkt->subs = sub->parent;
-        OPENSSL_free(sub);
+        OPENtls_free(sub);
     }
 
     return 1;
@@ -246,7 +246,7 @@ int WPACKET_fill_lengths(WPACKET *pkt)
 {
     WPACKET_SUB *sub;
 
-    if (!ossl_assert(pkt->subs != NULL))
+    if (!otls_assert(pkt->subs != NULL))
         return 0;
 
     for (sub = pkt->subs; sub != NULL; sub = sub->parent) {
@@ -282,7 +282,7 @@ int WPACKET_finish(WPACKET *pkt)
 
     ret = wpacket_intern_close(pkt, pkt->subs, 1);
     if (ret) {
-        OPENSSL_free(pkt->subs);
+        OPENtls_free(pkt->subs);
         pkt->subs = NULL;
     }
 
@@ -295,11 +295,11 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
     unsigned char *lenchars;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (!otls_assert(pkt->subs != NULL))
         return 0;
 
-    if ((sub = OPENSSL_zalloc(sizeof(*sub))) == NULL) {
-        SSLerr(SSL_F_WPACKET_START_SUB_PACKET_LEN__, ERR_R_MALLOC_FAILURE);
+    if ((sub = OPENtls_zalloc(sizeof(*sub))) == NULL) {
+        tlserr(tls_F_WPACKET_START_SUB_PACKET_LEN__, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -331,7 +331,7 @@ int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t size)
     unsigned char *data;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(size <= sizeof(unsigned int))
+    if (!otls_assert(size <= sizeof(unsigned int))
             || !WPACKET_allocate_bytes(pkt, size, &data)
             || !put_value(data, val, size))
         return 0;
@@ -345,7 +345,7 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
     size_t lenbytes;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (!otls_assert(pkt->subs != NULL))
         return 0;
 
     /* Find the WPACKET_SUB for the top level */
@@ -410,7 +410,7 @@ int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(written != NULL))
+    if (!otls_assert(written != NULL))
         return 0;
 
     *written = pkt->written;
@@ -421,7 +421,7 @@ int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 int WPACKET_get_length(WPACKET *pkt, size_t *len)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL && len != NULL))
+    if (!otls_assert(pkt->subs != NULL && len != NULL))
         return 0;
 
     *len = pkt->written - pkt->subs->pwritten;
@@ -450,7 +450,7 @@ void WPACKET_cleanup(WPACKET *pkt)
 
     for (sub = pkt->subs; sub != NULL; sub = parent) {
         parent = sub->parent;
-        OPENSSL_free(sub);
+        OPENtls_free(sub);
     }
     pkt->subs = NULL;
 }

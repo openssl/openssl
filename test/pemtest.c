@@ -1,15 +1,15 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/pem.h>
+#include <opentls/bio.h>
+#include <opentls/pem.h>
 
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -52,9 +52,9 @@ static int test_b64(int idx)
     ret = 1;
  err:
     BIO_free(b);
-    OPENSSL_free(name);
-    OPENSSL_free(header);
-    OPENSSL_free(data);
+    OPENtls_free(name);
+    OPENtls_free(header);
+    OPENtls_free(data);
     return ret;
 }
 
@@ -77,15 +77,15 @@ static int test_invalid(void)
         return 0;
     }
     BIO_free(b);
-    OPENSSL_free(name);
-    OPENSSL_free(header);
-    OPENSSL_free(data);
+    OPENtls_free(name);
+    OPENtls_free(header);
+    OPENtls_free(data);
     return 1;
 }
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_b64, OSSL_NELEM(b64_pem_data));
+    ADD_ALL_TESTS(test_b64, Otls_NELEM(b64_pem_data));
     ADD_TEST(test_invalid);
     return 1;
 }

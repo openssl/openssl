@@ -1,15 +1,15 @@
 /*
- * Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
 #include <limits.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "internal/cryptlib.h"
 
 char *CRYPTO_strdup(const char *str, const char* file, int line)
@@ -32,7 +32,7 @@ char *CRYPTO_strndup(const char *str, size_t s, const char* file, int line)
     if (str == NULL)
         return NULL;
 
-    maxlen = OPENSSL_strnlen(str, s);
+    maxlen = OPENtls_strnlen(str, s);
 
     ret = CRYPTO_malloc(maxlen + 1, file, line);
     if (ret) {
@@ -57,7 +57,7 @@ void *CRYPTO_memdup(const void *data, size_t siz, const char* file, int line)
     return memcpy(ret, data, siz);
 }
 
-size_t OPENSSL_strnlen(const char *str, size_t maxlen)
+size_t OPENtls_strnlen(const char *str, size_t maxlen)
 {
     const char *p;
 
@@ -66,7 +66,7 @@ size_t OPENSSL_strnlen(const char *str, size_t maxlen)
     return p - str;
 }
 
-size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size)
+size_t OPENtls_strlcpy(char *dst, const char *src, size_t size)
 {
     size_t l = 0;
     for (; size > 1 && *src; size--) {
@@ -78,15 +78,15 @@ size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size)
     return l + strlen(src);
 }
 
-size_t OPENSSL_strlcat(char *dst, const char *src, size_t size)
+size_t OPENtls_strlcat(char *dst, const char *src, size_t size)
 {
     size_t l = 0;
     for (; size > 0 && *dst; size--, dst++)
         l++;
-    return l + OPENSSL_strlcpy(dst, src, size);
+    return l + OPENtls_strlcpy(dst, src, size);
 }
 
-int OPENSSL_hexchar2int(unsigned char c)
+int OPENtls_hexchar2int(unsigned char c)
 {
 #ifdef CHARSET_EBCDIC
     c = os_toebcdic[c];
@@ -132,7 +132,7 @@ int OPENSSL_hexchar2int(unsigned char c)
 /*
  * Give a string of hex digits convert to a buffer
  */
-int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+int OPENtls_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
                           const char *str)
 {
     unsigned char *q;
@@ -147,21 +147,21 @@ int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
             continue;
         cl = *p++;
         if (!cl) {
-            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
+            CRYPTOerr(CRYPTO_F_OPENtls_HEXSTR2BUF_EX,
                       CRYPTO_R_ODD_NUMBER_OF_DIGITS);
             return 0;
         }
-        cli = OPENSSL_hexchar2int(cl);
-        chi = OPENSSL_hexchar2int(ch);
+        cli = OPENtls_hexchar2int(cl);
+        chi = OPENtls_hexchar2int(ch);
         if (cli < 0 || chi < 0) {
-            CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
+            CRYPTOerr(CRYPTO_F_OPENtls_HEXSTR2BUF_EX,
                       CRYPTO_R_ILLEGAL_HEX_DIGIT);
             return 0;
         }
         cnt++;
         if (q != NULL) {
             if (cnt > buf_n) {
-                CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF_EX,
+                CRYPTOerr(CRYPTO_F_OPENtls_HEXSTR2BUF_EX,
                           CRYPTO_R_TOO_SMALL_BUFFER);
                 return 0;
             }
@@ -174,30 +174,30 @@ int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
     return 1;
 }
 
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen)
+unsigned char *OPENtls_hexstr2buf(const char *str, long *buflen)
 {
     unsigned char *buf;
     size_t buf_n, tmp_buflen;
 
     buf_n = strlen(str) >> 1;
-    if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF, ERR_R_MALLOC_FAILURE);
+    if ((buf = OPENtls_malloc(buf_n)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENtls_HEXSTR2BUF, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (buflen != NULL)
         *buflen = 0;
     tmp_buflen = 0;
-    if (OPENSSL_hexstr2buf_ex(buf, buf_n, &tmp_buflen, str)) {
+    if (OPENtls_hexstr2buf_ex(buf, buf_n, &tmp_buflen, str)) {
         if (buflen != NULL)
             *buflen = (long)tmp_buflen;
         return buf;
     }
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return NULL;
 }
 
-int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+int OPENtls_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
                           const unsigned char *buf, size_t buflen)
 {
     static const char hexdig[] = "0123456789ABCDEF";
@@ -211,7 +211,7 @@ int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
         return 1;
 
     if (str_n < (unsigned long)buflen * 3) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_BUF2HEXSTR_EX, CRYPTO_R_TOO_SMALL_BUFFER);
+        CRYPTOerr(CRYPTO_F_OPENtls_BUF2HEXSTR_EX, CRYPTO_R_TOO_SMALL_BUFFER);
         return 0;
     }
 
@@ -229,31 +229,31 @@ int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
 }
 
 /*
- * Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
+ * Given a buffer of length 'len' return a OPENtls_malloc'ed string with its
  * hex representation @@@ (Contents of buffer are always kept in ASCII, also
  * on EBCDIC machines)
  */
-char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen)
+char *OPENtls_buf2hexstr(const unsigned char *buf, long buflen)
 {
     char *tmp;
     size_t tmp_n;
 
     if (buflen == 0)
-        return OPENSSL_zalloc(1);
+        return OPENtls_zalloc(1);
 
     tmp_n = buflen * 3;
-    if ((tmp = OPENSSL_malloc(tmp_n)) == NULL) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_BUF2HEXSTR, ERR_R_MALLOC_FAILURE);
+    if ((tmp = OPENtls_malloc(tmp_n)) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENtls_BUF2HEXSTR, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    if (OPENSSL_buf2hexstr_ex(tmp, tmp_n, NULL, buf, buflen))
+    if (OPENtls_buf2hexstr_ex(tmp, tmp_n, NULL, buf, buflen))
         return tmp;
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     return NULL;
 }
 
-int openssl_strerror_r(int errnum, char *buf, size_t buflen)
+int opentls_strerror_r(int errnum, char *buf, size_t buflen)
 {
 #if defined(_MSC_VER) && _MSC_VER>=1400
     return !strerror_s(buf, buflen, errnum);
@@ -270,19 +270,19 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
         return 0;
     /*
      * If err is statically allocated, err != buf and we need to copy the data.
-     * If err points somewhere inside buf, OPENSSL_strlcpy can handle this,
+     * If err points somewhere inside buf, OPENtls_strlcpy can handle this,
      * since src and dest are not annotated with __restrict and the function
      * reads src byte for byte and writes to dest.
      * If err == buf we do not have to copy anything.
      */
     if (err != buf)
-        OPENSSL_strlcpy(buf, err, buflen);
+        OPENtls_strlcpy(buf, err, buflen);
     return 1;
 #elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
       (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
     /*
-     * We can use "real" strerror_r. The OpenSSL version differs in that it
-     * gives 1 on success and 0 on failure for consistency with other OpenSSL
+     * We can use "real" strerror_r. The Opentls version differs in that it
+     * gives 1 on success and 0 on failure for consistency with other Opentls
      * functions. Real strerror_r does it the other way around
      */
     return !strerror_r(errnum, buf, buflen);
@@ -296,7 +296,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     /* Can this ever happen? */
     if (err == NULL)
         return 0;
-    OPENSSL_strlcpy(buf, err, buflen);
+    OPENtls_strlcpy(buf, err, buflen);
     return 1;
 #endif
 }

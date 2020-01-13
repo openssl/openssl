@@ -3,7 +3,7 @@
  INSTALLATION ON THE DOS PLATFORM WITH DJGPP
  -------------------------------------------
 
- OpenSSL has been ported to DJGPP, a Unix look-alike 32-bit run-time
+ Opentls has been ported to DJGPP, a Unix look-alike 32-bit run-time
  environment for 16-bit DOS, but only with long filename support.
  If you wish to compile on native DOS with 8+3 filenames, you will
  have to tweak the installation yourself, including renaming files
@@ -19,13 +19,13 @@
  files to download, see the DJGPP "ZIP PICKER" page at
  "http://www.delorie.com/djgpp/zip-picker.html". You also need to have
  the WATT-32 networking package installed before you try to compile
- OpenSSL. This can be obtained from "http://www.watt-32.net/".
+ Opentls. This can be obtained from "http://www.watt-32.net/".
  The Makefile assumes that the WATT-32 code is in the directory
  specified by the environment variable WATT_ROOT. If you have watt-32
  in directory "watt32" under your main DJGPP directory, specify
  WATT_ROOT="/dev/env/DJDIR/watt32".
 
- To compile OpenSSL, start your BASH shell, then configure for DJGPP by
+ To compile Opentls, start your BASH shell, then configure for DJGPP by
  running "./Configure" with appropriate arguments:
 
 	./Configure no-threads --prefix=/dev/env/DJDIR DJGPP

@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Reads one or more template files and runs it through Text::Template
 #
@@ -16,9 +16,9 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/perl";
-use OpenSSL::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
+use Opentls::fallback "$FindBin::Bin/../external/perl/MODULES.txt";
 use Getopt::Std;
-use OpenSSL::Template;
+use Opentls::Template;
 
 # We expect to get a lot of information from configdata, so check that
 # it was part of our commandline.
@@ -77,7 +77,7 @@ use platform;
 _____
 
 foreach (@template_settings) {
-    my $template = OpenSSL::Template->new(%$_);
+    my $template = Opentls::Template->new(%$_);
     die "Couldn't create template: $Text::Template::ERROR"
         if !defined($template);
 
@@ -93,7 +93,7 @@ foreach (@template_settings) {
                        # To ensure that global variables and functions
                        # defined in one template stick around for the
                        # next, making them combinable
-                       PACKAGE => 'OpenSSL::safe');
+                       PACKAGE => 'Opentls::safe');
     exit 1 if $failed;
 
     if (defined($opts{i})) {

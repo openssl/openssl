@@ -1,21 +1,21 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/conf.h>
+#include <opentls/tls.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/conf.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
 /* Just a ClientHello without a cookie */
 static const unsigned char clienthello_nocookie[] = {
@@ -259,7 +259,7 @@ static tests testpackets[9] = {
 
 # define COOKIE_LEN  20
 
-static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+static int cookie_gen(tls *tls, unsigned char *cookie, unsigned int *cookie_len)
 {
     unsigned int i;
 
@@ -270,7 +270,7 @@ static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
     return 1;
 }
 
-static int cookie_verify(SSL *ssl, const unsigned char *cookie,
+static int cookie_verify(tls *tls, const unsigned char *cookie,
                          unsigned int cookie_len)
 {
     unsigned int i;
@@ -288,8 +288,8 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
 
 static int dtls_listen_test(int i)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *ssl = NULL;
+    tls_CTX *ctx = NULL;
+    tls *tls = NULL;
     BIO *outbio = NULL;
     BIO *inbio = NULL;
     BIO_ADDR *peer = NULL;
@@ -298,26 +298,26 @@ static int dtls_listen_test(int i)
     long datalen;
     int ret, success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+    if (!TEST_ptr(ctx = tls_CTX_new(DTLS_server_method()))
             || !TEST_ptr(peer = BIO_ADDR_new()))
         goto err;
-    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
-    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+    tls_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    tls_CTX_set_cookie_verify_cb(ctx, cookie_verify);
 
-    /* Create an SSL object and set the BIO */
-    if (!TEST_ptr(ssl = SSL_new(ctx))
+    /* Create an tls object and set the BIO */
+    if (!TEST_ptr(tls = tls_new(ctx))
             || !TEST_ptr(outbio = BIO_new(BIO_s_mem())))
         goto err;
-    SSL_set0_wbio(ssl, outbio);
+    tls_set0_wbio(tls, outbio);
 
     /* Set Non-blocking IO behaviour */
     if (!TEST_ptr(inbio = BIO_new_mem_buf((char *)tp->in, tp->inlen)))
         goto err;
     BIO_set_mem_eof_return(inbio, -1);
-    SSL_set0_rbio(ssl, inbio);
+    tls_set0_rbio(tls, inbio);
 
     /* Process the incoming packet */
-    if (!TEST_int_ge(ret = DTLSv1_listen(ssl, peer), 0))
+    if (!TEST_int_ge(ret = DTLSv1_listen(tls, peer), 0))
         goto err;
     datalen = BIO_get_mem_data(outbio, &data);
 
@@ -335,23 +335,23 @@ static int dtls_listen_test(int i)
     }
     (void)BIO_reset(outbio);
     inbio = NULL;
-    SSL_set0_rbio(ssl, NULL);
+    tls_set0_rbio(tls, NULL);
     success = 1;
 
  err:
     /* Also frees up outbio */
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
+    tls_free(tls);
+    tls_CTX_free(ctx);
     BIO_free(inbio);
-    OPENSSL_free(peer);
+    OPENtls_free(peer);
     return success;
 }
 #endif
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_SOCK
-    ADD_ALL_TESTS(dtls_listen_test, (int)OSSL_NELEM(testpackets));
+#ifndef OPENtls_NO_SOCK
+    ADD_ALL_TESTS(dtls_listen_test, (int)Otls_NELEM(testpackets));
 #endif
     return 1;
 }

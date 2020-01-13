@@ -1,35 +1,35 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_ASN1_H
-# define OPENSSL_ASN1_H
+#ifndef OPENtls_ASN1_H
+# define OPENtls_ASN1_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_ASN1_H
 # endif
 
 # include <time.h>
-# include <openssl/e_os2.h>
-# include <openssl/opensslconf.h>
-# include <openssl/bio.h>
-# include <openssl/safestack.h>
-# include <openssl/asn1err.h>
-# include <openssl/symhacks.h>
+# include <opentls/e_os2.h>
+# include <opentls/opentlsconf.h>
+# include <opentls/bio.h>
+# include <opentls/safestack.h>
+# include <opentls/asn1err.h>
+# include <opentls/symhacks.h>
 
-# include <openssl/types.h>
-# include <openssl/bn.h>
+# include <opentls/types.h>
+# include <opentls/bn.h>
 
-# ifdef OPENSSL_BUILD_SHLIBCRYPTO
-#  undef OPENSSL_EXTERN
-#  define OPENSSL_EXTERN OPENSSL_EXPORT
+# ifdef OPENtls_BUILD_SHLIBCRYPTO
+#  undef OPENtls_EXTERN
+#  define OPENtls_EXTERN OPENtls_EXPORT
 # endif
 
 #ifdef  __cplusplus
@@ -678,7 +678,7 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x);
 # define M_ASN1_free_of(x, type) \
                 ASN1_item_free(CHECKED_PTR_OF(type, x), ASN1_ITEM_rptr(type))
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 void *ASN1_d2i_fp(void *(*xnew) (void), d2i_of_void *d2i, FILE *in, void **x);
 
 #  define ASN1_d2i_fp_of(type,xnew,d2i,in,x) \

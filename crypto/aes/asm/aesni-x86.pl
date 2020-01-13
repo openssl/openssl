@@ -1,21 +1,21 @@
 #! /usr/bin/env perl
-# Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements support for Intel AES-NI extension. In
-# OpenSSL context it's used with Intel engine, but can also be used as
+# Opentls context it's used with Intel engine, but can also be used as
 # drop-in replacement for crypto/aes/asm/aes-586.pl [see below for
 # details].
 #
@@ -80,7 +80,7 @@ $output = pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0]);
 
-&external_label("OPENSSL_ia32cap_P");
+&external_label("OPENtls_ia32cap_P");
 &static_label("key_const");
 
 if ($PREFIX eq "aesni")	{ $movekey=\&movups; }
@@ -2993,7 +2993,7 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 	&blindpop("ebx");
 	&lea	("ebx",&DWP(&label("key_const")."-".&label("pic"),"ebx"));
 
-	&picmeup("ebp","OPENSSL_ia32cap_P","ebx",&label("key_const"));
+	&picmeup("ebp","OPENtls_ia32cap_P","ebx",&label("key_const"));
 	&movups	("xmm0",&QWP(0,"eax"));	# pull first 128 bits of *userKey
 	&xorps	("xmm4","xmm4");	# low dword of xmm4 is assumed 0
 	&mov	("ebp",&DWP(4,"ebp"));
@@ -3406,7 +3406,7 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 &data_word(0x04070605,0x04070605,0x04070605,0x04070605);
 &data_word(1,1,1,1);
 &data_word(0x1b,0x1b,0x1b,0x1b);
-&asciz("AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("AES for Intel AES-NI, CRYPTOGAMS by <appro\@opentls.org>");
 
 &asm_finish();
 

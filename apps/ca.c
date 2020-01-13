@@ -1,32 +1,32 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <openssl/conf.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/txt_db.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-#include <openssl/ocsp.h>
-#include <openssl/pem.h>
+#include <opentls/conf.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/bn.h>
+#include <opentls/txt_db.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/objects.h>
+#include <opentls/ocsp.h>
+#include <opentls/pem.h>
 
 #ifndef W_OK
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
 #  include <unistd.h>
-# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS)
+# elif !defined(OPENtls_SYS_VXWORKS) && !defined(OPENtls_SYS_WINDOWS)
 #  include <sys/file.h>
 # endif
 #endif
@@ -89,7 +89,7 @@ typedef enum {
 static char *lookup_conf(const CONF *conf, const char *group, const char *tag);
 
 static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                    BIGNUM *serial, const char *subj, unsigned long chtype,
                    int multirdn, int email_dn, const char *startdate,
@@ -99,7 +99,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    int default_op, int ext_copy, int selfsign,
                    unsigned char *sm2_id, size_t sm2idlen);
 static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                        const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                         BIGNUM *serial, const char *subj, unsigned long chtype,
                         int multirdn, int email_dn, const char *startdate,
@@ -108,7 +108,7 @@ static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x
                         unsigned long nameopt, int default_op, int ext_copy);
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          X509 *x509, const EVP_MD *dgst,
-                         STACK_OF(OPENSSL_STRING) *sigopts,
+                         STACK_OF(OPENtls_STRING) *sigopts,
                          STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                          BIGNUM *serial, const char *subj, unsigned long chtype,
                          int multirdn, int email_dn, const char *startdate,
@@ -116,7 +116,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          int verbose, unsigned long certopt,
                          unsigned long nameopt, int default_op, int ext_copy);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
                    int email_dn, const char *startdate, const char *enddate, long days,
@@ -170,7 +170,7 @@ const OPTIONS ca_options[] = {
     {"ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign"},
     {"spkac", OPT_SPKAC, '<',
      "File contains DN and signed public key and challenge"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
 
@@ -196,7 +196,7 @@ const OPTIONS ca_options[] = {
      "Extension section (override value in config file)"},
     {"extfile", OPT_EXTFILE, '<',
      "Configuration file with X509v3 extensions to add"},
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     {"sm2-id", OPT_SM2ID, 's',
      "Specify an ID string to verify an SM2 certificate request"},
     {"sm2-hex-id", OPT_SM2HEXID, 's',
@@ -255,7 +255,7 @@ int ca_main(int argc, char **argv)
     CA_DB *db = NULL;
     DB_ATTR db_attr;
     STACK_OF(CONF_VALUE) *attribs = NULL;
-    STACK_OF(OPENSSL_STRING) *sigopts = NULL;
+    STACK_OF(OPENtls_STRING) *sigopts = NULL;
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
     const EVP_MD *dgst = NULL;
@@ -375,8 +375,8 @@ opthelp:
             break;
         case OPT_SIGOPT:
             if (sigopts == NULL)
-                sigopts = sk_OPENSSL_STRING_new_null();
-            if (sigopts == NULL || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+                sigopts = sk_OPENtls_STRING_new_null();
+            if (sigopts == NULL || !sk_OPENtls_STRING_push(sigopts, opt_arg()))
                 goto end;
             break;
         case OPT_NOTEXT:
@@ -468,7 +468,7 @@ opthelp:
                 goto end;
             }
             sm2_free = 1;
-            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            sm2_id = OPENtls_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
             if (sm2_id == NULL) {
                 BIO_printf(bio_err, "Invalid hex string input\n");
                 goto end;
@@ -571,7 +571,7 @@ end_of_options:
     }
     pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
     if (key != NULL)
-        OPENSSL_cleanse(key, strlen(key));
+        OPENtls_cleanse(key, strlen(key));
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;
@@ -650,7 +650,7 @@ end_of_options:
                        "there needs to be defined a directory for new certificate to be placed in\n");
             goto end;
         }
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
         /*
          * outdir is a directory spec, but access() for VMS demands a
          * filename.  We could use the DEC C routine to convert the
@@ -677,8 +677,8 @@ end_of_options:
         goto end;
 
     /* Lets check some fields */
-    for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-        pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+    for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+        pp = sk_OPENtls_PSTRING_value(db->db->data, i);
         if ((pp[DB_type][0] != DB_TYPE_REV) && (pp[DB_rev_date][0] != '\0')) {
             BIO_printf(bio_err,
                        "entry %d: not revoked yet, but has a revocation date\n",
@@ -717,7 +717,7 @@ end_of_options:
     if (verbose) {
         TXT_DB_write(bio_out, db->db);
         BIO_printf(bio_err, "%d entries loaded from the database\n",
-                   sk_OPENSSL_PSTRING_num(db->db->data));
+                   sk_OPENtls_PSTRING_num(db->db->data));
         BIO_printf(bio_err, "generating index\n");
     }
 
@@ -902,7 +902,7 @@ end_of_options:
                     if ((f = BN_bn2hex(serial)) == NULL)
                         goto end;
                     BIO_printf(bio_err, "next serial number is %s\n", f);
-                    OPENSSL_free(f);
+                    OPENtls_free(f);
                 }
             }
         }
@@ -1035,9 +1035,9 @@ end_of_options:
                 goto end;
         }
 
-        outdirlen = OPENSSL_strlcpy(new_cert, outdir, sizeof(new_cert));
-#ifndef OPENSSL_SYS_VMS
-        outdirlen = OPENSSL_strlcat(new_cert, "/", sizeof(new_cert));
+        outdirlen = OPENtls_strlcpy(new_cert, outdir, sizeof(new_cert));
+#ifndef OPENtls_SYS_VMS
+        outdirlen = OPENtls_strlcat(new_cert, "/", sizeof(new_cert));
 #endif
 
         if (verbose)
@@ -1170,8 +1170,8 @@ end_of_options:
 
         ASN1_TIME_free(tmptm);
 
-        for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-            pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+        for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+            pp = sk_OPENtls_PSTRING_value(db->db->data, i);
             if (pp[DB_type][0] == DB_TYPE_REV) {
                 if ((r = X509_REVOKED_new()) == NULL)
                     goto end;
@@ -1282,7 +1282,7 @@ end_of_options:
 
  end:
     if (sm2_free)
-        OPENSSL_free(sm2_id);
+        OPENtls_free(sm2_id);
     if (ret)
         ERR_print_errors(bio_err);
     BIO_free_all(Sout);
@@ -1291,11 +1291,11 @@ end_of_options:
     sk_X509_pop_free(cert_sk, X509_free);
 
     if (free_key)
-        OPENSSL_free(key);
+        OPENtls_free(key);
     BN_free(serial);
     BN_free(crlnumber);
     free_index(db);
-    sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENtls_STRING_free(sigopts);
     EVP_PKEY_free(pkey);
     X509_free(x509);
     X509_CRL_free(crl);
@@ -1314,7 +1314,7 @@ static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
 }
 
 static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                    BIGNUM *serial, const char *subj, unsigned long chtype,
                    int multirdn, int email_dn, const char *startdate,
@@ -1355,7 +1355,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
         goto end;
     }
     if (sm2id != NULL) {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
         ASN1_OCTET_STRING *v;
 
         v = ASN1_OCTET_STRING_new();
@@ -1403,7 +1403,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
 }
 
 static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                        const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                         BIGNUM *serial, const char *subj, unsigned long chtype,
                         int multirdn, int email_dn, const char *startdate,
@@ -1456,7 +1456,7 @@ static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x
 }
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const EVP_MD *dgst, STACK_OF(OPENtls_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
                    int email_dn, const char *startdate, const char *enddate, long days,
@@ -1474,9 +1474,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     int ok = -1, i, j, last, nid;
     const char *p;
     CONF_VALUE *cv;
-    OPENSSL_STRING row[DB_NUMBER];
-    OPENSSL_STRING *irow = NULL;
-    OPENSSL_STRING *rrow = NULL;
+    OPENtls_STRING row[DB_NUMBER];
+    OPENtls_STRING *irow = NULL;
+    OPENtls_STRING *rrow = NULL;
     char buf[25];
 
     for (i = 0; i < DB_NUMBER; i++)
@@ -1806,7 +1806,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     if (BN_is_zero(serial))
-        row[DB_serial] = OPENSSL_strdup("00");
+        row[DB_serial] = OPENtls_strdup("00");
     else
         row[DB_serial] = BN_bn2hex(serial);
     if (row[DB_serial] == NULL) {
@@ -1820,8 +1820,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
          * unique_subject is in use then we don't want different entries with
          * empty subjects matching each other.
          */
-        OPENSSL_free(row[DB_name]);
-        row[DB_name] = OPENSSL_strdup(row[DB_serial]);
+        OPENtls_free(row[DB_name]);
+        row[DB_name] = OPENtls_strdup(row[DB_serial]);
         if (row[DB_name] == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
@@ -1829,7 +1829,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     if (db->attributes.unique_subject) {
-        OPENSSL_STRING *crow = row;
+        OPENtls_STRING *crow = row;
 
         rrow = TXT_DB_get_by_index(db->db, DB_name, crow);
         if (rrow != NULL) {
@@ -1928,13 +1928,13 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
 
     /* We now just add it to the database as DB_TYPE_VAL('V') */
-    row[DB_type] = OPENSSL_strdup("V");
+    row[DB_type] = OPENtls_strdup("V");
     tm = X509_get0_notAfter(ret);
     row[DB_exp_date] = app_malloc(tm->length + 1, "row expdate");
     memcpy(row[DB_exp_date], tm->data, tm->length);
     row[DB_exp_date][tm->length] = '\0';
     row[DB_rev_date] = NULL;
-    row[DB_file] = OPENSSL_strdup("unknown");
+    row[DB_file] = OPENtls_strdup("unknown");
     if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
         (row[DB_file] == NULL) || (row[DB_name] == NULL)) {
         BIO_printf(bio_err, "Memory allocation failure\n");
@@ -1956,9 +1956,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
  end:
     if (ok != 1) {
         for (i = 0; i < DB_NUMBER; i++)
-            OPENSSL_free(row[i]);
+            OPENtls_free(row[i]);
     }
-    OPENSSL_free(irow);
+    OPENtls_free(irow);
 
     X509_NAME_free(CAname);
     X509_NAME_free(subject);
@@ -1983,7 +1983,7 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          X509 *x509, const EVP_MD *dgst,
-                         STACK_OF(OPENSSL_STRING) *sigopts,
+                         STACK_OF(OPENtls_STRING) *sigopts,
                          STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                          BIGNUM *serial, const char *subj, unsigned long chtype,
                          int multirdn, int email_dn, const char *startdate,
@@ -2137,14 +2137,14 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
     if (!bn)
         goto end;
     if (BN_is_zero(bn))
-        row[DB_serial] = OPENSSL_strdup("00");
+        row[DB_serial] = OPENtls_strdup("00");
     else
         row[DB_serial] = BN_bn2hex(bn);
     BN_free(bn);
     if (row[DB_name] != NULL && row[DB_name][0] == '\0') {
         /* Entries with empty Subjects actually use the serial number instead */
-        OPENSSL_free(row[DB_name]);
-        row[DB_name] = OPENSSL_strdup(row[DB_serial]);
+        OPENtls_free(row[DB_name]);
+        row[DB_name] = OPENtls_strdup(row[DB_serial]);
     }
     if ((row[DB_name] == NULL) || (row[DB_serial] == NULL)) {
         BIO_printf(bio_err, "Memory allocation failure\n");
@@ -2161,13 +2161,13 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
                    row[DB_serial], row[DB_name]);
 
         /* We now just add it to the database as DB_TYPE_REV('V') */
-        row[DB_type] = OPENSSL_strdup("V");
+        row[DB_type] = OPENtls_strdup("V");
         tm = X509_get0_notAfter(x509);
         row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data");
         memcpy(row[DB_exp_date], tm->data, tm->length);
         row[DB_exp_date][tm->length] = '\0';
         row[DB_rev_date] = NULL;
-        row[DB_file] = OPENSSL_strdup("unknown");
+        row[DB_file] = OPENtls_strdup("unknown");
 
         if (row[DB_type] == NULL || row[DB_file] == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
@@ -2182,7 +2182,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
         if (!TXT_DB_insert(db->db, irow)) {
             BIO_printf(bio_err, "failed to update database\n");
             BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
-            OPENSSL_free(irow);
+            OPENtls_free(irow);
             goto end;
         }
 
@@ -2223,7 +2223,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
     ok = 1;
  end:
     for (i = 0; i < DB_NUMBER; i++)
-        OPENSSL_free(row[i]);
+        OPENtls_free(row[i]);
     return ok;
 }
 
@@ -2289,7 +2289,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     }
  end:
     for (i = 0; i < DB_NUMBER; i++) {
-        OPENSSL_free(row[i]);
+        OPENtls_free(row[i]);
     }
     return ok;
 }
@@ -2320,8 +2320,8 @@ static int do_updatedb(CA_DB *db)
     else
         a_y2k = 0;
 
-    for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-        rrow = sk_OPENSSL_PSTRING_value(db->db->data, i);
+    for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+        rrow = sk_OPENtls_PSTRING_value(db->db->data, i);
 
         if (rrow[DB_type][0] == DB_TYPE_VAL) {
             /* ignore entries that are not valid */
@@ -2351,7 +2351,7 @@ static int do_updatedb(CA_DB *db)
     }
 
     ASN1_UTCTIME_free(a_tm);
-    OPENSSL_free(a_tm_s);
+    OPENtls_free(a_tm_s);
     return cnt;
 }
 
@@ -2371,7 +2371,7 @@ static const char *crl_reasons[] = {
     "CAkeyTime"
 };
 
-#define NUM_REASONS OSSL_NELEM(crl_reasons)
+#define NUM_REASONS Otls_NELEM(crl_reasons)
 
 /*
  * Given revocation information convert to a DB string. The format of the
@@ -2451,14 +2451,14 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
         i += strlen(other) + 1;
 
     str = app_malloc(i, "revocation reason");
-    OPENSSL_strlcpy(str, (char *)revtm->data, i);
+    OPENtls_strlcpy(str, (char *)revtm->data, i);
     if (reason) {
-        OPENSSL_strlcat(str, ",", i);
-        OPENSSL_strlcat(str, reason, i);
+        OPENtls_strlcat(str, ",", i);
+        OPENtls_strlcat(str, reason, i);
     }
     if (other) {
-        OPENSSL_strlcat(str, ",", i);
-        OPENSSL_strlcat(str, other, i);
+        OPENtls_strlcat(str, ",", i);
+        OPENtls_strlcat(str, other, i);
     }
     ASN1_UTCTIME_free(revtm);
     return str;
@@ -2517,7 +2517,7 @@ static int make_revoked(X509_REVOKED *rev, const char *str)
 
  end:
 
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     ASN1_OBJECT_free(hold);
     ASN1_GENERALIZEDTIME_free(comp_time);
     ASN1_ENUMERATED_free(rtmp);
@@ -2578,7 +2578,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
     ASN1_OBJECT *hold = NULL;
     ASN1_GENERALIZEDTIME *comp_time = NULL;
 
-    tmp = OPENSSL_strdup(str);
+    tmp = OPENtls_strdup(str);
     if (!tmp) {
         BIO_printf(bio_err, "memory allocation failure\n");
         goto end;
@@ -2672,7 +2672,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
  end:
 
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     ASN1_GENERALIZEDTIME_free(comp_time);
 
     return ret;

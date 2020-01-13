@@ -1,10 +1,10 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -20,7 +20,7 @@
 # if __GLIBC_PREREQ(2, 16)
 #  include <sys/auxv.h>
 #  if defined(HWCAP_S390_STFLE) && defined(HWCAP_S390_VX)
-#   define OSSL_IMPLEMENT_GETAUXVAL
+#   define Otls_IMPLEMENT_GETAUXVAL
 #  endif
 # endif
 #endif
@@ -56,45 +56,45 @@
             memcpy(cap, &NAME, sizeof(*cap));                           \
     }
 
-#ifndef OSSL_IMPLEMENT_GETAUXVAL
+#ifndef Otls_IMPLEMENT_GETAUXVAL
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
 {
     siglongjmp(ill_jmp, sig);
 }
 
-void OPENSSL_vx_probe(void);
+void OPENtls_vx_probe(void);
 #endif
 
 static const char *env;
-static int parse_env(struct OPENSSL_s390xcap_st *cap);
+static int parse_env(struct OPENtls_s390xcap_st *cap);
 
-void OPENSSL_s390x_facilities(void);
-void OPENSSL_s390x_functions(void);
+void OPENtls_s390x_facilities(void);
+void OPENtls_s390x_functions(void);
 
-struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
+struct OPENtls_s390xcap_st OPENtls_s390xcap_P;
 
-void OPENSSL_cpuid_setup(void)
+void OPENtls_cpuid_setup(void)
 {
-    struct OPENSSL_s390xcap_st cap;
+    struct OPENtls_s390xcap_st cap;
 
-    if (OPENSSL_s390xcap_P.stfle[0])
+    if (OPENtls_s390xcap_P.stfle[0])
         return;
 
     /* set a bit that will not be tested later */
-    OPENSSL_s390xcap_P.stfle[0] |= S390X_CAPBIT(0);
+    OPENtls_s390xcap_P.stfle[0] |= S390X_CAPBIT(0);
 
-#if defined(OSSL_IMPLEMENT_GETAUXVAL)
+#if defined(Otls_IMPLEMENT_GETAUXVAL)
     {
         const unsigned long hwcap = getauxval(AT_HWCAP);
 
         /* protection against missing store-facility-list-extended */
         if (hwcap & HWCAP_S390_STFLE)
-            OPENSSL_s390x_facilities();
+            OPENtls_s390x_facilities();
 
         /* protection against disabled vector facility */
         if (!(hwcap & HWCAP_S390_VX)) {
-            OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
+            OPENtls_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
                                              | S390X_CAPBIT(S390X_VXD)
                                              | S390X_CAPBIT(S390X_VXE));
         }
@@ -117,14 +117,14 @@ void OPENSSL_cpuid_setup(void)
 
         /* protection against missing store-facility-list-extended */
         if (sigsetjmp(ill_jmp, 1) == 0)
-            OPENSSL_s390x_facilities();
+            OPENtls_s390x_facilities();
 
         /* protection against disabled vector facility */
-        if ((OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX))
+        if ((OPENtls_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX))
             && (sigsetjmp(ill_jmp, 1) == 0)) {
-            OPENSSL_vx_probe();
+            OPENtls_vx_probe();
         } else {
-            OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
+            OPENtls_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
                                              | S390X_CAPBIT(S390X_VXD)
                                              | S390X_CAPBIT(S390X_VXE));
         }
@@ -135,49 +135,49 @@ void OPENSSL_cpuid_setup(void)
     }
 #endif
 
-    env = getenv("OPENSSL_s390xcap");
+    env = getenv("OPENtls_s390xcap");
     if (env != NULL) {
         if (!parse_env(&cap))
             env = NULL;
     }
 
     if (env != NULL) {
-        OPENSSL_s390xcap_P.stfle[0] &= cap.stfle[0];
-        OPENSSL_s390xcap_P.stfle[1] &= cap.stfle[1];
-        OPENSSL_s390xcap_P.stfle[2] &= cap.stfle[2];
+        OPENtls_s390xcap_P.stfle[0] &= cap.stfle[0];
+        OPENtls_s390xcap_P.stfle[1] &= cap.stfle[1];
+        OPENtls_s390xcap_P.stfle[2] &= cap.stfle[2];
     }
 
-    OPENSSL_s390x_functions(); /* check OPENSSL_s390xcap_P.stfle */
+    OPENtls_s390x_functions(); /* check OPENtls_s390xcap_P.stfle */
 
     if (env != NULL) {
-        OPENSSL_s390xcap_P.kimd[0] &= cap.kimd[0];
-        OPENSSL_s390xcap_P.kimd[1] &= cap.kimd[1];
-        OPENSSL_s390xcap_P.klmd[0] &= cap.klmd[0];
-        OPENSSL_s390xcap_P.klmd[1] &= cap.klmd[1];
-        OPENSSL_s390xcap_P.km[0] &= cap.km[0];
-        OPENSSL_s390xcap_P.km[1] &= cap.km[1];
-        OPENSSL_s390xcap_P.kmc[0] &= cap.kmc[0];
-        OPENSSL_s390xcap_P.kmc[1] &= cap.kmc[1];
-        OPENSSL_s390xcap_P.kmac[0] &= cap.kmac[0];
-        OPENSSL_s390xcap_P.kmac[1] &= cap.kmac[1];
-        OPENSSL_s390xcap_P.kmctr[0] &= cap.kmctr[0];
-        OPENSSL_s390xcap_P.kmctr[1] &= cap.kmctr[1];
-        OPENSSL_s390xcap_P.kmo[0] &= cap.kmo[0];
-        OPENSSL_s390xcap_P.kmo[1] &= cap.kmo[1];
-        OPENSSL_s390xcap_P.kmf[0] &= cap.kmf[0];
-        OPENSSL_s390xcap_P.kmf[1] &= cap.kmf[1];
-        OPENSSL_s390xcap_P.prno[0] &= cap.prno[0];
-        OPENSSL_s390xcap_P.prno[1] &= cap.prno[1];
-        OPENSSL_s390xcap_P.kma[0] &= cap.kma[0];
-        OPENSSL_s390xcap_P.kma[1] &= cap.kma[1];
-        OPENSSL_s390xcap_P.pcc[0] &= cap.pcc[0];
-        OPENSSL_s390xcap_P.pcc[1] &= cap.pcc[1];
-        OPENSSL_s390xcap_P.kdsa[0] &= cap.kdsa[0];
-        OPENSSL_s390xcap_P.kdsa[1] &= cap.kdsa[1];
+        OPENtls_s390xcap_P.kimd[0] &= cap.kimd[0];
+        OPENtls_s390xcap_P.kimd[1] &= cap.kimd[1];
+        OPENtls_s390xcap_P.klmd[0] &= cap.klmd[0];
+        OPENtls_s390xcap_P.klmd[1] &= cap.klmd[1];
+        OPENtls_s390xcap_P.km[0] &= cap.km[0];
+        OPENtls_s390xcap_P.km[1] &= cap.km[1];
+        OPENtls_s390xcap_P.kmc[0] &= cap.kmc[0];
+        OPENtls_s390xcap_P.kmc[1] &= cap.kmc[1];
+        OPENtls_s390xcap_P.kmac[0] &= cap.kmac[0];
+        OPENtls_s390xcap_P.kmac[1] &= cap.kmac[1];
+        OPENtls_s390xcap_P.kmctr[0] &= cap.kmctr[0];
+        OPENtls_s390xcap_P.kmctr[1] &= cap.kmctr[1];
+        OPENtls_s390xcap_P.kmo[0] &= cap.kmo[0];
+        OPENtls_s390xcap_P.kmo[1] &= cap.kmo[1];
+        OPENtls_s390xcap_P.kmf[0] &= cap.kmf[0];
+        OPENtls_s390xcap_P.kmf[1] &= cap.kmf[1];
+        OPENtls_s390xcap_P.prno[0] &= cap.prno[0];
+        OPENtls_s390xcap_P.prno[1] &= cap.prno[1];
+        OPENtls_s390xcap_P.kma[0] &= cap.kma[0];
+        OPENtls_s390xcap_P.kma[1] &= cap.kma[1];
+        OPENtls_s390xcap_P.pcc[0] &= cap.pcc[0];
+        OPENtls_s390xcap_P.pcc[1] &= cap.pcc[1];
+        OPENtls_s390xcap_P.kdsa[0] &= cap.kdsa[0];
+        OPENtls_s390xcap_P.kdsa[1] &= cap.kdsa[1];
     }
 }
 
-static int parse_env(struct OPENSSL_s390xcap_st *cap)
+static int parse_env(struct OPENtls_s390xcap_st *cap)
 {
     /*-
      * CPU model data
@@ -188,7 +188,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z900 (2000) - z/Architecture POP SA22-7832-00
      * Facility detection would fail on real hw (no STFLE).
      */
-    static const struct OPENSSL_s390xcap_st z900 = {
+    static const struct OPENtls_s390xcap_st z900 = {
         /*.stfle  = */{0ULL, 0ULL, 0ULL, 0ULL},
         /*.kimd   = */{0ULL, 0ULL},
         /*.klmd   = */{0ULL, 0ULL},
@@ -208,7 +208,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z990 (2003) - z/Architecture POP SA22-7832-02
      * Implements MSA. Facility detection would fail on real hw (no STFLE).
      */
-    static const struct OPENSSL_s390xcap_st z990 = {
+    static const struct OPENtls_s390xcap_st z990 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA),
                        0ULL, 0ULL, 0ULL},
         /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
@@ -236,7 +236,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z9 (2005) - z/Architecture POP SA22-7832-04
      * Implements MSA and MSA1.
      */
-    static const struct OPENSSL_s390xcap_st z9 = {
+    static const struct OPENtls_s390xcap_st z9 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF),
                        0ULL, 0ULL, 0ULL},
@@ -269,7 +269,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z10 (2008) - z/Architecture POP SA22-7832-06
      * Implements MSA and MSA1-2.
      */
-    static const struct OPENSSL_s390xcap_st z10 = {
+    static const struct OPENtls_s390xcap_st z10 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF),
                        0ULL, 0ULL, 0ULL},
@@ -308,7 +308,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z196 (2010) - z/Architecture POP SA22-7832-08
      * Implements MSA and MSA1-4.
      */
-    static const struct OPENSSL_s390xcap_st z196 = {
+    static const struct OPENtls_s390xcap_st z196 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF),
                        S390X_CAPBIT(S390X_MSA3)
@@ -367,7 +367,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * zEC12 (2012) - z/Architecture POP SA22-7832-09
      * Implements MSA and MSA1-4.
      */
-    static const struct OPENSSL_s390xcap_st zEC12 = {
+    static const struct OPENtls_s390xcap_st zEC12 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF),
                        S390X_CAPBIT(S390X_MSA3)
@@ -426,7 +426,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z13 (2015) - z/Architecture POP SA22-7832-10
      * Implements MSA and MSA1-5.
      */
-    static const struct OPENSSL_s390xcap_st z13 = {
+    static const struct OPENtls_s390xcap_st z13 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF)
                        | S390X_CAPBIT(S390X_MSA5),
@@ -489,7 +489,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z14 (2017) - z/Architecture POP SA22-7832-11
      * Implements MSA and MSA1-8.
      */
-    static const struct OPENSSL_s390xcap_st z14 = {
+    static const struct OPENtls_s390xcap_st z14 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF)
                        | S390X_CAPBIT(S390X_MSA5),
@@ -571,7 +571,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
      * z15 (2019) - z/Architecture POP SA22-7832-12
      * Implements MSA and MSA1-9.
      */
-    static const struct OPENSSL_s390xcap_st z15 = {
+    static const struct OPENtls_s390xcap_st z15 = {
         /*.stfle  = */{S390X_CAPBIT(S390X_MSA)
                        | S390X_CAPBIT(S390X_STCKF)
                        | S390X_CAPBIT(S390X_MSA5),
@@ -725,7 +725,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
         /* whitespace(ignored) or invalid tokens */
         else {
             while (*tok_begin != '\0') {
-                if (!ossl_isspace(*tok_begin))
+                if (!otls_isspace(*tok_begin))
                     goto ret;
                 tok_begin++;
             }

@@ -1,41 +1,41 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_TS_H
-# define OPENSSL_TS_H
+#ifndef OPENtls_TS_H
+# define OPENtls_TS_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_TS_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_TS
-# include <openssl/symhacks.h>
-# include <openssl/buffer.h>
-# include <openssl/evp.h>
-# include <openssl/bio.h>
-# include <openssl/asn1.h>
-# include <openssl/safestack.h>
-# include <openssl/rsa.h>
-# include <openssl/dsa.h>
-# include <openssl/dh.h>
-# include <openssl/tserr.h>
-# include <openssl/ess.h>
+# ifndef OPENtls_NO_TS
+# include <opentls/symhacks.h>
+# include <opentls/buffer.h>
+# include <opentls/evp.h>
+# include <opentls/bio.h>
+# include <opentls/asn1.h>
+# include <opentls/safestack.h>
+# include <opentls/rsa.h>
+# include <opentls/dsa.h>
+# include <opentls/dh.h>
+# include <opentls/tserr.h>
+# include <opentls/ess.h>
 # ifdef  __cplusplus
 extern "C" {
 # endif
 
-# include <openssl/x509.h>
-# include <openssl/x509v3.h>
+# include <opentls/x509.h>
+# include <opentls/x509v3.h>
 
 typedef struct TS_msg_imprint_st TS_MSG_IMPRINT;
 typedef struct TS_req_st TS_REQ;
@@ -69,7 +69,7 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(TS_REQ)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(TS_REQ, TS_REQ)
 DECLARE_ASN1_DUP_FUNCTION(TS_REQ)
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a);
 int i2d_TS_REQ_fp(FILE *fp, const TS_REQ *a);
 #endif
@@ -80,7 +80,7 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(TS_MSG_IMPRINT)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(TS_MSG_IMPRINT, TS_MSG_IMPRINT)
 DECLARE_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a);
 int i2d_TS_MSG_IMPRINT_fp(FILE *fp, const TS_MSG_IMPRINT *a);
 #endif
@@ -91,7 +91,7 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(TS_RESP)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(TS_RESP, TS_RESP)
 DECLARE_ASN1_DUP_FUNCTION(TS_RESP)
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a);
 int i2d_TS_RESP_fp(FILE *fp, const TS_RESP *a);
 #endif
@@ -107,7 +107,7 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_only(TS_TST_INFO, TS_TST_INFO)
 DECLARE_ASN1_DUP_FUNCTION(TS_TST_INFO)
 TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token);
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a);
 int i2d_TS_TST_INFO_fp(FILE *fp, const TS_TST_INFO *a);
 #endif
@@ -421,7 +421,7 @@ BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b);
 unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
                                          unsigned char *hexstr, long len);
 X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define TS_VERIFY_CTS_set_certs(ctx, cert) TS_VERIFY_CTX_set_certs(ctx,cert)
 # endif
 STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
@@ -469,7 +469,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass);
 const char *TS_CONF_get_tsa_section(CONF *conf, const char *section);
 int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
                        TS_RESP_CTX *ctx);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
 int TS_CONF_set_crypto_device(CONF *conf, const char *section,
                               const char *device);
 int TS_CONF_set_default_engine(const char *name);

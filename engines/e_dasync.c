@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #if defined(_WIN32)
@@ -14,18 +14,18 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/engine.h>
-#include <openssl/sha.h>
-#include <openssl/aes.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
-#include <openssl/async.h>
-#include <openssl/bn.h>
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-#include <openssl/modes.h>
+#include <opentls/engine.h>
+#include <opentls/sha.h>
+#include <opentls/aes.h>
+#include <opentls/rsa.h>
+#include <opentls/evp.h>
+#include <opentls/async.h>
+#include <opentls/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/tls.h>
+#include <opentls/modes.h>
 
-#if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
+#if defined(OPENtls_SYS_UNIX) && defined(OPENtls_THREADS)
 # undef ASYNC_POSIX
 # define ASYNC_POSIX
 # include <unistd.h>
@@ -138,7 +138,7 @@ struct dasync_pipeline_ctx {
     unsigned char **inbufs;
     unsigned char **outbufs;
     size_t *lens;
-    unsigned char tlsaad[SSL_MAX_PIPELINES][EVP_AEAD_TLS1_AAD_LEN];
+    unsigned char tlsaad[tls_MAX_PIPELINES][EVP_AEAD_TLS1_AAD_LEN];
     unsigned int aadctr;
 };
 
@@ -158,7 +158,7 @@ static const EVP_CIPHER *dasync_aes_128_cbc(void)
  *
  * This 'stitched' cipher depends on the EVP_aes_128_cbc_hmac_sha1() cipher,
  * which is implemented only if the AES-NI instruction set extension is available
- * (see OPENSSL_IA32CAP(3)). If that's not the case, then this cipher will not
+ * (see OPENtls_IA32CAP(3)). If that's not the case, then this cipher will not
  * be available either.
  *
  * Note: Since it is a legacy mac-then-encrypt cipher, modern TLS peers (which
@@ -287,7 +287,7 @@ static int bind_dasync(ENGINE *e)
     return 1;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# ifndef OPENtls_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 {
     if (id && (strcmp(id, engine_dasync_id) != 0))
@@ -392,9 +392,9 @@ static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 }
 
 static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
-                         OSSL_ASYNC_FD readfd, void *pvwritefd)
+                         Otls_ASYNC_FD readfd, void *pvwritefd)
 {
-    OSSL_ASYNC_FD *pwritefd = (OSSL_ASYNC_FD *)pvwritefd;
+    Otls_ASYNC_FD *pwritefd = (Otls_ASYNC_FD *)pvwritefd;
 #if defined(ASYNC_WIN)
     CloseHandle(readfd);
     CloseHandle(*pwritefd);
@@ -402,7 +402,7 @@ static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
     close(readfd);
     close(*pwritefd);
 #endif
-    OPENSSL_free(pwritefd);
+    OPENtls_free(pwritefd);
 }
 
 #define DUMMY_CHAR 'X'
@@ -412,8 +412,8 @@ static void dummy_pause_job(void) {
     ASYNC_WAIT_CTX *waitctx;
     ASYNC_callback_fn callback;
     void * callback_arg;
-    OSSL_ASYNC_FD pipefds[2] = {0, 0};
-    OSSL_ASYNC_FD *writefd;
+    Otls_ASYNC_FD pipefds[2] = {0, 0};
+    Otls_ASYNC_FD *writefd;
 #if defined(ASYNC_WIN)
     DWORD numwritten, numread;
     char buf = DUMMY_CHAR;
@@ -442,17 +442,17 @@ static void dummy_pause_job(void) {
                               (void **)&writefd)) {
         pipefds[1] = *writefd;
     } else {
-        writefd = OPENSSL_malloc(sizeof(*writefd));
+        writefd = OPENtls_malloc(sizeof(*writefd));
         if (writefd == NULL)
             return;
 #if defined(ASYNC_WIN)
         if (CreatePipe(&pipefds[0], &pipefds[1], NULL, 256) == 0) {
-            OPENSSL_free(writefd);
+            OPENtls_free(writefd);
             return;
         }
 #elif defined(ASYNC_POSIX)
         if (pipe(pipefds) != 0) {
-            OPENSSL_free(writefd);
+            OPENtls_free(writefd);
             return;
         }
 #endif
@@ -524,7 +524,7 @@ static int dasync_pub_enc(int flen, const unsigned char *from,
                     unsigned char *to, RSA *rsa, int padding) {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
+    return RSA_meth_get_pub_enc(RSA_PKCS1_Opentls())
         (flen, from, to, rsa, padding);
 }
 
@@ -532,7 +532,7 @@ static int dasync_pub_dec(int flen, const unsigned char *from,
                     unsigned char *to, RSA *rsa, int padding) {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_meth_get_pub_dec(RSA_PKCS1_OpenSSL())
+    return RSA_meth_get_pub_dec(RSA_PKCS1_Opentls())
         (flen, from, to, rsa, padding);
 }
 
@@ -541,7 +541,7 @@ static int dasync_rsa_priv_enc(int flen, const unsigned char *from,
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_meth_get_priv_enc(RSA_PKCS1_OpenSSL())
+    return RSA_meth_get_priv_enc(RSA_PKCS1_Opentls())
         (flen, from, to, rsa, padding);
 }
 
@@ -550,7 +550,7 @@ static int dasync_rsa_priv_dec(int flen, const unsigned char *from,
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_meth_get_priv_dec(RSA_PKCS1_OpenSSL())
+    return RSA_meth_get_priv_dec(RSA_PKCS1_Opentls())
         (flen, from, to, rsa, padding);
 }
 
@@ -558,16 +558,16 @@ static int dasync_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_meth_get_mod_exp(RSA_PKCS1_OpenSSL())(r0, I, rsa, ctx);
+    return RSA_meth_get_mod_exp(RSA_PKCS1_Opentls())(r0, I, rsa, ctx);
 }
 
 static int dasync_rsa_init(RSA *rsa)
 {
-    return RSA_meth_get_init(RSA_PKCS1_OpenSSL())(rsa);
+    return RSA_meth_get_init(RSA_PKCS1_Opentls())(rsa);
 }
 static int dasync_rsa_finish(RSA *rsa)
 {
-    return RSA_meth_get_finish(RSA_PKCS1_OpenSSL())(rsa);
+    return RSA_meth_get_finish(RSA_PKCS1_Opentls())(rsa);
 }
 
 /* Cipher helper functions */
@@ -615,7 +615,7 @@ static int dasync_cipher_ctrl_helper(EVP_CIPHER_CTX *ctx, int type, int arg,
             if (!aeadcapable || arg != EVP_AEAD_TLS1_AAD_LEN)
                 return -1;
 
-            if (pipe_ctx->aadctr >= SSL_MAX_PIPELINES)
+            if (pipe_ctx->aadctr >= tls_MAX_PIPELINES)
                 return -1;
 
             memcpy(pipe_ctx->tlsaad[pipe_ctx->aadctr], ptr,
@@ -656,7 +656,7 @@ static int dasync_cipher_init_key_helper(EVP_CIPHER_CTX *ctx,
 
     if (pipe_ctx->inner_cipher_data == NULL
             && EVP_CIPHER_impl_ctx_size(cipher) != 0) {
-        pipe_ctx->inner_cipher_data = OPENSSL_zalloc(
+        pipe_ctx->inner_cipher_data = OPENtls_zalloc(
             EVP_CIPHER_impl_ctx_size(cipher));
         if (pipe_ctx->inner_cipher_data == NULL) {
             DASYNCerr(DASYNC_F_DASYNC_CIPHER_INIT_KEY_HELPER,
@@ -724,7 +724,7 @@ static int dasync_cipher_cleanup_helper(EVP_CIPHER_CTX *ctx,
     struct dasync_pipeline_ctx *pipe_ctx =
         (struct dasync_pipeline_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
-    OPENSSL_clear_free(pipe_ctx->inner_cipher_data,
+    OPENtls_clear_free(pipe_ctx->inner_cipher_data,
                        EVP_CIPHER_impl_ctx_size(cipher));
 
     return 1;

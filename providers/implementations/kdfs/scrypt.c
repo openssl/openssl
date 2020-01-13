@@ -1,19 +1,19 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/err.h>
-#include <openssl/core_names.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/err.h>
+#include <opentls/core_names.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
@@ -21,16 +21,16 @@
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 
-static OSSL_OP_kdf_newctx_fn kdf_scrypt_new;
-static OSSL_OP_kdf_freectx_fn kdf_scrypt_free;
-static OSSL_OP_kdf_reset_fn kdf_scrypt_reset;
-static OSSL_OP_kdf_derive_fn kdf_scrypt_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kdf_scrypt_set_ctx_params;
+static Otls_OP_kdf_newctx_fn kdf_scrypt_new;
+static Otls_OP_kdf_freectx_fn kdf_scrypt_free;
+static Otls_OP_kdf_reset_fn kdf_scrypt_reset;
+static Otls_OP_kdf_derive_fn kdf_scrypt_derive;
+static Otls_OP_kdf_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
+static Otls_OP_kdf_set_ctx_params_fn kdf_scrypt_set_ctx_params;
 
-static int scrypt_alg(const char *pass, size_t passlen,
+static int scrypt_alg(const char *pass, size_t patlsen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256);
@@ -53,7 +53,7 @@ static void *kdf_scrypt_new(void *provctx)
 {
     KDF_SCRYPT *ctx;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = OPENtls_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -62,7 +62,7 @@ static void *kdf_scrypt_new(void *provctx)
     ctx->sha256 = EVP_MD_fetch(PROV_LIBRARY_CONTEXT_OF(provctx),
                                "sha256", NULL);
     if (ctx->sha256 == NULL) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOAD_SHA256);
         return NULL;
     }
@@ -77,7 +77,7 @@ static void kdf_scrypt_free(void *vctx)
     if (ctx != NULL) {
         EVP_MD_meth_free(ctx->sha256);
         kdf_scrypt_reset(ctx);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
     }
 }
 
@@ -85,8 +85,8 @@ static void kdf_scrypt_reset(void *vctx)
 {
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
-    OPENSSL_free(ctx->salt);
-    OPENSSL_clear_free(ctx->pass, ctx->pass_len);
+    OPENtls_free(ctx->salt);
+    OPENtls_clear_free(ctx->pass, ctx->pass_len);
     kdf_scrypt_init(ctx);
 }
 
@@ -103,17 +103,17 @@ static void kdf_scrypt_init(KDF_SCRYPT *ctx)
 }
 
 static int scrypt_set_membuf(unsigned char **buffer, size_t *buflen,
-                             const OSSL_PARAM *p)
+                             const Otls_PARAM *p)
 {
-    OPENSSL_clear_free(*buffer, *buflen);
+    OPENtls_clear_free(*buffer, *buflen);
     if (p->data_size == 0) {
-        if ((*buffer = OPENSSL_malloc(1)) == NULL) {
+        if ((*buffer = OPENtls_malloc(1)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     } else if (p->data != NULL) {
         *buffer = NULL;
-        if (!OSSL_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
+        if (!Otls_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
             return 0;
     }
     return 1;
@@ -144,95 +144,95 @@ static int is_power_of_two(uint64_t value)
     return (value != 0) && ((value & (value - 1)) == 0);
 }
 
-static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int kdf_scrypt_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     KDF_SCRYPT *ctx = vctx;
     uint64_t u64_value;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_PASSWORD)) != NULL)
         if (!scrypt_set_membuf(&ctx->pass, &ctx->pass_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL)
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SALT)) != NULL)
         if (!scrypt_set_membuf(&ctx->salt, &ctx->salt_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SCRYPT_N))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SCRYPT_N))
         != NULL) {
-        if (!OSSL_PARAM_get_uint64(p, &u64_value)
+        if (!Otls_PARAM_get_uint64(p, &u64_value)
             || u64_value <= 1
             || !is_power_of_two(u64_value))
             return 0;
         ctx->N = u64_value;
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SCRYPT_R))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SCRYPT_R))
         != NULL) {
-        if (!OSSL_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
+        if (!Otls_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
             return 0;
         ctx->r = u64_value;
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SCRYPT_P))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SCRYPT_P))
         != NULL) {
-        if (!OSSL_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
+        if (!Otls_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
             return 0;
         ctx->p = u64_value;
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SCRYPT_MAXMEM))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SCRYPT_MAXMEM))
         != NULL) {
-        if (!OSSL_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
+        if (!Otls_PARAM_get_uint64(p, &u64_value) || u64_value < 1)
             return 0;
         ctx->maxmem_bytes = u64_value;
     }
     return 1;
 }
 
-static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(void)
+static const Otls_PARAM *kdf_scrypt_settable_ctx_params(void)
 {
-    static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
-        OSSL_PARAM_uint64(OSSL_KDF_PARAM_SCRYPT_N, NULL),
-        OSSL_PARAM_uint32(OSSL_KDF_PARAM_SCRYPT_R, NULL),
-        OSSL_PARAM_uint32(OSSL_KDF_PARAM_SCRYPT_P, NULL),
-        OSSL_PARAM_uint64(OSSL_KDF_PARAM_SCRYPT_MAXMEM, NULL),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_settable_ctx_params[] = {
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_PASSWORD, NULL, 0),
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_SALT, NULL, 0),
+        Otls_PARAM_uint64(Otls_KDF_PARAM_SCRYPT_N, NULL),
+        Otls_PARAM_uint32(Otls_KDF_PARAM_SCRYPT_R, NULL),
+        Otls_PARAM_uint32(Otls_KDF_PARAM_SCRYPT_P, NULL),
+        Otls_PARAM_uint64(Otls_KDF_PARAM_SCRYPT_MAXMEM, NULL),
+        Otls_PARAM_END
     };
     return known_settable_ctx_params;
 }
 
-static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int kdf_scrypt_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, SIZE_MAX);
+    if ((p = Otls_PARAM_locate(params, Otls_KDF_PARAM_SIZE)) != NULL)
+        return Otls_PARAM_set_size_t(p, SIZE_MAX);
     return -2;
 }
 
-static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(void)
+static const Otls_PARAM *kdf_scrypt_gettable_ctx_params(void)
 {
-    static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_gettable_ctx_params[] = {
+        Otls_PARAM_size_t(Otls_KDF_PARAM_SIZE, NULL),
+        Otls_PARAM_END
     };
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_scrypt_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_scrypt_new },
-    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_scrypt_free },
-    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_scrypt_reset },
-    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_scrypt_derive },
-    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+const Otls_DISPATCH kdf_scrypt_functions[] = {
+    { Otls_FUNC_KDF_NEWCTX, (void(*)(void))kdf_scrypt_new },
+    { Otls_FUNC_KDF_FREECTX, (void(*)(void))kdf_scrypt_free },
+    { Otls_FUNC_KDF_RESET, (void(*)(void))kdf_scrypt_reset },
+    { Otls_FUNC_KDF_DERIVE, (void(*)(void))kdf_scrypt_derive },
+    { Otls_FUNC_KDF_SETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_scrypt_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_scrypt_set_ctx_params },
-    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+    { Otls_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_scrypt_set_ctx_params },
+    { Otls_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_scrypt_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_scrypt_get_ctx_params },
+    { Otls_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_scrypt_get_ctx_params },
     { 0, NULL }
 };
 
@@ -279,7 +279,7 @@ static void salsa208_word_specification(uint32_t inout[16])
     }
     for (i = 0; i < 16; ++i)
         inout[i] += x[i];
-    OPENSSL_cleanse(x, sizeof(x));
+    OPENtls_cleanse(x, sizeof(x));
 }
 
 static void scryptBlockMix(uint32_t *B_, uint32_t *B, uint64_t r)
@@ -295,7 +295,7 @@ static void scryptBlockMix(uint32_t *B_, uint32_t *B, uint64_t r)
         salsa208_word_specification(X);
         memcpy(B_ + (i / 2 + (i & 1) * r) * 16, X, sizeof(X));
     }
-    OPENSSL_cleanse(X, sizeof(X));
+    OPENtls_cleanse(X, sizeof(X));
 }
 
 static void scryptROMix(unsigned char *B, uint64_t r, uint64_t N,
@@ -356,7 +356,7 @@ static void scryptROMix(unsigned char *B, uint64_t r, uint64_t N,
 
 #define SCRYPT_PR_MAX   ((1 << 30) - 1)
 
-static int scrypt_alg(const char *pass, size_t passlen,
+static int scrypt_alg(const char *pass, size_t patlsen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256)
@@ -435,7 +435,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
     if (key == NULL)
         return 1;
 
-    B = OPENSSL_malloc((size_t)(Blen + Vlen));
+    B = OPENtls_malloc((size_t)(Blen + Vlen));
     if (B == NULL) {
         EVPerr(EVP_F_SCRYPT_ALG, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -443,14 +443,14 @@ static int scrypt_alg(const char *pass, size_t passlen,
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, 1, sha256,
+    if (PKCS5_PBKDF2_HMAC(pass, patlsen, salt, saltlen, 1, sha256,
                           (int)Blen, B) == 0)
         goto err;
 
     for (i = 0; i < p; i++)
         scryptROMix(B + 128 * r * i, r, N, X, T, V);
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, B, (int)Blen, 1, sha256,
+    if (PKCS5_PBKDF2_HMAC(pass, patlsen, B, (int)Blen, 1, sha256,
                           keylen, key) == 0)
         goto err;
     rv = 1;
@@ -458,7 +458,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
     if (rv == 0)
         EVPerr(EVP_F_SCRYPT_ALG, EVP_R_PBKDF2_ERROR);
 
-    OPENSSL_clear_free(B, (size_t)(Blen + Vlen));
+    OPENtls_clear_free(B, (size_t)(Blen + Vlen));
     return rv;
 }
 

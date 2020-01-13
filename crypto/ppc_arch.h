@@ -1,20 +1,20 @@
 /*
- * Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_PPC_ARCH_H
-# define OSSL_CRYPTO_PPC_ARCH_H
+#ifndef Otls_CRYPTO_PPC_ARCH_H
+# define Otls_CRYPTO_PPC_ARCH_H
 
-extern unsigned int OPENSSL_ppccap_P;
+extern unsigned int OPENtls_ppccap_P;
 
 /*
  * Flags' usage can appear ambiguous, because they are set rather
- * to reflect OpenSSL performance preferences than actual processor
+ * to reflect Opentls performance preferences than actual processor
  * capabilities.
  */
 # define PPC_FPU64       (1<<0)

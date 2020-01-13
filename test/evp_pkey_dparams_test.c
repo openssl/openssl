@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,16 +12,16 @@
 #include <string.h>
 
 #include "internal/nelem.h"
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
-#include <openssl/bn.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/ec.h>
+#include <opentls/crypto.h>
+#include <opentls/bio.h>
+#include <opentls/bn.h>
+#include <opentls/rand.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/ec.h>
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 static const unsigned char dhparam_bin[] = {
 0x30,0x82,0x01,0x08,0x02,0x82,0x01,0x01,0x00,0xc0,0xd1,0x2e,0x14,0x18,0xbd,0x03,
 0xfd,0x39,0xe1,0x99,0xf4,0x93,0x06,0x2d,0x49,0xc6,0xb5,0xb9,0xf0,0x91,0xcb,0x2f,
@@ -43,7 +43,7 @@ static const unsigned char dhparam_bin[] = {
 };
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static const unsigned char dsaparam_bin[] = {
 0x30,0x82,0x02,0x28,0x02,0x82,0x01,0x01,0x00,0xf2,0x85,0x01,0xa5,0xb9,0x56,0x65,
 0x19,0xff,0x9a,0x7d,0xf9,0x90,0xd6,0xaa,0x73,0xac,0xf7,0x94,0xfa,0x8a,0x64,0x6d,
@@ -83,7 +83,7 @@ static const unsigned char dsaparam_bin[] = {
 };
 #endif
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static const unsigned char ecparam_bin[] = {
 0x06,0x08,0x2a,0x86,0x48,0xce,0x3d,0x03,0x01,0x07
 };
@@ -94,18 +94,18 @@ static const struct {
     const unsigned char *param_bin;
     size_t param_bin_len;
 } pkey_params [] = {
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     { EVP_PKEY_DH, dhparam_bin, sizeof(dhparam_bin) },
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     { EVP_PKEY_DSA, dsaparam_bin, sizeof(dsaparam_bin) },
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     { EVP_PKEY_EC, ecparam_bin, sizeof(ecparam_bin) }
 #endif
 };
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
+#if !defined(OPENtls_NO_DH) || !defined(OPENtls_NO_DSA) || !defined(OPENtls_NO_EC)
 static int params_bio_test(int id)
 {
     int ret, out_len;
@@ -140,10 +140,10 @@ static int params_bio_test(int id)
 
 int setup_tests(void)
 {
-#if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
+#if defined(OPENtls_NO_DH) && defined(OPENtls_NO_DSA) && defined(OPENtls_NO_EC)
     TEST_note("No DH/DSA/EC support");
 #else
-    ADD_ALL_TESTS(params_bio_test, OSSL_NELEM(pkey_params));
+    ADD_ALL_TESTS(params_bio_test, Otls_NELEM(pkey_params));
 #endif
     return 1;
 }

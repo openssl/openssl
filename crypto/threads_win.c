@@ -1,25 +1,25 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #if defined(_WIN32)
 # include <windows.h>
 #endif
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
-#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENtls_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENtls_SYS_WINDOWS)
 
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
     CRYPTO_RWLOCK *lock;
 
-    if ((lock = OPENSSL_zalloc(sizeof(CRITICAL_SECTION))) == NULL) {
+    if ((lock = OPENtls_zalloc(sizeof(CRITICAL_SECTION))) == NULL) {
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
     }
@@ -27,7 +27,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 # if !defined(_WIN32_WCE)
     /* 0x400 is the spin count value suggested in the documentation */
     if (!InitializeCriticalSectionAndSpinCount(lock, 0x400)) {
-        OPENSSL_free(lock);
+        OPENtls_free(lock);
         return NULL;
     }
 # else
@@ -61,7 +61,7 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
         return;
 
     DeleteCriticalSection(lock);
-    OPENSSL_free(lock);
+    OPENtls_free(lock);
 
     return;
 }
@@ -115,7 +115,7 @@ void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
      * not need to handle this.
      *
      * However, this error-mangling behavior interferes with the caller's use of
-     * GetLastError. In particular SSL_get_error queries the error queue to
+     * GetLastError. In particular tls_get_error queries the error queue to
      * determine whether the caller should look at the OS's errors. To avoid
      * destroying state, save and restore the Windows error.
      *
@@ -159,12 +159,12 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int openssl_init_fork_handlers(void)
+int opentls_init_fork_handlers(void)
 {
     return 0;
 }
 
-int openssl_get_fork_id(void)
+int opentls_get_fork_id(void)
 {
     return 0;
 }

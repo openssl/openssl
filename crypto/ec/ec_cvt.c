@@ -1,14 +1,14 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/err.h>
+#include <opentls/err.h>
 #include "crypto/bn.h"
 #include "ec_local.h"
 
@@ -18,7 +18,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
     const EC_METHOD *meth;
     EC_GROUP *ret;
 
-#if defined(OPENSSL_BN_ASM_MONT)
+#if defined(OPENtls_BN_ASM_MONT)
     /*
      * This might appear controversial, but the fact is that generic
      * prime method was observed to deliver better performance even
@@ -60,7 +60,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx)
 {

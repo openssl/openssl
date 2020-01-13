@@ -21,23 +21,23 @@ The supported parameters are:
 
 =over 4
 
-=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<Otls_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "mode" (B<OSSL_KDF_PARAM_MODE>) <UTF8 string>
+=item "mode" (B<Otls_KDF_PARAM_MODE>) <UTF8 string>
 
-=item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
+=item "mac" (B<Otls_KDF_PARAM_MAC>) <UTF8 string>
 
-=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+=item "digest" (B<Otls_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item "cipher" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+=item "cipher" (B<Otls_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
+=item "key" (B<Otls_KDF_PARAM_KEY>) <octet string>
 
-=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
+=item "salt" (B<Otls_KDF_PARAM_SALT>) <octet string>
 
-=item "info (B<OSSL_KDF_PARAM_INFO>) <octet string>
+=item "info (B<Otls_KDF_PARAM_INFO>) <octet string>
 
-=item "seed" (B<OSSL_KDF_PARAM_SEED>) <octet string>
+=item "seed" (B<Otls_KDF_PARAM_SEED>) <octet string>
 
 =back
 
@@ -62,7 +62,7 @@ A context for KBKDF can be obtained by calling:
 The output length of an KBKDF is specified via the C<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.
 
-Note that currently OpenSSL only implements counter and feedback modes.  Other
+Note that currently Opentls only implements counter and feedback modes.  Other
 variants may be supported in the future.
 
 =head1 EXAMPLES
@@ -73,23 +73,23 @@ Label "label", and Context "context".
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[10];
- OSSL_PARAM params[6], *p = params;
+ Otls_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                          "SHA2-256", 0);
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_MAC,
                                          "HMAC", 0);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY,
                                           "secret", strlen("secret"))
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                           "label", strlen("label"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                           "context", strlen("context"));
- *p = OSSL_PARAM_construct_end();
+ *p = Otls_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
      error("EVP_KDF_CTX_set_params");
  else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
@@ -103,25 +103,25 @@ Label "label", and IV "sixteen bytes iv".
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[10];
- OSSL_PARAM params[8], *p = params;
+ Otls_PARAM params[8], *p = params;
  unsigned char *iv = "sixteen bytes iv";
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES256", 0);
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, "CMAC", 0);
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE, "FEEDBACK", 0);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_CIPHER, "AES256", 0);
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_MAC, "CMAC", 0);
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_MODE, "FEEDBACK", 0);
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY,
                                           "secret", strlen("secret"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                           "label", strlen("label"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                           "context", strlen("context"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SEED,
                                           iv, strlen(iv));
- *p = OSSL_PARAM_construct_end();
+ *p = Otls_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
      error("EVP_KDF_CTX_set_params");
  else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
@@ -143,16 +143,16 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.
+This functionality was added to Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 Copyright 2019 Red Hat, Inc.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,30 +1,30 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_BN_H
-# define OPENSSL_BN_H
+#ifndef OPENtls_BN_H
+# define OPENtls_BN_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_BN_H
 # endif
 
-# include <openssl/e_os2.h>
-# ifndef OPENSSL_NO_STDIO
+# include <opentls/e_os2.h>
+# ifndef OPENtls_NO_STDIO
 #  include <stdio.h>
 # endif
-# include <openssl/opensslconf.h>
-# include <openssl/types.h>
-# include <openssl/crypto.h>
-# include <openssl/bnerr.h>
+# include <opentls/opentlsconf.h>
+# include <opentls/types.h>
+# include <opentls/crypto.h>
+# include <opentls/bnerr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -67,7 +67,7 @@ extern "C" {
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# ifndef OPENSSL_NO_DEPRECATED_0_9_8
+# ifndef OPENtls_NO_DEPRECATED_0_9_8
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
 #  define BN_FLG_FREE            0x8000 /* used for debugging */
@@ -109,7 +109,7 @@ void BN_GENCB_set(BN_GENCB *gencb, int (*callback) (int, int, BN_GENCB *),
 
 void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define BN_prime_checks 0      /* default: select number of iterations based
                                   * on the size of the number */
 
@@ -198,7 +198,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-# if OPENSSL_API_LEVEL > 908
+# if OPENtls_API_LEVEL > 908
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
 #  define BN_zero(a)      (BN_set_word((a),0))
@@ -206,9 +206,9 @@ void BN_zero_ex(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx);
+BN_CTX *BN_CTX_new_ex(OPENtls_CTX *ctx);
 BN_CTX *BN_CTX_new(void);
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx);
+BN_CTX *BN_CTX_secure_new_ex(OPENtls_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);
@@ -310,7 +310,7 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                       const BIGNUM *m, BN_CTX *ctx);
 
 int BN_mask_bits(BIGNUM *a, int n);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int BN_print_fp(FILE *fp, const BIGNUM *a);
 # endif
 int BN_print(BIO *bio, const BIGNUM *a);
@@ -433,7 +433,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
                 BN_RECP_CTX *recp, BN_CTX *ctx);
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 
 /*
  * Functions for arithmetic over binary polynomials represented by BIGNUMs.
@@ -539,7 +539,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
 #  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
 #  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536

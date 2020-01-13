@@ -1,27 +1,27 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_NO_CT
+#ifdef OPENtls_NO_CT
 # error "CT disabled"
 #endif
 
-#include <openssl/ct.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/tls1.h>
-#include <openssl/x509.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/tls1.h>
+#include <opentls/x509.h>
 
 #include "ct_local.h"
 
 SCT *SCT_new(void)
 {
-    SCT *sct = OPENSSL_zalloc(sizeof(*sct));
+    SCT *sct = OPENtls_zalloc(sizeof(*sct));
 
     if (sct == NULL) {
         CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
@@ -38,11 +38,11 @@ void SCT_free(SCT *sct)
     if (sct == NULL)
         return;
 
-    OPENSSL_free(sct->log_id);
-    OPENSSL_free(sct->ext);
-    OPENSSL_free(sct->sig);
-    OPENSSL_free(sct->sct);
-    OPENSSL_free(sct);
+    OPENtls_free(sct->log_id);
+    OPENtls_free(sct->ext);
+    OPENtls_free(sct->sig);
+    OPENtls_free(sct->sct);
+    OPENtls_free(sct);
 }
 
 void SCT_LIST_free(STACK_OF(SCT) *a)
@@ -84,7 +84,7 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
         return 0;
     }
 
-    OPENSSL_free(sct->log_id);
+    OPENtls_free(sct->log_id);
     sct->log_id = log_id;
     sct->log_id_len = log_id_len;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -98,13 +98,13 @@ int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
         return 0;
     }
 
-    OPENSSL_free(sct->log_id);
+    OPENtls_free(sct->log_id);
     sct->log_id = NULL;
     sct->log_id_len = 0;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (log_id != NULL && log_id_len > 0) {
-        sct->log_id = OPENSSL_memdup(log_id, log_id_len);
+        sct->log_id = OPENtls_memdup(log_id, log_id_len);
         if (sct->log_id == NULL) {
             CTerr(CT_F_SCT_SET1_LOG_ID, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -142,7 +142,7 @@ int SCT_set_signature_nid(SCT *sct, int nid)
 
 void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
 {
-    OPENSSL_free(sct->ext);
+    OPENtls_free(sct->ext);
     sct->ext = ext;
     sct->ext_len = ext_len;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -150,13 +150,13 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
 
 int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
 {
-    OPENSSL_free(sct->ext);
+    OPENtls_free(sct->ext);
     sct->ext = NULL;
     sct->ext_len = 0;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (ext != NULL && ext_len > 0) {
-        sct->ext = OPENSSL_memdup(ext, ext_len);
+        sct->ext = OPENtls_memdup(ext, ext_len);
         if (sct->ext == NULL) {
             CTerr(CT_F_SCT_SET1_EXTENSIONS, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -168,7 +168,7 @@ int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
 
 void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 {
-    OPENSSL_free(sct->sig);
+    OPENtls_free(sct->sig);
     sct->sig = sig;
     sct->sig_len = sig_len;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -176,13 +176,13 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 
 int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
 {
-    OPENSSL_free(sct->sig);
+    OPENtls_free(sct->sig);
     sct->sig = NULL;
     sct->sig_len = 0;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (sig != NULL && sig_len > 0) {
-        sct->sig = OPENSSL_memdup(sig, sig_len);
+        sct->sig = OPENtls_memdup(sig, sig_len);
         if (sct->sig == NULL) {
             CTerr(CT_F_SCT_SET1_SIGNATURE, ERR_R_MALLOC_FAILURE);
             return 0;

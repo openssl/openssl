@@ -1,22 +1,22 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 /*
- * Fuzz the parser used for dumping ASN.1 using "openssl asn1parse".
+ * Fuzz the parser used for dumping ASN.1 using "opentls asn1parse".
  */
 
 #include <stdio.h>
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
 #include "fuzzer.h"
 
 static BIO *bio_out;
@@ -24,7 +24,7 @@ static BIO *bio_out;
 int FuzzerInitialize(int *argc, char ***argv)
 {
     bio_out = BIO_new_file("/dev/null", "w");
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     return 1;

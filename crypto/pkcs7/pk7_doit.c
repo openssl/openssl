@@ -1,19 +1,19 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
+#include <opentls/rand.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
@@ -113,7 +113,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, key, keylen) <= 0)
         goto err;
 
-    ek = OPENSSL_malloc(eklen);
+    ek = OPENtls_malloc(eklen);
 
     if (ek == NULL) {
         PKCS7err(PKCS7_F_PKCS7_ENCODE_RINFO, ERR_R_MALLOC_FAILURE);
@@ -130,7 +130,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 
  err:
     EVP_PKEY_CTX_free(pctx);
-    OPENSSL_free(ek);
+    OPENtls_free(ek);
     return ret;
 
 }
@@ -161,7 +161,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
                          ri->enc_key->data, ri->enc_key->length) <= 0)
         goto err;
 
-    ek = OPENSSL_malloc(eklen);
+    ek = OPENtls_malloc(eklen);
 
     if (ek == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DECRYPT_RINFO, ERR_R_MALLOC_FAILURE);
@@ -179,14 +179,14 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 
     ret = 1;
 
-    OPENSSL_clear_free(*pek, *peklen);
+    OPENtls_clear_free(*pek, *peklen);
     *pek = ek;
     *peklen = eklen;
 
  err:
     EVP_PKEY_CTX_free(pctx);
     if (!ret)
-        OPENSSL_free(ek);
+        OPENtls_free(ek);
 
     return ret;
 }
@@ -307,7 +307,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             if (pkcs7_encode_rinfo(ri, key, keylen) <= 0)
                 goto err;
         }
-        OPENSSL_cleanse(key, keylen);
+        OPENtls_cleanse(key, keylen);
 
         if (out == NULL)
             out = btmp;
@@ -520,7 +520,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             goto err;
         /* Generate random key as MMA defence */
         tkeylen = EVP_CIPHER_CTX_key_length(evp_ctx);
-        tkey = OPENSSL_malloc(tkeylen);
+        tkey = OPENtls_malloc(tkeylen);
         if (tkey == NULL)
             goto err;
         if (EVP_CIPHER_CTX_rand_key(evp_ctx, tkey) <= 0)
@@ -539,7 +539,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
              */
             if (!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen)) {
                 /* Use random key as MMA defence */
-                OPENSSL_clear_free(ek, eklen);
+                OPENtls_clear_free(ek, eklen);
                 ek = tkey;
                 eklen = tkeylen;
                 tkey = NULL;
@@ -550,9 +550,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         if (EVP_CipherInit_ex(evp_ctx, NULL, NULL, ek, NULL, 0) <= 0)
             goto err;
 
-        OPENSSL_clear_free(ek, eklen);
+        OPENtls_clear_free(ek, eklen);
         ek = NULL;
-        OPENSSL_clear_free(tkey, tkeylen);
+        OPENtls_clear_free(tkey, tkeylen);
         tkey = NULL;
 
         if (out == NULL)
@@ -580,8 +580,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     return out;
 
  err:
-    OPENSSL_clear_free(ek, eklen);
-    OPENSSL_clear_free(tkey, tkeylen);
+    OPENtls_clear_free(ek, eklen);
+    OPENtls_clear_free(tkey, tkeylen);
     BIO_free_all(out);
     BIO_free_all(btmp);
     BIO_free_all(etmp);
@@ -759,12 +759,12 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                 unsigned char *abuf = NULL;
                 unsigned int abuflen;
                 abuflen = EVP_PKEY_size(si->pkey);
-                abuf = OPENSSL_malloc(abuflen);
+                abuf = OPENtls_malloc(abuflen);
                 if (abuf == NULL)
                     goto err;
 
                 if (!EVP_SignFinal(ctx_tmp, abuf, &abuflen, si->pkey)) {
-                    OPENSSL_free(abuf);
+                    OPENtls_free(abuf);
                     PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_EVP_LIB);
                     goto err;
                 }
@@ -866,11 +866,11 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
         goto err;
     if (EVP_DigestSignUpdate(mctx, abuf, alen) <= 0)
         goto err;
-    OPENSSL_free(abuf);
+    OPENtls_free(abuf);
     abuf = NULL;
     if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
         goto err;
-    abuf = OPENSSL_malloc(siglen);
+    abuf = OPENtls_malloc(siglen);
     if (abuf == NULL)
         goto err;
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
@@ -907,7 +907,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
     return 1;
 
  err:
-    OPENSSL_free(abuf);
+    OPENtls_free(abuf);
     EVP_MD_CTX_free(mctx);
     return 0;
 
@@ -1060,7 +1060,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         if (!EVP_VerifyUpdate(mdc_tmp, abuf, alen))
             goto err;
 
-        OPENSSL_free(abuf);
+        OPENtls_free(abuf);
     }
 
     os = si->enc_digest;

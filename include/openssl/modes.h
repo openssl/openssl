@@ -1,23 +1,23 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_MODES_H
-# define OPENSSL_MODES_H
+#ifndef OPENtls_MODES_H
+# define OPENtls_MODES_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_MODES_H
 # endif
 
 # include <stddef.h>
-# include <openssl/types.h>
+# include <opentls/types.h>
 
 # ifdef  __cplusplus
 extern "C" {
@@ -180,7 +180,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
                              unsigned char *out, const unsigned char *in,
                              size_t inlen, block128_f block);
 
-# ifndef OPENSSL_NO_OCB
+# ifndef OPENtls_NO_OCB
 typedef struct ocb128_context OCB128_CONTEXT;
 
 typedef void (*ocb128_f) (const unsigned char *in, unsigned char *out,
@@ -210,7 +210,7 @@ int CRYPTO_ocb128_finish(OCB128_CONTEXT *ctx, const unsigned char *tag,
                          size_t len);
 int CRYPTO_ocb128_tag(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len);
 void CRYPTO_ocb128_cleanup(OCB128_CONTEXT *ctx);
-# endif                          /* OPENSSL_NO_OCB */
+# endif                          /* OPENtls_NO_OCB */
 
 # ifdef  __cplusplus
 }

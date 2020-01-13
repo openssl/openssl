@@ -5,11 +5,11 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
-CRYPTO_atomic_add - OpenSSL thread support
+CRYPTO_atomic_add - Opentls thread support
 
 =head1 SYNOPSIS
 
- #include <openssl/crypto.h>
+ #include <opentls/crypto.h>
 
  CRYPTO_ONCE CRYPTO_ONCE_STATIC_INIT;
  int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
@@ -24,12 +24,12 @@ CRYPTO_atomic_add - OpenSSL thread support
 
 =head1 DESCRIPTION
 
-OpenSSL can be safely used in multi-threaded applications provided that
-support for the underlying OS threading API is built-in. Currently, OpenSSL
-supports the pthread and Windows APIs. OpenSSL can also be built without
+Opentls can be safely used in multi-threaded applications provided that
+support for the underlying OS threading API is built-in. Currently, Opentls
+supports the pthread and Windows APIs. Opentls can also be built without
 any multi-threading support, for example on platforms that don't provide
 any threading support or that provide a threading API that is not yet
-supported by OpenSSL.
+supported by Opentls.
 
 The following multi-threading function are provided:
 
@@ -90,7 +90,7 @@ The other functions return 1 on success, or 0 on error.
 =head1 NOTES
 
 On Windows platforms the CRYPTO_THREAD_* types and functions in the
-openssl/crypto.h header are dependent on some of the types customarily
+opentls/crypto.h header are dependent on some of the types customarily
 made available by including windows.h. The application developer is
 likely to require control over when the latter is included, commonly as
 one of the first included headers. Therefore it is defined as an
@@ -99,10 +99,10 @@ crypto.h where use of CRYPTO_THREAD_* types and functions is required.
 
 =head1 EXAMPLES
 
-You can find out if OpenSSL was configured with thread support:
+You can find out if Opentls was configured with thread support:
 
- #include <openssl/opensslconf.h>
- #if defined(OPENSSL_THREADS)
+ #include <opentls/opentlsconf.h>
+ #if defined(OPENtls_THREADS)
      /* thread support enabled */
  #else
      /* no thread support */
@@ -113,7 +113,7 @@ This example safely initializes and uses a lock.
  #ifdef _WIN32
  # include <windows.h>
  #endif
- #include <openssl/crypto.h>
+ #include <opentls/crypto.h>
 
  static CRYPTO_ONCE once = CRYPTO_ONCE_STATIC_INIT;
  static CRYPTO_RWLOCK *lock;
@@ -159,11 +159,11 @@ L<crypto(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

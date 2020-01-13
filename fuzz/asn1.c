@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -17,22 +17,22 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/dh.h>
-#include <openssl/ec.h>
-#include <openssl/ocsp.h>
-#include <openssl/pkcs12.h>
-#include <openssl/rsa.h>
-#include <openssl/ts.h>
-#include <openssl/x509v3.h>
-#include <openssl/cms.h>
-#include <openssl/ess.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/dh.h>
+#include <opentls/ec.h>
+#include <opentls/ocsp.h>
+#include <opentls/pkcs12.h>
+#include <opentls/rsa.h>
+#include <opentls/ts.h>
+#include <opentls/x509v3.h>
+#include <opentls/cms.h>
+#include <opentls/ess.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/bio.h>
+#include <opentls/evp.h>
+#include <opentls/tls.h>
 #include <internal/nelem.h>
 #include "fuzzer.h"
 
@@ -40,7 +40,7 @@
 
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(ASIdentifierChoice),
     ASN1_ITEM_ref(ASIdentifiers),
     ASN1_ITEM_ref(ASIdOrRange),
@@ -71,7 +71,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ASN1_UTCTIME),
     ASN1_ITEM_ref(ASN1_UTF8STRING),
     ASN1_ITEM_ref(ASN1_VISIBLESTRING),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(ASRange),
 #endif
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
@@ -80,19 +80,19 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(BIGNUM),
     ASN1_ITEM_ref(CBIGNUM),
     ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
     ASN1_ITEM_ref(CRL_DIST_POINTS),
 #endif
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     ASN1_ITEM_ref(DHparams),
 #endif
     ASN1_ITEM_ref(DIRECTORYSTRING),
     ASN1_ITEM_ref(DISPLAYTEXT),
     ASN1_ITEM_ref(DIST_POINT),
     ASN1_ITEM_ref(DIST_POINT_NAME),
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     ASN1_ITEM_ref(ECPARAMETERS),
     ASN1_ITEM_ref(ECPKPARAMETERS),
 #endif
@@ -101,14 +101,14 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(GENERAL_NAME),
     ASN1_ITEM_ref(GENERAL_NAMES),
     ASN1_ITEM_ref(GENERAL_SUBTREE),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(IPAddressChoice),
     ASN1_ITEM_ref(IPAddressFamily),
     ASN1_ITEM_ref(IPAddressOrRange),
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(LONG),
 #endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
@@ -116,7 +116,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(NETSCAPE_SPKAC),
     ASN1_ITEM_ref(NETSCAPE_SPKI),
     ASN1_ITEM_ref(NOTICEREF),
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     ASN1_ITEM_ref(OCSP_BASICRESP),
     ASN1_ITEM_ref(OCSP_CERTID),
     ASN1_ITEM_ref(OCSP_CERTSTATUS),
@@ -189,7 +189,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(X509_REVOKED),
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(ZLONG),
 #endif
     ASN1_ITEM_ref(INT32),
@@ -218,7 +218,7 @@ static ASN1_PCTX *pctx;
         BIO_free(bio); \
         len2 = I2D(type, &der); \
         if (len2 != 0) {} \
-        OPENSSL_free(der); \
+        OPENtls_free(der); \
         TYPE ## _free(type); \
     } \
 }
@@ -234,7 +234,7 @@ static ASN1_PCTX *pctx;
         PRINT(bio, type, 0); \
         BIO_free(bio); \
         I2D(type, &der); \
-        OPENSSL_free(der); \
+        OPENtls_free(der); \
         TYPE ## _free(type); \
     } \
 }
@@ -250,7 +250,7 @@ static ASN1_PCTX *pctx;
         PRINT(bio, type, 0, pctx); \
         BIO_free(bio); \
         I2D(type, &der); \
-        OPENSSL_free(der); \
+        OPENtls_free(der); \
         TYPE ## _free(type); \
     } \
 }
@@ -266,7 +266,7 @@ static ASN1_PCTX *pctx;
         \
         BIO_free(bio); \
         I2D(type, &der); \
-        OPENSSL_free(der); \
+        OPENtls_free(der); \
         TYPE ## _free(type); \
     } \
 }
@@ -281,8 +281,8 @@ int FuzzerInitialize(int *argc, char ***argv)
     ASN1_PCTX_set_str_flags(pctx, ASN1_STRFLGS_UTF8_CONVERT |
         ASN1_STRFLGS_SHOW_TYPE | ASN1_STRFLGS_DUMP_ALL);
 
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    OPENtls_init_tls(OPENtls_INIT_LOAD_tls_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     FuzzerSetRand();
@@ -307,12 +307,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             ASN1_item_print(bio, o, 4, i, pctx);
             BIO_free(bio);
             ASN1_item_i2d(o, &der, i);
-            OPENSSL_free(der);
+            OPENtls_free(der);
             ASN1_item_free(o, i);
         }
     }
 
-#ifndef OPENSSL_NO_TS
+#ifndef OPENtls_NO_TS
     DO_TEST(TS_REQ, d2i_TS_REQ, i2d_TS_REQ, TS_REQ_print_bio);
     DO_TEST(TS_MSG_IMPRINT, d2i_TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, TS_MSG_IMPRINT_print_bio);
     DO_TEST(TS_RESP, d2i_TS_RESP, i2d_TS_RESP, TS_RESP_print_bio);
@@ -325,25 +325,25 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT, d2i_ESS_SIGNING_CERT, i2d_ESS_SIGNING_CERT);
     DO_TEST_NO_PRINT(ESS_CERT_ID_V2, d2i_ESS_CERT_ID_V2, i2d_ESS_CERT_ID_V2);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT_V2, d2i_ESS_SIGNING_CERT_V2, i2d_ESS_SIGNING_CERT_V2);
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     DO_TEST(DH, d2i_DHparams, i2d_DHparams, DHparams_print);
     DO_TEST(DH, d2i_DHxparams, i2d_DHxparams, DHparams_print);
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     DO_TEST_NO_PRINT(DSA_SIG, d2i_DSA_SIG, i2d_DSA_SIG);
     DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPrivateKey, i2d_DSAPrivateKey, DSA_print);
     DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey, DSA_print);
     DO_TEST(DSA, d2i_DSAparams, i2d_DSAparams, DSAparams_print);
 #endif
     DO_TEST_PRINT_OFFSET(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey, RSA_print);
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     DO_TEST_PRINT_OFFSET(EC_GROUP, d2i_ECPKParameters, i2d_ECPKParameters, ECPKParameters_print);
     DO_TEST_PRINT_OFFSET(EC_KEY, d2i_ECPrivateKey, i2d_ECPrivateKey, EC_KEY_print);
     DO_TEST(EC_KEY, d2i_ECParameters, i2d_ECParameters, ECParameters_print);
     DO_TEST_NO_PRINT(ECDSA_SIG, d2i_ECDSA_SIG, i2d_ECDSA_SIG);
 #endif
     DO_TEST_PRINT_PCTX(EVP_PKEY, d2i_AutoPrivateKey, i2d_PrivateKey, EVP_PKEY_print_private);
-    DO_TEST(SSL_SESSION, d2i_SSL_SESSION, i2d_SSL_SESSION, SSL_SESSION_print);
+    DO_TEST(tls_SESSION, d2i_tls_SESSION, i2d_tls_SESSION, tls_SESSION_print);
 
     ERR_clear_error();
 

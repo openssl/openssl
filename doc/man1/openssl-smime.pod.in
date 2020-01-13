@@ -1,13 +1,13 @@
 =pod
-{- OpenSSL::safe::output_do_not_edit_headers(); -}
+{- Opentls::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-smime - S/MIME utility
+opentls-smime - S/MIME utility
 
 =head1 SYNOPSIS
 
-B<openssl> B<smime>
+B<opentls> B<smime>
 [B<-help>]
 [B<-encrypt>]
 [B<-decrypt>]
@@ -64,11 +64,11 @@ B<openssl> B<smime>
 [B<-noindef>]
 [B<-stream>]
 [B<-md> I<digest>]
-{- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $Opentls::safe::opt_trust_synopsis -}
+{- $Opentls::safe::opt_r_synopsis -}
 I<cert.pem> ...
 
-=for openssl ifdef engine
+=for opentls ifdef engine
 
 =head1 DESCRIPTION
 
@@ -133,18 +133,18 @@ format message that has been signed or verified.
 
 The input format of the PKCS#7 (S/MIME) structure (if one is being read);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
 The output format of the PKCS#7 (S/MIME) structure (if one is being written);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 =item B<-keyform> B<DER>|B<PEM>
 
 The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
 
@@ -186,8 +186,8 @@ default digest algorithm for the signing key will be used (usually SHA1).
 The encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for
-example B<-aes-128-cbc>. See L<openssl-enc(1)> for list of ciphers
-supported by your version of OpenSSL.
+example B<-aes-128-cbc>. See L<opentls-enc(1)> for list of ciphers
+supported by your version of Opentls.
 
 If not specified triple DES is used. Only used with B<-encrypt>.
 
@@ -274,7 +274,7 @@ specified, the argument is given to the engine as a key identifier.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<opentls(1)/Pass Phrase Options>.
 
 =item B<-to>, B<-from>, B<-subject>
 
@@ -292,11 +292,11 @@ B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various options of certificate chain verification. See
-L<openssl-verify(1)> manual page for details.
+L<opentls-verify(1)> manual page for details.
 
-{- $OpenSSL::safe::opt_trust_item -}
+{- $Opentls::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_r_item -}
+{- $Opentls::safe::opt_r_item -}
 
 =item I<cert.pem> ...
 
@@ -379,46 +379,46 @@ the signers certificates.
 
 Create a cleartext signed message:
 
- openssl smime -sign -in message.txt -text -out mail.msg \
+ opentls smime -sign -in message.txt -text -out mail.msg \
         -signer mycert.pem
 
 Create an opaque signed message:
 
- openssl smime -sign -in message.txt -text -out mail.msg -nodetach \
+ opentls smime -sign -in message.txt -text -out mail.msg -nodetach \
         -signer mycert.pem
 
 Create a signed message, include some additional certificates and
 read the private key from another file:
 
- openssl smime -sign -in in.txt -text -out mail.msg \
+ opentls smime -sign -in in.txt -text -out mail.msg \
         -signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
 
 Create a signed message with two signers:
 
- openssl smime -sign -in message.txt -text -out mail.msg \
+ opentls smime -sign -in message.txt -text -out mail.msg \
         -signer mycert.pem -signer othercert.pem
 
 Send a signed message under Unix directly to sendmail, including headers:
 
- openssl smime -sign -in in.txt -text -signer mycert.pem \
-        -from steve@openssl.org -to someone@somewhere \
+ opentls smime -sign -in in.txt -text -signer mycert.pem \
+        -from steve@opentls.org -to someone@somewhere \
         -subject "Signed message" | sendmail someone@somewhere
 
 Verify a message and extract the signer's certificate if successful:
 
- openssl smime -verify -in mail.msg -signer user.pem -out signedtext.txt
+ opentls smime -verify -in mail.msg -signer user.pem -out signedtext.txt
 
 Send encrypted mail using triple DES:
 
- openssl smime -encrypt -in in.txt -from steve@openssl.org \
+ opentls smime -encrypt -in in.txt -from steve@opentls.org \
         -to someone@somewhere -subject "Encrypted message" \
         -des3 user.pem -out mail.msg
 
 Sign and encrypt mail:
 
- openssl smime -sign -in ml.txt -signer my.pem -text \
-        | openssl smime -encrypt -out mail.msg \
-        -from steve@openssl.org -to someone@somewhere \
+ opentls smime -sign -in ml.txt -signer my.pem -text \
+        | opentls smime -encrypt -out mail.msg \
+        -from steve@opentls.org -to someone@somewhere \
         -subject "Signed and Encrypted message" -des3 user.pem
 
 Note: the encryption command does not include the B<-text> option because the
@@ -426,7 +426,7 @@ message being encrypted already has MIME headers.
 
 Decrypt mail:
 
- openssl smime -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
+ opentls smime -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
 
 The output from Netscape form signing is a PKCS#7 structure with the
 detached signature format. You can use this program to verify the
@@ -438,19 +438,19 @@ it with:
 
 and using the command:
 
- openssl smime -verify -inform PEM -in signature.pem -content content.txt
+ opentls smime -verify -inform PEM -in signature.pem -content content.txt
 
 Alternatively you can base64 decode the signature and use:
 
- openssl smime -verify -inform DER -in signature.der -content content.txt
+ opentls smime -verify -inform DER -in signature.der -content content.txt
 
 Create an encrypted message using 128 bit Camellia:
 
- openssl smime -encrypt -in plain.txt -camellia128 -out mail.msg cert.pem
+ opentls smime -encrypt -in plain.txt -camellia128 -out mail.msg cert.pem
 
 Add a signer to an existing message:
 
- openssl smime -resign -in mail.msg -signer newsign.pem -out mail2.msg
+ opentls smime -resign -in mail.msg -signer newsign.pem -out mail2.msg
 
 =head1 BUGS
 
@@ -477,22 +477,22 @@ structures may cause parsing errors.
 
 =head1 SEE ALSO
 
-L<ossl_store-file(7)>
+L<otls_store-file(7)>
 
 =head1 HISTORY
 
 The use of multiple B<-signer> options and the B<-resign> command were first
-added in OpenSSL 1.0.0
+added in Opentls 1.0.0
 
-The -no_alt_chains option was added in OpenSSL 1.1.0.
+The -no_alt_chains option was added in Opentls 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,23 +1,23 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 #include <stdio.h>
 #include <ctype.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "internal/conf.h"
 #include "internal/dso.h"
-#include <openssl/x509.h>
-#include <openssl/trace.h>
+#include <opentls/x509.h>
+#include <opentls/trace.h>
 
-#define DSO_mod_init_name "OPENSSL_init"
-#define DSO_mod_finish_name "OPENSSL_finish"
+#define DSO_mod_init_name "OPENtls_init"
+#define DSO_mod_finish_name "OPENtls_finish"
 
 /*
  * This structure contains a data about supported modules. entries in this
@@ -86,14 +86,14 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
         vsection = NCONF_get_string(cnf, NULL, appname);
 
     if (!appname || (!vsection && (flags & CONF_MFLAGS_DEFAULT_SECTION)))
-        vsection = NCONF_get_string(cnf, NULL, "openssl_conf");
+        vsection = NCONF_get_string(cnf, NULL, "opentls_conf");
 
     if (!vsection) {
         ERR_clear_error();
         return 1;
     }
 
-    OSSL_TRACE1(CONF, "Configuration in section %s\n", vsection);
+    Otls_TRACE1(CONF, "Configuration in section %s\n", vsection);
     values = NCONF_get_section(cnf, vsection);
 
     if (!values)
@@ -102,7 +102,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
         ret = module_run(cnf, vl->name, vl->value, flags);
-        OSSL_TRACE3(CONF, "Running module %s (%s) returned %d\n",
+        Otls_TRACE3(CONF, "Running module %s (%s) returned %d\n",
                     vl->name, vl->value, ret);
         if (ret <= 0)
             if (!(flags & CONF_MFLAGS_IGNORE_ERRORS))
@@ -143,7 +143,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
 
  err:
     if (filename == NULL)
-        OPENSSL_free(file);
+        OPENtls_free(file);
     NCONF_free(conf);
 
     if (flags & CONF_MFLAGS_IGNORE_RETURN_CODES)
@@ -240,23 +240,23 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         supported_modules = sk_CONF_MODULE_new_null();
     if (supported_modules == NULL)
         return NULL;
-    if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
+    if ((tmod = OPENtls_zalloc(sizeof(*tmod))) == NULL) {
         CONFerr(CONF_F_MODULE_ADD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     tmod->dso = dso;
-    tmod->name = OPENSSL_strdup(name);
+    tmod->name = OPENtls_strdup(name);
     tmod->init = ifunc;
     tmod->finish = ffunc;
     if (tmod->name == NULL) {
-        OPENSSL_free(tmod);
+        OPENtls_free(tmod);
         return NULL;
     }
 
     if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
-        OPENSSL_free(tmod->name);
-        OPENSSL_free(tmod);
+        OPENtls_free(tmod->name);
+        OPENtls_free(tmod);
         return NULL;
     }
 
@@ -300,13 +300,13 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
     CONF_IMODULE *imod = NULL;
 
     /* Otherwise add initialized module to list */
-    imod = OPENSSL_malloc(sizeof(*imod));
+    imod = OPENtls_malloc(sizeof(*imod));
     if (imod == NULL)
         goto err;
 
     imod->pmod = pmod;
-    imod->name = OPENSSL_strdup(name);
-    imod->value = OPENSSL_strdup(value);
+    imod->name = OPENtls_strdup(name);
+    imod->value = OPENtls_strdup(value);
     imod->usr_data = NULL;
 
     if (!imod->name || !imod->value)
@@ -346,9 +346,9 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
 
  memerr:
     if (imod) {
-        OPENSSL_free(imod->name);
-        OPENSSL_free(imod->value);
-        OPENSSL_free(imod);
+        OPENtls_free(imod->name);
+        OPENtls_free(imod->value);
+        OPENtls_free(imod);
     }
 
     return -1;
@@ -386,8 +386,8 @@ void CONF_modules_unload(int all)
 static void module_free(CONF_MODULE *md)
 {
     DSO_free(md->dso);
-    OPENSSL_free(md->name);
-    OPENSSL_free(md);
+    OPENtls_free(md->name);
+    OPENtls_free(md);
 }
 
 /* finish and free up all modules instances */
@@ -412,12 +412,12 @@ static void module_finish(CONF_IMODULE *imod)
     if (imod->pmod->finish)
         imod->pmod->finish(imod);
     imod->pmod->links--;
-    OPENSSL_free(imod->name);
-    OPENSSL_free(imod->value);
-    OPENSSL_free(imod);
+    OPENtls_free(imod->name);
+    OPENtls_free(imod->value);
+    OPENtls_free(imod);
 }
 
-/* Add a static module to OpenSSL */
+/* Add a static module to Opentls */
 
 int CONF_module_add(const char *name, conf_init_func *ifunc,
                     conf_finish_func *ffunc)
@@ -488,22 +488,22 @@ char *CONF_get1_default_config_file(void)
     char *file, *sep = "";
     int len;
 
-    if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
-        return OPENSSL_strdup(file);
+    if ((file = otls_safe_getenv("OPENtls_CONF")) != NULL)
+        return OPENtls_strdup(file);
 
     len = strlen(X509_get_default_cert_area());
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     len++;
     sep = "/";
 #endif
-    len += strlen(OPENSSL_CONF);
+    len += strlen(OPENtls_CONF);
 
-    file = OPENSSL_malloc(len + 1);
+    file = OPENtls_malloc(len + 1);
 
     if (file == NULL)
         return NULL;
     BIO_snprintf(file, len + 1, "%s%s%s", X509_get_default_cert_area(),
-                 sep, OPENSSL_CONF);
+                 sep, OPENtls_CONF);
 
     return file;
 }

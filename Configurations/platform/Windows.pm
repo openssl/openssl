@@ -38,7 +38,7 @@ sub staticname {
         . ($disabled{shared} ? '' : '_static');
 }
 
-# To mark forward compatibility, we include the OpenSSL major release version
+# To mark forward compatibility, we include the Opentls major release version
 # number in the installed shared library names.
 (my $sover_filename = $config{shlib_version}) =~ s|\.|_|g;
 sub shlib_version_as_filename {

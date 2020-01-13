@@ -1,34 +1,34 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 
-#ifndef OPENSSL_ASYNC_H
-# define OPENSSL_ASYNC_H
+#ifndef OPENtls_ASYNC_H
+# define OPENtls_ASYNC_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_ASYNC_H
 # endif
 
 #if defined(_WIN32)
 # if defined(BASETYPES) || defined(_WINDEF_H)
 /* application has to include <windows.h> to use this */
-#define OSSL_ASYNC_FD       HANDLE
-#define OSSL_BAD_ASYNC_FD   INVALID_HANDLE_VALUE
+#define Otls_ASYNC_FD       HANDLE
+#define Otls_BAD_ASYNC_FD   INVALID_HANDLE_VALUE
 # endif
 #else
-#define OSSL_ASYNC_FD       int
-#define OSSL_BAD_ASYNC_FD   -1
+#define Otls_ASYNC_FD       int
+#define Otls_BAD_ASYNC_FD   -1
 #endif
-# include <openssl/asyncerr.h>
+# include <opentls/asyncerr.h>
 
 
 # ifdef  __cplusplus
@@ -52,17 +52,17 @@ typedef int (*ASYNC_callback_fn)(void *arg);
 int ASYNC_init_thread(size_t max_size, size_t init_size);
 void ASYNC_cleanup_thread(void);
 
-#ifdef OSSL_ASYNC_FD
+#ifdef Otls_ASYNC_FD
 ASYNC_WAIT_CTX *ASYNC_WAIT_CTX_new(void);
 void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx);
 int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                               OSSL_ASYNC_FD fd,
+                               Otls_ASYNC_FD fd,
                                void *custom_data,
                                void (*cleanup)(ASYNC_WAIT_CTX *, const void *,
-                                               OSSL_ASYNC_FD, void *));
+                                               Otls_ASYNC_FD, void *));
 int ASYNC_WAIT_CTX_get_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                        OSSL_ASYNC_FD *fd, void **custom_data);
-int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
+                        Otls_ASYNC_FD *fd, void **custom_data);
+int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *fd,
                                size_t *numfds);
 int ASYNC_WAIT_CTX_get_callback(ASYNC_WAIT_CTX *ctx,
                                 ASYNC_callback_fn *callback,
@@ -72,8 +72,8 @@ int ASYNC_WAIT_CTX_set_callback(ASYNC_WAIT_CTX *ctx,
                                 void *callback_arg);
 int ASYNC_WAIT_CTX_set_status(ASYNC_WAIT_CTX *ctx, int status);
 int ASYNC_WAIT_CTX_get_status(ASYNC_WAIT_CTX *ctx);
-int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
-                                   size_t *numaddfds, OSSL_ASYNC_FD *delfd,
+int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *addfd,
+                                   size_t *numaddfds, Otls_ASYNC_FD *delfd,
                                    size_t *numdelfds);
 int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key);
 #endif

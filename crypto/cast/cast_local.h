@@ -1,13 +1,13 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_SYS_WIN32
+#ifdef OPENtls_SYS_WIN32
 # include <stdlib.h>
 #endif
 
@@ -113,7 +113,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
+#if defined(OPENtls_SYS_WIN32) && defined(_MSC_VER)
 # define ROTL(a,n)     (_lrotl(a,n))
 #else
 # define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>((32-(n))&31)))

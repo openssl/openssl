@@ -1,22 +1,22 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
 #include "crypto/ec.h" /* ec_group_do_inverse_ord() */
 #include "internal/numbers.h"
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/bn.h>
 #include <string.h>
 
 int sm2_compute_z_digest(uint8_t *out,
@@ -98,7 +98,7 @@ int sm2_compute_z_digest(uint8_t *out,
     }
 
     p_bytes = BN_num_bytes(p);
-    buf = OPENSSL_zalloc(p_bytes);
+    buf = OPENtls_zalloc(p_bytes);
     if (buf == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -130,7 +130,7 @@ int sm2_compute_z_digest(uint8_t *out,
     rc = 1;
 
  done:
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     BN_CTX_free(ctx);
     EVP_MD_CTX_free(hash);
     return rc;
@@ -152,7 +152,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    z = OPENSSL_zalloc(md_size);
+    z = OPENtls_zalloc(md_size);
     if (hash == NULL || z == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -177,7 +177,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
 
  done:
-    OPENSSL_free(z);
+    OPENtls_free(z);
     EVP_MD_CTX_free(hash);
     return e;
 }
@@ -472,7 +472,7 @@ int sm2_verify(const unsigned char *dgst, int dgstlen,
     ret = sm2_sig_verify(eckey, s, e);
 
  done:
-    OPENSSL_free(der);
+    OPENtls_free(der);
     BN_free(e);
     ECDSA_SIG_free(s);
     return ret;

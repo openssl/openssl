@@ -1,18 +1,18 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test::Utils;
 
 setup("test_rsa");
 
@@ -22,7 +22,7 @@ require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["rsa_test"])), "running rsatest");
 
-ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])), "rsa -check");
+ok(run(app([ 'opentls', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])), "rsa -check");
 
  SKIP: {
      skip "Skipping rsa conversion test", 3

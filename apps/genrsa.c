@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -18,14 +18,14 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <sys/stat.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/rsa.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
-# include <openssl/rand.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/bn.h>
+# include <opentls/rsa.h>
+# include <opentls/evp.h>
+# include <opentls/x509.h>
+# include <opentls/pem.h>
+# include <opentls/rand.h>
 
 # define DEFBITS 2048
 # define DEFPRIMES 2
@@ -46,7 +46,7 @@ const OPTIONS genrsa_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -140,11 +140,11 @@ opthelp:
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num <= 0)
             goto end;
-        if (num > OPENSSL_RSA_MAX_MODULUS_BITS)
+        if (num > OPENtls_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
-                       OPENSSL_RSA_MAX_MODULUS_BITS, num);
+                       OPENtls_RSA_MAX_MODULUS_BITS, num);
     } else if (argc > 0) {
         BIO_printf(bio_err, "Extra arguments given.\n");
         goto opthelp;
@@ -177,8 +177,8 @@ opthelp:
     if (hexe && dece && verbose) {
         BIO_printf(bio_err, "e is %s (0x%s)\n", dece, hexe);
     }
-    OPENSSL_free(hexe);
-    OPENSSL_free(dece);
+    OPENtls_free(hexe);
+    OPENtls_free(dece);
     cb_data.password = passout;
     cb_data.prompt_info = outfile;
     assert(private);
@@ -194,7 +194,7 @@ opthelp:
     RSA_free(rsa);
     BIO_free_all(out);
     release_engine(eng);
-    OPENSSL_free(passout);
+    OPENtls_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
     return ret;

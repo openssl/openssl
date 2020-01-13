@@ -1,26 +1,26 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/params.h>
+#include <opentls/params.h>
 #include "testutil.h"
 
 /* On machines that dont support <inttypes.h> just disable the tests */
-#if !defined(OPENSSL_NO_INTTYPES_H)
+#if !defined(OPENtls_NO_INTTYPES_H)
 
-# ifdef OPENSSL_SYS_WINDOWS
+# ifdef OPENtls_SYS_WINDOWS
 #  define strcasecmp _stricmp
 # endif
 
 typedef struct {
-    OSSL_PARAM *param;
+    Otls_PARAM *param;
     int32_t i32;
     int64_t i64;
     uint32_t u32;
@@ -39,13 +39,13 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
     static uint32_t datum_u32, ref_u32;
     static uint64_t datum_u64, ref_u64;
     static double datum_d, ref_d;
-    static OSSL_PARAM params[] = {
-        OSSL_PARAM_int32("int32",   &datum_i32),
-        OSSL_PARAM_int64("int64",   &datum_i64),
-        OSSL_PARAM_uint32("uint32", &datum_u32),
-        OSSL_PARAM_uint64("uint64", &datum_u64),
-        OSSL_PARAM_double("double", &datum_d),
-        OSSL_PARAM_END
+    static Otls_PARAM params[] = {
+        Otls_PARAM_int32("int32",   &datum_i32),
+        Otls_PARAM_int64("int64",   &datum_i64),
+        Otls_PARAM_uint32("uint32", &datum_u32),
+        Otls_PARAM_uint64("uint64", &datum_u64),
+        Otls_PARAM_double("double", &datum_d),
+        Otls_PARAM_END
     };
     int def_i32 = 0, def_i64 = 0, def_u32 = 0, def_u64 = 0, def_d = 0;
     const PAIR *pp = s->pairs;
@@ -62,7 +62,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
                 TEST_info("Line %d: multiple type lines", s->curr);
                 return 0;
             }
-            pc->param = OSSL_PARAM_locate(params, type = pp->value);
+            pc->param = Otls_PARAM_locate(params, type = pp->value);
             if (pc->param == NULL) {
                 TEST_info("Line %d: unknown type line", s->curr);
                 return 0;
@@ -189,18 +189,18 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     double d;
 
     if (!pc->valid_i32) {
-        if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))) {
+        if (!TEST_false(Otls_PARAM_get_int32(pc->param, &i32))) {
             TEST_note("unexpected valid conversion to int32 on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_int32(pc->param, &i32))
+        if (!TEST_true(Otls_PARAM_get_int32(pc->param, &i32))
             || !TEST_true(i32 == pc->i32)) {
             TEST_note("unexpected conversion to int32 on line %d", line);
             return 0;
         }
         memset(pc->datum, 44, pc->size);
-        if (!TEST_true(OSSL_PARAM_set_int32(pc->param, i32))
+        if (!TEST_true(Otls_PARAM_set_int32(pc->param, i32))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from int32 on line %d",
                       line);
@@ -209,18 +209,18 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_i64) {
-        if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))) {
+        if (!TEST_false(Otls_PARAM_get_int64(pc->param, &i64))) {
             TEST_note("unexpected valid conversion to int64 on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_int64(pc->param, &i64))
+        if (!TEST_true(Otls_PARAM_get_int64(pc->param, &i64))
             || !TEST_true(i64 == pc->i64)) {
             TEST_note("unexpected conversion to int64 on line %d", line);
             return 0;
         }
         memset(pc->datum, 44, pc->size);
-        if (!TEST_true(OSSL_PARAM_set_int64(pc->param, i64))
+        if (!TEST_true(Otls_PARAM_set_int64(pc->param, i64))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from int64 on line %d",
                       line);
@@ -229,18 +229,18 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u32) {
-        if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))) {
+        if (!TEST_false(Otls_PARAM_get_uint32(pc->param, &u32))) {
             TEST_note("unexpected valid conversion to uint32 on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_uint32(pc->param, &u32))
+        if (!TEST_true(Otls_PARAM_get_uint32(pc->param, &u32))
             || !TEST_true(u32 == pc->u32)) {
             TEST_note("unexpected conversion to uint32 on line %d", line);
             return 0;
         }
         memset(pc->datum, 44, pc->size);
-        if (!TEST_true(OSSL_PARAM_set_uint32(pc->param, u32))
+        if (!TEST_true(Otls_PARAM_set_uint32(pc->param, u32))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from uint32 on line %d",
                       line);
@@ -249,18 +249,18 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u64) {
-        if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))) {
+        if (!TEST_false(Otls_PARAM_get_uint64(pc->param, &u64))) {
             TEST_note("unexpected valid conversion to uint64 on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_uint64(pc->param, &u64))
+        if (!TEST_true(Otls_PARAM_get_uint64(pc->param, &u64))
             || !TEST_true(u64 == pc->u64)) {
             TEST_note("unexpected conversion to uint64 on line %d", line);
             return 0;
         }
         memset(pc->datum, 44, pc->size);
-        if (!TEST_true(OSSL_PARAM_set_uint64(pc->param, u64))
+        if (!TEST_true(Otls_PARAM_set_uint64(pc->param, u64))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from uint64 on line %d",
                       line);
@@ -269,18 +269,18 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_d) {
-        if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))) {
+        if (!TEST_false(Otls_PARAM_get_double(pc->param, &d))) {
             TEST_note("unexpected valid conversion to double on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_double(pc->param, &d))
+        if (!TEST_true(Otls_PARAM_get_double(pc->param, &d))
             || !TEST_true(d == pc->d)) {
             TEST_note("unexpected conversion to double on line %d", line);
             return 0;
         }
         memset(pc->datum, 44, pc->size);
-        if (!TEST_true(OSSL_PARAM_set_double(pc->param, d))
+        if (!TEST_true(Otls_PARAM_set_double(pc->param, d))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from double on line %d",
                       line);
@@ -298,10 +298,10 @@ static int run_param_file_tests(int i)
     const char *testfile = test_get_argument(i);
     int res = 1;
 
-    if (!TEST_ptr(s = OPENSSL_zalloc(sizeof(*s))))
+    if (!TEST_ptr(s = OPENtls_zalloc(sizeof(*s))))
         return 0;
     if (!test_start_file(s, testfile)) {
-        OPENSSL_free(s);
+        OPENtls_free(s);
         return 0;
     }
 
@@ -318,11 +318,11 @@ static int run_param_file_tests(int i)
     }
 end:
     test_end_file(s);
-    OPENSSL_free(s);
+    OPENtls_free(s);
     return res;
 }
 
-#endif /* OPENSSL_NO_INTTYPES_H */
+#endif /* OPENtls_NO_INTTYPES_H */
 
 OPT_TEST_DECLARE_USAGE("file...\n")
 
@@ -333,9 +333,9 @@ int setup_tests(void)
     if (n == 0)
         return 0;
 
-#if !defined(OPENSSL_NO_INTTYPES_H)
+#if !defined(OPENtls_NO_INTTYPES_H)
     ADD_ALL_TESTS(run_param_file_tests, n);
-#endif /* OPENSSL_NO_INTTYPES_H */
+#endif /* OPENtls_NO_INTTYPES_H */
 
     return 1;
 }

@@ -43,17 +43,17 @@ The supported parameters are:
 
 =over 4
 
-=item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
+=item "pass" (B<Otls_KDF_PARAM_PASSWORD>) <octet string>
 
-=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
+=item "salt" (B<Otls_KDF_PARAM_SALT>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item "n" (B<OSSL_KDF_PARAM_SCRYPT_N>) <unsigned integer>
+=item "n" (B<Otls_KDF_PARAM_SCRYPT_N>) <unsigned integer>
 
-=item "r" (B<OSSL_KDF_PARAM_SCRYPT_R>) <unsigned integer>
+=item "r" (B<Otls_KDF_PARAM_SCRYPT_R>) <unsigned integer>
 
-=item "p" (B<OSSL_KDF_PARAM_SCRYPT_P>) <unsigned integer>
+=item "p" (B<Otls_KDF_PARAM_SCRYPT_P>) <unsigned integer>
 
 These parameters configure the scrypt work factors N, r and p.
 N is a parameter of type B<uint64_t>.
@@ -79,20 +79,20 @@ This example derives a 64-byte long test vector using scrypt with the password
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[64];
- OSSL_PARAM params[6], *p = params;
+ Otls_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_PASSWORD,
                                           "password", (size_t)8);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                           "NaCl", (size_t)4);
- *p++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, (uint64_t)1024);
- *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_R, (uint32_t)8);
- *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_P, (uint32_t)16);
- *p = OSSL_PARAM_construct_end();
+ *p++ = Otls_PARAM_construct_uint64(Otls_KDF_PARAM_SCRYPT_N, (uint64_t)1024);
+ *p++ = Otls_PARAM_construct_uint32(Otls_KDF_PARAM_SCRYPT_R, (uint32_t)8);
+ *p++ = Otls_PARAM_construct_uint32(Otls_KDF_PARAM_SCRYPT_P, (uint32_t)16);
+ *p = Otls_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
      error("EVP_KDF_CTX_set_params");
  }
@@ -132,11 +132,11 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,13 +1,13 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 /*-
  * IMPLEMENTATION NOTES.
  *
@@ -45,9 +45,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/sha.h>
-#include <openssl/opensslv.h>
+#include <opentls/crypto.h>
+#include <opentls/sha.h>
+#include <opentls/opentlsv.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/sha.h"
@@ -341,7 +341,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
     SHA384_Init(&c);
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
+    OPENtls_cleanse(&c, sizeof(c));
     return md;
 }
 
@@ -355,7 +355,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
     SHA512_Init(&c);
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
+    OPENtls_cleanse(&c, sizeof(c));
     return md;
 }
 
@@ -405,7 +405,7 @@ static const SHA_LONG64 K512[80] = {
 
 # ifndef PEDANTIC
 #  if defined(__GNUC__) && __GNUC__>=2 && \
-      !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+      !defined(OPENtls_NO_ASM) && !defined(OPENtls_NO_INLINE_ASM)
 #   if defined(__x86_64) || defined(__x86_64__)
 #    define ROTR(a,n)    ({ SHA_LONG64 ret;             \
                                 asm ("rorq %1,%0"       \
@@ -459,8 +459,8 @@ static const SHA_LONG64 K512[80] = {
 #    pragma intrinsic(_rotr64)
 #    define ROTR(a,n)    _rotr64((a),n)
 #   endif
-#   if defined(_M_IX86) && !defined(OPENSSL_NO_ASM) && \
-       !defined(OPENSSL_NO_INLINE_ASM)
+#   if defined(_M_IX86) && !defined(OPENtls_NO_ASM) && \
+       !defined(OPENtls_NO_INLINE_ASM)
 #    if defined(I386_ONLY)
 static SHA_LONG64 __fastcall __pull64be(const void *x)
 {
@@ -566,7 +566,7 @@ static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
     }
 }
 
-# elif defined(OPENSSL_SMALL_FOOTPRINT)
+# elif defined(OPENtls_SMALL_FOOTPRINT)
 
 static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
                                     size_t num)

@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # December 2014
@@ -194,11 +194,11 @@ $code.=<<___;
 .Lone:
 .long	1,0,0,0
 #if __ARM_MAX_ARCH__>=7
-.LOPENSSL_armcap:
+.LOPENtls_armcap:
 # ifdef	_WIN32
-.word	OPENSSL_armcap_P
+.word	OPENtls_armcap_P
 # else
-.word   OPENSSL_armcap_P-.LChaCha20_ctr32
+.word   OPENtls_armcap_P-.LChaCha20_ctr32
 # endif
 #else
 .word	-1
@@ -1154,7 +1154,7 @@ $code.=<<___;
 	add		sp,sp,#4*(16+3)
 	ldmia		sp!,{r4-r11,pc}
 .size	ChaCha20_neon,.-ChaCha20_neon
-.comm	OPENSSL_armcap_P,4,4
+.comm	OPENtls_armcap_P,4,4
 #endif
 ___
 }}}

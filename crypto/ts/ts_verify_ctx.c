@@ -1,20 +1,20 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/ts.h>
+#include <opentls/objects.h>
+#include <opentls/ts.h>
 #include "ts_local.h"
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
-    TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    TS_VERIFY_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -23,7 +23,7 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx)
 {
-    OPENSSL_assert(ctx != NULL);
+    OPENtls_assert(ctx != NULL);
     memset(ctx, 0, sizeof(*ctx));
 }
 
@@ -33,7 +33,7 @@ void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx)
         return;
 
     TS_VERIFY_CTX_cleanup(ctx);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f)
@@ -86,7 +86,7 @@ void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
     ASN1_OBJECT_free(ctx->policy);
 
     X509_ALGOR_free(ctx->md_alg);
-    OPENSSL_free(ctx->imprint);
+    OPENtls_free(ctx->imprint);
 
     BIO_free_all(ctx->data);
 
@@ -106,7 +106,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     ASN1_OCTET_STRING *msg;
     const ASN1_INTEGER *nonce;
 
-    OPENSSL_assert(req != NULL);
+    OPENtls_assert(req != NULL);
     if (ret)
         TS_VERIFY_CTX_cleanup(ret);
     else if ((ret = TS_VERIFY_CTX_new()) == NULL)
@@ -126,7 +126,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
         goto err;
     msg = imprint->hashed_msg;
     ret->imprint_len = ASN1_STRING_length(msg);
-    if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
+    if ((ret->imprint = OPENtls_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_get0_data(msg), ret->imprint_len);
 

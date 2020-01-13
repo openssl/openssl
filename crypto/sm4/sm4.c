@@ -1,15 +1,15 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/e_os2.h>
+#include <opentls/e_os2.h>
 #include "crypto/sm4.h"
 
 static const uint8_t SM4_S[256] = {
@@ -85,12 +85,12 @@ static const uint32_t SM4_SBOX_T[256] = {
     0x794C3535, 0xA0208080, 0x9D78E5E5, 0x56EDBBBB, 0x235E7D7D, 0xC63EF8F8,
     0x8BD45F5F, 0xE7C82F2F, 0xDD39E4E4, 0x68492121 };
 
-static ossl_inline uint32_t rotl(uint32_t a, uint8_t n)
+static otls_inline uint32_t rotl(uint32_t a, uint8_t n)
 {
     return (a << n) | (a >> (32 - n));
 }
 
-static ossl_inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
+static otls_inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
 {
     return ((uint32_t)b[4 * n] << 24) |
            ((uint32_t)b[4 * n + 1] << 16) |
@@ -98,7 +98,7 @@ static ossl_inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
            ((uint32_t)b[4 * n + 3]);
 }
 
-static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
+static otls_inline void store_u32_be(uint32_t v, uint8_t *b)
 {
     b[0] = (uint8_t)(v >> 24);
     b[1] = (uint8_t)(v >> 16);
@@ -106,7 +106,7 @@ static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
     b[3] = (uint8_t)(v);
 }
 
-static ossl_inline uint32_t SM4_T_slow(uint32_t X)
+static otls_inline uint32_t SM4_T_slow(uint32_t X)
 {
     uint32_t t = 0;
 
@@ -121,7 +121,7 @@ static ossl_inline uint32_t SM4_T_slow(uint32_t X)
     return t ^ rotl(t, 2) ^ rotl(t, 10) ^ rotl(t, 18) ^ rotl(t, 24);
 }
 
-static ossl_inline uint32_t SM4_T(uint32_t X)
+static otls_inline uint32_t SM4_T(uint32_t X)
 {
     return SM4_SBOX_T[(uint8_t)(X >> 24)] ^
            rotl(SM4_SBOX_T[(uint8_t)(X >> 16)], 24) ^

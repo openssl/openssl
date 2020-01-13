@@ -1,10 +1,10 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Internal tests for the x509 and x509v3 modules */
@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/ssl.h>
+#include <opentls/tls.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "../ssl/ssl_local.h"
-#include "../ssl/ssl_cert_table.h"
+#include "../tls/tls_local.h"
+#include "../tls/tls_cert_table.h"
 
 #define test_cert_table(nid, amask, idx) \
     do_test_cert_table(nid, amask, idx, #idx)
@@ -24,7 +24,7 @@
 static int do_test_cert_table(int nid, uint32_t amask, size_t idx,
                               const char *idxname)
 {
-    const SSL_CERT_LOOKUP *clu = &ssl_cert_info[idx];
+    const tls_CERT_LOOKUP *clu = &tls_cert_info[idx];
 
     if (clu->nid == nid && clu->amask == amask)
         return 1;
@@ -39,28 +39,28 @@ static int do_test_cert_table(int nid, uint32_t amask, size_t idx,
     return 0;
 }
 
-/* Sanity check of ssl_cert_table */
+/* Sanity check of tls_cert_table */
 
-static int test_ssl_cert_table(void)
+static int test_tls_cert_table(void)
 {
-    TEST_size_t_eq(OSSL_NELEM(ssl_cert_info), SSL_PKEY_NUM);
-    if (!test_cert_table(EVP_PKEY_RSA, SSL_aRSA, SSL_PKEY_RSA))
+    TEST_size_t_eq(Otls_NELEM(tls_cert_info), tls_PKEY_NUM);
+    if (!test_cert_table(EVP_PKEY_RSA, tls_aRSA, tls_PKEY_RSA))
         return 0;
-    if (!test_cert_table(EVP_PKEY_DSA, SSL_aDSS, SSL_PKEY_DSA_SIGN))
+    if (!test_cert_table(EVP_PKEY_DSA, tls_aDSS, tls_PKEY_DSA_SIGN))
         return 0;
-    if (!test_cert_table(EVP_PKEY_EC, SSL_aECDSA, SSL_PKEY_ECC))
+    if (!test_cert_table(EVP_PKEY_EC, tls_aECDSA, tls_PKEY_ECC))
         return 0;
-    if (!test_cert_table(NID_id_GostR3410_2001, SSL_aGOST01, SSL_PKEY_GOST01))
+    if (!test_cert_table(NID_id_GostR3410_2001, tls_aGOST01, tls_PKEY_GOST01))
         return 0;
-    if (!test_cert_table(NID_id_GostR3410_2012_256, SSL_aGOST12,
-                         SSL_PKEY_GOST12_256))
+    if (!test_cert_table(NID_id_GostR3410_2012_256, tls_aGOST12,
+                         tls_PKEY_GOST12_256))
         return 0;
-    if (!test_cert_table(NID_id_GostR3410_2012_512, SSL_aGOST12,
-                         SSL_PKEY_GOST12_512))
+    if (!test_cert_table(NID_id_GostR3410_2012_512, tls_aGOST12,
+                         tls_PKEY_GOST12_512))
         return 0;
-    if (!test_cert_table(EVP_PKEY_ED25519, SSL_aECDSA, SSL_PKEY_ED25519))
+    if (!test_cert_table(EVP_PKEY_ED25519, tls_aECDSA, tls_PKEY_ED25519))
         return 0;
-    if (!test_cert_table(EVP_PKEY_ED448, SSL_aECDSA, SSL_PKEY_ED448))
+    if (!test_cert_table(EVP_PKEY_ED448, tls_aECDSA, tls_PKEY_ED448))
         return 0;
 
     return 1;
@@ -68,6 +68,6 @@ static int test_ssl_cert_table(void)
 
 int setup_tests(void)
 {
-    ADD_TEST(test_ssl_cert_table);
+    ADD_TEST(test_tls_cert_table);
     return 1;
 }

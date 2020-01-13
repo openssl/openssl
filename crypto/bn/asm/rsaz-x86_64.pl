@@ -1,11 +1,11 @@
 #! /usr/bin/env perl
-# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
 # Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 #
 # Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
 # (1) Intel Corporation, Israel Development Center, Haifa, Israel
@@ -22,19 +22,19 @@
 # [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
 #     resistant 512-bit and 1024-bit modular exponentiation for optimizing
 #     RSA1024 and RSA2048 on x86_64 platforms",
-#     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest
+#     http://rt.opentls.org/Ticket/Display.html?id=2582&user=guest&pass=guest
 #
 # While original submission covers 512- and 1024-bit exponentiation,
 # this module is limited to 512-bit version only (and as such
 # accelerates RSA1024 sign). This is because improvement for longer
 # keys is not high enough to justify the effort, highest measured
-# was ~5% on Westmere. [This is relative to OpenSSL 1.0.2, upcoming
+# was ~5% on Westmere. [This is relative to Opentls 1.0.2, upcoming
 # for the moment of this writing!] Nor does this module implement
 # "monolithic" complete exponentiation jumbo-subroutine, but adheres
 # to more modular mixture of C and assembly. And it's optimized even
 # for processors other than Intel Core family (see table below for
 # improvement coefficients).
-# 						<appro@openssl.org>
+# 						<appro@opentls.org>
 #
 # RSA1024 sign/sec	this/original	|this/rsax(*)	this/fips(*)
 #			----------------+---------------------------
@@ -95,7 +95,7 @@ my ($out,$inp,$mod,$n0,$times) = ("%rdi","%rsi","%rdx","%rcx","%r8d");
 $code.=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	rsaz_512_sqr
 .type	rsaz_512_sqr,\@function,5
@@ -125,7 +125,7 @@ rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
 ___
 $code.=<<___ if ($addx);
 	movl	\$0x80100,%r11d
-	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	andl	OPENtls_ia32cap_P+8(%rip),%r11d
 	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
 	je	.Loop_sqrx
 ___
@@ -835,7 +835,7 @@ rsaz_512_mul:
 ___
 $code.=<<___ if ($addx);
 	movl	\$0x80100,%r11d
-	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	andl	OPENtls_ia32cap_P+8(%rip),%r11d
 	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
 	je	.Lmulx
 ___
@@ -1013,7 +1013,7 @@ $code.=<<___;
 ___
 $code.=<<___ if ($addx);
 	movl	\$0x80100,%r11d
-	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	andl	OPENtls_ia32cap_P+8(%rip),%r11d
 	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
 	je	.Lmulx_gather
 ___
@@ -1422,7 +1422,7 @@ rsaz_512_mul_scatter4:
 ___
 $code.=<<___ if ($addx);
 	movl	\$0x80100,%r11d
-	andl	OPENSSL_ia32cap_P+8(%rip),%r11d
+	andl	OPENtls_ia32cap_P+8(%rip),%r11d
 	cmpl	\$0x80100,%r11d		# check for MULX and ADO/CX
 	je	.Lmulx_scatter
 ___
@@ -1540,7 +1540,7 @@ rsaz_512_mul_by_one:
 .Lmul_by_one_body:
 ___
 $code.=<<___ if ($addx);
-	movl	OPENSSL_ia32cap_P+8(%rip),%eax
+	movl	OPENtls_ia32cap_P+8(%rip),%eax
 ___
 $code.=<<___;
 	movq	$mod, %rbp	# reassign argument

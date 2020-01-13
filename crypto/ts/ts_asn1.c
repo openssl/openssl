@@ -1,15 +1,15 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/ts.h>
-#include <openssl/err.h>
-#include <openssl/asn1t.h>
+#include <opentls/ts.h>
+#include <opentls/err.h>
+#include <opentls/asn1t.h>
 #include "ts_local.h"
 
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
@@ -29,7 +29,7 @@ int i2d_TS_MSG_IMPRINT_bio(BIO *bp, const TS_MSG_IMPRINT *a)
 {
     return ASN1_i2d_bio_of(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, bp, a);
 }
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a)
 {
     return ASN1_d2i_fp_of(TS_MSG_IMPRINT, TS_MSG_IMPRINT_new,
@@ -62,7 +62,7 @@ int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
 {
     return ASN1_i2d_bio_of(TS_REQ, i2d_TS_REQ, bp, a);
 }
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
 {
     return ASN1_d2i_fp_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, fp, a);
@@ -108,7 +108,7 @@ int i2d_TS_TST_INFO_bio(BIO *bp, const TS_TST_INFO *a)
 {
     return ASN1_i2d_bio_of(TS_TST_INFO, i2d_TS_TST_INFO, bp, a);
 }
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
 {
     return ASN1_d2i_fp_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, fp,
@@ -189,7 +189,7 @@ int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)
 {
     return ASN1_i2d_bio_of(TS_RESP, i2d_TS_RESP, bp, a);
 }
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
 {
     return ASN1_d2i_fp_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, fp, a);

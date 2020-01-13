@@ -1,11 +1,11 @@
 #!{- $config{HASHBANGPERL} -}
-# Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
 # Copyright (c) 2002 The OpenTSA Project. All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use IO::Handle;
@@ -47,7 +47,7 @@ sub create_curl {
     $curl->setopt(CURLOPT_VERBOSE, 1) if $options{d};
     $curl->setopt(CURLOPT_FAILONERROR, 1);
     $curl->setopt(CURLOPT_USERAGENT,
-        "OpenTSA tsget.pl/openssl-{- $config{full_version} -}");
+        "OpenTSA tsget.pl/opentls-{- $config{full_version} -}");
 
     # Options for POST method.
     $curl->setopt(CURLOPT_UPLOAD, 1);
@@ -61,13 +61,13 @@ sub create_curl {
     # Options for getting the result.
     $curl->setopt(CURLOPT_WRITEFUNCTION, \&write_body);
 
-    # SSL related options.
-    $curl->setopt(CURLOPT_SSLKEYTYPE, "PEM");
-    $curl->setopt(CURLOPT_SSL_VERIFYPEER, 1);	# Verify server's certificate.
-    $curl->setopt(CURLOPT_SSL_VERIFYHOST, 2);	# Check server's CN.
-    $curl->setopt(CURLOPT_SSLKEY, $options{k}) if defined($options{k});
-    $curl->setopt(CURLOPT_SSLKEYPASSWD, $options{p}) if defined($options{p});
-    $curl->setopt(CURLOPT_SSLCERT, $options{c}) if defined($options{c});
+    # tls related options.
+    $curl->setopt(CURLOPT_tlsKEYTYPE, "PEM");
+    $curl->setopt(CURLOPT_tls_VERIFYPEER, 1);	# Verify server's certificate.
+    $curl->setopt(CURLOPT_tls_VERIFYHOST, 2);	# Check server's CN.
+    $curl->setopt(CURLOPT_tlsKEY, $options{k}) if defined($options{k});
+    $curl->setopt(CURLOPT_tlsKEYPASSWD, $options{p}) if defined($options{p});
+    $curl->setopt(CURLOPT_tlsCERT, $options{c}) if defined($options{c});
     $curl->setopt(CURLOPT_CAINFO, $options{C}) if defined($options{C});
     $curl->setopt(CURLOPT_CAPATH, $options{P}) if defined($options{P});
     $curl->setopt(CURLOPT_RANDOM_FILE, $options{r}) if defined($options{r});

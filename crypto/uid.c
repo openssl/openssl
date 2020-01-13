@@ -1,18 +1,18 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/opensslconf.h>
+#include <opentls/crypto.h>
+#include <opentls/opentlsconf.h>
 
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
+#if defined(OPENtls_SYS_WIN32) || defined(OPENtls_SYS_VXWORKS) || defined(OPENtls_SYS_UEFI)
 
-int OPENSSL_issetugid(void)
+int OPENtls_issetugid(void)
 {
     return 0;
 }
@@ -21,7 +21,7 @@ int OPENSSL_issetugid(void)
 
 # include <unistd.h>
 
-int OPENSSL_issetugid(void)
+int OPENtls_issetugid(void)
 {
     return issetugid();
 }
@@ -34,13 +34,13 @@ int OPENSSL_issetugid(void)
 # if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 #  if __GLIBC_PREREQ(2, 16)
 #   include <sys/auxv.h>
-#   define OSSL_IMPLEMENT_GETAUXVAL
+#   define Otls_IMPLEMENT_GETAUXVAL
 #  endif
 # endif
 
-int OPENSSL_issetugid(void)
+int OPENtls_issetugid(void)
 {
-# ifdef OSSL_IMPLEMENT_GETAUXVAL
+# ifdef Otls_IMPLEMENT_GETAUXVAL
     return getauxval(AT_SECURE) != 0;
 # else
     return getuid() != geteuid() || getgid() != getegid();

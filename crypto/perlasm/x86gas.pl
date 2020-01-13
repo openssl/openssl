@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 package x86gas;
@@ -165,8 +165,8 @@ sub ::file_end
 	    {	push(@out,"$non_lazy_ptr{$i}:\n.indirect_symbol\t$i\n.long\t0\n");   }
 	}
     }
-    if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
+    if (grep {/\b${nmdecor}OPENtls_ia32cap_P\b/i} @out) {
+	my $tmp=".comm\t${nmdecor}OPENtls_ia32cap_P,16";
 	if ($::macosx)	{ push (@out,"$tmp,2\n"); }
 	elsif ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
@@ -203,7 +203,7 @@ sub ::picmeup
 	    &::mov($dst,&::DWP("$indirect-$reflabel",$base));
 	    $non_lazy_ptr{"$nmdecor$sym"}=$indirect;
 	}
-	elsif ($sym eq "OPENSSL_ia32cap_P" && $::elf>0)
+	elsif ($sym eq "OPENtls_ia32cap_P" && $::elf>0)
 	{   &::lea($dst,&::DWP("$sym-$reflabel",$base));   }
 	else
 	{   &::lea($dst,&::DWP("_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",

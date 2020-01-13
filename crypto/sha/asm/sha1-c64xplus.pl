@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA1 for C64x+.
@@ -19,7 +19,7 @@
 # November 2011
 #
 # If compared to compiler-generated code with similar characteristics,
-# i.e. compiled with OPENSSL_SMALL_FOOTPRINT and utilizing SPLOOPs,
+# i.e. compiled with OPENtls_SMALL_FOOTPRINT and utilizing SPLOOPs,
 # this implementation is 25% smaller and >2x faster. In absolute terms
 # performance is (quite impressive) ~6.5 cycles per processed byte.
 # Fully unrolled assembler would be ~5x larger and is likely to be
@@ -328,7 +328,7 @@ $code.=<<___;
 	.endasmfunc
 
 	.sect	.const
-	.cstring "SHA1 block transform for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "SHA1 block transform for C64x+, CRYPTOGAMS by <appro\@opentls.org>"
 	.align	4
 ___
 

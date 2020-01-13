@@ -1,14 +1,14 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_TYPES_H
-# define OPENSSL_TYPES_H
+#ifndef OPENtls_TYPES_H
+# define OPENtls_TYPES_H
 
 #include <limits.h>
 
@@ -16,10 +16,10 @@
 extern "C" {
 #endif
 
-# include <openssl/e_os2.h>
-# include <openssl/safestack.h>
+# include <opentls/e_os2.h>
+# include <opentls/safestack.h>
 
-typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
+typedef struct otls_provider_st Otls_PROVIDER; /* Provider Object */
 
 # ifdef NO_ASN1_TYPEDEFS
 #  define ASN1_INTEGER            ASN1_STRING
@@ -138,7 +138,7 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 typedef struct rand_meth_st RAND_METHOD;
 typedef struct rand_drbg_st RAND_DRBG;
 
-typedef struct ssl_dane_st SSL_DANE;
+typedef struct tls_dane_st tls_DANE;
 typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
 typedef struct X509_crl_st X509_CRL;
@@ -160,14 +160,14 @@ typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
 typedef struct v3_ext_ctx X509V3_CTX;
 typedef struct conf_st CONF;
-typedef struct ossl_init_settings_st OPENSSL_INIT_SETTINGS;
+typedef struct otls_init_settings_st OPENtls_INIT_SETTINGS;
 
 typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
 
 typedef struct engine_st ENGINE;
-typedef struct ssl_st SSL;
-typedef struct ssl_ctx_st SSL_CTX;
+typedef struct tls_st tls;
+typedef struct tls_ctx_st tls_CTX;
 
 typedef struct comp_ctx_st COMP_CTX;
 typedef struct comp_method_st COMP_METHOD;
@@ -194,25 +194,25 @@ typedef struct ctlog_st CTLOG;
 typedef struct ctlog_store_st CTLOG_STORE;
 typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
-typedef struct ossl_store_info_st OSSL_STORE_INFO;
-typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
+typedef struct otls_store_info_st Otls_STORE_INFO;
+typedef struct otls_store_search_st Otls_STORE_SEARCH;
 
-typedef struct openssl_ctx_st OPENSSL_CTX;
+typedef struct opentls_ctx_st OPENtls_CTX;
 
-typedef struct ossl_dispatch_st OSSL_DISPATCH;
-typedef struct ossl_item_st OSSL_ITEM;
-typedef struct ossl_algorithm_st OSSL_ALGORITHM;
-typedef struct ossl_param_st OSSL_PARAM;
+typedef struct otls_dispatch_st Otls_DISPATCH;
+typedef struct otls_item_st Otls_ITEM;
+typedef struct otls_algorithm_st Otls_ALGORITHM;
+typedef struct otls_param_st Otls_PARAM;
 
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
-typedef struct ossl_serializer_st OSSL_SERIALIZER;
-typedef struct ossl_serializer_ctx_st OSSL_SERIALIZER_CTX;
+typedef struct otls_serializer_st Otls_SERIALIZER;
+typedef struct otls_serializer_ctx_st Otls_SERIALIZER_CTX;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
-typedef intmax_t ossl_intmax_t;
-typedef uintmax_t ossl_uintmax_t;
+typedef intmax_t otls_intmax_t;
+typedef uintmax_t otls_uintmax_t;
 #else
 /*
  * Not long long, because the C-library can only be expected to provide
@@ -220,11 +220,11 @@ typedef uintmax_t ossl_uintmax_t;
  * strtoumax().  Since we use these for parsing arguments, we need the
  * conversion functions, not just the sizes.
  */
-typedef long ossl_intmax_t;
-typedef unsigned long ossl_uintmax_t;
+typedef long otls_intmax_t;
+typedef unsigned long otls_uintmax_t;
 #endif
 
 #ifdef  __cplusplus
 }
 #endif
-#endif                          /* def OPENSSL_TYPES_H */
+#endif                          /* def OPENtls_TYPES_H */

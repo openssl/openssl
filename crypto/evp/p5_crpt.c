@@ -1,17 +1,17 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/evp.h>
+#include <opentls/x509.h>
+#include <opentls/evp.h>
 
 /*
  * Doesn't do anything now: Builtin PBE algorithms in static table.
@@ -21,7 +21,7 @@ void PKCS5_PBE_add(void)
 {
 }
 
-int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
+int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int patlsen,
                        ASN1_TYPE *param, const EVP_CIPHER *cipher,
                        const EVP_MD *md, int en_de)
 {
@@ -67,9 +67,9 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     saltlen = pbe->salt->length;
 
     if (pass == NULL)
-        passlen = 0;
-    else if (passlen == -1)
-        passlen = strlen(pass);
+        patlsen = 0;
+    else if (patlsen == -1)
+        patlsen = strlen(pass);
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
@@ -79,7 +79,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 
     if (!EVP_DigestInit_ex(ctx, md, NULL))
         goto err;
-    if (!EVP_DigestUpdate(ctx, pass, passlen))
+    if (!EVP_DigestUpdate(ctx, pass, patlsen))
         goto err;
     if (!EVP_DigestUpdate(ctx, salt, saltlen))
         goto err;
@@ -101,9 +101,9 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     memcpy(iv, md_tmp + (16 - ivl), ivl);
     if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de))
         goto err;
-    OPENSSL_cleanse(md_tmp, EVP_MAX_MD_SIZE);
-    OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
-    OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
+    OPENtls_cleanse(md_tmp, EVP_MAX_MD_SIZE);
+    OPENtls_cleanse(key, EVP_MAX_KEY_LENGTH);
+    OPENtls_cleanse(iv, EVP_MAX_IV_LENGTH);
     rv = 1;
  err:
     EVP_MD_CTX_free(ctx);

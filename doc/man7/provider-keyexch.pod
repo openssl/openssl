@@ -6,15 +6,15 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for openssl multiple includes
+=for opentls multiple includes
 
- #include <openssl/core_numbers.h>
- #include <openssl/core_names.h>
+ #include <opentls/core_numbers.h>
+ #include <opentls/core_names.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
   * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * pointers in Otls_DISPATCH arrays.
   */
 
  /* Context management */
@@ -29,48 +29,48 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
                        size_t outlen);
 
  /* Key Exchange parameters */
- int OP_keyexch_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OP_keyexch_settable_ctx_params(void);
+ int OP_keyexch_set_ctx_params(void *ctx, const Otls_PARAM params[]);
+ const Otls_PARAM *OP_keyexch_settable_ctx_params(void);
 
 =head1 DESCRIPTION
 
 This documentation is primarily aimed at provider authors. See L<provider(7)>
 for further information.
 
-The key exchange (OSSL_OP_KEYEXCH) operation enables providers to implement key
+The key exchange (Otls_OP_KEYEXCH) operation enables providers to implement key
 exchange algorithms and make them available to applications via the API
 functions L<EVP_PKEY_derive_init_ex(3)>, and L<EVP_PKEY_derive(3)> (as well as
 other related functions).
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the provider's
+F<libcrypto> and the provider in B<Otls_DISPATCH> arrays via
+B<Otls_ALGORITHM> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+named B<Otls_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<Otls_DISPATCH> element named
+B<Otls_get_{name}>.
 For example, the "function" OP_keyexch_newctx() has these:
 
- typedef void *(OSSL_OP_keyexch_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_keyexch_newctx_fn
-     OSSL_get_OP_keyexch_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(Otls_OP_keyexch_newctx_fn)(void *provctx);
+ static otls_inline Otls_OP_keyexch_newctx_fn
+     Otls_get_OP_keyexch_newctx(const Otls_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+B<Otls_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<opentls-core_numbers.h(7)>, as follows:
 
- OP_keyexch_newctx                OSSL_FUNC_KEYEXCH_NEWCTX
- OP_keyexch_freectx               OSSL_FUNC_KEYEXCH_FREECTX
- OP_keyexch_dupctx                OSSL_FUNC_KEYEXCH_DUPCTX
+ OP_keyexch_newctx                Otls_FUNC_KEYEXCH_NEWCTX
+ OP_keyexch_freectx               Otls_FUNC_KEYEXCH_FREECTX
+ OP_keyexch_dupctx                Otls_FUNC_KEYEXCH_DUPCTX
 
- OP_keyexch_init                  OSSL_FUNC_KEYEXCH_INIT
- OP_keyexch_set_peer              OSSL_FUNC_KEYEXCH_SET_PEER
- OP_keyexch_derive                OSSL_FUNC_KEYEXCH_DERIVE
+ OP_keyexch_init                  Otls_FUNC_KEYEXCH_INIT
+ OP_keyexch_set_peer              Otls_FUNC_KEYEXCH_SET_PEER
+ OP_keyexch_derive                Otls_FUNC_KEYEXCH_DERIVE
 
- OP_keyexch_set_ctx_params        OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS
- OP_keyexch_settable_ctx_params   OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS
+ OP_keyexch_set_ctx_params        Otls_FUNC_KEYEXCH_SET_CTX_PARAMS
+ OP_keyexch_settable_ctx_params   Otls_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS
 
 A key exchange algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions a provider must implement
@@ -78,7 +78,7 @@ OP_keyexch_newctx, OP_keyexch_freectx, OP_keyexch_init and OP_keyexch_derive.
 All other functions are optional.
 
 A key exchange algorithm must also implement some mechanism for generating,
-loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.
+loading or importing keys via the key management (Otls_OP_KEYMGMT) operation.
 See L<provider-keymgmt(7)> for further details.
 
 =head2 Context Management Functions
@@ -103,14 +103,14 @@ OP_keyexch_init() initialises a key exchange operation given a provider side key
 exchange context in the I<ctx> parameter, and a pointer to a provider key object
 in the I<provkey> parameter. The key object should have been previously
 generated, loaded or imported into the provider using the key management
-(OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
+(Otls_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
 
 OP_keyexch_set_peer() is called to supply the peer's public key (in the
 I<provkey> parameter) to be used when deriving the shared secret.
 It is also passed a previously initialised key exchange context in the I<ctx>
 parameter.
 The key object should have been previously generated, loaded or imported into
-the provider using the key management (OSSL_OP_KEYMGMT) operation (see
+the provider using the key management (Otls_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OP_keyexch_derive() performs the actual key exchange itself by deriving a shared
@@ -125,7 +125,7 @@ written to I<*secretlen>.
 
 =head2 Key Exchange Parameters
 
-See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+See L<Otls_PARAM(3)> for further details on the parameters structure used by
 the OP_keyexch_set_params() function.
 
 OP_keyexch_set_ctx_params() sets key exchange parameters associated with the
@@ -139,7 +139,7 @@ algorithms:
 
 =over 4
 
-=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
+=item "pad" (B<Otls_EXCHANGE_PARAM_PAD>) <unsigned integer>
 
 Sets the padding mode for the associated key exchange ctx.
 Setting a value of 1 will turn padding on.
@@ -152,10 +152,10 @@ possible secret size.
 
 =back
 
-OP_keyexch_settable_ctx_params() gets a constant B<OSSL_PARAM> array that
+OP_keyexch_settable_ctx_params() gets a constant B<Otls_PARAM> array that
 describes the settable parameters, i.e. parameters that can be used with
 OP_signature_set_ctx_params().
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+See L<Otls_PARAM(3)> for the use of B<Otls_PARAM> as parameter descriptor.
 
 =head1 RETURN VALUES
 
@@ -171,15 +171,15 @@ L<provider(7)>
 
 =head1 HISTORY
 
-The provider KEYEXCH interface was introduced in OpenSSL 3.0.
+The provider KEYEXCH interface was introduced in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

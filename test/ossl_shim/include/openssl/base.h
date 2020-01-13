@@ -1,29 +1,29 @@
 /*
- * Copyright 1998-2001 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2001 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
-#define OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
+#ifndef Otls_TEST_SHIM_INCLUDE_OPENtls_BASE_H
+#define Otls_TEST_SHIM_INCLUDE_OPENtls_BASE_H
 
-/* Needed for BORINGSSL_MAKE_DELETER */
-# include <openssl/bio.h>
-# include <openssl/evp.h>
-# include <openssl/dh.h>
-# include <openssl/x509.h>
-# include <openssl/ssl.h>
+/* Needed for BORINGtls_MAKE_DELETER */
+# include <opentls/bio.h>
+# include <opentls/evp.h>
+# include <opentls/dh.h>
+# include <opentls/x509.h>
+# include <opentls/tls.h>
 
-# define OPENSSL_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+# define OPENtls_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
 extern "C++" {
 
 #include <memory>
 
-namespace bssl {
+namespace btls {
 
 namespace internal {
 
@@ -34,7 +34,7 @@ template <typename T>
 struct Deleter {
   void operator()(T *ptr) {
     // Rather than specialize Deleter for each type, we specialize
-    // DeleterImpl. This allows bssl::UniquePtr<T> to be used while only
+    // DeleterImpl. This allows btls::UniquePtr<T> to be used while only
     // including base.h as long as the destructor is not emitted. This matches
     // std::unique_ptr's behavior on forward-declared types.
     //
@@ -69,7 +69,7 @@ class StackAllocated {
 
 }  // namespace internal
 
-#define BORINGSSL_MAKE_DELETER(type, deleter)     \
+#define BORINGtls_MAKE_DELETER(type, deleter)     \
   namespace internal {                            \
   template <>                                     \
   struct DeleterImpl<type> {                      \
@@ -79,7 +79,7 @@ class StackAllocated {
 
 // This makes a unique_ptr to STACK_OF(type) that owns all elements on the
 // stack, i.e. it uses sk_pop_free() to clean up.
-#define BORINGSSL_MAKE_STACK_DELETER(type, deleter) \
+#define BORINGtls_MAKE_STACK_DELETER(type, deleter) \
   namespace internal {                              \
   template <>                                       \
   struct DeleterImpl<STACK_OF(type)> {              \
@@ -89,23 +89,23 @@ class StackAllocated {
   };                                                \
   }
 
-// Holds ownership of heap-allocated BoringSSL structures. Sample usage:
-//   bssl::UniquePtr<BIO> rsa(RSA_new());
-//   bssl::UniquePtr<BIO> bio(BIO_new(BIO_s_mem()));
+// Holds ownership of heap-allocated Boringtls structures. Sample usage:
+//   btls::UniquePtr<BIO> rsa(RSA_new());
+//   btls::UniquePtr<BIO> bio(BIO_new(BIO_s_mem()));
 template <typename T>
 using UniquePtr = std::unique_ptr<T, internal::Deleter<T>>;
 
-BORINGSSL_MAKE_DELETER(BIO, BIO_free)
-BORINGSSL_MAKE_DELETER(EVP_PKEY, EVP_PKEY_free)
-BORINGSSL_MAKE_DELETER(DH, DH_free)
-BORINGSSL_MAKE_DELETER(X509, X509_free)
-BORINGSSL_MAKE_DELETER(SSL, SSL_free)
-BORINGSSL_MAKE_DELETER(SSL_CTX, SSL_CTX_free)
-BORINGSSL_MAKE_DELETER(SSL_SESSION, SSL_SESSION_free)
+BORINGtls_MAKE_DELETER(BIO, BIO_free)
+BORINGtls_MAKE_DELETER(EVP_PKEY, EVP_PKEY_free)
+BORINGtls_MAKE_DELETER(DH, DH_free)
+BORINGtls_MAKE_DELETER(X509, X509_free)
+BORINGtls_MAKE_DELETER(tls, tls_free)
+BORINGtls_MAKE_DELETER(tls_CTX, tls_CTX_free)
+BORINGtls_MAKE_DELETER(tls_SESSION, tls_SESSION_free)
 
-}  // namespace bssl
+}  // namespace btls
 
 }  /* extern C++ */
 
 
-#endif  /* OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H */
+#endif  /* Otls_TEST_SHIM_INCLUDE_OPENtls_BASE_H */

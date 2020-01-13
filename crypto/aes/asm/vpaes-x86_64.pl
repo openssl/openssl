@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 ######################################################################
@@ -20,7 +20,7 @@
 ######################################################################
 # September 2011.
 #
-# Interface to OpenSSL as "almost" drop-in replacement for
+# Interface to Opentls as "almost" drop-in replacement for
 # aes-x86_64.pl. "Almost" refers to the fact that AES_cbc_encrypt
 # doesn't handle partial vectors (doesn't have to if called from
 # EVP only). "Drop-in" implies that this module doesn't share key
@@ -52,7 +52,7 @@
 #	pshufb,	yet it's respectable +36%/62% improvement on Core 2
 #	(as implied, over "hyper-threading-safe" code path).
 #
-#						<appro@openssl.org>
+#						<appro@opentls.org>
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -691,7 +691,7 @@ _vpaes_schedule_mangle:
 .size	_vpaes_schedule_mangle,.-_vpaes_schedule_mangle
 
 #
-# Interface to OpenSSL
+# Interface to Opentls
 #
 .globl	${PREFIX}_set_encrypt_key
 .type	${PREFIX}_set_encrypt_key,\@function,3

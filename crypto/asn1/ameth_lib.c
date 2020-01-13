@@ -1,18 +1,18 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"               /* for strncasecmp */
 #include "internal/cryptlib.h"
 #include <stdio.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/engine.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/engine.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -35,7 +35,7 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
 
 int EVP_PKEY_asn1_get_count(void)
 {
-    int num = OSSL_NELEM(standard_methods);
+    int num = Otls_NELEM(standard_methods);
     if (app_methods)
         num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
     return num;
@@ -43,7 +43,7 @@ int EVP_PKEY_asn1_get_count(void)
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
-    int num = OSSL_NELEM(standard_methods);
+    int num = Otls_NELEM(standard_methods);
     if (idx < 0)
         return NULL;
     if (idx < num)
@@ -64,7 +64,7 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
         if (idx >= 0)
             return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
     }
-    ret = OBJ_bsearch_ameth(&t, standard_methods, OSSL_NELEM(standard_methods));
+    ret = OBJ_bsearch_ameth(&t, standard_methods, Otls_NELEM(standard_methods));
     if (ret == NULL || *ret == NULL)
         return NULL;
     return *ret;
@@ -87,7 +87,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
         type = t->pkey_base_id;
     }
     if (pe) {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
         ENGINE *e;
         /* type will contain the final unaliased type */
         e = ENGINE_get_pkey_asn1_meth_engine(type);
@@ -110,7 +110,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     if (len == -1)
         len = strlen(str);
     if (pe) {
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
         ENGINE *e;
         ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
         if (ameth) {
@@ -218,7 +218,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey)
 EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
                                         const char *pem_str, const char *info)
 {
-    EVP_PKEY_ASN1_METHOD *ameth = OPENSSL_zalloc(sizeof(*ameth));
+    EVP_PKEY_ASN1_METHOD *ameth = OPENtls_zalloc(sizeof(*ameth));
 
     if (ameth == NULL)
         return NULL;
@@ -228,13 +228,13 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
     ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;
 
     if (info) {
-        ameth->info = OPENSSL_strdup(info);
+        ameth->info = OPENtls_strdup(info);
         if (!ameth->info)
             goto err;
     }
 
     if (pem_str) {
-        ameth->pem_str = OPENSSL_strdup(pem_str);
+        ameth->pem_str = OPENtls_strdup(pem_str);
         if (!ameth->pem_str)
             goto err;
     }
@@ -288,9 +288,9 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 {
     if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC)) {
-        OPENSSL_free(ameth->pem_str);
-        OPENSSL_free(ameth->info);
-        OPENSSL_free(ameth);
+        OPENtls_free(ameth->pem_str);
+        OPENtls_free(ameth->info);
+        OPENtls_free(ameth);
     }
 }
 

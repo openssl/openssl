@@ -1,20 +1,20 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* This must be the first #include file */
 #include "async_local.h"
 
-#include <openssl/err.h>
+#include <opentls/err.h>
 
 ASYNC_WAIT_CTX *ASYNC_WAIT_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(ASYNC_WAIT_CTX));
+    return OPENtls_zalloc(sizeof(ASYNC_WAIT_CTX));
 }
 
 void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx)
@@ -34,20 +34,20 @@ void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx)
         }
         /* Always free the fd_lookup_st */
         next = curr->next;
-        OPENSSL_free(curr);
+        OPENtls_free(curr);
         curr = next;
     }
 
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                               OSSL_ASYNC_FD fd, void *custom_data,
+                               Otls_ASYNC_FD fd, void *custom_data,
                                void (*cleanup)(ASYNC_WAIT_CTX *, const void *,
-                                               OSSL_ASYNC_FD, void *))
+                                               Otls_ASYNC_FD, void *))
 {
     struct fd_lookup_st *fdlookup;
 
-    if ((fdlookup = OPENSSL_zalloc(sizeof(*fdlookup))) == NULL) {
+    if ((fdlookup = OPENtls_zalloc(sizeof(*fdlookup))) == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_WAIT_CTX_SET_WAIT_FD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -64,7 +64,7 @@ int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
 }
 
 int ASYNC_WAIT_CTX_get_fd(ASYNC_WAIT_CTX *ctx, const void *key,
-                          OSSL_ASYNC_FD *fd, void **custom_data)
+                          Otls_ASYNC_FD *fd, void **custom_data)
 {
     struct fd_lookup_st *curr;
 
@@ -85,7 +85,7 @@ int ASYNC_WAIT_CTX_get_fd(ASYNC_WAIT_CTX *ctx, const void *key,
     return 0;
 }
 
-int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
+int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *fd,
                                size_t *numfds)
 {
     struct fd_lookup_st *curr;
@@ -108,8 +108,8 @@ int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
     return 1;
 }
 
-int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
-                                   size_t *numaddfds, OSSL_ASYNC_FD *delfd,
+int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, Otls_ASYNC_FD *addfd,
+                                   size_t *numaddfds, Otls_ASYNC_FD *delfd,
                                    size_t *numdelfds)
 {
     struct fd_lookup_st *curr;
@@ -162,7 +162,7 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
                 /* It is responsibility of the caller to cleanup before calling
                  * ASYNC_WAIT_CTX_clear_fd
                  */
-                OPENSSL_free(curr);
+                OPENtls_free(curr);
                 ctx->numadd--;
                 return 1;
             }
@@ -232,7 +232,7 @@ void async_wait_ctx_reset_counts(ASYNC_WAIT_CTX *ctx)
                 ctx->fds = curr->next;
             else
                 prev->next = curr->next;
-            OPENSSL_free(curr);
+            OPENtls_free(curr);
             if (prev == NULL)
                 curr = ctx->fds;
             else

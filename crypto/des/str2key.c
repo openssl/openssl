@@ -1,13 +1,13 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "des_local.h"
 
 void DES_string_to_key(const char *str, DES_cblock *key)
@@ -33,7 +33,7 @@ void DES_string_to_key(const char *str, DES_cblock *key)
     DES_set_odd_parity(key);
     DES_set_key_unchecked(key, &ks);
     DES_cbc_cksum((const unsigned char *)str, key, length, &ks, key);
-    OPENSSL_cleanse(&ks, sizeof(ks));
+    OPENtls_cleanse(&ks, sizeof(ks));
     DES_set_odd_parity(key);
 }
 
@@ -71,7 +71,7 @@ void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
     DES_cbc_cksum((const unsigned char *)str, key1, length, &ks, key1);
     DES_set_key_unchecked(key2, &ks);
     DES_cbc_cksum((const unsigned char *)str, key2, length, &ks, key2);
-    OPENSSL_cleanse(&ks, sizeof(ks));
+    OPENtls_cleanse(&ks, sizeof(ks));
     DES_set_odd_parity(key1);
     DES_set_odd_parity(key2);
 }

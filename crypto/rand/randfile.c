@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -14,16 +14,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
-#include <openssl/rand_drbg.h>
-#include <openssl/buffer.h>
+#include <opentls/crypto.h>
+#include <opentls/rand.h>
+#include <opentls/rand_drbg.h>
+#include <opentls/buffer.h>
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
 # include <unixio.h>
 #endif
 #include <sys/types.h>
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
 # ifdef _WIN32
@@ -52,7 +52,7 @@
 #define RAND_BUF_SIZE 1024
 #define RFILE ".rnd"
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
 /*
  * __FILE_ptr32 is a type provided by DEC C headers (types.h specifically)
  * to make sure the FILE* is a 32-bit pointer no matter what.  We know that
@@ -65,7 +65,7 @@ static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
         (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 # define VMS_OPEN_ATTRS \
         "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
-# define openssl_fopen(fname, mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
+# define opentls_fopen(fname, mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
 #endif
 
 /*
@@ -85,7 +85,7 @@ int RAND_load_file(const char *file, long bytes)
 #define RAND_LOAD_BUF_SIZE (RAND_BUF_SIZE + RAND_DRBG_STRENGTH)
     unsigned char buf[RAND_LOAD_BUF_SIZE];
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     struct stat sb;
 #endif
     int i, n, ret = 0;
@@ -94,13 +94,13 @@ int RAND_load_file(const char *file, long bytes)
     if (bytes == 0)
         return 0;
 
-    if ((in = openssl_fopen(file, "rb")) == NULL) {
+    if ((in = opentls_fopen(file, "rb")) == NULL) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     if (fstat(fileno(in), &sb) < 0) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_INTERNAL_ERROR);
         ERR_add_error_data(2, "Filename=", file);
@@ -122,7 +122,7 @@ int RAND_load_file(const char *file, long bytes)
      * above the first 4 GB of memory, so we simply turn off the warning
      * temporarily.
      */
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma environment save
 # pragma message disable maylosedata2
 #endif
@@ -132,7 +132,7 @@ int RAND_load_file(const char *file, long bytes)
      * contents lying around?
      */
     setbuf(in, NULL);
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
 # pragma environment restore
 #endif
 
@@ -160,7 +160,7 @@ int RAND_load_file(const char *file, long bytes)
             break;
     }
 
-    OPENSSL_cleanse(buf, sizeof(buf));
+    OPENtls_cleanse(buf, sizeof(buf));
     fclose(in);
     if (!RAND_status()) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_RESEED_ERROR);
@@ -176,7 +176,7 @@ int RAND_write_file(const char *file)
     unsigned char buf[RAND_BUF_SIZE];
     int ret = -1;
     FILE *out = NULL;
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     struct stat sb;
 
     if (stat(file, &sb) >= 0 && !S_ISREG(sb.st_mode)) {
@@ -190,8 +190,8 @@ int RAND_write_file(const char *file)
     if (RAND_priv_bytes(buf, (int)sizeof(buf)) != 1)
         return  -1;
 
-#if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && \
-    !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS)
+#if defined(O_CREAT) && !defined(OPENtls_NO_POSIX_IO) && \
+    !defined(OPENtls_SYS_VMS) && !defined(OPENtls_SYS_WINDOWS)
     {
 # ifndef O_BINARY
 #  define O_BINARY 0
@@ -206,14 +206,14 @@ int RAND_write_file(const char *file)
     }
 #endif
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     /*
      * VMS NOTE: Prior versions of this routine created a _new_ version of
      * the rand file for each call into this routine, then deleted all
      * existing versions named ;-1, and finally renamed the current version
      * as ';1'. Under concurrent usage, this resulted in an RMS race
      * condition in rename() which could orphan files (see vms message help
-     * for RMS$_REENT). With the fopen() calls below, openssl/VMS now shares
+     * for RMS$_REENT). With the fopen() calls below, opentls/VMS now shares
      * the top-level version of the rand file. Note that there may still be
      * conditions where the top-level rand file is locked. If so, this code
      * will then create a new version of the rand file. Without the delete
@@ -224,18 +224,18 @@ int RAND_write_file(const char *file)
      * application level. Also consider whether or not you NEED a persistent
      * rand file in a concurrent use situation.
      */
-    out = openssl_fopen(file, "rb+");
+    out = opentls_fopen(file, "rb+");
 #endif
 
     if (out == NULL)
-        out = openssl_fopen(file, "wb");
+        out = opentls_fopen(file, "wb");
     if (out == NULL) {
         RANDerr(RAND_F_RAND_WRITE_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
 
-#if !defined(NO_CHMOD) && !defined(OPENSSL_NO_POSIX_IO)
+#if !defined(NO_CHMOD) && !defined(OPENtls_NO_POSIX_IO)
     /*
      * Yes it's late to do this (see above comment), but better than nothing.
      */
@@ -244,7 +244,7 @@ int RAND_write_file(const char *file)
 
     ret = fwrite(buf, 1, RAND_BUF_SIZE, out);
     fclose(out);
-    OPENSSL_cleanse(buf, RAND_BUF_SIZE);
+    OPENtls_cleanse(buf, RAND_BUF_SIZE);
     return ret;
 }
 
@@ -282,9 +282,9 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
-    if ((s = ossl_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
+    if ((s = otls_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
         use_randfile = 0;
-        s = ossl_safe_getenv("HOME");
+        s = otls_safe_getenv("HOME");
     }
 #endif
 
@@ -304,7 +304,7 @@ const char *RAND_file_name(char *buf, size_t size)
         if (len + 1 + strlen(RFILE) + 1 >= size)
             return NULL;
         strcpy(buf, s);
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
         strcat(buf, "/");
 #endif
         strcat(buf, RFILE);

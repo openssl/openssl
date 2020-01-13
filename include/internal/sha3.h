@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_INTERNAL_SHA3_H
-# define OSSL_INTERNAL_SHA3_H
+#ifndef Otls_INTERNAL_SHA3_H
+# define Otls_INTERNAL_SHA3_H
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 # include <stddef.h>
 
 # define KECCAK1600_WIDTH 1600
@@ -49,4 +49,4 @@ int sha3_final(unsigned char *md, KECCAK1600_CTX *ctx);
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 
-#endif /* OSSL_INTERNAL_SHA3_H */
+#endif /* Otls_INTERNAL_SHA3_H */

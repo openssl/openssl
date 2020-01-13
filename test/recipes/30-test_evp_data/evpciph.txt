@@ -1,10 +1,10 @@
 #
-# Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
@@ -15,7 +15,7 @@
 
 # DES EDE3 CFB1
 # echo -n "Hello World" |
-#  apps/openssl enc -des-ede3-cfb1 \
+#  apps/opentls enc -des-ede3-cfb1 \
 #   -K 000102030405060708090A0B0C0D0E0F1011121314151617 -iv 0001020304050607 |
 #  xxd -ps -u
 

@@ -1,18 +1,18 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
 #include "crypto/modes.h"
 
-#ifndef OPENSSL_NO_OCB
+#ifndef OPENtls_NO_OCB
 
 /*
  * Calculate the number of binary trailing zero's in any given number
@@ -110,7 +110,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
          * the index.
          */
         ctx->max_l_index += (idx - ctx->max_l_index + 4) & ~3;
-        tmp_ptr = OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
+        tmp_ptr = OPENtls_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
         if (tmp_ptr == NULL) /* prevent ctx->l from being clobbered */
             return NULL;
         ctx->l = tmp_ptr;
@@ -134,12 +134,12 @@ OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
     OCB128_CONTEXT *octx;
     int ret;
 
-    if ((octx = OPENSSL_malloc(sizeof(*octx))) != NULL) {
+    if ((octx = OPENtls_malloc(sizeof(*octx))) != NULL) {
         ret = CRYPTO_ocb128_init(octx, keyenc, keydec, encrypt, decrypt,
                                  stream);
         if (ret)
             return octx;
-        OPENSSL_free(octx);
+        OPENtls_free(octx);
     }
 
     return NULL;
@@ -155,7 +155,7 @@ int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
     memset(ctx, 0, sizeof(*ctx));
     ctx->l_index = 0;
     ctx->max_l_index = 5;
-    if ((ctx->l = OPENSSL_malloc(ctx->max_l_index * 16)) == NULL) {
+    if ((ctx->l = OPENtls_malloc(ctx->max_l_index * 16)) == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -202,7 +202,7 @@ int CRYPTO_ocb128_copy_ctx(OCB128_CONTEXT *dest, OCB128_CONTEXT *src,
     if (keydec)
         dest->keydec = keydec;
     if (src->l) {
-        if ((dest->l = OPENSSL_malloc(src->max_l_index * 16)) == NULL) {
+        if ((dest->l = OPENtls_malloc(src->max_l_index * 16)) == NULL) {
             CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_COPY_CTX, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -554,9 +554,9 @@ int CRYPTO_ocb128_tag(OCB128_CONTEXT *ctx, unsigned char *tag, size_t len)
 void CRYPTO_ocb128_cleanup(OCB128_CONTEXT *ctx)
 {
     if (ctx) {
-        OPENSSL_clear_free(ctx->l, ctx->max_l_index * 16);
-        OPENSSL_cleanse(ctx, sizeof(*ctx));
+        OPENtls_clear_free(ctx->l, ctx->max_l_index * 16);
+        OPENtls_cleanse(ctx, sizeof(*ctx));
     }
 }
 
-#endif                          /* OPENSSL_NO_OCB */
+#endif                          /* OPENtls_NO_OCB */

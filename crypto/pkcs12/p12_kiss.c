@@ -1,25 +1,25 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/pkcs12.h>
+#include <opentls/pkcs12.h>
 
 /* Simplified PKCS#12 routines */
 
-static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
+static int parse_pk12(PKCS12 *p12, const char *pass, int patlsen,
                       EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
 
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-                      int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
+                      int patlsen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
 
-static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
+static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int patlsen,
                      EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
 
 /*
@@ -129,7 +129,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 /* Parse the outer PKCS#12 structure */
 
-static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
+static int parse_pk12(PKCS12 *p12, const char *pass, int patlsen,
                       EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
     STACK_OF(PKCS7) *asafes;
@@ -145,14 +145,14 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
         if (bagnid == NID_pkcs7_data) {
             bags = PKCS12_unpack_p7data(p7);
         } else if (bagnid == NID_pkcs7_encrypted) {
-            bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
+            bags = PKCS12_unpack_p7encdata(p7, pass, patlsen);
         } else
             continue;
         if (!bags) {
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
         }
-        if (!parse_bags(bags, pass, passlen, pkey, ocerts)) {
+        if (!parse_bags(bags, pass, patlsen, pkey, ocerts)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
@@ -164,18 +164,18 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
 }
 
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-                      int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
+                      int patlsen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!parse_bag(sk_PKCS12_SAFEBAG_value(bags, i),
-                       pass, passlen, pkey, ocerts))
+                       pass, patlsen, pkey, ocerts))
             return 0;
     }
     return 1;
 }
 
-static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
+static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int patlsen,
                      EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
     PKCS8_PRIV_KEY_INFO *p8;
@@ -202,7 +202,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
     case NID_pkcs8ShroudedKeyBag:
         if (pkey == NULL || *pkey != NULL)
             return 1;
-        if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
+        if ((p8 = PKCS12_decrypt_skey(bag, pass, patlsen)) == NULL)
             return 0;
         *pkey = EVP_PKCS82PKEY(p8);
         PKCS8_PRIV_KEY_INFO_free(p8);
@@ -225,7 +225,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
             len = ASN1_STRING_to_UTF8(&data, fname);
             if (len >= 0) {
                 r = X509_alias_set1(x509, data, len);
-                OPENSSL_free(data);
+                OPENtls_free(data);
                 if (!r) {
                     X509_free(x509);
                     return 0;
@@ -241,7 +241,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_safeContentsBag:
-        return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, passlen, pkey,
+        return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, patlsen, pkey,
                           ocerts);
 
     default:

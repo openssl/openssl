@@ -1,14 +1,14 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TEST_ECDSATEST_H
-# define OSSL_TEST_ECDSATEST_H
+#ifndef Otls_TEST_ECDSATEST_H
+# define Otls_TEST_ECDSATEST_H
 
 /*-
  * NIST CAVP ECDSA KATs:
@@ -3350,7 +3350,7 @@ static const ecdsa_cavs_kat_t ecdsa_cavs_kats[] = {
      "507488b99f4b3c8bb404fb5c852f959273f412cbdd5e713c5e3f0e67f94",
      "0097ed9e005416fc944e26bcc3661a09b35c128fcccdc2742739c8a301a338dd77d9d135"
      "71612a3b9524a6164b09fe73643bbc31447ee31ef44a490843e4e7db23f"}
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
     /* binary KATs from NIST CAVP */
     , {NID_sect233k1, NID_sha224,
        "f23f784fe136c9fc0d169503d361e9c6148b0f1fbdcae0a97fae1af7033ddef25cb7489c"
@@ -10209,6 +10209,6 @@ static const ecdsa_cavs_kat_t ecdsa_cavs_kats[] = {
      "18d114bdf47e2913463e50375dc92784a14934a124f83d28caf97c5d8aab",
      "03210d71ef6c10157c0d1053dff93e8b085f1e9bc22401f7a24798a63c00",
      "1c8c4343a8ecbf7c4d4e48f7d76d5658bc027c77086ec8b10097deb307d6"}
-# endif                         /* OPENSSL_NO_EC2M */
+# endif                         /* OPENtls_NO_EC2M */
 };
-#endif                          /* OSSL_TEST_ECDSATEST_H */
+#endif                          /* Otls_TEST_ECDSATEST_H */

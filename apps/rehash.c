@@ -1,17 +1,17 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@gmail.com>
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "apps.h"
 #include "progs.h"
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
+#if defined(OPENtls_SYS_UNIX) || defined(__APPLE__) || \
     (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)
 # include <unistd.h>
 # include <stdio.h>
@@ -24,7 +24,7 @@
 /*
  * Make sure that the processing of symbol names is treated the same as when
  * libcrypto is built.  This is done automatically for public headers (see
- * include/openssl/__DECC_INCLUDE_PROLOGUE.H and __DECC_INCLUDE_EPILOGUE.H),
+ * include/opentls/__DECC_INCLUDE_PROLOGUE.H and __DECC_INCLUDE_EPILOGUE.H),
  * but not for internal headers.
  */
 # ifdef __VMS
@@ -38,9 +38,9 @@
 #  pragma names restore
 # endif
 
-# include <openssl/evp.h>
-# include <openssl/pem.h>
-# include <openssl/x509.h>
+# include <opentls/evp.h>
+# include <opentls/pem.h>
+# include <opentls/x509.h>
 
 
 # ifndef PATH_MAX
@@ -51,7 +51,7 @@
 # endif
 # define MAX_COLLISIONS  256
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
 /*
  * VxWorks has no symbolic links
  */
@@ -129,7 +129,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     static HENTRY nilhentry;
     BUCKET *bp;
     HENTRY *ep, *found = NULL;
-    unsigned int ndx = (type + hash) % OSSL_NELEM(hash_table);
+    unsigned int ndx = (type + hash) % Otls_NELEM(hash_table);
 
     for (bp = hash_table[ndx]; bp; bp = bp->next)
         if (bp->type == type && bp->hash == hash)
@@ -168,7 +168,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         ep = app_malloc(sizeof(*ep), "collision bucket");
         *ep = nilhentry;
         ep->old_id = ~0;
-        ep->filename = OPENSSL_strdup(filename);
+        ep->filename = OPENtls_strdup(filename);
         if (bp->last_entry)
             bp->last_entry->next = ep;
         if (bp->first_entry == NULL)
@@ -196,18 +196,18 @@ static int handle_symlink(const char *filename, const char *fullpath)
     int i, type, id;
     unsigned char ch;
     char linktarget[PATH_MAX], *endptr;
-    ossl_ssize_t n;
+    otls_ssize_t n;
 
     for (i = 0; i < 8; i++) {
         ch = filename[i];
         if (!isxdigit(ch))
             return -1;
         hash <<= 4;
-        hash += OPENSSL_hexchar2int(ch);
+        hash += OPENtls_hexchar2int(ch);
     }
     if (filename[i++] != '.')
         return -1;
-    for (type = OSSL_NELEM(suffixes) - 1; type > 0; type--) {
+    for (type = Otls_NELEM(suffixes) - 1; type > 0; type--) {
         const char *suffix = suffixes[type];
         if (strncasecmp(suffix, &filename[i], strlen(suffix)) == 0)
             break;
@@ -243,11 +243,11 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     /* Does it end with a recognized extension? */
     if ((ext = strrchr(filename, '.')) == NULL)
         goto end;
-    for (i = 0; i < OSSL_NELEM(extensions); i++) {
+    for (i = 0; i < Otls_NELEM(extensions); i++) {
         if (strcasecmp(extensions[i], ext + 1) == 0)
             break;
     }
-    if (i >= OSSL_NELEM(extensions))
+    if (i >= Otls_NELEM(extensions))
         goto end;
 
     /* Does it have X.509 data in it? */
@@ -297,7 +297,7 @@ end:
 
 static void str_free(char *s)
 {
-    OPENSSL_free(s);
+    OPENtls_free(s);
 }
 
 static int ends_with_dirsep(const char *path)
@@ -321,7 +321,7 @@ static int do_dir(const char *dirname, enum Hash h)
 {
     BUCKET *bp, *nextbp;
     HENTRY *ep, *nextep;
-    OPENSSL_DIR_CTX *d = NULL;
+    OPENtls_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
     int n, numfiles, nextid, buflen, errs = 0;
@@ -329,7 +329,7 @@ static int do_dir(const char *dirname, enum Hash h)
     const char *pathsep;
     const char *filename;
     char *buf, *copy = NULL;
-    STACK_OF(OPENSSL_STRING) *files = NULL;
+    STACK_OF(OPENtls_STRING) *files = NULL;
 
     if (app_access(dirname, W_OK) < 0) {
         BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
@@ -343,26 +343,26 @@ static int do_dir(const char *dirname, enum Hash h)
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
 
-    if ((files = sk_OPENSSL_STRING_new_null()) == NULL) {
+    if ((files = sk_OPENtls_STRING_new_null()) == NULL) {
         BIO_printf(bio_err, "Skipping %s, out of memory\n", dirname);
         errs = 1;
         goto err;
     }
-    while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
-        if ((copy = OPENSSL_strdup(filename)) == NULL
-                || sk_OPENSSL_STRING_push(files, copy) == 0) {
-            OPENSSL_free(copy);
+    while ((filename = OPENtls_DIR_read(&d, dirname)) != NULL) {
+        if ((copy = OPENtls_strdup(filename)) == NULL
+                || sk_OPENtls_STRING_push(files, copy) == 0) {
+            OPENtls_free(copy);
             BIO_puts(bio_err, "out of memory\n");
             errs = 1;
             goto err;
         }
     }
-    OPENSSL_DIR_end(&d);
-    sk_OPENSSL_STRING_sort(files);
+    OPENtls_DIR_end(&d);
+    sk_OPENtls_STRING_sort(files);
 
-    numfiles = sk_OPENSSL_STRING_num(files);
+    numfiles = sk_OPENtls_STRING_num(files);
     for (n = 0; n < numfiles; ++n) {
-        filename = sk_OPENSSL_STRING_value(files, n);
+        filename = sk_OPENtls_STRING_value(files, n);
         if (BIO_snprintf(buf, buflen, "%s%s%s",
                          dirname, pathsep, filename) >= buflen)
             continue;
@@ -373,7 +373,7 @@ static int do_dir(const char *dirname, enum Hash h)
         errs += do_file(filename, buf, h);
     }
 
-    for (i = 0; i < OSSL_NELEM(hash_table); i++) {
+    for (i = 0; i < Otls_NELEM(hash_table); i++) {
         for (bp = hash_table[i]; bp; bp = nextbp) {
             nextbp = bp->next;
             nextid = 0;
@@ -431,17 +431,17 @@ static int do_dir(const char *dirname, enum Hash h)
                         errs++;
                     }
                 }
-                OPENSSL_free(ep->filename);
-                OPENSSL_free(ep);
+                OPENtls_free(ep->filename);
+                OPENtls_free(ep);
             }
-            OPENSSL_free(bp);
+            OPENtls_free(bp);
         }
         hash_table[i] = NULL;
     }
 
  err:
-    sk_OPENSSL_STRING_pop_free(files, str_free);
-    OPENSSL_free(buf);
+    sk_OPENtls_STRING_pop_free(files, str_free);
+    OPENtls_free(buf);
     return errs;
 }
 
@@ -512,10 +512,10 @@ int rehash_main(int argc, char **argv)
             errs += do_dir(*argv++, h);
     } else if ((env = getenv(X509_get_default_cert_dir_env())) != NULL) {
         char lsc[2] = { LIST_SEPARATOR_CHAR, '\0' };
-        m = OPENSSL_strdup(env);
+        m = OPENtls_strdup(env);
         for (e = strtok(m, lsc); e != NULL; e = strtok(NULL, lsc))
             errs += do_dir(e, h);
-        OPENSSL_free(m);
+        OPENtls_free(m);
     } else {
         errs += do_dir(X509_get_default_cert_dir(), h);
     }
@@ -535,4 +535,4 @@ int rehash_main(int argc, char **argv)
     return 1;
 }
 
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) */
+#endif /* defined(OPENtls_SYS_UNIX) || defined(__APPLE__) */

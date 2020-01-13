@@ -1,22 +1,22 @@
 #! /usr/bin/env perl
-# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT with bldtop_file srctop_file cmdstr/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT with bldtop_file srctop_file cmdstr/;
+use Opentls::Test::Utils;
 
 setup("test_verify_store");
 
 plan tests => 10;
 
-my $dummycnf = srctop_file("apps", "openssl.cnf");
+my $dummycnf = srctop_file("apps", "opentls.cnf");
 
 my $CAkey = "keyCA.ss";
 my $CAcert="certCA.ss";
@@ -102,17 +102,17 @@ SKIP: {
 sub verify {
     my $title = shift;
 
-    ok(run(app([qw(openssl verify), @_])), $title);
+    ok(run(app([qw(opentls verify), @_])), $title);
 }
 
 sub req {
     my $title = shift;
 
-    ok(run(app([qw(openssl req), @_])), $title);
+    ok(run(app([qw(opentls req), @_])), $title);
 }
 
 sub x509 {
     my $title = shift;
 
-    ok(run(app([qw(openssl x509), @_])), $title);
+    ok(run(app([qw(opentls x509), @_])), $title);
 }

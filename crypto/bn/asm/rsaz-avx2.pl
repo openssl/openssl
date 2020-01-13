@@ -1,11 +1,11 @@
 #! /usr/bin/env perl
-# Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2018 The Opentls Project Authors. All Rights Reserved.
 # Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 #
 # Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
 # (1) Intel Corporation, Israel Development Center, Haifa, Israel
@@ -24,11 +24,11 @@
 # [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
 #     resistant 1024-bit modular exponentiation, for optimizing RSA2048
 #     on AVX2 capable x86_64 platforms",
-#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
+#     http://rt.opentls.org/Ticket/Display.html?id=2850&user=guest&pass=guest
 #
-# +13% improvement over original submission by <appro@openssl.org>
+# +13% improvement over original submission by <appro@opentls.org>
 #
-# rsa2048 sign/sec	OpenSSL 1.0.1	scalar(*)	this
+# rsa2048 sign/sec	Opentls 1.0.1	scalar(*)	this
 # 2.3GHz Haswell	621		765/+23%	1113/+79%
 # 2.3GHz Broadwell(**)	688		1200(***)/+74%	1120/+63%
 #
@@ -1759,12 +1759,12 @@ ___
 }
 
 $code.=<<___;
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 .globl	rsaz_avx2_eligible
 .type	rsaz_avx2_eligible,\@abi-omnipotent
 .align	32
 rsaz_avx2_eligible:
-	mov	OPENSSL_ia32cap_P+8(%rip),%eax
+	mov	OPENtls_ia32cap_P+8(%rip),%eax
 ___
 $code.=<<___	if ($addx);
 	mov	\$`1<<8|1<<19`,%ecx

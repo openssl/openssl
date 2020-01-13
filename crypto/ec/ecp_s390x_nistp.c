@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "ec_local.h"
 #include "s390x_arch.h"
 
@@ -110,7 +110,7 @@ ret:
     /* Otherwise use default. */
     if (rc == -1)
         rc = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-    OPENSSL_cleanse(param + S390X_OFF_SCALAR(len), len);
+    OPENtls_cleanse(param + S390X_OFF_SCALAR(len), len);
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return rc;
@@ -203,7 +203,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
 
     ok = 1;
 ret:
-    OPENSSL_cleanse(param + S390X_OFF_K(len), 2 * len);
+    OPENtls_cleanse(param + S390X_OFF_K(len), 2 * len);
     if (ok != 1) {
         ECDSA_SIG_free(sig);
         sig = NULL;
@@ -376,11 +376,11 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
     };                                                                  \
     static const EC_METHOD *ret;                                        \
                                                                         \
-    if ((OPENSSL_s390xcap_P.pcc[1]                                      \
+    if ((OPENtls_s390xcap_P.pcc[1]                                      \
          & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P##bits))                 \
-        && (OPENSSL_s390xcap_P.kdsa[0]                                  \
+        && (OPENtls_s390xcap_P.kdsa[0]                                  \
             & S390X_CAPBIT(S390X_ECDSA_VERIFY_P##bits))                 \
-        && (OPENSSL_s390xcap_P.kdsa[0]                                  \
+        && (OPENtls_s390xcap_P.kdsa[0]                                  \
             & S390X_CAPBIT(S390X_ECDSA_SIGN_P##bits)))                  \
         ret = &EC_GFp_s390x_nistp##bits##_meth;                         \
     else                                                                \

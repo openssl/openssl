@@ -1,20 +1,20 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "internal/nelem.h"
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/obj_mac.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/obj_mac.h>
+#include <opentls/evp.h>
+#include <opentls/aes.h>
 #include "../crypto/rand/rand_local.h"
 
 #include "testutil.h"
@@ -91,7 +91,7 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
     t.noncelen = td->noncelen;
     RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
 
-    buff = OPENSSL_malloc(td->retbyteslen);
+    buff = OPENtls_malloc(td->retbyteslen);
     if (buff == NULL)
         goto err;
 
@@ -106,7 +106,7 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
         failures++;
 
 err:
-    OPENSSL_free(buff);
+    OPENtls_free(buff);
     RAND_DRBG_uninstantiate(drbg);
     RAND_DRBG_free(drbg);
     return failures == 0;
@@ -152,7 +152,7 @@ static int single_kat_pr_false(const struct drbg_kat *td)
     t.noncelen = td->noncelen;
     RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
 
-    buff = OPENSSL_malloc(td->retbyteslen);
+    buff = OPENtls_malloc(td->retbyteslen);
     if (buff == NULL)
         goto err;
 
@@ -173,7 +173,7 @@ static int single_kat_pr_false(const struct drbg_kat *td)
         failures++;
 
 err:
-    OPENSSL_free(buff);
+    OPENtls_free(buff);
     RAND_DRBG_uninstantiate(drbg);
     RAND_DRBG_free(drbg);
     return failures == 0;
@@ -218,7 +218,7 @@ static int single_kat_pr_true(const struct drbg_kat *td)
     t.entropylen = td->entropyinlen;
     RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
 
-    buff = OPENSSL_malloc(td->retbyteslen);
+    buff = OPENtls_malloc(td->retbyteslen);
     if (buff == NULL)
         goto err;
 
@@ -243,7 +243,7 @@ static int single_kat_pr_true(const struct drbg_kat *td)
         failures++;
 
 err:
-    OPENSSL_free(buff);
+    OPENtls_free(buff);
     RAND_DRBG_uninstantiate(drbg);
     RAND_DRBG_free(drbg);
     return failures == 0;

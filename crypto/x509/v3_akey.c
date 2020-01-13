@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
@@ -41,25 +41,25 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 {
     char *tmp;
     if (akeyid->keyid) {
-        tmp = OPENSSL_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
+        tmp = OPENtls_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
         if (tmp == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         X509V3_add_value((akeyid->issuer || akeyid->serial) ? "keyid" : NULL,
                          tmp, &extlist);
-        OPENSSL_free(tmp);
+        OPENtls_free(tmp);
     }
     if (akeyid->issuer)
         extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
     if (akeyid->serial) {
-        tmp = OPENSSL_buf2hexstr(akeyid->serial->data, akeyid->serial->length);
+        tmp = OPENtls_buf2hexstr(akeyid->serial->data, akeyid->serial->length);
         if (tmp == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         X509V3_add_value("serial", tmp, &extlist);
-        OPENSSL_free(tmp);
+        OPENtls_free(tmp);
     }
     return extlist;
 }

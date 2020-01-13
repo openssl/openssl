@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,12 +13,12 @@
 #include <time.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/conf.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
+#include <opentls/bio.h>
+#include <opentls/conf.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -32,7 +32,7 @@ const OPTIONS spkac_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"spksect", OPT_SPKSECT, 's',
      "Specify the name of an SPKAC-dedicated section of configuration"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
 
@@ -146,11 +146,11 @@ int spkac_main(int argc, char **argv)
 
         out = bio_open_default(outfile, 'w', FORMAT_TEXT);
         if (out == NULL) {
-            OPENSSL_free(spkstr);
+            OPENtls_free(spkstr);
             goto end;
         }
         BIO_printf(out, "SPKAC=%s\n", spkstr);
-        OPENSSL_free(spkstr);
+        OPENtls_free(spkstr);
         ret = 0;
         goto end;
     }
@@ -202,6 +202,6 @@ int spkac_main(int argc, char **argv)
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     release_engine(e);
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     return ret;
 }

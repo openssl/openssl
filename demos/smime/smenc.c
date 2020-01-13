@@ -1,16 +1,16 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Simple S/MIME encrypt example */
-#include <openssl/pem.h>
-#include <openssl/pkcs7.h>
-#include <openssl/err.h>
+#include <opentls/pem.h>
+#include <opentls/pkcs7.h>
+#include <opentls/err.h>
 
 int main(int argc, char **argv)
 {
@@ -21,12 +21,12 @@ int main(int argc, char **argv)
     int ret = 1;
 
     /*
-     * On OpenSSL 0.9.9 only:
+     * On Opentls 0.9.9 only:
      * for streaming set PKCS7_STREAM
      */
     int flags = PKCS7_STREAM;
 
-    OpenSSL_add_all_algorithms();
+    Opentls_add_all_algorithms();
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate */

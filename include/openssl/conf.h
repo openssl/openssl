@@ -1,27 +1,27 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef  OPENSSL_CONF_H
-# define OPENSSL_CONF_H
+#ifndef  OPENtls_CONF_H
+# define OPENtls_CONF_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CONF_H
 # endif
 
-# include <openssl/bio.h>
-# include <openssl/lhash.h>
-# include <openssl/safestack.h>
-# include <openssl/e_os2.h>
-# include <openssl/types.h>
-# include <openssl/conferr.h>
+# include <opentls/bio.h>
+# include <opentls/lhash.h>
+# include <opentls/safestack.h>
+# include <opentls/e_os2.h>
+# include <opentls/types.h>
+# include <opentls/conferr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -76,7 +76,7 @@ int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash);
 LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
                                 long *eline);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
                                    long *eline);
 # endif
@@ -89,16 +89,16 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
 long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
                      const char *name);
 void CONF_free(LHASH_OF(CONF_VALUE) *conf);
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 #endif
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
-DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
+DEPRECATEDIN_1_1_0(void OPENtls_config(const char *config_name))
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-# define OPENSSL_no_config() \
-    OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
+# define OPENtls_no_config() \
+    OPENtls_init_crypto(OPENtls_INIT_NO_LOAD_CONFIG, NULL)
 #endif
 
 /*
@@ -120,7 +120,7 @@ void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
 int NCONF_load(CONF *conf, const char *file, long *eline);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int NCONF_load_fp(CONF *conf, FILE *fp, long *eline);
 # endif
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline);
@@ -129,7 +129,7 @@ STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf,
 char *NCONF_get_string(const CONF *conf, const char *group, const char *name);
 int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
                        long *result);
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int NCONF_dump_fp(const CONF *conf, FILE *out);
 #endif
 int NCONF_dump_bio(const CONF *conf, BIO *out);
@@ -144,7 +144,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 # define CONF_modules_free() while(0) continue
 #endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,
@@ -166,7 +166,7 @@ int CONF_parse_list(const char *list, int sep, int nospc,
                     int (*list_cb) (const char *elem, int len, void *usr),
                     void *arg);
 
-void OPENSSL_load_builtin_modules(void);
+void OPENtls_load_builtin_modules(void);
 
 
 # ifdef  __cplusplus

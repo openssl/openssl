@@ -1,20 +1,20 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/conf.h>
-#include <openssl/ct.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/safestack.h>
+#include <opentls/conf.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/safestack.h>
 
 #include "internal/cryptlib.h"
 
@@ -56,7 +56,7 @@ static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx);
 
 static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new(void)
 {
-    CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    CTLOG_STORE_LOAD_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         CTerr(CT_F_CTLOG_STORE_LOAD_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -66,7 +66,7 @@ static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new(void)
 
 static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx)
 {
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 /* Converts a log's public key into a SHA256 log ID */
@@ -85,13 +85,13 @@ static int ct_v1_log_id_from_pkey(EVP_PKEY *pkey,
     SHA256(pkey_der, pkey_der_len, log_id);
     ret = 1;
 err:
-    OPENSSL_free(pkey_der);
+    OPENtls_free(pkey_der);
     return ret;
 }
 
 CTLOG_STORE *CTLOG_STORE_new(void)
 {
-    CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
+    CTLOG_STORE *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         CTerr(CT_F_CTLOG_STORE_NEW, ERR_R_MALLOC_FAILURE);
@@ -104,7 +104,7 @@ CTLOG_STORE *CTLOG_STORE_new(void)
 
     return ret;
 err:
-    OPENSSL_free(ret);
+    OPENtls_free(ret);
     return NULL;
 }
 
@@ -112,7 +112,7 @@ void CTLOG_STORE_free(CTLOG_STORE *store)
 {
     if (store != NULL) {
         sk_CTLOG_pop_free(store->logs, CTLOG_free);
-        OPENSSL_free(store);
+        OPENtls_free(store);
     }
 }
 
@@ -137,7 +137,7 @@ static int ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *sec
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 {
-    const char *fpath = ossl_safe_getenv(CTLOG_FILE_EVP);
+    const char *fpath = otls_safe_getenv(CTLOG_FILE_EVP);
 
     if (fpath == NULL)
       fpath = CTLOG_FILE;
@@ -164,12 +164,12 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
     if (log_name == NULL)
         return 1;
 
-    tmp = OPENSSL_strndup(log_name, log_name_len);
+    tmp = OPENtls_strndup(log_name, log_name_len);
     if (tmp == NULL)
         goto mem_err;
 
     ret = ctlog_new_from_conf(&ct_log, load_ctx->conf, tmp);
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
 
     if (ret < 0) {
         /* Propagate any internal error */
@@ -236,14 +236,14 @@ end:
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
 {
-    CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
+    CTLOG *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    ret->name = OPENSSL_strdup(name);
+    ret->name = OPENtls_strdup(name);
     if (ret->name == NULL) {
         CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -263,9 +263,9 @@ err:
 void CTLOG_free(CTLOG *log)
 {
     if (log != NULL) {
-        OPENSSL_free(log->name);
+        OPENtls_free(log->name);
         EVP_PKEY_free(log->public_key);
-        OPENSSL_free(log);
+        OPENtls_free(log);
     }
 }
 

@@ -1,22 +1,22 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/bn.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
 #include <string.h>
 
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;
@@ -168,8 +168,8 @@ int sm2_encrypt(const EC_KEY *key,
         goto done;
     }
 
-    x2y2 = OPENSSL_zalloc(2 * field_size);
-    C3 = OPENSSL_zalloc(C3_size);
+    x2y2 = OPENtls_zalloc(2 * field_size);
+    C3 = OPENtls_zalloc(C3_size);
 
     if (x2y2 == NULL || C3 == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -197,7 +197,7 @@ int sm2_encrypt(const EC_KEY *key,
         goto done;
     }
 
-    msg_mask = OPENSSL_zalloc(msg_len);
+    msg_mask = OPENtls_zalloc(msg_len);
     if (msg_mask == NULL) {
        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
@@ -250,9 +250,9 @@ int sm2_encrypt(const EC_KEY *key,
  done:
     ASN1_OCTET_STRING_free(ctext_struct.C2);
     ASN1_OCTET_STRING_free(ctext_struct.C3);
-    OPENSSL_free(msg_mask);
-    OPENSSL_free(x2y2);
-    OPENSSL_free(C3);
+    OPENtls_free(msg_mask);
+    OPENtls_free(x2y2);
+    OPENtls_free(C3);
     EVP_MD_CTX_free(hash);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
@@ -319,9 +319,9 @@ int sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    msg_mask = OPENSSL_zalloc(msg_len);
-    x2y2 = OPENSSL_zalloc(2 * field_size);
-    computed_C3 = OPENSSL_zalloc(hash_size);
+    msg_mask = OPENtls_zalloc(msg_len);
+    x2y2 = OPENtls_zalloc(2 * field_size);
+    computed_C3 = OPENtls_zalloc(hash_size);
 
     if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
@@ -381,9 +381,9 @@ int sm2_decrypt(const EC_KEY *key,
     if (rc == 0)
         memset(ptext_buf, 0, *ptext_len);
 
-    OPENSSL_free(msg_mask);
-    OPENSSL_free(x2y2);
-    OPENSSL_free(computed_C3);
+    OPENtls_free(msg_mask);
+    OPENtls_free(x2y2);
+    OPENtls_free(computed_C3);
     EC_POINT_free(C1);
     BN_CTX_free(ctx);
     SM2_Ciphertext_free(sm2_ctext);

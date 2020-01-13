@@ -1,25 +1,25 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_WHRLPOOL_H
-# define OPENSSL_WHRLPOOL_H
+#ifndef OPENtls_WHRLPOOL_H
+# define OPENtls_WHRLPOOL_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_WHRLPOOL_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_WHIRLPOOL
-#  include <openssl/e_os2.h>
+# ifndef OPENtls_NO_WHIRLPOOL
+#  include <opentls/e_os2.h>
 #  include <stddef.h>
 #  ifdef __cplusplus
 extern "C" {
@@ -27,7 +27,7 @@ extern "C" {
 
 #  define WHIRLPOOL_DIGEST_LENGTH (512/8)
 
-#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+#  if !defined(OPENtls_NO_DEPRECATED_3_0)
 
 #   define WHIRLPOOL_BBLOCK        512
 #   define WHIRLPOOL_COUNTER       (256/8)
@@ -53,7 +53,7 @@ DEPRECATEDIN_3_0(int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c))
 DEPRECATEDIN_3_0(unsigned char *WHIRLPOOL(const void *inp, size_t bytes,
                                           unsigned char *md))
 
-#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
+#  if !defined(OPENtls_NO_DEPRECATED_3_0)
 #   ifdef __cplusplus
 }
 #   endif

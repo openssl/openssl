@@ -1,36 +1,36 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 #include "dsa_local.h"
 #include <string.h>
-#include <openssl/err.h>
+#include <opentls/err.h>
 
 DSA_METHOD *DSA_meth_new(const char *name, int flags)
 {
-    DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(*dsam));
+    DSA_METHOD *dsam = OPENtls_zalloc(sizeof(*dsam));
 
     if (dsam != NULL) {
         dsam->flags = flags;
 
-        dsam->name = OPENSSL_strdup(name);
+        dsam->name = OPENtls_strdup(name);
         if (dsam->name != NULL)
             return dsam;
 
-        OPENSSL_free(dsam);
+        OPENtls_free(dsam);
     }
 
     DSAerr(DSA_F_DSA_METH_NEW, ERR_R_MALLOC_FAILURE);
@@ -40,23 +40,23 @@ DSA_METHOD *DSA_meth_new(const char *name, int flags)
 void DSA_meth_free(DSA_METHOD *dsam)
 {
     if (dsam != NULL) {
-        OPENSSL_free(dsam->name);
-        OPENSSL_free(dsam);
+        OPENtls_free(dsam->name);
+        OPENtls_free(dsam);
     }
 }
 
 DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam)
 {
-    DSA_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
+    DSA_METHOD *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, dsam, sizeof(*dsam));
 
-        ret->name = OPENSSL_strdup(dsam->name);
+        ret->name = OPENtls_strdup(dsam->name);
         if (ret->name != NULL)
             return ret;
 
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
     }
 
     DSAerr(DSA_F_DSA_METH_DUP, ERR_R_MALLOC_FAILURE);
@@ -70,14 +70,14 @@ const char *DSA_meth_get0_name(const DSA_METHOD *dsam)
 
 int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
 {
-    char *tmpname = OPENSSL_strdup(name);
+    char *tmpname = OPENtls_strdup(name);
 
     if (tmpname == NULL) {
         DSAerr(DSA_F_DSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    OPENSSL_free(dsam->name);
+    OPENtls_free(dsam->name);
     dsam->name = tmpname;
 
     return 1;

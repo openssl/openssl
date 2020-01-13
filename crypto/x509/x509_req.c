@@ -1,23 +1,23 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
-#include <openssl/pem.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
+#include <opentls/pem.h>
 
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
@@ -35,7 +35,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     ri = &ret->req_info;
 
     ri->version->length = 1;
-    ri->version->data = OPENSSL_malloc(1);
+    ri->version->data = OPENtls_malloc(1);
     if (ri->version->data == NULL)
         goto err;
     ri->version->data[0] = 0;   /* version == 0 */
@@ -97,13 +97,13 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
         X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         if (EVP_PKEY_id(k) == EVP_PKEY_EC) {
             X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
             break;
         }
 #endif
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
         if (EVP_PKEY_id(k) == EVP_PKEY_DH) {
             /* No idea */
             X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,
@@ -192,7 +192,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
     if (extlen <= 0)
         return 0;
     rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
-    OPENSSL_free(ext);
+    OPENtls_free(ext);
     return rv;
 }
 

@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -34,16 +34,16 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &v3_ext_ku,
     &v3_delta_crl,
     &v3_crl_reason,
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     &v3_crl_invdate,
 #endif
     &v3_sxnet,
     &v3_info,
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     &v3_addr,
     &v3_asid,
 #endif
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     &v3_ocsp_nonce,
     &v3_ocsp_crlid,
     &v3_ocsp_accresp,
@@ -53,7 +53,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #endif
     &v3_sinfo,
     &v3_policy_constraints,
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     &v3_crl_hold,
 #endif
     &v3_pci,
@@ -63,7 +63,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &v3_idp,
     &v3_alt[2],
     &v3_freshest_crl,
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
     &v3_ct_scts[0],
     &v3_ct_scts[1],
     &v3_ct_scts[2],
@@ -74,5 +74,5 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 
 /* Number of standard extensions */
 
-#define STANDARD_EXTENSION_COUNT OSSL_NELEM(standard_exts)
+#define STANDARD_EXTENSION_COUNT Otls_NELEM(standard_exts)
 

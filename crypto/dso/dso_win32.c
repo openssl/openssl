@@ -1,10 +1,10 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -67,10 +67,10 @@ static char *win32_merger(DSO *dso, const char *filespec1,
 static int win32_pathbyaddr(void *addr, char *path, int sz);
 static void *win32_globallookup(const char *name);
 
-static const char *openssl_strnchr(const char *string, int c, size_t len);
+static const char *opentls_strnchr(const char *string, int c, size_t len);
 
 static DSO_METHOD dso_meth_win32 = {
-    "OpenSSL 'win32' shared library method",
+    "Opentls 'win32' shared library method",
     win32_load,
     win32_unload,
     win32_bind_func,
@@ -83,7 +83,7 @@ static DSO_METHOD dso_meth_win32 = {
     win32_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_openssl(void)
+DSO_METHOD *DSO_METHOD_opentls(void)
 {
     return &dso_meth_win32;
 }
@@ -109,7 +109,7 @@ static int win32_load(DSO *dso)
         ERR_add_error_data(3, "filename(", filename, ")");
         goto err;
     }
-    p = OPENSSL_malloc(sizeof(*p));
+    p = OPENtls_malloc(sizeof(*p));
     if (p == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -124,8 +124,8 @@ static int win32_load(DSO *dso)
     return 1;
  err:
     /* Cleanup ! */
-    OPENSSL_free(filename);
-    OPENSSL_free(p);
+    OPENtls_free(filename);
+    OPENtls_free(p);
     if (h != NULL)
         FreeLibrary(h);
     return 0;
@@ -154,7 +154,7 @@ static int win32_unload(DSO *dso)
         return 0;
     }
     /* Cleanup */
-    OPENSSL_free(p);
+    OPENtls_free(p);
     return 1;
 }
 
@@ -214,7 +214,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
         return NULL;
     }
 
-    result = OPENSSL_zalloc(sizeof(*result));
+    result = OPENtls_zalloc(sizeof(*result));
     if (result == NULL) {
         DSOerr(DSO_F_WIN32_SPLITTER, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -236,7 +236,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
         case ':':
             if (position != IN_DEVICE) {
                 DSOerr(DSO_F_WIN32_SPLITTER, DSO_R_INCORRECT_FILE_SYNTAX);
-                OPENSSL_free(result);
+                OPENtls_free(result);
                 return NULL;
             }
             result->device = start;
@@ -333,7 +333,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
         return NULL;
     }
 
-    result = OPENSSL_malloc(len + 1);
+    result = OPENtls_malloc(len + 1);
     if (result == NULL) {
         DSOerr(DSO_F_WIN32_JOINER, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -356,7 +356,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
     }
     start = file_split->predir;
     while (file_split->predirlen > (start - file_split->predir)) {
-        const char *end = openssl_strnchr(start, '/',
+        const char *end = opentls_strnchr(start, '/',
                                           file_split->predirlen - (start -
                                                                    file_split->predir));
         if (!end)
@@ -370,7 +370,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
     }
     start = file_split->dir;
     while (file_split->dirlen > (start - file_split->dir)) {
-        const char *end = openssl_strnchr(start, '/',
+        const char *end = opentls_strnchr(start, '/',
                                           file_split->dirlen - (start -
                                                                 file_split->dir));
         if (!end)
@@ -399,13 +399,13 @@ static char *win32_merger(DSO *dso, const char *filespec1,
         return NULL;
     }
     if (!filespec2) {
-        merged = OPENSSL_strdup(filespec1);
+        merged = OPENtls_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     } else if (!filespec1) {
-        merged = OPENSSL_strdup(filespec2);
+        merged = OPENtls_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -419,7 +419,7 @@ static char *win32_merger(DSO *dso, const char *filespec1,
         filespec2_split = win32_splitter(dso, filespec2, 1);
         if (!filespec2_split) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
-            OPENSSL_free(filespec1_split);
+            OPENtls_free(filespec1_split);
             return NULL;
         }
 
@@ -445,8 +445,8 @@ static char *win32_merger(DSO *dso, const char *filespec1,
 
         merged = win32_joiner(dso, filespec1_split);
     }
-    OPENSSL_free(filespec1_split);
-    OPENSSL_free(filespec2_split);
+    OPENtls_free(filespec1_split);
+    OPENtls_free(filespec2_split);
     return merged;
 }
 
@@ -461,10 +461,10 @@ static char *win32_name_converter(DSO *dso, const char *filename)
                  (strstr(filename, ":") == NULL));
     if (transform)
         /* We will convert this to "%s.dll" */
-        translated = OPENSSL_malloc(len + 5);
+        translated = OPENtls_malloc(len + 5);
     else
         /* We will simply duplicate filename */
-        translated = OPENSSL_malloc(len + 1);
+        translated = OPENtls_malloc(len + 1);
     if (translated == NULL) {
         DSOerr(DSO_F_WIN32_NAME_CONVERTER, DSO_R_NAME_TRANSLATION_FAILED);
         return NULL;
@@ -476,7 +476,7 @@ static char *win32_name_converter(DSO *dso, const char *filename)
     return translated;
 }
 
-static const char *openssl_strnchr(const char *string, int c, size_t len)
+static const char *opentls_strnchr(const char *string, int c, size_t len)
 {
     size_t i;
     const char *p;

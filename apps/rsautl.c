@@ -1,23 +1,23 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include "apps.h"
 # include "progs.h"
 # include <string.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rsa.h>
+# include <opentls/err.h>
+# include <opentls/pem.h>
+# include <opentls/rsa.h>
 
 # define RSA_SIGN        1
 # define RSA_VERIFY      2
@@ -31,7 +31,7 @@ NON_EMPTY_TRANSLATION_UNIT
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
-    OPT_RSA_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
+    OPT_RSA_RAW, OPT_OAEP, OPT_tls, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
     OPT_R_ENUM
@@ -44,7 +44,7 @@ const OPTIONS rsautl_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -59,7 +59,7 @@ const OPTIONS rsautl_options[] = {
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
-    {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
+    {"tls", OPT_tls, '-', "Use tls v2 padding"},
     {"raw", OPT_RSA_RAW, '-', "Use no padding"},
     {"pkcs", OPT_PKCS, '-', "Use PKCS#1 v1.5 padding (default)"},
     {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
@@ -124,8 +124,8 @@ int rsautl_main(int argc, char **argv)
         case OPT_OAEP:
             pad = RSA_PKCS1_OAEP_PADDING;
             break;
-        case OPT_SSL:
-            pad = RSA_SSLV23_PADDING;
+        case OPT_tls:
+            pad = RSA_tlsV23_PADDING;
             break;
         case OPT_PKCS:
             pad = RSA_PKCS1_PADDING;
@@ -280,9 +280,9 @@ int rsautl_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
-    OPENSSL_free(rsa_in);
-    OPENSSL_free(rsa_out);
-    OPENSSL_free(passin);
+    OPENtls_free(rsa_in);
+    OPENtls_free(rsa_out);
+    OPENtls_free(passin);
     return ret;
 }
 #endif

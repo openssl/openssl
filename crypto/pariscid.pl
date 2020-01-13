@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # $output is the last argument if it looks like a file (it has an extension)
@@ -33,9 +33,9 @@ $code=<<___;
 	.SPACE	\$TEXT\$
 	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
 
-	.EXPORT	OPENSSL_cpuid_setup,ENTRY
+	.EXPORT	OPENtls_cpuid_setup,ENTRY
 	.ALIGN	8
-OPENSSL_cpuid_setup
+OPENtls_cpuid_setup
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
@@ -44,9 +44,9 @@ OPENSSL_cpuid_setup
 	nop
 	.PROCEND
 
-	.EXPORT	OPENSSL_rdtsc,ENTRY
+	.EXPORT	OPENtls_rdtsc,ENTRY
 	.ALIGN	8
-OPENSSL_rdtsc
+OPENtls_rdtsc
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
@@ -56,9 +56,9 @@ OPENSSL_rdtsc
 	nop
 	.PROCEND
 
-	.EXPORT	OPENSSL_wipe_cpu,ENTRY
+	.EXPORT	OPENtls_wipe_cpu,ENTRY
 	.ALIGN	8
-OPENSSL_wipe_cpu
+OPENtls_wipe_cpu
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
@@ -101,9 +101,9 @@ my $inp="%r26";
 my $len="%r25";
 
 $code.=<<___;
-	.EXPORT	OPENSSL_cleanse,ENTRY,ARGW0=GR,ARGW1=GR
+	.EXPORT	OPENtls_cleanse,ENTRY,ARGW0=GR,ARGW1=GR
 	.ALIGN	8
-OPENSSL_cleanse
+OPENtls_cleanse
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
@@ -177,9 +177,9 @@ my ($tick,$lasttick)=("%r23","%r22");
 my ($diff,$lastdiff)=("%r21","%r20");
 
 $code.=<<___;
-	.EXPORT	OPENSSL_instrument_bus,ENTRY,ARGW0=GR,ARGW1=GR
+	.EXPORT	OPENtls_instrument_bus,ENTRY,ARGW0=GR,ARGW1=GR
 	.ALIGN	8
-OPENSSL_instrument_bus
+OPENtls_instrument_bus
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
@@ -210,9 +210,9 @@ L\$oop
 	sub		$rv,$cnt,$rv
 	.PROCEND
 
-	.EXPORT	OPENSSL_instrument_bus2,ENTRY,ARGW0=GR,ARGW1=GR
+	.EXPORT	OPENtls_instrument_bus2,ENTRY,ARGW0=GR,ARGW1=GR
 	.ALIGN	8
-OPENSSL_instrument_bus2
+OPENtls_instrument_bus2
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY

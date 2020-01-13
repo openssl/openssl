@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Dispatch functions for ccm mode */
@@ -64,15 +64,15 @@ static size_t ccm_get_ivlen(PROV_CCM_CTX *ctx)
     return 15 - ctx->l;
 }
 
-int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int ccm_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     size_t sz;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -92,11 +92,11 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->m = p->data_size;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_IVLEN);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_IVLEN);
     if (p != NULL) {
         size_t ivlen;
 
-        if (!OSSL_PARAM_get_size_t(p, &sz)) {
+        if (!Otls_PARAM_get_size_t(p, &sz)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -108,9 +108,9 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->l = ivlen;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -122,9 +122,9 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         ctx->tls_aad_pad_sz = sz;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -137,58 +137,58 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ccm_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ccm_get_ivlen(ctx))) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_IVLEN);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, ccm_get_ivlen(ctx))) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TAGLEN);
     if (p != NULL) {
         size_t m = ctx->m;
 
-        if (!OSSL_PARAM_set_size_t(p, m)) {
+        if (!Otls_PARAM_set_size_t(p, m)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_IV);
     if (p != NULL) {
         if (ccm_get_ivlen(ctx) != p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)) {
+        if (!Otls_PARAM_set_octet_string(p, ctx->iv, p->data_size)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_KEYLEN);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, ctx->keylen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         if (!ctx->enc || !ctx->tag_set) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOTSET);
             return 0;
         }
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }

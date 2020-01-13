@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # June 2011
@@ -129,7 +129,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 
 $code.=<<___;
 .text
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	aesni_cbc_sha1_enc
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
@@ -137,8 +137,8 @@ $code.=<<___;
 aesni_cbc_sha1_enc:
 .cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
-	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
-	mov	OPENSSL_ia32cap_P+4(%rip),%r11
+	mov	OPENtls_ia32cap_P+0(%rip),%r10d
+	mov	OPENtls_ia32cap_P+4(%rip),%r11
 ___
 $code.=<<___ if ($shaext);
 	bt	\$61,%r11		# check SHA bit
@@ -846,8 +846,8 @@ $code.=<<___;
 aesni256_cbc_sha1_dec:
 .cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
-	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
-	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
+	mov	OPENtls_ia32cap_P+0(%rip),%r10d
+	mov	OPENtls_ia32cap_P+4(%rip),%r11d
 ___
 $code.=<<___ if ($avx);
 	and	\$`1<<28`,%r11d		# mask AVX bit
@@ -1747,7 +1747,7 @@ K_XX_XX:
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
 .byte	0xf,0xe,0xd,0xc,0xb,0xa,0x9,0x8,0x7,0x6,0x5,0x4,0x3,0x2,0x1,0x0
 
-.asciz	"AESNI-CBC+SHA1 stitch for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"AESNI-CBC+SHA1 stitch for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 ___
 						if ($shaext) {{{

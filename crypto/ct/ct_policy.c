@@ -1,18 +1,18 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifdef OPENSSL_NO_CT
+#ifdef OPENtls_NO_CT
 # error "CT is disabled"
 #endif
 
-#include <openssl/ct.h>
-#include <openssl/err.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
 #include <time.h>
 
 #include "ct_local.h"
@@ -27,7 +27,7 @@ static const time_t SCT_CLOCK_DRIFT_TOLERANCE = 300;
 
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 {
-    CT_POLICY_EVAL_CTX *ctx = OPENSSL_zalloc(sizeof(CT_POLICY_EVAL_CTX));
+    CT_POLICY_EVAL_CTX *ctx = OPENtls_zalloc(sizeof(CT_POLICY_EVAL_CTX));
 
     if (ctx == NULL) {
         CTerr(CT_F_CT_POLICY_EVAL_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -47,7 +47,7 @@ void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx)
         return;
     X509_free(ctx->cert);
     X509_free(ctx->issuer);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert)

@@ -1,20 +1,20 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
+#include <opentls/bn.h>
 
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -571,7 +571,7 @@ int setup_tests(void)
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
     ADD_TEST(test_output);
-    ADD_ALL_TESTS(test_bn_output, OSSL_NELEM(bn_output_tests));
+    ADD_ALL_TESTS(test_bn_output, Otls_NELEM(bn_output_tests));
     ADD_TEST(test_skip_one);
     ADD_TEST(test_skip_null);
     ADD_ALL_TESTS(test_skip_many, 3);

@@ -29,7 +29,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
 =head1 SYNOPSIS
 
- #include <openssl/pem.h>
+ #include <opentls/pem.h>
 
  typedef int pem_password_cb(char *buf, int size, int rwflag, void *u);
 
@@ -314,7 +314,7 @@ New applications should write private keys using the
 PEM_write_bio_PKCS8PrivateKey() or PEM_write_PKCS8PrivateKey() routines
 because they are more secure (they use an iteration count of 2048 whereas
 the traditional routines use a count of 1) unless compatibility with older
-versions of OpenSSL is important.
+versions of Opentls is important.
 
 The B<PrivateKey> read routines can be used in all applications because
 they handle all formats transparently.
@@ -385,7 +385,7 @@ The pseudo code to derive the key would look similar to:
 
 =head1 BUGS
 
-The PEM read routines in some versions of OpenSSL will not correctly reuse
+The PEM read routines in some versions of Opentls will not correctly reuse
 an existing structure. Therefore the following:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
@@ -477,16 +477,16 @@ L<passphrase-encoding(7)>
 =head1 HISTORY
 
 The old Netscape certificate sequences were no longer documented
-in OpenSSL 1.1.0; applications should use the PKCS7 standard instead
+in Opentls 1.1.0; applications should use the PKCS7 standard instead
 as they will be formally deprecated in a future releases.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,10 +1,10 @@
 /*
- * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -32,11 +32,11 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef OSSL_CRYPTO_SEED_LOCAL_H
-# define OSSL_CRYPTO_SEED_LOCAL_H
+#ifndef Otls_CRYPTO_SEED_LOCAL_H
+# define Otls_CRYPTO_SEED_LOCAL_H
 
-# include "openssl/e_os2.h"
-# include <openssl/seed.h>
+# include "opentls/e_os2.h"
+# include <opentls/seed.h>
 
 # ifdef SEED_LONG               /* need 32-bit type */
 typedef unsigned long seed_word;
@@ -109,4 +109,4 @@ typedef unsigned int seed_word;
         (X1) ^= (T0);                            \
         (X2) ^= (T1)
 
-#endif                          /* OSSL_CRYPTO_SEED_LOCAL_H */
+#endif                          /* Otls_CRYPTO_SEED_LOCAL_H */

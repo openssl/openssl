@@ -1,17 +1,17 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/pkcs12.h>
-#include <openssl/x509.h>
+#include <opentls/evp.h>
+#include <opentls/pkcs12.h>
+#include <opentls/x509.h>
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -77,12 +77,12 @@ static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA512_224, -1, NID_sha512_224, 0},
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA512_256, -1, NID_sha512_256, 0},
     {EVP_PBE_TYPE_KDF, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen},
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     {EVP_PBE_TYPE_KDF, NID_id_scrypt, -1, -1, PKCS5_v2_scrypt_keyivgen}
 #endif
 };
 
-int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
+int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int patlsen,
                        ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
     const EVP_CIPHER *cipher;
@@ -96,7 +96,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
         EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_PBE_ALGORITHM);
         if (pbe_obj == NULL)
-            OPENSSL_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
+            OPENtls_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
         else
             i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), pbe_obj);
         ERR_add_error_data(2, "TYPE=", obj_tmp);
@@ -104,9 +104,9 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     }
 
     if (pass == NULL)
-        passlen = 0;
-    else if (passlen == -1)
-        passlen = strlen(pass);
+        patlsen = 0;
+    else if (patlsen == -1)
+        patlsen = strlen(pass);
 
     if (cipher_nid == -1)
         cipher = NULL;
@@ -128,7 +128,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         }
     }
 
-    if (!keygen(ctx, pass, passlen, param, cipher, md, en_de)) {
+    if (!keygen(ctx, pass, patlsen, param, cipher, md, en_de)) {
         EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_KEYGEN_FAILURE);
         return 0;
     }
@@ -170,7 +170,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
             goto err;
     }
 
-    if ((pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL)
+    if ((pbe_tmp = OPENtls_malloc(sizeof(*pbe_tmp))) == NULL)
         goto err;
 
     pbe_tmp->pbe_type = pbe_type;
@@ -180,7 +180,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     pbe_tmp->keygen = keygen;
 
     if (!sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp)) {
-        OPENSSL_free(pbe_tmp);
+        OPENtls_free(pbe_tmp);
         goto err;
     }
     return 1;
@@ -224,7 +224,7 @@ int EVP_PBE_find(int type, int pbe_nid,
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }
     if (pbetmp == NULL) {
-        pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, OSSL_NELEM(builtin_pbe));
+        pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, Otls_NELEM(builtin_pbe));
     }
     if (pbetmp == NULL)
         return 0;
@@ -239,7 +239,7 @@ int EVP_PBE_find(int type, int pbe_nid,
 
 static void free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
 {
-    OPENSSL_free(pbe);
+    OPENtls_free(pbe);
 }
 
 void EVP_PBE_cleanup(void)
@@ -252,7 +252,7 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
 {
     const EVP_PBE_CTL *tpbe;
 
-    if (num >= OSSL_NELEM(builtin_pbe))
+    if (num >= Otls_NELEM(builtin_pbe))
         return 0;
 
     tpbe = builtin_pbe + num;

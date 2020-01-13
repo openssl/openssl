@@ -1,25 +1,25 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Copyright (c) 2008 Andy Polyakov <appro@openssl.org>
+# Copyright (c) 2008 Andy Polyakov <appro@opentls.org>
 #
 # This module may be used under the terms of either the GNU General
 # Public License version 2 or later, the GNU Lesser General Public
 # License version 2.1 or later, the Mozilla Public License version
 # 1.1 or the BSD License. The exact terms of either license are
 # distributed along with this module. For further details see
-# http://www.openssl.org/~appro/camellia/.
+# http://www.opentls.org/~appro/camellia/.
 # ====================================================================
 
 # Performance in cycles per processed byte (less is better) in
-# 'openssl speed ...' benchmark:
+# 'opentls speed ...' benchmark:
 #
 #			AMD K8	Core2	PIII	P4
 # -evp camellia-128-ecb	21.5	22.8	27.0	28.9
@@ -47,7 +47,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
-$OPENSSL=1;
+$OPENtls=1;
 
 $output = pop and open STDOUT,">$output";
 
@@ -187,7 +187,7 @@ my $t0=@T[($j)%4],$t1=@T[($j+1)%4],$t2=@T[($j+2)%4],$t3=@T[($j+3)%4];
 	&jmp	(&label("Camellia_EncryptBlock_Rounds"));
 &function_end_B("Camellia_EncryptBlock");
 
-if ($OPENSSL) {
+if ($OPENtls) {
 # void Camellia_encrypt(
 #		const unsigned char *in,
 #		unsigned char *out,
@@ -362,7 +362,7 @@ if ($OPENSSL) {
 	&jmp	(&label("Camellia_DecryptBlock_Rounds"));
 &function_end_B("Camellia_DecryptBlock");
 
-if ($OPENSSL) {
+if ($OPENtls) {
 # void Camellia_decrypt(
 #		const unsigned char *in,
 #		unsigned char *out,
@@ -731,7 +731,7 @@ my $bias=int(@T[0])?shift(@T):0;
 }
 &function_end("Camellia_Ekeygen");
 
-if ($OPENSSL) {
+if ($OPENtls) {
 # int Camellia_set_key (
 #		const unsigned char *userKey,
 #		int bits,
@@ -1142,7 +1142,7 @@ my ($s0,$s1,$s2,$s3) = @T;
 &function_end("Camellia_cbc_encrypt");
 }
 
-&asciz("Camellia for x86 by <appro\@openssl.org>");
+&asciz("Camellia for x86 by <appro\@opentls.org>");
 
 &asm_finish();
 

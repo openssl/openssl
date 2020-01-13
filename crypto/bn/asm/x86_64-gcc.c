@@ -1,10 +1,10 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../bn_local.h"
@@ -14,7 +14,7 @@
 /*-
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
- * Implemented by Andy Polyakov <appro@openssl.org> for the OpenSSL
+ * Implemented by Andy Polyakov <appro@opentls.org> for the Opentls
  * project.
  *
  * Rights for redistribution and usage in source and binary forms are
@@ -34,7 +34,7 @@
  *    Win64 implements different ABI for AMD64, different from Linux.
  *
  * Q. How much faster does it get?
- * A. 'apps/openssl speed rsa dsa' output with no-asm:
+ * A. 'apps/opentls speed rsa dsa' output with no-asm:
  *
  *                        sign    verify    sign/s verify/s
  *      rsa  512 bits   0.0006s   0.0001s   1683.8  18456.2
@@ -46,7 +46,7 @@
  *      dsa 1024 bits   0.0014s   0.0018s    692.3    559.2
  *      dsa 2048 bits   0.0049s   0.0061s    204.7    165.0
  *
- *    'apps/openssl speed rsa dsa' output with this module:
+ *    'apps/opentls speed rsa dsa' output with this module:
  *
  *                        sign    verify    sign/s verify/s
  *      rsa  512 bits   0.0004s   0.0000s   2767.1  33297.9

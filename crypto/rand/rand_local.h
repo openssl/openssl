@@ -1,21 +1,21 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_RAND_LOCAL_H
-# define OSSL_CRYPTO_RAND_LOCAL_H
+#ifndef Otls_CRYPTO_RAND_LOCAL_H
+# define Otls_CRYPTO_RAND_LOCAL_H
 
-# include <openssl/aes.h>
-# include <openssl/evp.h>
-# include <openssl/sha.h>
-# include <openssl/hmac.h>
-# include <openssl/ec.h>
-# include <openssl/rand_drbg.h>
+# include <opentls/aes.h>
+# include <opentls/evp.h>
+# include <opentls/sha.h>
+# include <opentls/hmac.h>
+# include <opentls/ec.h>
+# include <opentls/rand_drbg.h>
 # include "internal/tsan_assist.h"
 # include "crypto/rand.h"
 
@@ -59,7 +59,7 @@
      0x4c, 0x20, 0x4e, 0x49, 0x53, 0x54, 0x20, 0x53, 0x50, 0x20, 0x38, 0x30, \
      0x30, 0x2d, 0x39, 0x30, 0x41, 0x20, 0x44, 0x52, 0x42, 0x47, 0x00};
 #else
-# define DRBG_DEFAULT_PERS_STRING                "OpenSSL NIST SP 800-90A DRBG"
+# define DRBG_DEFAULT_PERS_STRING                "Opentls NIST SP 800-90A DRBG"
 #endif
 
 /*
@@ -220,14 +220,14 @@ struct rand_pool_st {
 struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
     /* The library context this DRBG is associated with, if any */
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
     RAND_DRBG *parent;
     int secure; /* 1: allocated on the secure heap, 0: otherwise */
     int type; /* the nid of the underlying algorithm */
     /*
-     * Stores the return value of openssl_get_fork_id() as of when we last
+     * Stores the return value of opentls_get_fork_id() as of when we last
      * reseeded.  The DRBG reseeds automatically whenever drbg->fork_id !=
-     * openssl_get_fork_id().  Used to provide fork-safety and reseed this
+     * opentls_get_fork_id().  Used to provide fork-safety and reseed this
      * DRBG in the child process.
      */
     int fork_id;
@@ -259,11 +259,11 @@ struct rand_drbg_st {
      * The parameters are closely related to the ones described in
      * section '10.2.1 CTR_DRBG' of [NIST SP 800-90Ar1], with one
      * crucial difference: In the NIST standard, all counts are given
-     * in bits, whereas in OpenSSL entropy counts are given in bits
+     * in bits, whereas in Opentls entropy counts are given in bits
      * and buffer lengths are given in bytes.
      *
      * Since this difference has lead to some confusion in the past,
-     * (see [GitHub Issue #2443], formerly [rt.openssl.org #4055])
+     * (see [GitHub Issue #2443], formerly [rt.opentls.org #4055])
      * the 'len' suffix has been added to all buffer sizes for
      * clarification.
      */
@@ -350,10 +350,10 @@ int drbg_hmac_init(RAND_DRBG *drbg);
  * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
  * These need to be exposed for the unit tests.
  */
-int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx, RAND_POOL *pool,
+int rand_crngt_get_entropy_cb(OPENtls_CTX *ctx, RAND_POOL *pool,
                               unsigned char *buf, unsigned char *md,
                               unsigned int *md_size);
-extern int (*crngt_get_entropy)(OPENSSL_CTX *ctx, RAND_POOL *pool,
+extern int (*crngt_get_entropy)(OPENtls_CTX *ctx, RAND_POOL *pool,
                                 unsigned char *buf, unsigned char *md,
                                 unsigned int *md_size);
 

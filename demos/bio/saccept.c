@@ -1,27 +1,27 @@
 /*
- * Copyright 1998-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-
- * A minimal program to serve an SSL connection.
+ * A minimal program to serve an tls connection.
  * It uses blocking.
  * saccept host:port
  * host is the interface IP to use.  If any interface, use *:port
  * The default it *:4433
  *
- * cc -I../../include saccept.c -L../.. -lssl -lcrypto -ldl
+ * cc -I../../include saccept.c -L../.. -ltls -lcrypto -ldl
  */
 
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
 
 #define CERT_FILE       "server.pem"
 
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
 {
     char *port = NULL;
     BIO *in = NULL;
-    BIO *ssl_bio, *tmp;
-    SSL_CTX *ctx;
+    BIO *tls_bio, *tmp;
+    tls_CTX *ctx;
     char buf[512];
     int ret = EXIT_FAILURE, i;
 
@@ -59,26 +59,26 @@ int main(int argc, char *argv[])
     else
         port = argv[1];
 
-    ctx = SSL_CTX_new(TLS_server_method());
-    if (!SSL_CTX_use_certificate_chain_file(ctx, CERT_FILE))
+    ctx = tls_CTX_new(TLS_server_method());
+    if (!tls_CTX_use_certificate_chain_file(ctx, CERT_FILE))
         goto err;
-    if (!SSL_CTX_use_PrivateKey_file(ctx, CERT_FILE, SSL_FILETYPE_PEM))
+    if (!tls_CTX_use_PrivateKey_file(ctx, CERT_FILE, tls_FILETYPE_PEM))
         goto err;
-    if (!SSL_CTX_check_private_key(ctx))
+    if (!tls_CTX_check_private_key(ctx))
         goto err;
 
-    /* Setup server side SSL bio */
-    ssl_bio = BIO_new_ssl(ctx, 0);
+    /* Setup server side tls bio */
+    tls_bio = BIO_new_tls(ctx, 0);
 
     if ((in = BIO_new_accept(port)) == NULL)
         goto err;
 
     /*
-     * This means that when a new connection is accepted on 'in', The ssl_bio
+     * This means that when a new connection is accepted on 'in', The tls_bio
      * will be 'duplicated' and have the new socket BIO push into it.
-     * Basically it means the SSL BIO will be automatically setup
+     * Basically it means the tls BIO will be automatically setup
      */
-    BIO_set_accept_bios(in, ssl_bio);
+    BIO_set_accept_bios(in, tls_bio);
 
     /* Arrange to leave server loop on interrupt */
     sigsetup();

@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA256 for C64x+.
@@ -310,7 +310,7 @@ K256:
 	.uword	0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3
 	.uword	0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208
 	.uword	0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-	.cstring "SHA256 block transform for C64x+, CRYPTOGAMS by <appro\@openssl.org>"
+	.cstring "SHA256 block transform for C64x+, CRYPTOGAMS by <appro\@opentls.org>"
 	.align	4
 
 ___

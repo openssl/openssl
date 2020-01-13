@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "rsa_local.h"
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,

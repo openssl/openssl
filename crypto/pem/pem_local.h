@@ -1,29 +1,29 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
- * TODO(v3.0): the IMPLEMENT macros in include/openssl/pem.h should be
+ * TODO(v3.0): the IMPLEMENT macros in include/opentls/pem.h should be
  * moved here.
  */
 
-#include <openssl/pem.h>
-#include <openssl/serializer.h>
+#include <opentls/pem.h>
+#include <opentls/serializer.h>
 
 /* Alternative IMPLEMENT macros for provided serializers */
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \
     int ret = 0;                                                        \
-    const char *pq = OSSL_SERIALIZER_##asn1##_TO_PEM_PQ;                \
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_##type(x, pq); \
+    const char *pq = Otls_SERIALIZER_##asn1##_TO_PEM_PQ;                \
+    Otls_SERIALIZER_CTX *ctx = Otls_SERIALIZER_CTX_new_by_##type(x, pq); \
                                                                         \
-    if (ctx != NULL && OSSL_SERIALIZER_CTX_get_serializer(ctx) == NULL) { \
-        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+    if (ctx != NULL && Otls_SERIALIZER_CTX_get_serializer(ctx) == NULL) { \
+        Otls_SERIALIZER_CTX_free(ctx);                                  \
         goto legacy;                                                    \
     }
 # define IMPLEMENT_PEM_provided_write_body_pass()                       \
@@ -38,25 +38,25 @@
     }                                                                   \
     if (enc != NULL) {                                                  \
         ret = 0;                                                        \
-        if (OSSL_SERIALIZER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),   \
+        if (Otls_SERIALIZER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),   \
                                            NULL)) {                     \
             ret = 1;                                                    \
             if (kstr != NULL                                            \
-                && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen)) \
+                && !Otls_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen)) \
                 ret = 0;                                                \
             else if (cb != NULL                                         \
-                     && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,  \
+                     && !Otls_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,  \
                                                                cb, u))  \
                 ret = 0;                                                \
         }                                                               \
     }                                                                   \
     if (!ret) {                                                         \
-        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+        Otls_SERIALIZER_CTX_free(ctx);                                  \
         return 0;                                                       \
     }
 # define IMPLEMENT_PEM_provided_write_body_main(type, outtype)          \
-    ret = OSSL_SERIALIZER_to_##outtype(ctx, out);                       \
-    OSSL_SERIALIZER_CTX_free(ctx);                                      \
+    ret = Otls_SERIALIZER_to_##outtype(ctx, out);                       \
+    Otls_SERIALIZER_CTX_free(ctx);                                      \
     return ret
 # define IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,          \
                                                     writename)          \
@@ -91,7 +91,7 @@
                                                       writename);       \
     }
 
-# ifdef OPENSSL_NO_STDIO
+# ifdef OPENtls_NO_STDIO
 
 #  define IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1)
 #  define IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1)

@@ -1,28 +1,28 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "rsa_local.h"
-#include <openssl/err.h>
+#include <opentls/err.h>
 
 RSA_METHOD *RSA_meth_new(const char *name, int flags)
 {
-    RSA_METHOD *meth = OPENSSL_zalloc(sizeof(*meth));
+    RSA_METHOD *meth = OPENtls_zalloc(sizeof(*meth));
 
     if (meth != NULL) {
         meth->flags = flags;
 
-        meth->name = OPENSSL_strdup(name);
+        meth->name = OPENtls_strdup(name);
         if (meth->name != NULL)
             return meth;
 
-        OPENSSL_free(meth);
+        OPENtls_free(meth);
     }
 
     RSAerr(RSA_F_RSA_METH_NEW, ERR_R_MALLOC_FAILURE);
@@ -32,23 +32,23 @@ RSA_METHOD *RSA_meth_new(const char *name, int flags)
 void RSA_meth_free(RSA_METHOD *meth)
 {
     if (meth != NULL) {
-        OPENSSL_free(meth->name);
-        OPENSSL_free(meth);
+        OPENtls_free(meth->name);
+        OPENtls_free(meth);
     }
 }
 
 RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
 {
-    RSA_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
+    RSA_METHOD *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, meth, sizeof(*meth));
 
-        ret->name = OPENSSL_strdup(meth->name);
+        ret->name = OPENtls_strdup(meth->name);
         if (ret->name != NULL)
             return ret;
 
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
     }
 
     RSAerr(RSA_F_RSA_METH_DUP, ERR_R_MALLOC_FAILURE);
@@ -62,14 +62,14 @@ const char *RSA_meth_get0_name(const RSA_METHOD *meth)
 
 int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
 {
-    char *tmpname = OPENSSL_strdup(name);
+    char *tmpname = OPENtls_strdup(name);
 
     if (tmpname == NULL) {
         RSAerr(RSA_F_RSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    OPENSSL_free(meth->name);
+    OPENtls_free(meth->name);
     meth->name = tmpname;
 
     return 1;

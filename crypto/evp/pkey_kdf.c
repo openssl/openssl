@@ -1,21 +1,21 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2018, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/buffer.h>
-#include <openssl/kdf.h>
-#include <openssl/core.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/buffer.h>
+#include <opentls/kdf.h>
+#include <opentls/core.h>
+#include <opentls/core_names.h>
+#include <opentls/params.h>
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 
@@ -45,7 +45,7 @@ static int pkey_kdf_init(EVP_PKEY_CTX *ctx)
     const char *kdf_name = OBJ_nid2sn(ctx->pmeth->pkey_id);
     EVP_KDF *kdf;
 
-    pkctx = OPENSSL_zalloc(sizeof(*pkctx));
+    pkctx = OPENtls_zalloc(sizeof(*pkctx));
     if (pkctx == NULL)
         return 0;
 
@@ -53,7 +53,7 @@ static int pkey_kdf_init(EVP_PKEY_CTX *ctx)
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {
-        OPENSSL_free(pkctx);
+        OPENtls_free(pkctx);
         return 0;
     }
 
@@ -68,7 +68,7 @@ static void pkey_kdf_cleanup(EVP_PKEY_CTX *ctx)
 
     EVP_KDF_CTX_free(pkctx->kctx);
     pkey_kdf_free_collected(pkctx);
-    OPENSSL_free(pkctx);
+    OPENtls_free(pkctx);
 }
 
 static int collect(BUF_MEM **collector, void *data, size_t datalen)
@@ -99,26 +99,26 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     enum { T_OCTET_STRING, T_UINT64, T_DIGEST, T_INT } cmd;
     const char *name, *mdname;
     BUF_MEM **collector = NULL;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    Otls_PARAM params[2] = { Otls_PARAM_END, Otls_PARAM_END };
 
     switch (type) {
     case EVP_PKEY_CTRL_PASS:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_PASSWORD;
+        name = Otls_KDF_PARAM_PASSWORD;
         break;
     case EVP_PKEY_CTRL_HKDF_SALT:
     case EVP_PKEY_CTRL_SCRYPT_SALT:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_SALT;
+        name = Otls_KDF_PARAM_SALT;
         break;
     case EVP_PKEY_CTRL_TLS_MD:
     case EVP_PKEY_CTRL_HKDF_MD:
         cmd = T_DIGEST;
-        name = OSSL_KDF_PARAM_DIGEST;
+        name = Otls_KDF_PARAM_DIGEST;
         break;
     case EVP_PKEY_CTRL_TLS_SECRET:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_SECRET;
+        name = Otls_KDF_PARAM_SECRET;
         /*
          * Perform the semantics described in
          * EVP_PKEY_CTX_add1_tls1_prf_seed(3)
@@ -130,37 +130,37 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         break;
     case EVP_PKEY_CTRL_TLS_SEED:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_SEED;
+        name = Otls_KDF_PARAM_SEED;
         collector = &pkctx->collected_seed;
         break;
     case EVP_PKEY_CTRL_HKDF_KEY:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_KEY;
+        name = Otls_KDF_PARAM_KEY;
         break;
     case EVP_PKEY_CTRL_HKDF_INFO:
         cmd = T_OCTET_STRING;
-        name = OSSL_KDF_PARAM_INFO;
+        name = Otls_KDF_PARAM_INFO;
         collector = &pkctx->collected_info;
         break;
     case EVP_PKEY_CTRL_HKDF_MODE:
         cmd = T_INT;
-        name = OSSL_KDF_PARAM_MODE;
+        name = Otls_KDF_PARAM_MODE;
         break;
     case EVP_PKEY_CTRL_SCRYPT_N:
         cmd = T_UINT64;
-        name = OSSL_KDF_PARAM_SCRYPT_N;
+        name = Otls_KDF_PARAM_SCRYPT_N;
         break;
     case EVP_PKEY_CTRL_SCRYPT_R:
         cmd = T_UINT64; /* Range checking occurs on the provider side */
-        name = OSSL_KDF_PARAM_SCRYPT_R;
+        name = Otls_KDF_PARAM_SCRYPT_R;
         break;
     case EVP_PKEY_CTRL_SCRYPT_P:
         cmd = T_UINT64; /* Range checking occurs on the provider side */
-        name = OSSL_KDF_PARAM_SCRYPT_P;
+        name = Otls_KDF_PARAM_SCRYPT_P;
         break;
     case EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES:
         cmd = T_UINT64;
-        name = OSSL_KDF_PARAM_SCRYPT_MAXMEM;
+        name = Otls_KDF_PARAM_SCRYPT_MAXMEM;
         break;
     default:
         return -2;
@@ -171,7 +171,7 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         case T_OCTET_STRING:
             return collect(collector, p2, p1);
         default:
-            OPENSSL_assert("You shouldn't be here");
+            OPENtls_assert("You shouldn't be here");
             break;
         }
         return 1;
@@ -180,13 +180,13 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     switch (cmd) {
     case T_OCTET_STRING:
         params[0] =
-            OSSL_PARAM_construct_octet_string(name, (unsigned char *)p2,
+            Otls_PARAM_construct_octet_string(name, (unsigned char *)p2,
                                               (size_t)p1);
         break;
 
     case T_DIGEST:
         mdname = EVP_MD_name((const EVP_MD *)p2);
-        params[0] = OSSL_PARAM_construct_utf8_string(name, (char *)mdname,
+        params[0] = Otls_PARAM_construct_utf8_string(name, (char *)mdname,
                                                      strlen(mdname) + 1);
         break;
 
@@ -195,11 +195,11 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
          * stack, so a local copy is required.
          */
     case T_INT:
-        params[0] = OSSL_PARAM_construct_int(name, &p1);
+        params[0] = Otls_PARAM_construct_int(name, &p1);
         break;
 
     case T_UINT64:
-        params[0] = OSSL_PARAM_construct_uint64(name, (uint64_t *)p2);
+        params[0] = Otls_PARAM_construct_uint64(name, (uint64_t *)p2);
         break;
     }
 
@@ -213,18 +213,18 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     EVP_KDF_CTX *kctx = pkctx->kctx;
     const EVP_KDF *kdf = EVP_KDF_CTX_kdf(kctx);
     BUF_MEM **collector = NULL;
-    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(kdf);
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    const Otls_PARAM *defs = EVP_KDF_settable_ctx_params(kdf);
+    Otls_PARAM params[2] = { Otls_PARAM_END, Otls_PARAM_END };
     int ok = 0;
 
     /* Deal with ctrl name aliasing */
     if (strcmp(type, "md") == 0)
-        type = OSSL_KDF_PARAM_DIGEST;
+        type = Otls_KDF_PARAM_DIGEST;
     /* scrypt uses 'N', params uses 'n' */
     if (strcmp(type, "N") == 0)
-        type = OSSL_KDF_PARAM_SCRYPT_N;
+        type = Otls_KDF_PARAM_SCRYPT_N;
 
-    if (!OSSL_PARAM_allocate_from_text(&params[0], defs, type,
+    if (!Otls_PARAM_allocate_from_text(&params[0], defs, type,
                                        value, strlen(value)))
         return 0;
 
@@ -232,16 +232,16 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
      * We do the same special casing of seed and info here as in
      * pkey_kdf_ctrl()
      */
-    if (strcmp(params[0].key, OSSL_KDF_PARAM_SEED) == 0)
+    if (strcmp(params[0].key, Otls_KDF_PARAM_SEED) == 0)
         collector = &pkctx->collected_seed;
-    else if (strcmp(params[0].key, OSSL_KDF_PARAM_INFO) == 0)
+    else if (strcmp(params[0].key, Otls_KDF_PARAM_INFO) == 0)
         collector = &pkctx->collected_info;
 
     if (collector != NULL)
         ok = collect(collector, params[0].data, params[0].data_size);
     else
         ok = EVP_KDF_CTX_set_params(kctx, params);
-    OPENSSL_free(params[0].data);
+    OPENtls_free(params[0].data);
     return ok;
 }
 
@@ -268,10 +268,10 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     int r;
 
     if (pkctx->collected_seed != NULL) {
-        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        Otls_PARAM params[] = { Otls_PARAM_END, Otls_PARAM_END };
 
         params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+            Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SEED,
                                               pkctx->collected_seed->data,
                                               pkctx->collected_seed->length);
 
@@ -281,10 +281,10 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
             return 0;
     }
     if (pkctx->collected_info != NULL) {
-        OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        Otls_PARAM params[] = { Otls_PARAM_END, Otls_PARAM_END };
 
         params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+            Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                               pkctx->collected_info->data,
                                               pkctx->collected_info->length);
 
@@ -306,7 +306,7 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     return EVP_KDF_derive(kctx, key, *keylen);
 }
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 static const EVP_PKEY_METHOD scrypt_pkey_meth = {
     EVP_PKEY_SCRYPT,
     0,

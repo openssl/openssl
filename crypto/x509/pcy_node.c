@@ -1,16 +1,16 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
 
 #include "pcy_local.h"
 
@@ -63,7 +63,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 {
     X509_POLICY_NODE *node;
 
-    node = OPENSSL_zalloc(sizeof(*node));
+    node = OPENtls_zalloc(sizeof(*node));
     if (node == NULL) {
         X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -115,7 +115,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 
 void policy_node_free(X509_POLICY_NODE *node)
 {
-    OPENSSL_free(node);
+    OPENtls_free(node);
 }
 
 /*

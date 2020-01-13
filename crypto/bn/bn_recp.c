@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -21,7 +21,7 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
 {
     BN_RECP_CTX *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_RECP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -39,7 +39,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
     BN_free(&recp->N);
     BN_free(&recp->Nr);
     if (recp->flags & BN_FLG_MALLOCED)
-        OPENSSL_free(recp);
+        OPENtls_free(recp);
 }
 
 int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)

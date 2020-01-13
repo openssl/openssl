@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # January 2009
@@ -24,12 +24,12 @@
 # code would be unsuitable for cores like UltraSPARC-Tx. The idea is
 # not really novel, Sun had VIS-powered implementation for a while.
 # Unlike Sun's implementation this one can process multiple unaligned
-# input blocks, and as such works as drop-in replacement for OpenSSL
+# input blocks, and as such works as drop-in replacement for Opentls
 # sha1_block_data_order. Performance improvement was measured to be
 # 40% over pure IALU sha1-sparcv9.pl on UltraSPARC-IIi, but 12% on
 # UltraSPARC-III. See below for discussion...
 #
-# The module does not present direct interest for OpenSSL, because
+# The module does not present direct interest for Opentls, because
 # it doesn't provide better performance on contemporary SPARCv9 CPUs,
 # UltraSPARC-Tx and SPARC64-V[II] to be specific. Those who feel they
 # absolutely must score on UltraSPARC-I-IV can simply replace
@@ -544,7 +544,7 @@ $code.=<<___;
 	restore
 .type	sha1_block_data_order,#function
 .size	sha1_block_data_order,(.-sha1_block_data_order)
-.asciz	"SHA1 block transform for SPARCv9a, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for SPARCv9a, CRYPTOGAMS by <appro\@opentls.org>"
 .align	4
 ___
 

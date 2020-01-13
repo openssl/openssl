@@ -1,28 +1,28 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/dtls1.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <opentls/dtls1.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
-/* for SSL_READ_ETM() */
-#include "../ssl/ssl_local.h"
+/* for tls_READ_ETM() */
+#include "../tls/tls_local.h"
 
 static int debug = 0;
 
-static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
+static unsigned int clnt_psk_callback(tls *tls, const char *hint,
                                       char *ident, unsigned int max_ident_len,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
@@ -36,7 +36,7 @@ static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
     return max_psk_len;
 }
 
-static unsigned int srvr_psk_callback(SSL *ssl, const char *identity,
+static unsigned int srvr_psk_callback(tls *tls, const char *identity,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
 {
@@ -46,9 +46,9 @@ static unsigned int srvr_psk_callback(SSL *ssl, const char *identity,
     return max_psk_len;
 }
 
-static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
+static int mtu_test(tls_CTX *ctx, const char *cs, int no_etm)
 {
-    SSL *srvr_ssl = NULL, *clnt_ssl = NULL;
+    tls *srvr_tls = NULL, *clnt_tls = NULL;
     BIO *sc_bio = NULL;
     int i;
     size_t s;
@@ -58,18 +58,18 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
 
     memset(buf, 0x5a, sizeof(buf));
 
-    if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
+    if (!TEST_true(create_tls_objects(ctx, ctx, &srvr_tls, &clnt_tls,
                                       NULL, NULL)))
         goto end;
 
     if (no_etm)
-        SSL_set_options(srvr_ssl, SSL_OP_NO_ENCRYPT_THEN_MAC);
+        tls_set_options(srvr_tls, tls_OP_NO_ENCRYPT_THEN_MAC);
 
-    if (!TEST_true(SSL_set_cipher_list(srvr_ssl, cs))
-            || !TEST_true(SSL_set_cipher_list(clnt_ssl, cs))
-            || !TEST_ptr(sc_bio = SSL_get_rbio(srvr_ssl))
-            || !TEST_true(create_ssl_connection(clnt_ssl, srvr_ssl,
-                                                SSL_ERROR_NONE)))
+    if (!TEST_true(tls_set_cipher_list(srvr_tls, cs))
+            || !TEST_true(tls_set_cipher_list(clnt_tls, cs))
+            || !TEST_ptr(sc_bio = tls_get_rbio(srvr_tls))
+            || !TEST_true(create_tls_connection(clnt_tls, srvr_tls,
+                                                tls_ERROR_NONE)))
         goto end;
 
     if (debug)
@@ -78,8 +78,8 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     /* For record MTU values between 500 and 539, call DTLS_get_data_mtu()
      * to query the payload MTU which will fit. */
     for (i = 0; i < 30; i++) {
-        SSL_set_mtu(clnt_ssl, 500 + i);
-        mtus[i] = DTLS_get_data_mtu(clnt_ssl);
+        tls_set_mtu(clnt_tls, 500 + i);
+        mtus[i] = DTLS_get_data_mtu(clnt_tls);
         if (debug)
             TEST_info("%s%s MTU for record mtu %d = %lu",
                       cs, no_etm ? "-noEtM" : "",
@@ -91,7 +91,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     }
 
     /* Now get out of the way */
-    SSL_set_mtu(clnt_ssl, 1000);
+    tls_set_mtu(clnt_tls, 1000);
 
     /*
      * Now for all values in the range of payload MTUs, send a payload of
@@ -100,7 +100,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     for (s = mtus[0]; s <= mtus[29]; s++) {
         size_t reclen;
 
-        if (!TEST_int_eq(SSL_write(clnt_ssl, buf, s), (int)s))
+        if (!TEST_int_eq(tls_write(clnt_tls, buf, s), (int)s))
             goto end;
         reclen = BIO_read(sc_bio, buf, sizeof(buf));
         if (debug)
@@ -133,39 +133,39 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
         }
     }
     rv = 1;
-    if (SSL_READ_ETM(clnt_ssl))
+    if (tls_READ_ETM(clnt_tls))
         rv = 2;
  end:
-    SSL_free(clnt_ssl);
-    SSL_free(srvr_ssl);
+    tls_free(clnt_tls);
+    tls_free(srvr_tls);
     return rv;
 }
 
 static int run_mtu_tests(void)
 {
-    SSL_CTX *ctx = NULL;
-    STACK_OF(SSL_CIPHER) *ciphers;
+    tls_CTX *ctx = NULL;
+    STACK_OF(tls_CIPHER) *ciphers;
     int i, ret = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method())))
+    if (!TEST_ptr(ctx = tls_CTX_new(DTLS_method())))
         goto end;
 
-    SSL_CTX_set_psk_server_callback(ctx, srvr_psk_callback);
-    SSL_CTX_set_psk_client_callback(ctx, clnt_psk_callback);
-    SSL_CTX_set_security_level(ctx, 0);
+    tls_CTX_set_psk_server_callback(ctx, srvr_psk_callback);
+    tls_CTX_set_psk_client_callback(ctx, clnt_psk_callback);
+    tls_CTX_set_security_level(ctx, 0);
 
     /*
      * We only care about iterating over each enc/mac; we don't want to
      * repeat the test for each auth/kx variant. So keep life simple and
      * only do (non-DH) PSK.
      */
-    if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "PSK")))
+    if (!TEST_true(tls_CTX_set_cipher_list(ctx, "PSK")))
         goto end;
 
-    ciphers = SSL_CTX_get_ciphers(ctx);
-    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
-        const char *cipher_name = SSL_CIPHER_get_name(cipher);
+    ciphers = tls_CTX_get_ciphers(ctx);
+    for (i = 0; i < sk_tls_CIPHER_num(ciphers); i++) {
+        const tls_CIPHER *cipher = sk_tls_CIPHER_value(ciphers, i);
+        const char *cipher_name = tls_CIPHER_get_name(cipher);
 
         /* As noted above, only one test for each enc/mac variant. */
         if (strncmp(cipher_name, "PSK-", 4) != 0)
@@ -184,7 +184,7 @@ static int run_mtu_tests(void)
     }
 
  end:
-    SSL_CTX_free(ctx);
+    tls_CTX_free(ctx);
     bio_s_mempacket_test_free();
     return ret;
 }

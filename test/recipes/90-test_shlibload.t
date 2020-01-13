@@ -1,13 +1,13 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-use OpenSSL::Test qw/:DEFAULT srctop_dir bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_dir bldtop_dir/;
+use Opentls::Test::Utils;
 use File::Temp qw(tempfile);
 
 #Load configdata.pm
@@ -26,30 +26,30 @@ plan skip_all => "Test only supported in a dso build" if disabled("dso");
 plan tests => 10;
 
 my $libcrypto = platform->sharedlib('libcrypto');
-my $libssl = platform->sharedlib('libssl');
+my $libtls = platform->sharedlib('libtls');
 
 (my $fh, my $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $filename])),
+ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libtls, $filename])),
    "running shlibloadtest -crypto_first $filename");
 ok(check_atexit($fh));
 unlink $filename;
 ($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $filename])),
-   "running shlibloadtest -ssl_first $filename");
+ok(run(test(["shlibloadtest", "-tls_first", $libcrypto, $libtls, $filename])),
+   "running shlibloadtest -tls_first $filename");
 ok(check_atexit($fh));
 unlink $filename;
 ($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $filename])),
+ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libtls, $filename])),
    "running shlibloadtest -just_crypto $filename");
 ok(check_atexit($fh));
 unlink $filename;
 ($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $filename])),
+ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libtls, $filename])),
    "running shlibloadtest -dso_ref $filename");
 ok(check_atexit($fh));
 unlink $filename;
 ($fh, $filename) = tempfile();
-ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $filename])),
+ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libtls, $filename])),
    "running shlibloadtest -no_atexit $filename");
 ok(!check_atexit($fh));
 unlink $filename;

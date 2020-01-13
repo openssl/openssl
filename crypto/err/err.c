@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* TODO: When ERR_STATE becomes opaque, this musts be removed */
-#define OSSL_FORCE_ERR_STATE
+#define Otls_FORCE_ERR_STATE
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -16,11 +16,11 @@
 #include "crypto/cryptlib.h"
 #include "internal/err.h"
 #include "crypto/err.h"
-#include <openssl/err.h>
-#include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
-#include <openssl/opensslconf.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
+#include <opentls/buffer.h>
+#include <opentls/bio.h>
+#include <opentls/opentlsconf.h>
 #include "internal/thread_once.h"
 #include "crypto/ctype.h"
 #include "internal/constant_time.h"
@@ -33,7 +33,7 @@ ERR_STATE *ERR_get_state(void);
 static int err_load_strings(const ERR_STRING_DATA *str);
 
 static void ERR_STATE_free(ERR_STATE *s);
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENtls_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_NONE, 0, 0), "unknown library"},
     {ERR_PACK(ERR_LIB_SYS, 0, 0), "system library"},
@@ -52,7 +52,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_EC, 0, 0), "elliptic curve routines"},
     {ERR_PACK(ERR_LIB_ECDSA, 0, 0), "ECDSA routines"},
     {ERR_PACK(ERR_LIB_ECDH, 0, 0), "ECDH routines"},
-    {ERR_PACK(ERR_LIB_SSL, 0, 0), "SSL routines"},
+    {ERR_PACK(ERR_LIB_tls, 0, 0), "tls routines"},
     {ERR_PACK(ERR_LIB_BIO, 0, 0), "BIO routines"},
     {ERR_PACK(ERR_LIB_PKCS7, 0, 0), "PKCS7 routines"},
     {ERR_PACK(ERR_LIB_X509V3, 0, 0), "X509 V3 routines"},
@@ -71,11 +71,11 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_CT, 0, 0), "CT routines"},
     {ERR_PACK(ERR_LIB_ASYNC, 0, 0), "ASYNC routines"},
     {ERR_PACK(ERR_LIB_KDF, 0, 0), "KDF routines"},
-    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, 0), "STORE routines"},
+    {ERR_PACK(ERR_LIB_Otls_STORE, 0, 0), "STORE routines"},
     {ERR_PACK(ERR_LIB_SM2, 0, 0), "SM2 routines"},
     {ERR_PACK(ERR_LIB_ESS, 0, 0), "ESS routines"},
     {ERR_PACK(ERR_LIB_PROV, 0, 0), "Provider routines"},
-    {ERR_PACK(ERR_LIB_OSSL_SERIALIZER, 0, 0), "SERIALIZER routines"},
+    {ERR_PACK(ERR_LIB_Otls_SERIALIZER, 0, 0), "SERIALIZER routines"},
     {0, NULL},
 };
 
@@ -97,7 +97,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_X509V3_LIB, "X509V3 lib"},
     {ERR_R_ENGINE_LIB, "ENGINE lib"},
     {ERR_R_UI_LIB, "UI lib"},
-    {ERR_R_OSSL_STORE_LIB, "STORE lib"},
+    {ERR_R_Otls_STORE_LIB, "STORE lib"},
     {ERR_R_ECDSA_LIB, "ECDSA lib"},
 
     {ERR_R_NESTED_ASN1_ERROR, "nested asn1 error"},
@@ -172,7 +172,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     return p;
 }
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENtls_NO_ERR
 /* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
 # define SPACE_SYS_STR_REASONS 8 * 1024
 # define NUM_SYS_STR_REASONS 127
@@ -190,7 +190,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 static void build_SYS_str_reasons(void)
 {
-    /* OPENSSL_malloc cannot be used here, use static storage instead */
+    /* OPENtls_malloc cannot be used here, use static storage instead */
     static char strerror_pool[SPACE_SYS_STR_REASONS];
     char *cur = strerror_pool;
     size_t cnt = 0;
@@ -210,10 +210,10 @@ static void build_SYS_str_reasons(void)
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         /*
          * If we have used up all the space in strerror_pool,
-         * there's no point in calling openssl_strerror_r()
+         * there's no point in calling opentls_strerror_r()
          */
         if (str->string == NULL && cnt < sizeof(strerror_pool)) {
-            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+            if (opentls_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
                 size_t l = strlen(cur);
 
                 str->string = cur;
@@ -224,7 +224,7 @@ static void build_SYS_str_reasons(void)
                  * VMS has an unusual quirk of adding spaces at the end of
                  * some (most? all?) messages. Lets trim them off.
                  */
-                while (cur > strerror_pool && ossl_isspace(cur[-1])) {
+                while (cur > strerror_pool && otls_isspace(cur[-1])) {
                     cur--;
                     cnt--;
                 }
@@ -244,7 +244,7 @@ static void build_SYS_str_reasons(void)
     init = 0;
 
     CRYPTO_THREAD_unlock(err_string_lock);
-    /* openssl_strerror_r could change errno, but we want to preserve it */
+    /* opentls_strerror_r could change errno, but we want to preserve it */
     set_sys_error(saveerrno);
     err_load_strings(SYS_str_reasons);
 }
@@ -259,12 +259,12 @@ static void ERR_STATE_free(ERR_STATE *s)
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
         err_clear_data(s, i, 1);
     }
-    OPENSSL_free(s);
+    OPENtls_free(s);
 }
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
+    if (!OPENtls_init_crypto(0, NULL))
         return 0;
     err_string_lock = CRYPTO_THREAD_lock_new();
     if (err_string_lock == NULL)
@@ -315,7 +315,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
 
 int ERR_load_ERR_strings(void)
 {
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENtls_NO_ERR
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
@@ -411,7 +411,7 @@ unsigned long ERR_get_error_all(const char **file, int *line,
     return get_error_values(EV_POP, file, line, func, data, flags);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 unsigned long ERR_get_error_line_data(const char **file, int *line,
                                       const char **data, int *flags)
 {
@@ -446,7 +446,7 @@ unsigned long ERR_peek_error_all(const char **file, int *line,
     return get_error_values(EV_PEEK, file, line, func, data, flags);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 unsigned long ERR_peek_error_line_data(const char **file, int *line,
                                        const char **data, int *flags)
 {
@@ -481,7 +481,7 @@ unsigned long ERR_peek_last_error_all(const char **file, int *line,
     return get_error_values(EV_PEEK_LAST, file, line, func, data, flags);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
                                             const char **data, int *flags)
 {
@@ -625,7 +625,7 @@ const char *ERR_lib_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 const char *ERR_func_error_string(unsigned long e)
 {
     return NULL;
@@ -663,13 +663,13 @@ static void err_delete_thread_state(void *arg)
     ERR_STATE_free(state);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
 }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_1_0_0
+#ifndef OPENtls_NO_DEPRECATED_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
 }
@@ -686,7 +686,7 @@ ERR_STATE *err_get_state_int(void)
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_BASE_ONLY, NULL))
         return NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
@@ -700,12 +700,12 @@ ERR_STATE *err_get_state_int(void)
         if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
-        if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
+        if ((state = OPENtls_zalloc(sizeof(*state))) == NULL) {
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
 
-        if (!ossl_init_thread_start(NULL, NULL, err_delete_thread_state)
+        if (!otls_init_thread_start(NULL, NULL, err_delete_thread_state)
                 || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
@@ -713,14 +713,14 @@ ERR_STATE *err_get_state_int(void)
         }
 
         /* Ignore failures from these */
-        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+        OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
     set_sys_error(saveerrno);
     return state;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 ERR_STATE *ERR_get_state(void)
 {
     return err_get_state_int();
@@ -737,18 +737,18 @@ int err_shelve_state(void **state)
     int saveerrno = get_last_sys_error();
 
     /*
-     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
-     * via ossl_init_load_crypto_nodelete(), by which point the requested
+     * Note, at present our only caller is OPENtls_init_crypto(), indirectly
+     * via otls_init_load_crypto_nodelete(), by which point the requested
      * "base" initialization has already been performed, so the below call is a
-     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
+     * NOOP, that re-enters OPENtls_init_crypto() only to quickly return.
      *
      * If are no other valid callers of this function, the call below can be
-     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
-     * potential uses that are not from inside OPENSSL_init_crypto(), then this
+     * removed, avoiding the re-entry into OPENtls_init_crypto().  If there are
+     * potential uses that are not from inside OPENtls_init_crypto(), then this
      * call is needed, but some care is required to make sure that the re-entry
      * remains a NOOP.
      */
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_BASE_ONLY, NULL))
         return 0;
 
     if (!RUN_ONCE(&err_init, err_do_init))
@@ -857,7 +857,7 @@ void ERR_add_error_vdata(int num, va_list args)
          */
         es->err_data[i] = NULL;
         es->err_data_flags[i] = 0;
-    } else if ((str = OPENSSL_malloc(size = 81)) == NULL) {
+    } else if ((str = OPENtls_malloc(size = 81)) == NULL) {
         return;
     } else {
         str[0] = '\0';
@@ -873,17 +873,17 @@ void ERR_add_error_vdata(int num, va_list args)
             char *p;
 
             size = len + 20;
-            p = OPENSSL_realloc(str, size);
+            p = OPENtls_realloc(str, size);
             if (p == NULL) {
-                OPENSSL_free(str);
+                OPENtls_free(str);
                 return;
             }
             str = p;
         }
-        OPENSSL_strlcat(str, arg, (size_t)size);
+        OPENtls_strlcat(str, arg, (size_t)size);
     }
     if (!err_set_error_data_int(str, size, flags, 0))
-        OPENSSL_free(str);
+        OPENtls_free(str);
 }
 
 int ERR_set_mark(void)

@@ -1,13 +1,13 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_NO_SIV
+#ifndef OPENtls_NO_SIV
 
 typedef struct siv128_context SIV128_CONTEXT;
 
@@ -31,4 +31,4 @@ int CRYPTO_siv128_get_tag(SIV128_CONTEXT *ctx, unsigned char *tag, size_t len);
 int CRYPTO_siv128_cleanup(SIV128_CONTEXT *ctx);
 int CRYPTO_siv128_speed(SIV128_CONTEXT *ctx, int arg);
 
-#endif /* OPENSSL_NO_SIV */
+#endif /* OPENtls_NO_SIV */

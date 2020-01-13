@@ -1,19 +1,19 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Internal EVP utility functions */
 
-#include <openssl/core.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/asn1.h>        /* evp_local.h needs it */
-#include <openssl/safestack.h>   /* evp_local.h needs it */
+#include <opentls/core.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/asn1.h>        /* evp_local.h needs it */
+#include <opentls/safestack.h>   /* evp_local.h needs it */
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
@@ -35,14 +35,14 @@
     }
 
 #define PARAM_FUNC(name, func, type, err)                                      \
-int name (const type *obj, OSSL_PARAM params[])                                \
+int name (const type *obj, Otls_PARAM params[])                                \
 {                                                                              \
     PARAM_CHECK(obj, func, err)                                                \
     return obj->func(params);                                                  \
 }
 
 #define PARAM_CTX_FUNC(name, func, type, err)                                  \
-int name (const type *obj, void *provctx, OSSL_PARAM params[])                 \
+int name (const type *obj, void *provctx, Otls_PARAM params[])                 \
 {                                                                              \
     PARAM_CHECK(obj, func, err)                                                \
     return obj->func(provctx, params);                                         \

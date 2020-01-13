@@ -1,28 +1,28 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-# ifndef OPENSSL_NO_ENGINE
-#  include <openssl/engine.h>
+#ifndef OPENtls_NO_EC
+# include <opentls/ec.h>
+# ifndef OPENtls_NO_ENGINE
+#  include <opentls/engine.h>
 # endif
-# include <openssl/err.h>
-# include <openssl/obj_mac.h>
-# include <openssl/objects.h>
-# include <openssl/rand.h>
-# include <openssl/bn.h>
-# include <openssl/opensslconf.h>
+# include <opentls/err.h>
+# include <opentls/obj_mac.h>
+# include <opentls/objects.h>
+# include <opentls/rand.h>
+# include <opentls/bn.h>
+# include <opentls/opentlsconf.h>
 
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
@@ -632,7 +632,7 @@ err:
     return r;
 }
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 
 static struct c2_curve_test {
     const char *name;
@@ -838,7 +838,7 @@ static int char2_curve_test(int n)
         goto err;
 
 /* Change test based on whether binary point compression is enabled or not. */
-# ifdef OPENSSL_EC_BIN_PT_COMP
+# ifdef OPENtls_EC_BIN_PT_COMP
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
@@ -884,7 +884,7 @@ static int char2_curve_test(int n)
         goto err;
 
     /* more tests using the last curve */
-    if (n == OSSL_NELEM(char2_curve_tests) - 1) {
+    if (n == Otls_NELEM(char2_curve_tests) - 1) {
         if (!TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
             || !TEST_true(EC_POINT_copy(Q, P))
             || !TEST_false(EC_POINT_is_at_infinity(group, Q))
@@ -1020,7 +1020,7 @@ static int char2_field_tests(void)
         || !TEST_ptr(yplusone = BN_new())
         || !TEST_true(BN_hex2bn(&x, "6"))
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+#  ifdef OPENtls_EC_BIN_PT_COMP
         || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
 #  else
         || !TEST_true(BN_hex2bn(&y, "8"))
@@ -1030,7 +1030,7 @@ static int char2_field_tests(void)
         goto err;
     if (!TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)) {
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+#  ifdef OPENtls_EC_BIN_PT_COMP
         if (!TEST_true(EC_POINT_get_affine_coordinates(group, Q, x, y, ctx)))
             goto err;
 #  endif
@@ -1068,7 +1068,7 @@ static int char2_field_tests(void)
         goto err;
 
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+#  ifdef OPENtls_EC_BIN_PT_COMP
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED,
                              buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
@@ -1089,7 +1089,7 @@ static int char2_field_tests(void)
                        buf, len);
 
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+#  ifdef OPENtls_EC_BIN_PT_COMP
     len =
         EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof(buf),
                            ctx);
@@ -1184,7 +1184,7 @@ static int group_field_test(void)
     if (BN_cmp(secp521r1_field, EC_GROUP_get0_field(secp521r1_group)))
       r = 0;
 
-    # ifndef OPENSSL_NO_EC2M
+    # ifndef OPENtls_NO_EC2M
     sect163r2_group = EC_GROUP_new_by_curve_name(NID_sect163r2);
     if (BN_cmp(sect163r2_field, EC_GROUP_get0_field(sect163r2_group)))
       r = 0;
@@ -1197,7 +1197,7 @@ static int group_field_test(void)
     return r;
 }
 
-# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# ifndef OPENtls_NO_EC_NISTP_64_GCC_128
 /*
  * nistp_test_params contains magic numbers for testing our optimized
  * implementations of several NIST curves with characteristic > 3.
@@ -1819,12 +1819,12 @@ static int check_named_curve_lookup_test(int id)
  * This function returns TRUE (1) if the checked nids are identical, or if they
  * alias to the same curve. FALSE (0) otherwise.
  */
-static ossl_inline
+static otls_inline
 int are_ec_nids_compatible(int n1d, int n2d)
 {
     int ret = 0;
     switch (n1d) {
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
         case NID_sect113r1:
         case NID_wap_wsg_idm_ecid_wtls4:
             ret = (n2d == NID_sect113r1 || n2d == NID_wap_wsg_idm_ecid_wtls4);
@@ -1846,7 +1846,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
             ret = (n2d == NID_X9_62_c2pnb163v1
                    || n2d == NID_wap_wsg_idm_ecid_wtls5);
             break;
-# endif /* OPENSSL_NO_EC2M */
+# endif /* OPENtls_NO_EC2M */
         case NID_secp112r1:
         case NID_wap_wsg_idm_ecid_wtls6:
             ret = (n2d == NID_secp112r1 || n2d == NID_wap_wsg_idm_ecid_wtls6);
@@ -1855,7 +1855,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
         case NID_wap_wsg_idm_ecid_wtls7:
             ret = (n2d == NID_secp160r2 || n2d == NID_wap_wsg_idm_ecid_wtls7);
             break;
-# ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+# ifdef OPENtls_NO_EC_NISTP_64_GCC_128
         case NID_secp224r1:
         case NID_wap_wsg_idm_ecid_wtls12:
             ret = (n2d == NID_secp224r1 || n2d == NID_wap_wsg_idm_ecid_wtls12);
@@ -1868,7 +1868,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
         case NID_wap_wsg_idm_ecid_wtls12:
             ret = (n2d == NID_secp224r1);
             break;
-# endif /* def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
+# endif /* def(OPENtls_NO_EC_NISTP_64_GCC_128) */
 
         default:
             ret = (n1d == n2d);
@@ -1883,7 +1883,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
  * Note that it is possible to retrieve an alternative alias that does not match
  * the original nid.
  *
- * Ensure that the OPENSSL_EC_EXPLICIT_CURVE ASN1 flag is set.
+ * Ensure that the OPENtls_EC_EXPLICIT_CURVE ASN1 flag is set.
  */
 static int check_named_curve_from_ecparameters(int id)
 {
@@ -1965,8 +1965,8 @@ static int check_named_curve_from_ecparameters(int id)
         TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
         goto err;
     }
-    /* Ensure that the OPENSSL_EC_EXPLICIT_CURVE ASN1 flag is set. */
-    if (!TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup), OPENSSL_EC_EXPLICIT_CURVE))
+    /* Ensure that the OPENtls_EC_EXPLICIT_CURVE ASN1 flag is set. */
+    if (!TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup), OPENtls_EC_EXPLICIT_CURVE))
         goto err;
 
     /*
@@ -1982,7 +1982,7 @@ static int check_named_curve_from_ecparameters(int id)
             || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
             || !TEST_true(are_ec_nids_compatible(nid, tnid))
             || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
-                            OPENSSL_EC_EXPLICIT_CURVE)) {
+                            OPENtls_EC_EXPLICIT_CURVE)) {
         TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
         goto err;
     }
@@ -1999,7 +1999,7 @@ static int check_named_curve_from_ecparameters(int id)
             || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
             || !TEST_true(are_ec_nids_compatible(nid, tnid))
             || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
-                            OPENSSL_EC_EXPLICIT_CURVE)) {
+                            OPENtls_EC_EXPLICIT_CURVE)) {
         TEST_info("nid = %s, tnid = %s", OBJ_nid2sn(nid), OBJ_nid2sn(tnid));
         goto err;
     }
@@ -2037,7 +2037,7 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
         || !TEST_true(are_ec_nids_compatible(nid, tnid))
         || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
-                        OPENSSL_EC_EXPLICIT_CURVE)
+                        OPENtls_EC_EXPLICIT_CURVE)
         /* Check that if the cofactor is not set then it still matches */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
                                              NULL))
@@ -2048,7 +2048,7 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
         || !TEST_true(are_ec_nids_compatible(nid, tnid))
         || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
-                        OPENSSL_EC_EXPLICIT_CURVE)
+                        OPENtls_EC_EXPLICIT_CURVE)
         /* check that restoring the generator passes */
         || !TEST_true(EC_GROUP_set_generator(tmpg, group_gen, group_order,
                                              group_cofactor))
@@ -2059,14 +2059,14 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_int_ne((tnid = EC_GROUP_get_curve_name(tgroup)), NID_undef)
         || !TEST_true(are_ec_nids_compatible(nid, tnid))
         || !TEST_int_eq(EC_GROUP_get_asn1_flag(tgroup),
-                        OPENSSL_EC_EXPLICIT_CURVE))
+                        OPENtls_EC_EXPLICIT_CURVE))
         goto err;
 
     ret = 1;
 err:
-    for (g_next = &g_ary[0]; g_next < g_ary + OSSL_NELEM(g_ary); g_next++)
+    for (g_next = &g_ary[0]; g_next < g_ary + Otls_NELEM(g_ary); g_next++)
         EC_GROUP_free(*g_next);
-    for (p_next = &p_ary[0]; p_next < p_ary + OSSL_NELEM(g_ary); p_next++)
+    for (p_next = &p_ary[0]; p_next < p_ary + Otls_NELEM(g_ary); p_next++)
         ECPARAMETERS_free(*p_next);
     ECPARAMETERS_free(params);
     EC_POINT_free(other_gen);
@@ -2100,14 +2100,14 @@ static int parameter_test(void)
         || !TEST_mem_eq(buf, len, p521_named, sizeof(p521_named)))
         goto err;
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     buf = NULL;
 
     /*
      * Test the explicit encoding. P-521 requires correctly zero-padding the
      * curve coefficients.
      */
-    EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+    EC_GROUP_set_asn1_flag(group, OPENtls_EC_EXPLICIT_CURVE);
     if (!TEST_true((len = i2d_ECPKParameters(group, &buf)) >= 0)
         || !TEST_mem_eq(buf, len, p521_explicit, sizeof(p521_explicit)))
         goto err;
@@ -2117,7 +2117,7 @@ err:
     EC_GROUP_free(group);
     EC_GROUP_free(group2);
     ECPARAMETERS_free(ecparameters);
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return r;
 }
 
@@ -2322,7 +2322,7 @@ static int check_ec_key_field_public_range_test(int id)
      * be the same point on the curve). The add is different for char2 fields.
      */
     type = EC_METHOD_get_field_type(meth);
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
     if (type == NID_X9_62_characteristic_two_field) {
         /* test for binary curves */
         if (!TEST_true(BN_GF2m_add(x, x, field)))
@@ -2357,7 +2357,7 @@ err:
  *
  * If P is NULL use point at infinity.
  */
-static ossl_inline
+static otls_inline
 int ec_point_hex2point_test_helper(const EC_GROUP *group, const EC_POINT *P,
                                    point_conversion_form_t form,
                                    BN_CTX *bnctx)
@@ -2393,7 +2393,7 @@ int ec_point_hex2point_test_helper(const EC_GROUP *group, const EC_POINT *P,
 
  err:
     EC_POINT_free(Pinf);
-    OPENSSL_free(hex);
+    OPENtls_free(hex);
     EC_POINT_free(Q);
 
     return ret;
@@ -2448,13 +2448,13 @@ static int ec_point_hex2point_test(int id)
     return ret;
 }
 
-#endif /* OPENSSL_NO_EC */
+#endif /* OPENtls_NO_EC */
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENtls_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
 
@@ -2462,12 +2462,12 @@ int setup_tests(void)
     ADD_TEST(cofactor_range_test);
     ADD_ALL_TESTS(cardinality_test, crv_len);
     ADD_TEST(prime_field_tests);
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
     ADD_TEST(char2_field_tests);
-    ADD_ALL_TESTS(char2_curve_test, OSSL_NELEM(char2_curve_tests));
+    ADD_ALL_TESTS(char2_curve_test, Otls_NELEM(char2_curve_tests));
 # endif
-# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-    ADD_ALL_TESTS(nistp_single_test, OSSL_NELEM(nistp_tests_params));
+# ifndef OPENtls_NO_EC_NISTP_64_GCC_128
+    ADD_ALL_TESTS(nistp_single_test, Otls_NELEM(nistp_tests_params));
     ADD_TEST(underflow_test);
 # endif
     ADD_ALL_TESTS(internal_curve_test, crv_len);
@@ -2478,13 +2478,13 @@ int setup_tests(void)
     ADD_ALL_TESTS(check_ec_key_field_public_range_test, crv_len);
     ADD_ALL_TESTS(check_named_curve_from_ecparameters, crv_len);
     ADD_ALL_TESTS(ec_point_hex2point_test, crv_len);
-#endif /* OPENSSL_NO_EC */
+#endif /* OPENtls_NO_EC */
     return 1;
 }
 
 void cleanup_tests(void)
 {
-#ifndef OPENSSL_NO_EC
-    OPENSSL_free(curves);
+#ifndef OPENtls_NO_EC
+    OPENtls_free(curves);
 #endif
 }

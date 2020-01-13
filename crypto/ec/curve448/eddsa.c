@@ -1,17 +1,17 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Mike Hamburg
  */
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
 #include "curve448_local.h"
 #include "word.h"
 #include "ed448.h"
@@ -19,7 +19,7 @@
 
 #define COFACTOR 4
 
-static c448_error_t oneshot_hash(OPENSSL_CTX *ctx, uint8_t *out, size_t outlen,
+static c448_error_t oneshot_hash(OPENtls_CTX *ctx, uint8_t *out, size_t outlen,
                                  const uint8_t *in, size_t inlen)
 {
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
@@ -52,7 +52,7 @@ static void clamp(uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES])
     secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
 }
 
-static c448_error_t hash_init_with_dom(OPENSSL_CTX *ctx, EVP_MD_CTX *hashctx,
+static c448_error_t hash_init_with_dom(OPENtls_CTX *ctx, EVP_MD_CTX *hashctx,
                                        uint8_t prehashed,
                                        uint8_t for_prehash,
                                        const uint8_t *context,
@@ -87,7 +87,7 @@ static c448_error_t hash_init_with_dom(OPENSSL_CTX *ctx, EVP_MD_CTX *hashctx,
 
 /* In this file because it uses the hash */
 c448_error_t c448_ed448_convert_private_key_to_x448(
-                            OPENSSL_CTX *ctx,
+                            OPENtls_CTX *ctx,
                             uint8_t x[X448_PRIVATE_BYTES],
                             const uint8_t ed [EDDSA_448_PRIVATE_BYTES])
 {
@@ -98,7 +98,7 @@ c448_error_t c448_ed448_convert_private_key_to_x448(
 }
 
 c448_error_t c448_ed448_derive_public_key(
-                        OPENSSL_CTX *ctx,
+                        OPENtls_CTX *ctx,
                         uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES])
 {
@@ -136,13 +136,13 @@ c448_error_t c448_ed448_derive_public_key(
     /* Cleanup */
     curve448_scalar_destroy(secret_scalar);
     curve448_point_destroy(p);
-    OPENSSL_cleanse(secret_scalar_ser, sizeof(secret_scalar_ser));
+    OPENtls_cleanse(secret_scalar_ser, sizeof(secret_scalar_ser));
 
     return C448_SUCCESS;
 }
 
 c448_error_t c448_ed448_sign(
-                        OPENSSL_CTX *ctx,
+                        OPENtls_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
@@ -182,10 +182,10 @@ c448_error_t c448_ed448_sign(
                                      expanded + EDDSA_448_PRIVATE_BYTES,
                                      EDDSA_448_PRIVATE_BYTES)
                 || !EVP_DigestUpdate(hashctx, message, message_len)) {
-            OPENSSL_cleanse(expanded, sizeof(expanded));
+            OPENtls_cleanse(expanded, sizeof(expanded));
             goto err;
         }
-        OPENSSL_cleanse(expanded, sizeof(expanded));
+        OPENtls_cleanse(expanded, sizeof(expanded));
     }
 
     /* Decode the nonce */
@@ -195,7 +195,7 @@ c448_error_t c448_ed448_sign(
         if (!EVP_DigestFinalXOF(hashctx, nonce, sizeof(nonce)))
             goto err;
         curve448_scalar_decode_long(nonce_scalar, nonce, sizeof(nonce));
-        OPENSSL_cleanse(nonce, sizeof(nonce));
+        OPENtls_cleanse(nonce, sizeof(nonce));
     }
 
     {
@@ -227,13 +227,13 @@ c448_error_t c448_ed448_sign(
 
         curve448_scalar_decode_long(challenge_scalar, challenge,
                                     sizeof(challenge));
-        OPENSSL_cleanse(challenge, sizeof(challenge));
+        OPENtls_cleanse(challenge, sizeof(challenge));
     }
 
     curve448_scalar_mul(challenge_scalar, challenge_scalar, secret_scalar);
     curve448_scalar_add(challenge_scalar, challenge_scalar, nonce_scalar);
 
-    OPENSSL_cleanse(signature, EDDSA_448_SIGNATURE_BYTES);
+    OPENtls_cleanse(signature, EDDSA_448_SIGNATURE_BYTES);
     memcpy(signature, nonce_point, sizeof(nonce_point));
     curve448_scalar_encode(&signature[EDDSA_448_PUBLIC_BYTES],
                            challenge_scalar);
@@ -249,7 +249,7 @@ c448_error_t c448_ed448_sign(
 }
 
 c448_error_t c448_ed448_sign_prehash(
-                        OPENSSL_CTX *ctx,
+                        OPENtls_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
@@ -261,7 +261,7 @@ c448_error_t c448_ed448_sign_prehash(
 }
 
 c448_error_t c448_ed448_verify(
-                    OPENSSL_CTX *ctx,
+                    OPENtls_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t *message, size_t message_len,
@@ -327,7 +327,7 @@ c448_error_t c448_ed448_verify(
         EVP_MD_CTX_free(hashctx);
         curve448_scalar_decode_long(challenge_scalar, challenge,
                                     sizeof(challenge));
-        OPENSSL_cleanse(challenge, sizeof(challenge));
+        OPENtls_cleanse(challenge, sizeof(challenge));
     }
     curve448_scalar_sub(challenge_scalar, curve448_scalar_zero,
                         challenge_scalar);
@@ -344,7 +344,7 @@ c448_error_t c448_ed448_verify(
 }
 
 c448_error_t c448_ed448_verify_prehash(
-                    OPENSSL_CTX *ctx,
+                    OPENtls_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64], const uint8_t *context,
@@ -354,7 +354,7 @@ c448_error_t c448_ed448_verify_prehash(
                              context_len);
 }
 
-int ED448_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
+int ED448_sign(OPENtls_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
                size_t message_len, const uint8_t public_key[57],
                const uint8_t private_key[57], const uint8_t *context,
                size_t context_len)
@@ -364,7 +364,7 @@ int ED448_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
         == C448_SUCCESS;
 }
 
-int ED448_verify(OPENSSL_CTX *ctx, const uint8_t *message, size_t message_len,
+int ED448_verify(OPENtls_CTX *ctx, const uint8_t *message, size_t message_len,
                  const uint8_t signature[114], const uint8_t public_key[57],
                  const uint8_t *context, size_t context_len)
 {
@@ -372,7 +372,7 @@ int ED448_verify(OPENSSL_CTX *ctx, const uint8_t *message, size_t message_len,
                              0, context, (uint8_t)context_len) == C448_SUCCESS;
 }
 
-int ED448ph_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t hash[64],
+int ED448ph_sign(OPENtls_CTX *ctx, uint8_t *out_sig, const uint8_t hash[64],
                  const uint8_t public_key[57], const uint8_t private_key[57],
                  const uint8_t *context, size_t context_len)
 {
@@ -381,7 +381,7 @@ int ED448ph_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t hash[64],
 
 }
 
-int ED448ph_verify(OPENSSL_CTX *ctx, const uint8_t hash[64],
+int ED448ph_verify(OPENtls_CTX *ctx, const uint8_t hash[64],
                    const uint8_t signature[114], const uint8_t public_key[57],
                    const uint8_t *context, size_t context_len)
 {
@@ -389,7 +389,7 @@ int ED448ph_verify(OPENSSL_CTX *ctx, const uint8_t hash[64],
                                      (uint8_t)context_len) == C448_SUCCESS;
 }
 
-int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
+int ED448_public_from_private(OPENtls_CTX *ctx, uint8_t out_public_key[57],
                               const uint8_t private_key[57])
 {
     return c448_ed448_derive_public_key(ctx, out_public_key, private_key)

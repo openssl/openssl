@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,15 +13,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
+#include <opentls/crypto.h>
+#include <opentls/rand.h>
+#include <opentls/bn.h>
+#include <opentls/dsa.h>
 
 #include "testutil.h"
 #include "internal/nelem.h"
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static int dsa_cb(int p, int n, BN_GENCB *arg);
 
 /*
@@ -130,11 +130,11 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
     }
     return 1;
 }
-#endif /* OPENSSL_NO_DSA */
+#endif /* OPENtls_NO_DSA */
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     ADD_TEST(dsa_test);
 #endif
     return 1;

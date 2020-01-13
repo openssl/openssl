@@ -26,7 +26,7 @@ B<-h> I<server_url>
 This command can be used for sending a timestamp request, as specified
 in RFC 3161, to a timestamp server over HTTP or HTTPS and storing the
 timestamp response in a file. It cannot be used for creating the requests
-and verifying responses, you have to use L<openssl-ts(1)> to do that. This
+and verifying responses, you have to use L<opentls-ts(1)> to do that. This
 command can send several requests to the server without closing the TCP
 connection if more than one requests are specified on the command line.
 
@@ -108,12 +108,12 @@ Either option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 =item B<-P> I<CA_path>
 
 (HTTPS) The path containing the trusted CA certificates to verify the peer's
-certificate. The directory must be prepared with L<openssl-rehash(1)>. Either
+certificate. The directory must be prepared with L<opentls-rehash(1)>. Either
 option B<-C> or option B<-P> must be given in case of HTTPS. (Optional)
 
 =item B<-r> I<files>
 
-See L<openssl(1)/Random State Options> for more information.
+See L<opentls(1)/Random State Options> for more information.
 
 =item B<-g> I<EGD_socket>
 
@@ -155,7 +155,7 @@ progress, output is written to F<file1.reply> and F<file2.reply> respectively:
 Create a timestamp request, write it to F<file3.tsq>, send it to the server and
 write the response to F<file3.tsr>:
 
-  openssl ts -query -data file3.txt -cert | tee file3.tsq \
+  opentls ts -query -data file3.txt -cert | tee file3.tsq \
         | tsget -h http://tsa.opentsa.org:8080/tsa \
         -o file3.tsr
 
@@ -183,20 +183,20 @@ example:
 
 =head1 SEE ALSO
 
-=for openssl foreign manuals: WWW::Curl::Easy
+=for opentls foreign manuals: WWW::Curl::Easy
 
-L<openssl(1)>,
-L<openssl-ts(1)>,
+L<opentls(1)>,
+L<opentls-ts(1)>,
 L<WWW::Curl::Easy>,
 L<https://www.rfc-editor.org/rfc/rfc3161.html>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

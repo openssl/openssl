@@ -1,16 +1,16 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use File::Spec::Functions;
 use File::Copy;
 use MIME::Base64;
-use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
-use OpenSSL::Test::Utils;
+use Opentls::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use Opentls::Test::Utils;
 
 my $test_name = "test_store";
 setup($test_name);
@@ -91,48 +91,48 @@ indir "store_$$" => sub {
         foreach (@noexist_files) {
             my $file = srctop_file($_);
 
-            ok(!run(app(["openssl", "storeutl", "-noout", $file])));
-            ok(!run(app(["openssl", "storeutl", "-noout",
+            ok(!run(app(["opentls", "storeutl", "-noout", $file])));
+            ok(!run(app(["opentls", "storeutl", "-noout",
                          to_abs_file($file)])));
             {
                 local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(!run(app(["openssl", "storeutl", "-noout",
+                ok(!run(app(["opentls", "storeutl", "-noout",
                              to_abs_file_uri($file)])));
             }
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
 
-            ok(run(app(["openssl", "storeutl", "-noout", $file])));
-            ok(run(app(["openssl", "storeutl", "-noout", to_abs_file($file)])));
+            ok(run(app(["opentls", "storeutl", "-noout", $file])));
+            ok(run(app(["opentls", "storeutl", "-noout", to_abs_file($file)])));
         SKIP:
             {
                 skip "file: tests disabled on MingW", 4 if $mingw;
 
-                ok(run(app(["openssl", "storeutl", "-noout",
+                ok(run(app(["opentls", "storeutl", "-noout",
                             to_abs_file_uri($file)])));
-                ok(run(app(["openssl", "storeutl", "-noout",
+                ok(run(app(["opentls", "storeutl", "-noout",
                             to_abs_file_uri($file, 0, "")])));
-                ok(run(app(["openssl", "storeutl", "-noout",
+                ok(run(app(["opentls", "storeutl", "-noout",
                             to_abs_file_uri($file, 0, "localhost")])));
-                ok(!run(app(["openssl", "storeutl", "-noout",
+                ok(!run(app(["opentls", "storeutl", "-noout",
                              to_abs_file_uri($file, 0, "dummy")])));
             }
         }
         foreach (@generated_files) {
-            ok(run(app(["openssl", "storeutl", "-noout", "-passin",
+            ok(run(app(["opentls", "storeutl", "-noout", "-passin",
                         "pass:password", $_])));
-            ok(run(app(["openssl", "storeutl",  "-noout", "-passin",
+            ok(run(app(["opentls", "storeutl",  "-noout", "-passin",
                         "pass:password", to_abs_file($_)])));
 
         SKIP:
             {
                 skip "file: tests disabled on MingW", 2 if $mingw;
 
-                ok(run(app(["openssl", "storeutl", "-noout", "-passin",
+                ok(run(app(["opentls", "storeutl", "-noout", "-passin",
                             "pass:password", to_abs_file_uri($_)])));
-                ok(!run(app(["openssl", "storeutl", "-noout", "-passin",
+                ok(!run(app(["opentls", "storeutl", "-noout", "-passin",
                              "pass:password", to_file_uri($_)])));
             }
         }
@@ -141,7 +141,7 @@ indir "store_$$" => sub {
             {
                 skip "file: tests disabled on MingW", 1 if $mingw;
 
-                ok(run(app(["openssl", "storeutl",  "-noout", $_])));
+                ok(run(app(["opentls", "storeutl",  "-noout", $_])));
             }
         }
         foreach (@noexist_file_files) {
@@ -149,40 +149,40 @@ indir "store_$$" => sub {
             {
                 skip "file: tests disabled on MingW", 1 if $mingw;
 
-                ok(!run(app(["openssl", "storeutl",  "-noout", $_])));
+                ok(!run(app(["opentls", "storeutl",  "-noout", $_])));
             }
         }
         {
             my $dir = srctop_dir("test", "certs");
 
-            ok(run(app(["openssl", "storeutl",  "-noout", $dir])));
-            ok(run(app(["openssl", "storeutl",  "-noout",
+            ok(run(app(["opentls", "storeutl",  "-noout", $dir])));
+            ok(run(app(["opentls", "storeutl",  "-noout",
                         to_abs_file($dir, 1)])));
         SKIP:
             {
                 skip "file: tests disabled on MingW", 1 if $mingw;
 
-                ok(run(app(["openssl", "storeutl",  "-noout",
+                ok(run(app(["opentls", "storeutl",  "-noout",
                             to_abs_file_uri($dir, 1)])));
             }
         }
 
-        ok(!run(app(['openssl', 'storeutl', '-noout',
-                     '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+        ok(!run(app(['opentls', 'storeutl', '-noout',
+                     '-subject', '/C=AU/ST=QLD/CN=tlseay\/rsa test cert',
                      srctop_file('test', 'testx509.pem')])),
            "Checking that -subject can't be used with a single file");
 
-        ok(run(app(['openssl', 'storeutl', '-certs', '-noout',
+        ok(run(app(['opentls', 'storeutl', '-certs', '-noout',
                     srctop_file('test', 'testx509.pem')])),
            "Checking that -certs returns 1 object on a certificate file");
-        ok(run(app(['openssl', 'storeutl', '-certs', '-noout',
+        ok(run(app(['opentls', 'storeutl', '-certs', '-noout',
                      srctop_file('test', 'testcrl.pem')])),
            "Checking that -certs returns 0 objects on a CRL file");
 
-        ok(run(app(['openssl', 'storeutl', '-crls', '-noout',
+        ok(run(app(['opentls', 'storeutl', '-crls', '-noout',
                      srctop_file('test', 'testx509.pem')])),
            "Checking that -crls returns 0 objects on a certificate file");
-        ok(run(app(['openssl', 'storeutl', '-crls', '-noout',
+        ok(run(app(['opentls', 'storeutl', '-crls', '-noout',
                     srctop_file('test', 'testcrl.pem')])),
            "Checking that -crls returns 1 object on a CRL file");
 
@@ -190,27 +190,27 @@ indir "store_$$" => sub {
             skip "failed rehash initialisation", 6 unless $rehash;
 
             # subject from testx509.pem:
-            # '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert'
+            # '/C=AU/ST=QLD/CN=tlseay\/rsa test cert'
             # issuer from testcrl.pem:
             # '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority'
-            ok(run(app(['openssl', 'storeutl', '-noout',
-                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+            ok(run(app(['opentls', 'storeutl', '-noout',
+                        '-subject', '/C=AU/ST=QLD/CN=tlseay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-noout',
+            ok(run(app(['opentls', 'storeutl', '-noout',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-noout', '-certs',
-                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+            ok(run(app(['opentls', 'storeutl', '-noout', '-certs',
+                        '-subject', '/C=AU/ST=QLD/CN=tlseay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-noout', '-crls',
-                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+            ok(run(app(['opentls', 'storeutl', '-noout', '-crls',
+                        '-subject', '/C=AU/ST=QLD/CN=tlseay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-noout', '-certs',
+            ok(run(app(['opentls', 'storeutl', '-noout', '-certs',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-noout', '-crls',
+            ok(run(app(['opentls', 'storeutl', '-noout', '-crls',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));
@@ -221,24 +221,24 @@ indir "store_$$" => sub {
 sub init {
     return (
             # rsa-key-pkcs1.pem
-            run(app(["openssl", "genrsa",
+            run(app(["opentls", "genrsa",
                      "-out", "rsa-key-pkcs1.pem", "2432"]))
             # dsa-key-pkcs1.pem
-            && run(app(["openssl", "dsaparam", "-genkey",
+            && run(app(["opentls", "dsaparam", "-genkey",
                         "-out", "dsa-key-pkcs1.pem", "1024"]))
             # ec-key-pkcs1.pem (one might think that 'genec' would be practical)
-            && run(app(["openssl", "ecparam", "-genkey", "-name", "prime256v1",
+            && run(app(["opentls", "ecparam", "-genkey", "-name", "prime256v1",
                         "-out", "ec-key-pkcs1.pem"]))
             # rsa-key-pkcs1-aes128.pem
-            && run(app(["openssl", "rsa", "-passout", "pass:password", "-aes128",
+            && run(app(["opentls", "rsa", "-passout", "pass:password", "-aes128",
                         "-in", "rsa-key-pkcs1.pem",
                         "-out", "rsa-key-pkcs1-aes128.pem"]))
             # dsa-key-pkcs1-aes128.pem
-            && run(app(["openssl", "dsa", "-passout", "pass:password", "-aes128",
+            && run(app(["opentls", "dsa", "-passout", "pass:password", "-aes128",
                         "-in", "dsa-key-pkcs1.pem",
                         "-out", "dsa-key-pkcs1-aes128.pem"]))
             # ec-key-pkcs1-aes128.pem
-            && run(app(["openssl", "ec", "-passout", "pass:password", "-aes128",
+            && run(app(["opentls", "ec", "-passout", "pass:password", "-aes128",
                         "-in", "ec-key-pkcs1.pem",
                         "-out", "ec-key-pkcs1-aes128.pem"]))
             # *-key-pkcs8.pem
@@ -246,7 +246,7 @@ sub init {
                           my $dstfile = shift;
                           (my $srcfile = $dstfile)
                               =~ s/-key-pkcs8\.pem$/-key-pkcs1.pem/i;
-                          run(app(["openssl", "pkcs8", "-topk8", "-nocrypt",
+                          run(app(["opentls", "pkcs8", "-topk8", "-nocrypt",
                                    "-in", $srcfile, "-out", $dstfile]));
                       }, grep(/-key-pkcs8\.pem$/, @generated_files))
             # *-key-pkcs8-pbes1-sha1-3des.pem
@@ -255,7 +255,7 @@ sub init {
                           (my $srcfile = $dstfile)
                               =~ s/-key-pkcs8-pbes1-sha1-3des\.pem$
                                   /-key-pkcs8.pem/ix;
-                          run(app(["openssl", "pkcs8", "-topk8",
+                          run(app(["opentls", "pkcs8", "-topk8",
                                    "-passout", "pass:password",
                                    "-v1", "pbeWithSHA1And3-KeyTripleDES-CBC",
                                    "-in", $srcfile, "-out", $dstfile]));
@@ -266,7 +266,7 @@ sub init {
                           (my $srcfile = $dstfile)
                               =~ s/-key-pkcs8-pbes1-md5-des\.pem$
                                   /-key-pkcs8.pem/ix;
-                          run(app(["openssl", "pkcs8", "-topk8",
+                          run(app(["opentls", "pkcs8", "-topk8",
                                    "-passout", "pass:password",
                                    "-v1", "pbeWithSHA1And3-KeyTripleDES-CBC",
                                    "-in", $srcfile, "-out", $dstfile]));
@@ -277,7 +277,7 @@ sub init {
                           (my $srcfile = $dstfile)
                               =~ s/-key-pkcs8-pbes2-sha1\.pem$
                                   /-key-pkcs8.pem/ix;
-                          run(app(["openssl", "pkcs8", "-topk8",
+                          run(app(["opentls", "pkcs8", "-topk8",
                                    "-passout", "pass:password",
                                    "-v2", "aes256", "-v2prf", "hmacWithSHA1",
                                    "-in", $srcfile, "-out", $dstfile]));
@@ -288,13 +288,13 @@ sub init {
                           (my $srcfile = $dstfile)
                               =~ s/-key-pkcs8-pbes2-sha256\.pem$
                                   /-key-pkcs8.pem/ix;
-                          run(app(["openssl", "pkcs8", "-topk8",
+                          run(app(["opentls", "pkcs8", "-topk8",
                                    "-passout", "pass:password",
                                    "-v2", "aes256", "-v2prf", "hmacWithSHA256",
                                    "-in", $srcfile, "-out", $dstfile]));
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
             # *-cert.pem (intermediary for the .p12 inits)
-            && run(app(["openssl", "req", "-x509",
+            && run(app(["opentls", "req", "-x509",
                         "-config", data_file("ca.cnf"), "-nodes",
                         "-out", "cacert.pem", "-keyout", "cakey.pem"]))
             && runall(sub {
@@ -302,11 +302,11 @@ sub init {
                           (my $dstfile = $srckey) =~ s|-key-pkcs8\.|-cert.|;
                           (my $csr = $dstfile) =~ s|\.pem|.csr|;
 
-                          (run(app(["openssl", "req", "-new",
+                          (run(app(["opentls", "req", "-new",
                                     "-config", data_file("user.cnf"),
                                     "-key", $srckey, "-out", $csr]))
                            &&
-                           run(app(["openssl", "x509", "-days", "3650",
+                           run(app(["opentls", "x509", "-days", "3650",
                                     "-CA", "cacert.pem",
                                     "-CAkey", "cakey.pem",
                                     "-set_serial", time(), "-req",
@@ -358,7 +358,7 @@ sub init {
                               print STDERR "(destination file was $dstfile)\n";
                               return 0;
                           }
-                          run(app(["openssl", "pkcs12", "-inkey", $srckey,
+                          run(app(["opentls", "pkcs12", "-inkey", $srckey,
                                    "-in", $srccert, "-passout", "pass:password",
                                    "-export", "-macalg", $macalg,
                                    "-certpbe", $certpbe, "-keypbe", $keypbe,
@@ -420,7 +420,7 @@ sub init_rehash {
                     catdir(curdir(), 'rehash'))
             && copy(srctop_file('test', 'testcrl.pem'),
                     catdir(curdir(), 'rehash'))
-            && run(app(['openssl', 'rehash', catdir(curdir(), 'rehash')]))
+            && run(app(['opentls', 'rehash', catdir(curdir(), 'rehash')]))
            );
 }
 

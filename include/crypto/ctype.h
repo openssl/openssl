@@ -1,10 +1,10 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -18,8 +18,8 @@
  * throughout the rest of the source code.  Refer to issue #4154 for
  * details.
  */
-#ifndef OSSL_CRYPTO_CTYPE_H
-# define OSSL_CRYPTO_CTYPE_H
+#ifndef Otls_CRYPTO_CTYPE_H
+# define Otls_CRYPTO_CTYPE_H
 
 # define CTYPE_MASK_lower       0x1
 # define CTYPE_MASK_upper       0x2
@@ -47,36 +47,36 @@
 # define CTYPE_MASK_ascii   (~0)
 
 # ifdef CHARSET_EBCDIC
-int ossl_toascii(int c);
-int ossl_fromascii(int c);
+int otls_toascii(int c);
+int otls_fromascii(int c);
 # else
-#  define ossl_toascii(c)       (c)
-#  define ossl_fromascii(c)     (c)
+#  define otls_toascii(c)       (c)
+#  define otls_fromascii(c)     (c)
 # endif
-int ossl_ctype_check(int c, unsigned int mask);
-int ossl_tolower(int c);
-int ossl_toupper(int c);
+int otls_ctype_check(int c, unsigned int mask);
+int otls_tolower(int c);
+int otls_toupper(int c);
 
 int ascii_isdigit(const char inchar);
 
-# define ossl_isalnum(c)        (ossl_ctype_check((c), CTYPE_MASK_alnum))
-# define ossl_isalpha(c)        (ossl_ctype_check((c), CTYPE_MASK_alpha))
+# define otls_isalnum(c)        (otls_ctype_check((c), CTYPE_MASK_alnum))
+# define otls_isalpha(c)        (otls_ctype_check((c), CTYPE_MASK_alpha))
 # ifdef CHARSET_EBCDIC
-# define ossl_isascii(c)        (ossl_ctype_check((c), CTYPE_MASK_ascii))
+# define otls_isascii(c)        (otls_ctype_check((c), CTYPE_MASK_ascii))
 # else
-# define ossl_isascii(c)        (((c) & ~127) == 0)
+# define otls_isascii(c)        (((c) & ~127) == 0)
 # endif
-# define ossl_isblank(c)        (ossl_ctype_check((c), CTYPE_MASK_blank))
-# define ossl_iscntrl(c)        (ossl_ctype_check((c), CTYPE_MASK_cntrl))
-# define ossl_isdigit(c)        (ossl_ctype_check((c), CTYPE_MASK_digit))
-# define ossl_isgraph(c)        (ossl_ctype_check((c), CTYPE_MASK_graph))
-# define ossl_islower(c)        (ossl_ctype_check((c), CTYPE_MASK_lower))
-# define ossl_isprint(c)        (ossl_ctype_check((c), CTYPE_MASK_print))
-# define ossl_ispunct(c)        (ossl_ctype_check((c), CTYPE_MASK_punct))
-# define ossl_isspace(c)        (ossl_ctype_check((c), CTYPE_MASK_space))
-# define ossl_isupper(c)        (ossl_ctype_check((c), CTYPE_MASK_upper))
-# define ossl_isxdigit(c)       (ossl_ctype_check((c), CTYPE_MASK_xdigit))
-# define ossl_isbase64(c)       (ossl_ctype_check((c), CTYPE_MASK_base64))
-# define ossl_isasn1print(c)    (ossl_ctype_check((c), CTYPE_MASK_asn1print))
+# define otls_isblank(c)        (otls_ctype_check((c), CTYPE_MASK_blank))
+# define otls_iscntrl(c)        (otls_ctype_check((c), CTYPE_MASK_cntrl))
+# define otls_isdigit(c)        (otls_ctype_check((c), CTYPE_MASK_digit))
+# define otls_isgraph(c)        (otls_ctype_check((c), CTYPE_MASK_graph))
+# define otls_islower(c)        (otls_ctype_check((c), CTYPE_MASK_lower))
+# define otls_isprint(c)        (otls_ctype_check((c), CTYPE_MASK_print))
+# define otls_ispunct(c)        (otls_ctype_check((c), CTYPE_MASK_punct))
+# define otls_isspace(c)        (otls_ctype_check((c), CTYPE_MASK_space))
+# define otls_isupper(c)        (otls_ctype_check((c), CTYPE_MASK_upper))
+# define otls_isxdigit(c)       (otls_ctype_check((c), CTYPE_MASK_xdigit))
+# define otls_isbase64(c)       (otls_ctype_check((c), CTYPE_MASK_base64))
+# define otls_isasn1print(c)    (otls_ctype_check((c), CTYPE_MASK_asn1print))
 
 #endif

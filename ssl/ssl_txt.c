@@ -1,35 +1,35 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/buffer.h>
-#include "ssl_local.h"
+#include <opentls/buffer.h>
+#include "tls_local.h"
 
-#ifndef OPENSSL_NO_STDIO
-int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
+#ifndef OPENtls_NO_STDIO
+int tls_SESSION_print_fp(FILE *fp, const tls_SESSION *x)
 {
     BIO *b;
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_PRINT_FP, ERR_R_BUF_LIB);
+        tlserr(tls_F_tls_SESSION_PRINT_FP, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = SSL_SESSION_print(b, x);
+    ret = tls_SESSION_print(b, x);
     BIO_free(b);
     return ret;
 }
 #endif
 
-int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
+int tls_SESSION_print(BIO *bp, const tls_SESSION *x)
 {
     size_t i;
     const char *s;
@@ -37,10 +37,10 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 
     if (x == NULL)
         goto err;
-    istls13 = (x->ssl_version == TLS1_3_VERSION);
-    if (BIO_puts(bp, "SSL-Session:\n") <= 0)
+    istls13 = (x->tls_version == TLS1_3_VERSION);
+    if (BIO_puts(bp, "tls-Session:\n") <= 0)
         goto err;
-    s = ssl_protocol_to_string(x->ssl_version);
+    s = tls_protocol_to_string(x->tls_version);
     if (BIO_printf(bp, "    Protocol  : %s\n", s) <= 0)
         goto err;
 
@@ -81,7 +81,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
-#ifndef OPENSSL_NO_PSK
+#ifndef OPENtls_NO_PSK
     if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
         goto err;
     if (BIO_printf(bp, "%s", x->psk_identity ? x->psk_identity : "None") <= 0)
@@ -92,7 +92,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         (bp, "%s", x->psk_identity_hint ? x->psk_identity_hint : "None") <= 0)
         goto err;
 #endif
-#ifndef OPENSSL_NO_SRP
+#ifndef OPENtls_NO_SRP
     if (BIO_puts(bp, "\n    SRP username: ") <= 0)
         goto err;
     if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0)
@@ -113,11 +113,11 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
             <= 0)
             goto err;
     }
-#ifndef OPENSSL_NO_COMP
+#ifndef OPENtls_NO_COMP
     if (x->compress_meth != 0) {
-        SSL_COMP *comp = NULL;
+        tls_COMP *comp = NULL;
 
-        if (!ssl_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp, 0))
+        if (!tls_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp, 0))
             goto err;
         if (comp == NULL) {
             if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <= 0)
@@ -147,7 +147,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         goto err;
 
     if (BIO_printf(bp, "    Extended master secret: %s\n",
-                   x->flags & SSL_SESS_FLAG_EXTMS ? "yes" : "no") <= 0)
+                   x->flags & tls_SESS_FLAG_EXTMS ? "yes" : "no") <= 0)
         goto err;
 
     if (istls13) {
@@ -165,7 +165,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
  * print session id and master key in NSS keylog format (RSA
  * Session-ID:<session id> Master-Key:<master key>)
  */
-int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x)
+int tls_SESSION_print_keylog(BIO *bp, const tls_SESSION *x)
 {
     size_t i;
 

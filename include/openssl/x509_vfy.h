@@ -1,46 +1,46 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_X509_VFY_H
-# define OPENSSL_X509_VFY_H
+#ifndef OPENtls_X509_VFY_H
+# define OPENtls_X509_VFY_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_X509_VFY_H
 # endif
 
 /*
  * Protect against recursion, x509.h and x509_vfy.h each include the other.
  */
-# ifndef OPENSSL_X509_H
-#  include <openssl/x509.h>
+# ifndef OPENtls_X509_H
+#  include <opentls/x509.h>
 # endif
 
-# include <openssl/opensslconf.h>
-# include <openssl/lhash.h>
-# include <openssl/bio.h>
-# include <openssl/crypto.h>
-# include <openssl/symhacks.h>
+# include <opentls/opentlsconf.h>
+# include <opentls/lhash.h>
+# include <opentls/bio.h>
+# include <opentls/crypto.h>
+# include <opentls/symhacks.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /*-
-SSL_CTX -> X509_STORE
+tls_CTX -> X509_STORE
                 -> X509_LOOKUP
                         ->X509_LOOKUP_METHOD
                 -> X509_LOOKUP
                         ->X509_LOOKUP_METHOD
 
-SSL     -> X509_STORE_CTX
+tls     -> X509_STORE_CTX
                 ->X509_STORE
 
 The X509_STORE holds the tables etc for verification stuff.
@@ -55,7 +55,7 @@ typedef enum {
     X509_LU_X509, X509_LU_CRL
 } X509_LOOKUP_TYPE;
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 #define X509_LU_RETRY   -1
 #define X509_LU_FAIL    0
 #endif
@@ -205,7 +205,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 /* Certificate verify flags */
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
 # endif
 /* Use check time instead of current time */
@@ -375,7 +375,7 @@ X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(X509_STORE_CTX *c
 X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(X509_STORE_CTX *ctx);
 X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(X509_STORE_CTX *ctx);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 # define X509_STORE_CTX_get_chain X509_STORE_CTX_get0_chain
 # define X509_STORE_CTX_set_chain X509_STORE_CTX_set0_untrusted
 # define X509_STORE_CTX_trusted_stack X509_STORE_CTX_set0_trusted_stack
@@ -539,10 +539,10 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
 /*
- * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * Bridge opacity barrier between libcrypt and libtls, also needed to support
  * offline testing in test/danetest.c
  */
-void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, tls_DANE *dane);
 #define DANE_FLAG_NO_DANE_EE_NAMECHECKS (1L << 0)
 
 /* X509_VERIFY_PARAM functions */

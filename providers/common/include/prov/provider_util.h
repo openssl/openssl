@@ -1,14 +1,14 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/provider.h>
-#include <openssl/engine.h>
+#include <opentls/provider.h>
+#include <opentls/engine.h>
 
 typedef struct {
     /*
@@ -43,19 +43,19 @@ typedef struct {
  * implementation used.  If a provider cannot be found, it falls back to trying
  * non-provider based implementations.
  */
-int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
-                                      const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+int otls_prov_cipher_load_from_params(PROV_CIPHER *pc,
+                                      const Otls_PARAM params[],
+                                      OPENtls_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
-void ossl_prov_cipher_reset(PROV_CIPHER *pc);
+void otls_prov_cipher_reset(PROV_CIPHER *pc);
 
 /* Clone a PROV_CIPHER structure into a second */
-int ossl_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src);
+int otls_prov_cipher_copy(PROV_CIPHER *dst, const PROV_CIPHER *src);
 
 /* Query the cipher and associated engine (if any) */
-const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
-ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
+const EVP_CIPHER *otls_prov_cipher_cipher(const PROV_CIPHER *pc);
+ENGINE *otls_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
 /*
@@ -64,19 +64,19 @@ ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
  * implementation used.  If a provider cannot be found, it falls back to trying
  * non-provider based implementations.
  */
-int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
-                                      const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+int otls_prov_digest_load_from_params(PROV_DIGEST *pd,
+                                      const Otls_PARAM params[],
+                                      OPENtls_CTX *ctx);
 
 /* Reset the PROV_DIGEST fields and free any allocated digest reference */
-void ossl_prov_digest_reset(PROV_DIGEST *pd);
+void otls_prov_digest_reset(PROV_DIGEST *pd);
 
 /* Clone a PROV_DIGEST structure into a second */
-int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
+int otls_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 
 /* Query the digest and associated engine (if any) */
-const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
-ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
+const EVP_MD *otls_prov_digest_md(const PROV_DIGEST *pd);
+ENGINE *otls_prov_digest_engine(const PROV_DIGEST *pd);
 
 /* MAC functions */
 /*
@@ -95,21 +95,21 @@ ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
  * given, and if any of them is, the "digest" and "cipher" parameters are
  * ignored.
  */
-int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
-                                      const OSSL_PARAM params[],
+int otls_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
+                                      const Otls_PARAM params[],
                                       const char *macname,
                                       const char *ciphername,
                                       const char *mdname,
-                                      OPENSSL_CTX *ctx);
+                                      OPENtls_CTX *ctx);
 
 typedef struct ag_capable_st {
-    OSSL_ALGORITHM alg;
+    Otls_ALGORITHM alg;
     int (*capable)(void);
-} OSSL_ALGORITHM_CAPABLE;
+} Otls_ALGORITHM_CAPABLE;
 
 /*
  * Dynamically select algorithms by calling a capable() method.
  * If this method is NULL or the method returns 1 then the algorithm is added.
  */
-void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
-                                         OSSL_ALGORITHM *out);
+void otls_prov_cache_exported_algorithms(const Otls_ALGORITHM_CAPABLE *in,
+                                         Otls_ALGORITHM *out);

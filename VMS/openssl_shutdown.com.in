@@ -1,7 +1,7 @@
-$	! OpenSSL shutdown script
+$	! Opentls shutdown script
 $	!
 $	! This script deassigns the logical names used by the installation
-$	! of OpenSSL.  It can do so at any level, defined by P1.
+$	! of Opentls.  It can do so at any level, defined by P1.
 $	!
 $	! P1	Qualifier(s) for DEASSIGN.
 $	!	Default: /PROCESS
@@ -29,27 +29,27 @@ $	DEAS := DEASSIGN /NOLOG 'P1'
 $	sv   := {- sprintf "%02d%02d", split m|\.|, $config{shlib_version} -}
 $	pz   := {- $config{pointer_size} -}
 $
-$	DEAS OSSL$DATAROOT
-$	DEAS OSSL$INSTROOT
-$	DEAS OSSL$INCLUDE
-$	DEAS OSSL$LIB
-$	DEAS OSSL$SHARE
-$	DEAS OSSL$ENGINES'sv'
-$	DEAS OSSL$EXE
-$	DEAS OSSL$LIBCRYPTO'pz'
-$	DEAS OSSL$LIBSSL'pz'
+$	DEAS Otls$DATAROOT
+$	DEAS Otls$INSTROOT
+$	DEAS Otls$INCLUDE
+$	DEAS Otls$LIB
+$	DEAS Otls$SHARE
+$	DEAS Otls$ENGINES'sv'
+$	DEAS Otls$EXE
+$	DEAS Otls$LIBCRYPTO'pz'
+$	DEAS Otls$LIBtls'pz'
 ${- output_off() if $config{no_shared}; "" -}
-$	DEAS OSSL$LIBCRYPTO'sv'_SHR'pz'
-$	DEAS OSSL$LIBSSL'sv'_SHR'pz'
+$	DEAS Otls$LIBCRYPTO'sv'_SHR'pz'
+$	DEAS Otls$LIBtls'sv'_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
-$	DEAS OPENSSL
+$	DEAS OPENtls
 $
 $	IF P2 .NES. "NOALIASES"
 $	THEN
-$	    DEAS OSSL$ENGINES
+$	    DEAS Otls$ENGINES
 ${- output_off() if $config{no_shared}; "" -}
-$	    DEAS OSSL$LIBCRYPTO_SHR'pz'
-$	    DEAS OSSL$LIBSSL_SHR'pz'
+$	    DEAS Otls$LIBCRYPTO_SHR'pz'
+$	    DEAS Otls$LIBtls_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
 $

@@ -1,53 +1,53 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_RSA_H
-# define OPENSSL_RSA_H
+#ifndef OPENtls_RSA_H
+# define OPENtls_RSA_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_RSA_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_RSA
-# include <openssl/asn1.h>
-# include <openssl/bio.h>
-# include <openssl/crypto.h>
-# include <openssl/types.h>
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/bn.h>
+# ifndef OPENtls_NO_RSA
+# include <opentls/asn1.h>
+# include <opentls/bio.h>
+# include <opentls/crypto.h>
+# include <opentls/types.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/bn.h>
 # endif
-# include <openssl/rsaerr.h>
-# include <openssl/safestack.h>
+# include <opentls/rsaerr.h>
+# include <opentls/safestack.h>
 
 # ifdef  __cplusplus
 extern "C" {
 # endif
 
-/* The types RSA and RSA_METHOD are defined in ossl_typ.h */
+/* The types RSA and RSA_METHOD are defined in otls_typ.h */
 
-# ifndef OPENSSL_RSA_MAX_MODULUS_BITS
-#  define OPENSSL_RSA_MAX_MODULUS_BITS   16384
+# ifndef OPENtls_RSA_MAX_MODULUS_BITS
+#  define OPENtls_RSA_MAX_MODULUS_BITS   16384
 # endif
 
-# define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 1024
+# define OPENtls_RSA_FIPS_MIN_MODULUS_BITS 1024
 
-# ifndef OPENSSL_RSA_SMALL_MODULUS_BITS
-#  define OPENSSL_RSA_SMALL_MODULUS_BITS 3072
+# ifndef OPENtls_RSA_SMALL_MODULUS_BITS
+#  define OPENtls_RSA_SMALL_MODULUS_BITS 3072
 # endif
-# ifndef OPENSSL_RSA_MAX_PUBEXP_BITS
+# ifndef OPENtls_RSA_MAX_PUBEXP_BITS
 
 /* exponent limit enforced for "large" modulus only */
-#  define OPENSSL_RSA_MAX_PUBEXP_BITS    64
+#  define OPENtls_RSA_MAX_PUBEXP_BITS    64
 # endif
 
 # define RSA_3   0x3L
@@ -81,13 +81,13 @@ extern "C" {
  * but other engines might not need it
  */
 # define RSA_FLAG_NO_BLINDING            0x0080
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
 #  define RSA_FLAG_NO_CONSTTIME           0x0000
 # endif
-# ifndef OPENSSL_NO_DEPRECATED_0_9_8
+# ifndef OPENtls_NO_DEPRECATED_0_9_8
 /* deprecated name for the flag*/
 /*
  * new with 0.9.7h; the built-in RSA
@@ -183,7 +183,7 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);
 # define EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES  (EVP_PKEY_ALG_CTRL + 13)
 
 # define RSA_PKCS1_PADDING          1
-# define RSA_SSLV23_PADDING         2
+# define RSA_tlsV23_PADDING         2
 # define RSA_NO_PADDING             3
 # define RSA_PKCS1_OAEP_PADDING     4
 # define RSA_X931_PADDING           5
@@ -275,7 +275,7 @@ const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
 /* these are the actual RSA functions */
-const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
+const RSA_METHOD *RSA_PKCS1_Opentls(void);
 
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2);
 
@@ -303,7 +303,7 @@ typedef struct rsa_oaep_params_st {
 
 DECLARE_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 # endif
 
@@ -361,9 +361,9 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                       int num, const unsigned char *param,
                                       int plen, const EVP_MD *md,
                                       const EVP_MD *mgf1md);
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+int RSA_padding_add_tlsv23(unsigned char *to, int tlen,
                            const unsigned char *f, int fl);
-int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
+int RSA_padding_check_tlsv23(unsigned char *to, int tlen,
                              const unsigned char *f, int fl, int rsa_len);
 int RSA_padding_add_none(unsigned char *to, int tlen, const unsigned char *f,
                          int fl);

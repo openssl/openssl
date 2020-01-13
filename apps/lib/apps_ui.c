@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/ui.h>
+#include <opentls/err.h>
+#include <opentls/ui.h>
 #include "apps_ui.h"
 
 static UI_METHOD *ui_method = NULL;
@@ -99,10 +99,10 @@ static int ui_close(UI *ui)
 int setup_ui_method(void)
 {
     ui_fallback_method = UI_null();
-#ifndef OPENSSL_NO_UI_CONSOLE
-    ui_fallback_method = UI_OpenSSL();
+#ifndef OPENtls_NO_UI_CONSOLE
+    ui_fallback_method = UI_Opentls();
 #endif
-    ui_method = UI_create_method("OpenSSL application user interface");
+    ui_method = UI_create_method("Opentls application user interface");
     UI_method_set_opener(ui_method, ui_open);
     UI_method_set_reader(ui_method, ui_read);
     UI_method_set_writer(ui_method, ui_write);
@@ -125,7 +125,7 @@ const UI_METHOD *get_ui_method(void)
 
 static void *ui_malloc(int sz, const char *what)
 {
-    void *vp = OPENSSL_malloc(sz);
+    void *vp = OPENtls_malloc(sz);
 
     if (vp == NULL) {
         BIO_printf(bio_err, "Could not allocate %d bytes for %s\n", sz, what);
@@ -176,22 +176,22 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data)
             ok = UI_process(ui);
         } while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
 
-    OPENSSL_clear_free(buff, (unsigned int)bufsiz);
+    OPENtls_clear_free(buff, (unsigned int)bufsiz);
 
     if (ok >= 0)
         res = strlen(buf);
     if (ok == -1) {
         BIO_printf(bio_err, "User interface error\n");
         ERR_print_errors(bio_err);
-        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
+        OPENtls_cleanse(buf, (unsigned int)bufsiz);
         res = 0;
     }
     if (ok == -2) {
         BIO_printf(bio_err, "aborted!\n");
-        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
+        OPENtls_cleanse(buf, (unsigned int)bufsiz);
         res = 0;
     }
     UI_free(ui);
-    OPENSSL_free(prompt);
+    OPENtls_free(prompt);
     return res;
 }

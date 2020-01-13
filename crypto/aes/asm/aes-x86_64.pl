@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # Version 2.1.
@@ -1731,7 +1731,7 @@ $code.=<<___;
 .globl	AES_cbc_encrypt
 .type	AES_cbc_encrypt,\@function,6
 .align	16
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 .globl	asm_AES_cbc_encrypt
 .hidden	asm_AES_cbc_encrypt
 asm_AES_cbc_encrypt:
@@ -1766,7 +1766,7 @@ AES_cbc_encrypt:
 	cmoveq	%r10,$sbox
 
 .cfi_remember_state
-	mov	OPENSSL_ia32cap_P(%rip),%r10d
+	mov	OPENtls_ia32cap_P(%rip),%r10d
 	cmp	\$$speed_limit,%rdx
 	jb	.Lcbc_slow_prologue
 	test	\$15,%rdx
@@ -2636,7 +2636,7 @@ ___
 $code.=<<___;
 	.long	0x80808080, 0x80808080, 0xfefefefe, 0xfefefefe
 	.long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
-.asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 ___
 

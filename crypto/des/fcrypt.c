@@ -1,10 +1,10 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* NOCW */
@@ -15,10 +15,10 @@
 # endif
 #endif
 #ifdef CHARSET_EBCDIC
-# include <openssl/ebcdic.h>
+# include <opentls/ebcdic.h>
 #endif
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "des_local.h"
 
 /*
@@ -76,7 +76,7 @@ char *DES_crypt(const char *buf, const char *salt)
     ebcdic2ascii(e_salt, e_salt, sizeof(e_salt));
 
     /* Convert password to ASCII. */
-    OPENSSL_strlcpy(e_buf, buf, sizeof(e_buf));
+    OPENtls_strlcpy(e_buf, buf, sizeof(e_buf));
     ebcdic2ascii(e_buf, e_buf, sizeof(e_buf));
 
     /* Encrypt it (from/to ASCII); if it worked, convert back. */

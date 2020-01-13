@@ -1,31 +1,31 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 ## Test version negotiation
 
-package ssltests;
+package tlstests;
 
 use strict;
 use warnings;
 
 use List::Util qw/max min/;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils qw/anydisabled alldisabled disabled/;
+use Opentls::Test;
+use Opentls::Test::Utils qw/anydisabled alldisabled disabled/;
 setup("no_test_here");
 
-my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @tls_protocols = ("tlsv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 # undef stands for "no limit".
-my @min_tls_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
-my @max_tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
+my @min_tls_protocols = (undef, "tlsv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @max_tls_protocols = ("tlsv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
 
-my @is_tls_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
+my @is_tls_disabled = anydisabled("tls3", "tls1", "tls1_1", "tls1_2", "tls1_3");
 
 my $min_tls_enabled; my $max_tls_enabled;
 
@@ -74,7 +74,7 @@ foreach my $i (0..$#dtls_protocols) {
 sub no_tests {
     my ($dtls) = @_;
     return $dtls ? alldisabled("dtls1", "dtls1_2") :
-      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
+      alldisabled("tls3", "tls1", "tls1_1", "tls1_2", "tls1_3");
 }
 
 sub generate_version_tests {

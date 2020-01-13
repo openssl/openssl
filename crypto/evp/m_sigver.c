@@ -1,17 +1,17 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -35,7 +35,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     int ret;
 
     if (ctx->provctx != NULL) {
-        if (!ossl_assert(ctx->digest != NULL)) {
+        if (!otls_assert(ctx->digest != NULL)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
@@ -79,7 +79,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
         if (locpctx->keymgmt->query_operation_name != NULL)
             supported_sig =
-                locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+                locpctx->keymgmt->query_operation_name(Otls_OP_SIGNATURE);
 
         /*
          * If we didn't get a supported sig, assume there is one with the
@@ -124,7 +124,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                              : EVP_PKEY_OP_SIGNCTX;
 
     locpctx->op.sig.sigprovctx
-        = signature->newctx(ossl_provider_ctx(signature->prov));
+        = signature->newctx(otls_provider_ctx(signature->prov));
     if (locpctx->op.sig.sigprovctx == NULL) {
         ERR_raise(ERR_LIB_EVP,  EVP_R_INITIALIZATION_ERROR);
         goto err;

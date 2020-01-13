@@ -1,20 +1,20 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "internal/nelem.h"
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/obj_mac.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/obj_mac.h>
+#include <opentls/evp.h>
+#include <opentls/aes.h>
 #include "../crypto/rand/rand_local.h"
 #include "../include/crypto/rand.h"
 
@@ -23,7 +23,7 @@
 #endif
 
 
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENtls_SYS_UNIX)
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
@@ -716,7 +716,7 @@ static int test_drbg_reseed(int expect_success,
 }
 
 
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENtls_SYS_UNIX)
 /*
  * Test whether master, public and private DRBG are reseeded after
  * forking the process.
@@ -750,7 +750,7 @@ static int test_drbg_reseed_after_fork(RAND_DRBG *master,
 #endif
 
 /*
- * Test whether the default rand_method (RAND_OpenSSL()) is
+ * Test whether the default rand_method (RAND_Opentls()) is
  * setup correctly, in particular whether reseeding  works
  * as designed.
  */
@@ -761,8 +761,8 @@ static int test_rand_drbg_reseed(void)
     int rv=0;
     time_t before_reseed;
 
-    /* Check whether RAND_OpenSSL() is the default method */
-    if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
+    /* Check whether RAND_Opentls() is the default method */
+    if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_Opentls()))
         return 0;
 
     /* All three DRBGs should be non-null */
@@ -839,7 +839,7 @@ static int test_rand_drbg_reseed(void)
         goto error;
     reset_drbg_hook_ctx();
 
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENtls_SYS_UNIX)
     if (!TEST_true(test_drbg_reseed_after_fork(master, public, private)))
         goto error;
 #endif
@@ -899,7 +899,7 @@ error:
     return rv;
 }
 
-#if defined(OPENSSL_THREADS)
+#if defined(OPENtls_THREADS)
 static int multi_thread_rand_bytes_succeeded = 1;
 static int multi_thread_rand_priv_bytes_succeeded = 1;
 
@@ -926,7 +926,7 @@ static void run_multi_thread_test(void)
     while(time(NULL) - start < 5);
 }
 
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
 
 typedef HANDLE thread_t;
 
@@ -935,9 +935,9 @@ static DWORD WINAPI thread_run(LPVOID arg)
     run_multi_thread_test();
     /*
      * Because we're linking with a static library, we must stop each
-     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     * thread explicitly, or so says OPENtls_thread_stop(3)
      */
-    OPENSSL_thread_stop();
+    OPENtls_thread_stop();
     return 0;
 }
 
@@ -961,9 +961,9 @@ static void *thread_run(void *arg)
     run_multi_thread_test();
     /*
      * Because we're linking with a static library, we must stop each
-     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     * thread explicitly, or so says OPENtls_thread_stop(3)
      */
-    OPENSSL_thread_stop();
+    OPENtls_thread_stop();
     return NULL;
 }
 
@@ -1026,7 +1026,7 @@ static int test_rand_seed(void)
         || !TEST_true(disable_crngt(master)))
         return 0;
 
-#ifdef OPENSSL_RAND_SEED_NONE
+#ifdef OPENtls_RAND_SEED_NONE
     required_seed_buflen = rand_drbg_seedlen(master);
 #endif
 
@@ -1309,7 +1309,7 @@ static const size_t crngt_num_cases = 6;
 
 static size_t crngt_case, crngt_idx;
 
-static int crngt_entropy_cb(OPENSSL_CTX *ctx, RAND_POOL *pool,
+static int crngt_entropy_cb(OPENtls_CTX *ctx, RAND_POOL *pool,
                             unsigned char *buf, unsigned char *md,
                             unsigned int *md_size)
 {
@@ -1334,7 +1334,7 @@ static int test_crngt(int n)
     size_t ent;
     int res = 0;
     int expect;
-    OPENSSL_CTX *ctx = OPENSSL_CTX_new();
+    OPENtls_CTX *ctx = OPENtls_CTX_new();
 
     if (!TEST_ptr(ctx))
         return 0;
@@ -1376,7 +1376,7 @@ err:
     uninstantiate(drbg);
     RAND_DRBG_free(drbg);
     crngt_get_entropy = &rand_crngt_get_entropy_cb;
-    OPENSSL_CTX_free(ctx);
+    OPENtls_CTX_free(ctx);
     return res;
 }
 
@@ -1384,17 +1384,17 @@ int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
 
-    ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
-    ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
+    ADD_ALL_TESTS(test_kats, Otls_NELEM(drbg_test));
+    ADD_ALL_TESTS(test_error_checks, Otls_NELEM(drbg_test));
     ADD_TEST(test_rand_drbg_reseed);
     ADD_TEST(test_rand_seed);
     ADD_TEST(test_rand_add);
     ADD_TEST(test_rand_drbg_prediction_resistance);
     ADD_TEST(test_multi_set);
     ADD_TEST(test_set_defaults);
-#if defined(OPENSSL_THREADS)
+#if defined(OPENtls_THREADS)
     ADD_TEST(test_multi_thread);
 #endif
-    ADD_ALL_TESTS(test_crngt, crngt_num_cases * OSSL_NELEM(drgb_types));
+    ADD_ALL_TESTS(test_crngt, crngt_num_cases * Otls_NELEM(drgb_types));
     return 1;
 }

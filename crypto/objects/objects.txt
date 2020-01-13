@@ -857,8 +857,8 @@ netscape-cert-extension 4 : nsCaRevocationUrl	: Netscape CA Revocation Url
 netscape-cert-extension 7 : nsRenewalUrl	: Netscape Renewal Url
 !Cname netscape-ca-policy-url
 netscape-cert-extension 8 : nsCaPolicyUrl	: Netscape CA Policy Url
-!Cname netscape-ssl-server-name
-netscape-cert-extension 12 : nsSslServerName	: Netscape SSL Server Name
+!Cname netscape-tls-server-name
+netscape-cert-extension 12 : nstlsServerName	: Netscape tls Server Name
 !Cname netscape-comment
 netscape-cert-extension 13 : nsComment		: Netscape Comment
 !Cname netscape-cert-sequence
@@ -1598,7 +1598,7 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 1 3 6 1 4 1 11129 2 4 4	: ct_precert_signer		: CT Precertificate Signer
 1 3 6 1 4 1 11129 2 4 5	: ct_cert_scts			: CT Certificate SCTs
 
-# CABForum EV SSL Certificate Guidelines
+# CABForum EV tls Certificate Guidelines
 # (see https://cabforum.org/extended-validation/)
 # OIDs for Subject Jurisdiction of Incorporation or Registration
 1 3 6 1 4 1 311 60 2 1 1	: jurisdictionL		: jurisdictionLocalityName

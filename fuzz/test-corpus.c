@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "fuzzer.h"
 #include "internal/o_dir.h"
 
@@ -51,7 +51,7 @@ static void testfile(const char *pathname)
     buf = malloc(st.st_size);
     if (buf != NULL) {
         s = fread(buf, 1, st.st_size, f);
-        OPENSSL_assert(s == (size_t)st.st_size);
+        OPENtls_assert(s == (size_t)st.st_size);
         FuzzerTestOneInput(buf, s);
         free(buf);
     }
@@ -67,13 +67,13 @@ int main(int argc, char **argv) {
         size_t dirname_len = strlen(argv[n]);
         const char *filename = NULL;
         char *pathname = NULL;
-        OPENSSL_DIR_CTX *ctx = NULL;
+        OPENtls_DIR_CTX *ctx = NULL;
         int wasdir = 0;
 
         /*
          * We start with trying to read the given path as a directory.
          */
-        while ((filename = OPENSSL_DIR_read(&ctx, argv[n])) != NULL) {
+        while ((filename = OPENtls_DIR_read(&ctx, argv[n])) != NULL) {
             wasdir = 1;
             if (pathname == NULL) {
                 pathname = malloc(PATH_MAX);
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
             strcpy(pathname + dirname_len, filename);
             testfile(pathname);
         }
-        OPENSSL_DIR_end(&ctx);
+        OPENtls_DIR_end(&ctx);
 
         /* If it wasn't a directory, treat it as a file instead */
         if (!wasdir)

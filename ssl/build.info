@@ -1,4 +1,4 @@
-LIBS=../libssl
+LIBS=../libtls
 
 #Needed for the multiblock code in rec_layer_s3.c
 IF[{- !$disabled{asm} -}]
@@ -10,11 +10,11 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-#TODO: For now we just include the libcrypto packet.c in libssl as well. We
+#TODO: For now we just include the libcrypto packet.c in libtls as well. We
 #      could either continue to do it like this, or export all the WPACKET
-#      symbols so that libssl can use them like any other. Probably would do
+#      symbols so that libtls can use them like any other. Probably would do
 #      this privately so it does not become part of the public API.
-SOURCE[../libssl]=\
+SOURCE[../libtls]=\
         pqueue.c ../crypto/packet.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
         statem/statem_lib.c statem/extensions.c statem/extensions_srvr.c \
@@ -22,10 +22,10 @@ SOURCE[../libssl]=\
         methods.c   t1_lib.c  t1_enc.c tls13_enc.c \
         d1_lib.c  record/rec_layer_d1.c d1_msg.c \
         statem/statem_dtls.c d1_srtp.c \
-        ssl_lib.c ssl_cert.c ssl_sess.c \
-        ssl_ciph.c ssl_stat.c ssl_rsa.c \
-        ssl_asn1.c ssl_txt.c ssl_init.c ssl_conf.c  ssl_mcnf.c \
-        bio_ssl.c ssl_err.c tls_srp.c t1_trce.c ssl_utst.c \
-        record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
-        statem/statem.c record/ssl3_record_tls13.c
-DEFINE[../libssl]=$AESDEF
+        tls_lib.c tls_cert.c tls_sess.c \
+        tls_ciph.c tls_stat.c tls_rsa.c \
+        tls_asn1.c tls_txt.c tls_init.c tls_conf.c  tls_mcnf.c \
+        bio_tls.c tls_err.c tls_srp.c t1_trce.c tls_utst.c \
+        record/tls3_buffer.c record/tls3_record.c record/dtls1_bitmap.c \
+        statem/statem.c record/tls3_record_tls13.c
+DEFINE[../libtls]=$AESDEF

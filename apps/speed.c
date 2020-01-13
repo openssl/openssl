@@ -1,11 +1,11 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #undef SECONDS
@@ -18,7 +18,7 @@
 #define SM2_SECONDS     10
 
 /* We need to use some deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENtls_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,13 +26,13 @@
 #include <math.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/async.h>
-#if !defined(OPENSSL_SYS_MSDOS)
+#include <opentls/crypto.h>
+#include <opentls/rand.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/async.h>
+#if !defined(OPENtls_SYS_MSDOS)
 # include <unistd.h>
 #endif
 
@@ -40,76 +40,76 @@
 # include <windows.h>
 #endif
 
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
+#include <opentls/bn.h>
+#ifndef OPENtls_NO_DES
+# include <opentls/des.h>
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#include <openssl/aes.h>
+#ifndef OPENtls_NO_DEPRECATED_3_0
+#include <opentls/aes.h>
 #endif
-#ifndef OPENSSL_NO_CAMELLIA
-# include <openssl/camellia.h>
+#ifndef OPENtls_NO_CAMELLIA
+# include <opentls/camellia.h>
 #endif
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h>
+#ifndef OPENtls_NO_MD2
+# include <opentls/md2.h>
 #endif
-#ifndef OPENSSL_NO_MDC2
-# include <openssl/mdc2.h>
+#ifndef OPENtls_NO_MDC2
+# include <opentls/mdc2.h>
 #endif
-#ifndef OPENSSL_NO_MD4
-# include <openssl/md4.h>
+#ifndef OPENtls_NO_MD4
+# include <opentls/md4.h>
 #endif
-#ifndef OPENSSL_NO_MD5
-# include <openssl/md5.h>
+#ifndef OPENtls_NO_MD5
+# include <opentls/md5.h>
 #endif
-#include <openssl/hmac.h>
-#ifndef OPENSSL_NO_CMAC
-#include <openssl/cmac.h>
+#include <opentls/hmac.h>
+#ifndef OPENtls_NO_CMAC
+#include <opentls/cmac.h>
 #endif
-#include <openssl/sha.h>
-#ifndef OPENSSL_NO_RMD160
-# include <openssl/ripemd.h>
+#include <opentls/sha.h>
+#ifndef OPENtls_NO_RMD160
+# include <opentls/ripemd.h>
 #endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-# include <openssl/whrlpool.h>
+#ifndef OPENtls_NO_WHIRLPOOL
+# include <opentls/whrlpool.h>
 #endif
-#ifndef OPENSSL_NO_RC4
-# include <openssl/rc4.h>
+#ifndef OPENtls_NO_RC4
+# include <opentls/rc4.h>
 #endif
-#ifndef OPENSSL_NO_RC5
-# include <openssl/rc5.h>
+#ifndef OPENtls_NO_RC5
+# include <opentls/rc5.h>
 #endif
-#ifndef OPENSSL_NO_RC2
-# include <openssl/rc2.h>
+#ifndef OPENtls_NO_RC2
+# include <opentls/rc2.h>
 #endif
-#ifndef OPENSSL_NO_IDEA
-# include <openssl/idea.h>
+#ifndef OPENtls_NO_IDEA
+# include <opentls/idea.h>
 #endif
-#ifndef OPENSSL_NO_SEED
-# include <openssl/seed.h>
+#ifndef OPENtls_NO_SEED
+# include <opentls/seed.h>
 #endif
-#ifndef OPENSSL_NO_BF
-# include <openssl/blowfish.h>
+#ifndef OPENtls_NO_BF
+# include <opentls/blowfish.h>
 #endif
-#ifndef OPENSSL_NO_CAST
-# include <openssl/cast.h>
+#ifndef OPENtls_NO_CAST
+# include <opentls/cast.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 # include "./testrsa.h"
 #endif
-#include <openssl/x509.h>
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
+#include <opentls/x509.h>
+#ifndef OPENtls_NO_DSA
+# include <opentls/dsa.h>
 # include "./testdsa.h"
 #endif
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
+#ifndef OPENtls_NO_EC
+# include <opentls/ec.h>
 #endif
-#include <openssl/modes.h>
+#include <opentls/modes.h>
 
 #ifndef HAVE_FORK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VMS) || defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_VXWORKS)
 #  define HAVE_FORK 0
 # else
 #  define HAVE_FORK 1
@@ -126,7 +126,7 @@
 #define MAX_ECDH_SIZE   256
 #define MISALIGN        64
 
-typedef struct openssl_speed_sec_st {
+typedef struct opentls_speed_sec_st {
     int sym;
     int rsa;
     int dsa;
@@ -134,7 +134,7 @@ typedef struct openssl_speed_sec_st {
     int ecdh;
     int eddsa;
     int sm2;
-} openssl_speed_sec_t;
+} opentls_speed_sec_t;
 
 static volatile int run = 0;
 
@@ -153,7 +153,7 @@ static int do_multi(int multi, int size_num);
 static const int lengths_list[] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
-#define SIZE_NUM         OSSL_NELEM(lengths_list)
+#define SIZE_NUM         Otls_NELEM(lengths_list)
 static const int *lengths = lengths_list;
 
 static const int aead_lengths_list[] = {
@@ -233,7 +233,7 @@ static double Time_F(int s)
 #endif
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
-                             const openssl_speed_sec_t *seconds);
+                             const opentls_speed_sec_t *seconds);
 
 static int opt_found(const char *name, unsigned int *result,
                      const OPT_PAIR pairs[], unsigned int nbelem)
@@ -248,7 +248,7 @@ static int opt_found(const char *name, unsigned int *result,
     return 0;
 }
 #define opt_found(value, pairs, result)\
-    opt_found(value, result, pairs, OSSL_NELEM(pairs))
+    opt_found(value, result, pairs, Otls_NELEM(pairs))
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -268,11 +268,11 @@ const OPTIONS speed_options[] = {
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
-#ifndef OPENSSL_NO_ASYNC
+#ifndef OPENtls_NO_ASYNC
     {"async_jobs", OPT_ASYNCJOBS, 'p',
      "Enable async mode and start specified number of jobs"},
 #endif
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
@@ -280,7 +280,7 @@ const OPTIONS speed_options[] = {
     OPT_SECTION("Selection"),
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
     {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
-#ifndef OPENSSL_NO_CMAC
+#ifndef OPENtls_NO_CMAC
     {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
 #endif
     {"decrypt", OPT_DECRYPT, '-',
@@ -329,38 +329,38 @@ static const char *names[ALGOR_NUM] = {
 
 /* list of configured algorithm (remaining), with some few alias */
 static const OPT_PAIR doit_choices[] = {
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD2) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"md2", D_MD2},
 #endif
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MDC2) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"mdc2", D_MDC2},
 #endif
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD4) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"md4", D_MD4},
 #endif
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     {"md5", D_MD5},
     {"hmac", D_HMAC},
 #endif
     {"sha1", D_SHA1},
     {"sha256", D_SHA256},
     {"sha512", D_SHA512},
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_WHIRLPOOL) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"whirlpool", D_WHIRLPOOL},
 #endif
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_RMD160) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"ripemd", D_RMD160},
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
 #endif
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
     {"rc4", D_RC4},
 #endif
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
@@ -368,28 +368,28 @@ static const OPT_PAIR doit_choices[] = {
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
 #endif
-#ifndef OPENSSL_NO_RC2
+#ifndef OPENtls_NO_RC2
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
 #endif
-#ifndef OPENSSL_NO_RC5
+#ifndef OPENtls_NO_RC5
     {"rc5-cbc", D_CBC_RC5},
     {"rc5", D_CBC_RC5},
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
     {"idea-cbc", D_CBC_IDEA},
     {"idea", D_CBC_IDEA},
 #endif
-#ifndef OPENSSL_NO_SEED
+#ifndef OPENtls_NO_SEED
     {"seed-cbc", D_CBC_SEED},
     {"seed", D_CBC_SEED},
 #endif
-#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_BF) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"bf-cbc", D_CBC_BF},
     {"blowfish", D_CBC_BF},
     {"bf", D_CBC_BF},
 #endif
-#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAST) && !defined(OPENtls_NO_DEPRECATED_3_0)
     {"cast-cbc", D_CBC_CAST},
     {"cast", D_CBC_CAST},
     {"cast5", D_CBC_CAST},
@@ -400,7 +400,7 @@ static const OPT_PAIR doit_choices[] = {
 
 static double results[ALGOR_NUM][SIZE_NUM];
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 enum { R_DSA_512, R_DSA_1024, R_DSA_2048, DSA_NUM };
 static const OPT_PAIR dsa_choices[DSA_NUM] = {
     {"dsa512", R_DSA_512},
@@ -408,9 +408,9 @@ static const OPT_PAIR dsa_choices[DSA_NUM] = {
     {"dsa2048", R_DSA_2048}
 };
 static double dsa_results[DSA_NUM][2];  /* 2 ops: sign then verify */
-#endif  /* OPENSSL_NO_DSA */
+#endif  /* OPENtls_NO_DSA */
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 enum {
     R_RSA_512, R_RSA_1024, R_RSA_2048, R_RSA_3072, R_RSA_4096, R_RSA_7680,
     R_RSA_15360, RSA_NUM
@@ -426,12 +426,12 @@ static const OPT_PAIR rsa_choices[RSA_NUM] = {
 };
 
 static double rsa_results[RSA_NUM][2];  /* 2 ops: sign then verify */
-#endif /* OPENSSL_NO_RSA */
+#endif /* OPENtls_NO_RSA */
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 enum ec_curves_t {
     R_EC_P160, R_EC_P192, R_EC_P224, R_EC_P256, R_EC_P384, R_EC_P521,
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
     R_EC_K163, R_EC_K233, R_EC_K283, R_EC_K409, R_EC_K571,
     R_EC_B163, R_EC_B233, R_EC_B283, R_EC_B409, R_EC_B571,
 # endif
@@ -446,7 +446,7 @@ static const OPT_PAIR ecdsa_choices[ECDSA_NUM] = {
     {"ecdsap256", R_EC_P256},
     {"ecdsap384", R_EC_P384},
     {"ecdsap521", R_EC_P521},
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
     {"ecdsak163", R_EC_K163},
     {"ecdsak233", R_EC_K233},
     {"ecdsak283", R_EC_K283},
@@ -474,7 +474,7 @@ static const OPT_PAIR ecdh_choices[EC_NUM] = {
     {"ecdhp256", R_EC_P256},
     {"ecdhp384", R_EC_P384},
     {"ecdhp521", R_EC_P521},
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
     {"ecdhk163", R_EC_K163},
     {"ecdhk233", R_EC_K233},
     {"ecdhk283", R_EC_K283},
@@ -507,7 +507,7 @@ static const OPT_PAIR eddsa_choices[EdDSA_NUM] = {
 };
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
 enum { R_EC_CURVESM2, SM2_NUM };
 static const OPT_PAIR sm2_choices[SM2_NUM] = {
     {"curveSM2", R_EC_CURVESM2}
@@ -515,8 +515,8 @@ static const OPT_PAIR sm2_choices[SM2_NUM] = {
 #  define SM2_ID        "TLSv1.3+GM+Cipher+Suite"
 #  define SM2_ID_LEN    sizeof("TLSv1.3+GM+Cipher+Suite") - 1
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
-# endif /* OPENSSL_NO_SM2 */
-#endif /* OPENSSL_NO_EC */
+# endif /* OPENtls_NO_SM2 */
+#endif /* OPENtls_NO_EC */
 
 #ifndef SIGALRM
 # define COND(d) (count < (d))
@@ -536,17 +536,17 @@ typedef struct loopargs_st {
     unsigned char *key;
     unsigned int siglen;
     size_t sigsize;
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     RSA *rsa_key[RSA_NUM];
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     DSA *dsa_key[DSA_NUM];
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     EC_KEY *ecdsa[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     EVP_MD_CTX *sm2_ctx[SM2_NUM];
     EVP_MD_CTX *sm2_vfy_ctx[SM2_NUM];
     EVP_PKEY *sm2_pkey[SM2_NUM];
@@ -557,7 +557,7 @@ typedef struct loopargs_st {
 #endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
-#ifndef OPENSSL_NO_CMAC
+#ifndef OPENtls_NO_CMAC
     CMAC_CTX *cmac_ctx;
 #endif
     GCM128_CONTEXT *gcm_ctx;
@@ -570,7 +570,7 @@ static unsigned int testnum;
 /* Nb of iterations to do per algorithm and key-size */
 static long c[ALGOR_NUM][SIZE_NUM];
 
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD2) && !defined(OPENtls_NO_DEPRECATED_3_0)
 static int EVP_Digest_MD2_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -587,7 +587,7 @@ static int EVP_Digest_MD2_loop(void *args)
 }
 #endif
 
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MDC2) && !defined(OPENtls_NO_DEPRECATED_3_0)
 static int EVP_Digest_MDC2_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -604,7 +604,7 @@ static int EVP_Digest_MDC2_loop(void *args)
 }
 #endif
 
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD4) && !defined(OPENtls_NO_DEPRECATED_3_0)
 static int EVP_Digest_MD4_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -621,7 +621,7 @@ static int EVP_Digest_MD4_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
 static int MD5_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -683,7 +683,7 @@ static int SHA512_loop(void *args)
     return count;
 }
 
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_WHIRLPOOL) && !defined(OPENtls_NO_DEPRECATED_3_0)
 static int WHIRLPOOL_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -696,7 +696,7 @@ static int WHIRLPOOL_loop(void *args)
 }
 #endif
 
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_RMD160) && !defined(OPENtls_NO_DEPRECATED_3_0)
 static int EVP_Digest_RMD160_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -712,7 +712,7 @@ static int EVP_Digest_RMD160_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
 static RC4_KEY rc4_ks;
 static int RC4_loop(void *args)
 {
@@ -725,7 +725,7 @@ static int RC4_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
 static unsigned char DES_iv[8];
 static DES_key_schedule sch[3];
 static int DES_ncbc_encrypt_loop(void *args)
@@ -755,7 +755,7 @@ static int DES_ede3_cbc_encrypt_loop(void *args)
 
 static unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 static AES_KEY aes_ks1, aes_ks2, aes_ks3;
 static int AES_cbc_128_encrypt_loop(void *args)
 {
@@ -983,7 +983,7 @@ static int EVP_HMAC_loop(void *args)
     return count;
 }
 
-#ifndef OPENSSL_NO_CMAC
+#ifndef OPENtls_NO_CMAC
 static const EVP_CIPHER *evp_cmac_cipher = NULL;
 static char *evp_cmac_name = NULL;
 
@@ -1007,7 +1007,7 @@ static int EVP_CMAC_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
 
 static int RSA_sign_loop(void *args)
@@ -1052,7 +1052,7 @@ static int RSA_verify_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static long dsa_c[DSA_NUM][2];
 static int DSA_sign_loop(void *args)
 {
@@ -1095,7 +1095,7 @@ static int DSA_verify_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static long ecdsa_c[ECDSA_NUM][2];
 static int ECDSA_sign_loop(void *args)
 {
@@ -1197,7 +1197,7 @@ static int EdDSA_verify_loop(void *args)
     return count;
 }
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
 static long sm2_c[SM2_NUM][2];
 static int SM2_sign_loop(void *args)
 {
@@ -1263,8 +1263,8 @@ static int SM2_verify_loop(void *args)
     }
     return count;
 }
-# endif                         /* OPENSSL_NO_SM2 */
-#endif                          /* OPENSSL_NO_EC */
+# endif                         /* OPENtls_NO_SM2 */
+#endif                          /* OPENtls_NO_EC */
 
 static int run_benchmark(int async_jobs,
                          int (*loop_function) (void *), loopargs_t * loopargs)
@@ -1273,7 +1273,7 @@ static int run_benchmark(int async_jobs,
     int total_op_count = 0;
     int num_inprogress = 0;
     int error = 0, i = 0, ret = 0;
-    OSSL_ASYNC_FD job_fd = 0;
+    Otls_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
 
     if (async_jobs == 0) {
@@ -1308,11 +1308,11 @@ static int run_benchmark(int async_jobs,
     }
 
     while (num_inprogress > 0) {
-#if defined(OPENSSL_SYS_WINDOWS)
+#if defined(OPENtls_SYS_WINDOWS)
         DWORD avail = 0;
-#elif defined(OPENSSL_SYS_UNIX)
+#elif defined(OPENtls_SYS_UNIX)
         int select_result = 0;
-        OSSL_ASYNC_FD max_fd = 0;
+        Otls_ASYNC_FD max_fd = 0;
         fd_set waitfdset;
 
         FD_ZERO(&waitfdset);
@@ -1336,7 +1336,7 @@ static int run_benchmark(int async_jobs,
                 max_fd = job_fd;
         }
 
-        if (max_fd >= (OSSL_ASYNC_FD)FD_SETSIZE) {
+        if (max_fd >= (Otls_ASYNC_FD)FD_SETSIZE) {
             BIO_printf(bio_err,
                        "Error: max_fd (%d) must be smaller than FD_SETSIZE (%d). "
                        "Decrease the value of async_jobs\n",
@@ -1376,10 +1376,10 @@ static int run_benchmark(int async_jobs,
             ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd,
                                        &num_job_fds);
 
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENtls_SYS_UNIX)
             if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
                 continue;
-#elif defined(OPENSSL_SYS_WINDOWS)
+#elif defined(OPENtls_SYS_WINDOWS)
             if (num_job_fds == 1
                 && !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL)
                 && avail > 0)
@@ -1418,7 +1418,7 @@ static int run_benchmark(int async_jobs,
 }
 
 #define stop_it(do_it, test_num)\
-    memset(do_it + test_num, 0, OSSL_NELEM(do_it) - test_num);
+    memset(do_it + test_num, 0, Otls_NELEM(do_it) - test_num);
 
 int speed_main(int argc, char **argv)
 {
@@ -1440,38 +1440,38 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
     int multi = 0;
 #endif
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC)
+#if !defined(OPENtls_NO_RSA) || !defined(OPENtls_NO_DSA) \
+    || !defined(OPENtls_NO_EC)
     long rsa_count = 1;
 #endif
-    openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
+    opentls_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
                                     EdDSA_SECONDS, SM2_SECONDS };
 
     /* What follows are the buffers and key material. */
-#ifndef OPENSSL_NO_RC5
+#ifndef OPENtls_NO_RC5
     RC5_32_KEY rc5_ks;
 #endif
-#ifndef OPENSSL_NO_RC2
+#ifndef OPENtls_NO_RC2
     RC2_KEY rc2_ks;
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
     IDEA_KEY_SCHEDULE idea_ks;
 #endif
-#ifndef OPENSSL_NO_SEED
+#ifndef OPENtls_NO_SEED
     SEED_KEY_SCHEDULE seed_ks;
 #endif
-#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_BF) && !defined(OPENtls_NO_DEPRECATED_3_0)
     BF_KEY bf_ks;
 #endif
-#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAST) && !defined(OPENtls_NO_DEPRECATED_3_0)
     CAST_KEY cast_ks;
 #endif
     static const unsigned char key16[16] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12
     };
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     static const unsigned char key24[24] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12,
@@ -1484,10 +1484,10 @@ int speed_main(int argc, char **argv)
         0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
     };
 #endif
-#if !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAMELLIA) && !defined(OPENtls_NO_DEPRECATED_3_0)
     CAMELLIA_KEY camellia_ks[3];
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     static const struct {
         const unsigned char *data;
         unsigned int length;
@@ -1504,11 +1504,11 @@ int speed_main(int argc, char **argv)
     uint8_t rsa_doit[RSA_NUM] = { 0 };
     int primes = RSA_DEFAULT_PRIME_NUM;
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     typedef struct ec_curve_st {
         const char *name;
         unsigned int nid;
@@ -1529,7 +1529,7 @@ int speed_main(int argc, char **argv)
         {"nistp256", NID_X9_62_prime256v1, 256},
         {"nistp384", NID_secp384r1, 384},
         {"nistp521", NID_secp521r1, 521},
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
         /* Binary Curves */
         {"nistk163", NID_sect163k1, 163},
         {"nistk233", NID_sect233k1, 233},
@@ -1557,7 +1557,7 @@ int speed_main(int argc, char **argv)
         {"Ed25519", NID_ED25519, 253, 64},
         {"Ed448", NID_ED448, 456, 114}
     };
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     static const EC_CURVE sm2_curves[SM2_NUM] = {
         /* SM2 */
         {"CurveSM2", NID_sm2, 256}
@@ -1569,20 +1569,20 @@ int speed_main(int argc, char **argv)
     uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
 
     /* checks declarated curves against choices list. */
-    OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
-    OPENSSL_assert(strcmp(eddsa_choices[EdDSA_NUM - 1].name, "ed448") == 0);
+    OPENtls_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
+    OPENtls_assert(strcmp(eddsa_choices[EdDSA_NUM - 1].name, "ed448") == 0);
 
-    OPENSSL_assert(ec_curves[EC_NUM - 1].nid == NID_X448);
-    OPENSSL_assert(strcmp(ecdh_choices[EC_NUM - 1].name, "ecdhx448") == 0);
+    OPENtls_assert(ec_curves[EC_NUM - 1].nid == NID_X448);
+    OPENtls_assert(strcmp(ecdh_choices[EC_NUM - 1].name, "ecdhx448") == 0);
 
-    OPENSSL_assert(ec_curves[ECDSA_NUM - 1].nid == NID_brainpoolP512t1);
-    OPENSSL_assert(strcmp(ecdsa_choices[ECDSA_NUM - 1].name, "ecdsabrp512t1") == 0);
+    OPENtls_assert(ec_curves[ECDSA_NUM - 1].nid == NID_brainpoolP512t1);
+    OPENtls_assert(strcmp(ecdsa_choices[ECDSA_NUM - 1].name, "ecdsabrp512t1") == 0);
 
-# ifndef OPENSSL_NO_SM2
-    OPENSSL_assert(sm2_curves[SM2_NUM - 1].nid == NID_sm2);
-    OPENSSL_assert(strcmp(sm2_choices[SM2_NUM - 1].name, "curveSM2") == 0);
+# ifndef OPENtls_NO_SM2
+    OPENtls_assert(sm2_curves[SM2_NUM - 1].nid == NID_sm2);
+    OPENtls_assert(strcmp(sm2_choices[SM2_NUM - 1].name, "curveSM2") == 0);
 # endif
-#endif                          /* ndef OPENSSL_NO_EC */
+#endif                          /* ndef OPENtls_NO_EC */
 
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -1622,7 +1622,7 @@ int speed_main(int argc, char **argv)
             doit[D_EVP_HMAC] = 1;
             break;
         case OPT_CMAC:
-#ifndef OPENSSL_NO_CMAC
+#ifndef OPENtls_NO_CMAC
             evp_cmac_cipher = EVP_get_cipherbyname(opt_arg());
             if (evp_cmac_cipher == NULL) {
                 BIO_printf(bio_err, "%s: %s is an unknown cipher\n",
@@ -1649,7 +1649,7 @@ int speed_main(int argc, char **argv)
 #endif
             break;
         case OPT_ASYNCJOBS:
-#ifndef OPENSSL_NO_ASYNC
+#ifndef OPENtls_NO_ASYNC
             async_jobs = atoi(opt_arg());
             if (!ASYNC_is_capable()) {
                 BIO_printf(bio_err,
@@ -1677,7 +1677,7 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_MB:
             multiblock = 1;
-#ifdef OPENSSL_NO_MULTIBLOCK
+#ifdef OPENtls_NO_MULTIBLOCK
             BIO_printf(bio_err,
                        "%s: -mb specified but multi-block support is disabled\n",
                        prog);
@@ -1718,7 +1718,7 @@ int speed_main(int argc, char **argv)
             doit[i] = 1;
             continue;
         }
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         if (strcmp(algo, "des") == 0) {
             doit[D_CBC_DES] = doit[D_EDE3_DES] = 1;
             continue;
@@ -1728,8 +1728,8 @@ int speed_main(int argc, char **argv)
             doit[D_SHA1] = doit[D_SHA256] = doit[D_SHA512] = 1;
             continue;
         }
-#ifndef OPENSSL_NO_RSA
-        if (strcmp(algo, "openssl") == 0) /* just for compatibility */
+#ifndef OPENtls_NO_RSA
+        if (strcmp(algo, "opentls") == 0) /* just for compatibility */
             continue;
         if (strncmp(algo, "rsa", 3) == 0) {
             if (algo[3] == '\0') {
@@ -1742,7 +1742,7 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
         if (strncmp(algo, "dsa", 3) == 0) {
             if (algo[3] == '\0') {
                 memset(dsa_doit, 1, sizeof(dsa_doit));
@@ -1754,19 +1754,19 @@ int speed_main(int argc, char **argv)
             }
         }
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
         if (strcmp(algo, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
             continue;
         }
 #endif
-#if !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAMELLIA) && !defined(OPENtls_NO_DEPRECATED_3_0)
         if (strcmp(algo, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
             continue;
         }
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         if (strncmp(algo, "ecdsa", 5) == 0) {
             if (algo[5] == '\0') {
                 memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
@@ -1795,7 +1795,7 @@ int speed_main(int argc, char **argv)
             eddsa_doit[i] = 2;
             continue;
         }
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
         if (strcmp(algo, "sm2") == 0) {
             memset(sm2_doit, 1, sizeof(sm2_doit));
             continue;
@@ -1805,7 +1805,7 @@ int speed_main(int argc, char **argv)
             continue;
         }
 # endif
-#endif  /* OPENSSL_NO_EC */
+#endif  /* OPENtls_NO_EC */
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
         goto end;
     }
@@ -1873,7 +1873,7 @@ int speed_main(int argc, char **argv)
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
 #endif
@@ -1891,17 +1891,17 @@ int speed_main(int argc, char **argv)
     if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
         memset(doit, 1, sizeof(doit));
         doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         memset(rsa_doit, 1, sizeof(rsa_doit));
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
         memset(dsa_doit, 1, sizeof(dsa_doit));
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
         memset(ecdh_doit, 1, sizeof(ecdh_doit));
         memset(eddsa_doit, 1, sizeof(eddsa_doit));
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
         memset(sm2_doit, 1, sizeof(sm2_doit));
 # endif
 #endif
@@ -1915,7 +1915,7 @@ int speed_main(int argc, char **argv)
                    "You have chosen to measure elapsed time "
                    "instead of user CPU time.\n");
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     for (i = 0; i < loopargs_len; i++) {
         if (primes > RSA_DEFAULT_PRIME_NUM) {
             /* for multi-prime RSA, skip this */
@@ -1934,14 +1934,14 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     for (i = 0; i < loopargs_len; i++) {
         loopargs[i].dsa_key[0] = get_dsa(512);
         loopargs[i].dsa_key[1] = get_dsa(1024);
         loopargs[i].dsa_key[2] = get_dsa(2048);
     }
 #endif
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     if (doit[D_CBC_DES] || doit[D_EDE3_DES]) {
         static DES_cblock keys[] = {
             { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 }, /* keys[0] */
@@ -1953,51 +1953,51 @@ int speed_main(int argc, char **argv)
         DES_set_key_unchecked(&keys[2], &sch[2]);
     }
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
 #endif
-#if !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAMELLIA) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_128_CML] || doit[D_CBC_192_CML] || doit[D_CBC_256_CML]) {
         Camellia_set_key(key16, 128, &camellia_ks[0]);
         Camellia_set_key(key24, 192, &camellia_ks[1]);
         Camellia_set_key(key32, 256, &camellia_ks[2]);
     }
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
     if (doit[D_CBC_IDEA])
         IDEA_set_encrypt_key(key16, &idea_ks);
 #endif
-#ifndef OPENSSL_NO_SEED
+#ifndef OPENtls_NO_SEED
     if (doit[D_CBC_SEED])
         SEED_set_key(key16, &seed_ks);
 #endif
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
     if (doit[D_RC4])
         RC4_set_key(&rc4_ks, 16, key16);
 #endif
-#ifndef OPENSSL_NO_RC2
+#ifndef OPENtls_NO_RC2
     if (doit[D_CBC_RC2])
         RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
-#ifndef OPENSSL_NO_RC5
+#ifndef OPENtls_NO_RC5
     if (doit[D_CBC_RC5])
         if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
             BIO_printf(bio_err, "Failed setting RC5 key\n");
             goto end;
         }
 #endif
-#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_BF) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_BF])
         BF_set_key(&bf_ks, 16, key16);
 #endif
-#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAST) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_CAST]) 
         CAST_set_key(&cast_ks, 16, key16);
 #endif
 #ifndef SIGALRM
-# ifndef OPENSSL_NO_DES
+# ifndef OPENtls_NO_DES
     BIO_printf(bio_err, "First we calculate the approximate speed ...\n");
     count = 10;
     do {
@@ -2085,7 +2085,7 @@ int speed_main(int argc, char **argv)
         c[D_IGE_256_AES][i] = c[D_IGE_256_AES][i - 1] * l0 / l1;
     }
 
-#  ifndef OPENSSL_NO_RSA
+#  ifndef OPENtls_NO_RSA
     rsa_c[R_RSA_512][0] = count / 2000;
     rsa_c[R_RSA_512][1] = count / 400;
     for (i = 1; i < RSA_NUM; i++) {
@@ -2102,7 +2102,7 @@ int speed_main(int argc, char **argv)
     }
 #  endif
 
-#  ifndef OPENSSL_NO_DSA
+#  ifndef OPENtls_NO_DSA
     dsa_c[R_DSA_512][0] = count / 1000;
     dsa_c[R_DSA_512][1] = count / 1000 / 2;
     for (i = 1; i < DSA_NUM; i++) {
@@ -2119,7 +2119,7 @@ int speed_main(int argc, char **argv)
     }
 #  endif
 
-#  ifndef OPENSSL_NO_EC
+#  ifndef OPENtls_NO_EC
     ecdsa_c[R_EC_P160][0] = count / 1000;
     ecdsa_c[R_EC_P160][1] = count / 1000 / 2;
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
@@ -2134,7 +2134,7 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-#   ifndef OPENSSL_NO_EC2M
+#   ifndef OPENtls_NO_EC2M
     ecdsa_c[R_EC_K163][0] = count / 1000;
     ecdsa_c[R_EC_K163][1] = count / 1000 / 2;
     for (i = R_EC_K233; i <= R_EC_K571; i++) {
@@ -2176,7 +2176,7 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-#   ifndef OPENSSL_NO_EC2M
+#   ifndef OPENtls_NO_EC2M
     ecdh_c[R_EC_K163][0] = count / 1000;
     for (i = R_EC_K233; i <= R_EC_K571; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
@@ -2230,20 +2230,20 @@ int speed_main(int argc, char **argv)
     eddsa_c[R_EC_Ed25519][0] = count / 1800;
     eddsa_c[R_EC_Ed448][0] = count / 7200;
 
-#   ifndef OPENSSL_NO_SM2
+#   ifndef OPENtls_NO_SM2
     sm2_c[R_EC_SM2P256][0] = count / 1800;
 #   endif
-#  endif                          /* OPENSSL_NO_EC */
+#  endif                          /* OPENtls_NO_EC */
 
 # else
 /* not worth fixing */
 #  error "You cannot disable DES on systems without SIGALRM."
-# endif                         /* OPENSSL_NO_DES */
+# endif                         /* OPENtls_NO_DES */
 #elif SIGALRM > 0
     signal(SIGALRM, alarmed);
 #endif                          /* SIGALRM */
 
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD2) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_MD2]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD2], c[D_MD2][testnum], lengths[testnum],
@@ -2255,7 +2255,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MDC2) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_MDC2]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MDC2], c[D_MDC2][testnum], lengths[testnum],
@@ -2270,7 +2270,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD4) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_MD4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD4], c[D_MD4][testnum], lengths[testnum],
@@ -2285,7 +2285,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     if (doit[D_MD5]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD5], c[D_MD5][testnum], lengths[testnum],
@@ -2352,7 +2352,7 @@ int speed_main(int argc, char **argv)
             print_result(D_SHA512, testnum, count, d);
         }
     }
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_WHIRLPOOL) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_WHIRLPOOL]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_WHIRLPOOL], c[D_WHIRLPOOL][testnum],
@@ -2365,7 +2365,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_RMD160) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_RMD160]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_RMD160], c[D_RMD160][testnum],
@@ -2379,7 +2379,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
     if (doit[D_RC4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_RC4], c[D_RC4][testnum], lengths[testnum],
@@ -2391,7 +2391,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     if (doit[D_CBC_DES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_CBC_DES], c[D_CBC_DES][testnum],
@@ -2416,7 +2416,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     if (doit[D_CBC_128_AES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_CBC_128_AES], c[D_CBC_128_AES][testnum],
@@ -2504,8 +2504,8 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
     }
-#endif /* OPENSSL_NO_DEPRECATED_3_0 */
-#if !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#endif /* OPENtls_NO_DEPRECATED_3_0 */
+#if !defined(OPENtls_NO_CAMELLIA) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_128_CML]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2565,7 +2565,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
     if (doit[D_CBC_IDEA]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2585,7 +2585,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_SEED
+#ifndef OPENtls_NO_SEED
     if (doit[D_CBC_SEED]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2604,7 +2604,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC2
+#ifndef OPENtls_NO_RC2
     if (doit[D_CBC_RC2]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2628,7 +2628,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC5
+#ifndef OPENtls_NO_RC5
     if (doit[D_CBC_RC5]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2652,7 +2652,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_BF) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_BF]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2672,7 +2672,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_CAST) && !defined(OPENtls_NO_DEPRECATED_3_0)
     if (doit[D_CBC_CAST]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
@@ -2723,7 +2723,7 @@ int speed_main(int argc, char **argv)
                 loopfunc = EVP_Update_loop_aead;
                 if (lengths == lengths_list) {
                     lengths = aead_lengths_list;
-                    size_num = OSSL_NELEM(aead_lengths_list);
+                    size_num = Otls_NELEM(aead_lengths_list);
                 }
             }
 
@@ -2755,7 +2755,7 @@ int speed_main(int argc, char **argv)
                         ERR_print_errors(bio_err);
                         exit(1);
                     }
-                    OPENSSL_clear_free(loopargs[k].key, keylen);
+                    OPENtls_clear_free(loopargs[k].key, keylen);
 
                     /* SIV mode only allows for a single Update operation */
                     if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
@@ -2802,7 +2802,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
-#ifndef OPENSSL_NO_CMAC
+#ifndef OPENtls_NO_CMAC
     if (doit[D_EVP_CMAC] && evp_cmac_cipher != NULL) {
         const char *cipher_name = OBJ_nid2ln(EVP_CIPHER_type(evp_cmac_cipher));
 
@@ -2835,7 +2835,7 @@ int speed_main(int argc, char **argv)
         if (RAND_bytes(loopargs[i].buf, 36) <= 0)
             goto end;
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
         int st = 0;
         if (!rsa_doit[testnum])
@@ -2925,13 +2925,13 @@ int speed_main(int argc, char **argv)
             stop_it(rsa_doit, testnum);
         }
     }
-#endif                          /* OPENSSL_NO_RSA */
+#endif                          /* OPENtls_NO_RSA */
 
     for (i = 0; i < loopargs_len; i++)
         if (RAND_bytes(loopargs[i].buf, 36) <= 0)
             goto end;
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         int st = 0;
         if (!dsa_doit[testnum])
@@ -2995,9 +2995,9 @@ int speed_main(int argc, char **argv)
             stop_it(dsa_doit, testnum);
         }
     }
-#endif                          /* OPENSSL_NO_DSA */
+#endif                          /* OPENtls_NO_DSA */
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     for (testnum = 0; testnum < ECDSA_NUM; testnum++) {
         int st = 1;
 
@@ -3343,7 +3343,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     for (testnum = 0; testnum < SM2_NUM; testnum++) {
         int st = 1;
         EVP_PKEY *sm2_pkey = NULL;
@@ -3478,37 +3478,37 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-# endif                         /* OPENSSL_NO_SM2 */
+# endif                         /* OPENtls_NO_SM2 */
 
-#endif                          /* OPENSSL_NO_EC */
+#endif                          /* OPENtls_NO_EC */
 #ifndef NO_FORK
  show_res:
 #endif
     if (!mr) {
-        printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
-        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("version: %s\n", Opentls_version(OPENtls_FULL_VERSION_STRING));
+        printf("built on: %s\n", Opentls_version(OPENtls_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_MD2) && !defined(OPENtls_NO_DEPRECATED_3_0)
         printf("%s ", MD2_options());
 #endif
-#ifndef OPENSSL_NO_RC4
+#ifndef OPENtls_NO_RC4
         printf("%s ", RC4_options());
 #endif
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         printf("%s ", DES_options());
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
         printf("%s ", AES_options());
 #endif
-#ifndef OPENSSL_NO_IDEA
+#ifndef OPENtls_NO_IDEA
         printf("%s ", IDEA_options());
 #endif
-#if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENtls_NO_BF) && !defined(OPENtls_NO_DEPRECATED_3_0)
         printf("%s ", BF_options());
 #endif
-        printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
-        printf("%s\n", OpenSSL_version(OPENSSL_CPU_INFO));
+        printf("\n%s\n", Opentls_version(OPENtls_CFLAGS));
+        printf("%s\n", Opentls_version(OPENtls_CPU_INFO));
     }
 
     if (pr_header) {
@@ -3539,7 +3539,7 @@ int speed_main(int argc, char **argv)
         }
         printf("\n");
     }
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     testnum = 1;
     for (k = 0; k < RSA_NUM; k++) {
         if (!rsa_doit[k])
@@ -3557,7 +3557,7 @@ int speed_main(int argc, char **argv)
                    rsa_results[k][0], rsa_results[k][1]);
     }
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     testnum = 1;
     for (k = 0; k < DSA_NUM; k++) {
         if (!dsa_doit[k])
@@ -3575,9 +3575,9 @@ int speed_main(int argc, char **argv)
                    dsa_results[k][0], dsa_results[k][1]);
     }
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     testnum = 1;
-    for (k = 0; k < OSSL_NELEM(ecdsa_doit); k++) {
+    for (k = 0; k < Otls_NELEM(ecdsa_doit); k++) {
         if (!ecdsa_doit[k])
             continue;
         if (testnum && !mr) {
@@ -3616,7 +3616,7 @@ int speed_main(int argc, char **argv)
     }
 
     testnum = 1;
-    for (k = 0; k < OSSL_NELEM(eddsa_doit); k++) {
+    for (k = 0; k < Otls_NELEM(eddsa_doit); k++) {
         if (!eddsa_doit[k])
             continue;
         if (testnum && !mr) {
@@ -3635,9 +3635,9 @@ int speed_main(int argc, char **argv)
                    eddsa_results[k][0], eddsa_results[k][1]);
     }
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     testnum = 1;
-    for (k = 0; k < OSSL_NELEM(sm2_doit); k++) {
+    for (k = 0; k < Otls_NELEM(sm2_doit); k++) {
         if (!sm2_doit[k])
             continue;
         if (testnum && !mr) {
@@ -3656,32 +3656,32 @@ int speed_main(int argc, char **argv)
                    sm2_results[k][0], sm2_results[k][1]);
     }
 # endif
-#endif                          /* OPENSSL_NO_EC */
+#endif                          /* OPENtls_NO_EC */
 
     ret = 0;
 
  end:
     ERR_print_errors(bio_err);
     for (i = 0; i < loopargs_len; i++) {
-        OPENSSL_free(loopargs[i].buf_malloc);
-        OPENSSL_free(loopargs[i].buf2_malloc);
+        OPENtls_free(loopargs[i].buf_malloc);
+        OPENtls_free(loopargs[i].buf2_malloc);
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         for (k = 0; k < RSA_NUM; k++)
             RSA_free(loopargs[i].rsa_key[k]);
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
         for (k = 0; k < DSA_NUM; k++)
             DSA_free(loopargs[i].dsa_key[k]);
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
         for (k = 0; k < ECDSA_NUM; k++)
             EC_KEY_free(loopargs[i].ecdsa[k]);
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
         for (k = 0; k < EdDSA_NUM; k++)
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
         for (k = 0; k < SM2_NUM; k++) {
             EVP_PKEY_CTX *pctx = NULL;
 
@@ -3699,13 +3699,13 @@ int speed_main(int argc, char **argv)
             EVP_PKEY_free(loopargs[i].sm2_pkey[k]);
         }
 # endif
-        OPENSSL_free(loopargs[i].secret_a);
-        OPENSSL_free(loopargs[i].secret_b);
+        OPENtls_free(loopargs[i].secret_a);
+        OPENtls_free(loopargs[i].secret_b);
 #endif
     }
-    OPENSSL_free(evp_hmac_name);
-#ifndef OPENSSL_NO_CMAC
-    OPENSSL_free(evp_cmac_name);
+    OPENtls_free(evp_hmac_name);
+#ifndef OPENtls_NO_CMAC
+    OPENtls_free(evp_cmac_name);
 #endif
 
     if (async_jobs > 0) {
@@ -3716,7 +3716,7 @@ int speed_main(int argc, char **argv)
     if (async_init) {
         ASYNC_cleanup_thread();
     }
-    OPENSSL_free(loopargs);
+    OPENtls_free(loopargs);
     release_engine(e);
     return ret;
 }
@@ -3827,7 +3827,7 @@ static int do_multi(int multi, int size_num)
             close(fd[1]);
             mr = 1;
             usertime = 0;
-            OPENSSL_free(fds);
+            OPENtls_free(fds);
             return 0;
         }
         printf("Forked child %d\n", n);
@@ -3874,7 +3874,7 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 rsa_results[k][1] += d;
             }
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
             else if (strncmp(buf, "+F3:", 4) == 0) {
                 int k;
                 double d;
@@ -3890,7 +3890,7 @@ static int do_multi(int multi, int size_num)
                 dsa_results[k][1] += d;
             }
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
             else if (strncmp(buf, "+F4:", 4) == 0) {
                 int k;
                 double d;
@@ -3929,7 +3929,7 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 eddsa_results[k][1] += d;
             }
-#  ifndef OPENSSL_NO_SM2
+#  ifndef OPENtls_NO_SM2
             else if (strncmp(buf, "+F7:", 4) == 0) {
                 int k;
                 double d;
@@ -3944,7 +3944,7 @@ static int do_multi(int multi, int size_num)
                 d = atof(sstrsep(&p, sep));
                 sm2_results[k][1] += d;
             }
-#  endif /* OPENSSL_NO_SM2 */
+#  endif /* OPENtls_NO_SM2 */
 # endif
 
             else if (strncmp(buf, "+H:", 3) == 0) {
@@ -3956,18 +3956,18 @@ static int do_multi(int multi, int size_num)
 
         fclose(f);
     }
-    OPENSSL_free(fds);
+    OPENtls_free(fds);
     return 1;
 }
 #endif
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
-                             const openssl_speed_sec_t *seconds)
+                             const opentls_speed_sec_t *seconds)
 {
     static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
     const int *mblengths = mblengths_list;
-    int j, count, keylen, num = OSSL_NELEM(mblengths_list);
+    int j, count, keylen, num = Otls_NELEM(mblengths_list);
     const char *alg_name;
     unsigned char *inp, *out, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx;
@@ -3987,7 +3987,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     key = app_malloc(keylen, "evp_cipher key");
     EVP_CIPHER_CTX_rand_key(ctx, key);
     EVP_EncryptInit_ex(ctx, NULL, NULL, key, NULL);
-    OPENSSL_clear_free(key, keylen);
+    OPENtls_clear_free(key, keylen);
 
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key), no_key);
     alg_name = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
@@ -4002,7 +4002,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
             int packlen;
 
             memset(aad, 0, 8);  /* avoid uninitialized values */
-            aad[8] = 23;        /* SSL3_RT_APPLICATION_DATA */
+            aad[8] = 23;        /* tls3_RT_APPLICATION_DATA */
             aad[9] = 3;         /* version */
             aad[10] = 2;
             aad[11] = 0;        /* length */
@@ -4066,7 +4066,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         fprintf(stdout, "\n");
     }
 
-    OPENSSL_free(inp);
-    OPENSSL_free(out);
+    OPENtls_free(inp);
+    OPENtls_free(out);
     EVP_CIPHER_CTX_free(ctx);
 }

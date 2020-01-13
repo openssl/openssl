@@ -1,18 +1,18 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
-#ifdef OPENSSL_NO_OCSP
+#ifdef OPENtls_NO_OCSP
 NON_EMPTY_TRANSLATION_UNIT
 #else
-# ifdef OPENSSL_SYS_VMS
+# ifdef OPENtls_SYS_VMS
 #  define _XOPEN_SOURCE_EXTENDED/* So fd_set and friends get properly defined
                                  * on OpenVMS */
 # endif
@@ -23,21 +23,21 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include <ctype.h>
 
-/* Needs to be included before the openssl headers */
+/* Needs to be included before the opentls headers */
 # include "apps.h"
 # include "progs.h"
 # include "internal/sockets.h"
-# include <openssl/e_os2.h>
-# include <openssl/crypto.h>
-# include <openssl/err.h>
-# include <openssl/ssl.h>
-# include <openssl/evp.h>
-# include <openssl/bn.h>
-# include <openssl/x509v3.h>
-# include <openssl/rand.h>
+# include <opentls/e_os2.h>
+# include <opentls/crypto.h>
+# include <opentls/err.h>
+# include <opentls/tls.h>
+# include <opentls/evp.h>
+# include <opentls/bn.h>
+# include <opentls/x509v3.h>
+# include <opentls/rand.h>
 
 #ifndef HAVE_FORK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_VMS) || defined(OPENtls_SYS_WINDOWS)
 #  define HAVE_FORK 0
 # else
 #  define HAVE_FORK 1
@@ -50,8 +50,8 @@ NON_EMPTY_TRANSLATION_UNIT
 # define NO_FORK
 #endif
 
-# if !defined(NO_FORK) && !defined(OPENSSL_NO_SOCK) \
-     && !defined(OPENSSL_NO_POSIX_IO)
+# if !defined(NO_FORK) && !defined(OPENtls_NO_SOCK) \
+     && !defined(OPENtls_NO_POSIX_IO)
 #  define OCSP_DAEMON
 #  include <sys/types.h>
 #  include <sys/wait.h>
@@ -67,7 +67,7 @@ NON_EMPTY_TRANSLATION_UNIT
 #  define LOG_ERR       2
 # endif
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENtls_SYS_VXWORKS)
 /* not supported */
 int setpgid(pid_t pid, pid_t pgid)
 {
@@ -91,13 +91,13 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
                            const EVP_MD *cert_id_md, X509 *issuer,
                            STACK_OF(OCSP_CERTID) *ids);
 static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-                              STACK_OF(OPENSSL_STRING) *names,
+                              STACK_OF(OPENtls_STRING) *names,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage);
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                               CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *md,
-                              STACK_OF(OPENSSL_STRING) *sigopts,
+                              STACK_OF(OPENtls_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig,
                               const EVP_MD *resp_md);
@@ -118,7 +118,7 @@ static int print_syslog(const char *str, size_t len, void *levPtr);
 static void socket_timeout(int signum);
 # endif
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
@@ -244,7 +244,7 @@ int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
-    STACK_OF(OPENSSL_STRING) *rsign_sigopts = NULL;
+    STACK_OF(OPENtls_STRING) *rsign_sigopts = NULL;
     int trailing_md = 0;
     CA_DB *rdb = NULL;
     EVP_PKEY *key = NULL, *rkey = NULL;
@@ -253,7 +253,7 @@ int ocsp_main(int argc, char **argv)
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(CONF_VALUE) *headers = NULL;
     STACK_OF(OCSP_CERTID) *ids = NULL;
-    STACK_OF(OPENSSL_STRING) *reqnames = NULL;
+    STACK_OF(OPENtls_STRING) *reqnames = NULL;
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
     STACK_OF(X509) *issuers = NULL;
     X509 *issuer = NULL, *cert = NULL;
@@ -273,7 +273,7 @@ int ocsp_main(int argc, char **argv)
     char *signfile = NULL, *keyfile = NULL;
     char *thost = NULL, *tport = NULL, *tpath = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
-    int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
+    int accept_count = -1, add_nonce = 1, noverify = 0, use_tls = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, ret = 1;
     int req_timeout = -1;
@@ -281,7 +281,7 @@ int ocsp_main(int argc, char **argv)
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
 
-    reqnames = sk_OPENSSL_STRING_new_null();
+    reqnames = sk_OPENtls_STRING_new_null();
     if (reqnames == NULL)
         goto end;
     ids = sk_OCSP_CERTID_new_null();
@@ -306,16 +306,16 @@ int ocsp_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_TIMEOUT:
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
             req_timeout = atoi(opt_arg());
 #endif
             break;
         case OPT_URL:
-            OPENSSL_free(thost);
-            OPENSSL_free(tport);
-            OPENSSL_free(tpath);
+            OPENtls_free(thost);
+            OPENtls_free(tport);
+            OPENtls_free(tpath);
             thost = tport = tpath = NULL;
-            if (!OCSP_parse_url(opt_arg(), &host, &port, &path, &use_ssl)) {
+            if (!OCSP_parse_url(opt_arg(), &host, &port, &path, &use_tls)) {
                 BIO_printf(bio_err, "%s Error parsing URL\n", prog);
                 goto end;
             }
@@ -462,7 +462,7 @@ int ocsp_main(int argc, char **argv)
                 cert_id_md = EVP_sha1();
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
                 goto end;
-            if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
+            if (!sk_OPENtls_STRING_push(reqnames, opt_arg()))
                 goto end;
             trailing_md = 0;
             break;
@@ -471,7 +471,7 @@ int ocsp_main(int argc, char **argv)
                 cert_id_md = EVP_sha1();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
                 goto end;
-            if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
+            if (!sk_OPENtls_STRING_push(reqnames, opt_arg()))
                 goto end;
             trailing_md = 0;
             break;
@@ -510,8 +510,8 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_RSIGOPT:
             if (rsign_sigopts == NULL)
-                rsign_sigopts = sk_OPENSSL_STRING_new_null();
-            if (rsign_sigopts == NULL || !sk_OPENSSL_STRING_push(rsign_sigopts, opt_arg()))
+                rsign_sigopts = sk_OPENtls_STRING_new_null();
+            if (rsign_sigopts == NULL || !sk_OPENtls_STRING_push(rsign_sigopts, opt_arg()))
                 goto end;
             break;
         case OPT_HEADER:
@@ -724,9 +724,9 @@ redo_accept:
         if (cbio != NULL)
             send_ocsp_response(cbio, resp);
     } else if (host != NULL) {
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
         resp = process_responder(req, host, path,
-                                 port, use_ssl, headers, req_timeout);
+                                 port, use_tls, headers, req_timeout);
         if (resp == NULL)
             goto end;
 # else
@@ -845,7 +845,7 @@ redo_accept:
     X509_free(signer);
     X509_STORE_free(store);
     X509_VERIFY_PARAM_free(vpm);
-    sk_OPENSSL_STRING_free(rsign_sigopts);
+    sk_OPENtls_STRING_free(rsign_sigopts);
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);
@@ -859,14 +859,14 @@ redo_accept:
     OCSP_REQUEST_free(req);
     OCSP_RESPONSE_free(resp);
     OCSP_BASICRESP_free(bs);
-    sk_OPENSSL_STRING_free(reqnames);
+    sk_OPENtls_STRING_free(reqnames);
     sk_OCSP_CERTID_free(ids);
     sk_X509_pop_free(sign_other, X509_free);
     sk_X509_pop_free(verify_other, X509_free);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
-    OPENSSL_free(thost);
-    OPENSSL_free(tport);
-    OPENSSL_free(tpath);
+    OPENtls_free(thost);
+    OPENtls_free(tport);
+    OPENtls_free(tpath);
 
     return ret;
 }
@@ -930,7 +930,7 @@ static void killall(int ret, pid_t *kidpids)
     for (i = 0; i < multi; ++i)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
-    OPENSSL_free(kidpids);
+    OPENtls_free(kidpids);
     sleep(1);
     exit(ret);
 }
@@ -1018,7 +1018,7 @@ static void spawn_loop(void)
             sleep(30);
             break;
         case 0:             /* child */
-            OPENSSL_free(kidpids);
+            OPENtls_free(kidpids);
             signal(SIGINT, SIG_DFL);
             signal(SIGTERM, SIG_DFL);
             if (termsig)
@@ -1114,7 +1114,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
 }
 
 static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-                              STACK_OF(OPENSSL_STRING) *names,
+                              STACK_OF(OPENtls_STRING) *names,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage)
 {
@@ -1123,13 +1123,13 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     int i, status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
-    if (bs == NULL || req == NULL || !sk_OPENSSL_STRING_num(names)
+    if (bs == NULL || req == NULL || !sk_OPENtls_STRING_num(names)
         || !sk_OCSP_CERTID_num(ids))
         return;
 
     for (i = 0; i < sk_OCSP_CERTID_num(ids); i++) {
         id = sk_OCSP_CERTID_value(ids, i);
-        name = sk_OPENSSL_STRING_value(names, i);
+        name = sk_OPENtls_STRING_value(names, i);
         BIO_printf(out, "%s: ", name);
 
         if (!OCSP_resp_find_status(bs, id, &status, &reason,
@@ -1173,7 +1173,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                               CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *rmd,
-                              STACK_OF(OPENSSL_STRING) *sigopts,
+                              STACK_OF(OPENtls_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig,
                               const EVP_MD *resp_md)
@@ -1283,8 +1283,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
         goto end;
     }
-    for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-        char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+    for (i = 0; i < sk_OPENtls_STRING_num(sigopts); i++) {
+        char *sigopt = sk_OPENtls_STRING_value(sigopts, i);
 
         if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
             BIO_printf(err, "parameter error \"%s\"\n", sigopt);
@@ -1321,16 +1321,16 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
     bn = ASN1_INTEGER_to_BN(ser, NULL);
-    OPENSSL_assert(bn);         /* FIXME: should report an error at this
+    OPENtls_assert(bn);         /* FIXME: should report an error at this
                                  * point and abort */
     if (BN_is_zero(bn))
-        itmp = OPENSSL_strdup("00");
+        itmp = OPENtls_strdup("00");
     else
         itmp = BN_bn2hex(bn);
     row[DB_serial] = itmp;
     BN_free(bn);
     rrow = TXT_DB_get_by_index(db->db, DB_serial, row);
-    OPENSSL_free(itmp);
+    OPENtls_free(itmp);
     return rrow;
 }
 
@@ -1338,7 +1338,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 
 static BIO *init_responder(const char *port)
 {
-# ifdef OPENSSL_NO_SOCK
+# ifdef OPENtls_NO_SOCK
     BIO_printf(bio_err,
                "Error setting up accept BIO - sockets not supported.\n");
     return NULL;
@@ -1372,7 +1372,7 @@ static BIO *init_responder(const char *port)
 # endif
 }
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 /*
  * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
  */
@@ -1386,8 +1386,8 @@ static int urldecode(char *p)
             *out++ = *p;
         else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
             /* Don't check, can't fail because of ixdigit() call. */
-            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
-                   | OPENSSL_hexchar2int(p[2]);
+            *out++ = (OPENtls_hexchar2int(p[1]) << 4)
+                   | OPENtls_hexchar2int(p[2]);
             p += 2;
         }
         else
@@ -1409,7 +1409,7 @@ static void socket_timeout(int signum)
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
                         int timeout)
 {
-# ifdef OPENSSL_NO_SOCK
+# ifdef OPENtls_NO_SOCK
     return 0;
 # else
     int len;
@@ -1539,7 +1539,7 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
-# ifndef OPENSSL_NO_SOCK
+# ifndef OPENtls_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
@@ -1571,7 +1571,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
 
     if (req_timeout != -1 && rv <= 0) {
         FD_ZERO(&confds);
-        openssl_fdset(fd, &confds);
+        opentls_fdset(fd, &confds);
         tv.tv_usec = 0;
         tv.tv_sec = req_timeout;
         rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
@@ -1606,7 +1606,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
         if (req_timeout == -1)
             continue;
         FD_ZERO(&confds);
-        openssl_fdset(fd, &confds);
+        opentls_fdset(fd, &confds);
         tv.tv_usec = 0;
         tv.tv_sec = req_timeout;
         if (BIO_should_read(cbio)) {
@@ -1635,12 +1635,12 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
 
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
-                                 const char *port, int use_ssl,
+                                 const char *port, int use_tls,
                                  STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout)
 {
     BIO *cbio = NULL;
-    SSL_CTX *ctx = NULL;
+    tls_CTX *ctx = NULL;
     OCSP_RESPONSE *resp = NULL;
 
     cbio = BIO_new_connect(host);
@@ -1650,15 +1650,15 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     }
     if (port != NULL)
         BIO_set_conn_port(cbio, port);
-    if (use_ssl == 1) {
+    if (use_tls == 1) {
         BIO *sbio;
-        ctx = SSL_CTX_new(TLS_client_method());
+        ctx = tls_CTX_new(TLS_client_method());
         if (ctx == NULL) {
-            BIO_printf(bio_err, "Error creating SSL context.\n");
+            BIO_printf(bio_err, "Error creating tls context.\n");
             goto end;
         }
-        SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-        sbio = BIO_new_ssl(ctx, 1);
+        tls_CTX_set_mode(ctx, tls_MODE_AUTO_RETRY);
+        sbio = BIO_new_tls(ctx, 1);
         cbio = BIO_push(sbio, cbio);
     }
 
@@ -1667,7 +1667,7 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         BIO_printf(bio_err, "Error querying OCSP responder\n");
  end:
     BIO_free_all(cbio);
-    SSL_CTX_free(ctx);
+    tls_CTX_free(ctx);
     return resp;
 }
 # endif

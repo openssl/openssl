@@ -1,11 +1,11 @@
 #! /usr/bin/env perl
-# Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
 # Copyright (c) 2014, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 #
 # Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
 # (1) Intel Corporation, Israel Development Center, Haifa, Israel
@@ -108,7 +108,7 @@ $code.=<<___;
 .quad 0x03ffffff, 0x03ffffff, 0x03ffffff, 0x03ffffff
 .quad 0x00000000, 0x00000000, 0x00000000, 0x00000000
 
-# RR = 2^266 mod p in AVX2 format, to transform from the native OpenSSL
+# RR = 2^266 mod p in AVX2 format, to transform from the native Opentls
 # Montgomery form (*2^256) to our format (*2^261)
 
 .LTO_MONT_AVX2:
@@ -2027,12 +2027,12 @@ $code.=<<___;
 	ret
 .size	ecp_nistz256_avx2_multi_gather_w7,.-ecp_nistz256_avx2_multi_gather_w7
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 .globl	ecp_nistz_avx2_eligible
 .type	ecp_nistz_avx2_eligible,\@abi-omnipotent
 .align	32
 ecp_nistz_avx2_eligible:
-	mov	OPENSSL_ia32cap_P+8(%rip),%eax
+	mov	OPENtls_ia32cap_P+8(%rip),%eax
 	shr	\$5,%eax
 	and	\$1,%eax
 	ret

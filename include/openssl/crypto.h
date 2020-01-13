@@ -1,64 +1,64 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_CRYPTO_H
-# define OPENSSL_CRYPTO_H
+#ifndef OPENtls_CRYPTO_H
+# define OPENtls_CRYPTO_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CRYPTO_H
 # endif
 
 # include <stdlib.h>
 # include <time.h>
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 #  include <stdio.h>
 # endif
 
-# include <openssl/safestack.h>
-# include <openssl/opensslv.h>
-# include <openssl/types.h>
-# include <openssl/opensslconf.h>
-# include <openssl/cryptoerr.h>
+# include <opentls/safestack.h>
+# include <opentls/opentlsv.h>
+# include <opentls/types.h>
+# include <opentls/opentlsconf.h>
+# include <opentls/cryptoerr.h>
 
 # ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
+#  include <opentls/ebcdic.h>
 # endif
 
 /*
  * Resolve problems on some operating systems with symbol names that clash
  * one way or another
  */
-# include <openssl/symhacks.h>
+# include <opentls/symhacks.h>
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/opensslv.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/opentlsv.h>
 # endif
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define SSLeay                  OpenSSL_version_num
-#  define SSLeay_version          OpenSSL_version
-#  define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
-#  define SSLEAY_VERSION          OPENSSL_VERSION
-#  define SSLEAY_CFLAGS           OPENSSL_CFLAGS
-#  define SSLEAY_BUILT_ON         OPENSSL_BUILT_ON
-#  define SSLEAY_PLATFORM         OPENSSL_PLATFORM
-#  define SSLEAY_DIR              OPENSSL_DIR
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  define tlseay                  Opentls_version_num
+#  define tlseay_version          Opentls_version
+#  define tlsEAY_VERSION_NUMBER   OPENtls_VERSION_NUMBER
+#  define tlsEAY_VERSION          OPENtls_VERSION
+#  define tlsEAY_CFLAGS           OPENtls_CFLAGS
+#  define tlsEAY_BUILT_ON         OPENtls_BUILT_ON
+#  define tlsEAY_PLATFORM         OPENtls_PLATFORM
+#  define tlsEAY_DIR              OPENtls_DIR
 
 /*
  * Old type for allocating dynamic locks. No longer used. Use the new thread
@@ -68,7 +68,7 @@ typedef struct {
     int dummy;
 } CRYPTO_dynlock;
 
-# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
+# endif /* OPENtls_NO_DEPRECATED_1_1_0 */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -90,7 +90,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 struct crypto_ex_data_st {
-    OPENSSL_CTX *ctx;
+    OPENtls_CTX *ctx;
     STACK_OF(void) *sk;
 };
 DEFINE_STACK_OF(void)
@@ -98,9 +98,9 @@ DEFINE_STACK_OF(void)
 /*
  * Per class, we have a STACK of function pointers.
  */
-# define CRYPTO_EX_INDEX_SSL              0
-# define CRYPTO_EX_INDEX_SSL_CTX          1
-# define CRYPTO_EX_INDEX_SSL_SESSION      2
+# define CRYPTO_EX_INDEX_tls              0
+# define CRYPTO_EX_INDEX_tls_CTX          1
+# define CRYPTO_EX_INDEX_tls_SESSION      2
 # define CRYPTO_EX_INDEX_X509             3
 # define CRYPTO_EX_INDEX_X509_STORE       4
 # define CRYPTO_EX_INDEX_X509_STORE_CTX   5
@@ -115,93 +115,93 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_RAND_DRBG       15
 # define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
-# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX_OPENtls_CTX     16
 # define CRYPTO_EX_INDEX__COUNT          17
 
 /* No longer needed, so this is a no-op */
-#define OPENSSL_malloc_init() while(0) continue
+#define OPENtls_malloc_init() while(0) continue
 
-# define OPENSSL_malloc(num) \
-        CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_zalloc(num) \
-        CRYPTO_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_realloc(addr, num) \
-        CRYPTO_realloc(addr, num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_clear_realloc(addr, old_num, num) \
-        CRYPTO_clear_realloc(addr, old_num, num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_clear_free(addr, num) \
-        CRYPTO_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_free(addr) \
-        CRYPTO_free(addr, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_memdup(str, s) \
-        CRYPTO_memdup((str), s, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_strdup(str) \
-        CRYPTO_strdup(str, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_strndup(str, n) \
-        CRYPTO_strndup(str, n, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_secure_malloc(num) \
-        CRYPTO_secure_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_secure_zalloc(num) \
-        CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_secure_free(addr) \
-        CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_secure_clear_free(addr, num) \
-        CRYPTO_secure_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
-# define OPENSSL_secure_actual_size(ptr) \
+# define OPENtls_malloc(num) \
+        CRYPTO_malloc(num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_zalloc(num) \
+        CRYPTO_zalloc(num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_realloc(addr, num) \
+        CRYPTO_realloc(addr, num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_clear_realloc(addr, old_num, num) \
+        CRYPTO_clear_realloc(addr, old_num, num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_clear_free(addr, num) \
+        CRYPTO_clear_free(addr, num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_free(addr) \
+        CRYPTO_free(addr, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_memdup(str, s) \
+        CRYPTO_memdup((str), s, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_strdup(str) \
+        CRYPTO_strdup(str, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_strndup(str, n) \
+        CRYPTO_strndup(str, n, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_secure_malloc(num) \
+        CRYPTO_secure_malloc(num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_secure_zalloc(num) \
+        CRYPTO_secure_zalloc(num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_secure_free(addr) \
+        CRYPTO_secure_free(addr, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_secure_clear_free(addr, num) \
+        CRYPTO_secure_clear_free(addr, num, OPENtls_FILE, OPENtls_LINE)
+# define OPENtls_secure_actual_size(ptr) \
         CRYPTO_secure_actual_size(ptr)
 
-size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
-size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
-size_t OPENSSL_strnlen(const char *str, size_t maxlen);
-int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+size_t OPENtls_strlcpy(char *dst, const char *src, size_t siz);
+size_t OPENtls_strlcat(char *dst, const char *src, size_t siz);
+size_t OPENtls_strnlen(const char *str, size_t maxlen);
+int OPENtls_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
                           const unsigned char *buf, size_t buflen);
-char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
-int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+char *OPENtls_buf2hexstr(const unsigned char *buf, long buflen);
+int OPENtls_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
                           const char *str);
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
-int OPENSSL_hexchar2int(unsigned char c);
+unsigned char *OPENtls_hexstr2buf(const char *str, long *buflen);
+int OPENtls_hexchar2int(unsigned char c);
 
-# define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
+# define OPENtls_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
 /*
- * These functions return the values of OPENSSL_VERSION_MAJOR,
- * OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH, OPENSSL_VERSION_PRE_RELEASE
- * and OPENSSL_VERSION_BUILD_METADATA, respectively.
+ * These functions return the values of OPENtls_VERSION_MAJOR,
+ * OPENtls_VERSION_MINOR, OPENtls_VERSION_PATCH, OPENtls_VERSION_PRE_RELEASE
+ * and OPENtls_VERSION_BUILD_METADATA, respectively.
  */
-unsigned int OPENSSL_version_major(void);
-unsigned int OPENSSL_version_minor(void);
-unsigned int OPENSSL_version_patch(void);
-const char *OPENSSL_version_pre_release(void);
-const char *OPENSSL_version_build_metadata(void);
+unsigned int OPENtls_version_major(void);
+unsigned int OPENtls_version_minor(void);
+unsigned int OPENtls_version_patch(void);
+const char *OPENtls_version_pre_release(void);
+const char *OPENtls_version_build_metadata(void);
 
-unsigned long OpenSSL_version_num(void);
-const char *OpenSSL_version(int type);
-# define OPENSSL_VERSION                0
-# define OPENSSL_CFLAGS                 1
-# define OPENSSL_BUILT_ON               2
-# define OPENSSL_PLATFORM               3
-# define OPENSSL_DIR                    4
-# define OPENSSL_ENGINES_DIR            5
-# define OPENSSL_VERSION_STRING         6
-# define OPENSSL_FULL_VERSION_STRING    7
-# define OPENSSL_MODULES_DIR            8
-# define OPENSSL_CPU_INFO               9
+unsigned long Opentls_version_num(void);
+const char *Opentls_version(int type);
+# define OPENtls_VERSION                0
+# define OPENtls_CFLAGS                 1
+# define OPENtls_BUILT_ON               2
+# define OPENtls_PLATFORM               3
+# define OPENtls_DIR                    4
+# define OPENtls_ENGINES_DIR            5
+# define OPENtls_VERSION_STRING         6
+# define OPENtls_FULL_VERSION_STRING    7
+# define OPENtls_MODULES_DIR            8
+# define OPENtls_CPU_INFO               9
 
-const char *OPENSSL_info(int type);
+const char *OPENtls_info(int type);
 /*
- * The series starts at 1001 to avoid confusion with the OpenSSL_version
+ * The series starts at 1001 to avoid confusion with the Opentls_version
  * types.
  */
-# define OPENSSL_INFO_CONFIG_DIR                1001
-# define OPENSSL_INFO_ENGINES_DIR               1002
-# define OPENSSL_INFO_MODULES_DIR               1003
-# define OPENSSL_INFO_DSO_EXTENSION             1004
-# define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
-# define OPENSSL_INFO_LIST_SEPARATOR            1006
-# define OPENSSL_INFO_SEED_SOURCE               1007
-# define OPENSSL_INFO_CPU_SETTINGS              1008
+# define OPENtls_INFO_CONFIG_DIR                1001
+# define OPENtls_INFO_ENGINES_DIR               1002
+# define OPENtls_INFO_MODULES_DIR               1003
+# define OPENtls_INFO_DSO_EXTENSION             1004
+# define OPENtls_INFO_DIR_FILENAME_SEPARATOR    1005
+# define OPENtls_INFO_LIST_SEPARATOR            1006
+# define OPENtls_INFO_SEED_SOURCE               1007
+# define OPENtls_INFO_CPU_SETTINGS              1008
 
-int OPENSSL_issetugid(void);
+int OPENtls_issetugid(void);
 
 typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
@@ -236,7 +236,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
@@ -283,11 +283,11 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_THREADID_cpy(dest, src)
 #  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-#  ifndef OPENSSL_NO_DEPRECATED_1_0_0
+#  ifndef OPENtls_NO_DEPRECATED_1_0_0
 #   define CRYPTO_set_id_callback(func)
 #   define CRYPTO_get_id_callback()                     (NULL)
 #   define CRYPTO_thread_id()                           (0UL)
-#  endif /* OPENSSL_NO_DEPRECATED_1_0_0 */
+#  endif /* OPENtls_NO_DEPRECATED_1_0_0 */
 
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
@@ -295,7 +295,7 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_create_callback()          (NULL)
 #  define CRYPTO_get_dynlock_lock_callback()            (NULL)
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
-# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
+# endif /* OPENtls_NO_DEPRECATED_1_1_0 */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -329,14 +329,14 @@ int CRYPTO_secure_malloc_initialized(void);
 size_t CRYPTO_secure_actual_size(void *ptr);
 size_t CRYPTO_secure_used(void);
 
-void OPENSSL_cleanse(void *ptr, size_t len);
+void OPENtls_cleanse(void *ptr, size_t len);
 
-# ifndef OPENSSL_NO_CRYPTO_MDEBUG
+# ifndef OPENtls_NO_CRYPTO_MDEBUG
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#    define OPENSSL_mem_debug_push(info) \
-         CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
-#    define OPENSSL_mem_debug_pop() \
+#  ifndef OPENtls_NO_DEPRECATED_3_0
+#    define OPENtls_mem_debug_push(info) \
+         CRYPTO_mem_debug_push(info, OPENtls_FILE, OPENtls_LINE)
+#    define OPENtls_mem_debug_pop() \
          CRYPTO_mem_debug_pop()
 #  endif
 DEPRECATEDIN_3_0(int CRYPTO_set_mem_debug(int flag))
@@ -356,35 +356,35 @@ DEPRECATEDIN_3_0(void CRYPTO_mem_debug_free(void *addr, int flag,
 
 DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_cb(
                       int (*cb)(const char *str, size_t len, void *u), void *u))
-#  ifndef OPENSSL_NO_STDIO
+#  ifndef OPENtls_NO_STDIO
 DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_fp(FILE *))
 #  endif
 DEPRECATEDIN_3_0(int CRYPTO_mem_leaks(BIO *bio))
 # endif
 
 /* die if we have to */
-ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
+otls_noreturn void OPENtls_die(const char *assertion, const char *file, int line);
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  define OpentlsDie(f,l,a) OPENtls_die((a),(f),(l))
 # endif
-# define OPENSSL_assert(e) \
-    (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
+# define OPENtls_assert(e) \
+    (void)((e) ? 0 : (OPENtls_die("assertion failed: " #e, OPENtls_FILE, OPENtls_LINE), 1))
 
-int OPENSSL_isservice(void);
+int OPENtls_isservice(void);
 
 int FIPS_mode(void);
 int FIPS_mode_set(int r);
 
-void OPENSSL_init(void);
-# ifdef OPENSSL_SYS_UNIX
-void OPENSSL_fork_prepare(void);
-void OPENSSL_fork_parent(void);
-void OPENSSL_fork_child(void);
+void OPENtls_init(void);
+# ifdef OPENtls_SYS_UNIX
+void OPENtls_fork_prepare(void);
+void OPENtls_fork_parent(void);
+void OPENtls_fork_child(void);
 # endif
 
-struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
-int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
-int OPENSSL_gmtime_diff(int *pday, int *psec,
+struct tm *OPENtls_gmtime(const time_t *timer, struct tm *result);
+int OPENtls_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
+int OPENtls_gmtime_diff(int *pday, int *psec,
                         const struct tm *from, const struct tm *to);
 
 /*
@@ -397,62 +397,62 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
 int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 
 /* Standard initialisation options */
-# define OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS 0x00000001L
-# define OPENSSL_INIT_LOAD_CRYPTO_STRINGS    0x00000002L
-# define OPENSSL_INIT_ADD_ALL_CIPHERS        0x00000004L
-# define OPENSSL_INIT_ADD_ALL_DIGESTS        0x00000008L
-# define OPENSSL_INIT_NO_ADD_ALL_CIPHERS     0x00000010L
-# define OPENSSL_INIT_NO_ADD_ALL_DIGESTS     0x00000020L
-# define OPENSSL_INIT_LOAD_CONFIG            0x00000040L
-# define OPENSSL_INIT_NO_LOAD_CONFIG         0x00000080L
-# define OPENSSL_INIT_ASYNC                  0x00000100L
-# define OPENSSL_INIT_ENGINE_RDRAND          0x00000200L
-# define OPENSSL_INIT_ENGINE_DYNAMIC         0x00000400L
-# define OPENSSL_INIT_ENGINE_OPENSSL         0x00000800L
-# define OPENSSL_INIT_ENGINE_CRYPTODEV       0x00001000L
-# define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
-# define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
-# define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
-/* OPENSSL_INIT_ZLIB                         0x00010000L */
-# define OPENSSL_INIT_ATFORK                 0x00020000L
-/* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
-# define OPENSSL_INIT_NO_ATEXIT              0x00080000L
-/* OPENSSL_INIT flag range 0x03f00000 reserved for OPENSSL_init_ssl() */
+# define OPENtls_INIT_NO_LOAD_CRYPTO_STRINGS 0x00000001L
+# define OPENtls_INIT_LOAD_CRYPTO_STRINGS    0x00000002L
+# define OPENtls_INIT_ADD_ALL_CIPHERS        0x00000004L
+# define OPENtls_INIT_ADD_ALL_DIGESTS        0x00000008L
+# define OPENtls_INIT_NO_ADD_ALL_CIPHERS     0x00000010L
+# define OPENtls_INIT_NO_ADD_ALL_DIGESTS     0x00000020L
+# define OPENtls_INIT_LOAD_CONFIG            0x00000040L
+# define OPENtls_INIT_NO_LOAD_CONFIG         0x00000080L
+# define OPENtls_INIT_ASYNC                  0x00000100L
+# define OPENtls_INIT_ENGINE_RDRAND          0x00000200L
+# define OPENtls_INIT_ENGINE_DYNAMIC         0x00000400L
+# define OPENtls_INIT_ENGINE_OPENtls         0x00000800L
+# define OPENtls_INIT_ENGINE_CRYPTODEV       0x00001000L
+# define OPENtls_INIT_ENGINE_CAPI            0x00002000L
+# define OPENtls_INIT_ENGINE_PADLOCK         0x00004000L
+# define OPENtls_INIT_ENGINE_AFALG           0x00008000L
+/* OPENtls_INIT_ZLIB                         0x00010000L */
+# define OPENtls_INIT_ATFORK                 0x00020000L
+/* OPENtls_INIT_BASE_ONLY                    0x00040000L */
+# define OPENtls_INIT_NO_ATEXIT              0x00080000L
+/* OPENtls_INIT flag range 0x03f00000 reserved for OPENtls_init_tls() */
 /* FREE: 0x04000000L */
 /* FREE: 0x08000000L */
 /* FREE: 0x10000000L */
 /* FREE: 0x20000000L */
 /* FREE: 0x40000000L */
 /* FREE: 0x80000000L */
-/* Max OPENSSL_INIT flag value is 0x80000000 */
+/* Max OPENtls_INIT flag value is 0x80000000 */
 
-/* openssl and dasync not counted as builtin */
-# define OPENSSL_INIT_ENGINE_ALL_BUILTIN \
-    (OPENSSL_INIT_ENGINE_RDRAND | OPENSSL_INIT_ENGINE_DYNAMIC \
-    | OPENSSL_INIT_ENGINE_CRYPTODEV | OPENSSL_INIT_ENGINE_CAPI | \
-    OPENSSL_INIT_ENGINE_PADLOCK)
+/* opentls and dasync not counted as builtin */
+# define OPENtls_INIT_ENGINE_ALL_BUILTIN \
+    (OPENtls_INIT_ENGINE_RDRAND | OPENtls_INIT_ENGINE_DYNAMIC \
+    | OPENtls_INIT_ENGINE_CRYPTODEV | OPENtls_INIT_ENGINE_CAPI | \
+    OPENtls_INIT_ENGINE_PADLOCK)
 
 
 /* Library initialisation functions */
-void OPENSSL_cleanup(void);
-int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
-int OPENSSL_atexit(void (*handler)(void));
-void OPENSSL_thread_stop(void);
-void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
+void OPENtls_cleanup(void);
+int OPENtls_init_crypto(uint64_t opts, const OPENtls_INIT_SETTINGS *settings);
+int OPENtls_atexit(void (*handler)(void));
+void OPENtls_thread_stop(void);
+void OPENtls_thread_stop_ex(OPENtls_CTX *ctx);
 
 /* Low-level control of initialization */
-OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
-# ifndef OPENSSL_NO_STDIO
-int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+OPENtls_INIT_SETTINGS *OPENtls_INIT_new(void);
+# ifndef OPENtls_NO_STDIO
+int OPENtls_INIT_set_config_filename(OPENtls_INIT_SETTINGS *settings,
                                      const char *config_filename);
-void OPENSSL_INIT_set_config_file_flags(OPENSSL_INIT_SETTINGS *settings,
+void OPENtls_INIT_set_config_file_flags(OPENtls_INIT_SETTINGS *settings,
                                         unsigned long flags);
-int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
+int OPENtls_INIT_set_config_appname(OPENtls_INIT_SETTINGS *settings,
                                     const char *config_appname);
 # endif
-void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
+void OPENtls_INIT_free(OPENtls_INIT_SETTINGS *settings);
 
-# if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+# if defined(OPENtls_THREADS) && !defined(CRYPTO_TDEBUG)
 #  if defined(_WIN32)
 #   if defined(BASETYPES) || defined(_WINDEF_H)
 /* application has to include <windows.h> in order to use this */
@@ -489,8 +489,8 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
-OPENSSL_CTX *OPENSSL_CTX_new(void);
-void OPENSSL_CTX_free(OPENSSL_CTX *);
+OPENtls_CTX *OPENtls_CTX_new(void);
+void OPENtls_CTX_free(OPENtls_CTX *);
 
 # ifdef  __cplusplus
 }

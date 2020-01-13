@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 
 static int linebuffer_write(BIO *h, const char *buf, int num);
 static int linebuffer_read(BIO *h, char *buf, int size);
@@ -59,14 +59,14 @@ static int linebuffer_new(BIO *bi)
 {
     BIO_LINEBUFFER_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENtls_malloc(sizeof(*ctx))) == NULL) {
         BIOerr(BIO_F_LINEBUFFER_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    ctx->obuf = OPENSSL_malloc(DEFAULT_LINEBUFFER_SIZE);
+    ctx->obuf = OPENtls_malloc(DEFAULT_LINEBUFFER_SIZE);
     if (ctx->obuf == NULL) {
         BIOerr(BIO_F_LINEBUFFER_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return 0;
     }
     ctx->obuf_size = DEFAULT_LINEBUFFER_SIZE;
@@ -85,8 +85,8 @@ static int linebuffer_free(BIO *a)
     if (a == NULL)
         return 0;
     b = (BIO_LINEBUFFER_CTX *)a->ptr;
-    OPENSSL_free(b->obuf);
-    OPENSSL_free(a->ptr);
+    OPENtls_free(b->obuf);
+    OPENtls_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
     a->flags = 0;
@@ -235,7 +235,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         obs = (int)num;
         p = ctx->obuf;
         if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
-            p = OPENSSL_malloc((int)num);
+            p = OPENtls_malloc((int)num);
             if (p == NULL)
                 goto malloc_error;
         }
@@ -244,7 +244,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ctx->obuf_len = obs;
             }
             memcpy(p, ctx->obuf, ctx->obuf_len);
-            OPENSSL_free(ctx->obuf);
+            OPENtls_free(ctx->obuf);
             ctx->obuf = p;
             ctx->obuf_size = obs;
         }

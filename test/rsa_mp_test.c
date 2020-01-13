@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* This aims to test the setting functions, including internal ones */
@@ -13,15 +13,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/bn.h>
 
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 # include "crypto/rsa.h"
 
 #define NUM_EXTRA_PRIMES 1
@@ -160,9 +160,9 @@ static int key2048p3_v1(RSA *key)
                                                    NULL)), 1))
         return 0;
 
-    pris = OPENSSL_zalloc(sizeof(BIGNUM *));
-    exps = OPENSSL_zalloc(sizeof(BIGNUM *));
-    coeffs = OPENSSL_zalloc(sizeof(BIGNUM *));
+    pris = OPENtls_zalloc(sizeof(BIGNUM *));
+    exps = OPENtls_zalloc(sizeof(BIGNUM *));
+    coeffs = OPENtls_zalloc(sizeof(BIGNUM *));
     if (!TEST_ptr(pris) || !TEST_ptr(exps) || !TEST_ptr(coeffs))
         goto err;
 
@@ -177,9 +177,9 @@ static int key2048p3_v1(RSA *key)
         goto err;
 
  ret:
-    OPENSSL_free(pris);
-    OPENSSL_free(exps);
-    OPENSSL_free(coeffs);
+    OPENtls_free(pris);
+    OPENtls_free(exps);
+    OPENtls_free(coeffs);
     return rv;
  err:
     if (pris != NULL)
@@ -287,7 +287,7 @@ err:
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     ADD_ALL_TESTS(test_rsa_mp, 2);
 #endif
     return 1;

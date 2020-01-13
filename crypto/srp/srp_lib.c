@@ -1,21 +1,21 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
 
-#ifndef OPENSSL_NO_SRP
+#ifndef OPENtls_NO_SRP
 # include "internal/cryptlib.h"
-# include <openssl/sha.h>
-# include <openssl/srp.h>
-# include <openssl/evp.h>
+# include <opentls/sha.h>
+# include <opentls/srp.h>
+# include <opentls/evp.h>
 # include "crypto/bn_srp.h"
 
 /* calculate = SHA1(PAD(x) || PAD(y)) */
@@ -31,7 +31,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N)
         return NULL;
     if (y != N && BN_ucmp(y, N) >= 0)
         return NULL;
-    if ((tmp = OPENSSL_malloc(numN * 2)) == NULL)
+    if ((tmp = OPENtls_malloc(numN * 2)) == NULL)
         goto err;
     if (BN_bn2binpad(x, tmp, numN) < 0
         || BN_bn2binpad(y, tmp + numN, numN) < 0
@@ -39,7 +39,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N)
         goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     return res;
 }
 
@@ -130,7 +130,7 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
     ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL)
         return NULL;
-    if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
+    if ((cs = OPENtls_malloc(BN_num_bytes(s))) == NULL)
         goto err;
 
     if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
@@ -152,7 +152,7 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
     res = BN_bin2bn(dig, sizeof(dig), NULL);
 
  err:
-    OPENSSL_free(cs);
+    OPENtls_free(cs);
     EVP_MD_CTX_free(ctxt);
     return res;
 }

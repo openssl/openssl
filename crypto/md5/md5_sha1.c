@@ -1,14 +1,14 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <string.h>
 #include "prov/md5_sha1.h"
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 
 int md5_sha1_init(MD5_SHA1_CTX *mctx)
 {
@@ -37,13 +37,13 @@ int md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms)
     unsigned char md5tmp[MD5_DIGEST_LENGTH];
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
-    if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
+    if (cmd != EVP_CTRL_tls3_MASTER_SECRET)
         return -2;
 
     if (mctx == NULL)
         return 0;
 
-    /* SSLv3 client auth handling: see RFC-6101 5.6.8 */
+    /* tlsv3 client auth handling: see RFC-6101 5.6.8 */
     if (mslen != 48)
         return 0;
 
@@ -92,10 +92,10 @@ int md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms)
     if (!SHA1_Update(&mctx->sha1, sha1tmp, sizeof(sha1tmp)))
         return 0;
 
-    /* Now when ctx is finalised it will return the SSL v3 hash value */
+    /* Now when ctx is finalised it will return the tls v3 hash value */
 
-    OPENSSL_cleanse(md5tmp, sizeof(md5tmp));
-    OPENSSL_cleanse(sha1tmp, sizeof(sha1tmp));
+    OPENtls_cleanse(md5tmp, sizeof(md5tmp));
+    OPENtls_cleanse(sha1tmp, sizeof(sha1tmp));
 
     return 1;
 }

@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,7 +16,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "blake2_impl.h"
 #include "prov/blake2.h"
 
@@ -45,13 +45,13 @@ static const uint8_t blake2b_sigma[12][16] =
 };
 
 /* Set that it's the last block we'll compress */
-static ossl_inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
+static otls_inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
 {
     S->f[0] = -1;
 }
 
 /* Initialize the hashing state. */
-static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
+static otls_inline void blake2b_init0(BLAKE2B_CTX *S)
 {
     int i;
 
@@ -141,7 +141,7 @@ int blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key)
 
         memcpy(block, key, P->key_length);
         blake2b_update(c, block, BLAKE2B_BLOCKBYTES);
-        OPENSSL_cleanse(block, BLAKE2B_BLOCKBYTES);
+        OPENtls_cleanse(block, BLAKE2B_BLOCKBYTES);
     }
 
     return 1;
@@ -221,7 +221,7 @@ static void blake2b_compress(BLAKE2B_CTX *S,
             G(r,6,v[ 2],v[ 7],v[ 8],v[13]); \
             G(r,7,v[ 3],v[ 4],v[ 9],v[14]); \
         } while (0)
-#if defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(OPENtls_SMALL_FOOTPRINT)
         /* 3x size reduction on x86_64, almost 7x on ARMv8, 9x on ARMv4 */
         for (i = 0; i < 12; i++) {
             ROUND(i);
@@ -323,6 +323,6 @@ int blake2b_final(unsigned char *md, BLAKE2B_CTX *c)
     if (target != md)
         memcpy(md, target, c->outlen);
 
-    OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
+    OPENtls_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }

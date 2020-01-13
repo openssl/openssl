@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/sha.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/sha.h>
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
@@ -79,7 +79,7 @@ int HASH_INIT(SHA_CTX *c)
 #define F_40_59(b,c,d)  (((b) & (c)) | (((b)|(c)) & (d)))
 #define F_60_79(b,c,d)  F_20_39(b,c,d)
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
+#ifndef OPENtls_SMALL_FOOTPRINT
 
 # define BODY_00_15(i,a,b,c,d,e,f,xi) \
         (f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
@@ -335,7 +335,7 @@ static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
 }
 # endif
 
-#else                           /* OPENSSL_SMALL_FOOTPRINT */
+#else                           /* OPENtls_SMALL_FOOTPRINT */
 
 # define BODY_00_15(xi)           do {   \
         T=E+K_00_19+F_00_19(B,C,D);     \

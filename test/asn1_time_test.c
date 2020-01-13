@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Time tests for the asn1 module */
@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
+#include <opentls/asn1.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 
@@ -338,21 +338,21 @@ int setup_tests(void)
      */
     struct tm *ptm = localtime(&t);
 
-    ADD_ALL_TESTS(test_table_pos, OSSL_NELEM(tbl_testdata_pos));
+    ADD_ALL_TESTS(test_table_pos, Otls_NELEM(tbl_testdata_pos));
     if (!(t > 0) && ptm != NULL) {
         TEST_info("Adding negative-sign time_t tests");
-        ADD_ALL_TESTS(test_table_neg, OSSL_NELEM(tbl_testdata_neg));
+        ADD_ALL_TESTS(test_table_neg, Otls_NELEM(tbl_testdata_neg));
     }
     if (sizeof(time_t) > sizeof(uint32_t)) {
         TEST_info("Adding 64-bit time_t tests");
-        ADD_ALL_TESTS(test_table_pos_64bit, OSSL_NELEM(tbl_testdata_pos_64bit));
+        ADD_ALL_TESTS(test_table_pos_64bit, Otls_NELEM(tbl_testdata_pos_64bit));
 #ifndef __hpux
         if (!(t > 0) && ptm != NULL) {
             TEST_info("Adding negative-sign 64-bit time_t tests");
-            ADD_ALL_TESTS(test_table_neg_64bit, OSSL_NELEM(tbl_testdata_neg_64bit));
+            ADD_ALL_TESTS(test_table_neg_64bit, Otls_NELEM(tbl_testdata_neg_64bit));
         }
 #endif
     }
-    ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
+    ADD_ALL_TESTS(test_table_compare, Otls_NELEM(tbl_compare_testdata));
     return 1;
 }

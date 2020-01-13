@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/refcount.h"
@@ -71,7 +71,7 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     ASN1_OCTET_STRING *sm2_id;
 # endif
 };
@@ -132,7 +132,7 @@ struct x509_revoked_st {
 /*
  * This stuff is certificate "auxiliary info": it contains details which are
  * useful in certificate stores and databases. When used this is tagged onto
- * the end of the certificate itself. OpenSSL specific structure not defined
+ * the end of the certificate itself. Opentls specific structure not defined
  * in any RFC.
  */
 
@@ -178,7 +178,7 @@ struct x509_st {
     STACK_OF(DIST_POINT) *crldp;
     STACK_OF(GENERAL_NAME) *altname;
     NAME_CONSTRAINTS *nc;
-# ifndef OPENSSL_NO_RFC3779
+# ifndef OPENtls_NO_RFC3779
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
 # endif
@@ -186,7 +186,7 @@ struct x509_st {
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     ASN1_OCTET_STRING *sm2_id;
 # endif
 } /* X509 */ ;
@@ -256,7 +256,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
-    SSL_DANE *dane;
+    tls_DANE *dane;
     /* signed via bare TA public key, rather than CA certificate */
     int bare_ta_signed;
 };

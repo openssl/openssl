@@ -1,21 +1,21 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/params.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/params.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -45,7 +45,7 @@ int kdf_main(int argc, char **argv)
 {
     int ret = 1, out_bin = 0;
     OPTION_CHOICE o;
-    STACK_OF(OPENSSL_STRING) *opts = NULL;
+    STACK_OF(OPENtls_STRING) *opts = NULL;
     char *prog, *hexout = NULL;
     const char *outfile = NULL;
     unsigned char *dkm_bytes = NULL;
@@ -76,8 +76,8 @@ opthelp:
             break;
         case OPT_KDFOPT:
             if (opts == NULL)
-                opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+                opts = sk_OPENtls_STRING_new_null();
+            if (opts == NULL || !sk_OPENtls_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
         }
@@ -101,7 +101,7 @@ opthelp:
 
     if (opts != NULL) {
         int ok = 1;
-        OSSL_PARAM *params =
+        Otls_PARAM *params =
             app_params_new_from_opts(opts, EVP_KDF_settable_ctx_params(kdf));
 
         if (params == NULL)
@@ -137,7 +137,7 @@ opthelp:
     if (out_bin) {
         BIO_write(out, dkm_bytes, dkm_len);
     } else {
-        hexout = OPENSSL_buf2hexstr(dkm_bytes, dkm_len);
+        hexout = OPENtls_buf2hexstr(dkm_bytes, dkm_len);
         if (hexout == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto err;
@@ -149,11 +149,11 @@ opthelp:
 err:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    OPENSSL_clear_free(dkm_bytes, dkm_len);
-    sk_OPENSSL_STRING_free(opts);
+    OPENtls_clear_free(dkm_bytes, dkm_len);
+    sk_OPENtls_STRING_free(opts);
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
     BIO_free(out);
-    OPENSSL_free(hexout);
+    OPENtls_free(hexout);
     return ret;
 }

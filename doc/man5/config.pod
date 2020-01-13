@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-config - OpenSSL CONF library configuration files
+config - Opentls CONF library configuration files
 
 =head1 DESCRIPTION
 
-The OpenSSL CONF library can be used to read configuration files.
-It is used for the OpenSSL master configuration file B<openssl.cnf>
+The Opentls CONF library can be used to read configuration files.
+It is used for the Opentls master configuration file B<opentls.cnf>
 and in a few other places like B<SPKAC> files and certificate extension
-files for the B<x509> utility. OpenSSL applications can also use the
+files for the B<x509> utility. Opentls applications can also use the
 CONF library for their own purposes.
 
 A configuration file is divided into a number of sections. Each section
@@ -40,12 +40,12 @@ It is strongly recommended to use absolute paths with the B<.include>
 directive. Relative paths are evaluated based on the application current
 working directory so unless the configuration file containing the
 B<.include> directive is application specific the inclusion will not
-work as expected. The environment variable B<OPENSSL_CONF_INCLUDE> can also be
+work as expected. The environment variable B<OPENtls_CONF_INCLUDE> can also be
 used to specify the path to prepend to all .include paths.
 
 There can be optional B<=> character and whitespace characters between
 B<.include> directive and the path which can be useful in cases the
-configuration file needs to be loaded by old OpenSSL versions which do
+configuration file needs to be loaded by old Opentls versions which do
 not support the B<.include> syntax. They would bail out with error
 if the B<=> character is not present but with it they just ignore
 the include.
@@ -115,18 +115,18 @@ By default, this pragma is turned off.
 
 =back
 
-=head1 OPENSSL LIBRARY CONFIGURATION
+=head1 OPENtls LIBRARY CONFIGURATION
 
 Applications can automatically configure certain
-aspects of OpenSSL using the master OpenSSL configuration file, or optionally
-an alternative configuration file. The B<openssl> utility includes this
-functionality: any sub command uses the master OpenSSL configuration file
+aspects of Opentls using the master Opentls configuration file, or optionally
+an alternative configuration file. The B<opentls> utility includes this
+functionality: any sub command uses the master Opentls configuration file
 unless an option is used in the sub command to use an alternative configuration
 file.
 
 To enable library configuration the default section needs to contain an
 appropriate line which points to the main configuration section. The default
-name is B<openssl_conf> which is used by the B<openssl> utility. Other
+name is B<opentls_conf> which is used by the B<opentls> utility. Other
 applications may use an alternative name such as B<myapplication_conf>.
 All library configuration lines appear in the default section at the start
 of the configuration file.
@@ -138,9 +138,9 @@ module specific: it may, for example, represent a further configuration
 section containing configuration module specific information. E.g.:
 
  # This must be in the default section
- openssl_conf = openssl_init
+ opentls_conf = opentls_init
 
- [openssl_init]
+ [opentls_init]
 
  oid_section = new_oids
  engines = engine_section
@@ -165,9 +165,9 @@ The features of each configuration module are described below.
 This module has the name B<oid_section>. The value of this variable points
 to a section containing name value pairs of OIDs: the name is the OID short
 and long name, the value is the numerical form of the OID. Although some of
-the B<openssl> utility sub commands already have their own ASN1 OBJECT section
+the B<opentls> utility sub commands already have their own ASN1 OBJECT section
 functionality not all do. By using the ASN1 OBJECT configuration module
-B<all> the B<openssl> utility sub commands can see the new objects as well
+B<all> the B<opentls> utility sub commands can see the new objects as well
 as any compliant applications. For example:
 
  [new_oids]
@@ -338,28 +338,28 @@ If the value is B<no>, nothing happens.
 These two commands should not be used together, as there is no control
 over how they affect each other.
 The use of B<fips_mode> is strongly discouraged and is only present
-for backward compatibility with earlier OpenSSL FIPS modules.
+for backward compatibility with earlier Opentls FIPS modules.
 
-=head2 SSL Configuration Module
+=head2 tls Configuration Module
 
-This module has the name B<ssl_conf> which points to a section containing
-SSL configurations.
+This module has the name B<tls_conf> which points to a section containing
+tls configurations.
 
-Each line in the SSL configuration section contains the name of the
+Each line in the tls configuration section contains the name of the
 configuration and the section containing it.
 
-Each configuration section consists of command value pairs for B<SSL_CONF>.
-Each pair will be passed to a B<SSL_CTX> or B<SSL> structure if it calls
-SSL_CTX_config() or SSL_config() with the appropriate configuration name.
+Each configuration section consists of command value pairs for B<tls_CONF>.
+Each pair will be passed to a B<tls_CTX> or B<tls> structure if it calls
+tls_CTX_config() or tls_config() with the appropriate configuration name.
 
 Note: any characters before an initial dot in the configuration section are
 ignored so the same command can be used multiple times.
 
 For example:
 
- ssl_conf = ssl_sect
+ tls_conf = tls_sect
 
- [ssl_sect]
+ [tls_sect]
 
  server = server_section
 
@@ -370,13 +370,13 @@ For example:
  Ciphers = ALL:!RC4
 
 The system default configuration with name B<system_default> if present will
-be applied during any creation of the B<SSL_CTX> structure.
+be applied during any creation of the B<tls_CTX> structure.
 
 Example of a configuration with the system default:
 
- ssl_conf = ssl_sect
+ tls_conf = tls_sect
 
- [ssl_sect]
+ [tls_sect]
 
  system_default = system_default_sect
 
@@ -390,7 +390,7 @@ Example of a configuration with the system default:
 If a configuration file attempts to expand a variable that doesn't exist
 then an error is flagged and the file will not load. This can happen
 if an attempt is made to expand an environment variable that doesn't
-exist. For example in a previous version of OpenSSL the default OpenSSL
+exist. For example in a previous version of Opentls the default Opentls
 master configuration file used the value of B<HOME> which may not be
 defined on non Unix systems and would cause an error.
 
@@ -452,13 +452,13 @@ priority and B</tmp> used if neither is defined:
  # The above value is used if TEMP isn't in the environment
  tmpfile=${ENV::TEMP}/tmp.filename
 
-Simple OpenSSL library configuration example to enter FIPS mode:
+Simple Opentls library configuration example to enter FIPS mode:
 
  # Default appname: should match "appname" parameter (if any)
  # supplied to CONF_modules_load_file et al.
- openssl_conf = openssl_conf_section
+ opentls_conf = opentls_conf_section
 
- [openssl_conf_section]
+ [opentls_conf_section]
  # Configuration module list
  alg_section = evp_sect
 
@@ -467,15 +467,15 @@ Simple OpenSSL library configuration example to enter FIPS mode:
  fips_mode = yes
 
 Note: in the above example you will get an error in non FIPS capable versions
-of OpenSSL.
+of Opentls.
 
-More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
+More complex Opentls library configuration. Add OID and don't enter FIPS mode:
 
  # Default appname: should match "appname" parameter (if any)
  # supplied to CONF_modules_load_file et al.
- openssl_conf = openssl_conf_section
+ opentls_conf = opentls_conf_section
 
- [openssl_conf_section]
+ [opentls_conf_section]
  # Configuration module list
  alg_section = evp_sect
  oid_section = new_oids
@@ -492,12 +492,12 @@ More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
  newoid2 = New OID 2 long name, 1.2.3.4.2
 
 The above examples can be used with any application supporting library
-configuration if "openssl_conf" is modified to match the appropriate "appname".
+configuration if "opentls_conf" is modified to match the appropriate "appname".
 
 For example if the second sample file above is saved to "example.cnf" then
 the command line:
 
- OPENSSL_CONF=example.cnf openssl asn1parse -genstr OID:1.2.3.4.1
+ OPENtls_CONF=example.cnf opentls asn1parse -genstr OID:1.2.3.4.1
 
 will output:
 
@@ -509,22 +509,22 @@ showing that the OID "newoid1" has been added as "1.2.3.4.1".
 
 =over 4
 
-=item B<OPENSSL_CONF>
+=item B<OPENtls_CONF>
 
 The path to the config file.
 Ignored in set-user-ID and set-group-ID programs.
 
-=item B<OPENSSL_ENGINES>
+=item B<OPENtls_ENGINES>
 
 The path to the engines directory.
 Ignored in set-user-ID and set-group-ID programs.
 
-=item B<OPENSSL_MODULES>
+=item B<OPENtls_MODULES>
 
-The path to the directory with OpenSSL modules, such as providers.
+The path to the directory with Opentls modules, such as providers.
 Ignored in set-user-ID and set-group-ID programs.
 
-=item B<OPENSSL_CONF_INCLUDE>
+=item B<OPENtls_CONF_INCLUDE>
 
 The optional path to prepend to all .include paths.
 
@@ -551,20 +551,20 @@ the Microsoft Windows platform.
 Specifically, the backslash character was not an escape character and
 could be used in pathnames, only the double-quote character was recognized,
 and comments began with a semi-colon.
-This function was deprecated in OpenSSL 3.0; applications with
+This function was deprecated in Opentls 3.0; applications with
 configuration files using that syntax will have to be modified.
 
 =head1 SEE ALSO
 
-L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>, L<fips_config(5)>
+L<opentls-x509(1)>, L<opentls-req(1)>, L<opentls-ca(1)>, L<fips_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

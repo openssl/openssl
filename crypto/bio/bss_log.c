@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -22,9 +22,9 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
-#if defined(OPENSSL_SYS_WINCE)
-#elif defined(OPENSSL_SYS_WIN32)
-#elif defined(OPENSSL_SYS_VMS)
+#if defined(OPENtls_SYS_WINCE)
+#elif defined(OPENtls_SYS_WIN32)
+#elif defined(OPENtls_SYS_VMS)
 # include <opcdef.h>
 # include <descrip.h>
 # include <lib$routines.h>
@@ -39,18 +39,18 @@ void *_malloc32(__size_t);
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
 # endif                         /* __INITIAL_POINTER_SIZE && defined
                                  * _ANSI_C_SOURCE */
-#elif defined(__DJGPP__) && defined(OPENSSL_NO_SOCK)
+#elif defined(__DJGPP__) && defined(OPENtls_NO_SOCK)
 # define NO_SYSLOG
-#elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
+#elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENtls_SYS_VXWORKS) && !defined(NO_SYSLOG)
 # include <syslog.h>
 #endif
 
-#include <openssl/buffer.h>
-#include <openssl/err.h>
+#include <opentls/buffer.h>
+#include <opentls/err.h>
 
 #ifndef NO_SYSLOG
 
-# if defined(OPENSSL_SYS_WIN32)
+# if defined(OPENtls_SYS_WIN32)
 #  define LOG_EMERG       0
 #  define LOG_ALERT       1
 #  define LOG_CRIT        2
@@ -61,7 +61,7 @@ void *_malloc32(__size_t);
 #  define LOG_DEBUG       7
 
 #  define LOG_DAEMON      (3<<3)
-# elif defined(OPENSSL_SYS_VMS)
+# elif defined(OPENtls_SYS_VMS)
 /* On VMS, we don't really care about these, but we need them to compile */
 #  define LOG_EMERG       0
 #  define LOG_ALERT       1
@@ -196,7 +196,7 @@ static int slg_write(BIO *b, const char *in, int inl)
         /* The default */
     };
 
-    if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
+    if ((buf = OPENtls_malloc(inl + 1)) == NULL) {
         BIOerr(BIO_F_SLG_WRITE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -211,7 +211,7 @@ static int slg_write(BIO *b, const char *in, int inl)
 
     xsyslog(b, priority, pp);
 
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return ret;
 }
 
@@ -237,7 +237,7 @@ static int slg_puts(BIO *bp, const char *str)
     return ret;
 }
 
-# if defined(OPENSSL_SYS_WIN32)
+# if defined(OPENtls_SYS_WIN32)
 
 static void xopenlog(BIO *bp, char *name, int level)
 {
@@ -294,7 +294,7 @@ static void xcloselog(BIO *bp)
     bp->ptr = NULL;
 }
 
-# elif defined(OPENSSL_SYS_VMS)
+# elif defined(OPENtls_SYS_VMS)
 
 static int VMS_OPC_target = LOG_DAEMON;
 
@@ -315,7 +315,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 #   define OPCDEF_MALLOC _malloc32
 #  else                         /* __INITIAL_POINTER_SIZE == 64 */
 #   define OPCDEF_TYPE char *
-#   define OPCDEF_MALLOC OPENSSL_malloc
+#   define OPCDEF_MALLOC OPENtls_malloc
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 [else] */
 
     struct opcdef *opcdef_p;
@@ -378,7 +378,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
 
     sys$sndopr(opc_dsc, 0);
 
-    OPENSSL_free(opcdef_p);
+    OPENtls_free(opcdef_p);
 }
 
 static void xcloselog(BIO *bp)

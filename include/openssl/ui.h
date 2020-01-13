@@ -1,35 +1,35 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_UI_H
-# define OPENSSL_UI_H
+#ifndef OPENtls_UI_H
+# define OPENtls_UI_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_UI_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/crypto.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/crypto.h>
 # endif
-# include <openssl/safestack.h>
-# include <openssl/pem.h>
-# include <openssl/types.h>
-# include <openssl/uierr.h>
+# include <opentls/safestack.h>
+# include <opentls/pem.h>
+# include <opentls/types.h>
+# include <opentls/uierr.h>
 
-/* For compatibility reasons, the macro OPENSSL_NO_UI is currently retained */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  ifdef OPENSSL_NO_UI_CONSOLE
-#   define OPENSSL_NO_UI
+/* For compatibility reasons, the macro OPENtls_NO_UI is currently retained */
+# ifndef OPENtls_NO_DEPRECATED_3_0
+#  ifdef OPENtls_NO_UI_CONSOLE
+#   define OPENtls_NO_UI
 #  endif
 # endif
 
@@ -143,7 +143,7 @@ int UI_dup_error_string(UI *ui, const char *text);
  * and object_name is the name of the object (might be a card name or
  * a file name.
  * The returned string shall always be allocated on the heap with
- * OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
+ * OPENtls_malloc(), and need to be free'd with OPENtls_free().
  *
  * If the ui_method doesn't contain a pointer to a user-defined prompt
  * constructor, a default string is built, looking like this:
@@ -163,10 +163,10 @@ char *UI_construct_prompt(UI *ui_method,
  * Any previous such pointer will be returned and replaced.
  *
  * For callback purposes, this function makes a lot more sense than using
- * ex_data, since the latter requires that different parts of OpenSSL or
+ * ex_data, since the latter requires that different parts of Opentls or
  * applications share the same ex_data index.
  *
- * Note that the UI_OpenSSL() method completely ignores the user data. Other
+ * Note that the UI_Opentls() method completely ignores the user data. Other
  * methods may not, however.
  */
 void *UI_add_user_data(UI *ui, void *user_data);
@@ -196,7 +196,7 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void));
 /* The commands */
 /*
  * Use UI_CONTROL_PRINT_ERRORS with the value 1 to have UI_process print the
- * OpenSSL error stack before printing any info or added error messages and
+ * Opentls error stack before printing any info or added error messages and
  * before any prompting.
  */
 # define UI_CTRL_PRINT_ERRORS            1
@@ -222,10 +222,10 @@ const UI_METHOD *UI_get_default_method(void);
 const UI_METHOD *UI_get_method(UI *ui);
 const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 
-# ifndef OPENSSL_NO_UI_CONSOLE
+# ifndef OPENtls_NO_UI_CONSOLE
 
 /* The method with all the built-in thingies */
-UI_METHOD *UI_OpenSSL(void);
+UI_METHOD *UI_Opentls(void);
 
 # endif
 

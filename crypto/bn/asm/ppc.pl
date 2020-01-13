@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Implemented as a Perl wrapper as we want to support several different
 # architectures with single file. We pick up the target based on the
 # file name we are asked to generate.
 #
 # It should be noted though that this perl code is nothing like
-# <openssl>/crypto/perlasm/x86*. In this case perl is used pretty much
+# <opentls>/crypto/perlasm/x86*. In this case perl is used pretty much
 # as pre-processor to cover for platform differences in name decoration,
 # linker tables, 32-/64-bit instruction sets...
 #
@@ -28,7 +28,7 @@
 #	The following is the performance of 32-bit compiler
 #	generated code:
 #
-#	OpenSSL 0.9.6c 21 dec 2001
+#	Opentls 0.9.6c 21 dec 2001
 #	built on: Tue Jun 11 11:06:51 EDT 2002
 #	options:bn(64,32) ...
 #compiler: cc -DTHREADS  -DAIX -DB_ENDIAN -DBN_LLONG -O3
@@ -54,7 +54,7 @@
 #	Here are performance numbers for 64-bit compiler
 #	generated code:
 #
-#	OpenSSL 0.9.6g [engine] 9 Aug 2002
+#	Opentls 0.9.6g [engine] 9 Aug 2002
 #	built on: Fri Apr 18 16:59:20 EDT 2003
 #	options:bn(64,64) ...
 #	compiler: cc -DTHREADS -D_REENTRANT -q64 -DB_ENDIAN -O3
@@ -78,7 +78,7 @@
 #	Again, performance increases by at about 75%
 #
 #       Mac OS X, Apple G5 1.8GHz (Note this is 32 bit code)
-#       OpenSSL 0.9.7c 30 Sep 2003
+#       Opentls 0.9.7c 30 Sep 2003
 #
 #       Original code.
 #
@@ -178,7 +178,7 @@ $data=<<EOF;
 #			Hawthorne, NY
 #
 #
-#	Description:	Optimized assembly routines for OpenSSL crypto
+#	Description:	Optimized assembly routines for Opentls crypto
 #			on the 32 bitPowerPC platform.
 #
 #

@@ -1,19 +1,19 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
-# define OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
+#ifndef Otls_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
+# define Otls_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 # include <stddef.h>
 
 # define BLAKE2S_BLOCKBYTES    64
@@ -113,4 +113,4 @@ void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
 void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
 void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);
 
-#endif /* OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H */
+#endif /* Otls_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H */

@@ -22,7 +22,7 @@ BN_get_rfc3526_prime_8192
 
 =head1 SYNOPSIS
 
- #include <openssl/dh.h>
+ #include <opentls/dh.h>
  DH *DH_get_1024_160(void)
  DH *DH_get_2048_224(void)
  DH *DH_get_2048_256(void)
@@ -64,11 +64,11 @@ Defined above.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

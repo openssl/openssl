@@ -1,12 +1,12 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "cmp_testlib.h"
@@ -16,42 +16,42 @@ static const char *pkcs10_f;
 
 typedef struct test_fixture {
     const char *test_case_name;
-    OSSL_CMP_CTX *cmp_ctx;
+    Otls_CMP_CTX *cmp_ctx;
     /* for msg create tests */
     int bodytype;
     int err_code;
     /* for certConf */
     int fail_info;
     /* for protection tests */
-    OSSL_CMP_MSG *msg;
+    Otls_CMP_MSG *msg;
     int expected;
     /* for error and response messages */
-    OSSL_CMP_PKISI *si;
+    Otls_CMP_PKISI *si;
 } CMP_MSG_TEST_FIXTURE;
 
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
 
 static void tear_down(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_CTX_free(fixture->cmp_ctx);
-    OSSL_CMP_MSG_free(fixture->msg);
-    OSSL_CMP_PKISI_free(fixture->si);
-    OPENSSL_free(fixture);
+    Otls_CMP_CTX_free(fixture->cmp_ctx);
+    Otls_CMP_MSG_free(fixture->msg);
+    Otls_CMP_PKISI_free(fixture->si);
+    OPENtls_free(fixture);
 }
 
 #define SET_OPT_UNPROTECTED_SEND(ctx, val) \
-    OSSL_CMP_CTX_set_option((ctx), OSSL_CMP_OPT_UNPROTECTED_SEND, (val))
+    Otls_CMP_CTX_set_option((ctx), Otls_CMP_OPT_UNPROTECTED_SEND, (val))
 static CMP_MSG_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
     CMP_MSG_TEST_FIXTURE *fixture;
 
-    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+    if (!TEST_ptr(fixture = OPENtls_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
 
-    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new())
+    if (!TEST_ptr(fixture->cmp_ctx = Otls_CMP_CTX_new())
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 1))
-            || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
+            || !TEST_true(Otls_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
                                                            ref, sizeof(ref)))) {
         tear_down(fixture);
         return NULL;
@@ -64,12 +64,12 @@ static X509 *cert = NULL;
 
 #define EXECUTE_MSG_CREATION_TEST(expr) \
     do { \
-        OSSL_CMP_MSG *msg = NULL; \
+        Otls_CMP_MSG *msg = NULL; \
         int good = fixture->expected != 0 ? \
             TEST_ptr(msg = (expr)) && TEST_true(valid_asn1_encoding(msg)) : \
             TEST_ptr_null(msg = (expr)); \
  \
-        OSSL_CMP_MSG_free(msg); \
+        Otls_CMP_MSG_free(msg); \
         return good; \
     } while (0)
 
@@ -82,14 +82,14 @@ static X509 *cert = NULL;
  */
 static int execute_certreq_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_certReq_new(fixture->cmp_ctx,
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_certReq_new(fixture->cmp_ctx,
                                                    fixture->bodytype,
                                                    fixture->err_code));
 }
 
 static int execute_errormsg_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_error_new(fixture->cmp_ctx, fixture->si,
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_error_new(fixture->cmp_ctx, fixture->si,
                                                  fixture->err_code,
                                                  NULL /* fixture->free_text */,
                                                  0));
@@ -97,37 +97,37 @@ static int execute_errormsg_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 
 static int execute_rr_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_rr_new(fixture->cmp_ctx));
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_rr_new(fixture->cmp_ctx));
 }
 
 static int execute_certconf_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_certConf_new
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_certConf_new
                               (fixture->cmp_ctx, fixture->fail_info, NULL));
 }
 
 static int execute_genm_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_genm_new(fixture->cmp_ctx));
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_genm_new(fixture->cmp_ctx));
 }
 
 static int execute_pollreq_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_pollReq_new(fixture->cmp_ctx, 4711));
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_pollReq_new(fixture->cmp_ctx, 4711));
 }
 
 static int execute_pkimessage_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_msg_create
+    EXECUTE_MSG_CREATION_TEST(otls_cmp_msg_create
                               (fixture->cmp_ctx, fixture->bodytype));
 }
 
-static int set1_newPkey(OSSL_CMP_CTX *ctx, EVP_PKEY* pkey)
+static int set1_newPkey(Otls_CMP_CTX *ctx, EVP_PKEY* pkey)
 {
     if (!EVP_PKEY_up_ref(pkey))
         return 0;
 
-    if (!OSSL_CMP_CTX_set0_newPkey(ctx, 1, pkey)) {
+    if (!Otls_CMP_CTX_set0_newPkey(ctx, 1, pkey)) {
         EVP_PKEY_free(pkey);
         return 0;
     }
@@ -137,16 +137,16 @@ static int set1_newPkey(OSSL_CMP_CTX *ctx, EVP_PKEY* pkey)
 static int test_cmp_create_ir_protection_set(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    Otls_CMP_CTX *ctx = fixture->cmp_ctx;
     unsigned char secret[16];
 
-    fixture->bodytype = OSSL_CMP_PKIBODY_IR;
+    fixture->bodytype = Otls_CMP_PKIBODY_IR;
     fixture->err_code = -1;
     fixture->expected = 1;
     if (!TEST_int_eq(1, RAND_bytes(secret, sizeof(secret)))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 0))
             || !TEST_true(set1_newPkey(ctx, newkey))
-            || !TEST_true(OSSL_CMP_CTX_set1_secretValue(ctx, secret,
+            || !TEST_true(Otls_CMP_CTX_set1_secretValue(ctx, secret,
                                                         sizeof(secret)))) {
         tear_down(fixture);
         fixture = NULL;
@@ -158,12 +158,12 @@ static int test_cmp_create_ir_protection_set(void)
 static int test_cmp_create_ir_protection_fails(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_IR;
+    fixture->bodytype = Otls_CMP_PKIBODY_IR;
     fixture->err_code = -1;
     fixture->expected = 0;
-    if (!TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, newkey))
+    if (!TEST_true(Otls_CMP_CTX_set1_pkey(fixture->cmp_ctx, newkey))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 0))
-            || !TEST_true(OSSL_CMP_CTX_set1_clCert(fixture->cmp_ctx, cert))) {
+            || !TEST_true(Otls_CMP_CTX_set1_clCert(fixture->cmp_ctx, cert))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -174,7 +174,7 @@ static int test_cmp_create_ir_protection_fails(void)
 static int test_cmp_create_cr_without_key(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_CR;
+    fixture->bodytype = Otls_CMP_PKIBODY_CR;
     fixture->err_code = -1;
     fixture->expected = 0;
     EXECUTE_TEST(execute_certreq_create_test, tear_down);
@@ -184,7 +184,7 @@ static int test_cmp_create_cr_without_key(void)
 static int test_cmp_create_cr(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_CR;
+    fixture->bodytype = Otls_CMP_PKIBODY_CR;
     fixture->err_code = -1;
     fixture->expected = 1;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
@@ -198,7 +198,7 @@ static int test_cmp_create_cr(void)
 static int test_cmp_create_certreq_with_invalid_bodytype(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_RR;
+    fixture->bodytype = Otls_CMP_PKIBODY_RR;
     fixture->err_code = -1;
     fixture->expected = 0;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
@@ -212,15 +212,15 @@ static int test_cmp_create_certreq_with_invalid_bodytype(void)
 static int test_cmp_create_p10cr(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    Otls_CMP_CTX *ctx = fixture->cmp_ctx;
     X509_REQ *p10cr = NULL;
 
-    fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
+    fixture->bodytype = Otls_CMP_PKIBODY_P10CR;
     fixture->err_code = CMP_R_ERROR_CREATING_P10CR;
     fixture->expected = 1;
     if (!TEST_ptr(p10cr = load_csr(pkcs10_f))
             || !TEST_true(set1_newPkey(ctx, newkey))
-            || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(ctx, p10cr))) {
+            || !TEST_true(Otls_CMP_CTX_set1_p10CSR(ctx, p10cr))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -232,7 +232,7 @@ static int test_cmp_create_p10cr(void)
 static int test_cmp_create_p10cr_null(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
+    fixture->bodytype = Otls_CMP_PKIBODY_P10CR;
     fixture->err_code = CMP_R_ERROR_CREATING_P10CR;
     fixture->expected = 0;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
@@ -246,11 +246,11 @@ static int test_cmp_create_p10cr_null(void)
 static int test_cmp_create_kur(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_KUR;
+    fixture->bodytype = Otls_CMP_PKIBODY_KUR;
     fixture->err_code = -1;
     fixture->expected = 1;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))
-            || !TEST_true(OSSL_CMP_CTX_set1_oldCert(fixture->cmp_ctx, cert))) {
+            || !TEST_true(Otls_CMP_CTX_set1_oldCert(fixture->cmp_ctx, cert))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -261,7 +261,7 @@ static int test_cmp_create_kur(void)
 static int test_cmp_create_kur_without_oldcert(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->bodytype = OSSL_CMP_PKIBODY_KUR;
+    fixture->bodytype = Otls_CMP_PKIBODY_KUR;
     fixture->err_code = -1;
     fixture->expected = 0;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
@@ -277,7 +277,7 @@ static int test_cmp_create_certconf(void)
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
     fixture->fail_info = 0;
     fixture->expected = 1;
-    if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
+    if (!TEST_true(otls_cmp_ctx_set0_newCert(fixture->cmp_ctx,
                                              X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
@@ -289,9 +289,9 @@ static int test_cmp_create_certconf(void)
 static int test_cmp_create_certconf_badAlg(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badAlg;
+    fixture->fail_info = 1 << Otls_CMP_PKIFAILUREINFO_badAlg;
     fixture->expected = 1;
-    if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
+    if (!TEST_true(otls_cmp_ctx_set0_newCert(fixture->cmp_ctx,
                                              X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
@@ -303,9 +303,9 @@ static int test_cmp_create_certconf_badAlg(void)
 static int test_cmp_create_certconf_fail_info_max(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_MAX;
+    fixture->fail_info = 1 << Otls_CMP_PKIFAILUREINFO_MAX;
     fixture->expected = 1;
-    if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
+    if (!TEST_true(otls_cmp_ctx_set0_newCert(fixture->cmp_ctx,
                                              X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
@@ -317,8 +317,8 @@ static int test_cmp_create_certconf_fail_info_max(void)
 static int test_cmp_create_error_msg(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    fixture->si = ossl_cmp_statusinfo_new(OSSL_CMP_PKISTATUS_rejection,
-                                          OSSL_CMP_PKIFAILUREINFO_systemFailure,
+    fixture->si = otls_cmp_statusinfo_new(Otls_CMP_PKISTATUS_rejection,
+                                          Otls_CMP_PKIFAILUREINFO_systemFailure,
                                           NULL);
     fixture->err_code = -1;
     fixture->expected = 1;      /* Expected: Message creation is successful */
@@ -343,7 +343,7 @@ static int test_cmp_create_rr(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    if (!TEST_true(OSSL_CMP_CTX_set1_oldCert(fixture->cmp_ctx, cert))) {
+    if (!TEST_true(Otls_CMP_CTX_set1_oldCert(fixture->cmp_ctx, cert))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -353,15 +353,15 @@ static int test_cmp_create_rr(void)
 
 static int test_cmp_create_genm(void)
 {
-    OSSL_CMP_ITAV *iv = NULL;
+    Otls_CMP_ITAV *iv = NULL;
 
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
     fixture->expected = 1;
-    iv = OSSL_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm), NULL);
+    iv = Otls_CMP_ITAV_create(OBJ_nid2obj(NID_id_it_implicitConfirm), NULL);
     if (!TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 1))
             || !TEST_ptr(iv)
-            || !TEST_true(OSSL_CMP_CTX_push0_genm_ITAV(fixture->cmp_ctx, iv))) {
-        OSSL_CMP_ITAV_free(iv);
+            || !TEST_true(Otls_CMP_CTX_push0_genm_ITAV(fixture->cmp_ctx, iv))) {
+        Otls_CMP_ITAV_free(iv);
         tear_down(fixture);
         fixture = NULL;
     }
@@ -372,8 +372,8 @@ static int test_cmp_create_genm(void)
 
 static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_CERTREPMESSAGE *crepmsg = OSSL_CMP_CERTREPMESSAGE_new();
-    OSSL_CMP_CERTRESPONSE *read_cresp, *cresp = OSSL_CMP_CERTRESPONSE_new();
+    Otls_CMP_CERTREPMESSAGE *crepmsg = Otls_CMP_CERTREPMESSAGE_new();
+    Otls_CMP_CERTRESPONSE *read_cresp, *cresp = Otls_CMP_CERTRESPONSE_new();
     EVP_PKEY *privkey;
     X509 *certfromresp = NULL;
     int res = 0;
@@ -382,30 +382,30 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
         goto err;
     if (!ASN1_INTEGER_set(cresp->certReqId, 99))
         goto err;
-    if ((cresp->certifiedKeyPair = OSSL_CMP_CERTIFIEDKEYPAIR_new()) == NULL)
+    if ((cresp->certifiedKeyPair = Otls_CMP_CERTIFIEDKEYPAIR_new()) == NULL)
         goto err;
     cresp->certifiedKeyPair->certOrEncCert->type =
-        OSSL_CMP_CERTORENCCERT_CERTIFICATE;
+        Otls_CMP_CERTORENCCERT_CERTIFICATE;
     if ((cresp->certifiedKeyPair->certOrEncCert->value.certificate =
          X509_dup(cert)) == NULL
-            || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
+            || !sk_Otls_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
         goto err;
     cresp = NULL;
-    read_cresp = ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 99);
+    read_cresp = otls_cmp_certrepmessage_get0_certresponse(crepmsg, 99);
     if (!TEST_ptr(read_cresp))
         goto err;
-    if (!TEST_ptr_null(ossl_cmp_certrepmessage_get0_certresponse(crepmsg, 88)))
+    if (!TEST_ptr_null(otls_cmp_certrepmessage_get0_certresponse(crepmsg, 88)))
         goto err;
-    privkey = OSSL_CMP_CTX_get0_newPkey(fixture->cmp_ctx, 1); /* may be NULL */
-    certfromresp = ossl_cmp_certresponse_get1_certificate(privkey, read_cresp);
+    privkey = Otls_CMP_CTX_get0_newPkey(fixture->cmp_ctx, 1); /* may be NULL */
+    certfromresp = otls_cmp_certresponse_get1_certificate(privkey, read_cresp);
     if (certfromresp == NULL || !TEST_int_eq(X509_cmp(cert, certfromresp), 0))
         goto err;
 
     res = 1;
  err:
     X509_free(certfromresp);
-    OSSL_CMP_CERTRESPONSE_free(cresp);
-    OSSL_CMP_CERTREPMESSAGE_free(crepmsg);
+    Otls_CMP_CERTRESPONSE_free(cresp);
+    Otls_CMP_CERTREPMESSAGE_free(crepmsg);
     return res;
 }
 
@@ -419,11 +419,11 @@ static int test_cmp_create_certrep(void)
 
 static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_PKISI *si = ossl_cmp_statusinfo_new(33, 44, "a text");
+    Otls_CMP_PKISI *si = otls_cmp_statusinfo_new(33, 44, "a text");
     X509_NAME *issuer = X509_NAME_new();
     ASN1_INTEGER *serial = ASN1_INTEGER_new();
-    OSSL_CRMF_CERTID *cid = NULL;
-    OSSL_CMP_MSG *rpmsg = NULL;
+    Otls_CRMF_CERTID *cid = NULL;
+    Otls_CMP_MSG *rpmsg = NULL;
     int res = 0;
 
     if (si == NULL || issuer == NULL || serial == NULL)
@@ -432,14 +432,14 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
     if (!X509_NAME_add_entry_by_txt(issuer, "CN", MBSTRING_ASC,
                                     (unsigned char*)"The Issuer", -1, -1, 0)
             || !ASN1_INTEGER_set(serial, 99)
-            || (cid = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL
-            || (rpmsg = ossl_cmp_rp_new(fixture->cmp_ctx, si, cid, 1)) == NULL)
+            || (cid = Otls_CRMF_CERTID_gen(issuer, serial)) == NULL
+            || (rpmsg = otls_cmp_rp_new(fixture->cmp_ctx, si, cid, 1)) == NULL)
         goto err;
 
-    if (!TEST_ptr(ossl_cmp_revrepcontent_get_CertId(rpmsg->body->value.rp, 0)))
+    if (!TEST_ptr(otls_cmp_revrepcontent_get_CertId(rpmsg->body->value.rp, 0)))
         goto err;
 
-    if (!TEST_ptr(ossl_cmp_revrepcontent_get_pkistatusinfo(rpmsg->body->value.rp,
+    if (!TEST_ptr(otls_cmp_revrepcontent_get_pkistatusinfo(rpmsg->body->value.rp,
                                                            0)))
         goto err;
 
@@ -447,9 +447,9 @@ static int execute_rp_create(CMP_MSG_TEST_FIXTURE *fixture)
  err:
     ASN1_INTEGER_free(serial);
     X509_NAME_free(issuer);
-    OSSL_CRMF_CERTID_free(cid);
-    OSSL_CMP_PKISI_free(si);
-    OSSL_CMP_MSG_free(rpmsg);
+    Otls_CRMF_CERTID_free(cid);
+    Otls_CMP_PKISI_free(si);
+    Otls_CMP_MSG_free(rpmsg);
     return res;
 }
 
@@ -462,22 +462,22 @@ static int test_cmp_create_rp(void)
 
 static int execute_pollrep_create(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    OSSL_CMP_MSG *pollrep;
+    Otls_CMP_MSG *pollrep;
     int res = 0;
 
-    pollrep = ossl_cmp_pollRep_new(fixture->cmp_ctx, 77, 2000);
+    pollrep = otls_cmp_pollRep_new(fixture->cmp_ctx, 77, 2000);
     if (!TEST_ptr(pollrep))
         return 0;
-    if (!TEST_ptr(ossl_cmp_pollrepcontent_get0_pollrep(
+    if (!TEST_ptr(otls_cmp_pollrepcontent_get0_pollrep(
             pollrep->body->value.pollRep, 77)))
         goto err;
-    if (!TEST_ptr_null(ossl_cmp_pollrepcontent_get0_pollrep(
+    if (!TEST_ptr_null(otls_cmp_pollrepcontent_get0_pollrep(
             pollrep->body->value.pollRep, 88)))
         goto err;
 
     res = 1;
  err:
-    OSSL_CMP_MSG_free(pollrep);
+    Otls_CMP_MSG_free(pollrep);
     return res;
 }
 
@@ -495,30 +495,30 @@ static int test_cmp_pkimessage_create(int bodytype)
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
 
     switch (fixture->bodytype = bodytype) {
-    case OSSL_CMP_PKIBODY_P10CR:
+    case Otls_CMP_PKIBODY_P10CR:
         fixture->expected = 1;
-        if (!TEST_true(OSSL_CMP_CTX_set1_p10CSR(fixture->cmp_ctx,
+        if (!TEST_true(Otls_CMP_CTX_set1_p10CSR(fixture->cmp_ctx,
                                                 p10cr = load_csr(pkcs10_f)))) {
             tear_down(fixture);
             fixture = NULL;
         }
         X509_REQ_free(p10cr);
         break;
-    case OSSL_CMP_PKIBODY_IR:
-    case OSSL_CMP_PKIBODY_IP:
-    case OSSL_CMP_PKIBODY_CR:
-    case OSSL_CMP_PKIBODY_CP:
-    case OSSL_CMP_PKIBODY_KUR:
-    case OSSL_CMP_PKIBODY_KUP:
-    case OSSL_CMP_PKIBODY_RR:
-    case OSSL_CMP_PKIBODY_RP:
-    case OSSL_CMP_PKIBODY_PKICONF:
-    case OSSL_CMP_PKIBODY_GENM:
-    case OSSL_CMP_PKIBODY_GENP:
-    case OSSL_CMP_PKIBODY_ERROR:
-    case OSSL_CMP_PKIBODY_CERTCONF:
-    case OSSL_CMP_PKIBODY_POLLREQ:
-    case OSSL_CMP_PKIBODY_POLLREP:
+    case Otls_CMP_PKIBODY_IR:
+    case Otls_CMP_PKIBODY_IP:
+    case Otls_CMP_PKIBODY_CR:
+    case Otls_CMP_PKIBODY_CP:
+    case Otls_CMP_PKIBODY_KUR:
+    case Otls_CMP_PKIBODY_KUP:
+    case Otls_CMP_PKIBODY_RR:
+    case Otls_CMP_PKIBODY_RP:
+    case Otls_CMP_PKIBODY_PKICONF:
+    case Otls_CMP_PKIBODY_GENM:
+    case Otls_CMP_PKIBODY_GENP:
+    case Otls_CMP_PKIBODY_ERROR:
+    case Otls_CMP_PKIBODY_CERTCONF:
+    case Otls_CMP_PKIBODY_POLLREQ:
+    case Otls_CMP_PKIBODY_POLLREP:
         fixture->expected = 1;
         break;
     default:
@@ -572,6 +572,6 @@ int setup_tests(void)
     ADD_TEST(test_cmp_create_certrep);
     ADD_TEST(test_cmp_create_pollrep);
     ADD_ALL_TESTS_NOSUBTEST(test_cmp_pkimessage_create,
-                            OSSL_CMP_PKIBODY_POLLREP + 1);
+                            Otls_CMP_PKIBODY_POLLREP + 1);
     return 1;
 }

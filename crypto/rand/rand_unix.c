@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #ifndef _GNU_SOURCE
@@ -13,8 +13,8 @@
 #include "e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
-#include <openssl/crypto.h>
+#include <opentls/rand.h>
+#include <opentls/crypto.h>
 #include "rand_local.h"
 #include "crypto/rand.h"
 #include <stdio.h>
@@ -27,7 +27,7 @@
 #  include <sys/utsname.h>
 # endif
 #endif
-#if defined(__FreeBSD__) && !defined(OPENSSL_SYS_UEFI)
+#if defined(__FreeBSD__) && !defined(OPENtls_SYS_UEFI)
 # include <sys/types.h>
 # include <sys/sysctl.h>
 # include <sys/param.h>
@@ -36,7 +36,7 @@
 # include <sys/param.h>
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+#if (defined(OPENtls_SYS_UNIX) && !defined(OPENtls_SYS_VXWORKS)) \
      || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -70,50 +70,50 @@ static uint64_t get_timer_bits(void);
  * The nested #if sequences are required to avoid using a parameterised
  * macro that might be undefined.
  */
-# undef OSSL_POSIX_TIMER_OKAY
+# undef Otls_POSIX_TIMER_OKAY
 # if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
 #  if defined(__GLIBC__)
 #   if defined(__GLIBC_PREREQ)
 #    if __GLIBC_PREREQ(2, 17)
-#     define OSSL_POSIX_TIMER_OKAY
+#     define Otls_POSIX_TIMER_OKAY
 #    endif
 #   endif
 #  else
-#   define OSSL_POSIX_TIMER_OKAY
+#   define Otls_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+#endif /* (defined(OPENtls_SYS_UNIX) && !defined(OPENtls_SYS_VXWORKS))
           || defined(__DJGPP__) */
 
-#if defined(OPENSSL_RAND_SEED_NONE)
+#if defined(OPENtls_RAND_SEED_NONE)
 /* none means none. this simplifies the following logic */
-# undef OPENSSL_RAND_SEED_OS
-# undef OPENSSL_RAND_SEED_GETRANDOM
-# undef OPENSSL_RAND_SEED_LIBRANDOM
-# undef OPENSSL_RAND_SEED_DEVRANDOM
-# undef OPENSSL_RAND_SEED_RDTSC
-# undef OPENSSL_RAND_SEED_RDCPU
-# undef OPENSSL_RAND_SEED_EGD
+# undef OPENtls_RAND_SEED_OS
+# undef OPENtls_RAND_SEED_GETRANDOM
+# undef OPENtls_RAND_SEED_LIBRANDOM
+# undef OPENtls_RAND_SEED_DEVRANDOM
+# undef OPENtls_RAND_SEED_RDTSC
+# undef OPENtls_RAND_SEED_RDCPU
+# undef OPENtls_RAND_SEED_EGD
 #endif
 
-#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
+#if defined(OPENtls_SYS_UEFI) && !defined(OPENtls_RAND_SEED_NONE)
 # error "UEFI only supports seeding NONE"
 #endif
 
-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
-    || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) \
-    || defined(OPENSSL_SYS_UEFI))
+#if !(defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_WIN32) \
+    || defined(OPENtls_SYS_VMS) || defined(OPENtls_SYS_VXWORKS) \
+    || defined(OPENtls_SYS_UEFI))
 
-# if defined(OPENSSL_SYS_VOS)
+# if defined(OPENtls_SYS_VOS)
 
-#  ifndef OPENSSL_RAND_SEED_OS
+#  ifndef OPENtls_RAND_SEED_OS
 #   error "Unsupported seeding method configured; must be os"
 #  endif
 
-#  if defined(OPENSSL_SYS_VOS_HPPA) && defined(OPENSSL_SYS_VOS_IA32)
+#  if defined(OPENtls_SYS_VOS_HPPA) && defined(OPENtls_SYS_VOS_IA32)
 #   error "Unsupported HP-PA and IA32 at the same time."
 #  endif
-#  if !defined(OPENSSL_SYS_VOS_HPPA) && !defined(OPENSSL_SYS_VOS_IA32)
+#  if !defined(OPENtls_SYS_VOS_HPPA) && !defined(OPENtls_SYS_VOS_IA32)
 #   error "Must have one of HP-PA or IA32"
 #  endif
 
@@ -138,7 +138,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     size_t bytes_needed;
     struct timespec ts;
     unsigned char v;
-#  ifdef OPENSSL_SYS_VOS_HPPA
+#  ifdef OPENtls_SYS_VOS_HPPA
     long duration;
     extern void s$sleep(long *_duration, short int *_code);
 #  else
@@ -156,7 +156,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         for (k = 0; k < 99; k++)
             ts.tv_nsec = random();
 
-#  ifdef OPENSSL_SYS_VOS_HPPA
+#  ifdef OPENtls_SYS_VOS_HPPA
         /* sleep for 1/1024 of a second (976 us).  */
         duration = 1;
         s$sleep(&duration, &code);
@@ -184,24 +184,24 @@ void rand_pool_keep_random_devices_open(int keep)
 
 # else
 
-#  if defined(OPENSSL_RAND_SEED_EGD) && \
-        (defined(OPENSSL_NO_EGD) || !defined(DEVRANDOM_EGD))
+#  if defined(OPENtls_RAND_SEED_EGD) && \
+        (defined(OPENtls_NO_EGD) || !defined(DEVRANDOM_EGD))
 #   error "Seeding uses EGD but EGD is turned off or no device given"
 #  endif
 
-#  if defined(OPENSSL_RAND_SEED_DEVRANDOM) && !defined(DEVRANDOM)
+#  if defined(OPENtls_RAND_SEED_DEVRANDOM) && !defined(DEVRANDOM)
 #   error "Seeding uses urandom but DEVRANDOM is not configured"
 #  endif
 
-#  if defined(OPENSSL_RAND_SEED_OS)
+#  if defined(OPENtls_RAND_SEED_OS)
 #   if !defined(DEVRANDOM)
 #    error "OS seeding requires DEVRANDOM to be configured"
 #   endif
-#   define OPENSSL_RAND_SEED_GETRANDOM
-#   define OPENSSL_RAND_SEED_DEVRANDOM
+#   define OPENtls_RAND_SEED_GETRANDOM
+#   define OPENtls_RAND_SEED_DEVRANDOM
 #  endif
 
-#  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+#  if defined(OPENtls_RAND_SEED_LIBRANDOM)
 #   error "librandom not (yet) supported"
 #  endif
 
@@ -227,7 +227,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
      * when the sysctl returns long and we want to request something not a
      * multiple of longs, which should never be the case.
      */
-    if (!ossl_assert(buflen % sizeof(long) == 0)) {
+    if (!otls_assert(buflen % sizeof(long) == 0)) {
         errno = EINVAL;
         return -1;
     }
@@ -260,7 +260,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 }
 #  endif
 
-#  if defined(OPENSSL_RAND_SEED_GETRANDOM)
+#  if defined(OPENtls_RAND_SEED_GETRANDOM)
 
 #   if defined(__linux) && !defined(__NR_getrandom)
 #    if defined(__arm__)
@@ -330,7 +330,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      *
      *   2 * RAND_POOL_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^14
      *
-     * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
+     * which is way below the Otls_SSIZE_MAX limit. Therefore sign conversion
      * between size_t and ssize_t is safe even without a range check.
      */
 
@@ -376,9 +376,9 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     return -1;
 #  endif
 }
-#  endif    /* defined(OPENSSL_RAND_SEED_GETRANDOM) */
+#  endif    /* defined(OPENtls_RAND_SEED_GETRANDOM) */
 
-#  if defined(OPENSSL_RAND_SEED_DEVRANDOM)
+#  if defined(OPENtls_RAND_SEED_DEVRANDOM)
 static const char *random_device_paths[] = { DEVRANDOM };
 static struct random_device {
     int fd;
@@ -386,7 +386,7 @@ static struct random_device {
     ino_t ino;
     mode_t mode;
     dev_t rdev;
-} random_devices[OSSL_NELEM(random_device_paths)];
+} random_devices[Otls_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
 
 #   if defined(__linux) && defined(DEVRANDOM_WAIT)
@@ -407,7 +407,7 @@ static void cleanup_shm(void)
  */
 static int wait_random_seeded(void)
 {
-    static int seeded = OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID < 0;
+    static int seeded = OPENtls_RAND_SEED_DEVRANDOM_SHM_ID < 0;
     static const int kernel_version[] = { DEVRANDOM_SAFE_KERNEL };
     int kernel[2];
     int shm_id, fd, r;
@@ -417,7 +417,7 @@ static int wait_random_seeded(void)
 
     if (!seeded) {
         /* See if anything has created the global seeded indication */
-        if ((shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1, 0)) == -1) {
+        if ((shm_id = shmget(OPENtls_RAND_SEED_DEVRANDOM_SHM_ID, 1, 0)) == -1) {
             /*
              * Check the kernel's version and fail if it is too recent.
              *
@@ -451,7 +451,7 @@ static int wait_random_seeded(void)
                 if (r == 1) {
                     seeded = 1;
                     /* Create the shared memory indicator */
-                    shm_id = shmget(OPENSSL_RAND_SEED_DEVRANDOM_SHM_ID, 1,
+                    shm_id = shmget(OPENtls_RAND_SEED_DEVRANDOM_SHM_ID, 1,
                                     IPC_CREAT | S_IRUSR | S_IRGRP | S_IROTH);
                 }
             }
@@ -464,9 +464,9 @@ static int wait_random_seeded(void)
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
 #    ifndef FIPS_MODE
-            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
+            /* TODO 3.0: The FIPS provider doesn't have OPENtls_atexit */
             if (shm_addr != (void *)-1)
-                OPENSSL_atexit(&cleanup_shm);
+                OPENtls_atexit(&cleanup_shm);
 #    endif
         }
     }
@@ -544,7 +544,7 @@ int rand_pool_init(void)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+    for (i = 0; i < Otls_NELEM(random_devices); i++)
         random_devices[i].fd = -1;
 
     return 1;
@@ -554,7 +554,7 @@ void rand_pool_cleanup(void)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+    for (i = 0; i < Otls_NELEM(random_devices); i++)
         close_random_device(i);
 }
 
@@ -566,7 +566,7 @@ void rand_pool_keep_random_devices_open(int keep)
     keep_random_devices_open = keep;
 }
 
-#  else     /* !defined(OPENSSL_RAND_SEED_DEVRANDOM) */
+#  else     /* !defined(OPENtls_RAND_SEED_DEVRANDOM) */
 
 int rand_pool_init(void)
 {
@@ -581,7 +581,7 @@ void rand_pool_keep_random_devices_open(int keep)
 {
 }
 
-#  endif    /* defined(OPENSSL_RAND_SEED_DEVRANDOM) */
+#  endif    /* defined(OPENtls_RAND_SEED_DEVRANDOM) */
 
 /*
  * Try the various seeding methods in turn, exit when successful.
@@ -602,12 +602,12 @@ void rand_pool_keep_random_devices_open(int keep)
  */
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-#  if defined(OPENSSL_RAND_SEED_NONE)
+#  if defined(OPENtls_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
 #  else
     size_t entropy_available;
 
-#   if defined(OPENSSL_RAND_SEED_GETRANDOM)
+#   if defined(OPENtls_RAND_SEED_GETRANDOM)
     {
         size_t bytes_needed;
         unsigned char *buffer;
@@ -633,20 +633,20 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         return entropy_available;
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+#   if defined(OPENtls_RAND_SEED_LIBRANDOM)
     {
         /* Not yet implemented. */
     }
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
+#   if defined(OPENtls_RAND_SEED_DEVRANDOM)
     if (wait_random_seeded()) {
         size_t bytes_needed;
         unsigned char *buffer;
         size_t i;
 
         bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-        for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths);
+        for (i = 0; bytes_needed > 0 && i < Otls_NELEM(random_device_paths);
              i++) {
             ssize_t bytes = 0;
             /* Maximum number of consecutive unsuccessful attempts */
@@ -679,19 +679,19 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_RDTSC)
+#   if defined(OPENtls_RAND_SEED_RDTSC)
     entropy_available = rand_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_RDCPU)
+#   if defined(OPENtls_RAND_SEED_RDCPU)
     entropy_available = rand_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_EGD)
+#   if defined(OPENtls_RAND_SEED_EGD)
     {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
         size_t bytes_needed;
@@ -724,7 +724,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+#if (defined(OPENtls_SYS_UNIX) && !defined(OPENtls_SYS_VXWORKS)) \
      || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
@@ -766,7 +766,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * The thread id adds a little randomness if the drbg is accessed
      * concurrently (which is the case for the <master> drbg).
      */
-    data.fork_id = openssl_get_fork_id();
+    data.fork_id = opentls_get_fork_id();
     data.tid = CRYPTO_THREAD_get_current_id();
     data.time = get_timer_bits();
 
@@ -783,7 +783,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
  */
 static uint64_t get_time_stamp(void)
 {
-# if defined(OSSL_POSIX_TIMER_OKAY)
+# if defined(Otls_POSIX_TIMER_OKAY)
     {
         struct timespec ts;
 
@@ -812,7 +812,7 @@ static uint64_t get_time_stamp(void)
  */
 static uint64_t get_timer_bits(void)
 {
-    uint64_t res = OPENSSL_rdtsc();
+    uint64_t res = OPENtls_rdtsc();
 
     if (res != 0)
         return res;
@@ -826,7 +826,7 @@ static uint64_t get_timer_bits(void)
         read_wall_time(&t, TIMEBASE_SZ);
         return TWO32TO64(t.tb_high, t.tb_low);
     }
-# elif defined(OSSL_POSIX_TIMER_OKAY)
+# elif defined(Otls_POSIX_TIMER_OKAY)
     {
         struct timespec ts;
 
@@ -853,5 +853,5 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+#endif /* (defined(OPENtls_SYS_UNIX) && !defined(OPENtls_SYS_VXWORKS))
           || defined(__DJGPP__) */

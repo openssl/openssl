@@ -1,13 +1,13 @@
 =pod
-{- OpenSSL::safe::output_do_not_edit_headers(); -}
+{- Opentls::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-ts - Time Stamping Authority tool (client/server)
+opentls-ts - Time Stamping Authority tool (client/server)
 
 =head1 SYNOPSIS
 
-B<openssl> B<ts>
+B<opentls> B<ts>
 B<-query>
 [B<-config> I<configfile>]
 [B<-data> I<file_to_hash>]
@@ -19,9 +19,9 @@ B<-query>
 [B<-in> I<request.tsq>]
 [B<-out> I<request.tsq>]
 [B<-text>]
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $Opentls::safe::opt_r_synopsis -}
 
-B<openssl> B<ts>
+B<opentls> B<ts>
 B<-reply>
 [B<-config> I<configfile>]
 [B<-section> I<tsa_section>]
@@ -37,9 +37,9 @@ B<-reply>
 [B<-out> I<response.tsr>]
 [B<-token_out>]
 [B<-text>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $Opentls::safe::opt_engine_synopsis -}
 
-B<openssl> B<ts>
+B<opentls> B<ts>
 B<-verify>
 [B<-data> I<file_to_hash>]
 [B<-digest> I<digest_bytes>]
@@ -83,7 +83,7 @@ I<verify options:>
 [B<-verify_name> I<name>]
 [B<-x509_strict>]
 
-=for openssl ifdef engine
+=for opentls ifdef engine
 
 =head1 DESCRIPTION
 
@@ -139,7 +139,7 @@ request with the following options:
 
 The configuration file to use.
 Optional; for a description of the default value,
-see L<openssl(1)/COMMAND SUMMARY>.
+see L<opentls(1)/COMMAND SUMMARY>.
 
 =item B<-data> I<file_to_hash>
 
@@ -158,7 +158,7 @@ in use. (Optional)
 =item B<-I<digest>>
 
 The message digest to apply to the data file.
-Any digest supported by the L<openssl-dgst(1)> command can be used.
+Any digest supported by the L<opentls-dgst(1)> command can be used.
 The default is SHA-256. (Optional)
 
 =item B<-tspolicy> I<object_id>
@@ -197,7 +197,7 @@ is stdout. (Optional)
 If this option is specified the output is human-readable text format
 instead of DER. (Optional)
 
-{- $OpenSSL::safe::opt_r_item -}
+{- $Opentls::safe::opt_r_item -}
 
 =back
 
@@ -217,7 +217,7 @@ otherwise it is a timestamp token (ContentInfo).
 
 The configuration file to use.
 Optional; for a description of the default value,
-see L<openssl(1)/COMMAND SUMMARY>.
+see L<opentls(1)/COMMAND SUMMARY>.
 See L</CONFIGURATION FILE OPTIONS> for configurable variables.
 
 =item B<-section> I<tsa_section>
@@ -233,7 +233,7 @@ The name of the file containing a DER encoded timestamp request. (Optional)
 =item B<-passin> I<password_src>
 
 Specifies the password source for the private key of the TSA. See
-description in L<openssl(1)>. (Optional)
+description in L<opentls(1)>. (Optional)
 
 =item B<-signer> I<tsa_cert.pem>
 
@@ -303,7 +303,7 @@ response (TimeStampResp). (Optional)
 If this option is specified the output is human-readable text format
 instead of DER. (Optional)
 
-{- $OpenSSL::safe::opt_engine_item -}
+{- $Opentls::safe::opt_engine_item -}
 
 =back
 
@@ -346,7 +346,7 @@ of a timestamp response (TimeStampResp). (Optional)
 
 =item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
-See L<openssl(1)/Trusted Certificate Options> for more information.
+See L<opentls(1)/Trusted Certificate Options> for more information.
 
 At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
 
@@ -368,7 +368,7 @@ B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
 B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
 B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
 B<-verify_name>, and B<-x509_strict> can be used to control timestamp
-verification.  See L<openssl-verify(1)>.
+verification.  See L<opentls-verify(1)>.
 
 =back
 
@@ -421,9 +421,9 @@ generation a new file is created with serial number 1. (Mandatory)
 
 =item B<crypto_device>
 
-Specifies the OpenSSL engine that will be set as the default for
+Specifies the Opentls engine that will be set as the default for
 all available algorithms. The default value is built-in, you can specify
-any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
+any other engines supported by Opentls (e.g. use chil for the NCipher HSM).
 (Optional)
 
 =item B<signer_cert>
@@ -509,9 +509,9 @@ public key certificate identifier. Default is sha256. (Optional)
 
 =head1 EXAMPLES
 
-All the examples below presume that B<OPENSSL_CONF> is set to a proper
+All the examples below presume that B<OPENtls_CONF> is set to a proper
 configuration file, e.g. the example configuration file
-F<openssl/apps/openssl.cnf> will do.
+F<opentls/apps/opentls.cnf> will do.
 
 =head2 Timestamp Request
 
@@ -519,25 +519,25 @@ To create a timestamp request for F<design1.txt> with SHA-256 digest,
 without nonce and policy, and without requirement for a certificate
 in the response:
 
-  openssl ts -query -data design1.txt -no_nonce \
+  opentls ts -query -data design1.txt -no_nonce \
         -out design1.tsq
 
 To create a similar timestamp request with specifying the message imprint
 explicitly:
 
-  openssl ts -query -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
+  opentls ts -query -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
          -no_nonce -out design1.tsq
 
 To print the content of the previous request in human readable format:
 
-  openssl ts -query -in design1.tsq -text
+  opentls ts -query -in design1.tsq -text
 
 To create a timestamp request which includes the SHA-512 digest
 of F<design2.txt>, requests the signer certificate and nonce, and
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
-  openssl ts -query -data design2.txt -sha512 \
+  opentls ts -query -data design2.txt -sha512 \
         -tspolicy tsa_policy1 -cert -out design2.tsq
 
 =head2 Timestamp Response
@@ -549,66 +549,66 @@ user certificate section of the config file to generate a proper certificate;
 
    extendedKeyUsage = critical,timeStamping
 
-See L<openssl-req(1)>, L<openssl-ca(1)>, and L<openssl-x509(1)> for
+See L<opentls-req(1)>, L<opentls-ca(1)>, and L<opentls-x509(1)> for
 instructions. The examples below assume that F<cacert.pem> contains the
 certificate of the CA, F<tsacert.pem> is the signing certificate issued
 by F<cacert.pem> and F<tsakey.pem> is the private key of the TSA.
 
 To create a timestamp response for a request:
 
-  openssl ts -reply -queryfile design1.tsq -inkey tsakey.pem \
+  opentls ts -reply -queryfile design1.tsq -inkey tsakey.pem \
         -signer tsacert.pem -out design1.tsr
 
 If you want to use the settings in the config file you could just write:
 
-  openssl ts -reply -queryfile design1.tsq -out design1.tsr
+  opentls ts -reply -queryfile design1.tsq -out design1.tsr
 
 To print a timestamp reply to stdout in human readable format:
 
-  openssl ts -reply -in design1.tsr -text
+  opentls ts -reply -in design1.tsr -text
 
 To create a timestamp token instead of timestamp response:
 
-  openssl ts -reply -queryfile design1.tsq -out design1_token.der -token_out
+  opentls ts -reply -queryfile design1.tsq -out design1_token.der -token_out
 
 To print a timestamp token to stdout in human readable format:
 
-  openssl ts -reply -in design1_token.der -token_in -text -token_out
+  opentls ts -reply -in design1_token.der -token_in -text -token_out
 
 To extract the timestamp token from a response:
 
-  openssl ts -reply -in design1.tsr -out design1_token.der -token_out
+  opentls ts -reply -in design1.tsr -out design1_token.der -token_out
 
 To add 'granted' status info to a timestamp token thereby creating a
 valid response:
 
-  openssl ts -reply -in design1_token.der -token_in -out design1.tsr
+  opentls ts -reply -in design1_token.der -token_in -out design1.tsr
 
 =head2 Timestamp Verification
 
 To verify a timestamp reply against a request:
 
-  openssl ts -verify -queryfile design1.tsq -in design1.tsr \
+  opentls ts -verify -queryfile design1.tsq -in design1.tsr \
         -CAfile cacert.pem -untrusted tsacert.pem
 
 To verify a timestamp reply that includes the certificate chain:
 
-  openssl ts -verify -queryfile design2.tsq -in design2.tsr \
+  opentls ts -verify -queryfile design2.tsq -in design2.tsr \
         -CAfile cacert.pem
 
 To verify a timestamp token against the original data file:
-  openssl ts -verify -data design2.txt -in design2.tsr \
+  opentls ts -verify -data design2.txt -in design2.tsr \
         -CAfile cacert.pem
 
 To verify a timestamp token against a message imprint:
-  openssl ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
+  opentls ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
          -in design2.tsr -CAfile cacert.pem
 
 You could also look at the 'test' directory for more examples.
 
 =head1 BUGS
 
-=for openssl foreign manuals: procmail(1), perl(1)
+=for opentls foreign manuals: procmail(1), perl(1)
 
 =over 2
 
@@ -624,7 +624,7 @@ L<tsget(1)>. Pure TCP/IP protocol is not supported.
 
 The file containing the last serial number of the TSA is not
 locked when being read or written. This is a problem if more than one
-instance of L<openssl(1)> is trying to create a timestamp
+instance of L<opentls(1)> is trying to create a timestamp
 response at the same time. This is not an issue when using the apache
 server module, it does proper locking.
 
@@ -645,29 +645,29 @@ test/testtsa).
 
 =head1 HISTORY
 
-OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
+Opentls 1.1.1 introduced a new random generator (CSPRNG) with an improved
 seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-tsget(1)>,
-L<openssl-req(1)>,
-L<openssl-x509(1)>,
-L<openssl-ca(1)>,
-L<openssl-genrsa(1)>,
+L<opentls(1)>,
+L<opentls-tsget(1)>,
+L<opentls-req(1)>,
+L<opentls-x509(1)>,
+L<opentls-ca(1)>,
+L<opentls-genrsa(1)>,
 L<config(5)>,
-L<ossl_store-file(7)>
+L<otls_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

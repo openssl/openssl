@@ -1,11 +1,11 @@
 
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
@@ -14,8 +14,8 @@ use Getopt::Long;
 use FindBin;
 use lib "$FindBin::Bin/perl";
 
-use OpenSSL::Ordinals;
-use OpenSSL::ParseC;
+use Opentls::Ordinals;
+use Opentls::ParseC;
 
 my $ordinals_file = undef;      # the ordinals file to use
 my $symhacks_file = undef;      # a symbol hacking file (optional)
@@ -37,7 +37,7 @@ GetOptions('ordinals=s' => \$ordinals_file,
 die "Please supply ordinals file\n"
     unless $ordinals_file;
 
-my $ordinals = OpenSSL::Ordinals->new(from => $ordinals_file,
+my $ordinals = Opentls::Ordinals->new(from => $ordinals_file,
                                       warnings => $warnings,
                                       verbose => $verbose,
                                       debug => $debug);
@@ -75,7 +75,7 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
                 && $_->{value} =~ /^\w(?:\w|\d)*/) {
             $ordinals->add_alias($_->{value}, $_->{name}, @{$_->{conds}});
         } else {
-            next if $_->{returntype} =~ /\b(?:ossl_)inline/;
+            next if $_->{returntype} =~ /\b(?:otls_)inline/;
             my $type = {
                 F => 'FUNCTION',
                 V => 'VARIABLE',

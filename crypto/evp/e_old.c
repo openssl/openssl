@@ -1,18 +1,18 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_DEPRECATED_0_9_8
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_DEPRECATED_0_9_8
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include <openssl/evp.h>
+# include <opentls/evp.h>
 
 /*
  * Define some deprecated functions, so older programs don't crash and burn
@@ -21,7 +21,7 @@ NON_EMPTY_TRANSLATION_UNIT
  * location, not by name.
  */
 
-# ifndef OPENSSL_NO_BF
+# ifndef OPENtls_NO_BF
 #  undef EVP_bf_cfb
 const EVP_CIPHER *EVP_bf_cfb(void);
 const EVP_CIPHER *EVP_bf_cfb(void)
@@ -30,7 +30,7 @@ const EVP_CIPHER *EVP_bf_cfb(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_DES
+# ifndef OPENtls_NO_DES
 #  undef EVP_des_cfb
 const EVP_CIPHER *EVP_des_cfb(void);
 const EVP_CIPHER *EVP_des_cfb(void)
@@ -53,7 +53,7 @@ const EVP_CIPHER *EVP_des_ede_cfb(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_IDEA
+# ifndef OPENtls_NO_IDEA
 #  undef EVP_idea_cfb
 const EVP_CIPHER *EVP_idea_cfb(void);
 const EVP_CIPHER *EVP_idea_cfb(void)
@@ -62,7 +62,7 @@ const EVP_CIPHER *EVP_idea_cfb(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_RC2
+# ifndef OPENtls_NO_RC2
 #  undef EVP_rc2_cfb
 const EVP_CIPHER *EVP_rc2_cfb(void);
 const EVP_CIPHER *EVP_rc2_cfb(void)
@@ -71,7 +71,7 @@ const EVP_CIPHER *EVP_rc2_cfb(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_CAST
+# ifndef OPENtls_NO_CAST
 #  undef EVP_cast5_cfb
 const EVP_CIPHER *EVP_cast5_cfb(void);
 const EVP_CIPHER *EVP_cast5_cfb(void)
@@ -80,7 +80,7 @@ const EVP_CIPHER *EVP_cast5_cfb(void)
 }
 # endif
 
-# ifndef OPENSSL_NO_RC5
+# ifndef OPENtls_NO_RC5
 #  undef EVP_rc5_32_12_16_cfb
 const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
 const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void)

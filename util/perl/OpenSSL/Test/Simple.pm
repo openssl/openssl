@@ -1,11 +1,11 @@
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::Test::Simple;
+package Opentls::Test::Simple;
 
 use strict;
 use warnings;
@@ -18,24 +18,24 @@ $VERSION = "0.2";
 
 =head1 NAME
 
-OpenSSL::Test::Simple - a few very simple test functions
+Opentls::Test::Simple - a few very simple test functions
 
 =head1 SYNOPSIS
 
-  use OpenSSL::Test::Simple;
+  use Opentls::Test::Simple;
 
   simple_test("my_test_name", "destest", "des");
 
 =head1 DESCRIPTION
 
-Sometimes, the functions in L<OpenSSL::Test> are quite tedious for some
+Sometimes, the functions in L<Opentls::Test> are quite tedious for some
 repetitive tasks.  This module provides functions to make life easier.
 You could call them hacks if you wish.
 
 =cut
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils;
+use Opentls::Test;
+use Opentls::Test::Utils;
 
 =over 4
 
@@ -46,7 +46,7 @@ to test the algorithm ALGORITHM.
 
 A complete recipe looks like this:
 
-  use OpenSSL::Test::Simple;
+  use Opentls::Test::Simple;
 
   simple_test("test_bf", "bftest", "bf");
 
@@ -65,10 +65,10 @@ sub simple_test {
 
     if (scalar(disabled(@algos))) {
 	if (scalar(@algos) == 1) {
-	    plan skip_all => $algos[0]." is not supported by this OpenSSL build";
+	    plan skip_all => $algos[0]." is not supported by this Opentls build";
 	} else {
 	    my $last = pop @algos;
-	    plan skip_all => join(", ", @algos)." and $last are not supported by this OpenSSL build";
+	    plan skip_all => join(", ", @algos)." and $last are not supported by this Opentls build";
 	}
     }
 
@@ -79,12 +79,12 @@ sub simple_test {
 
 =head1 SEE ALSO
 
-L<OpenSSL::Test>
+L<Opentls::Test>
 
 =head1 AUTHORS
 
-Richard Levitte E<lt>levitte@openssl.orgE<gt> with inspiration
-from Rich Salz E<lt>rsalz@openssl.orgE<gt>.
+Richard Levitte E<lt>levitte@opentls.orgE<gt> with inspiration
+from Rich Salz E<lt>rsalz@opentls.orgE<gt>.
 
 =cut
 

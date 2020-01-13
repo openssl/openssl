@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,16 +12,16 @@
 #include <string.h>
 
 #include "internal/nelem.h"
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
-#include <openssl/bn.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/obj_mac.h>
+#include <opentls/crypto.h>
+#include <opentls/bio.h>
+#include <opentls/bn.h>
+#include <opentls/rand.h>
+#include <opentls/err.h>
+#include <opentls/obj_mac.h>
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
+#ifndef OPENtls_NO_DH
+# include <opentls/dh.h>
 
 static int cb(int p, int n, BN_GENCB *arg);
 
@@ -175,17 +175,17 @@ static int dh_test(void)
     cpriv_key = NULL;
 
     alen = DH_size(a);
-    if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
+    if (!TEST_ptr(abuf = OPENtls_malloc(alen))
             || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
         goto err3;
 
     blen = DH_size(b);
-    if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
+    if (!TEST_ptr(bbuf = OPENtls_malloc(blen))
             || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err3;
 
     clen = DH_size(c);
-    if (!TEST_ptr(cbuf = OPENSSL_malloc(clen))
+    if (!TEST_ptr(cbuf = OPENtls_malloc(clen))
             || !TEST_true((cout = DH_compute_key(cbuf, apub_key, c)) != -1))
         goto err3;
 
@@ -207,9 +207,9 @@ static int dh_test(void)
     BN_free(priv_key);
  err3:
  success:
-    OPENSSL_free(abuf);
-    OPENSSL_free(bbuf);
-    OPENSSL_free(cbuf);
+    OPENtls_free(abuf);
+    OPENtls_free(bbuf);
+    OPENtls_free(cbuf);
     DH_free(b);
     DH_free(a);
     DH_free(c);
@@ -520,7 +520,7 @@ static int rfc5114_test(void)
     BIGNUM *bady = NULL, *priv_key = NULL, *pub_key = NULL;
     const BIGNUM *pub_key_tmp;
 
-    for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
+    for (i = 0; i < (int)Otls_NELEM(rfctd); i++) {
         td = rfctd + i;
         /* Set up DH structures setting key components */
         if (!TEST_ptr(dhA = td->get_param())
@@ -542,8 +542,8 @@ static int rfc5114_test(void)
             || !TEST_uint_eq(td->Z_len, (size_t)DH_size(dhB)))
             goto err;
 
-        if (!TEST_ptr(Z1 = OPENSSL_malloc(DH_size(dhA)))
-                || !TEST_ptr(Z2 = OPENSSL_malloc(DH_size(dhB))))
+        if (!TEST_ptr(Z1 = OPENtls_malloc(DH_size(dhA)))
+                || !TEST_ptr(Z2 = OPENtls_malloc(DH_size(dhB))))
             goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
@@ -565,16 +565,16 @@ static int rfc5114_test(void)
         dhA = NULL;
         DH_free(dhB);
         dhB = NULL;
-        OPENSSL_free(Z1);
+        OPENtls_free(Z1);
         Z1 = NULL;
-        OPENSSL_free(Z2);
+        OPENtls_free(Z2);
         Z2 = NULL;
     }
 
-    /* Now i == OSSL_NELEM(rfctd) */
+    /* Now i == Otls_NELEM(rfctd) */
     /* RFC5114 uses unsafe primes, so now test an invalid y value */
     if (!TEST_ptr(dhA = DH_get_2048_224())
-            || !TEST_ptr(Z1 = OPENSSL_malloc(DH_size(dhA))))
+            || !TEST_ptr(Z1 = OPENtls_malloc(DH_size(dhA))))
         goto bad_err;
 
     if (!TEST_ptr(bady = BN_bin2bn(dhtest_rfc5114_2048_224_bad_y,
@@ -596,7 +596,7 @@ static int rfc5114_test(void)
     ERR_clear_error();
     BN_free(bady);
     DH_free(dhA);
-    OPENSSL_free(Z1);
+    OPENtls_free(Z1);
     return 1;
 
  bad_err:
@@ -605,8 +605,8 @@ static int rfc5114_test(void)
     DH_free(dhB);
     BN_free(pub_key);
     BN_free(priv_key);
-    OPENSSL_free(Z1);
-    OPENSSL_free(Z2);
+    OPENtls_free(Z1);
+    OPENtls_free(Z2);
     TEST_error("Initialisation error RFC5114 set %d\n", i + 1);
     return 0;
 
@@ -614,8 +614,8 @@ static int rfc5114_test(void)
     BN_free(bady);
     DH_free(dhA);
     DH_free(dhB);
-    OPENSSL_free(Z1);
-    OPENSSL_free(Z2);
+    OPENtls_free(Z1);
+    OPENtls_free(Z2);
     TEST_error("Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }
@@ -654,12 +654,12 @@ static int rfc7919_test(void)
     DH_get0_key(b, &bpub_key, NULL);
 
     alen = DH_size(a);
-    if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
+    if (!TEST_ptr(abuf = OPENtls_malloc(alen))
             || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
         goto err;
 
     blen = DH_size(b);
-    if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
+    if (!TEST_ptr(bbuf = OPENtls_malloc(blen))
             || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err;
 
@@ -670,8 +670,8 @@ static int rfc7919_test(void)
     ret = 1;
 
  err:
-    OPENSSL_free(abuf);
-    OPENSSL_free(bbuf);
+    OPENtls_free(abuf);
+    OPENtls_free(bbuf);
     DH_free(a);
     DH_free(b);
     return ret;
@@ -681,7 +681,7 @@ static int rfc7919_test(void)
 
 int setup_tests(void)
 {
-#ifdef OPENSSL_NO_DH
+#ifdef OPENtls_NO_DH
     TEST_note("No DH support");
 #else
     ADD_TEST(dh_test);

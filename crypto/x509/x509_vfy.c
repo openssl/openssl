@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -14,13 +14,13 @@
 
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
+#include <opentls/crypto.h>
+#include <opentls/buffer.h>
+#include <opentls/evp.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/objects.h>
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
@@ -236,7 +236,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if ((ok = check_name_constraints(ctx)) == 0)
         return ok;
 
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     /* RFC 3779 path validation, now that CRL check has been done */
     if ((ok = X509v3_asid_validate_path(ctx)) == 0)
         return ok;
@@ -252,7 +252,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     int ret;
 
     if (ctx->cert == NULL) {
@@ -297,7 +297,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     /*
      * Safety-net.  If we are returning an error, we must also set ctx->error,
      * so that the chain is not considered verified should the error be ignored
-     * (e.g. TLS with SSL_VERIFY_NONE).
+     * (e.g. TLS with tls_VERIFY_NONE).
      */
     if (ret <= 0 && ctx->error == X509_V_OK)
         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -710,15 +710,15 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
-    int n = sk_OPENSSL_STRING_num(vpm->hosts);
+    int n = sk_OPENtls_STRING_num(vpm->hosts);
     char *name;
 
     if (vpm->peername != NULL) {
-        OPENSSL_free(vpm->peername);
+        OPENtls_free(vpm->peername);
         vpm->peername = NULL;
     }
     for (i = 0; i < n; ++i) {
-        name = sk_OPENSSL_STRING_value(vpm->hosts, i);
+        name = sk_OPENtls_STRING_value(vpm->hosts, i);
         if (X509_check_host(x, name, 0, vpm->hostflags, &vpm->peername) > 0)
             return 1;
     }
@@ -749,7 +749,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     int i;
     X509 *x = NULL;
     X509 *mx;
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
 
@@ -1647,7 +1647,7 @@ static int check_policy(X509_STORE_CTX *ctx)
         ctx->current_cert = NULL;
         /*
          * Verification errors need to be "sticky", a callback may have allowed
-         * an SSL handshake to continue despite an error, and we must then
+         * an tls handshake to continue despite an error, and we must then
          * remain in an error state.  Therefore, we MUST NOT clear earlier
          * verification errors by setting the error to X509_V_OK.
          */
@@ -2148,9 +2148,9 @@ int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
  * This is intended to be used when another structure has its own trust and
  * purpose values which (if set) will be inherited by the ctx. If they aren't
  * set then we will usually have a default purpose in mind which should then
- * be used to set the trust value. An example of this is SSL use: an SSL
+ * be used to set the trust value. An example of this is tls use: an tls
  * structure will have its own purpose and trust settings which the
- * application can set: if they aren't set then we use the default of SSL
+ * application can set: if they aren't set then we use the default of tls
  * client/server.
  */
 
@@ -2207,7 +2207,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 
 X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
-    X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    X509_STORE_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -2222,7 +2222,7 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
         return;
 
     X509_STORE_CTX_cleanup(ctx);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
@@ -2253,7 +2253,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 
-    /* store->cleanup is always 0 in OpenSSL, if set must be idempotent */
+    /* store->cleanup is always 0 in Opentls, if set must be idempotent */
     if (store)
         ctx->cleanup = store->cleanup;
     else
@@ -2382,7 +2382,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
      * calls cleanup() for the same object twice!  Thus we must zero the
      * pointers below after they're freed!
      */
-    /* Seems to always be 0 in OpenSSL, do this at most once. */
+    /* Seems to always be 0 in Opentls, do this at most once. */
     if (ctx->cleanup != NULL) {
         ctx->cleanup(ctx);
         ctx->cleanup = NULL;
@@ -2545,7 +2545,7 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
     ctx->param = param;
 }
 
-void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane)
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, tls_DANE *dane)
 {
     ctx->dane = dane;
 }
@@ -2586,7 +2586,7 @@ static unsigned char *dane_i2d(
 
 static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 {
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     unsigned usage = DANETLS_NONE;
     unsigned selector = DANETLS_NONE;
     unsigned ordinal = DANETLS_NONE;
@@ -2630,8 +2630,8 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
      * is always processed (last).  If none match, we then process PKIX-EE(1).
      *
      * NOTE: This relies on DANE usages sorting before the corresponding PKIX
-     * usages in SSL_dane_tlsa_add(), and also on descending sorting of digest
-     * priorities.  See twin comment in ssl/ssl_lib.c.
+     * usages in tls_dane_tlsa_add(), and also on descending sorting of digest
+     * priorities.  See twin comment in tls/tls_lib.c.
      *
      * We expect that most TLSA RRsets will have just a single usage, so we
      * don't go out of our way to cache multiple selector-specific i2d buffers
@@ -2662,7 +2662,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
             selector = t->selector;
 
             /* Update per-selector state */
-            OPENSSL_free(i2dbuf);
+            OPENtls_free(i2dbuf);
             i2dbuf = dane_i2d(cert, selector, &i2dlen);
             if (i2dbuf == NULL)
                 return -1;
@@ -2714,7 +2714,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
             if (matched || dane->mdpth < 0) {
                 dane->mdpth = depth;
                 dane->mtlsa = t;
-                OPENSSL_free(dane->mcert);
+                OPENtls_free(dane->mcert);
                 dane->mcert = cert;
                 X509_up_ref(cert);
             }
@@ -2723,13 +2723,13 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
     }
 
     /* Clear the one-element DER cache */
-    OPENSSL_free(i2dbuf);
+    OPENtls_free(i2dbuf);
     return matched;
 }
 
 static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 {
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     int matched = 0;
     X509 *cert;
 
@@ -2754,7 +2754,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 
 static int check_dane_pkeys(X509_STORE_CTX *ctx)
 {
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     danetls_record *t;
     int num = ctx->num_untrusted;
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
@@ -2789,7 +2789,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
     return X509_TRUST_UNTRUSTED;
 }
 
-static void dane_reset(SSL_DANE *dane)
+static void dane_reset(tls_DANE *dane)
 {
     /*
      * Reset state to verify another chain, or clear after failure.
@@ -2813,7 +2813,7 @@ static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
 static int dane_verify(X509_STORE_CTX *ctx)
 {
     X509 *cert = ctx->cert;
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     int matched;
     int done;
 
@@ -2887,7 +2887,7 @@ static int get_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
 
 static int build_chain(X509_STORE_CTX *ctx)
 {
-    SSL_DANE *dane = ctx->dane;
+    tls_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int ss = cert_self_signed(cert);
@@ -2902,7 +2902,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     int i;
 
     /* Our chain starts with a single untrusted element. */
-    if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
+    if (!otls_assert(num == 1 && ctx->num_untrusted == num))  {
         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -2943,8 +2943,8 @@ static int build_chain(X509_STORE_CTX *ctx)
      * them to our working copy of the untrusted certificate stack.  Since the
      * caller of X509_STORE_CTX_init() may have provided only a leaf cert with
      * no corresponding stack of untrusted certificates, we may need to create
-     * an empty stack first.  [ At present only the ssl library provides DANE
-     * support, and ssl_verify_cert_chain() always provides a non-null stack
+     * an empty stack first.  [ At present only the tls library provides DANE
+     * support, and tls_verify_cert_chain() always provides a non-null stack
      * containing at least the leaf certificate, but we must be prepared for
      * this to change. ]
      */
@@ -3043,7 +3043,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate among the ones from the trust store.
                  */
                 if ((search & S_DOALTERNATE) != 0) {
-                    if (!ossl_assert(num > i && i > 0 && ss == 0)) {
+                    if (!otls_assert(num > i && i > 0 && ss == 0)) {
                         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                         X509_free(xtmp);
                         trust = X509_TRUST_REJECTED;
@@ -3113,7 +3113,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate with ctx->num_untrusted <= num.
                  */
                 if (ok) {
-                    if (!ossl_assert(ctx->num_untrusted <= num)) {
+                    if (!otls_assert(ctx->num_untrusted <= num)) {
                         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                         trust = X509_TRUST_REJECTED;
                         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -3158,7 +3158,7 @@ static int build_chain(X509_STORE_CTX *ctx)
          */
         if ((search & S_DOUNTRUSTED) != 0) {
             num = sk_X509_num(ctx->chain);
-            if (!ossl_assert(num == ctx->num_untrusted)) {
+            if (!otls_assert(num == ctx->num_untrusted)) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                 trust = X509_TRUST_REJECTED;
                 ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -3249,7 +3249,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 }
 
 static const int minbits_table[] = { 80, 112, 128, 192, 256 };
-static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
+static const int NUM_AUTH_LEVELS = Otls_NELEM(minbits_table);
 
 /*
  * Check whether the public key of ``cert`` meets the security level of

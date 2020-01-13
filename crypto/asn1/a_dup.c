@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 
 #ifndef NO_OLD_ASN1
 
@@ -24,7 +24,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
         return NULL;
 
     i = i2d(x, NULL);
-    b = OPENSSL_malloc(i + 10);
+    b = OPENtls_malloc(i + 10);
     if (b == NULL) {
         ASN1err(ASN1_F_ASN1_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -33,7 +33,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
     i = i2d(x, &p);
     p2 = b;
     ret = d2i(NULL, &p2, i);
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return ret;
 }
 
@@ -63,6 +63,6 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     }
     p = b;
     ret = ASN1_item_d2i(NULL, &p, i, it);
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return ret;
 }

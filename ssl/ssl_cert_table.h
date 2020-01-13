@@ -1,23 +1,23 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
- * Certificate table information. NB: table entries must match SSL_PKEY indices
+ * Certificate table information. NB: table entries must match tls_PKEY indices
  */
-static const SSL_CERT_LOOKUP ssl_cert_info [] = {
-    {EVP_PKEY_RSA, SSL_aRSA}, /* SSL_PKEY_RSA */
-    {EVP_PKEY_RSA_PSS, SSL_aRSA}, /* SSL_PKEY_RSA_PSS_SIGN */
-    {EVP_PKEY_DSA, SSL_aDSS}, /* SSL_PKEY_DSA_SIGN */
-    {EVP_PKEY_EC, SSL_aECDSA}, /* SSL_PKEY_ECC */
-    {NID_id_GostR3410_2001, SSL_aGOST01}, /* SSL_PKEY_GOST01 */
-    {NID_id_GostR3410_2012_256, SSL_aGOST12}, /* SSL_PKEY_GOST12_256 */
-    {NID_id_GostR3410_2012_512, SSL_aGOST12}, /* SSL_PKEY_GOST12_512 */
-    {EVP_PKEY_ED25519, SSL_aECDSA}, /* SSL_PKEY_ED25519 */
-    {EVP_PKEY_ED448, SSL_aECDSA} /* SSL_PKEY_ED448 */
+static const tls_CERT_LOOKUP tls_cert_info [] = {
+    {EVP_PKEY_RSA, tls_aRSA}, /* tls_PKEY_RSA */
+    {EVP_PKEY_RSA_PSS, tls_aRSA}, /* tls_PKEY_RSA_PSS_SIGN */
+    {EVP_PKEY_DSA, tls_aDSS}, /* tls_PKEY_DSA_SIGN */
+    {EVP_PKEY_EC, tls_aECDSA}, /* tls_PKEY_ECC */
+    {NID_id_GostR3410_2001, tls_aGOST01}, /* tls_PKEY_GOST01 */
+    {NID_id_GostR3410_2012_256, tls_aGOST12}, /* tls_PKEY_GOST12_256 */
+    {NID_id_GostR3410_2012_512, tls_aGOST12}, /* tls_PKEY_GOST12_512 */
+    {EVP_PKEY_ED25519, tls_aECDSA}, /* tls_PKEY_ED25519 */
+    {EVP_PKEY_ED448, tls_aECDSA} /* tls_PKEY_ED448 */
 };

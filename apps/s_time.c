@@ -1,38 +1,38 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
 #include "apps.h"
 #include "progs.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/pem.h>
+#include <opentls/x509.h>
+#include <opentls/tls.h>
+#include <opentls/pem.h>
 #include "s_apps.h"
-#include <openssl/err.h>
+#include <opentls/err.h>
 #include <internal/sockets.h>
-#if !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENtls_SYS_MSDOS)
 # include <unistd.h>
 #endif
 
-#define SSL_CONNECT_NAME        "localhost:4433"
+#define tls_CONNECT_NAME        "localhost:4433"
 
 #define SECONDS 30
 #define SECONDSSTR "30"
 
-static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
+static tls *doConnection(tls *scon, const char *host, tls_CTX *ctx);
 
 /*
  * Define a HTTP get command globally.
@@ -47,7 +47,7 @@ typedef enum OPTION_choice {
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
-    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
+    OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_tls3,
     OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3
 } OPTION_CHOICE;
 
@@ -57,26 +57,26 @@ const OPTIONS s_time_options[] = {
 
     OPT_SECTION("Connection"),
     {"connect", OPT_CONNECT, 's',
-     "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
+     "Where to connect as post:port (default is " tls_CONNECT_NAME ")"},
     {"new", OPT_NEW, '-', "Just time new connections"},
     {"reuse", OPT_REUSE, '-', "Just time connection reuse"},
-    {"bugs", OPT_BUGS, '-', "Turn on SSL bug compatibility"},
+    {"bugs", OPT_BUGS, '-', "Turn on tls bug compatibility"},
     {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Specify TLSv1.3 ciphersuites to be used"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
+#ifndef OPENtls_NO_tls3
+    {"tls3", OPT_tls3, '-', "Just use tlsv3"},
 #endif
-#ifndef OPENSSL_NO_TLS1
+#ifndef OPENtls_NO_TLS1
     {"tls1", OPT_TLS1, '-', "Just use TLSv1.0"},
 #endif
-#ifndef OPENSSL_NO_TLS1_1
+#ifndef OPENtls_NO_TLS1_1
     {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
 #endif
-#ifndef OPENSSL_NO_TLS1_2
+#ifndef OPENtls_NO_TLS1_2
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
-#ifndef OPENSSL_NO_TLS1_3
+#ifndef OPENtls_NO_TLS1_3
     {"tls1_3", OPT_TLS1_3, '-', "Just use TLSv1.3"},
 #endif
     {"verify", OPT_VERIFY, 'p',
@@ -112,13 +112,13 @@ static double tm_Time_F(int s)
 int s_time_main(int argc, char **argv)
 {
     char buf[1024 * 8];
-    SSL *scon = NULL;
-    SSL_CTX *ctx = NULL;
-    const SSL_METHOD *meth = NULL;
+    tls *scon = NULL;
+    tls_CTX *ctx = NULL;
+    const tls_METHOD *meth = NULL;
     char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     char *cipher = NULL, *ciphersuites = NULL;
     char *www_path = NULL;
-    char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
+    char *host = tls_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
@@ -205,9 +205,9 @@ int s_time_main(int argc, char **argv)
                 goto end;
             }
             break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
+        case OPT_tls3:
+            min_version = tls3_VERSION;
+            max_version = tls3_VERSION;
             break;
         case OPT_TLS1:
             min_version = TLS1_VERSION;
@@ -232,23 +232,23 @@ int s_time_main(int argc, char **argv)
         goto opthelp;
 
     if (cipher == NULL)
-        cipher = getenv("SSL_CIPHER");
+        cipher = getenv("tls_CIPHER");
 
-    if ((ctx = SSL_CTX_new(meth)) == NULL)
+    if ((ctx = tls_CTX_new(meth)) == NULL)
         goto end;
 
-    SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-    SSL_CTX_set_quiet_shutdown(ctx, 1);
-    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+    tls_CTX_set_mode(ctx, tls_MODE_AUTO_RETRY);
+    tls_CTX_set_quiet_shutdown(ctx, 1);
+    if (tls_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
-    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+    if (tls_CTX_set_max_proto_version(ctx, max_version) == 0)
         goto end;
 
     if (st_bugs)
-        SSL_CTX_set_options(ctx, SSL_OP_ALL);
-    if (cipher != NULL && !SSL_CTX_set_cipher_list(ctx, cipher))
+        tls_CTX_set_options(ctx, tls_OP_ALL);
+    if (cipher != NULL && !tls_CTX_set_cipher_list(ctx, cipher))
         goto end;
-    if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites))
+    if (ciphersuites != NULL && !tls_CTX_set_ciphersuites(ctx, ciphersuites))
         goto end;
     if (!set_cert_stuff(ctx, certfile, keyfile))
         goto end;
@@ -277,22 +277,22 @@ int s_time_main(int argc, char **argv)
         if (www_path != NULL) {
             buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
                                    www_path);
-            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+            if (buf_len <= 0 || tls_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
+            while ((i = tls_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }
-        SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-        BIO_closesocket(SSL_get_fd(scon));
+        tls_set_shutdown(scon, tls_SENT_SHUTDOWN | tls_RECEIVED_SHUTDOWN);
+        BIO_closesocket(tls_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon)) {
+        if (tls_session_reused(scon)) {
             ver = 'r';
         } else {
-            ver = SSL_version(scon);
+            ver = tls_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
+            else if (ver == tls3_VERSION)
                 ver = '3';
             else
                 ver = '*';
@@ -300,7 +300,7 @@ int s_time_main(int argc, char **argv)
         fputc(ver, stdout);
         fflush(stdout);
 
-        SSL_free(scon);
+        tls_free(scon);
         scon = NULL;
     }
     totalTime += tm_Time_F(STOP); /* Add the time for this iteration */
@@ -322,7 +322,7 @@ int s_time_main(int argc, char **argv)
         goto end;
     printf("\n\nNow timing with session id reuse.\n");
 
-    /* Get an SSL object so we can reuse the session id */
+    /* Get an tls object so we can reuse the session id */
     if ((scon = doConnection(NULL, host, ctx)) == NULL) {
         BIO_printf(bio_err, "Unable to get connection\n");
         goto end;
@@ -330,13 +330,13 @@ int s_time_main(int argc, char **argv)
 
     if (www_path != NULL) {
         buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
-        if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+        if (buf_len <= 0 || tls_write(scon, buf, buf_len) <= 0)
             goto end;
-        while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
+        while ((i = tls_read(scon, buf, sizeof(buf))) > 0)
             continue;
     }
-    SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-    BIO_closesocket(SSL_get_fd(scon));
+    tls_set_shutdown(scon, tls_SENT_SHUTDOWN | tls_RECEIVED_SHUTDOWN);
+    BIO_closesocket(tls_get_fd(scon));
 
     nConn = 0;
     totalTime = 0.0;
@@ -357,22 +357,22 @@ int s_time_main(int argc, char **argv)
         if (www_path != NULL) {
             buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
                                    www_path);
-            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+            if (buf_len <= 0 || tls_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
+            while ((i = tls_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }
-        SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-        BIO_closesocket(SSL_get_fd(scon));
+        tls_set_shutdown(scon, tls_SENT_SHUTDOWN | tls_RECEIVED_SHUTDOWN);
+        BIO_closesocket(tls_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon)) {
+        if (tls_session_reused(scon)) {
             ver = 'r';
         } else {
-            ver = SSL_version(scon);
+            ver = tls_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
+            else if (ver == tls3_VERSION)
                 ver = '3';
             else
                 ver = '*';
@@ -392,18 +392,18 @@ int s_time_main(int argc, char **argv)
     ret = 0;
 
  end:
-    SSL_free(scon);
-    SSL_CTX_free(ctx);
+    tls_free(scon);
+    tls_CTX_free(ctx);
     return ret;
 }
 
 /*-
  * doConnection - make a connection
  */
-static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
+static tls *doConnection(tls *scon, const char *host, tls_CTX *ctx)
 {
     BIO *conn;
-    SSL *serverCon;
+    tls *serverCon;
     int i;
 
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
@@ -413,16 +413,16 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     BIO_set_conn_mode(conn, BIO_SOCK_NODELAY);
 
     if (scon == NULL)
-        serverCon = SSL_new(ctx);
+        serverCon = tls_new(ctx);
     else {
         serverCon = scon;
-        SSL_set_connect_state(serverCon);
+        tls_set_connect_state(serverCon);
     }
 
-    SSL_set_bio(serverCon, conn, conn);
+    tls_set_bio(serverCon, conn, conn);
 
     /* ok, lets connect */
-    i = SSL_connect(serverCon);
+    i = tls_connect(serverCon);
     if (i <= 0) {
         BIO_printf(bio_err, "ERROR\n");
         if (verify_args.error != X509_V_OK)
@@ -431,7 +431,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
         else
             ERR_print_errors(bio_err);
         if (scon == NULL)
-            SSL_free(serverCon);
+            tls_free(serverCon);
         return NULL;
     }
 
@@ -442,7 +442,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
 
         no_linger.l_onoff  = 1;
         no_linger.l_linger = 0;
-        fd = SSL_get_fd(serverCon);
+        fd = tls_get_fd(serverCon);
         if (fd >= 0)
             (void)setsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&no_linger,
                              sizeof(no_linger));
@@ -451,4 +451,4 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
 
     return serverCon;
 }
-#endif /* OPENSSL_NO_SOCK */
+#endif /* OPENtls_NO_SOCK */

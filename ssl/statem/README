@@ -4,7 +4,7 @@ State Machine Design
 This file provides some guidance on the thinking behind the design of the
 state machine code to aid future maintenance.
 
-The state machine code replaces an older state machine present in OpenSSL
+The state machine code replaces an older state machine present in Opentls
 versions 1.0.2 and below. The new state machine has the following objectives:
     - Remove duplication of state code between client and server
     - Remove duplication of state code between TLS and DTLS
@@ -30,7 +30,7 @@ detailed description of the various states and transitions possible.
 
 Conceptually the state machine component is designed as follows:
 
-                        libssl
+                        libtls
                            |
 ---------------------------|-----statem.h--------------------------------------
                            |

@@ -1,19 +1,19 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use feature 'state';
 
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 
-my $test_name = "test_sslcbcpadding";
+my $test_name = "test_tlscbcpadding";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -28,16 +28,16 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLSv1.2 enabled"
     if disabled("tls1_2");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&add_maximal_padding_filter,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 # TODO: We could test all 256 values, but then the log file gets too large for
-# CI. See https://github.com/openssl/openssl/issues/1440.
+# CI. See https://github.com/opentls/opentls/issues/1440.
 my @test_offsets = (0, 128, 254, 255);
 
 # Test that maximally-padded records are accepted.

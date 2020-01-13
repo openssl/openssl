@@ -1,23 +1,23 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_BN_LOCAL_H
-# define OSSL_CRYPTO_BN_LOCAL_H
+#ifndef Otls_CRYPTO_BN_LOCAL_H
+# define Otls_CRYPTO_BN_LOCAL_H
 
 /*
  * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or
  * SIXTY_FOUR_BIT in its own environment since it doesn't re-run our
  * Configure script and needs to support both 32-bit and 64-bit.
  */
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# if !defined(OPENSSL_SYS_UEFI)
+# if !defined(OPENtls_SYS_UEFI)
 #  include "crypto/bn_conf.h"
 # endif
 
@@ -27,7 +27,7 @@
  * These preprocessor symbols control various aspects of the bignum headers
  * and library code. They're not defined by any "normal" configuration, as
  * they are intended for development and testing purposes. NB: defining all
- * three can be useful for debugging application code as well as openssl
+ * three can be useful for debugging application code as well as opentls
  * itself. BN_DEBUG - turn on various debugging alterations to the bignum
  * code BN_DEBUG_RAND - uses random poisoning of unused words to trip up
  * mismanagement of bignum internals. You must also define BN_DEBUG.
@@ -35,7 +35,7 @@
 /* #define BN_DEBUG */
 /* #define BN_DEBUG_RAND */
 
-# ifndef OPENSSL_SMALL_FOOTPRINT
+# ifndef OPENtls_SMALL_FOOTPRINT
 #  define BN_MUL_COMBA
 #  define BN_SQR_COMBA
 #  define BN_RECURSION
@@ -53,8 +53,8 @@
  * this should be on.  Again this in only really a problem on machines using
  * "long long's", are 32bit, and are not using my assembler code.
  */
-# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
-    defined(OPENSSL_SYS_WIN32) || defined(linux)
+# if defined(OPENtls_SYS_MSDOS) || defined(OPENtls_SYS_WINDOWS) || \
+    defined(OPENtls_SYS_WIN32) || defined(linux)
 #  define BN_DIV2W
 # endif
 
@@ -134,10 +134,10 @@
  * was not appropriate, we convert it permanently to bn_check_top() and track
  * down the cause of the bug. Eventually, no internal code should be using the
  * bn_fix_top() macro. External applications and libraries should try this with
- * their own code too, both in terms of building against the openssl headers
- * with BN_DEBUG defined *and* linking with a version of OpenSSL built with it
+ * their own code too, both in terms of building against the opentls headers
+ * with BN_DEBUG defined *and* linking with a version of Opentls built with it
  * defined. This not only improves external code, it provides more test
- * coverage for openssl's own code.
+ * coverage for opentls's own code.
  */
 
 # ifdef BN_DEBUG
@@ -175,7 +175,7 @@
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
                         int _top = _bnum2->top; \
-                        (void)ossl_assert((_top == 0 && !_bnum2->neg) || \
+                        (void)otls_assert((_top == 0 && !_bnum2->neg) || \
                                   (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
                                             || _bnum2->d[_top - 1] != 0))); \
                         bn_pollute(_bnum2); \
@@ -345,17 +345,17 @@ struct bn_gencb_st {
  * with the same size as a pointer, which size_t is not certain to be. The
  * only fix here is VMS-specific.
  */
-# if defined(OPENSSL_SYS_VMS)
+# if defined(OPENtls_SYS_VMS)
 #  if __INITIAL_POINTER_SIZE == 64
 #   define PTR_SIZE_INT long long
 #  else                         /* __INITIAL_POINTER_SIZE == 64 */
 #   define PTR_SIZE_INT int
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 [else] */
-# elif !defined(PTR_SIZE_INT)   /* defined(OPENSSL_SYS_VMS) */
+# elif !defined(PTR_SIZE_INT)   /* defined(OPENtls_SYS_VMS) */
 #  define PTR_SIZE_INT size_t
-# endif                         /* defined(OPENSSL_SYS_VMS) [else] */
+# endif                         /* defined(OPENtls_SYS_VMS) [else] */
 
-# if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
+# if !defined(OPENtls_NO_ASM) && !defined(OPENtls_NO_INLINE_ASM) && !defined(PEDANTIC)
 /*
  * BN_UMULT_HIGH section.
  * If the compiler doesn't support 2*N integer type, then you have to
@@ -447,7 +447,7 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         ret;                      })
 #   endif
 #  endif                        /* cpu */
-# endif                         /* OPENSSL_NO_ASM */
+# endif                         /* OPENtls_NO_ASM */
 
 # ifdef BN_DEBUG_RAND
 #  define bn_clear_top2max(a) \
@@ -654,7 +654,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *noinv);
 
-static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+static otls_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
     if (bits > (INT_MAX - BN_BITS2 + 1))
         return NULL;

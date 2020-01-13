@@ -1,24 +1,24 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/ec.h>
-#include <openssl/bn.h>
-#include <openssl/cms.h>
-#include <openssl/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/ec.h>
+#include <opentls/bn.h>
+#include <opentls/cms.h>
+#include <opentls/asn1t.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "ec_local.h"
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
@@ -70,7 +70,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     penclen = i2o_ECPublicKey(ec_key, NULL);
     if (penclen <= 0)
         goto err;
-    penc = OPENSSL_malloc(penclen);
+    penc = OPENtls_malloc(penclen);
     if (penc == NULL)
         goto err;
     p = penc;
@@ -85,7 +85,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         ASN1_OBJECT_free(pval);
     else
         ASN1_STRING_free(pval);
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     return 0;
 }
 
@@ -116,7 +116,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval)
         group = EC_GROUP_new_by_curve_name(OBJ_obj2nid(poid));
         if (group == NULL)
             goto ecerr;
-        EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+        EC_GROUP_set_asn1_flag(group, OPENtls_EC_NAMED_CURVE);
         if (EC_KEY_set_group(eckey, group) == 0)
             goto ecerr;
         EC_GROUP_free(group);
@@ -242,21 +242,21 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
-    ep = OPENSSL_malloc(eplen);
+    ep = OPENtls_malloc(eplen);
     if (ep == NULL) {
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p = ep;
     if (!i2d_ECPrivateKey(&ec_key, &p)) {
-        OPENSSL_free(ep);
+        OPENtls_free(ep);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen)) {
-        OPENSSL_free(ep);
+        OPENtls_free(ep);
         return 0;
     }
 
@@ -397,8 +397,8 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
  err:
     if (!ret)
         ECerr(EC_F_DO_EC_KEY_PRINT, ERR_R_EC_LIB);
-    OPENSSL_clear_free(priv, privlen);
-    OPENSSL_free(pub);
+    OPENtls_clear_free(priv, privlen);
+    OPENtls_free(pub);
     return ret;
 }
 
@@ -474,7 +474,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
         }
         return 1;
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     case ASN1_PKEY_CTRL_CMS_SIGN:
         if (arg1 == 0) {
             int snid, hnid;
@@ -573,7 +573,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     EVP_PKEY_EC,
     0,
     "EC",
-    "OpenSSL EC algorithm",
+    "Opentls EC algorithm",
 
     eckey_pub_decode,
     eckey_pub_encode,
@@ -608,7 +608,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     ec_pkey_param_check
 };
 
-#if !defined(OPENSSL_NO_SM2)
+#if !defined(OPENtls_NO_SM2)
 const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
    EVP_PKEY_SM2,
    EVP_PKEY_EC,
@@ -629,7 +629,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
     return do_EC_KEY_print(bp, x, 4, EC_KEY_PRINT_PARAM);
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 
 static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                                 X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
@@ -771,7 +771,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     rv = 1;
  err:
     X509_ALGOR_free(kekalg);
-    OPENSSL_free(der);
+    OPENtls_free(der);
     return rv;
 }
 
@@ -838,7 +838,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         penclen = i2o_ECPublicKey(eckey, NULL);
         if (penclen <= 0)
             goto err;
-        penc = OPENSSL_malloc(penclen);
+        penc = OPENtls_malloc(penclen);
         if (penc == NULL)
             goto err;
         p = penc;
@@ -939,7 +939,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     rv = 1;
 
  err:
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     X509_ALGOR_free(wrap_alg);
     return rv;
 }

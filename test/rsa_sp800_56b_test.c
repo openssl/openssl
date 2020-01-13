@@ -1,10 +1,10 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,14 +12,14 @@
 
 #include "internal/nelem.h"
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/bn.h>
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
+#ifdef OPENtls_NO_RSA
 int setup_tests(void)
 {
     /* No tests */
@@ -27,7 +27,7 @@ int setup_tests(void)
 }
 #else
 # include "rsa_local.h"
-# include <openssl/rsa.h>
+# include <opentls/rsa.h>
 
 /* taken from RSA2 cavs data */
 static const unsigned char cav_e[] = {
@@ -669,7 +669,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid_keypair);
     ADD_TEST(test_pq_diff);
     ADD_TEST(test_fips1864_keygen_kat);
-    ADD_ALL_TESTS(test_sp80056b_keygen, (int)OSSL_NELEM(keygen_size));
+    ADD_ALL_TESTS(test_sp80056b_keygen, (int)Otls_NELEM(keygen_size));
     return 1;
 }
 #endif

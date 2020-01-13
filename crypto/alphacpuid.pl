@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 $output = pop and open STDOUT,">$output";
@@ -14,17 +14,17 @@ print <<'___';
 
 .set	noat
 
-.globl	OPENSSL_cpuid_setup
-.ent	OPENSSL_cpuid_setup
-OPENSSL_cpuid_setup:
+.globl	OPENtls_cpuid_setup
+.ent	OPENtls_cpuid_setup
+OPENtls_cpuid_setup:
 	.frame	$30,0,$26
 	.prologue 0
 	ret	($26)
-.end	OPENSSL_cpuid_setup
+.end	OPENtls_cpuid_setup
 
-.globl	OPENSSL_wipe_cpu
-.ent	OPENSSL_wipe_cpu
-OPENSSL_wipe_cpu:
+.globl	OPENtls_wipe_cpu
+.ent	OPENtls_wipe_cpu
+OPENtls_wipe_cpu:
 	.frame	$30,0,$26
 	.prologue 0
 	clr	$1
@@ -73,11 +73,11 @@ OPENSSL_wipe_cpu:
 	fclr	$f30
 	mov	$sp,$0
 	ret	($26)
-.end	OPENSSL_wipe_cpu
+.end	OPENtls_wipe_cpu
 
-.globl	OPENSSL_atomic_add
-.ent	OPENSSL_atomic_add
-OPENSSL_atomic_add:
+.globl	OPENtls_atomic_add
+.ent	OPENtls_atomic_add
+OPENtls_atomic_add:
 	.frame	$30,0,$26
 	.prologue 0
 1:	ldl_l	$0,0($16)
@@ -86,20 +86,20 @@ OPENSSL_atomic_add:
 	beq	$1,1b
 	addl	$0,$17,$0
 	ret	($26)
-.end	OPENSSL_atomic_add
+.end	OPENtls_atomic_add
 
-.globl	OPENSSL_rdtsc
-.ent	OPENSSL_rdtsc
-OPENSSL_rdtsc:
+.globl	OPENtls_rdtsc
+.ent	OPENtls_rdtsc
+OPENtls_rdtsc:
 	.frame	$30,0,$26
 	.prologue 0
 	rpcc	$0
 	ret	($26)
-.end	OPENSSL_rdtsc
+.end	OPENtls_rdtsc
 
-.globl	OPENSSL_cleanse
-.ent	OPENSSL_cleanse
-OPENSSL_cleanse:
+.globl	OPENtls_cleanse
+.ent	OPENtls_cleanse
+OPENtls_cleanse:
 	.frame	$30,0,$26
 	.prologue 0
 	beq	$17,.Ldone
@@ -132,7 +132,7 @@ OPENSSL_cleanse:
 	bne	$at,.Laligned
 	bne	$17,.Little
 .Ldone: ret	($26)
-.end	OPENSSL_cleanse
+.end	OPENtls_cleanse
 
 .globl	CRYPTO_memcmp
 .ent	CRYPTO_memcmp
@@ -169,9 +169,9 @@ my ($diff,$lastdiff)=("\$21","\$22");
 my ($v0,$ra,$sp,$zero)=("\$0","\$26","\$30","\$31");
 
 print <<___;
-.globl	OPENSSL_instrument_bus
-.ent	OPENSSL_instrument_bus
-OPENSSL_instrument_bus:
+.globl	OPENtls_instrument_bus
+.ent	OPENtls_instrument_bus
+OPENtls_instrument_bus:
 	.frame	$sp,0,$ra
 	.prologue 0
 	mov	$cnt,$v0
@@ -202,11 +202,11 @@ OPENSSL_instrument_bus:
 	bne	$cnt,.Loop
 
 	ret	($ra)
-.end	OPENSSL_instrument_bus
+.end	OPENtls_instrument_bus
 
-.globl	OPENSSL_instrument_bus2
-.ent	OPENSSL_instrument_bus2
-OPENSSL_instrument_bus2:
+.globl	OPENtls_instrument_bus2
+.ent	OPENtls_instrument_bus2
+OPENtls_instrument_bus2:
 	.frame	$sp,0,$ra
 	.prologue 0
 	mov	$cnt,$v0
@@ -249,7 +249,7 @@ OPENSSL_instrument_bus2:
 .Ldone2:
 	subl	$v0,$cnt,$v0
 	ret	($ra)
-.end	OPENSSL_instrument_bus2
+.end	OPENtls_instrument_bus2
 ___
 }
 

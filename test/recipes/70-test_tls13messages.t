@@ -1,14 +1,14 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
+use Opentls::Test::Utils;
 use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 use checkhandshake qw(checkhandshake @handmessages @extensions);
@@ -31,7 +31,7 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
 plan skip_all => "$test_name needs EC enabled"
     if disabled("ec");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 
@@ -199,7 +199,7 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
@@ -226,7 +226,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                "Resumption handshake test");
 
 SKIP: {
-    skip "No OCSP support in this OpenSSL build", 4
+    skip "No OCSP support in this Opentls build", 4
         if disabled("ct") || disabled("ec") || disabled("ocsp");
     #Test 3: A status_request handshake (client request only)
     $proxy->clear();
@@ -341,7 +341,7 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                "ALPN handshake test");
 
 SKIP: {
-    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+    skip "No CT, EC or OCSP support in this Opentls build", 1
         if disabled("ct") || disabled("ec") || disabled("ocsp");
 
     #Test 14: SCT handshake (client request only)

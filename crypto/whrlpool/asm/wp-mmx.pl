@@ -1,14 +1,14 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
 # project. Rights for redistribution and usage in source and binary
 # forms are granted according to the License.
 # ====================================================================
@@ -45,7 +45,7 @@
 #	pre-MMX AMD core[s], the improvement coefficient is more
 #	than likely to vary anyway and I don't know how. But the
 #	least I know is that gcc-generated code compiled with
-#	-DL_ENDIAN and -DOPENSSL_SMALL_FOOTPRINT [see C module for
+#	-DL_ENDIAN and -DOPENtls_SMALL_FOOTPRINT [see C module for
 #	details] and optimized for Pentium was observed to perform
 #	*better* on Pentium 100 than unrolled non-MMX assembler
 #	loop... So we just say that I don't know if maintaining

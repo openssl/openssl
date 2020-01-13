@@ -1,16 +1,16 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
 
 /* Minor tweak to operation: zero private key data */
@@ -21,7 +21,7 @@ static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (operation == ASN1_OP_FREE_PRE) {
         PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
         if (key->pkey)
-            OPENSSL_cleanse(key->pkey->data, key->pkey->length);
+            OPENtls_cleanse(key->pkey->data, key->pkey->length);
     }
     return 1;
 }

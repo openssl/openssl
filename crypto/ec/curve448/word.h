@@ -1,22 +1,22 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2014 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Mike Hamburg
  */
 
-#ifndef OSSL_CRYPTO_EC_CURVE448_WORD_H
-# define OSSL_CRYPTO_EC_CURVE448_WORD_H
+#ifndef Otls_CRYPTO_EC_CURVE448_WORD_H
+# define Otls_CRYPTO_EC_CURVE448_WORD_H
 
 # include <string.h>
 # include <assert.h>
 # include <stdlib.h>
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 # include "arch_intrinsics.h"
 # include "curve448utils.h"
 
@@ -58,12 +58,12 @@ typedef int64_t dsword_t;
  * that's handled in common.h: it converts between c448_bool_t and
  * c448_error_t.
  */
-static ossl_inline c448_bool_t mask_to_bool(mask_t m)
+static otls_inline c448_bool_t mask_to_bool(mask_t m)
 {
     return (c448_sword_t)(sword_t)m;
 }
 
-static ossl_inline mask_t bool_to_mask(c448_bool_t m)
+static otls_inline mask_t bool_to_mask(c448_bool_t m)
 {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
@@ -78,4 +78,4 @@ static ossl_inline mask_t bool_to_mask(c448_bool_t m)
     return ret;
 }
 
-#endif                          /* OSSL_CRYPTO_EC_CURVE448_WORD_H */
+#endif                          /* Otls_CRYPTO_EC_CURVE448_WORD_H */

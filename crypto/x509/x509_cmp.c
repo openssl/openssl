@@ -1,19 +1,19 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/core_names.h>
+#include <opentls/asn1.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/core_names.h>
 #include "crypto/x509.h"
 
 int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
@@ -29,7 +29,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
     return X509_NAME_cmp(ai->issuer, bi->issuer);
 }
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
 unsigned long X509_issuer_and_serial_hash(X509 *a)
 {
     unsigned long ret = 0;
@@ -44,7 +44,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         goto err;
     if (!EVP_DigestUpdate(ctx, (unsigned char *)f, strlen(f)))
         goto err;
-    OPENSSL_free(f);
+    OPENtls_free(f);
     if (!EVP_DigestUpdate
         (ctx, (unsigned char *)a->cert_info.serialNumber.data,
          (unsigned long)a->cert_info.serialNumber.length))
@@ -90,7 +90,7 @@ unsigned long X509_issuer_name_hash(X509 *x)
     return X509_NAME_hash(x->cert_info.issuer);
 }
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
 unsigned long X509_issuer_name_hash_old(X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.issuer);
@@ -117,7 +117,7 @@ unsigned long X509_subject_name_hash(X509 *x)
     return X509_NAME_hash(x->cert_info.subject);
 }
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
 unsigned long X509_subject_name_hash_old(X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.subject);
@@ -198,7 +198,7 @@ unsigned long X509_NAME_hash(X509_NAME *x)
     return ret;
 }
 
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
 /*
  * I now DER encode the name and hash it.  Since I cache the DER encoding,
  * this is reasonably efficient.
@@ -206,7 +206,7 @@ unsigned long X509_NAME_hash(X509_NAME *x)
 
 unsigned long X509_NAME_hash_old(X509_NAME *x)
 {
-    EVP_MD *md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
+    EVP_MD *md5 = EVP_MD_fetch(NULL, Otls_DIGEST_NAME_MD5, "-fips");
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     unsigned long ret = 0;
     unsigned char md[16];
@@ -314,7 +314,7 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
  * flags field which must contain the suite B verification flags.
  */
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 
 static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
 {

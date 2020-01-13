@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/x509v3.h>
+#include <opentls/x509v3.h>
 #include "x509_local.h"
 
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
@@ -446,7 +446,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk))
 {
-    X509_CRL_METHOD *m = OPENSSL_malloc(sizeof(*m));
+    X509_CRL_METHOD *m = OPENtls_malloc(sizeof(*m));
 
     if (m == NULL) {
         X509err(X509_F_X509_CRL_METHOD_NEW, ERR_R_MALLOC_FAILURE);
@@ -464,7 +464,7 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m)
 {
     if (m == NULL || !(m->flags & X509_CRL_METHOD_DYNAMIC))
         return;
-    OPENSSL_free(m);
+    OPENtls_free(m);
 }
 
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat)

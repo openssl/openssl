@@ -1,11 +1,11 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Tests of the EVP_KDF_CTX APIs */
@@ -13,9 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/core_names.h>
 #include "testutil.h"
 
 static EVP_KDF_CTX *get_kdfbyname(const char *name)
@@ -32,24 +32,24 @@ static int test_kdf_tls1_prf(void)
     int ret;
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[16];
-    OSSL_PARAM params[4], *p = params;
+    Otls_PARAM params[4], *p = params;
     static const unsigned char expected[sizeof(out)] = {
         0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
         0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha256", sizeof("sha256"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SECRET,
                                              (unsigned char *)"secret",
                                              (size_t)6);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SEED,
                                              (unsigned char *)"seed",
                                              (size_t)4);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_TLS1_PRF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_TLS1_PRF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -63,23 +63,23 @@ static int test_kdf_hkdf(void)
     int ret;
     EVP_KDF_CTX *kctx;
     unsigned char out[10];
-    OSSL_PARAM params[5], *p = params;
+    Otls_PARAM params[5], *p = params;
     static const unsigned char expected[sizeof(out)] = {
         0x2a, 0xc4, 0x36, 0x9f, 0x52, 0x59, 0x96, 0xf8, 0xde, 0x13
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha256", sizeof("sha256"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                              (unsigned char *)"salt", 4);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY,
                                              (unsigned char *)"secret", 6);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                              (unsigned char *)"label", 5);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_HKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -96,7 +96,7 @@ static int test_kdf_pbkdf2(void)
     size_t len = 0;
     unsigned int iterations = 4096;
     int mode = 0;
-    OSSL_PARAM params[6], *p = params;
+    Otls_PARAM params[6], *p = params;
     const unsigned char expected[sizeof(out)] = {
         0x34, 0x8c, 0x89, 0xdb, 0xcb, 0xd3, 0x2b, 0x2f,
         0x32, 0xd8, 0x14, 0xb8, 0x11, 0x6e, 0x84, 0xcf,
@@ -107,20 +107,20 @@ static int test_kdf_pbkdf2(void)
     if (sizeof(len) > 32)
         len = SIZE_MAX;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_PASSWORD,
                                              (unsigned char *)
                                                 "passwordPASSWORDpassword", 24);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                              (unsigned char *)
                                                 "saltSALTsaltSALTsaltSALTsaltSALTsalt",
                                                 36);
-    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &iterations);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_uint(Otls_KDF_PARAM_ITER, &iterations);
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                              (char *)"sha256", 7);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
-    *p = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_int(Otls_KDF_PARAM_PKCS5, &mode);
+    *p = Otls_PARAM_construct_end();
 
-    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_PBKDF2))
+    if (!TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_PBKDF2))
         || !TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         || !TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))
@@ -160,12 +160,12 @@ err:
     return ret;
 }
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 static int test_kdf_scrypt(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[7], *p = params;
+    Otls_PARAM params[7], *p = params;
     unsigned char out[64];
     unsigned int nu = 1024, ru = 8, pu = 16, maxmem = 16;
     static const unsigned char expected[sizeof(out)] = {
@@ -179,22 +179,22 @@ static int test_kdf_scrypt(void)
         0x83, 0x60, 0xcb, 0xdf, 0xa2, 0xcc, 0x06, 0x40
     };
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_PASSWORD,
                                              (char *)"password", 8);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                              (char *)"NaCl", 4);
-    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_SCRYPT_N, &nu);
-    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_SCRYPT_R, &ru);
-    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_SCRYPT_P, &pu);
-    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
-    *p = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_uint(Otls_KDF_PARAM_SCRYPT_N, &nu);
+    *p++ = Otls_PARAM_construct_uint(Otls_KDF_PARAM_SCRYPT_R, &ru);
+    *p++ = Otls_PARAM_construct_uint(Otls_KDF_PARAM_SCRYPT_P, &pu);
+    *p++ = Otls_PARAM_construct_uint(Otls_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SCRYPT))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_SCRYPT))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         /* failure test *//*
         && TEST_int_le(EVP_KDF_derive(kctx, out, sizeof(out)), 0)*/
-        && TEST_true(OSSL_PARAM_set_uint(p - 1, 10 * 1024 * 1024))
+        && TEST_true(Otls_PARAM_set_uint(p - 1, 10 * 1024 * 1024))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, p - 1))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -202,13 +202,13 @@ static int test_kdf_scrypt(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
-#endif /* OPENSSL_NO_SCRYPT */
+#endif /* OPENtls_NO_SCRYPT */
 
 static int test_kdf_ss_hash(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[4], *p = params;
+    Otls_PARAM params[4], *p = params;
     unsigned char out[14];
     static unsigned char z[] = {
         0x6d,0xbd,0xc2,0x3f,0x04,0x54,0x88,0xe4,0x06,0x27,0x57,0xb0,0x6b,0x9e,
@@ -226,15 +226,15 @@ static int test_kdf_ss_hash(void)
         0xa4,0x62,0xde,0x16,0xa8,0x9d,0xe8,0x46,0x6e,0xf5,0x46,0x0b,0x47,0xb8
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha224", sizeof("sha224"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, z, sizeof(z));
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO, other,
                                              sizeof(other));
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -247,7 +247,7 @@ static int test_kdf_x963(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[4], *p = params;
+    Otls_PARAM params[4], *p = params;
     unsigned char out[1024 / 8];
     /*
      * Test data from https://csrc.nist.gov/CSRC/media/Projects/
@@ -280,15 +280,15 @@ static int test_kdf_x963(void)
         0xab, 0x87, 0xf9, 0x66, 0x1c, 0x3e, 0x88, 0x16
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha512", sizeof("sha512"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, shared,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, z, sizeof(z));
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO, shared,
                                              sizeof(shared));
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X963KDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_X963KDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -297,7 +297,7 @@ static int test_kdf_x963(void)
     return ret;
 }
 
-#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
+#if !defined(OPENtls_NO_CMAC) && !defined(OPENtls_NO_CAMELLIA)
 /*
  * KBKDF test vectors from RFC 6803 (Camellia Encryption for Kerberos 5)
  * section 10.
@@ -306,7 +306,7 @@ static int test_kdf_kbkdf_6803_128(void)
 {
     int ret = 0, i, p;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[7];
+    Otls_PARAM params[7];
     static unsigned char input_key[] = {
         0x57, 0xD0, 0x29, 0x72, 0x98, 0xFF, 0xD9, 0xD3,
         0x5D, 0xE5, 0xA4, 0x7F, 0xB4, 0xBD, 0xE2, 0x4B,
@@ -329,19 +329,19 @@ static int test_kdf_kbkdf_6803_128(void)
 
     for (i = 0; i < 3; i++) {
         p = 0;
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_CIPHER, "CAMELLIA-128-CBC", 0);
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_MAC, "CMAC", 0);
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_MODE, "FEEDBACK", 0);
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_SEED, iv, sizeof(iv));
-        params[p] = OSSL_PARAM_construct_end();
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_CIPHER, "CAMELLIA-128-CBC", 0);
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_MAC, "CMAC", 0);
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_MODE, "FEEDBACK", 0);
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_KEY, input_key, sizeof(input_key));
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_SEED, iv, sizeof(iv));
+        params[p] = Otls_PARAM_construct_end();
 
         kctx = get_kdfbyname("KBKDF");
         ret = TEST_ptr(kctx)
@@ -361,7 +361,7 @@ static int test_kdf_kbkdf_6803_256(void)
 {
     int ret = 0, i, p;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[7];
+    Otls_PARAM params[7];
     static unsigned char input_key[] = {
         0xB9, 0xD6, 0x82, 0x8B, 0x20, 0x56, 0xB7, 0xBE,
         0x65, 0x6D, 0x88, 0xA1, 0x23, 0xB1, 0xFA, 0xC6,
@@ -395,19 +395,19 @@ static int test_kdf_kbkdf_6803_256(void)
 
     for (i = 0; i < 3; i++) {
         p = 0;
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_CIPHER, "CAMELLIA-256-CBC", 0);
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_MAC, "CMAC", 0);
-        params[p++] = OSSL_PARAM_construct_utf8_string(
-            OSSL_KDF_PARAM_MODE, "FEEDBACK", 0);
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
-        params[p++] = OSSL_PARAM_construct_octet_string(
-            OSSL_KDF_PARAM_SEED, iv, sizeof(iv));
-        params[p] = OSSL_PARAM_construct_end();
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_CIPHER, "CAMELLIA-256-CBC", 0);
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_MAC, "CMAC", 0);
+        params[p++] = Otls_PARAM_construct_utf8_string(
+            Otls_KDF_PARAM_MODE, "FEEDBACK", 0);
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_KEY, input_key, sizeof(input_key));
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_SALT, constants[i], sizeof(constants[i]));
+        params[p++] = Otls_PARAM_construct_octet_string(
+            Otls_KDF_PARAM_SEED, iv, sizeof(iv));
+        params[p] = Otls_PARAM_construct_end();
 
         kctx = get_kdfbyname("KBKDF");
         ret = TEST_ptr(kctx)
@@ -430,7 +430,7 @@ static int test_kdf_kbkdf_8009_prf1(void)
 {
     int ret, i = 0;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6];
+    Otls_PARAM params[6];
     char *label = "prf", *digest = "sha256", *prf_input = "test",
         *mac = "HMAC";
     static unsigned char input_key[] = {
@@ -445,17 +445,17 @@ static int test_kdf_kbkdf_8009_prf1(void)
     };
     unsigned char result[sizeof(output)] = { 0 };
 
-    params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
-    params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_MAC, mac, strlen(mac) + 1);
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_SALT, label, strlen(label));
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_INFO, prf_input, strlen(prf_input));
-    params[i] = OSSL_PARAM_construct_end();
+    params[i++] = Otls_PARAM_construct_utf8_string(
+        Otls_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
+    params[i++] = Otls_PARAM_construct_utf8_string(
+        Otls_KDF_PARAM_MAC, mac, strlen(mac) + 1);
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_KEY, input_key, sizeof(input_key));
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_SALT, label, strlen(label));
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_INFO, prf_input, strlen(prf_input));
+    params[i] = Otls_PARAM_construct_end();
 
     kctx = get_kdfbyname("KBKDF");
     ret = TEST_ptr(kctx)
@@ -471,7 +471,7 @@ static int test_kdf_kbkdf_8009_prf2(void)
 {
     int ret, i = 0;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6];
+    Otls_PARAM params[6];
     char *label = "prf", *digest = "sha384", *prf_input = "test",
         *mac = "HMAC";
     static unsigned char input_key[] = {
@@ -490,17 +490,17 @@ static int test_kdf_kbkdf_8009_prf2(void)
     };
     unsigned char result[sizeof(output)] = { 0 };
 
-    params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
-    params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_MAC, mac, strlen(mac) + 1);
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_SALT, label, strlen(label));
-    params[i++] = OSSL_PARAM_construct_octet_string(
-        OSSL_KDF_PARAM_INFO, prf_input, strlen(prf_input));
-    params[i] = OSSL_PARAM_construct_end();
+    params[i++] = Otls_PARAM_construct_utf8_string(
+        Otls_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
+    params[i++] = Otls_PARAM_construct_utf8_string(
+        Otls_KDF_PARAM_MAC, mac, strlen(mac) + 1);
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_KEY, input_key, sizeof(input_key));
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_SALT, label, strlen(label));
+    params[i++] = Otls_PARAM_construct_octet_string(
+        Otls_KDF_PARAM_INFO, prf_input, strlen(prf_input));
+    params[i] = Otls_PARAM_construct_end();
 
     kctx = get_kdfbyname("KBKDF");
     ret = TEST_ptr(kctx)
@@ -516,7 +516,7 @@ static int test_kdf_ss_hmac(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6], *p = params;
+    Otls_PARAM params[6], *p = params;
     unsigned char out[16];
     static unsigned char z[] = {
         0xb7,0x4a,0x14,0x9a,0x16,0x15,0x46,0xf8,0xc2,0x0b,0x06,0xac,0x4e,0xd4
@@ -533,20 +533,20 @@ static int test_kdf_ss_hmac(void)
         0x1c,0xa3
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
-                                            (char *)OSSL_MAC_NAME_HMAC,
-                                            sizeof(OSSL_MAC_NAME_HMAC));
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_MAC,
+                                            (char *)Otls_MAC_NAME_HMAC,
+                                            sizeof(Otls_MAC_NAME_HMAC));
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha256", sizeof("sha256"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, z, sizeof(z));
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO, other,
                                              sizeof(other));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT, salt,
                                              sizeof(salt));
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -559,7 +559,7 @@ static int test_kdf_ss_kmac(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6], *p = params;
+    Otls_PARAM params[6], *p = params;
     unsigned char out[64];
     size_t mac_size = 20;
     static unsigned char z[] = {
@@ -580,19 +580,19 @@ static int test_kdf_ss_kmac(void)
         0xae,0x15,0x7e,0x1d,0xe8,0x14,0x98,0x03
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
-                                            (char *)OSSL_MAC_NAME_KMAC128,
-                                            sizeof(OSSL_MAC_NAME_KMAC128));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_MAC,
+                                            (char *)Otls_MAC_NAME_KMAC128,
+                                            sizeof(Otls_MAC_NAME_KMAC128));
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, z, sizeof(z));
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO, other,
                                              sizeof(other));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT, salt,
                                              sizeof(salt));
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_MAC_SIZE, &mac_size);
-    *p = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_size_t(Otls_KDF_PARAM_MAC_SIZE, &mac_size);
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_SSKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -605,7 +605,7 @@ static int test_kdf_sshkdf(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6], *p = params;
+    Otls_PARAM params[6], *p = params;
     char kdftype = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
     unsigned char out[8];
     /* Test data from NIST CAVS 14.1 test vectors */
@@ -637,20 +637,20 @@ static int test_kdf_sshkdf(void)
         0x41, 0xff, 0x2e, 0xad, 0x16, 0x83, 0xf1, 0xe6
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha256", sizeof("sha256"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, key,
                                              sizeof(key));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_XCGHASH,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SSHKDF_XCGHASH,
                                              xcghash, sizeof(xcghash));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SSHKDF_SESSION_ID,
                                              sessid, sizeof(sessid));
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_SSHKDF_TYPE,
                                             &kdftype, sizeof(kdftype));
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSHKDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_SSHKDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -666,7 +666,7 @@ static int test_kdf_get_kdf(void)
     int ok = 1;
 
     if (!TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
-        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL))
+        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, Otls_KDF_NAME_PBKDF2, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
                                           NULL))
         || !TEST_ptr_eq(kdf1, kdf2))
@@ -695,12 +695,12 @@ static int test_kdf_get_kdf(void)
     return ok;
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int test_kdf_x942_asn1(void)
 {
     int ret;
     EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM params[4], *p = params;
+    Otls_PARAM params[4], *p = params;
     const char *cek_alg = SN_id_smime_alg_CMS3DESwrap;
     unsigned char out[24];
     /* RFC2631 Section 2.1.6 Test data */
@@ -714,17 +714,17 @@ static int test_kdf_x942_asn1(void)
         0xb6,0x7f,0x5f,0x1e,0xf6,0x3e,0xb5,0xfb
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)"sha1", sizeof("sha1"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, z,
                                              sizeof(z));
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_CEK_ALG,
                                             (char *)cek_alg,
                                             strlen(cek_alg) + 1);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X942KDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_X942KDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -732,13 +732,13 @@ static int test_kdf_x942_asn1(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
-#endif /* OPENSSL_NO_CMS */
+#endif /* OPENtls_NO_CMS */
 
 static int test_kdf_krb5kdf(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[4], *p = params;
+    Otls_PARAM params[4], *p = params;
     unsigned char out[16];
     static unsigned char key[] = {
         0x42, 0x26, 0x3C, 0x6E, 0x89, 0xF4, 0xFC, 0x28,
@@ -752,17 +752,17 @@ static int test_kdf_krb5kdf(void)
         0xB2, 0xDA, 0x2F, 0x9E, 0xF0, 0x66, 0x85, 0x4B
     };
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_CIPHER,
                                             (char *)"AES-128-CBC",
                                             sizeof("AES-128-CBC"));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY, key,
                                              sizeof(key));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_CONSTANT,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_CONSTANT,
                                              constant, sizeof(constant));
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_KRB5KDF))
+        TEST_ptr(kctx = get_kdfbyname(Otls_KDF_NAME_KRB5KDF))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
@@ -773,7 +773,7 @@ static int test_kdf_krb5kdf(void)
 
 int setup_tests(void)
 {
-#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
+#if !defined(OPENtls_NO_CMAC) && !defined(OPENtls_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
 #endif
@@ -783,7 +783,7 @@ int setup_tests(void)
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_hkdf);
     ADD_TEST(test_kdf_pbkdf2);
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
 #endif
     ADD_TEST(test_kdf_ss_hash);
@@ -791,7 +791,7 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_kmac);
     ADD_TEST(test_kdf_sshkdf);
     ADD_TEST(test_kdf_x963);
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     ADD_TEST(test_kdf_x942_asn1);
 #endif
     ADD_TEST(test_kdf_krb5kdf);

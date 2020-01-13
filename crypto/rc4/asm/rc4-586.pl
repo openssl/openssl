@@ -1,20 +1,20 @@
 #! /usr/bin/env perl
-# Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# [Re]written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# [Re]written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
-# At some point it became apparent that the original SSLeay RC4
+# At some point it became apparent that the original tlseay RC4
 # assembler implementation performs suboptimally on latest IA-32
 # microarchitectures. After re-tuning performance has changed as
 # following:
@@ -160,7 +160,7 @@ if ($alt=0) {
   }
 }
 
-&external_label("OPENSSL_ia32cap_P");
+&external_label("OPENtls_ia32cap_P");
 
 # void RC4(RC4_KEY *key,size_t len,const unsigned char *inp,unsigned char *out);
 &function_begin("RC4");
@@ -201,7 +201,7 @@ if ($alt=0) {
 	&test	($ty,-8);
 	&jz	(&label("go4loop4"));
 
-	&picmeup($out,"OPENSSL_ia32cap_P");
+	&picmeup($out,"OPENtls_ia32cap_P");
 	&bt	(&DWP(0,$out),26);	# check SSE2 bit [could have been MMX]
 	&jnc	(&label("go4loop4"));
 
@@ -318,7 +318,7 @@ $idx="edx";
 	&mov	($out,&wparam(0));		# load key
 	&mov	($idi,&wparam(1));		# load len
 	&mov	($inp,&wparam(2));		# load data
-	&picmeup($idx,"OPENSSL_ia32cap_P");
+	&picmeup($idx,"OPENtls_ia32cap_P");
 
 	&lea	($out,&DWP(2*4,$out));		# &key->data
 	&lea	($inp,&DWP(0,$inp,$idi));	# $inp to point at the end
@@ -400,7 +400,7 @@ $idx="edx";
 &set_label("pic_point");
 	&blindpop("eax");
 	&lea	("eax",&DWP(&label("opts")."-".&label("pic_point"),"eax"));
-	&picmeup("edx","OPENSSL_ia32cap_P");
+	&picmeup("edx","OPENtls_ia32cap_P");
 	&mov	("edx",&DWP(0,"edx"));
 	&bt	("edx",20);
 	&jc	(&label("1xchar"));
@@ -416,7 +416,7 @@ $idx="edx";
 &asciz	("rc4(4x,int)");
 &asciz	("rc4(1x,char)");
 &asciz	("rc4(8x,mmx)");
-&asciz	("RC4 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("RC4 for x86, CRYPTOGAMS by <appro\@opentls.org>");
 &align	(64);
 &function_end_B("RC4_options");
 

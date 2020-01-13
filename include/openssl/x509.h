@@ -1,40 +1,40 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_X509_H
-# define OPENSSL_X509_H
+#ifndef OPENtls_X509_H
+# define OPENtls_X509_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_X509_H
 # endif
 
-# include <openssl/e_os2.h>
-# include <openssl/types.h>
-# include <openssl/symhacks.h>
-# include <openssl/buffer.h>
-# include <openssl/evp.h>
-# include <openssl/bio.h>
-# include <openssl/asn1.h>
-# include <openssl/safestack.h>
-# include <openssl/ec.h>
+# include <opentls/e_os2.h>
+# include <opentls/types.h>
+# include <opentls/symhacks.h>
+# include <opentls/buffer.h>
+# include <opentls/evp.h>
+# include <opentls/bio.h>
+# include <opentls/asn1.h>
+# include <opentls/safestack.h>
+# include <opentls/ec.h>
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/rsa.h>
-#  include <openssl/dsa.h>
-#  include <openssl/dh.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/rsa.h>
+#  include <opentls/dsa.h>
+#  include <opentls/dh.h>
 # endif
 
-# include <openssl/sha.h>
-# include <openssl/x509err.h>
+# include <opentls/sha.h>
+# include <opentls/x509err.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -122,8 +122,8 @@ DEFINE_STACK_OF(X509_TRUST)
 # define X509_TRUST_DEFAULT      0 /* Only valid in purpose settings */
 
 # define X509_TRUST_COMPAT       1
-# define X509_TRUST_SSL_CLIENT   2
-# define X509_TRUST_SSL_SERVER   3
+# define X509_TRUST_tls_CLIENT   2
+# define X509_TRUST_tls_SERVER   3
 # define X509_TRUST_EMAIL        4
 # define X509_TRUST_OBJECT_SIGN  5
 # define X509_TRUST_OCSP_SIGN    6
@@ -309,7 +309,7 @@ typedef struct PBKDF2PARAM_st {
     X509_ALGOR *prf;
 } PBKDF2PARAM;
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 typedef struct SCRYPT_PARAMS_st {
     ASN1_OCTET_STRING *salt;
     ASN1_INTEGER *costParameter;
@@ -323,8 +323,8 @@ typedef struct SCRYPT_PARAMS_st {
 }
 #endif
 
-# include <openssl/x509_vfy.h>
-# include <openssl/pkcs7.h>
+# include <opentls/x509_vfy.h>
+# include <opentls/pkcs7.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -372,14 +372,14 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
-# ifndef OPENSSL_NO_OCSP
+# ifndef OPENtls_NO_OCSP
 int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert);
 # endif
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
-# ifndef OPENSSL_NO_OCSP
+# ifndef OPENtls_NO_OCSP
 int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl);
 # endif
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
@@ -395,14 +395,14 @@ int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
 int i2d_X509_fp(FILE *fp, const X509 *x509);
 X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl);
 int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req);
-#  ifndef OPENSSL_NO_RSA
+#  ifndef OPENtls_NO_RSA
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp, const RSA *rsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa);
@@ -410,13 +410,13 @@ int i2d_RSAPublicKey_fp(FILE *fp, const RSA *rsa);
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa);
 int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa);
 #  endif
-#  ifndef OPENSSL_NO_DSA
+#  ifndef OPENtls_NO_DSA
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, const DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, const DSA *dsa);
 #  endif
-#  ifndef OPENSSL_NO_EC
+#  ifndef OPENtls_NO_EC
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey);
 int i2d_EC_PUBKEY_fp(FILE *fp, const EC_KEY *eckey);
 EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey);
@@ -442,7 +442,7 @@ X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl);
 int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req);
 int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req);
-#  ifndef OPENSSL_NO_RSA
+#  ifndef OPENtls_NO_RSA
 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp, const RSA *rsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa);
@@ -450,13 +450,13 @@ int i2d_RSAPublicKey_bio(BIO *bp, const RSA *rsa);
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa);
 int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa);
 #  endif
-#  ifndef OPENSSL_NO_DSA
+#  ifndef OPENtls_NO_DSA
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa);
 int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, const DSA *dsa);
 #  endif
-#  ifndef OPENSSL_NO_EC
+#  ifndef OPENtls_NO_EC
 EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey);
 int i2d_EC_PUBKEY_bio(BIO *bp, const EC_KEY *eckey);
 EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey);
@@ -524,13 +524,13 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
 long X509_get_pathlen(X509 *x);
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(EVP_PKEY, PUBKEY)
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(RSA, RSA_PUBKEY)
 # endif
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSA_PUBKEY)
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(EC_KEY, EC_PUBKEY)
 # endif
 
@@ -579,7 +579,7 @@ void X509_get0_signature(const ASN1_BIT_STRING **psig,
                          const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
 void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
 ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
 void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id);
@@ -664,7 +664,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define X509_get_notBefore X509_getm_notBefore
 #  define X509_get_notAfter X509_getm_notAfter
 #  define X509_set_notBefore X509_set1_notBefore
@@ -730,7 +730,7 @@ int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 int X509_CRL_up_ref(X509_CRL *crl);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
 #  define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
 #endif
@@ -776,7 +776,7 @@ unsigned long X509_issuer_name_hash(X509 *a);
 int X509_subject_name_cmp(const X509 *a, const X509 *b);
 unsigned long X509_subject_name_hash(X509 *x);
 
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
 unsigned long X509_issuer_name_hash_old(X509 *a);
 unsigned long X509_subject_name_hash_old(X509 *x);
 # endif
@@ -789,7 +789,7 @@ unsigned long X509_NAME_hash_old(X509_NAME *x);
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
 int X509_aux_print(BIO *out, X509 *x, int indent);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int X509_print_ex_fp(FILE *bp, X509 *x, unsigned long nmflag,
                      unsigned long cflag);
 int X509_print_fp(FILE *bp, X509 *x);
@@ -993,7 +993,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name);
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
 DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 DECLARE_ASN1_FUNCTIONS(SCRYPT_PARAMS)
 #endif
 
@@ -1008,7 +1008,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
                               unsigned char *salt, int saltlen,
                               unsigned char *aiv, int prf_nid);
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
                                   const unsigned char *salt, int saltlen,
                                   unsigned char *aiv, uint64_t N, uint64_t r,

@@ -1,20 +1,20 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
-#include <openssl/core_names.h>
-#include <openssl/des.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+#include <opentls/core_names.h>
+#include <opentls/des.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
@@ -26,14 +26,14 @@
 
 /* KRB5 KDF defined in RFC 3961, Section 5.1 */
 
-static OSSL_OP_kdf_newctx_fn krb5kdf_new;
-static OSSL_OP_kdf_freectx_fn krb5kdf_free;
-static OSSL_OP_kdf_reset_fn krb5kdf_reset;
-static OSSL_OP_kdf_derive_fn krb5kdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn krb5kdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn krb5kdf_set_ctx_params;
-static OSSL_OP_kdf_gettable_ctx_params_fn krb5kdf_gettable_ctx_params;
-static OSSL_OP_kdf_get_ctx_params_fn krb5kdf_get_ctx_params;
+static Otls_OP_kdf_newctx_fn krb5kdf_new;
+static Otls_OP_kdf_freectx_fn krb5kdf_free;
+static Otls_OP_kdf_reset_fn krb5kdf_reset;
+static Otls_OP_kdf_derive_fn krb5kdf_derive;
+static Otls_OP_kdf_settable_ctx_params_fn krb5kdf_settable_ctx_params;
+static Otls_OP_kdf_set_ctx_params_fn krb5kdf_set_ctx_params;
+static Otls_OP_kdf_gettable_ctx_params_fn krb5kdf_gettable_ctx_params;
+static Otls_OP_kdf_get_ctx_params_fn krb5kdf_get_ctx_params;
 
 static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
                    const unsigned char *key, size_t key_len,
@@ -53,7 +53,7 @@ static void *krb5kdf_new(void *provctx)
 {
     KRB5KDF_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
     return ctx;
@@ -65,7 +65,7 @@ static void krb5kdf_free(void *vctx)
 
     if (ctx != NULL) {
         krb5kdf_reset(ctx);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
     }
 }
 
@@ -73,26 +73,26 @@ static void krb5kdf_reset(void *vctx)
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
 
-    ossl_prov_cipher_reset(&ctx->cipher);
-    OPENSSL_clear_free(ctx->key, ctx->key_len);
-    OPENSSL_clear_free(ctx->constant, ctx->constant_len);
+    otls_prov_cipher_reset(&ctx->cipher);
+    OPENtls_clear_free(ctx->key, ctx->key_len);
+    OPENtls_clear_free(ctx->constant, ctx->constant_len);
     memset(ctx, 0, sizeof(*ctx));
 }
 
 static int krb5kdf_set_membuf(unsigned char **dst, size_t *dst_len,
-                              const OSSL_PARAM *p)
+                              const Otls_PARAM *p)
 {
-    OPENSSL_clear_free(*dst, *dst_len);
+    OPENtls_clear_free(*dst, *dst_len);
     *dst = NULL;
-    return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
+    return Otls_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
 static int krb5kdf_derive(void *vctx, unsigned char *key,
                               size_t keylen)
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
-    const EVP_CIPHER *cipher = ossl_prov_cipher_cipher(&ctx->cipher);
-    ENGINE *engine = ossl_prov_cipher_engine(&ctx->cipher);
+    const EVP_CIPHER *cipher = otls_prov_cipher_cipher(&ctx->cipher);
+    ENGINE *engine = otls_prov_cipher_engine(&ctx->cipher);
 
     if (cipher == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CIPHER);
@@ -111,20 +111,20 @@ static int krb5kdf_derive(void *vctx, unsigned char *key,
                    key, keylen);
 }
 
-static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int krb5kdf_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     KRB5KDF_CTX *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OPENtls_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
-    if (!ossl_prov_cipher_load_from_params(&ctx->cipher, params, provctx))
+    if (!otls_prov_cipher_load_from_params(&ctx->cipher, params, provctx))
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_KEY)) != NULL)
         if (!krb5kdf_set_membuf(&ctx->key, &ctx->key_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CONSTANT))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_CONSTANT))
         != NULL)
         if (!krb5kdf_set_membuf(&ctx->constant, &ctx->constant_len, p))
             return 0;
@@ -132,62 +132,62 @@ static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *krb5kdf_settable_ctx_params(void)
+static const Otls_PARAM *krb5kdf_settable_ctx_params(void)
 {
-    static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CIPHER, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_CONSTANT, NULL, 0),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_settable_ctx_params[] = {
+        Otls_PARAM_utf8_string(Otls_KDF_PARAM_PROPERTIES, NULL, 0),
+        Otls_PARAM_utf8_string(Otls_KDF_PARAM_CIPHER, NULL, 0),
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_KEY, NULL, 0),
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_CONSTANT, NULL, 0),
+        Otls_PARAM_END
     };
     return known_settable_ctx_params;
 }
 
-static int krb5kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int krb5kdf_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
     const EVP_CIPHER *cipher;
     size_t len;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    cipher = ossl_prov_cipher_cipher(&ctx->cipher);
+    cipher = otls_prov_cipher_cipher(&ctx->cipher);
     if (cipher)
         len = EVP_CIPHER_key_length(cipher);
     else
         len = EVP_MAX_KEY_LENGTH;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, len);
+    if ((p = Otls_PARAM_locate(params, Otls_KDF_PARAM_SIZE)) != NULL)
+        return Otls_PARAM_set_size_t(p, len);
     return -2;
 }
 
-static const OSSL_PARAM *krb5kdf_gettable_ctx_params(void)
+static const Otls_PARAM *krb5kdf_gettable_ctx_params(void)
 {
-    static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_gettable_ctx_params[] = {
+        Otls_PARAM_size_t(Otls_KDF_PARAM_SIZE, NULL),
+        Otls_PARAM_END
     };
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_krb5kdf_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))krb5kdf_new },
-    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))krb5kdf_free },
-    { OSSL_FUNC_KDF_RESET, (void(*)(void))krb5kdf_reset },
-    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))krb5kdf_derive },
-    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+const Otls_DISPATCH kdf_krb5kdf_functions[] = {
+    { Otls_FUNC_KDF_NEWCTX, (void(*)(void))krb5kdf_new },
+    { Otls_FUNC_KDF_FREECTX, (void(*)(void))krb5kdf_free },
+    { Otls_FUNC_KDF_RESET, (void(*)(void))krb5kdf_reset },
+    { Otls_FUNC_KDF_DERIVE, (void(*)(void))krb5kdf_derive },
+    { Otls_FUNC_KDF_SETTABLE_CTX_PARAMS,
       (void(*)(void))krb5kdf_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS,
+    { Otls_FUNC_KDF_SET_CTX_PARAMS,
       (void(*)(void))krb5kdf_set_ctx_params },
-    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+    { Otls_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))krb5kdf_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS,
+    { Otls_FUNC_KDF_GET_CTX_PARAMS,
       (void(*)(void))krb5kdf_get_ctx_params },
     { 0, NULL }
 };
 
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
 /*
  * DES3 is a special case, it requires a random-to-key function and its
  * input truncated to 21 bytes of the 24 produced by the cipher.
@@ -336,13 +336,13 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
     size_t blocksize;
     size_t cipherlen;
     size_t osize;
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     int des3_no_fixup = 0;
 #endif
     int ret;
 
     if (key_len != okey_len) {
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         /* special case for 3des, where the caller may be requesting
          * the random raw key, instead of the fixed up key  */
         if (EVP_CIPHER_nid(cipher) == NID_des_ede3_cbc &&
@@ -352,7 +352,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
 #endif
             ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);
             return 0;
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         }
 #endif
     }
@@ -420,7 +420,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
         }
     }
 
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     if (EVP_CIPHER_nid(cipher) == NID_des_ede3_cbc && !des3_no_fixup) {
         ret = fixup_des3_key(okey);
         if (!ret) {
@@ -434,7 +434,7 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
 
 out:
     EVP_CIPHER_CTX_free(ctx);
-    OPENSSL_cleanse(block, EVP_MAX_BLOCK_LENGTH * 2);
+    OPENtls_cleanse(block, EVP_MAX_BLOCK_LENGTH * 2);
     return ret;
 }
 

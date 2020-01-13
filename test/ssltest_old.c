@@ -1,12 +1,12 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -29,7 +29,7 @@
 
 #include "internal/nelem.h"
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
 /*
  * Or isascii won't be declared properly on VMS (at least with DECompHP C).
  */
@@ -38,26 +38,26 @@
 
 #include <ctype.h>
 
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 #endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
+#ifndef OPENtls_NO_DSA
+# include <opentls/dsa.h>
 #endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
+#ifndef OPENtls_NO_DH
+# include <opentls/dh.h>
 #endif
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
+#include <opentls/bn.h>
+#ifndef OPENtls_NO_CT
+# include <opentls/ct.h>
 #endif
 
 /*
@@ -68,14 +68,14 @@
  */
 #define _XOPEN_SOURCE_EXTENDED  1
 
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENtls_SYS_WINDOWS
 # include <winsock.h>
 #else
 # include <unistd.h>
 #endif
 
-static SSL_CTX *s_ctx = NULL;
-static SSL_CTX *s_ctx2 = NULL;
+static tls_CTX *s_ctx = NULL;
+static tls_CTX *s_ctx2 = NULL;
 
 /*
  * There is really no standard for this, so let's assign something
@@ -91,20 +91,20 @@ struct app_verify_arg {
     int app_verify;
 };
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 static DH *get_dh512(void);
 static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
 #endif
 
 static char *psk_key = NULL;    /* by default PSK is not used */
-#ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_callback(SSL *ssl, const char *hint,
+#ifndef OPENtls_NO_PSK
+static unsigned int psk_client_callback(tls *tls, const char *hint,
                                         char *identity,
                                         unsigned int max_identity_len,
                                         unsigned char *psk,
                                         unsigned int max_psk_len);
-static unsigned int psk_server_callback(SSL *ssl, const char *identity,
+static unsigned int psk_server_callback(tls *tls, const char *identity,
                                         unsigned char *psk,
                                         unsigned int max_psk_len);
 #endif
@@ -112,14 +112,14 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
 static BIO *bio_err = NULL;
 static BIO *bio_stdout = NULL;
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
 /* Note that this code assumes that this is only a one element list: */
 static const char NEXT_PROTO_STRING[] = "\x09testproto";
 static int npn_client = 0;
 static int npn_server = 0;
 static int npn_server_reject = 0;
 
-static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
+static int cb_client_npn(tls *s, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
@@ -130,32 +130,32 @@ static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
      */
     *out = (unsigned char *)NEXT_PROTO_STRING + 1;
     *outlen = sizeof(NEXT_PROTO_STRING) - 2;
-    return SSL_TLSEXT_ERR_OK;
+    return tls_TLSEXT_ERR_OK;
 }
 
-static int cb_server_npn(SSL *s, const unsigned char **data,
+static int cb_server_npn(tls *s, const unsigned char **data,
                          unsigned int *len, void *arg)
 {
     *data = (const unsigned char *)NEXT_PROTO_STRING;
     *len = sizeof(NEXT_PROTO_STRING) - 1;
-    return SSL_TLSEXT_ERR_OK;
+    return tls_TLSEXT_ERR_OK;
 }
 
-static int cb_server_rejects_npn(SSL *s, const unsigned char **data,
+static int cb_server_rejects_npn(tls *s, const unsigned char **data,
                                  unsigned int *len, void *arg)
 {
-    return SSL_TLSEXT_ERR_NOACK;
+    return tls_TLSEXT_ERR_NOACK;
 }
 
-static int verify_npn(SSL *client, SSL *server)
+static int verify_npn(tls *client, tls *server)
 {
     const unsigned char *client_s;
     unsigned client_len;
     const unsigned char *server_s;
     unsigned server_len;
 
-    SSL_get0_next_proto_negotiated(client, &client_s, &client_len);
-    SSL_get0_next_proto_negotiated(server, &server_s, &server_len);
+    tls_get0_next_proto_negotiated(client, &client_s, &client_len);
+    tls_get0_next_proto_negotiated(server, &server_s, &server_len);
 
     if (client_len) {
         BIO_printf(bio_stdout, "Client NPN: ");
@@ -211,30 +211,30 @@ static const char *server_sess_out;
 static const char *server_sess_in;
 static const char *client_sess_out;
 static const char *client_sess_in;
-static SSL_SESSION *server_sess;
-static SSL_SESSION *client_sess;
+static tls_SESSION *server_sess;
+static tls_SESSION *client_sess;
 
-static int servername_cb(SSL *s, int *ad, void *arg)
+static int servername_cb(tls *s, int *ad, void *arg)
 {
-    const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    const char *servername = tls_get_servername(s, TLSEXT_NAMETYPE_host_name);
     if (sn_server2 == NULL) {
         BIO_printf(bio_stdout, "Servername 2 is NULL\n");
-        return SSL_TLSEXT_ERR_NOACK;
+        return tls_TLSEXT_ERR_NOACK;
     }
 
     if (servername) {
         if (s_ctx2 != NULL && sn_server2 != NULL &&
             !strcasecmp(servername, sn_server2)) {
             BIO_printf(bio_stdout, "Switching server context.\n");
-            SSL_set_SSL_CTX(s, s_ctx2);
+            tls_set_tls_CTX(s, s_ctx2);
         }
     }
-    return SSL_TLSEXT_ERR_OK;
+    return tls_TLSEXT_ERR_OK;
 }
-static int verify_servername(SSL *client, SSL *server)
+static int verify_servername(tls *client, tls *server)
 {
     /* just need to see if sn_context is what we expect */
-    SSL_CTX* ctx = SSL_get_SSL_CTX(server);
+    tls_CTX* ctx = tls_get_tls_CTX(server);
     if (sn_expect == 0)
         return 0;
     if (sn_expect == 1 && ctx == s_ctx)
@@ -254,7 +254,7 @@ static int verify_servername(SSL *client, SSL *server)
 
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
- * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
+ * in a format suitable for passing to tls_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   in: a NUL terminated string like "abc,def,ghi"
  *
@@ -271,14 +271,14 @@ static unsigned char *next_protos_parse(size_t *outlen,
     if (len >= 65535)
         return NULL;
 
-    out = OPENSSL_malloc(strlen(in) + 1);
+    out = OPENtls_malloc(strlen(in) + 1);
     if (!out)
         return NULL;
 
     for (i = 0; i <= len; ++i) {
         if (i == len || in[i] == ',') {
             if (i - start > 255) {
-                OPENSSL_free(out);
+                OPENtls_free(out);
                 return NULL;
             }
             out[start] = (unsigned char)(i - start);
@@ -291,7 +291,7 @@ static unsigned char *next_protos_parse(size_t *outlen,
     return out;
 }
 
-static int cb_server_alpn(SSL *s, const unsigned char **out,
+static int cb_server_alpn(tls *s, const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
                           unsigned int inlen, void *arg)
 {
@@ -306,33 +306,33 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
         abort();
     }
 
-    if (SSL_select_next_proto
+    if (tls_select_next_proto
         ((unsigned char **)out, outlen, protos, protos_len, in,
-         inlen) != OPENSSL_NPN_NEGOTIATED) {
-        OPENSSL_free(protos);
-        return SSL_TLSEXT_ERR_NOACK;
+         inlen) != OPENtls_NPN_NEGOTIATED) {
+        OPENtls_free(protos);
+        return tls_TLSEXT_ERR_NOACK;
     }
 
     /*
      * Make a copy of the selected protocol which will be freed in
      * verify_alpn.
      */
-    alpn_selected = OPENSSL_malloc(*outlen);
+    alpn_selected = OPENtls_malloc(*outlen);
     memcpy(alpn_selected, *out, *outlen);
     *out = alpn_selected;
 
-    OPENSSL_free(protos);
-    return SSL_TLSEXT_ERR_OK;
+    OPENtls_free(protos);
+    return tls_TLSEXT_ERR_OK;
 }
 
-static int verify_alpn(SSL *client, SSL *server)
+static int verify_alpn(tls *client, tls *server)
 {
     const unsigned char *client_proto, *server_proto;
     unsigned int client_proto_len = 0, server_proto_len = 0;
-    SSL_get0_alpn_selected(client, &client_proto, &client_proto_len);
-    SSL_get0_alpn_selected(server, &server_proto, &server_proto_len);
+    tls_get0_alpn_selected(client, &client_proto, &client_proto_len);
+    tls_get0_alpn_selected(server, &server_proto, &server_proto_len);
 
-    OPENSSL_free(alpn_selected);
+    OPENtls_free(alpn_selected);
     alpn_selected = NULL;
 
     if (client_proto_len != server_proto_len) {
@@ -370,7 +370,7 @@ static int verify_alpn(SSL *client, SSL *server)
     BIO_printf(bio_stdout, "'\n");
     BIO_printf(bio_stdout, "ALPN configured: client: '%s', server: '",
                    alpn_client);
-    if (SSL_get_SSL_CTX(server) == s_ctx2) {
+    if (tls_get_tls_CTX(server) == s_ctx2) {
         BIO_printf(bio_stdout, "%s'\n",
                    alpn_server2);
     } else {
@@ -382,7 +382,7 @@ static int verify_alpn(SSL *client, SSL *server)
 
 /*
  * WARNING : below extension types are *NOT* IETF assigned, and could
- * conflict if these types are reassigned and handled specially by OpenSSL
+ * conflict if these types are reassigned and handled specially by Opentls
  * in the future
  */
 #define TACK_EXT_TYPE 62208
@@ -410,7 +410,7 @@ static int custom_ext = 0;
 /* This set based on extension callbacks */
 static int custom_ext_error = 0;
 
-static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int serverinfo_cli_parse_cb(tls *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
                                    int *al, void *arg)
 {
@@ -442,7 +442,7 @@ static int verify_serverinfo(void)
  * 3 - ClientHello with "abc", "defg" response
  */
 
-static int custom_ext_0_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_0_cli_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -451,14 +451,14 @@ static int custom_ext_0_cli_add_cb(SSL *s, unsigned int ext_type,
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_0_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_0_cli_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
     return 1;
 }
 
-static int custom_ext_1_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_cli_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -469,14 +469,14 @@ static int custom_ext_1_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_1_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_cli_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
     return 1;
 }
 
-static int custom_ext_2_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_cli_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -487,7 +487,7 @@ static int custom_ext_2_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_2_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_cli_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -498,7 +498,7 @@ static int custom_ext_2_cli_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_3_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_cli_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -509,7 +509,7 @@ static int custom_ext_3_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_cli_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -526,7 +526,7 @@ static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
  * custom_ext_0_cli_add_cb returns 0 - the server won't receive a callback
  * for this extension
  */
-static int custom_ext_0_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_0_srv_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -535,7 +535,7 @@ static int custom_ext_0_srv_parse_cb(SSL *s, unsigned int ext_type,
 }
 
 /* 'add' callbacks are only called if the 'parse' callback is called */
-static int custom_ext_0_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_0_srv_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -544,7 +544,7 @@ static int custom_ext_0_srv_add_cb(SSL *s, unsigned int ext_type,
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_1_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_srv_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -558,14 +558,14 @@ static int custom_ext_1_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_1_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_srv_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_2_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_srv_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -579,7 +579,7 @@ static int custom_ext_2_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_2_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_srv_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -588,7 +588,7 @@ static int custom_ext_2_srv_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send empty extension */
 }
 
-static int custom_ext_3_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_srv_parse_cb(tls *s, unsigned int ext_type,
                                      const unsigned char *in,
                                      size_t inlen, int *al, void *arg)
 {
@@ -602,7 +602,7 @@ static int custom_ext_3_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_srv_add_cb(tls *s, unsigned int ext_type,
                                    const unsigned char **out,
                                    size_t *outlen, int *al, void *arg)
 {
@@ -616,15 +616,15 @@ static char *ciphersuites = NULL;
 static int verbose = 0;
 static int debug = 0;
 
-int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family,
+int doit_localhost(tls *s_tls, tls *c_tls, int family,
                    long bytes, clock_t *s_time, clock_t *c_time);
-int doit_biopair(SSL *s_ssl, SSL *c_ssl, long bytes, clock_t *s_time,
+int doit_biopair(tls *s_tls, tls *c_tls, long bytes, clock_t *s_time,
                  clock_t *c_time);
-int doit(SSL *s_ssl, SSL *c_ssl, long bytes);
+int doit(tls *s_tls, tls *c_tls, long bytes);
 
 static void sv_usage(void)
 {
-    fprintf(stderr, "usage: ssltest [args ...]\n");
+    fprintf(stderr, "usage: tlstest [args ...]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, " -server_auth  - check server certificate\n");
     fprintf(stderr, " -client_auth  - do client authentication\n");
@@ -634,7 +634,7 @@ static void sv_usage(void)
     fprintf(stderr, " -num <val>    - number of connections to perform\n");
     fprintf(stderr,
             " -bytes <val>  - number of bytes to swap between client/server\n");
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     fprintf(stderr,
             " -dhe512       - use 512 bit key for DHE (to test failure)\n");
     fprintf(stderr,
@@ -643,24 +643,24 @@ static void sv_usage(void)
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #endif
-#ifndef OPENSSL_NO_EC
-    fprintf(stderr, " -no_ecdhe     - disable ECDHE\nTODO(openssl-team): no_ecdhe was broken by auto ecdh. Make this work again.\n");
+#ifndef OPENtls_NO_EC
+    fprintf(stderr, " -no_ecdhe     - disable ECDHE\nTODO(opentls-team): no_ecdhe was broken by auto ecdh. Make this work again.\n");
 #endif
-#ifndef OPENSSL_NO_PSK
+#ifndef OPENtls_NO_PSK
     fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
 #endif
-#ifndef OPENSSL_NO_SSL3
-    fprintf(stderr, " -ssl3         - use SSLv3\n");
+#ifndef OPENtls_NO_tls3
+    fprintf(stderr, " -tls3         - use tlsv3\n");
 #endif
-#ifndef OPENSSL_NO_TLS1
+#ifndef OPENtls_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
 #endif
-#ifndef OPENSSL_NO_DTLS
+#ifndef OPENtls_NO_DTLS
     fprintf(stderr, " -dtls         - use DTLS\n");
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENtls_NO_DTLS1
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
 #endif
-#ifndef OPENSSL_NO_DTLS1_2
+#ifndef OPENtls_NO_DTLS1_2
     fprintf(stderr, " -dtls12       - use DTLSv1.2\n");
 #endif
 #endif
@@ -681,7 +681,7 @@ static void sv_usage(void)
     fprintf(stderr,
             " -time         - measure processor time used by client and server\n");
     fprintf(stderr, " -zlib         - use zlib compression\n");
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
     fprintf(stderr, " -npn_client - have client side offer NPN\n");
     fprintf(stderr, " -npn_server - have server side offer NPN\n");
     fprintf(stderr, " -npn_server_reject - have server reject NPN\n");
@@ -703,7 +703,7 @@ static void sv_usage(void)
     fprintf(stderr, " -client_min_proto <string> - Minimum version the client should support\n");
     fprintf(stderr, " -client_max_proto <string> - Maximum version the client should support\n");
     fprintf(stderr, " -should_negotiate <string> - The version that should be negotiated, fail-client or fail-server\n");
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
     fprintf(stderr, " -noct         - no certificate transparency\n");
     fprintf(stderr, " -requestct    - request certificate transparency\n");
     fprintf(stderr, " -requirect    - require certificate transparency\n");
@@ -724,7 +724,7 @@ static void sv_usage(void)
 static void print_key_details(BIO *out, EVP_PKEY *key)
 {
     int keyid = EVP_PKEY_id(key);
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     if (keyid == EVP_PKEY_EC) {
         EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
         int nid;
@@ -757,19 +757,19 @@ static void print_key_details(BIO *out, EVP_PKEY *key)
     }
 }
 
-static void print_details(SSL *c_ssl, const char *prefix)
+static void print_details(tls *c_tls, const char *prefix)
 {
-    const SSL_CIPHER *ciph;
+    const tls_CIPHER *ciph;
     int mdnid;
     X509 *cert;
     EVP_PKEY *pkey;
 
-    ciph = SSL_get_current_cipher(c_ssl);
+    ciph = tls_get_current_cipher(c_tls);
     BIO_printf(bio_stdout, "%s%s, cipher %s %s",
                prefix,
-               SSL_get_version(c_ssl),
-               SSL_CIPHER_get_version(ciph), SSL_CIPHER_get_name(ciph));
-    cert = SSL_get_peer_certificate(c_ssl);
+               tls_get_version(c_tls),
+               tls_CIPHER_get_version(ciph), tls_CIPHER_get_name(ciph));
+    cert = tls_get_peer_certificate(c_tls);
     if (cert != NULL) {
         EVP_PKEY* pubkey = X509_get0_pubkey(cert);
 
@@ -779,12 +779,12 @@ static void print_details(SSL *c_ssl, const char *prefix)
         }
         X509_free(cert);
     }
-    if (SSL_get_peer_tmp_key(c_ssl, &pkey)) {
+    if (tls_get_peer_tmp_key(c_tls, &pkey)) {
         BIO_puts(bio_stdout, ", temp key: ");
         print_key_details(bio_stdout, pkey);
         EVP_PKEY_free(pkey);
     }
-    if (SSL_get_peer_signature_nid(c_ssl, &mdnid))
+    if (tls_get_peer_signature_nid(c_tls, &mdnid))
         BIO_printf(bio_stdout, ", digest=%s", OBJ_nid2sn(mdnid));
     BIO_printf(bio_stdout, "\n");
 }
@@ -801,7 +801,7 @@ static int protocol_from_string(const char *value)
         int version;
     };
     static const struct protocol_versions versions[] = {
-        {"ssl3", SSL3_VERSION},
+        {"tls3", tls3_VERSION},
         {"tls1", TLS1_VERSION},
         {"tls1.1", TLS1_1_VERSION},
         {"tls1.2", TLS1_2_VERSION},
@@ -809,7 +809,7 @@ static int protocol_from_string(const char *value)
         {"dtls1", DTLS1_VERSION},
         {"dtls1.2", DTLS1_2_VERSION}};
     size_t i;
-    size_t n = OSSL_NELEM(versions);
+    size_t n = Otls_NELEM(versions);
 
     for (i = 0; i < n; i++)
         if (strcmp(versions[i].name, value) == 0)
@@ -817,9 +817,9 @@ static int protocol_from_string(const char *value)
     return -1;
 }
 
-static SSL_SESSION *read_session(const char *filename)
+static tls_SESSION *read_session(const char *filename)
 {
-    SSL_SESSION *sess;
+    tls_SESSION *sess;
     BIO *f = BIO_new_file(filename, "r");
 
     if (f == NULL) {
@@ -827,7 +827,7 @@ static SSL_SESSION *read_session(const char *filename)
         ERR_print_errors(bio_err);
         return NULL;
     }
-    sess = PEM_read_bio_SSL_SESSION(f, NULL, 0, NULL);
+    sess = PEM_read_bio_tls_SESSION(f, NULL, 0, NULL);
     if (sess == NULL) {
         BIO_printf(bio_err, "Can't parse session file %s\n", filename);
         ERR_print_errors(bio_err);
@@ -836,7 +836,7 @@ static SSL_SESSION *read_session(const char *filename)
     return sess;
 }
 
-static int write_session(const char *filename, SSL_SESSION *sess)
+static int write_session(const char *filename, tls_SESSION *sess)
 {
     BIO *f = BIO_new_file(filename, "w");
 
@@ -849,7 +849,7 @@ static int write_session(const char *filename, SSL_SESSION *sess)
         ERR_print_errors(bio_err);
         return 0;
     }
-    PEM_write_bio_SSL_SESSION(f, sess);
+    PEM_write_bio_tls_SESSION(f, sess);
     BIO_free(f);
     return 1;
 }
@@ -859,7 +859,7 @@ static int write_session(const char *filename, SSL_SESSION *sess)
  *
  * Returns 0 on failure and 1 on success
  */
-static int set_protocol_version(const char *version, SSL *ssl, int setting)
+static int set_protocol_version(const char *version, tls *tls, int setting)
 {
     if (version != NULL) {
         int ver = protocol_from_string(version);
@@ -867,7 +867,7 @@ static int set_protocol_version(const char *version, SSL *ssl, int setting)
             BIO_printf(bio_err, "Error parsing: %s\n", version);
             return 0;
         }
-        return SSL_ctrl(ssl, setting, ver, NULL);
+        return tls_ctrl(tls, setting, ver, NULL);
     }
     return 1;
 }
@@ -878,20 +878,20 @@ int main(int argc, char *argv[])
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, tls3 = 0;
     int ret = EXIT_FAILURE;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
         { APP_CALLBACK_STRING, 0 };
-    SSL_CTX *c_ctx = NULL;
-    const SSL_METHOD *meth = NULL;
-    SSL *c_ssl, *s_ssl;
+    tls_CTX *c_ctx = NULL;
+    const tls_METHOD *meth = NULL;
+    tls *c_tls, *s_tls;
     int number = 1, reuse = 0;
     int should_reuse = -1;
     int no_ticket = 0;
     long bytes = 256L;
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     DH *dh;
     int dhe512 = 0, dhe1024dsa = 0;
 #endif
@@ -899,22 +899,22 @@ int main(int argc, char *argv[])
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
-#ifndef OPENSSL_NO_COMP
+#ifndef OPENtls_NO_COMP
     int n, comp = 0;
     COMP_METHOD *cm = NULL;
-    STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
+    STACK_OF(tls_COMP) *tls_comp_methods = NULL;
 #endif
     int no_protocol;
     int min_version = 0, max_version = 0;
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
     /*
      * Disable CT validation by default, because it will interfere with
      * anything using custom extension handlers to deal with SCT extensions.
      */
     int ct_validation = 0;
 #endif
-    SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL, *s_cctx2 = NULL;
-    STACK_OF(OPENSSL_STRING) *conf_args = NULL;
+    tls_CONF_CTX *s_cctx = NULL, *c_cctx = NULL, *s_cctx2 = NULL;
+    STACK_OF(OPENtls_STRING) *conf_args = NULL;
     char *arg = NULL, *argn = NULL;
 
     verbose = 0;
@@ -923,37 +923,37 @@ int main(int argc, char *argv[])
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
     bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
-    s_cctx = SSL_CONF_CTX_new();
-    s_cctx2 = SSL_CONF_CTX_new();
-    c_cctx = SSL_CONF_CTX_new();
+    s_cctx = tls_CONF_CTX_new();
+    s_cctx2 = tls_CONF_CTX_new();
+    c_cctx = tls_CONF_CTX_new();
 
     if (!s_cctx || !c_cctx || !s_cctx2) {
         ERR_print_errors(bio_err);
         goto end;
     }
 
-    SSL_CONF_CTX_set_flags(s_cctx,
-                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_SERVER |
-                           SSL_CONF_FLAG_CERTIFICATE |
-                           SSL_CONF_FLAG_REQUIRE_PRIVATE);
-    SSL_CONF_CTX_set_flags(s_cctx2,
-                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_SERVER |
-                           SSL_CONF_FLAG_CERTIFICATE |
-                           SSL_CONF_FLAG_REQUIRE_PRIVATE);
-    if (!SSL_CONF_CTX_set1_prefix(s_cctx, "-s_")) {
+    tls_CONF_CTX_set_flags(s_cctx,
+                           tls_CONF_FLAG_CMDLINE | tls_CONF_FLAG_SERVER |
+                           tls_CONF_FLAG_CERTIFICATE |
+                           tls_CONF_FLAG_REQUIRE_PRIVATE);
+    tls_CONF_CTX_set_flags(s_cctx2,
+                           tls_CONF_FLAG_CMDLINE | tls_CONF_FLAG_SERVER |
+                           tls_CONF_FLAG_CERTIFICATE |
+                           tls_CONF_FLAG_REQUIRE_PRIVATE);
+    if (!tls_CONF_CTX_set1_prefix(s_cctx, "-s_")) {
         ERR_print_errors(bio_err);
         goto end;
     }
-    if (!SSL_CONF_CTX_set1_prefix(s_cctx2, "-s_")) {
+    if (!tls_CONF_CTX_set1_prefix(s_cctx2, "-s_")) {
         ERR_print_errors(bio_err);
         goto end;
     }
 
-    SSL_CONF_CTX_set_flags(c_cctx,
-                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_CLIENT |
-                           SSL_CONF_FLAG_CERTIFICATE |
-                           SSL_CONF_FLAG_REQUIRE_PRIVATE);
-    if (!SSL_CONF_CTX_set1_prefix(c_cctx, "-c_")) {
+    tls_CONF_CTX_set_flags(c_cctx,
+                           tls_CONF_FLAG_CMDLINE | tls_CONF_FLAG_CLIENT |
+                           tls_CONF_FLAG_CERTIFICATE |
+                           tls_CONF_FLAG_REQUIRE_PRIVATE);
+    if (!tls_CONF_CTX_set1_prefix(c_cctx, "-c_")) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -977,14 +977,14 @@ int main(int argc, char *argv[])
         else if (strcmp(*argv, "-reuse") == 0)
             reuse = 1;
         else if (strcmp(*argv, "-dhe512") == 0) {
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
             dhe512 = 1;
 #else
             fprintf(stderr,
                     "ignoring -dhe512, since I'm compiled without DH\n");
 #endif
         } else if (strcmp(*argv, "-dhe1024dsa") == 0) {
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
             dhe1024dsa = 1;
 #else
             fprintf(stderr,
@@ -998,7 +998,7 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             psk_key = *(++argv);
-#ifndef OPENSSL_NO_PSK
+#ifndef OPENtls_NO_PSK
             if (strspn(psk_key, "abcdefABCDEF1234567890") != strlen(psk_key)) {
                 BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
                 goto bad;
@@ -1011,8 +1011,8 @@ int main(int argc, char *argv[])
             tls1_2 = 1;
         } else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
-        } else if (strcmp(*argv, "-ssl3") == 0) {
-            ssl3 = 1;
+        } else if (strcmp(*argv, "-tls3") == 0) {
+            tls3 = 1;
         } else if (strcmp(*argv, "-dtls1") == 0) {
             dtls1 = 1;
         } else if (strcmp(*argv, "-dtls12") == 0) {
@@ -1055,7 +1055,7 @@ int main(int argc, char *argv[])
         } else if (strcmp(*argv, "-bio_pair") == 0) {
             bio_type = BIO_PAIR;
         }
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
         else if (strcmp(*argv, "-ipv4") == 0) {
             bio_type = BIO_IPV4;
         } else if (strcmp(*argv, "-ipv6") == 0) {
@@ -1067,7 +1067,7 @@ int main(int argc, char *argv[])
         } else if (strcmp(*argv, "-time") == 0) {
             print_time = 1;
         }
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
         else if (strcmp(*argv, "-noct") == 0) {
             ct_validation = 0;
         }
@@ -1075,7 +1075,7 @@ int main(int argc, char *argv[])
             ct_validation = 1;
         }
 #endif
-#ifndef OPENSSL_NO_COMP
+#ifndef OPENtls_NO_COMP
         else if (strcmp(*argv, "-zlib") == 0) {
             comp = COMP_ZLIB;
         }
@@ -1083,7 +1083,7 @@ int main(int argc, char *argv[])
         else if (strcmp(*argv, "-app_verify") == 0) {
             app_verify_arg.app_verify = 1;
         }
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
           else if (strcmp(*argv, "-npn_client") == 0) {
             npn_client = 1;
         } else if (strcmp(*argv, "-npn_server") == 0) {
@@ -1181,23 +1181,23 @@ int main(int argc, char *argv[])
             int rv;
             arg = argv[0];
             argn = argv[1];
-            /* Try to process command using SSL_CONF */
-            rv = SSL_CONF_cmd_argv(c_cctx, &argc, &argv);
+            /* Try to process command using tls_CONF */
+            rv = tls_CONF_cmd_argv(c_cctx, &argc, &argv);
             /* If not processed try server */
             if (rv == 0)
-                rv = SSL_CONF_cmd_argv(s_cctx, &argc, &argv);
+                rv = tls_CONF_cmd_argv(s_cctx, &argc, &argv);
             /* Recognised: store it for later use */
             if (rv > 0) {
                 if (rv == 1)
                     argn = NULL;
                 if (!conf_args) {
-                    conf_args = sk_OPENSSL_STRING_new_null();
+                    conf_args = sk_OPENtls_STRING_new_null();
                     if (!conf_args)
                         goto end;
                 }
-                if (!sk_OPENSSL_STRING_push(conf_args, arg))
+                if (!sk_OPENtls_STRING_push(conf_args, arg))
                     goto end;
-                if (!sk_OPENSSL_STRING_push(conf_args, argn))
+                if (!sk_OPENtls_STRING_push(conf_args, argn))
                     goto end;
                 continue;
             }
@@ -1219,33 +1219,33 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
+    if (tls3 + tls1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -tls3, -tls1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
 
-#ifdef OPENSSL_NO_SSL3
-    if (ssl3)
+#ifdef OPENtls_NO_tls3
+    if (tls3)
         no_protocol = 1;
     else
 #endif
-#ifdef OPENSSL_NO_TLS1
+#ifdef OPENtls_NO_TLS1
     if (tls1)
         no_protocol = 1;
     else
 #endif
-#ifdef OPENSSL_NO_TLS1_2
+#ifdef OPENtls_NO_TLS1_2
     if (tls1_2)
         no_protocol = 1;
     else
 #endif
-#if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1)
+#if defined(OPENtls_NO_DTLS) || defined(OPENtls_NO_DTLS1)
     if (dtls1)
         no_protocol = 1;
     else
 #endif
-#if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1_2)
+#if defined(OPENtls_NO_DTLS) || defined(OPENtls_NO_DTLS1_2)
     if (dtls12)
         no_protocol = 1;
     else
@@ -1253,7 +1253,7 @@ int main(int argc, char *argv[])
         no_protocol = 0;
 
     /*
-     * Testing was requested for a compiled-out protocol (e.g. SSLv3).
+     * Testing was requested for a compiled-out protocol (e.g. tlsv3).
      * Ideally, we would error out, but the generic test wrapper can't know
      * when to expect failure. So we do nothing and return success.
      */
@@ -1264,11 +1264,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
+    if (!tls3 && !tls1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
             && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
+                "or add one of -tls3, -tls1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1283,12 +1283,12 @@ int main(int argc, char *argv[])
                     "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
     }
 
-#ifndef OPENSSL_NO_COMP
+#ifndef OPENtls_NO_COMP
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
     if (cm != NULL) {
         if (COMP_get_type(cm) != NID_undef) {
-            if (SSL_COMP_add_compression_method(comp, cm) != 0) {
+            if (tls_COMP_add_compression_method(comp, cm) != 0) {
                 fprintf(stderr, "Failed to add compression method\n");
                 ERR_print_errors_fp(stderr);
             }
@@ -1299,24 +1299,24 @@ int main(int argc, char *argv[])
             ERR_print_errors_fp(stderr);
         }
     }
-    ssl_comp_methods = SSL_COMP_get_compression_methods();
-    n = sk_SSL_COMP_num(ssl_comp_methods);
+    tls_comp_methods = tls_COMP_get_compression_methods();
+    n = sk_tls_COMP_num(tls_comp_methods);
     if (n) {
         int j;
         printf("Available compression methods:");
         for (j = 0; j < n; j++) {
-            SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
-            printf("  %s:%d", SSL_COMP_get0_name(c), SSL_COMP_get_id(c));
+            tls_COMP *c = sk_tls_COMP_value(tls_comp_methods, j);
+            printf("  %s:%d", tls_COMP_get0_name(c), tls_COMP_get_id(c));
         }
         printf("\n");
     }
 #endif
 
-#ifndef OPENSSL_NO_TLS
+#ifndef OPENtls_NO_TLS
     meth = TLS_method();
-    if (ssl3) {
-        min_version = SSL3_VERSION;
-        max_version = SSL3_VERSION;
+    if (tls3) {
+        min_version = tls3_VERSION;
+        max_version = tls3_VERSION;
     } else if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
@@ -1328,7 +1328,7 @@ int main(int argc, char *argv[])
         max_version = 0;
     }
 #endif
-#ifndef OPENSSL_NO_DTLS
+#ifndef OPENtls_NO_DTLS
     if (dtls || dtls1 || dtls12) {
         meth = DTLS_method();
         if (dtls1) {
@@ -1344,9 +1344,9 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    c_ctx = SSL_CTX_new(meth);
-    s_ctx = SSL_CTX_new(meth);
-    s_ctx2 = SSL_CTX_new(meth); /* no SSL_CTX_dup! */
+    c_ctx = tls_CTX_new(meth);
+    s_ctx = tls_CTX_new(meth);
+    s_ctx2 = tls_CTX_new(meth); /* no tls_CTX_dup! */
     if ((c_ctx == NULL) || (s_ctx == NULL) || (s_ctx2 == NULL)) {
         ERR_print_errors(bio_err);
         goto end;
@@ -1356,28 +1356,28 @@ int main(int argc, char *argv[])
      * security level to zero by default. Tests can override this by adding
      * "@SECLEVEL=n" to the cipher string.
      */
-    SSL_CTX_set_security_level(c_ctx, 0);
-    SSL_CTX_set_security_level(s_ctx, 0);
-    SSL_CTX_set_security_level(s_ctx2, 0);
+    tls_CTX_set_security_level(c_ctx, 0);
+    tls_CTX_set_security_level(s_ctx, 0);
+    tls_CTX_set_security_level(s_ctx2, 0);
 
     if (no_ticket) {
-        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
-        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
+        tls_CTX_set_options(c_ctx, tls_OP_NO_TICKET);
+        tls_CTX_set_options(s_ctx, tls_OP_NO_TICKET);
     }
 
-    if (SSL_CTX_set_min_proto_version(c_ctx, min_version) == 0)
+    if (tls_CTX_set_min_proto_version(c_ctx, min_version) == 0)
         goto end;
-    if (SSL_CTX_set_max_proto_version(c_ctx, max_version) == 0)
+    if (tls_CTX_set_max_proto_version(c_ctx, max_version) == 0)
         goto end;
-    if (SSL_CTX_set_min_proto_version(s_ctx, min_version) == 0)
+    if (tls_CTX_set_min_proto_version(s_ctx, min_version) == 0)
         goto end;
-    if (SSL_CTX_set_max_proto_version(s_ctx, max_version) == 0)
+    if (tls_CTX_set_max_proto_version(s_ctx, max_version) == 0)
         goto end;
 
     if (cipher != NULL) {
         if (strcmp(cipher, "") == 0) {
-            if (!SSL_CTX_set_cipher_list(c_ctx, cipher)) {
-                if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
+            if (!tls_CTX_set_cipher_list(c_ctx, cipher)) {
+                if (ERR_GET_REASON(ERR_peek_error()) == tls_R_NO_CIPHER_MATCH) {
                     ERR_clear_error();
                 } else {
                     ERR_print_errors(bio_err);
@@ -1389,8 +1389,8 @@ int main(int argc, char *argv[])
                 goto end;
             }
 
-            if (!SSL_CTX_set_cipher_list(s_ctx, cipher)) {
-                if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
+            if (!tls_CTX_set_cipher_list(s_ctx, cipher)) {
+                if (ERR_GET_REASON(ERR_peek_error()) == tls_R_NO_CIPHER_MATCH) {
                     ERR_clear_error();
                 } else {
                     ERR_print_errors(bio_err);
@@ -1402,8 +1402,8 @@ int main(int argc, char *argv[])
                 goto end;
             }
 
-            if (!SSL_CTX_set_cipher_list(s_ctx2, cipher)) {
-                if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
+            if (!tls_CTX_set_cipher_list(s_ctx2, cipher)) {
+                if (ERR_GET_REASON(ERR_peek_error()) == tls_R_NO_CIPHER_MATCH) {
                     ERR_clear_error();
                 } else {
                     ERR_print_errors(bio_err);
@@ -1415,46 +1415,46 @@ int main(int argc, char *argv[])
                 goto end;
             }
         } else {
-            if (!SSL_CTX_set_cipher_list(c_ctx, cipher)
-                    || !SSL_CTX_set_cipher_list(s_ctx, cipher)
-                    || !SSL_CTX_set_cipher_list(s_ctx2, cipher)) {
+            if (!tls_CTX_set_cipher_list(c_ctx, cipher)
+                    || !tls_CTX_set_cipher_list(s_ctx, cipher)
+                    || !tls_CTX_set_cipher_list(s_ctx2, cipher)) {
                 ERR_print_errors(bio_err);
                 goto end;
             }
         }
     }
     if (ciphersuites != NULL) {
-        if (!SSL_CTX_set_ciphersuites(c_ctx, ciphersuites)
-            || !SSL_CTX_set_ciphersuites(s_ctx, ciphersuites)
-            || !SSL_CTX_set_ciphersuites(s_ctx2, ciphersuites)) {
+        if (!tls_CTX_set_ciphersuites(c_ctx, ciphersuites)
+            || !tls_CTX_set_ciphersuites(s_ctx, ciphersuites)
+            || !tls_CTX_set_ciphersuites(s_ctx2, ciphersuites)) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
     if (ct_validation &&
-        !SSL_CTX_enable_ct(c_ctx, SSL_CT_VALIDATION_STRICT)) {
+        !tls_CTX_enable_ct(c_ctx, tls_CT_VALIDATION_STRICT)) {
         ERR_print_errors(bio_err);
         goto end;
     }
 #endif
 
-    /* Process SSL_CONF arguments */
-    SSL_CONF_CTX_set_ssl_ctx(c_cctx, c_ctx);
-    SSL_CONF_CTX_set_ssl_ctx(s_cctx, s_ctx);
-    SSL_CONF_CTX_set_ssl_ctx(s_cctx2, s_ctx2);
+    /* Process tls_CONF arguments */
+    tls_CONF_CTX_set_tls_ctx(c_cctx, c_ctx);
+    tls_CONF_CTX_set_tls_ctx(s_cctx, s_ctx);
+    tls_CONF_CTX_set_tls_ctx(s_cctx2, s_ctx2);
 
-    for (i = 0; i < sk_OPENSSL_STRING_num(conf_args); i += 2) {
+    for (i = 0; i < sk_OPENtls_STRING_num(conf_args); i += 2) {
         int rv;
-        arg = sk_OPENSSL_STRING_value(conf_args, i);
-        argn = sk_OPENSSL_STRING_value(conf_args, i + 1);
-        rv = SSL_CONF_cmd(c_cctx, arg, argn);
+        arg = sk_OPENtls_STRING_value(conf_args, i);
+        argn = sk_OPENtls_STRING_value(conf_args, i + 1);
+        rv = tls_CONF_cmd(c_cctx, arg, argn);
         /* If not recognised use server context */
         if (rv == -2) {
-            rv = SSL_CONF_cmd(s_cctx2, arg, argn);
+            rv = tls_CONF_cmd(s_cctx2, arg, argn);
             if (rv > 0)
-                rv = SSL_CONF_cmd(s_cctx, arg, argn);
+                rv = tls_CONF_cmd(s_cctx, arg, argn);
         }
         if (rv <= 0) {
             BIO_printf(bio_err, "Error processing %s %s\n",
@@ -1464,12 +1464,12 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!SSL_CONF_CTX_finish(s_cctx) || !SSL_CONF_CTX_finish(c_cctx) || !SSL_CONF_CTX_finish(s_cctx2)) {
+    if (!tls_CONF_CTX_finish(s_cctx) || !tls_CONF_CTX_finish(c_cctx) || !tls_CONF_CTX_finish(s_cctx2)) {
         BIO_puts(bio_err, "Error finishing context\n");
         ERR_print_errors(bio_err);
         goto end;
     }
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     if (!no_dhe) {
         if (dhe1024dsa) {
             dh = get_dh1024dsa();
@@ -1477,59 +1477,59 @@ int main(int argc, char *argv[])
             dh = get_dh512();
         else
             dh = get_dh1024();
-        SSL_CTX_set_tmp_dh(s_ctx, dh);
-        SSL_CTX_set_tmp_dh(s_ctx2, dh);
+        tls_CTX_set_tmp_dh(s_ctx, dh);
+        tls_CTX_set_tmp_dh(s_ctx2, dh);
         DH_free(dh);
     }
 #else
     (void)no_dhe;
 #endif
 
-    if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
-          || SSL_CTX_load_verify_dir(s_ctx, CApath))
-        || !SSL_CTX_set_default_verify_paths(s_ctx)
-        || !(SSL_CTX_load_verify_file(s_ctx2, CAfile)
-             || SSL_CTX_load_verify_dir(s_ctx2, CApath))
-        || !SSL_CTX_set_default_verify_paths(s_ctx2)
-        || !(SSL_CTX_load_verify_file(c_ctx, CAfile)
-             || SSL_CTX_load_verify_dir(c_ctx, CApath))
-        || !SSL_CTX_set_default_verify_paths(c_ctx)) {
+    if (!(tls_CTX_load_verify_file(s_ctx, CAfile)
+          || tls_CTX_load_verify_dir(s_ctx, CApath))
+        || !tls_CTX_set_default_verify_paths(s_ctx)
+        || !(tls_CTX_load_verify_file(s_ctx2, CAfile)
+             || tls_CTX_load_verify_dir(s_ctx2, CApath))
+        || !tls_CTX_set_default_verify_paths(s_ctx2)
+        || !(tls_CTX_load_verify_file(c_ctx, CAfile)
+             || tls_CTX_load_verify_dir(c_ctx, CApath))
+        || !tls_CTX_set_default_verify_paths(c_ctx)) {
         ERR_print_errors(bio_err);
     }
 
-#ifndef OPENSSL_NO_CT
-    if (!SSL_CTX_set_default_ctlog_list_file(s_ctx) ||
-        !SSL_CTX_set_default_ctlog_list_file(s_ctx2) ||
-        !SSL_CTX_set_default_ctlog_list_file(c_ctx)) {
+#ifndef OPENtls_NO_CT
+    if (!tls_CTX_set_default_ctlog_list_file(s_ctx) ||
+        !tls_CTX_set_default_ctlog_list_file(s_ctx2) ||
+        !tls_CTX_set_default_ctlog_list_file(c_ctx)) {
         ERR_print_errors(bio_err);
     }
 #endif
 
     if (client_auth) {
         printf("client authentication\n");
-        SSL_CTX_set_verify(s_ctx,
-                           SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+        tls_CTX_set_verify(s_ctx,
+                           tls_VERIFY_PEER | tls_VERIFY_FAIL_IF_NO_PEER_CERT,
                            verify_callback);
-        SSL_CTX_set_verify(s_ctx2,
-                           SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+        tls_CTX_set_verify(s_ctx2,
+                           tls_VERIFY_PEER | tls_VERIFY_FAIL_IF_NO_PEER_CERT,
                            verify_callback);
-        SSL_CTX_set_cert_verify_callback(s_ctx, app_verify_callback,
+        tls_CTX_set_cert_verify_callback(s_ctx, app_verify_callback,
                                          &app_verify_arg);
-        SSL_CTX_set_cert_verify_callback(s_ctx2, app_verify_callback,
+        tls_CTX_set_cert_verify_callback(s_ctx2, app_verify_callback,
                                          &app_verify_arg);
     }
     if (server_auth) {
         printf("server authentication\n");
-        SSL_CTX_set_verify(c_ctx, SSL_VERIFY_PEER, verify_callback);
-        SSL_CTX_set_cert_verify_callback(c_ctx, app_verify_callback,
+        tls_CTX_set_verify(c_ctx, tls_VERIFY_PEER, verify_callback);
+        tls_CTX_set_cert_verify_callback(c_ctx, app_verify_callback,
                                          &app_verify_arg);
     }
 
     {
         int session_id_context = 0;
-        if (!SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context,
+        if (!tls_CTX_set_session_id_context(s_ctx, (void *)&session_id_context,
                                             sizeof(session_id_context)) ||
-            !SSL_CTX_set_session_id_context(s_ctx2, (void *)&session_id_context,
+            !tls_CTX_set_session_id_context(s_ctx2, (void *)&session_id_context,
                                             sizeof(session_id_context))) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1539,7 +1539,7 @@ int main(int argc, char *argv[])
     /* Use PSK only if PSK key is given */
     if (psk_key != NULL) {
         /*
-         * no_psk is used to avoid putting psk command to openssl tool
+         * no_psk is used to avoid putting psk command to opentls tool
          */
         if (no_psk) {
             /*
@@ -1549,14 +1549,14 @@ int main(int argc, char *argv[])
             ret = EXIT_SUCCESS;
             goto end;
         }
-#ifndef OPENSSL_NO_PSK
-        SSL_CTX_set_psk_client_callback(c_ctx, psk_client_callback);
-        SSL_CTX_set_psk_server_callback(s_ctx, psk_server_callback);
-        SSL_CTX_set_psk_server_callback(s_ctx2, psk_server_callback);
+#ifndef OPENtls_NO_PSK
+        tls_CTX_set_psk_client_callback(c_ctx, psk_client_callback);
+        tls_CTX_set_psk_server_callback(s_ctx, psk_server_callback);
+        tls_CTX_set_psk_server_callback(s_ctx2, psk_server_callback);
         if (debug)
             BIO_printf(bio_err, "setting PSK identity hint to s_ctx\n");
-        if (!SSL_CTX_use_psk_identity_hint(s_ctx, "ctx server identity_hint") ||
-            !SSL_CTX_use_psk_identity_hint(s_ctx2, "ctx server identity_hint")) {
+        if (!tls_CTX_use_psk_identity_hint(s_ctx, "ctx server identity_hint") ||
+            !tls_CTX_use_psk_identity_hint(s_ctx2, "ctx server identity_hint")) {
             BIO_printf(bio_err, "error setting PSK identity hint to s_ctx\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -1564,9 +1564,9 @@ int main(int argc, char *argv[])
 #endif
     }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
     if (npn_client) {
-        SSL_CTX_set_next_proto_select_cb(c_ctx, cb_client_npn, NULL);
+        tls_CTX_set_next_proto_select_cb(c_ctx, cb_client_npn, NULL);
     }
     if (npn_server) {
         if (npn_server_reject) {
@@ -1574,17 +1574,17 @@ int main(int argc, char *argv[])
                        "Can't have both -npn_server and -npn_server_reject\n");
             goto end;
         }
-        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_npn, NULL);
-        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_npn, NULL);
+        tls_CTX_set_npn_advertised_cb(s_ctx, cb_server_npn, NULL);
+        tls_CTX_set_npn_advertised_cb(s_ctx2, cb_server_npn, NULL);
     }
     if (npn_server_reject) {
-        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_rejects_npn, NULL);
-        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_rejects_npn, NULL);
+        tls_CTX_set_npn_advertised_cb(s_ctx, cb_server_rejects_npn, NULL);
+        tls_CTX_set_npn_advertised_cb(s_ctx2, cb_server_rejects_npn, NULL);
     }
 #endif
 
     if (serverinfo_sct) {
-        if (!SSL_CTX_add_client_custom_ext(c_ctx,
+        if (!tls_CTX_add_client_custom_ext(c_ctx,
                 TLSEXT_TYPE_signed_certificate_timestamp,
                 NULL, NULL, NULL,
                 serverinfo_cli_parse_cb, NULL)) {
@@ -1593,7 +1593,7 @@ int main(int argc, char *argv[])
         }
     }
     if (serverinfo_tack) {
-        if (!SSL_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
+        if (!tls_CTX_add_client_custom_ext(c_ctx, TACK_EXT_TYPE,
                                       NULL, NULL, NULL,
                                       serverinfo_cli_parse_cb, NULL)) {
             BIO_printf(bio_err, "Error adding TACK extension\n");
@@ -1601,58 +1601,58 @@ int main(int argc, char *argv[])
         }
     }
     if (serverinfo_file)
-        if (!SSL_CTX_use_serverinfo_file(s_ctx, serverinfo_file) ||
-            !SSL_CTX_use_serverinfo_file(s_ctx2, serverinfo_file)) {
+        if (!tls_CTX_use_serverinfo_file(s_ctx, serverinfo_file) ||
+            !tls_CTX_use_serverinfo_file(s_ctx2, serverinfo_file)) {
             BIO_printf(bio_err, "missing serverinfo file\n");
             goto end;
         }
 
     if (custom_ext) {
-        if (!SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0,
+        if (!tls_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_0,
                                       custom_ext_0_cli_add_cb,
                                       NULL, NULL,
                                       custom_ext_0_cli_parse_cb, NULL)
-            || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1,
+            || !tls_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_1,
                                       custom_ext_1_cli_add_cb,
                                       NULL, NULL,
                                       custom_ext_1_cli_parse_cb, NULL)
-            || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2,
+            || !tls_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_2,
                                       custom_ext_2_cli_add_cb,
                                       NULL, NULL,
                                       custom_ext_2_cli_parse_cb, NULL)
-            || !SSL_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3,
+            || !tls_CTX_add_client_custom_ext(c_ctx, CUSTOM_EXT_TYPE_3,
                                       custom_ext_3_cli_add_cb,
                                       NULL, NULL,
                                       custom_ext_3_cli_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0,
+            || !tls_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_0,
                                       custom_ext_0_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_0_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_0,
+            || !tls_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_0,
                                       custom_ext_0_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_0_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1,
+            || !tls_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_1,
                                       custom_ext_1_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_1_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_1,
+            || !tls_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_1,
                                       custom_ext_1_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_1_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2,
+            || !tls_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_2,
                                       custom_ext_2_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_2_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_2,
+            || !tls_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_2,
                                       custom_ext_2_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_2_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3,
+            || !tls_CTX_add_server_custom_ext(s_ctx, CUSTOM_EXT_TYPE_3,
                                       custom_ext_3_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_3_srv_parse_cb, NULL)
-            || !SSL_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_3,
+            || !tls_CTX_add_server_custom_ext(s_ctx2, CUSTOM_EXT_TYPE_3,
                                       custom_ext_3_srv_add_cb,
                                       NULL, NULL,
                                       custom_ext_3_srv_parse_cb, NULL)) {
@@ -1662,9 +1662,9 @@ int main(int argc, char *argv[])
     }
 
     if (alpn_server)
-        SSL_CTX_set_alpn_select_cb(s_ctx, cb_server_alpn, alpn_server);
+        tls_CTX_set_alpn_select_cb(s_ctx, cb_server_alpn, alpn_server);
     if (alpn_server2)
-        SSL_CTX_set_alpn_select_cb(s_ctx2, cb_server_alpn, alpn_server2);
+        tls_CTX_set_alpn_select_cb(s_ctx2, cb_server_alpn, alpn_server2);
 
     if (alpn_client) {
         size_t alpn_len;
@@ -1675,12 +1675,12 @@ int main(int argc, char *argv[])
             goto end;
         }
         /* Returns 0 on success!! */
-        if (SSL_CTX_set_alpn_protos(c_ctx, alpn, alpn_len)) {
+        if (tls_CTX_set_alpn_protos(c_ctx, alpn, alpn_len)) {
             BIO_printf(bio_err, "Error setting ALPN\n");
-            OPENSSL_free(alpn);
+            OPENtls_free(alpn);
             goto end;
         }
-        OPENSSL_free(alpn);
+        OPENtls_free(alpn);
     }
 
     if (server_sess_in != NULL) {
@@ -1699,32 +1699,32 @@ int main(int argc, char *argv[])
         long size;
 
         /* Use a fixed key so that we can decrypt the ticket. */
-        size = SSL_CTX_set_tlsext_ticket_keys(s_ctx, NULL, 0);
-        keys = OPENSSL_zalloc(size);
-        SSL_CTX_set_tlsext_ticket_keys(s_ctx, keys, size);
-        OPENSSL_free(keys);
+        size = tls_CTX_set_tlsext_ticket_keys(s_ctx, NULL, 0);
+        keys = OPENtls_zalloc(size);
+        tls_CTX_set_tlsext_ticket_keys(s_ctx, keys, size);
+        OPENtls_free(keys);
     }
 
     if (sn_server1 != NULL || sn_server2 != NULL)
-        SSL_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
+        tls_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
 
-    c_ssl = SSL_new(c_ctx);
-    s_ssl = SSL_new(s_ctx);
+    c_tls = tls_new(c_ctx);
+    s_tls = tls_new(s_ctx);
 
     if (sn_client)
-        SSL_set_tlsext_host_name(c_ssl, sn_client);
+        tls_set_tlsext_host_name(c_tls, sn_client);
 
-    if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+    if (!set_protocol_version(server_min_proto, s_tls, tls_CTRL_SET_MIN_PROTO_VERSION))
         goto end;
-    if (!set_protocol_version(server_max_proto, s_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+    if (!set_protocol_version(server_max_proto, s_tls, tls_CTRL_SET_MAX_PROTO_VERSION))
         goto end;
-    if (!set_protocol_version(client_min_proto, c_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+    if (!set_protocol_version(client_min_proto, c_tls, tls_CTRL_SET_MIN_PROTO_VERSION))
         goto end;
-    if (!set_protocol_version(client_max_proto, c_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+    if (!set_protocol_version(client_max_proto, c_tls, tls_CTRL_SET_MAX_PROTO_VERSION))
         goto end;
 
     if (server_sess) {
-        if (SSL_CTX_add_session(s_ctx, server_sess) == 0) {
+        if (tls_CTX_add_session(s_ctx, server_sess) == 0) {
             BIO_printf(bio_err, "Can't add server session\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -1734,13 +1734,13 @@ int main(int argc, char *argv[])
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
         if (!reuse) {
-            if (!SSL_set_session(c_ssl, NULL)) {
+            if (!tls_set_session(c_tls, NULL)) {
                 BIO_printf(bio_err, "Failed to set session\n");
                 goto end;
             }
         }
         if (client_sess_in != NULL) {
-            if (SSL_set_session(c_ssl, client_sess) == 0) {
+            if (tls_set_session(c_tls, client_sess) == 0) {
                 BIO_printf(bio_err, "Can't set client session\n");
                 ERR_print_errors(bio_err);
                 goto end;
@@ -1748,18 +1748,18 @@ int main(int argc, char *argv[])
         }
         switch (bio_type) {
         case BIO_MEM:
-            ret = doit(s_ssl, c_ssl, bytes);
+            ret = doit(s_tls, c_tls, bytes);
             break;
         case BIO_PAIR:
-            ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
+            ret = doit_biopair(s_tls, c_tls, bytes, &s_time, &c_time);
             break;
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
         case BIO_IPV4:
-            ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV4,
+            ret = doit_localhost(s_tls, c_tls, BIO_FAMILY_IPV4,
                                  bytes, &s_time, &c_time);
             break;
         case BIO_IPV6:
-            ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV6,
+            ret = doit_localhost(s_tls, c_tls, BIO_FAMILY_IPV6,
                                  bytes, &s_time, &c_time);
             break;
 #else
@@ -1781,40 +1781,40 @@ int main(int argc, char *argv[])
             ret = EXIT_FAILURE;
             goto err;
         }
-        if (SSL_version(c_ssl) != version) {
+        if (tls_version(c_tls) != version) {
             BIO_printf(bio_err, "Unexpected version negotiated. "
-                "Expected: %s, got %s\n", should_negotiate, SSL_get_version(c_ssl));
+                "Expected: %s, got %s\n", should_negotiate, tls_get_version(c_tls));
             ret = EXIT_FAILURE;
             goto err;
         }
     }
 
     if (should_reuse != -1) {
-        if (SSL_session_reused(s_ssl) != should_reuse ||
-            SSL_session_reused(c_ssl) != should_reuse) {
+        if (tls_session_reused(s_tls) != should_reuse ||
+            tls_session_reused(c_tls) != should_reuse) {
             BIO_printf(bio_err, "Unexpected session reuse state. "
                 "Expected: %d, server: %d, client: %d\n", should_reuse,
-                SSL_session_reused(s_ssl), SSL_session_reused(c_ssl));
+                tls_session_reused(s_tls), tls_session_reused(c_tls));
             ret = EXIT_FAILURE;
             goto err;
         }
     }
 
     if (server_sess_out != NULL) {
-        if (write_session(server_sess_out, SSL_get_session(s_ssl)) == 0) {
+        if (write_session(server_sess_out, tls_get_session(s_tls)) == 0) {
             ret = EXIT_FAILURE;
             goto err;
         }
     }
     if (client_sess_out != NULL) {
-        if (write_session(client_sess_out, SSL_get_session(c_ssl)) == 0) {
+        if (write_session(client_sess_out, tls_get_session(c_tls)) == 0) {
             ret = EXIT_FAILURE;
             goto err;
         }
     }
 
     if (!verbose) {
-        print_details(c_ssl, "");
+        print_details(c_tls, "");
     }
     if (print_time) {
 #ifdef CLOCKS_PER_SEC
@@ -1836,33 +1836,33 @@ int main(int argc, char *argv[])
     }
 
  err:
-    SSL_free(s_ssl);
-    SSL_free(c_ssl);
+    tls_free(s_tls);
+    tls_free(c_tls);
 
  end:
-    SSL_CTX_free(s_ctx);
-    SSL_CTX_free(s_ctx2);
-    SSL_CTX_free(c_ctx);
-    SSL_CONF_CTX_free(s_cctx);
-    SSL_CONF_CTX_free(s_cctx2);
-    SSL_CONF_CTX_free(c_cctx);
-    sk_OPENSSL_STRING_free(conf_args);
+    tls_CTX_free(s_ctx);
+    tls_CTX_free(s_ctx2);
+    tls_CTX_free(c_ctx);
+    tls_CONF_CTX_free(s_cctx);
+    tls_CONF_CTX_free(s_cctx2);
+    tls_CONF_CTX_free(c_cctx);
+    sk_OPENtls_STRING_free(conf_args);
 
     BIO_free(bio_stdout);
 
-    SSL_SESSION_free(server_sess);
-    SSL_SESSION_free(client_sess);
+    tls_SESSION_free(server_sess);
+    tls_SESSION_free(client_sess);
 
     BIO_free(bio_err);
     EXIT(ret);
 }
 
-#ifndef OPENSSL_NO_SOCK
-int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
+#ifndef OPENtls_NO_SOCK
+int doit_localhost(tls *s_tls, tls *c_tls, int family, long count,
                    clock_t *s_time, clock_t *c_time)
 {
     long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
-    BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
+    BIO *s_tls_bio = NULL, *c_tls_bio = NULL;
     BIO *acpt = NULL, *server = NULL, *client = NULL;
     char addr_str[40];
     int ret = EXIT_FAILURE;
@@ -1917,32 +1917,32 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     BIO_free_all(acpt);
     acpt = NULL;
 
-    s_ssl_bio = BIO_new(BIO_f_ssl());
-    if (!s_ssl_bio)
+    s_tls_bio = BIO_new(BIO_f_tls());
+    if (!s_tls_bio)
         goto err;
 
-    c_ssl_bio = BIO_new(BIO_f_ssl());
-    if (!c_ssl_bio)
+    c_tls_bio = BIO_new(BIO_f_tls());
+    if (!c_tls_bio)
         goto err;
 
-    SSL_set_connect_state(c_ssl);
-    SSL_set_bio(c_ssl, client, client);
-    (void)BIO_set_ssl(c_ssl_bio, c_ssl, BIO_NOCLOSE);
+    tls_set_connect_state(c_tls);
+    tls_set_bio(c_tls, client, client);
+    (void)BIO_set_tls(c_tls_bio, c_tls, BIO_NOCLOSE);
 
-    SSL_set_accept_state(s_ssl);
-    SSL_set_bio(s_ssl, server, server);
-    (void)BIO_set_ssl(s_ssl_bio, s_ssl, BIO_NOCLOSE);
+    tls_set_accept_state(s_tls);
+    tls_set_bio(s_tls, server, server);
+    (void)BIO_set_tls(s_tls_bio, s_tls, BIO_NOCLOSE);
 
     do {
         /*-
-         * c_ssl_bio:          SSL filter BIO
+         * c_tls_bio:          tls filter BIO
          *
-         * client:             I/O for SSL library
+         * client:             I/O for tls library
          *
          *
-         * server:             I/O for SSL library
+         * server:             I/O for tls library
          *
-         * s_ssl_bio:          SSL filter BIO
+         * s_tls_bio:          tls filter BIO
          */
 
         /*
@@ -1962,9 +1962,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
             memset(cbuf, 0, sizeof(cbuf));
 
             if (debug)
-                if (SSL_in_init(c_ssl))
-                    printf("client waiting in SSL_connect - %s\n",
-                           SSL_state_string_long(c_ssl));
+                if (tls_in_init(c_tls))
+                    printf("client waiting in tls_connect - %s\n",
+                           tls_state_string_long(c_tls));
 
             if (cw_num > 0) {
                 /* Write to server. */
@@ -1973,9 +1973,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
                     i = sizeof(cbuf);
                 else
                     i = (int)cw_num;
-                r = BIO_write(c_ssl_bio, cbuf, i);
+                r = BIO_write(c_tls_bio, cbuf, i);
                 if (r < 0) {
-                    if (!BIO_should_retry(c_ssl_bio)) {
+                    if (!BIO_should_retry(c_tls_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
                         err_in_client = 1;
                         goto err;
@@ -1987,7 +1987,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
                      * next iteration.
                      */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -1999,9 +1999,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
             if (cr_num > 0) {
                 /* Read from server. */
 
-                r = BIO_read(c_ssl_bio, cbuf, sizeof(cbuf));
+                r = BIO_read(c_tls_bio, cbuf, sizeof(cbuf));
                 if (r < 0) {
-                    if (!BIO_should_retry(c_ssl_bio)) {
+                    if (!BIO_should_retry(c_tls_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
                         err_in_client = 1;
                         goto err;
@@ -2010,7 +2010,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
                      * Again, "BIO_should_retry" can be ignored.
                      */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2041,9 +2041,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
             memset(sbuf, 0, sizeof(sbuf));
 
             if (debug)
-                if (SSL_in_init(s_ssl))
-                    printf("server waiting in SSL_accept - %s\n",
-                           SSL_state_string_long(s_ssl));
+                if (tls_in_init(s_tls))
+                    printf("server waiting in tls_accept - %s\n",
+                           tls_state_string_long(s_tls));
 
             if (sw_num > 0) {
                 /* Write to client. */
@@ -2052,16 +2052,16 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
                     i = sizeof(sbuf);
                 else
                     i = (int)sw_num;
-                r = BIO_write(s_ssl_bio, sbuf, i);
+                r = BIO_write(s_tls_bio, sbuf, i);
                 if (r < 0) {
-                    if (!BIO_should_retry(s_ssl_bio)) {
+                    if (!BIO_should_retry(s_tls_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
                         err_in_server = 1;
                         goto err;
                     }
                     /* Ignore "BIO_should_retry". */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    fprintf(stderr, "tls SERVER STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2073,16 +2073,16 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
             if (sr_num > 0) {
                 /* Read from client. */
 
-                r = BIO_read(s_ssl_bio, sbuf, sizeof(sbuf));
+                r = BIO_read(s_tls_bio, sbuf, sizeof(sbuf));
                 if (r < 0) {
-                    if (!BIO_should_retry(s_ssl_bio)) {
+                    if (!BIO_should_retry(s_tls_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
                         err_in_server = 1;
                         goto err;
                     }
                     /* blah, blah */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    fprintf(stderr, "tls SERVER STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2097,17 +2097,17 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
     if (verbose)
-        print_details(c_ssl, "DONE via TCP connect: ");
-# ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0)
+        print_details(c_tls, "DONE via TCP connect: ");
+# ifndef OPENtls_NO_NEXTPROTONEG
+    if (verify_npn(c_tls, s_tls) < 0)
         goto end;
 # endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0
-            || verify_servername(c_ssl, s_ssl) < 0)
+    if (verify_alpn(c_tls, s_tls) < 0
+            || verify_servername(c_tls, s_tls) < 0)
         goto err;
 
     if (custom_ext_error) {
@@ -2115,7 +2115,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
         goto err;
     }
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENtls_NO_NEXTPROTONEG
  end:
 # endif
     ret = EXIT_SUCCESS;
@@ -2126,8 +2126,8 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     BIO_free_all(acpt);
     BIO_free(server);
     BIO_free(client);
-    BIO_free(s_ssl_bio);
-    BIO_free(c_ssl_bio);
+    BIO_free(s_tls_bio);
+    BIO_free(c_tls_bio);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
         ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -2138,11 +2138,11 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
 }
 #endif
 
-int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
+int doit_biopair(tls *s_tls, tls *c_tls, long count,
                  clock_t *s_time, clock_t *c_time)
 {
     long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
-    BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
+    BIO *s_tls_bio = NULL, *c_tls_bio = NULL;
     BIO *server = NULL, *server_io = NULL, *client = NULL, *client_io = NULL;
     int ret = EXIT_FAILURE;
     int err_in_client = 0;
@@ -2155,37 +2155,37 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     if (!BIO_new_bio_pair(&client, bufsiz, &client_io, bufsiz))
         goto err;
 
-    s_ssl_bio = BIO_new(BIO_f_ssl());
-    if (!s_ssl_bio)
+    s_tls_bio = BIO_new(BIO_f_tls());
+    if (!s_tls_bio)
         goto err;
 
-    c_ssl_bio = BIO_new(BIO_f_ssl());
-    if (!c_ssl_bio)
+    c_tls_bio = BIO_new(BIO_f_tls());
+    if (!c_tls_bio)
         goto err;
 
-    SSL_set_connect_state(c_ssl);
-    SSL_set_bio(c_ssl, client, client);
-    (void)BIO_set_ssl(c_ssl_bio, c_ssl, BIO_NOCLOSE);
+    tls_set_connect_state(c_tls);
+    tls_set_bio(c_tls, client, client);
+    (void)BIO_set_tls(c_tls_bio, c_tls, BIO_NOCLOSE);
 
-    SSL_set_accept_state(s_ssl);
-    SSL_set_bio(s_ssl, server, server);
-    (void)BIO_set_ssl(s_ssl_bio, s_ssl, BIO_NOCLOSE);
+    tls_set_accept_state(s_tls);
+    tls_set_bio(s_tls, server, server);
+    (void)BIO_set_tls(s_tls_bio, s_tls, BIO_NOCLOSE);
 
     do {
         /*-
-         * c_ssl_bio:          SSL filter BIO
+         * c_tls_bio:          tls filter BIO
          *
-         * client:             pseudo-I/O for SSL library
+         * client:             pseudo-I/O for tls library
          *
-         * client_io:          client's SSL communication; usually to be
+         * client_io:          client's tls communication; usually to be
          *                     relayed over some I/O facility, but in this
          *                     test program, we're the server, too:
          *
-         * server_io:          server's SSL communication
+         * server_io:          server's tls communication
          *
-         * server:             pseudo-I/O for SSL library
+         * server:             pseudo-I/O for tls library
          *
-         * s_ssl_bio:          SSL filter BIO
+         * s_tls_bio:          tls filter BIO
          *
          * The client and the server each employ a "BIO pair":
          * client + client_io, server + server_io.
@@ -2224,9 +2224,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
             memset(cbuf, 0, sizeof(cbuf));
 
             if (debug)
-                if (SSL_in_init(c_ssl))
-                    printf("client waiting in SSL_connect - %s\n",
-                           SSL_state_string_long(c_ssl));
+                if (tls_in_init(c_tls))
+                    printf("client waiting in tls_connect - %s\n",
+                           tls_state_string_long(c_tls));
 
             if (cw_num > 0) {
                 /* Write to server. */
@@ -2235,9 +2235,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                     i = sizeof(cbuf);
                 else
                     i = (int)cw_num;
-                r = BIO_write(c_ssl_bio, cbuf, i);
+                r = BIO_write(c_tls_bio, cbuf, i);
                 if (r < 0) {
-                    if (!BIO_should_retry(c_ssl_bio)) {
+                    if (!BIO_should_retry(c_tls_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
                         err_in_client = 1;
                         goto err;
@@ -2249,7 +2249,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                      * next iteration.
                      */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2261,9 +2261,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
             if (cr_num > 0) {
                 /* Read from server. */
 
-                r = BIO_read(c_ssl_bio, cbuf, sizeof(cbuf));
+                r = BIO_read(c_tls_bio, cbuf, sizeof(cbuf));
                 if (r < 0) {
-                    if (!BIO_should_retry(c_ssl_bio)) {
+                    if (!BIO_should_retry(c_tls_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
                         err_in_client = 1;
                         goto err;
@@ -2272,7 +2272,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                      * Again, "BIO_should_retry" can be ignored.
                      */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2303,9 +2303,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
             memset(sbuf, 0, sizeof(sbuf));
 
             if (debug)
-                if (SSL_in_init(s_ssl))
-                    printf("server waiting in SSL_accept - %s\n",
-                           SSL_state_string_long(s_ssl));
+                if (tls_in_init(s_tls))
+                    printf("server waiting in tls_accept - %s\n",
+                           tls_state_string_long(s_tls));
 
             if (sw_num > 0) {
                 /* Write to client. */
@@ -2314,16 +2314,16 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                     i = sizeof(sbuf);
                 else
                     i = (int)sw_num;
-                r = BIO_write(s_ssl_bio, sbuf, i);
+                r = BIO_write(s_tls_bio, sbuf, i);
                 if (r < 0) {
-                    if (!BIO_should_retry(s_ssl_bio)) {
+                    if (!BIO_should_retry(s_tls_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
                         err_in_server = 1;
                         goto err;
                     }
                     /* Ignore "BIO_should_retry". */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    fprintf(stderr, "tls SERVER STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2335,16 +2335,16 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
             if (sr_num > 0) {
                 /* Read from client. */
 
-                r = BIO_read(s_ssl_bio, sbuf, sizeof(sbuf));
+                r = BIO_read(s_tls_bio, sbuf, sizeof(sbuf));
                 if (r < 0) {
-                    if (!BIO_should_retry(s_ssl_bio)) {
+                    if (!BIO_should_retry(s_tls_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
                         err_in_server = 1;
                         goto err;
                     }
                     /* blah, blah */
                 } else if (r == 0) {
-                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    fprintf(stderr, "tls SERVER STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2419,7 +2419,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 /*
                  * here we could use ..._get_write_guarantee instead of
                  * ..._get_read_request, but by using the latter we test
-                 * restartability of the SSL implementation more thoroughly
+                 * restartability of the tls implementation more thoroughly
                  */
                 num = r1;
                 if (r2 < num)
@@ -2471,17 +2471,17 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
 
     if (verbose)
-        print_details(c_ssl, "DONE via BIO pair: ");
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0)
+        print_details(c_tls, "DONE via BIO pair: ");
+#ifndef OPENtls_NO_NEXTPROTONEG
+    if (verify_npn(c_tls, s_tls) < 0)
         goto end;
 #endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0
-            || verify_servername(c_ssl, s_ssl) < 0)
+    if (verify_alpn(c_tls, s_tls) < 0
+            || verify_servername(c_tls, s_tls) < 0)
         goto err;
 
     if (custom_ext_error) {
@@ -2489,7 +2489,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
         goto err;
     }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENtls_NO_NEXTPROTONEG
  end:
 #endif
     ret = EXIT_SUCCESS;
@@ -2501,8 +2501,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     BIO_free(server_io);
     BIO_free(client);
     BIO_free(client_io);
-    BIO_free(s_ssl_bio);
-    BIO_free(c_ssl_bio);
+    BIO_free(s_tls_bio);
+    BIO_free(c_tls_bio);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
         ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -2517,7 +2517,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
 #define C_DONE  1
 #define S_DONE  2
 
-int doit(SSL *s_ssl, SSL *c_ssl, long count)
+int doit(tls *s_tls, tls *c_tls, long count)
 {
     char *cbuf = NULL, *sbuf = NULL;
     long bufsiz;
@@ -2539,9 +2539,9 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
     bufsiz = count > 40 * 1024 ? 40 * 1024 : count;
 
-    if ((cbuf = OPENSSL_zalloc(bufsiz)) == NULL)
+    if ((cbuf = OPENtls_zalloc(bufsiz)) == NULL)
         goto err;
-    if ((sbuf = OPENSSL_zalloc(bufsiz)) == NULL)
+    if ((sbuf = OPENtls_zalloc(bufsiz)) == NULL)
         goto err;
 
     c_to_s = BIO_new(BIO_s_mem());
@@ -2551,43 +2551,43 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
         goto err;
     }
 
-    c_bio = BIO_new(BIO_f_ssl());
-    s_bio = BIO_new(BIO_f_ssl());
+    c_bio = BIO_new(BIO_f_tls());
+    s_bio = BIO_new(BIO_f_tls());
     if ((c_bio == NULL) || (s_bio == NULL)) {
         ERR_print_errors(bio_err);
         goto err;
     }
 
-    SSL_set_connect_state(c_ssl);
-    SSL_set_bio(c_ssl, s_to_c, c_to_s);
-    SSL_set_max_send_fragment(c_ssl, max_frag);
-    BIO_set_ssl(c_bio, c_ssl, BIO_NOCLOSE);
+    tls_set_connect_state(c_tls);
+    tls_set_bio(c_tls, s_to_c, c_to_s);
+    tls_set_max_send_fragment(c_tls, max_frag);
+    BIO_set_tls(c_bio, c_tls, BIO_NOCLOSE);
 
     /*
-     * We've just given our ref to these BIOs to c_ssl. We need another one to
-     * give to s_ssl
+     * We've just given our ref to these BIOs to c_tls. We need another one to
+     * give to s_tls
      */
     if (!BIO_up_ref(c_to_s)) {
-        /* c_to_s and s_to_c will get freed when we free c_ssl */
+        /* c_to_s and s_to_c will get freed when we free c_tls */
         c_to_s = NULL;
         s_to_c = NULL;
         goto err;
     }
     if (!BIO_up_ref(s_to_c)) {
-        /* s_to_c will get freed when we free c_ssl */
+        /* s_to_c will get freed when we free c_tls */
         s_to_c = NULL;
         goto err;
     }
 
-    SSL_set_accept_state(s_ssl);
-    SSL_set_bio(s_ssl, c_to_s, s_to_c);
+    tls_set_accept_state(s_tls);
+    tls_set_bio(s_tls, c_to_s, s_to_c);
 
     /* We've used up all our refs to these now */
     c_to_s = NULL;
     s_to_c = NULL;
 
-    SSL_set_max_send_fragment(s_ssl, max_frag);
-    BIO_set_ssl(s_bio, s_ssl, BIO_NOCLOSE);
+    tls_set_max_send_fragment(s_tls, max_frag);
+    BIO_set_tls(s_bio, s_tls, BIO_NOCLOSE);
 
     c_r = 0;
     s_r = 1;
@@ -2609,15 +2609,15 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
             do_client = 1;
 
         if (do_server && debug) {
-            if (SSL_in_init(s_ssl))
-                printf("server waiting in SSL_accept - %s\n",
-                       SSL_state_string_long(s_ssl));
+            if (tls_in_init(s_tls))
+                printf("server waiting in tls_accept - %s\n",
+                       tls_state_string_long(s_tls));
         }
 
         if (do_client && debug) {
-            if (SSL_in_init(c_ssl))
-                printf("client waiting in SSL_connect - %s\n",
-                       SSL_state_string_long(c_ssl));
+            if (tls_in_init(c_tls))
+                printf("client waiting in tls_connect - %s\n",
+                       tls_state_string_long(c_tls));
         }
 
         if (!do_client && !do_server) {
@@ -2644,7 +2644,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                         goto err;
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2654,7 +2654,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                     c_write = 0;
                     cw_num -= i;
                     if (max_frag > 1029)
-                        SSL_set_max_send_fragment(c_ssl, max_frag -= 5);
+                        tls_set_max_send_fragment(c_tls, max_frag -= 5);
                 }
             } else {
                 i = BIO_read(c_bio, cbuf, bufsiz);
@@ -2673,7 +2673,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                         goto err;
                     }
                 } else if (i == 0) {
-                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    fprintf(stderr, "tls CLIENT STARTUP FAILED\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2712,7 +2712,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                 } else if (i == 0) {
                     ERR_print_errors(bio_err);
                     fprintf(stderr,
-                            "SSL SERVER STARTUP FAILED in SSL_read\n");
+                            "tls SERVER STARTUP FAILED in tls_read\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2748,7 +2748,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                 } else if (i == 0) {
                     ERR_print_errors(bio_err);
                     fprintf(stderr,
-                            "SSL SERVER STARTUP FAILED in SSL_write\n");
+                            "tls SERVER STARTUP FAILED in tls_write\n");
                     goto err;
                 } else {
                     if (debug)
@@ -2759,7 +2759,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                     if (sw_num <= 0)
                         done |= S_DONE;
                     if (max_frag > 1029)
-                        SSL_set_max_send_fragment(s_ssl, max_frag -= 5);
+                        tls_set_max_send_fragment(s_tls, max_frag -= 5);
                 }
             }
         }
@@ -2769,9 +2769,9 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     }
 
     if (verbose)
-        print_details(c_ssl, "DONE: ");
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0)
+        print_details(c_tls, "DONE: ");
+#ifndef OPENtls_NO_NEXTPROTONEG
+    if (verify_npn(c_tls, s_tls) < 0)
         goto err;
 #endif
     if (verify_serverinfo() < 0) {
@@ -2788,8 +2788,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     BIO_free(s_to_c);
     BIO_free_all(c_bio);
     BIO_free_all(s_bio);
-    OPENSSL_free(cbuf);
-    OPENSSL_free(sbuf);
+    OPENtls_free(cbuf);
+    OPENtls_free(sbuf);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
         ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -2861,12 +2861,12 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
     return ok;
 }
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 /*-
  * These DH parameters have been generated as follows:
- *    $ openssl dhparam -C -noout 512
- *    $ openssl dhparam -C -noout 1024
- *    $ openssl dhparam -C -noout -dsaparam 1024
+ *    $ opentls dhparam -C -noout 512
+ *    $ opentls dhparam -C -noout 1024
+ *    $ opentls dhparam -C -noout -dsaparam 1024
  * (The third function has been renamed to avoid name conflicts.)
  */
 static DH *get_dh512(void)
@@ -3013,7 +3013,7 @@ static DH *get_dh1024dsa(void)
 }
 #endif
 
-#ifndef OPENSSL_NO_PSK
+#ifndef OPENtls_NO_PSK
 /* convert the PSK key (psk_key) in ascii to binary (psk) */
 static int psk_key2bn(const char *pskkey, unsigned char *psk,
                       unsigned int max_psk_len)
@@ -3040,7 +3040,7 @@ static int psk_key2bn(const char *pskkey, unsigned char *psk,
     return ret;
 }
 
-static unsigned int psk_client_callback(SSL *ssl, const char *hint,
+static unsigned int psk_client_callback(tls *tls, const char *hint,
                                         char *identity,
                                         unsigned int max_identity_len,
                                         unsigned char *psk,
@@ -3063,7 +3063,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     return psk_len;
 }
 
-static unsigned int psk_server_callback(SSL *ssl, const char *identity,
+static unsigned int psk_server_callback(tls *tls, const char *identity,
                                         unsigned char *psk,
                                         unsigned int max_psk_len)
 {

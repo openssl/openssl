@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
- * Stolen from tjh's ssl/ssl_trc.c stuff.
+ * Stolen from tjh's tls/tls_trc.c stuff.
  */
 
 #include <stdio.h>
@@ -91,7 +91,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
     return ret;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 static int write_fp(const void *data, size_t len, void *fp)
 {
     return UP_fwrite(data, len, 1, fp);

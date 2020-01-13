@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/md2.h>
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
+#include <opentls/md2.h>
+#include <opentls/opentlsv.h>
+#include <opentls/crypto.h>
 
 /*
  * Implemented from RFC1319 The MD2 Message-Digest Algorithm
@@ -150,7 +150,7 @@ static void md2_block(MD2_CTX *c, const unsigned char *d)
         t = (t + i) & 0xff;
     }
     memcpy(sp1, state, 16 * sizeof(MD2_INT));
-    OPENSSL_cleanse(state, 48 * sizeof(MD2_INT));
+    OPENtls_cleanse(state, 48 * sizeof(MD2_INT));
 }
 
 int MD2_Final(unsigned char *md, MD2_CTX *c)
@@ -174,6 +174,6 @@ int MD2_Final(unsigned char *md, MD2_CTX *c)
 
     for (i = 0; i < 16; i++)
         md[i] = (UCHAR) (p1[i] & 0xff);
-    OPENSSL_cleanse(c, sizeof(*c));
+    OPENtls_cleanse(c, sizeof(*c));
     return 1;
 }

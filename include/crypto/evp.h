@@ -1,14 +1,14 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_numbers.h>
+#include <opentls/evp.h>
+#include <opentls/core_numbers.h>
 #include "internal/refcount.h"
 
 /*
@@ -25,7 +25,7 @@ struct evp_pkey_ctx_st {
      * Library context, Key type name and properties associated
      * with this context
      */
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
     const char *keytype;
     const char *propquery;
 
@@ -145,44 +145,44 @@ const EVP_PKEY_METHOD *poly1305_pkey_method(void);
 const EVP_PKEY_METHOD *siphash_pkey_method(void);
 
 struct evp_mac_st {
-    OSSL_PROVIDER *prov;
+    Otls_PROVIDER *prov;
     int name_id;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_mac_newctx_fn *newctx;
-    OSSL_OP_mac_dupctx_fn *dupctx;
-    OSSL_OP_mac_freectx_fn *freectx;
-    OSSL_OP_mac_size_fn *size;
-    OSSL_OP_mac_init_fn *init;
-    OSSL_OP_mac_update_fn *update;
-    OSSL_OP_mac_final_fn *final;
-    OSSL_OP_mac_gettable_params_fn *gettable_params;
-    OSSL_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_mac_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_mac_get_params_fn *get_params;
-    OSSL_OP_mac_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
+    Otls_OP_mac_newctx_fn *newctx;
+    Otls_OP_mac_dupctx_fn *dupctx;
+    Otls_OP_mac_freectx_fn *freectx;
+    Otls_OP_mac_size_fn *size;
+    Otls_OP_mac_init_fn *init;
+    Otls_OP_mac_update_fn *update;
+    Otls_OP_mac_final_fn *final;
+    Otls_OP_mac_gettable_params_fn *gettable_params;
+    Otls_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
+    Otls_OP_mac_settable_ctx_params_fn *settable_ctx_params;
+    Otls_OP_mac_get_params_fn *get_params;
+    Otls_OP_mac_get_ctx_params_fn *get_ctx_params;
+    Otls_OP_mac_set_ctx_params_fn *set_ctx_params;
 };
 
 struct evp_kdf_st {
-    OSSL_PROVIDER *prov;
+    Otls_PROVIDER *prov;
     int name_id;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_kdf_newctx_fn *newctx;
-    OSSL_OP_kdf_dupctx_fn *dupctx;
-    OSSL_OP_kdf_freectx_fn *freectx;
-    OSSL_OP_kdf_reset_fn *reset;
-    OSSL_OP_kdf_derive_fn *derive;
-    OSSL_OP_kdf_gettable_params_fn *gettable_params;
-    OSSL_OP_kdf_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_kdf_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_kdf_get_params_fn *get_params;
-    OSSL_OP_kdf_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
+    Otls_OP_kdf_newctx_fn *newctx;
+    Otls_OP_kdf_dupctx_fn *dupctx;
+    Otls_OP_kdf_freectx_fn *freectx;
+    Otls_OP_kdf_reset_fn *reset;
+    Otls_OP_kdf_derive_fn *derive;
+    Otls_OP_kdf_gettable_params_fn *gettable_params;
+    Otls_OP_kdf_gettable_ctx_params_fn *gettable_ctx_params;
+    Otls_OP_kdf_settable_ctx_params_fn *settable_ctx_params;
+    Otls_OP_kdf_get_params_fn *get_params;
+    Otls_OP_kdf_get_ctx_params_fn *get_ctx_params;
+    Otls_OP_kdf_set_ctx_params_fn *set_ctx_params;
 };
 
 struct evp_md_st {
@@ -207,22 +207,22 @@ struct evp_md_st {
     /* New structure members */
     /* TODO(3.0): Remove above comment when legacy has gone */
     int name_id;
-    OSSL_PROVIDER *prov;
+    Otls_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
-    OSSL_OP_digest_newctx_fn *newctx;
-    OSSL_OP_digest_init_fn *dinit;
-    OSSL_OP_digest_update_fn *dupdate;
-    OSSL_OP_digest_final_fn *dfinal;
-    OSSL_OP_digest_digest_fn *digest;
-    OSSL_OP_digest_freectx_fn *freectx;
-    OSSL_OP_digest_dupctx_fn *dupctx;
-    OSSL_OP_digest_get_params_fn *get_params;
-    OSSL_OP_digest_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_digest_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_digest_gettable_params_fn *gettable_params;
-    OSSL_OP_digest_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
+    Otls_OP_digest_newctx_fn *newctx;
+    Otls_OP_digest_init_fn *dinit;
+    Otls_OP_digest_update_fn *dupdate;
+    Otls_OP_digest_final_fn *dfinal;
+    Otls_OP_digest_digest_fn *digest;
+    Otls_OP_digest_freectx_fn *freectx;
+    Otls_OP_digest_dupctx_fn *dupctx;
+    Otls_OP_digest_get_params_fn *get_params;
+    Otls_OP_digest_set_ctx_params_fn *set_ctx_params;
+    Otls_OP_digest_get_ctx_params_fn *get_ctx_params;
+    Otls_OP_digest_gettable_params_fn *gettable_params;
+    Otls_OP_digest_settable_ctx_params_fn *settable_ctx_params;
+    Otls_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
 
 } /* EVP_MD */ ;
 
@@ -260,23 +260,23 @@ struct evp_cipher_st {
     /* New structure members */
     /* TODO(3.0): Remove above comment when legacy has gone */
     int name_id;
-    OSSL_PROVIDER *prov;
+    Otls_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
-    OSSL_OP_cipher_newctx_fn *newctx;
-    OSSL_OP_cipher_encrypt_init_fn *einit;
-    OSSL_OP_cipher_decrypt_init_fn *dinit;
-    OSSL_OP_cipher_update_fn *cupdate;
-    OSSL_OP_cipher_final_fn *cfinal;
-    OSSL_OP_cipher_cipher_fn *ccipher;
-    OSSL_OP_cipher_freectx_fn *freectx;
-    OSSL_OP_cipher_dupctx_fn *dupctx;
-    OSSL_OP_cipher_get_params_fn *get_params;
-    OSSL_OP_cipher_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_cipher_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_cipher_gettable_params_fn *gettable_params;
-    OSSL_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_cipher_settable_ctx_params_fn *settable_ctx_params;
+    Otls_OP_cipher_newctx_fn *newctx;
+    Otls_OP_cipher_encrypt_init_fn *einit;
+    Otls_OP_cipher_decrypt_init_fn *dinit;
+    Otls_OP_cipher_update_fn *cupdate;
+    Otls_OP_cipher_final_fn *cfinal;
+    Otls_OP_cipher_cipher_fn *ccipher;
+    Otls_OP_cipher_freectx_fn *freectx;
+    Otls_OP_cipher_dupctx_fn *dupctx;
+    Otls_OP_cipher_get_params_fn *get_params;
+    Otls_OP_cipher_get_ctx_params_fn *get_ctx_params;
+    Otls_OP_cipher_set_ctx_params_fn *set_ctx_params;
+    Otls_OP_cipher_gettable_params_fn *gettable_params;
+    Otls_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
+    Otls_OP_cipher_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */
@@ -496,7 +496,7 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
 
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
 
 #define X25519_KEYLEN        32
 #define X448_KEYLEN          56
@@ -525,16 +525,16 @@ struct evp_pkey_st {
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
         struct rsa_st *rsa;     /* RSA */
 # endif
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
         struct dsa_st *dsa;     /* DSA */
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
         struct dh_st *dh;       /* DH */
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
         struct ec_key_st *ec;   /* ECC */
         ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
 # endif
@@ -581,8 +581,8 @@ struct evp_pkey_st {
     ((ctx)->operation == EVP_PKEY_OP_ENCRYPT \
      || (ctx)->operation == EVP_PKEY_OP_DECRYPT)
 
-void openssl_add_all_ciphers_int(void);
-void openssl_add_all_digests_int(void);
+void opentls_add_all_ciphers_int(void);
+void opentls_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
@@ -591,35 +591,35 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                      int domainparams);
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
 void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           const OSSL_PARAM params[], int domainparams);
+                           const Otls_PARAM params[], int domainparams);
 
 
 /* KEYMGMT provider interface functions */
 void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[]);
+                                  const Otls_PARAM params[]);
 void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
+                            const Otls_PARAM params[]);
 void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
                                void *provdomparams);
 int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
                                 void *provdomparams,
-                                OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *
+                                Otls_CALLBACK *param_cb, void *cbarg);
+const Otls_PARAM *
 evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *
+const Otls_PARAM *
 evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
+                            const Otls_PARAM params[]);
 void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[]);
+                         const Otls_PARAM params[]);
 void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
                           void *id, size_t idlen);
 void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
 int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                          OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
+                          Otls_CALLBACK *param_cb, void *cbarg);
+const Otls_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
+const Otls_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
 
 /* Pulling defines out of C source files */
 
@@ -636,6 +636,6 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
-const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
+const EVP_CIPHER *evp_get_cipherbyname_ex(OPENtls_CTX *libctx, const char *name);
+const EVP_MD *evp_get_digestbyname_ex(OPENtls_CTX *libctx, const char *name);
 

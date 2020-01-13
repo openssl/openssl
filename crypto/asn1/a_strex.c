@@ -1,19 +1,19 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
-#include <openssl/crypto.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
+#include <opentls/crypto.h>
+#include <opentls/x509.h>
+#include <opentls/asn1.h>
 
 #include "charmap.h"
 
@@ -44,7 +44,7 @@ static int send_bio_chars(void *arg, const void *buf, int len)
     return 1;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 static int send_fp_chars(void *arg, const void *buf, int len)
 {
     if (!arg)
@@ -280,14 +280,14 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     t.type = str->type;
     t.value.ptr = (char *)str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
-    if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
+    if ((der_buf = OPENtls_malloc(der_len)) == NULL) {
         ASN1err(ASN1_F_DO_DUMP, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     p = der_buf;
     i2d_ASN1_TYPE(&t, &p);
     outlen = do_hex_dump(io_ch, arg, der_buf, der_len);
-    OPENSSL_free(der_buf);
+    OPENtls_free(der_buf);
     if (outlen < 0)
         return -1;
     return outlen + 1;
@@ -565,7 +565,7 @@ int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
     return do_name_ex(send_bio_chars, out, nm, indent, flags);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
                           unsigned long flags)
 {
@@ -588,7 +588,7 @@ int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
     return do_print_ex(send_bio_chars, out, flags, str);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_fp_chars, fp, flags, str);

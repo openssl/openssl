@@ -1,24 +1,24 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_CAMELLIA_H
-# define OPENSSL_CAMELLIA_H
+#ifndef OPENtls_CAMELLIA_H
+# define OPENtls_CAMELLIA_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CAMELLIA_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_CAMELLIA
+# ifndef OPENtls_NO_CAMELLIA
 # include <stddef.h>
 #ifdef  __cplusplus
 extern "C" {
@@ -26,7 +26,7 @@ extern "C" {
 
 # define CAMELLIA_BLOCK_SIZE 16
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 
 #  define CAMELLIA_ENCRYPT        1
 #  define CAMELLIA_DECRYPT        0
@@ -53,7 +53,7 @@ struct camellia_key_st {
 };
 typedef struct camellia_key_st CAMELLIA_KEY;
 
-# endif /* OPENSSL_NO_DEPRECATED_3_0 */
+# endif /* OPENtls_NO_DEPRECATED_3_0 */
 
 DEPRECATEDIN_3_0(int Camellia_set_key(const unsigned char *userKey,
                                       const int bits,

@@ -1,18 +1,18 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/objects.h>
+#include <opentls/objects.h>
 #include "internal/comp.h"
-#include <openssl/err.h>
+#include <opentls/err.h>
 #include "crypto/cryptlib.h"
 #include "internal/bio.h"
 #include "comp_local.h"
@@ -48,13 +48,13 @@ static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
 
-    p = OPENSSL_zalloc(no * size);
+    p = OPENtls_zalloc(no * size);
     return p;
 }
 
 static void zlib_zfree(void *opaque, void *address)
 {
-    OPENSSL_free(address);
+    OPENtls_free(address);
 }
 
 
@@ -68,15 +68,15 @@ static COMP_METHOD zlib_stateful_method = {
 };
 
 /*
- * When OpenSSL is built on Windows, we do not want to require that
- * the ZLIB.DLL be available in order for the OpenSSL DLLs to
+ * When Opentls is built on Windows, we do not want to require that
+ * the ZLIB.DLL be available in order for the Opentls DLLs to
  * work.  Therefore, all ZLIB routines are loaded at run time
  * and we do not link to a .LIB file when ZLIB_SHARED is set.
  */
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+# if defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_WIN32)
 #  include <windows.h>
-# endif                         /* !(OPENSSL_SYS_WINDOWS ||
-                                 * OPENSSL_SYS_WIN32) */
+# endif                         /* !(OPENtls_SYS_WINDOWS ||
+                                 * OPENtls_SYS_WIN32) */
 
 # ifdef ZLIB_SHARED
 #  include "internal/dso.h"
@@ -123,7 +123,7 @@ struct zlib_state {
 static int zlib_stateful_init(COMP_CTX *ctx)
 {
     int err;
-    struct zlib_state *state = OPENSSL_zalloc(sizeof(*state));
+    struct zlib_state *state = OPENtls_zalloc(sizeof(*state));
 
     if (state == NULL)
         goto err;
@@ -150,7 +150,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     ctx->data = state;
     return 1;
  err:
-    OPENSSL_free(state);
+    OPENtls_free(state);
     return 0;
 }
 
@@ -159,7 +159,7 @@ static void zlib_stateful_finish(COMP_CTX *ctx)
     struct zlib_state *state = ctx->data;
     inflateEnd(&state->istream);
     deflateEnd(&state->ostream);
-    OPENSSL_free(state);
+    OPENtls_free(state);
 }
 
 static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
@@ -213,9 +213,9 @@ COMP_METHOD *COMP_zlib(void)
 #ifdef ZLIB_SHARED
     /* LIBZ may be externally defined, and we should respect that value */
 # ifndef LIBZ
-#  if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#  if defined(OPENtls_SYS_WINDOWS) || defined(OPENtls_SYS_WIN32)
 #   define LIBZ "ZLIB1"
-#  elif defined(OPENSSL_SYS_VMS)
+#  elif defined(OPENtls_SYS_VMS)
 #   define LIBZ "LIBZ"
 #  else
 #   define LIBZ "z"
@@ -243,7 +243,7 @@ COMP_METHOD *COMP_zlib(void)
                 && p_deflate && p_deflateInit_ && p_zError)
                 zlib_loaded++;
 
-            if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
+            if (!OPENtls_init_crypto(OPENtls_INIT_ZLIB, NULL)) {
                 comp_zlib_cleanup_int();
                 return meth;
             }
@@ -325,7 +325,7 @@ static int bio_zlib_new(BIO *bi)
         return 0;
     }
 # endif
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = OPENtls_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         COMPerr(COMP_F_BIO_ZLIB_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -352,14 +352,14 @@ static int bio_zlib_free(BIO *bi)
     if (ctx->ibuf) {
         /* Destroy decompress context */
         inflateEnd(&ctx->zin);
-        OPENSSL_free(ctx->ibuf);
+        OPENtls_free(ctx->ibuf);
     }
     if (ctx->obuf) {
         /* Destroy compress context */
         deflateEnd(&ctx->zout);
-        OPENSSL_free(ctx->obuf);
+        OPENtls_free(ctx->obuf);
     }
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
     BIO_set_data(bi, NULL);
     BIO_set_init(bi, 0);
 
@@ -379,7 +379,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
     zin = &ctx->zin;
     BIO_clear_retry_flags(b);
     if (!ctx->ibuf) {
-        ctx->ibuf = OPENSSL_malloc(ctx->ibufsize);
+        ctx->ibuf = OPENtls_malloc(ctx->ibufsize);
         if (ctx->ibuf == NULL) {
             COMPerr(COMP_F_BIO_ZLIB_READ, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -439,7 +439,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
     zout = &ctx->zout;
     BIO_clear_retry_flags(b);
     if (!ctx->obuf) {
-        ctx->obuf = OPENSSL_malloc(ctx->obufsize);
+        ctx->obuf = OPENtls_malloc(ctx->obufsize);
         /* Need error here */
         if (ctx->obuf == NULL) {
             COMPerr(COMP_F_BIO_ZLIB_WRITE, ERR_R_MALLOC_FAILURE);
@@ -579,13 +579,13 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
 
         if (ibs != -1) {
-            OPENSSL_free(ctx->ibuf);
+            OPENtls_free(ctx->ibuf);
             ctx->ibuf = NULL;
             ctx->ibufsize = ibs;
         }
 
         if (obs != -1) {
-            OPENSSL_free(ctx->obuf);
+            OPENtls_free(ctx->obuf);
             ctx->obuf = NULL;
             ctx->obufsize = obs;
         }

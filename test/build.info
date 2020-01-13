@@ -1,4 +1,4 @@
-SUBDIRS=ossl_shim
+SUBDIRS=otls_shim
 
 # TODO: use ../apps/libapps.a instead of direct ../apps/lib source.
 # This can't currently be done, because some of its units drag in too many
@@ -38,7 +38,7 @@ IF[{- !$disabled{tests} -}]
           rc2test rc4test rc5test \
           destest mdc2test \
           dhtest enginetest \
-          ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
+          tlstest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
           v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -46,18 +46,18 @@ IF[{- !$disabled{tests} -}]
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
-          ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
+          tls_test_ctx_test tls_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test param_build_test \
-          bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
+          bioprinttest tlsapitest dtlstest tlscorrupttest bio_enc_test \
           pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
-          recordlentest drbgtest sslbuffertest \
-          recordlentest drbgtest drbg_cavs_test sslbuffertest \
-          time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
+          recordlentest drbgtest tlsbuffertest \
+          recordlentest drbgtest drbg_cavs_test tlsbuffertest \
+          time_offset_test pemtest tls_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest ssl_ctx_test gosttest \
+          sysdefaulttest errtest tls_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test
 
@@ -152,9 +152,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[enginetest]=../include ../apps/include
   DEPEND[enginetest]=../libcrypto libtestutil.a
 
-  SOURCE[ssltest_old]=ssltest_old.c
-  INCLUDE[ssltest_old]=.. ../include ../apps/include
-  DEPEND[ssltest_old]=../libcrypto ../libssl
+  SOURCE[tlstest_old]=tlstest_old.c
+  INCLUDE[tlstest_old]=.. ../include ../apps/include
+  DEPEND[tlstest_old]=../libcrypto ../libtls
 
   SOURCE[dsatest]=dsatest.c
   INCLUDE[dsatest]=../include ../apps/include
@@ -176,13 +176,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[rsa_mp_test]=../include ../apps/include
   DEPEND[rsa_mp_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[fatalerrtest]=fatalerrtest.c ssltestlib.c
+  SOURCE[fatalerrtest]=fatalerrtest.c tlstestlib.c
   INCLUDE[fatalerrtest]=../include ../apps/include
-  DEPEND[fatalerrtest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[fatalerrtest]=../libcrypto ../libtls libtestutil.a
 
-  SOURCE[tls13ccstest]=tls13ccstest.c ssltestlib.c
+  SOURCE[tls13ccstest]=tls13ccstest.c tlstestlib.c
   INCLUDE[tls13ccstest]=../include ../apps/include
-  DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[tls13ccstest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include ../apps/include
@@ -237,7 +237,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[danetest]=danetest.c
   INCLUDE[danetest]=../include ../apps/include
-  DEPEND[danetest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[danetest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[constant_time_test]=constant_time_test.c
   INCLUDE[constant_time_test]=../include ../apps/include
@@ -249,11 +249,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[clienthellotest]=clienthellotest.c
   INCLUDE[clienthellotest]=../include ../apps/include
-  DEPEND[clienthellotest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[clienthellotest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[bad_dtls_test]=bad_dtls_test.c
   INCLUDE[bad_dtls_test]=../include ../apps/include
-  DEPEND[bad_dtls_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[bad_dtls_test]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[packettest]=packettest.c
   INCLUDE[packettest]=../include ../apps/include
@@ -285,7 +285,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[dtlsv1listentest]=dtlsv1listentest.c
   INCLUDE[dtlsv1listentest]=../include ../apps/include
-  DEPEND[dtlsv1listentest]=../libssl libtestutil.a
+  DEPEND[dtlsv1listentest]=../libtls libtestutil.a
 
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../include ../apps/include
@@ -303,30 +303,30 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[d2i_test]=../include ../apps/include
   DEPEND[d2i_test]=../libcrypto libtestutil.a
 
-  SOURCE[ssl_test_ctx_test]=ssl_test_ctx_test.c ssl_test_ctx.c
-  INCLUDE[ssl_test_ctx_test]=../include ../apps/include
-  DEPEND[ssl_test_ctx_test]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tls_test_ctx_test]=tls_test_ctx_test.c tls_test_ctx.c
+  INCLUDE[tls_test_ctx_test]=../include ../apps/include
+  DEPEND[tls_test_ctx_test]=../libcrypto ../libtls libtestutil.a
 
-  SOURCE[ssl_test]=ssl_test.c ssl_test_ctx.c handshake_helper.c
-  INCLUDE[ssl_test]=../include ../apps/include
-  DEPEND[ssl_test]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tls_test]=tls_test.c tls_test_ctx.c handshake_helper.c
+  INCLUDE[tls_test]=../include ../apps/include
+  DEPEND[tls_test]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[cipherlist_test]=cipherlist_test.c
   INCLUDE[cipherlist_test]=../include ../apps/include
-  DEPEND[cipherlist_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[cipherlist_test]=../libcrypto ../libtls libtestutil.a
 
-  INCLUDE[ssl_test_ctx.o]=../include
+  INCLUDE[tls_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=.. ../include
-  INCLUDE[ssltestlib.o]=.. ../include
+  INCLUDE[tlstestlib.o]=.. ../include
   INCLUDE[cmp_testlib.o]=.. ../include ../apps/include
 
   SOURCE[x509aux]=x509aux.c
   INCLUDE[x509aux]=../include ../apps/include
   DEPEND[x509aux]=../libcrypto libtestutil.a
 
-  SOURCE[asynciotest]=asynciotest.c ssltestlib.c
+  SOURCE[asynciotest]=asynciotest.c tlstestlib.c
   INCLUDE[asynciotest]=../include ../apps/include
-  DEPEND[asynciotest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[asynciotest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[bio_callback_test]=bio_callback_test.c
   INCLUDE[bio_callback_test]=../include ../apps/include
@@ -352,21 +352,21 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[param_build_test]=../include ../apps/include
   DEPEND[param_build_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c
-  INCLUDE[sslapitest]=../include ../apps/include ..
-  DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tlsapitest]=tlsapitest.c tlstestlib.c
+  INCLUDE[tlsapitest]=../include ../apps/include ..
+  DEPEND[tlsapitest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[ocspapitest]=ocspapitest.c
   INCLUDE[ocspapitest]=../include ../apps/include
   DEPEND[ocspapitest]=../libcrypto libtestutil.a
 
-  SOURCE[dtlstest]=dtlstest.c ssltestlib.c
+  SOURCE[dtlstest]=dtlstest.c tlstestlib.c
   INCLUDE[dtlstest]=../include ../apps/include
-  DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[dtlstest]=../libcrypto ../libtls libtestutil.a
 
-  SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c
-  INCLUDE[sslcorrupttest]=../include ../apps/include
-  DEPEND[sslcorrupttest]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tlscorrupttest]=tlscorrupttest.c tlstestlib.c
+  INCLUDE[tlscorrupttest]=../include ../apps/include
+  DEPEND[tlscorrupttest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
@@ -392,9 +392,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[x509_time_test]=../include ../apps/include
   DEPEND[x509_time_test]=../libcrypto libtestutil.a
 
-  SOURCE[recordlentest]=recordlentest.c ssltestlib.c
+  SOURCE[recordlentest]=recordlentest.c tlstestlib.c
   INCLUDE[recordlentest]=../include ../apps/include
-  DEPEND[recordlentest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[recordlentest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include ../apps/include ../crypto/include
@@ -418,17 +418,17 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pemtest]=../include ../apps/include
   DEPEND[pemtest]=../libcrypto libtestutil.a
 
-  SOURCE[ssl_cert_table_internal_test]=ssl_cert_table_internal_test.c
-  INCLUDE[ssl_cert_table_internal_test]=.. ../include ../apps/include
-  DEPEND[ssl_cert_table_internal_test]=../libcrypto libtestutil.a
+  SOURCE[tls_cert_table_internal_test]=tls_cert_table_internal_test.c
+  INCLUDE[tls_cert_table_internal_test]=.. ../include ../apps/include
+  DEPEND[tls_cert_table_internal_test]=../libcrypto libtestutil.a
 
   SOURCE[ciphername_test]=ciphername_test.c
   INCLUDE[ciphername_test]=../include ../apps/include
-  DEPEND[ciphername_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[ciphername_test]=../libcrypto ../libtls libtestutil.a
 
-  SOURCE[servername_test]=servername_test.c ssltestlib.c
+  SOURCE[servername_test]=servername_test.c tlstestlib.c
   INCLUDE[servername_test]=../include ../apps/include
-  DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[servername_test]=../libcrypto ../libtls libtestutil.a
 
   IF[{- !$disabled{cms} -}]
     PROGRAMS{noinst}=cmsapitest
@@ -439,9 +439,9 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{psk} -}]
     PROGRAMS{noinst}=dtls_mtu_test
-    SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
+    SOURCE[dtls_mtu_test]=dtls_mtu_test.c tlstestlib.c
     INCLUDE[dtls_mtu_test]=.. ../include ../apps/include
-    DEPEND[dtls_mtu_test]=../libcrypto ../libssl libtestutil.a
+    DEPEND[dtls_mtu_test]=../libcrypto ../libtls libtestutil.a
   ENDIF
 
   IF[{- !$disabled{shared} -}]
@@ -455,15 +455,15 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=cipher_overhead_test
   SOURCE[cipher_overhead_test]=cipher_overhead_test.c
   INCLUDE[cipher_overhead_test]=.. ../include ../apps/include
-  DEPEND[cipher_overhead_test]=../libcrypto.a ../libssl.a libtestutil.a
+  DEPEND[cipher_overhead_test]=../libcrypto.a ../libtls.a libtestutil.a
 
   SOURCE[uitest]=uitest.c ../apps/lib/apps_ui.c
   INCLUDE[uitest]=.. ../include ../apps/include
-  DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[uitest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[cipherbytes_test]=cipherbytes_test.c
   INCLUDE[cipherbytes_test]=../include ../apps/include
-  DEPEND[cipherbytes_test]=../libcrypto ../libssl libtestutil.a
+  DEPEND[cipherbytes_test]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[asn1_encode_test]=asn1_encode_test.c
   INCLUDE[asn1_encode_test]=../include ../apps/include
@@ -568,11 +568,11 @@ IF[{- !$disabled{tests} -}]
 
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
-    DEPEND[tls13encryptiontest]=../libcrypto ../libssl.a libtestutil.a
+    DEPEND[tls13encryptiontest]=../libcrypto ../libtls.a libtestutil.a
 
     SOURCE[wpackettest]=wpackettest.c
     INCLUDE[wpackettest]=../include ../apps/include
-    DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
+    DEPEND[wpackettest]=../libcrypto ../libtls.a libtestutil.a
 
     SOURCE[property_test]=property_test.c
     INCLUDE[property_test]=.. ../include ../apps/include
@@ -641,31 +641,31 @@ IF[{- !$disabled{tests} -}]
   DEPEND[asn1_time_test]=../libcrypto libtestutil.a
 
   # We disable this test completely in a shared build because it deliberately
-  # redefines some internal libssl symbols. This doesn't work in a non-shared
+  # redefines some internal libtls symbols. This doesn't work in a non-shared
   # build
   IF[{- !$disabled{shared} -}]
     PROGRAMS{noinst}=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
-    SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../crypto/packet.c
+    SOURCE[tls13secretstest]= ../tls/tls13_enc.c ../crypto/packet.c
     INCLUDE[tls13secretstest]=.. ../include ../apps/include
-    DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
+    DEPEND[tls13secretstest]=../libcrypto ../libtls libtestutil.a
   ENDIF
 
-  SOURCE[sslbuffertest]=sslbuffertest.c ssltestlib.c
-  INCLUDE[sslbuffertest]=../include ../apps/include
-  DEPEND[sslbuffertest]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tlsbuffertest]=tlsbuffertest.c tlstestlib.c
+  INCLUDE[tlsbuffertest]=../include ../apps/include
+  DEPEND[tlsbuffertest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[sysdefaulttest]=sysdefaulttest.c
   INCLUDE[sysdefaulttest]=../include ../apps/include
-  DEPEND[sysdefaulttest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[sysdefaulttest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[errtest]=errtest.c
   INCLUDE[errtest]=../include ../apps/include
   DEPEND[errtest]=../libcrypto libtestutil.a
 
-  SOURCE[gosttest]=gosttest.c ssltestlib.c
+  SOURCE[gosttest]=gosttest.c tlstestlib.c
   INCLUDE[gosttest]=../include ../apps/include ..
-  DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[gosttest]=../libcrypto ../libtls libtestutil.a
 
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include ..
@@ -718,22 +718,22 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_prefix_text]=../libcrypto
 ENDIF
 
-  SOURCE[ssl_ctx_test]=ssl_ctx_test.c
-  INCLUDE[ssl_ctx_test]=../include ../apps/include
-  DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
+  SOURCE[tls_ctx_test]=tls_ctx_test.c
+  INCLUDE[tls_ctx_test]=../include ../apps/include
+  DEPEND[tls_ctx_test]=../libcrypto ../libtls libtestutil.a
 
 {-
    use File::Spec::Functions;
    use File::Basename;
-   use OpenSSL::Glob;
+   use Opentls::Glob;
 
    my @nogo_headers = ( "asn1_mac.h",
-                        "opensslconf.h",
+                        "opentlsconf.h",
                         "__decc_include_prologue.h",
                         "__decc_include_epilogue.h" );
    my @nogo_headers_re = ( qr/.*err\.h/ );
    my @headerfiles = glob catfile($sourcedir,
-                                  updir(), "include", "openssl", "*.h");
+                                  updir(), "include", "opentls", "*.h");
 
    foreach my $headerfile (@headerfiles) {
        my $name = basename($headerfile, ".h");
@@ -746,7 +746,7 @@ ENDIF
   SOURCE[buildtest_c_$name]=buildtest_$name.c
   GENERATE[buildtest_$name.c]=generate_buildtest.pl $name
   INCLUDE[buildtest_c_$name]=../include
-  DEPEND[buildtest_c_$name]=../libssl ../libcrypto
+  DEPEND[buildtest_c_$name]=../libtls ../libcrypto
 _____
        $OUT .= <<"_____" if $config{CXX} && !$disabled{"buildtest-c++"};
 
@@ -754,7 +754,7 @@ _____
   SOURCE[buildtest_cc_$name]=buildtest_$name.cc
   GENERATE[buildtest_$name.cc]=generate_buildtest.pl $name
   INCLUDE[buildtest_cc_$name]=../include
-  DEPEND[buildtest_cc_$name]=../libssl ../libcrypto
+  DEPEND[buildtest_cc_$name]=../libtls ../libcrypto
 _____
    }
 -}

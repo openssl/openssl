@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # sha1_block procedure for x86_64.
@@ -47,7 +47,7 @@
 #
 # Add SSSE3, Supplemental[!] SSE3, implementation. The idea behind it
 # is to offload message schedule denoted by Wt in NIST specification,
-# or Xupdate in OpenSSL source, to SIMD unit. See sha1-586.pl module
+# or Xupdate in Opentls source, to SIMD unit. See sha1-586.pl module
 # for background and implementation details. The only difference from
 # 32-bit code is that 64-bit code doesn't have to spill @X[] elements
 # to free temporary registers.
@@ -255,16 +255,16 @@ push(@xi,shift(@xi));
 
 $code.=<<___;
 .text
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,\@function,3
 .align	16
 sha1_block_data_order:
 .cfi_startproc
-	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
-	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
-	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
+	mov	OPENtls_ia32cap_P+0(%rip),%r9d
+	mov	OPENtls_ia32cap_P+4(%rip),%r8d
+	mov	OPENtls_ia32cap_P+8(%rip),%r10d
 	test	\$`1<<9`,%r8d		# check SSSE3 bit
 	jz	.Lialu
 ___
@@ -1848,7 +1848,7 @@ K_XX_XX:
 ___
 }}}
 $code.=<<___;
-.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 ___
 

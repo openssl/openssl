@@ -1,14 +1,14 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "crypto/modes.h"
 
 /*
@@ -29,7 +29,7 @@ static void ctr128_inc(unsigned char *counter)
     } while (n);
 }
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
 static void ctr128_inc_aligned(unsigned char *counter)
 {
     size_t *data, c, d, n;
@@ -79,7 +79,7 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
     n = *num;
 
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     if (16 % sizeof(size_t) == 0) { /* always true actually */
         do {
             while (n && len) {

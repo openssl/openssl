@@ -1,22 +1,22 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/asn1.h>
 #include "dh_local.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include <openssl/cms.h>
-#include <openssl/core_names.h>
+#include <opentls/cms.h>
+#include <opentls/core_names.h>
 #include "internal/param_build.h"
 
 /*
@@ -137,7 +137,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 1;
 
  err:
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     ASN1_STRING_free(str);
 
     return 0;
@@ -241,7 +241,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     return 1;
 
  err:
-    OPENSSL_free(dp);
+    OPENtls_free(dp);
     ASN1_STRING_free(params);
     ASN1_STRING_clear_free(prkey);
     return 0;
@@ -408,11 +408,11 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
             return 0;
         if (!int_dh_bn_cpy(&to->j, from->j))
             return 0;
-        OPENSSL_free(to->seed);
+        OPENtls_free(to->seed);
         to->seed = NULL;
         to->seedlen = 0;
         if (from->seed) {
-            to->seed = OPENSSL_memdup(from->seed, from->seedlen);
+            to->seed = OPENtls_memdup(from->seed, from->seedlen);
             if (!to->seed)
                 return 0;
             to->seedlen = from->seedlen;
@@ -487,7 +487,7 @@ int DHparams_print(BIO *bp, const DH *x)
     return do_dh_print(bp, x, 4, 0);
 }
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 static int dh_cms_decrypt(CMS_RecipientInfo *ri);
 static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
@@ -507,7 +507,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
         if (arg1 == 1)
@@ -554,46 +554,46 @@ static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                int want_domainparams)
 {
     DH *dh = pk->pkey.dh;
-    OSSL_PARAM_BLD tmpl;
+    Otls_PARAM_BLD tmpl;
     const BIGNUM *p = DH_get0_p(dh), *g = DH_get0_g(dh), *q = DH_get0_q(dh);
     const BIGNUM *pub_key = DH_get0_pub_key(dh);
     const BIGNUM *priv_key = DH_get0_priv_key(dh);
-    OSSL_PARAM *params;
+    Otls_PARAM *params;
     void *provdata = NULL;
 
     if (p == NULL || g == NULL)
         return NULL;
 
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    otls_param_bld_init(&tmpl);
+    if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_P, p)
+        || !otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_G, g))
         return NULL;
     if (q != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
+        if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_Q, q))
             return NULL;
     }
 
     if (!want_domainparams) {
         /* A key must at least have a public part. */
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY,
+        if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_DH_PUB_KEY,
                                     pub_key))
             return NULL;
 
         if (priv_key != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
+            if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_DH_PRIV_KEY,
                                         priv_key))
                 return NULL;
         }
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    params = otls_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
     provdata = want_domainparams
         ? evp_keymgmt_importdomparams(keymgmt, params)
         : evp_keymgmt_importkey(keymgmt, params);
 
-    ossl_param_bld_free(params);
+    otls_param_bld_free(params);
     return provdata;
 }
 
@@ -603,7 +603,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     0,
 
     "DH",
-    "OpenSSL PKCS#3 DH method",
+    "Opentls PKCS#3 DH method",
 
     dh_pub_decode,
     dh_pub_encode,
@@ -647,7 +647,7 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
     0,
 
     "X9.42 DH",
-    "OpenSSL X9.42 DH method",
+    "Opentls X9.42 DH method",
 
     dh_pub_decode,
     dh_pub_encode,
@@ -680,7 +680,7 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
     dh_pkey_param_check
 };
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
 
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
@@ -801,7 +801,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
+        dukm = OPENtls_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -813,7 +813,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     rv = 1;
  err:
     X509_ALGOR_free(kekalg);
-    OPENSSL_free(dukm);
+    OPENtls_free(dukm);
     return rv;
 }
 
@@ -948,7 +948,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
+        dukm = OPENtls_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -976,9 +976,9 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     rv = 1;
 
  err:
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     X509_ALGOR_free(wrap_alg);
-    OPENSSL_free(dukm);
+    OPENtls_free(dukm);
     return rv;
 }
 

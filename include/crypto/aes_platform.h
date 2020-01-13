@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_AES_PLATFORM_H
-# define OSSL_AES_PLATFORM_H
+#ifndef Otls_AES_PLATFORM_H
+# define Otls_AES_PLATFORM_H
 
-# include "openssl/aes.h"
+# include "opentls/aes.h"
 
 # ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -57,13 +57,13 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
                      const unsigned char iv[16]);
 # endif /* AES_XTS_ASM */
 
-# if defined(OPENSSL_CPUID_OBJ)
+# if defined(OPENtls_CPUID_OBJ)
 #  if (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 #   include "ppc_arch.h"
 #   ifdef VPAES_ASM
-#    define VPAES_CAPABLE (OPENSSL_ppccap_P & PPC_ALTIVEC)
+#    define VPAES_CAPABLE (OPENtls_ppccap_P & PPC_ALTIVEC)
 #   endif
-#   define HWAES_CAPABLE  (OPENSSL_ppccap_P & PPC_CRYPTO207)
+#   define HWAES_CAPABLE  (OPENtls_ppccap_P & PPC_CRYPTO207)
 #   define HWAES_set_encrypt_key aes_p8_set_encrypt_key
 #   define HWAES_set_decrypt_key aes_p8_set_decrypt_key
 #   define HWAES_encrypt aes_p8_encrypt
@@ -78,12 +78,12 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #   include "arm_arch.h"
 #   if __ARM_MAX_ARCH__>=7
 #    if defined(BSAES_ASM)
-#     define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
+#     define BSAES_CAPABLE (OPENtls_armcap_P & ARMV7_NEON)
 #    endif
 #    if defined(VPAES_ASM)
-#     define VPAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
+#     define VPAES_CAPABLE (OPENtls_armcap_P & ARMV7_NEON)
 #    endif
-#    define HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
+#    define HWAES_CAPABLE (OPENtls_armcap_P & ARMV8_AES)
 #    define HWAES_set_encrypt_key aes_v8_set_encrypt_key
 #    define HWAES_set_decrypt_key aes_v8_set_decrypt_key
 #    define HWAES_encrypt aes_v8_encrypt
@@ -91,7 +91,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
 #    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
-#    define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
+#    define AES_PMULL_CAPABLE ((OPENtls_armcap_P & ARMV8_PMULL) && (OPENtls_armcap_P & ARMV8_AES))
 #    define AES_GCM_ENC_BYTES 512
 #    define AES_GCM_DEC_BYTES 512
 #    if __ARM_MAX_ARCH__>=8
@@ -119,29 +119,29 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #    endif
 #   endif
 #  endif
-# endif /* OPENSSL_CPUID_OBJ */
+# endif /* OPENtls_CPUID_OBJ */
 
 # if     defined(AES_ASM) &&     ( \
          defined(__x86_64)       || defined(__x86_64__)  || \
          defined(_M_AMD64)       || defined(_M_X64)      )
 #  define AES_CBC_HMAC_SHA_CAPABLE 1
-#  define AESNI_CBC_HMAC_SHA_CAPABLE (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
+#  define AESNI_CBC_HMAC_SHA_CAPABLE (OPENtls_ia32cap_P[1]&(1<<(57-32)))
 # endif
 
 # if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
          ((defined(__i386)       || defined(__i386__)    || \
-           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
+           defined(_M_IX86)) && defined(OPENtls_IA32_SSE2))|| \
          defined(__x86_64)       || defined(__x86_64__)  || \
          defined(_M_AMD64)       || defined(_M_X64)      )
 
 /* AES-NI section */
 
-#  define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
+#  define AESNI_CAPABLE   (OPENtls_ia32cap_P[1]&(1<<(57-32)))
 #  ifdef VPAES_ASM
-#   define VPAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
+#   define VPAES_CAPABLE   (OPENtls_ia32cap_P[1]&(1<<(41-32)))
 #  endif
 #  ifdef BSAES_ASM
-#   define BSAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
+#   define BSAES_CAPABLE   (OPENtls_ia32cap_P[1]&(1<<(41-32)))
 #  endif
 
 #  define AES_GCM_ENC_BYTES 32
@@ -164,7 +164,7 @@ void aesni_cbc_encrypt(const unsigned char *in,
                        unsigned char *out,
                        size_t length,
                        const AES_KEY *key, unsigned char *ivec, int enc);
-#  ifndef OPENSSL_NO_OCB
+#  ifndef OPENtls_NO_OCB
 void aesni_ocb_encrypt(const unsigned char *in, unsigned char *out,
                        size_t blocks, const void *key,
                        size_t start_block_num,
@@ -177,7 +177,7 @@ void aesni_ocb_decrypt(const unsigned char *in, unsigned char *out,
                        unsigned char offset_i[16],
                        const unsigned char L_[][16],
                        unsigned char checksum[16]);
-#  endif /* OPENSSL_NO_OCB */
+#  endif /* OPENtls_NO_OCB */
 
 void aesni_ctr32_encrypt_blocks(const unsigned char *in,
                                 unsigned char *out,
@@ -227,11 +227,11 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 # elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 
 /* Fujitsu SPARC64 X support */
-extern unsigned int OPENSSL_sparcv9cap_P[];
+extern unsigned int OPENtls_sparcv9cap_P[];
 #  include "sparc_arch.h"
 
-#  define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
-#  define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
+#  define SPARC_AES_CAPABLE       (OPENtls_sparcv9cap_P[1] & CFR_AES)
+#  define HWAES_CAPABLE           (OPENtls_sparcv9cap_P[0] & SPARCV9_FJAESX)
 #  define HWAES_set_encrypt_key aes_fx_set_encrypt_key
 #  define HWAES_set_decrypt_key aes_fx_set_decrypt_key
 #  define HWAES_encrypt aes_fx_encrypt
@@ -296,7 +296,7 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
                            size_t blocks, const AES_KEY *key1,
                            const AES_KEY *key2, const unsigned char *ivec);
 
-# elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
+# elif defined(OPENtls_CPUID_OBJ) && defined(__s390__)
 /* IBM S390X support */
 #  include "s390x_arch.h"
 
@@ -305,11 +305,11 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #  define S390X_AES_FC(keylen)  (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
 
 /* Most modes of operation need km for partial block processing. */
-#  define S390X_aes_128_CAPABLE (OPENSSL_s390xcap_P.km[0] &  \
+#  define S390X_aes_128_CAPABLE (OPENtls_s390xcap_P.km[0] &  \
                                 S390X_CAPBIT(S390X_AES_128))
-#  define S390X_aes_192_CAPABLE (OPENSSL_s390xcap_P.km[0] &  \
+#  define S390X_aes_192_CAPABLE (OPENtls_s390xcap_P.km[0] &  \
                                 S390X_CAPBIT(S390X_AES_192))
-#  define S390X_aes_256_CAPABLE (OPENSSL_s390xcap_P.km[0] &  \
+#  define S390X_aes_256_CAPABLE (OPENtls_s390xcap_P.km[0] &  \
                                 S390X_CAPBIT(S390X_AES_256))
 
 #  define S390X_aes_128_cbc_CAPABLE     1       /* checked by callee */
@@ -321,29 +321,29 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #  define S390X_aes_256_ecb_CAPABLE     S390X_aes_256_CAPABLE
 
 #  define S390X_aes_128_ofb_CAPABLE (S390X_aes_128_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmo[0] &        \
+                                    (OPENtls_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_128)))
 #  define S390X_aes_192_ofb_CAPABLE (S390X_aes_192_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmo[0] &        \
+                                    (OPENtls_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_192)))
 #  define S390X_aes_256_ofb_CAPABLE (S390X_aes_256_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmo[0] &        \
+                                    (OPENtls_s390xcap_P.kmo[0] &        \
                                      S390X_CAPBIT(S390X_AES_256)))
 
 #  define S390X_aes_128_cfb_CAPABLE (S390X_aes_128_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmf[0] &        \
+                                    (OPENtls_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_128)))
 #  define S390X_aes_192_cfb_CAPABLE (S390X_aes_192_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmf[0] &        \
+                                    (OPENtls_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_192)))
 #  define S390X_aes_256_cfb_CAPABLE (S390X_aes_256_CAPABLE &&           \
-                                    (OPENSSL_s390xcap_P.kmf[0] &        \
+                                    (OPENtls_s390xcap_P.kmf[0] &        \
                                      S390X_CAPBIT(S390X_AES_256)))
-#  define S390X_aes_128_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
+#  define S390X_aes_128_cfb8_CAPABLE (OPENtls_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_128))
-#  define S390X_aes_192_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
+#  define S390X_aes_192_cfb8_CAPABLE (OPENtls_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_192))
-#  define S390X_aes_256_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &       \
+#  define S390X_aes_256_cfb8_CAPABLE (OPENtls_s390xcap_P.kmf[0] &       \
                                      S390X_CAPBIT(S390X_AES_256))
 #  define S390X_aes_128_cfb1_CAPABLE    0
 #  define S390X_aes_192_cfb1_CAPABLE    0
@@ -357,37 +357,37 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #  define S390X_aes_256_xts_CAPABLE     1
 
 # define S390X_aes_128_gcm_CAPABLE (S390X_aes_128_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kma[0] &    \
+                                    (OPENtls_s390xcap_P.kma[0] &    \
                                      S390X_CAPBIT(S390X_AES_128)))
 # define S390X_aes_192_gcm_CAPABLE (S390X_aes_192_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kma[0] &    \
+                                    (OPENtls_s390xcap_P.kma[0] &    \
                                      S390X_CAPBIT(S390X_AES_192)))
 # define S390X_aes_256_gcm_CAPABLE (S390X_aes_256_CAPABLE &&        \
-                                    (OPENSSL_s390xcap_P.kma[0] &    \
+                                    (OPENtls_s390xcap_P.kma[0] &    \
                                      S390X_CAPBIT(S390X_AES_256)))
 
 #  define S390X_aes_128_ccm_CAPABLE (S390X_aes_128_CAPABLE &&       \
-                                    (OPENSSL_s390xcap_P.kmac[0] &   \
+                                    (OPENtls_s390xcap_P.kmac[0] &   \
                                      S390X_CAPBIT(S390X_AES_128)))
 #  define S390X_aes_192_ccm_CAPABLE (S390X_aes_192_CAPABLE &&       \
-                                    (OPENSSL_s390xcap_P.kmac[0] &   \
+                                    (OPENtls_s390xcap_P.kmac[0] &   \
                                      S390X_CAPBIT(S390X_AES_192)))
 #  define S390X_aes_256_ccm_CAPABLE (S390X_aes_256_CAPABLE &&       \
-                                    (OPENSSL_s390xcap_P.kmac[0] &   \
+                                    (OPENtls_s390xcap_P.kmac[0] &   \
                                      S390X_CAPBIT(S390X_AES_256)))
 #  define S390X_CCM_AAD_FLAG    0x40
 
-#  ifndef OPENSSL_NO_OCB
+#  ifndef OPENtls_NO_OCB
 #   define S390X_aes_128_ocb_CAPABLE    0
 #   define S390X_aes_192_ocb_CAPABLE    0
 #   define S390X_aes_256_ocb_CAPABLE    0
-#  endif /* OPENSSL_NO_OCB */
+#  endif /* OPENtls_NO_OCB */
 
-#  ifndef OPENSSL_NO_SIV
+#  ifndef OPENtls_NO_SIV
 #   define S390X_aes_128_siv_CAPABLE    0
 #   define S390X_aes_192_siv_CAPABLE    0
 #   define S390X_aes_256_siv_CAPABLE    0
-#  endif /* OPENSSL_NO_SIV */
+#  endif /* OPENtls_NO_SIV */
 
 /* Convert key size to function code: [16,24,32] -> [18,19,20]. */
 #  define S390X_AES_FC(keylen)  (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
@@ -417,7 +417,7 @@ void HWAES_xts_encrypt(const unsigned char *inp, unsigned char *out,
 void HWAES_xts_decrypt(const unsigned char *inp, unsigned char *out,
                        size_t len, const AES_KEY *key1,
                        const AES_KEY *key2, const unsigned char iv[16]);
-#  ifndef OPENSSL_NO_OCB
+#  ifndef OPENtls_NO_OCB
 #   ifdef HWAES_ocb_encrypt
 void HWAES_ocb_encrypt(const unsigned char *in, unsigned char *out,
                        size_t blocks, const void *key,
@@ -438,8 +438,8 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
 #   else
 #     define HWAES_ocb_decrypt ((ocb128_f)NULL)
 #   endif
-#  endif /* OPENSSL_NO_OCB */
+#  endif /* OPENtls_NO_OCB */
 
 # endif /* HWAES_CAPABLE */
 
-#endif /* OSSL_AES_PLATFORM_H */
+#endif /* Otls_AES_PLATFORM_H */

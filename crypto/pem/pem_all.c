@@ -1,32 +1,32 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
+#include <opentls/bio.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/pkcs7.h>
+#include <opentls/pem.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
+#include <opentls/dh.h>
 #include "pem_local.h"
 
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa);
 #endif
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static EC_KEY *pkey_get_eckey(EVP_PKEY *key, EC_KEY **eckey);
 #endif
 
@@ -39,7 +39,7 @@ IMPLEMENT_PEM_rw(PKCS7, PKCS7, PEM_STRING_PKCS7, PKCS7)
 
 IMPLEMENT_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE,
                  PEM_STRING_X509, NETSCAPE_CERT_SEQUENCE)
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
 /*
  * We treat RSA or DSA private keys as a special case. For private keys we
  * read in an EVP_PKEY structure with PEM_read_bio_PrivateKey() and extract
@@ -70,7 +70,7 @@ RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **rsa, pem_password_cb *cb,
     return pkey_get_rsa(pktmp, rsa);
 }
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 
 RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **rsa, pem_password_cb *cb, void *u)
 {
@@ -85,7 +85,7 @@ IMPLEMENT_PEM_write_cb(RSAPrivateKey, RSA, PEM_STRING_RSA, RSAPrivateKey)
 IMPLEMENT_PEM_rw(RSAPublicKey, RSA, PEM_STRING_RSA_PUBLIC, RSAPublicKey)
 IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA, PEM_STRING_PUBLIC, RSA_PUBKEY)
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa)
 {
     DSA *dtmp;
@@ -112,7 +112,7 @@ DSA *PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **dsa, pem_password_cb *cb,
 
 IMPLEMENT_PEM_write_cb(DSAPrivateKey, DSA, PEM_STRING_DSA, DSAPrivateKey)
 IMPLEMENT_PEM_rw(DSA_PUBKEY, DSA, PEM_STRING_PUBLIC, DSA_PUBKEY)
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **dsa, pem_password_cb *cb, void *u)
 {
     EVP_PKEY *pktmp;
@@ -124,7 +124,7 @@ DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **dsa, pem_password_cb *cb, void *u)
 
 IMPLEMENT_PEM_rw(DSAparams, DSA, PEM_STRING_DSAPARAMS, DSAparams)
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static EC_KEY *pkey_get_eckey(EVP_PKEY *key, EC_KEY **eckey)
 {
     EC_KEY *dtmp;
@@ -156,7 +156,7 @@ IMPLEMENT_PEM_rw(ECPKParameters, EC_GROUP, PEM_STRING_ECPARAMETERS,
 IMPLEMENT_PEM_write_cb(ECPrivateKey, EC_KEY, PEM_STRING_ECPRIVATEKEY,
                        ECPrivateKey)
 IMPLEMENT_PEM_rw(EC_PUBKEY, EC_KEY, PEM_STRING_PUBLIC, EC_PUBKEY)
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 EC_KEY *PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb,
                               void *u)
 {
@@ -169,7 +169,7 @@ EC_KEY *PEM_read_ECPrivateKey(FILE *fp, EC_KEY **eckey, pem_password_cb *cb,
 
 #endif
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 
 IMPLEMENT_PEM_write(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
 IMPLEMENT_PEM_write(DHxparams, DH, PEM_STRING_DHXPARAMS, DHxparams)

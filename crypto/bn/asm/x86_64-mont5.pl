@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # August 2011.
@@ -89,7 +89,7 @@ $m1="%rbp";
 $code=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	bn_mul_mont_gather5
 .type	bn_mul_mont_gather5,\@function,6
@@ -103,7 +103,7 @@ bn_mul_mont_gather5:
 	jnz	.Lmul_enter
 ___
 $code.=<<___ if ($addx);
-	mov	OPENSSL_ia32cap_P+8(%rip),%r11d
+	mov	OPENtls_ia32cap_P+8(%rip),%r11d
 ___
 $code.=<<___;
 	jmp	.Lmul4x_enter
@@ -1107,7 +1107,7 @@ bn_power5:
 .cfi_def_cfa_register	%rax
 ___
 $code.=<<___ if ($addx);
-	mov	OPENSSL_ia32cap_P+8(%rip),%r11d
+	mov	OPENtls_ia32cap_P+8(%rip),%r11d
 	and	\$0x80108,%r11d
 	cmp	\$0x80108,%r11d		# check for AD*X+BMI2+BMI1
 	je	.Lpowerx5_enter
@@ -2233,7 +2233,7 @@ bn_from_mont8x:
 	movq	%r10, %xmm3		# -num
 ___
 $code.=<<___ if ($addx);
-	mov	OPENSSL_ia32cap_P+8(%rip),%r11d
+	mov	OPENtls_ia32cap_P+8(%rip),%r11d
 	and	\$0x80108,%r11d
 	cmp	\$0x80108,%r11d		# check for AD*X+BMI2+BMI1
 	jne	.Lfrom_mont_nox
@@ -3768,7 +3768,7 @@ $code.=<<___;
 .Linc:
 	.long	0,0, 1,1
 	.long	2,2, 2,2
-.asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

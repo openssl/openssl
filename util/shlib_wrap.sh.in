@@ -5,21 +5,21 @@
     use lib catdir($config{sourcedir}, 'Configurations');
     use platform;
 -}
-# To test this OpenSSL version's applications against another version's
+# To test this Opentls version's applications against another version's
 # shared libraries, simply set
 #
-#     OPENSSL_REGRESSION=/path/to/other/OpenSSL/build/tree
-if [ -n "$OPENSSL_REGRESSION" ]; then
-    shlibwrap="$OPENSSL_REGRESSION/util/shlib_wrap.sh"
+#     OPENtls_REGRESSION=/path/to/other/Opentls/build/tree
+if [ -n "$OPENtls_REGRESSION" ]; then
+    shlibwrap="$OPENtls_REGRESSION/util/shlib_wrap.sh"
     if [ -x "$shlibwrap" ]; then
-        # We clear OPENSSL_REGRESSION to avoid a loop, should the shlib_wrap.sh
+        # We clear OPENtls_REGRESSION to avoid a loop, should the shlib_wrap.sh
         # we exec also support that mechanism...
-        OPENSSL_REGRESSION= exec "$shlibwrap" "$@"
+        OPENtls_REGRESSION= exec "$shlibwrap" "$@"
     else
         if [ -f "$shlibwrap" ]; then
             echo "Not permitted to run $shlibwrap" >&2
         else
-            echo "No $shlibwrap, perhaps OPENSSL_REGRESSION isn't properly set?" >&2
+            echo "No $shlibwrap, perhaps OPENtls_REGRESSION isn't properly set?" >&2
         fi
         exit 1
     fi
@@ -31,7 +31,7 @@ THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
 [ -d "${THERE}" ] || exec "$@"	# should never happen...
 
 LIBCRYPTOSO="${THERE}/{- platform->sharedlib('libcrypto') -}"
-LIBSSLSO="${THERE}/{- platform->sharedlib('libssl') -}"
+LIBtlsSO="${THERE}/{- platform->sharedlib('libtls') -}"
 
 SYSNAME=`(uname -s) 2>/dev/null`;
 case "$SYSNAME" in
@@ -42,7 +42,7 @@ SunOS|IRIX*)
 	case "`(/usr/bin/file "$LIBCRYPTOSO") 2>/dev/null`" in
 	*ELF\ 64*SPARC*|*ELF\ 64*AMD64*)
 		[ -n "$LD_LIBRARY_PATH_64" ] && rld_var=LD_LIBRARY_PATH_64
-		LD_PRELOAD_64="$LIBCRYPTOSO $LIBSSLSO"; export LD_PRELOAD_64
+		LD_PRELOAD_64="$LIBCRYPTOSO $LIBtlsSO"; export LD_PRELOAD_64
 		preload_var=LD_PRELOAD_64
 		;;
 	*ELF\ 32*SPARC*|*ELF\ 32*80386*)
@@ -50,7 +50,7 @@ SunOS|IRIX*)
 		# on a multi-arch system.  Otherwise, trust the fallbacks.
 		if [ -f /lib/64/ld.so.1 ]; then
 		    [ -n "$LD_LIBRARY_PATH_32" ] && rld_var=LD_LIBRARY_PATH_32
-		    LD_PRELOAD_32="$LIBCRYPTOSO $LIBSSLSO"; export LD_PRELOAD_32
+		    LD_PRELOAD_32="$LIBCRYPTOSO $LIBtlsSO"; export LD_PRELOAD_32
 		    preload_var=LD_PRELOAD_32
 		fi
 		;;
@@ -61,21 +61,21 @@ SunOS|IRIX*)
 	# newly built .so's we trick run-time linker to fail to find
 	# the installed .so by setting _RLD_ROOT variable.
 	*ELF\ 32*MIPS*)
-		#_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD_LIST
+		#_RLD_LIST="$LIBCRYPTOSO:$LIBtlsSO:DEFAULT"; export _RLD_LIST
 		_RLD_ROOT=/no/such/dir; export _RLD_ROOT
 		eval $rld_var=\"/usr/lib'${'$rld_var':+:$'$rld_var'}'\"
 		preload_var=_RLD_LIST
 		;;
 	*ELF\ N32*MIPS*)
 		[ -n "$LD_LIBRARYN32_PATH" ] && rld_var=LD_LIBRARYN32_PATH
-		#_RLDN32_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLDN32_LIST
+		#_RLDN32_LIST="$LIBCRYPTOSO:$LIBtlsSO:DEFAULT"; export _RLDN32_LIST
 		_RLDN32_ROOT=/no/such/dir; export _RLDN32_ROOT
 		eval $rld_var=\"/usr/lib32'${'$rld_var':+:$'$rld_var'}'\"
 		preload_var=_RLDN32_LIST
 		;;
 	*ELF\ 64*MIPS*)
 		[ -n "$LD_LIBRARY64_PATH"  ] && rld_var=LD_LIBRARY64_PATH
-		#_RLD64_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD64_LIST
+		#_RLD64_LIST="$LIBCRYPTOSO:$LIBtlsSO:DEFAULT"; export _RLD64_LIST
 		_RLD64_ROOT=/no/such/dir; export _RLD64_ROOT
 		eval $rld_var=\"/usr/lib64'${'$rld_var':+:$'$rld_var'}'\"
 		preload_var=_RLD64_LIST
@@ -108,11 +108,11 @@ if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	# it into a script makes it possible to do so on multi-ABI
 	# platforms.
 	case "$SYSNAME" in
-	*BSD)	LD_PRELOAD="$LIBCRYPTOSO:$LIBSSLSO" ;;	# *BSD
-	*)	LD_PRELOAD="$LIBCRYPTOSO $LIBSSLSO" ;;	# SunOS, Linux, ELF HP-UX
+	*BSD)	LD_PRELOAD="$LIBCRYPTOSO:$LIBtlsSO" ;;	# *BSD
+	*)	LD_PRELOAD="$LIBCRYPTOSO $LIBtlsSO" ;;	# SunOS, Linux, ELF HP-UX
 	esac
-	_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"	# Tru64, o32 IRIX
-	DYLD_INSERT_LIBRARIES="$LIBCRYPTOSO:$LIBSSLSO"	# MacOS X
+	_RLD_LIST="$LIBCRYPTOSO:$LIBtlsSO:DEFAULT"	# Tru64, o32 IRIX
+	DYLD_INSERT_LIBRARIES="$LIBCRYPTOSO:$LIBtlsSO"	# MacOS X
 	export LD_PRELOAD _RLD_LIST DYLD_INSERT_LIBRARIES
 fi
 {- output_on() unless grep (/-rpath\b/, @{$config{LDFLAGS}}); ""; -}

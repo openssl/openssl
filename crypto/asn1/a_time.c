@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-
@@ -18,7 +18,7 @@
 #include <time.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
+#include <opentls/asn1t.h>
 #include "asn1_local.h"
 
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
@@ -246,7 +246,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
             }
             o++;
         }
-        if (offset && !OPENSSL_gmtime_adj(&tmp, 0, offset * offsign))
+        if (offset && !OPENtls_gmtime_adj(&tmp, 0, offset * offsign))
             goto err;
     } else {
         /* not Z, or not +/- in non-strict mode */
@@ -325,13 +325,13 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
     struct tm *ts;
     struct tm data;
 
-    ts = OPENSSL_gmtime(&t, &data);
+    ts = OPENtls_gmtime(&t, &data);
     if (ts == NULL) {
         ASN1err(ASN1_F_ASN1_TIME_ADJ, ASN1_R_ERROR_GETTING_TIME);
         return NULL;
     }
     if (offset_day || offset_sec) {
-        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+        if (!OPENtls_gmtime_adj(ts, offset_day, offset_sec))
             return NULL;
     }
     return asn1_time_from_tm(s, ts, V_ASN1_UNDEF);
@@ -417,7 +417,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
              * to a piece of memory allocated outside of this function.
              * new t.data would be freed after ASN1_STRING_copy is done.
              */
-            t.data = OPENSSL_zalloc(t.length + 1);
+            t.data = OPENtls_zalloc(t.length + 1);
             if (t.data == NULL)
                 goto out;
             memcpy(t.data, str + 2, t.length);
@@ -429,7 +429,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
         rv = 1;
 
     if (t.data != (unsigned char *)str)
-        OPENSSL_free(t.data);
+        OPENtls_free(t.data);
 out:
     return rv;
 }
@@ -441,7 +441,7 @@ int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 
         time(&now_t);
         memset(tm, 0, sizeof(*tm));
-        if (OPENSSL_gmtime(&now_t, tm) != NULL)
+        if (OPENtls_gmtime(&now_t, tm) != NULL)
             return 1;
         return 0;
     }
@@ -458,7 +458,7 @@ int ASN1_TIME_diff(int *pday, int *psec,
         return 0;
     if (!ASN1_TIME_to_tm(to, &tm_to))
         return 0;
-    return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
+    return OPENtls_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
 
 static const char _asn1_mon[12][4] = {
@@ -521,10 +521,10 @@ int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)
     if (!ASN1_TIME_to_tm(s, &stm))
         return -2;
 
-    if (!OPENSSL_gmtime(&t, &ttm))
+    if (!OPENtls_gmtime(&t, &ttm))
         return -2;
 
-    if (!OPENSSL_gmtime_diff(&day, &sec, &ttm, &stm))
+    if (!OPENtls_gmtime_diff(&day, &sec, &ttm, &stm))
         return -2;
 
     if (day > 0 || sec > 0)

@@ -1,5 +1,5 @@
 ##
-## Makefile for OpenSSL
+## Makefile for Opentls
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
@@ -195,37 +195,37 @@ MANDOCS7={-
              fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man7}})) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENtls={- use File::Spec::Functions;
+                catfile("apps","opentls") -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
 DESTDIR=
 
-# Do not edit these manually. Use Configure with --prefix or --openssldir
+# Do not edit these manually. Use Configure with --prefix or --opentlsdir
 # to change this!  Short explanation in the top comment in Configure
-INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
+INSTALLTOP={- # $prefix is used in the OPENtlsDIR perl snippet
 	      #
 	      our $prefix = $config{prefix} || "/usr/local";
               $prefix -}
-OPENSSLDIR={- #
-	      # The logic here is that if no --openssldir was given,
-	      # OPENSSLDIR will get the value from $prefix plus "/ssl".
-	      # If --openssldir was given and the value is an absolute
-	      # path, OPENSSLDIR will get its value without change.
-	      # If the value from --openssldir is a relative path,
-	      # OPENSSLDIR will get $prefix with the --openssldir
+OPENtlsDIR={- #
+	      # The logic here is that if no --opentlsdir was given,
+	      # OPENtlsDIR will get the value from $prefix plus "/tls".
+	      # If --opentlsdir was given and the value is an absolute
+	      # path, OPENtlsDIR will get its value without change.
+	      # If the value from --opentlsdir is a relative path,
+	      # OPENtlsDIR will get $prefix with the --opentlsdir
 	      # value appended as a subdirectory.
 	      #
               use File::Spec::Functions;
-              our $openssldir =
-                  $config{openssldir} ?
-                      (file_name_is_absolute($config{openssldir}) ?
-                           $config{openssldir}
-                           : catdir($prefix, $config{openssldir}))
-                      : catdir($prefix, "ssl");
-              $openssldir -}
+              our $opentlsdir =
+                  $config{opentlsdir} ?
+                      (file_name_is_absolute($config{opentlsdir}) ?
+                           $config{opentlsdir}
+                           : catdir($prefix, $config{opentlsdir}))
+                      : catdir($prefix, "tls");
+              $opentlsdir -}
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
               #
@@ -242,7 +242,7 @@ LIBDIR={- our $libdir = $config{libdir};
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
 ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
-MODULESDIR=$(libdir)/ossl-modules
+MODULESDIR=$(libdir)/otls-modules
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -253,8 +253,8 @@ DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
 HTMLDIR=$(DOCDIR)/html
 
 # MANSUFFIX is for the benefit of anyone who may want to have a suffix
-# appended after the manpage file section number.  "ssl" is popular,
-# resulting in files such as config.5ssl rather than config.5.
+# appended after the manpage file section number.  "tls" is popular,
+# resulting in files such as config.5tls rather than config.5.
 MANSUFFIX=
 HTMLSUFFIX=html
 
@@ -297,7 +297,7 @@ RMDIR= rmdir
 TAR= {- $target{TAR} || "tar" -}
 TARFLAGS= {- $target{TARFLAGS} -}
 
-BASENAME=       openssl
+BASENAME=       opentls
 NAME=           $(BASENAME)-$(VERSION)
 # Relative to $(SRCDIR)
 TARFILE=        ../$(NAME).tar
@@ -345,7 +345,7 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
                           (map { '-D'.$_ }
-                               'OPENSSLDIR="\"$(OPENSSLDIR)\""',
+                               'OPENtlsDIR="\"$(OPENtlsDIR)\""',
                                'ENGINESDIR="\"$(ENGINESDIR)\""',
                                'MODULESDIR="\"$(MODULESDIR)\""'),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -443,7 +443,7 @@ build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+build_libs_nodep: libcrypto.pc libtls.pc opentls.pc
 build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -471,8 +471,8 @@ test: tests
 	  RESULT_D=test-runs \
 	  PERL="$(PERL)" \
 	  EXE_EXT={- platform->binext() -} \
-	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
-	  OPENSSL_MODULES=`cd ../$(BLDDIR)/providers 2>/dev/null && pwd` \
+	  OPENtls_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
+	  OPENtls_MODULES=`cd ../$(BLDDIR)/providers 2>/dev/null && pwd` \
 	  $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
@@ -486,7 +486,7 @@ list-tests:
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
-install: install_sw install_ssldirs install_docs
+install: install_sw install_tlsdirs install_docs
 
 uninstall: uninstall_docs uninstall_sw
 
@@ -518,7 +518,7 @@ clean: libclean
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
-	$(RM) openssl.pc libcrypto.pc libssl.pc
+	$(RM) opentls.pc libcrypto.pc libtls.pc
 	-$(RM) `find . -type l \! -name '.*' -print`
 	$(RM) $(TARFILE)
 
@@ -546,66 +546,66 @@ install_docs: install_man_docs install_html_docs
 uninstall_docs: uninstall_man_docs uninstall_html_docs
 	$(RM) -r $(DESTDIR)$(DOCDIR)
 
-install_ssldirs:
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/private
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
+install_tlsdirs:
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENtlsDIR)/certs
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENtlsDIR)/private
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENtlsDIR)/misc
 	@set -e; for x in dummy $(MISC_SCRIPTS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		x1=`echo "$$x" | cut -f1 -d:`; \
 		x2=`echo "$$x" | cut -f2 -d:`; \
 		fn=`basename $$x1`; \
-		$(ECHO) "install $$x1 -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-		cp $$x1 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
-		chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
-		mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new \
-		      $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
+		$(ECHO) "install $$x1 -> $(DESTDIR)$(OPENtlsDIR)/misc/$$fn"; \
+		cp $$x1 $(DESTDIR)$(OPENtlsDIR)/misc/$$fn.new; \
+		chmod 755 $(DESTDIR)$(OPENtlsDIR)/misc/$$fn.new; \
+		mv -f $(DESTDIR)$(OPENtlsDIR)/misc/$$fn.new \
+		      $(DESTDIR)$(OPENtlsDIR)/misc/$$fn; \
 		if [ "$$x1" != "$$x2" ]; then \
 			ln=`basename "$$x2"`; \
 			: {- output_off() unless windowsdll(); "" -}; \
-			$(ECHO) "copy $(DESTDIR)$(OPENSSLDIR)/misc/$$ln -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-			cp $(DESTDIR)$(OPENSSLDIR)/misc/$$fn $(DESTDIR)$(OPENSSLDIR)/misc/$$ln; \
+			$(ECHO) "copy $(DESTDIR)$(OPENtlsDIR)/misc/$$ln -> $(DESTDIR)$(OPENtlsDIR)/misc/$$fn"; \
+			cp $(DESTDIR)$(OPENtlsDIR)/misc/$$fn $(DESTDIR)$(OPENtlsDIR)/misc/$$ln; \
 			: {- output_on() unless windowsdll();
 			     output_off() if windowsdll(); "" -}; \
-			$(ECHO) "link $(DESTDIR)$(OPENSSLDIR)/misc/$$ln -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-			ln -sf $$fn $(DESTDIR)$(OPENSSLDIR)/misc/$$ln; \
+			$(ECHO) "link $(DESTDIR)$(OPENtlsDIR)/misc/$$ln -> $(DESTDIR)$(OPENtlsDIR)/misc/$$fn"; \
+			ln -sf $$fn $(DESTDIR)$(OPENtlsDIR)/misc/$$ln; \
 			: {- output_on() if windowsdll(); "" -}; \
 		fi; \
 	done
-	@$(ECHO) "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.dist"
-	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
-	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
-	@mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.dist
-	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/openssl.cnf" ]; then \
-		$(ECHO) "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf"; \
-		cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
-		chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
+	@$(ECHO) "install $(SRCDIR)/apps/opentls.cnf -> $(DESTDIR)$(OPENtlsDIR)/opentls.cnf.dist"
+	@cp $(SRCDIR)/apps/opentls.cnf $(DESTDIR)$(OPENtlsDIR)/opentls.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENtlsDIR)/opentls.cnf.new
+	@mv -f  $(DESTDIR)$(OPENtlsDIR)/opentls.cnf.new $(DESTDIR)$(OPENtlsDIR)/opentls.cnf.dist
+	@if [ ! -f "$(DESTDIR)$(OPENtlsDIR)/opentls.cnf" ]; then \
+		$(ECHO) "install $(SRCDIR)/apps/opentls.cnf -> $(DESTDIR)$(OPENtlsDIR)/opentls.cnf"; \
+		cp $(SRCDIR)/apps/opentls.cnf $(DESTDIR)$(OPENtlsDIR)/opentls.cnf; \
+		chmod 644 $(DESTDIR)$(OPENtlsDIR)/opentls.cnf; \
 	fi
-	@$(ECHO) "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist"
-	@cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
-	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
-	@mv -f  $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist
-	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf" ]; then \
-		$(ECHO) "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf"; \
-		cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
-		chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
+	@$(ECHO) "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf.dist"
+	@cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf.new
+	@mv -f  $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf.new $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf.dist
+	@if [ ! -f "$(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf" ]; then \
+		$(ECHO) "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf"; \
+		cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf; \
+		chmod 644 $(DESTDIR)$(OPENtlsDIR)/ct_log_list.cnf; \
 	fi
 
 install_dev: install_runtime_libs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(ECHO) "*** Installing development files"
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/include/openssl
-	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
-	@$(ECHO) "install $(SRCDIR)/ms/applink.c -> $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
-	@cp $(SRCDIR)/ms/applink.c $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-	@chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
-	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
-			  $(BLDDIR)/include/openssl/*.h; do \
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/include/opentls
+	@ : {- output_off() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+	@$(ECHO) "install $(SRCDIR)/ms/applink.c -> $(DESTDIR)$(INSTALLTOP)/include/opentls/applink.c"
+	@cp $(SRCDIR)/ms/applink.c $(DESTDIR)$(INSTALLTOP)/include/opentls/applink.c
+	@chmod 644 $(DESTDIR)$(INSTALLTOP)/include/opentls/applink.c
+	@ : {- output_on() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+	@set -e; for i in $(SRCDIR)/include/opentls/*.h \
+			  $(BLDDIR)/include/opentls/*.h; do \
 		fn=`basename $$i`; \
-		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-		cp $$i $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
+		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/opentls/$$fn"; \
+		cp $$i $(DESTDIR)$(INSTALLTOP)/include/opentls/$$fn; \
+		chmod 644 $(DESTDIR)$(INSTALLTOP)/include/opentls/$$fn; \
 	done
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
 	@set -e; for l in $(INSTALL_LIBS); do \
@@ -656,26 +656,26 @@ install_dev: install_runtime_libs
 	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(libdir)/pkgconfig
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
-	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
-	@cp libssl.pc $(DESTDIR)$(libdir)/pkgconfig
-	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
-	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-	@cp openssl.pc $(DESTDIR)$(libdir)/pkgconfig
-	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
+	@$(ECHO) "install libtls.pc -> $(DESTDIR)$(libdir)/pkgconfig/libtls.pc"
+	@cp libtls.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libtls.pc
+	@$(ECHO) "install opentls.pc -> $(DESTDIR)$(libdir)/pkgconfig/opentls.pc"
+	@cp opentls.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/opentls.pc
 
 uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
-	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
-	@$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
-	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
-			  $(BLDDIR)/include/openssl/*.h; do \
+	@ : {- output_off() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+	@$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/opentls/applink.c"
+	@$(RM) $(DESTDIR)$(INSTALLTOP)/include/opentls/applink.c
+	@ : {- output_on() unless grep { $_ eq "OPENtls_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
+	@set -e; for i in $(SRCDIR)/include/opentls/*.h \
+			  $(BLDDIR)/include/opentls/*.h; do \
 		fn=`basename $$i`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
+		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/opentls/$$fn"; \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/include/opentls/$$fn; \
 	done
-	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include/openssl
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include/opentls
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -702,8 +702,8 @@ uninstall_dev: uninstall_runtime_libs
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
 	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
-	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
-	$(RM) $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libtls.pc
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/opentls.pc
 	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(libdir)
 
@@ -726,7 +726,7 @@ uninstall_engines:
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
-		if [ "$$fn" = '{- platform->dso("ossltest") -}' ]; then \
+		if [ "$$fn" = '{- platform->dso("otlstest") -}' ]; then \
 			continue; \
 		fi; \
 		$(ECHO) "$(RM) $(DESTDIR)$(ENGINESDIR)/$$fn"; \
@@ -963,12 +963,12 @@ lint:
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
-				< apps/openssl.cnf > apps/openssl-vms.cnf )
+				< apps/opentls.cnf > apps/opentls-vms.cnf )
 	@ : {- output_off() if $disabled{apps}; "" -}
 	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
+	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENtls) > apps/progs.h )
 	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
+	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENtls) > apps/progs.c )
 	@ : {- output_on() if $disabled{apps}; "" -}
 
 generate_crypto_bn:
@@ -983,9 +983,9 @@ generate_crypto_objects:
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
 				crypto/objects/objects.txt \
 				crypto/objects/obj_mac.num \
-				> include/openssl/obj_mac.h )
+				> include/opentls/obj_mac.h )
 	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
-				include/openssl/obj_mac.h \
+				include/opentls/obj_mac.h \
 				> crypto/objects/obj_dat.h )
 	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
 				crypto/objects/obj_mac.num \
@@ -1021,46 +1021,46 @@ errors:
 
 {- use File::Basename;
 
-   our @sslheaders =
-       qw( include/openssl/ssl.h
-           include/openssl/ssl2.h
-           include/openssl/ssl3.h
-           include/openssl/sslerr.h
-           include/openssl/tls1.h
-           include/openssl/dtls1.h
-           include/openssl/srtp.h );
+   our @tlsheaders =
+       qw( include/opentls/tls.h
+           include/opentls/tls2.h
+           include/opentls/tls3.h
+           include/opentls/tlserr.h
+           include/opentls/tls1.h
+           include/opentls/dtls1.h
+           include/opentls/srtp.h );
    our @cryptoheaders =
        qw( include/internal/dso.h
            include/internal/o_dir.h
            include/internal/err.h
-           include/internal/sslconf.h );
-   our @cryptoskipheaders = ( @sslheaders,
-       qw( include/openssl/conf_api.h
-           include/openssl/ebcdic.h
-           include/openssl/opensslconf.h
-           include/openssl/symhacks.h ) );
+           include/internal/tlsconf.h );
+   our @cryptoskipheaders = ( @tlsheaders,
+       qw( include/opentls/conf_api.h
+           include/opentls/ebcdic.h
+           include/opentls/opentlsconf.h
+           include/opentls/symhacks.h ) );
    foreach my $f ( glob(catfile($config{sourcedir},
-                                'include','openssl','*.h')) ) {
-       my $fn = "include/openssl/" . basename($f);
+                                'include','opentls','*.h')) ) {
+       my $fn = "include/opentls/" . basename($f);
        push @cryptoheaders, $fn unless grep { $_ eq $fn } @cryptoskipheaders;
    }
    "";
 -}
 CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort @cryptoheaders)) -}
-SSLHEADERS={- join(" \\\n" . ' ' x 11,
-                   fill_lines(" ", $COLUMNS - 11, sort @sslheaders)) -}
+tlsHEADERS={- join(" \\\n" . ' ' x 11,
+                   fill_lines(" ", $COLUMNS - 11, sort @tlsheaders)) -}
 ordinals:
 	( cd $(SRCDIR); \
           $(PERL) util/mknum.pl --version $(VERSION) --no-warnings \
                   --ordinals util/libcrypto.num \
-                  --symhacks include/openssl/symhacks.h \
+                  --symhacks include/opentls/symhacks.h \
                   $(CRYPTOHEADERS) )
 	( cd $(SRCDIR); \
           $(PERL) util/mknum.pl --version $(VERSION) --no-warnings \
-                  --ordinals util/libssl.num \
-                  --symhacks include/openssl/symhacks.h \
-                  $(SSLHEADERS))
+                  --ordinals util/libtls.num \
+                  --symhacks include/opentls/symhacks.h \
+                  $(tlsHEADERS))
 
 test_ordinals:
 	( cd test; \
@@ -1080,19 +1080,19 @@ tar:
 
 # Helper targets #####################################################
 
-link-utils: $(BLDDIR)/util/opensslwrap.sh
+link-utils: $(BLDDIR)/util/opentlswrap.sh
 
-$(BLDDIR)/util/opensslwrap.sh: configdata.pm
+$(BLDDIR)/util/opentlswrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
-	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
+	    ln -sf "../$(SRCDIR)/util/opentlswrap.sh" "$(BLDDIR)/util"; \
 	fi
 
 FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // () } @{$unified_info{libraries}}) -}
+libcrypto.pc libtls.pc opentls.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // () } @{$unified_info{libraries}}) -}
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -1104,14 +1104,14 @@ libcrypto.pc:
 	    echo 'includedir=$${prefix}/include'; \
 	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
 	    echo ''; \
-	    echo 'Name: OpenSSL-libcrypto'; \
-	    echo 'Description: OpenSSL cryptography library'; \
+	    echo 'Name: Opentls-libcrypto'; \
+	    echo 'Description: Opentls cryptography library'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Libs: -L$${libdir} -lcrypto'; \
 	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
 
-libssl.pc:
+libtls.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
 	    if [ -n "$(LIBDIR)" ]; then \
@@ -1121,14 +1121,14 @@ libssl.pc:
 	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
-	    echo 'Name: OpenSSL-libssl'; \
+	    echo 'Name: Opentls-libtls'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires.private: libcrypto'; \
-	    echo 'Libs: -L$${libdir} -lssl'; \
-	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
+	    echo 'Libs: -L$${libdir} -ltls'; \
+	    echo 'Cflags: -I$${includedir}' ) > libtls.pc
 
-openssl.pc:
+opentls.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
 	    if [ -n "$(LIBDIR)" ]; then \
@@ -1138,10 +1138,10 @@ openssl.pc:
 	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
-	    echo 'Name: OpenSSL'; \
+	    echo 'Name: Opentls'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: libssl libcrypto' ) > openssl.pc
+	    echo 'Requires: libtls libcrypto' ) > opentls.pc
 
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config \
                {- join(" \\\n" . ' ' x 15,
@@ -1196,7 +1196,7 @@ EOF
 	  my $name = uc basename($args{src}, ".$section");
 	  return <<"EOF";
 $args{src}: $args{generator}->[0]
-	pod2man --name=$name --section=$section --center=OpenSSL \\
+	pod2man --name=$name --section=$section --center=Opentls \\
 		--release=\$(VERSION) \$< \\
 	> \$\@
 EOF

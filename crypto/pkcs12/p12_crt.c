@@ -1,15 +1,15 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/pkcs12.h>
+#include <opentls/pkcs12.h>
 #include "p12_local.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
@@ -42,7 +42,7 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
 
     /* Set defaults */
     if (!nid_cert)
-#ifdef OPENSSL_NO_RC2
+#ifdef OPENtls_NO_RC2
         nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 #else
         nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
@@ -216,7 +216,7 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
     }
 
     if (nid_safe == 0)
-#ifdef OPENSSL_NO_RC2
+#ifdef OPENtls_NO_RC2
         nid_safe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 #else
         nid_safe = NID_pbe_WithSHA1And40BitRC2_CBC;

@@ -9,8 +9,8 @@ ${-
   "" -}
 $       ! Remove the local environment created by local_shlib.com
 $
-$       OPENSSL_NAMES := OPENSSL_NAMES_'F$GETJPI("","PID")'
-$       IF F$TRNLNM("OSSL_FLAG",OPENSSL_NAMES) .EQS. "" THEN EXIT 0
+$       OPENtls_NAMES := OPENtls_NAMES_'F$GETJPI("","PID")'
+$       IF F$TRNLNM("Otls_FLAG",OPENtls_NAMES) .EQS. "" THEN EXIT 0
 $
 $       NAMES := {- join(",", sort keys %names); -}
 $       I = 0
@@ -18,10 +18,10 @@ $       LOOP:
 $           E = F$ELEMENT(I,",",NAMES)
 $           I = I + 1
 $           IF E .EQS. "," THEN GOTO ENDLOOP
-$           OLDV = F$TRNLNM(E,OPENSSL_NAMES)
+$           OLDV = F$TRNLNM(E,OPENtls_NAMES)
 $           DEASSIGN 'E'
 $           IF OLDV .NES. "" THEN DEFINE 'E' 'OLDV'
 $           GOTO LOOP
 $       ENDLOOP:
 $
-$       DEASSIGN 'OPENSSL_NAMES' /TABLE=LNM$PROCESS_DIRECTORY
+$       DEASSIGN 'OPENtls_NAMES' /TABLE=LNM$PROCESS_DIRECTORY

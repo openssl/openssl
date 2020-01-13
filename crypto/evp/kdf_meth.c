@@ -1,17 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/core.h>
-#include <openssl/core_numbers.h>
-#include <openssl/kdf.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/core.h>
+#include <opentls/core_numbers.h>
+#include <opentls/kdf.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -32,9 +32,9 @@ static void evp_kdf_free(void *vkdf){
     if (kdf != NULL) {
         CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
         if (ref <= 0) {
-            ossl_provider_free(kdf->prov);
+            otls_provider_free(kdf->prov);
             CRYPTO_THREAD_lock_free(kdf->lock);
-            OPENSSL_free(kdf);
+            OPENtls_free(kdf);
         }
     }
 }
@@ -43,9 +43,9 @@ static void *evp_kdf_new(void)
 {
     EVP_KDF *kdf = NULL;
 
-    if ((kdf = OPENSSL_zalloc(sizeof(*kdf))) == NULL
+    if ((kdf = OPENtls_zalloc(sizeof(*kdf))) == NULL
         || (kdf->lock = CRYPTO_THREAD_lock_new()) == NULL) {
-        OPENSSL_free(kdf);
+        OPENtls_free(kdf);
         return NULL;
     }
     kdf->refcnt = 1;
@@ -53,8 +53,8 @@ static void *evp_kdf_new(void)
 }
 
 static void *evp_kdf_from_dispatch(int name_id,
-                                   const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+                                   const Otls_DISPATCH *fns,
+                                   Otls_PROVIDER *prov)
 {
     EVP_KDF *kdf = NULL;
     int fnkdfcnt = 0, fnctxcnt = 0;
@@ -67,66 +67,66 @@ static void *evp_kdf_from_dispatch(int name_id,
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
-        case OSSL_FUNC_KDF_NEWCTX:
+        case Otls_FUNC_KDF_NEWCTX:
             if (kdf->newctx != NULL)
                 break;
-            kdf->newctx = OSSL_get_OP_kdf_newctx(fns);
+            kdf->newctx = Otls_get_OP_kdf_newctx(fns);
             fnctxcnt++;
             break;
-        case OSSL_FUNC_KDF_DUPCTX:
+        case Otls_FUNC_KDF_DUPCTX:
             if (kdf->dupctx != NULL)
                 break;
-            kdf->dupctx = OSSL_get_OP_kdf_dupctx(fns);
+            kdf->dupctx = Otls_get_OP_kdf_dupctx(fns);
             break;
-        case OSSL_FUNC_KDF_FREECTX:
+        case Otls_FUNC_KDF_FREECTX:
             if (kdf->freectx != NULL)
                 break;
-            kdf->freectx = OSSL_get_OP_kdf_freectx(fns);
+            kdf->freectx = Otls_get_OP_kdf_freectx(fns);
             fnctxcnt++;
             break;
-        case OSSL_FUNC_KDF_RESET:
+        case Otls_FUNC_KDF_RESET:
             if (kdf->reset != NULL)
                 break;
-            kdf->reset = OSSL_get_OP_kdf_reset(fns);
+            kdf->reset = Otls_get_OP_kdf_reset(fns);
             break;
-        case OSSL_FUNC_KDF_DERIVE:
+        case Otls_FUNC_KDF_DERIVE:
             if (kdf->derive != NULL)
                 break;
-            kdf->derive = OSSL_get_OP_kdf_derive(fns);
+            kdf->derive = Otls_get_OP_kdf_derive(fns);
             fnkdfcnt++;
             break;
-        case OSSL_FUNC_KDF_GETTABLE_PARAMS:
+        case Otls_FUNC_KDF_GETTABLE_PARAMS:
             if (kdf->gettable_params != NULL)
                 break;
             kdf->gettable_params =
-                OSSL_get_OP_kdf_gettable_params(fns);
+                Otls_get_OP_kdf_gettable_params(fns);
             break;
-        case OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS:
+        case Otls_FUNC_KDF_GETTABLE_CTX_PARAMS:
             if (kdf->gettable_ctx_params != NULL)
                 break;
             kdf->gettable_ctx_params =
-                OSSL_get_OP_kdf_gettable_ctx_params(fns);
+                Otls_get_OP_kdf_gettable_ctx_params(fns);
             break;
-        case OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS:
+        case Otls_FUNC_KDF_SETTABLE_CTX_PARAMS:
             if (kdf->settable_ctx_params != NULL)
                 break;
             kdf->settable_ctx_params =
-                OSSL_get_OP_kdf_settable_ctx_params(fns);
+                Otls_get_OP_kdf_settable_ctx_params(fns);
             break;
-        case OSSL_FUNC_KDF_GET_PARAMS:
+        case Otls_FUNC_KDF_GET_PARAMS:
             if (kdf->get_params != NULL)
                 break;
-            kdf->get_params = OSSL_get_OP_kdf_get_params(fns);
+            kdf->get_params = Otls_get_OP_kdf_get_params(fns);
             break;
-        case OSSL_FUNC_KDF_GET_CTX_PARAMS:
+        case Otls_FUNC_KDF_GET_CTX_PARAMS:
             if (kdf->get_ctx_params != NULL)
                 break;
-            kdf->get_ctx_params = OSSL_get_OP_kdf_get_ctx_params(fns);
+            kdf->get_ctx_params = Otls_get_OP_kdf_get_ctx_params(fns);
             break;
-        case OSSL_FUNC_KDF_SET_CTX_PARAMS:
+        case Otls_FUNC_KDF_SET_CTX_PARAMS:
             if (kdf->set_ctx_params != NULL)
                 break;
-            kdf->set_ctx_params = OSSL_get_OP_kdf_set_ctx_params(fns);
+            kdf->set_ctx_params = Otls_get_OP_kdf_set_ctx_params(fns);
             break;
         }
     }
@@ -142,15 +142,15 @@ static void *evp_kdf_from_dispatch(int name_id,
     }
     kdf->prov = prov;
     if (prov != NULL)
-        ossl_provider_up_ref(prov);
+        otls_provider_up_ref(prov);
 
     return kdf;
 }
 
-EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_KDF *EVP_KDF_fetch(OPENtls_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
+    return evp_generic_fetch(libctx, Otls_OP_KDF, algorithm, properties,
                              evp_kdf_from_dispatch, evp_kdf_up_ref,
                              evp_kdf_free);
 }
@@ -165,32 +165,32 @@ void EVP_KDF_free(EVP_KDF *kdf)
     evp_kdf_free(kdf);
 }
 
-const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf)
+const Otls_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf)
 {
     if (kdf->gettable_params == NULL)
         return NULL;
     return kdf->gettable_params();
 }
 
-const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf)
+const Otls_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf)
 {
     if (kdf->gettable_ctx_params == NULL)
         return NULL;
     return kdf->gettable_ctx_params();
 }
 
-const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
+const Otls_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
 {
     if (kdf->settable_ctx_params == NULL)
         return NULL;
     return kdf->settable_ctx_params();
 }
 
-void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KDF_do_all_provided(OPENtls_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
                              void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_KDF,
+    evp_generic_do_all(libctx, Otls_OP_KDF,
                        (void (*)(void *, void *))fn, arg,
                        evp_kdf_from_dispatch, evp_kdf_free);
 }

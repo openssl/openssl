@@ -1,21 +1,21 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/e_os2.h>
+#include <opentls/e_os2.h>
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
-struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
+struct tm *OPENtls_gmtime(const time_t *timer, struct tm *result)
 {
     struct tm *ts = NULL;
 
-#if defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_VMS)
+#if defined(OPENtls_THREADS) && defined(OPENtls_SYS_VMS)
     {
         /*
          * On VMS, gmtime_r() takes a 32-bit pointer as second argument.
@@ -24,12 +24,12 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
          * and copy the result.  The stack is always reachable with 32-bit
          * pointers.
          */
-#if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE
+#if defined(OPENtls_SYS_VMS) && __INITIAL_POINTER_SIZE
 # pragma pointer_size save
 # pragma pointer_size 32
 #endif
         struct tm data, *ts2 = &data;
-#if defined OPENSSL_SYS_VMS && __INITIAL_POINTER_SIZE
+#if defined OPENtls_SYS_VMS && __INITIAL_POINTER_SIZE
 # pragma pointer_size restore
 #endif
         if (gmtime_r(timer, ts2) == NULL)
@@ -37,11 +37,11 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
         memcpy(result, ts2, sizeof(struct tm));
         ts = result;
     }
-#elif defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_MACOSX)
+#elif defined(OPENtls_THREADS) && !defined(OPENtls_SYS_WIN32) && !defined(OPENtls_SYS_MACOSX)
     if (gmtime_r(timer, result) == NULL)
         return NULL;
     ts = result;
-#elif defined (OPENSSL_SYS_WINDOWS) && defined(_MSC_VER) && _MSC_VER >= 1400
+#elif defined (OPENtls_SYS_WINDOWS) && defined(_MSC_VER) && _MSC_VER >= 1400
     if (gmtime_s(result, timer))
         return NULL;
     ts = result;
@@ -69,7 +69,7 @@ static void julian_to_date(long jd, int *y, int *m, int *d);
 static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
                       long *pday, int *psec);
 
-int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
+int OPENtls_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
 {
     int time_sec, time_year, time_month, time_day;
     long time_jd;
@@ -99,7 +99,7 @@ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
 
 }
 
-int OPENSSL_gmtime_diff(int *pday, int *psec,
+int OPENtls_gmtime_diff(int *pday, int *psec,
                         const struct tm *from, const struct tm *to)
 {
     int from_sec, to_sec, diff_sec;

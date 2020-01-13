@@ -1,20 +1,20 @@
 /*
- * Copyright 2003-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include <stdio.h>
 #include "crypto/asn1.h"
-#include <openssl/asn1t.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
-#include <openssl/bn.h>
+#include <opentls/asn1t.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
+#include <opentls/bn.h>
 
 #include "crypto/x509.h"
 #include "ext_dat.h"
@@ -320,7 +320,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
      *
      * The same applies to CNs which are intended to represent DNS names.
      * However, while in the SAN DNS-IDs are IA5Strings, as CNs they may be
-     * needlessly encoded in 16-bit Unicode.  We perform a conversion to UTF-8
+     * needletlsy encoded in 16-bit Unicode.  We perform a conversion to UTF-8
      * to ensure that we get an ASCII representation of any CNs that are
      * representable as ASCII, but just not encoded as ASCII.  The UTF-8 form
      * may contain some non-ASCII octets, and that's fine, such CNs are not
@@ -342,7 +342,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 
     /* Reject *embedded* NULs */
     if ((size_t)utf8_length != strlen((char *)utf8_value)) {
-        OPENSSL_free(utf8_value);
+        OPENtls_free(utf8_value);
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     }
 
@@ -390,7 +390,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
         *idlen = (size_t)utf8_length;
         return X509_V_OK;
     }
-    OPENSSL_free(utf8_value);
+    OPENtls_free(utf8_value);
     return X509_V_OK;
 }
 
@@ -432,7 +432,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         stmp.length = idlen;
         stmp.data = idval;
         r = nc_match(&gntmp, nc);
-        OPENSSL_free(idval);
+        OPENtls_free(idval);
         if (r != X509_V_OK)
             return r;
     }

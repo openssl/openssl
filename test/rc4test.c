@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
@@ -12,9 +12,9 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_RC4
-# include <openssl/rc4.h>
-# include <openssl/sha.h>
+#ifndef OPENtls_NO_RC4
+# include <opentls/rc4.h>
+# include <opentls/sha.h>
 
 static unsigned char keys[6][30] = {
     {8, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef},
@@ -118,8 +118,8 @@ static int test_rc_bulk(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_RC4
-    ADD_ALL_TESTS(test_rc4_encrypt, OSSL_NELEM(data_len));
+#ifndef OPENtls_NO_RC4
+    ADD_ALL_TESTS(test_rc4_encrypt, Otls_NELEM(data_len));
     ADD_ALL_TESTS(test_rc4_end_processing, data_len[3]);
     ADD_ALL_TESTS(test_rc4_multi_call, data_len[3]);
     ADD_TEST(test_rc_bulk);

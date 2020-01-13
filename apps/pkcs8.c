@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,16 +12,16 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pkcs12.h>
+#include <opentls/pem.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/pkcs12.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT,
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P,
 #endif
     OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
 const OPTIONS pkcs8_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
@@ -54,7 +54,7 @@ const OPTIONS pkcs8_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     OPT_SECTION("Scrypt"),
     {"scrypt", OPT_SCRYPT, '-', "Use scrypt algorithm"},
     {"scrypt_N", OPT_SCRYPT_N, 's', "Set scrypt N parameter"},
@@ -76,7 +76,7 @@ int pkcs8_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
     char pass[APP_PASS_LEN];
 #endif
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
@@ -84,7 +84,7 @@ int pkcs8_main(int argc, char **argv)
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif
 
@@ -165,7 +165,7 @@ int pkcs8_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
         case OPT_SCRYPT:
             scrypt_N = 16384;
             scrypt_r = 8;
@@ -231,7 +231,7 @@ int pkcs8_main(int argc, char **argv)
         } else {
             X509_ALGOR *pbe;
             if (cipher) {
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
                 if (scrypt_N && scrypt_r && scrypt_p)
                     pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, 0, NULL,
                                                 scrypt_N, scrypt_r, scrypt_p);
@@ -251,7 +251,7 @@ int pkcs8_main(int argc, char **argv)
                 p8pass = passout;
             } else if (1) {
                 /* To avoid bit rot */
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
                 p8pass = pass;
                 if (EVP_read_pw_string
                     (pass, sizeof(pass), "Enter Encryption Password:", 1)) {
@@ -312,7 +312,7 @@ int pkcs8_main(int argc, char **argv)
         if (passin != NULL) {
             p8pass = passin;
         } else if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             p8pass = pass;
             if (EVP_read_pw_string(pass, sizeof(pass), "Enter Password:", 0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
@@ -360,8 +360,8 @@ int pkcs8_main(int argc, char **argv)
     release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    OPENtls_free(passin);
+    OPENtls_free(passout);
 
     return ret;
 }

@@ -1,29 +1,29 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <opentls/bn.h>
+#include <opentls/rsa.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
+#ifndef OPENtls_NO_MD2
+# include <opentls/md2.h> /* uses MD2_DIGEST_LENGTH */
 #endif
-#ifndef OPENSSL_NO_MD5
-# include <openssl/md5.h> /* uses MD5_DIGEST_LENGTH */
+#ifndef OPENtls_NO_MD5
+# include <opentls/md5.h> /* uses MD5_DIGEST_LENGTH */
 #endif
-#ifndef OPENSSL_NO_MDC2
-# include <openssl/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
+#ifndef OPENtls_NO_MDC2
+# include <opentls/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
 #endif
-#include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
+#include <opentls/sha.h> /* uses SHA???_DIGEST_LENGTH */
 #include "rsa_local.h"
 
 /*
@@ -81,13 +81,13 @@ static const unsigned char digestinfo_##name##_der[] = {                       \
 };
 
 #ifndef FIPS_MODE
-# ifndef OPENSSL_NO_MD2
+# ifndef OPENtls_NO_MD2
 ENCODE_DIGESTINFO_MD(md2, 0x02, MD2_DIGEST_LENGTH)
 # endif
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
 ENCODE_DIGESTINFO_MD(md5, 0x05, MD5_DIGEST_LENGTH)
 # endif
-# ifndef OPENSSL_NO_MDC2
+# ifndef OPENtls_NO_MDC2
 /* MDC-2 (2 5 8 3 101) */
 static const unsigned char digestinfo_mdc2_der[] = {
     ASN1_SEQUENCE, 0x0c + MDC2_DIGEST_LENGTH,
@@ -128,13 +128,13 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
 {
     switch (nid) {
 #ifndef FIPS_MODE
-# ifndef OPENSSL_NO_MDC2
+# ifndef OPENtls_NO_MDC2
     MD_CASE(mdc2)
 # endif
-# ifndef OPENSSL_NO_MD2
+# ifndef OPENtls_NO_MD2
     MD_CASE(md2)
 # endif
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
     MD_CASE(md5)
 # endif
     MD_CASE(sha1)
@@ -154,8 +154,8 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
     }
 }
 
-/* Size of an SSL signature: MD5+SHA1 */
-#define SSL_SIG_LENGTH  36
+/* Size of an tls signature: MD5+SHA1 */
+#define tls_SIG_LENGTH  36
 
 /*
  * Encodes a DigestInfo prefix of hash |type| and digest |m|, as
@@ -164,7 +164,7 @@ static const unsigned char *digestinfo_encoding(int nid, size_t *len)
  *
  * On success, it returns one and sets |*out| to a newly allocated buffer
  * containing the result and |*out_len| to its length. The caller must free
- * |*out| with OPENSSL_free(). Otherwise, it returns zero.
+ * |*out| with OPENtls_free(). Otherwise, it returns zero.
  */
 static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
                         const unsigned char *m, size_t m_len)
@@ -184,7 +184,7 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
         return 0;
     }
     dig_info_len = di_prefix_len + m_len;
-    dig_info = OPENSSL_malloc(dig_info_len);
+    dig_info = OPENtls_malloc(dig_info_len);
     if (dig_info == NULL) {
         RSAerr(RSA_F_ENCODE_PKCS1, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -215,11 +215,11 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
          * earlier. It has no DigestInfo wrapper but otherwise is
          * RSASSA-PKCS1-v1_5.
          */
-        if (m_len != SSL_SIG_LENGTH) {
+        if (m_len != tls_SIG_LENGTH) {
             RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
             return 0;
         }
-        encoded_len = SSL_SIG_LENGTH;
+        encoded_len = tls_SIG_LENGTH;
         encoded = m;
     } else {
         if (!encode_pkcs1(&tmps, &encoded_len, type, m, m_len))
@@ -240,7 +240,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     ret = 1;
 
 err:
-    OPENSSL_clear_free(tmps, encoded_len);
+    OPENtls_clear_free(tmps, encoded_len);
     return ret;
 }
 
@@ -267,7 +267,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     }
 
     /* Recover the encoded digest. */
-    decrypt_buf = OPENSSL_malloc(siglen);
+    decrypt_buf = OPENtls_malloc(siglen);
     if (decrypt_buf == NULL) {
         RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -285,21 +285,21 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
          * earlier. It has no DigestInfo wrapper but otherwise is
          * RSASSA-PKCS1-v1_5.
          */
-        if (decrypt_len != SSL_SIG_LENGTH) {
+        if (decrypt_len != tls_SIG_LENGTH) {
             RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 
         if (rm != NULL) {
-            memcpy(rm, decrypt_buf, SSL_SIG_LENGTH);
-            *prm_len = SSL_SIG_LENGTH;
+            memcpy(rm, decrypt_buf, tls_SIG_LENGTH);
+            *prm_len = tls_SIG_LENGTH;
         } else {
-            if (m_len != SSL_SIG_LENGTH) {
+            if (m_len != tls_SIG_LENGTH) {
                 RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
                 goto err;
             }
 
-            if (memcmp(decrypt_buf, m, SSL_SIG_LENGTH) != 0) {
+            if (memcmp(decrypt_buf, m, tls_SIG_LENGTH) != 0) {
                 RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
                 goto err;
             }
@@ -368,8 +368,8 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     ret = 1;
 
 err:
-    OPENSSL_clear_free(encoded, encoded_len);
-    OPENSSL_clear_free(decrypt_buf, siglen);
+    OPENtls_clear_free(encoded, encoded_len);
+    OPENtls_clear_free(decrypt_buf, siglen);
     return ret;
 }
 

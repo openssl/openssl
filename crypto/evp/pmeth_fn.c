@@ -1,16 +1,16 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
@@ -41,7 +41,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
 
         if (ctx->keymgmt->query_operation_name != NULL)
             supported_ciph =
-                ctx->keymgmt->query_operation_name(OSSL_OP_ASYM_CIPHER);
+                ctx->keymgmt->query_operation_name(Otls_OP_ASYM_CIPHER);
 
         /*
          * If we didn't get a supported ciph, assume there is one with the
@@ -80,7 +80,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
         if (provkey == NULL)
             goto legacy;
     }
-    ctx->op.ciph.ciphprovctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
+    ctx->op.ciph.ciphprovctx = cipher->newctx(otls_provider_ctx(cipher->prov));
     if (ctx->op.ciph.ciphprovctx == NULL) {
         /* The provider key can stay in the cache */
         EVPerr(0, EVP_R_INITIALIZATION_ERROR);
@@ -220,9 +220,9 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 }
 
 
-static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
+static EVP_ASYM_CIPHER *evp_asym_cipher_new(Otls_PROVIDER *prov)
 {
-    EVP_ASYM_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
+    EVP_ASYM_CIPHER *cipher = OPENtls_zalloc(sizeof(EVP_ASYM_CIPHER));
 
     if (cipher == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -232,19 +232,19 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     cipher->lock = CRYPTO_THREAD_lock_new();
     if (cipher->lock == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(cipher);
+        OPENtls_free(cipher);
         return NULL;
     }
     cipher->prov = prov;
-    ossl_provider_up_ref(prov);
+    otls_provider_up_ref(prov);
     cipher->refcnt = 1;
 
     return cipher;
 }
 
 static void *evp_asym_cipher_from_dispatch(int name_id,
-                                           const OSSL_DISPATCH *fns,
-                                           OSSL_PROVIDER *prov)
+                                           const Otls_DISPATCH *fns,
+                                           Otls_PROVIDER *prov)
 {
     EVP_ASYM_CIPHER *cipher = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
@@ -259,73 +259,73 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
-        case OSSL_FUNC_ASYM_CIPHER_NEWCTX:
+        case Otls_FUNC_ASYM_CIPHER_NEWCTX:
             if (cipher->newctx != NULL)
                 break;
-            cipher->newctx = OSSL_get_OP_asym_cipher_newctx(fns);
+            cipher->newctx = Otls_get_OP_asym_cipher_newctx(fns);
             ctxfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT:
+        case Otls_FUNC_ASYM_CIPHER_ENCRYPT_INIT:
             if (cipher->encrypt_init != NULL)
                 break;
-            cipher->encrypt_init = OSSL_get_OP_asym_cipher_encrypt_init(fns);
+            cipher->encrypt_init = Otls_get_OP_asym_cipher_encrypt_init(fns);
             encfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_ENCRYPT:
+        case Otls_FUNC_ASYM_CIPHER_ENCRYPT:
             if (cipher->encrypt != NULL)
                 break;
-            cipher->encrypt = OSSL_get_OP_asym_cipher_encrypt(fns);
+            cipher->encrypt = Otls_get_OP_asym_cipher_encrypt(fns);
             encfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT:
+        case Otls_FUNC_ASYM_CIPHER_DECRYPT_INIT:
             if (cipher->decrypt_init != NULL)
                 break;
-            cipher->decrypt_init = OSSL_get_OP_asym_cipher_decrypt_init(fns);
+            cipher->decrypt_init = Otls_get_OP_asym_cipher_decrypt_init(fns);
             decfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_DECRYPT:
+        case Otls_FUNC_ASYM_CIPHER_DECRYPT:
             if (cipher->decrypt != NULL)
                 break;
-            cipher->decrypt = OSSL_get_OP_asym_cipher_decrypt(fns);
+            cipher->decrypt = Otls_get_OP_asym_cipher_decrypt(fns);
             decfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_FREECTX:
+        case Otls_FUNC_ASYM_CIPHER_FREECTX:
             if (cipher->freectx != NULL)
                 break;
-            cipher->freectx = OSSL_get_OP_asym_cipher_freectx(fns);
+            cipher->freectx = Otls_get_OP_asym_cipher_freectx(fns);
             ctxfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_DUPCTX:
+        case Otls_FUNC_ASYM_CIPHER_DUPCTX:
             if (cipher->dupctx != NULL)
                 break;
-            cipher->dupctx = OSSL_get_OP_asym_cipher_dupctx(fns);
+            cipher->dupctx = Otls_get_OP_asym_cipher_dupctx(fns);
             break;
-        case OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS:
+        case Otls_FUNC_ASYM_CIPHER_GET_CTX_PARAMS:
             if (cipher->get_ctx_params != NULL)
                 break;
             cipher->get_ctx_params
-                = OSSL_get_OP_asym_cipher_get_ctx_params(fns);
+                = Otls_get_OP_asym_cipher_get_ctx_params(fns);
             gparamfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS:
+        case Otls_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS:
             if (cipher->gettable_ctx_params != NULL)
                 break;
             cipher->gettable_ctx_params
-                = OSSL_get_OP_asym_cipher_gettable_ctx_params(fns);
+                = Otls_get_OP_asym_cipher_gettable_ctx_params(fns);
             gparamfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS:
+        case Otls_FUNC_ASYM_CIPHER_SET_CTX_PARAMS:
             if (cipher->set_ctx_params != NULL)
                 break;
             cipher->set_ctx_params
-                = OSSL_get_OP_asym_cipher_set_ctx_params(fns);
+                = Otls_get_OP_asym_cipher_set_ctx_params(fns);
             sparamfncnt++;
             break;
-        case OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS:
+        case Otls_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS:
             if (cipher->settable_ctx_params != NULL)
                 break;
             cipher->settable_ctx_params
-                = OSSL_get_OP_asym_cipher_settable_ctx_params(fns);
+                = Otls_get_OP_asym_cipher_settable_ctx_params(fns);
             sparamfncnt++;
             break;
         }
@@ -363,9 +363,9 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
         CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
         if (i > 0)
             return;
-        ossl_provider_free(cipher->prov);
+        otls_provider_free(cipher->prov);
         CRYPTO_THREAD_lock_free(cipher->lock);
-        OPENSSL_free(cipher);
+        OPENtls_free(cipher);
     }
 }
 
@@ -377,15 +377,15 @@ int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
     return 1;
 }
 
-OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
+Otls_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->prov;
 }
 
-EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENtls_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
+    return evp_generic_fetch(ctx, Otls_OP_ASYM_CIPHER, algorithm, properties,
                              evp_asym_cipher_from_dispatch,
                              (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
                              (void (*)(void *))EVP_ASYM_CIPHER_free);
@@ -401,12 +401,12 @@ int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
     return cipher->name_id;
 }
 
-void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_ASYM_CIPHER_do_all_provided(OPENtls_CTX *libctx,
                                      void (*fn)(EVP_ASYM_CIPHER *cipher,
                                                 void *arg),
                                      void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
+    evp_generic_do_all(libctx, Otls_OP_ASYM_CIPHER,
                        (void (*)(void *, void *))fn, arg,
                        evp_asym_cipher_from_dispatch,
                        (void (*)(void *))EVP_ASYM_CIPHER_free);

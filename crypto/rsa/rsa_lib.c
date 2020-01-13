@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/crypto.h>
-#include <openssl/core_names.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
+#include <opentls/crypto.h>
+#include <opentls/core_names.h>
+#include <opentls/engine.h>
+#include <opentls/evp.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "crypto/bn.h"
@@ -39,7 +39,7 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
     mtmp = rsa->meth;
     if (mtmp->finish)
         mtmp->finish(rsa);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(rsa->engine);
     rsa->engine = NULL;
 #endif
@@ -51,7 +51,7 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
-    RSA *ret = OPENSSL_zalloc(sizeof(*ret));
+    RSA *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -62,12 +62,12 @@ RSA *RSA_new_method(ENGINE *engine)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
 
     ret->meth = RSA_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -119,7 +119,7 @@ void RSA_free(RSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(r->engine);
 #endif
 
@@ -139,8 +139,8 @@ void RSA_free(RSA *r)
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
-    OPENSSL_free(r->bignum_data);
-    OPENSSL_free(r);
+    OPENtls_free(r->bignum_data);
+    OPENtls_free(r);
 }
 
 int RSA_up_ref(RSA *r)
@@ -185,7 +185,7 @@ static const unsigned int c4_690 = 0x12c28f;    /* scale * 4.690 */
 /*
  * Multiply two scaled integers together and rescale the result.
  */
-static ossl_inline uint64_t mul2(uint64_t a, uint64_t b)
+static otls_inline uint64_t mul2(uint64_t a, uint64_t b)
 {
     return a * b / scale;
 }
@@ -665,11 +665,11 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
             BIGNUM *coeff = sk_BIGNUM_value(coeffs, i - 1);
             RSA_PRIME_INFO *pinfo = NULL;
 
-            if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
+            if (!otls_assert(prime != NULL && exp != NULL && coeff != NULL))
                 goto err;
 
             /* Using rsa_multip_info_new() is wasteful, so allocate directly */
-            if ((pinfo = OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
+            if ((pinfo = OPENtls_zalloc(sizeof(*pinfo))) == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -742,7 +742,7 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
 
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
 {
-    OSSL_PARAM pad_params[2], *p = pad_params;
+    Otls_PARAM pad_params[2], *p = pad_params;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -762,15 +762,15 @@ int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
         return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_RSA_PADDING,
                                  pad_mode, NULL);
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, &pad_mode);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_int(Otls_ASYM_CIPHER_PARAM_PAD_MODE, &pad_mode);
+    *p++ = Otls_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, pad_params);
 }
 
 int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 {
-    OSSL_PARAM pad_params[2], *p = pad_params;
+    Otls_PARAM pad_params[2], *p = pad_params;
 
     if (ctx == NULL || pad_mode == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -790,8 +790,8 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
         return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_GET_RSA_PADDING, 0,
                                  pad_mode);
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, pad_mode);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_int(Otls_ASYM_CIPHER_PARAM_PAD_MODE, pad_mode);
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, pad_params))
         return 0;
@@ -827,7 +827,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                       const char *mdprops)
 {
-    OSSL_PARAM rsa_params[3], *p = rsa_params;
+    Otls_PARAM rsa_params[3], *p = rsa_params;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -840,7 +840,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
         return -1;
 
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_ASYM_CIPHER_PARAM_OAEP_DIGEST,
                                             /*
                                              * Cast away the const. This is read
                                              * only so should be safe
@@ -848,8 +848,8 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                             (char *)mdname,
                                             strlen(mdname) + 1);
     if (mdprops != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(
-                    OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS,
+        *p++ = Otls_PARAM_construct_utf8_string(
+                    Otls_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS,
                     /*
                      * Cast away the const. This is read
                      * only so should be safe
@@ -857,7 +857,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                     (char *)mdprops,
                     strlen(mdprops) + 1);
     }
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
@@ -865,7 +865,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
 int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
                                       size_t namelen)
 {
-    OSSL_PARAM rsa_params[2], *p = rsa_params;
+    Otls_PARAM rsa_params[2], *p = rsa_params;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -877,9 +877,9 @@ int EVP_PKEY_CTX_get_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, char *name,
     if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_ASYM_CIPHER_PARAM_OAEP_DIGEST,
                                             name, namelen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
         return -1;
@@ -951,7 +951,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                       const char *mdprops)
 {
-    OSSL_PARAM rsa_params[3], *p = rsa_params;
+    Otls_PARAM rsa_params[3], *p = rsa_params;
 
     if (ctx == NULL
             || mdname == NULL
@@ -968,7 +968,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
             && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_ASYM_CIPHER_PARAM_MGF1_DIGEST,
                                             /*
                                              * Cast away the const. This is read
                                              * only so should be safe
@@ -976,8 +976,8 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                             (char *)mdname,
                                             strlen(mdname) + 1);
     if (mdprops != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(
-                    OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS,
+        *p++ = Otls_PARAM_construct_utf8_string(
+                    Otls_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS,
                     /*
                      * Cast away the const. This is read
                      * only so should be safe
@@ -985,7 +985,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                     (char *)mdprops,
                     strlen(mdprops) + 1);
     }
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
 }
@@ -993,7 +993,7 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
 int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
                                       size_t namelen)
 {
-    OSSL_PARAM rsa_params[2], *p = rsa_params;
+    Otls_PARAM rsa_params[2], *p = rsa_params;
 
     if (ctx == NULL
             || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
@@ -1009,9 +1009,9 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
             && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_ASYM_CIPHER_PARAM_MGF1_DIGEST,
                                             name, namelen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
         return -1;
@@ -1058,7 +1058,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 
 int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
 {
-    OSSL_PARAM rsa_params[2], *p = rsa_params;
+    Otls_PARAM rsa_params[2], *p = rsa_params;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -1076,25 +1076,25 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
                                  EVP_PKEY_CTRL_RSA_OAEP_LABEL, llen,
                                  (void *)label);
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_ASYM_CIPHER_PARAM_OAEP_LABEL,
                                             /*
                                              * Cast away the const. This is read
                                              * only so should be safe
                                              */
                                             (void *)label,
                                             (size_t)llen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_set_params(ctx, rsa_params))
         return 0;
 
-    OPENSSL_free(label);
+    OPENtls_free(label);
     return 1;
 }
 
 int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
 {
-    OSSL_PARAM rsa_params[3], *p = rsa_params;
+    Otls_PARAM rsa_params[3], *p = rsa_params;
     size_t labellen;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
@@ -1113,11 +1113,11 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
                                  EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0,
                                  (void *)label);
 
-    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
+    *p++ = Otls_PARAM_construct_octet_ptr(Otls_ASYM_CIPHER_PARAM_OAEP_LABEL,
                                           (void **)label, 0);
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN,
+    *p++ = Otls_PARAM_construct_size_t(Otls_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN,
                                        &labellen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
         return -1;

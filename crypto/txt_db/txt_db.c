@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/txt_db.h>
+#include <opentls/buffer.h>
+#include <opentls/txt_db.h>
 
 #undef BUFSIZE
 #define BUFSIZE 512
@@ -26,7 +26,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     int size = BUFSIZE;
     int offset = 0;
     char *p, *f;
-    OPENSSL_STRING *pp;
+    OPENtls_STRING *pp;
     BUF_MEM *buf = NULL;
 
     if ((buf = BUF_MEM_new()) == NULL)
@@ -34,16 +34,16 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     if (!BUF_MEM_grow(buf, size))
         goto err;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENtls_malloc(sizeof(*ret))) == NULL)
         goto err;
     ret->num_fields = num;
     ret->index = NULL;
     ret->qual = NULL;
-    if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
+    if ((ret->data = sk_OPENtls_PSTRING_new_null()) == NULL)
         goto err;
-    if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL)
+    if ((ret->index = OPENtls_malloc(sizeof(*ret->index) * num)) == NULL)
         goto err;
-    if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL)
+    if ((ret->qual = OPENtls_malloc(sizeof(*(ret->qual)) * num)) == NULL)
         goto err;
     for (i = 0; i < num; i++) {
         ret->index[i] = NULL;
@@ -72,7 +72,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             continue;
         else {
             buf->data[offset - 1] = '\0'; /* blat the '\n' */
-            if ((p = OPENSSL_malloc(add + offset)) == NULL)
+            if ((p = OPENtls_malloc(add + offset)) == NULL)
                 goto err;
             offset = 0;
         }
@@ -104,13 +104,13 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         }
         *(p++) = '\0';
         if ((n != num) || (*f != '\0')) {
-            OPENSSL_free(pp);
+            OPENtls_free(pp);
             ret->error = DB_ERROR_WRONG_NUM_FIELDS;
             goto err;
         }
         pp[n] = p;
-        if (!sk_OPENSSL_PSTRING_push(ret->data, pp)) {
-            OPENSSL_free(pp);
+        if (!sk_OPENtls_PSTRING_push(ret->data, pp)) {
+            OPENtls_free(pp);
             goto err;
         }
     }
@@ -119,19 +119,19 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
  err:
     BUF_MEM_free(buf);
     if (ret != NULL) {
-        sk_OPENSSL_PSTRING_free(ret->data);
-        OPENSSL_free(ret->index);
-        OPENSSL_free(ret->qual);
-        OPENSSL_free(ret);
+        sk_OPENtls_PSTRING_free(ret->data);
+        OPENtls_free(ret->index);
+        OPENtls_free(ret->qual);
+        OPENtls_free(ret);
     }
     return NULL;
 }
 
-OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
-                                    OPENSSL_STRING *value)
+OPENtls_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
+                                    OPENtls_STRING *value)
 {
-    OPENSSL_STRING *ret;
-    LHASH_OF(OPENSSL_STRING) *lh;
+    OPENtls_STRING *ret;
+    LHASH_OF(OPENtls_STRING) *lh;
 
     if (idx >= db->num_fields) {
         db->error = DB_ERROR_INDEX_OUT_OF_RANGE;
@@ -142,16 +142,16 @@ OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
         db->error = DB_ERROR_NO_INDEX;
         return NULL;
     }
-    ret = lh_OPENSSL_STRING_retrieve(lh, value);
+    ret = lh_OPENtls_STRING_retrieve(lh, value);
     db->error = DB_ERROR_OK;
     return ret;
 }
 
-int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
-                        OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC cmp)
+int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENtls_STRING *),
+                        OPENtls_LH_HASHFUNC hash, OPENtls_LH_COMPFUNC cmp)
 {
-    LHASH_OF(OPENSSL_STRING) *idx;
-    OPENSSL_STRING *r, *k;
+    LHASH_OF(OPENtls_STRING) *idx;
+    OPENtls_STRING *r, *k;
     int i, n;
 
     if (field >= db->num_fields) {
@@ -159,29 +159,29 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
         return 0;
     }
     /* FIXME: we lose type checking at this point */
-    if ((idx = (LHASH_OF(OPENSSL_STRING) *)OPENSSL_LH_new(hash, cmp)) == NULL) {
+    if ((idx = (LHASH_OF(OPENtls_STRING) *)OPENtls_LH_new(hash, cmp)) == NULL) {
         db->error = DB_ERROR_MALLOC;
         return 0;
     }
-    n = sk_OPENSSL_PSTRING_num(db->data);
+    n = sk_OPENtls_PSTRING_num(db->data);
     for (i = 0; i < n; i++) {
-        r = sk_OPENSSL_PSTRING_value(db->data, i);
+        r = sk_OPENtls_PSTRING_value(db->data, i);
         if ((qual != NULL) && (qual(r) == 0))
             continue;
-        if ((k = lh_OPENSSL_STRING_insert(idx, r)) != NULL) {
+        if ((k = lh_OPENtls_STRING_insert(idx, r)) != NULL) {
             db->error = DB_ERROR_INDEX_CLASH;
-            db->arg1 = sk_OPENSSL_PSTRING_find(db->data, k);
+            db->arg1 = sk_OPENtls_PSTRING_find(db->data, k);
             db->arg2 = i;
-            lh_OPENSSL_STRING_free(idx);
+            lh_OPENtls_STRING_free(idx);
             return 0;
         }
-        if (lh_OPENSSL_STRING_retrieve(idx, r) == NULL) {
+        if (lh_OPENtls_STRING_retrieve(idx, r) == NULL) {
             db->error = DB_ERROR_MALLOC;
-            lh_OPENSSL_STRING_free(idx);
+            lh_OPENtls_STRING_free(idx);
             return 0;
         }
     }
-    lh_OPENSSL_STRING_free(db->index[field]);
+    lh_OPENtls_STRING_free(db->index[field]);
     db->index[field] = idx;
     db->qual[field] = qual;
     return 1;
@@ -196,10 +196,10 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
 
     if ((buf = BUF_MEM_new()) == NULL)
         goto err;
-    n = sk_OPENSSL_PSTRING_num(db->data);
+    n = sk_OPENtls_PSTRING_num(db->data);
     nn = db->num_fields;
     for (i = 0; i < n; i++) {
-        pp = sk_OPENSSL_PSTRING_value(db->data, i);
+        pp = sk_OPENtls_PSTRING_value(db->data, i);
 
         l = 0;
         for (j = 0; j < nn; j++) {
@@ -234,16 +234,16 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
     return ret;
 }
 
-int TXT_DB_insert(TXT_DB *db, OPENSSL_STRING *row)
+int TXT_DB_insert(TXT_DB *db, OPENtls_STRING *row)
 {
     int i;
-    OPENSSL_STRING *r;
+    OPENtls_STRING *r;
 
     for (i = 0; i < db->num_fields; i++) {
         if (db->index[i] != NULL) {
             if ((db->qual[i] != NULL) && (db->qual[i] (row) == 0))
                 continue;
-            r = lh_OPENSSL_STRING_retrieve(db->index[i], row);
+            r = lh_OPENtls_STRING_retrieve(db->index[i], row);
             if (r != NULL) {
                 db->error = DB_ERROR_INDEX_CLASH;
                 db->arg1 = i;
@@ -257,12 +257,12 @@ int TXT_DB_insert(TXT_DB *db, OPENSSL_STRING *row)
         if (db->index[i] != NULL) {
             if ((db->qual[i] != NULL) && (db->qual[i] (row) == 0))
                 continue;
-            (void)lh_OPENSSL_STRING_insert(db->index[i], row);
-            if (lh_OPENSSL_STRING_retrieve(db->index[i], row) == NULL)
+            (void)lh_OPENtls_STRING_insert(db->index[i], row);
+            if (lh_OPENtls_STRING_retrieve(db->index[i], row) == NULL)
                 goto err1;
         }
     }
-    if (!sk_OPENSSL_PSTRING_push(db->data, row))
+    if (!sk_OPENtls_PSTRING_push(db->data, row))
         goto err1;
     return 1;
 
@@ -272,7 +272,7 @@ int TXT_DB_insert(TXT_DB *db, OPENSSL_STRING *row)
         if (db->index[i] != NULL) {
             if ((db->qual[i] != NULL) && (db->qual[i] (row) == 0))
                 continue;
-            (void)lh_OPENSSL_STRING_delete(db->index[i], row);
+            (void)lh_OPENtls_STRING_delete(db->index[i], row);
         }
     }
  err:
@@ -288,30 +288,30 @@ void TXT_DB_free(TXT_DB *db)
         return;
     if (db->index != NULL) {
         for (i = db->num_fields - 1; i >= 0; i--)
-            lh_OPENSSL_STRING_free(db->index[i]);
-        OPENSSL_free(db->index);
+            lh_OPENtls_STRING_free(db->index[i]);
+        OPENtls_free(db->index);
     }
-    OPENSSL_free(db->qual);
+    OPENtls_free(db->qual);
     if (db->data != NULL) {
-        for (i = sk_OPENSSL_PSTRING_num(db->data) - 1; i >= 0; i--) {
+        for (i = sk_OPENtls_PSTRING_num(db->data) - 1; i >= 0; i--) {
             /*
              * check if any 'fields' have been allocated from outside of the
              * initial block
              */
-            p = sk_OPENSSL_PSTRING_value(db->data, i);
+            p = sk_OPENtls_PSTRING_value(db->data, i);
             max = p[db->num_fields]; /* last address */
             if (max == NULL) {  /* new row */
                 for (n = 0; n < db->num_fields; n++)
-                    OPENSSL_free(p[n]);
+                    OPENtls_free(p[n]);
             } else {
                 for (n = 0; n < db->num_fields; n++) {
                     if (((p[n] < (char *)p) || (p[n] > max)))
-                        OPENSSL_free(p[n]);
+                        OPENtls_free(p[n]);
                 }
             }
-            OPENSSL_free(sk_OPENSSL_PSTRING_value(db->data, i));
+            OPENtls_free(sk_OPENtls_PSTRING_value(db->data, i));
         }
-        sk_OPENSSL_PSTRING_free(db->data);
+        sk_OPENtls_PSTRING_free(db->data);
     }
-    OPENSSL_free(db);
+    OPENtls_free(db);
 }

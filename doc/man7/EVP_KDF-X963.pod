@@ -21,18 +21,18 @@ The supported parameters are:
 
 =over 4
 
-=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<Otls_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+=item "digest" (B<Otls_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
+=item "key" (B<Otls_KDF_PARAM_KEY>) <octet string>
 
 The shared secret used for key derivation.
 This parameter sets the secret.
 
-=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
+=item "info" (B<Otls_KDF_PARAM_INFO>) <octet string>
 
 This parameter specifies an optional value for shared info.
 
@@ -59,19 +59,19 @@ value "label":
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[10];
- OSSL_PARAM params[4], *p = params;
+ Otls_PARAM params[4], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "X963KDF", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                          SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SECRET,
                                           "secret", (size_t)6);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                           "label", (size_t)5);
- *p = OSSL_PARAM_construct_end();
+ *p = Otls_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
      error("EVP_KDF_CTX_set_params");
  }
@@ -97,15 +97,15 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.
+This functionality was added to Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -1,25 +1,25 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/e_os2.h>
+#include <opentls/e_os2.h>
 
 # include "testutil.h"
 
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/buffer.h>
-# include <openssl/crypto.h>
-# include <openssl/engine.h>
-# include <openssl/rsa.h>
-# include <openssl/err.h>
+#ifndef OPENtls_NO_ENGINE
+# include <opentls/buffer.h>
+# include <opentls/crypto.h>
+# include <opentls/engine.h>
+# include <opentls/rsa.h>
+# include <opentls/err.h>
 
 static void display_engine_list(void)
 {
@@ -143,9 +143,9 @@ static int test_engines(void)
     TEST_info("About to beef up the engine-type list");
     for (loop = 0; loop < NUMTOADD; loop++) {
         sprintf(buf, "id%d", loop);
-        eid[loop] = OPENSSL_strdup(buf);
+        eid[loop] = OPENtls_strdup(buf);
         sprintf(buf, "Fake engine type %d", loop);
-        ename[loop] = OPENSSL_strdup(buf);
+        ename[loop] = OPENtls_strdup(buf);
         if (!TEST_ptr(block[loop] = ENGINE_new())
                 || !TEST_true(ENGINE_set_id(block[loop], eid[loop]))
                 || !TEST_true(ENGINE_set_name(block[loop], ename[loop])))
@@ -167,8 +167,8 @@ static int test_engines(void)
         ENGINE_free(ptr);
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free(eid[loop]);
-        OPENSSL_free(ename[loop]);
+        OPENtls_free(eid[loop]);
+        OPENtls_free(ename[loop]);
     }
     to_return = 1;
 
@@ -258,7 +258,7 @@ static int test_redirect(void)
         goto err;
 
     len = EVP_PKEY_size(pkey);
-    if (!TEST_ptr(tmp = OPENSSL_malloc(len)))
+    if (!TEST_ptr(tmp = OPENtls_malloc(len)))
         goto err;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
@@ -346,7 +346,7 @@ static int test_redirect(void)
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     ENGINE_free(e);
-    OPENSSL_free(tmp);
+    OPENtls_free(tmp);
     return to_return;
 }
 #endif
@@ -357,12 +357,12 @@ int global_init(void)
      * If the config file gets loaded, the dynamic engine will be loaded,
      * and that interferes with our test above.
      */
-    return OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
+    return OPENtls_init_crypto(OPENtls_INIT_NO_LOAD_CONFIG, NULL);
 }
 
 int setup_tests(void)
 {
-#ifdef OPENSSL_NO_ENGINE
+#ifdef OPENtls_NO_ENGINE
     TEST_note("No ENGINE support");
 #else
     ADD_TEST(test_engines);

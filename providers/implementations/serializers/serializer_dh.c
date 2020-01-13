@@ -1,25 +1,25 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/dh.h>
-#include <openssl/err.h>
-#include "prov/bio.h"             /* ossl_prov_bio_printf() */
+#include <opentls/dh.h>
+#include <opentls/err.h>
+#include "prov/bio.h"             /* otls_prov_bio_printf() */
 #include "prov/implementations.h" /* rsa_keymgmt_functions */
 #include "prov/providercommonerr.h" /* PROV_R_BN_ERROR */
 #include "serializer_local.h"
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dh_importkey(void)
+Otls_OP_keymgmt_importkey_fn *otls_prov_get_dh_importkey(void)
 {
-    return ossl_prov_get_importkey(dh_keymgmt_functions);
+    return otls_prov_get_importkey(dh_keymgmt_functions);
 }
 
-int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
+int otls_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
 {
     const char *type_label = NULL;
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
@@ -66,20 +66,20 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
      * This can happen as soon as there are DH_get0_ functions for them.
      */
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
+    if (otls_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
         <= 0)
         goto err;
     if (priv_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    private-key:", priv_key))
+        && !otls_prov_print_labeled_bignum(out, "    private-key:", priv_key))
         goto err;
     if (pub_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    public-key:", pub_key))
+        && !otls_prov_print_labeled_bignum(out, "    public-key:", pub_key))
         goto err;
     if (p != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    prime:", p))
+        && !otls_prov_print_labeled_bignum(out, "    prime:", p))
         goto err;
     if (g != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    generator:", g))
+        && !otls_prov_print_labeled_bignum(out, "    generator:", g))
         goto err;
 
     return 1;
@@ -90,7 +90,7 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
     goto err;
 }
 
-int ossl_prov_prepare_dh_params(const void *dh, int nid,
+int otls_prov_prepare_dh_params(const void *dh, int nid,
                                 ASN1_STRING **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
@@ -117,7 +117,7 @@ int ossl_prov_prepare_dh_params(const void *dh, int nid,
     return 1;
 }
 
-int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder)
+int otls_prov_dh_pub_to_der(const void *dh, unsigned char **pder)
 {
     ASN1_INTEGER *pub_key = BN_to_ASN1_INTEGER(DH_get0_pub_key(dh), NULL);
     int ret;
@@ -133,7 +133,7 @@ int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder)
     return ret;
 }
 
-int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder)
+int otls_prov_dh_priv_to_der(const void *dh, unsigned char **pder)
 {
     ASN1_INTEGER *priv_key = BN_to_ASN1_INTEGER(DH_get0_priv_key(dh), NULL);
     int ret;

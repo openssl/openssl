@@ -1,14 +1,14 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_EC
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -17,10 +17,10 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/evp.h>
-# include <openssl/pem.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/evp.h>
+# include <opentls/pem.h>
 
 static OPT_PAIR conv_forms[] = {
     {"compressed", POINT_CONVERSION_COMPRESSED},
@@ -30,7 +30,7 @@ static OPT_PAIR conv_forms[] = {
 };
 
 static OPT_PAIR param_enc[] = {
-    {"named_curve", OPENSSL_EC_NAMED_CURVE},
+    {"named_curve", OPENtls_EC_NAMED_CURVE},
     {"explicit", 0},
     {NULL}
 };
@@ -46,7 +46,7 @@ typedef enum OPTION_choice {
 const OPTIONS ec_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -84,7 +84,7 @@ int ec_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
-    int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_form = 0, new_asn1_flag = 0;
+    int asn1_flag = OPENtls_EC_NAMED_CURVE, new_form = 0, new_asn1_flag = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int pubin = 0, pubout = 0, param_out = 0, i, ret = 1, private = 0;
     int no_public = 0, check = 0;
@@ -281,8 +281,8 @@ int ec_main(int argc, char **argv)
     BIO_free_all(out);
     EC_KEY_free(eckey);
     release_engine(e);
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    OPENtls_free(passin);
+    OPENtls_free(passout);
     return ret;
 }
 #endif

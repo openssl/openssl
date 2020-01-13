@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_RC2
-# include <openssl/rc2.h>
+#ifndef OPENtls_NO_RC2
+# include <opentls/rc2.h>
 
 static unsigned char RC2key[4][16] = {
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -61,8 +61,8 @@ static int test_rc2(const int n)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_RC2
-    ADD_ALL_TESTS(test_rc2, OSSL_NELEM(RC2key));
+#ifndef OPENtls_NO_RC2
+    ADD_ALL_TESTS(test_rc2, Otls_NELEM(RC2key));
 #endif
     return 1;
 }

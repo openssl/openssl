@@ -1,39 +1,39 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
-#include <openssl/bn.h>
-#include <openssl/dh.h>
-#include <openssl/params.h>
+#include <opentls/core_numbers.h>
+#include <opentls/core_names.h>
+#include <opentls/bn.h>
+#include <opentls/dh.h>
+#include <opentls/params.h>
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-static OSSL_OP_keymgmt_importdomparams_fn dh_importdomparams;
-static OSSL_OP_keymgmt_exportdomparams_fn dh_exportdomparams;
-static OSSL_OP_keymgmt_importkey_fn dh_importkey;
-static OSSL_OP_keymgmt_exportkey_fn dh_exportkey;
+static Otls_OP_keymgmt_importdomparams_fn dh_importdomparams;
+static Otls_OP_keymgmt_exportdomparams_fn dh_exportdomparams;
+static Otls_OP_keymgmt_importkey_fn dh_importkey;
+static Otls_OP_keymgmt_exportkey_fn dh_exportkey;
 
-static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
+static int params_to_domparams(DH *dh, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *param_p, *param_g;
+    const Otls_PARAM *param_p, *param_g;
     BIGNUM *p = NULL, *g = NULL;
 
     if (dh == NULL)
         return 0;
 
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
+    param_p = Otls_PARAM_locate_const(params, Otls_PKEY_PARAM_FFC_P);
+    param_g = Otls_PARAM_locate_const(params, Otls_PKEY_PARAM_FFC_G);
 
-    if ((param_p != NULL && !OSSL_PARAM_get_BN(param_p, &p))
-        || (param_g != NULL && !OSSL_PARAM_get_BN(param_g, &g)))
+    if ((param_p != NULL && !Otls_PARAM_get_BN(param_p, &p))
+        || (param_g != NULL && !Otls_PARAM_get_BN(param_g, &g)))
         goto err;
 
     if (!DH_set0_pqg(dh, p, NULL, g))
@@ -47,7 +47,7 @@ static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
     return 0;
 }
 
-static int domparams_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
+static int domparams_to_params(DH *dh, Otls_PARAM_BLD *tmpl)
 {
     const BIGNUM *dh_p = NULL, *dh_g = NULL;
 
@@ -56,18 +56,18 @@ static int domparams_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 
     DH_get0_pqg(dh, &dh_p, NULL, &dh_g);
     if (dh_p != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dh_p))
+        && !otls_param_bld_push_BN(tmpl, Otls_PKEY_PARAM_FFC_P, dh_p))
         return 0;
     if (dh_g != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dh_g))
+        && !otls_param_bld_push_BN(tmpl, Otls_PKEY_PARAM_FFC_G, dh_g))
         return 0;
 
     return 1;
 }
 
-static int params_to_key(DH *dh, const OSSL_PARAM params[])
+static int params_to_key(DH *dh, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *param_priv_key, *param_pub_key;
+    const Otls_PARAM *param_priv_key, *param_pub_key;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
 
     if (dh == NULL)
@@ -77,9 +77,9 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
         return 0;
 
     param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_KEY);
+        Otls_PARAM_locate_const(params, Otls_PKEY_PARAM_DH_PRIV_KEY);
     param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PUB_KEY);
+        Otls_PARAM_locate_const(params, Otls_PKEY_PARAM_DH_PUB_KEY);
 
     /*
      * DH documentation says that a public key must be present if a
@@ -91,8 +91,8 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
         return 0;
 
     if ((param_priv_key != NULL
-         && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
-        || !OSSL_PARAM_get_BN(param_pub_key, &pub_key))
+         && !Otls_PARAM_get_BN(param_priv_key, &priv_key))
+        || !Otls_PARAM_get_BN(param_pub_key, &pub_key))
         goto err;
 
     if (!DH_set0_key(dh, pub_key, priv_key))
@@ -106,7 +106,7 @@ static int params_to_key(DH *dh, const OSSL_PARAM params[])
     return 0;
 }
 
-static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
+static int key_to_params(DH *dh, Otls_PARAM_BLD *tmpl)
 {
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
 
@@ -117,16 +117,16 @@ static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 
     DH_get0_key(dh, &pub_key, &priv_key);
     if (priv_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY, priv_key))
+        && !otls_param_bld_push_BN(tmpl, Otls_PKEY_PARAM_DH_PRIV_KEY, priv_key))
         return 0;
     if (pub_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
+        && !otls_param_bld_push_BN(tmpl, Otls_PKEY_PARAM_DH_PUB_KEY, pub_key))
         return 0;
 
     return 1;
 }
 
-static void *dh_importdomparams(void *provctx, const OSSL_PARAM params[])
+static void *dh_importdomparams(void *provctx, const Otls_PARAM params[])
 {
     DH *dh;
 
@@ -138,25 +138,25 @@ static void *dh_importdomparams(void *provctx, const OSSL_PARAM params[])
     return dh;
 }
 
-static int dh_exportdomparams(void *domparams, OSSL_CALLBACK *param_cb,
+static int dh_exportdomparams(void *domparams, Otls_CALLBACK *param_cb,
                               void *cbarg)
 {
     DH *dh = domparams;
-    OSSL_PARAM_BLD tmpl;
-    OSSL_PARAM *params = NULL;
+    Otls_PARAM_BLD tmpl;
+    Otls_PARAM *params = NULL;
     int ret;
 
-    ossl_param_bld_init(&tmpl);
+    otls_param_bld_init(&tmpl);
     if (dh == NULL
         || !domparams_to_params(dh, &tmpl)
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        || (params = otls_param_bld_to_param(&tmpl)) == NULL)
         return 0;
     ret = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
+    otls_param_bld_free(params);
     return ret;
 }
 
-static void *dh_importkey(void *provctx, const OSSL_PARAM params[])
+static void *dh_importkey(void *provctx, const Otls_PARAM params[])
 {
     DH *dh;
 
@@ -168,33 +168,33 @@ static void *dh_importkey(void *provctx, const OSSL_PARAM params[])
     return dh;
 }
 
-static int dh_exportkey(void *key, OSSL_CALLBACK *param_cb, void *cbarg)
+static int dh_exportkey(void *key, Otls_CALLBACK *param_cb, void *cbarg)
 {
     DH *dh = key;
-    OSSL_PARAM_BLD tmpl;
-    OSSL_PARAM *params = NULL;
+    Otls_PARAM_BLD tmpl;
+    Otls_PARAM *params = NULL;
     int ret;
 
-    ossl_param_bld_init(&tmpl);
+    otls_param_bld_init(&tmpl);
     if (dh == NULL
         || !key_to_params(dh, &tmpl)
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        || (params = otls_param_bld_to_param(&tmpl)) == NULL)
         return 0;
     ret = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
+    otls_param_bld_free(params);
     return ret;
 }
 
-const OSSL_DISPATCH dh_keymgmt_functions[] = {
+const Otls_DISPATCH dh_keymgmt_functions[] = {
     /*
-     * TODO(3.0) When implementing OSSL_FUNC_KEYMGMT_GENKEY, remember to also
-     * implement OSSL_FUNC_KEYMGMT_EXPORTKEY.
+     * TODO(3.0) When implementing Otls_FUNC_KEYMGMT_GENKEY, remember to also
+     * implement Otls_FUNC_KEYMGMT_EXPORTKEY.
      */
-    { OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS, (void (*)(void))dh_importdomparams },
-    { OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS, (void (*)(void))dh_exportdomparams },
-    { OSSL_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DH_free },
-    { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dh_importkey },
-    { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dh_exportkey },
-    { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DH_free },
+    { Otls_FUNC_KEYMGMT_IMPORTDOMPARAMS, (void (*)(void))dh_importdomparams },
+    { Otls_FUNC_KEYMGMT_EXPORTDOMPARAMS, (void (*)(void))dh_exportdomparams },
+    { Otls_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DH_free },
+    { Otls_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dh_importkey },
+    { Otls_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dh_exportkey },
+    { Otls_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DH_free },
     { 0, NULL }
 };

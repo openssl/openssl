@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -41,7 +41,7 @@ int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     int ret = 0;
     int num = mont->N.top;
 
-#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
+#if defined(OPENtls_BN_ASM_MONT) && defined(MONT_WORD)
     if (num > 1 && a->top == num && b->top == num) {
         if (bn_wexpand(r, num) == NULL)
             return 0;
@@ -229,7 +229,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 {
     BN_MONT_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_MONT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -257,7 +257,7 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
     BN_clear_free(&mont->N);
     BN_clear_free(&mont->Ni);
     if (mont->flags & BN_FLG_MALLOCED)
-        OPENSSL_free(mont);
+        OPENtls_free(mont);
 }
 
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
@@ -293,7 +293,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
         mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
 
-# if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+# if defined(OPENtls_BN_ASM_MONT) && (BN_BITS2<=32)
         /*
          * Only certain BN_BITS2<=32 platforms actually make use of n0[1],
          * and we could use the #else case (with a shorter R value) for the

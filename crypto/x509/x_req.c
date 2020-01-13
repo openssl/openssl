@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
 
 /*-
@@ -48,7 +48,7 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     X509_REQ *ret = (X509_REQ *)*pval;
 
     switch (operation) {
@@ -90,7 +90,7 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
 void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id)
 {
     ASN1_OCTET_STRING_free(x->sm2_id);

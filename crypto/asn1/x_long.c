@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
+#include <opentls/asn1t.h>
 
-#ifdef OPENSSL_NO_DEPRECATED_3_0
+#ifdef OPENtls_NO_DEPRECATED_3_0
 NON_EMPTY_TRANSLATION_UNIT
 #else
 

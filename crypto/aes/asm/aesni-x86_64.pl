@@ -1,21 +1,21 @@
 #! /usr/bin/env perl
-# Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements support for Intel AES-NI extension. In
-# OpenSSL context it's used with Intel engine, but can also be used as
+# Opentls context it's used with Intel engine, but can also be used as
 # drop-in replacement for crypto/aes/asm/aes-x86_64.pl [see below for
 # details].
 #
@@ -39,7 +39,7 @@
 # CFB	5.73/5.85   5.56/5.62   5.48/5.56   5.47/5.55   5.47/5.55
 #
 # ECB, CTR, CBC and CCM results are free from EVP overhead. This means
-# that otherwise used 'openssl speed -evp aes-128-??? -engine aesni
+# that otherwise used 'opentls speed -evp aes-128-??? -engine aesni
 # [-decrypt]' will exhibit 10-15% worse results for smaller blocks.
 # The results were collected with specially crafted speed.c benchmark
 # in order to compare them with results reported in "Intel Advanced
@@ -213,7 +213,7 @@ $movkey = $PREFIX eq "aesni" ? "movups" : "movups";
 		("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 $code=".text\n";
-$code.=".extern	OPENSSL_ia32cap_P\n";
+$code.=".extern	OPENtls_ia32cap_P\n";
 
 $rounds="%eax";	# input to and changed by aesni_[en|de]cryptN !!!
 # this is natural Unix argument order for public $PREFIX_[ecb|cbc]_encrypt ...
@@ -1191,7 +1191,7 @@ ___
 # does not update *ivec! (see crypto/modes/ctr128.c for details)
 #
 # Overhaul based on suggestions from Shay Gueron and Vlad Krasnov,
-# http://rt.openssl.org/Ticket/Display.html?id=3021&user=guest&pass=guest.
+# http://rt.opentls.org/Ticket/Display.html?id=3021&user=guest&pass=guest.
 # Keywords are full unroll and modulo-schedule counter calculations
 # with zero-round key xor.
 {
@@ -1298,7 +1298,7 @@ $code.=<<___;
 	lea	7($ctr),%r9
 	 mov	%r10d,0x60+12(%rsp)
 	bswap	%r9d
-	 mov	OPENSSL_ia32cap_P+4(%rip),%r10d
+	 mov	OPENtls_ia32cap_P+4(%rip),%r10d
 	xor	$key0,%r9d
 	 and	\$`1<<26|1<<22`,%r10d		# isolate XSAVE+MOVBE
 	mov	%r9d,0x70+12(%rsp)
@@ -3856,7 +3856,7 @@ $code.=<<___;
 	movdqa	$inout3,$in3
 	movdqu	0x50($inp),$inout5
 	movdqa	$inout4,$in4
-	mov	OPENSSL_ia32cap_P+4(%rip),%r9d
+	mov	OPENtls_ia32cap_P+4(%rip),%r9d
 	cmp	\$0x70,$len
 	jbe	.Lcbc_dec_six_or_seven
 
@@ -4370,7 +4370,7 @@ __aesni_set_encrypt_key:
 	mov	\$`1<<28|1<<11`,%r10d	# AVX and XOP bits
 	movups	($inp),%xmm0		# pull first 128 bits of *userKey
 	xorps	%xmm4,%xmm4		# low dword of xmm4 is assumed 0
-	and	OPENSSL_ia32cap_P+4(%rip),%r10d
+	and	OPENtls_ia32cap_P+4(%rip),%r10d
 	lea	16($key),%rax		# %rax is used as modifiable copy of $key
 	cmp	\$256,$bits
 	je	.L14rounds
@@ -4752,7 +4752,7 @@ $code.=<<___;
 .Lkey_rcon1b:
 	.long	0x1b,0x1b,0x1b,0x1b
 
-.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 ___
 

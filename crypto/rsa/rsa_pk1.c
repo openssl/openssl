@@ -1,20 +1,20 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/constant_time.h"
 
 #include <stdio.h>
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
-/* Just for the SSL_MAX_MASTER_KEY_LENGTH value */
-#include <openssl/ssl.h>
+#include <opentls/bn.h>
+#include <opentls/rsa.h>
+#include <opentls/rand.h>
+/* Just for the tls_MAX_MASTER_KEY_LENGTH value */
+#include <opentls/tls.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
 
@@ -178,7 +178,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
         return -1;
     }
 
-    em = OPENSSL_malloc(num);
+    em = OPENtls_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, ERR_R_MALLOC_FAILURE);
         return -1;
@@ -250,7 +250,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
         to[i] = constant_time_select_8(mask, em[i + RSA_PKCS1_PADDING_SIZE], to[i]);
     }
 
-    OPENSSL_clear_free(em, num);
+    OPENtls_clear_free(em, num);
     RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, RSA_R_PKCS_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
 
@@ -261,7 +261,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * rsa_padding_check_PKCS1_type_2_TLS() checks and removes the PKCS1 type 2
  * padding from a decrypted RSA message in a TLS signature. The result is stored
  * in the buffer pointed to by |to| which should be |tlen| bytes long. |tlen|
- * must be at least SSL_MAX_MASTER_KEY_LENGTH. The original decrypted message
+ * must be at least tls_MAX_MASTER_KEY_LENGTH. The original decrypted message
  * should be stored in |from| which must be |flen| bytes in length and padded
  * such that |flen == RSA_size()|. The TLS protocol version that the client
  * originally requested should be passed in |client_version|. Some buggy clients
@@ -273,7 +273,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * If the passed message is publicly invalid or some other error that can be
  * treated in non-constant time occurs then -1 is returned. On success the
  * length of the decrypted data is returned. This will always be
- * SSL_MAX_MASTER_KEY_LENGTH. If an error occurs that should be treated in
+ * tls_MAX_MASTER_KEY_LENGTH. If an error occurs that should be treated in
  * constant time then this function will appear to return successfully, but the
  * decrypted data will be randomly generated (as per
  * https://tools.ietf.org/html/rfc5246#section-7.4.7.1).
@@ -283,14 +283,14 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
                                        int client_version, int alt_version)
 {
     unsigned int i, good, version_good;
-    unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
+    unsigned char rand_premaster_secret[tls_MAX_MASTER_KEY_LENGTH];
 
     /*
      * If these checks fail then either the message in publicly invalid, or
      * we've been called incorrectly. We can fail immediately.
      */
-    if (flen < RSA_PKCS1_PADDING_SIZE + SSL_MAX_MASTER_KEY_LENGTH
-            || tlen < SSL_MAX_MASTER_KEY_LENGTH) {
+    if (flen < RSA_PKCS1_PADDING_SIZE + tls_MAX_MASTER_KEY_LENGTH
+            || tlen < tls_MAX_MASTER_KEY_LENGTH) {
         ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
@@ -309,9 +309,9 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
     good &= constant_time_eq(from[1], 2);
 
     /* Check we have the expected padding data */
-    for (i = 2; i < flen - SSL_MAX_MASTER_KEY_LENGTH - 1; i++)
+    for (i = 2; i < flen - tls_MAX_MASTER_KEY_LENGTH - 1; i++)
         good &= ~constant_time_is_zero_8(from[i]);
-    good &= constant_time_is_zero_8(from[flen - SSL_MAX_MASTER_KEY_LENGTH - 1]);
+    good &= constant_time_is_zero_8(from[flen - tls_MAX_MASTER_KEY_LENGTH - 1]);
 
 
     /*
@@ -323,10 +323,10 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
      * constant time and are treated like any other decryption error.
      */
     version_good =
-        constant_time_eq(from[flen - SSL_MAX_MASTER_KEY_LENGTH],
+        constant_time_eq(from[flen - tls_MAX_MASTER_KEY_LENGTH],
                          (client_version >> 8) & 0xff);
     version_good &=
-        constant_time_eq(from[flen - SSL_MAX_MASTER_KEY_LENGTH + 1],
+        constant_time_eq(from[flen - tls_MAX_MASTER_KEY_LENGTH + 1],
                          client_version & 0xff);
 
     /*
@@ -335,7 +335,7 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
      * protocol does not offer such protection for DH ciphersuites).
      * However, buggy clients exist that send the negotiated protocol
      * version instead if the server does not support the requested
-     * protocol version. If SSL_OP_TLS_ROLLBACK_BUG is set then we tolerate
+     * protocol version. If tls_OP_TLS_ROLLBACK_BUG is set then we tolerate
      * such clients. In that case alt_version will be non-zero and set to
      * the negotiated version.
      */
@@ -343,10 +343,10 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
         unsigned int workaround_good;
 
         workaround_good =
-            constant_time_eq(from[flen - SSL_MAX_MASTER_KEY_LENGTH],
+            constant_time_eq(from[flen - tls_MAX_MASTER_KEY_LENGTH],
                              (alt_version >> 8) & 0xff);
         workaround_good &=
-            constant_time_eq(from[flen - SSL_MAX_MASTER_KEY_LENGTH + 1],
+            constant_time_eq(from[flen - tls_MAX_MASTER_KEY_LENGTH + 1],
                              alt_version & 0xff);
         version_good |= workaround_good;
     }
@@ -358,10 +358,10 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
      * Now copy the result over to the to buffer if good, or random data if
      * not good.
      */
-    for (i = 0; i < SSL_MAX_MASTER_KEY_LENGTH; i++) {
+    for (i = 0; i < tls_MAX_MASTER_KEY_LENGTH; i++) {
         to[i] =
             constant_time_select_8(good,
-                                   from[flen - SSL_MAX_MASTER_KEY_LENGTH + i],
+                                   from[flen - tls_MAX_MASTER_KEY_LENGTH + i],
                                    rand_premaster_secret[i]);
     }
 
@@ -374,5 +374,5 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
      * So, whether we actually succeeded or not, return success.
      */
 
-    return SSL_MAX_MASTER_KEY_LENGTH;
+    return tls_MAX_MASTER_KEY_LENGTH;
 }

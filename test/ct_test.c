@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <ctype.h>
@@ -12,15 +12,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/ct.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
+#include <opentls/pem.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 #include "testutil.h"
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
 /* Used when declaring buffers to read text files into */
 # define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -60,7 +60,7 @@ static CT_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE *fixture = NULL;
 
-    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+    if (!TEST_ptr(fixture = OPENtls_zalloc(sizeof(*fixture))))
         goto end;
     fixture->test_case_name = test_case_name;
     fixture->epoch_time_in_ms = 1473269626000ULL; /* Sep 7 17:33:46 2016 GMT */
@@ -73,7 +73,7 @@ static CT_TEST_FIXTURE *set_up(const char *const test_case_name)
 end:
     if (fixture != NULL)
         CTLOG_STORE_free(fixture->ctlog_store);
-    OPENSSL_free(fixture);
+    OPENtls_free(fixture);
     TEST_error("Failed to setup");
     return NULL;
 }
@@ -84,7 +84,7 @@ static void tear_down(CT_TEST_FIXTURE *fixture)
         CTLOG_STORE_free(fixture->ctlog_store);
         SCT_LIST_free(fixture->sct_list);
     }
-    OPENSSL_free(fixture);
+    OPENtls_free(fixture);
 }
 
 static X509 *load_pem_cert(const char *dir, const char *file)
@@ -100,7 +100,7 @@ static X509 *load_pem_cert(const char *dir, const char *file)
         BIO_free(cert_io);
     }
 
-    OPENSSL_free(file_path);
+    OPENtls_free(file_path);
     return cert;
 }
 
@@ -118,7 +118,7 @@ static int read_text_file(const char *dir, const char *file,
         BIO_free(file_io);
     }
 
-    OPENSSL_free(file_path);
+    OPENtls_free(file_path);
     return len;
 }
 
@@ -321,7 +321,7 @@ end:
     SCT_LIST_free(scts);
     SCT_free(sct);
     CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
-    OPENSSL_free(tls_sct_list);
+    OPENtls_free(tls_sct_list);
     return success;
 }
 
@@ -512,7 +512,7 @@ static int test_ctlog_from_base64(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
     if ((ct_dir = getenv("CT_DIR")) == NULL)
         ct_dir = "ct";
     if ((certs_dir = getenv("CERTS_DIR")) == NULL)

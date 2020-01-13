@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # October 2005.
@@ -100,7 +100,7 @@ $m1="%rbp";
 $code=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 
 .globl	bn_mul_mont
 .type	bn_mul_mont,\@function,6
@@ -116,7 +116,7 @@ bn_mul_mont:
 	jb	.Lmul_enter
 ___
 $code.=<<___ if ($addx);
-	mov	OPENSSL_ia32cap_P+8(%rip),%r11d
+	mov	OPENtls_ia32cap_P+8(%rip),%r11d
 ___
 $code.=<<___;
 	cmp	$ap,$bp
@@ -921,7 +921,7 @@ bn_sqr8x_mont:
 	movq	%r10, %xmm3		# -$num
 ___
 $code.=<<___ if ($addx);
-	mov	OPENSSL_ia32cap_P+8(%rip),%eax
+	mov	OPENtls_ia32cap_P+8(%rip),%eax
 	and	\$0x80100,%eax
 	cmp	\$0x80100,%eax
 	jne	.Lsqr8x_nox
@@ -1400,7 +1400,7 @@ $code.=<<___;
 ___
 }}}
 $code.=<<___;
-.asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	16
 ___
 

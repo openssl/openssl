@@ -1,43 +1,43 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_APPS_H
-# define OSSL_APPS_H
+#ifndef Otls_APPS_H
+# define Otls_APPS_H
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
 # include <assert.h>
 
 # include <sys/types.h>
-# ifndef OPENSSL_NO_POSIX_IO
+# ifndef OPENtls_NO_POSIX_IO
 #  include <sys/stat.h>
 #  include <fcntl.h>
 # endif
 
-# include <openssl/e_os2.h>
-# include <openssl/types.h>
-# include <openssl/bio.h>
-# include <openssl/x509.h>
-# include <openssl/conf.h>
-# include <openssl/txt_db.h>
-# include <openssl/engine.h>
-# include <openssl/ocsp.h>
+# include <opentls/e_os2.h>
+# include <opentls/types.h>
+# include <opentls/bio.h>
+# include <opentls/x509.h>
+# include <opentls/conf.h>
+# include <opentls/txt_db.h>
+# include <opentls/engine.h>
+# include <opentls/ocsp.h>
 # include <signal.h>
 # include "apps_ui.h"
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
 
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
-#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
+# if defined(OPENtls_SYS_WIN32) || defined(OPENtls_SYS_WINCE)
+#  define opentls_fdset(a,b) FD_SET((unsigned int)a, b)
 # else
-#  define openssl_fdset(a,b) FD_SET(a, b)
+#  define opentls_fdset(a,b) FD_SET(a, b)
 # endif
 
 /*
@@ -69,8 +69,8 @@ CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
-void wait_for_async(SSL *s);
-# if defined(OPENSSL_SYS_MSDOS)
+void wait_for_async(tls *s);
+# if defined(OPENtls_SYS_MSDOS)
 int has_stdin_waiting(void);
 # endif
 
@@ -115,29 +115,29 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
                          const char *CApath, int noCApath,
                          const char *CAstore, int noCAstore);
-__owur int ctx_set_verify_locations(SSL_CTX *ctx,
+__owur int ctx_set_verify_locations(tls_CTX *ctx,
                                     const char *CAfile, int noCAfile,
                                     const char *CApath, int noCApath,
                                     const char *CAstore, int noCAstore);
 
-#ifndef OPENSSL_NO_CT
+#ifndef OPENtls_NO_CT
 
 /*
  * Sets the file to load the Certificate Transparency log list from.
  * If path is NULL, loads from the default file path.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+__owur int ctx_set_ctlog_list_file(tls_CTX *ctx, const char *path);
 
 #endif
 
 ENGINE *setup_engine(const char *engine, int debug);
 void release_engine(ENGINE *e);
 
-# ifndef OPENSSL_NO_OCSP
+# ifndef OPENtls_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
-                                 const char *port, int use_ssl,
+                                 const char *port, int use_tls,
                                  STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout);
 # endif
@@ -167,7 +167,7 @@ typedef struct ca_db_st {
     DB_ATTR attributes;
     TXT_DB *db;
     char *dbfname;
-# ifndef OPENSSL_NO_POSIX_IO
+# ifndef OPENtls_NO_POSIX_IO
     struct stat dbst;
 # endif
 } CA_DB;
@@ -186,9 +186,9 @@ int rotate_index(const char *dbfile, const char *new_suffix,
                  const char *old_suffix);
 void free_index(CA_DB *db);
 # define index_name_cmp_noconst(a, b) \
-        index_name_cmp((const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, a), \
-        (const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, b))
-int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
+        index_name_cmp((const OPENtls_CSTRING *)CHECKED_PTR_OF(OPENtls_STRING, a), \
+        (const OPENtls_CSTRING *)CHECKED_PTR_OF(OPENtls_STRING, b))
+int index_name_cmp(const OPENtls_CSTRING *a, const OPENtls_CSTRING *b);
 int parse_yesno(const char *str, int def);
 
 X509_NAME *parse_name(const char *str, long chtype, int multirdn);
@@ -198,11 +198,11 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
-                 STACK_OF(OPENSSL_STRING) *sigopts);
+                 STACK_OF(OPENtls_STRING) *sigopts);
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts);
+                     STACK_OF(OPENtls_STRING) *sigopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts);
+                     STACK_OF(OPENtls_STRING) *sigopts);
 
 extern char *psk_key;
 
@@ -252,8 +252,8 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
-OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
-                                     const OSSL_PARAM *paramdefs);
-void app_params_free(OSSL_PARAM *params);
+Otls_PARAM *app_params_new_from_opts(STACK_OF(OPENtls_STRING) *opts,
+                                     const Otls_PARAM *paramdefs);
+void app_params_free(Otls_PARAM *params);
 
 #endif

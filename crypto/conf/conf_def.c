@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Part of the code in here was originally in conf.c, which is now removed */
@@ -13,13 +13,13 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
-#include <openssl/lhash.h>
-#include <openssl/conf.h>
-#include <openssl/conf_api.h>
+#include <opentls/lhash.h>
+#include <opentls/conf.h>
+#include <opentls/conf_api.h>
 #include "conf_def.h"
-#include <openssl/buffer.h>
-#include <openssl/err.h>
-#ifndef OPENSSL_NO_POSIX_IO
+#include <opentls/buffer.h>
+#include <opentls/err.h>
+#ifndef OPENtls_NO_POSIX_IO
 # include <sys/stat.h>
 # ifdef _WIN32
 #  define stat    _stat
@@ -46,15 +46,15 @@ static int str_copy(CONF *conf, char *section, char **to, char *from);
 static char *scan_quote(CONF *conf, char *p);
 static char *scan_dquote(CONF *conf, char *p);
 #define scan_esc(conf,p)        (((IS_EOF((conf),(p)[1]))?((p)+1):((p)+2)))
-#ifndef OPENSSL_NO_POSIX_IO
-static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
+#ifndef OPENtls_NO_POSIX_IO
+static BIO *process_include(char *include, OPENtls_DIR_CTX **dirctx,
                             char **dirpath);
-static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx);
+static BIO *get_next_file(const char *path, OPENtls_DIR_CTX **dirctx);
 #endif
 
 static CONF *def_create(CONF_METHOD *meth);
 static int def_init_default(CONF *conf);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 static int def_init_WIN32(CONF *conf);
 #endif
 static int def_destroy(CONF *conf);
@@ -66,7 +66,7 @@ static int def_is_number(const CONF *conf, char c);
 static int def_to_int(const CONF *conf, char c);
 
 static CONF_METHOD default_method = {
-    "OpenSSL default",
+    "Opentls default",
     def_create,
     def_init_default,
     def_destroy,
@@ -83,7 +83,7 @@ CONF_METHOD *NCONF_default(void)
     return &default_method;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 static CONF_METHOD WIN32_method = {
     "WIN32",
     def_create,
@@ -107,10 +107,10 @@ static CONF *def_create(CONF_METHOD *meth)
 {
     CONF *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENtls_malloc(sizeof(*ret));
     if (ret != NULL)
         if (meth->init(ret) == 0) {
-            OPENSSL_free(ret);
+            OPENtls_free(ret);
             ret = NULL;
         }
     return ret;
@@ -128,7 +128,7 @@ static int def_init_default(CONF *conf)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 static int def_init_WIN32(CONF *conf)
 {
     if (conf == NULL)
@@ -145,7 +145,7 @@ static int def_init_WIN32(CONF *conf)
 static int def_destroy(CONF *conf)
 {
     if (def_destroy_data(conf)) {
-        OPENSSL_free(conf);
+        OPENtls_free(conf);
         return 1;
     }
     return 0;
@@ -164,7 +164,7 @@ static int def_load(CONF *conf, const char *name, long *line)
     int ret;
     BIO *in = NULL;
 
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
     in = BIO_new_file(name, "r");
 #else
     in = BIO_new_file(name, "rb");
@@ -199,9 +199,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     char *start, *psection, *pname;
     void *h = (void *)(conf->data);
     STACK_OF(BIO) *biosk = NULL;
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
     char *dirpath = NULL;
-    OPENSSL_DIR_CTX *dirctx = NULL;
+    OPENtls_DIR_CTX *dirctx = NULL;
 #endif
 
     if ((buff = BUF_MEM_new()) == NULL) {
@@ -209,7 +209,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         goto err;
     }
 
-    section = OPENSSL_strdup("default");
+    section = OPENtls_strdup("default");
     if (section == NULL) {
         CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -243,7 +243,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             /* the currently processed BIO is at EOF */
             BIO *parent;
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
             /* continue processing with the next file from directory */
             if (dirctx != NULL) {
                 BIO *next;
@@ -253,7 +253,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     in = next;
                     goto read_retry;
                 } else {
-                    OPENSSL_free(dirpath);
+                    OPENtls_free(dirpath);
                     dirpath = NULL;
                 }
             }
@@ -400,7 +400,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
-                const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
+                const char *include_dir = otls_safe_getenv("OPENtls_CONF_INCLUDE");
                 char *include_path = NULL;
 
                 if (*p == '=') {
@@ -414,28 +414,28 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 if (include_dir != NULL) {
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
 
-                    include_path = OPENSSL_malloc(newlen);
-                    OPENSSL_strlcpy(include_path, include_dir, newlen);
-                    OPENSSL_strlcat(include_path, "/", newlen);
-                    OPENSSL_strlcat(include_path, include, newlen);
+                    include_path = OPENtls_malloc(newlen);
+                    OPENtls_strlcpy(include_path, include_dir, newlen);
+                    OPENtls_strlcat(include_path, "/", newlen);
+                    OPENtls_strlcat(include_path, include, newlen);
                 } else {
                     include_path = include;
                 }
 
                 /* get the BIO of the included file */
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
                 next = process_include(include_path, &dirctx, &dirpath);
                 if (include_path != dirpath) {
                     /* dirpath will contain include in case of a directory */
-                    OPENSSL_free(include);
+                    OPENtls_free(include);
                     if (include_path != include)
-                        OPENSSL_free(include_path);
+                        OPENtls_free(include_path);
                 }
 #else
                 next = BIO_new_file(include_path, "r");
-                OPENSSL_free(include);
+                OPENtls_free(include);
                 if (include_path != include)
-                    OPENSSL_free(include_path);
+                    OPENtls_free(include_path);
 #endif
 
                 if (next != NULL) {
@@ -464,11 +464,11 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             start = eat_ws(conf, p);
             trim_ws(conf, start);
 
-            if ((v = OPENSSL_malloc(sizeof(*v))) == NULL) {
+            if ((v = OPENtls_malloc(sizeof(*v))) == NULL) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            v->name = OPENSSL_strdup(pname);
+            v->name = OPENtls_strdup(pname);
             v->value = NULL;
             if (v->name == NULL) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
@@ -496,7 +496,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         }
     }
     BUF_MEM_free(buff);
-    OPENSSL_free(section);
+    OPENtls_free(section);
     /*
      * No need to pop, since we only get here if the stack is empty.
      * If this causes a BIO leak, THE ISSUE IS SOMEWHERE ELSE!
@@ -505,7 +505,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     return 1;
  err:
     BUF_MEM_free(buff);
-    OPENSSL_free(section);
+    OPENtls_free(section);
     /*
      * Since |in| is the first element of the stack and should NOT be freed
      * here, we cannot use sk_BIO_pop_free().  Instead, we pop and free one
@@ -517,10 +517,10 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         in = popped;
     }
     sk_BIO_free(biosk);
-#ifndef OPENSSL_NO_POSIX_IO
-    OPENSSL_free(dirpath);
+#ifndef OPENtls_NO_POSIX_IO
+    OPENtls_free(dirpath);
     if (dirctx != NULL)
-        OPENSSL_DIR_end(&dirctx);
+        OPENtls_DIR_end(&dirctx);
 #endif
     if (line != NULL)
         *line = eline;
@@ -531,9 +531,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         conf->data = NULL;
     }
     if (v != NULL) {
-        OPENSSL_free(v->name);
-        OPENSSL_free(v->value);
-        OPENSSL_free(v);
+        OPENtls_free(v->name);
+        OPENtls_free(v->value);
+        OPENtls_free(v);
     }
     return 0;
 }
@@ -724,22 +724,22 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
             buf->data[to++] = *(from++);
     }
     buf->data[to] = '\0';
-    OPENSSL_free(*pto);
+    OPENtls_free(*pto);
     *pto = buf->data;
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return 1;
  err:
     BUF_MEM_free(buf);
     return 0;
 }
 
-#ifndef OPENSSL_NO_POSIX_IO
+#ifndef OPENtls_NO_POSIX_IO
 /*
  * Check whether included path is a directory.
  * Returns next BIO to process and in case of a directory
  * also an opened directory context and the include path.
  */
-static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
+static BIO *process_include(char *include, OPENtls_DIR_CTX **dirctx,
                             char **dirpath)
 {
     struct stat st;
@@ -774,13 +774,13 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
  * Get next file from the directory path.
  * Returns BIO of the next file to read and updates dirctx.
  */
-static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
+static BIO *get_next_file(const char *path, OPENtls_DIR_CTX **dirctx)
 {
     const char *filename;
     size_t pathlen;
 
     pathlen = strlen(path);
-    while ((filename = OPENSSL_DIR_read(dirctx, path)) != NULL) {
+    while ((filename = OPENtls_DIR_read(dirctx, path)) != NULL) {
         size_t namelen;
 
         namelen = strlen(filename);
@@ -793,12 +793,12 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
             BIO *bio;
 
             newlen = pathlen + namelen + 2;
-            newpath = OPENSSL_zalloc(newlen);
+            newpath = OPENtls_zalloc(newlen);
             if (newpath == NULL) {
                 CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
                 break;
             }
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
             /*
              * If the given path isn't clear VMS syntax,
              * we treat it as on Unix.
@@ -807,23 +807,23 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
                 || path[pathlen - 1] == '>'
                 || path[pathlen - 1] == ':') {
                 /* Clear VMS directory syntax, just copy as is */
-                OPENSSL_strlcpy(newpath, path, newlen);
+                OPENtls_strlcpy(newpath, path, newlen);
             }
 #endif
             if (newpath[0] == '\0') {
-                OPENSSL_strlcpy(newpath, path, newlen);
-                OPENSSL_strlcat(newpath, "/", newlen);
+                OPENtls_strlcpy(newpath, path, newlen);
+                OPENtls_strlcat(newpath, "/", newlen);
             }
-            OPENSSL_strlcat(newpath, filename, newlen);
+            OPENtls_strlcat(newpath, filename, newlen);
 
             bio = BIO_new_file(newpath, "r");
-            OPENSSL_free(newpath);
+            OPENtls_free(newpath);
             /* Errors when opening files are non-fatal. */
             if (bio != NULL)
                 return bio;
         }
     }
-    OPENSSL_DIR_end(dirctx);
+    OPENtls_DIR_end(dirctx);
     *dirctx = NULL;
     return NULL;
 }

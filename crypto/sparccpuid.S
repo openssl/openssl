@@ -1,9 +1,9 @@
-! Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+! Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
 !
 ! Licensed under the Apache License 2.0 (the "License").  You may not use
 ! this file except in compliance with the License.  You can obtain a copy
 ! in the file LICENSE in the source distribution or at
-! https://www.openssl.org/source/license.html
+! https://www.opentls.org/source/license.html
 
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
@@ -23,13 +23,13 @@
 
 .text
 .align	32
-.global	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,#function
+.global	OPENtls_wipe_cpu
+.type	OPENtls_wipe_cpu,#function
 ! Keep in mind that this does not excuse us from wiping the stack!
 ! This routine wipes registers, but not the backing store [which
 ! resides on the stack, toward lower addresses]. To facilitate for
 ! stack wiping I return pointer to the top of stack of the *caller*.
-OPENSSL_wipe_cpu:
+OPENtls_wipe_cpu:
 	save	%sp,FRAME,%sp
 	nop
 #ifdef __sun
@@ -170,12 +170,12 @@ walk_reg_wins:
 	add	%o0,1,%i0	! used for debugging
 2:	ret
 	restore
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.size	OPENtls_wipe_cpu,.-OPENtls_wipe_cpu
 
-.global	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,#function
+.global	OPENtls_atomic_add
+.type	OPENtls_atomic_add,#function
 .align	32
-OPENSSL_atomic_add:
+OPENtls_atomic_add:
 #ifndef ABI64
 	subcc	%g0,1,%o2
 	.word	0x95408000	!rd	%ccr,%o2, see comment above
@@ -217,10 +217,10 @@ OPENSSL_atomic_add:
 	cmp	%o2,%o3
 	bne	1b
 	mov	%o3,%o2		! cas is always fetching to dest. register
-	add	%o1,%o2,%o0	! OpenSSL expects the new value
+	add	%o1,%o2,%o0	! Opentls expects the new value
 	retl
 	sra	%o0,%g0,%o0	! we return signed int, remember?
-.size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
+.size	OPENtls_atomic_add,.-OPENtls_atomic_add
 
 .global	_sparcv9_rdtick
 .align	32
@@ -360,9 +360,9 @@ _sparcv9_fjaesx_probe:
 	nop
 .size	_sparcv9_fjaesx_probe,.-_sparcv9_fjaesx_probe
 
-.global	OPENSSL_cleanse
+.global	OPENtls_cleanse
 .align	32
-OPENSSL_cleanse:
+OPENtls_cleanse:
 	cmp	%o1,14
 	nop
 #ifdef ABI64
@@ -440,8 +440,8 @@ OPENSSL_cleanse:
 	retl
 	nop
 #endif
-.type	OPENSSL_cleanse,#function
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+.type	OPENtls_cleanse,#function
+.size	OPENtls_cleanse,.-OPENtls_cleanse
 
 .global	CRYPTO_memcmp
 .align	16
@@ -574,5 +574,5 @@ _sparcv9_vis1_instrument_bus2:
 .size	_sparcv9_vis1_instrument_bus2,.-_sparcv9_vis1_instrument_bus2
 
 .section	".init",#alloc,#execinstr
-	call	OPENSSL_cpuid_setup
+	call	OPENtls_cpuid_setup
 	nop

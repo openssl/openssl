@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Copyright 2011 Google Inc.
@@ -26,19 +26,19 @@
 /*
  * A 64-bit implementation of the NIST P-256 elliptic curve point multiplication
  *
- * OpenSSL integration was taken from Emilia Kasper's work in ecp_nistp224.c.
+ * Opentls integration was taken from Emilia Kasper's work in ecp_nistp224.c.
  * Otherwise based on Emilia's P224 work, which was inspired by my curve25519
  * work which got its smarts from Daniel J. Bernstein's work on the same.
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_EC_NISTP_64_GCC_128
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <stdint.h>
 # include <string.h>
-# include <openssl/err.h>
+# include <opentls/err.h>
 # include "ec_local.h"
 
 # if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
@@ -146,7 +146,7 @@ static void smallfelem_to_bin32(u8 out[32], const smallfelem in)
     *((u64 *)&out[24]) = in[3];
 }
 
-/* BN_to_felem converts an OpenSSL BIGNUM into an felem */
+/* BN_to_felem converts an Opentls BIGNUM into an felem */
 static int BN_to_felem(felem out, const BIGNUM *bn)
 {
     felem_bytearray b_out;
@@ -165,7 +165,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     return 1;
 }
 
-/* felem_to_BN converts an felem into an OpenSSL BIGNUM */
+/* felem_to_BN converts an felem into an Opentls BIGNUM */
 static BIGNUM *smallfelem_to_BN(BIGNUM *out, const smallfelem in)
 {
     felem_bytearray b_out;
@@ -1849,7 +1849,7 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
 
 static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
 {
-    NISTP256_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
+    NISTP256_PRE_COMP *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -1861,7 +1861,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -1889,12 +1889,12 @@ void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *pre)
     REF_ASSERT_ISNT(i < 0);
 
     CRYPTO_THREAD_lock_free(pre->lock);
-    OPENSSL_free(pre);
+    OPENtls_free(pre);
 }
 
 /******************************************************************************/
 /*
- * OPENSSL EC_METHOD FUNCTIONS
+ * OPENtls EC_METHOD FUNCTIONS
  */
 
 int ec_GFp_nistp256_group_init(EC_GROUP *group)
@@ -2099,11 +2099,11 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
              */
             mixed = 1;
         }
-        secrets = OPENSSL_malloc(sizeof(*secrets) * num_points);
-        pre_comp = OPENSSL_malloc(sizeof(*pre_comp) * num_points);
+        secrets = OPENtls_malloc(sizeof(*secrets) * num_points);
+        pre_comp = OPENtls_malloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_smallfelems =
-              OPENSSL_malloc(sizeof(*tmp_smallfelems) * (num_points * 17 + 1));
+              OPENtls_malloc(sizeof(*tmp_smallfelems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_smallfelems == NULL))) {
             ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -2224,9 +2224,9 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    OPENSSL_free(secrets);
-    OPENSSL_free(pre_comp);
-    OPENSSL_free(tmp_smallfelems);
+    OPENtls_free(secrets);
+    OPENtls_free(pre_comp);
+    OPENtls_free(tmp_smallfelems);
     return ret;
 }
 

@@ -1,16 +1,16 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
@@ -643,11 +643,11 @@ static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
     if ((gen->d.otherName->value = ASN1_generate_v3(p + 1, ctx)) == NULL)
         return 0;
     objlen = p - value;
-    objtmp = OPENSSL_strndup(value, objlen);
+    objtmp = OPENtls_strndup(value, objlen);
     if (objtmp == NULL)
         return 0;
     gen->d.otherName->type_id = OBJ_txt2obj(objtmp, 0);
-    OPENSSL_free(objtmp);
+    OPENtls_free(objtmp);
     if (!gen->d.otherName->type_id)
         return 0;
     return 1;

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -14,13 +14,13 @@
  */
 #define xxxHASH    EVP_sha1()
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
+#include <opentls/evp.h>
+#include <opentls/bn.h>
+#include <opentls/rand.h>
+#include <opentls/sha.h>
 #include "dsa_local.h"
 
 int DSA_generate_parameters_ex(DSA *ret, int bits,
@@ -347,12 +347,12 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         if (seed_len == 0)
             seed_len = mdsize;
 
-        seed = OPENSSL_malloc(seed_len);
+        seed = OPENtls_malloc(seed_len);
 
         if (seed_out)
             seed_tmp = seed_out;
         else
-            seed_tmp = OPENSSL_malloc(seed_len);
+            seed_tmp = OPENtls_malloc(seed_len);
 
         if (seed == NULL || seed_tmp == NULL)
             goto err;
@@ -603,9 +603,9 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         if (h_ret != NULL)
             *h_ret = h;
     }
-    OPENSSL_free(seed);
+    OPENtls_free(seed);
     if (seed_out != seed_tmp)
-        OPENSSL_free(seed_tmp);
+        OPENtls_free(seed_tmp);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_MONT_CTX_free(mont);

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "async_bio.h"
@@ -12,8 +12,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
 
 
 namespace {
@@ -96,7 +96,7 @@ static long AsyncCtrl(BIO *bio, int cmd, long num, void *ptr) {
 }
 
 static int AsyncNew(BIO *bio) {
-  AsyncBio *a = (AsyncBio *)OPENSSL_malloc(sizeof(*a));
+  AsyncBio *a = (AsyncBio *)OPENtls_malloc(sizeof(*a));
   if (a == NULL) {
     return 0;
   }
@@ -112,7 +112,7 @@ static int AsyncFree(BIO *bio) {
     return 0;
   }
 
-  OPENSSL_free(BIO_get_data(bio));
+  OPENtls_free(BIO_get_data(bio));
   BIO_set_data(bio, NULL);
   BIO_set_init(bio, 0);
   return 1;
@@ -145,12 +145,12 @@ static const BIO_METHOD *AsyncMethod(void)
 
 }  // namespace
 
-bssl::UniquePtr<BIO> AsyncBioCreate() {
-  return bssl::UniquePtr<BIO>(BIO_new(AsyncMethod()));
+btls::UniquePtr<BIO> AsyncBioCreate() {
+  return btls::UniquePtr<BIO>(BIO_new(AsyncMethod()));
 }
 
-bssl::UniquePtr<BIO> AsyncBioCreateDatagram() {
-  bssl::UniquePtr<BIO> ret(BIO_new(AsyncMethod()));
+btls::UniquePtr<BIO> AsyncBioCreateDatagram() {
+  btls::UniquePtr<BIO> ret(BIO_new(AsyncMethod()));
   if (!ret) {
     return nullptr;
   }

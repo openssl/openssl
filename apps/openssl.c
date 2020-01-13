@@ -1,30 +1,30 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <internal/cryptlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/trace.h>
-#include <openssl/lhash.h>
-#include <openssl/conf.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/trace.h>
+#include <opentls/lhash.h>
+#include <opentls/conf.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/tls.h>
+#ifndef OPENtls_NO_ENGINE
+# include <opentls/engine.h>
 #endif
-#include <openssl/err.h>
+#include <opentls/err.h>
 /* Needed to get the other O_xxx flags. */
-#ifdef OPENSSL_SYS_VMS
+#ifdef OPENtls_SYS_VMS
 # include <unixio.h>
 #endif
 #include "apps.h"
@@ -54,8 +54,8 @@ static int apps_startup(void)
 #endif
 
     /* Set non-default library initialisation settings */
-    if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                          | OPENSSL_INIT_LOAD_CONFIG, NULL))
+    if (!OPENtls_init_tls(OPENtls_INIT_ENGINE_ALL_BUILTIN
+                          | OPENtls_INIT_LOAD_CONFIG, NULL))
         return 0;
 
     setup_ui_method();
@@ -74,23 +74,23 @@ static char *make_config_name(void)
     size_t len;
     char *p;
 
-    if ((t = getenv("OPENSSL_CONF")) != NULL)
-        return OPENSSL_strdup(t);
+    if ((t = getenv("OPENtls_CONF")) != NULL)
+        return OPENtls_strdup(t);
 
     t = X509_get_default_cert_area();
-    len = strlen(t) + 1 + strlen(OPENSSL_CONF) + 1;
+    len = strlen(t) + 1 + strlen(OPENtls_CONF) + 1;
     p = app_malloc(len, "config filename buffer");
     strcpy(p, t);
-#ifndef OPENSSL_SYS_VMS
+#ifndef OPENtls_SYS_VMS
     strcat(p, "/");
 #endif
-    strcat(p, OPENSSL_CONF);
+    strcat(p, OPENtls_CONF);
 
     return p;
 }
 
 
-#ifndef OPENSSL_NO_TRACE
+#ifndef OPENtls_NO_TRACE
 typedef struct tracedata_st {
     BIO *bio;
     unsigned int ingroup:1;
@@ -105,27 +105,27 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
     CRYPTO_THREAD_ID tid;
 
     switch (cmd) {
-    case OSSL_TRACE_CTRL_BEGIN:
-        if (!ossl_assert(!trace_data->ingroup))
+    case Otls_TRACE_CTRL_BEGIN:
+        if (!otls_assert(!trace_data->ingroup))
             return 0;
         trace_data->ingroup = 1;
 
         tid = CRYPTO_THREAD_get_current_id();
-        hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
+        hex = OPENtls_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
         BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
                      hex == NULL ? "<null>" : hex,
-                     OSSL_trace_get_category_name(category));
-        OPENSSL_free(hex);
+                     Otls_trace_get_category_name(category));
+        OPENtls_free(hex);
         BIO_set_prefix(trace_data->bio, buffer);
         break;
-    case OSSL_TRACE_CTRL_WRITE:
-        if (!ossl_assert(trace_data->ingroup))
+    case Otls_TRACE_CTRL_WRITE:
+        if (!otls_assert(trace_data->ingroup))
             return 0;
 
         ret = BIO_write(trace_data->bio, buf, cnt);
         break;
-    case OSSL_TRACE_CTRL_END:
-        if (!ossl_assert(trace_data->ingroup))
+    case Otls_TRACE_CTRL_END:
+        if (!otls_assert(trace_data->ingroup))
             return 0;
         trace_data->ingroup = 0;
 
@@ -143,7 +143,7 @@ static STACK_OF(tracedata) *trace_data_stack;
 static void tracedata_free(tracedata *data)
 {
     BIO_free_all(data->bio);
-    OPENSSL_free(data);
+    OPENtls_free(data);
 }
 
 static STACK_OF(tracedata) *trace_data_stack;
@@ -158,23 +158,23 @@ static void setup_trace_category(int category)
     BIO *channel;
     tracedata *trace_data;
 
-    if (OSSL_trace_enabled(category))
+    if (Otls_trace_enabled(category))
         return;
 
     channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
-    trace_data = OPENSSL_zalloc(sizeof(*trace_data));
+    trace_data = OPENtls_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
         || (trace_data->bio = channel) == NULL
-        || OSSL_trace_set_callback(category, internal_trace_cb,
+        || Otls_trace_set_callback(category, internal_trace_cb,
                                    trace_data) == 0
         || sk_tracedata_push(trace_data_stack, trace_data) == 0) {
 
         fprintf(stderr,
                 "warning: unable to setup trace callback for category '%s'.\n",
-                OSSL_trace_get_category_name(category));
+                Otls_trace_get_category_name(category));
 
-        OSSL_trace_set_callback(category, NULL, NULL);
+        Otls_trace_set_callback(category, NULL, NULL);
         BIO_free_all(channel);
     }
 }
@@ -186,22 +186,22 @@ static void setup_trace(const char *str)
     /*
      * We add this handler as early as possible to ensure it's executed
      * as late as possible, i.e. after the TRACE code has done its cleanup
-     * (which happens last in OPENSSL_cleanup).
+     * (which happens last in OPENtls_cleanup).
      */
     atexit(cleanup_trace);
 
     trace_data_stack = sk_tracedata_new_null();
-    val = OPENSSL_strdup(str);
+    val = OPENtls_strdup(str);
 
     if (val != NULL) {
         char *valp = val;
         char *item;
 
         for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
-            int category = OSSL_trace_get_category_num(item);
+            int category = Otls_trace_get_category_num(item);
 
-            if (category == OSSL_TRACE_CATEGORY_ALL) {
-                while (++category < OSSL_TRACE_CATEGORY_NUM)
+            if (category == Otls_TRACE_CATEGORY_ALL) {
+                while (++category < Otls_TRACE_CATEGORY_NUM)
                     setup_trace_category(category);
                 break;
             } else if (category > 0) {
@@ -213,9 +213,9 @@ static void setup_trace(const char *str)
         }
     }
 
-    OPENSSL_free(val);
+    OPENtls_free(val);
 }
-#endif /* OPENSSL_NO_TRACE */
+#endif /* OPENtls_NO_TRACE */
 
 int main(int argc, char *argv[])
 {
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+#if defined(OPENtls_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
     /*
@@ -245,11 +245,11 @@ int main(int argc, char *argv[])
     win32_utf8argv(&argc, &argv);
 #endif
 
-#ifndef OPENSSL_NO_TRACE
-    setup_trace(getenv("OPENSSL_TRACE"));
+#ifndef OPENtls_NO_TRACE
+    setup_trace(getenv("OPENtls_TRACE"));
 #endif
 
-    if (getenv("OPENSSL_FIPS")) {
+    if (getenv("OPENtls_FIPS")) {
         BIO_printf(bio_err, "FIPS mode not supported.\n");
         return 1;
     }
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
         ret = 0;
         /* Read a line, continue reading if line ends with \ */
         for (p = buf, n = sizeof(buf), i = 0, first = 1; n > 0; first = 0) {
-            prompt = first ? "OpenSSL> " : "> ";
+            prompt = first ? "Opentls> " : "> ";
             p[0] = '\0';
 #ifndef READLINE
             fputs(prompt, stdout);
@@ -357,9 +357,9 @@ int main(int argc, char *argv[])
     }
     ret = 1;
  end:
-    OPENSSL_free(default_config_file);
+    OPENtls_free(default_config_file);
     lh_FUNCTION_free(prog);
-    OPENSSL_free(arg.argv);
+    OPENtls_free(arg.argv);
     app_RAND_write();
 
     BIO_free(bio_in);
@@ -502,7 +502,7 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
 
 static unsigned long function_hash(const FUNCTION * a)
 {
-    return OPENSSL_LH_strhash(a->name);
+    return OPENtls_LH_strhash(a->name);
 }
 
 static int SortFnByName(const void *_f1, const void *_f2)

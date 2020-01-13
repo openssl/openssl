@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
 #include "internal/cryptlib.h"
 
-const void *ossl_bsearch(const void *key, const void *base, int num,
+const void *otls_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
                          int flags)
 {
@@ -33,9 +33,9 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
         else
             break;
     }
-    if (c != 0 && !(flags & OSSL_BSEARCH_VALUE_ON_NOMATCH))
+    if (c != 0 && !(flags & Otls_BSEARCH_VALUE_ON_NOMATCH))
         p = NULL;
-    else if (c == 0 && (flags & OSSL_BSEARCH_FIRST_VALUE_ON_MATCH)) {
+    else if (c == 0 && (flags & Otls_BSEARCH_FIRST_VALUE_ON_MATCH)) {
         while (i > 0 && (*cmp) (key, &(base_[(i - 1) * size])) == 0)
             i--;
         p = &(base_[i * size]);

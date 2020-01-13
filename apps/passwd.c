@@ -1,10 +1,10 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
@@ -12,15 +12,15 @@
 #include "apps.h"
 #include "progs.h"
 
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
+#ifndef OPENtls_NO_DES
+# include <opentls/des.h>
 #endif
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include <opentls/md5.h>
+#include <opentls/sha.h>
 
 static unsigned const char cov_2char[64] = {
     /* from crypto/des/fcrypt.c */
@@ -82,7 +82,7 @@ const OPTIONS passwd_options[] = {
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 #endif
 
@@ -100,7 +100,7 @@ int passwd_main(int argc, char **argv)
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
     int in_stdin = 0, pw_source_defined = 0;
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
     int in_noverify = 0;
 #endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
@@ -129,7 +129,7 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             in_noverify = 1;
 #endif
             break;
@@ -168,7 +168,7 @@ int passwd_main(int argc, char **argv)
             mode = passwd_aixmd5;
             break;
         case OPT_CRYPT:
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
             if (mode != passwd_unset)
                 goto opthelp;
             mode = passwd_crypt;
@@ -205,7 +205,7 @@ int passwd_main(int argc, char **argv)
         mode = passwd_crypt;
     }
 
-#ifdef OPENSSL_NO_DES
+#ifdef OPENtls_NO_DES
     if (mode == passwd_crypt)
         goto opthelp;
 #endif
@@ -244,7 +244,7 @@ int passwd_main(int argc, char **argv)
          * avoid rot of not-frequently-used code.
          */
         if (1) {
-#ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENtls_NO_UI_CONSOLE
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };
 
@@ -306,8 +306,8 @@ int passwd_main(int argc, char **argv)
 #if 0
     ERR_print_errors(bio_err);
 #endif
-    OPENSSL_free(salt_malloc);
-    OPENSSL_free(passwd_malloc);
+    OPENtls_free(salt_malloc);
+    OPENtls_free(passwd_malloc);
     BIO_free(in);
     return ret;
 }
@@ -339,21 +339,21 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
     out_buf[0] = 0;
     magic_len = strlen(magic);
-    OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
+    OPENtls_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
 #ifdef CHARSET_EBCDIC
     if ((magic[0] & 0x80) != 0)    /* High bit is 1 in EBCDIC alnums */
         ebcdic2ascii(ascii_magic, ascii_magic, magic_len);
 #endif
 
     /* The salt gets truncated to 8 chars */
-    OPENSSL_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
+    OPENtls_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
     salt_len = strlen(ascii_salt);
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(ascii_salt, ascii_salt, salt_len);
 #endif
 
 #ifdef CHARSET_EBCDIC
-    ascii_passwd = OPENSSL_strdup(passwd);
+    ascii_passwd = OPENtls_strdup(passwd);
     if (ascii_passwd == NULL)
         return NULL;
     ebcdic2ascii(ascii_passwd, ascii_passwd, passwd_len);
@@ -361,16 +361,16 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 #endif
 
     if (magic_len > 0) {
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+        OPENtls_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
 
         if (magic_len > 4)    /* assert it's  "1" or "apr1" */
             goto err;
 
-        OPENSSL_strlcat(out_buf, ascii_magic, sizeof(out_buf));
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+        OPENtls_strlcat(out_buf, ascii_magic, sizeof(out_buf));
+        OPENtls_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     }
 
-    OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
+    OPENtls_strlcat(out_buf, ascii_salt, sizeof(out_buf));
 
     if (strlen(out_buf) > 6 + 8) /* assert "$apr1$..salt.." */
         goto err;
@@ -492,7 +492,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     return out_buf;
 
  err:
-    OPENSSL_free(ascii_passwd);
+    OPENtls_free(ascii_passwd);
     EVP_MD_CTX_free(md2);
     EVP_MD_CTX_free(md);
     return NULL;
@@ -572,21 +572,21 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         }
     }
 
-    OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
+    OPENtls_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
 #ifdef CHARSET_EBCDIC
     if ((magic[0] & 0x80) != 0)    /* High bit is 1 in EBCDIC alnums */
         ebcdic2ascii(ascii_magic, ascii_magic, magic_len);
 #endif
 
     /* The salt gets truncated to 16 chars */
-    OPENSSL_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
+    OPENtls_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
     salt_len = strlen(ascii_salt);
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(ascii_salt, ascii_salt, salt_len);
 #endif
 
 #ifdef CHARSET_EBCDIC
-    ascii_passwd = OPENSSL_strdup(passwd);
+    ascii_passwd = OPENtls_strdup(passwd);
     if (ascii_passwd == NULL)
         return NULL;
     ebcdic2ascii(ascii_passwd, ascii_passwd, passwd_len);
@@ -594,9 +594,9 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
 #endif
 
     out_buf[0] = 0;
-    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
-    OPENSSL_strlcat(out_buf, ascii_magic, sizeof(out_buf));
-    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    OPENtls_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    OPENtls_strlcat(out_buf, ascii_magic, sizeof(out_buf));
+    OPENtls_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     if (rounds_custom) {
         char tmp_buf[80]; /* "rounds=999999999" */
         sprintf(tmp_buf, "rounds=%u", rounds);
@@ -605,10 +605,10 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         if (tmp_buf[0] != 0x72)  /* ASCII 'r' */
             ebcdic2ascii(tmp_buf, tmp_buf, strlen(tmp_buf));
 #endif
-        OPENSSL_strlcat(out_buf, tmp_buf, sizeof(out_buf));
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+        OPENtls_strlcat(out_buf, tmp_buf, sizeof(out_buf));
+        OPENtls_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     }
-    OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
+    OPENtls_strlcat(out_buf, ascii_salt, sizeof(out_buf));
 
     /* assert "$5$rounds=999999999$......salt......" */
     if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len )
@@ -659,7 +659,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
         return NULL;
 
-    if ((p_bytes = OPENSSL_zalloc(passwd_len)) == NULL)
+    if ((p_bytes = OPENtls_zalloc(passwd_len)) == NULL)
         goto err;
     for (cp = p_bytes, n = passwd_len; n > buf_size; n -= buf_size, cp += buf_size)
         memcpy(cp, temp_buf, buf_size);
@@ -676,7 +676,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
         return NULL;
 
-    if ((s_bytes = OPENSSL_zalloc(salt_len)) == NULL)
+    if ((s_bytes = OPENtls_zalloc(salt_len)) == NULL)
         goto err;
     for (cp = s_bytes, n = salt_len; n > buf_size; n -= buf_size, cp += buf_size)
         memcpy(cp, temp_buf, buf_size);
@@ -708,8 +708,8 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX_free(md);
     md2 = NULL;
     md = NULL;
-    OPENSSL_free(p_bytes);
-    OPENSSL_free(s_bytes);
+    OPENtls_free(p_bytes);
+    OPENtls_free(s_bytes);
     p_bytes = NULL;
     s_bytes = NULL;
 
@@ -778,9 +778,9 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
  err:
     EVP_MD_CTX_free(md2);
     EVP_MD_CTX_free(md);
-    OPENSSL_free(p_bytes);
-    OPENSSL_free(s_bytes);
-    OPENSSL_free(ascii_passwd);
+    OPENtls_free(p_bytes);
+    OPENtls_free(s_bytes);
+    OPENtls_free(ascii_passwd);
     return NULL;
 }
 
@@ -798,10 +798,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         size_t saltlen = 0;
         size_t i;
 
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
         if (mode == passwd_crypt)
             saltlen = 2;
-#endif                         /* !OPENSSL_NO_DES */
+#endif                         /* !OPENtls_NO_DES */
 
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
             saltlen = 8;
@@ -841,7 +841,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     if (mode == passwd_crypt)
         hash = DES_crypt(passwd, *salt_p);
 #endif

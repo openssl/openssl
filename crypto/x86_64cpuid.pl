@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # $output is the last argument if it looks like a file (it has an extension)
@@ -27,20 +27,20 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 print<<___;
-.extern		OPENSSL_cpuid_setup
-.hidden		OPENSSL_cpuid_setup
+.extern		OPENtls_cpuid_setup
+.hidden		OPENtls_cpuid_setup
 .section	.init
-	call	OPENSSL_cpuid_setup
+	call	OPENtls_cpuid_setup
 
-.hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,16,4
+.hidden	OPENtls_ia32cap_P
+.comm	OPENtls_ia32cap_P,16,4
 
 .text
 
-.globl	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,\@abi-omnipotent
+.globl	OPENtls_atomic_add
+.type	OPENtls_atomic_add,\@abi-omnipotent
 .align	16
-OPENSSL_atomic_add:
+OPENtls_atomic_add:
 .cfi_startproc
 	movl	($arg1),%eax
 .Lspin:	leaq	($arg2,%rax),%r8
@@ -51,24 +51,24 @@ OPENSSL_atomic_add:
 	.byte	0x48,0x98	# cltq/cdqe
 	ret
 .cfi_endproc
-.size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
+.size	OPENtls_atomic_add,.-OPENtls_atomic_add
 
-.globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,\@abi-omnipotent
+.globl	OPENtls_rdtsc
+.type	OPENtls_rdtsc,\@abi-omnipotent
 .align	16
-OPENSSL_rdtsc:
+OPENtls_rdtsc:
 .cfi_startproc
 	rdtsc
 	shl	\$32,%rdx
 	or	%rdx,%rax
 	ret
 .cfi_endproc
-.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
+.size	OPENtls_rdtsc,.-OPENtls_rdtsc
 
-.globl	OPENSSL_ia32_cpuid
-.type	OPENSSL_ia32_cpuid,\@function,1
+.globl	OPENtls_ia32_cpuid
+.type	OPENtls_ia32_cpuid,\@function,1
 .align	16
-OPENSSL_ia32_cpuid:
+OPENtls_ia32_cpuid:
 .cfi_startproc
 	mov	%rbx,%r8		# save %rbx
 .cfi_register	%rbx,%r8
@@ -232,12 +232,12 @@ OPENSSL_ia32_cpuid:
 	or	%r9,%rax
 	ret
 .cfi_endproc
-.size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
+.size	OPENtls_ia32_cpuid,.-OPENtls_ia32_cpuid
 
-.globl  OPENSSL_cleanse
-.type   OPENSSL_cleanse,\@abi-omnipotent
+.globl  OPENtls_cleanse
+.type   OPENtls_cleanse,\@abi-omnipotent
 .align  16
-OPENSSL_cleanse:
+OPENtls_cleanse:
 .cfi_startproc
 	xor	%rax,%rax
 	cmp	\$15,$arg2
@@ -269,7 +269,7 @@ OPENSSL_cleanse:
 	jne	.Little
 	ret
 .cfi_endproc
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+.size	OPENtls_cleanse,.-OPENtls_cleanse
 
 .globl  CRYPTO_memcmp
 .type   CRYPTO_memcmp,\@abi-omnipotent
@@ -309,10 +309,10 @@ CRYPTO_memcmp:
 ___
 
 print<<___ if (!$win64);
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@abi-omnipotent
+.globl	OPENtls_wipe_cpu
+.type	OPENtls_wipe_cpu,\@abi-omnipotent
 .align	16
-OPENSSL_wipe_cpu:
+OPENtls_wipe_cpu:
 .cfi_startproc
 	pxor	%xmm0,%xmm0
 	pxor	%xmm1,%xmm1
@@ -341,13 +341,13 @@ OPENSSL_wipe_cpu:
 	leaq	8(%rsp),%rax
 	ret
 .cfi_endproc
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.size	OPENtls_wipe_cpu,.-OPENtls_wipe_cpu
 ___
 print<<___ if ($win64);
-.globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,\@abi-omnipotent
+.globl	OPENtls_wipe_cpu
+.type	OPENtls_wipe_cpu,\@abi-omnipotent
 .align	16
-OPENSSL_wipe_cpu:
+OPENtls_wipe_cpu:
 	pxor	%xmm0,%xmm0
 	pxor	%xmm1,%xmm1
 	pxor	%xmm2,%xmm2
@@ -362,7 +362,7 @@ OPENSSL_wipe_cpu:
 	xorq	%r11,%r11
 	leaq	8(%rsp),%rax
 	ret
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.size	OPENtls_wipe_cpu,.-OPENtls_wipe_cpu
 ___
 {
 my $out="%r10";
@@ -373,10 +373,10 @@ my $lastdiff="%r9d";
 my $redzone=win64?8:-8;
 
 print<<___;
-.globl	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,\@abi-omnipotent
+.globl	OPENtls_instrument_bus
+.type	OPENtls_instrument_bus,\@abi-omnipotent
 .align	16
-OPENSSL_instrument_bus:
+OPENtls_instrument_bus:
 .cfi_startproc
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
@@ -405,12 +405,12 @@ OPENSSL_instrument_bus:
 	mov	$max,%rax
 	ret
 .cfi_endproc
-.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+.size	OPENtls_instrument_bus,.-OPENtls_instrument_bus
 
-.globl	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,\@abi-omnipotent
+.globl	OPENtls_instrument_bus2
+.type	OPENtls_instrument_bus2,\@abi-omnipotent
 .align	16
-OPENSSL_instrument_bus2:
+OPENtls_instrument_bus2:
 .cfi_startproc
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
@@ -455,17 +455,17 @@ OPENSSL_instrument_bus2:
 	sub	$cnt,%rax
 	ret
 .cfi_endproc
-.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+.size	OPENtls_instrument_bus2,.-OPENtls_instrument_bus2
 ___
 }
 
 sub gen_random {
 my $rdop = shift;
 print<<___;
-.globl	OPENSSL_ia32_${rdop}_bytes
-.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
+.globl	OPENtls_ia32_${rdop}_bytes
+.type	OPENtls_ia32_${rdop}_bytes,\@abi-omnipotent
 .align	16
-OPENSSL_ia32_${rdop}_bytes:
+OPENtls_ia32_${rdop}_bytes:
 .cfi_startproc
 	xor	%rax, %rax	# return value
 	cmp	\$0,$arg2
@@ -504,7 +504,7 @@ OPENSSL_ia32_${rdop}_bytes:
 	xor	%r10,%r10	# Clear sensitive data from register
 	ret
 .cfi_endproc
-.size	OPENSSL_ia32_${rdop}_bytes,.-OPENSSL_ia32_${rdop}_bytes
+.size	OPENtls_ia32_${rdop}_bytes,.-OPENtls_ia32_${rdop}_bytes
 ___
 }
 gen_random("rdrand");

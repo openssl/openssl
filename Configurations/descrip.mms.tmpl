@@ -1,14 +1,14 @@
-## descrip.mms to build OpenSSL on OpenVMS
+## descrip.mms to build Opentls on OpenVMS
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
   use File::Basename;
 
-  (our $osslprefix_q = platform->osslprefix()) =~ s/\$/\\\$/;
+  (our $otlsprefix_q = platform->otlsprefix()) =~ s/\$/\\\$/;
 
   our $sover_dirname = platform->shlib_version_as_filename();
-  our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
+  our $otlsver = sprintf "%02d%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
   our $builddir = $config{builddir};
@@ -81,11 +81,11 @@
       $unified_info{after}->{$obj}
           = qq(deassign arch);
   }
-  my $sd1 = sourcedir("ssl","record");
-  my $sd2 = sourcedir("ssl","statem");
-  my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
+  my $sd1 = sourcedir("tls","record");
+  my $sd2 = sourcedir("tls","statem");
+  my @tls_locl_users = grep(/^\[\.(?:tls\.(?:record|statem)|test)\].*\.o$/,
                             keys %{$unified_info{sources}});
-  foreach (@ssl_locl_users) {
+  foreach (@tls_locl_users) {
       my $obj = platform->obj($_);
       $unified_info{before}->{$obj}
           = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -148,32 +148,32 @@ HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -
 HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
 HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENtls={- use File::Spec::Functions;
+                catfile("apps","opentls") -}
 
 # DESTDIR is for package builders so that they can configure for, say,
-# SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
-# In that case, configure with --prefix=SYS$COMMON:[OPENSSL] and then run
+# SYS$COMMON:[OPENtls] and yet have everything installed in STAGING:[USER].
+# In that case, configure with --prefix=SYS$COMMON:[OPENtls] and then run
 # MMS with /MACROS=(DESTDIR=STAGING:[USER]).  The result will end up in
-# STAGING:[USER.OPENSSL].
+# STAGING:[USER.OPENtls].
 # Normally it is left empty.
 DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
 INSTALLTOP={- our $installtop =
-                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL]";
+                  catdir($config{prefix}) || "SYS\$COMMON:[OPENtls]";
               $installtop -}
 SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 # This is the standard central area to store certificates, private keys...
-OPENSSLDIR={- catdir($config{openssldir}) or
+OPENtlsDIR={- catdir($config{opentlsdir}) or
               $config{prefix} ? catdir($config{prefix},"COMMON")
-                              : "SYS\$COMMON:[OPENSSL-COMMON]" -}
+                              : "SYS\$COMMON:[OPENtls-COMMON]" -}
 # The same, but for C
-OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
+OPENtlsDIR_C={- platform->otlsprefix() -}DATAROOT:[000000]
 # Where installed ENGINE modules reside, for C
-ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+ENGINESDIR_C={- platform->otlsprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 # Where modules reside, for C
-MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
+MODULESDIR_C={- platform->otlsprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -193,7 +193,7 @@ ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 ##### Special command flags ##########################################
 
-ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
+ASOUTFLAG={- $target{asoutflag} -}$(Otls_EMPTY)
 
 ##### Project flags ##################################################
 
@@ -232,7 +232,7 @@ LIB_DEFINES={- our $lib_defines =
                                        @{$config{lib_defines}},
                                        @{$config{shared_defines}}));
                join('', $lib_defines,
-                        (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                        (map { ",$_" } 'OPENtlsDIR="""$(OPENtlsDIR_C)"""',
                                        'ENGINESDIR="""$(ENGINESDIR_C)"""',
                                        'MODULESDIR="""$(MODULESDIR_C)"""'),
                         '$(CNF_DEFINES)', '$(DEFINES)') -}
@@ -351,7 +351,7 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # The defines in there are for C.  includes that look like
 # this:
 #
-#    #include <openssl/foo.h>
+#    #include <opentls/foo.h>
 #    #include "internal/bar.h"
 #
 # will use the logical names to find the files.  Expecting
@@ -359,12 +359,12 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
-        $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
-        $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) opentls_inc1 = F$PARSE("[.include.opentls]","A.;",,,"syntax_only") - "A.;"
+        $(NODEBUG) opentls_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.opentls]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc3 = F$PARSE("{- catdir($config{sourcedir},"[.crypto.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
-        $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
+        $(NODEBUG) DEFINE opentls 'opentls_inc1','opentls_inc2'
         $(NODEBUG) DEFINE internal 'internal_inc1','internal_inc2','internal_inc3'
         $(NODEBUG) staging_dir = "$(DESTDIR)"
         $(NODEBUG) staging_instdir = ""
@@ -372,22 +372,22 @@ NODEBUG=@
         $(NODEBUG) IF staging_dir .NES. "" THEN -
                 staging_instdir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
         $(NODEBUG) IF staging_instdir - "]A.;" .NES. staging_instdir THEN -
-                staging_instdir = staging_instdir - "]A.;" + ".OPENSSL-INSTALL]"
+                staging_instdir = staging_instdir - "]A.;" + ".OPENtls-INSTALL]"
         $(NODEBUG) IF staging_instdir - "A.;" .NES. staging_instdir THEN -
-                staging_instdir = staging_instdir - "A.;" + "[OPENSSL-INSTALL]"
+                staging_instdir = staging_instdir - "A.;" + "[OPENtls-INSTALL]"
         $(NODEBUG) IF staging_dir .NES. "" THEN -
                 staging_datadir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
         $(NODEBUG) IF staging_datadir - "]A.;" .NES. staging_datadir THEN -
-                staging_datadir = staging_datadir - "]A.;" + ".OPENSSL-COMMON]"
+                staging_datadir = staging_datadir - "]A.;" + ".OPENtls-COMMON]"
         $(NODEBUG) IF staging_datadir - "A.;" .NES. staging_datadir THEN -
-                staging_datadir = staging_datadir - "A.;" + "[OPENSSL-COMMON]"
+                staging_datadir = staging_datadir - "A.;" + "[OPENtls-COMMON]"
         $(NODEBUG) !
         $(NODEBUG) ! Installation logical names
         $(NODEBUG) !
         $(NODEBUG) installtop = F$PARSE(staging_instdir,"$(INSTALLTOP)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
-        $(NODEBUG) datatop = F$PARSE(staging_datadir,"$(OPENSSLDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
-        $(NODEBUG) DEFINE ossl_installroot 'installtop'
-        $(NODEBUG) DEFINE ossl_dataroot 'datatop'
+        $(NODEBUG) datatop = F$PARSE(staging_datadir,"$(OPENtlsDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE otls_installroot 'installtop'
+        $(NODEBUG) DEFINE otls_dataroot 'datatop'
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
@@ -400,10 +400,10 @@ NODEBUG=@
 
 .LAST :
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
-        $(NODEBUG) DEASSIGN ossl_dataroot
-        $(NODEBUG) DEASSIGN ossl_installroot
+        $(NODEBUG) DEASSIGN otls_dataroot
+        $(NODEBUG) DEASSIGN otls_installroot
         $(NODEBUG) DEASSIGN internal
-        $(NODEBUG) DEASSIGN openssl
+        $(NODEBUG) DEASSIGN opentls
 .DEFAULT :
         @ ! MMS cannot handle no actions...
 
@@ -444,12 +444,12 @@ test : tests
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
         DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
-        DEFINE OPENSSL_ENGINES {- builddir("engines") -}
-        DEFINE OPENSSL_MODULES {- builddir("providers") -}
+        DEFINE OPENtls_ENGINES {- builddir("engines") -}
+        DEFINE OPENtls_MODULES {- builddir("providers") -}
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
-        DEASSIGN OPENSSL_MODULES
-        DEASSIGN OPENSSL_ENGINES
+        DEASSIGN OPENtls_MODULES
+        DEASSIGN OPENtls_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
         SET DEFAULT [-]{- move("..") -}
@@ -466,7 +466,7 @@ list-tests :
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
-install : install_sw install_ssldirs install_docs install_final
+install : install_sw install_tlsdirs install_docs install_final
 
 install_final :
         @ WRITE SYS$OUTPUT ""
@@ -475,8 +475,8 @@ install_final :
         @ IF "$(DESTDIR)" .EQS. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Installation complete" ; -
                     WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)opentls_startup{- $otlsver -} to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)opentls_utils{- $otlsver -} to define commands" ; -
                     WRITE SYS$OUTPUT "" )
         @ IF "$(DESTDIR)" .NES. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Staging installation complete" ; -
@@ -486,15 +486,15 @@ install_final :
                     WRITE SYS$OUTPUT "ends up in $(INSTALLTOP)," ; -
                     WRITE SYS$OUTPUT "and that the contents of the contents of the directory tree" ; -
                     WRITE SYS$OUTPUT staging_datadir ; -
-                    WRITE SYS$OUTPUT "ends up in $(OPENSSLDIR)" ; -
+                    WRITE SYS$OUTPUT "ends up in $(OPENtlsDIR)" ; -
                     WRITE SYS$OUTPUT "" ; -
                     WRITE SYS$OUTPUT "When in its final destination," ; -
-                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)opentls_startup{- $otlsver -} to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)opentls_utils{- $otlsver -} to define commands" ; -
                     WRITE SYS$OUTPUT "" )
 
 check_install :
-        spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
+        spawn/nolog @otls_installroot:[SYSTEST]opentls_ivp{- $otlsver -}.com
 
 uninstall : uninstall_docs uninstall_sw
 
@@ -518,8 +518,8 @@ clean : libclean
         - DELETE [...]*.D;*
         - DELETE [...]*.OBJ;*,*.LIS;*
         - DELETE []CXX$DEMANGLER_DB.;*
-        - DELETE [.VMS]openssl_startup.com;*
-        - DELETE [.VMS]openssl_shutdown.com;*
+        - DELETE [.VMS]opentls_startup.com;*
+        - DELETE [.VMS]opentls_shutdown.com;*
         - DELETE []vmsconfig.pm;*
 
 distclean : clean
@@ -544,45 +544,45 @@ install_docs : install_html_docs
 
 uninstall_docs : uninstall_html_docs
 
-install_ssldirs : check_INSTALLTOP
-        - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
-        IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
-        IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
-        IF F$SEARCH("OSSL_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
-        COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
+install_tlsdirs : check_INSTALLTOP
+        - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) Otls_DATAROOT:[000000]
+        IF F$SEARCH("Otls_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) Otls_DATAROOT:[CERTS]
+        IF F$SEARCH("Otls_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) Otls_DATAROOT:[PRIVATE]
+        IF F$SEARCH("Otls_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) Otls_DATAROOT:[MISC]
+        COPY/PROT=W:RE $(MISC_SCRIPTS) Otls_DATAROOT:[MISC]
         @ ! Install configuration file
-        COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
-                ossl_dataroot:[000000]openssl.cnf-dist
-        IF F$SEARCH("OSSL_DATAROOT:[000000]openssl.cnf") .EQS. "" THEN -
-                COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
-                        ossl_dataroot:[000000]openssl.cnf
+        COPY/PROT=W:R {- sourcefile("apps", "opentls-vms.cnf") -} -
+                otls_dataroot:[000000]opentls.cnf-dist
+        IF F$SEARCH("Otls_DATAROOT:[000000]opentls.cnf") .EQS. "" THEN -
+                COPY/PROT=W:R {- sourcefile("apps", "opentls-vms.cnf") -} -
+                        otls_dataroot:[000000]opentls.cnf
         @ ! Install CTLOG configuration file
         COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
-                ossl_dataroot:[000000]ct_log_list.cnf-dist
-        IF F$SEARCH("OSSL_DATAROOT:[000000]ct_log_list.cnf") .EQS. "" THEN -
+                otls_dataroot:[000000]ct_log_list.cnf-dist
+        IF F$SEARCH("Otls_DATAROOT:[000000]ct_log_list.cnf") .EQS. "" THEN -
                 COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
-                        ossl_dataroot:[000000]ct_log_list.cnf
+                        otls_dataroot:[000000]ct_log_list.cnf
 
 install_dev : check_INSTALLTOP install_runtime_libs
         @ WRITE SYS$OUTPUT "*** Installing development files"
         @ ! Install header files
-        - CREATE/DIR ossl_installroot:[include.openssl]
-        COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
+        - CREATE/DIR otls_installroot:[include.opentls]
+        COPY/PROT=W:R opentls:*.h otls_installroot:[include.opentls]
         @ ! Install static (development) libraries
-        - CREATE/DIR ossl_installroot:[LIB.'arch']
+        - CREATE/DIR otls_installroot:[LIB.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
+                map { "COPY/PROT=W:R $_.OLB otls_installroot:[LIB.'arch']" }
                 @install_libs) -}
 
 install_engines : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_engines; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing ENGINE modules"
-        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        - CREATE/DIR otls_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE otls_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @install_engines) -}
         @ {- output_on() unless scalar @install_engines; "" -} !
 
@@ -592,60 +592,60 @@ install_runtime_libs : check_INSTALLTOP build_libs
         @ {- output_off() if $disabled{shared}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing shareable images"
         @ ! Install shared (runtime) libraries
-        - CREATE/DIR ossl_installroot:[LIB.'arch']
+        - CREATE/DIR otls_installroot:[LIB.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:R $_.EXE ossl_installroot:[LIB.'arch']" }
+                map { "COPY/PROT=W:R $_.EXE otls_installroot:[LIB.'arch']" }
                 @install_shlibs) -}
         @ {- output_on() if $disabled{shared}; "" -} !
 
 install_programs : check_INSTALLTOP install_runtime_libs build_programs
         @ {- output_off() if $disabled{apps}; "" -} !
         @ ! Install the main program
-        - CREATE/DIR ossl_installroot:[EXE.'arch']
-        COPY/PROT=W:RE [.APPS]openssl.EXE -
-                ossl_installroot:[EXE.'arch']openssl{- $osslver -}.EXE
+        - CREATE/DIR otls_installroot:[EXE.'arch']
+        COPY/PROT=W:RE [.APPS]opentls.EXE -
+                otls_installroot:[EXE.'arch']opentls{- $otlsver -}.EXE
         @ ! Install scripts
-        COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
+        COPY/PROT=W:RE $(BIN_SCRIPTS) otls_installroot:[EXE]
         @ ! {- output_on() if $disabled{apps}; "" -}
 
-install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
-                 [.VMS]openssl_utils.com, check_INSTALLTOP
-        - CREATE/DIR ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE [.VMS]openssl_startup.com -
-                ossl_installroot:[SYS$STARTUP]openssl_startup{- $osslver -}.com
-        COPY/PROT=W:RE [.VMS]openssl_shutdown.com -
-                ossl_installroot:[SYS$STARTUP]openssl_shutdown{- $osslver -}.com
-        COPY/PROT=W:RE [.VMS]openssl_utils.com -
-                ossl_installroot:[SYS$STARTUP]openssl_utils{- $osslver -}.com
+install_startup : [.VMS]opentls_startup.com [.VMS]opentls_shutdown.com -
+                 [.VMS]opentls_utils.com, check_INSTALLTOP
+        - CREATE/DIR otls_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]opentls_startup.com -
+                otls_installroot:[SYS$STARTUP]opentls_startup{- $otlsver -}.com
+        COPY/PROT=W:RE [.VMS]opentls_shutdown.com -
+                otls_installroot:[SYS$STARTUP]opentls_shutdown{- $otlsver -}.com
+        COPY/PROT=W:RE [.VMS]opentls_utils.com -
+                otls_installroot:[SYS$STARTUP]opentls_utils{- $otlsver -}.com
 
-install_ivp : [.VMS]openssl_ivp.com check_INSTALLTOP
-        - CREATE/DIR ossl_installroot:[SYSTEST]
-        COPY/PROT=W:RE [.VMS]openssl_ivp.com -
-                ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
+install_ivp : [.VMS]opentls_ivp.com check_INSTALLTOP
+        - CREATE/DIR otls_installroot:[SYSTEST]
+        COPY/PROT=W:RE [.VMS]opentls_ivp.com -
+                otls_installroot:[SYSTEST]opentls_ivp{- $otlsver -}.com
 
-[.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
+[.VMS]opentls_startup.com : vmsconfig.pm {- sourcefile("VMS", "opentls_startup.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
-                {- sourcefile("VMS", "openssl_startup.com.in") -} -
-                > [.VMS]openssl_startup.com
+                {- sourcefile("VMS", "opentls_startup.com.in") -} -
+                > [.VMS]opentls_startup.com
 
-[.VMS]openssl_utils.com : vmsconfig.pm {- sourcefile("VMS", "openssl_utils.com.in") -}
+[.VMS]opentls_utils.com : vmsconfig.pm {- sourcefile("VMS", "opentls_utils.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
-                {- sourcefile("VMS", "openssl_utils.com.in") -} -
-                > [.VMS]openssl_utils.com
+                {- sourcefile("VMS", "opentls_utils.com.in") -} -
+                > [.VMS]opentls_utils.com
 
-[.VMS]openssl_shutdown.com : vmsconfig.pm {- sourcefile("VMS", "openssl_shutdown.com.in") -}
+[.VMS]opentls_shutdown.com : vmsconfig.pm {- sourcefile("VMS", "opentls_shutdown.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
-                {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
-                > [.VMS]openssl_shutdown.com
+                {- sourcefile("VMS", "opentls_shutdown.com.in") -} -
+                > [.VMS]opentls_shutdown.com
 
-[.VMS]openssl_ivp.com : vmsconfig.pm {- sourcefile("VMS", "openssl_ivp.com.in") -}
+[.VMS]opentls_ivp.com : vmsconfig.pm {- sourcefile("VMS", "opentls_ivp.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
-                {- sourcefile("VMS", "openssl_ivp.com.in") -} -
-                > [.VMS]openssl_ivp.com
+                {- sourcefile("VMS", "opentls_ivp.com.in") -} -
+                > [.VMS]opentls_ivp.com
 
 vmsconfig.pm : configdata.pm
         OPEN/WRITE/SHARE=READ CONFIG []vmsconfig.pm
@@ -662,7 +662,7 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
         WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
         WRITE CONFIG "  INSTALLTOP => '$(INSTALLTOP)',"
-        WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
+        WRITE CONFIG "  OPENtlsDIR => '$(OPENtlsDIR)',"
         WRITE CONFIG "  pointer_size => '","{- $target{pointer_size} -}","',"
         WRITE CONFIG ");"
         WRITE CONFIG "our %target = ();"
@@ -674,18 +674,18 @@ vmsconfig.pm : configdata.pm
 
 install_html_docs : check_INSTALLTOP build_html_docs
         @ WRITE SYS$OUTPUT "*** Installing HTML docs"
-        - CREATE/DIR ossl_installroot:[HTML.MAN1]
-        - CREATE/DIR ossl_installroot:[HTML.MAN3]
-        - CREATE/DIR ossl_installroot:[HTML.MAN5]
-        - CREATE/DIR ossl_installroot:[HTML.MAN7]
+        - CREATE/DIR otls_installroot:[HTML.MAN1]
+        - CREATE/DIR otls_installroot:[HTML.MAN3]
+        - CREATE/DIR otls_installroot:[HTML.MAN5]
+        - CREATE/DIR otls_installroot:[HTML.MAN7]
         {- join("\n        ",
-                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN1]" }
+                ( map { "COPY/PROT=W:RE $_ otls_installroot:[HTML.MAN1]" }
                   @{$unified_info{htmldocs}->{man1}} ),
-                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN3]" }
+                ( map { "COPY/PROT=W:RE $_ otls_installroot:[HTML.MAN3]" }
                   @{$unified_info{htmldocs}->{man3}} ),
-                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN5]" }
+                ( map { "COPY/PROT=W:RE $_ otls_installroot:[HTML.MAN5]" }
                   @{$unified_info{htmldocs}->{man5}} ),
-                ( map { "COPY/PROT=W:RE $_ ossl_installroot:[HTML.MAN7]" }
+                ( map { "COPY/PROT=W:RE $_ otls_installroot:[HTML.MAN7]" }
                   @{$unified_info{htmldocs}->{man7}} )) -}
 
 check_INSTALLTOP :
@@ -699,7 +699,7 @@ check_INSTALLTOP :
 # Developer targets ##################################################
 
 debug_logicals :
-        SH LOGICAL/PROC openssl,internal,ossl_installroot,ossl_dataroot
+        SH LOGICAL/PROC opentls,internal,otls_installroot,otls_dataroot
 
 # Building targets ###################################################
 
@@ -1163,9 +1163,9 @@ EOF
       # the first copy encountered (the one in bar.obj in this example).
       # On Unix and on Windows, the corresponding maneuvre goes through
       # silently with the same effect.
-      # With some test programs, made for checking the internals of OpenSSL,
+      # With some test programs, made for checking the internals of Opentls,
       # we do this kind of linking deliberately, picking a few specific object
-      # files from within [.crypto] or [.ssl] so we can reach symbols that are
+      # files from within [.crypto] or [.tls] so we can reach symbols that are
       # otherwise unreachable (since the shareable images only exports the
       # symbols listed in [.util]*.num), and then with the shared libraries
       # themselves.  So we need to silence the warning about multiply defined

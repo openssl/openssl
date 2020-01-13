@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-VERSION - OpenSSL version information
+VERSION - Opentls version information
 
 =head1 SYNOPSIS
 
@@ -24,21 +24,21 @@ The keys that are recognised are:
 
 =item B<MAJOR>, B<MINOR>, B<PATCH>
 
-The three parts of OpenSSL's 3 numbered version number, MAJOR.MINOR.PATCH.
-These are used to compose the values for the C macros B<OPENSSL_VERSION_MAJOR>,
-B<OPENSSL_VERSION_MINOR>, B<OPENSSL_VERSION_PACTH>.
+The three parts of Opentls's 3 numbered version number, MAJOR.MINOR.PATCH.
+These are used to compose the values for the C macros B<OPENtls_VERSION_MAJOR>,
+B<OPENtls_VERSION_MINOR>, B<OPENtls_VERSION_PACTH>.
 
 =item B<PRE_RELEASE_TAG>
 
 This is the added pre-release tag, which is added to the version separated by
-a dash.  For a value C<foo>, the C macro B<OPENSSL_VERSION_PRE_RELEASE> gets
+a dash.  For a value C<foo>, the C macro B<OPENtls_VERSION_PRE_RELEASE> gets
 the string C<-foo> (dash added).
 
 =item B<BUILD_METADATA>
 
 Extra metadata to be used by anyone for their own purposes.  This is added to
 the version and possible pre-release tag, separated by a plus sign.  For a
-value C<bar>, the C macro B<OPENSSL_VERSION_BUILD_METADATA> gets the string
+value C<bar>, the C macro B<OPENtls_VERSION_BUILD_METADATA> gets the string
 C<+bar>.
 
 =item B<RELEASE_DATE>
@@ -135,15 +135,15 @@ C<3.0.0-alpha3+something>.
 
 =head1 SEE ALSO
 
-L<OpenSSL_version(3)>
+L<Opentls_version(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

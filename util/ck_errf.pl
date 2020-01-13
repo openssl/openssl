@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # This is just a quick script to scan for cases where the 'error'
 # function name in a XXXerr() macro is wrong.
@@ -32,7 +32,7 @@ Options:
 
     -debug      Verbose output debugging on stderr.
 
-    -internal   Generate code that is to be built as part of OpenSSL itself.
+    -internal   Generate code that is to be built as part of Opentls itself.
                 Also scans internal list of files.
 
     -strict     If any error was found, fail with exit code 1, otherwise 0.
@@ -70,9 +70,9 @@ while ( @ARGV ) {
 my @source;
 if ( $internal ) {
     die "Extra parameters given.\n" if @ARGV;
-    $config = "crypto/err/openssl.ec" unless defined $config;
+    $config = "crypto/err/opentls.ec" unless defined $config;
     @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
-                glob('ssl/*.c'), glob('ssl/*/*.c'), glob('providers/*.c'),
+                glob('tls/*.c'), glob('tls/*/*.c'), glob('providers/*.c'),
                 glob('providers/*/*.c'), glob('providers/*/*/*.c') );
 } else {
     die "Configuration file not given.\nSee '$0 -help' for information\n"
@@ -80,9 +80,9 @@ if ( $internal ) {
     @source = @ARGV;
 }
 
-# To detect if there is any error generation for a libcrypto/libssl libs
+# To detect if there is any error generation for a libcrypto/libtls libs
 # we don't know, we need to find out what libs we do know.  That list is
-# readily available in crypto/err/openssl.ec, in form of lines starting
+# readily available in crypto/err/opentls.ec, in form of lines starting
 # with "L ".  Note that we always rely on the modules SYS and ERR to be
 # generally available.
 my %libs       = ( SYS => 1, ERR => 1 );

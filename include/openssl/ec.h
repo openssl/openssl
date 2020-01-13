@@ -1,37 +1,37 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_EC_H
-# define OPENSSL_EC_H
+#ifndef OPENtls_EC_H
+# define OPENtls_EC_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_EC_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_EC
-# include <openssl/asn1.h>
-# include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/bn.h>
+# ifndef OPENtls_NO_EC
+# include <opentls/asn1.h>
+# include <opentls/symhacks.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/bn.h>
 # endif
-# include <openssl/ecerr.h>
+# include <opentls/ecerr.h>
 # ifdef  __cplusplus
 extern "C" {
 # endif
 
-# ifndef OPENSSL_ECC_MAX_FIELD_BITS
-#  define OPENSSL_ECC_MAX_FIELD_BITS 661
+# ifndef OPENtls_ECC_MAX_FIELD_BITS
+#  define OPENtls_ECC_MAX_FIELD_BITS 661
 # endif
 
 /** Enum for the point conversion form as defined in X9.62 (ECDSA)
@@ -73,7 +73,7 @@ const EC_METHOD *EC_GFp_mont_method(void);
  */
 const EC_METHOD *EC_GFp_nist_method(void);
 
-# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# ifndef OPENtls_NO_EC_NISTP_64_GCC_128
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
@@ -90,7 +90,7 @@ const EC_METHOD *EC_GFp_nistp256_method(void);
 const EC_METHOD *EC_GFp_nistp521_method(void);
 # endif
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 /********************************************************************/
 /*           EC_METHOD for curves over GF(2^m)                      */
 /********************************************************************/
@@ -113,7 +113,7 @@ const EC_METHOD *EC_GF2m_simple_method(void);
  *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
-EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
+EC_GROUP *EC_GROUP_new_ex(OPENtls_CTX *libctx, const EC_METHOD *meth);
 
 /**
  *  Creates a new EC_GROUP object. Same as EC_GROUP_new_ex with NULL for the
@@ -298,7 +298,7 @@ DEPRECATEDIN_3_0(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
                                           BIGNUM *a, BIGNUM *b,
                                           BN_CTX *ctx))
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 /** Sets the parameter of an ec curve. Synonym for EC_GROUP_set_curve
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
@@ -368,7 +368,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx);
  */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
                                  const BIGNUM *b, BN_CTX *ctx);
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 /** Creates a new EC_GROUP object with the specified parameters defined
  *  over GF2m (defined by the equation y^2 + x*y = x^3 + a*x^2 + b)
  *  \param  p    BIGNUM with the polynomial defining the underlying field
@@ -389,7 +389,7 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
+EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENtls_CTX *libctx, int nid);
 
 /**
  * Creates a EC_GROUP object with a curve specified by a NID. Same as
@@ -609,7 +609,7 @@ DEPRECATEDIN_3_0(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *gro
                                                            const BIGNUM *x,
                                                            int y_bit,
                                                            BN_CTX *ctx))
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 /** Sets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_set_affine_coordinates
  *  \param  group  underlying EC_GROUP object
@@ -818,14 +818,14 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(ECPARAMETERS)
  * represent the field elements
  */
 int EC_GROUP_get_basis_type(const EC_GROUP *);
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
 int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
                                    unsigned int *k2, unsigned int *k3);
 # endif
 
-# define OPENSSL_EC_EXPLICIT_CURVE  0x000
-# define OPENSSL_EC_NAMED_CURVE     0x001
+# define OPENtls_EC_EXPLICIT_CURVE  0x000
+# define OPENtls_EC_NAMED_CURVE     0x001
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
@@ -838,7 +838,7 @@ int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
                 (unsigned char *)(x))
 
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 # endif
 
@@ -861,7 +861,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
  *               which case the default library context is used.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
+EC_KEY *EC_KEY_new_ex(OPENtls_CTX *ctx);
 
 /**
  *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a NULL
@@ -884,7 +884,7 @@ void EC_KEY_clear_flags(EC_KEY *key, int flags);
  *  \param  nid  NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
+EC_KEY *EC_KEY_new_by_curve_name_ex(OPENtls_CTX *ctx, int nid);
 
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
@@ -1142,7 +1142,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *key);
  */
 int EC_KEY_print(BIO *bp, const EC_KEY *key, int off);
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 /** Prints out the ec parameters on human readable form.
  *  \param  fp   file descriptor to which the information is printed
  *  \param  key  EC_KEY object
@@ -1160,7 +1160,7 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 
 # endif
 
-const EC_KEY_METHOD *EC_KEY_OpenSSL(void);
+const EC_KEY_METHOD *EC_KEY_Opentls(void);
 const EC_KEY_METHOD *EC_KEY_get_default_method(void);
 void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
 const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);

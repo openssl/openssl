@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-openssl_user_macros, OPENSSL_API_COMPAT - User defined macros
+opentls_user_macros, OPENtls_API_COMPAT - User defined macros
 
 =head1 DESCRIPTION
 
 User defined macros allow the programmer to control certain aspects of
-what is exposed by the OpenSSL headers.
+what is exposed by the Opentls headers.
 
 B<NOTE:> to be effective, a user defined macro I<must be defined
 before including any header file that depends on it>, either in the
@@ -21,7 +21,7 @@ user defined macros.
 
 =over 4
 
-=item B<OPENSSL_API_COMPAT>
+=item B<OPENtls_API_COMPAT>
 
 The value is a version number, given in one of the following two forms:
 
@@ -75,25 +75,25 @@ minor and patch components of the version number.  For example:
 
 If not set, this macro will default to
 C<{- join('', map { my @x = split /=/,$_; $x[1] }
-              grep /^OPENSSL_CONFIGURED_API=/, @{$config{openssl_api_defines} // []})
+              grep /^OPENtls_CONFIGURED_API=/, @{$config{opentls_api_defines} // []})
      || '0x00000000L'
   -}>.
 
-=item B<OPENSSL_NO_DEPRECATED>
+=item B<OPENtls_NO_DEPRECATED>
 
-If this macro is defined, all deprecated public symbols in all OpenSSL
-versions up to and including the version given by B<OPENSSL_API_COMPAT>
+If this macro is defined, all deprecated public symbols in all Opentls
+versions up to and including the version given by B<OPENtls_API_COMPAT>
 will be hidden.
 
 =back
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -3,4 +3,4 @@ s@internal/(aria.h|asn1_dsa.h|async.h|bn_conf.h|bn_conf.h|bn_dh.h|bn_srp.h|chach
 s/constant_time_locl/constant_time/g ;
 s/_lo?cl\.h/_local.h/g ;
 s/_int\.h/_local.h/g ;
-s|openssl/ossl_typ\.h|openssl/types.h|g ;
+s|opentls/otls_typ\.h|opentls/types.h|g ;

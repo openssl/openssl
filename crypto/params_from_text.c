@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/params.h>
+#include <opentls/err.h>
+#include <opentls/params.h>
 
 /*
  * When processing text to params, we're trying to be smart with numbers.
@@ -20,13 +20,13 @@
  * (if the size can be arbitrary, then we give whatever we have)
  */
 
-static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
+static int prepare_from_text(const Otls_PARAM *paramdefs, const char *key,
                              const char *value, size_t value_n,
                              /* Output parameters */
-                             const OSSL_PARAM **paramdef, int *ishex,
+                             const Otls_PARAM **paramdef, int *ishex,
                              size_t *buf_n, BIGNUM **tmpbn)
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
 
     /*
      * ishex is used to translate legacy style string controls in hex format
@@ -37,13 +37,13 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
     if (*ishex)
         key += 3;
 
-    p = *paramdef = OSSL_PARAM_locate_const(paramdefs, key);
+    p = *paramdef = Otls_PARAM_locate_const(paramdefs, key);
     if (p == NULL)
         return 0;
 
     switch (p->data_type) {
-    case OSSL_PARAM_INTEGER:
-    case OSSL_PARAM_UNSIGNED_INTEGER:
+    case Otls_PARAM_INTEGER:
+    case Otls_PARAM_UNSIGNED_INTEGER:
         if (*ishex)
             BN_hex2bn(tmpbn, value);
         else
@@ -60,7 +60,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
          * it by subtracting 1 here and inverting the bytes in
          * construct_from_text() below.
          */
-        if (p->data_type == OSSL_PARAM_INTEGER && BN_is_negative(*tmpbn)
+        if (p->data_type == Otls_PARAM_INTEGER && BN_is_negative(*tmpbn)
             && !BN_sub_word(*tmpbn, 1)) {
             return 0;
         }
@@ -81,14 +81,14 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
             *buf_n = p->data_size;
         }
         break;
-    case OSSL_PARAM_UTF8_STRING:
+    case Otls_PARAM_UTF8_STRING:
         if (*ishex) {
             CRYPTOerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
         *buf_n = strlen(value) + 1;
         break;
-    case OSSL_PARAM_OCTET_STRING:
+    case Otls_PARAM_OCTET_STRING:
         if (*ishex) {
             *buf_n = strlen(value) >> 1;
         } else {
@@ -100,7 +100,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
     return 1;
 }
 
-static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
+static int construct_from_text(Otls_PARAM *to, const Otls_PARAM *paramdef,
                                const char *value, size_t value_n, int ishex,
                                void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
@@ -109,11 +109,11 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
 
     if (buf_n > 0) {
         switch (paramdef->data_type) {
-        case OSSL_PARAM_INTEGER:
-        case OSSL_PARAM_UNSIGNED_INTEGER:
+        case Otls_PARAM_INTEGER:
+        case Otls_PARAM_UNSIGNED_INTEGER:
             /*
             {
-                if ((new_value = OPENSSL_malloc(new_value_n)) == NULL) {
+                if ((new_value = OPENtls_malloc(new_value_n)) == NULL) {
                     BN_free(a);
                     break;
                 }
@@ -127,7 +127,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
              * Because we did the first part on the BIGNUM itself, we can just
              * invert all the bytes here and be done with it.
              */
-            if (paramdef->data_type == OSSL_PARAM_INTEGER
+            if (paramdef->data_type == Otls_PARAM_INTEGER
                 && BN_is_negative(tmpbn)) {
                 unsigned char *cp;
                 size_t i = buf_n;
@@ -136,14 +136,14 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
                     *cp ^= 0xFF;
             }
             break;
-        case OSSL_PARAM_UTF8_STRING:
+        case Otls_PARAM_UTF8_STRING:
             strncpy(buf, value, buf_n);
             break;
-        case OSSL_PARAM_OCTET_STRING:
+        case Otls_PARAM_OCTET_STRING:
             if (ishex) {
                 size_t l = 0;
 
-                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
+                if (!OPENtls_hexstr2buf_ex(buf, buf_n, &l, value))
                     return 0;
             } else {
                 memcpy(buf, value, buf_n);
@@ -160,13 +160,13 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     return 1;
 }
 
-int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
-                                   const OSSL_PARAM *paramdefs,
+int Otls_PARAM_construct_from_text(Otls_PARAM *to,
+                                   const Otls_PARAM *paramdefs,
                                    const char *key, const char *value,
                                    size_t value_n,
                                    void *buf, size_t *buf_n)
 {
-    const OSSL_PARAM *paramdef = NULL;
+    const Otls_PARAM *paramdef = NULL;
     int ishex = 0;
     BIGNUM *tmpbn = NULL;
     int ok = 0;
@@ -191,12 +191,12 @@ int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
     return ok;
 }
 
-int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
-                                  const OSSL_PARAM *paramdefs,
+int Otls_PARAM_allocate_from_text(Otls_PARAM *to,
+                                  const Otls_PARAM *paramdefs,
                                   const char *key, const char *value,
                                   size_t value_n)
 {
-    const OSSL_PARAM *paramdef = NULL;
+    const Otls_PARAM *paramdef = NULL;
     int ishex = 0;
     void *buf = NULL;
     size_t buf_n = 0;
@@ -210,7 +210,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                            &paramdef, &ishex, &buf_n, &tmpbn))
         return 0;
 
-    if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
+    if ((buf = OPENtls_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
         CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -219,6 +219,6 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                              buf, buf_n, tmpbn);
     BN_free(tmpbn);
     if (!ok)
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
     return ok;
 }

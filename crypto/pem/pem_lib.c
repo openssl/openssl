@@ -1,26 +1,26 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/pkcs12.h>
+#include <opentls/buffer.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/pkcs12.h>
 #include "crypto/asn1.h"
-#include <openssl/des.h>
-#include <openssl/engine.h>
+#include <opentls/des.h>
+#include <opentls/engine.h>
 
 #define MIN_LENGTH      4
 
@@ -102,7 +102,7 @@ void PEM_dek_info(char *buf, const char *type, int len, const char *str)
     }
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 void *PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
                     pem_password_cb *cb, void *u)
 {
@@ -161,7 +161,7 @@ static int check_pem(const char *nm, const char *name)
                     r = 1;
                 else
                     r = 0;
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
                 ENGINE_finish(e);
 #endif
                 return r;
@@ -202,7 +202,7 @@ static int check_pem(const char *nm, const char *name)
         && strcmp(name, PEM_STRING_PKCS7) == 0)
         return 1;
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     if (strcmp(nm, PEM_STRING_X509) == 0
         && strcmp(name, PEM_STRING_CMS) == 0)
         return 1;
@@ -218,15 +218,15 @@ static int check_pem(const char *nm, const char *name)
 static void pem_free(void *p, unsigned int flags, size_t num)
 {
     if (flags & PEM_FLAG_SECURE)
-        OPENSSL_secure_clear_free(p, num);
+        OPENtls_secure_clear_free(p, num);
     else
-        OPENSSL_free(p);
+        OPENtls_free(p);
 }
 
 static void *pem_malloc(int num, unsigned int flags)
 {
-    return (flags & PEM_FLAG_SECURE) ? OPENSSL_secure_malloc(num)
-                                     : OPENSSL_malloc(num);
+    return (flags & PEM_FLAG_SECURE) ? OPENtls_secure_malloc(num)
+                                     : OPENtls_malloc(num);
 }
 
 static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
@@ -286,7 +286,7 @@ int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
                                     PEM_FLAG_SECURE | PEM_FLAG_EAY_COMPATIBLE);
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
                    const void *x, const EVP_CIPHER *enc,
                    const unsigned char *kstr, int klen,
@@ -341,7 +341,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     }
     /* dsize + 8 bytes are needed */
     /* actually it needs the cipher block size extra... */
-    data = OPENSSL_malloc((unsigned int)dsize + 20);
+    data = OPENtls_malloc((unsigned int)dsize + 20);
     if (data == NULL) {
         PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -375,7 +375,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
             goto err;
 
         if (kstr == (unsigned char *)buf)
-            OPENSSL_cleanse(buf, PEM_BUFSIZE);
+            OPENtls_cleanse(buf, PEM_BUFSIZE);
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
@@ -399,11 +399,11 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     if (i <= 0)
         ret = 0;
  err:
-    OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(iv, sizeof(iv));
+    OPENtls_cleanse(key, sizeof(key));
+    OPENtls_cleanse(iv, sizeof(iv));
     EVP_CIPHER_CTX_free(ctx);
-    OPENSSL_cleanse(buf, PEM_BUFSIZE);
-    OPENSSL_clear_free(data, (unsigned int)dsize);
+    OPENtls_cleanse(buf, PEM_BUFSIZE);
+    OPENtls_clear_free(data, (unsigned int)dsize);
     return ret;
 }
 
@@ -463,8 +463,8 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
         PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
 
     EVP_CIPHER_CTX_free(ctx);
-    OPENSSL_cleanse((char *)buf, sizeof(buf));
-    OPENSSL_cleanse((char *)key, sizeof(key));
+    OPENtls_cleanse((char *)buf, sizeof(buf));
+    OPENtls_cleanse((char *)key, sizeof(key));
     return ok;
 }
 
@@ -570,7 +570,7 @@ static int load_iv(char **fromp, unsigned char *to, int num)
         to[i] = 0;
     num *= 2;
     for (i = 0; i < num; i++) {
-        v = OPENSSL_hexchar2int(*from);
+        v = OPENtls_hexchar2int(*from);
         if (v < 0) {
             PEMerr(PEM_F_LOAD_IV, PEM_R_BAD_IV_CHARS);
             return 0;
@@ -583,7 +583,7 @@ static int load_iv(char **fromp, unsigned char *to, int num)
     return 1;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_write(FILE *fp, const char *name, const char *header,
               const unsigned char *data, long len)
 {
@@ -629,7 +629,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
             goto err;
     }
 
-    buf = OPENSSL_malloc(PEM_BUFSIZE * 8);
+    buf = OPENtls_malloc(PEM_BUFSIZE * 8);
     if (buf == NULL) {
         reason = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -659,11 +659,11 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     if (retval == 0)
         PEMerr(PEM_F_PEM_WRITE_BIO, reason);
     EVP_ENCODE_CTX_free(ctx);
-    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
+    OPENtls_clear_free(buf, PEM_BUFSIZE * 8);
     return retval;
 }
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
              long *len)
 {
@@ -705,7 +705,7 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags, int first_c
         len++;
     } else if (flags & PEM_FLAG_ONLY_B64) {
         for (i = 0; i < len; ++i) {
-            if (!ossl_isbase64(linebuf[i]) || linebuf[i] == '\n'
+            if (!otls_isbase64(linebuf[i]) || linebuf[i] == '\n'
                 || linebuf[i] == '\r')
                 break;
         }
@@ -716,7 +716,7 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags, int first_c
         for (i = 0; i < len; ++i) {
             if (linebuf[i] == '\n' || linebuf[i] == '\r')
                 break;
-            if (ossl_iscntrl(linebuf[i]))
+            if (otls_iscntrl(linebuf[i]))
                 linebuf[i] = ' ';
         }
         len = i;

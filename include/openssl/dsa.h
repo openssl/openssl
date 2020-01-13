@@ -1,46 +1,46 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_DSA_H
-# define OPENSSL_DSA_H
+#ifndef OPENtls_DSA_H
+# define OPENtls_DSA_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_DSA_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 # ifdef  __cplusplus
 extern "C" {
 # endif
-# include <openssl/e_os2.h>
-# include <openssl/asn1.h>
-# include <openssl/bio.h>
-# include <openssl/crypto.h>
-# include <openssl/types.h>
-# include <openssl/bn.h>
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/dh.h>
+# include <opentls/e_os2.h>
+# include <opentls/asn1.h>
+# include <opentls/bio.h>
+# include <opentls/crypto.h>
+# include <opentls/types.h>
+# include <opentls/bn.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/dh.h>
 # endif
-# include <openssl/dsaerr.h>
+# include <opentls/dsaerr.h>
 
-# ifndef OPENSSL_DSA_MAX_MODULUS_BITS
-#  define OPENSSL_DSA_MAX_MODULUS_BITS   10000
+# ifndef OPENtls_DSA_MAX_MODULUS_BITS
+#  define OPENtls_DSA_MAX_MODULUS_BITS   10000
 # endif
 
-# define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
+# define OPENtls_DSA_FIPS_MIN_MODULUS_BITS 1024
 
 # define DSA_FLAG_CACHE_MONT_P   0x01
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
@@ -65,7 +65,7 @@ extern "C" {
 # define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
 # define DSA_FLAG_FIPS_CHECKED                   0x0800
 
-/* Already defined in ossl_typ.h */
+/* Already defined in otls_typ.h */
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 
@@ -89,7 +89,7 @@ DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 int DSA_do_verify(const unsigned char *dgst, int dgst_len,
                   DSA_SIG *sig, DSA *dsa);
 
-const DSA_METHOD *DSA_OpenSSL(void);
+const DSA_METHOD *DSA_Opentls(void);
 
 void DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
@@ -139,12 +139,12 @@ int DSA_generate_key(DSA *a);
 
 int DSAparams_print(BIO *bp, const DSA *x);
 int DSA_print(BIO *bp, const DSA *x, int off);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int DSAparams_print_fp(FILE *fp, const DSA *x);
 int DSA_print_fp(FILE *bp, const DSA *x, int off);
 # endif
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define DSS_prime_checks 64
 /*
  * Primality test according to FIPS PUB 186-4, Appendix C.3. Since we only
@@ -156,7 +156,7 @@ int DSA_print_fp(FILE *bp, const DSA *x, int off);
            BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
 # endif
 
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
 /*
  * Convert DSA structure (key or just parameters) into DH structure (be
  * careful to avoid small subgroup attacks when using this!)

@@ -1,16 +1,16 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 #include "testutil.h"
 
@@ -71,7 +71,7 @@ typedef struct myobj_ex_data_st {
 static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
           int idx, long argl, void *argp)
 {
-    MYOBJ_EX_DATA *ex_data = OPENSSL_zalloc(sizeof(*ex_data));
+    MYOBJ_EX_DATA *ex_data = OPENtls_zalloc(sizeof(*ex_data));
 
     if (!TEST_true(idx == saved_idx2 || idx == saved_idx3)
         || !TEST_long_eq(argl, saved_argl)
@@ -80,7 +80,7 @@ static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
         || !TEST_ptr(ex_data)
         || !TEST_true(CRYPTO_set_ex_data(ad, idx, ex_data))) {
         gbl_result = 0;
-        OPENSSL_free(ex_data);
+        OPENtls_free(ex_data);
     } else {
         ex_data->new = 1;
     }
@@ -121,7 +121,7 @@ static void exfree2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
         || !TEST_ptr_eq(argp, saved_argp)
         || !TEST_true(CRYPTO_set_ex_data(ad, idx, NULL)))
         gbl_result = 0;
-    OPENSSL_free(ex_data);
+    OPENtls_free(ex_data);
 }
 
 typedef struct myobj_st {
@@ -133,7 +133,7 @@ typedef struct myobj_st {
 static MYOBJ *MYOBJ_new(void)
 {
     static int count = 0;
-    MYOBJ *obj = OPENSSL_malloc(sizeof(*obj));
+    MYOBJ *obj = OPENtls_malloc(sizeof(*obj));
 
     obj->id = ++count;
     obj->st = CRYPTO_new_ex_data(CRYPTO_EX_INDEX_APP, obj, &obj->ex_data);
@@ -200,7 +200,7 @@ static char *MYOBJ_gethello3(MYOBJ *obj)
 static void MYOBJ_free(MYOBJ *obj)
 {
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_APP, obj, &obj->ex_data);
-    OPENSSL_free(obj);
+    OPENtls_free(obj);
 }
 
 static MYOBJ *MYOBJ_dup(MYOBJ *in)
@@ -221,9 +221,9 @@ static int test_exdata(void)
 
     gbl_result = 1;
 
-    p = OPENSSL_strdup("hello world");
+    p = OPENtls_strdup("hello world");
     saved_argl = 21;
-    saved_argp = OPENSSL_malloc(1);
+    saved_argp = OPENtls_malloc(1);
     saved_idx = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_APP,
                                         saved_argl, saved_argp,
                                         exnew, exdup, exfree);
@@ -295,8 +295,8 @@ static int test_exdata(void)
     MYOBJ_free(t1);
     MYOBJ_free(t2);
     MYOBJ_free(t3);
-    OPENSSL_free(saved_argp);
-    OPENSSL_free(p);
+    OPENtls_free(saved_argp);
+    OPENtls_free(p);
 
     if (gbl_result)
       return 1;

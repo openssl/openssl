@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/ui.h>
+#include <opentls/x509.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
+#include <opentls/ui.h>
 
 #ifndef BUFSIZ
 # define BUFSIZ 256
@@ -69,7 +69,7 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
                                     buf) < 0))
         goto end;
     ret = UI_process(ui);
-    OPENSSL_cleanse(buff, BUFSIZ);
+    OPENtls_cleanse(buff, BUFSIZ);
  end:
     UI_free(ui);
     return ret;
@@ -87,8 +87,8 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     int rv = 0;
     nkey = EVP_CIPHER_key_length(type);
     niv = EVP_CIPHER_iv_length(type);
-    OPENSSL_assert(nkey <= EVP_MAX_KEY_LENGTH);
-    OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
+    OPENtls_assert(nkey <= EVP_MAX_KEY_LENGTH);
+    OPENtls_assert(niv <= EVP_MAX_IV_LENGTH);
 
     if (data == NULL)
         return nkey;
@@ -149,6 +149,6 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     rv = EVP_CIPHER_key_length(type);
  err:
     EVP_MD_CTX_free(c);
-    OPENSSL_cleanse(md_buf, sizeof(md_buf));
+    OPENtls_cleanse(md_buf, sizeof(md_buf));
     return rv;
 }

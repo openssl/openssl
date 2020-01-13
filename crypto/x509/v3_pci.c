@@ -1,10 +1,10 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -45,8 +45,8 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *ext,
@@ -128,14 +128,14 @@ static int process_pci_value(CONF_VALUE *val,
         }
         if (strncmp(val->value, "hex:", 4) == 0) {
             unsigned char *tmp_data2 =
-                OPENSSL_hexstr2buf(val->value + 4, &val_len);
+                OPENtls_hexstr2buf(val->value + 4, &val_len);
 
             if (!tmp_data2) {
                 X509V3_conf_err(val);
                 goto err;
             }
 
-            tmp_data = OPENSSL_realloc((*policy)->data,
+            tmp_data = OPENtls_realloc((*policy)->data,
                                        (*policy)->length + val_len + 1);
             if (tmp_data) {
                 (*policy)->data = tmp_data;
@@ -144,19 +144,19 @@ static int process_pci_value(CONF_VALUE *val,
                 (*policy)->length += val_len;
                 (*policy)->data[(*policy)->length] = '\0';
             } else {
-                OPENSSL_free(tmp_data2);
+                OPENtls_free(tmp_data2);
                 /*
                  * realloc failure implies the original data space is b0rked
                  * too!
                  */
-                OPENSSL_free((*policy)->data);
+                OPENtls_free((*policy)->data);
                 (*policy)->data = NULL;
                 (*policy)->length = 0;
                 X509V3err(X509V3_F_PROCESS_PCI_VALUE, ERR_R_MALLOC_FAILURE);
                 X509V3_conf_err(val);
                 goto err;
             }
-            OPENSSL_free(tmp_data2);
+            OPENtls_free(tmp_data2);
         } else if (strncmp(val->value, "file:", 5) == 0) {
             unsigned char buf[2048];
             int n;
@@ -171,11 +171,11 @@ static int process_pci_value(CONF_VALUE *val,
                 if (!n)
                     continue;
 
-                tmp_data = OPENSSL_realloc((*policy)->data,
+                tmp_data = OPENtls_realloc((*policy)->data,
                                            (*policy)->length + n + 1);
 
                 if (!tmp_data) {
-                    OPENSSL_free((*policy)->data);
+                    OPENtls_free((*policy)->data);
                     (*policy)->data = NULL;
                     (*policy)->length = 0;
                     X509V3err(X509V3_F_PROCESS_PCI_VALUE,
@@ -199,7 +199,7 @@ static int process_pci_value(CONF_VALUE *val,
             }
         } else if (strncmp(val->value, "text:", 5) == 0) {
             val_len = strlen(val->value + 5);
-            tmp_data = OPENSSL_realloc((*policy)->data,
+            tmp_data = OPENtls_realloc((*policy)->data,
                                        (*policy)->length + val_len + 1);
             if (tmp_data) {
                 (*policy)->data = tmp_data;
@@ -212,7 +212,7 @@ static int process_pci_value(CONF_VALUE *val,
                  * realloc failure implies the original data space is b0rked
                  * too!
                  */
-                OPENSSL_free((*policy)->data);
+                OPENtls_free((*policy)->data);
                 (*policy)->data = NULL;
                 (*policy)->length = 0;
                 X509V3err(X509V3_F_PROCESS_PCI_VALUE, ERR_R_MALLOC_FAILURE);

@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/opensslconf.h>
+#include <opentls/crypto.h>
+#include <opentls/opentlsconf.h>
 
-#include <openssl/opensslv.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
+#include <opentls/opentlsv.h>
+#include <opentls/evp.h>
+#include <opentls/sha.h>
 
 /* The implementation is in ../md32_common.h */
 
@@ -24,13 +24,13 @@ int sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
     unsigned char padtmp[40];
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
-    if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
+    if (cmd != EVP_CTRL_tls3_MASTER_SECRET)
         return -2;
 
     if (sha1 == NULL)
         return 0;
 
-    /* SSLv3 client auth handling: see RFC-6101 5.6.8 */
+    /* tlsv3 client auth handling: see RFC-6101 5.6.8 */
     if (mslen != 48)
         return 0;
 
@@ -67,8 +67,8 @@ int sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
     if (!SHA1_Update(sha1, sha1tmp, sizeof(sha1tmp)))
         return 0;
 
-    /* Now when ctx is finalised it will return the SSL v3 hash value */
-    OPENSSL_cleanse(sha1tmp, sizeof(sha1tmp));
+    /* Now when ctx is finalised it will return the tls v3 hash value */
+    OPENtls_cleanse(sha1tmp, sizeof(sha1tmp));
 
     return 1;
 }

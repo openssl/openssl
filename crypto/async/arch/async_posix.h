@@ -1,18 +1,18 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_ASYNC_POSIX_H
-#define OSSL_CRYPTO_ASYNC_POSIX_H
-#include <openssl/e_os2.h>
+#ifndef Otls_CRYPTO_ASYNC_POSIX_H
+#define Otls_CRYPTO_ASYNC_POSIX_H
+#include <opentls/e_os2.h>
 
-#if defined(OPENSSL_SYS_UNIX) \
-    && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC) \
+#if defined(OPENtls_SYS_UNIX) \
+    && defined(OPENtls_THREADS) && !defined(OPENtls_NO_ASYNC) \
     && !defined(__ANDROID__) && !defined(__OpenBSD__)
 
 # include <unistd.h>
@@ -34,7 +34,7 @@ typedef struct async_fibre_st {
     int env_init;
 } async_fibre;
 
-static ossl_inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
+static otls_inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
     o->env_init = 1;
 
@@ -55,4 +55,4 @@ void async_fibre_free(async_fibre *fibre);
 
 # endif
 #endif
-#endif /* OSSL_CRYPTO_ASYNC_POSIX_H */
+#endif /* Otls_CRYPTO_ASYNC_POSIX_H */

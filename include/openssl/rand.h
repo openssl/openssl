@@ -1,25 +1,25 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_RAND_H
-# define OPENSSL_RAND_H
+#ifndef OPENtls_RAND_H
+# define OPENtls_RAND_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_RAND_H
 # endif
 
 # include <stdlib.h>
-# include <openssl/types.h>
-# include <openssl/e_os2.h>
-# include <openssl/randerr.h>
+# include <opentls/types.h>
+# include <opentls/e_os2.h>
+# include <opentls/randerr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -36,13 +36,13 @@ struct rand_meth_st {
 
 int RAND_set_rand_method(const RAND_METHOD *meth);
 const RAND_METHOD *RAND_get_rand_method(void);
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
 int RAND_set_rand_engine(ENGINE *engine);
 # endif
 
-RAND_METHOD *RAND_OpenSSL(void);
+RAND_METHOD *RAND_Opentls(void);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #   define RAND_cleanup() while(0) continue
 # endif
 int RAND_bytes(unsigned char *buf, int num);
@@ -61,7 +61,7 @@ int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
 int RAND_status(void);
 
-# ifndef OPENSSL_NO_EGD
+# ifndef OPENtls_NO_EGD
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);

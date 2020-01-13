@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "test_config.h"
@@ -15,7 +15,7 @@
 
 #include <memory>
 
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 
 namespace {
 
@@ -52,7 +52,7 @@ const Flag<bool> kBoolFlags[] = {
   { "-no-tls12", &TestConfig::no_tls12 },
   { "-no-tls11", &TestConfig::no_tls11 },
   { "-no-tls1", &TestConfig::no_tls1 },
-  { "-no-ssl3", &TestConfig::no_ssl3 },
+  { "-no-tls3", &TestConfig::no_tls3 },
   { "-shim-writes-first", &TestConfig::shim_writes_first },
   { "-expect-session-miss", &TestConfig::expect_session_miss },
   { "-decline-alpn", &TestConfig::decline_alpn },
@@ -143,7 +143,7 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
 
       /*
        * Fix up the -cipher argument. runner uses "DEFAULT:NULL-SHA" to enable
-       * the NULL-SHA cipher. However in OpenSSL "DEFAULT" permanently switches
+       * the NULL-SHA cipher. However in Opentls "DEFAULT" permanently switches
        * off NULL ciphers, so we use "ALL:NULL-SHA" instead.
        */
       if (strcmp(argv[i - 1], "-cipher") == 0

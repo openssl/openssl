@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ static const BN_ULONG small_prime_factors[] = {
     (BN_ULONG)0x000017b1
 };
 
-#define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
+#define BN_SMALL_PRIME_FACTORS_TOP Otls_NELEM(small_prime_factors)
 static const BIGNUM _bignum_small_prime_factors = {
     (BN_ULONG *)small_prime_factors,
     BN_SMALL_PRIME_FACTORS_TOP,
@@ -144,7 +144,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
         return 0;
     }
 
-    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    mods = OPENtls_zalloc(sizeof(*mods) * NUMPRIMES);
     if (mods == NULL)
         goto err;
 
@@ -201,7 +201,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
     /* we have a prime :-) */
     found = 1;
  err:
-    OPENSSL_free(mods);
+    OPENtls_free(mods);
     BN_CTX_end(ctx);
     bn_check_top(ret);
     return found;
@@ -224,7 +224,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
 }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
                    BN_GENCB *cb)
 {

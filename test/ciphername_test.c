@@ -1,23 +1,23 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/err.h>
-#include <openssl/e_os2.h>
-#include <openssl/ssl.h>
-#include <openssl/ssl3.h>
-#include <openssl/tls1.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/err.h>
+#include <opentls/e_os2.h>
+#include <opentls/tls.h>
+#include <opentls/tls3.h>
+#include <opentls/tls1.h>
 
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -57,8 +57,8 @@ static CIPHER_ID_NAME cipher_names[] = {
     {0x0019, "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA"},
     {0x001A, "TLS_DH_anon_WITH_DES_CBC_SHA"},
     {0x001B, "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA"},
-    {0x001D, "SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA"},
-    {0x001E, "SSL_FORTEZZA_KEA_WITH_RC4_128_SHA"},
+    {0x001D, "tls_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA"},
+    {0x001E, "tls_FORTEZZA_KEA_WITH_RC4_128_SHA"},
     {0x001F, "TLS_KRB5_WITH_3DES_EDE_CBC_SHA"},
     {0x0020, "TLS_KRB5_WITH_RC4_128_SHA"},
     {0x0021, "TLS_KRB5_WITH_IDEA_CBC_SHA"},
@@ -361,15 +361,15 @@ static CIPHER_ID_NAME cipher_names[] = {
     {0x1303, "TLS_CHACHA20_POLY1305_SHA256"},
     {0x1304, "TLS_AES_128_CCM_SHA256"},
     {0x1305, "TLS_AES_128_CCM_8_SHA256"},
-    {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
-    {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
+    {0xFEFE, "tls_RSA_FIPS_WITH_DES_CBC_SHA"},
+    {0xFEFF, "tls_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
 };
 
 static const char *get_std_name_by_id(int id)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(cipher_names); i++)
+    for (i = 0; i < Otls_NELEM(cipher_names); i++)
         if (cipher_names[i].id == id)
             return cipher_names[i].name;
 
@@ -378,63 +378,63 @@ static const char *get_std_name_by_id(int id)
 
 static int test_cipher_name(void)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *ssl = NULL;
-    const SSL_CIPHER *c;
-    STACK_OF(SSL_CIPHER) *sk = NULL;
+    tls_CTX *ctx = NULL;
+    tls *tls = NULL;
+    const tls_CIPHER *c;
+    STACK_OF(tls_CIPHER) *sk = NULL;
     const char *ciphers = "ALL:eNULL", *p, *q, *r;
     int i, id = 0, ret = 0;
 
     /* tests for invalid input */
-    p = SSL_CIPHER_standard_name(NULL);
+    p = tls_CIPHER_standard_name(NULL);
     if (!TEST_str_eq(p, "(NONE)")) {
         TEST_info("test_cipher_name(std) failed: NULL input doesn't return \"(NONE)\"\n");
         goto err;
     }
 
-    p = OPENSSL_cipher_name(NULL);
+    p = OPENtls_cipher_name(NULL);
     if (!TEST_str_eq(p, "(NONE)")) {
-        TEST_info("test_cipher_name(ossl) failed: NULL input doesn't return \"(NONE)\"\n");
+        TEST_info("test_cipher_name(otls) failed: NULL input doesn't return \"(NONE)\"\n");
         goto err;
     }
 
-    p = OPENSSL_cipher_name("This is not a valid cipher");
+    p = OPENtls_cipher_name("This is not a valid cipher");
     if (!TEST_str_eq(p, "(NONE)")) {
-        TEST_info("test_cipher_name(ossl) failed: invalid input doesn't return \"(NONE)\"\n");
+        TEST_info("test_cipher_name(otls) failed: invalid input doesn't return \"(NONE)\"\n");
         goto err;
     }
 
     /* tests for valid input */
-    ctx = SSL_CTX_new(TLS_server_method());
+    ctx = tls_CTX_new(TLS_server_method());
     if (ctx == NULL) {
         TEST_info("test_cipher_name failed: internal error\n");
         goto err;
     }
 
-    if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
+    if (!tls_CTX_set_cipher_list(ctx, ciphers)) {
         TEST_info("test_cipher_name failed: internal error\n");
         goto err;
     }
 
-    ssl = SSL_new(ctx);
-    if (ssl == NULL) {
+    tls = tls_new(ctx);
+    if (tls == NULL) {
         TEST_info("test_cipher_name failed: internal error\n");
         goto err;
     }
 
-    sk = SSL_get_ciphers(ssl);
+    sk = tls_get_ciphers(tls);
     if (sk == NULL) {
         TEST_info("test_cipher_name failed: internal error\n");
         goto err;
     }
 
-    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
-        c = sk_SSL_CIPHER_value(sk, i);
-        id = SSL_CIPHER_get_id(c) & 0xFFFF;
+    for (i = 0; i < sk_tls_CIPHER_num(sk); i++) {
+        c = sk_tls_CIPHER_value(sk, i);
+        id = tls_CIPHER_get_id(c) & 0xFFFF;
         if ((id == 0xFF85) || (id == 0xFF87))
             /* skip GOST2012-GOST8912-GOST891 and GOST2012-NULL-GOST12 */
             continue;
-        p = SSL_CIPHER_standard_name(c);
+        p = tls_CIPHER_standard_name(c);
         q = get_std_name_by_id(id);
         if (!TEST_ptr(p)) {
             TEST_info("test_cipher_name failed: expected %s, got NULL, cipher %x\n",
@@ -447,19 +447,19 @@ static int test_cipher_name(void)
                        q, p, id);
             goto err;
         }
-        /* test OPENSSL_cipher_name */
-        q = SSL_CIPHER_get_name(c);
-        r = OPENSSL_cipher_name(p);
+        /* test OPENtls_cipher_name */
+        q = tls_CIPHER_get_name(c);
+        r = OPENtls_cipher_name(p);
         if (!TEST_str_eq(r, q)) {
-            TEST_info("test_cipher_name(ossl) failed: expected %s, got %s, cipher %x\n",
+            TEST_info("test_cipher_name(otls) failed: expected %s, got %s, cipher %x\n",
                        q, r, id);
             goto err;
         }
     }
     ret = 1;
 err:
-    SSL_CTX_free(ctx);
-    SSL_free(ssl);
+    tls_CTX_free(ctx);
+    tls_free(tls);
     return ret;
 }
 

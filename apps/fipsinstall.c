@@ -1,18 +1,18 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-#include <openssl/fips_names.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/provider.h>
+#include <opentls/params.h>
+#include <opentls/fips_names.h>
 #include "apps.h"
 #include "progs.h"
 
@@ -78,16 +78,16 @@ err:
 static int load_fips_prov_and_run_self_test(const char *prov_name)
 {
     int ret = 0;
-    OSSL_PROVIDER *prov = NULL;
+    Otls_PROVIDER *prov = NULL;
 
-    prov = OSSL_PROVIDER_load(NULL, prov_name);
+    prov = Otls_PROVIDER_load(NULL, prov_name);
     if (prov == NULL) {
         BIO_printf(bio_err, "Failed to load FIPS module\n");
         goto end;
     }
     ret = 1;
 end:
-    OSSL_PROVIDER_unload(prov);
+    Otls_PROVIDER_unload(prov);
     return ret;
 }
 
@@ -97,19 +97,19 @@ static int print_mac(BIO *bio, const char *label, const unsigned char *mac,
     int ret;
     char *hexstr = NULL;
 
-    hexstr = OPENSSL_buf2hexstr(mac, (long)len);
+    hexstr = OPENtls_buf2hexstr(mac, (long)len);
     if (hexstr == NULL)
         return 0;
     ret = BIO_printf(bio, "%s = %s\n", label, hexstr);
-    OPENSSL_free(hexstr);
+    OPENtls_free(hexstr);
     return ret;
 }
 
 static int write_config_header(BIO *out, const char *prov_name,
                                const char *section)
 {
-    return BIO_printf(out, "openssl_conf = openssl_init\n\n")
-           && BIO_printf(out, "[openssl_init]\n")
+    return BIO_printf(out, "opentls_conf = opentls_init\n\n")
+           && BIO_printf(out, "[opentls_init]\n")
            && BIO_printf(out, "providers = provider_section\n\n")
            && BIO_printf(out, "[provider_section]\n")
            && BIO_printf(out, "%s = %s\n\n", prov_name, section);
@@ -131,17 +131,17 @@ static int write_config_fips_section(BIO *out, const char *section,
 
     if (!(BIO_printf(out, "[%s]\n", section) > 0
           && BIO_printf(out, "activate = 1\n") > 0
-          && BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
+          && BIO_printf(out, "%s = %s\n", Otls_PROV_FIPS_PARAM_INSTALL_VERSION,
                         VERSION_VAL) > 0
-          && print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
+          && print_mac(out, Otls_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                        module_mac_len)))
         goto end;
 
     if (install_mac != NULL) {
-        if (!(print_mac(out, OSSL_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
+        if (!(print_mac(out, Otls_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
                       install_mac_len)
               && BIO_printf(out, "%s = %s\n",
-                            OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+                            Otls_PROV_FIPS_PARAM_INSTALL_STATUS,
                             INSTALL_STATUS_VAL) > 0))
         goto end;
     }
@@ -207,34 +207,34 @@ static int verify_config(const char *infile, const char *section,
     if (conf == NULL)
         goto end;
 
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_VERSION);
+    s = NCONF_get_string(conf, section, Otls_PROV_FIPS_PARAM_INSTALL_VERSION);
     if (s == NULL || strcmp(s, VERSION_VAL) != 0) {
         BIO_printf(bio_err, "version not found\n");
         goto end;
     }
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_STATUS);
+    s = NCONF_get_string(conf, section, Otls_PROV_FIPS_PARAM_INSTALL_STATUS);
     if (s == NULL || strcmp(s, INSTALL_STATUS_VAL) != 0) {
         BIO_printf(bio_err, "install status not found\n");
         goto end;
     }
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_MODULE_MAC);
+    s = NCONF_get_string(conf, section, Otls_PROV_FIPS_PARAM_MODULE_MAC);
     if (s == NULL) {
         BIO_printf(bio_err, "Module integrity MAC not found\n");
         goto end;
     }
-    buf1 = OPENSSL_hexstr2buf(s, &len);
+    buf1 = OPENtls_hexstr2buf(s, &len);
     if (buf1 == NULL
             || (size_t)len != module_mac_len
             || memcmp(module_mac, buf1, module_mac_len) != 0) {
         BIO_printf(bio_err, "Module integrity mismatch\n");
         goto end;
     }
-    s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_MAC);
+    s = NCONF_get_string(conf, section, Otls_PROV_FIPS_PARAM_INSTALL_MAC);
     if (s == NULL) {
         BIO_printf(bio_err, "Install indicator MAC not found\n");
         goto end;
     }
-    buf2 = OPENSSL_hexstr2buf(s, &len);
+    buf2 = OPENtls_hexstr2buf(s, &len);
     if (buf2 == NULL
             || (size_t)len != install_mac_len
             || memcmp(install_mac, buf2, install_mac_len) != 0) {
@@ -243,8 +243,8 @@ static int verify_config(const char *infile, const char *section,
     }
     ret = 1;
 end:
-    OPENSSL_free(buf1);
-    OPENSSL_free(buf2);
+    OPENtls_free(buf1);
+    OPENtls_free(buf2);
     NCONF_free(conf);
     return ret;
 }
@@ -257,7 +257,7 @@ int fipsinstall_main(int argc, char **argv)
     char *prov_name = NULL, *module_fname = NULL;
     static const char *mac_name = DEFAULT_MAC_NAME;
     EVP_MAC_CTX *ctx = NULL, *ctx2 = NULL;
-    STACK_OF(OPENSSL_STRING) *opts = NULL;
+    STACK_OF(OPENtls_STRING) *opts = NULL;
     OPTION_CHOICE o;
     unsigned char *read_buffer = NULL;
     unsigned char module_mac[EVP_MAX_MD_SIZE];
@@ -301,8 +301,8 @@ opthelp:
             break;
         case OPT_MACOPT:
             if (opts == NULL)
-                opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+                opts = sk_OPENtls_STRING_new_null();
+            if (opts == NULL || !sk_OPENtls_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_VERIFY:
@@ -342,7 +342,7 @@ opthelp:
 
     if (opts != NULL) {
         int ok = 1;
-        OSSL_PARAM *params =
+        Otls_PARAM *params =
             app_params_new_from_opts(opts, EVP_MAC_settable_ctx_params(mac));
 
         if (params == NULL)
@@ -412,11 +412,11 @@ end:
     BIO_free(fout);
     BIO_free(mem_bio);
     BIO_free(module_bio);
-    sk_OPENSSL_STRING_free(opts);
+    sk_OPENtls_STRING_free(opts);
     EVP_MAC_free(mac);
     EVP_MAC_CTX_free(ctx2);
     EVP_MAC_CTX_free(ctx);
-    OPENSSL_free(read_buffer);
+    OPENtls_free(read_buffer);
     free_config_and_unload(conf);
     return ret;
 }

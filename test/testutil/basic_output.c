@@ -1,18 +1,18 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../testutil.h"
 #include "output.h"
 #include "tu_local.h"
 
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/bio.h>
 
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
@@ -27,8 +27,8 @@ void test_open_streams(void)
 #endif
     bio_err = BIO_push(BIO_new(BIO_f_tap()), bio_err);
 
-    OPENSSL_assert(bio_out != NULL);
-    OPENSSL_assert(bio_err != NULL);
+    OPENtls_assert(bio_out != NULL);
+    OPENtls_assert(bio_err != NULL);
 }
 
 void test_close_streams(void)

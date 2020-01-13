@@ -1,16 +1,16 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/objects.h>
+#include <opentls/objects.h>
 #include "obj_xref.h"
 #include "internal/nelem.h"
-#include <openssl/err.h>
+#include <opentls/err.h>
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 
@@ -52,7 +52,7 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
     }
 #ifndef OBJ_XREF_TEST2
     if (rv == NULL) {
-        rv = OBJ_bsearch_sig(&tmp, sigoid_srt, OSSL_NELEM(sigoid_srt));
+        rv = OBJ_bsearch_sig(&tmp, sigoid_srt, Otls_NELEM(sigoid_srt));
     }
 #endif
     if (rv == NULL)
@@ -82,7 +82,7 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
     }
 #ifndef OBJ_XREF_TEST2
     if (rv == NULL) {
-        rv = OBJ_bsearch_sigx(&t, sigoid_srt_xref, OSSL_NELEM(sigoid_srt_xref));
+        rv = OBJ_bsearch_sigx(&t, sigoid_srt_xref, Otls_NELEM(sigoid_srt_xref));
     }
 #endif
     if (rv == NULL)
@@ -103,7 +103,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
         sigx_app = sk_nid_triple_new(sigx_cmp);
     if (sigx_app == NULL)
         return 0;
-    if ((ntr = OPENSSL_malloc(sizeof(*ntr))) == NULL) {
+    if ((ntr = OPENtls_malloc(sizeof(*ntr))) == NULL) {
         OBJerr(OBJ_F_OBJ_ADD_SIGID, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -112,7 +112,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     ntr->pkey_id = pkey_id;
 
     if (!sk_nid_triple_push(sig_app, ntr)) {
-        OPENSSL_free(ntr);
+        OPENtls_free(ntr);
         return 0;
     }
 
@@ -127,7 +127,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 
 static void sid_free(nid_triple *tt)
 {
-    OPENSSL_free(tt);
+    OPENtls_free(tt);
 }
 
 void OBJ_sigid_free(void)

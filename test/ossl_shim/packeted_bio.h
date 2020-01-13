@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_TEST_SHIM_PACKETED_BIO_H
-#define OSSL_TEST_SHIM_PACKETED_BIO_H
+#ifndef Otls_TEST_SHIM_PACKETED_BIO_H
+#define Otls_TEST_SHIM_PACKETED_BIO_H
 
-#include <openssl/base.h>
-#include <openssl/bio.h>
+#include <opentls/base.h>
+#include <opentls/bio.h>
 
 // PacketedBioCreate creates a filter BIO which implements a reliable in-order
 // blocking datagram socket. It internally maintains a clock and honors
@@ -22,7 +22,7 @@
 // continues reading, subject to the read deadline. Otherwise, it fails
 // immediately. The caller must then call |PacketedBioAdvanceClock| before
 // retrying |BIO_read|.
-bssl::UniquePtr<BIO> PacketedBioCreate(bool advance_clock);
+btls::UniquePtr<BIO> PacketedBioCreate(bool advance_clock);
 
 // PacketedBioGetClock returns the current time for |bio|.
 timeval PacketedBioGetClock(const BIO *bio);
@@ -32,4 +32,4 @@ timeval PacketedBioGetClock(const BIO *bio);
 bool PacketedBioAdvanceClock(BIO *bio);
 
 
-#endif  // OSSL_TEST_SHIM_PACKETED_BIO_H
+#endif  // Otls_TEST_SHIM_PACKETED_BIO_H

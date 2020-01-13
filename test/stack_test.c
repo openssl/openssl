@@ -1,20 +1,20 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/safestack.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
+#include <opentls/opentlsconf.h>
+#include <opentls/safestack.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
 
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -54,7 +54,7 @@ static int test_int_stack(int reserve)
 {
     static int v[] = { 1, 2, -4, 16, 999, 1, -173, 1, 9 };
     static int notpresent = -1;
-    const int n = OSSL_NELEM(v);
+    const int n = Otls_NELEM(v);
     static struct {
         int value;
         int unsorted;
@@ -67,7 +67,7 @@ static int test_int_stack(int reserve)
         { 999,  3,  8,  8   },
         { 0,   -1, -1,  1   }
     };
-    const int n_finds = OSSL_NELEM(finds);
+    const int n_finds = Otls_NELEM(finds);
     static struct {
         int value;
         int ex;
@@ -79,7 +79,7 @@ static int test_int_stack(int reserve)
         { -5,   0   },
         { 8,    5   }
     };
-    const int n_exfinds = OSSL_NELEM(exfinds);
+    const int n_exfinds = Otls_NELEM(exfinds);
     STACK_OF(sint) *s = sk_sint_new_null();
     int i;
     int testresult = 0;
@@ -174,7 +174,7 @@ static int uchar_compare(const unsigned char *const *a,
 static int test_uchar_stack(int reserve)
 {
     static const unsigned char v[] = { 1, 3, 7, 5, 255, 0 };
-    const int n = OSSL_NELEM(v);
+    const int n = Otls_NELEM(v);
     STACK_OF(uchar) *s = sk_uchar_new(&uchar_compare), *r = NULL;
     int i;
     int testresult = 0;
@@ -253,7 +253,7 @@ end:
 
 static SS *SS_copy(const SS *p)
 {
-    SS *q = OPENSSL_malloc(sizeof(*q));
+    SS *q = OPENtls_malloc(sizeof(*q));
 
     if (q != NULL)
         memcpy(q, p, sizeof(*q));
@@ -261,7 +261,7 @@ static SS *SS_copy(const SS *p)
 }
 
 static void SS_free(SS *p) {
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
 static int test_SS_stack(void)
@@ -269,13 +269,13 @@ static int test_SS_stack(void)
     STACK_OF(SS) *s = sk_SS_new_null();
     STACK_OF(SS) *r = NULL;
     SS *v[10], *p;
-    const int n = OSSL_NELEM(v);
+    const int n = Otls_NELEM(v);
     int i;
     int testresult = 0;
 
     /* allocate and push */
     for (i = 0; i < n; i++) {
-        v[i] = OPENSSL_malloc(sizeof(*v[i]));
+        v[i] = OPENtls_malloc(sizeof(*v[i]));
 
         if (!TEST_ptr(v[i]))
             goto end;
@@ -338,7 +338,7 @@ static int test_SU_stack(void)
 {
     STACK_OF(SU) *s = sk_SU_new_null();
     SU v[10];
-    const int n = OSSL_NELEM(v);
+    const int n = Otls_NELEM(v);
     int i;
     int testresult = 0;
 

@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "prov/ciphercommon.h"
@@ -14,20 +14,20 @@ int cipher_capable_aes_cbc_hmac_sha1(void);
 int cipher_capable_aes_cbc_hmac_sha256(void);
 
 #ifdef AES_CBC_HMAC_SHA_CAPABLE
-# include <openssl/aes.h>
-# include <openssl/sha.h>
+# include <opentls/aes.h>
+# include <opentls/sha.h>
 
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_st {
     PROV_CIPHER_HW base; /* must be first */
     void (*init_mac_key)(void *ctx, const unsigned char *inkey, size_t inlen);
     int (*set_tls1_aad)(void *ctx, unsigned char *aad_rec, int aad_len);
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
     int (*tls1_multiblock_max_bufsize)(void *ctx);
     int (*tls1_multiblock_aad)(
         void *vctx, EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param);
     int (*tls1_multiblock_encrypt)(
         void *ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param);
-# endif /* OPENSSL_NO_MULTIBLOCK) */
+# endif /* OPENtls_NO_MULTIBLOCK) */
 } PROV_CIPHER_HW_AES_HMAC_SHA;
 
 typedef struct prov_aes_hmac_sha_ctx_st {

@@ -1,26 +1,26 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_COMP_H
-# define OPENSSL_COMP_H
+#ifndef OPENtls_COMP_H
+# define OPENtls_COMP_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_COMP_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_COMP
-# include <openssl/crypto.h>
-# include <openssl/comperr.h>
+# ifndef OPENtls_NO_COMP
+# include <opentls/crypto.h>
+# include <opentls/comperr.h>
 # ifdef  __cplusplus
 extern "C" {
 # endif
@@ -41,11 +41,11 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 
 COMP_METHOD *COMP_zlib(void);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 # define COMP_zlib_cleanup() while(0) continue
 #endif
 
-# ifdef OPENSSL_BIO_H
+# ifdef OPENtls_BIO_H
 #  ifdef ZLIB
 const BIO_METHOD *BIO_f_zlib(void);
 #  endif

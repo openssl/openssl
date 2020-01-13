@@ -1,19 +1,19 @@
 /*
- * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
-#include <openssl/aes.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
+#include <opentls/aes.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
@@ -205,7 +205,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     /* obtain output length of ciphered key */
     if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, inlen))
         goto err;
-    out = OPENSSL_malloc(outlen);
+    out = OPENtls_malloc(outlen);
     if (out == NULL)
         goto err;
     if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
@@ -215,9 +215,9 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     rv = 1;
 
  err:
-    OPENSSL_cleanse(kek, keklen);
+    OPENtls_cleanse(kek, keklen);
     if (!rv)
-        OPENSSL_free(out);
+        OPENtls_free(out);
     EVP_CIPHER_CTX_reset(kari->ctx);
     /* FIXME: WHY IS kari->pctx freed here?  /RL */
     EVP_PKEY_CTX_free(kari->pctx);
@@ -243,13 +243,13 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     if (!cms_kek_cipher(&cek, &ceklen, enckey, enckeylen, ri->d.kari, 0))
         goto err;
     ec = cms->d.envelopedData->encryptedContentInfo;
-    OPENSSL_clear_free(ec->key, ec->keylen);
+    OPENtls_clear_free(ec->key, ec->keylen);
     ec->key = cek;
     ec->keylen = ceklen;
     cek = NULL;
     rv = 1;
  err:
-    OPENSSL_free(cek);
+    OPENtls_free(cek);
     return rv;
 }
 
@@ -348,7 +348,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
      * Pick a cipher based on content encryption cipher. If it is DES3 use
      * DES3 wrap otherwise use AES wrap similar to key size.
      */
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     if (EVP_CIPHER_type(cipher) == NID_des_ede3_cbc)
         kekcipher = EVP_des_ede3_wrap();
     else

@@ -1,17 +1,17 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
-#include <openssl/asn1t.h>
-#include <openssl/bn.h>
+#include <opentls/asn1t.h>
+#include <opentls/bn.h>
 #include "asn1_local.h"
 
 /*
@@ -28,7 +28,7 @@
 
 static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t))) == NULL) {
+    if ((*pval = (ASN1_VALUE *)OPENtls_zalloc(sizeof(uint64_t))) == NULL) {
         ASN1err(ASN1_F_UINT64_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -37,7 +37,7 @@ static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 static void uint64_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    OPENSSL_free(*pval);
+    OPENtls_free(*pval);
     *pval = NULL;
 }
 
@@ -123,7 +123,7 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t))) == NULL) {
+    if ((*pval = (ASN1_VALUE *)OPENtls_zalloc(sizeof(uint32_t))) == NULL) {
         ASN1err(ASN1_F_UINT32_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -132,7 +132,7 @@ static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 static void uint32_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    OPENSSL_free(*pval);
+    OPENtls_free(*pval);
     *pval = NULL;
 }
 

@@ -1,20 +1,20 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-/* Internal tests for the OpenSSL library context */
+/* Internal tests for the Opentls library context */
 
 #include "internal/cryptlib.h"
 #include "testutil.h"
 
 /*
  * Everything between BEGIN EXAMPLE and END EXAMPLE is copied from
- * doc/internal/man3/openssl_ctx_get_data.pod
+ * doc/internal/man3/opentls_ctx_get_data.pod
  */
 
 /*
@@ -27,18 +27,18 @@ typedef struct foo_st {
     void *data;
 } FOO;
 
-static void *foo_new(OPENSSL_CTX *ctx)
+static void *foo_new(OPENtls_CTX *ctx)
 {
-    FOO *ptr = OPENSSL_zalloc(sizeof(*ptr));
+    FOO *ptr = OPENtls_zalloc(sizeof(*ptr));
     if (ptr != NULL)
         ptr->i = 42;
     return ptr;
 }
 static void foo_free(void *ptr)
 {
-    OPENSSL_free(ptr);
+    OPENtls_free(ptr);
 }
-static const OPENSSL_CTX_METHOD foo_method = {
+static const OPENtls_CTX_METHOD foo_method = {
     foo_new,
     foo_free
 };
@@ -48,23 +48,23 @@ static const OPENSSL_CTX_METHOD foo_method = {
  * ======================================================================
  */
 
-static int test_context(OPENSSL_CTX *ctx)
+static int test_context(OPENtls_CTX *ctx)
 {
     FOO *data = NULL;
 
-    return TEST_ptr(data = openssl_ctx_get_data(ctx, 0, &foo_method))
-        /* OPENSSL_zalloc in foo_new() initialized it to zero */
+    return TEST_ptr(data = opentls_ctx_get_data(ctx, 0, &foo_method))
+        /* OPENtls_zalloc in foo_new() initialized it to zero */
         && TEST_int_eq(data->i, 42);
 }
 
 static int test_app_context(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OPENtls_CTX *ctx = NULL;
     int result =
-        TEST_ptr(ctx = OPENSSL_CTX_new())
+        TEST_ptr(ctx = OPENtls_CTX_new())
         && test_context(ctx);
 
-    OPENSSL_CTX_free(ctx);
+    OPENtls_CTX_free(ctx);
     return result;
 }
 

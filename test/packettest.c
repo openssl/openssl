@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/packet.h"
@@ -234,7 +234,7 @@ static int test_PACKET_memdup(void)
         goto end;
     result = 1;
 end:
-    OPENSSL_free(data);
+    OPENtls_free(data);
     return result;
 }
 
@@ -261,7 +261,7 @@ static int test_PACKET_strndup(void)
 
     result = 1;
 end:
-    OPENSSL_free(data);
+    OPENtls_free(data);
     return result;
 }
 

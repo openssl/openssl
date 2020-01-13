@@ -1,25 +1,25 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/bio.h>
+#include <opentls/evp.h>
+#include <opentls/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
 
 # include "crypto/sm2.h"
 
@@ -56,7 +56,7 @@ static int start_fake_rand(const char *hex_bytes)
     /* use own random function */
     fake_rand.bytes = get_faked_bytes;
 
-    fake_rand_bytes = OPENSSL_hexstr2buf(hex_bytes, NULL);
+    fake_rand_bytes = OPENtls_hexstr2buf(hex_bytes, NULL);
     fake_rand_bytes_offset = 0;
     fake_rand_size = strlen(hex_bytes) / 2;
 
@@ -68,7 +68,7 @@ static int start_fake_rand(const char *hex_bytes)
 
 static int restore_rand(void)
 {
-    OPENSSL_free(fake_rand_bytes);
+    OPENtls_free(fake_rand_bytes);
     fake_rand_bytes = NULL;
     fake_rand_bytes_offset = 0;
     if (!TEST_true(RAND_set_rand_method(saved_rand)))
@@ -144,7 +144,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
     BIGNUM *priv = NULL;
     EC_KEY *key = NULL;
     EC_POINT *pt = NULL;
-    unsigned char *expected = OPENSSL_hexstr2buf(ctext_hex, NULL);
+    unsigned char *expected = OPENtls_hexstr2buf(ctext_hex, NULL);
     size_t ctext_len = 0;
     size_t ptext_len = 0;
     uint8_t *ctext = NULL;
@@ -169,7 +169,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
             || !TEST_true(sm2_ciphertext_size(key, digest, msg_len, &ctext_len)))
         goto done;
 
-    ctext = OPENSSL_zalloc(ctext_len);
+    ctext = OPENtls_zalloc(ctext_len);
     if (!TEST_ptr(ctext))
         goto done;
 
@@ -189,7 +189,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
             || !TEST_int_eq(ptext_len, msg_len))
         goto done;
 
-    recovered = OPENSSL_zalloc(ptext_len);
+    recovered = OPENtls_zalloc(ptext_len);
     if (!TEST_ptr(recovered)
             || !TEST_true(sm2_decrypt(key, digest, ctext, ctext_len, recovered, &recovered_len))
             || !TEST_int_eq(recovered_len, msg_len)
@@ -200,9 +200,9 @@ static int test_sm2_crypt(const EC_GROUP *group,
  done:
     BN_free(priv);
     EC_POINT_free(pt);
-    OPENSSL_free(ctext);
-    OPENSSL_free(recovered);
-    OPENSSL_free(expected);
+    OPENtls_free(ctext);
+    OPENtls_free(recovered);
+    OPENtls_free(expected);
     EC_KEY_free(key);
     return rc;
 }
@@ -368,7 +368,7 @@ static int sm2_sig_test(void)
 
 int setup_tests(void)
 {
-#ifdef OPENSSL_NO_SM2
+#ifdef OPENtls_NO_SM2
     TEST_note("SM2 is disabled.");
 #else
     ADD_TEST(sm2_crypt_test);

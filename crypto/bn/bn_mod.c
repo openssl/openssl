@@ -1,10 +1,10 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -57,7 +57,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         return 0;
 
     if (mtop > sizeof(storage) / sizeof(storage[0])
-        && (tp = OPENSSL_malloc(mtop * sizeof(BN_ULONG))) == NULL)
+        && (tp = OPENtls_malloc(mtop * sizeof(BN_ULONG))) == NULL)
         return 0;
 
     ap = a->d != NULL ? a->d : tp;
@@ -87,7 +87,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     r->neg = 0;
 
     if (tp != storage)
-        OPENSSL_free(tp);
+        OPENtls_free(tp);
 
     return 1;
 }

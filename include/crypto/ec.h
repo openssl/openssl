@@ -1,21 +1,21 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Internal EC functions for other submodules: not for application use */
 
-#ifndef OSSL_CRYPTO_EC_H
-# define OSSL_CRYPTO_EC_H
-# include <openssl/opensslconf.h>
+#ifndef Otls_CRYPTO_EC_H
+# define Otls_CRYPTO_EC_H
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
 
-#  include <openssl/ec.h>
+#  include <opentls/ec.h>
 
 /*-
  * Computes the multiplicative inverse of x in the range
@@ -49,5 +49,5 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md);
 
-# endif /* OPENSSL_NO_EC */
+# endif /* OPENtls_NO_EC */
 #endif

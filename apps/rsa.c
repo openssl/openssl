@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -18,13 +18,13 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/rsa.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
-# include <openssl/bn.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/rsa.h>
+# include <opentls/evp.h>
+# include <opentls/x509.h>
+# include <opentls/pem.h>
+# include <opentls/bn.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -41,7 +41,7 @@ const OPTIONS rsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -62,7 +62,7 @@ const OPTIONS rsa_options[] = {
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
 
-# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+# if !defined(OPENtls_NO_DSA) && !defined(OPENtls_NO_RC4)
     OPT_SECTION("PVK"),
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
@@ -82,7 +82,7 @@ int rsa_main(int argc, char **argv)
     int i, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+# if !defined(OPENtls_NO_DSA) && !defined(OPENtls_NO_RC4)
     int pvk_encr = 2;
 # endif
     OPTION_CHOICE o;
@@ -137,7 +137,7 @@ int rsa_main(int argc, char **argv)
         case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
         case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
         case OPT_PVK_NONE:      /* pvk_encr:= 0 */
-# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+# if !defined(OPENtls_NO_DSA) && !defined(OPENtls_NO_RC4)
             pvk_encr = (o - OPT_PVK_NONE);
 # endif
             break;
@@ -271,7 +271,7 @@ int rsa_main(int argc, char **argv)
             i = PEM_write_bio_RSAPrivateKey(out, rsa,
                                             enc, NULL, 0, NULL, passout);
         }
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
@@ -286,7 +286,7 @@ int rsa_main(int argc, char **argv)
                 goto end;
             }
             assert(private);
-#  ifdef OPENSSL_NO_RC4
+#  ifdef OPENtls_NO_RC4
             BIO_printf(bio_err, "PVK format not supported\n");
             EVP_PKEY_free(pk);
             goto end;
@@ -315,8 +315,8 @@ int rsa_main(int argc, char **argv)
     release_engine(e);
     BIO_free_all(out);
     RSA_free(rsa);
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    OPENtls_free(passin);
+    OPENtls_free(passout);
     return ret;
 }
 #endif

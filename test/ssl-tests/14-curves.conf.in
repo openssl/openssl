@@ -1,14 +1,14 @@
 # -*- mode: perl; -*-
 
-## SSL test configurations
+## tls test configurations
 
-package ssltests;
+package tlstests;
 
 use strict;
 use warnings;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils qw(anydisabled);
+use Opentls::Test;
+use Opentls::Test::Utils qw(anydisabled);
 
 my @curves = ("sect163k1", "sect163r1", "sect163r2", "sect193r1",
               "sect193r2", "sect233k1", "sect233r1", "sect239k1",

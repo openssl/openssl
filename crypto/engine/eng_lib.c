@@ -1,15 +1,15 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
 #include "eng_local.h"
-#include <openssl/rand.h>
+#include <opentls/rand.h>
 #include "internal/refcount.h"
 
 CRYPTO_RWLOCK *global_engine_lock;
@@ -20,7 +20,7 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
-    if (!OPENSSL_init_crypto(0, NULL))
+    if (!OPENtls_init_crypto(0, NULL))
         return 0;
     global_engine_lock = CRYPTO_THREAD_lock_new();
     return global_engine_lock != NULL;
@@ -31,14 +31,14 @@ ENGINE *ENGINE_new(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
-        || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        || (ret = OPENtls_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->struct_ref = 1;
     engine_ref_debug(ret, 0, 1);
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -93,7 +93,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     if (e->destroy)
         e->destroy(e);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
-    OPENSSL_free(e);
+    OPENtls_free(e);
     return 1;
 }
 
@@ -125,7 +125,7 @@ static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
     ENGINE_CLEANUP_ITEM *item;
 
-    if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
+    if ((item = OPENtls_malloc(sizeof(*item))) == NULL) {
         ENGINEerr(ENGINE_F_INT_CLEANUP_ITEM, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -152,7 +152,7 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
     item = int_cleanup_item(cb);
     if (item != NULL) {
         if (sk_ENGINE_CLEANUP_ITEM_push(cleanup_stack, item) <= 0)
-            OPENSSL_free(item);
+            OPENtls_free(item);
     }
 }
 
@@ -160,7 +160,7 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
 static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
 {
     (*(item->cb)) ();
-    OPENSSL_free(item);
+    OPENtls_free(item);
 }
 
 void engine_cleanup_int(void)

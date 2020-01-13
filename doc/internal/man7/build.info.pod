@@ -40,7 +40,7 @@ B<$>I<VARIABLE>B<=>I<value>
 
 =head1 DESCRIPTION
 
-OpenSSL's build system revolves around three questions:
+Opentls's build system revolves around three questions:
 
 =over 4
 
@@ -68,7 +68,7 @@ the end.
 
 =head2 F<build.info> files
 
-F<build.info> files are meta data files for OpenSSL's built file
+F<build.info> files are meta data files for Opentls's built file
 generators, and are used to specify exactly what end product files
 (programs, libraries, modules or scripts) are to be produced, and from
 what sources.
@@ -274,7 +274,7 @@ is the F<build.info> file they are in.
 =head2 Perl nuggets
 
 Whenever a F<build.info> file is read, it is passed through the Perl
-template processor L<OpenSSL::Template>, which is a small extension of
+template processor L<Opentls::Template>, which is a small extension of
 L<Text::Template>.
 
 Perl nuggets are anything between C<{-> and C<-}>, and whatever the
@@ -448,7 +448,7 @@ to load, where this is applicable.
 The build file generators must be able to recognise the I<generator>.
 Currently, they at least recognise files ending in C<.pl>, and will
 execute them to generate the I<item>, and files ending in C<.in>,
-which will be used as input for L<OpenSSL::Template> to generate
+which will be used as input for L<Opentls::Template> to generate
 I<item> (in other words, we use the exact same style of
 L</Perl nuggets> mechanism that is used to read F<build.info> files).
 
@@ -585,18 +585,18 @@ B<SCRIPTS>.
 
 =head1 SEE ALSO
 
-For OpenSSL::Template documentation,
-C<perldoc -o man util/perl/OpenSSL/Template.pm>
+For Opentls::Template documentation,
+C<perldoc -o man util/perl/Opentls/Template.pm>
 
 L<Text::Temlate|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file
 LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-openssl-sess_id - SSL/TLS session handling utility
+opentls-sess_id - tls/TLS session handling utility
 
 =head1 SYNOPSIS
 
-B<openssl> B<sess_id>
+B<opentls> B<sess_id>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>|B<NSS>]
@@ -18,13 +18,13 @@ B<openssl> B<sess_id>
 
 =head1 DESCRIPTION
 
-This command processes the encoded version of the SSL session
-structure and optionally prints out SSL session details (for example
-the SSL session master key) in human readable format. Since this is a
-diagnostic tool that needs some knowledge of the SSL protocol to use
+This command processes the encoded version of the tls session
+structure and optionally prints out tls session details (for example
+the tls session master key) in human readable format. Since this is a
+diagnostic tool that needs some knowledge of the tls protocol to use
 properly, most users will not need to use it.
 
-The precise format of the data can vary across OpenSSL versions and
+The precise format of the data can vary across Opentls versions and
 is not documented.
 
 =head1 OPTIONS
@@ -38,7 +38,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>|B<NSS>
 
 The input and output formats; the default is PEM.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 For B<NSS> output, the session ID and master key are reported in NSS "keylog"
 format.
@@ -79,7 +79,7 @@ be used.
 
 Typical output:
 
- SSL-Session:
+ tls-Session:
      Protocol  : TLSv1
      Cipher    : 0016
      Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
@@ -96,16 +96,16 @@ Theses are described below in more detail.
 
 =item B<Protocol>
 
-This is the protocol in use TLSv1.3, TLSv1.2, TLSv1.1, TLSv1 or SSLv3.
+This is the protocol in use TLSv1.3, TLSv1.2, TLSv1.1, TLSv1 or tlsv3.
 
 =item B<Cipher>
 
-The cipher used this is the actual raw SSL or TLS cipher code, see the SSL
+The cipher used this is the actual raw tls or TLS cipher code, see the tls
 or TLS specifications for more information.
 
 =item B<Session-ID>
 
-The SSL session ID in hex format.
+The tls session ID in hex format.
 
 =item B<Session-ID-ctx>
 
@@ -113,7 +113,7 @@ The session ID context in hex format.
 
 =item B<Master-Key>
 
-This is the SSL session master key.
+This is the tls session master key.
 
 =item B<Start Time>
 
@@ -126,13 +126,13 @@ The timeout in seconds.
 
 =item B<Verify return code>
 
-This is the return code when an SSL client certificate is verified.
+This is the return code when an tls client certificate is verified.
 
 =back
 
 =head1 NOTES
 
-Since the SSL session output contains the master key it is
+Since the tls session output contains the master key it is
 possible to read the contents of an encrypted session using this
 information. Therefore appropriate security precautions should be taken if
 the information is being output by a "real" application. This is however
@@ -144,17 +144,17 @@ The cipher and start time should be printed out in human readable form.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-ciphers(1)>,
-L<openssl-s_server(1)>
+L<opentls(1)>,
+L<opentls-ciphers(1)>,
+L<opentls-s_server(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

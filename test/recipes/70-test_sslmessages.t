@@ -1,19 +1,19 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
+use Opentls::Test::Utils;
 use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 use checkhandshake qw(checkhandshake @handmessages @extensions);
 
-my $test_name = "test_sslmessages";
+my $test_name = "test_tlsmessages";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -29,12 +29,12 @@ plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"))
        || (!disabled("tls1_3") && disabled("tls1_2"));
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
@@ -193,7 +193,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
 unlink $session;
 
 SKIP: {
-    skip "No OCSP support in this OpenSSL build", 3
+    skip "No OCSP support in this Opentls build", 3
         if disabled("ocsp");
 
     #Test 3: A status_request handshake (client request only)
@@ -305,7 +305,7 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                "ALPN handshake test");
 
 SKIP: {
-    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+    skip "No CT, EC or OCSP support in this Opentls build", 1
         if disabled("ct") || disabled("ec") || disabled("ocsp");
 
     #Test 14: SCT handshake (client request only)
@@ -324,7 +324,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "No OCSP support in this OpenSSL build", 1
+    skip "No OCSP support in this Opentls build", 1
         if disabled("ocsp");
 
     #Test 15: SCT handshake (server support only)
@@ -340,7 +340,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+    skip "No CT, EC or OCSP support in this Opentls build", 1
         if disabled("ct") || disabled("ec") || disabled("ocsp");
 
     #Test 16: SCT handshake (client and server)
@@ -364,7 +364,7 @@ SKIP: {
 
 
 SKIP: {
-    skip "No NPN support in this OpenSSL build", 3
+    skip "No NPN support in this Opentls build", 3
         if disabled("nextprotoneg");
 
     #Test 17: NPN handshake (client request only)
@@ -398,7 +398,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "No SRP support in this OpenSSL build", 1
+    skip "No SRP support in this Opentls build", 1
         if disabled("srp");
 
     #Test 20: SRP extension
@@ -417,7 +417,7 @@ SKIP: {
 
 #Test 21: EC handshake
 SKIP: {
-    skip "No EC support in this OpenSSL build", 1 if disabled("ec");
+    skip "No EC support in this Opentls build", 1 if disabled("ec");
     $proxy->clear();
     $proxy->clientflags("-no_tls1_3");
     $proxy->serverflags("-no_tls1_3");

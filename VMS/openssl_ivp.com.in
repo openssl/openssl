@@ -1,32 +1,32 @@
-$	! OpenSSL Internal Verification Procedure
+$	! Opentls Internal Verification Procedure
 $	!
-$	! This script checks the consistency of a OpenSSL installation
+$	! This script checks the consistency of a Opentls installation
 $	! It had better be spawned, as it creates process logicals
 $
 $	! Generated information
 $	INSTALLTOP := {- $config{INSTALLTOP} -}
-$	OPENSSLDIR := {- $config{OPENSSLDIR} -}
+$	OPENtlsDIR := {- $config{OPENtlsDIR} -}
 $
-$	! Make sure that INSTALLTOP and OPENSSLDIR become something one
+$	! Make sure that INSTALLTOP and OPENtlsDIR become something one
 $	! can use to call the startup procedure
 $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
-$	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
+$	OPENtlsDIR_ = F$PARSE("A.;",OPENtlsDIR,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $
 $	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
 $	pz   := {- $config{pointer_size} -}
 $	
-$	@'INSTALLTOP_'SYS$STARTUP]openssl_startup'v'
-$	@'INSTALLTOP_'SYS$STARTUP]openssl_utils'v'
+$	@'INSTALLTOP_'SYS$STARTUP]opentls_startup'v'
+$	@'INSTALLTOP_'SYS$STARTUP]opentls_utils'v'
 $
-$	IF F$SEARCH("OSSL$LIBCRYPTO''pz'") .EQS. "" -
-           .OR. F$SEARCH("OSSL$LIBSSL''pz'") .EQS. "" {- output_off() if $config{no_shared}; "" -}-
-           .OR. F$SEARCH("OSSL$LIBCRYPTO_SHR''pz'") .EQS. "" -
-           .OR. F$SEARCH("OSSL$LIBSSL_SHR''pz'") .EQS. "" {- output_on() if $config{no_shared}; "" -}-
-           .OR. F$SEARCH("OSSL$INCLUDE:[OPENSSL]crypto.h") .EQS. "" -
-           .OR. F$SEARCH("OPENSSL:crypto.h") .EQS. "" -
-           .OR. F$SEARCH("OSSL$EXE:OPENSSL''v'.EXE") .EQS. ""
+$	IF F$SEARCH("Otls$LIBCRYPTO''pz'") .EQS. "" -
+           .OR. F$SEARCH("Otls$LIBtls''pz'") .EQS. "" {- output_off() if $config{no_shared}; "" -}-
+           .OR. F$SEARCH("Otls$LIBCRYPTO_SHR''pz'") .EQS. "" -
+           .OR. F$SEARCH("Otls$LIBtls_SHR''pz'") .EQS. "" {- output_on() if $config{no_shared}; "" -}-
+           .OR. F$SEARCH("Otls$INCLUDE:[OPENtls]crypto.h") .EQS. "" -
+           .OR. F$SEARCH("OPENtls:crypto.h") .EQS. "" -
+           .OR. F$SEARCH("Otls$EXE:OPENtls''v'.EXE") .EQS. ""
 $	THEN
 $	    WRITE SYS$ERROR "Installation inconsistent"
 $	    EXIT %x00018292 ! RMS$_FNF, file not found
@@ -36,15 +36,15 @@ $	ON ERROR THEN GOTO error
 $
 $	! If something else is wrong with the installation, we're likely
 $	! to get an image activation error here
-$	openssl version -a
+$	opentls version -a
 $
 $	! FUTURE ENHANCEMENT: Verify that engines are where they should be.
-$	! openssl engine -c -t checker
+$	! opentls engine -c -t checker
 $
-$	WRITE SYS$ERROR "OpenSSL IVP passed"
+$	WRITE SYS$ERROR "Opentls IVP passed"
 $	EXIT %x10000001
 $
 $ error:
 $	save_status = $STATUS
-$	WRITE SYS$ERROR "OpenSSL IVP failed"
+$	WRITE SYS$ERROR "Opentls IVP failed"
 $	EXIT 'save_status'

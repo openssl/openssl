@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,11 +12,11 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/pem.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -43,7 +43,7 @@ const OPTIONS crl_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
     {"text", OPT_TEXT, '-', "Print out a text format version"},
     {"hash", OPT_HASH, '-', "Print hash value"},
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
 #endif
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
@@ -90,7 +90,7 @@ int crl_main(int argc, char **argv)
     int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
     int text = 0, do_ver = 0, noCAfile = 0, noCApath = 0, noCAstore = 0;
     int i;
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     int hash_old = 0;
 #endif
 
@@ -152,7 +152,7 @@ int crl_main(int argc, char **argv)
             noCAstore =  1;
             break;
         case OPT_HASH_OLD:
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
             hash_old = ++num;
 #endif
             break;
@@ -292,7 +292,7 @@ int crl_main(int argc, char **argv)
                 BIO_printf(bio_out, "%08lx\n",
                            X509_NAME_hash(X509_CRL_get_issuer(x)));
             }
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
             if (hash_old == i) {
                 BIO_printf(bio_out, "%08lx\n",
                            X509_NAME_hash_old(X509_CRL_get_issuer(x)));

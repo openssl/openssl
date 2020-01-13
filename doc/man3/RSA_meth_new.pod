@@ -18,7 +18,7 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
 
 =head1 SYNOPSIS
 
- #include <openssl/rsa.h>
+ #include <opentls/rsa.h>
 
  RSA_METHOD *RSA_meth_new(const char *name, int flags);
  void RSA_meth_free(RSA_METHOD *meth);
@@ -124,7 +124,7 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
 =head1 DESCRIPTION
 
 The B<RSA_METHOD> type is a structure used for the provision of custom
-RSA implementations. It provides a set of functions used by OpenSSL
+RSA implementations. It provides a set of functions used by Opentls
 for the implementation of the various RSA capabilities.
 
 RSA_meth_new() creates a new B<RSA_METHOD> structure. It should be
@@ -179,7 +179,7 @@ value:
  r = a ^ p mod m
 
 Both the mod_exp() and bn_mod_exp() functions are called by the
-default OpenSSL method during encryption, decryption, signing and
+default Opentls method during encryption, decryption, signing and
 verification.
 
 RSA_meth_get_init() and RSA_meth_set_init() get and set the function
@@ -245,17 +245,17 @@ L<RSA_generate_multi_prime_key(3)>
 =head1 HISTORY
 
 RSA_meth_get_multi_prime_keygen() and RSA_meth_set_multi_prime_keygen() were
-added in OpenSSL 1.1.1.
+added in Opentls 1.1.1.
 
-Other functions described here were added in OpenSSL 1.1.0.
+Other functions described here were added in Opentls 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

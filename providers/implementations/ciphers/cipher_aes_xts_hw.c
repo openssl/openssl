@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -40,8 +40,8 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
                                              size_t keylen)
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
+    Otls_xts_stream_fn stream_enc = NULL;
+    Otls_xts_stream_fn stream_dec = NULL;
 
 #ifdef AES_XTS_ASM
     stream_enc = AES_xts_encrypt;
@@ -122,8 +122,8 @@ static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *key, size_t keylen)
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
+    Otls_xts_stream_fn stream_enc = NULL;
+    Otls_xts_stream_fn stream_dec = NULL;
 
     /* Note: keylen is the size of 2 keys */
     switch (keylen) {

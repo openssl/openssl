@@ -1,18 +1,18 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
 #include "rand_local.h"
@@ -80,7 +80,7 @@ static int hash_df(RAND_DRBG *drbg, unsigned char *out,
             if (!EVP_DigestFinal(ctx, vtmp, NULL))
                 return 0;
             memcpy(out, vtmp, outlen);
-            OPENSSL_cleanse(vtmp, hash->blocklen);
+            OPENtls_cleanse(vtmp, hash->blocklen);
             break;
         } else if(!EVP_DigestFinal(ctx, out, NULL)) {
             return 0;
@@ -292,7 +292,7 @@ static int drbg_hash_uninstantiate(RAND_DRBG *drbg)
 {
     EVP_MD_free(drbg->data.hash.md);
     EVP_MD_CTX_free(drbg->data.hash.ctx);
-    OPENSSL_cleanse(&drbg->data.hash, sizeof(drbg->data.hash));
+    OPENtls_cleanse(&drbg->data.hash, sizeof(drbg->data.hash));
     return 1;
 }
 
@@ -313,7 +313,7 @@ int drbg_hash_init(RAND_DRBG *drbg)
      * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
      * digests.
      */
-    md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
+    md = EVP_MD_fetch(drbg->libctx, otls_prov_util_nid_to_name(drbg->type), "");
     if (md == NULL)
         return 0;
 

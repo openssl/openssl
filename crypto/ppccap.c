@@ -1,10 +1,10 @@
 /*
- * Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -26,20 +26,20 @@
 # include <sys/types.h>
 # include <sys/sysctl.h>
 #endif
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/bn.h>
 #include <internal/cryptlib.h>
 #include <crypto/chacha.h>
 #include "bn/bn_local.h"
 
 #include "ppc_arch.h"
 
-unsigned int OPENSSL_ppccap_P = 0;
+unsigned int OPENtls_ppccap_P = 0;
 
 static sigset_t all_masked;
 
 
-#ifdef OPENSSL_BN_ASM_MONT
+#ifdef OPENtls_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
@@ -70,7 +70,7 @@ void sha256_block_ppc(void *ctx, const void *inp, size_t len);
 void sha256_block_data_order(void *ctx, const void *inp, size_t len);
 void sha256_block_data_order(void *ctx, const void *inp, size_t len)
 {
-    OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha256_block_p8(ctx, inp, len) :
+    OPENtls_ppccap_P & PPC_CRYPTO207 ? sha256_block_p8(ctx, inp, len) :
         sha256_block_ppc(ctx, inp, len);
 }
 
@@ -79,7 +79,7 @@ void sha512_block_ppc(void *ctx, const void *inp, size_t len);
 void sha512_block_data_order(void *ctx, const void *inp, size_t len);
 void sha512_block_data_order(void *ctx, const void *inp, size_t len)
 {
-    OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha512_block_p8(ctx, inp, len) :
+    OPENtls_ppccap_P & PPC_CRYPTO207 ? sha512_block_p8(ctx, inp, len) :
         sha512_block_ppc(ctx, inp, len);
 }
 
@@ -88,7 +88,7 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
  * the FIPS module yet.
  */
 #ifndef FIPS_MODE
-# ifndef OPENSSL_NO_CHACHA
+# ifndef OPENtls_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
                         const unsigned int counter[4]);
@@ -102,15 +102,15 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
                     size_t len, const unsigned int key[8],
                     const unsigned int counter[4])
 {
-    OPENSSL_ppccap_P & PPC_CRYPTO207
+    OPENtls_ppccap_P & PPC_CRYPTO207
         ? ChaCha20_ctr32_vsx(out, inp, len, key, counter)
-        : OPENSSL_ppccap_P & PPC_ALTIVEC
+        : OPENtls_ppccap_P & PPC_ALTIVEC
             ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
             : ChaCha20_ctr32_int(out, inp, len, key, counter);
 }
 # endif
 
-# ifndef OPENSSL_NO_POLY1305
+# ifndef OPENtls_NO_POLY1305
 void poly1305_init_int(void *ctx, const unsigned char key[16]);
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
@@ -129,11 +129,11 @@ void poly1305_emit_vsx(void *ctx, unsigned char mac[16],
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2]);
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
 {
-    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+    if (OPENtls_ppccap_P & PPC_CRYPTO207) {
         poly1305_init_int(ctx, key);
         func[0] = (void*)(uintptr_t)poly1305_blocks_vsx;
         func[1] = (void*)(uintptr_t)poly1305_emit;
-    } else if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
+    } else if (sizeof(size_t) == 4 && (OPENtls_ppccap_P & PPC_FPU)) {
         poly1305_init_fpu(ctx, key);
         func[0] = (void*)(uintptr_t)poly1305_blocks_fpu;
         func[1] = (void*)(uintptr_t)poly1305_emit_fpu;
@@ -177,47 +177,47 @@ static void ill_handler(int sig)
     siglongjmp(ill_jmp, sig);
 }
 
-void OPENSSL_fpu_probe(void);
-void OPENSSL_ppc64_probe(void);
-void OPENSSL_altivec_probe(void);
-void OPENSSL_crypto207_probe(void);
-void OPENSSL_madd300_probe(void);
+void OPENtls_fpu_probe(void);
+void OPENtls_ppc64_probe(void);
+void OPENtls_altivec_probe(void);
+void OPENtls_crypto207_probe(void);
+void OPENtls_madd300_probe(void);
 
-long OPENSSL_rdtsc_mftb(void);
-long OPENSSL_rdtsc_mfspr268(void);
+long OPENtls_rdtsc_mftb(void);
+long OPENtls_rdtsc_mfspr268(void);
 
-uint32_t OPENSSL_rdtsc(void)
+uint32_t OPENtls_rdtsc(void)
 {
-    if (OPENSSL_ppccap_P & PPC_MFTB)
-        return OPENSSL_rdtsc_mftb();
-    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
-        return OPENSSL_rdtsc_mfspr268();
+    if (OPENtls_ppccap_P & PPC_MFTB)
+        return OPENtls_rdtsc_mftb();
+    else if (OPENtls_ppccap_P & PPC_MFSPR268)
+        return OPENtls_rdtsc_mfspr268();
     else
         return 0;
 }
 
-size_t OPENSSL_instrument_bus_mftb(unsigned int *, size_t);
-size_t OPENSSL_instrument_bus_mfspr268(unsigned int *, size_t);
+size_t OPENtls_instrument_bus_mftb(unsigned int *, size_t);
+size_t OPENtls_instrument_bus_mfspr268(unsigned int *, size_t);
 
-size_t OPENSSL_instrument_bus(unsigned int *out, size_t cnt)
+size_t OPENtls_instrument_bus(unsigned int *out, size_t cnt)
 {
-    if (OPENSSL_ppccap_P & PPC_MFTB)
-        return OPENSSL_instrument_bus_mftb(out, cnt);
-    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
-        return OPENSSL_instrument_bus_mfspr268(out, cnt);
+    if (OPENtls_ppccap_P & PPC_MFTB)
+        return OPENtls_instrument_bus_mftb(out, cnt);
+    else if (OPENtls_ppccap_P & PPC_MFSPR268)
+        return OPENtls_instrument_bus_mfspr268(out, cnt);
     else
         return 0;
 }
 
-size_t OPENSSL_instrument_bus2_mftb(unsigned int *, size_t, size_t);
-size_t OPENSSL_instrument_bus2_mfspr268(unsigned int *, size_t, size_t);
+size_t OPENtls_instrument_bus2_mftb(unsigned int *, size_t, size_t);
+size_t OPENtls_instrument_bus2_mfspr268(unsigned int *, size_t, size_t);
 
-size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
+size_t OPENtls_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 {
-    if (OPENSSL_ppccap_P & PPC_MFTB)
-        return OPENSSL_instrument_bus2_mftb(out, cnt, max);
-    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
-        return OPENSSL_instrument_bus2_mfspr268(out, cnt, max);
+    if (OPENtls_ppccap_P & PPC_MFTB)
+        return OPENtls_instrument_bus2_mftb(out, cnt, max);
+    else if (OPENtls_ppccap_P & PPC_MFSPR268)
+        return OPENtls_instrument_bus2_mfspr268(out, cnt, max);
     else
         return 0;
 }
@@ -225,7 +225,7 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 # if __GLIBC_PREREQ(2, 16)
 #  include <sys/auxv.h>
-#  define OSSL_IMPLEMENT_GETAUXVAL
+#  define Otls_IMPLEMENT_GETAUXVAL
 # endif
 #endif
 
@@ -244,7 +244,7 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 # if defined(__GNUC__) && __GNUC__>=2
 __attribute__ ((constructor))
 # endif
-void OPENSSL_cpuid_setup(void)
+void OPENtls_cpuid_setup(void)
 {
     char *e;
     struct sigaction ill_oact, ill_act;
@@ -255,15 +255,15 @@ void OPENSSL_cpuid_setup(void)
         return;
     trigger = 1;
 
-    if ((e = getenv("OPENSSL_ppccap"))) {
-        OPENSSL_ppccap_P = strtoul(e, NULL, 0);
+    if ((e = getenv("OPENtls_ppccap"))) {
+        OPENtls_ppccap_P = strtoul(e, NULL, 0);
         return;
     }
 
-    OPENSSL_ppccap_P = 0;
+    OPENtls_ppccap_P = 0;
 
 #if defined(_AIX)
-    OPENSSL_ppccap_P |= PPC_FPU;
+    OPENtls_ppccap_P |= PPC_FPU;
 
     if (sizeof(size_t) == 4) {
         struct utsname uts;
@@ -284,28 +284,28 @@ void OPENSSL_cpuid_setup(void)
     if (sizeof(size_t) == 4) {
         /* In 32-bit case PPC_FPU64 is always fastest [if option] */
         if (__power_set(0xffffffffU<<13))       /* POWER5 and later */
-            OPENSSL_ppccap_P |= PPC_FPU64;
+            OPENtls_ppccap_P |= PPC_FPU64;
     } else {
         /* In 64-bit case PPC_FPU64 is fastest only on POWER6 */
         if (__power_set(0x1U<<14))              /* POWER6 */
-            OPENSSL_ppccap_P |= PPC_FPU64;
+            OPENtls_ppccap_P |= PPC_FPU64;
     }
 
     if (__power_set(0xffffffffU<<14))           /* POWER6 and later */
-        OPENSSL_ppccap_P |= PPC_ALTIVEC;
+        OPENtls_ppccap_P |= PPC_ALTIVEC;
 
     if (__power_set(0xffffffffU<<16))           /* POWER8 and later */
-        OPENSSL_ppccap_P |= PPC_CRYPTO207;
+        OPENtls_ppccap_P |= PPC_CRYPTO207;
 
     if (__power_set(0xffffffffU<<17))           /* POWER9 and later */
-        OPENSSL_ppccap_P |= PPC_MADD300;
+        OPENtls_ppccap_P |= PPC_MADD300;
 
     return;
 # endif
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-    OPENSSL_ppccap_P |= PPC_FPU;
+    OPENtls_ppccap_P |= PPC_FPU;
 
     {
         int val;
@@ -313,47 +313,47 @@ void OPENSSL_cpuid_setup(void)
 
         if (sysctlbyname("hw.optional.64bitops", &val, &len, NULL, 0) == 0) {
             if (val)
-                OPENSSL_ppccap_P |= PPC_FPU64;
+                OPENtls_ppccap_P |= PPC_FPU64;
         }
 
         len = sizeof(val);
         if (sysctlbyname("hw.optional.altivec", &val, &len, NULL, 0) == 0) {
             if (val)
-                OPENSSL_ppccap_P |= PPC_ALTIVEC;
+                OPENtls_ppccap_P |= PPC_ALTIVEC;
         }
 
         return;
     }
 #endif
 
-#ifdef OSSL_IMPLEMENT_GETAUXVAL
+#ifdef Otls_IMPLEMENT_GETAUXVAL
     {
         unsigned long hwcap = getauxval(HWCAP);
         unsigned long hwcap2 = getauxval(HWCAP2);
 
         if (hwcap & HWCAP_FPU) {
-            OPENSSL_ppccap_P |= PPC_FPU;
+            OPENtls_ppccap_P |= PPC_FPU;
 
             if (sizeof(size_t) == 4) {
                 /* In 32-bit case PPC_FPU64 is always fastest [if option] */
                 if (hwcap & HWCAP_PPC64)
-                    OPENSSL_ppccap_P |= PPC_FPU64;
+                    OPENtls_ppccap_P |= PPC_FPU64;
             } else {
                 /* In 64-bit case PPC_FPU64 is fastest only on POWER6 */
                 if (hwcap & HWCAP_POWER6_EXT)
-                    OPENSSL_ppccap_P |= PPC_FPU64;
+                    OPENtls_ppccap_P |= PPC_FPU64;
             }
         }
 
         if (hwcap & HWCAP_ALTIVEC) {
-            OPENSSL_ppccap_P |= PPC_ALTIVEC;
+            OPENtls_ppccap_P |= PPC_ALTIVEC;
 
             if ((hwcap & HWCAP_VSX) && (hwcap2 & HWCAP_VEC_CRYPTO))
-                OPENSSL_ppccap_P |= PPC_CRYPTO207;
+                OPENtls_ppccap_P |= PPC_CRYPTO207;
         }
 
         if (hwcap2 & HWCAP_ARCH_3_00) {
-            OPENSSL_ppccap_P |= PPC_MADD300;
+            OPENtls_ppccap_P |= PPC_MADD300;
         }
     }
 #endif
@@ -375,10 +375,10 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
-#ifndef OSSL_IMPLEMENT_GETAUXVAL
+#ifndef Otls_IMPLEMENT_GETAUXVAL
     if (sigsetjmp(ill_jmp,1) == 0) {
-        OPENSSL_fpu_probe();
-        OPENSSL_ppccap_P |= PPC_FPU;
+        OPENtls_fpu_probe();
+        OPENtls_ppccap_P |= PPC_FPU;
 
         if (sizeof(size_t) == 4) {
 # ifdef __linux
@@ -386,8 +386,8 @@ void OPENSSL_cpuid_setup(void)
             if (uname(&uts) == 0 && strcmp(uts.machine, "ppc64") == 0)
 # endif
                 if (sigsetjmp(ill_jmp, 1) == 0) {
-                    OPENSSL_ppc64_probe();
-                    OPENSSL_ppccap_P |= PPC_FPU64;
+                    OPENtls_ppc64_probe();
+                    OPENtls_ppccap_P |= PPC_FPU64;
                 }
         } else {
             /*
@@ -397,26 +397,26 @@ void OPENSSL_cpuid_setup(void)
     }
 
     if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_altivec_probe();
-        OPENSSL_ppccap_P |= PPC_ALTIVEC;
+        OPENtls_altivec_probe();
+        OPENtls_ppccap_P |= PPC_ALTIVEC;
         if (sigsetjmp(ill_jmp, 1) == 0) {
-            OPENSSL_crypto207_probe();
-            OPENSSL_ppccap_P |= PPC_CRYPTO207;
+            OPENtls_crypto207_probe();
+            OPENtls_ppccap_P |= PPC_CRYPTO207;
         }
     }
 
     if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_madd300_probe();
-        OPENSSL_ppccap_P |= PPC_MADD300;
+        OPENtls_madd300_probe();
+        OPENtls_ppccap_P |= PPC_MADD300;
     }
 #endif
 
     if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_rdtsc_mftb();
-        OPENSSL_ppccap_P |= PPC_MFTB;
+        OPENtls_rdtsc_mftb();
+        OPENtls_ppccap_P |= PPC_MFTB;
     } else if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_rdtsc_mfspr268();
-        OPENSSL_ppccap_P |= PPC_MFSPR268;
+        OPENtls_rdtsc_mfspr268();
+        OPENtls_ppccap_P |= PPC_MFSPR268;
     }
 
     sigaction(SIGILL, &ill_oact, NULL);

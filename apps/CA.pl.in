@@ -1,10 +1,10 @@
 #!{- $config{HASHBANGPERL} -}
-# Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # Wrapper around the ca to make it easier to use
@@ -14,25 +14,25 @@
 use strict;
 use warnings;
 
-my $openssl = "openssl";
-if(defined $ENV{'OPENSSL'}) {
-    $openssl = $ENV{'OPENSSL'};
+my $opentls = "opentls";
+if(defined $ENV{'OPENtls'}) {
+    $opentls = $ENV{'OPENtls'};
 } else {
-    $ENV{'OPENSSL'} = $openssl;
+    $ENV{'OPENtls'} = $opentls;
 }
 
 my $verbose = 1;
 
-my $OPENSSL_CONFIG = $ENV{"OPENSSL_CONFIG"} || "";
+my $OPENtls_CONFIG = $ENV{"OPENtls_CONFIG"} || "";
 my $DAYS = "-days 365";
 my $CADAYS = "-days 1095";	# 3 years
-my $REQ = "$openssl req $OPENSSL_CONFIG";
-my $CA = "$openssl ca $OPENSSL_CONFIG";
-my $VERIFY = "$openssl verify";
-my $X509 = "$openssl x509";
-my $PKCS12 = "$openssl pkcs12";
+my $REQ = "$opentls req $OPENtls_CONFIG";
+my $CA = "$opentls ca $OPENtls_CONFIG";
+my $VERIFY = "$opentls verify";
+my $X509 = "$opentls x509";
+my $PKCS12 = "$opentls pkcs12";
 
-# default openssl.cnf file has setup as per the following
+# default opentls.cnf file has setup as per the following
 my $CATOP = "./demoCA";
 my $CAKEY = "cakey.pem";
 my $CAREQ = "careq.pem";
@@ -46,7 +46,7 @@ my $NEWCERT = "newcert.pem";
 my $NEWP12 = "newcert.p12";
 my $RET = 0;
 my $WHAT = shift @ARGV || "";
-my @OPENSSL_CMDS = ("req", "ca", "pkcs12", "x509", "verify");
+my @OPENtls_CMDS = ("req", "ca", "pkcs12", "x509", "verify");
 my %EXTRA = extra_args(\@ARGV, "-extra-");
 my $FILE;
 
@@ -61,7 +61,7 @@ sub extra_args {
 	    ();
 	}
     } reverse grep($$args_ref[$_] =~ /$arg_prefix/, 0..$#$args_ref);
-    my %empty = map { ($_, "") } @OPENSSL_CMDS;
+    my %empty = map { ($_, "") } @OPENtls_CMDS;
     return (%empty, %eargs);
 }
 

@@ -1,18 +1,18 @@
 /*
- * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "bn_local.h"
 #include "internal/nelem.h"
 
-#ifndef OPENSSL_NO_SRP
+#ifndef OPENtls_NO_SRP
 
-#include <openssl/srp.h>
+#include <opentls/srp.h>
 #include "crypto/bn_srp.h"
 
 # if (BN_BYTES == 8)
@@ -50,8 +50,8 @@ static const BN_ULONG bn_group_1024_value[] = {
 
 const BIGNUM bn_group_1024 = {
     (BN_ULONG *)bn_group_1024_value,
-    OSSL_NELEM(bn_group_1024_value),
-    OSSL_NELEM(bn_group_1024_value),
+    Otls_NELEM(bn_group_1024_value),
+    Otls_NELEM(bn_group_1024_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -85,8 +85,8 @@ static const BN_ULONG bn_group_1536_value[] = {
 
 const BIGNUM bn_group_1536 = {
     (BN_ULONG *)bn_group_1536_value,
-    OSSL_NELEM(bn_group_1536_value),
-    OSSL_NELEM(bn_group_1536_value),
+    Otls_NELEM(bn_group_1536_value),
+    Otls_NELEM(bn_group_1536_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -128,8 +128,8 @@ static const BN_ULONG bn_group_2048_value[] = {
 
 const BIGNUM bn_group_2048 = {
     (BN_ULONG *)bn_group_2048_value,
-    OSSL_NELEM(bn_group_2048_value),
-    OSSL_NELEM(bn_group_2048_value),
+    Otls_NELEM(bn_group_2048_value),
+    Otls_NELEM(bn_group_2048_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -187,8 +187,8 @@ static const BN_ULONG bn_group_3072_value[] = {
 
 const BIGNUM bn_group_3072 = {
     (BN_ULONG *)bn_group_3072_value,
-    OSSL_NELEM(bn_group_3072_value),
-    OSSL_NELEM(bn_group_3072_value),
+    Otls_NELEM(bn_group_3072_value),
+    Otls_NELEM(bn_group_3072_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -262,8 +262,8 @@ static const BN_ULONG bn_group_4096_value[] = {
 
 const BIGNUM bn_group_4096 = {
     (BN_ULONG *)bn_group_4096_value,
-    OSSL_NELEM(bn_group_4096_value),
-    OSSL_NELEM(bn_group_4096_value),
+    Otls_NELEM(bn_group_4096_value),
+    Otls_NELEM(bn_group_4096_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -369,8 +369,8 @@ static const BN_ULONG bn_group_6144_value[] = {
 
 const BIGNUM bn_group_6144 = {
     (BN_ULONG *)bn_group_6144_value,
-    OSSL_NELEM(bn_group_6144_value),
-    OSSL_NELEM(bn_group_6144_value),
+    Otls_NELEM(bn_group_6144_value),
+    Otls_NELEM(bn_group_6144_value),
     0,
     BN_FLG_STATIC_DATA
 };
@@ -508,8 +508,8 @@ static const BN_ULONG bn_group_8192_value[] = {
 
 const BIGNUM bn_group_8192 = {
     (BN_ULONG *)bn_group_8192_value,
-    OSSL_NELEM(bn_group_8192_value),
-    OSSL_NELEM(bn_group_8192_value),
+    Otls_NELEM(bn_group_8192_value),
+    Otls_NELEM(bn_group_8192_value),
     0,
     BN_FLG_STATIC_DATA
 };

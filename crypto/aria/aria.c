@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -18,13 +18,13 @@
  * Public domain version is distributed above.
  */
 
-#include <openssl/e_os2.h>
+#include <opentls/e_os2.h>
 #include "crypto/aria.h"
 
 #include <assert.h>
 #include <string.h>
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
+#ifndef OPENtls_SMALL_FOOTPRINT
 
 /* Begin macro */
 
@@ -924,7 +924,7 @@ static void xor128(ARIA_c128 o, const ARIA_c128 x, const ARIA_u128 *y)
  * Generalised circular rotate right and exclusive or function.
  * It is safe for the output to overlap either input.
  */
-static ossl_inline void rotnr(unsigned int n, ARIA_u128 *o,
+static otls_inline void rotnr(unsigned int n, ARIA_u128 *o,
                               const ARIA_u128 *xor, const ARIA_u128 *z)
 {
     const unsigned int bytes = n / 8, bits = n % 8;
@@ -1059,7 +1059,7 @@ static void a(ARIA_u128 *y, const ARIA_u128 *x)
  * Apply the first substitution layer and then a diffusion step.
  * It is safe for the input and output to overlap.
  */
-static ossl_inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
+static otls_inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
                            const ARIA_u128 *rk)
 {
     ARIA_u128 y;
@@ -1073,7 +1073,7 @@ static ossl_inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
  * Apply the second substitution layer and then a diffusion step.
  * It is safe for the input and output to overlap.
  */
-static ossl_inline void FE(ARIA_u128 *o, const ARIA_u128 *d,
+static otls_inline void FE(ARIA_u128 *o, const ARIA_u128 *d,
                            const ARIA_u128 *rk)
 {
     ARIA_u128 y;

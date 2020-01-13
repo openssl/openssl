@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # ====================================================================
-# Written by Andy Polyakov, @dot-asm, initially for use with OpenSSL.
+# Written by Andy Polyakov, @dot-asm, initially for use with Opentls.
 # ====================================================================
 #
 # ChaCha20 for Itanium.

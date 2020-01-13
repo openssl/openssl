@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <opentls/bn.h>
+#include <opentls/rsa.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
 
 int RSA_sign_ASN1_OCTET_STRING(int type,
                                const unsigned char *m, unsigned int m_len,
@@ -34,7 +34,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
                RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         return 0;
     }
-    s = OPENSSL_malloc((unsigned int)j + 1);
+    s = OPENtls_malloc((unsigned int)j + 1);
     if (s == NULL) {
         RSAerr(RSA_F_RSA_SIGN_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -47,7 +47,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     else
         *siglen = i;
 
-    OPENSSL_clear_free(s, (unsigned int)j + 1);
+    OPENtls_clear_free(s, (unsigned int)j + 1);
     return ret;
 }
 
@@ -67,7 +67,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
         return 0;
     }
 
-    s = OPENSSL_malloc((unsigned int)siglen);
+    s = OPENtls_malloc((unsigned int)siglen);
     if (s == NULL) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -90,6 +90,6 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     }
  err:
     ASN1_OCTET_STRING_free(sig);
-    OPENSSL_clear_free(s, (unsigned int)siglen);
+    OPENtls_clear_free(s, (unsigned int)siglen);
     return ret;
 }

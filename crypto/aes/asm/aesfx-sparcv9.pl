@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # March 2016
@@ -1124,7 +1124,7 @@ aes_fx_ctr32_encrypt_blocks:
 	.byte	0, 0, 56,  8,	0, 56,  8, -56
 .Lone:
 	.word	0, 1
-.asciz	"AES for Fujitsu SPARC64 X, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"AES for Fujitsu SPARC64 X, CRYPTOGAMS by <appro\@opentls.org>"
 .align	4
 ___
 }

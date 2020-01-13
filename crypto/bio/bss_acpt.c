@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
 typedef struct bio_accept_st {
     int state;
@@ -92,7 +92,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 {
     BIO_ACCEPT *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_zalloc(sizeof(*ret))) == NULL) {
         BIOerr(BIO_F_BIO_ACCEPT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -105,15 +105,15 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a)
 {
     if (a == NULL)
         return;
-    OPENSSL_free(a->param_addr);
-    OPENSSL_free(a->param_serv);
+    OPENtls_free(a->param_addr);
+    OPENtls_free(a->param_serv);
     BIO_ADDRINFO_free(a->addr_first);
-    OPENSSL_free(a->cache_accepting_name);
-    OPENSSL_free(a->cache_accepting_serv);
-    OPENSSL_free(a->cache_peer_name);
-    OPENSSL_free(a->cache_peer_serv);
+    OPENtls_free(a->cache_accepting_name);
+    OPENtls_free(a->cache_accepting_serv);
+    OPENtls_free(a->cache_peer_name);
+    OPENtls_free(a->cache_peer_serv);
     BIO_free(a->bio_chain);
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 static void acpt_close_socket(BIO *bio)
@@ -167,13 +167,13 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
              * are now obsolete and need to be cleaned out.
              * QUESTION: should this be done in acpt_close_socket() instead?
              */
-            OPENSSL_free(c->cache_accepting_name);
+            OPENtls_free(c->cache_accepting_name);
             c->cache_accepting_name = NULL;
-            OPENSSL_free(c->cache_accepting_serv);
+            OPENtls_free(c->cache_accepting_serv);
             c->cache_accepting_serv = NULL;
-            OPENSSL_free(c->cache_peer_name);
+            OPENtls_free(c->cache_peer_name);
             c->cache_peer_name = NULL;
-            OPENSSL_free(c->cache_peer_serv);
+            OPENtls_free(c->cache_peer_serv);
             c->cache_peer_serv = NULL;
 
             c->state = ACPT_S_GET_ADDR;
@@ -275,9 +275,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             BIO_clear_retry_flags(b);
             b->retry_reason = 0;
 
-            OPENSSL_free(c->cache_peer_name);
+            OPENtls_free(c->cache_peer_name);
             c->cache_peer_name = NULL;
-            OPENSSL_free(c->cache_peer_serv);
+            OPENtls_free(c->cache_peer_serv);
             c->cache_peer_serv = NULL;
 
             s = BIO_accept_ex(c->accept_sock, &c->cache_peer_addr,
@@ -421,18 +421,18 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
                  * string might contain a host:service spec, so we must
                  * parse it, which might or might not affect the service
                  */
-                OPENSSL_free(data->param_addr);
+                OPENtls_free(data->param_addr);
                 data->param_addr = NULL;
                 ret = BIO_parse_hostserv(ptr,
                                          &data->param_addr,
                                          &data->param_serv,
                                          BIO_PARSE_PRIO_SERV);
                 if (hold_serv != data->param_serv)
-                    OPENSSL_free(hold_serv);
+                    OPENtls_free(hold_serv);
                 b->init = 1;
             } else if (num == 1) {
-                OPENSSL_free(data->param_serv);
-                data->param_serv = OPENSSL_strdup(ptr);
+                OPENtls_free(data->param_serv);
+                data->param_serv = OPENtls_strdup(ptr);
                 b->init = 1;
             } else if (num == 2) {
                 data->bind_mode |= BIO_SOCK_NONBLOCK;

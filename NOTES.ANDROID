@@ -48,7 +48,7 @@
     ./Configure android-arm -D__ANDROID_API__=14
     make
 
- Caveat lector! Earlier OpenSSL versions relied on additional CROSS_SYSROOT
+ Caveat lector! Earlier Opentls versions relied on additional CROSS_SYSROOT
  variable set to $ANDROID_NDK_HOME/platforms/android-<api>/arch-<arch> to
  appoint headers-n-libraries' location. It's still recognized in order
  to facilitate migration from older projects. However, since API level

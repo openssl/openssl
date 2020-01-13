@@ -1,13 +1,13 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "apps.h"
 #include "progs.h"
 
@@ -53,35 +53,35 @@ opthelp:
             ret = 0;
             goto end;
         case OPT_CONFIGDIR:
-            type = OPENSSL_INFO_CONFIG_DIR;
+            type = OPENtls_INFO_CONFIG_DIR;
             dirty++;
             break;
         case OPT_ENGINESDIR:
-            type = OPENSSL_INFO_ENGINES_DIR;
+            type = OPENtls_INFO_ENGINES_DIR;
             dirty++;
             break;
         case OPT_MODULESDIR:
-            type = OPENSSL_INFO_MODULES_DIR;
+            type = OPENtls_INFO_MODULES_DIR;
             dirty++;
             break;
         case OPT_DSOEXT:
-            type = OPENSSL_INFO_DSO_EXTENSION;
+            type = OPENtls_INFO_DSO_EXTENSION;
             dirty++;
             break;
         case OPT_DIRNAMESEP:
-            type = OPENSSL_INFO_DIR_FILENAME_SEPARATOR;
+            type = OPENtls_INFO_DIR_FILENAME_SEPARATOR;
             dirty++;
             break;
         case OPT_LISTSEP:
-            type = OPENSSL_INFO_LIST_SEPARATOR;
+            type = OPENtls_INFO_LIST_SEPARATOR;
             dirty++;
             break;
         case OPT_SEEDS:
-            type = OPENSSL_INFO_SEED_SOURCE;
+            type = OPENtls_INFO_SEED_SOURCE;
             dirty++;
             break;
         case OPT_CPUSETTINGS:
-            type = OPENSSL_INFO_CPU_SETTINGS;
+            type = OPENtls_INFO_CPU_SETTINGS;
             dirty++;
             break;
         }
@@ -99,7 +99,7 @@ opthelp:
         goto opthelp;
     }
 
-    BIO_printf(bio_out, "%s\n", OPENSSL_info(type));
+    BIO_printf(bio_out, "%s\n", OPENtls_info(type));
     ret = 0;
  end:
     return ret;

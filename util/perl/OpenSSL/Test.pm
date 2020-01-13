@@ -1,11 +1,11 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::Test;
+package Opentls::Test;
 
 use strict;
 use warnings;
@@ -22,20 +22,20 @@ $VERSION = "1.0";
                                          srctop_dir srctop_file
                                          data_file data_dir
                                          pipe with cmdstr quotify
-                                         openssl_versions
+                                         opentls_versions
                                          ok_nofips is_nofips isnt_nofips));
 
 =head1 NAME
 
-OpenSSL::Test - a private extension of Test::More
+Opentls::Test - a private extension of Test::More
 
 =head1 SYNOPSIS
 
-  use OpenSSL::Test;
+  use Opentls::Test;
 
   setup("my_test_name");
 
-  ok(run(app(["openssl", "version"])), "check for openssl presence");
+  ok(run(app(["opentls", "version"])), "check for opentls presence");
 
   indir "subdir" => sub {
     ok(run(test(["sometest", "arg1"], stdout => "foo.txt")),
@@ -44,9 +44,9 @@ OpenSSL::Test - a private extension of Test::More
 
 =head1 DESCRIPTION
 
-This module is a private extension of L<Test::More> for testing OpenSSL.
+This module is a private extension of L<Test::More> for testing Opentls.
 In addition to the Test::More functions, it also provides functions that
-easily find the diverse programs within a OpenSSL build tree, as well as
+easily find the diverse programs within a Opentls build tree, as well as
 some other useful functions.
 
 This module I<depends> on the environment variables C<$TOP> or C<$SRCTOP>
@@ -107,7 +107,7 @@ my $debug = 0;
 
 =head2 Main functions
 
-The following functions are exported by default when using C<OpenSSL::Test>.
+The following functions are exported by default when using C<Opentls::Test>.
 
 =cut
 
@@ -116,7 +116,7 @@ The following functions are exported by default when using C<OpenSSL::Test>.
 =item B<setup "NAME">
 
 C<setup> is used for initial setup, and it is mandatory that it's used.
-If it's not used in a OpenSSL test recipe, the rest of the recipe will
+If it's not used in a Opentls test recipe, the rest of the recipe will
 most likely refuse to run.
 
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
@@ -181,12 +181,12 @@ is executed.
 An example:
 
   indir "foo" => sub {
-      ok(run(app(["openssl", "version"]), stdout => "foo.txt"));
+      ok(run(app(["opentls", "version"]), stdout => "foo.txt"));
       if (ok(open(RESULT, "foo.txt"), "reading foo.txt")) {
           my $line = <RESULT>;
           close RESULT;
-          is($line, qr/^OpenSSL 1\./,
-             "check that we're using OpenSSL 1.x.x");
+          is($line, qr/^Opentls 1\./,
+             "check that we're using Opentls 1.x.x");
       }
   }, create => 1, cleanup => 1;
 
@@ -258,7 +258,7 @@ or C<$BLDTOP/test>).
 
 Also, for both C<app> and C<test>, the command may be prefixed with
 the content of the environment variable C<$EXE_SHELL>, which is useful
-in case OpenSSL has been cross compiled.
+in case Opentls has been cross compiled.
 
 =item B<perlapp ARRAYREF, OPTS>
 
@@ -295,13 +295,13 @@ we want to make sure the directory in which those programs are found are
 correct at the time these commands are used.  Consider the following code
 snippet:
 
-  my $cmd = app(["openssl", ...]);
+  my $cmd = app(["opentls", ...]);
 
   indir "foo", sub {
       ok(run($cmd), "Testing foo")
   };
 
-If there wasn't this lazy evaluation, the directory where C<openssl> is
+If there wasn't this lazy evaluation, the directory where C<opentls> is
 found would be incorrect at the time C<run> is called, because it was
 calculated before we moved into the directory "foo".
 
@@ -443,7 +443,7 @@ sub run {
     my $r = 0;
     my $e = 0;
 
-    die "OpenSSL::Test::run(): statusvar value not a scalar reference"
+    die "Opentls::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
     # For some reason, program output, or even output from this function
@@ -463,7 +463,7 @@ sub run {
         }
     }
 
-    $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
+    $ENV{HARNESS_Otls_LEVEL} = $level + 1;
 
     # The dance we do with $? is the same dance the Unix shells appear to
     # do.  For example, a program that gets aborted (and therefore signals
@@ -484,9 +484,9 @@ sub run {
 	}
 	close $pipe;
     } else {
-	$ENV{HARNESS_OSSL_PREFIX} = "# ";
+	$ENV{HARNESS_Otls_PREFIX} = "# ";
 	system("$prefix$cmd");
-	delete $ENV{HARNESS_OSSL_PREFIX};
+	delete $ENV{HARNESS_Otls_PREFIX};
     }
     $e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     $r = $hooks{exit_checker}->($e);
@@ -531,13 +531,13 @@ END {
 
 =head2 Utility functions
 
-The following functions are exported on request when using C<OpenSSL::Test>.
+The following functions are exported on request when using C<Opentls::Test>.
 
   # To only get the bldtop_file and srctop_file functions.
-  use OpenSSL::Test qw/bldtop_file srctop_file/;
+  use Opentls::Test qw/bldtop_file srctop_file/;
 
   # To only get the bldtop_file function in addition to the default ones.
-  use OpenSSL::Test qw/:DEFAULT bldtop_file/;
+  use Opentls::Test qw/:DEFAULT bldtop_file/;
 
 =cut
 
@@ -547,7 +547,7 @@ The following functions are exported on request when using C<OpenSSL::Test>.
 
 =item B<bldtop_dir LIST>
 
-LIST is a list of directories that make up a path from the top of the OpenSSL
+LIST is a list of directories that make up a path from the top of the Opentls
 build directory (as indicated by the environment variable C<$TOP> or
 C<$BLDTOP>).
 C<bldtop_dir> returns the resulting directory as a string, adapted to the local
@@ -566,7 +566,7 @@ sub bldtop_dir {
 
 =item B<bldtop_file LIST, FILENAME>
 
-LIST is a list of directories that make up a path from the top of the OpenSSL
+LIST is a list of directories that make up a path from the top of the Opentls
 build directory (as indicated by the environment variable C<$TOP> or
 C<$BLDTOP>) and FILENAME is the name of a file located in that directory path.
 C<bldtop_file> returns the resulting file path as a string, adapted to the local
@@ -584,7 +584,7 @@ sub bldtop_file {
 
 =item B<srctop_dir LIST>
 
-LIST is a list of directories that make up a path from the top of the OpenSSL
+LIST is a list of directories that make up a path from the top of the Opentls
 source directory (as indicated by the environment variable C<$TOP> or
 C<$SRCTOP>).
 C<srctop_dir> returns the resulting directory as a string, adapted to the local
@@ -603,7 +603,7 @@ sub srctop_dir {
 
 =item B<srctop_file LIST, FILENAME>
 
-LIST is a list of directories that make up a path from the top of the OpenSSL
+LIST is a list of directories that make up a path from the top of the Opentls
 source directory (as indicated by the environment variable C<$TOP> or
 C<$SRCTOP>) and FILENAME is the name of a file located in that directory path.
 C<srctop_file> returns the resulting file path as a string, adapted to the local
@@ -820,10 +820,10 @@ sub quotify {
 
 =over 4
 
-=item B<openssl_versions>
+=item B<opentls_versions>
 
 Returns a list of two version numbers, the first representing the build
-version, the second representing the library version.  See opensslv.h for
+version, the second representing the library version.  See opentlsv.h for
 more information on those numbers.
 
 =back
@@ -831,7 +831,7 @@ more information on those numbers.
 =cut
 
 my @versions = ();
-sub openssl_versions {
+sub opentls_versions {
     unless (@versions) {
         my %lines =
             map { s/\R$//;
@@ -905,7 +905,7 @@ sub isnt_nofips {
 
 =head1 ENVIRONMENT
 
-OpenSSL::Test depends on some environment variables.
+Opentls::Test depends on some environment variables.
 
 =over 4
 
@@ -917,7 +917,7 @@ If this isn't so, C<setup> will C<BAIL_OUT>.
 
 =item B<BIN_D>
 
-If defined, its value should be the directory where the openssl application
+If defined, its value should be the directory where the opentls application
 is located.  Defaults to C<$TOP/apps> (adapted to the operating system).
 
 =item B<TEST_D>
@@ -1276,8 +1276,8 @@ L<Test::More>, L<Test::Harness>
 
 =head1 AUTHORS
 
-Richard Levitte E<lt>levitte@openssl.orgE<gt> with assistance and
-inspiration from Andy Polyakov E<lt>appro@openssl.org<gt>.
+Richard Levitte E<lt>levitte@opentls.orgE<gt> with assistance and
+inspiration from Andy Polyakov E<lt>appro@opentls.org<gt>.
 
 =cut
 

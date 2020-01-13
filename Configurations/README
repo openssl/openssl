@@ -5,7 +5,7 @@ This directory contains a few sets of files that are used for
 configuration in diverse ways:
 
     *.conf      Target platform configurations, please read
-                'Configurations of OpenSSL target platforms' for more
+                'Configurations of Opentls target platforms' for more
                 information.
     *.tmpl      Build file templates, please read 'Build-file
                 programming with the "unified" build system' as well
@@ -15,7 +15,7 @@ configuration in diverse ways:
                 information.
 
 
-Configurations of OpenSSL target platforms
+Configurations of Opentls target platforms
 ==========================================
 
 Configuration targets are a collection of facts that we know about
@@ -130,21 +130,21 @@ In each table entry, the following keys are significant:
         shlib_variant   => A "variant" identifier inserted between the base
                            shared library name and the extension.  On "unixy"
                            platforms (BSD, Linux, Solaris, MacOS/X, ...) this
-                           supports installation of custom OpenSSL libraries
-                           that don't conflict with other builds of OpenSSL
+                           supports installation of custom Opentls libraries
+                           that don't conflict with other builds of Opentls
                            installed on the system.  The variant identifier
                            becomes part of the SONAME of the library and also
                            any symbol versions (symbol versions are not used or
                            needed with MacOS/X).  For example, on a system
-                           where a default build would normally create the SSL
-                           shared library as 'libssl.so -> libssl.so.1.1' with
+                           where a default build would normally create the tls
+                           shared library as 'libtls.so -> libtls.so.1.1' with
                            the value of the symlink as the SONAME, a target
                            definition that sets 'shlib_variant => "-abc"' will
-                           create 'libssl.so -> libssl-abc.so.1.1', again with
+                           create 'libtls.so -> libtls-abc.so.1.1', again with
                            an SONAME equal to the value of the symlink.  The
                            symbol versions associated with the variant library
-                           would then be 'OPENSSL_ABC_<version>' rather than
-                           the default 'OPENSSL_<version>'. The string inserted
+                           would then be 'OPENtls_ABC_<version>' rather than
+                           the default 'OPENtls_<version>'. The string inserted
                            into symbol versions is obtained by mapping all
                            letters in the "variant" identifier to upper case
                            and all non-alphanumeric characters to '_'.
@@ -290,18 +290,18 @@ In each table entry, the following keys are significant:
                 ignored => ""
         }
 
-[2] OpenSSL is built with threading capabilities unless the user
+[2] Opentls is built with threading capabilities unless the user
     specifies 'no-threads'.  The value of the key 'thread_scheme' may
     be "(unknown)", in which case the user MUST give some compilation
     flags to Configure.
 
-[3] OpenSSL has three types of things to link from object files or
+[3] Opentls has three types of things to link from object files or
     static libraries:
 
-    - shared libraries; that would be libcrypto and libssl.
+    - shared libraries; that would be libcrypto and libtls.
     - shared objects (sometimes called dynamic libraries);  that would
       be the modules.
-    - applications; those are apps/openssl and all the test apps.
+    - applications; those are apps/opentls and all the test apps.
 
     Very roughly speaking, linking is done like this (words in braces
     represent the configuration settings documented at the beginning
@@ -317,7 +317,7 @@ In each table entry, the following keys are significant:
 
     applications:
         {ld} $(CFLAGS) {lflags} -o app \
-            app1.o utils.o -lssl -lcrypto {ex_libs}
+            app1.o utils.o -ltls -lcrypto {ex_libs}
 
 [4] There are variants of these attribute, prefixed with `lib_',
     `dso_' or `bin_'.  Those variants replace the unprefixed attribute
@@ -334,7 +334,7 @@ Build info files
 ================
 
 The build.info files that are spread over the source tree contain the
-minimum information needed to build and distribute OpenSSL.  It uses a
+minimum information needed to build and distribute Opentls.  It uses a
 simple and yet fairly powerful language to determine what needs to be
 built, from what sources, and other relationships between files.
 

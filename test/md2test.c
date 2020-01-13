@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,18 +15,18 @@
 
 #include <string.h>
 
-#include <openssl/provider.h>
+#include <opentls/provider.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-static OSSL_PROVIDER *prov = NULL;
+static Otls_PROVIDER *prov = NULL;
 
-#ifndef OPENSSL_NO_MD2
-# include <openssl/evp.h>
-# include <openssl/md2.h>
+#ifndef OPENtls_NO_MD2
+# include <opentls/evp.h>
+# include <opentls/md2.h>
 
 # ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
+#  include <opentls/ebcdic.h>
 # endif
 
 static char *test[] = {
@@ -69,19 +69,19 @@ static int test_md2(int n)
 
 int global_init(void)
 {
-    prov = OSSL_PROVIDER_load(NULL, "legacy");
+    prov = Otls_PROVIDER_load(NULL, "legacy");
 
     return prov != NULL;
 }
 void cleanup_tests(void)
 {
-    OSSL_PROVIDER_unload(prov);
+    Otls_PROVIDER_unload(prov);
 }
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_MD2
-    ADD_ALL_TESTS(test_md2, OSSL_NELEM(test));
+#ifndef OPENtls_NO_MD2
+    ADD_ALL_TESTS(test_md2, Otls_NELEM(test));
 #endif
     return 1;
 }

@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* This must be the first #include file */
@@ -36,7 +36,7 @@ int async_fibre_makecontext(async_fibre *fibre)
 {
     fibre->env_init = 0;
     if (getcontext(&fibre->fibre) == 0) {
-        fibre->fibre.uc_stack.ss_sp = OPENSSL_malloc(STACKSIZE);
+        fibre->fibre.uc_stack.ss_sp = OPENtls_malloc(STACKSIZE);
         if (fibre->fibre.uc_stack.ss_sp != NULL) {
             fibre->fibre.uc_stack.ss_size = STACKSIZE;
             fibre->fibre.uc_link = NULL;
@@ -51,7 +51,7 @@ int async_fibre_makecontext(async_fibre *fibre)
 
 void async_fibre_free(async_fibre *fibre)
 {
-    OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
+    OPENtls_free(fibre->fibre.uc_stack.ss_sp);
     fibre->fibre.uc_stack.ss_sp = NULL;
 }
 

@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* EME-OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
@@ -24,10 +24,10 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
+#include <opentls/sha.h>
 #include "rsa_local.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
@@ -95,7 +95,7 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         goto err;
 
     dbmask_len = emlen - mdlen;
-    dbmask = OPENSSL_malloc(dbmask_len);
+    dbmask = OPENtls_malloc(dbmask_len);
     if (dbmask == NULL) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -117,8 +117,8 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     rv = 1;
 
  err:
-    OPENSSL_cleanse(seedmask, sizeof(seedmask));
-    OPENSSL_clear_free(dbmask, dbmask_len);
+    OPENtls_cleanse(seedmask, sizeof(seedmask));
+    OPENtls_clear_free(dbmask, dbmask_len);
     return rv;
 }
 
@@ -171,13 +171,13 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     }
 
     dblen = num - mdlen - 1;
-    db = OPENSSL_malloc(dblen);
+    db = OPENtls_malloc(dblen);
     if (db == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
-    em = OPENSSL_malloc(num);
+    em = OPENtls_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
                ERR_R_MALLOC_FAILURE);
@@ -280,9 +280,9 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
            RSA_R_OAEP_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
  cleanup:
-    OPENSSL_cleanse(seed, sizeof(seed));
-    OPENSSL_clear_free(db, dblen);
-    OPENSSL_clear_free(em, num);
+    OPENtls_cleanse(seed, sizeof(seed));
+    OPENtls_clear_free(db, dblen);
+    OPENtls_clear_free(em, num);
 
     return constant_time_select_int(good, mlen, -1);
 }
@@ -334,7 +334,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
     }
     rv = 0;
  err:
-    OPENSSL_cleanse(md, sizeof(md));
+    OPENtls_cleanse(md, sizeof(md));
     EVP_MD_CTX_free(c);
     return rv;
 }

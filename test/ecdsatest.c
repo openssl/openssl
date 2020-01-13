@@ -1,22 +1,22 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+#include <opentls/opentlsconf.h> /* To see if OPENtls_NO_EC is defined */
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 
-# include <openssl/evp.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/rand.h>
+# include <opentls/evp.h>
+# include <opentls/bn.h>
+# include <opentls/ec.h>
+# include <opentls/rand.h>
 # include "internal/nelem.h"
 # include "ecdsatest.h"
 
@@ -64,14 +64,14 @@ static int fbytes(unsigned char *buf, int num)
     use_fake = 0;
 
     if (!TEST_ptr(tmp = BN_new())
-        || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
+        || !TEST_int_lt(fbytes_counter, Otls_NELEM(numbers))
         || !TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))
         /* tmp might need leading zeros so pad it out */
         || !TEST_int_le(BN_num_bytes(tmp), num)
         || !TEST_true(BN_bn2binpad(tmp, buf, num)))
         goto err;
 
-    fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
+    fbytes_counter = (fbytes_counter + 1) % Otls_NELEM(numbers);
     ret = 1;
  err:
     BN_free(tmp);
@@ -125,7 +125,7 @@ static int x9_62_tests(int n)
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */
-        || !TEST_ptr(message = OPENSSL_hexstr2buf(tbs, &msg_len))
+        || !TEST_ptr(message = OPENtls_hexstr2buf(tbs, &msg_len))
         || !TEST_true(EVP_DigestInit_ex(mctx, EVP_get_digestbynid(md_nid), NULL))
         || !TEST_true(EVP_DigestUpdate(mctx, message, msg_len))
         || !TEST_true(EVP_DigestFinal_ex(mctx, digest, &dgst_len))
@@ -145,7 +145,7 @@ static int x9_62_tests(int n)
     if (!TEST_true(EC_KEY_generate_key(key))
         || !TEST_true(p_len = EC_KEY_key2buf(key, POINT_CONVERSION_UNCOMPRESSED,
                                              &pbuf, NULL))
-        || !TEST_ptr(qbuf = OPENSSL_hexstr2buf(ecdsa_cavs_kats[n].Q, &q_len))
+        || !TEST_ptr(qbuf = OPENtls_hexstr2buf(ecdsa_cavs_kats[n].Q, &q_len))
         || !TEST_int_eq(q_len, p_len)
         || !TEST_mem_eq(qbuf, q_len, pbuf, p_len))
         goto err;
@@ -172,9 +172,9 @@ static int x9_62_tests(int n)
     if (!TEST_true(restore_rand()))
         ret = 0;
 
-    OPENSSL_free(message);
-    OPENSSL_free(pbuf);
-    OPENSSL_free(qbuf);
+    OPENtls_free(message);
+    OPENtls_free(pbuf);
+    OPENtls_free(qbuf);
     EC_KEY_free(key);
     ECDSA_SIG_free(signature);
     BN_free(r);
@@ -240,7 +240,7 @@ static int test_builtin(int n)
     temp = ECDSA_size(eckey);
 
     if (!TEST_int_ge(temp, 0)
-        || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
+        || !TEST_ptr(sig = OPENtls_malloc(sig_len = (size_t)temp))
         /* create a signature */
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))
@@ -317,30 +317,30 @@ static int test_builtin(int n)
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(pkey_neg);
     EVP_MD_CTX_free(mctx);
-    OPENSSL_free(sig);
+    OPENtls_free(sig);
     return ret;
 }
 #endif
 
 int setup_tests(void)
 {
-#ifdef OPENSSL_NO_EC
+#ifdef OPENtls_NO_EC
     TEST_note("Elliptic curves are disabled.");
 #else
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
-    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+    if (!TEST_ptr(curves = OPENtls_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
     ADD_ALL_TESTS(test_builtin, crv_len);
-    ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
+    ADD_ALL_TESTS(x9_62_tests, Otls_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;
 }
 
 void cleanup_tests(void)
 {
-#ifndef OPENSSL_NO_EC
-    OPENSSL_free(curves);
+#ifndef OPENtls_NO_EC
+    OPENtls_free(curves);
 #endif
 }

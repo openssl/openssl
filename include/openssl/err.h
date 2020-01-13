@@ -1,38 +1,38 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_ERR_H
-# define OPENSSL_ERR_H
+#ifndef OPENtls_ERR_H
+# define OPENtls_ERR_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_ERR_H
 # endif
 
-# include <openssl/e_os2.h>
+# include <opentls/e_os2.h>
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 #  include <stdio.h>
 #  include <stdlib.h>
 # endif
 
-# include <openssl/types.h>
-# include <openssl/bio.h>
-# include <openssl/lhash.h>
+# include <opentls/types.h>
+# include <opentls/bio.h>
+# include <opentls/lhash.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  ifndef OPENSSL_NO_FILENAMES
+# ifndef OPENtls_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_FILENAMES
 #   define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,fn,ln)
 #  else
 #   define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,NULL,0)
@@ -44,7 +44,7 @@ extern "C" {
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
 
-# if !defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OSSL_FORCE_ERR_STATE)
+# if !defined(OPENtls_NO_DEPRECATED_3_0) || defined(Otls_FORCE_ERR_STATE)
 #  define ERR_FLAG_MARK           0x01
 #  define ERR_FLAG_CLEAR          0x02
 
@@ -79,10 +79,10 @@ struct err_state_st {
 # define ERR_LIB_CONF            14
 # define ERR_LIB_CRYPTO          15
 # define ERR_LIB_EC              16
-# define ERR_LIB_SSL             20
-/* #define ERR_LIB_SSL23        21 */
-/* #define ERR_LIB_SSL2         22 */
-/* #define ERR_LIB_SSL3         23 */
+# define ERR_LIB_tls             20
+/* #define ERR_LIB_tls23        21 */
+/* #define ERR_LIB_tls2         22 */
+/* #define ERR_LIB_tls3         23 */
 /* #define ERR_LIB_RSAREF       30 */
 /* #define ERR_LIB_PROXY        31 */
 # define ERR_LIB_BIO             32
@@ -97,7 +97,7 @@ struct err_state_st {
 # define ERR_LIB_COMP            41
 # define ERR_LIB_ECDSA           42
 # define ERR_LIB_ECDH            43
-# define ERR_LIB_OSSL_STORE      44
+# define ERR_LIB_Otls_STORE      44
 # define ERR_LIB_FIPS            45
 # define ERR_LIB_CMS             46
 # define ERR_LIB_TS              47
@@ -112,11 +112,11 @@ struct err_state_st {
 # define ERR_LIB_CRMF            56
 # define ERR_LIB_PROV            57
 # define ERR_LIB_CMP             58
-# define ERR_LIB_OSSL_SERIALIZER 59
+# define ERR_LIB_Otls_SERIALIZER 59
 
 # define ERR_LIB_USER            128
 
-# if 1 || !defined(OPENSSL_NO_DEPRECATED_3_0)
+# if 1 || !defined(OPENtls_NO_DEPRECATED_3_0)
 #  define ASN1err(f, r) ERR_raise_data(ERR_LIB_ASN1, (r), NULL)
 #  define ASYNCerr(f, r) ERR_raise_data(ERR_LIB_ASYNC, (r), NULL)
 #  define BIOerr(f, r) ERR_raise_data(ERR_LIB_BIO, (r), NULL)
@@ -143,7 +143,7 @@ struct err_state_st {
 #  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define OBJerr(f, r) ERR_raise_data(ERR_LIB_OBJ, (r), NULL)
 #  define OCSPerr(f, r) ERR_raise_data(ERR_LIB_OCSP, (r), NULL)
-#  define OSSL_STOREerr(f, r) ERR_raise_data(ERR_LIB_OSSL_STORE, (r), NULL)
+#  define Otls_STOREerr(f, r) ERR_raise_data(ERR_LIB_Otls_STORE, (r), NULL)
 #  define PEMerr(f, r) ERR_raise_data(ERR_LIB_PEM, (r), NULL)
 #  define PKCS12err(f, r) ERR_raise_data(ERR_LIB_PKCS12, (r), NULL)
 #  define PKCS7err(f, r) ERR_raise_data(ERR_LIB_PKCS7, (r), NULL)
@@ -153,7 +153,7 @@ struct err_state_st {
 #  define RSAerr(f, r) ERR_raise_data(ERR_LIB_RSA, (r), NULL)
 #  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define SM2err(f, r) ERR_raise_data(ERR_LIB_SM2, (r), NULL)
-#  define SSLerr(f, r) ERR_raise_data(ERR_LIB_SSL, (r), NULL)
+#  define tlserr(f, r) ERR_raise_data(ERR_LIB_tls, (r), NULL)
 #  define SYSerr(f, r) ERR_raise_data(ERR_LIB_SYS, (r), NULL)
 #  define TSerr(f, r) ERR_raise_data(ERR_LIB_TS, (r), NULL)
 #  define UIerr(f, r) ERR_raise_data(ERR_LIB_UI, (r), NULL)
@@ -170,7 +170,7 @@ struct err_state_st {
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define SYS_F_FOPEN             0
 #  define SYS_F_CONNECT           0
 #  define SYS_F_GETSERVBYNAME     0
@@ -217,7 +217,7 @@ struct err_state_st {
 # define ERR_R_ENGINE_LIB ERR_LIB_ENGINE/* 38 */
 # define ERR_R_UI_LIB    ERR_LIB_UI/* 40 */
 # define ERR_R_ECDSA_LIB ERR_LIB_ECDSA/* 42 */
-# define ERR_R_OSSL_STORE_LIB ERR_LIB_OSSL_STORE/* 44 */
+# define ERR_R_Otls_STORE_LIB ERR_LIB_Otls_STORE/* 44 */
 
 # define ERR_R_NESTED_ASN1_ERROR                 58
 # define ERR_R_MISSING_ASN1_EOS                  63
@@ -260,14 +260,14 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
 # define ERR_raise(lib, reason) ERR_raise_data((lib),(reason),NULL)
 # define ERR_raise_data                                         \
     (ERR_new(),                                                 \
-     ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
+     ERR_set_debug(OPENtls_FILE,OPENtls_LINE,OPENtls_FUNC),     \
      ERR_set_error)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 /* Backward compatibility */
 #  define ERR_put_error(lib, func, reason, file, line)          \
     (ERR_new(),                                                 \
-     ERR_set_debug((file), (line), OPENSSL_FUNC),               \
+     ERR_set_debug((file), (line), OPENtls_FUNC),               \
      ERR_set_error((lib), (reason), NULL))
 # endif
 
@@ -324,7 +324,7 @@ const char *ERR_reason_error_string(unsigned long e);
 
 void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
                          void *u);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 void ERR_print_errors_fp(FILE *fp);
 # endif
 void ERR_print_errors(BIO *bp);
@@ -337,9 +337,9 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str);
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_ERR_strings(void);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 # define ERR_load_crypto_strings() \
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL)
 # define ERR_free_strings() while(0) continue
 #endif
 

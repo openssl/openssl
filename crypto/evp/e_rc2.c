@@ -1,21 +1,21 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 
-#ifndef OPENSSL_NO_RC2
+#ifndef OPENtls_NO_RC2
 
-# include <openssl/evp.h>
-# include <openssl/objects.h>
+# include <opentls/evp.h>
+# include <opentls/objects.h>
 # include "crypto/evp.h"
-# include <openssl/rc2.h>
+# include <opentls/rc2.h>
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc);
@@ -128,7 +128,7 @@ static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
     if (type != NULL) {
         l = EVP_CIPHER_CTX_iv_length(c);
-        OPENSSL_assert(l <= sizeof(iv));
+        OPENtls_assert(l <= sizeof(iv));
         i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);
         if (i != (int)l)
             return -1;

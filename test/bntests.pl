@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-# Run the tests specified in bntests.txt, as a check against OpenSSL.
+# Run the tests specified in bntests.txt, as a check against Opentls.
 use strict;
 use warnings;
 use Math::BigInt;
@@ -75,9 +75,9 @@ sub evaluate
         my $rempassed = $remainder == $a->bsub($b) ? 1 : 0;
 
         # Math::BigInt->bdiv() is documented to do floored division,
-        # i.e. 1 / -4 = -1, while OpenSSL BN_div does truncated
+        # i.e. 1 / -4 = -1, while Opentls BN_div does truncated
         # division, i.e. 1 / -4 = 0.  We need to make the operation
-        # work like OpenSSL's BN_div to be able to verify.
+        # work like Opentls's BN_div to be able to verify.
         $a = bn($s{'A'});
         $b = bn($s{'B'});
         my $neg = $a->is_neg() ? !$b->is_neg() : $b->is_neg();

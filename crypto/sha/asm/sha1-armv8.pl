@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA1 for ARMv8.
@@ -177,7 +177,7 @@ ___
 $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
-.extern OPENSSL_armcap_P
+.extern OPENtls_armcap_P
 #endif
 
 .text
@@ -186,8 +186,8 @@ $code.=<<___;
 .type	sha1_block_data_order,%function
 .align	6
 sha1_block_data_order:
-	adrp	x16,OPENSSL_armcap_P
-	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
+	adrp	x16,OPENtls_armcap_P
+	ldr	w16,[x16,#:lo12:OPENtls_armcap_P]
 	tst	w16,#ARMV8_SHA1
 	b.ne	.Lv8_entry
 
@@ -321,10 +321,10 @@ $code.=<<___;
 .long	0x6ed9eba1,0x6ed9eba1,0x6ed9eba1,0x6ed9eba1	//K_20_39
 .long	0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc	//K_40_59
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	//K_60_79
-.asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@opentls.org>"
 .align	2
 #if !defined(__KERNELL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
+.comm	OPENtls_armcap_P,4,4
 #endif
 ___
 }}}

@@ -1,24 +1,24 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 
-typedef struct ossl_namemap_st OSSL_NAMEMAP;
+typedef struct otls_namemap_st Otls_NAMEMAP;
 
-OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
+Otls_NAMEMAP *otls_namemap_stored(OPENtls_CTX *libctx);
 
-OSSL_NAMEMAP *ossl_namemap_new(void);
-void ossl_namemap_free(OSSL_NAMEMAP *namemap);
-int ossl_namemap_empty(OSSL_NAMEMAP *namemap);
+Otls_NAMEMAP *otls_namemap_new(void);
+void otls_namemap_free(Otls_NAMEMAP *namemap);
+int otls_namemap_empty(Otls_NAMEMAP *namemap);
 
-int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name);
-int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
+int otls_namemap_add_name(Otls_NAMEMAP *namemap, int number, const char *name);
+int otls_namemap_add_name_n(Otls_NAMEMAP *namemap, int number,
                             const char *name, size_t name_len);
 
 /*
@@ -26,12 +26,12 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
  * Therefore, the name->number mapping is a simple function, while the
  * number->name mapping is an iterator.
  */
-int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
-int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
+int otls_namemap_name2num(const Otls_NAMEMAP *namemap, const char *name);
+int otls_namemap_name2num_n(const Otls_NAMEMAP *namemap,
                             const char *name, size_t name_len);
-const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
+const char *otls_namemap_num2name(const Otls_NAMEMAP *namemap, int number,
                                   size_t idx);
-void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+void otls_namemap_doall_names(const Otls_NAMEMAP *namemap, int number,
                               void (*fn)(const char *name, void *data),
                               void *data);
 
@@ -39,5 +39,5 @@ void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
  * A utility that handles several names in a string, divided by a given
  * separator.
  */
-int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
+int otls_namemap_add_names(Otls_NAMEMAP *namemap, int number,
                            const char *names, const char separator);

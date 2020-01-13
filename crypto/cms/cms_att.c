@@ -1,17 +1,17 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
 #include "cms_local.h"
 #include "internal/nelem.h"
 
@@ -268,7 +268,7 @@ int CMS_si_check_attributes(const CMS_SignerInfo *si)
     int have_signed_attrs = (CMS_signed_get_attr_count(si) > 0);
     int have_unsigned_attrs = (CMS_unsigned_get_attr_count(si) > 0);
 
-    for (i = 0; i < (int)OSSL_NELEM(cms_attribute_properties); ++i) {
+    for (i = 0; i < (int)Otls_NELEM(cms_attribute_properties); ++i) {
         int nid = cms_attribute_properties[i].nid;
         int flags = cms_attribute_properties[i].flags;
 

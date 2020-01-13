@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "apps.h"
 #include "app_params.h"
 
-static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
+static int describe_param_type(char *buf, size_t bufsz, const Otls_PARAM *param)
 {
     const char *type_mod = "";
     const char *type = NULL;
@@ -18,22 +18,22 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
     int printed_len;
 
     switch (param->data_type) {
-    case OSSL_PARAM_UNSIGNED_INTEGER:
+    case Otls_PARAM_UNSIGNED_INTEGER:
         type_mod = "unsigned ";
         /* FALLTHRU */
-    case OSSL_PARAM_INTEGER:
+    case Otls_PARAM_INTEGER:
         type = "integer";
         break;
-    case OSSL_PARAM_UTF8_PTR:
+    case Otls_PARAM_UTF8_PTR:
         type_mod = "pointer to a ";
         /* FALLTHRU */
-    case OSSL_PARAM_UTF8_STRING:
+    case Otls_PARAM_UTF8_STRING:
         type = "UTF8 encoded string";
         break;
-    case OSSL_PARAM_OCTET_PTR:
+    case Otls_PARAM_OCTET_PTR:
         type_mod = "pointer to an ";
         /* FALLTHRU */
-    case OSSL_PARAM_OCTET_STRING:
+    case Otls_PARAM_OCTET_STRING:
         type = "octet string";
         break;
     default:
@@ -72,7 +72,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
     return 1;
 }
 
-int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
+int print_param_types(const char *thing, const Otls_PARAM *pdefs, int indent)
 {
     if (pdefs == NULL) {
         BIO_printf(bio_out, "%*sNo declared %s\n", indent, "", thing);

@@ -1,15 +1,15 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/x509v3.h>
+#include <opentls/asn1.h>
+#include <opentls/x509v3.h>
 
 #define ASN1_GEN_FLAG           0x10000
 #define ASN1_GEN_FLAG_IMP       (ASN1_GEN_FLAG|1)
@@ -192,7 +192,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
 
     /* Allocate buffer for new encoding */
 
-    new_der = OPENSSL_malloc(len);
+    new_der = OPENtls_malloc(len);
     if (new_der == NULL)
         goto err;
 
@@ -230,8 +230,8 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
     ret = d2i_ASN1_TYPE(NULL, &cp, len);
 
  err:
-    OPENSSL_free(orig_der);
-    OPENSSL_free(new_der);
+    OPENtls_free(orig_der);
+    OPENtls_free(new_der);
 
     return ret;
 
@@ -455,7 +455,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
 
  bad:
 
-    OPENSSL_free(der);
+    OPENtls_free(der);
 
     sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
     X509V3_section_free(cnf, sect);
@@ -567,7 +567,7 @@ static int asn1_str2tag(const char *tagstr, int len)
         len = strlen(tagstr);
 
     tntmp = tnst;
-    for (i = 0; i < OSSL_NELEM(tnst); i++, tntmp++) {
+    for (i = 0; i < Otls_NELEM(tnst); i++, tntmp++) {
         if ((len == tntmp->len) && (strncmp(tntmp->strnam, tagstr, len) == 0))
             return tntmp->tag;
     }
@@ -694,7 +694,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         }
 
         if (format == ASN1_GEN_FORMAT_HEX) {
-            if ((rdata = OPENSSL_hexstr2buf(str, &rdlen)) == NULL) {
+            if ((rdata = OPENtls_hexstr2buf(str, &rdlen)) == NULL) {
                 ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_HEX);
                 goto bad_str;
             }

@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* RC4_HMAC_MD5 cipher implementation */
@@ -66,7 +66,7 @@ static int cipher_hw_rc4_hmac_md5_cipher(PROV_CIPHER_CTX *bctx,
 
         if (plen > md5_off
                 && (blocks = (plen - md5_off) / MD5_CBLOCK)
-                && (OPENSSL_ia32cap_P[0] & (1 << 20)) == 0) {
+                && (OPENtls_ia32cap_P[0] & (1 << 20)) == 0) {
             MD5_Update(&ctx->md, in, md5_off);
             RC4(ks, rc4_off, in, out);
 
@@ -112,7 +112,7 @@ static int cipher_hw_rc4_hmac_md5_cipher(PROV_CIPHER_CTX *bctx,
 
         if (len > rc4_off
                 && (blocks = (len - rc4_off) / MD5_CBLOCK)
-                && (OPENSSL_ia32cap_P[0] & (1 << 20)) == 0) {
+                && (OPENtls_ia32cap_P[0] & (1 << 20)) == 0) {
             RC4(ks, rc4_off, in, out);
             MD5_Update(&ctx->md, out, md5_off);
 
@@ -208,7 +208,7 @@ static void cipher_hw_rc4_hmac_md5_init_mackey(PROV_CIPHER_CTX *bctx,
     MD5_Init(&ctx->tail);
     MD5_Update(&ctx->tail, hmac_key, sizeof(hmac_key));
 
-    OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+    OPENtls_cleanse(hmac_key, sizeof(hmac_key));
 }
 
 static const PROV_CIPHER_HW_RC4_HMAC_MD5 rc4_hmac_md5_hw = {

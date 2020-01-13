@@ -1,27 +1,27 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 #include <stdio.h>
 #include <string.h>
 #include "crypto/engine.h"
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
+#include <opentls/rand.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
-     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
+     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENtls_CPUID_OBJ)
 
-size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
+size_t OPENtls_ia32_rdrand_bytes(unsigned char *buf, size_t len);
 
 static int get_random_bytes(unsigned char *buf, int num)
 {
@@ -29,7 +29,7 @@ static int get_random_bytes(unsigned char *buf, int num)
         return 0;
     }
 
-    return (size_t)num == OPENSSL_ia32_rdrand_bytes(buf, (size_t)num);
+    return (size_t)num == OPENtls_ia32_rdrand_bytes(buf, (size_t)num);
 }
 
 static int random_status(void)
@@ -80,7 +80,7 @@ static ENGINE *ENGINE_rdrand(void)
 
 void engine_load_rdrand_int(void)
 {
-    if (OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) {
+    if (OPENtls_ia32cap_P[1] & (1 << (62 - 32))) {
         ENGINE *toadd = ENGINE_rdrand();
         if (!toadd)
             return;

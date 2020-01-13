@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <assert.h>
 #include <errno.h>
@@ -12,20 +12,20 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <openssl/bn.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENtls_SYS_WINDOWS
 # define strcasecmp _stricmp
 #endif
 
 /*
- * Things in boring, not in openssl.  TODO we should add them.
+ * Things in boring, not in opentls.  TODO we should add them.
  */
 #define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
@@ -48,7 +48,7 @@ static BN_CTX *ctx;
 /*
  * Polynomial coefficients used in GFM tests.
  */
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 static int p0[] = { 163, 7, 6, 3, 0, -1 };
 static int p1[] = { 193, 15, 0, -1 };
 #endif
@@ -75,7 +75,7 @@ static int parse_bigBN(BIGNUM **out, const char *bn_strings[])
     char *bigstring = glue_strings(bn_strings, NULL);
     int ret = BN_hex2bn(out, bigstring);
 
-    OPENSSL_free(bigstring);
+    OPENtls_free(bigstring);
     return ret;
 }
 
@@ -601,7 +601,7 @@ static int test_modexp_mont5(void)
     return st;
 }
 
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 static int test_gf2m_add(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL;
@@ -2012,7 +2012,7 @@ static int test_rand_range_single(size_t n)
     unsigned int i, v;
     int res = 0;
 
-    if (!TEST_ptr(counts = OPENSSL_zalloc(sizeof(*counts) * range))
+    if (!TEST_ptr(counts = OPENtls_zalloc(sizeof(*counts) * range))
         || !TEST_ptr(rng = BN_new())
         || !TEST_ptr(val = BN_new())
         || !TEST_true(BN_set_word(rng, range)))
@@ -2041,7 +2041,7 @@ static int test_rand_range_single(size_t n)
 err:
     BN_free(rng);
     BN_free(val);
-    OPENSSL_free(counts);
+    OPENtls_free(counts);
     return res;
 }
 
@@ -2050,7 +2050,7 @@ static int test_rand_range(void)
     int n_success = 0;
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(rand_range_cases); i++)
+    for (i = 0; i < Otls_NELEM(rand_range_cases); i++)
         n_success += test_rand_range_single(i);
     if (TEST_int_ge(n_success, binomial_critical))
         return 1;
@@ -2377,7 +2377,7 @@ static int test_ctx_set_ct_flag(BN_CTX *c)
     BIGNUM *b[15];
 
     BN_CTX_start(c);
-    for (i = 0; i < OSSL_NELEM(b); i++) {
+    for (i = 0; i < Otls_NELEM(b); i++) {
         if (!TEST_ptr(b[i] = BN_CTX_get(c)))
             goto err;
         if (i % 2 == 1)
@@ -2397,7 +2397,7 @@ static int test_ctx_check_ct_flag(BN_CTX *c)
     BIGNUM *b[30];
 
     BN_CTX_start(c);
-    for (i = 0; i < OSSL_NELEM(b); i++) {
+    for (i = 0; i < Otls_NELEM(b); i++) {
         if (!TEST_ptr(b[i] = BN_CTX_get(c)))
             goto err;
         if (!TEST_false(BN_get_flags(b[i], BN_FLG_CONSTTIME)))
@@ -2720,7 +2720,7 @@ static int test_mod_exp(int i)
     res = 1;
 
  err:
-    OPENSSL_free(s);
+    OPENtls_free(s);
     BN_free(result);
     BN_free(base);
     BN_free(exponent);
@@ -2758,7 +2758,7 @@ static int test_mod_exp_consttime(int i)
     res = 1;
 
  err:
-    OPENSSL_free(s);
+    OPENtls_free(s);
     BN_free(result);
     BN_free(base);
     BN_free(exponent);
@@ -2782,7 +2782,7 @@ static int file_test_run(STANZA *s)
         {"ModSqrt", file_modsqrt},
         {"GCD", file_gcd},
     };
-    int numtests = OSSL_NELEM(filetests);
+    int numtests = Otls_NELEM(filetests);
     const FILETEST *tp = filetests;
 
     for ( ; --numtests >= 0; tp++) {
@@ -2805,10 +2805,10 @@ static int run_file_tests(int i)
     char *testfile = test_get_argument(i);
     int c;
 
-    if (!TEST_ptr(s = OPENSSL_zalloc(sizeof(*s))))
+    if (!TEST_ptr(s = OPENtls_zalloc(sizeof(*s))))
         return 0;
     if (!test_start_file(s, testfile)) {
-        OPENSSL_free(s);
+        OPENtls_free(s);
         return 0;
     }
 
@@ -2823,7 +2823,7 @@ static int run_file_tests(int i)
     }
     test_end_file(s);
     c = s->errors;
-    OPENSSL_free(s);
+    OPENtls_free(s);
 
     return c == 0;
 }
@@ -2880,7 +2880,7 @@ int setup_tests(void)
         ADD_TEST(test_dec2bn);
         ADD_TEST(test_hex2bn);
         ADD_TEST(test_asc2bn);
-        ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
+        ADD_ALL_TESTS(test_mpi, (int)Otls_NELEM(kMPITests));
         ADD_TEST(test_negzero);
         ADD_TEST(test_badmod);
         ADD_TEST(test_expmodzero);
@@ -2889,7 +2889,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_smallsafeprime, 16);
         ADD_TEST(test_swap);
         ADD_TEST(test_ctx_consttime_flag);
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
         ADD_TEST(test_gf2m_add);
         ADD_TEST(test_gf2m_mod);
         ADD_TEST(test_gf2m_mul);
@@ -2900,11 +2900,11 @@ int setup_tests(void)
         ADD_TEST(test_gf2m_modsqrt);
         ADD_TEST(test_gf2m_modsolvequad);
 #endif
-        ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
-        ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));
+        ADD_ALL_TESTS(test_is_prime, (int)Otls_NELEM(primes));
+        ADD_ALL_TESTS(test_not_prime, (int)Otls_NELEM(not_primes));
         ADD_TEST(test_gcd_prime);
-        ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(ModExpTests));
-        ADD_ALL_TESTS(test_mod_exp_consttime, (int)OSSL_NELEM(ModExpTests));
+        ADD_ALL_TESTS(test_mod_exp, (int)Otls_NELEM(ModExpTests));
+        ADD_ALL_TESTS(test_mod_exp_consttime, (int)Otls_NELEM(ModExpTests));
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {

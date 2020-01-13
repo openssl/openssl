@@ -1,14 +1,14 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_TS
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_TS
 NON_EMPTY_TRANSLATION_UNIT
 #else
 # include <stdio.h>
@@ -16,12 +16,12 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rand.h>
-# include <openssl/ts.h>
-# include <openssl/bn.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/pem.h>
+# include <opentls/rand.h>
+# include <opentls/ts.h>
+# include <opentls/bn.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
 # define NONCE_LENGTH            64
@@ -94,7 +94,7 @@ const OPTIONS ts_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"config", OPT_CONFIG, '<', "Configuration file"},
     {"section", OPT_SECTION, 's', "Section to use within config file"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
     {"inkey", OPT_INKEY, 's', "File with private key for reply"},
@@ -136,22 +136,22 @@ const OPTIONS ts_options[] = {
 static char* opt_helplist[] = {
     "",
     "Typical uses:",
-    " openssl ts -query [-rand file...] [-config file] [-data file]",
+    " opentls ts -query [-rand file...] [-config file] [-data file]",
     "    [-digest hexstring] [-tspolicy oid] [-no_nonce] [-cert]",
     "    [-in file] [-out file] [-text]",
     "",
-    " openssl ts -reply [-config file] [-section tsa_section]",
+    " opentls ts -reply [-config file] [-section tsa_section]",
     "    [-queryfile file] [-passin password]",
     "    [-signer tsa_cert.pem] [-inkey private_key.pem]",
     "    [-chain certs_file.pem] [-tspolicy oid]",
     "    [-in file] [-token_in] [-out file] [-token_out]",
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     "    [-text] [-engine id]",
 # else
     "    [-text]",
 # endif
     "",
-    " openssl ts -verify -CApath dir -CAfile file.pem -CAstore uri",
+    " opentls ts -verify -CApath dir -CAfile file.pem -CAstore uri",
     "   -untrusted file.pem [-data file] [-digest hexstring]",
     "    [-queryfile file] -in file [-token_in] ...",
     NULL,
@@ -332,7 +332,7 @@ int ts_main(int argc, char **argv)
  end:
     X509_VERIFY_PARAM_free(vpm);
     NCONF_free(conf);
-    OPENSSL_free(password);
+    OPENtls_free(password);
     return ret;
 }
 
@@ -483,7 +483,7 @@ static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
     }
     TS_MSG_IMPRINT_free(msg_imprint);
     X509_ALGOR_free(algo);
-    OPENSSL_free(data);
+    OPENtls_free(data);
     ASN1_OBJECT_free(policy_obj);
     ASN1_INTEGER_free(nonce_asn1);
     return ts_req;
@@ -520,9 +520,9 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     } else {
         long digest_len;
 
-        *md_value = OPENSSL_hexstr2buf(digest, &digest_len);
+        *md_value = OPENtls_hexstr2buf(digest, &digest_len);
         if (*md_value == NULL || md_value_len != digest_len) {
-            OPENSSL_free(*md_value);
+            OPENtls_free(*md_value);
             *md_value = NULL;
             BIO_printf(bio_err, "bad digest, %d bytes "
                        "must be specified\n", md_value_len);
@@ -552,7 +552,7 @@ static ASN1_INTEGER *create_nonce(int bits)
         continue;
     if ((nonce = ASN1_INTEGER_new()) == NULL)
         goto err;
-    OPENSSL_free(nonce->data);
+    OPENtls_free(nonce->data);
     nonce->length = len - i;
     nonce->data = app_malloc(nonce->length + 1, "nonce buffer");
     memcpy(nonce->data, buf + i, nonce->length);
@@ -694,7 +694,7 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
         goto end;
     if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
         goto end;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     if (!TS_CONF_set_crypto_device(conf, section, engine))
         goto end;
 # endif
@@ -906,7 +906,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             }
         } else if (digest != NULL) {
             long imprint_len;
-            unsigned char *hexstr = OPENSSL_hexstr2buf(digest, &imprint_len);
+            unsigned char *hexstr = OPENtls_hexstr2buf(digest, &imprint_len);
             f |= TS_VFY_IMPRINT;
             if (TS_VERIFY_CTX_set_imprint(ctx, hexstr, imprint_len) == NULL) {
                 BIO_printf(bio_err, "invalid digest string\n");
@@ -1008,4 +1008,4 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     return ok;
 }
-#endif  /* ndef OPENSSL_NO_TS */
+#endif  /* ndef OPENtls_NO_TS */

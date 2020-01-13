@@ -1,18 +1,18 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/bn.h>
-#include <openssl/cms.h>
-#include <openssl/core_names.h>
+#include <opentls/x509.h>
+#include <opentls/asn1.h>
+#include <opentls/bn.h>
+#include <opentls/cms.h>
+#include <opentls/core_names.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -126,7 +126,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 1;
 
  err:
-    OPENSSL_free(penc);
+    OPENtls_free(penc);
     ASN1_STRING_free(str);
 
     return 0;
@@ -250,7 +250,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     return 1;
 
  err:
-    OPENSSL_free(dp);
+    OPENtls_free(dp);
     ASN1_STRING_free(params);
     ASN1_STRING_clear_free(prkey);
     return 0;
@@ -495,7 +495,7 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
         }
         return 1;
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     case ASN1_PKEY_CTRL_CMS_SIGN:
         if (arg1 == 0) {
             int snid, hnid;
@@ -537,43 +537,43 @@ static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                 int want_domainparams)
 {
     DSA *dsa = pk->pkey.dsa;
-    OSSL_PARAM_BLD tmpl;
+    Otls_PARAM_BLD tmpl;
     const BIGNUM *p = DSA_get0_p(dsa), *g = DSA_get0_g(dsa);
     const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
     const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
-    OSSL_PARAM *params;
+    Otls_PARAM *params;
     void *provdata = NULL;
 
     if (p == NULL || q == NULL || g == NULL)
         return NULL;
 
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    otls_param_bld_init(&tmpl);
+    if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_P, p)
+        || !otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_Q, q)
+        || !otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_FFC_G, g))
         return NULL;
 
     if (!want_domainparams) {
         /* A key must at least have a public part. */
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
+        if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_DSA_PUB_KEY,
                                     pub_key))
             return NULL;
 
         if (priv_key != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY,
+            if (!otls_param_bld_push_BN(&tmpl, Otls_PKEY_PARAM_DSA_PRIV_KEY,
                                         priv_key))
                 return NULL;
         }
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    params = otls_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
     provdata = want_domainparams
         ? evp_keymgmt_importdomparams(keymgmt, params)
         : evp_keymgmt_importkey(keymgmt, params);
 
-    ossl_param_bld_free(params);
+    otls_param_bld_free(params);
     return provdata;
 }
 
@@ -607,7 +607,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
      0,
 
      "DSA",
-     "OpenSSL DSA method",
+     "Opentls DSA method",
 
      dsa_pub_decode,
      dsa_pub_encode,

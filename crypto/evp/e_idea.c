@@ -1,20 +1,20 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 
-#ifndef OPENSSL_NO_IDEA
-# include <openssl/evp.h>
-# include <openssl/objects.h>
+#ifndef OPENtls_NO_IDEA
+# include <opentls/evp.h>
+# include <opentls/objects.h>
 # include "crypto/evp.h"
-# include <openssl/idea.h>
+# include <opentls/idea.h>
 
 /* Can't use IMPLEMENT_BLOCK_CIPHER because IDEA_ecb_encrypt is different */
 
@@ -62,7 +62,7 @@ static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
         IDEA_set_encrypt_key(key, &tmp);
         IDEA_set_decrypt_key(&tmp, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
-        OPENSSL_cleanse((unsigned char *)&tmp, sizeof(IDEA_KEY_SCHEDULE));
+        OPENtls_cleanse((unsigned char *)&tmp, sizeof(IDEA_KEY_SCHEDULE));
     }
     return 1;
 }

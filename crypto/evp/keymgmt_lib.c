@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -17,13 +17,13 @@
 
 struct import_data_st {
     void *provctx;
-    void *(*importfn)(void *provctx, const OSSL_PARAM params[]);
+    void *(*importfn)(void *provctx, const Otls_PARAM params[]);
 
     /* Result */
     void *provdata;
 };
 
-static int try_import(const OSSL_PARAM params[], void *arg)
+static int try_import(const Otls_PARAM params[], void *arg)
 {
     struct import_data_st *data = arg;
 
@@ -58,7 +58,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
      * If we have, return immediately.
      */
     for (i = 0;
-         i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
+         i < Otls_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
          i++) {
         if (keymgmt == pk->pkeys[i].keymgmt
             && want_domainparams == pk->pkeys[i].domainparams)
@@ -101,14 +101,14 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return NULL;
 
         for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            int (*exportfn)(void *provctx, OSSL_CALLBACK *cb, void *cbarg) =
+            int (*exportfn)(void *provctx, Otls_CALLBACK *cb, void *cbarg) =
                 want_domainparams
                 ? pk->pkeys[j].keymgmt->exportdomparams
                 : pk->pkeys[j].keymgmt->exportkey;
 
             if (exportfn != NULL) {
                 import_data.provctx =
-                    ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+                    otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
                 /*
                  * The export function calls the callback (try_import), which
@@ -130,7 +130,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
      * have to think about a cache aging scheme, though, if |i| indexes
      * outside the array.
      */
-    j = ossl_assert(i < OSSL_NELEM(pk->pkeys));
+    j = otls_assert(i < Otls_NELEM(pk->pkeys));
 
     if (provdata != NULL) {
         EVP_KEYMGMT_up_ref(keymgmt);
@@ -148,7 +148,7 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
 
     if (pk != NULL) {
         for (i = 0;
-             i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
+             i < Otls_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
              i++) {
             EVP_KEYMGMT *keymgmt = pk->pkeys[i].keymgmt;
             void *provdata = pk->pkeys[i].provdata;
@@ -165,9 +165,9 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
 }
 
 void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           const OSSL_PARAM params[], int domainparams)
+                           const Otls_PARAM params[], int domainparams)
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
     void *provdata = domainparams
         ? keymgmt->importdomparams(provctx, params)
         : keymgmt->importkey(provctx, params);
@@ -186,17 +186,17 @@ void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 /* internal functions */
 /* TODO(3.0) decide if these should be public or internal */
 void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[])
+                                  const Otls_PARAM params[])
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     return keymgmt->importdomparams(provctx, params);
 }
 
 void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                               const OSSL_PARAM params[])
+                               const Otls_PARAM params[])
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     return keymgmt->gendomparams(provctx, params);
 }
@@ -209,38 +209,38 @@ void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
 
 int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
                                 void *provdomparams,
-                                OSSL_CALLBACK *param_cb, void *cbarg)
+                                Otls_CALLBACK *param_cb, void *cbarg)
 {
     return keymgmt->exportdomparams(provdomparams, param_cb, cbarg);
 }
 
-const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
+const Otls_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->importdomparam_types();
 }
 
 /*
- * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * TODO(v3.0) investigate if we need this function.  'opentls provider' may
  * be a caller...
  */
-const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
+const Otls_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->exportdomparam_types();
 }
 
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[])
+                            const Otls_PARAM params[])
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     return keymgmt->importkey(provctx, params);
 }
 
 void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[])
+                         const Otls_PARAM params[])
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     return keymgmt->genkey(provctx, domparams, params);
 }
@@ -248,7 +248,7 @@ void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
 void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
                           void *id, size_t idlen)
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *provctx = otls_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     return keymgmt->loadkey(provctx, id, idlen);
 }
@@ -259,21 +259,21 @@ void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey)
 }
 
 int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                          OSSL_CALLBACK *param_cb, void *cbarg)
+                          Otls_CALLBACK *param_cb, void *cbarg)
 {
     return keymgmt->exportkey(provkey, param_cb, cbarg);
 }
 
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
+const Otls_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->importkey_types();
 }
 
 /*
- * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * TODO(v3.0) investigate if we need this function.  'opentls provider' may
  * be a caller...
  */
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
+const Otls_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
 {
     return keymgmt->exportkey_types();
 }

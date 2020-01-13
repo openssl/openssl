@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -16,9 +16,9 @@ $output = pop and open STDOUT,">$output";
 &asm_init($ARGV[0]);
 
 $sse2=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
-&external_label("OPENSSL_ia32cap_P") if ($sse2);
+&external_label("OPENtls_ia32cap_P") if ($sse2);
 
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");
@@ -36,14 +36,14 @@ sub bn_mul_add_words
 	{
 	local($name)=@_;
 
-	&function_begin_B($name,$sse2?"EXTRN\t_OPENSSL_ia32cap_P:DWORD":"");
+	&function_begin_B($name,$sse2?"EXTRN\t_OPENtls_ia32cap_P:DWORD":"");
 
 	$r="eax";
 	$a="edx";
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picmeup("eax","OPENtls_ia32cap_P");
 		&bt(&DWP(0,"eax"),26);
 		&jnc(&label("maw_non_sse2"));
 
@@ -222,14 +222,14 @@ sub bn_mul_words
 	{
 	local($name)=@_;
 
-	&function_begin_B($name,$sse2?"EXTRN\t_OPENSSL_ia32cap_P:DWORD":"");
+	&function_begin_B($name,$sse2?"EXTRN\t_OPENtls_ia32cap_P:DWORD":"");
 
 	$r="eax";
 	$a="edx";
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picmeup("eax","OPENtls_ia32cap_P");
 		&bt(&DWP(0,"eax"),26);
 		&jnc(&label("mw_non_sse2"));
 
@@ -333,14 +333,14 @@ sub bn_sqr_words
 	{
 	local($name)=@_;
 
-	&function_begin_B($name,$sse2?"EXTRN\t_OPENSSL_ia32cap_P:DWORD":"");
+	&function_begin_B($name,$sse2?"EXTRN\t_OPENtls_ia32cap_P:DWORD":"");
 
 	$r="eax";
 	$a="edx";
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picmeup("eax","OPENtls_ia32cap_P");
 		&bt(&DWP(0,"eax"),26);
 		&jnc(&label("sqr_non_sse2"));
 

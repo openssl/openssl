@@ -1,10 +1,10 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -245,7 +245,7 @@ static int test_eq_int(int a, int b)
 
 static int test_sizeofs(void)
 {
-    if (!TEST_uint_eq(OSSL_NELEM(test_values), OSSL_NELEM(test_values_s)))
+    if (!TEST_uint_eq(Otls_NELEM(test_values), Otls_NELEM(test_values_s)))
         return 0;
     return 1;
 }
@@ -256,7 +256,7 @@ static int test_binops(int i)
     int j;
     int ret = 1;
 
-    for (j = 0; j < (int)OSSL_NELEM(test_values); ++j) {
+    for (j = 0; j < (int)Otls_NELEM(test_values); ++j) {
         unsigned int b = test_values[j];
 
         if (!test_select(a, b)
@@ -283,7 +283,7 @@ static int test_binops_8(int i)
     int j;
     int ret = 1;
 
-    for (j = 0; j < (int)OSSL_NELEM(test_values_8); ++j) {
+    for (j = 0; j < (int)Otls_NELEM(test_values_8); ++j) {
         unsigned int b = test_values_8[j];
 
         if (!test_binary_op_8(&constant_time_lt_8, "constant_time_lt_8",
@@ -309,7 +309,7 @@ static int test_binops_s(int i)
     int j;
     int ret = 1;
 
-    for (j = 0; j < (int)OSSL_NELEM(test_values_s); ++j) {
+    for (j = 0; j < (int)Otls_NELEM(test_values_s); ++j) {
         size_t b = test_values_s[j];
 
         if (!test_select_s(a, b)
@@ -337,7 +337,7 @@ static int test_signed(int i)
     unsigned int j;
     int ret = 1;
 
-    for (j = 0; j < OSSL_NELEM(signed_test_values); ++j) {
+    for (j = 0; j < Otls_NELEM(signed_test_values); ++j) {
         int d = signed_test_values[j];
 
         if (!test_select_int(c, d)
@@ -369,7 +369,7 @@ static int test_32values(int i)
     size_t j;
     int ret = 1;
 
-    for (j = 0; j < OSSL_NELEM(test_values_32); j++) {
+    for (j = 0; j < Otls_NELEM(test_values_32); j++) {
         uint32_t f = test_values_32[j];
 
         if (!test_select_32(e, f))
@@ -383,7 +383,7 @@ static int test_64values(int i)
     uint64_t g = test_values_64[i];
     int j, ret = 1;
 
-    for (j = i + 1; j < (int)OSSL_NELEM(test_values_64); j++) {
+    for (j = i + 1; j < (int)Otls_NELEM(test_values_64); j++) {
         uint64_t h = test_values_64[j];
 
         if (!test_binary_op_64(&constant_time_lt_64, "constant_time_lt_64",
@@ -399,16 +399,16 @@ static int test_64values(int i)
 int setup_tests(void)
 {
     ADD_TEST(test_sizeofs);
-    ADD_ALL_TESTS(test_is_zero, OSSL_NELEM(test_values));
-    ADD_ALL_TESTS(test_is_zero_8, OSSL_NELEM(test_values_8));
-    ADD_ALL_TESTS(test_is_zero_32, OSSL_NELEM(test_values_32));
-    ADD_ALL_TESTS(test_is_zero_s, OSSL_NELEM(test_values_s));
-    ADD_ALL_TESTS(test_binops, OSSL_NELEM(test_values));
-    ADD_ALL_TESTS(test_binops_8, OSSL_NELEM(test_values_8));
-    ADD_ALL_TESTS(test_binops_s, OSSL_NELEM(test_values_s));
-    ADD_ALL_TESTS(test_signed, OSSL_NELEM(signed_test_values));
-    ADD_ALL_TESTS(test_8values, OSSL_NELEM(test_values_8));
-    ADD_ALL_TESTS(test_32values, OSSL_NELEM(test_values_32));
-    ADD_ALL_TESTS(test_64values, OSSL_NELEM(test_values_64));
+    ADD_ALL_TESTS(test_is_zero, Otls_NELEM(test_values));
+    ADD_ALL_TESTS(test_is_zero_8, Otls_NELEM(test_values_8));
+    ADD_ALL_TESTS(test_is_zero_32, Otls_NELEM(test_values_32));
+    ADD_ALL_TESTS(test_is_zero_s, Otls_NELEM(test_values_s));
+    ADD_ALL_TESTS(test_binops, Otls_NELEM(test_values));
+    ADD_ALL_TESTS(test_binops_8, Otls_NELEM(test_values_8));
+    ADD_ALL_TESTS(test_binops_s, Otls_NELEM(test_values_s));
+    ADD_ALL_TESTS(test_signed, Otls_NELEM(signed_test_values));
+    ADD_ALL_TESTS(test_8values, Otls_NELEM(test_values_8));
+    ADD_ALL_TESTS(test_32values, Otls_NELEM(test_values_32));
+    ADD_ALL_TESTS(test_64values, Otls_NELEM(test_values_64));
     return 1;
 }

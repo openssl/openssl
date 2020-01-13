@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # I let hardware handle unaligned input, except on page boundaries
@@ -35,7 +35,7 @@
 # version was that it was using thread local storage pointer register.
 # Well, it scrupulously preserved it, but the problem would arise the
 # moment asynchronous signal was delivered and signal handler would
-# dereference the TLS pointer. While it's never the case in openssl
+# dereference the TLS pointer. While it's never the case in opentls
 # application or test suite, we have to respect this scenario and not
 # use TLS pointer register. Alternative would be to require caller to
 # block signals prior calling this routine. For the record, in 32-bit

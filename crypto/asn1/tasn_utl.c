@@ -1,20 +1,20 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
 #include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/objects.h>
-#include <openssl/err.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/objects.h>
+#include <opentls/err.h>
 #include "asn1_local.h"
 
 /* Utility functions for manipulating fields and offsets */
@@ -151,7 +151,7 @@ void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
 
     if (enc != NULL) {
-        OPENSSL_free(enc->enc);
+        OPENtls_free(enc->enc);
         enc->enc = NULL;
         enc->len = 0;
         enc->modified = 1;
@@ -166,8 +166,8 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
     if (enc == NULL)
         return 1;
 
-    OPENSSL_free(enc->enc);
-    if ((enc->enc = OPENSSL_malloc(inlen)) == NULL) {
+    OPENtls_free(enc->enc);
+    if ((enc->enc = OPENtls_malloc(inlen)) == NULL) {
         ASN1err(ASN1_F_ASN1_ENC_SAVE, ERR_R_MALLOC_FAILURE);
         return 0;
     }

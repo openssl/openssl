@@ -1,15 +1,15 @@
 /*
- * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -28,7 +28,7 @@ static void hmac_key_free(EVP_PKEY *pkey)
     ASN1_OCTET_STRING *os = EVP_PKEY_get0(pkey);
     if (os) {
         if (os->data)
-            OPENSSL_cleanse(os->data, os->length);
+            OPENtls_cleanse(os->data, os->length);
         ASN1_OCTET_STRING_free(os);
     }
 }
@@ -97,7 +97,7 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
     0,
 
     "HMAC",
-    "OpenSSL HMAC method",
+    "Opentls HMAC method",
 
     0, 0, hmac_pkey_public_cmp, 0,
 

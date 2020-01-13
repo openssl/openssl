@@ -3,7 +3,7 @@
 LibFuzzer
 =========
 
-How to fuzz OpenSSL with [libfuzzer](http://llvm.org/docs/LibFuzzer.html),
+How to fuzz Opentls with [libfuzzer](http://llvm.org/docs/LibFuzzer.html),
 starting from a vanilla+OpenSSH server Ubuntu install.
 
 With `clang` from a package manager
@@ -14,7 +14,7 @@ since version 6.0:
 
     $ sudo apt-get install clang
 
-Configure `openssl` for fuzzing. For now, you'll still need to pass in the path
+Configure `opentls` for fuzzing. For now, you'll still need to pass in the path
 to the `libFuzzer` library file while configuring; this is represented as
 `$PATH_TO_LIBFUZZER` below. A typical value would be
 `/usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.fuzzer-x86_64.a`.
@@ -25,8 +25,8 @@ to the `libFuzzer` library file while configuring; this is represented as
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
             -fsanitize=fuzzer-no-link \
             enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
-            enable-weak-ssl-ciphers enable-rc5 enable-md2 \
-            enable-ssl3 enable-ssl3-method enable-nextprotoneg \
+            enable-weak-tls-ciphers enable-rc5 enable-md2 \
+            enable-tls3 enable-tls3-method enable-nextprotoneg \
             --debug
 
 Compile:
@@ -61,8 +61,8 @@ prebuilt fuzzer library. This is represented as `$PATH_TO_LIBFUZZER_DIR` below.
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
             -fsanitize=fuzzer-no-link \
             enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
-            enable-weak-ssl-ciphers enable-rc5 enable-md2 \
-            enable-ssl3 enable-ssl3-method enable-nextprotoneg \
+            enable-weak-tls-ciphers enable-rc5 enable-md2 \
+            enable-tls3 enable-tls3-method enable-nextprotoneg \
             --debug
 
 AFL
@@ -72,8 +72,8 @@ Configure for fuzzing:
 
     $ sudo apt-get install afl-clang
     $ CC=afl-clang-fast ./config enable-fuzz-afl no-shared no-module \
-        -DPEDANTIC enable-tls1_3 enable-weak-ssl-ciphers enable-rc5 \
-        enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg \
+        -DPEDANTIC enable-tls1_3 enable-weak-tls-ciphers enable-rc5 \
+        enable-md2 enable-tls3 enable-tls3-method enable-nextprotoneg \
         enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
         --debug
     $ make

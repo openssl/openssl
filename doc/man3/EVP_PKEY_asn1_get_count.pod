@@ -11,7 +11,7 @@ EVP_PKEY_asn1_get0_info
 
 =head1 SYNOPSIS
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
  int EVP_PKEY_asn1_get_count(void);
  const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
@@ -70,11 +70,11 @@ L<EVP_PKEY_asn1_new(3)>, L<EVP_PKEY_asn1_add0(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

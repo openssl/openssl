@@ -1,10 +1,10 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -21,14 +21,14 @@
 static intmax_t num_repeats;
 static int print_mode = 0;
 
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-# include <openssl/err.h>
-# include <openssl/obj_mac.h>
-# include <openssl/objects.h>
-# include <openssl/rand.h>
-# include <openssl/bn.h>
-# include <openssl/opensslconf.h>
+#ifndef OPENtls_NO_EC
+# include <opentls/ec.h>
+# include <opentls/err.h>
+# include <opentls/obj_mac.h>
+# include <opentls/objects.h>
+# include <opentls/rand.h>
+# include <opentls/bn.h>
+# include <opentls/opentlsconf.h>
 
 static const char *kP256DefaultResult =
     "A1E24B223B8E81BC1FFF99BAFB909EDB895FACDE7D6DA5EF5E7B3255FB378E0F";
@@ -148,7 +148,7 @@ int setup_tests(void)
         }
     }
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     ADD_TEST(test_curve);
 #endif
     return 1;

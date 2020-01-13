@@ -1,20 +1,20 @@
 #! /usr/bin/env perl
-# Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
-# This module doesn't present direct interest for OpenSSL, because it
+# This module doesn't present direct interest for Opentls, because it
 # doesn't provide better performance for longer keys, at least not on
 # in-order-execution cores. While 512-bit RSA sign operations can be
 # 65% faster in 64-bit mode, 1024-bit ones are only 15% faster, and
@@ -74,7 +74,7 @@ if ($flavour =~ /64|n32/i) {
 }
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0x00fff000 : 0x00ff0000;
 #
-# <appro@openssl.org>
+# <appro@opentls.org>
 #
 ######################################################################
 
@@ -427,7 +427,7 @@ $code.=<<___;
 	$PTR_ADD $sp,$FRAMESIZE*$SZREG
 .end	bn_mul_mont_internal
 .rdata
-.asciiz	"Montgomery Multiplication for MIPS, CRYPTOGAMS by <appro\@openssl.org>"
+.asciiz	"Montgomery Multiplication for MIPS, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

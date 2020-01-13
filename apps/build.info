@@ -9,9 +9,9 @@ IF[{- $config{target} =~ /^vms-/ -}]
   $INITSRC=vms_decc_init.c
 ENDIF
 
-# Source for the 'openssl' program
-$OPENSSLSRC=\
-        openssl.c progs.c \
+# Source for the 'opentls' program
+$OPENtlsSRC=\
+        opentls.c progs.c \
         asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c \
         dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c \
         genpkey.c genrsa.c kdf.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c \
@@ -21,14 +21,14 @@ $OPENSSLSRC=\
         list.c info.c provider.c fipsinstall.c
 
 IF[{- !$disabled{apps} -}]
-  PROGRAMS=openssl
-  SOURCE[openssl]=$INITSRC $OPENSSLSRC
-  INCLUDE[openssl]=.. ../include include
-  DEPEND[openssl]=libapps.a ../libssl
+  PROGRAMS=opentls
+  SOURCE[opentls]=$INITSRC $OPENtlsSRC
+  INCLUDE[opentls]=.. ../include include
+  DEPEND[opentls]=libapps.a ../libtls
 
   IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
-    GENERATE[openssl.rc]=../util/mkrc.pl openssl
-    SOURCE[openssl]=openssl.rc
+    GENERATE[opentls.rc]=../util/mkrc.pl opentls
+    SOURCE[opentls]=opentls.rc
   ENDIF
 
   SCRIPTS{misc}=CA.pl

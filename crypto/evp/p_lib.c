@@ -1,28 +1,28 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
-#include <openssl/err.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/cmac.h>
-#include <openssl/engine.h>
-#include <openssl/params.h>
-#include <openssl/serializer.h>
-#include <openssl/core_names.h>
+#include <opentls/bn.h>
+#include <opentls/err.h>
+#include <opentls/objects.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
+#include <opentls/dh.h>
+#include <opentls/cmac.h>
+#include <opentls/engine.h>
+#include <opentls/params.h>
+#include <opentls/serializer.h>
+#include <opentls/core_names.h>
 
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -50,7 +50,7 @@ int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 {
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     if (pkey->type == EVP_PKEY_DSA) {
         int ret = pkey->save_parameters;
 
@@ -59,7 +59,7 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
         return ret;
     }
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
     if (pkey->type == EVP_PKEY_EC) {
         int ret = pkey->save_parameters;
 
@@ -157,7 +157,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          */
         if ((type == pkey->save_type) && pkey->ameth)
             return 1;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
         /* If we have ENGINEs release them */
         ENGINE_finish(pkey->engine);
         pkey->engine = NULL;
@@ -169,7 +169,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else
         ameth = EVP_PKEY_asn1_find(eptr, type);
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     if (pkey == NULL && eptr != NULL)
         ENGINE_finish(e);
 # endif
@@ -284,18 +284,18 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
-# ifndef OPENSSL_NO_CMAC
-#  ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_CMAC
+#  ifndef OPENtls_NO_ENGINE
     const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
 #  endif
     const char *cipher_name = EVP_CIPHER_name(cipher);
-    const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
-    OPENSSL_CTX *libctx =
-        prov == NULL ? NULL : ossl_provider_library_context(prov);
+    const Otls_PROVIDER *prov = EVP_CIPHER_provider(cipher);
+    OPENtls_CTX *libctx =
+        prov == NULL ? NULL : otls_provider_library_context(prov);
     EVP_PKEY *ret = EVP_PKEY_new();
-    EVP_MAC *cmac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_CMAC, NULL);
+    EVP_MAC *cmac = EVP_MAC_fetch(libctx, Otls_MAC_NAME_CMAC, NULL);
     EVP_MAC_CTX *cmctx = cmac != NULL ? EVP_MAC_CTX_new(cmac) : NULL;
-    OSSL_PARAM params[4];
+    Otls_PARAM params[4];
     size_t paramsn = 0;
 
     if (ret == NULL
@@ -305,19 +305,19 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-#  ifndef OPENSSL_NO_ENGINE
+#  ifndef OPENtls_NO_ENGINE
     if (engine_id != NULL)
         params[paramsn++] =
-            OSSL_PARAM_construct_utf8_string("engine", (char *)engine_id, 0);
+            Otls_PARAM_construct_utf8_string("engine", (char *)engine_id, 0);
 #  endif
 
     params[paramsn++] =
-        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+        Otls_PARAM_construct_utf8_string(Otls_MAC_PARAM_CIPHER,
                                          (char *)cipher_name, 0);
     params[paramsn++] =
-        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        Otls_PARAM_construct_octet_string(Otls_MAC_PARAM_KEY,
                                           (char *)priv, len);
-    params[paramsn] = OSSL_PARAM_construct_end();
+    params[paramsn] = Otls_PARAM_construct_end();
 
     if (!EVP_MAC_CTX_set_params(cmctx, params)) {
         EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
@@ -368,7 +368,7 @@ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
     return 1;
 }
 
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
 {
     if (e != NULL) {
@@ -417,7 +417,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
     return os->data;
 }
 
-# ifndef OPENSSL_NO_POLY1305
+# ifndef OPENtls_NO_POLY1305
 const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
@@ -431,7 +431,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 }
 # endif
 
-# ifndef OPENSSL_NO_SIPHASH
+# ifndef OPENtls_NO_SIPHASH
 const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
@@ -446,7 +446,7 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 }
 # endif
 
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret = EVP_PKEY_assign_RSA(pkey, key);
@@ -473,7 +473,7 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 }
 # endif
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
     int ret = EVP_PKEY_assign_DSA(pkey, key);
@@ -500,7 +500,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 }
 # endif
 
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
 
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
@@ -528,7 +528,7 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 }
 # endif
 
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
@@ -568,7 +568,7 @@ int EVP_PKEY_type(int type)
         ret = ameth->pkey_id;
     else
         ret = NID_undef;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     ENGINE_finish(e);
 # endif
     return ret;
@@ -635,16 +635,16 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
 {
     int pop_f_prefix;
     long saved_indent;
-    OSSL_SERIALIZER_CTX *ctx = NULL;
+    Otls_SERIALIZER_CTX *ctx = NULL;
     int ret = -2;                /* default to unsupported */
 
     if (!print_set_indent(&out, &pop_f_prefix, &saved_indent, indent))
         return 0;
 
-    ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, propquery);
-    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
-        ret = OSSL_SERIALIZER_to_bio(ctx, out);
-    OSSL_SERIALIZER_CTX_free(ctx);
+    ctx = Otls_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, propquery);
+    if (Otls_SERIALIZER_CTX_get_serializer(ctx) != NULL)
+        ret = Otls_SERIALIZER_to_bio(ctx, out);
+    Otls_SERIALIZER_CTX_free(ctx);
 
     if (ret != -2)
         goto end;
@@ -663,7 +663,7 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
 int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, Otls_SERIALIZER_PUBKEY_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->pub_print : NULL),
                       pctx);
 }
@@ -671,7 +671,7 @@ int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
                            int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, Otls_SERIALIZER_PrivateKey_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->priv_print : NULL),
                       pctx);
 }
@@ -679,7 +679,7 @@ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_Parameters_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, Otls_SERIALIZER_Parameters_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->param_print : NULL),
                       pctx);
 }
@@ -742,7 +742,7 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
-    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
+    EVP_PKEY *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
@@ -755,7 +755,7 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -783,7 +783,7 @@ static void evp_pkey_free_it(EVP_PKEY *x)
         x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
     }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(x->engine);
     x->engine = NULL;
     ENGINE_finish(x->pmeth_engine);
@@ -808,7 +808,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
 #ifndef FIPS_MODE
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 #endif
-    OPENSSL_free(x);
+    OPENtls_free(x);
 }
 
 /* TODO (3.0) : Needs to call getparams fo non legacy case */

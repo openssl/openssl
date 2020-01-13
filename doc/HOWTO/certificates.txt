@@ -11,12 +11,12 @@ Your role can be one or several of:
   - Certificate authority
 
 This file is for users who wish to get a certificate of their own.
-Certificate authorities should read https://www.openssl.org/docs/apps/ca.html.
+Certificate authorities should read https://www.opentls.org/docs/apps/ca.html.
 
 In all the cases shown below, the standard configuration file, as
-compiled into openssl, will be used.  You may find it in /etc/,
-/usr/local/ssl/ or somewhere else.  By default the file is named
-openssl.cnf and is described at https://www.openssl.org/docs/apps/config.html.
+compiled into opentls, will be used.  You may find it in /etc/,
+/usr/local/tls/ or somewhere else.  By default the file is named
+opentls.cnf and is described at https://www.opentls.org/docs/apps/config.html.
 You can specify a different configuration file using the
 '-config {file}' argument with the commands shown below.
 
@@ -25,17 +25,17 @@ You can specify a different configuration file using the
 
 Certificates are related to public key cryptography by containing a
 public key.  To be useful, there must be a corresponding private key
-somewhere.  With OpenSSL, public keys are easily derived from private
+somewhere.  With Opentls, public keys are easily derived from private
 keys, so before you create a certificate or a certificate request, you
 need to create a private key.
 
-Private keys are generated with 'openssl genrsa -out privkey.pem' if
+Private keys are generated with 'opentls genrsa -out privkey.pem' if
 you want a RSA private key, or if you want a DSA private key:
-'openssl dsaparam -out dsaparam.pem 2048; openssl gendsa -out privkey.pem dsaparam.pem'.
+'opentls dsaparam -out dsaparam.pem 2048; opentls gendsa -out privkey.pem dsaparam.pem'.
 
 The private keys created by these commands are not passphrase protected;
 it might or might not be the desirable thing.  Further information on how to
-create private keys can be found at https://www.openssl.org/docs/HOWTO/keys.txt.
+create private keys can be found at https://www.opentls.org/docs/HOWTO/keys.txt.
 The rest of this text assumes you have a private key in the file privkey.pem.
 
 
@@ -52,14 +52,14 @@ self-signed certificate (typically for testing purpose).
 
 The certificate request is created like this:
 
-  openssl req -new -key privkey.pem -out cert.csr
+  opentls req -new -key privkey.pem -out cert.csr
 
 Now, cert.csr can be sent to the certificate authority, if they can
 handle files in PEM format.  If not, use the extra argument '-outform'
 followed by the keyword for the format to use (see another HOWTO
 <formats.txt?>).  In some cases, -outform does not let you output the
 certificate request in the right format and you will have to use one
-of the various other commands that are exposed by openssl (or get
+of the various other commands that are exposed by opentls (or get
 creative and use a combination of tools).
 
 The certificate authority performs various checks (according to their
@@ -77,9 +77,9 @@ with a certificate authority, or if you just want to create a test
 certificate for yourself.  This is similar to creating a certificate
 request, but creates a certificate instead of a certificate request.
 This is NOT the recommended way to create a CA certificate, see
-https://www.openssl.org/docs/apps/ca.html.
+https://www.opentls.org/docs/apps/ca.html.
 
-  openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
+  opentls req -new -x509 -key privkey.pem -out cacert.pem -days 1095
 
 
 5. What to do with the certificate
@@ -90,7 +90,7 @@ Your key most definitely is if you have followed the examples above.
 However, some (most?) certificate authorities will encode them with
 things like PKCS7 or PKCS12, or something else.  Depending on your
 applications, this may be perfectly OK, it all depends on what they
-know how to decode.  If not, there are a number of OpenSSL tools to
+know how to decode.  If not, there are a number of Opentls tools to
 convert between some (most?) formats.
 
 So, depending on your application, you may have to convert your

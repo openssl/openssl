@@ -1,14 +1,14 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_DSA
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_DSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -18,12 +18,12 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include "apps.h"
 # include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/dsa.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/bn.h>
+# include <opentls/dsa.h>
+# include <opentls/x509.h>
+# include <opentls/pem.h>
 
 static int verbose = 0;
 
@@ -41,7 +41,7 @@ const OPTIONS dsaparam_options[] = {
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
 
@@ -146,11 +146,11 @@ int dsaparam_main(int argc, char **argv)
         goto end;
 
     if (numbits > 0) {
-        if (numbits > OPENSSL_DSA_MAX_MODULUS_BITS)
+        if (numbits > OPENtls_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
-                       OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
+                       OPENtls_DSA_MAX_MODULUS_BITS, numbits);
 
         cb = BN_GENCB_new();
         if (cb == NULL) {
@@ -221,7 +221,7 @@ int dsaparam_main(int argc, char **argv)
                             "        return NULL;\n"
                             "    }\n"
                             "    return dsa;\n}\n");
-        OPENSSL_free(data);
+        OPENtls_free(data);
     }
 
     if (outformat == FORMAT_ASN1 && genkey)

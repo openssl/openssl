@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 package x86masm;
@@ -138,14 +138,14 @@ ___
 
     push(@out,"$segment	ENDS\n");
 
-    if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
+    if (grep {/\b${nmdecor}OPENtls_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
 .bss	SEGMENT 'BSS'
-COMM	${nmdecor}OPENSSL_ia32cap_P:DWORD:4
+COMM	${nmdecor}OPENtls_ia32cap_P:DWORD:4
 .bss	ENDS
 ___
-	# comment out OPENSSL_ia32cap_P declarations
-	grep {s/(^EXTERN\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
+	# comment out OPENtls_ia32cap_P declarations
+	grep {s/(^EXTERN\s+${nmdecor}OPENtls_ia32cap_P)/\;$1/} @out;
 	push (@out,$comm);
     }
     push (@out,$initseg) if ($initseg);

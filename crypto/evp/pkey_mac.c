@@ -1,18 +1,18 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/engine.h>
-#include <openssl/params.h>
-#include <openssl/core_names.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/engine.h>
+#include <opentls/params.h>
+#include <opentls/core_names.h>
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -53,14 +53,14 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
     int nid = ctx->pmeth->pkey_id;
     EVP_MAC *mac = EVP_MAC_fetch(NULL, OBJ_nid2sn(nid), NULL);
 
-    if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
+    if ((hctx = OPENtls_zalloc(sizeof(*hctx))) == NULL) {
         EVPerr(EVP_F_PKEY_MAC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     hctx->ctx = EVP_MAC_CTX_new(mac);
     if (hctx->ctx == NULL) {
-        OPENSSL_free(hctx);
+        OPENtls_free(hctx);
         return 0;
     }
 
@@ -86,7 +86,7 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     if (sctx->ctx->data == NULL)
         return 0;
 
-    dctx = OPENSSL_zalloc(sizeof(*dctx));
+    dctx = OPENtls_zalloc(sizeof(*dctx));
     if (dctx == NULL) {
         EVPerr(EVP_F_PKEY_MAC_COPY, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -146,13 +146,13 @@ static void pkey_mac_cleanup(EVP_PKEY_CTX *ctx)
 
         switch (hctx->type) {
         case MAC_TYPE_RAW:
-            OPENSSL_clear_free(hctx->raw_data.ktmp.data,
+            OPENtls_clear_free(hctx->raw_data.ktmp.data,
                                hctx->raw_data.ktmp.length);
             break;
         }
         EVP_MAC_CTX_free(hctx->ctx);
         EVP_MAC_free(mac);
-        OPENSSL_free(hctx);
+        OPENtls_free(hctx);
         EVP_PKEY_CTX_set_data(ctx, NULL);
     }
 }
@@ -234,18 +234,18 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 
     /* Some MACs don't support this control...  that's fine */
     {
-        OSSL_PARAM params[3];
+        Otls_PARAM params[3];
         size_t params_n = 0;
         int flags = EVP_MD_CTX_test_flags(mctx, ~EVP_MD_CTX_FLAG_NO_INIT);
 
         /* TODO(3.0) "flags" isn't quite right, i.e. a quick hack for now */
         params[params_n++] =
-            OSSL_PARAM_construct_int(OSSL_MAC_PARAM_FLAGS, &flags);
+            Otls_PARAM_construct_int(Otls_MAC_PARAM_FLAGS, &flags);
         if (set_key)
             params[params_n++] =
-                OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                Otls_PARAM_construct_octet_string(Otls_MAC_PARAM_KEY,
                                                   key->data, key->length);
-        params[params_n++] = OSSL_PARAM_construct_end();
+        params[params_n++] = Otls_PARAM_construct_end();
         rv = EVP_MAC_CTX_set_params(hctx->ctx, params);
     }
     return rv;
@@ -271,19 +271,19 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return -2;       /* The raw types don't support ciphers */
         case MAC_TYPE_MAC:
             {
-                OSSL_PARAM params[3];
+                Otls_PARAM params[3];
                 size_t params_n = 0;
                 char *ciphname = (char *)OBJ_nid2sn(EVP_CIPHER_nid(p2));
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
                 char *engineid = (char *)ENGINE_get_id(ctx->engine);
 
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
+                    Otls_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                    Otls_PARAM_construct_utf8_string(Otls_MAC_PARAM_CIPHER,
                                                      ciphname, 0);
-                params[params_n] = OSSL_PARAM_construct_end();
+                params[params_n] = Otls_PARAM_construct_end();
 
                 if (!EVP_MAC_CTX_set_params(hctx->ctx, params)
                     || !EVP_MAC_init(hctx->ctx))
@@ -322,7 +322,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_SET_DIGEST_SIZE:
         {
-            OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+            Otls_PARAM params[2] = { Otls_PARAM_END, Otls_PARAM_END };
             size_t size = (size_t)p1;
             size_t verify = 0;
 
@@ -335,13 +335,13 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
              */
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
+                Otls_PARAM_construct_size_t(Otls_MAC_PARAM_SIZE, &size);
 
             if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
                 return 0;
 
             params[0] =
-                OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &verify);
+                Otls_PARAM_construct_size_t(Otls_MAC_PARAM_SIZE, &verify);
 
             if (!EVP_MAC_CTX_get_params(hctx->ctx, params))
                 return 0;
@@ -365,13 +365,13 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             break;
         case MAC_TYPE_MAC:
             {
-                OSSL_PARAM params[2];
+                Otls_PARAM params[2];
                 size_t params_n = 0;
 
                 params[params_n++] =
-                    OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                    Otls_PARAM_construct_octet_string(Otls_MAC_PARAM_KEY,
                                                       p2, p1);
-                params[params_n] = OSSL_PARAM_construct_end();
+                params[params_n] = Otls_PARAM_construct_end();
 
                 return EVP_MAC_CTX_set_params(hctx->ctx, params);
             }
@@ -391,25 +391,25 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             {
                 ASN1_OCTET_STRING *key =
                     (ASN1_OCTET_STRING *)ctx->pkey->pkey.ptr;
-                OSSL_PARAM params[4];
+                Otls_PARAM params[4];
                 size_t params_n = 0;
                 char *mdname =
                     (char *)OBJ_nid2sn(EVP_MD_nid(hctx->raw_data.md));
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
                 char *engineid = ctx->engine == NULL
                     ? NULL : (char *)ENGINE_get_id(ctx->engine);
 
                 if (engineid != NULL)
                     params[params_n++] =
-                        OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
+                        Otls_PARAM_construct_utf8_string("engine", engineid, 0);
 #endif
                 params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                    Otls_PARAM_construct_utf8_string(Otls_MAC_PARAM_DIGEST,
                                                      mdname, 0);
                 params[params_n++] =
-                    OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                    Otls_PARAM_construct_octet_string(Otls_MAC_PARAM_KEY,
                                                       key->data, key->length);
-                params[params_n] = OSSL_PARAM_construct_end();
+                params[params_n] = Otls_PARAM_construct_end();
 
                 return EVP_MAC_CTX_set_params(hctx->ctx, params);
             }
@@ -434,7 +434,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 {
     MAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
     const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
-    OSSL_PARAM params[2];
+    Otls_PARAM params[2];
     int ok = 0;
 
     /*
@@ -447,17 +447,17 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
      * it's really the same as "size".
      */
     if (strcmp(type, "md") == 0)
-        type = OSSL_MAC_PARAM_DIGEST;
+        type = Otls_MAC_PARAM_DIGEST;
     else if (strcmp(type, "digestsize") == 0)
-        type = OSSL_MAC_PARAM_SIZE;
+        type = Otls_MAC_PARAM_SIZE;
 
-    if (!OSSL_PARAM_allocate_from_text(&params[0],
+    if (!Otls_PARAM_allocate_from_text(&params[0],
                                        EVP_MAC_settable_ctx_params(mac),
                                        type, value, strlen(value) + 1))
         return 0;
-    params[1] = OSSL_PARAM_construct_end();
+    params[1] = Otls_PARAM_construct_end();
     ok = EVP_MAC_CTX_set_params(hctx->ctx, params);
-    OPENSSL_free(params[0].data);
+    OPENtls_free(params[0].data);
     return ok;
 }
 

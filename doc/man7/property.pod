@@ -6,7 +6,7 @@ property - Properties, a selection mechanism for algorithm implementations
 
 =head1 DESCRIPTION
 
-As of OpenSSL 3.0, a new method has been introduced to decide which of
+As of Opentls 3.0, a new method has been introduced to decide which of
 multiple implementations of an algorithm will be used.
 The method is centered around the concept of properties.
 Each implementation defines a number of properties and when an algorithm
@@ -18,13 +18,13 @@ assigned.
 
 =head2 Property Names
 
-Property names fall into two categories: those reserved by the OpenSSL
+Property names fall into two categories: those reserved by the Opentls
 project and user defined names.
 A I<reserved> property name consists of a single C-style identifier
 (except for leading underscores not being permitted), which begins
 with a letter and can be followed by any number of letters, numbers
 and underscores.
-Property names are case-insensitive, but OpenSSL will only use lowercase
+Property names are case-insensitive, but Opentls will only use lowercase
 letters.
 
 A I<user defined> property name is similar, but it B<must> consist of
@@ -158,15 +158,15 @@ The lexical syntax in EBNF is given by:
 
 =head1 HISTORY
 
-Properties were added in OpenSSL 3.0
+Properties were added in Opentls 3.0
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

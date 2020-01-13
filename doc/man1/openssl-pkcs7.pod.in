@@ -7,11 +7,11 @@
 
 =head1 NAME
 
-openssl-pkcs7 - PKCS#7 utility
+opentls-pkcs7 - PKCS#7 utility
 
 =head1 SYNOPSIS
 
-B<openssl> B<pkcs7>
+B<opentls> B<pkcs7>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
@@ -20,9 +20,9 @@ B<openssl> B<pkcs7>
 [B<-print_certs>]
 [B<-text>]
 [B<-noout>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $Opentls::safe::opt_engine_synopsis -}
 
-=for openssl ifdef engine
+=for opentls ifdef engine
 
 =head1 DESCRIPTION
 
@@ -43,7 +43,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<opentls(1)/Format Options> for details.
 
 The data is a PKCS#7 Version 1.5 structure.
 
@@ -72,7 +72,7 @@ issuer names.
 Don't output the encoded version of the PKCS#7 structure (or certificates
 is B<-print_certs> is set).
 
-{- $OpenSSL::safe::opt_engine_item -}
+{- $Opentls::safe::opt_engine_item -}
 
 =back
 
@@ -80,24 +80,24 @@ is B<-print_certs> is set).
 
 Convert a PKCS#7 file from PEM to DER:
 
- openssl pkcs7 -in file.pem -outform DER -out file.der
+ opentls pkcs7 -in file.pem -outform DER -out file.der
 
 Output all certificates in a file:
 
- openssl pkcs7 -in file.pem -print_certs -out certs.pem
+ opentls pkcs7 -in file.pem -print_certs -out certs.pem
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-crl2pkcs7(1)>
+L<opentls(1)>,
+L<opentls-crl2pkcs7(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

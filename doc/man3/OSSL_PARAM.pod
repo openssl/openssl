@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-OSSL_PARAM - a structure to pass or request object parameters
+Otls_PARAM - a structure to pass or request object parameters
 
 =head1 SYNOPSIS
 
- #include <openssl/core.h>
+ #include <opentls/core.h>
 
- typedef struct ossl_param_st OSSL_PARAM;
- struct ossl_param_st {
+ typedef struct otls_param_st Otls_PARAM;
+ struct otls_param_st {
      const char *key;             /* the name of the parameter */
      unsigned char data_type;     /* declare what kind of content is in data */
      void *data;                  /* value being passed in or out */
@@ -19,7 +19,7 @@ OSSL_PARAM - a structure to pass or request object parameters
 
 =head1 DESCRIPTION
 
-B<OSSL_PARAM> is a type that allows passing arbitrary data for some
+B<Otls_PARAM> is a type that allows passing arbitrary data for some
 object between two parties that have no or very little shared
 knowledge about their respective internal structures for that object.
 
@@ -33,38 +33,38 @@ Arrays of this type can be used for the following purposes:
 
 =item * Setting parameters for some object
 
-The caller sets up the B<OSSL_PARAM> array and calls some function
+The caller sets up the B<Otls_PARAM> array and calls some function
 (the I<setter>) that has intimate knowledge about the object that can
-take the data from the B<OSSL_PARAM> array and assign them in a
+take the data from the B<Otls_PARAM> array and assign them in a
 suitable form for the internal structure of the object.
 
 =item * Request parameters of some object
 
-The caller (the I<requestor>) sets up the B<OSSL_PARAM> array and
+The caller (the I<requestor>) sets up the B<Otls_PARAM> array and
 calls some function (the I<responder>) that has intimate knowledge
 about the object, which can take the internal data of the object and
 copy (possibly convert) that to the memory prepared by the
-I<requestor> and pointed at with the B<OSSL_PARAM> I<data>.
+I<requestor> and pointed at with the B<Otls_PARAM> I<data>.
 
 =item * Request parameter descriptors
 
-The caller gets an array of constant B<OSSL_PARAM>, which describe
+The caller gets an array of constant B<Otls_PARAM>, which describe
 available parameters and some of their properties; name, data type and
 expected data size.
 For a detailed description of each field for this use, see the field
 descriptions below.
 
 The caller may then use the information from this descriptor array to
-build up its own B<OSSL_PARAM> array to pass down to a I<setter> or
+build up its own B<Otls_PARAM> array to pass down to a I<setter> or
 I<responder>.
 
 =back
 
-Normally, the order of the an B<OSSL_PARAM> array is not relevant.
+Normally, the order of the an B<Otls_PARAM> array is not relevant.
 However, if the I<responder> can handle multiple elements with the
 same key, those elements must be handled in the order they are in.
 
-=head2 B<OSSL_PARAM> fields
+=head2 B<Otls_PARAM> fields
 
 =over 4
 
@@ -92,14 +92,14 @@ This can be used by the I<requestor> to figure out dynamically exactly
 how much buffer space is needed to store the parameter data.
 In this case, I<data_size> is ignored.
 
-When the B<OSSL_PARAM> is used as a parameter descriptor, I<data>
+When the B<Otls_PARAM> is used as a parameter descriptor, I<data>
 should be ignored.
 If I<data_size> is zero, it means that an arbitrary data size is
 accepted, otherwise it specifies the maximum size allowed.
 
 =item I<return_size>
 
-When an array of B<OSSL_PARAM> is used to request data, the
+When an array of B<Otls_PARAM> is used to request data, the
 I<responder> must set this field to indicate size of the parameter
 data, including padding as the case may be.
 In case the I<data_size> is an unsuitable size for the data, the
@@ -107,7 +107,7 @@ I<responder> must still set this field to indicate the minimum data
 size required.
 (further notes on this in L</NOTES> below).
 
-When the B<OSSL_PARAM> is used as a parameter descriptor,
+When the B<Otls_PARAM> is used as a parameter descriptor,
 I<return_size> should be ignored.
 
 =back
@@ -116,13 +116,13 @@ B<NOTE:>
 
 The key names and associated types are defined by the entity that
 offers these parameters, i.e. names for parameters provided by the
-OpenSSL libraries are defined by the libraries, and names for
+Opentls libraries are defined by the libraries, and names for
 parameters provided by providers are defined by those providers,
 except for the pointer form of strings (see data type descriptions
 below).
 Entities that want to set or request parameters need to know what
 those keys are and of what type, any functionality between those two
-entities should remain oblivious and just pass the B<OSSL_PARAM> array
+entities should remain oblivious and just pass the B<Otls_PARAM> array
 along.
 
 =head2 Supported types
@@ -131,32 +131,32 @@ The I<data_type> field can be one of the following types:
 
 =over 4
 
-=item B<OSSL_PARAM_INTEGER>
+=item B<Otls_PARAM_INTEGER>
 
-=item B<OSSL_PARAM_UNSIGNED_INTEGER>
+=item B<Otls_PARAM_UNSIGNED_INTEGER>
 
 The parameter data is an integer (signed or unsigned) of arbitrary
 length, organized in native form, i.e. most significant byte first on
 Big-Endian systems, and least significant byte first on Little-Endian
 systems.
 
-=item B<OSSL_PARAM_REAL>
+=item B<Otls_PARAM_REAL>
 
 The parameter data is a floating point value in native form.
 
-=item B<OSSL_PARAM_UTF8_STRING>
+=item B<Otls_PARAM_UTF8_STRING>
 
 The parameter data is a printable string.
 
-=item B<OSSL_PARAM_OCTET_STRING>
+=item B<Otls_PARAM_OCTET_STRING>
 
 The parameter data is an arbitrary string of bytes.
 
-=item B<OSSL_PARAM_UTF8_PTR>
+=item B<Otls_PARAM_UTF8_PTR>
 
 The parameter data is a pointer to a printable string.
 
-The difference between this and B<OSSL_PARAM_UTF8_STRING> is that I<data>
+The difference between this and B<Otls_PARAM_UTF8_STRING> is that I<data>
 doesn't point directly at the data, but to a pointer that points to the data.
 
 This is used to indicate that constant data is or will be passed,
@@ -174,11 +174,11 @@ used for data that remains constant and in a constant location for a
 long enough duration (such as the life-time of the entity that
 offers these parameters).
 
-=item B<OSSL_PARAM_OCTET_PTR>
+=item B<Otls_PARAM_OCTET_PTR>
 
 The parameter data is a pointer to an arbitrary string of bytes.
 
-The difference between this and B<OSSL_PARAM_OCTET_STRING> is that
+The difference between this and B<Otls_PARAM_OCTET_STRING> is that
 I<data> doesn't point directly at the data, but to a pointer that
 points to the data.
 
@@ -221,7 +221,7 @@ enough set of data, that call should succeed.
 =item *
 
 Apart from the I<return_size>, a I<responder> must never change the fields
-of an B<OSSL_PARAM>.
+of an B<Otls_PARAM>.
 To return a value, it should change the contents of the memory that
 I<data> points at.
 
@@ -233,20 +233,20 @@ the called function may return an error.
 The called function may also try to convert the data to a suitable
 form (for example, it's plausible to pass a large number as an octet
 string, so even though a given key is defined as an
-B<OSSL_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
-B<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
+B<Otls_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
+B<Otls_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 =item *
 
 If a I<responder> finds that some data sizes are too small for the
 requested data, it must set I<return_size> for each such
-B<OSSL_PARAM> item to the minimum required size, and eventually return
+B<Otls_PARAM> item to the minimum required size, and eventually return
 an error.
 
 =item *
 
-For the integer type parameters (B<OSSL_PARAM_UNSIGNED_INTEGER> and
-B<OSSL_PARAM_INTEGER>), a I<responder> may choose to return an error
+For the integer type parameters (B<Otls_PARAM_UNSIGNED_INTEGER> and
+B<Otls_PARAM_INTEGER>), a I<responder> may choose to return an error
 if the I<data_size> isn't a suitable size (even if I<data_size> is
 bigger than needed).  If the I<responder> finds the size suitable, it
 must fill all I<data_size> bytes and ensure correct padding for the
@@ -267,21 +267,21 @@ txt
 
 =head1 EXAMPLES
 
-A couple of examples to just show how B<OSSL_PARAM> arrays could be
+A couple of examples to just show how B<Otls_PARAM> arrays could be
 set up.
 
 =head3 Example 1
 
 This example is for setting parameters on some object:
 
-    #include <openssl/core.h>
+    #include <opentls/core.h>
 
     const char *foo = "some string";
     size_t foo_l = strlen(foo) + 1;
     const char bar[] = "some other string";
-    OSSL_PARAM set[] = {
-        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
-        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
+    Otls_PARAM set[] = {
+        { "foo", Otls_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
+        { "bar", Otls_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
         { NULL, 0, NULL, 0, NULL }
     };
 
@@ -293,16 +293,16 @@ This example is for requesting parameters on some object:
     size_t foo_l;
     char bar[1024];
     size_t bar_l;
-    OSSL_PARAM request[] = {
-        { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
-        { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
+    Otls_PARAM request[] = {
+        { "foo", Otls_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
+        { "bar", Otls_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
         { NULL, 0, NULL, 0, NULL }
     };
 
 A I<responder> that receives this array (as I<params> in this example)
 could fill in the parameters like this:
 
-    /* OSSL_PARAM *params */
+    /* Otls_PARAM *params */
 
     int i;
 
@@ -319,19 +319,19 @@ could fill in the parameters like this:
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<OSSL_PARAM_get_int(3)>
+L<opentls-core.h(7)>, L<Otls_PARAM_get_int(3)>
 
 =head1 HISTORY
 
-B<OSSL_PARAM> was added in OpenSSL 3.0.
+B<Otls_PARAM> was added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

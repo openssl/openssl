@@ -1,22 +1,22 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#ifdef OPENSSL_NO_RSA
+#ifdef OPENtls_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <stdio.h>
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/x509.h>
-# include <openssl/rsa.h>
+# include <opentls/evp.h>
+# include <opentls/objects.h>
+# include <opentls/x509.h>
+# include <opentls/rsa.h>
 
 int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  const unsigned char *ek, int ekl, const unsigned char *iv,
@@ -40,7 +40,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     }
 
     size = EVP_PKEY_size(priv);
-    key = OPENSSL_malloc(size);
+    key = OPENtls_malloc(size);
     if (key == NULL) {
         /* ERROR */
         EVPerr(EVP_F_EVP_OPENINIT, ERR_R_MALLOC_FAILURE);
@@ -57,7 +57,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 
     ret = 1;
  err:
-    OPENSSL_clear_free(key, size);
+    OPENtls_clear_free(key, size);
     return ret;
 }
 

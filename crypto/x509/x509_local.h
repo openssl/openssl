@@ -1,10 +1,10 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/refcount.h"
@@ -26,7 +26,7 @@ struct X509_VERIFY_PARAM_st {
     int auth_level;             /* Security level for chain verification */
     STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
     /* Peer identity details */
-    STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
+    STACK_OF(OPENtls_STRING) *hosts; /* Set of acceptable names */
     unsigned int hostflags;     /* Flags to control matching features */
     char *peername;             /* Matching hostname in peer certificate */
     char *email;                /* If not NULL email address to match */

@@ -1,33 +1,33 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef  OPENSSL_CONF_API_H
-# define OPENSSL_CONF_API_H
+#ifndef  OPENtls_CONF_API_H
+# define OPENtls_CONF_API_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_CONF_API_H
 # endif
 
-# include <openssl/lhash.h>
-# include <openssl/conf.h>
+# include <opentls/lhash.h>
+# include <opentls/conf.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-/* Up until OpenSSL 0.9.5a, this was new_section */
+/* Up until Opentls 0.9.5a, this was new_section */
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section);
-/* Up until OpenSSL 0.9.5a, this was get_section */
+/* Up until Opentls 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section);
-/* Up until OpenSSL 0.9.5a, this was CONF_get_section */
+/* Up until Opentls 0.9.5a, this was CONF_get_section */
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
                                                const char *section);
 

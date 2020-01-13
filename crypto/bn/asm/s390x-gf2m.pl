@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # May 2011
@@ -222,7 +222,7 @@ $code.=<<___;
 	lm${g}	%r6,%r15,`$stdframe+128+6*$SIZE_T`($sp)
 	br	$ra
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
-.string	"GF(2^m) Multiplication for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"GF(2^m) Multiplication for s390x, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;

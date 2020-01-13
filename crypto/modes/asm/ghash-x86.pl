@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # March, May, June 2010
@@ -140,7 +140,7 @@ $output=pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$x86only = $ARGV[$#ARGV] eq "386");
 
 $sse2=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $sse2=1 if (/-DOPENtls_IA32_SSE2/); }
 
 ($Zhh,$Zhl,$Zlh,$Zll) = ("ebp","edx","ecx","ebx");
 $inp  = "edi";
@@ -1374,7 +1374,7 @@ my ($Xhi,$Xi)=@_;
 	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
 }}}	# !$x86only
 
-&asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz("GHASH for x86, CRYPTOGAMS by <appro\@opentls.org>");
 &asm_finish();
 
 close STDOUT;

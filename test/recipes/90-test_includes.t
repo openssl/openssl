@@ -2,8 +2,8 @@
 
 use strict;
 use warnings;
-use OpenSSL::Test qw/:DEFAULT data_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT data_file/;
+use Opentls::Test::Utils;
 
 setup("test_includes");
 

@@ -13,9 +13,9 @@ require platform::BASE;
 use configdata;
 
 # VMS has a cultural standard where all installed libraries are prefixed.
-# For OpenSSL, the choice is 'ossl$' (this prefix was claimed in a
+# For Opentls, the choice is 'otls$' (this prefix was claimed in a
 # conversation with VSI, Tuesday January 26 2016)
-sub osslprefix          { 'OSSL$' }
+sub otlsprefix          { 'Otls$' }
 
 sub binext              { '.EXE' }
 sub dsoext              { '.EXE' }
@@ -41,12 +41,12 @@ sub staticname {
     my $in_libname = platform::BASE->staticname($_[1]);
     return $in_libname if $unified_info{attributes}->{$_[1]}->{noinst};
 
-    return platform::BASE::__concat($_[0]->osslprefix(),
+    return platform::BASE::__concat($_[0]->otlsprefix(),
                                     platform::BASE->staticname($_[1]),
                                     $target{pointer_size});
 }
 
-# To enable installation of multiple major OpenSSL releases, we include the
+# To enable installation of multiple major Opentls releases, we include the
 # version number in installed shared library names.
 my $sover_filename =
     join('', map { sprintf "%02d", $_ } split(m|\.|, $config{shlib_version}));
@@ -54,7 +54,7 @@ sub shlib_version_as_filename {
     return $sover_filename;
 }
 sub sharedname {
-    return platform::BASE::__concat($_[0]->osslprefix(),
+    return platform::BASE::__concat($_[0]->otlsprefix(),
                                     platform::BASE->sharedname($_[1]),
                                     $_[0]->shlib_version_as_filename(),
                                     ($_[0]->shlibvariant() // ''),

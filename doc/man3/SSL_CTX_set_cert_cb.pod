@@ -2,33 +2,33 @@
 
 =head1 NAME
 
-SSL_CTX_set_cert_cb, SSL_set_cert_cb - handle certificate callback function
+tls_CTX_set_cert_cb, tls_set_cert_cb - handle certificate callback function
 
 =head1 SYNOPSIS
 
- #include <openssl/ssl.h>
+ #include <opentls/tls.h>
 
- void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cert_cb)(SSL *ssl, void *arg),
+ void tls_CTX_set_cert_cb(tls_CTX *c, int (*cert_cb)(tls *tls, void *arg),
                           void *arg);
- void SSL_set_cert_cb(SSL *s, int (*cert_cb)(SSL *ssl, void *arg), void *arg);
+ void tls_set_cert_cb(tls *s, int (*cert_cb)(tls *tls, void *arg), void *arg);
 
- int (*cert_cb)(SSL *ssl, void *arg);
+ int (*cert_cb)(tls *tls, void *arg);
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_cert_cb() and SSL_set_cert_cb() sets the cert_cb() callback,
+tls_CTX_set_cert_cb() and tls_set_cert_cb() sets the cert_cb() callback,
 B<arg> value is pointer which is passed to the application callback.
 
 When cert_cb() is NULL, no callback function is used.
 
 cert_cb() is the application defined callback. It is called before a
 certificate will be used by a client or server. The callback can then inspect
-the passed B<ssl> structure and set or clear any appropriate certificates. If
+the passed B<tls> structure and set or clear any appropriate certificates. If
 the callback is successful it B<MUST> return 1 even if no certificates have
 been set. A zero is returned on error which will abort the handshake with a
 fatal internal error alert. A negative return value will suspend the handshake
 and the handshake function will return immediately.
-L<SSL_get_error(3)> will return SSL_ERROR_WANT_X509_LOOKUP to
+L<tls_get_error(3)> will return tls_ERROR_WANT_X509_LOOKUP to
 indicate, that the handshake was suspended. The next call to the handshake
 function will again lead to the call of cert_cb(). It is the job of the
 cert_cb() to store information about the state of the last call,
@@ -36,13 +36,13 @@ if required to continue.
 
 =head1 NOTES
 
-An application will typically call SSL_use_certificate() and
-SSL_use_PrivateKey() to set the end entity certificate and private key.
+An application will typically call tls_use_certificate() and
+tls_use_PrivateKey() to set the end entity certificate and private key.
 It can add intermediate and optionally the root CA certificates using
-SSL_add1_chain_cert().
+tls_add1_chain_cert().
 
-It might also call SSL_certs_clear() to delete any certificates associated
-with the B<SSL> object.
+It might also call tls_certs_clear() to delete any certificates associated
+with the B<tls> object.
 
 The certificate callback functionality supersedes the (largely broken)
 functionality provided by the old client certificate callback interface.
@@ -61,22 +61,22 @@ support it will B<not> be used.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_cert_cb() and SSL_set_cert_cb() do not return values.
+tls_CTX_set_cert_cb() and tls_set_cert_cb() do not return values.
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<SSL_use_certificate(3)>,
-L<SSL_add1_chain_cert(3)>,
-L<SSL_get_client_CA_list(3)>,
-L<SSL_clear(3)>, L<SSL_free(3)>
+L<tls(7)>, L<tls_use_certificate(3)>,
+L<tls_add1_chain_cert(3)>,
+L<tls_get_client_CA_list(3)>,
+L<tls_clear(3)>, L<tls_free(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

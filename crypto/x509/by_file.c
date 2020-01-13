@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,9 +12,9 @@
 #include <errno.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
+#include <opentls/buffer.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
 #include "x509_local.h"
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
@@ -46,7 +46,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
     switch (cmd) {
     case X509_L_FILE_LOAD:
         if (argl == X509_FILETYPE_DEFAULT) {
-            file = ossl_safe_getenv(X509_get_default_cert_file_env());
+            file = otls_safe_getenv(X509_get_default_cert_file_env());
             if (file)
                 ok = (X509_load_cert_crl_file(ctx, file,
                                               X509_FILETYPE_PEM) != 0);

@@ -1,27 +1,27 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
+#include <opentls/bn.h>
+#include <opentls/rsa.h>
+#include <opentls/rand.h>
 #include "internal/constant_time.h"
 
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+int RSA_padding_add_tlsv23(unsigned char *to, int tlen,
                            const unsigned char *from, int flen)
 {
     int i, j;
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_SSLV23,
+        RSAerr(RSA_F_RSA_PADDING_ADD_tlsV23,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
@@ -58,7 +58,7 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
  * if nul delimiter is not preceded by 8 consecutive 0x03 bytes. It also
  * preserves error code reporting for backward compatibility.
  */
-int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
+int RSA_padding_check_tlsv23(unsigned char *to, int tlen,
                              const unsigned char *from, int flen, int num)
 {
     int i;
@@ -71,13 +71,13 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
         return -1;
 
     if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
+        RSAerr(RSA_F_RSA_PADDING_CHECK_tlsV23, RSA_R_DATA_TOO_SMALL);
         return -1;
     }
 
-    em = OPENSSL_malloc(num);
+    em = OPENtls_malloc(num);
     if (em == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_PADDING_CHECK_tlsV23, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     /*
@@ -124,7 +124,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
 
     good &= constant_time_ge(threes_in_row, 8);
     err = constant_time_select_int(mask | good, err,
-                                   RSA_R_SSLV3_ROLLBACK_ATTACK);
+                                   RSA_R_tlsV3_ROLLBACK_ATTACK);
     mask = ~good;
 
     /*
@@ -162,8 +162,8 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
         to[i] = constant_time_select_8(mask, em[i + RSA_PKCS1_PADDING_SIZE], to[i]);
     }
 
-    OPENSSL_clear_free(em, num);
-    RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, err);
+    OPENtls_clear_free(em, num);
+    RSAerr(RSA_F_RSA_PADDING_CHECK_tlsV23, err);
     err_clear_last_constant_time(1 & good);
 
     return constant_time_select_int(good, mlen, -1);

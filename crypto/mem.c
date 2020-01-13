@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
@@ -27,7 +27,7 @@ static void *(*realloc_impl)(void *, size_t, const char *, int)
 static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 # include "internal/tsan_assist.h"
 
 static TSAN_QUALIFIER int malloc_count;
@@ -81,7 +81,7 @@ void CRYPTO_get_mem_functions(
         *f = free_impl;
 }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
     if (mcount != NULL)
@@ -157,13 +157,13 @@ static int shouldfail(void)
     return shoulditfail;
 }
 
-void ossl_malloc_setup_failures(void)
+void otls_malloc_setup_failures(void)
 {
-    const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+    const char *cp = getenv("OPENtls_MALLOC_FAILURES");
 
     if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
         parseit();
-    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
+    if ((cp = getenv("OPENtls_MALLOC_FD")) != NULL)
         md_tracefd = atoi(cp);
 }
 #endif
@@ -239,7 +239,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
     /* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
     if (num < old_len) {
-        OPENSSL_cleanse((char*)str + num, old_len - num);
+        OPENtls_cleanse((char*)str + num, old_len - num);
         return str;
     }
 
@@ -267,13 +267,13 @@ void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
     if (str == NULL)
         return;
     if (num)
-        OPENSSL_cleanse(str, num);
+        OPENtls_cleanse(str, num);
     CRYPTO_free(str, file, line);
 }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG)
+#if !defined(OPENtls_NO_CRYPTO_MDEBUG)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 int CRYPTO_mem_ctrl(int mode)
 {
     (void)mode;
@@ -321,7 +321,7 @@ int CRYPTO_mem_leaks(BIO *b)
     return -1;
 }
 
-#  ifndef OPENSSL_NO_STDIO
+#  ifndef OPENtls_NO_STDIO
 int CRYPTO_mem_leaks_fp(FILE *fp)
 {
     (void)fp;

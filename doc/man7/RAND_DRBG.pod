@@ -6,11 +6,11 @@ RAND_DRBG - the deterministic random bit generator
 
 =head1 SYNOPSIS
 
- #include <openssl/rand_drbg.h>
+ #include <opentls/rand_drbg.h>
 
 =head1 DESCRIPTION
 
-The default OpenSSL RAND method is based on the RAND_DRBG class,
+The default Opentls RAND method is based on the RAND_DRBG class,
 which implements a deterministic random bit generator (DRBG).
 A DRBG is a certain type of cryptographically-secure pseudo-random
 number generator (CSPRNG), which is described in
@@ -49,7 +49,7 @@ You need to integrate a previously unsupported entropy source.
 
 =item *
 
-You need to change the default settings of the standard OpenSSL RAND
+You need to change the default settings of the standard Opentls RAND
 implementation to meet specific requirements.
 
 =back
@@ -206,7 +206,7 @@ The <public> and <private> DRBG will detect this on their next generate
 call and reseed, pulling randomness from <master>.
 
 The last feature has been added to support the common practice used with
-previous OpenSSL versions to call RAND_add() before calling RAND_bytes().
+previous Opentls versions to call RAND_add() before calling RAND_bytes().
 
 
 =head2 Entropy Input and Additional Data
@@ -221,7 +221,7 @@ This is in fact done automatically by L<RAND_DRBG_bytes(3)>.
 
 =head2 Configuring the Random Seed Source
 
-In most cases OpenSSL will automatically choose a suitable seed source
+In most cases Opentls will automatically choose a suitable seed source
 for automatically seeding and reseeding its <master> DRBG. In some cases
 however, it will be necessary to explicitly specify a seed source during
 configuration, using the --with-rand-seed option. For more information,
@@ -299,11 +299,11 @@ L<RAND(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

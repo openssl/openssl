@@ -1,28 +1,28 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_PKCS7_H
-# define OPENSSL_PKCS7_H
+#ifndef OPENtls_PKCS7_H
+# define OPENtls_PKCS7_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_PKCS7_H
 # endif
 
-# include <openssl/asn1.h>
-# include <openssl/bio.h>
-# include <openssl/e_os2.h>
+# include <opentls/asn1.h>
+# include <opentls/bio.h>
+# include <opentls/e_os2.h>
 
-# include <openssl/symhacks.h>
-# include <openssl/types.h>
-# include <openssl/pkcs7err.h>
+# include <opentls/symhacks.h>
+# include <opentls/types.h>
+# include <opentls/pkcs7err.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -212,7 +212,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                                    const EVP_MD *type, unsigned char *md,
                                    unsigned int *len);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7);
 int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7);
 # endif

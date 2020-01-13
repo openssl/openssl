@@ -7,7 +7,7 @@ BIO_new, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all
 
 =head1 SYNOPSIS
 
- #include <openssl/bio.h>
+ #include <opentls/bio.h>
 
  BIO *  BIO_new(const BIO_METHOD *type);
  int    BIO_up_ref(BIO *a);
@@ -51,7 +51,7 @@ on it other than the discarded return value.
 
 =head1 HISTORY
 
-BIO_set() was removed in OpenSSL 1.1.0 as BIO type is now opaque.
+BIO_set() was removed in Opentls 1.1.0 as BIO type is now opaque.
 
 =head1 EXAMPLES
 
@@ -61,11 +61,11 @@ Create a memory BIO:
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

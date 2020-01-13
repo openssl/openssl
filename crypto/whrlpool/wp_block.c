@@ -1,10 +1,10 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /**
@@ -74,16 +74,16 @@ typedef unsigned long long u64;
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
 # define SMALL_REGISTER_BANK
 # if defined(WHIRLPOOL_ASM)
-#  ifndef OPENSSL_SMALL_FOOTPRINT
+#  ifndef OPENtls_SMALL_FOOTPRINT
 /*
  * it appears that for elder non-MMX
  * CPUs this is actually faster!
  */
-#   define OPENSSL_SMALL_FOOTPRINT
+#   define OPENtls_SMALL_FOOTPRINT
 #  endif
 #  define GO_FOR_MMX(ctx,inp,num)     do {                    \
         void whirlpool_block_mmx(void *,const void *,size_t);   \
-        if (!(OPENSSL_ia32cap_P[0] & (1<<23)))  break;          \
+        if (!(OPENtls_ia32cap_P[0] & (1<<23)))  break;          \
         whirlpool_block_mmx(ctx->H.c,inp,num);  return;         \
                                         } while (0)
 # endif
@@ -125,7 +125,7 @@ typedef unsigned long long u64;
 # endif
 #endif
 
-#if defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(OPENtls_SMALL_FOOTPRINT)
 # if !defined(ROTATE)
 #  if defined(L_ENDIAN)         /* little-endians have to rotate left */
 #   define ROTATE(i,n)       ((i)<<(n) ^ (i)>>(64-n))
@@ -495,7 +495,7 @@ void whirlpool_block(WHIRLPOOL_CTX *ctx, const void *inp, size_t n)
     GO_FOR_MMX(ctx, inp, n);
 #endif
     do {
-#ifdef OPENSSL_SMALL_FOOTPRINT
+#ifdef OPENtls_SMALL_FOOTPRINT
         u64 L[8];
         int i;
 

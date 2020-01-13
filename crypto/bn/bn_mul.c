@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <assert.h>
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-#if defined(OPENSSL_NO_ASM) || !defined(OPENSSL_BN_ASM_PART_WORDS)
+#if defined(OPENtls_NO_ASM) || !defined(OPENtls_BN_ASM_PART_WORDS)
 /*
  * Here follows specialised variants of bn_add_words() and bn_sub_words().
  * They have the property performing operations on arrays of different sizes.

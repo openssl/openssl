@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,19 +13,19 @@
 
 #include "internal/nelem.h"
 
-# include <openssl/hmac.h>
-# include <openssl/sha.h>
-# ifndef OPENSSL_NO_MD5
-#  include <openssl/md5.h>
+# include <opentls/hmac.h>
+# include <opentls/sha.h>
+# ifndef OPENtls_NO_MD5
+#  include <opentls/md5.h>
 # endif
 
 # ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
+#  include <opentls/ebcdic.h>
 # endif
 
 #include "testutil.h"
 
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
 static struct test_st {
     const char key[16];
     int key_len;
@@ -78,7 +78,7 @@ static struct test_st {
 static char *pt(unsigned char *md, unsigned int len);
 
 
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
 static int test_hmac_md5(int idx)
 {
     char *p;
@@ -241,7 +241,7 @@ err:
     return ret;
 }
 
-# ifndef OPENSSL_NO_MD5
+# ifndef OPENtls_NO_MD5
 static char *pt(unsigned char *md, unsigned int len)
 {
     unsigned int i;

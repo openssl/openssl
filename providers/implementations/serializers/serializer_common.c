@@ -1,26 +1,26 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h> /* SIXTY_FOUR_BIT_LONG, ... */
-#include <openssl/err.h>
-#include <openssl/pem.h>         /* PEM_BUFSIZE */
-#include <openssl/pkcs12.h>      /* PKCS8_encrypt() */
-#include <openssl/types.h>
-#include <openssl/x509.h>        /* i2d_X509_PUBKEY_bio() */
+#include <opentls/opentlsconf.h> /* SIXTY_FOUR_BIT_LONG, ... */
+#include <opentls/err.h>
+#include <opentls/pem.h>         /* PEM_BUFSIZE */
+#include <opentls/pkcs12.h>      /* PKCS8_encrypt() */
+#include <opentls/types.h>
+#include <opentls/x509.h>        /* i2d_X509_PUBKEY_bio() */
 #include "crypto/bn.h"           /* bn_get_words() */
-#include "prov/bio.h"            /* ossl_prov_bio_printf() */
+#include "prov/bio.h"            /* otls_prov_bio_printf() */
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h" /* PROV_R_READ_KEY */
 #include "serializer_local.h"
 
 static PKCS8_PRIV_KEY_INFO *
-ossl_prov_p8info_from_obj(const void *obj, int obj_nid,
+otls_prov_p8info_from_obj(const void *obj, int obj_nid,
                           ASN1_STRING *params,
                           int params_type,
                           int (*k2d)(const void *obj,
@@ -39,14 +39,14 @@ ossl_prov_p8info_from_obj(const void *obj, int obj_nid,
                             params_type, params, der, derlen)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         PKCS8_PRIV_KEY_INFO_free(p8info);
-        OPENSSL_free(der);
+        OPENtls_free(der);
         p8info = NULL;
     }
 
     return p8info;
 }
 
-static X509_SIG *ossl_prov_encp8_from_p8info(PKCS8_PRIV_KEY_INFO *p8info,
+static X509_SIG *otls_prov_encp8_from_p8info(PKCS8_PRIV_KEY_INFO *p8info,
                                              struct pkcs8_encrypt_ctx_st *ctx)
 {
     X509_SIG *p8 = NULL;
@@ -67,11 +67,11 @@ static X509_SIG *ossl_prov_encp8_from_p8info(PKCS8_PRIV_KEY_INFO *p8info,
     /* NID == -1 means "standard" */
     p8 = PKCS8_encrypt(-1, ctx->cipher, kstr, klen, NULL, 0, 0, p8info);
     if (kstr == buf)
-        OPENSSL_cleanse(buf, klen);
+        OPENtls_cleanse(buf, klen);
     return p8;
 }
 
-static X509_SIG *ossl_prov_encp8_from_obj(const void *obj, int obj_nid,
+static X509_SIG *otls_prov_encp8_from_obj(const void *obj, int obj_nid,
                                           ASN1_STRING *params,
                                           int params_type,
                                           int (*k2d)(const void *obj,
@@ -79,14 +79,14 @@ static X509_SIG *ossl_prov_encp8_from_obj(const void *obj, int obj_nid,
                                           struct pkcs8_encrypt_ctx_st *ctx)
 {
     PKCS8_PRIV_KEY_INFO *p8info =
-        ossl_prov_p8info_from_obj(obj, obj_nid, params, params_type, k2d);
-    X509_SIG *p8 = ossl_prov_encp8_from_p8info(p8info, ctx);
+        otls_prov_p8info_from_obj(obj, obj_nid, params, params_type, k2d);
+    X509_SIG *p8 = otls_prov_encp8_from_p8info(p8info, ctx);
 
     PKCS8_PRIV_KEY_INFO_free(p8info);
     return p8;
 }
 
-static X509_PUBKEY *ossl_prov_pubkey_from_obj(const void *obj, int obj_nid,
+static X509_PUBKEY *otls_prov_pubkey_from_obj(const void *obj, int obj_nid,
                                               ASN1_STRING *params,
                                               int params_type,
                                               int (*k2d)(const void *obj,
@@ -105,19 +105,19 @@ static X509_PUBKEY *ossl_prov_pubkey_from_obj(const void *obj, int obj_nid,
                                    params_type, params, der, derlen)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         X509_PUBKEY_free(xpk);
-        OPENSSL_free(der);
+        OPENtls_free(der);
         xpk = NULL;
     }
 
     return xpk;
 }
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_importkey(const OSSL_DISPATCH *fns)
+Otls_OP_keymgmt_importkey_fn *otls_prov_get_importkey(const Otls_DISPATCH *fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
-        if (fns->function_id == OSSL_FUNC_KEYMGMT_IMPORTKEY)
-            return OSSL_get_OP_keymgmt_importkey(fns);
+        if (fns->function_id == Otls_FUNC_KEYMGMT_IMPORTKEY)
+            return Otls_get_OP_keymgmt_importkey(fns);
 
     return NULL;
 }
@@ -137,7 +137,7 @@ OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_importkey(const OSSL_DISPATCH *fns)
 #  define BN_FMTx "%x"
 # endif
 
-int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
+int otls_prov_print_labeled_bignum(BIO *out, const char *label,
                                    const BIGNUM *n)
 {
     const char *neg;
@@ -158,10 +158,10 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     neg = BN_is_negative(n) ? "-" : "";
 
     if (BN_is_zero(n))
-        return ossl_prov_bio_printf(out, "%s%s0\n", label, post_label_spc);
+        return otls_prov_bio_printf(out, "%s%s0\n", label, post_label_spc);
 
     if (BN_num_bytes(n) <= BN_BYTES)
-        return ossl_prov_bio_printf(out,
+        return otls_prov_bio_printf(out,
                                     "%s%s%s" BN_FMTu " (%s0x" BN_FMTx ")\n",
                                     label, post_label_spc, neg, words[0],
                                     neg, words[0]);
@@ -169,7 +169,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     if (neg[0] == '-')
         neg = " (Negative)";
 
-    if (ossl_prov_bio_printf(out, "%s%s\n", label, neg) <= 0)
+    if (otls_prov_bio_printf(out, "%s%s\n", label, neg) <= 0)
         return 0;
 
     /* Skip past the zero bytes in the first word */
@@ -185,7 +185,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     for (i = 0; i < bytes; i += 16) {
         int j, step;
 
-        if (ossl_prov_bio_printf(out, "    ") <= 0)
+        if (otls_prov_bio_printf(out, "    ") <= 0)
             return 0;
 
         for (j = 0; i + j < bytes && j < 16; j += BN_BYTES - step) {
@@ -202,12 +202,12 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
                 if (i + j + k - off >= bytes)
                     break;
 
-                if (ossl_prov_bio_printf(out, "%02x:", b) <= 0)
+                if (otls_prov_bio_printf(out, "%02x:", b) <= 0)
                     return 0;
             }
         }
 
-        if (ossl_prov_bio_printf(out, "\n") <= 0)
+        if (otls_prov_bio_printf(out, "\n") <= 0)
             return 0;
     }
 
@@ -215,7 +215,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
 }
 
 /* p2s = param to asn1_string, k2d = key to der */
-int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
+int otls_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
                                                  ASN1_STRING **str,
                                                  int *strtype),
@@ -232,7 +232,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
 
     if (ctx->cipher_intent) {
         X509_SIG *p8 =
-            ossl_prov_encp8_from_obj(obj, obj_nid, str, strtype, k2d, ctx);
+            otls_prov_encp8_from_obj(obj, obj_nid, str, strtype, k2d, ctx);
 
         if (p8 != NULL)
             ret = i2d_PKCS8_bio(out, p8);
@@ -240,7 +240,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
         X509_SIG_free(p8);
     } else {
         PKCS8_PRIV_KEY_INFO *p8info =
-            ossl_prov_p8info_from_obj(obj, obj_nid, str, strtype, k2d);
+            otls_prov_p8info_from_obj(obj, obj_nid, str, strtype, k2d);
 
         if (p8info != NULL)
             ret = i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8info);
@@ -251,7 +251,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
     return ret;
 }
 
-int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
+int otls_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
                                                  ASN1_STRING **str,
                                                  int *strtype),
@@ -267,7 +267,7 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
         return 0;
 
     if (ctx->cipher_intent) {
-        X509_SIG *p8 = ossl_prov_encp8_from_obj(obj, obj_nid, str, strtype,
+        X509_SIG *p8 = otls_prov_encp8_from_obj(obj, obj_nid, str, strtype,
                                                 k2d, ctx);
 
         if (p8 != NULL)
@@ -276,7 +276,7 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
         X509_SIG_free(p8);
     } else {
         PKCS8_PRIV_KEY_INFO *p8info =
-            ossl_prov_p8info_from_obj(obj, obj_nid, str, strtype, k2d);
+            otls_prov_p8info_from_obj(obj, obj_nid, str, strtype, k2d);
 
         if (p8info != NULL)
             ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8info);
@@ -287,7 +287,7 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
     return ret;
 }
 
-int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
+int otls_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
                                                 ASN1_STRING **str,
                                                 int *strtype),
@@ -302,7 +302,7 @@ int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
 
-    xpk = ossl_prov_pubkey_from_obj(obj, obj_nid, str, strtype, k2d);
+    xpk = otls_prov_pubkey_from_obj(obj, obj_nid, str, strtype, k2d);
 
     if (xpk != NULL)
         ret = i2d_X509_PUBKEY_bio(out, xpk);
@@ -312,7 +312,7 @@ int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
     return ret;
 }
 
-int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
+int otls_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
                                                 ASN1_STRING **str,
                                                 int *strtype),
@@ -327,7 +327,7 @@ int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
 
-    xpk = ossl_prov_pubkey_from_obj(obj, obj_nid, str, strtype, k2d);
+    xpk = otls_prov_pubkey_from_obj(obj, obj_nid, str, strtype, k2d);
 
     if (xpk != NULL)
         ret = PEM_write_bio_X509_PUBKEY(out, xpk);

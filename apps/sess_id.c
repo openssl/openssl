@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,11 +12,11 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/ssl.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/tls.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -37,17 +37,17 @@ const OPTIONS sess_id_options[] = {
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"outform", OPT_OUTFORM, 'f',
      "Output format - default PEM (PEM, DER or NSS)"},
-    {"text", OPT_TEXT, '-', "Print ssl session id details"},
+    {"text", OPT_TEXT, '-', "Print tls session id details"},
     {"cert", OPT_CERT, '-', "Output certificate "},
     {"noout", OPT_NOOUT, '-', "Don't output the encoded session info"},
     {NULL}
 };
 
-static SSL_SESSION *load_sess_id(char *file, int format);
+static tls_SESSION *load_sess_id(char *file, int format);
 
 int sess_id_main(int argc, char **argv)
 {
-    SSL_SESSION *x = NULL;
+    tls_SESSION *x = NULL;
     X509 *peer = NULL;
     BIO *out = NULL;
     char *infile = NULL, *outfile = NULL, *context = NULL, *prog;
@@ -104,15 +104,15 @@ int sess_id_main(int argc, char **argv)
     if (x == NULL) {
         goto end;
     }
-    peer = SSL_SESSION_get0_peer(x);
+    peer = tls_SESSION_get0_peer(x);
 
     if (context != NULL) {
         size_t ctx_len = strlen(context);
-        if (ctx_len > SSL_MAX_SID_CTX_LENGTH) {
+        if (ctx_len > tls_MAX_SID_CTX_LENGTH) {
             BIO_printf(bio_err, "Context too long\n");
             goto end;
         }
-        if (!SSL_SESSION_set1_id_context(x, (unsigned char *)context,
+        if (!tls_SESSION_set1_id_context(x, (unsigned char *)context,
                                          ctx_len)) {
             BIO_printf(bio_err, "Error setting id context\n");
             goto end;
@@ -126,7 +126,7 @@ int sess_id_main(int argc, char **argv)
     }
 
     if (text) {
-        SSL_SESSION_print(out, x);
+        tls_SESSION_print(out, x);
 
         if (cert) {
             if (peer == NULL)
@@ -138,17 +138,17 @@ int sess_id_main(int argc, char **argv)
 
     if (!noout && !cert) {
         if (outformat == FORMAT_ASN1) {
-            i = i2d_SSL_SESSION_bio(out, x);
+            i = i2d_tls_SESSION_bio(out, x);
         } else if (outformat == FORMAT_PEM) {
-            i = PEM_write_bio_SSL_SESSION(out, x);
+            i = PEM_write_bio_tls_SESSION(out, x);
         } else if (outformat == FORMAT_NSS) {
-            i = SSL_SESSION_print_keylog(out, x);
+            i = tls_SESSION_print_keylog(out, x);
         } else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
             goto end;
         }
         if (!i) {
-            BIO_printf(bio_err, "unable to write SSL_SESSION\n");
+            BIO_printf(bio_err, "unable to write tls_SESSION\n");
             goto end;
         }
     } else if (!noout && (peer != NULL)) { /* just print the certificate */
@@ -168,24 +168,24 @@ int sess_id_main(int argc, char **argv)
     ret = 0;
  end:
     BIO_free_all(out);
-    SSL_SESSION_free(x);
+    tls_SESSION_free(x);
     return ret;
 }
 
-static SSL_SESSION *load_sess_id(char *infile, int format)
+static tls_SESSION *load_sess_id(char *infile, int format)
 {
-    SSL_SESSION *x = NULL;
+    tls_SESSION *x = NULL;
     BIO *in = NULL;
 
     in = bio_open_default(infile, 'r', format);
     if (in == NULL)
         goto end;
     if (format == FORMAT_ASN1)
-        x = d2i_SSL_SESSION_bio(in, NULL);
+        x = d2i_tls_SESSION_bio(in, NULL);
     else
-        x = PEM_read_bio_SSL_SESSION(in, NULL, NULL, NULL);
+        x = PEM_read_bio_tls_SESSION(in, NULL, NULL, NULL);
     if (x == NULL) {
-        BIO_printf(bio_err, "unable to load SSL_SESSION\n");
+        BIO_printf(bio_err, "unable to load tls_SESSION\n");
         ERR_print_errors(bio_err);
         goto end;
     }

@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
@@ -57,7 +57,7 @@ $output = pop and open STDOUT,">$output";
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # Camellia_[en|de]crypt, Camellia_set_key and Camellia_cbc_encrypt
-# entry points. These are fully compatible with openssl/camellia.h.
+# entry points. These are fully compatible with opentls/camellia.h.
 
 ######################################################################
 # single-round subroutines

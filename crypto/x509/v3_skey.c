@@ -1,15 +1,15 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509v3.h>
+#include <opentls/x509v3.h>
 #include "crypto/x509.h"
 #include "ext_dat.h"
 
@@ -27,7 +27,7 @@ const X509V3_EXT_METHOD v3_skey_id = {
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
                             const ASN1_OCTET_STRING *oct)
 {
-    return OPENSSL_buf2hexstr(oct->data, oct->length);
+    return OPENtls_buf2hexstr(oct->data, oct->length);
 }
 
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
@@ -41,7 +41,7 @@ ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
         return NULL;
     }
 
-    if ((oct->data = OPENSSL_hexstr2buf(str, &length)) == NULL) {
+    if ((oct->data = OPENtls_hexstr2buf(str, &length)) == NULL) {
         ASN1_OCTET_STRING_free(oct);
         return NULL;
     }

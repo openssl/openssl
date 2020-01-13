@@ -1,25 +1,25 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <internal/cryptlib.h>
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_MD5)
+#if !defined(OPENtls_NO_RC4) && !defined(OPENtls_NO_MD5)
 
-# include <openssl/crypto.h>
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/rc4.h>
-# include <openssl/md5.h>
+# include <opentls/crypto.h>
+# include <opentls/evp.h>
+# include <opentls/objects.h>
+# include <opentls/rc4.h>
+# include <opentls/md5.h>
 # include "crypto/evp.h"
 
 typedef struct {
@@ -87,7 +87,7 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             md5_off += MD5_CBLOCK;
 
         if (plen > md5_off && (blocks = (plen - md5_off) / MD5_CBLOCK) &&
-            (OPENSSL_ia32cap_P[0] & (1 << 20)) == 0) {
+            (OPENtls_ia32cap_P[0] & (1 << 20)) == 0) {
             MD5_Update(&key->md, in, md5_off);
             RC4(&key->ks, rc4_off, in, out);
 
@@ -131,7 +131,7 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             rc4_off += MD5_CBLOCK;
 
         if (len > rc4_off && (blocks = (len - rc4_off) / MD5_CBLOCK) &&
-            (OPENSSL_ia32cap_P[0] & (1 << 20)) == 0) {
+            (OPENtls_ia32cap_P[0] & (1 << 20)) == 0) {
             RC4(&key->ks, rc4_off, in, out);
             MD5_Update(&key->md, out, md5_off);
 
@@ -204,7 +204,7 @@ static int rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             MD5_Init(&key->tail);
             MD5_Update(&key->tail, hmac_key, sizeof(hmac_key));
 
-            OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+            OPENtls_cleanse(hmac_key, sizeof(hmac_key));
 
             return 1;
         }

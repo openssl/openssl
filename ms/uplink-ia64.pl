@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 $output = pop and open STDOUT,">$output";
 
@@ -17,8 +17,8 @@ local $V=8;	# max number of args uplink functions may accept...
 my $loc0 = "r".(32+$V);
 print <<___;
 .text
-.global	OPENSSL_Uplink#
-.type	OPENSSL_Uplink#,\@function
+.global	OPENtls_Uplink#
+.type	OPENtls_Uplink#,\@function
 
 ___
 for ($i=1;$i<=$N;$i++) {
@@ -30,12 +30,12 @@ lazy$i:
 	alloc	loc0=ar.pfs,$V,3,2,0
 	.save	b0,loc1
 	mov	loc1=b0
-	addl	loc2=\@ltoff(OPENSSL_UplinkTable#),gp	};;
+	addl	loc2=\@ltoff(OPENtls_UplinkTable#),gp	};;
 	.body
 { .mmi;	ld8	out0=[loc2]
 	mov	out1=$i					};;
 { .mib;	add	loc2=8*$i,out0
-	br.call.sptk.many	b0=OPENSSL_Uplink#	};;
+	br.call.sptk.many	b0=OPENtls_Uplink#	};;
 { .mmi;	ld8	r31=[loc2];;
 	ld8	r30=[r31],8				};;
 { .mii;	ld8	gp=[r31]
@@ -49,12 +49,12 @@ ___
 }
 print <<___;
 .data
-.global OPENSSL_UplinkTable#
-OPENSSL_UplinkTable:    data8   $N      // amount of following entries
+.global OPENtls_UplinkTable#
+OPENtls_UplinkTable:    data8   $N      // amount of following entries
 ___
 for ($i=1;$i<=$N;$i++) {   print "      data8   \@fptr(lazy$i#)\n";   }
 print <<___;
-.size   OPENSSL_UplinkTable,.-OPENSSL_UplinkTable#
+.size   OPENtls_UplinkTable,.-OPENtls_UplinkTable#
 ___
 
 close STDOUT;

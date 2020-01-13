@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # $output is the last argument if it looks like a file (it has an extension)
@@ -34,46 +34,46 @@ $code=<<___;
 .machine	"any"
 .text
 
-.globl	.OPENSSL_fpu_probe
+.globl	.OPENtls_fpu_probe
 .align	4
-.OPENSSL_fpu_probe:
+.OPENtls_fpu_probe:
 	fmr	f0,f0
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_fpu_probe,.-.OPENSSL_fpu_probe
-.globl	.OPENSSL_ppc64_probe
+.size	.OPENtls_fpu_probe,.-.OPENtls_fpu_probe
+.globl	.OPENtls_ppc64_probe
 .align	4
-.OPENSSL_ppc64_probe:
+.OPENtls_ppc64_probe:
 	fcfid	f1,f1
 	extrdi	r0,r0,32,0
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_ppc64_probe,.-.OPENSSL_ppc64_probe
+.size	.OPENtls_ppc64_probe,.-.OPENtls_ppc64_probe
 
-.globl	.OPENSSL_altivec_probe
+.globl	.OPENtls_altivec_probe
 .align	4
-.OPENSSL_altivec_probe:
+.OPENtls_altivec_probe:
 	.long	0x10000484	# vor	v0,v0,v0
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_altivec_probe,.-..OPENSSL_altivec_probe
+.size	.OPENtls_altivec_probe,.-..OPENtls_altivec_probe
 
-.globl	.OPENSSL_crypto207_probe
+.globl	.OPENtls_crypto207_probe
 .align	4
-.OPENSSL_crypto207_probe:
+.OPENtls_crypto207_probe:
 	lvx_u	v0,0,r1
 	vcipher	v0,v0,v0
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_crypto207_probe,.-.OPENSSL_crypto207_probe
+.size	.OPENtls_crypto207_probe,.-.OPENtls_crypto207_probe
 
-.globl	.OPENSSL_madd300_probe
+.globl	.OPENtls_madd300_probe
 .align	4
-.OPENSSL_madd300_probe:
+.OPENtls_madd300_probe:
 	xor	r0,r0,r0
 	maddld	r3,r0,r0,r0
 	maddhdu	r3,r0,r0,r0
@@ -81,9 +81,9 @@ $code=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 
-.globl	.OPENSSL_wipe_cpu
+.globl	.OPENtls_wipe_cpu
 .align	4
-.OPENSSL_wipe_cpu:
+.OPENtls_wipe_cpu:
 	xor	r0,r0,r0
 	fmr	f0,f31
 	fmr	f1,f31
@@ -112,11 +112,11 @@ $code=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_wipe_cpu,.-.OPENSSL_wipe_cpu
+.size	.OPENtls_wipe_cpu,.-.OPENtls_wipe_cpu
 
-.globl	.OPENSSL_atomic_add
+.globl	.OPENtls_atomic_add
 .align	4
-.OPENSSL_atomic_add:
+.OPENtls_atomic_add:
 Ladd:	lwarx	r5,0,r3
 	add	r0,r4,r5
 	stwcx.	r0,0,r3
@@ -126,29 +126,29 @@ Ladd:	lwarx	r5,0,r3
 	.long	0
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
-.size	.OPENSSL_atomic_add,.-.OPENSSL_atomic_add
+.size	.OPENtls_atomic_add,.-.OPENtls_atomic_add
 
-.globl	.OPENSSL_rdtsc_mftb
+.globl	.OPENtls_rdtsc_mftb
 .align	4
-.OPENSSL_rdtsc_mftb:
+.OPENtls_rdtsc_mftb:
 	mftb	r3
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_rdtsc_mftb,.-.OPENSSL_rdtsc_mftb
+.size	.OPENtls_rdtsc_mftb,.-.OPENtls_rdtsc_mftb
 
-.globl	.OPENSSL_rdtsc_mfspr268
+.globl	.OPENtls_rdtsc_mfspr268
 .align	4
-.OPENSSL_rdtsc_mfspr268:
+.OPENtls_rdtsc_mfspr268:
 	mfspr	r3,268
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-.size	.OPENSSL_rdtsc_mfspr268,.-.OPENSSL_rdtsc_mfspr268
+.size	.OPENtls_rdtsc_mfspr268,.-.OPENtls_rdtsc_mfspr268
 
-.globl	.OPENSSL_cleanse
+.globl	.OPENtls_cleanse
 .align	4
-.OPENSSL_cleanse:
+.OPENtls_cleanse:
 	$CMPLI	r4,7
 	li	r0,0
 	bge	Lot
@@ -177,7 +177,7 @@ Laligned:
 	.long	0
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
-.size	.OPENSSL_cleanse,.-.OPENSSL_cleanse
+.size	.OPENtls_cleanse,.-.OPENtls_cleanse
 
 globl	.CRYPTO_memcmp
 .align	4
@@ -211,9 +211,9 @@ my ($tick,$lasttick)=("r6","r7");
 my ($diff,$lastdiff)=("r8","r9");
 
 $code.=<<___;
-.globl	.OPENSSL_instrument_bus_mftb
+.globl	.OPENtls_instrument_bus_mftb
 .align	4
-.OPENSSL_instrument_bus_mftb:
+.OPENtls_instrument_bus_mftb:
 	mtctr	$cnt
 
 	mftb	$lasttick		# collect 1st tick
@@ -241,11 +241,11 @@ Loop:	mftb	$tick
 	.long	0
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
-.size	.OPENSSL_instrument_bus_mftb,.-.OPENSSL_instrument_bus_mftb
+.size	.OPENtls_instrument_bus_mftb,.-.OPENtls_instrument_bus_mftb
 
-.globl	.OPENSSL_instrument_bus2_mftb
+.globl	.OPENtls_instrument_bus2_mftb
 .align	4
-.OPENSSL_instrument_bus2_mftb:
+.OPENtls_instrument_bus2_mftb:
 	mr	r0,$cnt
 	slwi	$cnt,$cnt,2
 
@@ -293,11 +293,11 @@ Ldone2:
 	.long	0
 	.byte	0,12,0x14,0,0,0,3,0
 	.long	0
-.size	.OPENSSL_instrument_bus2_mftb,.-.OPENSSL_instrument_bus2_mftb
+.size	.OPENtls_instrument_bus2_mftb,.-.OPENtls_instrument_bus2_mftb
 
-.globl	.OPENSSL_instrument_bus_mfspr268
+.globl	.OPENtls_instrument_bus_mfspr268
 .align	4
-.OPENSSL_instrument_bus_mfspr268:
+.OPENtls_instrument_bus_mfspr268:
 	mtctr	$cnt
 
 	mfspr	$lasttick,268		# collect 1st tick
@@ -325,11 +325,11 @@ Loop3:	mfspr	$tick,268
 	.long	0
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
-.size	.OPENSSL_instrument_bus_mfspr268,.-.OPENSSL_instrument_bus_mfspr268
+.size	.OPENtls_instrument_bus_mfspr268,.-.OPENtls_instrument_bus_mfspr268
 
-.globl	.OPENSSL_instrument_bus2_mfspr268
+.globl	.OPENtls_instrument_bus2_mfspr268
 .align	4
-.OPENSSL_instrument_bus2_mfspr268:
+.OPENtls_instrument_bus2_mfspr268:
 	mr	r0,$cnt
 	slwi	$cnt,$cnt,2
 
@@ -377,7 +377,7 @@ Ldone4:
 	.long	0
 	.byte	0,12,0x14,0,0,0,3,0
 	.long	0
-.size	.OPENSSL_instrument_bus2_mfspr268,.-.OPENSSL_instrument_bus2_mfspr268
+.size	.OPENtls_instrument_bus2_mfspr268,.-.OPENtls_instrument_bus2_mfspr268
 ___
 }
 

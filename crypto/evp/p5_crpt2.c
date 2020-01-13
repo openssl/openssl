@@ -1,25 +1,25 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/hmac.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
+#include <opentls/x509.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/hmac.h>
+#include <opentls/trace.h>
+#include <opentls/core_names.h>
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
+int PKCS5_PBKDF2_HMAC(const char *pass, int patlsen,
                       const unsigned char *salt, int saltlen, int iter,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
@@ -28,42 +28,42 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
     const char *mdname = EVP_MD_name(digest);
-    OSSL_PARAM params[6], *p = params;
+    Otls_PARAM params[6], *p = params;
 
     /* Keep documented behaviour. */
     if (pass == NULL) {
         pass = empty;
-        passlen = 0;
-    } else if (passlen == -1) {
-        passlen = strlen(pass);
+        patlsen = 0;
+    } else if (patlsen == -1) {
+        patlsen = strlen(pass);
     }
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;
 
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
+    kdf = EVP_KDF_fetch(NULL, Otls_KDF_NAME_PBKDF2, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-                                             (char *)pass, (size_t)passlen);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_PASSWORD,
+                                             (char *)pass, (size_t)patlsen);
+    *p++ = Otls_PARAM_construct_int(Otls_KDF_PARAM_PKCS5, &mode);
+    *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                              (unsigned char *)salt, saltlen);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_int(Otls_KDF_PARAM_ITER, &iter);
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                             (char *)mdname, strlen(mdname) + 1);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
     if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, out, keylen) != 1)
         rv = 0;
 
     EVP_KDF_CTX_free(kctx);
 
-    OSSL_TRACE_BEGIN(PKCS5V2) {
+    Otls_TRACE_BEGIN(PKCS5V2) {
         BIO_printf(trc_out, "Password:\n");
         BIO_hex_string(trc_out,
-                       0, passlen, pass, passlen);
+                       0, patlsen, pass, patlsen);
         BIO_printf(trc_out, "\n");
         BIO_printf(trc_out, "Salt:\n");
         BIO_hex_string(trc_out,
@@ -74,15 +74,15 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         BIO_hex_string(trc_out,
                        0, keylen, out, keylen);
         BIO_printf(trc_out, "\n");
-    } OSSL_TRACE_END(PKCS5V2);
+    } Otls_TRACE_END(PKCS5V2);
     return rv;
 }
 
-int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
+int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int patlsen,
                            const unsigned char *salt, int saltlen, int iter,
                            int keylen, unsigned char *out)
 {
-    return PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, EVP_sha1(),
+    return PKCS5_PBKDF2_HMAC(pass, patlsen, salt, saltlen, iter, EVP_sha1(),
                              keylen, out);
 }
 
@@ -92,7 +92,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
  * them...
  */
 
-int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int patlsen,
                           ASN1_TYPE *param, const EVP_CIPHER *c,
                           const EVP_MD *md, int en_de)
 {
@@ -134,14 +134,14 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_CIPHER_PARAMETER_ERROR);
         goto err;
     }
-    rv = kdf(ctx, pass, passlen, pbe2->keyfunc->parameter, NULL, NULL, en_de);
+    rv = kdf(ctx, pass, patlsen, pbe2->keyfunc->parameter, NULL, NULL, en_de);
  err:
     PBE2PARAM_free(pbe2);
     return rv;
 }
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
-                             int passlen, ASN1_TYPE *param,
+                             int patlsen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
@@ -157,7 +157,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
     keylen = EVP_CIPHER_CTX_key_length(ctx);
-    OPENSSL_assert(keylen <= sizeof(key));
+    OPENtls_assert(keylen <= sizeof(key));
 
     /* Decode parameter */
 
@@ -207,12 +207,12 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     salt = kdf->salt->value.octet_string->data;
     saltlen = kdf->salt->value.octet_string->length;
     iter = ASN1_INTEGER_get(kdf->iter);
-    if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
+    if (!PKCS5_PBKDF2_HMAC(pass, patlsen, salt, saltlen, iter, prfmd,
                            keylen, key))
         goto err;
     rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
  err:
-    OPENSSL_cleanse(key, keylen);
+    OPENtls_cleanse(key, keylen);
     PBKDF2PARAM_free(kdf);
     return rv;
 }

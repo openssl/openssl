@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*-
@@ -72,10 +72,10 @@
 #include <errno.h>
 #include <assert.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
+#include <opentls/buffer.h>
 #include "internal/bio.h"
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
 #include "crypto/evp.h"
 
 static int ok_write(BIO *h, const char *buf, int num);
@@ -133,7 +133,7 @@ static int ok_new(BIO *bi)
 {
     BIO_OK_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL) {
         EVPerr(EVP_F_OK_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -142,7 +142,7 @@ static int ok_new(BIO *bi)
     ctx->sigio = 1;
     ctx->md = EVP_MD_CTX_new();
     if (ctx->md == NULL) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return 0;
     }
     BIO_set_init(bi, 0);
@@ -161,7 +161,7 @@ static int ok_free(BIO *a)
     ctx = BIO_get_data(a);
 
     EVP_MD_CTX_free(ctx->md);
-    OPENSSL_clear_free(ctx, sizeof(BIO_OK_CTX));
+    OPENtls_clear_free(ctx, sizeof(BIO_OK_CTX));
     BIO_set_data(a, NULL);
     BIO_set_init(a, 0);
 

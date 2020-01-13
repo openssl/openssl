@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
+#include <opentls/conf.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509v3.h>
 #include "ext_dat.h"
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
@@ -79,11 +79,11 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         vtmp = sk_CONF_VALUE_value(tret, i);
         i2t_ASN1_OBJECT(objtmp, sizeof(objtmp), desc->method);
         nlen = strlen(objtmp) + 3 + strlen(vtmp->name) + 1;
-        ntmp = OPENSSL_malloc(nlen);
+        ntmp = OPENtls_malloc(nlen);
         if (ntmp == NULL)
             goto err;
         BIO_snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
-        OPENSSL_free(vtmp->name);
+        OPENtls_free(vtmp->name);
         vtmp->name = ntmp;
     }
     if (ret == NULL && tret == NULL)
@@ -133,7 +133,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         ctmp.value = cnf->value;
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
-        if ((objtmp = OPENSSL_strndup(cnf->name, objlen)) == NULL) {
+        if ((objtmp = OPENtls_strndup(cnf->name, objlen)) == NULL) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       ERR_R_MALLOC_FAILURE);
             goto err;
@@ -143,10 +143,10 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       X509V3_R_BAD_OBJECT);
             ERR_add_error_data(2, "value=", objtmp);
-            OPENSSL_free(objtmp);
+            OPENtls_free(objtmp);
             goto err;
         }
-        OPENSSL_free(objtmp);
+        OPENtls_free(objtmp);
 
     }
     return ainfo;

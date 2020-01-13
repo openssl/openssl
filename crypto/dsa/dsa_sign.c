@@ -1,13 +1,13 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "internal/cryptlib.h"
 #include "dsa_local.h"
 #include "crypto/asn1_dsa.h"
@@ -18,7 +18,7 @@ DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
     return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
@@ -27,7 +27,7 @@ int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 
 DSA_SIG *DSA_SIG_new(void)
 {
-    DSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    DSA_SIG *sig = OPENtls_zalloc(sizeof(*sig));
     if (sig == NULL)
         DSAerr(DSA_F_DSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
     return sig;
@@ -39,7 +39,7 @@ void DSA_SIG_free(DSA_SIG *sig)
         return;
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
-    OPENSSL_free(sig);
+    OPENtls_free(sig);
 }
 
 DSA_SIG *d2i_DSA_SIG(DSA_SIG **psig, const unsigned char **ppin, long len)
@@ -142,7 +142,7 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
+int dsa_sign_int(OPENtls_CTX *libctx, int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
@@ -194,7 +194,7 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
         goto err;
     ret = DSA_do_verify(dgst, dgst_len, s, dsa);
  err:
-    OPENSSL_clear_free(der, derlen);
+    OPENtls_clear_free(der, derlen);
     DSA_SIG_free(s);
     return ret;
 }

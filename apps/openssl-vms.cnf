@@ -1,5 +1,5 @@
 #
-# OpenSSL example configuration file.
+# Opentls example configuration file.
 # This is mostly being used for generation of certificate requests.
 #
 
@@ -16,7 +16,7 @@ HOME			= .
 oid_section		= new_oids
 
 # To use this configuration file with the "-extfile" option of the
-# "openssl x509" utility, name here the section containing the
+# "opentls x509" utility, name here the section containing the
 # X.509v3 extensions to use:
 # extensions		=
 # (Alternatively, use a configuration file that has only
@@ -174,7 +174,7 @@ basicConstraints=CA:FALSE
 # Here are some examples of the usage of nsCertType. If it is omitted
 # the certificate can be used for anything *except* object signing.
 
-# This is OK for an SSL server.
+# This is OK for an tls server.
 # nsCertType			= server
 
 # For an object signing certificate this would be used.
@@ -190,7 +190,7 @@ basicConstraints=CA:FALSE
 # keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 
 # This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
+nsComment			= "Opentls Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
@@ -211,7 +211,7 @@ authorityKeyIdentifier=keyid,issuer
 #nsRevocationUrl
 #nsRenewalUrl
 #nsCaPolicyUrl
-#nsSslServerName
+#nstlsServerName
 
 # This is required for TSA certificates.
 # extendedKeyUsage = critical,timeStamping
@@ -243,7 +243,7 @@ basicConstraints = critical,CA:true
 # keyUsage = cRLSign, keyCertSign
 
 # Some might want this also
-# nsCertType = sslCA, emailCA
+# nsCertType = tlsCA, emailCA
 
 # Include email address in subject alt name: another PKIX recommendation
 # subjectAltName=email:copy
@@ -275,7 +275,7 @@ basicConstraints=CA:FALSE
 # Here are some examples of the usage of nsCertType. If it is omitted
 # the certificate can be used for anything *except* object signing.
 
-# This is OK for an SSL server.
+# This is OK for an tls server.
 # nsCertType			= server
 
 # For an object signing certificate this would be used.
@@ -291,7 +291,7 @@ basicConstraints=CA:FALSE
 # keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 
 # This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
+nsComment			= "Opentls Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
@@ -312,7 +312,7 @@ authorityKeyIdentifier=keyid,issuer
 #nsRevocationUrl
 #nsRenewalUrl
 #nsCaPolicyUrl
-#nsSslServerName
+#nstlsServerName
 
 # This really needs to be in place for it to be a proxy certificate.
 proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:3,policy:foo
@@ -327,7 +327,7 @@ default_tsa = tsa_config1	# the default TSA section
 # These are used by the TSA reply generation only.
 dir		= sys\$disk:[.demoCA		# TSA root directory
 serial		= $dir]tsaserial.	# The current serial number (mandatory)
-crypto_device	= builtin		# OpenSSL engine to use for signing
+crypto_device	= builtin		# Opentls engine to use for signing
 signer_cert	= $dir/tsacert.pem 	# The TSA signing certificate
 					# (optional)
 certs		= $dir.cacert.pem]	# Certificate chain to include in reply

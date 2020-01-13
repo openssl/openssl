@@ -1,14 +1,14 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
 
@@ -60,16 +60,16 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3 enabled"
     if disabled("tls1_3");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-#We assume that test_ssl_new and friends will test the happy path for this,
+#We assume that test_tls_new and friends will test the happy path for this,
 #so we concentrate on the less common scenarios
 
 #Test 1: An empty key_shares extension should succeed after a HelloRetryRequest
@@ -138,7 +138,7 @@ ok(TLSProxy::Message->success(), "Non preferred key_share");
 $proxy->filter(\&modify_key_shares_filter);
 
 SKIP: {
-    skip "No ec support in this OpenSSL build", 1 if disabled("ec");
+    skip "No ec support in this Opentls build", 1 if disabled("ec");
 
     #Test 7: An acceptable key_share after a list of non-acceptable ones should
     #succeed
@@ -250,7 +250,7 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "key_share trailing data in ServerHello");
 
 SKIP: {
-    skip "No TLSv1.2 support in this OpenSSL build", 2 if disabled("tls1_2");
+    skip "No TLSv1.2 support in this Opentls build", 2 if disabled("tls1_2");
 
     #Test 20: key_share should not be sent if the client is not capable of
     #         negotiating TLSv1.3

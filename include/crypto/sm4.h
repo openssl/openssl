@@ -1,20 +1,20 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_SM4_H
-# define OSSL_CRYPTO_SM4_H
+#ifndef Otls_CRYPTO_SM4_H
+# define Otls_CRYPTO_SM4_H
 
-# include <openssl/opensslconf.h>
-# include <openssl/e_os2.h>
+# include <opentls/opentlsconf.h>
+# include <opentls/e_os2.h>
 
-# ifdef OPENSSL_NO_SM4
+# ifdef OPENtls_NO_SM4
 #  error SM4 is disabled.
 # endif
 

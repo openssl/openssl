@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -14,22 +14,22 @@
 #include <ctype.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/conf.h>
-#include <openssl/err.h>
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-#include <openssl/pem.h>
-#include <openssl/bn.h>
-#include <openssl/lhash.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#include <opentls/bio.h>
+#include <opentls/evp.h>
+#include <opentls/conf.h>
+#include <opentls/err.h>
+#include <opentls/asn1.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/objects.h>
+#include <opentls/pem.h>
+#include <opentls/bn.h>
+#include <opentls/lhash.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 #endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
+#ifndef OPENtls_NO_DSA
+# include <opentls/dsa.h>
 #endif
 
 #define SECTION         "req"
@@ -97,7 +97,7 @@ typedef enum OPTION_choice {
 const OPTIONS req_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
      "Specify engine to be used for key generation operations"},
@@ -141,7 +141,7 @@ const OPTIONS req_options[] = {
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     {"sm2-id", OPT_SM2ID, 's',
      "Specify an ID string to verify an SM2 certificate request"},
     {"sm2-hex-id", OPT_SM2HEXID, 's',
@@ -167,19 +167,19 @@ const OPTIONS req_options[] = {
 /*
  * An LHASH of strings, where each string is an extension name.
  */
-static unsigned long ext_name_hash(const OPENSSL_STRING *a)
+static unsigned long ext_name_hash(const OPENtls_STRING *a)
 {
-    return OPENSSL_LH_strhash((const char *)a);
+    return OPENtls_LH_strhash((const char *)a);
 }
 
-static int ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b)
+static int ext_name_cmp(const OPENtls_STRING *a, const OPENtls_STRING *b)
 {
     return strcmp((const char *)a, (const char *)b);
 }
 
-static void exts_cleanup(OPENSSL_STRING *x)
+static void exts_cleanup(OPENtls_STRING *x)
 {
-    OPENSSL_free((char *)x);
+    OPENtls_free((char *)x);
 }
 
 /*
@@ -187,7 +187,7 @@ static void exts_cleanup(OPENSSL_STRING *x)
  * right.  Return 0 if unique, -1 on runtime error; 1 if found or a syntax
  * error.
  */
-static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
+static int duplicated(LHASH_OF(OPENtls_STRING) *addexts, char *kv)
 {
     char *p;
     size_t off;
@@ -200,7 +200,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     if ((p = strchr(kv, '=')) == NULL)
         return 1;
     off = p - kv;
-    if ((kv = OPENSSL_strdup(kv)) == NULL)
+    if ((kv = OPENtls_strdup(kv)) == NULL)
         return -1;
 
     /* Skip trailing space before the equal sign. */
@@ -208,18 +208,18 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
         if (!isspace(p[-1]))
             break;
     if (p == kv) {
-        OPENSSL_free(kv);
+        OPENtls_free(kv);
         return 1;
     }
     *p = '\0';
 
     /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
-    p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv);
+    p = (char *)lh_OPENtls_STRING_insert(addexts, (OPENtls_STRING*)kv);
     if (p != NULL) {
-        OPENSSL_free(p);
+        OPENtls_free(p);
         return 1;
-    } else if (lh_OPENSSL_STRING_error(addexts)) {
-        OPENSSL_free(kv);
+    } else if (lh_OPENtls_STRING_error(addexts)) {
+        OPENtls_free(kv);
         return -1;
     }
 
@@ -233,8 +233,8 @@ int req_main(int argc, char **argv)
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
-    LHASH_OF(OPENSSL_STRING) *addexts = NULL;
+    STACK_OF(OPENtls_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    LHASH_OF(OPENtls_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
@@ -260,7 +260,7 @@ int req_main(int argc, char **argv)
     size_t sm2_idlen = 0;
     int sm2_free = 0;
 
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     cipher = EVP_des_ede3_cbc();
 #endif
 
@@ -288,7 +288,7 @@ int req_main(int argc, char **argv)
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
             gen_eng = ENGINE_by_id(opt_arg());
             if (gen_eng == NULL) {
                 BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
@@ -337,15 +337,15 @@ int req_main(int argc, char **argv)
             break;
         case OPT_PKEYOPT:
             if (pkeyopts == NULL)
-                pkeyopts = sk_OPENSSL_STRING_new_null();
+                pkeyopts = sk_OPENtls_STRING_new_null();
             if (pkeyopts == NULL
-                    || !sk_OPENSSL_STRING_push(pkeyopts, opt_arg()))
+                    || !sk_OPENtls_STRING_push(pkeyopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_SIGOPT:
             if (!sigopts)
-                sigopts = sk_OPENSSL_STRING_new_null();
-            if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+                sigopts = sk_OPENtls_STRING_new_null();
+            if (!sigopts || !sk_OPENtls_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_BATCH:
@@ -410,7 +410,7 @@ int req_main(int argc, char **argv)
         case OPT_ADDEXT:
             p = opt_arg();
             if (addexts == NULL) {
-                addexts = lh_OPENSSL_STRING_new(ext_name_hash, ext_name_cmp);
+                addexts = lh_OPENtls_STRING_new(ext_name_hash, ext_name_cmp);
                 addext_bio = BIO_new(BIO_s_mem());
                 if (addexts == NULL || addext_bio == NULL)
                     goto end;
@@ -452,7 +452,7 @@ int req_main(int argc, char **argv)
             }
             /* try to parse the input as hex string first */
             sm2_free = 1;
-            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            sm2_id = OPENtls_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
             if (sm2_id == NULL) {
                 BIO_printf(bio_err, "Invalid hex string input\n");
                 goto end;
@@ -632,18 +632,18 @@ int req_main(int argc, char **argv)
             goto end;
         }
 
-        if (pkey_type == EVP_PKEY_RSA && newkey > OPENSSL_RSA_MAX_MODULUS_BITS)
+        if (pkey_type == EVP_PKEY_RSA && newkey > OPENtls_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
-                       OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
+                       OPENtls_RSA_MAX_MODULUS_BITS, newkey);
 
-#ifndef OPENSSL_NO_DSA
-        if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS)
+#ifndef OPENtls_NO_DSA
+        if (pkey_type == EVP_PKEY_DSA && newkey > OPENtls_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
-                       OPENSSL_DSA_MAX_MODULUS_BITS, newkey);
+                       OPENtls_DSA_MAX_MODULUS_BITS, newkey);
 #endif
 
         if (genctx == NULL) {
@@ -655,8 +655,8 @@ int req_main(int argc, char **argv)
 
         if (pkeyopts != NULL) {
             char *genopt;
-            for (i = 0; i < sk_OPENSSL_STRING_num(pkeyopts); i++) {
-                genopt = sk_OPENSSL_STRING_value(pkeyopts, i);
+            for (i = 0; i < sk_OPENtls_STRING_num(pkeyopts); i++) {
+                genopt = sk_OPENtls_STRING_value(pkeyopts, i);
                 if (pkey_ctrl_string(genctx, genopt) <= 0) {
                     BIO_printf(bio_err, "parameter error \"%s\"\n", genopt);
                     ERR_print_errors(bio_err);
@@ -891,7 +891,7 @@ int req_main(int argc, char **argv)
         }
 
         if (sm2_id != NULL) {
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
             ASN1_OCTET_STRING *v;
 
             v = ASN1_OCTET_STRING_new();
@@ -983,7 +983,7 @@ int req_main(int argc, char **argv)
             goto end;
         }
         fprintf(stdout, "Modulus=");
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
             const BIGNUM *n;
             RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
@@ -1019,7 +1019,7 @@ int req_main(int argc, char **argv)
     ret = 0;
  end:
     if (sm2_free)
-        OPENSSL_free(sm2_id);
+        OPENtls_free(sm2_id);
     if (ret) {
         ERR_print_errors(bio_err);
     }
@@ -1030,22 +1030,22 @@ int req_main(int argc, char **argv)
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
-    sk_OPENSSL_STRING_free(pkeyopts);
-    sk_OPENSSL_STRING_free(sigopts);
-    lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
-    lh_OPENSSL_STRING_free(addexts);
-#ifndef OPENSSL_NO_ENGINE
+    sk_OPENtls_STRING_free(pkeyopts);
+    sk_OPENtls_STRING_free(sigopts);
+    lh_OPENtls_STRING_doall(addexts, exts_cleanup);
+    lh_OPENtls_STRING_free(addexts);
+#ifndef OPENtls_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif
-    OPENSSL_free(keyalgstr);
+    OPENtls_free(keyalgstr);
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
     release_engine(e);
     if (passin != nofree_passin)
-        OPENSSL_free(passin);
+        OPENtls_free(passin);
     if (passout != nofree_passout)
-        OPENSSL_free(passout);
+        OPENtls_free(passout);
     return ret;
 }
 
@@ -1555,7 +1555,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         }
 
         EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL, ameth);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
         ENGINE_finish(tmpeng);
 #endif
         if (*pkey_type == EVP_PKEY_RSA) {
@@ -1615,8 +1615,8 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
-        *palgnam = OPENSSL_strdup(anam);
-#ifndef OPENSSL_NO_ENGINE
+        *palgnam = OPENtls_strdup(anam);
+#ifndef OPENtls_NO_ENGINE
         ENGINE_finish(tmpeng);
 #endif
     }
@@ -1641,7 +1641,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
         if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0) {
             BIO_puts(bio_err, "Error setting RSA keysize\n");
@@ -1674,7 +1674,7 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
 static int ec_pkey_is_sm2(EVP_PKEY *pkey)
 {
     EC_KEY *eckey = NULL;
@@ -1692,17 +1692,17 @@ static int ec_pkey_is_sm2(EVP_PKEY *pkey)
 #endif
 
 static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
-                        const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
+                        const EVP_MD *md, STACK_OF(OPENtls_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
 #endif
     int i, def_nid, ret = 0;
 
     if (ctx == NULL)
         goto err;
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     if (ec_pkey_is_sm2(pkey)) {
         /* initialize some SM2-specific code */
         if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
@@ -1715,8 +1715,8 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
             goto err;
         }
         /* set SM2 ID from sig options before calling the real init routine */
-        for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-            char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+        for (i = 0; i < sk_OPENtls_STRING_num(sigopts); i++) {
+            char *sigopt = sk_OPENtls_STRING_value(sigopts, i);
             if (pkey_ctrl_string(pctx, sigopt) <= 0) {
                 BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
                 ERR_print_errors(bio_err);
@@ -1737,8 +1737,8 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
     }
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
         goto err;
-    for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-        char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+    for (i = 0; i < sk_OPENtls_STRING_num(sigopts); i++) {
+        char *sigopt = sk_OPENtls_STRING_value(sigopts, i);
         if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
             BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
             ERR_print_errors(bio_err);
@@ -1748,7 +1748,7 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
 
     ret = 1;
  err:
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     if (!ret)
         EVP_PKEY_CTX_free(pctx);
 #endif
@@ -1756,18 +1756,18 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
 }
 
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
-                 STACK_OF(OPENSSL_STRING) *sigopts)
+                 STACK_OF(OPENtls_STRING) *sigopts)
 {
     int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
 #endif
 
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_sign_ctx(x, mctx);
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
         /*
          * only in SM2 case we need to free the pctx explicitly
          * if do_sign_init() fails, pctx is already freed in it
@@ -1783,18 +1783,18 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
 }
 
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts)
+                     STACK_OF(OPENtls_STRING) *sigopts)
 {
     int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
 #endif
 
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_REQ_sign_ctx(x, mctx);
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
         /*
          * only in SM2 case we need to free the pctx explicitly
          * if do_sign_init() fails, pctx is already freed in it
@@ -1810,18 +1810,18 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
 }
 
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts)
+                     STACK_OF(OPENtls_STRING) *sigopts)
 {
     int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     EVP_PKEY_CTX *pctx = NULL;
 #endif
 
     rv = do_sign_init(mctx, pkey, md, sigopts);
     if (rv > 0) {
         rv = X509_CRL_sign_ctx(x, mctx);
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
         /*
          * only in SM2 case we need to free the pctx explicitly
          * if do_sign_init() fails, no need to double free pctx

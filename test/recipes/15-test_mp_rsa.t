@@ -1,19 +1,19 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017 The Opentls Project Authors. All Rights Reserved.
 # Copyright 2017 BaishanCloud. All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT data_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT data_file/;
+use Opentls::Test::Utils;
 
 setup("test_mp_rsa");
 
@@ -55,28 +55,28 @@ sub run_mp_tests {
         my $name = ($evp ? "evp" : "") . "${bits}p${primes}";
 
         if ($evp) {
-            ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'genpkey', '-out', 'rsamptest.pem',
                          '-algorithm', 'RSA', '-pkeyopt', "rsa_keygen_primes:$primes",
                          '-pkeyopt', "rsa_keygen_bits:$bits"])), "genrsa $name");
         } else {
-            ok(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'genrsa', '-out', 'rsamptest.pem',
                          '-primes', $primes, $bits])), "genrsa $name");
         }
 
-        ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
+        ok(run(app([ 'opentls', 'rsa', '-check', '-in', 'rsamptest.pem',
                      '-noout'])), "rsa -check $name");
         if ($evp) {
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'pkeyutl', '-inkey', 'rsamptest.pem',
                          '-encrypt', '-in', $cleartext,
                          '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'pkeyutl', '-inkey', 'rsamptest.pem',
                          '-decrypt', '-in', 'rsamptest.enc',
                          '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
         } else {
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'rsautl', '-inkey', 'rsamptest.pem',
                          '-encrypt', '-in', $cleartext,
                          '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'opentls', 'rsautl', '-inkey', 'rsamptest.pem',
                          '-decrypt', '-in', 'rsamptest.enc',
                          '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
         }

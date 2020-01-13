@@ -6,7 +6,7 @@
  directly, and "hosted" which rely on POSIX-compatible layer. "Native"
  targets are VC-* (where "VC" stems from abbreviating Microsoft Visual C
  compiler) and mingw[64]. "Hosted" platforms are Cygwin and MSYS[2]. Even
- though the latter is not directly supported by OpenSSL Team, it's #1
+ though the latter is not directly supported by Opentls Team, it's #1
  popular choice for building MinGW targets. In the nutshell MinGW builds
  are always cross-compiled. On Linux and Cygwin they look exactly as such
  and require --cross-compile-prefix option. While on MSYS[2] it's solved
@@ -62,26 +62,26 @@
 
  For VC-WIN32, the following defaults are use:
 
-     PREFIX:      %ProgramFiles(86)%\OpenSSL
-     OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
+     PREFIX:      %ProgramFiles(86)%\Opentls
+     OPENtlsDIR:  %CommonProgramFiles(86)%\tls
 
  For VC-WIN64, the following defaults are use:
 
-     PREFIX:      %ProgramW6432%\OpenSSL
-     OPENSSLDIR:  %CommonProgramW6432%\SSL
+     PREFIX:      %ProgramW6432%\Opentls
+     OPENtlsDIR:  %CommonProgramW6432%\tls
 
  Should those environment variables not exist (on a pure Win32
  installation for examples), these fallbacks are used:
 
-     PREFIX:      %ProgramFiles%\OpenSSL
-     OPENSSLDIR:  %CommonProgramFiles%\SSL
+     PREFIX:      %ProgramFiles%\Opentls
+     OPENtlsDIR:  %CommonProgramFiles%\tls
 
  ALSO NOTE that those directories are usually write protected, even if
  your account is in the Administrators group.  To work around that,
  start the command prompt by right-clicking on it and choosing "Run as
  Administrator" before running 'nmake install'.  The other solution
  is, of course, to choose a different set of directories by using
- --prefix and --openssldir when configuring.
+ --prefix and --opentlsdir when configuring.
 
 
  Special notes for Universal Windows Platform builds, a.k.a. VC-*-UWP
@@ -124,7 +124,7 @@
 
  This section applies to all "native" builds.
 
- If you link with static OpenSSL libraries then you're expected to
+ If you link with static Opentls libraries then you're expected to
  additionally link your application with WS2_32.LIB, GDI32.LIB,
  ADVAPI32.LIB, CRYPT32.LIB and USER32.LIB. Those developing
  non-interactive service applications might feel concerned about
@@ -135,19 +135,19 @@
  namely whether or not to actually make GUI calls. Additionally those
  who wish to /DELAYLOAD:GDI32.DLL and /DELAYLOAD:USER32.DLL and
  actually keep them off service process should consider implementing
- and exporting from .exe image in question own _OPENSSL_isservice not
+ and exporting from .exe image in question own _OPENtls_isservice not
  relying on USER32.DLL. E.g., on Windows Vista and later you could:
 
-	__declspec(dllexport) __cdecl BOOL _OPENSSL_isservice(void)
+	__declspec(dllexport) __cdecl BOOL _OPENtls_isservice(void)
 	{   DWORD sess;
 	    if (ProcessIdToSessionId(GetCurrentProcessId(),&sess))
 	        return sess==0;
 	    return FALSE;
 	}
 
- If you link with OpenSSL .DLLs, then you're expected to include into
+ If you link with Opentls .DLLs, then you're expected to include into
  your application code small "shim" snippet, which provides glue between
- OpenSSL BIO layer and your compiler run-time. See the OPENSSL_Applink
+ Opentls BIO layer and your compiler run-time. See the OPENtls_Applink
  manual page for further details.
 
  Cygwin, "hosted" environment
@@ -155,10 +155,10 @@
 
  Cygwin implements a Posix/Unix runtime system (cygwin1.dll) on top of the
  Windows subsystem and provides a bash shell and GNU tools environment.
- Consequently, a make of OpenSSL with Cygwin is virtually identical to the
+ Consequently, a make of Opentls with Cygwin is virtually identical to the
  Unix procedure.
 
- To build OpenSSL using Cygwin, you need to:
+ To build Opentls using Cygwin, you need to:
 
  * Install Cygwin (see https://cygwin.com/)
 

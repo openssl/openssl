@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <assert.h>
 #include <errno.h>
@@ -12,10 +12,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <openssl/bn.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+#include <opentls/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
@@ -90,7 +90,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_is_prime_enhanced);
-    ADD_ALL_TESTS(test_is_composite_enhanced, (int)OSSL_NELEM(composites));
+    ADD_ALL_TESTS(test_is_composite_enhanced, (int)Otls_NELEM(composites));
     ADD_TEST(test_bn_small_factors);
 
     return 1;

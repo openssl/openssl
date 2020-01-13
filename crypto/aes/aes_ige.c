@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,11 +15,11 @@
 
 #include "internal/cryptlib.h"
 
-#ifdef OPENSSL_NO_DEPRECATED_3_0
+#ifdef OPENtls_NO_DEPRECATED_3_0
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-#include <openssl/aes.h>
+#include <opentls/aes.h>
 #include "aes_local.h"
 
 #define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
@@ -55,9 +55,9 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
     if (length == 0)
         return;
 
-    OPENSSL_assert(in && out && key && ivec);
-    OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
-    OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
+    OPENtls_assert(in && out && key && ivec);
+    OPENtls_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
+    OPENtls_assert((length % AES_BLOCK_SIZE) == 0);
 
     len = length / AES_BLOCK_SIZE;
 
@@ -199,9 +199,9 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
     const unsigned char *iv;
     const unsigned char *iv2;
 
-    OPENSSL_assert(in && out && key && ivec);
-    OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
-    OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
+    OPENtls_assert(in && out && key && ivec);
+    OPENtls_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
+    OPENtls_assert((length % AES_BLOCK_SIZE) == 0);
 
     if (AES_ENCRYPT == enc) {
         /*

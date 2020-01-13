@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* extension creation utilities */
@@ -12,10 +12,10 @@
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/x509.h>
+#include <opentls/conf.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/x509v3.h>
+#include <opentls/x509v3.h>
 
 static int v3_check_critical(const char **value);
 static int v3_check_generic(const char **value);
@@ -146,7 +146,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
         unsigned char *p;
 
         ext_len = method->i2d(ext_struc, NULL);
-        if ((ext_der = OPENSSL_malloc(ext_len)) == NULL)
+        if ((ext_der = OPENtls_malloc(ext_len)) == NULL)
             goto merr;
         p = ext_der;
         method->i2d(ext_struc, &p);
@@ -166,7 +166,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
 
  merr:
     X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
-    OPENSSL_free(ext_der);
+    OPENtls_free(ext_der);
     ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
 
@@ -192,7 +192,7 @@ static int v3_check_critical(const char **value)
     if ((strlen(p) < 9) || strncmp(p, "critical,", 9))
         return 0;
     p += 9;
-    while (ossl_isspace(*p))
+    while (otls_isspace(*p))
         p++;
     *value = p;
     return 1;
@@ -212,7 +212,7 @@ static int v3_check_generic(const char **value)
     } else
         return 0;
 
-    while (ossl_isspace(*p))
+    while (otls_isspace(*p))
         p++;
     *value = p;
     return gen_type;
@@ -237,7 +237,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
     }
 
     if (gen_type == 1)
-        ext_der = OPENSSL_hexstr2buf(value, &ext_len);
+        ext_der = OPENtls_hexstr2buf(value, &ext_len);
     else if (gen_type == 2)
         ext_der = generic_asn1(value, ctx, &ext_len);
 
@@ -262,7 +262,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
  err:
     ASN1_OBJECT_free(obj);
     ASN1_OCTET_STRING_free(oct);
-    OPENSSL_free(ext_der);
+    OPENtls_free(ext_der);
     return extension;
 
 }

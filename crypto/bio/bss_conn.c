@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,7 +12,7 @@
 
 #include "bio_local.h"
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
 typedef struct bio_connect_st {
     int state;
@@ -30,7 +30,7 @@ typedef struct bio_connect_st {
     /*
      * called when the connection is initially made callback(BIO,state,ret);
      * The callback should return 'ret'.  state is for compatibility with the
-     * ssl info_callback
+     * tls info_callback
      */
     BIO_info_cb *info_callback;
 } BIO_CONNECT;
@@ -227,7 +227,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
 {
     BIO_CONNECT *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENtls_zalloc(sizeof(*ret))) == NULL) {
         BIOerr(BIO_F_BIO_CONNECT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -240,10 +240,10 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
 {
     if (a == NULL)
         return;
-    OPENSSL_free(a->param_hostname);
-    OPENSSL_free(a->param_service);
+    OPENtls_free(a->param_hostname);
+    OPENtls_free(a->param_service);
     BIO_ADDRINFO_free(a->addr_first);
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 const BIO_METHOD *BIO_s_connect(void)
@@ -408,17 +408,17 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                  * string might contain a host:service spec, so we must
                  * parse it, which might or might not affect the service
                  */
-                OPENSSL_free(data->param_hostname);
+                OPENtls_free(data->param_hostname);
                 data->param_hostname = NULL;
                 ret = BIO_parse_hostserv(ptr,
                                          &data->param_hostname,
                                          &data->param_service,
                                          BIO_PARSE_PRIO_HOST);
                 if (hold_service != data->param_service)
-                    OPENSSL_free(hold_service);
+                    OPENtls_free(hold_service);
             } else if (num == 1) {
-                OPENSSL_free(data->param_service);
-                data->param_service = OPENSSL_strdup(ptr);
+                OPENtls_free(data->param_service);
+                data->param_service = OPENtls_strdup(ptr);
             } else if (num == 2) {
                 const BIO_ADDR *addr = (const BIO_ADDR *)ptr;
                 if (ret) {

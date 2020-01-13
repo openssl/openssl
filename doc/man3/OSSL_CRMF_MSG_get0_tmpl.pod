@@ -2,61 +2,61 @@
 
 =head1 NAME
 
-OSSL_CRMF_MSG_get0_tmpl,
-OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
-OSSL_CRMF_CERTTEMPLATE_get0_issuer,
-OSSL_CRMF_CERTID_get0_serialNumber,
-OSSL_CRMF_CERTID_get0_issuer,
-OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert,
-OSSL_CRMF_MSG_get_certReqId
+Otls_CRMF_MSG_get0_tmpl,
+Otls_CRMF_CERTTEMPLATE_get0_serialNumber,
+Otls_CRMF_CERTTEMPLATE_get0_issuer,
+Otls_CRMF_CERTID_get0_serialNumber,
+Otls_CRMF_CERTID_get0_issuer,
+Otls_CRMF_ENCRYPTEDVALUE_get1_encCert,
+Otls_CRMF_MSG_get_certReqId
 - functions reading from CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
 
- #include <openssl/crmf.h>
+ #include <opentls/crmf.h>
 
- OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
+ Otls_CRMF_CERTTEMPLATE *Otls_CRMF_MSG_get0_tmpl(const Otls_CRMF_MSG *crm);
  ASN1_INTEGER
-     *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *tmpl);
- X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl);
+     *Otls_CRMF_CERTTEMPLATE_get0_serialNumber(Otls_CRMF_CERTTEMPLATE *tmpl);
+ X509_NAME *Otls_CRMF_CERTTEMPLATE_get0_issuer(Otls_CRMF_CERTTEMPLATE *tmpl);
 
- ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid);
- X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid);
+ ASN1_INTEGER *Otls_CRMF_CERTID_get0_serialNumber(const Otls_CRMF_CERTID *cid);
+ X509_NAME *Otls_CRMF_CERTID_get0_issuer(const Otls_CRMF_CERTID *cid);
 
- X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
+ X509 *Otls_CRMF_ENCRYPTEDVALUE_get1_encCert(Otls_CRMF_ENCRYPTEDVALUE *ecert,
                                              EVP_PKEY *pkey);
 
- int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm);
+ int Otls_CRMF_MSG_get_certReqId(Otls_CRMF_MSG *crm);
 
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_MSG_get0_tmpl() retrieves the certificate template of B<crm>.
+Otls_CRMF_MSG_get0_tmpl() retrieves the certificate template of B<crm>.
 
-OSSL_CRMF_CERTTEMPLATE_get0_serialNumber() retrieves the serialNumber of the
+Otls_CRMF_CERTTEMPLATE_get0_serialNumber() retrieves the serialNumber of the
 given certificate template B<tmpl>.
 
-OSSL_CRMF_CERTTEMPLATE_get0_issuer() retrieves the issuer name of the
+Otls_CRMF_CERTTEMPLATE_get0_issuer() retrieves the issuer name of the
 given certificate template B<tmpl>.
 
-OSSL_CRMF_CERTID_get0_serialNumber retrieves the serialNumber
+Otls_CRMF_CERTID_get0_serialNumber retrieves the serialNumber
 of the given CertId B<cid>.
 
-OSSL_CRMF_CERTID_get0_issuer retrieves the issuer name
+Otls_CRMF_CERTID_get0_issuer retrieves the issuer name
 of the given CertId B<cid>, which must be of ASN.1 type GEN_DIRNAME.
 
-OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
+Otls_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
 encryptedValue B<ecert>, using the private key B<pkey>.
 This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
 The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.
 
-OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of B<crm>.
+Otls_CRMF_MSG_get_certReqId() retrieves the certReqId of B<crm>.
 
 
 =head1 RETURN VALUES
 
-OSSL_CRMF_MSG_get_certReqId() returns the certificate request ID as a
+Otls_CRMF_MSG_get_certReqId() returns the certificate request ID as a
 non-negative integer or -1 on error.
 
 All other functions return a pointer with the intended result or NULL on error.
@@ -67,15 +67,15 @@ B<RFC 4211>
 
 =head1 HISTORY
 
-The OpenSSL CRMF support was added in OpenSSL 3.0.
+The Opentls CRMF support was added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

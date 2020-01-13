@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Dispatch functions for chacha20_poly1305 cipher */
@@ -27,23 +27,23 @@
                                 | EVP_CIPH_CUSTOM_IV                           \
                                 | EVP_CIPH_CUSTOM_IV_LENGTH)
 
-static OSSL_OP_cipher_newctx_fn chacha20_poly1305_newctx;
-static OSSL_OP_cipher_freectx_fn chacha20_poly1305_freectx;
-static OSSL_OP_cipher_encrypt_init_fn chacha20_poly1305_einit;
-static OSSL_OP_cipher_decrypt_init_fn chacha20_poly1305_dinit;
-static OSSL_OP_cipher_get_params_fn chacha20_poly1305_get_params;
-static OSSL_OP_cipher_get_ctx_params_fn chacha20_poly1305_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn chacha20_poly1305_set_ctx_params;
-static OSSL_OP_cipher_cipher_fn chacha20_poly1305_cipher;
-static OSSL_OP_cipher_final_fn chacha20_poly1305_final;
-static OSSL_OP_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_params;
+static Otls_OP_cipher_newctx_fn chacha20_poly1305_newctx;
+static Otls_OP_cipher_freectx_fn chacha20_poly1305_freectx;
+static Otls_OP_cipher_encrypt_init_fn chacha20_poly1305_einit;
+static Otls_OP_cipher_decrypt_init_fn chacha20_poly1305_dinit;
+static Otls_OP_cipher_get_params_fn chacha20_poly1305_get_params;
+static Otls_OP_cipher_get_ctx_params_fn chacha20_poly1305_get_ctx_params;
+static Otls_OP_cipher_set_ctx_params_fn chacha20_poly1305_set_ctx_params;
+static Otls_OP_cipher_cipher_fn chacha20_poly1305_cipher;
+static Otls_OP_cipher_final_fn chacha20_poly1305_final;
+static Otls_OP_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_params;
 #define chacha20_poly1305_settable_ctx_params cipher_aead_settable_ctx_params
 #define chacha20_poly1305_gettable_params cipher_generic_gettable_params
 #define chacha20_poly1305_update chacha20_poly1305_cipher
 
 static void *chacha20_poly1305_newctx(void *provctx)
 {
-    PROV_CHACHA20_POLY1305_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_CHACHA20_POLY1305_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, CHACHA20_POLY1305_KEYLEN * 8,
@@ -66,10 +66,10 @@ static void chacha20_poly1305_freectx(void *vctx)
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
 
     if (ctx != NULL)
-        OPENSSL_clear_free(ctx, sizeof(*ctx));
+        OPENtls_clear_free(ctx, sizeof(*ctx));
 }
 
-static int chacha20_poly1305_get_params(OSSL_PARAM params[])
+static int chacha20_poly1305_get_params(Otls_PARAM params[])
 {
     return cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
                                      CHACHA20_POLY1305_KEYLEN * 8,
@@ -77,37 +77,37 @@ static int chacha20_poly1305_get_params(OSSL_PARAM params[])
                                      CHACHA20_POLY1305_IVLEN * 8);
 }
 
-static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int chacha20_poly1305_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_IVLEN);
     if (p != NULL) {
-        if (!OSSL_PARAM_set_size_t(p, ctx->nonce_len)) {
+        if (!Otls_PARAM_set_size_t(p, ctx->nonce_len)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, CHACHA20_POLY1305_KEYLEN)) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_KEYLEN);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, CHACHA20_POLY1305_KEYLEN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAGLEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tag_len)) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TAGLEN);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, ctx->tag_len)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
+    if (p != NULL && !Otls_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -125,31 +125,31 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM chacha20_poly1305_known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
-    OSSL_PARAM_END
+static const Otls_PARAM chacha20_poly1305_known_gettable_ctx_params[] = {
+    Otls_PARAM_size_t(Otls_CIPHER_PARAM_KEYLEN, NULL),
+    Otls_PARAM_size_t(Otls_CIPHER_PARAM_IVLEN, NULL),
+    Otls_PARAM_size_t(Otls_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+    Otls_PARAM_octet_string(Otls_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    Otls_PARAM_size_t(Otls_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
+    Otls_PARAM_END
 };
-static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params(void)
+static const Otls_PARAM *chacha20_poly1305_gettable_ctx_params(void)
 {
     return chacha20_poly1305_known_gettable_ctx_params;
 }
 
 static int chacha20_poly1305_set_ctx_params(void *vctx,
-                                            const OSSL_PARAM params[])
+                                            const Otls_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     size_t len;
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_size_t(p, &len)) {
+        if (!Otls_PARAM_get_size_t(p, &len)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -158,9 +158,9 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_IVLEN);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_size_t(p, &len)) {
+        if (!Otls_PARAM_get_size_t(p, &len)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -171,9 +171,9 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
         ctx->nonce_len = len;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -191,9 +191,9 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
         ctx->tag_len = p->data_size;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -205,9 +205,9 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
         ctx->tls_aad_pad_sz = len;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
+    p = Otls_PARAM_locate_const(params, Otls_CIPHER_PARAM_AEAD_TLS1_IV_FIXED);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING) {
+        if (p->data_type != Otls_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -216,7 +216,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
     }
-    /* ignore OSSL_CIPHER_PARAM_AEAD_MAC_KEY */
+    /* ignore Otls_CIPHER_PARAM_AEAD_MAC_KEY */
     return 1;
 }
 
@@ -294,25 +294,25 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
 }
 
 /* chacha20_poly1305_functions */
-const OSSL_DISPATCH chacha20_poly1305_functions[] = {
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_poly1305_newctx },
-    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_poly1305_freectx },
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_poly1305_einit },
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))chacha20_poly1305_dinit },
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))chacha20_poly1305_update },
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))chacha20_poly1305_final },
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))chacha20_poly1305_cipher },
-    { OSSL_FUNC_CIPHER_GET_PARAMS,
+const Otls_DISPATCH chacha20_poly1305_functions[] = {
+    { Otls_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_poly1305_newctx },
+    { Otls_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_poly1305_freectx },
+    { Otls_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_poly1305_einit },
+    { Otls_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))chacha20_poly1305_dinit },
+    { Otls_FUNC_CIPHER_UPDATE, (void (*)(void))chacha20_poly1305_update },
+    { Otls_FUNC_CIPHER_FINAL, (void (*)(void))chacha20_poly1305_final },
+    { Otls_FUNC_CIPHER_CIPHER, (void (*)(void))chacha20_poly1305_cipher },
+    { Otls_FUNC_CIPHER_GET_PARAMS,
         (void (*)(void))chacha20_poly1305_get_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
+    { Otls_FUNC_CIPHER_GETTABLE_PARAMS,
         (void (*)(void))chacha20_poly1305_gettable_params },
-    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
+    { Otls_FUNC_CIPHER_GET_CTX_PARAMS,
          (void (*)(void))chacha20_poly1305_get_ctx_params },
-    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
+    { Otls_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
         (void (*)(void))chacha20_poly1305_gettable_ctx_params },
-    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
+    { Otls_FUNC_CIPHER_SET_CTX_PARAMS,
         (void (*)(void))chacha20_poly1305_set_ctx_params },
-    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
+    { Otls_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
         (void (*)(void))chacha20_poly1305_settable_ctx_params },
     { 0, NULL }
 };

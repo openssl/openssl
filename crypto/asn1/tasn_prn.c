@@ -1,20 +1,20 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/x509v3.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
+#include <opentls/err.h>
+#include <opentls/x509v3.h>
 #include "crypto/asn1.h"
 #include "asn1_local.h"
 
@@ -36,7 +36,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 {
     ASN1_PCTX *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -46,7 +46,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 
 void ASN1_PCTX_free(ASN1_PCTX *p)
 {
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
 unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p)
@@ -399,7 +399,7 @@ static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
         return 0;
     if (BIO_puts(out, s) <= 0)
         ret = 0;
-    OPENSSL_free(s);
+    OPENtls_free(s);
     return ret;
 }
 

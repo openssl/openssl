@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # ECP_NISTZ256 module for SPARCv9.
@@ -108,7 +108,7 @@ $code.=<<___;
 .long	0xfffffffe, 0xffffffff, 0xfffffffd, 0x00000004
 .Lone:
 .long	1,0,0,0,0,0,0,0
-.asciz	"ECP_NISTZ256 for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"ECP_NISTZ256 for SPARCv9, CRYPTOGAMS by <appro\@opentls.org>"
 
 ! void	ecp_nistz256_to_mont(BN_ULONG %i0[8],const BN_ULONG %i1[8]);
 .globl	ecp_nistz256_to_mont
@@ -755,8 +755,8 @@ SPARC_PIC_THUNK(%g1)
 .globl	ecp_nistz256_point_double
 .align	32
 ecp_nistz256_point_double:
-	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
-	ld	[%g1],%g1		! OPENSSL_sparcv9cap_P[0]
+	SPARC_LOAD_ADDRESS_LEAF(OPENtls_sparcv9cap_P,%g1,%g5)
+	ld	[%g1],%g1		! OPENtls_sparcv9cap_P[0]
 	and	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK),%g1
 	cmp	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK)
 	be	ecp_nistz256_point_double_vis3
@@ -885,8 +885,8 @@ $code.=<<___;
 .globl	ecp_nistz256_point_add
 .align	32
 ecp_nistz256_point_add:
-	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
-	ld	[%g1],%g1		! OPENSSL_sparcv9cap_P[0]
+	SPARC_LOAD_ADDRESS_LEAF(OPENtls_sparcv9cap_P,%g1,%g5)
+	ld	[%g1],%g1		! OPENtls_sparcv9cap_P[0]
 	and	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK),%g1
 	cmp	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK)
 	be	ecp_nistz256_point_add_vis3
@@ -1155,8 +1155,8 @@ $code.=<<___;
 .globl	ecp_nistz256_point_add_affine
 .align	32
 ecp_nistz256_point_add_affine:
-	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
-	ld	[%g1],%g1		! OPENSSL_sparcv9cap_P[0]
+	SPARC_LOAD_ADDRESS_LEAF(OPENtls_sparcv9cap_P,%g1,%g5)
+	ld	[%g1],%g1		! OPENtls_sparcv9cap_P[0]
 	and	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK),%g1
 	cmp	%g1,(SPARCV9_VIS3|SPARCV9_64BIT_STACK)
 	be	ecp_nistz256_point_add_affine_vis3

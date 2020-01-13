@@ -1,40 +1,40 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_TLS1_H
-# define OPENSSL_TLS1_H
+#ifndef OPENtls_TLS1_H
+# define OPENtls_TLS1_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_TLS1_H
 # endif
 
-# include <openssl/buffer.h>
-# include <openssl/x509.h>
+# include <opentls/buffer.h>
+# include <opentls/x509.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /* Default security level if not overridden at config time */
-# ifndef OPENSSL_TLS_SECURITY_LEVEL
-#  define OPENSSL_TLS_SECURITY_LEVEL 1
+# ifndef OPENtls_TLS_SECURITY_LEVEL
+#  define OPENtls_TLS_SECURITY_LEVEL 1
 # endif
 
 # define TLS1_VERSION                    0x0301
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
 # define TLS1_3_VERSION                  0x0304
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define TLS_MAX_VERSION                TLS1_3_VERSION
 # endif
 
@@ -51,10 +51,10 @@ extern "C" {
 # define TLS1_2_VERSION_MINOR            0x03
 
 # define TLS1_get_version(s) \
-        ((SSL_version(s) >> 8) == TLS1_VERSION_MAJOR ? SSL_version(s) : 0)
+        ((tls_version(s) >> 8) == TLS1_VERSION_MAJOR ? tls_version(s) : 0)
 
 # define TLS1_get_client_version(s) \
-        ((SSL_client_version(s) >> 8) == TLS1_VERSION_MAJOR ? SSL_client_version(s) : 0)
+        ((tls_client_version(s) >> 8) == TLS1_VERSION_MAJOR ? tls_client_version(s) : 0)
 
 # define TLS1_AD_DECRYPTION_FAILED       21
 # define TLS1_AD_RECORD_OVERFLOW         22
@@ -153,7 +153,7 @@ extern "C" {
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENtls_NO_NEXTPROTONEG
 /* This is not an IANA defined extension number */
 #  define TLSEXT_TYPE_next_proto_neg              13172
 # endif
@@ -205,7 +205,7 @@ extern "C" {
 # define TLSEXT_curve_P_256                              23
 # define TLSEXT_curve_P_384                              24
 
-/* OpenSSL value to disable maximum fragment length extension */
+/* Opentls value to disable maximum fragment length extension */
 # define TLSEXT_max_fragment_length_DISABLED    0
 /* Allowed values for max fragment length extension */
 # define TLSEXT_max_fragment_length_512         1
@@ -213,122 +213,122 @@ extern "C" {
 # define TLSEXT_max_fragment_length_2048        3
 # define TLSEXT_max_fragment_length_4096        4
 
-int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
-int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
+int tls_CTX_set_tlsext_max_fragment_length(tls_CTX *ctx, uint8_t mode);
+int tls_set_tlsext_max_fragment_length(tls *tls, uint8_t mode);
 
 # define TLSEXT_MAXLEN_host_name 255
 
-__owur const char *SSL_get_servername(const SSL *s, const int type);
-__owur int SSL_get_servername_type(const SSL *s);
+__owur const char *tls_get_servername(const tls *s, const int type);
+__owur int tls_get_servername_type(const tls *s);
 /*
- * SSL_export_keying_material exports a value derived from the master secret,
+ * tls_export_keying_material exports a value derived from the master secret,
  * as specified in RFC 5705. It writes |olen| bytes to |out| given a label and
  * optional context. (Since a zero length context is allowed, the |use_context|
  * flag controls whether a context is included.) It returns 1 on success and
  * 0 or -1 otherwise.
  */
-__owur int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+__owur int tls_export_keying_material(tls *s, unsigned char *out, size_t olen,
                                       const char *label, size_t llen,
                                       const unsigned char *context,
                                       size_t contextlen, int use_context);
 
 /*
- * SSL_export_keying_material_early exports a value derived from the
+ * tls_export_keying_material_early exports a value derived from the
  * early exporter master secret, as specified in
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-23. It writes
  * |olen| bytes to |out| given a label and optional context. It
  * returns 1 on success and 0 otherwise.
  */
-__owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
+__owur int tls_export_keying_material_early(tls *s, unsigned char *out,
                                             size_t olen, const char *label,
                                             size_t llen,
                                             const unsigned char *context,
                                             size_t contextlen);
 
-int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
-int SSL_get_signature_type_nid(const SSL *s, int *pnid);
+int tls_get_peer_signature_type_nid(const tls *s, int *pnid);
+int tls_get_signature_type_nid(const tls *s, int *pnid);
 
-int SSL_get_sigalgs(SSL *s, int idx,
+int tls_get_sigalgs(tls *s, int idx,
                     int *psign, int *phash, int *psignandhash,
                     unsigned char *rsig, unsigned char *rhash);
 
-int SSL_get_shared_sigalgs(SSL *s, int idx,
+int tls_get_shared_sigalgs(tls *s, int idx,
                            int *psign, int *phash, int *psignandhash,
                            unsigned char *rsig, unsigned char *rhash);
 
-__owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain);
+__owur int tls_check_chain(tls *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain);
 
-# define SSL_set_tlsext_host_name(s,name) \
-        SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,\
+# define tls_set_tlsext_host_name(s,name) \
+        tls_ctrl(s,tls_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,\
                 (void *)name)
 
-# define SSL_set_tlsext_debug_callback(ssl, cb) \
-        SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,\
+# define tls_set_tlsext_debug_callback(tls, cb) \
+        tls_callback_ctrl(tls,tls_CTRL_SET_TLSEXT_DEBUG_CB,\
                 (void (*)(void))cb)
 
-# define SSL_set_tlsext_debug_arg(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0,arg)
+# define tls_set_tlsext_debug_arg(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_SET_TLSEXT_DEBUG_ARG,0,arg)
 
-# define SSL_get_tlsext_status_type(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0,NULL)
+# define tls_get_tlsext_status_type(tls) \
+        tls_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0,NULL)
 
-# define SSL_set_tlsext_status_type(ssl, type) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type,NULL)
+# define tls_set_tlsext_status_type(tls, type) \
+        tls_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type,NULL)
 
-# define SSL_get_tlsext_status_exts(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0,arg)
+# define tls_get_tlsext_status_exts(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0,arg)
 
-# define SSL_set_tlsext_status_exts(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0,arg)
+# define tls_set_tlsext_status_exts(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0,arg)
 
-# define SSL_get_tlsext_status_ids(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0,arg)
+# define tls_get_tlsext_status_ids(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0,arg)
 
-# define SSL_set_tlsext_status_ids(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0,arg)
+# define tls_set_tlsext_status_ids(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0,arg)
 
-# define SSL_get_tlsext_status_ocsp_resp(ssl, arg) \
-        SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0,arg)
+# define tls_get_tlsext_status_ocsp_resp(tls, arg) \
+        tls_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0,arg)
 
-# define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen,arg)
+# define tls_set_tlsext_status_ocsp_resp(tls, arg, arglen) \
+        tls_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen,arg)
 
-# define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
-        SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,\
+# define tls_CTX_set_tlsext_servername_callback(ctx, cb) \
+        tls_CTX_callback_ctrl(ctx,tls_CTRL_SET_TLSEXT_SERVERNAME_CB,\
                 (void (*)(void))cb)
 
-# define SSL_TLSEXT_ERR_OK 0
-# define SSL_TLSEXT_ERR_ALERT_WARNING 1
-# define SSL_TLSEXT_ERR_ALERT_FATAL 2
-# define SSL_TLSEXT_ERR_NOACK 3
+# define tls_TLSEXT_ERR_OK 0
+# define tls_TLSEXT_ERR_ALERT_WARNING 1
+# define tls_TLSEXT_ERR_ALERT_FATAL 2
+# define tls_TLSEXT_ERR_NOACK 3
 
-# define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0,arg)
+# define tls_CTX_set_tlsext_servername_arg(ctx, arg) \
+        tls_CTX_ctrl(ctx,tls_CTRL_SET_TLSEXT_SERVERNAME_ARG,0,arg)
 
-# define SSL_CTX_get_tlsext_ticket_keys(ctx, keys, keylen) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_GET_TLSEXT_TICKET_KEYS,keylen,keys)
-# define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_TICKET_KEYS,keylen,keys)
+# define tls_CTX_get_tlsext_ticket_keys(ctx, keys, keylen) \
+        tls_CTX_ctrl(ctx,tls_CTRL_GET_TLSEXT_TICKET_KEYS,keylen,keys)
+# define tls_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
+        tls_CTX_ctrl(ctx,tls_CTRL_SET_TLSEXT_TICKET_KEYS,keylen,keys)
 
-# define SSL_CTX_get_tlsext_status_cb(ssl, cb) \
-        SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB,0,(void *)cb)
-# define SSL_CTX_set_tlsext_status_cb(ssl, cb) \
-        SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,\
+# define tls_CTX_get_tlsext_status_cb(tls, cb) \
+        tls_CTX_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_CB,0,(void *)cb)
+# define tls_CTX_set_tlsext_status_cb(tls, cb) \
+        tls_CTX_callback_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_CB,\
                 (void (*)(void))cb)
 
-# define SSL_CTX_get_tlsext_status_arg(ssl, arg) \
-        SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG,0,arg)
-# define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
-        SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0,arg)
+# define tls_CTX_get_tlsext_status_arg(tls, arg) \
+        tls_CTX_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG,0,arg)
+# define tls_CTX_set_tlsext_status_arg(tls, arg) \
+        tls_CTX_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0,arg)
 
-# define SSL_CTX_set_tlsext_status_type(ssl, type) \
-        SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type,NULL)
+# define tls_CTX_set_tlsext_status_type(tls, type) \
+        tls_CTX_ctrl(tls,tls_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type,NULL)
 
-# define SSL_CTX_get_tlsext_status_type(ssl) \
-        SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0,NULL)
+# define tls_CTX_get_tlsext_status_type(tls) \
+        tls_CTX_ctrl(tls,tls_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0,NULL)
 
-# define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
-        SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,\
+# define tls_CTX_set_tlsext_ticket_key_cb(tls, cb) \
+        tls_CTX_callback_ctrl(tls,tls_CTRL_SET_TLSEXT_TICKET_KEY_CB,\
                 (void (*)(void))cb)
 
 /* PSK ciphersuites from 4279 */
@@ -617,7 +617,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS1_CK_RSA_PSK_WITH_ARIA_128_GCM_SHA256         0x0300C06E
 # define TLS1_CK_RSA_PSK_WITH_ARIA_256_GCM_SHA384         0x0300C06F
 
-/* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
+/* a bundle of RFC standard cipher names, generated from tls3_ciphers[] */
 # define TLS1_RFC_RSA_WITH_AES_128_SHA                   "TLS_RSA_WITH_AES_128_CBC_SHA"
 # define TLS1_RFC_DHE_DSS_WITH_AES_128_SHA               "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
 # define TLS1_RFC_DHE_RSA_WITH_AES_128_SHA               "TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
@@ -810,7 +810,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 
 
 /*
- * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE
+ * XXX Backward compatibility alert: Older versions of Opentls gave some DHE
  * ciphers names with "EDH" instead of "DHE".  Going forward, we should be
  * using DHE everywhere, though we may indefinitely maintain aliases for
  * users or configurations that used "EDH"
@@ -1115,14 +1115,14 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS_CT_GOST12_512_SIGN          239
 
 /*
- * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
+ * when correcting this number, correct also tls3_CT_NUMBER in tls3.h (see
  * comment there)
  */
 # define TLS_CT_NUMBER                   10
 
-# if defined(SSL3_CT_NUMBER)
-#  if TLS_CT_NUMBER != SSL3_CT_NUMBER
-#    error "SSL/TLS CT_NUMBER values do not match"
+# if defined(tls3_CT_NUMBER)
+#  if TLS_CT_NUMBER != tls3_CT_NUMBER
+#    error "tls/TLS CT_NUMBER values do not match"
 #  endif
 # endif
 

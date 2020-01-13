@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
+#include <opentls/buffer.h>
 
 /*
  * LIMIT_BEFORE_EXPANSION is the maximum n such that (n+3)/3*4 < 2**31. That
@@ -32,7 +32,7 @@ BUF_MEM *BUF_MEM_new(void)
 {
     BUF_MEM *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -46,11 +46,11 @@ void BUF_MEM_free(BUF_MEM *a)
         return;
     if (a->data != NULL) {
         if (a->flags & BUF_MEM_FLAG_SECURE)
-            OPENSSL_secure_clear_free(a->data, a->max);
+            OPENtls_secure_clear_free(a->data, a->max);
         else
-            OPENSSL_clear_free(a->data, a->max);
+            OPENtls_clear_free(a->data, a->max);
     }
-    OPENSSL_free(a);
+    OPENtls_free(a);
 }
 
 /* Allocate a block of secure memory; copy over old data if there
@@ -59,11 +59,11 @@ static char *sec_alloc_realloc(BUF_MEM *str, size_t len)
 {
     char *ret;
 
-    ret = OPENSSL_secure_malloc(len);
+    ret = OPENtls_secure_malloc(len);
     if (str->data != NULL) {
         if (ret != NULL) {
             memcpy(ret, str->data, str->length);
-            OPENSSL_secure_clear_free(str->data, str->length);
+            OPENtls_secure_clear_free(str->data, str->length);
             str->data = NULL;
         }
     }
@@ -94,7 +94,7 @@ size_t BUF_MEM_grow(BUF_MEM *str, size_t len)
     if ((str->flags & BUF_MEM_FLAG_SECURE))
         ret = sec_alloc_realloc(str, n);
     else
-        ret = OPENSSL_realloc(str->data, n);
+        ret = OPENtls_realloc(str->data, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
         len = 0;
@@ -132,7 +132,7 @@ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
     if ((str->flags & BUF_MEM_FLAG_SECURE))
         ret = sec_alloc_realloc(str, n);
     else
-        ret = OPENSSL_clear_realloc(str->data, str->max, n);
+        ret = OPENtls_clear_realloc(str->data, str->max, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
         len = 0;

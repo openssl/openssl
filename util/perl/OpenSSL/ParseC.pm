@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::ParseC;
+package Opentls::ParseC;
 
 use strict;
 use warnings;
@@ -58,21 +58,21 @@ sub all_conds {
 #                       be ignored.
 #                       If the massager is undefined, the "complete" string
 #                       should be ignored.
-my @opensslcpphandlers = (
+my @opentlscpphandlers = (
     ##################################################################
-    # OpenSSL CPP specials
+    # Opentls CPP specials
     #
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
-    # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of
-    # OPENSSL_NO_DEPRECATEDIN_x_y[_z].  That's due to <openssl/macros.h>
-    # creating OPENSSL_NO_DEPRECATED_x_y[_z], but the ordinals files using
+    # This changes any OPENtls_NO_DEPRECATED_x_y[_z] check to a check of
+    # OPENtls_NO_DEPRECATEDIN_x_y[_z].  That's due to <opentls/macros.h>
+    # creating OPENtls_NO_DEPRECATED_x_y[_z], but the ordinals files using
     # DEPRECATEDIN_x_y[_z].
-    { regexp   => qr/#if(def|ndef) OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?)$/,
+    { regexp   => qr/#if(def|ndef) OPENtls_NO_DEPRECATED_(\d+_\d+(?:_\d+)?)$/,
       massager => sub {
           return (<<"EOF");
-#if$1 OPENSSL_NO_DEPRECATEDIN_$2
+#if$1 OPENtls_NO_DEPRECATEDIN_$2
 EOF
       }
    }
@@ -250,16 +250,16 @@ EOF
     },
     );
 
-my @opensslchandlers = (
+my @opentlschandlers = (
     ##################################################################
-    # OpenSSL C specials
+    # Opentls C specials
     #
     # They are really preprocessor stuff, but they look like C stuff
     # to this parser.  All of these do replacements, anything else is
     # an error.
 
     #####
-    # Deprecated stuff, by OpenSSL release.
+    # Deprecated stuff, by Opentls release.
 
     # We trick the parser by pretending that the declaration is wrapped in a
     # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
@@ -284,21 +284,21 @@ EOF
     { regexp   => qr/DEFINE_LHASH_OF<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
-static ossl_inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
+static otls_inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
                                             int (*cfn)(const $1 *, const $1 *));
-static ossl_inline void lh_$1_free(LHASH_OF($1) *lh);
-static ossl_inline $1 *lh_$1_insert(LHASH_OF($1) *lh, $1 *d);
-static ossl_inline $1 *lh_$1_delete(LHASH_OF($1) *lh, const $1 *d);
-static ossl_inline $1 *lh_$1_retrieve(LHASH_OF($1) *lh, const $1 *d);
-static ossl_inline int lh_$1_error(LHASH_OF($1) *lh);
-static ossl_inline unsigned long lh_$1_num_items(LHASH_OF($1) *lh);
-static ossl_inline void lh_$1_node_stats_bio(const LHASH_OF($1) *lh, BIO *out);
-static ossl_inline void lh_$1_node_usage_stats_bio(const LHASH_OF($1) *lh,
+static otls_inline void lh_$1_free(LHASH_OF($1) *lh);
+static otls_inline $1 *lh_$1_insert(LHASH_OF($1) *lh, $1 *d);
+static otls_inline $1 *lh_$1_delete(LHASH_OF($1) *lh, const $1 *d);
+static otls_inline $1 *lh_$1_retrieve(LHASH_OF($1) *lh, const $1 *d);
+static otls_inline int lh_$1_error(LHASH_OF($1) *lh);
+static otls_inline unsigned long lh_$1_num_items(LHASH_OF($1) *lh);
+static otls_inline void lh_$1_node_stats_bio(const LHASH_OF($1) *lh, BIO *out);
+static otls_inline void lh_$1_node_usage_stats_bio(const LHASH_OF($1) *lh,
                                                    BIO *out);
-static ossl_inline void lh_$1_stats_bio(const LHASH_OF($1) *lh, BIO *out);
-static ossl_inline unsigned long lh_$1_get_down_load(LHASH_OF($1) *lh);
-static ossl_inline void lh_$1_set_down_load(LHASH_OF($1) *lh, unsigned long dl);
-static ossl_inline void lh_$1_doall(LHASH_OF($1) *lh, void (*doall)($1 *));
+static otls_inline void lh_$1_stats_bio(const LHASH_OF($1) *lh, BIO *out);
+static otls_inline unsigned long lh_$1_get_down_load(LHASH_OF($1) *lh);
+static otls_inline void lh_$1_set_down_load(LHASH_OF($1) *lh, unsigned long dl);
+static otls_inline void lh_$1_doall(LHASH_OF($1) *lh, void (*doall)($1 *));
 LHASH_OF($1)
 EOF
       }
@@ -328,34 +328,34 @@ STACK_OF($1);
 typedef int (*sk_$1_compfunc)(const $3 * const *a, const $3 *const *b);
 typedef void (*sk_$1_freefunc)($3 *a);
 typedef $3 * (*sk_$1_copyfunc)(const $3 *a);
-static ossl_inline int sk_$1_num(const STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_value(const STACK_OF($1) *sk, int idx);
-static ossl_inline STACK_OF($1) *sk_$1_new(sk_$1_compfunc compare);
-static ossl_inline STACK_OF($1) *sk_$1_new_null(void);
-static ossl_inline STACK_OF($1) *sk_$1_new_reserve(sk_$1_compfunc compare,
+static otls_inline int sk_$1_num(const STACK_OF($1) *sk);
+static otls_inline $2 *sk_$1_value(const STACK_OF($1) *sk, int idx);
+static otls_inline STACK_OF($1) *sk_$1_new(sk_$1_compfunc compare);
+static otls_inline STACK_OF($1) *sk_$1_new_null(void);
+static otls_inline STACK_OF($1) *sk_$1_new_reserve(sk_$1_compfunc compare,
                                                    int n);
-static ossl_inline int sk_$1_reserve(STACK_OF($1) *sk, int n);
-static ossl_inline void sk_$1_free(STACK_OF($1) *sk);
-static ossl_inline void sk_$1_zero(STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_delete(STACK_OF($1) *sk, int i);
-static ossl_inline $2 *sk_$1_delete_ptr(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_push(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_unshift(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline $2 *sk_$1_pop(STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_shift(STACK_OF($1) *sk);
-static ossl_inline void sk_$1_pop_free(STACK_OF($1) *sk,
+static otls_inline int sk_$1_reserve(STACK_OF($1) *sk, int n);
+static otls_inline void sk_$1_free(STACK_OF($1) *sk);
+static otls_inline void sk_$1_zero(STACK_OF($1) *sk);
+static otls_inline $2 *sk_$1_delete(STACK_OF($1) *sk, int i);
+static otls_inline $2 *sk_$1_delete_ptr(STACK_OF($1) *sk, $2 *ptr);
+static otls_inline int sk_$1_push(STACK_OF($1) *sk, $2 *ptr);
+static otls_inline int sk_$1_unshift(STACK_OF($1) *sk, $2 *ptr);
+static otls_inline $2 *sk_$1_pop(STACK_OF($1) *sk);
+static otls_inline $2 *sk_$1_shift(STACK_OF($1) *sk);
+static otls_inline void sk_$1_pop_free(STACK_OF($1) *sk,
                                        sk_$1_freefunc freefunc);
-static ossl_inline int sk_$1_insert(STACK_OF($1) *sk, $2 *ptr, int idx);
-static ossl_inline $2 *sk_$1_set(STACK_OF($1) *sk, int idx, $2 *ptr);
-static ossl_inline int sk_$1_find(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_find_ex(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline void sk_$1_sort(STACK_OF($1) *sk);
-static ossl_inline int sk_$1_is_sorted(const STACK_OF($1) *sk);
-static ossl_inline STACK_OF($1) * sk_$1_dup(const STACK_OF($1) *sk);
-static ossl_inline STACK_OF($1) *sk_$1_deep_copy(const STACK_OF($1) *sk,
+static otls_inline int sk_$1_insert(STACK_OF($1) *sk, $2 *ptr, int idx);
+static otls_inline $2 *sk_$1_set(STACK_OF($1) *sk, int idx, $2 *ptr);
+static otls_inline int sk_$1_find(STACK_OF($1) *sk, $2 *ptr);
+static otls_inline int sk_$1_find_ex(STACK_OF($1) *sk, $2 *ptr);
+static otls_inline void sk_$1_sort(STACK_OF($1) *sk);
+static otls_inline int sk_$1_is_sorted(const STACK_OF($1) *sk);
+static otls_inline STACK_OF($1) * sk_$1_dup(const STACK_OF($1) *sk);
+static otls_inline STACK_OF($1) *sk_$1_deep_copy(const STACK_OF($1) *sk,
                                                  sk_$1_copyfunc copyfunc,
                                                  sk_$1_freefunc freefunc);
-static ossl_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
+static otls_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
                                                      sk_$1_compfunc compare);
 EOF
       }
@@ -488,7 +488,7 @@ EOF
     },
     { regexp   => qr/DECLARE_PEM(?|_rw|_rw_cb|_rw_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_read_$1(void);
 int PEM_write_$1(void);
 #endif
@@ -502,7 +502,7 @@ EOF
     # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_write|_write_cb|_write_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_write_$1(void);
 #endif
 int PEM_write_bio_$1(void);
@@ -511,7 +511,7 @@ EOF
     },
     { regexp   => qr/DECLARE_PEM(?|_read|_read_cb)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_read_$1(void);
 #endif
 int PEM_read_bio_$1(void);
@@ -519,7 +519,7 @@ EOF
       },
     },
 
-    # Spurious stuff found in the OpenSSL headers
+    # Spurious stuff found in the Opentls headers
     # Usually, these are just macros that expand to, well, something
     { regexp   => qr/__NDK_FPABI__/,
       massager => sub { return (); }
@@ -710,7 +710,7 @@ sub parse {
                                 # complete definition/declaration, as determined
                                 # by any handler being capable of matching it.
 
-    # We use $_ shamelessly when looking through @lines.
+    # We use $_ shameletlsy when looking through @lines.
     # In case we find a \ at the end, we keep filling it up with more lines.
     $_ = undef;
 
@@ -761,17 +761,17 @@ sub parse {
                     # This is only done if we're not inside a comment and
                     # if it's a preprocessor directive and it's finished.
                     if ($normalized_line =~ m|^#| && $_ eq "") {
-                        print STDERR "DEBUG[OPENSSL CPP]: \$normalized_line = '$normalized_line'\n"
+                        print STDERR "DEBUG[OPENtls CPP]: \$normalized_line = '$normalized_line'\n"
                             if $opts{debug};
-                        $opts{debug_type} = "OPENSSL CPP";
+                        $opts{debug_type} = "OPENtls CPP";
                         my @r = ( _run_handlers($normalized_line,
-                                                @opensslcpphandlers,
+                                                @opentlscpphandlers,
                                                 \%opts) );
                         if (shift @r) {
                             # Checking if there are lines to inject.
                             if (@r) {
                                 @r = split $/, (pop @r).$_;
-                                print STDERR "DEBUG[OPENSSL CPP]: injecting '", join("', '", @r),"'\n"
+                                print STDERR "DEBUG[OPENtls CPP]: injecting '", join("', '", @r),"'\n"
                                     if $opts{debug} && @r;
                                 @lines = ( @r, @lines );
 
@@ -816,27 +816,27 @@ sub parse {
 
                     # Now, unless we're building up a preprocessor directive or
                     # are in the middle of a string, or the parens et al aren't
-                    # balanced up yet, let's try and see if there's a OpenSSL
+                    # balanced up yet, let's try and see if there's a Opentls
                     # or C handler that can make sense of what we have so far.
                     if ( $normalized_line !~ m|^#|
                          && ($collected_stmt ne "" || $normalized_line ne "")
                          && ! @{$state{c_parens}}
                          && ! $state{in_string} ) {
                         if ($opts{debug}) {
-                            print STDERR "DEBUG[OPENSSL C]: \$collected_stmt  = '$collected_stmt'\n";
-                            print STDERR "DEBUG[OPENSSL C]: \$normalized_line = '$normalized_line'\n";
+                            print STDERR "DEBUG[OPENtls C]: \$collected_stmt  = '$collected_stmt'\n";
+                            print STDERR "DEBUG[OPENtls C]: \$normalized_line = '$normalized_line'\n";
                         }
-                        $opts{debug_type} = "OPENSSL C";
+                        $opts{debug_type} = "OPENtls C";
                         my @r = ( _run_handlers($collected_stmt
                                                     .$space
                                                     .$normalized_line,
-                                                @opensslchandlers,
+                                                @opentlschandlers,
                                                 \%opts) );
                         if (shift @r) {
                             # Checking if there are lines to inject.
                             if (@r) {
                                 @r = split $/, (pop @r).$_;
-                                print STDERR "DEBUG[OPENSSL]: injecting '", join("', '", @r),"'\n"
+                                print STDERR "DEBUG[OPENtls]: injecting '", join("', '", @r),"'\n"
                                     if $opts{debug} && @r;
                                 @lines = ( @r, @lines );
 

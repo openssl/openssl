@@ -1,20 +1,20 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <openssl/ocsp.h>
+#include <opentls/objects.h>
+#include <opentls/x509.h>
+#include <opentls/ocsp.h>
 #include "ocsp_local.h"
-#include <openssl/rand.h>
-#include <openssl/x509v3.h>
+#include <opentls/rand.h>
+#include <opentls/x509v3.h>
 
 /* Standard wrapper functions for extensions */
 
@@ -237,7 +237,7 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 
 /*
  * Add a nonce to an extension stack. A nonce can be specified or if NULL a
- * random nonce will be generated. Note: OpenSSL 0.9.7d and later create an
+ * random nonce will be generated. Note: Opentls 0.9.7d and later create an
  * OCTET STRING containing the nonce, previous versions used the raw nonce.
  */
 
@@ -259,7 +259,7 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
     if (os.length < 0)
         return 0;
 
-    os.data = OPENSSL_malloc(os.length);
+    os.data = OPENtls_malloc(os.length);
     if (os.data == NULL)
         goto err;
     tmpval = os.data;
@@ -273,7 +273,7 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
         goto err;
     ret = 1;
  err:
-    OPENSSL_free(os.data);
+    OPENtls_free(os.data);
     return ret;
 }
 

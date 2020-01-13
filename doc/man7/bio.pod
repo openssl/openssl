@@ -6,15 +6,15 @@ bio - Basic I/O abstraction
 
 =head1 SYNOPSIS
 
-=for openssl generic
+=for opentls generic
 
- #include <openssl/bio.h>
+ #include <opentls/bio.h>
 
 =head1 DESCRIPTION
 
 A BIO is an I/O abstraction, it hides many of the underlying I/O
 details from an application. If an application uses a BIO for its
-I/O it can transparently handle SSL connections, unencrypted network
+I/O it can transparently handle tls connections, unencrypted network
 connections and file I/O.
 
 There are two type of BIO, a source/sink BIO and a filter BIO.
@@ -63,7 +63,7 @@ Create a memory BIO:
 L<BIO_ctrl(3)>,
 L<BIO_f_base64(3)>, L<BIO_f_buffer(3)>,
 L<BIO_f_cipher(3)>, L<BIO_f_md(3)>,
-L<BIO_f_null(3)>, L<BIO_f_ssl(3)>,
+L<BIO_f_null(3)>, L<BIO_f_tls(3)>,
 L<BIO_find_type(3)>, L<BIO_new(3)>,
 L<BIO_new_bio_pair(3)>,
 L<BIO_push(3)>, L<BIO_read_ex(3)>,
@@ -76,12 +76,12 @@ L<BIO_should_retry(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut
 

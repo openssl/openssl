@@ -12,7 +12,7 @@
  # sure there are no duplicate or weak dependencies and that they are in
  # the right order.  This is used to sort the list of libraries  that a
  # build depends on.
- sub extensionlesslib {
+ sub extensionletlsib {
      my @result = map { $_ =~ /(\.a)?$/; $` } @_;
      return @result if wantarray;
      return $result[0];
@@ -24,7 +24,7 @@
      return () unless @_;
 
      my $thing = shift;
-     my $extensionlessthing = extensionlesslib($thing);
+     my $extensionlessthing = extensionletlsib($thing);
      my @listsofar = @_;    # to check if we're looping
      my @list = @{$unified_info{depends}->{$thing} //
                       $unified_info{depends}->{$extensionlessthing}};
@@ -33,9 +33,9 @@
      print STDERR "DEBUG[collectdepends] $thing > ", join(' ', @listsofar), "\n"
          if $debug_resolvedepends;
      foreach my $item (@list) {
-         my $extensionlessitem = extensionlesslib($item);
+         my $extensionlessitem = extensionletlsib($item);
          # It's time to break off when the dependency list starts looping
-         next if grep { extensionlesslib($_) eq $extensionlessitem } @listsofar;
+         next if grep { extensionletlsib($_) eq $extensionlessitem } @listsofar;
          # Don't add anything here if the dependency is weak
          next if defined $unified_info{attributes}->{depends}->{$thing}->{$item}->{'weak'};
          my @resolved = collectdepends($item, @listsofar, $item);
@@ -64,10 +64,10 @@
              $item,
              map {
                  my $x = $_;
-                 my $extlessx = extensionlesslib($x);
-                 if (grep { $extlessx eq extensionlesslib($_) } @before
+                 my $extlessx = extensionletlsib($x);
+                 if (grep { $extlessx eq extensionletlsib($_) } @before
                      and
-                     !grep { $extlessx eq extensionlesslib($_) } @after) {
+                     !grep { $extlessx eq extensionletlsib($_) } @after) {
                      print STDERR "DEBUG[expanddepends] + ", $x, "\n"
                          if $debug_resolvedepends;
                      ( $x )
@@ -99,8 +99,8 @@
      my %replace = ();
      while (@list) {
          my $item = shift @list;
-         my $extensionlessitem = extensionlesslib($item);
-         if (grep { $extensionlessitem eq extensionlesslib($_) } @list) {
+         my $extensionlessitem = extensionletlsib($item);
+         if (grep { $extensionlessitem eq extensionletlsib($_) } @list) {
              if ($item ne $extensionlessitem) {
                  # If this instance of the library is explicitly static, we
                  # prefer that to any shared library name, since it must have

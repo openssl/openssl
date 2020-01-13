@@ -1,14 +1,14 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_SPARC_ARCH_H
-# define OSSL_CRYPTO_SPARC_ARCH_H
+#ifndef Otls_CRYPTO_SPARC_ARCH_H
+# define Otls_CRYPTO_SPARC_ARCH_H
 
 # define SPARCV9_TICK_PRIVILEGED (1<<0)
 # define SPARCV9_PREFER_FPU      (1<<1)
@@ -26,9 +26,9 @@
 # define SPARCV9_VIS4            (1<<14)/* reserved */
 
 /*
- * OPENSSL_sparcv9cap_P[1] is copy of Compatibility Feature Register,
+ * OPENtls_sparcv9cap_P[1] is copy of Compatibility Feature Register,
  * %asr26, SPARC-T4 and later. There is no SPARCV9_CFR bit in
- * OPENSSL_sparcv9cap_P[0], as %cfr copy is sufficient...
+ * OPENtls_sparcv9cap_P[0], as %cfr copy is sufficient...
  */
 # define CFR_AES         0x00000001/* Supports AES opcodes */
 # define CFR_DES         0x00000002/* Supports DES opcodes */
@@ -46,7 +46,7 @@
 # define CFR_XMONTMUL    0x00002000/* Supports XMONTMUL opcodes */
 # define CFR_XMONTSQR    0x00004000/* Supports XMONTSQR opcodes */
 
-# if defined(OPENSSL_PIC) && !defined(__PIC__)
+# if defined(OPENtls_PIC) && !defined(__PIC__)
 #  define __PIC__
 # endif
 
@@ -115,4 +115,4 @@
         mov     tmp, %o7;
 # endif
 
-#endif                          /* OSSL_CRYPTO_SPARC_ARCH_H */
+#endif                          /* Otls_CRYPTO_SPARC_ARCH_H */

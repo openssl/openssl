@@ -18,7 +18,7 @@ HMAC_size
 
 =head1 SYNOPSIS
 
- #include <openssl/hmac.h>
+ #include <opentls/hmac.h>
 
  unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
                      int key_len, const unsigned char *d, int n,
@@ -40,9 +40,9 @@ HMAC_size
 
  size_t HMAC_size(const HMAC_CTX *e);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+Deprecated since Opentls 1.1.0, can be hidden entirely by defining
+B<OPENtls_API_COMPAT> with a suitable version value, see
+L<opentls_user_macros(7)>:
 
  int HMAC_Init(HMAC_CTX *ctx, const void *key, int key_len,
                const EVP_MD *md);
@@ -138,22 +138,22 @@ L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 
-HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL 1.1.0.
+HMAC_CTX_init() was replaced with HMAC_CTX_reset() in Opentls 1.1.0.
 
-HMAC_CTX_cleanup() existed in OpenSSL before version 1.1.0.
+HMAC_CTX_cleanup() existed in Opentls before version 1.1.0.
 
-HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL 1.1.0.
+HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in Opentls 1.1.0.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
-OpenSSL before version 1.0.0.
+Opentls before version 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

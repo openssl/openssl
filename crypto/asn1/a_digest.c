@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,10 +13,10 @@
 
 #include "internal/cryptlib.h"
 
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
-#include <openssl/x509.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/buffer.h>
+#include <opentls/x509.h>
 
 #ifndef NO_ASN1_OLD
 
@@ -31,7 +31,7 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
         ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if ((str = OPENSSL_malloc(inl)) == NULL) {
+    if ((str = OPENtls_malloc(inl)) == NULL) {
         ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -39,10 +39,10 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
     i2d(data, &p);
 
     if (!EVP_Digest(str, inl, md, len, type, NULL)) {
-        OPENSSL_free(str);
+        OPENtls_free(str);
         return 0;
     }
-    OPENSSL_free(str);
+    OPENtls_free(str);
     return 1;
 }
 
@@ -59,9 +59,9 @@ int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
         return 0;
 
     if (!EVP_Digest(str, i, md, len, type, NULL)) {
-        OPENSSL_free(str);
+        OPENtls_free(str);
         return 0;
     }
-    OPENSSL_free(str);
+    OPENtls_free(str);
     return 1;
 }

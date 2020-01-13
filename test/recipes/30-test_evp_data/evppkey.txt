@@ -1,10 +1,10 @@
 #
-# Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
@@ -2830,7 +2830,7 @@ MFcCAQAwEAYHKoZIzj0CAQYFK4EEABYEQDA+AgEBBBEAUCFDwJLLThLHiDlw/Qcn
 
 PublicKey=ALICE_sect131r1_PUB
 -----BEGIN PUBLIC KEY-----
-MDgwEAYHKoZIzj0CAQYFK4EEABYDJAAEABT7LAX2I+/osOV0o4uEuBcFEjsSlmdt
+MDgwEAYHKoZIzj0CAQYFK4EEABYDJAAEABT7LAX2I+/osOV0o4uEuBcFEjtlsmdt
 c9eFSaRBY+EcBA==
 -----END PUBLIC KEY-----
 
@@ -3760,7 +3760,7 @@ j8i/vH/+viMd48yhNAMyAARka5rhdTmtbqQVRMWZQjUqsHUMX43siRt5f2WQSZfg
 PublicKey=BOB_c2tnb191v1_PUB
 -----BEGIN PUBLIC KEY-----
 MEkwEwYHKoZIzj0CAQYIKoZIzj0DAAUDMgAEZGua4XU5rW6kFUTFmUI1KrB1DF+N
-7IkbeX9lkEmX4PiENpf/L3mssl/Xq1Erd4Cu
+7IkbeX9lkEmX4PiENpf/L3mtls/Xq1Erd4Cu
 -----END PUBLIC KEY-----
 
 PrivPubKeyPair = BOB_c2tnb191v1:BOB_c2tnb191v1_PUB
@@ -7155,7 +7155,7 @@ PrivPubKeyPair = KAS-ECC-CDH_P-224_C19:KAS-ECC-CDH_P-224_C19-PUBLIC
 
 PublicKey=KAS-ECC-CDH_P-224_C19-Peer-PUBLIC
 -----BEGIN PUBLIC KEY-----
-ME4wEAYHKoZIzj0CAQYFK4EEACEDOgAEjuTR3MMd7kv2/iHKilh3IdkQrPsSLBbC
+ME4wEAYHKoZIzj0CAQYFK4EEACEDOgAEjuTR3MMd7kv2/iHKilh3IdkQrPtlsBbC
 p3qBUk6/Mj//BOtHcGmgrGizRfaxrhNO/DGUDlE8uZ8=
 -----END PUBLIC KEY-----
 
@@ -7763,7 +7763,7 @@ VKfaxJKV8oHsfPvmuSaopN4mzMg7gCsSEkAHVL4l2fPurwCLCYcK52Mh
 PublicKey=KAS-ECC-CDH_P-256_C16-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEybK4SW8UQL1KLR5SdS/TcoNbNkiF
-4VSn2sSSlfKB7Hz75rkmqKTeJszIO4ArEhJAB1S+Jdnz7q8AiwmHCudjIQ==
+4VSn2stlsfKB7Hz75rkmqKTeJszIO4ArEhJAB1S+Jdnz7q8AiwmHCudjIQ==
 -----END PUBLIC KEY-----
 
 PrivPubKeyPair = KAS-ECC-CDH_P-256_C16:KAS-ECC-CDH_P-256_C16-PUBLIC
@@ -13024,7 +13024,7 @@ PrivPubKeyPair = KAS-ECC-CDH_K-571_C12:KAS-ECC-CDH_K-571_C12-PUBLIC
 PublicKey=KAS-ECC-CDH_K-571_C12-Peer-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MIGnMBAGByqGSM49AgEGBSuBBAAmA4GSAAQBi7bL/L+67UaFZLNo8LCrw/vKR9zB
-nyyEa/ooc3DhuRL2tw4IUZ9XfwysMlt5/Wa2sjqh4q4mK80ueossLZjZ7XelTHKV
+nyyEa/ooc3DhuRL2tw4IUZ9XfwysMlt5/Wa2sjqh4q4mK80ueotlsZjZ7XelTHKV
 +Y0Fvpu9kXcrtCJmq6nIk+VmcM+2bK++RAHKLLV2W0aVBISFl8f0RumYFHRnhxWK
 g+v443loVzY6jgT4dCoJ1+yhY4bWD9fIWN8=
 -----END PUBLIC KEY-----
@@ -15775,7 +15775,7 @@ SharedSecret=010a8aafbb243fc9466bf381eae173c01be95d88a9c131b07ed54d2f117cd3af401
 PrivateKey=KAS-ECC-CDH_B-409_C6
 -----BEGIN PRIVATE KEY-----
 MIHCAgEAMBAGByqGSM49AgEGBSuBBAAlBIGqMIGnAgEBBDQA33VUwBMv1OSiuSF4
-dfmSSlXKsxm3anwXnPAiKTdXmZbPlJILr9RT5S9dL8SAATKfvXjEoWwDagAEAWCF
+dfmtlsXKsxm3anwXnPAiKTdXmZbPlJILr9RT5S9dL8SAATKfvXjEoWwDagAEAWCF
 HP+UfOcqEYqrTa1M4sPOm8Mwzh0G761/Yw5Fu883CX2UBR2dMQq/+o2W7SKoR8vm
 kwB5o93eY2vGKvQebsDgc/5kYuOK1Lnjo27MgROixjlM7SGr3I7Flp5Y4AnqE9vp
 KalnCco=
@@ -16273,7 +16273,7 @@ PrivPubKeyPair = KAS-ECC-CDH_B-409_C21:KAS-ECC-CDH_B-409_C21-PUBLIC
 
 PublicKey=KAS-ECC-CDH_B-409_C21-Peer-PUBLIC
 -----BEGIN PUBLIC KEY-----
-MH4wEAYHKoZIzj0CAQYFK4EEACUDagAEAMSSlPtxKUIiGiUAMkr3vYx+wc0bgJTe
+MH4wEAYHKoZIzj0CAQYFK4EEACUDagAEAMtlsPtxKUIiGiUAMkr3vYx+wc0bgJTe
 0brAAQqGlgg/fvrsqlED1nYkmeG+SFfTIAMCgQBWT6ERCzk5Jd+7JLqaazNz9GJO
 y8PhL5cG86sFQpktjbbI2Lsl+gYU1Ib20ayfPZi57f4=
 -----END PUBLIC KEY-----
@@ -16930,7 +16930,7 @@ PublicKey=KAS-ECC-CDH_B-571_C15-Peer-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MIGnMBAGByqGSM49AgEGBSuBBAAnA4GSAAQGzXkx/PGTX4HzAUee2a0Mb5oFvs9O
 Vzov9Am6/EQuwZX34/39COWBYdTg/Tf2KpaUIbGc1I/oSKXX90uBN6fHJqnL03os
-87QEtbLNg7J4lXUcNNOsW5YKEz7BiwOcLhKNNEHbT3bot1BkCUYZsSLl+y8cJ5ZV
+87QEtbLNg7J4lXUcNNOsW5YKEz7BiwOcLhKNNEHbT3bot1BkCUYZtlsl+y8cJ5ZV
 mtlTxxHjMNx79V7fKfCVyuRVV7fI1YQ9ib0=
 -----END PUBLIC KEY-----
 

@@ -1,20 +1,20 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "dsa_local.h"
-#include <openssl/asn1.h>
-#include <openssl/engine.h>
-#include <openssl/dh.h>
+#include <opentls/asn1.h>
+#include <opentls/engine.h>
+#include <opentls/dh.h>
 #include "crypto/dsa.h"
 
 #ifndef FIPS_MODE
@@ -41,7 +41,7 @@ int DSA_security_bits(const DSA *d)
     return -1;
 }
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 DH *DSA_dup_DH(const DSA *r)
 {
     /*
@@ -159,7 +159,7 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     mtmp = dsa->meth;
     if (mtmp->finish)
         mtmp->finish(dsa);
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     ENGINE_finish(dsa->engine);
     dsa->engine = NULL;
 #endif
@@ -176,9 +176,9 @@ const DSA_METHOD *DSA_get_method(DSA *d)
     return d->meth;
 }
 
-static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
+static DSA *dsa_new_method(OPENtls_CTX *libctx, ENGINE *engine)
 {
-    DSA *ret = OPENSSL_zalloc(sizeof(*ret));
+    DSA *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -189,12 +189,12 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
 
     ret->meth = DSA_get_default_method();
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODE) && !defined(OPENtls_NO_ENGINE)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -235,7 +235,7 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_method(NULL, engine);
 }
 
-DSA *dsa_new(OPENSSL_CTX *libctx)
+DSA *dsa_new(OPENtls_CTX *libctx)
 {
     return dsa_new_method(libctx, NULL);
 }
@@ -255,7 +255,7 @@ void DSA_free(DSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODE) && !defined(OPENtls_NO_ENGINE)
     ENGINE_finish(r->engine);
 #endif
 
@@ -268,7 +268,7 @@ void DSA_free(DSA *r)
     BN_clear_free(r->g);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
-    OPENSSL_free(r);
+    OPENtls_free(r);
 }
 
 int DSA_up_ref(DSA *r)

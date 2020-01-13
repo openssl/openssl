@@ -26,23 +26,23 @@ The supported parameters are:
 
 =over 4
 
-=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<Otls_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+=item "digest" (B<Otls_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
+=item "key" (B<Otls_KDF_PARAM_KEY>) <octet string>
 
-=item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
+=item "salt" (B<Otls_KDF_PARAM_SALT>) <octet string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
+=item "info" (B<Otls_KDF_PARAM_INFO>) <octet string>
 
 This parameter sets the info value.
 The length of the context info buffer cannot exceed 1024 bytes;
 this should be more than enough for any normal use of HKDF.
 
-=item "mode" (B<OSSL_KDF_PARAM_MODE>) <UTF8 string> or <integer>
+=item "mode" (B<Otls_KDF_PARAM_MODE>) <UTF8 string> or <integer>
 
 This parameter sets the mode for the HKDF operation.
 There are three modes that are currently defined:
@@ -104,21 +104,21 @@ salt value "salt" and info value "label":
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
  unsigned char out[10];
- OSSL_PARAM params[5], *p = params;
+ Otls_PARAM params[5], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+ *p++ = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                          SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_KEY,
                                           "secret", (size_t)6);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_INFO,
                                           "label", (size_t)5);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+ *p++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                           "salt", (size_t)4);
- *p = OSSL_PARAM_construct_end();
+ *p = Otls_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
      error("EVP_KDF_CTX_set_params");
  }
@@ -144,11 +144,11 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 COPYRIGHT
 
-Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

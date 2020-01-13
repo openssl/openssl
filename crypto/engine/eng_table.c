@@ -1,16 +1,16 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/lhash.h>
-#include <openssl/trace.h>
+#include <opentls/evp.h>
+#include <opentls/lhash.h>
+#include <opentls/trace.h>
 #include "eng_local.h"
 
 /* The type of the items in the table */
@@ -98,21 +98,21 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
         tmplate.nid = *nids;
         fnd = lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate);
         if (!fnd) {
-            fnd = OPENSSL_malloc(sizeof(*fnd));
+            fnd = OPENtls_malloc(sizeof(*fnd));
             if (fnd == NULL)
                 goto end;
             fnd->uptodate = 1;
             fnd->nid = *nids;
             fnd->sk = sk_ENGINE_new_null();
             if (!fnd->sk) {
-                OPENSSL_free(fnd);
+                OPENtls_free(fnd);
                 goto end;
             }
             fnd->funct = NULL;
             (void)lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
             if (lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate) != fnd) {
                 sk_ENGINE_free(fnd->sk);
-                OPENSSL_free(fnd);
+                OPENtls_free(fnd);
                 goto end;
             }
         }
@@ -175,7 +175,7 @@ static void int_cleanup_cb_doall(ENGINE_PILE *p)
     sk_ENGINE_free(p->sk);
     if (p->funct)
         engine_unlocked_finish(p->funct, 0);
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
 void engine_table_cleanup(ENGINE_TABLE **table)
@@ -198,10 +198,10 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     int initres, loop = 0;
 
     /* Load the config before trying to check if engines are available */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CONFIG, NULL);
 
     if (!(*table)) {
-        OSSL_TRACE3(ENGINE_TABLE,
+        Otls_TRACE3(ENGINE_TABLE,
                    "%s:%d, nid=%d, nothing registered!\n",
                    f, l, nid);
         return NULL;
@@ -219,7 +219,7 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     if (!fnd)
         goto end;
     if (fnd->funct && engine_unlocked_init(fnd->funct)) {
-        OSSL_TRACE4(ENGINE_TABLE,
+        Otls_TRACE4(ENGINE_TABLE,
                    "%s:%d, nid=%d, using ENGINE '%s' cached\n",
                    f, l, nid, fnd->funct->id);
         ret = fnd->funct;
@@ -232,7 +232,7 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
  trynext:
     ret = sk_ENGINE_value(fnd->sk, loop++);
     if (!ret) {
-        OSSL_TRACE3(ENGINE_TABLE,
+        Otls_TRACE3(ENGINE_TABLE,
                     "%s:%d, nid=%d, "
                     "no registered implementations would initialise\n",
                     f, l, nid);
@@ -250,11 +250,11 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
             if (fnd->funct)
                 engine_unlocked_finish(fnd->funct, 0);
             fnd->funct = ret;
-            OSSL_TRACE4(ENGINE_TABLE,
+            Otls_TRACE4(ENGINE_TABLE,
                         "%s:%d, nid=%d, setting default to '%s'\n",
                         f, l, nid, ret->id);
         }
-        OSSL_TRACE4(ENGINE_TABLE,
+        Otls_TRACE4(ENGINE_TABLE,
                     "%s:%d, nid=%d, using newly initialised '%s'\n",
                     f, l, nid, ret->id);
         goto end;
@@ -268,11 +268,11 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     if (fnd)
         fnd->uptodate = 1;
     if (ret)
-        OSSL_TRACE4(ENGINE_TABLE,
+        Otls_TRACE4(ENGINE_TABLE,
                    "%s:%d, nid=%d, caching ENGINE '%s'\n",
                    f, l, nid, ret->id);
     else
-        OSSL_TRACE3(ENGINE_TABLE,
+        Otls_TRACE3(ENGINE_TABLE,
                     "%s:%d, nid=%d, caching 'no matching ENGINE'\n",
                     f, l, nid);
     CRYPTO_THREAD_unlock(global_engine_lock);

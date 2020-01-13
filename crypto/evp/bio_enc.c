@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
+#include <opentls/buffer.h>
+#include <opentls/evp.h>
 #include "internal/bio.h"
 
 static int enc_write(BIO *h, const char *buf, int num);
@@ -65,14 +65,14 @@ static int enc_new(BIO *bi)
 {
     BIO_ENC_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL) {
         EVPerr(EVP_F_ENC_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     ctx->cipher = EVP_CIPHER_CTX_new();
     if (ctx->cipher == NULL) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return 0;
     }
     ctx->cont = 1;
@@ -96,7 +96,7 @@ static int enc_free(BIO *a)
         return 0;
 
     EVP_CIPHER_CTX_free(b->cipher);
-    OPENSSL_clear_free(b, sizeof(BIO_ENC_CTX));
+    OPENtls_clear_free(b, sizeof(BIO_ENC_CTX));
     BIO_set_data(a, NULL);
     BIO_set_init(a, 0);
 

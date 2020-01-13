@@ -700,7 +700,7 @@ file C<formletter.tmpl>:
     It has come to our attention that you are delinquent in your
     {$monthname[$last_paid_month]} payment.  Please remit
     ${sprintf("%.2f", $amount)} immediately, or your patellae may
-    be needlessly endangered.
+    be needletlsy endangered.
 
                     Love,
 
@@ -714,7 +714,7 @@ something like this:
     It has come to our attention that you are delinquent in your
     February payment.  Please remit
     $392.12 immediately, or your patellae may
-    be needlessly endangered.
+    be needletlsy endangered.
 
 
                     Love,

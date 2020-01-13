@@ -1,18 +1,18 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
@@ -706,7 +706,7 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 }
 
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
-                              unsigned char *pass, ossl_ssize_t passlen)
+                              unsigned char *pass, otls_ssize_t patlsen)
 {
     STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri;
@@ -716,7 +716,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
         ri = sk_CMS_RecipientInfo_value(ris, i);
         if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_PASS)
             continue;
-        CMS_RecipientInfo_set0_password(ri, pass, passlen);
+        CMS_RecipientInfo_set0_password(ri, pass, patlsen);
         r = CMS_RecipientInfo_decrypt(cms, ri);
         CMS_RecipientInfo_set0_password(ri, NULL, 0);
         if (r > 0)

@@ -1,36 +1,36 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/obj_mac.h>
-#include <openssl/rand.h>
+#include <opentls/err.h>
+#include <opentls/obj_mac.h>
+#include <opentls/rand.h>
 #include "crypto/bn.h"
 #include "ec_local.h"
 
-int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+int otls_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                           BIGNUM **rp)
 {
     if (eckey->group->meth->ecdsa_sign_setup == NULL) {
-        ECerr(EC_F_OSSL_ECDSA_SIGN_SETUP, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
+        ECerr(EC_F_Otls_ECDSA_SIGN_SETUP, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
         return 0;
     }
 
     return eckey->group->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp);
 }
 
-ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+ECDSA_SIG *otls_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                const BIGNUM *in_kinv, const BIGNUM *in_r,
                                EC_KEY *eckey)
 {
     if (eckey->group->meth->ecdsa_sign_sig == NULL) {
-        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
+        ECerr(EC_F_Otls_ECDSA_SIGN_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
         return NULL;
     }
 
@@ -38,18 +38,18 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                               in_kinv, in_r, eckey);
 }
 
-int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+int otls_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey)
 {
     if (eckey->group->meth->ecdsa_verify_sig == NULL) {
-        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
+        ECerr(EC_F_Otls_ECDSA_VERIFY_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA);
         return 0;
     }
 
     return eckey->group->meth->ecdsa_verify_sig(dgst, dgst_len, sig, eckey);
 }
 
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+int otls_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
@@ -324,7 +324,7 @@ ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
  *      0: incorrect signature
  *     -1: error
  */
-int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+int otls_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
 {
     ECDSA_SIG *s;
@@ -344,7 +344,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
         goto err;
     ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
  err:
-    OPENSSL_free(der);
+    OPENtls_free(der);
     ECDSA_SIG_free(s);
     return ret;
 }

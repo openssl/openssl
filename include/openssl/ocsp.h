@@ -1,25 +1,25 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_OCSP_H
-# define OPENSSL_OCSP_H
+#ifndef OPENtls_OCSP_H
+# define OPENtls_OCSP_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_OCSP_H
 # endif
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 
 /*
- * These definitions are outside the OPENSSL_NO_OCSP guard because although for
+ * These definitions are outside the OPENtls_NO_OCSP guard because although for
  * historical reasons they have OCSP_* names, they can actually be used
  * independently of OCSP. E.g. see RFC5280
  */
@@ -50,13 +50,13 @@
 #  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
 
 
-# ifndef OPENSSL_NO_OCSP
+# ifndef OPENtls_NO_OCSP
 
-#  include <openssl/types.h>
-#  include <openssl/x509.h>
-#  include <openssl/x509v3.h>
-#  include <openssl/safestack.h>
-#  include <openssl/ocsperr.h>
+#  include <opentls/types.h>
+#  include <opentls/x509.h>
+#  include <opentls/x509v3.h>
+#  include <opentls/safestack.h>
+#  include <opentls/ocsperr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -238,7 +238,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
 int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
-                   int *pssl);
+                   int *ptls);
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);

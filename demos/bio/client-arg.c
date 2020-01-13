@@ -1,36 +1,36 @@
 /*
- * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <opentls/err.h>
+#include <opentls/tls.h>
 
 int main(int argc, char **argv)
 {
     BIO *sbio = NULL, *out = NULL;
     int len;
     char tmpbuf[1024];
-    SSL_CTX *ctx;
-    SSL_CONF_CTX *cctx;
-    SSL *ssl;
+    tls_CTX *ctx;
+    tls_CONF_CTX *cctx;
+    tls *tls;
     char **args = argv + 1;
     const char *connect_str = "localhost:4433";
     int nargs = argc - 1;
 
-    ctx = SSL_CTX_new(TLS_client_method());
-    cctx = SSL_CONF_CTX_new();
-    SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT);
-    SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+    ctx = tls_CTX_new(TLS_client_method());
+    cctx = tls_CONF_CTX_new();
+    tls_CONF_CTX_set_flags(cctx, tls_CONF_FLAG_CLIENT);
+    tls_CONF_CTX_set_tls_ctx(cctx, ctx);
     while (*args && **args == '-') {
         int rv;
         /* Parse standard arguments */
-        rv = SSL_CONF_cmd_argv(cctx, &nargs, &args);
+        rv = tls_CONF_cmd_argv(cctx, &nargs, &args);
         if (rv == -3) {
             fprintf(stderr, "Missing argument for %s\n", *args);
             goto end;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!SSL_CONF_CTX_finish(cctx)) {
+    if (!tls_CONF_CTX_finish(cctx)) {
         fprintf(stderr, "Finish error\n");
         ERR_print_errors_fp(stderr);
         goto end;
@@ -71,19 +71,19 @@ int main(int argc, char **argv)
      * certificate is signed by any CA.
      */
 
-    sbio = BIO_new_ssl_connect(ctx);
+    sbio = BIO_new_tls_connect(ctx);
 
-    BIO_get_ssl(sbio, &ssl);
+    BIO_get_tls(sbio, &tls);
 
-    if (!ssl) {
-        fprintf(stderr, "Can't locate SSL pointer\n");
+    if (!tls) {
+        fprintf(stderr, "Can't locate tls pointer\n");
         goto end;
     }
 
     /* Don't want any retries */
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+    tls_set_mode(tls, tls_MODE_AUTO_RETRY);
 
-    /* We might want to do other things with ssl here */
+    /* We might want to do other things with tls here */
 
     BIO_set_conn_hostname(sbio, connect_str);
 
@@ -95,12 +95,12 @@ int main(int argc, char **argv)
     }
 
     if (BIO_do_handshake(sbio) <= 0) {
-        fprintf(stderr, "Error establishing SSL connection\n");
+        fprintf(stderr, "Error establishing tls connection\n");
         ERR_print_errors_fp(stderr);
         goto end;
     }
 
-    /* Could examine ssl here to get connection info */
+    /* Could examine tls here to get connection info */
 
     BIO_puts(sbio, "GET / HTTP/1.0\n\n");
     for (;;) {
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         BIO_write(out, tmpbuf, len);
     }
  end:
-    SSL_CONF_CTX_free(cctx);
+    tls_CONF_CTX_free(cctx);
     BIO_free_all(sbio);
     BIO_free(out);
     return 0;

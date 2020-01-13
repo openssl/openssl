@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 #
 # Hardware SPARC T4 support by David S. Miller
 # ====================================================================
@@ -203,8 +203,8 @@ SPARC_PIC_THUNK(%g1)
 .align	32
 .globl	sha1_block_data_order
 sha1_block_data_order:
-	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
-	ld	[%g1+4],%g1		! OPENSSL_sparcv9cap_P[1]
+	SPARC_LOAD_ADDRESS_LEAF(OPENtls_sparcv9cap_P,%g1,%g5)
+	ld	[%g1+4],%g1		! OPENtls_sparcv9cap_P[1]
 
 	andcc	%g1, CFR_SHA1, %g0
 	be	.Lsoftware
@@ -368,7 +368,7 @@ $code.=<<___;
 	restore
 .type	sha1_block_data_order,#function
 .size	sha1_block_data_order,(.-sha1_block_data_order)
-.asciz	"SHA1 block transform for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA1 block transform for SPARCv9, CRYPTOGAMS by <appro\@opentls.org>"
 .align	4
 ___
 

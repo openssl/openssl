@@ -1,10 +1,10 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Copyright 2011 Google Inc.
@@ -30,14 +30,14 @@
  * and Adam Langley's public domain 64-bit C implementation of curve25519
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_EC_NISTP_64_GCC_128
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <stdint.h>
 # include <string.h>
-# include <openssl/err.h>
+# include <opentls/err.h>
 # include "ec_local.h"
 
 # if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
@@ -327,7 +327,7 @@ static void felem_to_bin28(u8 out[28], const felem in)
     }
 }
 
-/* From OpenSSL BIGNUM to internal representation */
+/* From Opentls BIGNUM to internal representation */
 static int BN_to_felem(felem out, const BIGNUM *bn)
 {
     felem_bytearray b_out;
@@ -346,7 +346,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     return 1;
 }
 
-/* From internal representation to OpenSSL BIGNUM */
+/* From internal representation to Opentls BIGNUM */
 static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 {
     felem_bytearray b_out;
@@ -1236,7 +1236,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 
 static NISTP224_PRE_COMP *nistp224_pre_comp_new(void)
 {
-    NISTP224_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
+    NISTP224_PRE_COMP *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (!ret) {
         ECerr(EC_F_NISTP224_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
@@ -1248,7 +1248,7 @@ static NISTP224_PRE_COMP *nistp224_pre_comp_new(void)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ECerr(EC_F_NISTP224_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
     return ret;
@@ -1276,12 +1276,12 @@ void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *p)
     REF_ASSERT_ISNT(i < 0);
 
     CRYPTO_THREAD_lock_free(p->lock);
-    OPENSSL_free(p);
+    OPENtls_free(p);
 }
 
 /******************************************************************************/
 /*
- * OPENSSL EC_METHOD FUNCTIONS
+ * OPENtls EC_METHOD FUNCTIONS
  */
 
 int ec_GFp_nistp224_group_init(EC_GROUP *group)
@@ -1485,11 +1485,11 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
              */
             mixed = 1;
         }
-        secrets = OPENSSL_zalloc(sizeof(*secrets) * num_points);
-        pre_comp = OPENSSL_zalloc(sizeof(*pre_comp) * num_points);
+        secrets = OPENtls_zalloc(sizeof(*secrets) * num_points);
+        pre_comp = OPENtls_zalloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_felems =
-                OPENSSL_malloc(sizeof(felem) * (num_points * 17 + 1));
+                OPENtls_malloc(sizeof(felem) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_felems == NULL))) {
             ECerr(EC_F_EC_GFP_NISTP224_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -1603,9 +1603,9 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    OPENSSL_free(secrets);
-    OPENSSL_free(pre_comp);
-    OPENSSL_free(tmp_felems);
+    OPENtls_free(secrets);
+    OPENtls_free(pre_comp);
+    OPENtls_free(tmp_felems);
     return ret;
 }
 

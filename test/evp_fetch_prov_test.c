@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/sha.h>
-#include <openssl/evp.h>
-#include <openssl/provider.h>
+#include <opentls/sha.h>
+#include <opentls/evp.h>
+#include <opentls/provider.h>
 #include "testutil.h"
 
 static char *alg = "digest";
@@ -66,13 +66,13 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
     return ret;
 }
 
-static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
+static int load_providers(OPENtls_CTX **libctx, Otls_PROVIDER *prov[])
 {
-    OPENSSL_CTX *ctx;
+    OPENtls_CTX *ctx;
     int ret = 0;
     size_t i;
 
-    ctx = OPENSSL_CTX_new();
+    ctx = OPENtls_CTX_new();
     if (!TEST_ptr(ctx))
         goto err;
 
@@ -81,7 +81,7 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
 
     for (i = 0; i < test_get_argument_count(); ++i) {
         char *provname = test_get_argument(i);
-        prov[i] = OSSL_PROVIDER_load(ctx, provname);
+        prov[i] = Otls_PROVIDER_load(ctx, provname);
         if (!TEST_ptr(prov[i]))
             goto err;
     }
@@ -96,9 +96,9 @@ err:
  */
 static int test_EVP_MD_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OPENtls_CTX *ctx = NULL;
     EVP_MD *md = NULL;
-    OSSL_PROVIDER *prov[2] = {NULL, NULL};
+    Otls_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
     const char testmsg[] = "Hello world";
     const unsigned char exptd[] = {
@@ -140,14 +140,14 @@ static int test_EVP_MD_fetch(void)
 
 err:
     EVP_MD_meth_free(md);
-    OSSL_PROVIDER_unload(prov[0]);
-    OSSL_PROVIDER_unload(prov[1]);
+    Otls_PROVIDER_unload(prov[0]);
+    Otls_PROVIDER_unload(prov[1]);
     /* Not normally needed, but we would like to test that
-     * OPENSSL_thread_stop_ex() behaves as expected.
+     * OPENtls_thread_stop_ex() behaves as expected.
      */
     if (ctx != NULL) {
-        OPENSSL_thread_stop_ex(ctx);
-        OPENSSL_CTX_free(ctx);
+        OPENtls_thread_stop_ex(ctx);
+        OPENtls_CTX_free(ctx);
     }
     return ret;
 }
@@ -182,9 +182,9 @@ err:
  */
 static int test_EVP_CIPHER_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OPENtls_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
-    OSSL_PROVIDER *prov[2] = {NULL, NULL};
+    Otls_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
     const unsigned char testmsg[] = "Hello world";
 
@@ -212,9 +212,9 @@ static int test_EVP_CIPHER_fetch(void)
     ret = 1;
 err:
     EVP_CIPHER_meth_free(cipher);
-    OSSL_PROVIDER_unload(prov[0]);
-    OSSL_PROVIDER_unload(prov[1]);
-    OPENSSL_CTX_free(ctx);
+    Otls_PROVIDER_unload(prov[0]);
+    Otls_PROVIDER_unload(prov[1]);
+    OPENtls_CTX_free(ctx);
     return ret;
 }
 

@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,7 +15,7 @@
 
 #include <string.h>
 #include "internal/bio.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 #include "internal/cryptlib.h"
 
 /* Must be large enough for biggest tag+length */
@@ -100,12 +100,12 @@ const BIO_METHOD *BIO_f_asn1(void)
 
 static int asn1_bio_new(BIO *b)
 {
-    BIO_ASN1_BUF_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    BIO_ASN1_BUF_CTX *ctx = OPENtls_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return 0;
     if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE)) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return 0;
     }
     BIO_set_data(b, ctx);
@@ -116,7 +116,7 @@ static int asn1_bio_new(BIO *b)
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
-    if ((ctx->buf = OPENSSL_malloc(size)) == NULL) {
+    if ((ctx->buf = OPENtls_malloc(size)) == NULL) {
         ASN1err(ASN1_F_ASN1_BIO_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -138,8 +138,8 @@ static int asn1_bio_free(BIO *b)
     if (ctx == NULL)
         return 0;
 
-    OPENSSL_free(ctx->buf);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx->buf);
+    OPENtls_free(ctx);
     BIO_set_data(b, NULL);
     BIO_set_init(b, 0);
 
@@ -183,7 +183,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
 
         case ASN1_STATE_HEADER:
             ctx->buflen = ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
-            if (!ossl_assert(ctx->buflen <= ctx->bufsize))
+            if (!otls_assert(ctx->buflen <= ctx->bufsize))
                 return 0;
             p = ctx->buf;
             ASN1_put_object(&p, 0, inl, ctx->asn1_tag, ctx->asn1_class);

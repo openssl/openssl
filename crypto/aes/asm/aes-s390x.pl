@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # AES for s390x.
@@ -824,7 +824,7 @@ $code.=<<___ if (!$softonly);
 	srl	%r5,6
 	ar	%r5,%r0
 
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
 	ng	%r0,S390X_KM(%r1)  # check availability of both km...
@@ -1413,7 +1413,7 @@ $code.=<<___ if (!$softonly);
 	clr	$len,%r1		# does work even in 64-bit mode
 	jle	.Lctr32_nokma		# kma is slower for <= 16 blocks
 
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	lr	$s2,%r0
 	llihh	$s3,0x8000
 	srlg	$s3,$s3,0($s2)
@@ -1497,7 +1497,7 @@ ___
 $code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
 	llgfr	$s0,%r0
 	lgr	$s1,%r1
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	llihh	%r0,0x8000	# check if kmctr supports the function code
 	srlg	%r0,%r0,0($s0)
 	ng	%r0,S390X_KMCTR(%r1)	# check kmctr capability vector
@@ -1647,7 +1647,7 @@ $code.=<<___ if(1);
 	llgfr	$s0,%r0			# put aside the function code
 	lghi	$s1,0x7f
 	nr	$s1,%r0
-	larl	%r1,OPENSSL_s390xcap_P
+	larl	%r1,OPENtls_s390xcap_P
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,32($s1)		# check for 32+function code
 	ng	%r0,S390X_KM(%r1)	# check km capability vector
@@ -2276,7 +2276,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.string	"AES for s390x, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

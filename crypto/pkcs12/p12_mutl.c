@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/crypto.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include <openssl/pkcs12.h>
+#include <opentls/crypto.h>
+#include <opentls/hmac.h>
+#include <opentls/rand.h>
+#include <opentls/pkcs12.h>
 #include "p12_local.h"
 
 int PKCS12_mac_present(const PKCS12 *p12)
@@ -46,7 +46,7 @@ void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
 
 #define TK26_MAC_KEY_LEN 32
 
-static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
+static int pkcs12_gen_gost_mac_key(const char *pass, int patlsen,
                                    const unsigned char *salt, int saltlen,
                                    int iter, int keylen, unsigned char *key,
                                    const EVP_MD *digest)
@@ -57,19 +57,19 @@ static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
         return 0;
     }
 
-    if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter,
+    if (!PKCS5_PBKDF2_HMAC(pass, patlsen, salt, saltlen, iter,
                            digest, sizeof(out), out)) {
         return 0;
     }
     memcpy(key, out + sizeof(out) - TK26_MAC_KEY_LEN, TK26_MAC_KEY_LEN);
-    OPENSSL_cleanse(out, sizeof(out));
+    OPENtls_cleanse(out, sizeof(out));
     return 1;
 }
 
 /* Generate a MAC */
-static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
+static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int patlsen,
                           unsigned char *mac, unsigned int *maclen,
-                          int (*pkcs12_key_gen)(const char *pass, int passlen,
+                          int (*pkcs12_key_gen)(const char *pass, int patlsen,
                                                 unsigned char *salt, int slen,
                                                 int id, int iter, int n,
                                                 unsigned char *out,
@@ -112,15 +112,15 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     if ((md_type_nid == NID_id_GostR3411_94
          || md_type_nid == NID_id_GostR3411_2012_256
          || md_type_nid == NID_id_GostR3411_2012_512)
-        && ossl_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
+        && otls_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
         md_size = TK26_MAC_KEY_LEN;
-        if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
+        if (!pkcs12_gen_gost_mac_key(pass, patlsen, salt, saltlen, iter,
                                      md_size, key, md_type)) {
             PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
             goto err;
         }
     } else
-        if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
+        if (!(*pkcs12_key_gen)(pass, patlsen, salt, saltlen, PKCS12_MAC_ID,
                                iter, md_size, key, md_type)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
         goto err;
@@ -135,19 +135,19 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     ret = 1;
 
 err:
-    OPENSSL_cleanse(key, sizeof(key));
+    OPENtls_cleanse(key, sizeof(key));
     HMAC_CTX_free(hmac);
     return ret;
 }
 
-int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
+int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int patlsen,
                    unsigned char *mac, unsigned int *maclen)
 {
-    return pkcs12_gen_mac(p12, pass, passlen, mac, maclen, NULL);
+    return pkcs12_gen_mac(p12, pass, patlsen, mac, maclen, NULL);
 }
 
 /* Verify the mac */
-int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
+int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int patlsen)
 {
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
@@ -157,7 +157,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
         return 0;
     }
-    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
+    if (!pkcs12_gen_mac(p12, pass, patlsen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
@@ -172,7 +172,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
 
 /* Set a mac */
 
-int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
+int PKCS12_set_mac(PKCS12 *p12, const char *pass, int patlsen,
                    unsigned char *salt, int saltlen, int iter,
                    const EVP_MD *md_type)
 {
@@ -189,7 +189,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
     /*
      * Note that output mac is forced to UTF-8...
      */
-    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
+    if (!pkcs12_gen_mac(p12, pass, patlsen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
@@ -225,7 +225,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     }
     if (!saltlen)
         saltlen = PKCS12_SALT_LEN;
-    if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
+    if ((p12->mac->salt->data = OPENtls_malloc(saltlen)) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
     }

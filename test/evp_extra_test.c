@@ -1,28 +1,28 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/conf.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/kdf.h>
-#include <openssl/provider.h>
-#include <openssl/core_names.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
+#include <opentls/bio.h>
+#include <opentls/conf.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/rsa.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/kdf.h>
+#include <opentls/provider.h>
+#include <opentls/core_names.h>
+#include <opentls/dsa.h>
+#include <opentls/dh.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
@@ -89,7 +89,7 @@ static const unsigned char kExampleRSAKeyDER[] = {
 * kExampleDSAKeyDER is a DSA private key in ASN.1, DER format. Of course, you
  * should never use this key anywhere but in an example.
  */
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static const unsigned char kExampleDSAKeyDER[] = {
     0x30, 0x82, 0x01, 0xba, 0x02, 0x01, 0x00, 0x02, 0x81, 0x81, 0x00, 0x9a,
     0x05, 0x6d, 0x33, 0xcd, 0x5d, 0x78, 0xa1, 0xbb, 0xcb, 0x7d, 0x5b, 0x8d,
@@ -304,7 +304,7 @@ static const unsigned char kExampleRSAKeyPKCS8[] = {
     0x08, 0xf1, 0x2d, 0x86, 0x9d, 0xa5, 0x20, 0x1b, 0xe5, 0xdf,
 };
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 /*
  * kExampleECKeyDER is a sample EC private key encoded as an ECPrivateKey
  * structure.
@@ -384,7 +384,7 @@ typedef struct APK_DATA_st {
 static APK_DATA keydata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
     {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC}
 #endif
 };
@@ -393,7 +393,7 @@ static APK_DATA keycheckdata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1, -2, -2, 0},
     {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), EVP_PKEY_RSA,
      0, -2, -2, 0},
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC, 1, 1, 1, 0},
     /* group is also associated in our pub key */
     {kExampleECPubKeyDER, sizeof(kExampleECPubKeyDER), EVP_PKEY_EC, 0, 1, 1, 1},
@@ -425,7 +425,7 @@ end:
     return ret;
 }
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 static EVP_PKEY *load_example_dsa_key(void)
 {
     EVP_PKEY *ret = NULL;
@@ -480,7 +480,7 @@ static int test_EVP_Enveloped(void)
     const EVP_CIPHER *type = EVP_aes_256_cbc();
 
     if (!TEST_ptr(keypair = load_example_rsa_key())
-            || !TEST_ptr(kek = OPENSSL_zalloc(EVP_PKEY_size(keypair)))
+            || !TEST_ptr(kek = OPENtls_zalloc(EVP_PKEY_size(keypair)))
             || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
             || !TEST_true(EVP_SealInit(ctx, type, &kek, &kek_len, iv,
                                        &keypair, 1))
@@ -504,7 +504,7 @@ static int test_EVP_Enveloped(void)
 
     ret = 1;
 err:
-    OPENSSL_free(kek);
+    OPENtls_free(kek);
     EVP_PKEY_free(keypair);
     EVP_CIPHER_CTX_free(ctx);
     return ret;
@@ -552,7 +552,7 @@ static int test_EVP_DigestSignInit(int tst)
         if (!TEST_ptr(pkey = load_example_rsa_key()))
                 goto out;
     } else if (tst == 1 || tst == 4 || tst == 7) {
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
         if (!TEST_ptr(pkey = load_example_dsa_key()))
                 goto out;
 #else
@@ -585,7 +585,7 @@ static int test_EVP_DigestSignInit(int tst)
             || !TEST_size_t_le(sig_len, (size_t)EVP_PKEY_size(pkey)))
         goto out;
 
-    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
+    if (!TEST_ptr(sig = OPENtls_malloc(sig_len))
             || !TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto out;
 
@@ -624,7 +624,7 @@ static int test_EVP_DigestSignInit(int tst)
     EVP_MD_CTX_free(a_md_ctx);
     EVP_MD_CTX_free(a_md_ctx_verify);
     EVP_PKEY_free(pkey);
-    OPENSSL_free(sig);
+    OPENtls_free(sig);
     EVP_MD_free(mdexp);
 
     return ret;
@@ -676,7 +676,7 @@ static int test_d2i_AutoPrivateKey(int i)
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 
 static const unsigned char ec_public_sect163k1_validxy[] = {
     0x30, 0x40, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
@@ -766,7 +766,7 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_SM2) && !defined(FIPS_MODE)
 
 static int test_EVP_SM2_verify(void)
 {
@@ -922,7 +922,7 @@ static int test_EVP_SM2(void)
     if (!TEST_size_t_eq(sig_len, (size_t)EVP_PKEY_size(pkey)))
         goto done;
 
-    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len)))
+    if (!TEST_ptr(sig = OPENtls_malloc(sig_len)))
         goto done;
 
     if (!TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
@@ -972,7 +972,7 @@ done:
     EVP_PKEY_free(params);
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_CTX_free(md_ctx_verify);
-    OPENSSL_free(sig);
+    OPENtls_free(sig);
     return ret;
 }
 
@@ -990,7 +990,7 @@ static struct keys_st {
     }, {
         EVP_PKEY_SIPHASH, "0123456789012345", NULL
     },
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     {
         EVP_PKEY_X25519, "01234567890123456789012345678901",
         "abcdefghijklmnopqrstuvwxyzabcdef"
@@ -1082,7 +1082,7 @@ static int test_EVP_PKEY_check(int i)
     int ret = 0;
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     EC_KEY *eckey = NULL;
 #endif
     EVP_PKEY_CTX *ctx = NULL;
@@ -1106,7 +1106,7 @@ static int test_EVP_PKEY_check(int i)
             || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
             goto done;
         break;
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     case 1:
         if (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
             || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
@@ -1206,7 +1206,7 @@ static int test_HKDF(void)
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static int test_X509_PUBKEY_inplace(void)
 {
   int ret = 0;
@@ -1235,24 +1235,24 @@ done:
   X509_PUBKEY_free(xp);
   return ret;
 }
-#endif /* OPENSSL_NO_EC */
+#endif /* OPENtls_NO_EC */
 
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
 /* Test getting and setting parameters on an EVP_PKEY_CTX */
 static int test_EVP_PKEY_CTX_get_set_params(void)
 {
     EVP_MD_CTX *mdctx = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_SIGNATURE *dsaimpl = NULL;
-    const OSSL_PARAM *params;
-    OSSL_PARAM ourparams[2], *param = ourparams;
+    const Otls_PARAM *params;
+    Otls_PARAM ourparams[2], *param = ourparams;
     DSA *dsa = NULL;
     BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
     EVP_PKEY *pkey = NULL;
     int ret = 0;
     const EVP_MD *md;
     size_t mdsize = SHA512_DIGEST_LENGTH;
-    char ssl3ms[48];
+    char tls3ms[48];
 
     /*
      * Setup the parameters for our DSA object. For our purposes they don't
@@ -1295,8 +1295,8 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     params = EVP_PKEY_CTX_settable_params(ctx);
     if (!TEST_ptr(params)
             || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
+                            Otls_SIGNATURE_PARAM_DIGEST_SIZE), 0)
+            || !TEST_int_eq(strcmp(params[1].key, Otls_SIGNATURE_PARAM_DIGEST),
                             0)
                /* The final key should be NULL */
             || !TEST_ptr_null(params[2].key))
@@ -1306,8 +1306,8 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     params = EVP_PKEY_CTX_gettable_params(ctx);
     if (!TEST_ptr(params)
             || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
+                            Otls_SIGNATURE_PARAM_DIGEST_SIZE), 0)
+            || !TEST_int_eq(strcmp(params[1].key, Otls_SIGNATURE_PARAM_DIGEST),
                             0)
                /* The final key should be NULL */
             || !TEST_ptr_null(params[2].key))
@@ -1317,9 +1317,9 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
      * Test getting and setting params via EVP_PKEY_CTX_set_params() and
      * EVP_PKEY_CTX_get_params()
      */
-    *param++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+    *param++ = Otls_PARAM_construct_size_t(Otls_SIGNATURE_PARAM_DIGEST_SIZE,
                                            &mdsize);
-    *param++ = OSSL_PARAM_construct_end();
+    *param++ = Otls_PARAM_construct_end();
 
     if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, ourparams)))
         goto err;
@@ -1352,16 +1352,16 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
      */
     params = EVP_MD_CTX_settable_params(mdctx);
     if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key, OSSL_DIGEST_PARAM_SSL3_MS), 0)
+            || !TEST_int_eq(strcmp(params[0].key, Otls_DIGEST_PARAM_tls3_MS), 0)
                /* The final key should be NULL */
             || !TEST_ptr_null(params[1].key))
         goto err;
 
     param = ourparams;
-    memset(ssl3ms, 0, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
-                                                 ssl3ms, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_end();
+    memset(tls3ms, 0, sizeof(tls3ms));
+    *param++ = Otls_PARAM_construct_octet_string(Otls_DIGEST_PARAM_tls3_MS,
+                                                 tls3ms, sizeof(tls3ms));
+    *param++ = Otls_PARAM_construct_end();
 
     if (!TEST_true(EVP_MD_CTX_set_params(mdctx, ourparams)))
         goto err;
@@ -1384,7 +1384,7 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
 }
 #endif
 
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#if !defined(OPENtls_NO_CHACHA) && !defined(OPENtls_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
 {
     EVP_CIPHER_CTX* ctx = NULL;
@@ -1448,9 +1448,9 @@ static int test_decrypt_null_chunks(void)
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
-#endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
+#endif /* !defined(OPENtls_NO_CHACHA) && !defined(OPENtls_NO_POLY1305) */
 
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
 static int test_EVP_PKEY_set1_DH(void)
 {
     DH *x942dh, *pkcs3dh;
@@ -1492,15 +1492,15 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);
-    ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
-#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_d2i_AutoPrivateKey, Otls_NELEM(keydata));
+#ifndef OPENtls_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
-#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_SM2) && !defined(FIPS_MODE)
     ADD_TEST(test_EVP_SM2);
     ADD_TEST(test_EVP_SM2_verify);
 #endif
-    ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
+    ADD_ALL_TESTS(test_set_get_raw_keys, Otls_NELEM(keys));
     custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
     if (!TEST_ptr(custom_pmeth))
         return 0;
@@ -1509,20 +1509,20 @@ int setup_tests(void)
     EVP_PKEY_meth_set_param_check(custom_pmeth, pkey_custom_param_check);
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
-    ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+    ADD_ALL_TESTS(test_EVP_PKEY_check, Otls_NELEM(keycheckdata));
     ADD_TEST(test_HKDF);
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
     ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
-                  OSSL_NELEM(ec_der_pub_keys));
+                  Otls_NELEM(ec_der_pub_keys));
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     ADD_TEST(test_EVP_PKEY_CTX_get_set_params);
 #endif
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#if !defined(OPENtls_NO_CHACHA) && !defined(OPENtls_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
 

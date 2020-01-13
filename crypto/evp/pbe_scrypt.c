@@ -1,19 +1,19 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
+#include <opentls/evp.h>
+#include <opentls/err.h>
+#include <opentls/kdf.h>
+#include <opentls/core_names.h>
 #include "internal/numbers.h"
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 
 /*
  * Maximum permitted memory allow this to be overridden with Configuration
@@ -34,7 +34,7 @@
 # define SCRYPT_MAX_MEM  (1024 * 1024 * 32)
 #endif
 
-int EVP_PBE_scrypt(const char *pass, size_t passlen,
+int EVP_PBE_scrypt(const char *pass, size_t patlsen,
                    const unsigned char *salt, size_t saltlen,
                    uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                    unsigned char *key, size_t keylen)
@@ -43,7 +43,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     int rv = 1;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[7], *z = params;
+    Otls_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
         EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
@@ -53,7 +53,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     /* Maintain existing behaviour. */
     if (pass == NULL) {
         pass = empty;
-        passlen = 0;
+        patlsen = 0;
     }
     if (salt == NULL) {
         salt = (const unsigned char *)empty;
@@ -62,22 +62,22 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
+    kdf = EVP_KDF_fetch(NULL, Otls_KDF_NAME_SCRYPT, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
 
-    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+    *z++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_PASSWORD,
                                               (unsigned char *)pass,
-                                                      passlen);
-    *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                                      patlsen);
+    *z++ = Otls_PARAM_construct_octet_string(Otls_KDF_PARAM_SALT,
                                              (unsigned char *)salt, saltlen);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, &N);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_R, &r);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_P, &p);
-    *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
-    *z = OSSL_PARAM_construct_end();
+    *z++ = Otls_PARAM_construct_uint64(Otls_KDF_PARAM_SCRYPT_N, &N);
+    *z++ = Otls_PARAM_construct_uint64(Otls_KDF_PARAM_SCRYPT_R, &r);
+    *z++ = Otls_PARAM_construct_uint64(Otls_KDF_PARAM_SCRYPT_P, &p);
+    *z++ = Otls_PARAM_construct_uint64(Otls_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
+    *z = Otls_PARAM_construct_end();
     if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, key, keylen) != 1)
         rv = 0;

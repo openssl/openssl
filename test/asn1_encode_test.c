@@ -1,17 +1,17 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/rand.h>
-#include <openssl/asn1t.h>
+#include <opentls/rand.h>
+#include <opentls/asn1t.h>
 #include "internal/numbers.h"
 #include "testutil.h"
 
@@ -179,7 +179,7 @@ typedef struct {
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 /***** LONG ******************************************************************/
 
 typedef struct {
@@ -541,7 +541,7 @@ static int do_encode(EXPECTED *input,
         ret = 1;
     }
 
-    OPENSSL_free(data);
+    OPENtls_free(data);
     return ret;
 }
 
@@ -559,7 +559,7 @@ static int do_enc_dec(EXPECTED *bytes, long nbytes,
         return -1;
 
     ret = do_decode(data, len, bytes, nbytes, package);
-    OPENSSL_free(data);
+    OPENtls_free(data);
     return ret;
 }
 
@@ -567,7 +567,7 @@ static size_t der_encode_length(size_t len, unsigned char **pp)
 {
     size_t lenbytes;
 
-    OPENSSL_assert(len < 0x8000);
+    OPENtls_assert(len < 0x8000);
     if (len > 255)
         lenbytes = 3;
     else if (len > 127)
@@ -631,7 +631,7 @@ static size_t make_custom_der(const TEST_CUSTOM_DATA *custom_data,
         1 + der_encode_length(sizeof(t_true) + firstbytes + secondbytes, NULL)
         + sizeof(t_true) + firstbytes + secondbytes;
 
-    *encoding = p = OPENSSL_malloc(seqbytes);
+    *encoding = p = OPENtls_malloc(seqbytes);
     if (*encoding == NULL)
         return 0;
 
@@ -660,7 +660,7 @@ static size_t make_custom_der(const TEST_CUSTOM_DATA *custom_data,
         p += custom_data->nbytes2;
     }
 
-    OPENSSL_assert(seqbytes == (size_t)(p - *encoding));
+    OPENtls_assert(seqbytes == (size_t)(p - *encoding));
 
     return seqbytes;
 }
@@ -683,7 +683,7 @@ static int do_decode_custom(const TEST_CUSTOM_DATA *custom_data,
 
     ret = do_decode(encoding, encoding_length, expected, expected_size,
                     package);
-    OPENSSL_free(encoding);
+    OPENtls_free(encoding);
 
     return ret;
 }
@@ -701,7 +701,7 @@ static int do_encode_custom(EXPECTED *input,
         return -1;
 
     ret = do_encode(input, expected, expected_length, package);
-    OPENSSL_free(expected);
+    OPENtls_free(expected);
 
     return ret;
 }
@@ -713,14 +713,14 @@ static int do_print_item(const TEST_PACKAGE *package)
     ASN1_VALUE *o;
     int ret;
 
-    OPENSSL_assert(package->encode_expectations_elem_size <= DATA_BUF_SIZE);
-    if ((o = OPENSSL_malloc(DATA_BUF_SIZE)) == NULL)
+    OPENtls_assert(package->encode_expectations_elem_size <= DATA_BUF_SIZE);
+    if ((o = OPENtls_malloc(DATA_BUF_SIZE)) == NULL)
         return 0;
 
     (void)RAND_bytes((unsigned char*)o,
                      (int)package->encode_expectations_elem_size);
     ret = ASN1_item_print(bio_err, o, 0, i, NULL);
-    OPENSSL_free(o);
+    OPENtls_free(o);
 
     return ret;
 }
@@ -738,7 +738,7 @@ static int test_intern(const TEST_PACKAGE *package)
     /* Do decode_custom checks */
     nelems = package->encode_expectations_size
         / package->encode_expectations_elem_size;
-    OPENSSL_assert(nelems ==
+    OPENtls_assert(nelems ==
                    sizeof(test_custom_data) / sizeof(test_custom_data[0]));
     for (i = 0; i < nelems; i++) {
         size_t pos = i * package->encode_expectations_elem_size;
@@ -748,19 +748,19 @@ static int test_intern(const TEST_PACKAGE *package)
         case -1:
             TEST_error("Failed custom encode round trip %u of %s",
                        i, package->name);
-            TEST_openssl_errors();
+            TEST_opentls_errors();
             fail++;
             break;
         case 0:
             TEST_error("Custom encode round trip %u of %s mismatch",
                        i, package->name);
-            TEST_openssl_errors();
+            TEST_opentls_errors();
             fail++;
             break;
         case 1:
             break;
         default:
-            OPENSSL_die("do_encode_custom() return unknown value",
+            OPENtls_die("do_encode_custom() return unknown value",
                         __FILE__, __LINE__);
         }
         switch (do_decode_custom(&test_custom_data[i],
@@ -771,19 +771,19 @@ static int test_intern(const TEST_PACKAGE *package)
         case -1:
             TEST_error("Failed custom decode round trip %u of %s",
                        i, package->name);
-            TEST_openssl_errors();
+            TEST_opentls_errors();
             fail++;
             break;
         case 0:
             TEST_error("Custom decode round trip %u of %s mismatch",
                        i, package->name);
-            TEST_openssl_errors();
+            TEST_opentls_errors();
             fail++;
             break;
         case 1:
             break;
         default:
-            OPENSSL_die("do_decode_custom() return unknown value",
+            OPENtls_die("do_decode_custom() return unknown value",
                         __FILE__, __LINE__);
         }
     }
@@ -799,7 +799,7 @@ static int test_intern(const TEST_PACKAGE *package)
         case -1:
             TEST_error("Failed encode/decode round trip %u of %s",
                        i, package->name);
-            TEST_openssl_errors();
+            TEST_opentls_errors();
             fail++;
             break;
         case 0:
@@ -810,21 +810,21 @@ static int test_intern(const TEST_PACKAGE *package)
         case 1:
             break;
         default:
-            OPENSSL_die("do_enc_dec() return unknown value",
+            OPENtls_die("do_enc_dec() return unknown value",
                         __FILE__, __LINE__);
         }
     }
 
     if (!do_print_item(package)) {
         TEST_error("Printing of %s failed", package->name);
-        TEST_openssl_errors();
+        TEST_opentls_errors();
         fail++;
     }
 
     return fail == 0;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 static int test_long_32bit(void)
 {
     return test_intern(&long_test_package_32bit);
@@ -858,7 +858,7 @@ static int test_uint64(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
 #endif

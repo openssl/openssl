@@ -7,7 +7,7 @@ EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover
 
 =head1 SYNOPSIS
 
- #include <openssl/evp.h>
+ #include <opentls/evp.h>
 
  int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
@@ -57,8 +57,8 @@ indicates the operation is not supported by the public key algorithm.
 
 Recover digest originally signed using PKCS#1 and SHA256 digest:
 
- #include <openssl/evp.h>
- #include <openssl/rsa.h>
+ #include <opentls/evp.h>
+ #include <opentls/rsa.h>
 
  EVP_PKEY_CTX *ctx;
  unsigned char *rout, *sig;
@@ -83,7 +83,7 @@ Recover digest originally signed using PKCS#1 and SHA256 digest:
  if (EVP_PKEY_verify_recover(ctx, NULL, &routlen, sig, siglen) <= 0)
      /* Error */
 
- rout = OPENSSL_malloc(routlen);
+ rout = OPENtls_malloc(routlen);
 
  if (!rout)
      /* malloc failure */
@@ -104,15 +104,15 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+These functions were added in Opentls 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

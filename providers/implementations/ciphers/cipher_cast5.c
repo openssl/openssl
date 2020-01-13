@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -21,20 +21,20 @@
 
 #define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
 
-static OSSL_OP_cipher_freectx_fn cast5_freectx;
-static OSSL_OP_cipher_dupctx_fn cast5_dupctx;
+static Otls_OP_cipher_freectx_fn cast5_freectx;
+static Otls_OP_cipher_dupctx_fn cast5_dupctx;
 
 static void cast5_freectx(void *vctx)
 {
     PROV_CAST_CTX *ctx = (PROV_CAST_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *cast5_dupctx(void *ctx)
 {
     PROV_CAST_CTX *in = (PROV_CAST_CTX *)ctx;
-    PROV_CAST_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_CAST_CTX *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);

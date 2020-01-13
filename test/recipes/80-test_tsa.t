@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -13,17 +13,17 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file/;
+use Opentls::Test::Utils;
 
 setup("test_tsa");
 
-plan skip_all => "TS is not supported by this OpenSSL build"
+plan skip_all => "TS is not supported by this Opentls build"
     if disabled("ts");
 
 # All these are modified inside indir further down. They need to exist
 # here, however, to be available in all subroutines.
-my $openssl_conf;
+my $opentls_conf;
 my $testtsa;
 my $CAtsa;
 my @RUN;
@@ -34,16 +34,16 @@ sub create_tsa_cert {
     my $r = 1;
     $ENV{TSDNSECT} = "ts_cert_dn";
 
-    ok(run(app(["openssl", "req", "-config", $openssl_conf, "-new",
+    ok(run(app(["opentls", "req", "-config", $opentls_conf, "-new",
                 "-out", "tsa_req${INDEX}.pem",
                 "-keyout", "tsa_key${INDEX}.pem"])));
     note "using extension $EXT";
-    ok(run(app(["openssl", "x509", "-req",
+    ok(run(app(["opentls", "x509", "-req",
                 "-in", "tsa_req${INDEX}.pem",
                 "-out", "tsa_cert${INDEX}.pem",
                 "-CA", "tsaca.pem", "-CAkey", "tsacakey.pem",
                 "-CAcreateserial",
-                "-extfile", $openssl_conf, "-extensions", $EXT])));
+                "-extfile", $opentls_conf, "-extensions", $EXT])));
 }
 
 sub create_time_stamp_response {
@@ -84,19 +84,19 @@ plan tests => 20;
 note "setting up TSA test directory";
 indir "tsa" => sub
 {
-    $openssl_conf = srctop_file("test", "CAtsa.cnf");
+    $opentls_conf = srctop_file("test", "CAtsa.cnf");
     $testtsa = srctop_file("test", "recipes", "80-test_tsa.t");
     $CAtsa = srctop_file("test", "CAtsa.cnf");
-    @RUN = ("openssl", "ts", "-config", $openssl_conf);
+    @RUN = ("opentls", "ts", "-config", $opentls_conf);
 
     # ../apps/CA.pl needs these
-    $ENV{OPENSSL_CONFIG} = "-config $openssl_conf";
-    $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
+    $ENV{OPENtls_CONFIG} = "-config $opentls_conf";
+    $ENV{OPENtls} = cmdstr(app(["opentls"]), display => 1);
 
  SKIP: {
      $ENV{TSDNSECT} = "ts_ca_dn";
      skip "failed", 19
-         unless ok(run(app(["openssl", "req", "-config", $openssl_conf,
+         unless ok(run(app(["opentls", "req", "-config", $opentls_conf,
                             "-new", "-x509", "-nodes",
                             "-out", "tsaca.pem", "-keyout", "tsacakey.pem"])),
                    'creating a new CA for the TSA tests');

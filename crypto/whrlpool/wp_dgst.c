@@ -1,10 +1,10 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /**
@@ -37,7 +37,7 @@
  */
 
 /*
- * OpenSSL-specific implementation notes.
+ * Opentls-specific implementation notes.
  *
  * WHIRLPOOL_Update as well as one-stroke WHIRLPOOL both expect
  * number of *bytes* as input length argument. Bit-oriented routine
@@ -58,7 +58,7 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "wp_local.h"
 #include <string.h>
 
@@ -109,7 +109,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
         } while (c->bitlen[n] == 0
                  && ++n < (WHIRLPOOL_COUNTER / sizeof(size_t)));
     }
-#ifndef OPENSSL_SMALL_FOOTPRINT
+#ifndef OPENtls_SMALL_FOOTPRINT
  reconsider:
     if (inpgap == 0 && bitrem == 0) { /* byte-oriented loop */
         while (bits) {
@@ -155,7 +155,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
             unsigned int byteoff = bitoff / 8;
             unsigned char b;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
+#ifndef OPENtls_SMALL_FOOTPRINT
             if (bitrem == inpgap) {
                 c->data[byteoff++] |= inp[0] & (0xff >> inpgap);
                 inpgap = 8 - inpgap;
@@ -244,7 +244,7 @@ int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c)
 
     if (md) {
         memcpy(md, c->H.c, WHIRLPOOL_DIGEST_LENGTH);
-        OPENSSL_cleanse(c, sizeof(*c));
+        OPENtls_cleanse(c, sizeof(*c));
         return 1;
     }
     return 0;

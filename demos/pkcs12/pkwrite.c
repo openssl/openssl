@@ -1,17 +1,17 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/pkcs12.h>
+#include <opentls/pem.h>
+#include <opentls/err.h>
+#include <opentls/pkcs12.h>
 
 /* Simple PKCS#12 file creator */
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: pkwrite infile password name p12file\n");
         exit(1);
     }
-    OpenSSL_add_all_algorithms();
+    Opentls_add_all_algorithms();
     ERR_load_crypto_strings();
     if ((fp = fopen(argv[1], "r")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);

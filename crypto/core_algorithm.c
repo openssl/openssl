@@ -1,32 +1,32 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <opentls/core.h>
+#include <opentls/core_numbers.h>
 #include "internal/core.h"
 #include "internal/property.h"
 #include "internal/provider.h"
 
 struct algorithm_data_st {
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
     int operation_id;            /* May be zero for finding them all */
-    void (*fn)(OSSL_PROVIDER *, const OSSL_ALGORITHM *, int no_store,
+    void (*fn)(Otls_PROVIDER *, const Otls_ALGORITHM *, int no_store,
                void *data);
     void *data;
 };
 
-static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
+static int algorithm_do_this(Otls_PROVIDER *provider, void *cbdata)
 {
     struct algorithm_data_st *data = cbdata;
     int no_store = 0;    /* Assume caching is ok */
     int first_operation = 1;
-    int last_operation = OSSL_OP__HIGHEST;
+    int last_operation = Otls_OP__HIGHEST;
     int cur_operation;
     int ok = 0;
 
@@ -36,8 +36,8 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     for (cur_operation = first_operation;
          cur_operation <= last_operation;
          cur_operation++) {
-        const OSSL_ALGORITHM *map =
-            ossl_provider_query_operation(provider, data->operation_id,
+        const Otls_ALGORITHM *map =
+            otls_provider_query_operation(provider, data->operation_id,
                                           &no_store);
 
         if (map == NULL)
@@ -45,7 +45,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
 
         ok = 1;                  /* As long as we've found *something* */
         while (map->algorithm_names != NULL) {
-            const OSSL_ALGORITHM *thismap = map++;
+            const Otls_ALGORITHM *thismap = map++;
 
             data->fn(provider, thismap, no_store, data->data);
         }
@@ -54,10 +54,10 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     return ok;
 }
 
-void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
-                           OSSL_PROVIDER *provider,
-                           void (*fn)(OSSL_PROVIDER *provider,
-                                      const OSSL_ALGORITHM *algo,
+void otls_algorithm_do_all(OPENtls_CTX *libctx, int operation_id,
+                           Otls_PROVIDER *provider,
+                           void (*fn)(Otls_PROVIDER *provider,
+                                      const Otls_ALGORITHM *algo,
                                       int no_store, void *data),
                            void *data)
 {
@@ -69,7 +69,7 @@ void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
     cbdata.data = data;
 
     if (provider == NULL)
-        ossl_provider_forall_loaded(libctx, algorithm_do_this, &cbdata);
+        otls_provider_forall_loaded(libctx, algorithm_do_this, &cbdata);
     else
         algorithm_do_this(provider, &cbdata);
 }

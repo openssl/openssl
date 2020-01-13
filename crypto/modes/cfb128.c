@@ -1,14 +1,14 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "crypto/modes.h"
 
 /*
@@ -27,7 +27,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
     n = *num;
 
     if (enc) {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
         if (16 % sizeof(size_t) == 0) { /* always true actually */
             do {
                 while (n && len) {
@@ -74,7 +74,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
         }
         *num = n;
     } else {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
         if (16 % sizeof(size_t) == 0) { /* always true actually */
             do {
                 while (n && len) {

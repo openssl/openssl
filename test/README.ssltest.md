@@ -1,18 +1,18 @@
-# SSL tests
+# tls tests
 
-SSL testcases are configured in the `ssl-tests` directory.
+tls testcases are configured in the `tls-tests` directory.
 
-Each `ssl_*.conf.in` file contains a number of test configurations. These files
-are used to generate testcases in the OpenSSL CONF format.
+Each `tls_*.conf.in` file contains a number of test configurations. These files
+are used to generate testcases in the Opentls CONF format.
 
 The precise test output can be dependent on the library configuration. The test
 harness generates the output files on the fly.
 
 However, for verification, we also include checked-in configuration outputs
 corresponding to the default configuration. These testcases live in
-`test/ssl-tests/*.conf` files.
+`test/tls-tests/*.conf` files.
 
-For more details, see `ssl-tests/01-simple.conf.in` for an example.
+For more details, see `tls-tests/01-simple.conf.in` for an example.
 
 ## Configuring the test
 
@@ -51,9 +51,9 @@ handshake.
   below).
 
 * MaxFragmentSize - maximum send fragment size (integer, defaults to 512 in
-  tests - see `SSL_CTX_set_max_send_fragment` for documentation). Applies to
+  tests - see `tls_CTX_set_max_send_fragment` for documentation). Applies to
   both client and server. Lowering the fragment size will split handshake and
-  application data up between more `SSL_write` calls, thus allowing to exercise
+  application data up between more `tls_write` calls, thus allowing to exercise
   different code paths. In particular, if the buffer size (64kB) is at least
   four times as large as the maximum fragment, interleaved multi-buffer crypto
   implementations may be used on some platforms.
@@ -67,14 +67,14 @@ handshake.
   - InternalError - some other error
 
 * ExpectedClientAlert, ExpectedServerAlert - expected alert. See
-  `ssl_test_ctx.c` for known values. Note: the expected alert is currently
+  `tls_test_ctx.c` for known values. Note: the expected alert is currently
   matched against the _last_ received alert (i.e., a fatal alert or a
   `close_notify`). Warning alert expectations are not yet supported. (A warning
   alert will not be correctly matched, if followed by a `close_notify` or
   another alert.)
 
 * ExpectedProtocol - expected negotiated protocol. One of
-  SSLv3, TLSv1, TLSv1.1, TLSv1.2.
+  tlsv3, TLSv1, TLSv1.1, TLSv1.2.
 
 * SessionTicketExpected - whether or not a session ticket is expected
   - Ignore - do not check for a session ticket (default)
@@ -113,8 +113,8 @@ handshake.
 
 ## Configuring the client and server
 
-The client and server configurations can be any valid `SSL_CTX`
-configurations. For details, see the manpages for `SSL_CONF_cmd`.
+The client and server configurations can be any valid `tls_CTX`
+configurations. For details, see the manpages for `tls_CONF_cmd`.
 
 Give your configurations as a dictionary of CONF commands, e.g.
 
@@ -171,8 +171,8 @@ client => {
 
 * CTValidation - Certificate Transparency validation strategy. One of
   - None - no validation (default)
-  - Permissive - SSL_CT_VALIDATION_PERMISSIVE
-  - Strict - SSL_CT_VALIDATION_STRICT
+  - Permissive - tls_CT_VALIDATION_PERMISSIVE
+  - Strict - tls_CT_VALIDATION_STRICT
 
 #### Supported server-side options
 
@@ -218,25 +218,25 @@ client => {
 
 ## Adding a test to the test harness
 
-1. Add a new test configuration to `test/ssl-tests`, following the examples of
+1. Add a new test configuration to `test/tls-tests`, following the examples of
    existing `*.conf.in` files (for example, `01-simple.conf.in`).
 
 2. Generate the generated `*.conf` test input file. You can do so by running
-   `generate_ssl_tests.pl`:
+   `generate_tls_tests.pl`:
 
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.conf.in \
-  > ssl-tests/my.conf
+$ TOP=.. perl -I ../util/perl/ generate_tls_tests.pl tls-tests/my.conf.in \
+  > tls-tests/my.conf
 ```
 
 where `my.conf.in` is your test input file.
 
-For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
+For example, to generate the test cases in `tls-tests/01-simple.conf.in`, do
 
 ```
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
+$ TOP=.. perl -I ../util/perl/ generate_tls_tests.pl tls-tests/01-simple.conf.in > tls-tests/01-simple.conf
 ```
 
 Alternatively (hackish but simple), you can comment out
@@ -245,55 +245,55 @@ Alternatively (hackish but simple), you can comment out
 unlink glob $tmp_file;
 ```
 
-in `test/recipes/80-test_ssl_new.t` and run
+in `test/recipes/80-test_tls_new.t` and run
 
 ```
-$ make TESTS=test_ssl_new test
+$ make TESTS=test_tls_new test
 ```
 
 This will save the generated output in a `*.tmp` file in the build directory.
 
-3. Update the number of tests planned in `test/recipes/80-test_ssl_new.t`. If
+3. Update the number of tests planned in `test/recipes/80-test_tls_new.t`. If
    the test suite has any skip conditions, update those too (see
-   `test/recipes/80-test_ssl_new.t` for details).
+   `test/recipes/80-test_tls_new.t` for details).
 
 ## Running the tests with the test harness
 
 ```
-HARNESS_VERBOSE=yes make TESTS=test_ssl_new test
+HARNESS_VERBOSE=yes make TESTS=test_tls_new test
 ```
 
 ## Running a test manually
 
 These steps are only needed during development. End users should run `make test`
-or follow the instructions above to run the SSL test suite.
+or follow the instructions above to run the tls test suite.
 
-To run an SSL test manually from the command line, the `TEST_CERTS_DIR`
+To run an tls test manually from the command line, the `TEST_CERTS_DIR`
 environment variable to point to the location of the certs. E.g., from the root
-OpenSSL directory, do
+Opentls directory, do
 
 ```
-$ CTLOG_FILE=test/ct/log_list.conf TEST_CERTS_DIR=test/certs test/ssl_test \
-  test/ssl-tests/01-simple.conf
+$ CTLOG_FILE=test/ct/log_list.conf TEST_CERTS_DIR=test/certs test/tls_test \
+  test/tls-tests/01-simple.conf
 ```
 
 or for shared builds
 
 ```
 $ CTLOG_FILE=test/ct/log_list.conf  TEST_CERTS_DIR=test/certs \
-  util/shlib_wrap.sh test/ssl_test test/ssl-tests/01-simple.conf
+  util/shlib_wrap.sh test/tls_test test/tls-tests/01-simple.conf
 ```
 
 Note that the test expectations sometimes depend on the Configure settings. For
 example, the negotiated protocol depends on the set of available (enabled)
-protocols: a build with `enable-ssl3` has different test expectations than a
-build with `no-ssl3`.
+protocols: a build with `enable-tls3` has different test expectations than a
+build with `no-tls3`.
 
 The Perl test harness automatically generates expected outputs, so users who
 just run `make test` do not need any extra steps.
 
 However, when running a test manually, keep in mind that the repository version
-of the generated `test/ssl-tests/*.conf` correspond to expected outputs in with
-the default Configure options. To run `ssl_test` manually from the command line
+of the generated `test/tls-tests/*.conf` correspond to expected outputs in with
+the default Configure options. To run `tls_test` manually from the command line
 in a build with a different configuration, you may need to generate the right
 `*.conf` file from the `*.conf.in` input first.

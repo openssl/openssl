@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -16,16 +16,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_BF is defined */
+#include <opentls/opentlsconf.h> /* To see if OPENtls_NO_BF is defined */
 #include "testutil.h"
 
 #include "internal/nelem.h"
 
-#ifndef OPENSSL_NO_BF
-# include <openssl/blowfish.h>
+#ifndef OPENtls_NO_BF
+# include <opentls/blowfish.h>
 
 # ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
+#  include <opentls/ebcdic.h>
 # endif
 
 static char bf_key[2][30] = {
@@ -454,7 +454,7 @@ const OPTIONS *test_get_options(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_BF
+#ifndef OPENtls_NO_BF
     OPTION_CHOICE o;
 # ifdef CHARSET_EBCDIC
     int n;

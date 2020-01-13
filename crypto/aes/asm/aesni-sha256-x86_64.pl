@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # January 2013
@@ -120,7 +120,7 @@ $framesz=16*$SZ+8*8;
 $code=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 .globl	$func
 .type	$func,\@abi-omnipotent
 .align	16
@@ -129,7 +129,7 @@ $func:
 ___
 						if ($avx) {
 $code.=<<___;
-	lea	OPENSSL_ia32cap_P(%rip),%r11
+	lea	OPENtls_ia32cap_P(%rip),%r11
 	mov	\$1,%eax
 	cmp	\$0,`$win64?"%rcx":"%rdi"`
 	je	.Lprobe
@@ -208,7 +208,7 @@ $TABLE:
 	.long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f
 	.long	0,0,0,0,   0,0,0,0,   -1,-1,-1,-1
 	.long	0,0,0,0,   0,0,0,0
-	.asciz	"AESNI-CBC+SHA256 stitch for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"AESNI-CBC+SHA256 stitch for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 .align	64
 ___
 

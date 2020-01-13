@@ -1,15 +1,15 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "ec_local.h"
-#include <openssl/sha.h>
+#include <opentls/sha.h>
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
                             defined(_M_AMD64) || defined(_M_X64))
@@ -247,7 +247,7 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
     fe64_mul(x2, x2, z2);
     fe64_tobytes(out, x2);
 
-    OPENSSL_cleanse(e, sizeof(e));
+    OPENtls_cleanse(e, sizeof(e));
 }
 #endif
 
@@ -447,7 +447,7 @@ static void fe51_mul(fe51 h, const fe51 f, const fe51 g)
 
 static void fe51_sq(fe51 h, const fe51 f)
 {
-#  if defined(OPENSSL_SMALL_FOOTPRINT)
+#  if defined(OPENtls_SMALL_FOOTPRINT)
     fe51_mul(h, f, f);
 #  else
     /* dedicated squaring gives 16-25% overall improvement */
@@ -739,7 +739,7 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
     fe51_mul(x2, x2, z2);
     fe51_tobytes(out, x2);
 
-    OPENSSL_cleanse(e, sizeof(e));
+    OPENtls_cleanse(e, sizeof(e));
 }
 #endif
 
@@ -4273,7 +4273,7 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a)
         ge_p1p1_to_p3(h, &r);
     }
 
-    OPENSSL_cleanse(e, sizeof(e));
+    OPENtls_cleanse(e, sizeof(e));
 }
 
 #if !defined(BASE_2_51_IMPLEMENTED)
@@ -4412,7 +4412,7 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
     fe_mul(x2, x2, z2);
     fe_tobytes(out, x2);
 
-    OPENSSL_cleanse(e, sizeof(e));
+    OPENtls_cleanse(e, sizeof(e));
 }
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
@@ -5464,9 +5464,9 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
     x25519_sc_reduce(hram);
     sc_muladd(out_sig + 32, hram, az, nonce);
 
-    OPENSSL_cleanse(&hash_ctx, sizeof(hash_ctx));
-    OPENSSL_cleanse(nonce, sizeof(nonce));
-    OPENSSL_cleanse(az, sizeof(az));
+    OPENtls_cleanse(&hash_ctx, sizeof(hash_ctx));
+    OPENtls_cleanse(nonce, sizeof(nonce));
+    OPENtls_cleanse(az, sizeof(az));
 
     return 1;
 }
@@ -5556,7 +5556,7 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
     ge_scalarmult_base(&A, az);
     ge_p3_tobytes(out_public_key, &A);
 
-    OPENSSL_cleanse(az, sizeof(az));
+    OPENtls_cleanse(az, sizeof(az));
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
@@ -5593,5 +5593,5 @@ void X25519_public_from_private(uint8_t out_public_value[32],
     fe_mul(zplusy, zplusy, zminusy_inv);
     fe_tobytes(out_public_value, zplusy);
 
-    OPENSSL_cleanse(e, sizeof(e));
+    OPENtls_cleanse(e, sizeof(e));
 }

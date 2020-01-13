@@ -1,21 +1,21 @@
 /*
- * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/e_os2.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/e_os2.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENtls_SYS_WINDOWS
 # define strcasecmp _stricmp
 #endif
 
@@ -289,7 +289,7 @@ static int run_cert(X509 *crt, const char *nameincert,
     for (; *pname != NULL; ++pname) {
         int samename = strcasecmp(nameincert, *pname) == 0;
         size_t namelen = strlen(*pname);
-        char *name = OPENSSL_malloc(namelen);
+        char *name = OPENtls_malloc(namelen);
         int match, ret;
 
         memcpy(name, *pname, namelen);
@@ -335,7 +335,7 @@ static int run_cert(X509 *crt, const char *nameincert,
             match = 1;
         if (!TEST_true(check_message(fn, "email", nameincert, match, *pname)))
             failed = 1;
-        OPENSSL_free(name);
+        OPENtls_free(name);
     }
 
     return failed == 0;
@@ -361,6 +361,6 @@ static int call_run_cert(int i)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
+    ADD_ALL_TESTS(call_run_cert, Otls_NELEM(name_fns));
     return 1;
 }

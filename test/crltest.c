@@ -1,19 +1,19 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/nelem.h"
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/pem.h>
+#include <opentls/x509.h>
 
 #include "testutil.h"
 
@@ -204,7 +204,7 @@ static X509_CRL *CRL_from_strings(const char **pem)
     BIO *b = glue2bio(pem, &p);
     X509_CRL *crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
 
-    OPENSSL_free(p);
+    OPENtls_free(p);
     BIO_free(b);
     return crl;
 }
@@ -218,7 +218,7 @@ static X509 *X509_from_strings(const char **pem)
     BIO *b = glue2bio(pem, &p);
     X509 *x = PEM_read_bio_X509(b, NULL, NULL, NULL);
 
-    OPENSSL_free(p);
+    OPENtls_free(p);
     BIO_free(b);
     return x;
 }
@@ -365,7 +365,7 @@ static int test_reuse_crl(void)
 
     reused_crl = PEM_read_bio_X509_CRL(b, &reused_crl, NULL, NULL);
 
-    OPENSSL_free(p);
+    OPENtls_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);
     return 1;
@@ -381,7 +381,7 @@ int setup_tests(void)
     ADD_TEST(test_basic_crl);
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_known_critical_crl);
-    ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
+    ADD_ALL_TESTS(test_unknown_critical_crl, Otls_NELEM(unknown_critical_crls));
     ADD_TEST(test_reuse_crl);
     return 1;
 }

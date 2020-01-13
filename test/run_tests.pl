@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use warnings;
@@ -20,14 +20,14 @@ use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
 use FindBin;
 use lib "$FindBin::Bin/../util/perl";
-use OpenSSL::Glob;
+use Opentls::Glob;
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
-$ENV{OPENSSL_CONF} = catdir($srctop, "apps", "openssl.cnf");
+$ENV{OPENtls_CONF} = catdir($srctop, "apps", "opentls.cnf");
 
 my %tapargs =
     ( verbosity         => $ENV{HARNESS_VERBOSE} ? 1 : 0,
@@ -36,16 +36,16 @@ my %tapargs =
       merge             => 1,
     );
 
-# Additional OpenSSL special TAP arguments.  Because we can't pass them via
+# Additional Opentls special TAP arguments.  Because we can't pass them via
 # TAP::Harness->new(), they will be accessed directly, see the
-# TAP::Parser::OpenSSL implementation further down
-my %openssl_args = ();
+# TAP::Parser::Opentls implementation further down
+my %opentls_args = ();
 
-$openssl_args{'failure_verbosity'} =
+$opentls_args{'failure_verbosity'} =
     $ENV{HARNESS_VERBOSE_FAILURE} && $tapargs{verbosity} < 1 ? 1 : 0;
 
 my $outfilename = $ENV{HARNESS_TAP_COPY};
-open $openssl_args{'tap_copy'}, ">$outfilename"
+open $opentls_args{'tap_copy'}, ">$outfilename"
     or die "Trying to create $outfilename: $!\n"
     if defined $outfilename;
 
@@ -117,7 +117,7 @@ my $package;
 my $eres;
 
 $eres = eval {
-    package TAP::Parser::OpenSSL;
+    package TAP::Parser::Opentls;
     use parent 'TAP::Parser';
 
     sub new {
@@ -129,20 +129,20 @@ $eres = eval {
         # objects down all the way to the TAP::Parser::Result object
         my @failure_output = ();
         my %callbacks = ();
-        if ($openssl_args{failure_verbosity}
-            || defined $openssl_args{tap_copy}) {
+        if ($opentls_args{failure_verbosity}
+            || defined $opentls_args{tap_copy}) {
             $callbacks{ALL} = sub {
                 my $self = shift;
-                my $fh = $openssl_args{tap_copy};
+                my $fh = $opentls_args{tap_copy};
 
                 print $fh $self->as_string, "\n"
                     if defined $fh;
                 push @failure_output, $self->as_string
-                    if $openssl_args{failure_verbosity} > 0;
+                    if $opentls_args{failure_verbosity} > 0;
             };
         }
 
-        if ($openssl_args{failure_verbosity} > 0) {
+        if ($opentls_args{failure_verbosity} > 0) {
             $callbacks{EOF} = sub {
                 my $self = shift;
 
@@ -165,13 +165,13 @@ $eres = eval {
         return $class->SUPER::new({ %opts });
     }
 
-    package TAP::Harness::OpenSSL;
+    package TAP::Harness::Opentls;
     use parent 'TAP::Harness';
 
     package main;
 
-    $tapargs{parser_class} = "TAP::Parser::OpenSSL";
-    $package = 'TAP::Harness::OpenSSL';
+    $tapargs{parser_class} = "TAP::Parser::Opentls";
+    $package = 'TAP::Harness::Opentls';
 };
 
 unless (defined $eres) {

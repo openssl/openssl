@@ -1,10 +1,10 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../testutil.h"
@@ -25,7 +25,7 @@ char *test_get_argument(size_t n)
 {
     char **argv = opt_rest();
 
-    OPENSSL_assert(n < sizeof(used));
+    OPENtls_assert(n < sizeof(used));
     if ((int)n >= opt_num_rest() || argv == NULL)
         return NULL;
     used[n] = 1;
@@ -38,8 +38,8 @@ void opt_check_usage(void)
     char **argv = opt_rest();
     int n, arg_count = opt_num_rest();
 
-    if (arg_count > (int)OSSL_NELEM(used))
-        n = (int)OSSL_NELEM(used);
+    if (arg_count > (int)Otls_NELEM(used))
+        n = (int)Otls_NELEM(used);
     else
         n = arg_count;
     for (i = 0; i < n; i++) {

@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include "bio_local.h"
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
 # ifdef SO_MAXCONN
 #  define MAX_LISTEN  SO_MAXCONN
@@ -20,11 +20,11 @@
 # else
 #  define MAX_LISTEN  32
 # endif
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
 static int wsa_init_done = 0;
 # endif
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 {
     BIO_ADDRINFO *res = NULL;
@@ -44,7 +44,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
              * Because only AF_INET addresses will reach this far, we can assert
              * that l should be 4
              */
-            if (ossl_assert(l == 4))
+            if (otls_assert(l == 4))
                 ret = BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), ip, &l);
         }
         BIO_ADDRINFO_free(res);
@@ -103,7 +103,7 @@ int BIO_sock_error(int sock)
         return j;
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 struct hostent *BIO_gethostbyname(const char *name)
 {
     /*
@@ -116,7 +116,7 @@ struct hostent *BIO_gethostbyname(const char *name)
 
 int BIO_sock_init(void)
 {
-# ifdef OPENSSL_SYS_WINDOWS
+# ifdef OPENtls_SYS_WINDOWS
     static struct WSAData wsa_state;
 
     if (!wsa_init_done) {
@@ -135,7 +135,7 @@ int BIO_sock_init(void)
             return -1;
         }
     }
-# endif                         /* OPENSSL_SYS_WINDOWS */
+# endif                         /* OPENtls_SYS_WINDOWS */
 # ifdef WATT32
     extern int _watt_do_exit;
     _watt_do_exit = 0;          /* don't make sock_init() call exit() */
@@ -148,7 +148,7 @@ int BIO_sock_init(void)
 
 void bio_sock_cleanup_int(void)
 {
-# ifdef OPENSSL_SYS_WINDOWS
+# ifdef OPENtls_SYS_WINDOWS
     if (wsa_init_done) {
         wsa_init_done = 0;
         WSACleanup();
@@ -163,7 +163,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #  ifdef __DJGPP__
     i = ioctlsocket(fd, type, (char *)arg);
 #  else
-#   if defined(OPENSSL_SYS_VMS)
+#   if defined(OPENtls_SYS_VMS)
     /*-
      * 2011-02-18 SMS.
      * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
@@ -183,9 +183,9 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #    else                       /* __INITIAL_POINTER_SIZE == 64 */
 #     define ARG arg
 #    endif                      /* __INITIAL_POINTER_SIZE == 64 [else] */
-#   else                        /* defined(OPENSSL_SYS_VMS) */
+#   else                        /* defined(OPENtls_SYS_VMS) */
 #    define ARG arg
-#   endif                       /* defined(OPENSSL_SYS_VMS) [else] */
+#   endif                       /* defined(OPENtls_SYS_VMS) [else] */
 
     i = ioctlsocket(fd, type, ARG);
 #  endif                        /* __DJGPP__ */
@@ -195,7 +195,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
     return i;
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 int BIO_get_accept_socket(char *host, int bind_mode)
 {
     int s = INVALID_SOCKET;
@@ -225,8 +225,8 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
  err:
     BIO_ADDRINFO_free(res);
-    OPENSSL_free(h);
-    OPENSSL_free(p);
+    OPENtls_free(h);
+    OPENtls_free(p);
 
     return s;
 }
@@ -252,7 +252,7 @@ int BIO_accept(int sock, char **ip_port)
         char *host = BIO_ADDR_hostname_string(&res, 1);
         char *port = BIO_ADDR_service_string(&res, 1);
         if (host != NULL && port != NULL)
-            *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
+            *ip_port = OPENtls_zalloc(strlen(host) + strlen(port) + 2);
         else
             *ip_port = NULL;
 
@@ -265,8 +265,8 @@ int BIO_accept(int sock, char **ip_port)
             strcat(*ip_port, ":");
             strcat(*ip_port, port);
         }
-        OPENSSL_free(host);
-        OPENSSL_free(port);
+        OPENtls_free(host);
+        OPENtls_free(port);
     }
 
  end:

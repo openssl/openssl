@@ -1,21 +1,21 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_SM2_H
-# define OSSL_CRYPTO_SM2_H
-# include <openssl/opensslconf.h>
+#ifndef Otls_CRYPTO_SM2_H
+# define Otls_CRYPTO_SM2_H
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
 
-#  include <openssl/ec.h>
+#  include <opentls/ec.h>
 
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
@@ -74,5 +74,5 @@ int sm2_decrypt(const EC_KEY *key,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
 
-# endif /* OPENSSL_NO_SM2 */
+# endif /* OPENtls_NO_SM2 */
 #endif

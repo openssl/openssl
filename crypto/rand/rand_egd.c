@@ -1,26 +1,26 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EGD
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_EGD
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include <openssl/crypto.h>
-# include <openssl/e_os2.h>
-# include <openssl/rand.h>
+# include <opentls/crypto.h>
+# include <opentls/e_os2.h>
+# include <opentls/rand.h>
 
 /*
  * Query an EGD
  */
 
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_UEFI)
+# if defined(OPENtls_SYS_WIN32) || defined(OPENtls_SYS_VMS) || defined(OPENtls_SYS_MSDOS) || defined(OPENtls_SYS_VXWORKS) || defined(OPENtls_SYS_VOS) || defined(OPENtls_SYS_UEFI)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     return -1;
@@ -43,7 +43,7 @@ int RAND_egd_bytes(const char *path, int bytes)
 #  include <sys/types.h>
 #  include <sys/socket.h>
 #  ifndef NO_SYS_UN_H
-#   ifdef OPENSSL_SYS_VXWORKS
+#   ifdef OPENtls_SYS_VXWORKS
 #    include <streams/un.h>
 #   else
 #    include <sys/un.h>

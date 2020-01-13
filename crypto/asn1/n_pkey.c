@@ -1,26 +1,26 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include "openssl/opensslconf.h"
-#ifdef OPENSSL_NO_RSA
+#include "opentls/opentlsconf.h"
+#ifdef OPENtls_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include "internal/cryptlib.h"
 # include <stdio.h>
-# include <openssl/rsa.h>
-# include <openssl/objects.h>
-# include <openssl/asn1t.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
+# include <opentls/rsa.h>
+# include <opentls/objects.h>
+# include <opentls/asn1t.h>
+# include <opentls/evp.h>
+# include <opentls/x509.h>
 
-# ifndef OPENSSL_NO_RC4
+# ifndef OPENtls_NO_RC4
 
 # define ASN1_BROKEN_SEQUENCE(tname) \
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
@@ -63,6 +63,6 @@ DECLARE_ASN1_FUNCTIONS(NETSCAPE_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(NETSCAPE_PKEY, NETSCAPE_PKEY)
 IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_PKEY)
 
-# endif                         /* OPENSSL_NO_RC4 */
+# endif                         /* OPENtls_NO_RC4 */
 
 #endif

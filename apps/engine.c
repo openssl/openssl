@@ -1,14 +1,14 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_ENGINE
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_ENGINE
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
@@ -17,10 +17,10 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
-# include <openssl/err.h>
-# include <openssl/engine.h>
-# include <openssl/ssl.h>
-# include <openssl/store.h>
+# include <opentls/err.h>
+# include <opentls/engine.h>
+# include <opentls/tls.h>
+# include <opentls/store.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -69,9 +69,9 @@ static int append_buf(char **buf, int *size, const char *s)
 
         if (len > *size) {
             *size = ((len + expand - 1) / expand) * expand;
-            p = OPENSSL_realloc(p, *size);
+            p = OPENtls_realloc(p, *size);
             if (p == NULL) {
-                OPENSSL_free(*buf);
+                OPENtls_free(*buf);
                 *buf = NULL;
                 return 0;
             }
@@ -156,14 +156,14 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
     char *desc = NULL;
     int flags;
     int xpos = 0;
-    STACK_OF(OPENSSL_STRING) *cmds = NULL;
+    STACK_OF(OPENtls_STRING) *cmds = NULL;
     if (!ENGINE_ctrl(e, ENGINE_CTRL_HAS_CTRL_FUNCTION, 0, NULL, NULL) ||
         ((num = ENGINE_ctrl(e, ENGINE_CTRL_GET_FIRST_CMD_TYPE,
                             0, NULL, NULL)) <= 0)) {
         return 1;
     }
 
-    cmds = sk_OPENSSL_STRING_new_null();
+    cmds = sk_OPENtls_STRING_new_null();
     if (cmds == NULL)
         goto err;
 
@@ -219,9 +219,9 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
                 xpos = 0;
             }
         }
-        OPENSSL_free(name);
+        OPENtls_free(name);
         name = NULL;
-        OPENSSL_free(desc);
+        OPENtls_free(desc);
         desc = NULL;
         /* Move to the next command */
         num = ENGINE_ctrl(e, ENGINE_CTRL_GET_NEXT_CMD_TYPE, num, NULL, NULL);
@@ -230,16 +230,16 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         BIO_printf(out, "\n");
     ret = 1;
  err:
-    sk_OPENSSL_STRING_free(cmds);
-    OPENSSL_free(name);
-    OPENSSL_free(desc);
+    sk_OPENtls_STRING_free(cmds);
+    OPENtls_free(name);
+    OPENtls_free(desc);
     return ret;
 }
 
-static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
+static void util_do_cmds(ENGINE *e, STACK_OF(OPENtls_STRING) *cmds,
                          BIO *out, const char *indent)
 {
-    int loop, res, num = sk_OPENSSL_STRING_num(cmds);
+    int loop, res, num = sk_OPENtls_STRING_num(cmds);
 
     if (num < 0) {
         BIO_printf(out, "[Error]: internal stack error\n");
@@ -248,7 +248,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
     for (loop = 0; loop < num; loop++) {
         char buf[256];
         const char *cmd, *arg;
-        cmd = sk_OPENSSL_STRING_value(cmds, loop);
+        cmd = sk_OPENtls_STRING_value(cmds, loop);
         res = 1;                /* assume success */
         /* Check if this command has no ":arg" */
         if ((arg = strstr(cmd, ":")) == NULL) {
@@ -281,14 +281,14 @@ struct util_store_cap_data {
     int *cap_size;
     int ok;
 };
-static void util_store_cap(const OSSL_STORE_LOADER *loader, void *arg)
+static void util_store_cap(const Otls_STORE_LOADER *loader, void *arg)
 {
     struct util_store_cap_data *ctx = arg;
 
-    if (OSSL_STORE_LOADER_get0_engine(loader) == ctx->engine) {
+    if (Otls_STORE_LOADER_get0_engine(loader) == ctx->engine) {
         char buf[256];
         BIO_snprintf(buf, sizeof(buf), "STORE(%s)",
-                     OSSL_STORE_LOADER_get0_scheme(loader));
+                     Otls_STORE_LOADER_get0_scheme(loader));
         if (!append_buf(ctx->cap_buf, ctx->cap_size, buf))
             ctx->ok = 0;
     }
@@ -299,9 +299,9 @@ int engine_main(int argc, char **argv)
     int ret = 1, i;
     int verbose = 0, list_cap = 0, test_avail = 0, test_avail_noise = 0;
     ENGINE *e;
-    STACK_OF(OPENSSL_CSTRING) *engines = sk_OPENSSL_CSTRING_new_null();
-    STACK_OF(OPENSSL_STRING) *pre_cmds = sk_OPENSSL_STRING_new_null();
-    STACK_OF(OPENSSL_STRING) *post_cmds = sk_OPENSSL_STRING_new_null();
+    STACK_OF(OPENtls_CSTRING) *engines = sk_OPENtls_CSTRING_new_null();
+    STACK_OF(OPENtls_STRING) *pre_cmds = sk_OPENtls_STRING_new_null();
+    STACK_OF(OPENtls_STRING) *post_cmds = sk_OPENtls_STRING_new_null();
     BIO *out;
     const char *indent = "     ";
     OPTION_CHOICE o;
@@ -316,7 +316,7 @@ int engine_main(int argc, char **argv)
      * names, and then setup to parse the rest of the line as flags. */
     prog = argv[0];
     while ((argv1 = argv[1]) != NULL && *argv1 != '-') {
-        sk_OPENSSL_CSTRING_push(engines, argv1);
+        sk_OPENtls_CSTRING_push(engines, argv1);
         argc--;
         argv++;
     }
@@ -352,10 +352,10 @@ int engine_main(int argc, char **argv)
             test_avail++;
             break;
         case OPT_PRE:
-            sk_OPENSSL_STRING_push(pre_cmds, opt_arg());
+            sk_OPENtls_STRING_push(pre_cmds, opt_arg());
             break;
         case OPT_POST:
-            sk_OPENSSL_STRING_push(post_cmds, opt_arg());
+            sk_OPENtls_STRING_push(post_cmds, opt_arg());
             break;
         }
     }
@@ -370,18 +370,18 @@ int engine_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         }
-        sk_OPENSSL_CSTRING_push(engines, *argv);
+        sk_OPENtls_CSTRING_push(engines, *argv);
     }
 
-    if (sk_OPENSSL_CSTRING_num(engines) == 0) {
+    if (sk_OPENtls_CSTRING_num(engines) == 0) {
         for (e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e)) {
-            sk_OPENSSL_CSTRING_push(engines, ENGINE_get_id(e));
+            sk_OPENtls_CSTRING_push(engines, ENGINE_get_id(e));
         }
     }
 
     ret = 0;
-    for (i = 0; i < sk_OPENSSL_CSTRING_num(engines); i++) {
-        const char *id = sk_OPENSSL_CSTRING_value(engines, i);
+    for (i = 0; i < sk_OPENtls_CSTRING_num(engines); i++) {
+        const char *id = sk_OPENtls_CSTRING_value(engines, i);
         if ((e = ENGINE_by_id(id)) != NULL) {
             const char *name = ENGINE_get_name(e);
             /*
@@ -449,14 +449,14 @@ int engine_main(int argc, char **argv)
                     store_ctx.cap_size = &cap_size;
                     store_ctx.ok = 1;
 
-                    OSSL_STORE_do_all_loaders(util_store_cap, &store_ctx);
+                    Otls_STORE_do_all_loaders(util_store_cap, &store_ctx);
                     if (!store_ctx.ok)
                         goto end;
                 }
                 if (cap_buf != NULL && (*cap_buf != '\0'))
                     BIO_printf(out, " [%s]\n", cap_buf);
 
-                OPENSSL_free(cap_buf);
+                OPENtls_free(cap_buf);
             }
             if (test_avail) {
                 BIO_printf(out, "%s", indent);
@@ -485,9 +485,9 @@ int engine_main(int argc, char **argv)
  end:
 
     ERR_print_errors(bio_err);
-    sk_OPENSSL_CSTRING_free(engines);
-    sk_OPENSSL_STRING_free(pre_cmds);
-    sk_OPENSSL_STRING_free(post_cmds);
+    sk_OPENtls_CSTRING_free(engines);
+    sk_OPENtls_STRING_free(pre_cmds);
+    sk_OPENtls_STRING_free(post_cmds);
     BIO_free_all(out);
     return ret;
 }

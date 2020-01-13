@@ -1,16 +1,16 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include "../ssl/ssl_local.h"
-#include "../ssl/record/record_local.h"
+#include <opentls/tls.h>
+#include <opentls/evp.h>
+#include "../tls/tls_local.h"
+#include "../tls/record/record_local.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -196,7 +196,7 @@ static RECORD_DATA refdata[] = {
 };
 
 /*
- * Same thing as OPENSSL_hexstr2buf() but enables us to pass the string in
+ * Same thing as OPENtls_hexstr2buf() but enables us to pass the string in
  * 3 chunks
  */
 static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
@@ -213,7 +213,7 @@ static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
     }
 
     totlen /= 2;
-    outbuf = OPENSSL_malloc(totlen);
+    outbuf = OPENtls_malloc(totlen);
     if (outbuf == NULL)
         return NULL;
 
@@ -221,11 +221,11 @@ static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
         for (inner = 0; str[outer][inner] != 0; inner += 2) {
             int hi, lo;
 
-            hi = OPENSSL_hexchar2int(str[outer][inner]);
-            lo = OPENSSL_hexchar2int(str[outer][inner + 1]);
+            hi = OPENtls_hexchar2int(str[outer][inner]);
+            lo = OPENtls_hexchar2int(str[outer][inner + 1]);
 
             if (hi < 0 || lo < 0) {
-                OPENSSL_free(outbuf);
+                OPENtls_free(outbuf);
                 return NULL;
             }
             outbuf[curr++] = (hi << 4) | lo;
@@ -236,44 +236,44 @@ static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
     return outbuf;
 }
 
-static int load_record(SSL3_RECORD *rec, RECORD_DATA *recd, unsigned char **key,
+static int load_record(tls3_RECORD *rec, RECORD_DATA *recd, unsigned char **key,
                        unsigned char *iv, size_t ivlen, unsigned char *seq)
 {
     unsigned char *pt = NULL, *sq = NULL, *ivtmp = NULL;
     size_t ptlen;
 
-    *key = OPENSSL_hexstr2buf(recd->key, NULL);
-    ivtmp = OPENSSL_hexstr2buf(recd->iv, NULL);
-    sq = OPENSSL_hexstr2buf(recd->seq, NULL);
+    *key = OPENtls_hexstr2buf(recd->key, NULL);
+    ivtmp = OPENtls_hexstr2buf(recd->iv, NULL);
+    sq = OPENtls_hexstr2buf(recd->seq, NULL);
     pt = multihexstr2buf(recd->plaintext, &ptlen);
 
     if (*key == NULL || ivtmp == NULL || sq == NULL || pt == NULL)
         goto err;
 
-    rec->data = rec->input = OPENSSL_malloc(ptlen + EVP_GCM_TLS_TAG_LEN);
+    rec->data = rec->input = OPENtls_malloc(ptlen + EVP_GCM_TLS_TAG_LEN);
 
     if (rec->data == NULL)
         goto err;
 
     rec->length = ptlen;
     memcpy(rec->data, pt, ptlen);
-    OPENSSL_free(pt);
+    OPENtls_free(pt);
     memcpy(seq, sq, SEQ_NUM_SIZE);
-    OPENSSL_free(sq);
+    OPENtls_free(sq);
     memcpy(iv, ivtmp, ivlen);
-    OPENSSL_free(ivtmp);
+    OPENtls_free(ivtmp);
 
     return 1;
  err:
-    OPENSSL_free(*key);
+    OPENtls_free(*key);
     *key = NULL;
-    OPENSSL_free(ivtmp);
-    OPENSSL_free(sq);
-    OPENSSL_free(pt);
+    OPENtls_free(ivtmp);
+    OPENtls_free(sq);
+    OPENtls_free(pt);
     return 0;
 }
 
-static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
+static int test_record(tls3_RECORD *rec, RECORD_DATA *recd, int enc)
 {
     int ret = 0;
     unsigned char *refd;
@@ -295,7 +295,7 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
     ret = 1;
 
  err:
-    OPENSSL_free(refd);
+    OPENtls_free(refd);
     return ret;
 }
 
@@ -303,9 +303,9 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
 
 static int test_tls13_encryption(void)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *s = NULL;
-    SSL3_RECORD rec;
+    tls_CTX *ctx = NULL;
+    tls *s = NULL;
+    tls3_RECORD rec;
     unsigned char *key = NULL, *iv = NULL, *seq = NULL;
     const EVP_CIPHER *ciph = EVP_aes_128_gcm();
     int ret = 0;
@@ -316,18 +316,18 @@ static int test_tls13_encryption(void)
      * application data, and a record version of TLSv1.2.
      */
     rec.data = NULL;
-    rec.type = SSL3_RT_APPLICATION_DATA;
+    rec.type = tls3_RT_APPLICATION_DATA;
     rec.rec_version = TLS1_2_VERSION;
 
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = tls_CTX_new(TLS_method());
     if (!TEST_ptr(ctx)) {
-        TEST_info("Failed creating SSL_CTX");
+        TEST_info("Failed creating tls_CTX");
         goto err;
     }
 
-    s = SSL_new(ctx);
+    s = tls_new(ctx);
     if (!TEST_ptr(s)) {
-        TEST_info("Failed creating SSL");
+        TEST_info("Failed creating tls");
         goto err;
     }
 
@@ -339,13 +339,13 @@ static int test_tls13_encryption(void)
     if (!TEST_ptr(s->enc_write_ctx))
         goto err;
 
-    s->s3.tmp.new_cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
+    s->s3.tmp.new_cipher = tls_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
     if (!TEST_ptr(s->s3.tmp.new_cipher)) {
         TEST_info("Failed to find cipher");
         goto err;
     }
 
-    for (ctr = 0; ctr < OSSL_NELEM(refdata); ctr++) {
+    for (ctr = 0; ctr < Otls_NELEM(refdata); ctr++) {
         /* Load the record */
         ivlen = EVP_CIPHER_iv_length(ciph);
         if (!load_record(&rec, &refdata[ctr], &key, s->read_iv, ivlen,
@@ -387,10 +387,10 @@ static int test_tls13_encryption(void)
             goto err;
         }
 
-        OPENSSL_free(rec.data);
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        OPENSSL_free(seq);
+        OPENtls_free(rec.data);
+        OPENtls_free(key);
+        OPENtls_free(iv);
+        OPENtls_free(seq);
         rec.data = NULL;
         key = NULL;
         iv = NULL;
@@ -401,12 +401,12 @@ static int test_tls13_encryption(void)
     ret = 1;
 
  err:
-    OPENSSL_free(rec.data);
-    OPENSSL_free(key);
-    OPENSSL_free(iv);
-    OPENSSL_free(seq);
-    SSL_free(s);
-    SSL_CTX_free(ctx);
+    OPENtls_free(rec.data);
+    OPENtls_free(key);
+    OPENtls_free(iv);
+    OPENtls_free(seq);
+    tls_free(s);
+    tls_CTX_free(ctx);
     return ret;
 }
 

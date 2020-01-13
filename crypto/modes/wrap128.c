@@ -1,10 +1,10 @@
 /*
- * Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /**  Beware!
@@ -14,7 +14,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/modes.h>
+#include <opentls/modes.h>
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */
 static const unsigned char default_iv[] = {
@@ -161,7 +161,7 @@ size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
     if (!iv)
         iv = default_iv;
     if (CRYPTO_memcmp(got_iv, iv, 8)) {
-        OPENSSL_cleanse(out, ret);
+        OPENtls_cleanse(out, ret);
         return 0;
     }
     return ret;
@@ -281,12 +281,12 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
         /* Remove AIV */
         memcpy(out, buff + 8, 8);
         padded_len = 8;
-        OPENSSL_cleanse(buff, inlen);
+        OPENtls_cleanse(buff, inlen);
     } else {
         padded_len = inlen - 8;
         ret = crypto_128_unwrap_raw(key, aiv, out, in, inlen, block);
         if (padded_len != ret) {
-            OPENSSL_cleanse(out, inlen);
+            OPENtls_cleanse(out, inlen);
             return 0;
         }
     }
@@ -298,7 +298,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      */
     if ((!icv && CRYPTO_memcmp(aiv, default_aiv, 4))
         || (icv && CRYPTO_memcmp(aiv, icv, 4))) {
-        OPENSSL_cleanse(out, inlen);
+        OPENtls_cleanse(out, inlen);
         return 0;
     }
 
@@ -312,7 +312,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
                 | ((unsigned int)aiv[6] <<  8)
                 |  (unsigned int)aiv[7];
     if (8 * (n - 1) >= ptext_len || ptext_len > 8 * n) {
-        OPENSSL_cleanse(out, inlen);
+        OPENtls_cleanse(out, inlen);
         return 0;
     }
 
@@ -322,7 +322,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      */
     padding_len = padded_len - ptext_len;
     if (CRYPTO_memcmp(out + ptext_len, zeros, padding_len) != 0) {
-        OPENSSL_cleanse(out, inlen);
+        OPENtls_cleanse(out, inlen);
         return 0;
     }
 

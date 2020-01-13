@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 
 int ASN1_PRINTABLE_type(const unsigned char *s, int len)
 {
@@ -25,9 +25,9 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
 
     while ((*s) && (len-- != 0)) {
         c = *(s++);
-        if (!ossl_isasn1print(c))
+        if (!otls_isasn1print(c))
             ia5 = 1;
-        if (!ossl_isascii(c))
+        if (!otls_isascii(c))
             t61 = 1;
     }
     if (t61)

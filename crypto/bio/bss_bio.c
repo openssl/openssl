@@ -1,18 +1,18 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
  * Special method for a BIO where the other endpoint is also a BIO of this
  * kind, handled by the same thread (i.e. the "peer" is actually ourselves,
- * wearing a different hat). Such "BIO pairs" are mainly for using the SSL
+ * wearing a different hat). Such "BIO pairs" are mainly for using the tls
  * library with I/O interfaces for which no specific BIO method is available.
- * See ssl/ssltest.c for some hints on how this can be used.
+ * See tls/tlstest.c for some hints on how this can be used.
  */
 
 #include "e_os.h"
@@ -22,8 +22,8 @@
 #include <string.h>
 
 #include "bio_local.h"
-#include <openssl/err.h>
-#include <openssl/crypto.h>
+#include <opentls/err.h>
+#include <opentls/crypto.h>
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
@@ -77,7 +77,7 @@ struct bio_bio_st {
 
 static int bio_new(BIO *bio)
 {
-    struct bio_bio_st *b = OPENSSL_zalloc(sizeof(*b));
+    struct bio_bio_st *b = OPENtls_zalloc(sizeof(*b));
 
     if (b == NULL)
         return 0;
@@ -102,8 +102,8 @@ static int bio_free(BIO *bio)
     if (b->peer)
         bio_destroy_pair(bio);
 
-    OPENSSL_free(b->buf);
-    OPENSSL_free(b);
+    OPENtls_free(b->buf);
+    OPENtls_free(b);
 
     return 1;
 }
@@ -199,10 +199,10 @@ static int bio_read(BIO *bio, char *buf, int size_)
  * WARNING: The non-copying interface is largely untested as of yet and may
  * contain bugs.
  */
-static ossl_ssize_t bio_nread0(BIO *bio, char **buf)
+static otls_ssize_t bio_nread0(BIO *bio, char **buf)
 {
     struct bio_bio_st *b, *peer_b;
-    ossl_ssize_t num;
+    otls_ssize_t num;
 
     BIO_clear_retry_flags(bio);
 
@@ -236,15 +236,15 @@ static ossl_ssize_t bio_nread0(BIO *bio, char **buf)
     return num;
 }
 
-static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
+static otls_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
 {
     struct bio_bio_st *b, *peer_b;
-    ossl_ssize_t num, available;
+    otls_ssize_t num, available;
 
-    if (num_ > OSSL_SSIZE_MAX)
-        num = OSSL_SSIZE_MAX;
+    if (num_ > Otls_SSIZE_MAX)
+        num = Otls_SSIZE_MAX;
     else
-        num = (ossl_ssize_t) num_;
+        num = (otls_ssize_t) num_;
 
     available = bio_nread0(bio, buf);
     if (num > available)
@@ -344,7 +344,7 @@ static int bio_write(BIO *bio, const char *buf, int num_)
  * (example usage:  bio_nwrite0(), write to buffer, bio_nwrite()
  *  or just         bio_nwrite(), write to buffer)
  */
-static ossl_ssize_t bio_nwrite0(BIO *bio, char **buf)
+static otls_ssize_t bio_nwrite0(BIO *bio, char **buf)
 {
     struct bio_bio_st *b;
     size_t num;
@@ -392,15 +392,15 @@ static ossl_ssize_t bio_nwrite0(BIO *bio, char **buf)
     return num;
 }
 
-static ossl_ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
+static otls_ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
 {
     struct bio_bio_st *b;
-    ossl_ssize_t num, space;
+    otls_ssize_t num, space;
 
-    if (num_ > OSSL_SSIZE_MAX)
-        num = OSSL_SSIZE_MAX;
+    if (num_ > Otls_SSIZE_MAX)
+        num = Otls_SSIZE_MAX;
     else
-        num = (ossl_ssize_t) num_;
+        num = (otls_ssize_t) num_;
 
     space = bio_nwrite0(bio, buf);
     if (num > space)
@@ -436,7 +436,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             size_t new_size = num;
 
             if (b->size != new_size) {
-                OPENSSL_free(b->buf);
+                OPENtls_free(b->buf);
                 b->buf = NULL;
                 b->size = new_size;
             }
@@ -491,7 +491,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case BIO_C_RESET_READ_REQUEST:
         /*
          * Reset request.  (Can be useful after read attempts at the other
-         * side that are meant to be non-blocking, e.g. when probing SSL_read
+         * side that are meant to be non-blocking, e.g. when probing tls_read
          * to see if any data is available.)
          */
         b->request = 0;
@@ -621,7 +621,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
     }
 
     if (b1->buf == NULL) {
-        b1->buf = OPENSSL_malloc(b1->size);
+        b1->buf = OPENtls_malloc(b1->size);
         if (b1->buf == NULL) {
             BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -631,7 +631,7 @@ static int bio_make_pair(BIO *bio1, BIO *bio2)
     }
 
     if (b2->buf == NULL) {
-        b2->buf = OPENSSL_malloc(b2->size);
+        b2->buf = OPENtls_malloc(b2->size);
         if (b2->buf == NULL) {
             BIOerr(BIO_F_BIO_MAKE_PAIR, ERR_R_MALLOC_FAILURE);
             return 0;

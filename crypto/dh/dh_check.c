@@ -1,15 +1,15 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "dh_local.h"
 
 /*-
@@ -62,7 +62,7 @@ int DH_check_params(const DH *dh, int *ret)
         *ret |= DH_NOT_SUITABLE_GENERATOR;
     if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS)
         *ret |= DH_MODULUS_TOO_SMALL;
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
+    if (BN_num_bits(dh->p) > OPENtls_DH_MAX_MODULUS_BITS)
         *ret |= DH_MODULUS_TOO_LARGE;
 
     ok = 1;

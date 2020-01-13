@@ -96,16 +96,16 @@ d2i_OCSP_REVOKEDINFO,
 d2i_OCSP_SERVICELOC,
 d2i_OCSP_SIGNATURE,
 d2i_OCSP_SINGLERESP,
-d2i_OSSL_CMP_MSG,
-d2i_OSSL_CMP_PKIHEADER,
-d2i_OSSL_CRMF_CERTID,
-d2i_OSSL_CRMF_CERTTEMPLATE,
-d2i_OSSL_CRMF_ENCRYPTEDVALUE,
-d2i_OSSL_CRMF_MSG,
-d2i_OSSL_CRMF_MSGS,
-d2i_OSSL_CRMF_PBMPARAMETER,
-d2i_OSSL_CRMF_PKIPUBLICATIONINFO,
-d2i_OSSL_CRMF_SINGLEPUBINFO,
+d2i_Otls_CMP_MSG,
+d2i_Otls_CMP_PKIHEADER,
+d2i_Otls_CRMF_CERTID,
+d2i_Otls_CRMF_CERTTEMPLATE,
+d2i_Otls_CRMF_ENCRYPTEDVALUE,
+d2i_Otls_CRMF_MSG,
+d2i_Otls_CRMF_MSGS,
+d2i_Otls_CRMF_PBMPARAMETER,
+d2i_Otls_CRMF_PKIPUBLICATIONINFO,
+d2i_Otls_CRMF_SINGLEPUBINFO,
 d2i_OTHERNAME,
 d2i_PBE2PARAM,
 d2i_PBEPARAM,
@@ -287,16 +287,16 @@ i2d_OCSP_REVOKEDINFO,
 i2d_OCSP_SERVICELOC,
 i2d_OCSP_SIGNATURE,
 i2d_OCSP_SINGLERESP,
-i2d_OSSL_CMP_MSG,
-i2d_OSSL_CMP_PKIHEADER,
-i2d_OSSL_CRMF_CERTID,
-i2d_OSSL_CRMF_CERTTEMPLATE,
-i2d_OSSL_CRMF_ENCRYPTEDVALUE,
-i2d_OSSL_CRMF_MSG,
-i2d_OSSL_CRMF_MSGS,
-i2d_OSSL_CRMF_PBMPARAMETER,
-i2d_OSSL_CRMF_PKIPUBLICATIONINFO,
-i2d_OSSL_CRMF_SINGLEPUBINFO,
+i2d_Otls_CMP_MSG,
+i2d_Otls_CMP_PKIHEADER,
+i2d_Otls_CRMF_CERTID,
+i2d_Otls_CRMF_CERTTEMPLATE,
+i2d_Otls_CRMF_ENCRYPTEDVALUE,
+i2d_Otls_CRMF_MSG,
+i2d_Otls_CRMF_MSGS,
+i2d_Otls_CRMF_PBMPARAMETER,
+i2d_Otls_CRMF_PKIPUBLICATIONINFO,
+i2d_Otls_CRMF_SINGLEPUBINFO,
 i2d_OTHERNAME,
 i2d_PBE2PARAM,
 i2d_PBEPARAM,
@@ -391,7 +391,7 @@ i2d_X509_VAL,
 
 =head1 SYNOPSIS
 
-=for openssl generic
+=for opentls generic
 
  TYPE *d2i_TYPE(TYPE **a, unsigned char **ppin, long length);
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
@@ -407,11 +407,11 @@ i2d_X509_VAL,
 =head1 DESCRIPTION
 
 In the description here, B<I<TYPE>> is used a placeholder
-for any of the OpenSSL datatypes, such as I<X509_CRL>.
+for any of the Opentls datatypes, such as I<X509_CRL>.
 The function parameters I<ppin> and I<ppout> are generally
 either both named I<pp> in the headers, or I<in> and I<out>.
 
-These functions convert OpenSSL objects to and from their ASN.1/DER
+These functions convert Opentls objects to and from their ASN.1/DER
 encoding.  Unlike the C structures which can have pointers to sub-objects
 within, the DER is a serialized encoding, suitable for sending over the
 network, writing to a file, and so on.
@@ -501,7 +501,7 @@ Represents a DSA public key using a B<SubjectPublicKeyInfo> structure.
 
 =item B<DSAPublicKey>, B<DSAPrivateKey>
 
-Use a non-standard OpenSSL format and should be avoided; use B<DSA_PUBKEY>,
+Use a non-standard Opentls format and should be avoided; use B<DSA_PUBKEY>,
 L<PEM_write_PrivateKey(3)>, or similar instead.
 
 =item B<ECDSA_SIG>
@@ -591,16 +591,16 @@ mistake is to attempt to use a buffer directly as follows:
  unsigned char *buf;
 
  len = i2d_X509(x, NULL);
- buf = OPENSSL_malloc(len);
+ buf = OPENtls_malloc(len);
  ...
  i2d_X509(x, &buf);
  ...
- OPENSSL_free(buf);
+ OPENtls_free(buf);
 
 This code will result in I<buf> apparently containing garbage because
 it was incremented after the call to point after the data just written.
-Also I<buf> will no longer contain the pointer allocated by OPENSSL_malloc()
-and the subsequent call to OPENSSL_free() is likely to crash.
+Also I<buf> will no longer contain the pointer allocated by OPENtls_malloc()
+and the subsequent call to OPENtls_free() is likely to crash.
 
 Another trap to avoid is misuse of the I<a> argument to B<d2i_I<TYPE>>():
 
@@ -617,16 +617,16 @@ happen.
 
 =head1 BUGS
 
-In some versions of OpenSSL the "reuse" behaviour of B<d2i_I<TYPE>>() when
+In some versions of Opentls the "reuse" behaviour of B<d2i_I<TYPE>>() when
 I<*a> is valid is broken and some parts of the reused structure may
 persist if they are not present in the new one. Additionally, in versions of
-OpenSSL prior to 1.1.0, when the "reuse" behaviour is used and an error occurs
+Opentls prior to 1.1.0, when the "reuse" behaviour is used and an error occurs
 the behaviour is inconsistent. Some functions behaved as described here, while
 some did not free I<*a> on error and did not set I<*a> to NULL.
 
 As a result of the above issues the "reuse" behaviour is strongly discouraged.
 
-B<i2d_I<TYPE>>() will not return an error in many versions of OpenSSL,
+B<i2d_I<TYPE>>() will not return an error in many versions of Opentls,
 if mandatory fields are not initialized due to a programming error
 then the encoded structure may contain invalid data or omit the
 fields entirely and will not be parsed by B<d2i_I<TYPE>>(). This may be
@@ -641,11 +641,11 @@ efficiency reasons.
 
 =head1 COPYRIGHT
 
-Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 1998-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

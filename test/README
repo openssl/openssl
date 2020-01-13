@@ -24,7 +24,7 @@ The number {nn} is (somewhat loosely) grouped as follows:
 05-09  individual symmetric cipher algorithms
 10-14  math (bignum)
 15-19  individual asymmetric cipher algorithms
-20-24  openssl commands (some otherwise not tested)
+20-24  opentls commands (some otherwise not tested)
 25-29  certificate forms, generation and verification
 30-35  engine and evp
 60-79  APIs:
@@ -32,7 +32,7 @@ The number {nn} is (somewhat loosely) grouped as follows:
    61  BIO subsystem
    65  CMP subsystem
    70  PACKET layer
-80-89  "larger" protocols (CA, CMS, OCSP, SSL, TSA)
+80-89  "larger" protocols (CA, CMS, OCSP, tls, TSA)
 90-98  misc
 99     most time consuming tests [such as test_fuzz]
 
@@ -44,7 +44,7 @@ A script that just runs a program looks like this:
 
     #! /usr/bin/perl
 
-    use OpenSSL::Test::Simple;
+    use Opentls::Test::Simple;
 
     simple_test("test_{name}", "{name}test", "{name}");
 
@@ -53,16 +53,16 @@ A script that just runs a program looks like this:
 The second argument to `simple_test' is the test executable, and `simple_test'
 expects it to be located in test/
 
-For documentation on OpenSSL::Test::Simple, do
-`perldoc util/perl/OpenSSL/Test/Simple.pm'.
+For documentation on Opentls::Test::Simple, do
+`perldoc util/perl/Opentls/Test/Simple.pm'.
 
 
 A recipe that runs a more complex test
 ======================================
 
 For more complex tests, you will need to read up on Test::More and
-OpenSSL::Test.  Test::More is normally preinstalled, do `man Test::More' for
-documentation.  For OpenSSL::Test, do `perldoc util/perl/OpenSSL/Test.pm'.
+Opentls::Test.  Test::More is normally preinstalled, do `man Test::More' for
+documentation.  For Opentls::Test, do `perldoc util/perl/Opentls/Test.pm'.
 
 A script to start from could be this:
 
@@ -70,7 +70,7 @@ A script to start from could be this:
 
     use strict;
     use warnings;
-    use OpenSSL::Test;
+    use Opentls::Test;
 
     setup("test_{name}");
 
@@ -142,11 +142,11 @@ it also takes a printf format string and argument.  In all cases the TEST_xxx
 macros are guaranteed to evaluate their arguments exactly once.  This means
 that expressions with side effects are allowed as parameters.  Thus,
 
-    if (!TEST_ptr(ptr = OPENSSL_malloc(..)))
+    if (!TEST_ptr(ptr = OPENtls_malloc(..)))
 
 works fine and can be used in place of:
 
-    ptr = OPENSSL_malloc(..);
+    ptr = OPENtls_malloc(..);
     if (!TEST_ptr(ptr))
 
 The former produces a more meaningful message on failure than the latter.

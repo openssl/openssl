@@ -1,38 +1,38 @@
-$	! OpenSSL startup script
+$	! Opentls startup script
 $	!
 $	! This script defines the logical names used by the installation
-$	! of OpenSSL.  It can provide those logical names at any level,
+$	! of Opentls.  It can provide those logical names at any level,
 $	! defined by P1.
 $	!
 $	! The logical names created are:
 $	!
-$	!	OSSL$INSTROOT		Installation root
-$	!	OSSL$DATAROOT		Data root (common directory
+$	!	Otls$INSTROOT		Installation root
+$	!	Otls$DATAROOT		Data root (common directory
 $	!				for certs etc)
-$	!	OSSL$INCLUDE		Include directory root
-$	!	OSSL$LIB		Where the static library files
+$	!	Otls$INCLUDE		Include directory root
+$	!	Otls$LIB		Where the static library files
 $	!				are located
-$	!	OSSL$SHARE		Where the shareable image files
+$	!	Otls$SHARE		Where the shareable image files
 $	!				are located
-$	!	OSSL$EXE		Where the executables are located
-$	!	OSSL$ENGINESnnn		Where the shareable images are located
-$	!	OSSL$LIBCRYPTO		The static crypto library
-$	!	OSSL$LIBSSL		The static ssl library
-$	!	OSSL$LIBCRYPTOnnn_SHR	The shareable crypto image
-$	!	OSSL$LIBSSLnnn_SHR	The shareable ssl image
-$	!	OPENSSL			is OSSL$INCLUDE:[OPENSSL]
+$	!	Otls$EXE		Where the executables are located
+$	!	Otls$ENGINESnnn		Where the shareable images are located
+$	!	Otls$LIBCRYPTO		The static crypto library
+$	!	Otls$LIBtls		The static tls library
+$	!	Otls$LIBCRYPTOnnn_SHR	The shareable crypto image
+$	!	Otls$LIBtlsnnn_SHR	The shareable tls image
+$	!	OPENtls			is Otls$INCLUDE:[OPENtls]
 $	!
-$	! In all these, nnn is the OpenSSL version number.  This allows
-$	! several OpenSSL versions to be installed simultaneously, which
+$	! In all these, nnn is the Opentls version number.  This allows
+$	! several Opentls versions to be installed simultaneously, which
 $	! matters for applications that are linked to the shareable images
 $	! or that depend on engines.
 $	!
 $	! In addition, unless P2 is "NOALIASES", these logical names are
 $	! created:
 $	!
-$	!	OSSL$ENGINES		Alias for OSSL$ENGINESnnn
-$	!	OSSL$LIBCRYPTO_SHR	Alias for OSSL$LIBCRYPTOnnn_SHR
-$	!	OSSL$LIBSSL_SHR		Alias for OSSL$LIBSSLnnn_SHR
+$	!	Otls$ENGINES		Alias for Otls$ENGINESnnn
+$	!	Otls$LIBCRYPTO_SHR	Alias for Otls$LIBCRYPTOnnn_SHR
+$	!	Otls$LIBtls_SHR		Alias for Otls$LIBtlsnnn_SHR
 $	!
 $	! P1	Qualifier(s) for DEFINE.  "/SYSTEM" would be typical when
 $	!	calling this script from SYS$STARTUP:SYSTARTUP_VMS.COM,
@@ -59,17 +59,17 @@ $	ENDIF
 $
 $	! Generated information
 $	INSTALLTOP := {- $config{INSTALLTOP} -}
-$	OPENSSLDIR := {- $config{OPENSSLDIR} -}
+$	OPENtlsDIR := {- $config{OPENtlsDIR} -}
 $
-$	! Make sure that INSTALLTOP and OPENSSLDIR become something one
+$	! Make sure that INSTALLTOP and OPENtlsDIR become something one
 $	! can build concealed logical names on
 $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
-$	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
+$	OPENtlsDIR_ = F$PARSE("A.;",OPENtlsDIR,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $
 $	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_']
-$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_']
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENtlsDIR 'OPENtlsDIR_']
 $
 $	! Check that things are in place, and specifically, the stuff
 $	! belonging to this architecture
@@ -78,9 +78,9 @@ $	IF F$SEARCH("WRK_INSTALLTOP:[000000]INCLUDE.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]EXE.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[LIB]''arch'.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[EXE]''arch'.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_OPENSSLDIR:[000000]openssl.cnf") .EQS. ""
+	   .OR. F$SEARCH("WRK_OPENtlsDIR:[000000]opentls.cnf") .EQS. ""
 $	THEN
-$	    WRITE SYS$ERROR "''INSTALLTOP' doesn't look like an OpenSSL installation for ''arch'"
+$	    WRITE SYS$ERROR "''INSTALLTOP' doesn't look like an Opentls installation for ''arch'"
 $	    status = %x00018292 ! RMS$_FNF, file not found
 $	    GOTO bailout
 $	ENDIF
@@ -91,33 +91,33 @@ $	DEF  := DEFINE /NOLOG 'P1'
 $	sv   := {- sprintf "%02d%02d", split m|\.|, $config{shlib_version} -}
 $	pz   := {- $config{pointer_size} -}
 $
-$	DEFT OSSL$DATAROOT		'OPENSSLDIR_']
-$	DEFT OSSL$INSTROOT		'INSTALLTOP_']
-$	DEFT OSSL$INCLUDE		'INSTALLTOP_'INCLUDE.]
-$	DEF  OSSL$LIB			OSSL$INSTROOT:[LIB.'arch']
-$	DEF  OSSL$SHARE			OSSL$INSTROOT:[LIB.'arch']
-$	DEF  OSSL$ENGINES'sv''pz'	OSSL$INSTROOT:[ENGINES'sv''pz'.'arch']
-$	DEF  OSSL$EXE			OSSL$INSTROOT:[EXE.'arch'],-
-					OSSL$INSTROOT:[EXE]
-$	DEF  OSSL$LIBCRYPTO'pz'		OSSL$LIB:OSSL$LIBCRYPTO'pz'.OLB
-$	DEF  OSSL$LIBSSL'pz'		OSSL$LIB:OSSL$LIBSSL'pz'.OLB
+$	DEFT Otls$DATAROOT		'OPENtlsDIR_']
+$	DEFT Otls$INSTROOT		'INSTALLTOP_']
+$	DEFT Otls$INCLUDE		'INSTALLTOP_'INCLUDE.]
+$	DEF  Otls$LIB			Otls$INSTROOT:[LIB.'arch']
+$	DEF  Otls$SHARE			Otls$INSTROOT:[LIB.'arch']
+$	DEF  Otls$ENGINES'sv''pz'	Otls$INSTROOT:[ENGINES'sv''pz'.'arch']
+$	DEF  Otls$EXE			Otls$INSTROOT:[EXE.'arch'],-
+					Otls$INSTROOT:[EXE]
+$	DEF  Otls$LIBCRYPTO'pz'		Otls$LIB:Otls$LIBCRYPTO'pz'.OLB
+$	DEF  Otls$LIBtls'pz'		Otls$LIB:Otls$LIBtls'pz'.OLB
 ${- output_off() if $config{no_shared}; "" -}
-$	DEF  OSSL$LIBCRYPTO'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBCRYPTO'sv'_SHR'pz'.EXE
-$	DEF  OSSL$LIBSSL'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBSSL'sv'_SHR'pz'.EXE
+$	DEF  Otls$LIBCRYPTO'sv'_SHR'pz'	Otls$SHARE:Otls$LIBCRYPTO'sv'_SHR'pz'.EXE
+$	DEF  Otls$LIBtls'sv'_SHR'pz'	Otls$SHARE:Otls$LIBtls'sv'_SHR'pz'.EXE
 ${- output_on() if $config{no_shared}; "" -}
-$	DEF  OPENSSL			OSSL$INCLUDE:[OPENSSL]
+$	DEF  OPENtls			Otls$INCLUDE:[OPENtls]
 $
 $	IF P2 .NES. "NOALIASES"
 $	THEN
-$	    DEF OSSL$ENGINES'pz'	OSSL$ENGINES'sv''pz'
+$	    DEF Otls$ENGINES'pz'	Otls$ENGINES'sv''pz'
 ${- output_off() if $config{no_shared}; "" -}
-$	    DEF OSSL$LIBCRYPTO_SHR'pz'	OSSL$LIBCRYPTO'sv'_SHR'pz'
-$	    DEF OSSL$LIBSSL_SHR'pz'	OSSL$LIBSSL'sv'_SHR'pz'
+$	    DEF Otls$LIBCRYPTO_SHR'pz'	Otls$LIBCRYPTO'sv'_SHR'pz'
+$	    DEF Otls$LIBtls_SHR'pz'	Otls$LIBtls'sv'_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
 $
 $ bailout:
 $	DEASSIGN WRK_INSTALLTOP
-$	DEASSIGN WRK_OPENSSLDIR
+$	DEASSIGN WRK_OPENtlsDIR
 $
 $	EXIT 'status'

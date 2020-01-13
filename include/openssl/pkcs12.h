@@ -1,24 +1,24 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_PKCS12_H
-# define OPENSSL_PKCS12_H
+#ifndef OPENtls_PKCS12_H
+# define OPENtls_PKCS12_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_PKCS12_H
 # endif
 
-# include <openssl/bio.h>
-# include <openssl/x509.h>
-# include <openssl/pkcs12err.h>
+# include <opentls/bio.h>
+# include <opentls/x509.h>
+# include <opentls/pkcs12err.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +61,7 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 /* Compatibility macros */
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 
 # define M_PKCS12_bag_type PKCS12_bag_type
 # define M_PKCS12_cert_bag_type PKCS12_cert_bag_type
@@ -107,7 +107,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8);
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8);
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
                                                     const char *pass,
-                                                    int passlen,
+                                                    int patlsen,
                                                     unsigned char *salt,
                                                     int saltlen, int iter,
                                                     PKCS8_PRIV_KEY_INFO *p8inf);
@@ -115,21 +115,21 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
                                          int nid1, int nid2);
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(const X509_SIG *p8, const char *pass,
-                                   int passlen);
+                                   int patlsen);
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
-                                         const char *pass, int passlen);
+                                         const char *pass, int patlsen);
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
-                        const char *pass, int passlen, unsigned char *salt,
+                        const char *pass, int patlsen, unsigned char *salt,
                         int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
-X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
+X509_SIG *PKCS8_set0_pbe(const char *pass, int patlsen,
                         PKCS8_PRIV_KEY_INFO *p8inf, X509_ALGOR *pbe);
 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk);
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7);
-PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
+PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int patlsen,
                              unsigned char *salt, int saltlen, int iter,
                              STACK_OF(PKCS12_SAFEBAG) *bags);
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
-                                                  int passlen);
+                                                  int patlsen);
 
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes);
 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
@@ -151,44 +151,44 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 const STACK_OF(X509_ATTRIBUTE) *
 PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag);
 unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
-                                const char *pass, int passlen,
+                                const char *pass, int patlsen,
                                 const unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen,
                                 int en_de);
 void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
-                              const char *pass, int passlen,
+                              const char *pass, int patlsen,
                               const ASN1_OCTET_STRING *oct, int zbuf);
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
                                            const ASN1_ITEM *it,
-                                           const char *pass, int passlen,
+                                           const char *pass, int patlsen,
                                            void *obj, int zbuf);
 PKCS12 *PKCS12_init(int mode);
-int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_asc(const char *pass, int patlsen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type);
-int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_uni(unsigned char *pass, int patlsen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type);
-int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
+int PKCS12_key_gen_utf8(const char *pass, int patlsen, unsigned char *salt,
                         int saltlen, int id, int iter, int n,
                         unsigned char *out, const EVP_MD *md_type);
-int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int patlsen,
                         ASN1_TYPE *param, const EVP_CIPHER *cipher,
                         const EVP_MD *md_type, int en_de);
-int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
+int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int patlsen,
                    unsigned char *mac, unsigned int *maclen);
-int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen);
-int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
+int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int patlsen);
+int PKCS12_set_mac(PKCS12 *p12, const char *pass, int patlsen,
                    unsigned char *salt, int saltlen, int iter,
                    const EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
                      int saltlen, const EVP_MD *md_type);
-unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
+unsigned char *OPENtls_asc2uni(const char *asc, int asclen,
                                unsigned char **uni, int *unilen);
-char *OPENSSL_uni2asc(const unsigned char *uni, int unilen);
-unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
+char *OPENtls_uni2asc(const unsigned char *uni, int unilen);
+unsigned char *OPENtls_utf82uni(const char *asc, int asclen,
                                 unsigned char **uni, int *unilen);
-char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen);
+char *OPENtls_uni2utf8(const unsigned char *uni, int unilen);
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)
 DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
@@ -214,11 +214,11 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
 
 int i2d_PKCS12_bio(BIO *bp, const PKCS12 *p12);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12);
 # endif
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12);
 # endif
 int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);

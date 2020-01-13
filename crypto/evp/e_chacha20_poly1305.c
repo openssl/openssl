@@ -1,26 +1,26 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 
-#ifndef OPENSSL_NO_CHACHA
+#ifndef OPENtls_NO_CHACHA
 
-# include <openssl/evp.h>
-# include <openssl/objects.h>
+# include <opentls/evp.h>
+# include <opentls/objects.h>
 # include "crypto/evp.h"
 # include "evp_local.h"
 # include "crypto/chacha.h"
 
 typedef struct {
     union {
-        OSSL_UNION_ALIGN;  /* this ensures even sizeof(EVP_CHACHA_KEY)%8==0 */
+        Otls_UNION_ALIGN;  /* this ensures even sizeof(EVP_CHACHA_KEY)%8==0 */
         unsigned int d[CHACHA_KEY_SIZE / 4];
     } key;
     unsigned int  counter[CHACHA_CTR_SIZE / 4];
@@ -145,7 +145,7 @@ const EVP_CIPHER *EVP_chacha20(void)
     return &chacha20;
 }
 
-# ifndef OPENSSL_NO_POLY1305
+# ifndef OPENtls_NO_POLY1305
 #  include "crypto/poly1305.h"
 
 typedef struct {
@@ -197,7 +197,7 @@ static int chacha20_poly1305_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-#  if !defined(OPENSSL_SMALL_FOOTPRINT)
+#  if !defined(OPENtls_SMALL_FOOTPRINT)
 
 #   if defined(POLY1305_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
                                  defined(_M_AMD64) || defined(_M_X64))
@@ -340,7 +340,7 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
     Poly1305_Update(POLY1305_ctx(actx), tohash, tohash_len);
-    OPENSSL_cleanse(buf, buf_len);
+    OPENtls_cleanse(buf, buf_len);
     Poly1305_Final(POLY1305_ctx(actx), ctx->encrypt ? actx->tag
                                                     : tohash);
 
@@ -369,7 +369,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     size_t rem, plen = actx->tls_payload_length;
 
     if (!actx->mac_inited) {
-#  if !defined(OPENSSL_SMALL_FOOTPRINT)
+#  if !defined(OPENtls_SMALL_FOOTPRINT)
         if (plen != NO_TLS_PAYLOAD_LENGTH && out != NULL)
             return chacha20_poly1305_tls_cipher(ctx, out, in, len);
 #  endif
@@ -493,7 +493,7 @@ static int chacha20_poly1305_cleanup(EVP_CIPHER_CTX *ctx)
 {
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
     if (actx)
-        OPENSSL_cleanse(ctx->cipher_data, sizeof(*actx) + Poly1305_ctx_size());
+        OPENtls_cleanse(ctx->cipher_data, sizeof(*actx) + Poly1305_ctx_size());
     return 1;
 }
 
@@ -506,7 +506,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     case EVP_CTRL_INIT:
         if (actx == NULL)
             actx = ctx->cipher_data
-                 = OPENSSL_zalloc(sizeof(*actx) + Poly1305_ctx_size());
+                 = OPENtls_zalloc(sizeof(*actx) + Poly1305_ctx_size());
         if (actx == NULL) {
             EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_INITIALIZATION_ERROR);
             return 0;
@@ -526,7 +526,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             EVP_CIPHER_CTX *dst = (EVP_CIPHER_CTX *)ptr;
 
             dst->cipher_data =
-                   OPENSSL_memdup(actx, sizeof(*actx) + Poly1305_ctx_size());
+                   OPENtls_memdup(actx, sizeof(*actx) + Poly1305_ctx_size());
             if (dst->cipher_data == NULL) {
                 EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_COPY_ERROR);
                 return 0;

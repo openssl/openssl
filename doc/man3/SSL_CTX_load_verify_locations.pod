@@ -2,63 +2,63 @@
 
 =head1 NAME
 
-SSL_CTX_load_verify_dir, SSL_CTX_load_verify_file,
-SSL_CTX_load_verify_store, SSL_CTX_set_default_verify_paths,
-SSL_CTX_set_default_verify_dir, SSL_CTX_set_default_verify_file,
-SSL_CTX_set_default_verify_store, SSL_CTX_load_verify_locations
+tls_CTX_load_verify_dir, tls_CTX_load_verify_file,
+tls_CTX_load_verify_store, tls_CTX_set_default_verify_paths,
+tls_CTX_set_default_verify_dir, tls_CTX_set_default_verify_file,
+tls_CTX_set_default_verify_store, tls_CTX_load_verify_locations
 - set default locations for trusted CA certificates
 
 =head1 SYNOPSIS
 
- #include <openssl/ssl.h>
+ #include <opentls/tls.h>
 
- int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
- int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
- int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
+ int tls_CTX_load_verify_dir(tls_CTX *ctx, const char *CApath);
+ int tls_CTX_load_verify_file(tls_CTX *ctx, const char *CAfile);
+ int tls_CTX_load_verify_store(tls_CTX *ctx, const char *CAstore);
 
- int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
+ int tls_CTX_set_default_verify_paths(tls_CTX *ctx);
 
- int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
- int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
- int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
+ int tls_CTX_set_default_verify_dir(tls_CTX *ctx);
+ int tls_CTX_set_default_verify_file(tls_CTX *ctx);
+ int tls_CTX_set_default_verify_store(tls_CTX *ctx);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+Deprecated since Opentls 3.0, can be hidden entirely by defining
+B<OPENtls_API_COMPAT> with a suitable version value, see
+L<opentls_user_macros(7)>:
 
- int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
+ int tls_CTX_load_verify_locations(tls_CTX *ctx, const char *CAfile,
                                    const char *CApath);
 
 =head1 DESCRIPTION
 
-SSL_CTX_load_verify_dir(), SSL_CTX_load_verify_file(),
-SSL_CTX_load_verify_store() specifies the locations for B<ctx>, at
+tls_CTX_load_verify_dir(), tls_CTX_load_verify_file(),
+tls_CTX_load_verify_store() specifies the locations for B<ctx>, at
 which CA certificates for verification purposes are located. The
 certificates available via B<CAfile>, B<CApath> and B<CAstore> are
 trusted.
 
-SSL_CTX_set_default_verify_paths() specifies that the default locations from
+tls_CTX_set_default_verify_paths() specifies that the default locations from
 which CA certificates are loaded should be used. There is one default directory,
 one default file and one default store.
-The default CA certificates directory is called F<certs> in the default OpenSSL
+The default CA certificates directory is called F<certs> in the default Opentls
 directory, and this is also the default store.
-Alternatively the B<SSL_CERT_DIR> environment variable can be defined to
+Alternatively the B<tls_CERT_DIR> environment variable can be defined to
 override this location.
 The default CA certificates file is called F<cert.pem> in the default
-OpenSSL directory.
-Alternatively the B<SSL_CERT_FILE> environment variable can be defined to
+Opentls directory.
+Alternatively the B<tls_CERT_FILE> environment variable can be defined to
 override this location.
 
-SSL_CTX_set_default_verify_dir() is similar to
-SSL_CTX_set_default_verify_paths() except that just the default directory is
+tls_CTX_set_default_verify_dir() is similar to
+tls_CTX_set_default_verify_paths() except that just the default directory is
 used.
 
-SSL_CTX_set_default_verify_file() is similar to
-SSL_CTX_set_default_verify_paths() except that just the default file is
+tls_CTX_set_default_verify_file() is similar to
+tls_CTX_set_default_verify_paths() except that just the default file is
 used.
 
-SSL_CTX_set_default_verify_store() is similar to
-SSL_CTX_set_default_verify_paths() except that just the default store is
+tls_CTX_set_default_verify_store() is similar to
+tls_CTX_set_default_verify_paths() except that just the default store is
 used.
 
 =head1 NOTES
@@ -73,7 +73,7 @@ format. The file can contain several CA certificates identified by
 sequences. Before, between, and after the certificates text is allowed
 which can be used e.g. for descriptions of the certificates.
 
-The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
+The B<CAfile> is processed on execution of the tls_CTX_load_verify_locations()
 function.
 
 If B<CApath> is not NULL, it points to a directory containing CA certificates
@@ -89,7 +89,7 @@ The certificates in B<CApath> are only looked up when required, e.g. when
 building the certificate chain or when actually performing the verification
 of a peer certificate.
 
-When looking up CA certificates, the OpenSSL library will first search the
+When looking up CA certificates, the Opentls library will first search the
 certificates in B<CAfile>, then those in B<CApath>. Certificate matching
 is done based on the subject name, the key identifier (if present), and the
 serial number as taken from the certificate to be verified. If these data
@@ -107,14 +107,14 @@ In server mode, when requesting a client certificate, the server must send
 the list of CAs of which it will accept client certificates. This list
 is not influenced by the contents of B<CAfile> or B<CApath> and must
 explicitly be set using the
-L<SSL_CTX_set_client_CA_list(3)>
+L<tls_CTX_set_client_CA_list(3)>
 family of functions.
 
-When building its own certificate chain, an OpenSSL client/server will
+When building its own certificate chain, an Opentls client/server will
 try to fill in missing certificates from B<CAfile>/B<CApath>, if the
 certificate chain was not explicitly specified (see
-L<SSL_CTX_add_extra_chain_cert(3)>,
-L<SSL_CTX_use_certificate(3)>.
+L<tls_CTX_add_extra_chain_cert(3)>,
+L<tls_CTX_use_certificate(3)>.
 
 =head1 WARNINGS
 
@@ -127,7 +127,7 @@ have expired certificates mixed with valid ones.
 
 =head1 RETURN VALUES
 
-For SSL_CTX_load_verify_locations the following return values can occur:
+For tls_CTX_load_verify_locations the following return values can occur:
 
 =over 4
 
@@ -143,8 +143,8 @@ The operation succeeded.
 
 =back
 
-SSL_CTX_set_default_verify_paths(), SSL_CTX_set_default_verify_dir() and
-SSL_CTX_set_default_verify_file() all return 1 on success or 0 on failure. A
+tls_CTX_set_default_verify_paths(), tls_CTX_set_default_verify_dir() and
+tls_CTX_set_default_verify_file() all return 1 on success or 0 on failure. A
 missing default location is still treated as a success.
 
 =head1 EXAMPLES
@@ -155,7 +155,7 @@ ca1.pem ca2.pem ca3.pem:
  #!/bin/sh
  rm CAfile.pem
  for i in ca1.pem ca2.pem ca3.pem ; do
-     openssl x509 -in $i -text >> CAfile.pem
+     opentls x509 -in $i -text >> CAfile.pem
  done
 
 Prepare the directory /some/where/certs containing several CA certificates
@@ -166,21 +166,21 @@ for use as B<CApath>:
 
 =head1 SEE ALSO
 
-L<ssl(7)>,
-L<SSL_CTX_set_client_CA_list(3)>,
-L<SSL_get_client_CA_list(3)>,
-L<SSL_CTX_use_certificate(3)>,
-L<SSL_CTX_add_extra_chain_cert(3)>,
-L<SSL_CTX_set_cert_store(3)>,
-L<SSL_CTX_set_client_CA_list(3)>
+L<tls(7)>,
+L<tls_CTX_set_client_CA_list(3)>,
+L<tls_get_client_CA_list(3)>,
+L<tls_CTX_use_certificate(3)>,
+L<tls_CTX_add_extra_chain_cert(3)>,
+L<tls_CTX_set_cert_store(3)>,
+L<tls_CTX_set_client_CA_list(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

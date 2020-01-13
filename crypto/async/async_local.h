@@ -1,10 +1,10 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -21,7 +21,7 @@
 #endif
 
 #include "crypto/async.h"
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 typedef struct async_ctx_st async_ctx;
 typedef struct async_pool_st async_pool;
@@ -47,9 +47,9 @@ struct async_job_st {
 
 struct fd_lookup_st {
     const void *key;
-    OSSL_ASYNC_FD fd;
+    Otls_ASYNC_FD fd;
     void *custom_data;
-    void (*cleanup)(ASYNC_WAIT_CTX *, const void *, OSSL_ASYNC_FD, void *);
+    void (*cleanup)(ASYNC_WAIT_CTX *, const void *, Otls_ASYNC_FD, void *);
     int add;
     int del;
     struct fd_lookup_st *next;

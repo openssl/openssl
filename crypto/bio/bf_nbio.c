@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
+#include <opentls/rand.h>
 
 /*
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest
@@ -57,7 +57,7 @@ static int nbiof_new(BIO *bi)
 {
     NBIO_TEST *nt;
 
-    if ((nt = OPENSSL_zalloc(sizeof(*nt))) == NULL) {
+    if ((nt = OPENtls_zalloc(sizeof(*nt))) == NULL) {
         BIOerr(BIO_F_NBIOF_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -72,7 +72,7 @@ static int nbiof_free(BIO *a)
 {
     if (a == NULL)
         return 0;
-    OPENSSL_free(a->ptr);
+    OPENtls_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
     a->flags = 0;

@@ -1,16 +1,16 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include <stdarg.h>
-#include <openssl/bio.h>
-#include <openssl/safestack.h>
+#include <opentls/bio.h>
+#include <opentls/safestack.h>
 #include "opt.h"
 
 static BIO *bio_in = NULL;
@@ -96,7 +96,7 @@ static int setup_bio_chain(const char *progname)
     BIO *next = NULL;
     size_t n = amount;
 
-    chain = OPENSSL_zalloc(sizeof(*chain) * n);
+    chain = OPENtls_zalloc(sizeof(*chain) * n);
 
     if (chain != NULL) {
         size_t i;
@@ -119,7 +119,7 @@ static int setup_bio_chain(const char *progname)
  err:
     /* Free the chain we built up */
     BIO_free_all(next);
-    OPENSSL_free(chain);
+    OPENtls_free(chain);
     return 0;
 }
 
@@ -127,7 +127,7 @@ static void cleanup(void)
 {
     if (chain != NULL) {
         BIO_free_all(chain[amount - 1]);
-        OPENSSL_free(chain);
+        OPENtls_free(chain);
     }
 
     BIO_free_all(bio_in);
@@ -152,9 +152,9 @@ static int setup(void)
     bio_err = BIO_push(BIO_new(BIO_f_linebuffer()), bio_err);
 #endif
 
-    OPENSSL_assert(bio_in != NULL);
-    OPENSSL_assert(bio_out != NULL);
-    OPENSSL_assert(bio_err != NULL);
+    OPENtls_assert(bio_in != NULL);
+    OPENtls_assert(bio_out != NULL);
+    OPENtls_assert(bio_err != NULL);
 
 
     while ((o = opt_next()) != OPT_EOF) {

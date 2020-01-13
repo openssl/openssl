@@ -1,19 +1,19 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
+#include <opentls/bn.h>
+#include <opentls/rsa.h>
+#include <opentls/evp.h>
+#include <opentls/rand.h>
+#include <opentls/sha.h>
 #include "rsa_local.h"
 
 static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -90,7 +90,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     }
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
-    DB = OPENSSL_malloc(maskedDBLen);
+    DB = OPENtls_malloc(maskedDBLen);
     if (DB == NULL) {
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -128,7 +128,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     }
 
  err:
-    OPENSSL_free(DB);
+    OPENtls_free(DB);
     EVP_MD_CTX_free(ctx);
 
     return ret;
@@ -194,7 +194,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         goto err;
     }
     if (sLen > 0) {
-        salt = OPENSSL_malloc(sLen);
+        salt = OPENtls_malloc(sLen);
         if (salt == NULL) {
             RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
                    ERR_R_MALLOC_FAILURE);
@@ -244,7 +244,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
  err:
     EVP_MD_CTX_free(ctx);
-    OPENSSL_clear_free(salt, (size_t)sLen); /* salt != NULL implies sLen > 0 */
+    OPENtls_clear_free(salt, (size_t)sLen); /* salt != NULL implies sLen > 0 */
 
     return ret;
 

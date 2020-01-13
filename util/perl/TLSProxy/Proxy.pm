@@ -1,9 +1,9 @@
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 use POSIX ":sys_wait_h";
@@ -220,9 +220,9 @@ sub start
     }
 
     my $execcmd = $self->execute
-        ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+        ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine otlstest"
         #In TLSv1.3 we issue two session tickets. The default session id
-        #callback gets confused because the ossltest engine causes the same
+        #callback gets confused because the otlstest engine causes the same
         #session id to be created twice due to the changed random number
         #generation. Using "-ext_cache" replaces the default callback with a
         #different one that doesn't get confused.
@@ -314,7 +314,7 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -max_protocol TLSv1.3 -engine ossltest"
+             ." s_client -max_protocol TLSv1.3 -engine otlstest"
              ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->cipherc ne "") {
             $execcmd .= " -cipher ".$self->cipherc;
@@ -663,7 +663,7 @@ sub serverconnects
 # This is a bit ugly because the caller is responsible for keeping the records
 # in sync with the updated message list; simply updating the message list isn't
 # sufficient to get the proxy to forward the new message.
-# But it does the trick for the one test (test_sslsessiontick) that needs it.
+# But it does the trick for the one test (test_tlssessiontick) that needs it.
 sub message_list
 {
     my $self = shift;

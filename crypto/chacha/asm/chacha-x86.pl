@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # January 2015
@@ -45,7 +45,7 @@ $output = pop and open STDOUT,">$output";
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $xmm=$ymm=0;
-for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
+for (@ARGV) { $xmm=1 if (/-DOPENtls_IA32_SSE2/); }
 
 $ymm=1 if ($xmm &&
 		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
@@ -141,7 +141,7 @@ if ($xmm) {
 	&call	(&label("pic_point"));
 &set_label("pic_point");
 	&blindpop("eax");
-	&picmeup("ebp","OPENSSL_ia32cap_P","eax",&label("pic_point"));
+	&picmeup("ebp","OPENtls_ia32cap_P","eax",&label("pic_point"));
 	&test	(&DWP(0,"ebp"),1<<24);		# test FXSR bit
 	&jz	(&label("x86"));
 	&test	(&DWP(4,"ebp"),1<<9);		# test SSSE3 bit
@@ -785,7 +785,7 @@ sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 &data_word(0,-1,-1,-1);
 &align	(64);
 }
-&asciz	("ChaCha20 for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("ChaCha20 for x86, CRYPTOGAMS by <appro\@opentls.org>");
 
 if ($ymm) {
 my ($xa,$xa_,$xb,$xb_,$xc,$xc_,$xd,$xd_)=map("xmm$_",(0..7));

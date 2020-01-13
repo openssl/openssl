@@ -10,7 +10,7 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
 
 =head1 SYNOPSIS
 
- #include <openssl/crypto.h>
+ #include <opentls/crypto.h>
 
  int CRYPTO_get_ex_new_index(int class_index,
                              long argl, void *argp,
@@ -40,7 +40,7 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
 
 =head1 DESCRIPTION
 
-Several OpenSSL structures can have application-specific data attached to them,
+Several Opentls structures can have application-specific data attached to them,
 known as "exdata."
 The specific structures are:
 
@@ -51,9 +51,9 @@ The specific structures are:
     ENGINE
     RAND_DRBG
     RSA
-    SSL
-    SSL_CTX
-    SSL_SESSION
+    tls
+    tls_CTX
+    tls_SESSION
     UI
     UI_METHOD
     X509
@@ -66,7 +66,7 @@ Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
 header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
 applications to use this facility for their own structures.
 
-The API described here is used by OpenSSL to manipulate exdata for specific
+The API described here is used by Opentls to manipulate exdata for specific
 structures.  Since the application data can be anything at all it is passed
 and retrieved as a B<void *> type.
 
@@ -122,7 +122,7 @@ exdata, and perhaps an "initialized" flag within that memory.
 The exdata value may be allocated later on with CRYPTO_alloc_ex_data(),
 or may be set by calling CRYPTO_set_ex_data().
 
-When a structure is free'd (such as SSL_CTX_free()) then the
+When a structure is free'd (such as tls_CTX_free()) then the
 free_func() is called for every defined index.  Again, the state of the
 parent structure is not guaranteed.  The free_func() may be called with a
 NULL pointer.
@@ -136,7 +136,7 @@ initially registered via CRYPTO_get_ex_new_index() and can be used if
 the same callback handles different types of exdata.
 
 dup_func() is called when a structure is being copied.  This is only done
-for B<SSL>, B<SSL_SESSION>, B<EC_KEY> objects and B<BIO> chains via
+for B<tls>, B<tls_SESSION>, B<EC_KEY> objects and B<BIO> chains via
 BIO_dup_chain().  The B<to> and B<from> parameters
 are pointers to the destination and source B<CRYPTO_EX_DATA> structures,
 respectively.  The B<from_d> parameter needs to be cast to a B<void **pptr>
@@ -163,15 +163,15 @@ dup_func() should return 0 for failure and 1 for success.
 
 =head1 HISTORY
 
-CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
+CRYPTO_alloc_ex_data() was added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

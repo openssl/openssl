@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
 use warnings;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils;
+use Opentls::Test;
+use Opentls::Test::Utils;
 
 setup("test_passwd");
 
@@ -79,32 +79,32 @@ my @sha_tests =
 plan tests => (disabled("des") ? 9 : 11) + scalar @sha_tests;
 
 
-ok(compare1stline_re([qw{openssl passwd password}], '^.{13}\R$'),
+ok(compare1stline_re([qw{opentls passwd password}], '^.{13}\R$'),
    'crypt password with random salt') if !disabled("des");
-ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
+ok(compare1stline_re([qw{opentls passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
    'BSD style MD5 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -apr1 password}], '^\$apr1\$.{8}\$.{22}\R$'),
+ok(compare1stline_re([qw{opentls passwd -apr1 password}], '^\$apr1\$.{8}\$.{22}\R$'),
    'Apache style MD5 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -5 password}], '^\$5\$.{16}\$.{43}\R$'),
+ok(compare1stline_re([qw{opentls passwd -5 password}], '^\$5\$.{16}\$.{43}\R$'),
    'SHA256 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -6 password}], '^\$6\$.{16}\$.{86}\R$'),
+ok(compare1stline_re([qw{opentls passwd -6 password}], '^\$6\$.{16}\$.{86}\R$'),
    'Apache SHA512 password with random salt');
 
-ok(compare1stline([qw{openssl passwd -salt xx password}], 'xxj31ZMTZzkVA'),
+ok(compare1stline([qw{opentls passwd -salt xx password}], 'xxj31ZMTZzkVA'),
    'crypt password with salt xx') if !disabled("des");
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -1 password}], '$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.'),
+ok(compare1stline([qw{opentls passwd -salt xxxxxxxx -1 password}], '$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.'),
    'BSD style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -apr1 password}], '$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0'),
+ok(compare1stline([qw{opentls passwd -salt xxxxxxxx -apr1 password}], '$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0'),
    'Apache style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -aixmd5 password}], 'xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/'),
+ok(compare1stline([qw{opentls passwd -salt xxxxxxxx -aixmd5 password}], 'xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/'),
    'AIX style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -5 password}], '$5$xxxxxxxxxxxxxxxx$fHytsM.wVD..zPN/h3i40WJRggt/1f73XkAC/gkelkB'),
+ok(compare1stline([qw{opentls passwd -salt xxxxxxxxxxxxxxxx -5 password}], '$5$xxxxxxxxxxxxxxxx$fHytsM.wVD..zPN/h3i40WJRggt/1f73XkAC/gkelkB'),
    'SHA256 password with salt xxxxxxxxxxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -6 password}], '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
+ok(compare1stline([qw{opentls passwd -salt xxxxxxxxxxxxxxxx -6 password}], '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
    'SHA512 password with salt xxxxxxxxxxxxxxxx');
 
 foreach (@sha_tests) {
-    ok(compare1stline([qw{openssl passwd}, '-'.$_->{type}, '-salt', $_->{salt},
+    ok(compare1stline([qw{opentls passwd}, '-'.$_->{type}, '-salt', $_->{salt},
                        $_->{key}], $_->{expected}),
        { 5 => 'SHA256', 6 => 'SHA512' }->{$_->{type}} . ' password with salt ' . $_->{salt});
 }

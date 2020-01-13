@@ -1,22 +1,22 @@
 /*
- * Copyright 2011-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 # include "testutil.h"
 
-#ifdef OPENSSL_NO_SRP
+#ifdef OPENtls_NO_SRP
 # include <stdio.h>
 #else
 
-# include <openssl/srp.h>
-# include <openssl/rand.h>
-# include <openssl/err.h>
+# include <opentls/srp.h>
+# include <opentls/rand.h>
+# include <opentls/err.h>
 
 # define RANDOM_SIZE 32         /* use 256 bits on each side */
 
@@ -266,7 +266,7 @@ static int run_srp_tests(void)
 
 int setup_tests(void)
 {
-#ifdef OPENSSL_NO_SRP
+#ifdef OPENtls_NO_SRP
     printf("No SRP support\n");
 #else
     ADD_TEST(run_srp_tests);

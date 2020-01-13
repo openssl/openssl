@@ -1,19 +1,19 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
-#include <openssl/rand.h>
+#include <opentls/asn1t.h>
+#include <opentls/pem.h>
+#include <opentls/x509v3.h>
+#include <opentls/err.h>
+#include <opentls/cms.h>
+#include <opentls/rand.h>
 #include "cms_local.h"
 
 /* CMS EncryptedData Utilities */
@@ -84,7 +84,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     tkeylen = EVP_CIPHER_CTX_key_length(ctx);
     /* Generate random session key */
     if (!enc || !ec->key) {
-        tkey = OPENSSL_malloc(tkeylen);
+        tkey = OPENtls_malloc(tkeylen);
         if (tkey == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -117,7 +117,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
                 goto err;
             } else {
                 /* Use random key */
-                OPENSSL_clear_free(ec->key, ec->keylen);
+                OPENtls_clear_free(ec->key, ec->keylen);
                 ec->key = tkey;
                 ec->keylen = tkeylen;
                 tkey = NULL;
@@ -152,10 +152,10 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
  err:
     if (!keep_key || !ok) {
-        OPENSSL_clear_free(ec->key, ec->keylen);
+        OPENtls_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
     }
-    OPENSSL_clear_free(tkey, tkeylen);
+    OPENtls_clear_free(tkey, tkeylen);
     if (ok)
         return b;
     BIO_free(b);
@@ -168,7 +168,7 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 {
     ec->cipher = cipher;
     if (key) {
-        if ((ec->key = OPENSSL_malloc(keylen)) == NULL) {
+        if ((ec->key = OPENtls_malloc(keylen)) == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT, ERR_R_MALLOC_FAILURE);
             return 0;
         }

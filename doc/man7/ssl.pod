@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ssl - OpenSSL SSL/TLS library
+tls - Opentls tls/TLS library
 
 =head1 SYNOPSIS
 
@@ -10,30 +10,30 @@ See the individual manual pages for details.
 
 =head1 DESCRIPTION
 
-The OpenSSL B<ssl> library implements several versions of the
+The Opentls B<tls> library implements several versions of the
 Secure Sockets Layer, Transport Layer Security, and Datagram Transport Layer
 Security protocols.
 This page gives a brief overview of the extensive API and data types
 provided by the library.
 
-An B<SSL_CTX> object is created as a framework to establish
-TLS/SSL enabled connections (see L<SSL_CTX_new(3)>).
+An B<tls_CTX> object is created as a framework to establish
+TLS/tls enabled connections (see L<tls_CTX_new(3)>).
 Various options regarding certificates, algorithms etc. can be set
 in this object.
 
 When a network connection has been created, it can be assigned to an
-B<SSL> object. After the B<SSL> object has been created using
-L<SSL_new(3)>, L<SSL_set_fd(3)> or
-L<SSL_set_bio(3)> can be used to associate the network
+B<tls> object. After the B<tls> object has been created using
+L<tls_new(3)>, L<tls_set_fd(3)> or
+L<tls_set_bio(3)> can be used to associate the network
 connection with the object.
 
-When the TLS/SSL handshake is performed using
-L<SSL_accept(3)> or L<SSL_connect(3)>
+When the TLS/tls handshake is performed using
+L<tls_accept(3)> or L<tls_connect(3)>
 respectively.
-L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> and L<SSL_write(3)> are
-used to read and write data on the TLS/SSL connection.
-L<SSL_shutdown(3)> can be used to shut down the
-TLS/SSL connection.
+L<tls_read_ex(3)>, L<tls_read(3)>, L<tls_write_ex(3)> and L<tls_write(3)> are
+used to read and write data on the TLS/tls connection.
+L<tls_shutdown(3)> can be used to shut down the
+TLS/tls connection.
 
 =head1 DATA STRUCTURES
 
@@ -41,34 +41,34 @@ Here are some of the main data structures in the library.
 
 =over 4
 
-=item B<SSL_METHOD> (SSL Method)
+=item B<tls_METHOD> (tls Method)
 
-This is a dispatch structure describing the internal B<ssl> library
-methods/functions which implement the various protocol versions (SSLv3
-TLSv1, ...). It's needed to create an B<SSL_CTX>.
+This is a dispatch structure describing the internal B<tls> library
+methods/functions which implement the various protocol versions (tlsv3
+TLSv1, ...). It's needed to create an B<tls_CTX>.
 
-=item B<SSL_CIPHER> (SSL Cipher)
+=item B<tls_CIPHER> (tls Cipher)
 
 This structure holds the algorithm information for a particular cipher which
-are a core part of the SSL/TLS protocol. The available ciphers are configured
-on a B<SSL_CTX> basis and the actual ones used are then part of the
-B<SSL_SESSION>.
+are a core part of the tls/TLS protocol. The available ciphers are configured
+on a B<tls_CTX> basis and the actual ones used are then part of the
+B<tls_SESSION>.
 
-=item B<SSL_CTX> (SSL Context)
+=item B<tls_CTX> (tls Context)
 
 This is the global context structure which is created by a server or client
 once per program life-time and which holds mainly default values for the
-B<SSL> structures which are later created for the connections.
+B<tls> structures which are later created for the connections.
 
-=item B<SSL_SESSION> (SSL Session)
+=item B<tls_SESSION> (tls Session)
 
-This is a structure containing the current TLS/SSL session details for a
-connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
+This is a structure containing the current TLS/tls session details for a
+connection: B<tls_CIPHER>s, client and server certificates, keys, etc.
 
-=item B<SSL> (SSL Connection)
+=item B<tls> (tls Connection)
 
-This is the main SSL/TLS structure which is created by a server or client per
-established connection. This actually is the core structure in the SSL API.
+This is the main tls/TLS structure which is created by a server or client per
+established connection. This actually is the core structure in the tls API.
 At run-time the application usually deals with this structure which has
 links to mostly all other structures.
 
@@ -76,29 +76,29 @@ links to mostly all other structures.
 
 =head1 HEADER FILES
 
-Currently the OpenSSL B<ssl> library provides the following C header files
+Currently the Opentls B<tls> library provides the following C header files
 containing the prototypes for the data structures and functions:
 
 =over 4
 
-=item F<< <openssl/ssl.h> >>
+=item F<< <opentls/tls.h> >>
 
-This is the common header file for the SSL/TLS API.  Include it into your
-program to make the API of the B<ssl> library available. It internally
-includes both more private SSL headers and headers from the B<crypto> library.
-Whenever you need hard-core details on the internals of the SSL API, look
+This is the common header file for the tls/TLS API.  Include it into your
+program to make the API of the B<tls> library available. It internally
+includes both more private tls headers and headers from the B<crypto> library.
+Whenever you need hard-core details on the internals of the tls API, look
 inside this header file.
 This file also includes the others listed below.
 
-=item F<< <openssl/ssl2.h> >>
+=item F<< <opentls/tls2.h> >>
 
 Unused. Present for backwards compatibility only.
 
-=item F<< <openssl/ssl3.h> >>
+=item F<< <opentls/tls3.h> >>
 
-This is the sub header file dealing with the SSLv3 protocol only.
+This is the sub header file dealing with the tlsv3 protocol only.
 
-=item F<< <openssl/tls1.h> >>
+=item F<< <opentls/tls1.h> >>
 
 This is the sub header file dealing with the TLSv1 protocol only.
 
@@ -106,11 +106,11 @@ This is the sub header file dealing with the TLSv1 protocol only.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

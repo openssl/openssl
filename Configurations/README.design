@@ -50,38 +50,38 @@ All their values in all the build.info throughout the source tree are
 collected together and form a set of programs, libraries, modules and
 scripts to be produced, source files, dependencies, etc etc etc.
 
-Let's have a pretend example, a very limited contraption of OpenSSL,
-composed of the program 'apps/openssl', the libraries 'libssl' and
-'libcrypto', an module 'engines/ossltest' and their sources and
+Let's have a pretend example, a very limited contraption of Opentls,
+composed of the program 'apps/opentls', the libraries 'libtls' and
+'libcrypto', an module 'engines/otlstest' and their sources and
 dependencies.
 
     # build.info
-    LIBS=libcrypto libssl
+    LIBS=libcrypto libtls
     INCLUDE[libcrypto]=include
-    INCLUDE[libssl]=include
-    DEPEND[libssl]=libcrypto
+    INCLUDE[libtls]=include
+    DEPEND[libtls]=libcrypto
 
 This is the top directory build.info file, and it tells us that two
 libraries are to be built, the include directory 'include/' shall be
 used throughout when building anything that will end up in each
-library, and that the library 'libssl' depend on the library
+library, and that the library 'libtls' depend on the library
 'libcrypto' to function properly.
 
     # apps/build.info
-    PROGRAMS=openssl
-    SOURCE[openssl]=openssl.c
-    INCLUDE[openssl]=.. ../include
-    DEPEND[openssl]=../libssl
+    PROGRAMS=opentls
+    SOURCE[opentls]=opentls.c
+    INCLUDE[opentls]=.. ../include
+    DEPEND[opentls]=../libtls
 
 This is the build.info file in 'apps/', one may notice that all file
 paths mentioned are relative to the directory the build.info file is
 located in.  This one tells us that there's a program to be built
-called 'apps/openssl' (the file name extension will depend on the
+called 'apps/opentls' (the file name extension will depend on the
 platform and is therefore not mentioned in the build.info file).  It's
-built from one source file, 'apps/openssl.c', and building it requires
+built from one source file, 'apps/opentls.c', and building it requires
 the use of '.' and 'include' include directories (both are declared
 from the point of view of the 'apps/' directory), and that the program
-depends on the library 'libssl' to function properly.
+depends on the library 'libtls' to function properly.
 
     # crypto/build.info
     LIBS=../libcrypto
@@ -112,12 +112,12 @@ Two things are worth an extra note:
 'DEPEND[cversion.o]' mentions an object file.  DEPEND indexes is the
 only location where it's valid to mention them
 
-    # ssl/build.info
-    LIBS=../libssl
-    SOURCE[../libssl]=tls.c
+    # tls/build.info
+    LIBS=../libtls
+    SOURCE[../libtls]=tls.c
 
-This is the build.info file in 'ssl/', and it tells us that the
-library 'libssl' is built from the source file 'ssl/tls.c'.
+This is the build.info file in 'tls/', and it tells us that the
+library 'libtls' is built from the source file 'tls/tls.c'.
 
     # engines/build.info
     MODULES=dasync
@@ -125,46 +125,46 @@ library 'libssl' is built from the source file 'ssl/tls.c'.
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include
 
-    MODULES_NO_INST=ossltest
-    SOURCE[ossltest]=e_ossltest.c
-    DEPEND[ossltest]=../libcrypto.a
-    INCLUDE[ossltest]=../include
+    MODULES_NO_INST=otlstest
+    SOURCE[otlstest]=e_otlstest.c
+    DEPEND[otlstest]=../libcrypto.a
+    INCLUDE[otlstest]=../include
 
 This is the build.info file in 'engines/', telling us that two modules
-called 'engines/dasync' and 'engines/ossltest' shall be built, that
-dasync's source is 'engines/e_dasync.c' and ossltest's source is
-'engines/e_ossltest.c' and that the include directory 'include/' may
+called 'engines/dasync' and 'engines/otlstest' shall be built, that
+dasync's source is 'engines/e_dasync.c' and otlstest's source is
+'engines/e_otlstest.c' and that the include directory 'include/' may
 be used when building anything that will be part of these modules.
 Also, both modules depend on the library 'libcrypto' to function
-properly.  ossltest is explicitly linked with the static variant of
+properly.  otlstest is explicitly linked with the static variant of
 the library 'libcrypto'.  Finally, only dasync is being installed, as
-ossltest is only for internal testing.
+otlstest is only for internal testing.
 
 When Configure digests these build.info files, the accumulated
 information comes down to this:
 
-    LIBS=libcrypto libssl
+    LIBS=libcrypto libtls
     SOURCE[libcrypto]=crypto/aes.c crypto/evp.c crypto/cversion.c
     DEPEND[crypto/cversion.o]=crypto/buildinf.h
     INCLUDE[libcrypto]=include
-    SOURCE[libssl]=ssl/tls.c
-    INCLUDE[libssl]=include
-    DEPEND[libssl]=libcrypto
+    SOURCE[libtls]=tls/tls.c
+    INCLUDE[libtls]=include
+    DEPEND[libtls]=libcrypto
 
-    PROGRAMS=apps/openssl
-    SOURCE[apps/openssl]=apps/openssl.c
-    INCLUDE[apps/openssl]=. include
-    DEPEND[apps/openssl]=libssl
+    PROGRAMS=apps/opentls
+    SOURCE[apps/opentls]=apps/opentls.c
+    INCLUDE[apps/opentls]=. include
+    DEPEND[apps/opentls]=libtls
 
     MODULES=engines/dasync
     SOURCE[engines/dasync]=engines/e_dasync.c
     DEPEND[engines/dasync]=libcrypto
     INCLUDE[engines/dasync]=include
 
-    MODULES_NO_INST=engines/ossltest
-    SOURCE[engines/ossltest]=engines/e_ossltest.c
-    DEPEND[engines/ossltest]=libcrypto.a
-    INCLUDE[engines/ossltest]=include
+    MODULES_NO_INST=engines/otlstest
+    SOURCE[engines/otlstest]=engines/e_otlstest.c
+    DEPEND[engines/otlstest]=libcrypto.a
+    INCLUDE[engines/otlstest]=include
 
     GENERATE[crypto/buildinf.h]=util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
     DEPEND[crypto/buildinf.h]=Makefile
@@ -251,9 +251,9 @@ section above would be digested into a %unified_info table:
     our %unified_info = (
         "depends" =>
             {
-                "apps/openssl" =>
+                "apps/opentls" =>
                     [
-                        "libssl",
+                        "libtls",
                     ],
                 "crypto/buildinf.h" =>
                     [
@@ -267,11 +267,11 @@ section above would be digested into a %unified_info table:
                     [
                         "libcrypto",
                     ],
-                "engines/ossltest" =>
+                "engines/otlstest" =>
                     [
                         "libcrypto.a",
                     ],
-                "libssl" =>
+                "libtls" =>
                     [
                         "libcrypto",
                     ],
@@ -283,7 +283,7 @@ section above would be digested into a %unified_info table:
         "modules" =>
             [
                 "engines/dasync",
-                "engines/ossltest",
+                "engines/otlstest",
             ],
         "generate" =>
             {
@@ -297,12 +297,12 @@ section above would be digested into a %unified_info table:
             },
         "includes" =>
             {
-                "apps/openssl" =>
+                "apps/opentls" =>
                     [
                         ".",
                         "include",
                     ],
-                "engines/ossltest" =>
+                "engines/otlstest" =>
                     [
                         "include"
                     ],
@@ -310,7 +310,7 @@ section above would be digested into a %unified_info table:
                     [
                         "include",
                     ],
-                "libssl" =>
+                "libtls" =>
                     [
                         "include",
                     ],
@@ -328,31 +328,31 @@ section above would be digested into a %unified_info table:
                 "libraries" =>
                     [
                         "libcrypto",
-                        "libssl",
+                        "libtls",
                     ],
                 "programs" =>
                     [
-                        "apps/openssl",
+                        "apps/opentls",
                     ],
            },
         "libraries" =>
             [
                 "libcrypto",
-                "libssl",
+                "libtls",
             ],
         "programs" =>
             [
-                "apps/openssl",
+                "apps/opentls",
             ],
         "sources" =>
             {
-                "apps/openssl" =>
+                "apps/opentls" =>
                     [
-                        "apps/openssl.o",
+                        "apps/opentls.o",
                     ],
-                "apps/openssl.o" =>
+                "apps/opentls.o" =>
                     [
-                        "apps/openssl.c",
+                        "apps/opentls.c",
                     ],
                 "crypto/aes.o" =>
                     [
@@ -374,13 +374,13 @@ section above would be digested into a %unified_info table:
                     [
                         "engines/e_dasync.o",
                     ],
-                "engines/e_ossltest.o" =>
+                "engines/e_otlstest.o" =>
                     [
-                        "engines/e_ossltest.c",
+                        "engines/e_otlstest.c",
                     ],
-                "engines/ossltest" =>
+                "engines/otlstest" =>
                     [
-                        "engines/e_ossltest.o",
+                        "engines/e_otlstest.o",
                     ],
                 "libcrypto" =>
                     [
@@ -388,24 +388,24 @@ section above would be digested into a %unified_info table:
                         "crypto/cversion.c",
                         "crypto/evp.c",
                     ],
-                "libssl" =>
+                "libtls" =>
                     [
-                        "ssl/tls.c",
+                        "tls/tls.c",
                     ],
-                "ssl/tls.o" =>
+                "tls/tls.o" =>
                     [
-                        "ssl/tls.c",
+                        "tls/tls.c",
                     ],
             },
     );
 
 As can be seen, everything in %unified_info is fairly simple suggest
 of information.  Still, it tells us that to build all programs, we
-must build 'apps/openssl', and to build the latter, we will need to
-build all its sources ('apps/openssl.o' in this case) and all the
-other things it depends on (such as 'libssl').  All those dependencies
-need to be built as well, using the same logic, so to build 'libssl',
-we need to build 'ssl/tls.o' as well as 'libcrypto', and to build the
+must build 'apps/opentls', and to build the latter, we will need to
+build all its sources ('apps/opentls.o' in this case) and all the
+other things it depends on (such as 'libtls').  All those dependencies
+need to be built as well, using the same logic, so to build 'libtls',
+we need to build 'tls/tls.o' as well as 'libcrypto', and to build the
 latter...
 
 

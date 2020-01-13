@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -14,23 +14,23 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-#include <openssl/types.h>
-#include <openssl/core_names.h>
+#include <opentls/provider.h>
+#include <opentls/params.h>
+#include <opentls/types.h>
+#include <opentls/core_names.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
-# define OPENSSL_NO_MDC2
+#if defined(OPENtls_NO_DES) && !defined(OPENtls_NO_MDC2)
+# define OPENtls_NO_MDC2
 #endif
 
-#ifndef OPENSSL_NO_MDC2
-# include <openssl/evp.h>
-# include <openssl/mdc2.h>
+#ifndef OPENtls_NO_MDC2
+# include <opentls/evp.h>
+# include <opentls/mdc2.h>
 
 # ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
+#  include <opentls/ebcdic.h>
 # endif
 
 static unsigned char pad1[16] = {
@@ -51,14 +51,14 @@ static int test_mdc2(void)
     EVP_MD_CTX *c;
     static char text[] = "Now is the time for all ";
     size_t tlen = strlen(text), i = 0;
-    OSSL_PROVIDER *prov = NULL;
-    OSSL_PARAM params[2];
+    Otls_PROVIDER *prov = NULL;
+    Otls_PARAM params[2];
 
-    params[i++] = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_PAD_TYPE,
+    params[i++] = Otls_PARAM_construct_uint(Otls_DIGEST_PARAM_PAD_TYPE,
                                             &pad_type),
-    params[i++] = OSSL_PARAM_construct_end();
+    params[i++] = Otls_PARAM_construct_end();
 
-    prov = OSSL_PROVIDER_load(NULL, "legacy");
+    prov = Otls_PROVIDER_load(NULL, "legacy");
 # ifdef CHARSET_EBCDIC
     ebcdic2ascii(text, text, tlen);
 # endif
@@ -81,14 +81,14 @@ static int test_mdc2(void)
     testresult = 1;
  end:
     EVP_MD_CTX_free(c);
-    OSSL_PROVIDER_unload(prov);
+    Otls_PROVIDER_unload(prov);
     return testresult;
 }
 #endif
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_MDC2
+#ifndef OPENtls_NO_MDC2
     ADD_TEST(test_mdc2);
 #endif
     return 1;

@@ -1,21 +1,21 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <opentls/asn1t.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/rand.h>
 
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
 /* PKCS#5 scrypt password based encryption structures */
 
 ASN1_SEQUENCE(SCRYPT_PARAMS) = {
@@ -210,7 +210,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
 }
 
 int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
-                             int passlen, ASN1_TYPE *param,
+                             int patlsen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
@@ -266,14 +266,14 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
 
     salt = sparam->salt->data;
     saltlen = sparam->salt->length;
-    if (EVP_PBE_scrypt(pass, passlen, salt, saltlen, N, r, p, 0, key, keylen)
+    if (EVP_PBE_scrypt(pass, patlsen, salt, saltlen, N, r, p, 0, key, keylen)
         == 0)
         goto err;
     rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
  err:
     if (keylen)
-        OPENSSL_cleanse(key, keylen);
+        OPENtls_cleanse(key, keylen);
     SCRYPT_PARAMS_free(sparam);
     return rv;
 }
-#endif /* OPENSSL_NO_SCRYPT */
+#endif /* OPENtls_NO_SCRYPT */

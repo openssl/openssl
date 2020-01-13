@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-package OpenSSL::Ordinals;
+package Opentls::Ordinals;
 
 use strict;
 use warnings;
@@ -21,11 +21,11 @@ $VERSION = "0.1";
 
 =head1 NAME
 
-OpenSSL::Util - small OpenSSL utilities
+Opentls::Util - small Opentls utilities
 
 =head1 SYNOPSIS
 
-  use OpenSSL::Util;
+  use Opentls::Util;
 
   $versiondiff = cmp_versions('1.0.2k', '3.0.1');
   # $versiondiff should be -1
@@ -42,7 +42,7 @@ OpenSSL::Util - small OpenSSL utilities
 
 =item B<cmp_versions "VERSION1", "VERSION2">
 
-Compares VERSION1 with VERSION2, paying attention to OpenSSL versioning.
+Compares VERSION1 with VERSION2, paying attention to Opentls versioning.
 
 Returns 1 if VERSION1 is greater than VERSION2, 0 if they are equal, and
 -1 if VERSION1 is less than VERSION2.
@@ -56,7 +56,7 @@ Returns 1 if VERSION1 is greater than VERSION2, 0 if they are equal, and
 # In terms of comparison, the x.y.zl and the x.y.z schemes
 # are compatible...  mostly because the latter starts at a
 # new major release with a new major number.
-sub _ossl_versionsplit {
+sub _otls_versionsplit {
     my $textversion = shift;
     return $textversion if $textversion eq '*';
     my ($major,$minor,$edit,$letter) =
@@ -66,8 +66,8 @@ sub _ossl_versionsplit {
 }
 
 sub cmp_versions {
-    my @a_split = _ossl_versionsplit(shift);
-    my @b_split = _ossl_versionsplit(shift);
+    my @a_split = _otls_versionsplit(shift);
+    my @b_split = _otls_versionsplit(shift);
     my $verdict = 0;
 
     while (@a_split) {

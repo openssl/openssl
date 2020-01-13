@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Perl script to run tests against S/MIME examples in RFC4134
 # Assumes RFC is in current directory and called "rfc4134.txt"
@@ -18,17 +18,17 @@ my $cmscmd;
 my $exdir  = "./";
 my $exfile = "./rfc4134.txt";
 
-if (-f "../apps/openssl")
+if (-f "../apps/opentls")
 	{
-	$cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
+	$cmscmd = "../util/shlib_wrap.sh ../apps/opentls cms";
 	}
-elsif (-f "..\\out32dll\\openssl.exe")
+elsif (-f "..\\out32dll\\opentls.exe")
 	{
-	$cmscmd = "..\\out32dll\\openssl.exe cms";
+	$cmscmd = "..\\out32dll\\opentls.exe cms";
 	}
-elsif (-f "..\\out32\\openssl.exe")
+elsif (-f "..\\out32\\opentls.exe")
 	{
-	$cmscmd = "..\\out32\\openssl.exe cms";
+	$cmscmd = "..\\out32\\opentls.exe cms";
 	}
 
 my @test_list = (

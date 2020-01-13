@@ -1,19 +1,19 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/bn.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/ts.h>
+#include <opentls/objects.h>
+#include <opentls/bn.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/ts.h>
 #include "ts_local.h"
 
 int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
@@ -28,7 +28,7 @@ int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
     if ((hex = BN_bn2hex(num_bn))) {
         result = BIO_write(bio, "0x", 2) > 0;
         result = result && BIO_write(bio, hex, strlen(hex)) > 0;
-        OPENSSL_free(hex);
+        OPENtls_free(hex);
     }
     BN_free(num_bn);
 

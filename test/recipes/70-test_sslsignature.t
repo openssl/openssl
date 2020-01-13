@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use Opentls::Test::Utils;
 use TLSProxy::Proxy;
 
-my $test_name = "test_sslsignature";
+my $test_name = "test_tlssignature";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
@@ -26,10 +26,10 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"));
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+$ENV{OPENtls_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"]), display => 1),
+    cmdstr(app(["opentls"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
@@ -83,7 +83,7 @@ SKIP: {
 
 SKIP: {
     skip "TLS <= 1.2 disabled", 2
-        if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
+        if alldisabled(("tls3", "tls1", "tls1_1", "tls1_2"));
 
     #Test 3: Corrupting a CertVerify signature in <=TLSv1.2 should fail
     $proxy->clear();

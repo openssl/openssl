@@ -1,24 +1,24 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_IDEA_H
-# define OPENSSL_IDEA_H
+#ifndef OPENtls_IDEA_H
+# define OPENtls_IDEA_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_IDEA_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_IDEA
+# ifndef OPENtls_NO_IDEA
 # ifdef  __cplusplus
 extern "C" {
 # endif
@@ -51,7 +51,7 @@ void IDEA_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                         int *num);
 void IDEA_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 #  define idea_options          IDEA_options
 #  define idea_ecb_encrypt      IDEA_ecb_encrypt
 #  define idea_set_encrypt_key  IDEA_set_encrypt_key

@@ -1,18 +1,18 @@
 /*
- * Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2016 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2012, Intel Corporation. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
  * (1) Intel Corporation, Israel Development Center, Haifa, Israel
  * (2) University of Haifa, Israel
  */
 
-#include <openssl/opensslconf.h>
+#include <opentls/opentlsconf.h>
 #include "rsaz_exp.h"
 
 #ifndef RSAZ_ENABLED
@@ -237,7 +237,7 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 
     rsaz_1024_red2norm_avx2(result_norm, result);
 
-    OPENSSL_cleanse(storage, sizeof(storage));
+    OPENtls_cleanse(storage, sizeof(storage));
 }
 
 /*
@@ -309,7 +309,7 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
     /* from Montgomery */
     rsaz_512_mul_by_one(result, temp, m, k0);
 
-    OPENSSL_cleanse(storage, sizeof(storage));
+    OPENtls_cleanse(storage, sizeof(storage));
 }
 
 #endif

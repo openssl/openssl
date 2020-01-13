@@ -1,19 +1,19 @@
 /*
- * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_local.h"
 #include "internal/refcount.h"
-#include <openssl/err.h>
-#include <openssl/engine.h>
+#include <opentls/err.h>
+#include <opentls/engine.h>
 
 #ifndef FIPS_MODE
 EC_KEY *EC_KEY_new(void)
@@ -22,12 +22,12 @@ EC_KEY *EC_KEY_new(void)
 }
 #endif
 
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx)
+EC_KEY *EC_KEY_new_ex(OPENtls_CTX *ctx)
 {
     return ec_key_new_method_int(ctx, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
+EC_KEY *EC_KEY_new_by_curve_name_ex(OPENtls_CTX *ctx, int nid)
 {
     EC_KEY *ret = EC_KEY_new_ex(ctx);
     if (ret == NULL)
@@ -68,7 +68,7 @@ void EC_KEY_free(EC_KEY *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(r->engine);
 #endif
 
@@ -83,7 +83,7 @@ void EC_KEY_free(EC_KEY *r)
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
 
-    OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
+    OPENtls_clear_free((void *)r, sizeof(EC_KEY));
 }
 
 EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
@@ -97,7 +97,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             dest->meth->finish(dest);
         if (dest->group && dest->group->meth->keyfinish)
             dest->group->meth->keyfinish(dest);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
         if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
@@ -152,7 +152,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 #endif
 
     if (src->meth != dest->meth) {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
         if (src->engine != NULL && ENGINE_init(src->engine) == 0)
             return NULL;
         dest->engine = src->engine;
@@ -209,7 +209,7 @@ int EC_KEY_generate_key(EC_KEY *eckey)
     return 0;
 }
 
-int ossl_ec_key_gen(EC_KEY *eckey)
+int otls_ec_key_gen(EC_KEY *eckey)
 {
     return eckey->group->meth->keygen(eckey);
 }
@@ -716,13 +716,13 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     len = EC_KEY_priv2oct(eckey, NULL, 0);
     if (len == 0)
         return 0;
-    if ((buf = OPENSSL_malloc(len)) == NULL) {
+    if ((buf = OPENtls_malloc(len)) == NULL) {
         ECerr(EC_F_EC_KEY_PRIV2BUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     len = EC_KEY_priv2oct(eckey, buf, len);
     if (len == 0) {
-        OPENSSL_free(buf);
+        OPENtls_free(buf);
         return 0;
     }
     *pbuf = buf;

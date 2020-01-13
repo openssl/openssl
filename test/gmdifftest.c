@@ -1,13 +1,13 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 #include "testutil.h"
 
@@ -29,17 +29,17 @@ static int check_time(long offset)
     time(&t1);
 
     t2 = t1 + offset;
-    OPENSSL_gmtime(&t2, &tm2);
-    OPENSSL_gmtime(&t1, &tm1);
+    OPENtls_gmtime(&t2, &tm2);
+    OPENtls_gmtime(&t1, &tm1);
     o1 = tm1;
-    OPENSSL_gmtime_adj(&tm1, 0, offset);
+    OPENtls_gmtime_adj(&tm1, 0, offset);
     if (!TEST_int_eq(tm1.tm_year, tm2.tm_year)
         || !TEST_int_eq(tm1.tm_mon, tm2.tm_mon)
         || !TEST_int_eq(tm1.tm_mday, tm2.tm_mday)
         || !TEST_int_eq(tm1.tm_hour, tm2.tm_hour)
         || !TEST_int_eq(tm1.tm_min, tm2.tm_min)
         || !TEST_int_eq(tm1.tm_sec, tm2.tm_sec)
-        || !TEST_true(OPENSSL_gmtime_diff(&off_day, &off_sec, &o1, &tm1)))
+        || !TEST_true(OPENtls_gmtime_diff(&off_day, &off_sec, &o1, &tm1)))
         return 0;
     toffset = (long)off_day * SECS_PER_DAY + off_sec;
     if (!TEST_long_eq(offset, toffset))

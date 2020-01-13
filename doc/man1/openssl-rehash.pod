@@ -1,16 +1,16 @@
 =pod
 
 =for comment
-Original text by James Westby, contributed under the OpenSSL license.
+Original text by James Westby, contributed under the Opentls license.
 
 =head1 NAME
 
-openssl-rehash, c_rehash - Create symbolic links to files named by the hash
+opentls-rehash, c_rehash - Create symbolic links to files named by the hash
 values
 
 =head1 SYNOPSIS
 
-B<openssl>
+B<opentls>
 B<rehash>
 [B<-h>]
 [B<-help>]
@@ -33,20 +33,20 @@ On some platforms, this command isn't available, and the external
 script B<c_rehash> has to be used instead.  They are functionally
 equivalent, except for minor differences noted below.
 
-B<openssl rehash> scans directories and calculates a hash value of
+B<opentls rehash> scans directories and calculates a hash value of
 each F<.pem>, F<.crt>, F<.cer>, or F<.crl>
 file in the specified directory list and creates symbolic links
 for each file, where the name of the link is the hash value.
 (If the platform does not support symbolic links, a copy is made.)
-This command is useful as many programs that use OpenSSL require
+This command is useful as many programs that use Opentls require
 directories to be set up like this in order to find certificates.
 
 If any directories are named on the command line, then those are
-processed in turn. If not, then the B<SSL_CERT_DIR> environment variable
+processed in turn. If not, then the B<tls_CERT_DIR> environment variable
 is consulted; this should be a colon-separated list of directories,
 like the Unix B<PATH> variable.
 If that is not set then the default directory (installation-specific
-but often F</usr/local/ssl/certs>) is processed.
+but often F</usr/local/tls/certs>) is processed.
 
 In order for a directory to be processed, the user must have write
 permissions on that directory, otherwise an error will be generated.
@@ -72,14 +72,14 @@ more than one such object appears in the file.
 =head2 Script Configuration
 
 The B<c_rehash> script
-uses the B<openssl> program to compute the hashes and
+uses the B<opentls> program to compute the hashes and
 fingerprints. If not found in the user's B<PATH>, then set the
-B<OPENSSL> environment variable to the full pathname.
+B<OPENtls> environment variable to the full pathname.
 Any program can be used, it will be invoked as follows for either
 a certificate or CRL:
 
-  $OPENSSL x509 -hash -fingerprint -noout -in FILENAME
-  $OPENSSL crl -hash -fingerprint -noout -in FILENAME
+  $OPENtls x509 -hash -fingerprint -noout -in FILENAME
+  $OPENtls crl -hash -fingerprint -noout -in FILENAME
 
 where I<FILENAME> is the filename. It must output the hash of the
 file on the first line, and the fingerprint on the second,
@@ -121,12 +121,12 @@ By default, this command only lists each directory as it is processed.
 
 =over 4
 
-=item B<OPENSSL>
+=item B<OPENtls>
 
 The path to an executable to use to generate hashes and
 fingerprints (see above).
 
-=item B<SSL_CERT_DIR>
+=item B<tls_CERT_DIR>
 
 Colon separated list of directories to operate on.
 Ignored if directories are listed on the command line.
@@ -135,17 +135,17 @@ Ignored if directories are listed on the command line.
 
 =head1 SEE ALSO
 
-L<openssl(1)>,
-L<openssl-crl(1)>,
-L<openssl-x509(1)>
+L<opentls(1)>,
+L<opentls-crl(1)>,
+L<opentls-x509(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

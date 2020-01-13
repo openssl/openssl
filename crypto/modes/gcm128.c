@@ -1,14 +1,14 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
 
@@ -38,7 +38,7 @@
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
  * TABLE_BITS>1 are lookup-table-driven implementations referred to as
- * "Shoup's" in GCM specification. In other words OpenSSL does not cover
+ * "Shoup's" in GCM specification. In other words Opentls does not cover
  * whole spectrum of possible table driven implementations. Why? In
  * non-"Shoup's" case memory access pattern is segmented in such manner,
  * that it's trivial to see that cache timing information can reveal
@@ -217,7 +217,7 @@ static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
 static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
     u128 V;
-# if defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(OPENtls_SMALL_FOOTPRINT)
     int i;
 # endif
 
@@ -226,7 +226,7 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
     V.hi = H[0];
     V.lo = H[1];
 
-# if defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(OPENtls_SMALL_FOOTPRINT)
     for (Htable[8] = V, i = 4; i > 0; i >>= 1) {
         REDUCE1BIT(V);
         Htable[i] = V;
@@ -366,7 +366,7 @@ static void gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
     }
 }
 
-#  if !defined(OPENSSL_SMALL_FOOTPRINT)
+#  if !defined(OPENtls_SMALL_FOOTPRINT)
 /*
  * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
  * details... Compiler-generated code doesn't seem to give any
@@ -552,7 +552,7 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 # endif
 
 # define GCM_MUL(ctx)      gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
-# if defined(GHASH_ASM) || !defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(GHASH_ASM) || !defined(OPENtls_SMALL_FOOTPRINT)
 #  define GHASH(ctx,in,len) gcm_ghash_4bit((ctx)->Xi.u,(ctx)->Htable,in,len)
 /*
  * GHASH_CHUNK is "stride parameter" missioned to mitigate cache trashing
@@ -629,7 +629,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
 
 #endif
 
-#if     TABLE_BITS==4 && (defined(GHASH_ASM) || defined(OPENSSL_CPUID_OBJ))
+#if     TABLE_BITS==4 && (defined(GHASH_ASM) || defined(OPENtls_CPUID_OBJ))
 # if    !defined(I386_ONLY) && \
         (defined(__i386)        || defined(__i386__)    || \
          defined(__x86_64)      || defined(__x86_64__)  || \
@@ -668,9 +668,9 @@ void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  if __ARM_MAX_ARCH__>=7
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
-#   define PMULL_CAPABLE        (OPENSSL_armcap_P & ARMV8_PMULL)
+#   define PMULL_CAPABLE        (OPENtls_armcap_P & ARMV8_PMULL)
 #   if defined(__arm__) || defined(__arm)
-#    define NEON_CAPABLE        (OPENSSL_armcap_P & ARMV7_NEON)
+#    define NEON_CAPABLE        (OPENtls_armcap_P & ARMV7_NEON)
 #   endif
 void gcm_init_neon(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_neon(u64 Xi[2], const u128 Htable[16]);
@@ -685,12 +685,12 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  include "sparc_arch.h"
 #  define GHASH_ASM_SPARC
 #  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_sparcv9cap_P[];
+extern unsigned int OPENtls_sparcv9cap_P[];
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
-# elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+# elif defined(OPENtls_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 #  include "ppc_arch.h"
 #  define GHASH_ASM_PPC
 #  define GCM_FUNCREF_4BIT
@@ -746,9 +746,9 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 #  define CTX__GHASH(f) (ctx->ghash = NULL)
 # endif
 # if    defined(GHASH_ASM_X86_OR_64)
-#  if   !defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
-    if (OPENSSL_ia32cap_P[1] & (1 << 1)) { /* check PCLMULQDQ bit */
-        if (((OPENSSL_ia32cap_P[1] >> 22) & 0x41) == 0x41) { /* AVX+MOVBE */
+#  if   !defined(GHASH_ASM_X86) || defined(OPENtls_IA32_SSE2)
+    if (OPENtls_ia32cap_P[1] & (1 << 1)) { /* check PCLMULQDQ bit */
+        if (((OPENtls_ia32cap_P[1] >> 22) & 0x41) == 0x41) { /* AVX+MOVBE */
             gcm_init_avx(ctx->Htable, ctx->H.u);
             ctx->gmult = gcm_gmult_avx;
             CTX__GHASH(gcm_ghash_avx);
@@ -762,10 +762,10 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 #  endif
     gcm_init_4bit(ctx->Htable, ctx->H.u);
 #  if   defined(GHASH_ASM_X86)  /* x86 only */
-#   if  defined(OPENSSL_IA32_SSE2)
-    if (OPENSSL_ia32cap_P[0] & (1 << 25)) { /* check SSE bit */
+#   if  defined(OPENtls_IA32_SSE2)
+    if (OPENtls_ia32cap_P[0] & (1 << 25)) { /* check SSE bit */
 #   else
-    if (OPENSSL_ia32cap_P[0] & (1 << 23)) { /* check MMX bit */
+    if (OPENtls_ia32cap_P[0] & (1 << 23)) { /* check MMX bit */
 #   endif
         ctx->gmult = gcm_gmult_4bit_mmx;
         CTX__GHASH(gcm_ghash_4bit_mmx);
@@ -798,7 +798,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
         CTX__GHASH(gcm_ghash_4bit);
     }
 # elif  defined(GHASH_ASM_SPARC)
-    if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
+    if (OPENtls_sparcv9cap_P[0] & SPARCV9_VIS3) {
         gcm_init_vis3(ctx->Htable, ctx->H.u);
         ctx->gmult = gcm_gmult_vis3;
         CTX__GHASH(gcm_ghash_vis3);
@@ -808,7 +808,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
         CTX__GHASH(gcm_ghash_4bit);
     }
 # elif  defined(GHASH_ASM_PPC)
-    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+    if (OPENtls_ppccap_P & PPC_CRYPTO207) {
         gcm_init_p8(ctx->Htable, ctx->H.u);
         ctx->gmult = gcm_gmult_p8;
         CTX__GHASH(gcm_ghash_p8);
@@ -993,7 +993,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
     void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
     void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
@@ -1008,7 +1008,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 
     if (ctx->ares) {
         /* First call to encrypt finalizes GHASH(AAD) */
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
         if (len == 0) {
             GCM_MUL(ctx);
             ctx->ares = 0;
@@ -1034,7 +1034,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
         ctr = ctx->Yi.d[3];
 
     n = mres % 16;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     if (16 % sizeof(size_t) == 0) { /* always true actually */
         do {
             if (n) {
@@ -1194,7 +1194,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
             else
                 ctx->Yi.d[3] = ctr;
         }
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
         ctx->Xn[mres++] = out[i] = in[i] ^ ctx->EKi.c[n];
         n = (n + 1) % 16;
         if (mres == sizeof(ctx->Xn)) {
@@ -1228,7 +1228,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
     void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
     void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
@@ -1243,7 +1243,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
     if (ctx->ares) {
         /* First call to decrypt finalizes GHASH(AAD) */
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
         if (len == 0) {
             GCM_MUL(ctx);
             ctx->ares = 0;
@@ -1269,7 +1269,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
         ctr = ctx->Yi.d[3];
 
     n = mres % 16;
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
+#if !defined(OPENtls_SMALL_FOOTPRINT)
     if (16 % sizeof(size_t) == 0) { /* always true actually */
         do {
             if (n) {
@@ -1435,7 +1435,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
             else
                 ctx->Yi.d[3] = ctr;
         }
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
         out[i] = (ctx->Xn[mres++] = c = in[i]) ^ ctx->EKi.c[n];
         n = (n + 1) % 16;
         if (mres == sizeof(ctx->Xn)) {
@@ -1460,7 +1460,7 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
                                 const unsigned char *in, unsigned char *out,
                                 size_t len, ctr128_f stream)
 {
-#if defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(OPENtls_SMALL_FOOTPRINT)
     return CRYPTO_gcm128_encrypt(ctx, in, out, len);
 #else
     const union {
@@ -1624,7 +1624,7 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
                                 const unsigned char *in, unsigned char *out,
                                 size_t len, ctr128_f stream)
 {
-#if defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(OPENtls_SMALL_FOOTPRINT)
     return CRYPTO_gcm128_decrypt(ctx, in, out, len);
 #else
     const union {
@@ -1802,13 +1802,13 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     u64 clen = ctx->len.u[1] << 3;
 #ifdef GCM_FUNCREF_4BIT
     void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+# if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
     void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
 #endif
 
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
     u128 bitlen;
     unsigned int mres = ctx->mres;
 
@@ -1844,7 +1844,7 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
 #endif
     }
 
-#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+#if defined(GHASH) && !defined(OPENtls_SMALL_FOOTPRINT)
     bitlen.hi = alen;
     bitlen.lo = clen;
     memcpy(ctx->Xn + mres, &bitlen, sizeof(bitlen));
@@ -1876,7 +1876,7 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 {
     GCM128_CONTEXT *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL)
+    if ((ret = OPENtls_malloc(sizeof(*ret))) != NULL)
         CRYPTO_gcm128_init(ret, key, block);
 
     return ret;
@@ -1884,5 +1884,5 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 {
-    OPENSSL_clear_free(ctx, sizeof(*ctx));
+    OPENtls_clear_free(ctx, sizeof(*ctx));
 }

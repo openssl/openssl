@@ -1,22 +1,22 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
-#ifndef OSSL_INTERNAL_REFCOUNT_H
-# define OSSL_INTERNAL_REFCOUNT_H
+#ifndef Otls_INTERNAL_REFCOUNT_H
+# define Otls_INTERNAL_REFCOUNT_H
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
-# if defined(OPENSSL_NO_STDIO)
+# if defined(OPENtls_NO_STDIO)
 #  if defined(REF_PRINT)
 #   error "REF_PRINT requires stdio"
 #  endif
 # endif
 
-# ifndef OPENSSL_DEV_NO_ATOMICS
+# ifndef OPENtls_DEV_NO_ATOMICS
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
       && !defined(__STDC_NO_ATOMICS__)
 #   include <stdatomic.h>
@@ -141,11 +141,11 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 #   endif
 
 #  endif
-# endif  /* !OPENSSL_DEV_NO_ATOMICS */
+# endif  /* !OPENtls_DEV_NO_ATOMICS */
 
 /*
  * All the refcounting implementations above define HAVE_ATOMICS, so if it's
- * still undefined here (such as when OPENSSL_DEV_NO_ATMOICS is defined), it
+ * still undefined here (such as when OPENtls_DEV_NO_ATMOICS is defined), it
  * means we need to implement a fallback.  This fallback uses locks.
  */
 # ifndef HAVE_ATOMICS
@@ -157,9 +157,9 @@ typedef int CRYPTO_REF_COUNT;
 
 # endif
 
-# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
+# if !defined(NDEBUG) && !defined(OPENtls_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
+    (void)((test) ? (OPENtls_die("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif

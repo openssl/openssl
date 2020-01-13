@@ -1,21 +1,21 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/asn1.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/ec.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/objects.h>
+#include <opentls/asn1.h>
+#include <opentls/rsa.h>
+#include <opentls/dsa.h>
+#include <opentls/ec.h>
 
 #include "crypto/evp.h"
 
@@ -38,7 +38,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     }
 
     switch (EVP_PKEY_id(ret)) {
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     case EVP_PKEY_RSA:
         if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) == NULL) {
             ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
@@ -46,7 +46,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
         }
         break;
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
     case EVP_PKEY_DSA:
         /* TMP UGLY CAST */
         if (!d2i_DSAPublicKey(&ret->pkey.dsa, pp, length)) {
@@ -55,7 +55,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
         }
         break;
 #endif
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     case EVP_PKEY_EC:
         if (!o2i_ECPublicKey(&ret->pkey.ec, pp, length)) {
             ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);

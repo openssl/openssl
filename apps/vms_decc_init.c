@@ -1,13 +1,13 @@
 /*
- * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#if defined( __VMS) && !defined( OPENSSL_NO_DECC_INIT) && \
+#if defined( __VMS) && !defined( OPENtls_NO_DECC_INIT) && \
  defined( __DECC) && !defined( __VAX) && (__CRTL_VER >= 70301000)
 # define USE_DECC_INIT 1
 #endif
@@ -65,7 +65,7 @@ decc_feat_t decc_feat_array[] = {
 
 static void decc_init(void)
 {
-    char *openssl_debug_decc_init;
+    char *opentls_debug_decc_init;
     int verbose = 0;
     int feat_index;
     int feat_value;
@@ -75,9 +75,9 @@ static void decc_init(void)
     int sts;
 
     /* Get debug option. */
-    openssl_debug_decc_init = getenv("OPENSSL_DEBUG_DECC_INIT");
-    if (openssl_debug_decc_init != NULL) {
-        verbose = strtol(openssl_debug_decc_init, NULL, 10);
+    opentls_debug_decc_init = getenv("OPENtls_DEBUG_DECC_INIT");
+    if (opentls_debug_decc_init != NULL) {
+        verbose = strtol(opentls_debug_decc_init, NULL, 10);
         if (verbose <= 0) {
             verbose = 1;
         }

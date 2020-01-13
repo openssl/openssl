@@ -1,27 +1,27 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include <stdio.h>
-#include <openssl/core.h>
-#include <openssl/core_numbers.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+#include <opentls/core.h>
+#include <opentls/core_numbers.h>
+#include <opentls/core_names.h>
+#include <opentls/params.h>
+#include <opentls/err.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
 
 /* TODO(3.0): Needed for dummy_evp_call(). To be removed */
-#include <openssl/sha.h>
-#include <openssl/rand_drbg.h>
-#include <openssl/ec.h>
-#include <openssl/fips_names.h>
+#include <opentls/sha.h>
+#include <opentls/rand_drbg.h>
+#include <opentls/ec.h>
+#include <opentls/fips_names.h>
 
 #include "internal/cryptlib.h"
 #include "internal/property.h"
@@ -36,89 +36,89 @@
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "fips=yes", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
-extern OSSL_core_thread_start_fn *c_thread_start;
+extern Otls_core_thread_start_fn *c_thread_start;
 
 /*
  * TODO(3.0): Should these be stored in the provider side provctx? Could they
  * ever be different from one init to the next? Unfortunately we can't do this
  * at the moment because c_put_error/c_add_error_vdata do not provide
- * us with the OPENSSL_CTX as a parameter.
+ * us with the OPENtls_CTX as a parameter.
  */
 
 static SELF_TEST_POST_PARAMS selftest_params;
 
 /* Functions provided by the core */
-static OSSL_core_gettable_params_fn *c_gettable_params;
-static OSSL_core_get_params_fn *c_get_params;
-OSSL_core_thread_start_fn *c_thread_start;
-static OSSL_core_new_error_fn *c_new_error;
-static OSSL_core_set_error_debug_fn *c_set_error_debug;
-static OSSL_core_vset_error_fn *c_vset_error;
-static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
-static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
-static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
-static OSSL_CRYPTO_clear_free_fn *c_CRYPTO_clear_free;
-static OSSL_CRYPTO_realloc_fn *c_CRYPTO_realloc;
-static OSSL_CRYPTO_clear_realloc_fn *c_CRYPTO_clear_realloc;
-static OSSL_CRYPTO_secure_malloc_fn *c_CRYPTO_secure_malloc;
-static OSSL_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
-static OSSL_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
-static OSSL_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
-static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
+static Otls_core_gettable_params_fn *c_gettable_params;
+static Otls_core_get_params_fn *c_get_params;
+Otls_core_thread_start_fn *c_thread_start;
+static Otls_core_new_error_fn *c_new_error;
+static Otls_core_set_error_debug_fn *c_set_error_debug;
+static Otls_core_vset_error_fn *c_vset_error;
+static Otls_CRYPTO_malloc_fn *c_CRYPTO_malloc;
+static Otls_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
+static Otls_CRYPTO_free_fn *c_CRYPTO_free;
+static Otls_CRYPTO_clear_free_fn *c_CRYPTO_clear_free;
+static Otls_CRYPTO_realloc_fn *c_CRYPTO_realloc;
+static Otls_CRYPTO_clear_realloc_fn *c_CRYPTO_clear_realloc;
+static Otls_CRYPTO_secure_malloc_fn *c_CRYPTO_secure_malloc;
+static Otls_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
+static Otls_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
+static Otls_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
+static Otls_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 
 typedef struct fips_global_st {
-    const OSSL_PROVIDER *prov;
+    const Otls_PROVIDER *prov;
 } FIPS_GLOBAL;
 
-static void *fips_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *fips_prov_otls_ctx_new(OPENtls_CTX *libctx)
 {
-    FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
+    FIPS_GLOBAL *fgbl = OPENtls_zalloc(sizeof(*fgbl));
 
     return fgbl;
 }
 
-static void fips_prov_ossl_ctx_free(void *fgbl)
+static void fips_prov_otls_ctx_free(void *fgbl)
 {
-    OPENSSL_free(fgbl);
+    OPENtls_free(fgbl);
 }
 
-static const OPENSSL_CTX_METHOD fips_prov_ossl_ctx_method = {
-    fips_prov_ossl_ctx_new,
-    fips_prov_ossl_ctx_free,
+static const OPENtls_CTX_METHOD fips_prov_otls_ctx_method = {
+    fips_prov_otls_ctx_new,
+    fips_prov_otls_ctx_free,
 };
 
 
 /* Parameters we provide to the core */
-static const OSSL_PARAM fips_param_types[] = {
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
-    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
-    OSSL_PARAM_END
+static const Otls_PARAM fips_param_types[] = {
+    Otls_PARAM_DEFN(Otls_PROV_PARAM_NAME, Otls_PARAM_UTF8_PTR, NULL, 0),
+    Otls_PARAM_DEFN(Otls_PROV_PARAM_VERSION, Otls_PARAM_UTF8_PTR, NULL, 0),
+    Otls_PARAM_DEFN(Otls_PROV_PARAM_BUILDINFO, Otls_PARAM_UTF8_PTR, NULL, 0),
+    Otls_PARAM_END
 };
 
 /*
  * Parameters to retrieve from the core provider - required for self testing.
  * NOTE: inside core_get_params() these will be loaded from config items
- * stored inside prov->parameters (except for OSSL_PROV_PARAM_MODULE_FILENAME).
+ * stored inside prov->parameters (except for Otls_PROV_PARAM_MODULE_FILENAME).
  */
-static OSSL_PARAM core_params[] =
+static Otls_PARAM core_params[] =
 {
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_MODULE_FILENAME,
+    Otls_PARAM_utf8_ptr(Otls_PROV_PARAM_MODULE_FILENAME,
                         selftest_params.module_filename,
                         sizeof(selftest_params.module_filename)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+    Otls_PARAM_utf8_ptr(Otls_PROV_FIPS_PARAM_MODULE_MAC,
                         selftest_params.module_checksum_data,
                         sizeof(selftest_params.module_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
+    Otls_PARAM_utf8_ptr(Otls_PROV_FIPS_PARAM_INSTALL_MAC,
                         selftest_params.indicator_checksum_data,
                         sizeof(selftest_params.indicator_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+    Otls_PARAM_utf8_ptr(Otls_PROV_FIPS_PARAM_INSTALL_STATUS,
                         selftest_params.indicator_data,
                         sizeof(selftest_params.indicator_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
+    Otls_PARAM_utf8_ptr(Otls_PROV_FIPS_PARAM_INSTALL_VERSION,
                         selftest_params.indicator_version,
                         sizeof(selftest_params.indicator_version)),
-    OSSL_PARAM_END
+    Otls_PARAM_END
 };
 
 /*
@@ -139,7 +139,7 @@ static int rawnative_fromhex(const char *hex_data[],
 
     for (slen = 0, i = 0; hex_data[i] != NULL; ++i)
         slen += strlen(hex_data[i]);
-    str = OPENSSL_zalloc(slen + 1);
+    str = OPENtls_zalloc(slen + 1);
     if (str == NULL)
         return 0;
     for (i = 0; hex_data[i] != NULL; ++i)
@@ -160,21 +160,21 @@ static int rawnative_fromhex(const char *hex_data[],
     data = NULL; /* so it does not get freed */
 err:
     BN_free(bn);
-    OPENSSL_free(data);
+    OPENtls_free(data);
     return ret;
 }
 
 /* TODO(3.0): To be removed */
 static int dummy_evp_call(void *provctx)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OPENtls_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
-    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, Otls_KDF_NAME_PBKDF2, NULL);
     EVP_PKEY_CTX *sctx = NULL, *kctx = NULL;
     EVP_PKEY *pkey = NULL;
-    OSSL_PARAM *p;
-    OSSL_PARAM params[16];
+    Otls_PARAM *p;
+    Otls_PARAM params[16];
     unsigned char sig[64];
     size_t siglen, sigdgstlen;
     unsigned char *dsa_p = NULL, *dsa_q = NULL, *dsa_g = NULL;
@@ -235,8 +235,8 @@ static int dummy_evp_call(void *provctx)
     BN_CTX *bnctx = NULL;
     BIGNUM *a = NULL, *b = NULL;
     unsigned char randbuf[128];
-    RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
-#ifndef OPENSSL_NO_EC
+    RAND_DRBG *drbg = OPENtls_CTX_get0_public_drbg(libctx);
+#ifndef OPENtls_NO_EC
     EC_KEY *key = NULL;
 #endif
 
@@ -272,7 +272,7 @@ static int dummy_evp_call(void *provctx)
     if (!BN_rand_ex(a, 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, bnctx))
         goto err;
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     /* Do some dummy EC calls */
     key = EC_KEY_new_by_curve_name_ex(libctx, NID_X9_62_prime256v1);
     if (key == NULL)
@@ -289,14 +289,14 @@ static int dummy_evp_call(void *provctx)
         goto err;
 
     p = params;
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_P, dsa_p, dsa_p_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_Q, dsa_q, dsa_q_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_G, dsa_g, dsa_g_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DSA_PUB_KEY,
+    *p++ = Otls_PARAM_construct_BN(Otls_PKEY_PARAM_FFC_P, dsa_p, dsa_p_len);
+    *p++ = Otls_PARAM_construct_BN(Otls_PKEY_PARAM_FFC_Q, dsa_q, dsa_q_len);
+    *p++ = Otls_PARAM_construct_BN(Otls_PKEY_PARAM_FFC_G, dsa_g, dsa_g_len);
+    *p++ = Otls_PARAM_construct_BN(Otls_PKEY_PARAM_DSA_PUB_KEY,
                                    dsa_pub, dsa_pub_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DSA_PRIV_KEY,
+    *p++ = Otls_PARAM_construct_BN(Otls_PKEY_PARAM_DSA_PRIV_KEY,
                                    dsa_priv, dsa_priv_len);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
 
     kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
     if (kctx == NULL)
@@ -315,13 +315,13 @@ static int dummy_evp_call(void *provctx)
     /* set signature parameters */
     sigdgstlen = SHA256_DIGEST_LENGTH;
     p = params;
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_SIGNATURE_PARAM_DIGEST,
                                             SN_sha256,
                                             strlen(SN_sha256) + 1);
 
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+    *p++ = Otls_PARAM_construct_size_t(Otls_SIGNATURE_PARAM_DIGEST_SIZE,
                                        &sigdgstlen);
-    *p = OSSL_PARAM_construct_end();
+    *p = Otls_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(sctx, params) <= 0)
         goto err;
 
@@ -338,44 +338,44 @@ static int dummy_evp_call(void *provctx)
     EVP_MD_CTX_free(ctx);
     EVP_MD_free(sha256);
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     EC_KEY_free(key);
 #endif
-    OPENSSL_free(dsa_p);
-    OPENSSL_free(dsa_q);
-    OPENSSL_free(dsa_g);
-    OPENSSL_free(dsa_pub);
-    OPENSSL_free(dsa_priv);
+    OPENtls_free(dsa_p);
+    OPENtls_free(dsa_q);
+    OPENtls_free(dsa_g);
+    OPENtls_free(dsa_pub);
+    OPENtls_free(dsa_priv);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(kctx);
     EVP_PKEY_CTX_free(sctx);
     return ret;
 }
 
-static const OSSL_PARAM *fips_gettable_params(const OSSL_PROVIDER *prov)
+static const Otls_PARAM *fips_gettable_params(const Otls_PROVIDER *prov)
 {
     return fips_param_types;
 }
 
-static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int fips_get_params(const Otls_PROVIDER *prov, Otls_PARAM params[])
 {
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL FIPS Provider"))
+    p = Otls_PARAM_locate(params, Otls_PROV_PARAM_NAME);
+    if (p != NULL && !Otls_PARAM_set_utf8_ptr(p, "Opentls FIPS Provider"))
         return 0;
-    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_VERSION);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR))
+    p = Otls_PARAM_locate(params, Otls_PROV_PARAM_VERSION);
+    if (p != NULL && !Otls_PARAM_set_utf8_ptr(p, OPENtls_VERSION_STR))
         return 0;
-    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_BUILDINFO);
-    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
+    p = Otls_PARAM_locate(params, Otls_PROV_PARAM_BUILDINFO);
+    if (p != NULL && !Otls_PARAM_set_utf8_ptr(p, OPENtls_FULL_VERSION_STR))
         return 0;
 
     return 1;
 }
 
 /* FIPS specific version of the function of the same name in provlib.c */
-const char *ossl_prov_util_nid_to_name(int nid)
+const char *otls_prov_util_nid_to_name(int nid)
 {
     /* We don't have OBJ_nid2n() in FIPS_MODE so we have an explicit list */
 
@@ -494,7 +494,7 @@ const char *ossl_prov_util_nid_to_name(int nid)
  * NIST uses, or that are used for ASN.1 OBJECT IDENTIFIERs, or names
  * we have used historically.
  */
-static const OSSL_ALGORITHM fips_digests[] = {
+static const Otls_ALGORITHM fips_digests[] = {
     /* Our primary name:NiST name[:our older names] */
     { "SHA1:SHA-1", "fips=yes", sha1_functions },
     { "SHA2-224:SHA-224:SHA224", "fips=yes", sha224_functions },
@@ -521,7 +521,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
+static const Otls_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
     ALG("AES-256-ECB", aes256ecb_functions),
     ALG("AES-192-ECB", aes192ecb_functions),
@@ -557,16 +557,16 @@ static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
          cipher_capable_aes_cbc_hmac_sha256),
     ALGC("AES-256-CBC-HMAC-SHA256", aes256cbc_hmac_sha256_functions,
          cipher_capable_aes_cbc_hmac_sha256),
-#ifndef OPENSSL_NO_DES
+#ifndef OPENtls_NO_DES
     ALG("DES-EDE3-ECB:DES-EDE3", tdes_ede3_ecb_functions),
     ALG("DES-EDE3-CBC:DES3", tdes_ede3_cbc_functions),
-#endif  /* OPENSSL_NO_DES */
+#endif  /* OPENtls_NO_DES */
     { { NULL, NULL, NULL }, NULL }
 };
-static OSSL_ALGORITHM exported_fips_ciphers[OSSL_NELEM(fips_ciphers)];
+static Otls_ALGORITHM exported_fips_ciphers[Otls_NELEM(fips_ciphers)];
 
-static const OSSL_ALGORITHM fips_macs[] = {
-#ifndef OPENSSL_NO_CMAC
+static const Otls_ALGORITHM fips_macs[] = {
+#ifndef OPENtls_NO_CMAC
     { "CMAC", "fips=yes", cmac_functions },
 #endif
     { "GMAC", "fips=yes", gmac_functions },
@@ -576,7 +576,7 @@ static const OSSL_ALGORITHM fips_macs[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM fips_kdfs[] = {
+static const Otls_ALGORITHM fips_kdfs[] = {
     { "HKDF", "fips=yes", kdf_hkdf_functions },
     { "SSKDF", "fips=yes", kdf_sskdf_functions },
     { "PBKDF2", "fips=yes", kdf_pbkdf2_functions },
@@ -585,135 +585,135 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM fips_signature[] = {
-#ifndef OPENSSL_NO_DSA
+static const Otls_ALGORITHM fips_signature[] = {
+#ifndef OPENtls_NO_DSA
     { "DSA:dsaEncryption", "fips=yes", dsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM fips_keymgmt[] = {
-#ifndef OPENSSL_NO_DSA
+static const Otls_ALGORITHM fips_keymgmt[] = {
+#ifndef OPENtls_NO_DSA
     { "DSA", "fips=yes", dsa_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
+static const Otls_ALGORITHM *fips_query(Otls_PROVIDER *prov,
                                          int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {
-    case OSSL_OP_DIGEST:
+    case Otls_OP_DIGEST:
         return fips_digests;
-    case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
+    case Otls_OP_CIPHER:
+        otls_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
         return exported_fips_ciphers;
-    case OSSL_OP_MAC:
+    case Otls_OP_MAC:
         return fips_macs;
-    case OSSL_OP_KDF:
+    case Otls_OP_KDF:
         return fips_kdfs;
-    case OSSL_OP_KEYMGMT:
+    case Otls_OP_KEYMGMT:
         return fips_keymgmt;
-    case OSSL_OP_SIGNATURE:
+    case Otls_OP_SIGNATURE:
         return fips_signature;
     }
     return NULL;
 }
 
 /* Functions we provide to the core */
-static const OSSL_DISPATCH fips_dispatch_table[] = {
+static const Otls_DISPATCH fips_dispatch_table[] = {
     /*
-     * To release our resources we just need to free the OPENSSL_CTX so we just
-     * use OPENSSL_CTX_free directly as our teardown function
+     * To release our resources we just need to free the OPENtls_CTX so we just
+     * use OPENtls_CTX_free directly as our teardown function
      */
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENSSL_CTX_free },
-    { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
-    { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
-    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
+    { Otls_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENtls_CTX_free },
+    { Otls_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
+    { Otls_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
+    { Otls_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { 0, NULL }
 };
 
 /* Functions we provide to ourself */
-static const OSSL_DISPATCH intern_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
+static const Otls_DISPATCH intern_dispatch_table[] = {
+    { Otls_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { 0, NULL }
 };
 
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
-                       const OSSL_DISPATCH *in,
-                       const OSSL_DISPATCH **out,
+int Otls_provider_init(const Otls_PROVIDER *provider,
+                       const Otls_DISPATCH *in,
+                       const Otls_DISPATCH **out,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *ctx;
+    OPENtls_CTX *ctx;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+        case Otls_FUNC_CORE_GETTABLE_PARAMS:
+            c_gettable_params = Otls_get_core_gettable_params(in);
             break;
-        case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+        case Otls_FUNC_CORE_GET_PARAMS:
+            c_get_params = Otls_get_core_get_params(in);
             break;
-        case OSSL_FUNC_CORE_THREAD_START:
-            c_thread_start = OSSL_get_core_thread_start(in);
+        case Otls_FUNC_CORE_THREAD_START:
+            c_thread_start = Otls_get_core_thread_start(in);
             break;
-        case OSSL_FUNC_CORE_NEW_ERROR:
-            c_new_error = OSSL_get_core_new_error(in);
+        case Otls_FUNC_CORE_NEW_ERROR:
+            c_new_error = Otls_get_core_new_error(in);
             break;
-        case OSSL_FUNC_CORE_SET_ERROR_DEBUG:
-            c_set_error_debug = OSSL_get_core_set_error_debug(in);
+        case Otls_FUNC_CORE_SET_ERROR_DEBUG:
+            c_set_error_debug = Otls_get_core_set_error_debug(in);
             break;
-        case OSSL_FUNC_CORE_VSET_ERROR:
-            c_vset_error = OSSL_get_core_vset_error(in);
+        case Otls_FUNC_CORE_VSET_ERROR:
+            c_vset_error = Otls_get_core_vset_error(in);
             break;
-        case OSSL_FUNC_CRYPTO_MALLOC:
-            c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
+        case Otls_FUNC_CRYPTO_MALLOC:
+            c_CRYPTO_malloc = Otls_get_CRYPTO_malloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_ZALLOC:
-            c_CRYPTO_zalloc = OSSL_get_CRYPTO_zalloc(in);
+        case Otls_FUNC_CRYPTO_ZALLOC:
+            c_CRYPTO_zalloc = Otls_get_CRYPTO_zalloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_FREE:
-            c_CRYPTO_free = OSSL_get_CRYPTO_free(in);
+        case Otls_FUNC_CRYPTO_FREE:
+            c_CRYPTO_free = Otls_get_CRYPTO_free(in);
             break;
-        case OSSL_FUNC_CRYPTO_CLEAR_FREE:
-            c_CRYPTO_clear_free = OSSL_get_CRYPTO_clear_free(in);
+        case Otls_FUNC_CRYPTO_CLEAR_FREE:
+            c_CRYPTO_clear_free = Otls_get_CRYPTO_clear_free(in);
             break;
-        case OSSL_FUNC_CRYPTO_REALLOC:
-            c_CRYPTO_realloc = OSSL_get_CRYPTO_realloc(in);
+        case Otls_FUNC_CRYPTO_REALLOC:
+            c_CRYPTO_realloc = Otls_get_CRYPTO_realloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_CLEAR_REALLOC:
-            c_CRYPTO_clear_realloc = OSSL_get_CRYPTO_clear_realloc(in);
+        case Otls_FUNC_CRYPTO_CLEAR_REALLOC:
+            c_CRYPTO_clear_realloc = Otls_get_CRYPTO_clear_realloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_SECURE_MALLOC:
-            c_CRYPTO_secure_malloc = OSSL_get_CRYPTO_secure_malloc(in);
+        case Otls_FUNC_CRYPTO_SECURE_MALLOC:
+            c_CRYPTO_secure_malloc = Otls_get_CRYPTO_secure_malloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_SECURE_ZALLOC:
-            c_CRYPTO_secure_zalloc = OSSL_get_CRYPTO_secure_zalloc(in);
+        case Otls_FUNC_CRYPTO_SECURE_ZALLOC:
+            c_CRYPTO_secure_zalloc = Otls_get_CRYPTO_secure_zalloc(in);
             break;
-        case OSSL_FUNC_CRYPTO_SECURE_FREE:
-            c_CRYPTO_secure_free = OSSL_get_CRYPTO_secure_free(in);
+        case Otls_FUNC_CRYPTO_SECURE_FREE:
+            c_CRYPTO_secure_free = Otls_get_CRYPTO_secure_free(in);
             break;
-        case OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE:
-            c_CRYPTO_secure_clear_free = OSSL_get_CRYPTO_secure_clear_free(in);
+        case Otls_FUNC_CRYPTO_SECURE_CLEAR_FREE:
+            c_CRYPTO_secure_clear_free = Otls_get_CRYPTO_secure_clear_free(in);
             break;
-        case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
-            c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
+        case Otls_FUNC_CRYPTO_SECURE_ALLOCATED:
+            c_CRYPTO_secure_allocated = Otls_get_CRYPTO_secure_allocated(in);
             break;
-        case OSSL_FUNC_BIO_NEW_FILE:
-            selftest_params.bio_new_file_cb = OSSL_get_BIO_new_file(in);
+        case Otls_FUNC_BIO_NEW_FILE:
+            selftest_params.bio_new_file_cb = Otls_get_BIO_new_file(in);
             break;
-        case OSSL_FUNC_BIO_NEW_MEMBUF:
-            selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
+        case Otls_FUNC_BIO_NEW_MEMBUF:
+            selftest_params.bio_new_buffer_cb = Otls_get_BIO_new_membuf(in);
             break;
-        case OSSL_FUNC_BIO_READ_EX:
-            selftest_params.bio_read_ex_cb = OSSL_get_BIO_read_ex(in);
+        case Otls_FUNC_BIO_READ_EX:
+            selftest_params.bio_read_ex_cb = Otls_get_BIO_read_ex(in);
             break;
-        case OSSL_FUNC_BIO_FREE:
-            selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
+        case Otls_FUNC_BIO_FREE:
+            selftest_params.bio_free_cb = Otls_get_BIO_free(in);
             break;
         default:
             /* Just ignore anything we don't understand */
@@ -725,11 +725,11 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         return 0;
 
     /*  Create a context. */
-    if ((ctx = OPENSSL_CTX_new()) == NULL)
+    if ((ctx = OPENtls_CTX_new()) == NULL)
         return 0;
-    if ((fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
-                                     &fips_prov_ossl_ctx_method)) == NULL) {
-        OPENSSL_CTX_free(ctx);
+    if ((fgbl = opentls_ctx_get_data(ctx, OPENtls_CTX_FIPS_PROV_INDEX,
+                                     &fips_prov_otls_ctx_method)) == NULL) {
+        OPENtls_CTX_free(ctx);
         return 0;
     }
 
@@ -737,7 +737,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
 
     selftest_params.libctx = PROV_LIBRARY_CONTEXT_OF(ctx);
     if (!SELF_TEST_post(&selftest_params, 0)) {
-        OPENSSL_CTX_free(ctx);
+        OPENtls_CTX_free(ctx);
         return 0;
     }
 
@@ -746,7 +746,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
      * EVP calls from within the FIPS module.
      */
     if (!dummy_evp_call(ctx)) {
-        OPENSSL_CTX_free(ctx);
+        OPENtls_CTX_free(ctx);
         return 0;
     }
 
@@ -763,18 +763,18 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
  * the provider context of this inner instance with the same library context
  * that was used in the EVP call that initiated this recursive call.
  */
-OSSL_provider_init_fn fips_intern_provider_init;
-int fips_intern_provider_init(const OSSL_PROVIDER *provider,
-                              const OSSL_DISPATCH *in,
-                              const OSSL_DISPATCH **out,
+Otls_provider_init_fn fips_intern_provider_init;
+int fips_intern_provider_init(const Otls_PROVIDER *provider,
+                              const Otls_DISPATCH *in,
+                              const Otls_DISPATCH **out,
                               void **provctx)
 {
-    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    Otls_core_get_library_context_fn *c_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_get_core_get_library_context(in);
+        case Otls_FUNC_CORE_GET_LIBRARY_CONTEXT:
+            c_get_libctx = Otls_get_core_get_library_context(in);
             break;
         default:
             break;
@@ -788,7 +788,7 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
 
     /*
      * Safety measure...  we should get the library context that was
-     * created up in OSSL_provider_init().
+     * created up in Otls_provider_init().
      */
     if (*provctx == NULL)
         return 0;
@@ -821,10 +821,10 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
-const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)
+const Otls_PROVIDER *FIPS_get_provider(OPENtls_CTX *ctx)
 {
-    FIPS_GLOBAL *fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
-                                             &fips_prov_ossl_ctx_method);
+    FIPS_GLOBAL *fgbl = opentls_ctx_get_data(ctx, OPENtls_CTX_FIPS_PROV_INDEX,
+                                             &fips_prov_otls_ctx_method);
 
     if (fgbl == NULL)
         return NULL;

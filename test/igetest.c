@@ -1,24 +1,24 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* The AES_ige_* functions are deprecated, so we suppress warnings about them */
-#define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENtls_SUPPRESS_DEPRECATED
 
-#include <openssl/crypto.h>
-#include <openssl/aes.h>
-#include <openssl/rand.h>
+#include <opentls/crypto.h>
+#include <opentls/aes.h>
+#include <opentls/rand.h>
 #include <stdio.h>
 #include <string.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 
 # define TEST_SIZE       128
 # define BIG_TEST_SIZE 10240
@@ -441,7 +441,7 @@ static int test_bi_ige_garble3(void)
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     RAND_bytes(rkey, sizeof(rkey));
     RAND_bytes(rkey2, sizeof(rkey2));
     RAND_bytes(plaintext, sizeof(plaintext));
@@ -455,8 +455,8 @@ int setup_tests(void)
     ADD_TEST(test_bi_ige_garble1);
     ADD_TEST(test_bi_ige_garble2);
     ADD_TEST(test_bi_ige_garble3);
-    ADD_ALL_TESTS(test_ige_vectors, OSSL_NELEM(ige_test_vectors));
-    ADD_ALL_TESTS(test_bi_ige_vectors, OSSL_NELEM(bi_ige_test_vectors));
+    ADD_ALL_TESTS(test_ige_vectors, Otls_NELEM(ige_test_vectors));
+    ADD_ALL_TESTS(test_bi_ige_vectors, Otls_NELEM(bi_ige_test_vectors));
 #endif
     return 1;
 }

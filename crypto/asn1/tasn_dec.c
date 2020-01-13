@@ -1,19 +1,19 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
 #include <string.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
-#include <openssl/err.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
+#include <opentls/err.h>
 #include "internal/numbers.h"
 #include "asn1_local.h"
 
@@ -768,7 +768,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
     ret = 1;
  err:
     if (free_cont)
-        OPENSSL_free(buf.data);
+        OPENtls_free(buf.data);
     return ret;
 }
 
@@ -882,7 +882,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         }
         /* If we've already allocated a buffer use it */
         if (*free_cont) {
-            OPENSSL_free(stmp->data);
+            OPENtls_free(stmp->data);
             stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
             stmp->length = len;
             *free_cont = 0;

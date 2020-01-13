@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "prov/ciphercommon.h"
@@ -16,7 +16,7 @@
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                   size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
-    PROV_TDES_CTX *tctx = OPENSSL_zalloc(sizeof(*tctx));
+    PROV_TDES_CTX *tctx = OPENtls_zalloc(sizeof(*tctx));
 
     if (tctx != NULL)
         cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags, hw,
@@ -28,7 +28,7 @@ void tdes_freectx(void *vctx)
 {
     PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
@@ -84,18 +84,18 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 }
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(tdes)
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
+    Otls_PARAM_octet_string(Otls_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(tdes)
 
-int tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int tdes_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
     PROV_CIPHER_CTX  *ctx = (PROV_CIPHER_CTX *)vctx;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
     if (!cipher_generic_get_ctx_params(vctx, params))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_RANDOM_KEY);
+    p = Otls_PARAM_locate(params, Otls_CIPHER_PARAM_RANDOM_KEY);
     if (p != NULL && !tdes_generatekey(ctx, p->data)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GENERATE_KEY);
         return 0;

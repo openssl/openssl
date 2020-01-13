@@ -1,15 +1,15 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
+#include <opentls/crypto.h>
 
 #include "crypto/poly1305.h"
 
@@ -60,7 +60,7 @@ static unsigned int U8TOU32(const unsigned char *p)
  * implementation is not necessarily optimal choice in every situation,
  * rather contrary...
  *
- *                                              <appro@openssl.org>
+ *                                              <appro@opentls.org>
  */
 
 typedef unsigned int u32;
@@ -526,5 +526,5 @@ void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16])
     poly1305_emit(ctx->opaque, mac, ctx->nonce);
 
     /* zero out the state */
-    OPENSSL_cleanse(ctx, sizeof(*ctx));
+    OPENtls_cleanse(ctx, sizeof(*ctx));
 }

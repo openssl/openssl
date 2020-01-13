@@ -1,16 +1,16 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 static ASN1_ITEM_EXP *asn1_item_list[] = {
 
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(ASIdOrRange),
     ASN1_ITEM_ref(ASIdentifierChoice),
     ASN1_ITEM_ref(ASIdentifiers),
@@ -41,7 +41,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(ASN1_UTCTIME),
     ASN1_ITEM_ref(ASN1_UTF8STRING),
     ASN1_ITEM_ref(ASN1_VISIBLESTRING),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(ASRange),
 #endif
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
@@ -50,19 +50,19 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(BIGNUM),
     ASN1_ITEM_ref(CBIGNUM),
     ASN1_ITEM_ref(CERTIFICATEPOLICIES),
-#ifndef OPENSSL_NO_CMS
+#ifndef OPENtls_NO_CMS
     ASN1_ITEM_ref(CMS_ContentInfo),
     ASN1_ITEM_ref(CMS_ReceiptRequest),
 #endif
     ASN1_ITEM_ref(CRL_DIST_POINTS),
-#ifndef OPENSSL_NO_DH
+#ifndef OPENtls_NO_DH
     ASN1_ITEM_ref(DHparams),
 #endif
     ASN1_ITEM_ref(DIRECTORYSTRING),
     ASN1_ITEM_ref(DISPLAYTEXT),
     ASN1_ITEM_ref(DIST_POINT_NAME),
     ASN1_ITEM_ref(DIST_POINT),
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     ASN1_ITEM_ref(ECPARAMETERS),
     ASN1_ITEM_ref(ECPKPARAMETERS),
 #endif
@@ -71,14 +71,14 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(GENERAL_NAMES),
     ASN1_ITEM_ref(GENERAL_NAME),
     ASN1_ITEM_ref(GENERAL_SUBTREE),
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
     ASN1_ITEM_ref(IPAddressChoice),
     ASN1_ITEM_ref(IPAddressFamily),
     ASN1_ITEM_ref(IPAddressOrRange),
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(LONG),
 #endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
@@ -86,7 +86,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(NETSCAPE_SPKAC),
     ASN1_ITEM_ref(NETSCAPE_SPKI),
     ASN1_ITEM_ref(NOTICEREF),
-#ifndef OPENSSL_NO_OCSP
+#ifndef OPENtls_NO_OCSP
     ASN1_ITEM_ref(OCSP_BASICRESP),
     ASN1_ITEM_ref(OCSP_CERTID),
     ASN1_ITEM_ref(OCSP_CERTSTATUS),
@@ -134,13 +134,13 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(POLICY_MAPPING),
     ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
     ASN1_ITEM_ref(PROXY_POLICY),
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
     ASN1_ITEM_ref(RSAPrivateKey),
     ASN1_ITEM_ref(RSAPublicKey),
     ASN1_ITEM_ref(RSA_OAEP_PARAMS),
     ASN1_ITEM_ref(RSA_PSS_PARAMS),
 #endif
-#ifndef OPENSSL_NO_SCRYPT
+#ifndef OPENtls_NO_SCRYPT
     ASN1_ITEM_ref(SCRYPT_PARAMS),
 #endif
     ASN1_ITEM_ref(SXNETID),
@@ -164,7 +164,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
     ASN1_ITEM_ref(X509),
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(ZLONG),
 #endif
     ASN1_ITEM_ref(INT32),

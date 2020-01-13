@@ -1,6 +1,6 @@
-openssl_conf = openssl_init
+opentls_conf = opentls_init
 
-[openssl_init]
+[opentls_init]
 providers = provider_sect
 
 [provider_sect]

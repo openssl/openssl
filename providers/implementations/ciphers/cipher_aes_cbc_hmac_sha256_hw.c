@@ -1,10 +1,10 @@
 /*
- * Copyright 2011-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -93,7 +93,7 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
         SHA256_Update(c, ptr, res);
 }
 
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
 
 typedef struct {
     unsigned int A[8], B[8], C[8], D[8], E[8], F[8], G[8], H[8];
@@ -376,13 +376,13 @@ static size_t tls1_multi_block_encrypt(void *vctx,
 
     aesni_multi_cbc_encrypt(ciph_d, &ctx->ks, n4x);
 
-    OPENSSL_cleanse(blocks, sizeof(blocks));
-    OPENSSL_cleanse(mctx, sizeof(*mctx));
+    OPENtls_cleanse(blocks, sizeof(blocks));
+    OPENtls_cleanse(mctx, sizeof(*mctx));
 
     ctx->multiblock_encrypt_len = ret;
     return ret;
 }
-# endif /* !OPENSSL_NO_MULTIBLOCK */
+# endif /* !OPENtls_NO_MULTIBLOCK */
 
 static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
                                         unsigned char *out,
@@ -421,10 +421,10 @@ static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
          * either even XOP-capable Bulldozer-based or GenuineIntel one.
          * But SHAEXT-capable go ahead...
          */
-        if (((OPENSSL_ia32cap_P[2] & (1 << 29)) ||         /* SHAEXT? */
-             ((OPENSSL_ia32cap_P[1] & (1 << (60 - 32))) && /* AVX? */
-              ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32)))   /* XOP? */
-               | (OPENSSL_ia32cap_P[0] & (1 << 30))))) &&  /* "Intel CPU"? */
+        if (((OPENtls_ia32cap_P[2] & (1 << 29)) ||         /* SHAEXT? */
+             ((OPENtls_ia32cap_P[1] & (1 << (60 - 32))) && /* AVX? */
+              ((OPENtls_ia32cap_P[1] & (1 << (43 - 32)))   /* XOP? */
+               | (OPENtls_ia32cap_P[0] & (1 << 30))))) &&  /* "Intel CPU"? */
             plen > (sha_off + iv) &&
             (blocks = (plen - (sha_off + iv)) / SHA256_CBLOCK)) {
             sha256_update(&sctx->md, in + iv, sha_off);
@@ -701,7 +701,7 @@ static void aesni_cbc_hmac_sha256_set_mac_key(void *vctx,
     SHA256_Init(&ctx->tail);
     sha256_update(&ctx->tail, hmac_key, sizeof(hmac_key));
 
-    OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+    OPENtls_cleanse(hmac_key, sizeof(hmac_key));
 }
 
 /* EVP_CTRL_AEAD_TLS1_AAD */
@@ -742,14 +742,14 @@ static int aesni_cbc_hmac_sha256_set_tls1_aad(void *vctx,
     }
 }
 
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
 /* EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE */
 static int aesni_cbc_hmac_sha256_tls1_multiblock_max_bufsize(
     void *vctx)
 {
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
 
-    OPENSSL_assert(ctx->multiblock_max_send_fragment != 0);
+    OPENtls_assert(ctx->multiblock_max_send_fragment != 0);
     return (int)(5 + 16
                  + (((int)ctx->multiblock_max_send_fragment + 32 + 16) & -16));
 }
@@ -773,7 +773,7 @@ static int aesni_cbc_hmac_sha256_tls1_multiblock_aad(
             if (inp_len < 4096)
                 return 0; /* too short */
 
-            if (inp_len >= 8192 && OPENSSL_ia32cap_P[2] & (1 << 5))
+            if (inp_len >= 8192 && OPENtls_ia32cap_P[2] & (1 << 5))
                 n4x = 2; /* AVX2 */
         } else if ((n4x = param->interleave / 4) && n4x <= 2)
             inp_len = param->len;
@@ -823,7 +823,7 @@ static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha256 = {
     },
     aesni_cbc_hmac_sha256_set_mac_key,
     aesni_cbc_hmac_sha256_set_tls1_aad,
-# if !defined(OPENSSL_NO_MULTIBLOCK)
+# if !defined(OPENtls_NO_MULTIBLOCK)
     aesni_cbc_hmac_sha256_tls1_multiblock_max_bufsize,
     aesni_cbc_hmac_sha256_tls1_multiblock_aad,
     aesni_cbc_hmac_sha256_tls1_multiblock_encrypt

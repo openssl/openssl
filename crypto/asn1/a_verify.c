@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,11 +13,11 @@
 
 #include "internal/cryptlib.h"
 
-#include <openssl/bn.h>
-#include <openssl/x509.h>
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
+#include <opentls/bn.h>
+#include <opentls/x509.h>
+#include <opentls/objects.h>
+#include <opentls/buffer.h>
+#include <opentls/evp.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -52,7 +52,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    buf_in = OPENSSL_malloc((unsigned int)inl);
+    buf_in = OPENtls_malloc((unsigned int)inl);
     if (buf_in == NULL) {
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -63,7 +63,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     ret = EVP_VerifyInit_ex(ctx, type, NULL)
         && EVP_VerifyUpdate(ctx, (unsigned char *)buf_in, inl);
 
-    OPENSSL_clear_free(buf_in, (unsigned int)inl);
+    OPENtls_clear_free(buf_in, (unsigned int)inl);
 
     if (!ret) {
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_EVP_LIB);
@@ -171,7 +171,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     }
     ret = 1;
  err:
-    OPENSSL_clear_free(buf_in, inll);
+    OPENtls_clear_free(buf_in, inll);
     EVP_MD_CTX_free(ctx);
     return ret;
 }

@@ -1,10 +1,10 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -28,7 +28,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     size_t len = 0, j;
 
     if (BN_is_zero(scalar)) {
-        r = OPENSSL_malloc(1);
+        r = OPENtls_malloc(1);
         if (r == NULL) {
             BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -57,7 +57,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     }
 
     len = BN_num_bits(scalar);
-    r = OPENSSL_malloc(len + 1); /*
+    r = OPENtls_malloc(len + 1); /*
                                   * Modified wNAF may be one digit longer than binary representation
                                   * (*ret_len will be set to the actual length, i.e. at most
                                   * BN_num_bits(scalar) + 1)
@@ -134,7 +134,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     return r;
 
  err:
-    OPENSSL_free(r);
+    OPENtls_free(r);
     return NULL;
 }
 

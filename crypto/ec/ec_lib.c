@@ -1,23 +1,23 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/err.h>
-#include <openssl/opensslv.h>
+#include <opentls/err.h>
+#include <opentls/opentlsv.h>
 
 #include "ec_local.h"
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
+EC_GROUP *EC_GROUP_new_ex(OPENtls_CTX *libctx, const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -30,7 +30,7 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
         return NULL;
     }
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -46,7 +46,7 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
         if (ret->cofactor == NULL)
             goto err;
     }
-    ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
+    ret->asn1_flag = OPENtls_EC_NAMED_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
     if (!meth->group_init(ret))
         goto err;
@@ -55,7 +55,7 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
  err:
     BN_free(ret->order);
     BN_free(ret->cofactor);
-    OPENSSL_free(ret);
+    OPENtls_free(ret);
     return NULL;
 }
 
@@ -76,7 +76,7 @@ void EC_pre_comp_free(EC_GROUP *group)
         EC_nistz256_pre_comp_free(group->pre_comp.nistz256);
 #endif
         break;
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifndef OPENtls_NO_EC_NISTP_64_GCC_128
     case PCT_nistp224:
         EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
         break;
@@ -112,11 +112,11 @@ void EC_GROUP_free(EC_GROUP *group)
     EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
-    OPENSSL_free(group->seed);
-    OPENSSL_free(group);
+    OPENtls_free(group->seed);
+    OPENtls_free(group);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 void EC_GROUP_clear_free(EC_GROUP *group)
 {
     if (!group)
@@ -132,8 +132,8 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
-    OPENSSL_clear_free(group->seed, group->seed_len);
-    OPENSSL_clear_free(group, sizeof(*group));
+    OPENtls_clear_free(group->seed, group->seed_len);
+    OPENtls_clear_free(group, sizeof(*group));
 }
 #endif
 
@@ -164,7 +164,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
         dest->pre_comp.nistz256 = EC_nistz256_pre_comp_dup(src->pre_comp.nistz256);
 #endif
         break;
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifndef OPENtls_NO_EC_NISTP_64_GCC_128
     case PCT_nistp224:
         dest->pre_comp.nistp224 = EC_nistp224_pre_comp_dup(src->pre_comp.nistp224);
         break;
@@ -224,8 +224,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     dest->asn1_form = src->asn1_form;
 
     if (src->seed) {
-        OPENSSL_free(dest->seed);
-        if ((dest->seed = OPENSSL_malloc(src->seed_len)) == NULL) {
+        OPENtls_free(dest->seed);
+        if ((dest->seed = OPENtls_malloc(src->seed_len)) == NULL) {
             ECerr(EC_F_EC_GROUP_COPY, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -233,7 +233,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
             return 0;
         dest->seed_len = src->seed_len;
     } else {
-        OPENSSL_free(dest->seed);
+        OPENtls_free(dest->seed);
         dest->seed = NULL;
         dest->seed_len = 0;
     }
@@ -493,14 +493,14 @@ point_conversion_form_t EC_GROUP_get_point_conversion_form(const EC_GROUP
 
 size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 {
-    OPENSSL_free(group->seed);
+    OPENtls_free(group->seed);
     group->seed = NULL;
     group->seed_len = 0;
 
     if (!len || !p)
         return 1;
 
-    if ((group->seed = OPENSSL_malloc(len)) == NULL) {
+    if ((group->seed = OPENtls_malloc(len)) == NULL) {
         ECerr(EC_F_EC_GROUP_SET_SEED, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -540,7 +540,7 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     return group->meth->group_get_curve(group, p, a, b, ctx);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                            const BIGNUM *b, BN_CTX *ctx)
 {
@@ -553,7 +553,7 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
     return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *ctx)
 {
@@ -693,7 +693,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         return NULL;
     }
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -703,7 +703,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
     ret->curve_name = group->curve_name;
 
     if (!ret->meth->point_init(ret)) {
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
         return NULL;
     }
 
@@ -717,7 +717,7 @@ void EC_POINT_free(EC_POINT *point)
 
     if (point->meth->point_finish != 0)
         point->meth->point_finish(point);
-    OPENSSL_free(point);
+    OPENtls_free(point);
 }
 
 void EC_POINT_clear_free(EC_POINT *point)
@@ -729,7 +729,7 @@ void EC_POINT_clear_free(EC_POINT *point)
         point->meth->point_clear_finish(point);
     else if (point->meth->point_finish != 0)
         point->meth->point_finish(point);
-    OPENSSL_clear_free(point, sizeof(*point));
+    OPENtls_clear_free(point, sizeof(*point));
 }
 
 int EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
@@ -849,7 +849,7 @@ int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
                                         EC_POINT *point, const BIGNUM *x,
                                         const BIGNUM *y, BN_CTX *ctx)
@@ -857,7 +857,7 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
     return EC_POINT_set_affine_coordinates(group, point, x, y, ctx);
 }
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
                                          EC_POINT *point, const BIGNUM *x,
                                          const BIGNUM *y, BN_CTX *ctx)
@@ -887,7 +887,7 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
     return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENtls_NO_DEPRECATED_3_0
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
                                         const EC_POINT *point, BIGNUM *x,
                                         BIGNUM *y, BN_CTX *ctx)
@@ -895,7 +895,7 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
     return EC_POINT_get_affine_coordinates(group, point, x, y, ctx);
 }
 
-# ifndef OPENSSL_NO_EC2M
+# ifndef OPENtls_NO_EC2M
 int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
                                          const EC_POINT *point, BIGNUM *x,
                                          BIGNUM *y, BN_CTX *ctx)

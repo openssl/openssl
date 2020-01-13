@@ -1,22 +1,22 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
 #include "internal/nelem.h"
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 #include "e_os.h"
 
-#ifdef OPENSSL_SYS_UNIX
+#ifdef OPENtls_SYS_UNIX
 # include <unistd.h>
-#ifndef OPENSSL_NO_KTLS
+#ifndef OPENtls_NO_KTLS
 # include <netinet/in.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
@@ -25,9 +25,9 @@
 # include <fcntl.h>
 #endif
 
-static ossl_inline void ossl_sleep(unsigned int millis)
+static otls_inline void otls_sleep(unsigned int millis)
 {
-# ifdef OPENSSL_SYS_VXWORKS
+# ifdef OPENtls_SYS_VXWORKS
     struct timespec ts;
     ts.tv_sec = (long int) (millis / 1000);
     ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
@@ -39,13 +39,13 @@ static ossl_inline void ossl_sleep(unsigned int millis)
 #elif defined(_WIN32)
 # include <windows.h>
 
-static ossl_inline void ossl_sleep(unsigned int millis)
+static otls_inline void otls_sleep(unsigned int millis)
 {
     Sleep(millis);
 }
 #else
 /* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned int millis)
+static otls_inline void otls_sleep(unsigned int millis)
 {
     struct timeval start, now;
     unsigned int elapsedms;
@@ -180,7 +180,7 @@ static void dump_data(const char *data, int len)
         /* Now look at message */
         rec += DTLS1_RT_HEADER_LENGTH;
         rem -= DTLS1_RT_HEADER_LENGTH;
-        if (content == SSL3_RT_HANDSHAKE) {
+        if (content == tls3_RT_HANDSHAKE) {
             printf("**---- START OF HANDSHAKE MESSAGE FRAGMENT ----\n");
             if (epoch > 0) {
                 printf("**---- HANDSHAKE MESSAGE FRAGMENT ENCRYPTED ----\n");
@@ -290,8 +290,8 @@ struct mempacket_st {
 static void mempacket_free(MEMPACKET *pkt)
 {
     if (pkt->data != NULL)
-        OPENSSL_free(pkt->data);
-    OPENSSL_free(pkt);
+        OPENtls_free(pkt->data);
+    OPENtls_free(pkt);
 }
 
 typedef struct mempacket_test_ctx_st {
@@ -341,10 +341,10 @@ static int mempacket_test_new(BIO *bio)
 {
     MEMPACKET_TEST_CTX *ctx;
 
-    if (!TEST_ptr(ctx = OPENSSL_zalloc(sizeof(*ctx))))
+    if (!TEST_ptr(ctx = OPENtls_zalloc(sizeof(*ctx))))
         return 0;
     if (!TEST_ptr(ctx->pkts = sk_MEMPACKET_new_null())) {
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
         return 0;
     }
     ctx->dropepoch = 0;
@@ -359,7 +359,7 @@ static int mempacket_test_free(BIO *bio)
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
 
     sk_MEMPACKET_pop_free(ctx->pkts, mempacket_free);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
     BIO_set_data(bio, NULL);
     BIO_set_init(bio, 0);
     return 1;
@@ -478,16 +478,16 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     }
 
     for (i = 0; i < (duprec ? 3 : 1); i++) {
-        if (!TEST_ptr(allpkts[i] = OPENSSL_malloc(sizeof(*thispkt))))
+        if (!TEST_ptr(allpkts[i] = OPENtls_malloc(sizeof(*thispkt))))
             goto err;
         thispkt = allpkts[i];
 
-        if (!TEST_ptr(thispkt->data = OPENSSL_malloc(inl)))
+        if (!TEST_ptr(thispkt->data = OPENtls_malloc(inl)))
             goto err;
         /*
          * If we are duplicating the packet, we duplicate it three times. The
          * first two times we drop the first record if there are more than one.
-         * In this way we know that libssl will not be able to make progress
+         * In this way we know that libtls will not be able to make progress
          * until it receives the last packet, and hence will be forced to
          * buffer these records.
          */
@@ -716,46 +716,46 @@ static int always_retry_puts(BIO *bio, const char *str)
     return -1;
 }
 
-int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
+int create_tls_ctx_pair(const tls_METHOD *sm, const tls_METHOD *cm,
                         int min_proto_version, int max_proto_version,
-                        SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
+                        tls_CTX **sctx, tls_CTX **cctx, char *certfile,
                         char *privkeyfile)
 {
-    SSL_CTX *serverctx = NULL;
-    SSL_CTX *clientctx = NULL;
+    tls_CTX *serverctx = NULL;
+    tls_CTX *clientctx = NULL;
 
-    if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
-            || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
+    if (!TEST_ptr(serverctx = tls_CTX_new(sm))
+            || (cctx != NULL && !TEST_ptr(clientctx = tls_CTX_new(cm))))
         goto err;
 
     if ((min_proto_version > 0
-         && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
+         && !TEST_true(tls_CTX_set_min_proto_version(serverctx,
                                                      min_proto_version)))
         || (max_proto_version > 0
-            && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
+            && !TEST_true(tls_CTX_set_max_proto_version(serverctx,
                                                         max_proto_version))))
         goto err;
     if (clientctx != NULL
         && ((min_proto_version > 0
-             && !TEST_true(SSL_CTX_set_min_proto_version(clientctx,
+             && !TEST_true(tls_CTX_set_min_proto_version(clientctx,
                                                          min_proto_version)))
             || (max_proto_version > 0
-                && !TEST_true(SSL_CTX_set_max_proto_version(clientctx,
+                && !TEST_true(tls_CTX_set_max_proto_version(clientctx,
                                                             max_proto_version)))))
         goto err;
 
     if (certfile != NULL && privkeyfile != NULL) {
-        if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,
-                                                      SSL_FILETYPE_PEM), 1)
-                || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(serverctx,
+        if (!TEST_int_eq(tls_CTX_use_certificate_file(serverctx, certfile,
+                                                      tls_FILETYPE_PEM), 1)
+                || !TEST_int_eq(tls_CTX_use_PrivateKey_file(serverctx,
                                                             privkeyfile,
-                                                            SSL_FILETYPE_PEM), 1)
-                || !TEST_int_eq(SSL_CTX_check_private_key(serverctx), 1))
+                                                            tls_FILETYPE_PEM), 1)
+                || !TEST_int_eq(tls_CTX_check_private_key(serverctx), 1))
             goto err;
     }
 
-#ifndef OPENSSL_NO_DH
-    SSL_CTX_set_dh_auto(serverctx, 1);
+#ifndef OPENtls_NO_DH
+    tls_CTX_set_dh_auto(serverctx, 1);
 #endif
 
     *sctx = serverctx;
@@ -764,14 +764,14 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     return 1;
 
  err:
-    SSL_CTX_free(serverctx);
-    SSL_CTX_free(clientctx);
+    tls_CTX_free(serverctx);
+    tls_CTX_free(clientctx);
     return 0;
 }
 
 #define MAXLOOPS    1000000
 
-#if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
+#if !defined(OPENtls_NO_KTLS) && !defined(OPENtls_NO_SOCK)
 static int set_nb(int fd)
 {
     int flags;
@@ -845,34 +845,34 @@ success:
     return ret;
 }
 
-int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
-                          SSL **cssl, int sfd, int cfd)
+int create_tls_objects2(tls_CTX *serverctx, tls_CTX *clientctx, tls **stls,
+                          tls **ctls, int sfd, int cfd)
 {
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
 
-    if (*sssl != NULL)
-        serverssl = *sssl;
-    else if (!TEST_ptr(serverssl = SSL_new(serverctx)))
+    if (*stls != NULL)
+        servertls = *stls;
+    else if (!TEST_ptr(servertls = tls_new(serverctx)))
         goto error;
-    if (*cssl != NULL)
-        clientssl = *cssl;
-    else if (!TEST_ptr(clientssl = SSL_new(clientctx)))
+    if (*ctls != NULL)
+        clienttls = *ctls;
+    else if (!TEST_ptr(clienttls = tls_new(clientctx)))
         goto error;
 
     if (!TEST_ptr(s_to_c_bio = BIO_new_socket(sfd, BIO_NOCLOSE))
             || !TEST_ptr(c_to_s_bio = BIO_new_socket(cfd, BIO_NOCLOSE)))
         goto error;
 
-    SSL_set_bio(clientssl, c_to_s_bio, c_to_s_bio);
-    SSL_set_bio(serverssl, s_to_c_bio, s_to_c_bio);
-    *sssl = serverssl;
-    *cssl = clientssl;
+    tls_set_bio(clienttls, c_to_s_bio, c_to_s_bio);
+    tls_set_bio(servertls, s_to_c_bio, s_to_c_bio);
+    *stls = servertls;
+    *ctls = clienttls;
     return 1;
 
  error:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
+    tls_free(servertls);
+    tls_free(clienttls);
     BIO_free(s_to_c_bio);
     BIO_free(c_to_s_bio);
     return 0;
@@ -882,22 +882,22 @@ int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error
  */
-int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
-                          SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
+int create_tls_objects(tls_CTX *serverctx, tls_CTX *clientctx, tls **stls,
+                          tls **ctls, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
 {
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
 
-    if (*sssl != NULL)
-        serverssl = *sssl;
-    else if (!TEST_ptr(serverssl = SSL_new(serverctx)))
+    if (*stls != NULL)
+        servertls = *stls;
+    else if (!TEST_ptr(servertls = tls_new(serverctx)))
         goto error;
-    if (*cssl != NULL)
-        clientssl = *cssl;
-    else if (!TEST_ptr(clientssl = SSL_new(clientctx)))
+    if (*ctls != NULL)
+        clienttls = *ctls;
+    else if (!TEST_ptr(clienttls = tls_new(clientctx)))
         goto error;
 
-    if (SSL_is_dtls(clientssl)) {
+    if (tls_is_dtls(clienttls)) {
         if (!TEST_ptr(s_to_c_bio = BIO_new(bio_s_mempacket_test()))
                 || !TEST_ptr(c_to_s_bio = BIO_new(bio_s_mempacket_test())))
             goto error;
@@ -918,18 +918,18 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     BIO_set_mem_eof_return(s_to_c_bio, -1);
     BIO_set_mem_eof_return(c_to_s_bio, -1);
 
-    /* Up ref these as we are passing them to two SSL objects */
-    SSL_set_bio(serverssl, c_to_s_bio, s_to_c_bio);
+    /* Up ref these as we are passing them to two tls objects */
+    tls_set_bio(servertls, c_to_s_bio, s_to_c_bio);
     BIO_up_ref(s_to_c_bio);
     BIO_up_ref(c_to_s_bio);
-    SSL_set_bio(clientssl, s_to_c_bio, c_to_s_bio);
-    *sssl = serverssl;
-    *cssl = clientssl;
+    tls_set_bio(clienttls, s_to_c_bio, c_to_s_bio);
+    *stls = servertls;
+    *ctls = clienttls;
     return 1;
 
  error:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
+    tls_free(servertls);
+    tls_free(clienttls);
     BIO_free(s_to_c_bio);
     BIO_free(c_to_s_bio);
     BIO_free(s_to_c_fbio);
@@ -939,48 +939,48 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 }
 
 /*
- * Create an SSL connection, but does not ready any post-handshake
+ * Create an tls connection, but does not ready any post-handshake
  * NewSessionTicket messages.
- * If |read| is set and we're using DTLS then we will attempt to SSL_read on
+ * If |read| is set and we're using DTLS then we will attempt to tls_read on
  * the connection once we've completed one half of it, to ensure any retransmits
  * get triggered.
  */
-int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
+int create_bare_tls_connection(tls *servertls, tls *clienttls, int want,
                                int read)
 {
     int retc = -1, rets = -1, err, abortctr = 0;
     int clienterr = 0, servererr = 0;
-    int isdtls = SSL_is_dtls(serverssl);
+    int isdtls = tls_is_dtls(servertls);
 
     do {
-        err = SSL_ERROR_WANT_WRITE;
-        while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
-            retc = SSL_connect(clientssl);
+        err = tls_ERROR_WANT_WRITE;
+        while (!clienterr && retc <= 0 && err == tls_ERROR_WANT_WRITE) {
+            retc = tls_connect(clienttls);
             if (retc <= 0)
-                err = SSL_get_error(clientssl, retc);
+                err = tls_get_error(clienttls, retc);
         }
 
-        if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
-            TEST_info("SSL_connect() failed %d, %d", retc, err);
+        if (!clienterr && retc <= 0 && err != tls_ERROR_WANT_READ) {
+            TEST_info("tls_connect() failed %d, %d", retc, err);
             clienterr = 1;
         }
-        if (want != SSL_ERROR_NONE && err == want)
+        if (want != tls_ERROR_NONE && err == want)
             return 0;
 
-        err = SSL_ERROR_WANT_WRITE;
-        while (!servererr && rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
-            rets = SSL_accept(serverssl);
+        err = tls_ERROR_WANT_WRITE;
+        while (!servererr && rets <= 0 && err == tls_ERROR_WANT_WRITE) {
+            rets = tls_accept(servertls);
             if (rets <= 0)
-                err = SSL_get_error(serverssl, rets);
+                err = tls_get_error(servertls, rets);
         }
 
         if (!servererr && rets <= 0
-                && err != SSL_ERROR_WANT_READ
-                && err != SSL_ERROR_WANT_X509_LOOKUP) {
-            TEST_info("SSL_accept() failed %d, %d", rets, err);
+                && err != tls_ERROR_WANT_READ
+                && err != tls_ERROR_WANT_X509_LOOKUP) {
+            TEST_info("tls_accept() failed %d, %d", rets, err);
             servererr = 1;
         }
-        if (want != SSL_ERROR_NONE && err == want)
+        if (want != tls_ERROR_NONE && err == want)
             return 0;
         if (clienterr && servererr)
             return 0;
@@ -989,16 +989,16 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
 
             /* Trigger any retransmits that may be appropriate */
             if (rets > 0 && retc <= 0) {
-                if (SSL_read(serverssl, buf, sizeof(buf)) > 0) {
+                if (tls_read(servertls, buf, sizeof(buf)) > 0) {
                     /* We don't expect this to succeed! */
-                    TEST_info("Unexpected SSL_read() success!");
+                    TEST_info("Unexpected tls_read() success!");
                     return 0;
                 }
             }
             if (retc > 0 && rets <= 0) {
-                if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
+                if (tls_read(clienttls, buf, sizeof(buf)) > 0) {
                     /* We don't expect this to succeed! */
-                    TEST_info("Unexpected SSL_read() success!");
+                    TEST_info("Unexpected tls_read() success!");
                     return 0;
                 }
             }
@@ -1013,7 +1013,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
              * give the DTLS timer a chance to do something. We only do this for
              * the first few times to prevent hangs.
              */
-            ossl_sleep(50);
+            otls_sleep(50);
         }
     } while (retc <=0 || rets <= 0);
 
@@ -1021,16 +1021,16 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
 }
 
 /*
- * Create an SSL connection including any post handshake NewSessionTicket
+ * Create an tls connection including any post handshake NewSessionTicket
  * messages.
  */
-int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+int create_tls_connection(tls *servertls, tls *clienttls, int want)
 {
     int i;
     unsigned char buf;
     size_t readbytes;
 
-    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1))
+    if (!create_bare_tls_connection(servertls, clienttls, want, 1))
         return 0;
 
     /*
@@ -1039,11 +1039,11 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
      * appropriate. We do this twice because there are 2 NewSessionTickets.
      */
     for (i = 0; i < 2; i++) {
-        if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0) {
+        if (tls_read_ex(clienttls, &buf, sizeof(buf), &readbytes) > 0) {
             if (!TEST_ulong_eq(readbytes, 0))
                 return 0;
-        } else if (!TEST_int_eq(SSL_get_error(clientssl, 0),
-                                SSL_ERROR_WANT_READ)) {
+        } else if (!TEST_int_eq(tls_get_error(clienttls, 0),
+                                tls_ERROR_WANT_READ)) {
             return 0;
         }
     }
@@ -1051,10 +1051,10 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
     return 1;
 }
 
-void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl)
+void shutdown_tls_connection(tls *servertls, tls *clienttls)
 {
-    SSL_shutdown(clientssl);
-    SSL_shutdown(serverssl);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
+    tls_shutdown(clienttls);
+    tls_shutdown(servertls);
+    tls_free(servertls);
+    tls_free(clienttls);
 }

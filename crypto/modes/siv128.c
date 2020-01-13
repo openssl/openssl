@@ -1,34 +1,34 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Opentls license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <opentls/crypto.h>
+#include <opentls/evp.h>
+#include <opentls/core_names.h>
+#include <opentls/params.h>
 #include "crypto/modes.h"
 #include "crypto/siv.h"
 
-#ifndef OPENSSL_NO_SIV
+#ifndef OPENtls_NO_SIV
 
-__owur static ossl_inline uint32_t rotl8(uint32_t x)
+__owur static otls_inline uint32_t rotl8(uint32_t x)
 {
     return (x << 8) | (x >> 24);
 }
 
-__owur static ossl_inline uint32_t rotr8(uint32_t x)
+__owur static otls_inline uint32_t rotr8(uint32_t x)
 {
     return (x >> 8) | (x << 24);
 }
 
-__owur static ossl_inline uint64_t byteswap8(uint64_t x)
+__owur static otls_inline uint64_t byteswap8(uint64_t x)
 {
     uint32_t high = (uint32_t)(x >> 32);
     uint32_t low = (uint32_t)x;
@@ -38,7 +38,7 @@ __owur static ossl_inline uint64_t byteswap8(uint64_t x)
     return ((uint64_t)low) << 32 | (uint64_t)high;
 }
 
-__owur static ossl_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
+__owur static otls_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
 {
     const union {
         long one;
@@ -50,7 +50,7 @@ __owur static ossl_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
     return b->word[i];
 }
 
-static ossl_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
+static otls_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
 {
     const union {
         long one;
@@ -63,7 +63,7 @@ static ossl_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
         b->word[i] = x;
 }
 
-static ossl_inline void siv128_xorblock(SIV_BLOCK *x,
+static otls_inline void siv128_xorblock(SIV_BLOCK *x,
                                         SIV_BLOCK const *y)
 {
     x->word[0] ^= y->word[0];
@@ -76,7 +76,7 @@ static ossl_inline void siv128_xorblock(SIV_BLOCK *x,
  * x**128 + x**7 + x**2 + x + 1.
  * Assumes two's-complement arithmetic
  */
-static ossl_inline void siv128_dbl(SIV_BLOCK *b)
+static otls_inline void siv128_dbl(SIV_BLOCK *b)
 {
     uint64_t high = siv128_getword(b, 0);
     uint64_t low = siv128_getword(b, 1);
@@ -91,7 +91,7 @@ static ossl_inline void siv128_dbl(SIV_BLOCK *b)
     siv128_putword(b, 1, low);
 }
 
-__owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *out,
+__owur static otls_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *out,
                                               unsigned char const* in, size_t len)
 {
     SIV_BLOCK t;
@@ -131,7 +131,7 @@ err:
 }
 
 
-__owur static ossl_inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned char *out,
+__owur static otls_inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                              unsigned char const *in, size_t len,
                                              SIV_BLOCK *icv)
 {
@@ -150,11 +150,11 @@ SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen, EVP_CIPHER
     SIV128_CONTEXT *ctx;
     int ret;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) != NULL) {
+    if ((ctx = OPENtls_malloc(sizeof(*ctx))) != NULL) {
         ret = CRYPTO_siv128_init(ctx, key, klen, cbc, ctr);
         if (ret)
             return ctx;
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
     }
 
     return NULL;
@@ -169,14 +169,14 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     static const unsigned char zero[SIV_LEN] = { 0 };
     size_t out_len = SIV_LEN;
     EVP_MAC_CTX *mac_ctx = NULL;
-    OSSL_PARAM params[3];
+    Otls_PARAM params[3];
     const char *cbc_name = EVP_CIPHER_name(cbc);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+    params[0] = Otls_PARAM_construct_utf8_string(Otls_MAC_PARAM_CIPHER,
                                                  (char *)cbc_name, 0);
-    params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+    params[1] = Otls_PARAM_construct_octet_string(Otls_MAC_PARAM_KEY,
                                                   (void *)key, klen);
-    params[2] = OSSL_PARAM_construct_end();
+    params[2] = Otls_PARAM_construct_end();
 
     memset(&ctx->d, 0, sizeof(ctx->d));
     ctx->cipher_ctx = NULL;
@@ -186,7 +186,7 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
             || (ctx->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL
             /* TODO(3.0) library context */
             || (ctx->mac =
-                EVP_MAC_fetch(NULL, OSSL_MAC_NAME_CMAC, NULL)) == NULL
+                EVP_MAC_fetch(NULL, Otls_MAC_NAME_CMAC, NULL)) == NULL
             || (ctx->mac_ctx_init = EVP_MAC_CTX_new(ctx->mac)) == NULL
             || !EVP_MAC_CTX_set_params(ctx->mac_ctx_init, params)
             || !EVP_EncryptInit_ex(ctx->cipher_ctx, ctr, NULL, key + klen, NULL)
@@ -308,7 +308,7 @@ int CRYPTO_siv128_decrypt(SIV128_CONTEXT *ctx,
         t.byte[i] ^= p[i];
 
     if ((t.word[0] | t.word[1]) != 0) {
-        OPENSSL_cleanse(out, len);
+        OPENtls_cleanse(out, len);
         return 0;
     }
     ctx->final_ret = 0;
@@ -361,8 +361,8 @@ int CRYPTO_siv128_cleanup(SIV128_CONTEXT *ctx)
         ctx->mac_ctx_init = NULL;
         EVP_MAC_free(ctx->mac);
         ctx->mac = NULL;
-        OPENSSL_cleanse(&ctx->d, sizeof(ctx->d));
-        OPENSSL_cleanse(&ctx->tag, sizeof(ctx->tag));
+        OPENtls_cleanse(&ctx->d, sizeof(ctx->d));
+        OPENtls_cleanse(&ctx->tag, sizeof(ctx->tag));
         ctx->final_ret = -1;
         ctx->crypto_ok = 1;
     }
@@ -375,4 +375,4 @@ int CRYPTO_siv128_speed(SIV128_CONTEXT *ctx, int arg)
     return 1;
 }
 
-#endif                          /* OPENSSL_NO_SIV */
+#endif                          /* OPENtls_NO_SIV */

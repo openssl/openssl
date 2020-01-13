@@ -1,18 +1,18 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 
-#include <openssl/obj_mac.h>
-#include <openssl/ec.h>
-#include <openssl/bn.h>
+#include <opentls/obj_mac.h>
+#include <opentls/ec.h>
+#include <opentls/bn.h>
 #include "internal/refcount.h"
 #include "crypto/ec.h"
 
@@ -277,7 +277,7 @@ struct ec_group_st {
         EC_PRE_COMP *ec;
     } pre_comp;
 
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
 };
 
 #define SETPRECOMP(g, type, pre) \
@@ -300,7 +300,7 @@ struct ec_key_st {
     CRYPTO_EX_DATA ex_data;
 #endif
     CRYPTO_RWLOCK *lock;
-    OPENSSL_CTX *libctx;
+    OPENtls_CTX *libctx;
 };
 
 struct ec_point_st {
@@ -319,7 +319,7 @@ struct ec_point_st {
                                  * special case */
 };
 
-static ossl_inline int ec_point_is_compat(const EC_POINT *point,
+static otls_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
     return group->meth == point->meth
@@ -498,7 +498,7 @@ int ec_GF2m_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                              const BIGNUM *b, BN_CTX *);
 
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifndef OPENtls_NO_EC_NISTP_64_GCC_128
 /* method functions in ecp_nistp224.c */
 int ec_GFp_nistp224_group_init(EC_GROUP *group);
 int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
@@ -643,10 +643,10 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine);
+EC_KEY *ec_key_new_method_int(OPENtls_CTX *libctx, ENGINE *engine);
 
-int ossl_ec_key_gen(EC_KEY *eckey);
-int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
+int otls_ec_key_gen(EC_KEY *eckey);
+int otls_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
                           const EC_POINT *pub_key, const EC_KEY *ecdh);
 int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
@@ -656,17 +656,17 @@ struct ECDSA_SIG_st {
     BIGNUM *s;
 };
 
-int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+int otls_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                           BIGNUM **rp);
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+int otls_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey);
-ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+ECDSA_SIG *otls_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                const BIGNUM *in_kinv, const BIGNUM *in_r,
                                EC_KEY *eckey);
-int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+int otls_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
-int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+int otls_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
 int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                             BIGNUM **rp);
@@ -723,7 +723,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
-static ossl_inline int ec_point_ladder_pre(const EC_GROUP *group,
+static otls_inline int ec_point_ladder_pre(const EC_GROUP *group,
                                            EC_POINT *r, EC_POINT *s,
                                            EC_POINT *p, BN_CTX *ctx)
 {
@@ -737,7 +737,7 @@ static ossl_inline int ec_point_ladder_pre(const EC_GROUP *group,
     return 1;
 }
 
-static ossl_inline int ec_point_ladder_step(const EC_GROUP *group,
+static otls_inline int ec_point_ladder_step(const EC_GROUP *group,
                                             EC_POINT *r, EC_POINT *s,
                                             EC_POINT *p, BN_CTX *ctx)
 {
@@ -752,7 +752,7 @@ static ossl_inline int ec_point_ladder_step(const EC_GROUP *group,
 
 }
 
-static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
+static otls_inline int ec_point_ladder_post(const EC_GROUP *group,
                                             EC_POINT *r, EC_POINT *s,
                                             EC_POINT *p, BN_CTX *ctx)
 {

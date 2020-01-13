@@ -1,14 +1,14 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
 static int docorrupt = 0;
@@ -41,12 +41,12 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy;
 
     if (docorrupt) {
-        if (!TEST_ptr(copy = OPENSSL_memdup(in, inl)))
+        if (!TEST_ptr(copy = OPENtls_memdup(in, inl)))
             return 0;
         /* corrupt last bit of application data */
         copy[inl-1] ^= 1;
         ret = BIO_write(next, copy, inl);
-        OPENSSL_free(copy);
+        OPENtls_free(copy);
     } else {
         ret = BIO_write(next, in, inl);
     }
@@ -139,14 +139,14 @@ static const char **cipher_list = NULL;
 
 static int setup_cipher_list(void)
 {
-    SSL_CTX *ctx = NULL;
-    SSL *ssl = NULL;
-    STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
+    tls_CTX *ctx = NULL;
+    tls *tls = NULL;
+    STACK_OF(tls_CIPHER) *sk_ciphers = NULL;
     int i, j, numciphers = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
-            || !TEST_ptr(ssl = SSL_new(ctx))
-            || !TEST_ptr(sk_ciphers = SSL_get1_supported_ciphers(ssl)))
+    if (!TEST_ptr(ctx = tls_CTX_new(TLS_server_method()))
+            || !TEST_ptr(tls = tls_new(ctx))
+            || !TEST_ptr(sk_ciphers = tls_get1_supported_ciphers(tls)))
         goto err;
 
     /*
@@ -154,24 +154,24 @@ static int setup_cipher_list(void)
      * so that some of the allocated space will be wasted, but the loss
      * is deemed acceptable...
      */
-    cipher_list = OPENSSL_malloc(sk_SSL_CIPHER_num(sk_ciphers) *
+    cipher_list = OPENtls_malloc(sk_tls_CIPHER_num(sk_ciphers) *
                                  sizeof(cipher_list[0]));
     if (!TEST_ptr(cipher_list))
         goto err;
 
-    for (j = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
-        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(sk_ciphers, i);
+    for (j = 0, i = 0; i < sk_tls_CIPHER_num(sk_ciphers); i++) {
+        const tls_CIPHER *cipher = sk_tls_CIPHER_value(sk_ciphers, i);
 
-        if (SSL_CIPHER_get_auth_nid(cipher) == NID_auth_rsa)
-            cipher_list[j++] = SSL_CIPHER_get_name(cipher);
+        if (tls_CIPHER_get_auth_nid(cipher) == NID_auth_rsa)
+            cipher_list[j++] = tls_CIPHER_get_name(cipher);
     }
     if (TEST_int_ne(j, 0))
         numciphers = j;
 
 err:
-    sk_SSL_CIPHER_free(sk_ciphers);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
+    sk_tls_CIPHER_free(sk_ciphers);
+    tls_free(tls);
+    tls_CTX_free(ctx);
 
     return numciphers;
 }
@@ -179,68 +179,68 @@ err:
 static char *cert = NULL;
 static char *privkey = NULL;
 
-static int test_ssl_corrupt(int testidx)
+static int test_tls_corrupt(int testidx)
 {
     static unsigned char junk[16000] = { 0 };
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *server = NULL, *client = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *server = NULL, *client = NULL;
     BIO *c_to_s_fbio;
     int testresult = 0;
-    STACK_OF(SSL_CIPHER) *ciphers;
-    const SSL_CIPHER *currcipher;
+    STACK_OF(tls_CIPHER) *ciphers;
+    const tls_CIPHER *currcipher;
 
     docorrupt = 0;
 
     TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_tls_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
-            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
-            || !TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
-            || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
-            || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
+    if (!TEST_true(tls_CTX_set_cipher_list(cctx, cipher_list[testidx]))
+            || !TEST_true(tls_CTX_set_ciphersuites(cctx, ""))
+            || !TEST_ptr(ciphers = tls_CTX_get_ciphers(cctx))
+            || !TEST_int_eq(sk_tls_CIPHER_num(ciphers), 1)
+            || !TEST_ptr(currcipher = sk_tls_CIPHER_value(ciphers, 0)))
         goto end;
 
     /*
      * No ciphers we are using are TLSv1.3 compatible so we should not attempt
      * to negotiate TLSv1.3
      */
-    if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
+    if (!TEST_true(tls_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
         goto end;
 
     if (!TEST_ptr(c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter())))
         goto end;
 
-    /* BIO is freed by create_ssl_connection on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
+    /* BIO is freed by create_tls_connection on error */
+    if (!TEST_true(create_tls_objects(sctx, cctx, &server, &client, NULL,
                                       c_to_s_fbio)))
         goto end;
 
-    if (!TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(server, client, tls_ERROR_NONE)))
         goto end;
 
     docorrupt = 1;
 
-    if (!TEST_int_ge(SSL_write(client, junk, sizeof(junk)), 0))
+    if (!TEST_int_ge(tls_write(client, junk, sizeof(junk)), 0))
         goto end;
 
-    if (!TEST_int_lt(SSL_read(server, junk, sizeof(junk)), 0))
+    if (!TEST_int_lt(tls_read(server, junk, sizeof(junk)), 0))
         goto end;
 
     if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
-                     SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC))
+                     tls_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC))
         goto end;
 
     testresult = 1;
  end:
-    SSL_free(server);
-    SSL_free(client);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(server);
+    tls_free(client);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
     return testresult;
 }
 
@@ -256,12 +256,12 @@ int setup_tests(void)
 
     n = setup_cipher_list();
     if (n > 0)
-        ADD_ALL_TESTS(test_ssl_corrupt, n);
+        ADD_ALL_TESTS(test_tls_corrupt, n);
     return 1;
 }
 
 void cleanup_tests(void)
 {
     bio_f_tls_corrupt_filter_free();
-    OPENSSL_free(cipher_list);
+    OPENtls_free(cipher_list);
 }

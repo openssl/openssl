@@ -1,10 +1,10 @@
   ENGINE
   ======
 
-  With OpenSSL 0.9.6, a new component was added to support alternative
+  With Opentls 0.9.6, a new component was added to support alternative
   cryptography implementations, most commonly for interfacing with external
   crypto devices (eg. accelerator cards). This component is called ENGINE,
-  and its presence in OpenSSL 0.9.6 (and subsequent bug-fix releases)
+  and its presence in Opentls 0.9.6 (and subsequent bug-fix releases)
   caused a little confusion as 0.9.6** releases were rolled in two
   versions, a "standard" and an "engine" version. In development for 0.9.7,
   the ENGINE code has been merged into the main branch and will be present
@@ -39,20 +39,20 @@
   based input to those ENGINEs, in the form of name-value pairs. This is an
   extensible way for ENGINEs to define their own "configuration" mechanisms
   that are specific to a given ENGINE (eg. for a particular hardware
-  device) but that should be consistent across *all* OpenSSL-based
+  device) but that should be consistent across *all* Opentls-based
   applications when they use that ENGINE. Work is in progress (or at least
   in planning) for supporting these control commands from the CONF (or
-  NCONF) code so that applications using OpenSSL's existing configuration
+  NCONF) code so that applications using Opentls's existing configuration
   file format can have ENGINE settings specified in much the same way.
   Presently however, applications must use the ENGINE API itself to provide
   such functionality. To see first hand the types of commands available
   with the various compiled-in ENGINEs (see further down for dynamic
-  ENGINEs), use the "engine" openssl utility with full verbosity, ie;
-       openssl engine -vvvv
+  ENGINEs), use the "engine" opentls utility with full verbosity, ie;
+       opentls engine -vvvv
 
 3 Documentation? Volunteers welcome! The source code is reasonably well
   self-documenting, but some summaries and usage instructions are needed -
-  moreover, they are needed in the same POD format the existing OpenSSL
+  moreover, they are needed in the same POD format the existing Opentls
   documentation is provided in. Any complete or incomplete contributions
   would help make this happen.
 
@@ -64,7 +64,7 @@
   the vendors of the devices these ENGINEs support have contributed to the
   development and/or testing of the implementations, and *usually* (with no
   guarantees) have experience in using the ENGINE support to drive their
-  devices from common OpenSSL-based applications. Bugs and/or inexplicable
+  devices from common Opentls-based applications. Bugs and/or inexplicable
   behaviour in using a specific ENGINE implementation should be sent to the
   author of that implementation (if it is mentioned in the corresponding C
   file), and in the case of implementations for commercial hardware
@@ -72,20 +72,20 @@
   none of this is possible, or the problem seems to be something about the
   ENGINE API itself (ie. not necessarily specific to a particular ENGINE
   implementation) then you should mail complete details to the relevant
-  OpenSSL mailing list. For a definition of "complete details", refer to
-  the OpenSSL "README" file. As for which list to send it to;
+  Opentls mailing list. For a definition of "complete details", refer to
+  the Opentls "README" file. As for which list to send it to;
 
-     openssl-users: if you are *using* the ENGINE abstraction, either in an
+     opentls-users: if you are *using* the ENGINE abstraction, either in an
           pre-compiled application or in your own application code.
 
-     openssl-dev: if you are discussing problems with OpenSSL source code.
+     opentls-dev: if you are discussing problems with Opentls source code.
 
   USAGE
   =====
 
-  The default "openssl" ENGINE is always chosen when performing crypto
+  The default "opentls" ENGINE is always chosen when performing crypto
   operations unless you specify otherwise. You must actively tell the
-  openssl utility commands to use anything else through a new command line
+  opentls utility commands to use anything else through a new command line
   switch called "-engine". Also, if you want to use the ENGINE support in
   your own code to do something similar, you must likewise explicitly
   select the ENGINE implementation you want.
@@ -101,10 +101,10 @@
   device, they only need to provide the means to carry such user/admin
   input through to the ENGINE in question. Ie. this connects *you* (and
   your helpdesk) to the specific ENGINE implementation (and device), and
-  allows application authors to not get buried in hassle supporting
+  allows application authors to not get buried in hatlse supporting
   arbitrary devices they know (and care) nothing about.
 
-  A new "openssl" utility, "openssl engine", has been added in that allows
+  A new "opentls" utility, "opentls engine", has been added in that allows
   for testing and examination of ENGINE implementations. Basic usage
   instructions are available by specifying the "-?" command line switch.
 
@@ -112,20 +112,20 @@
   ===============
 
   The new "dynamic" ENGINE provides a low-overhead way to support ENGINE
-  implementations that aren't pre-compiled and linked into OpenSSL-based
+  implementations that aren't pre-compiled and linked into Opentls-based
   applications. This could be because existing compiled-in implementations
   have known problems and you wish to use a newer version with an existing
-  application. It could equally be because the application (or OpenSSL
+  application. It could equally be because the application (or Opentls
   library) you are using simply doesn't have support for the ENGINE you
   wish to use, and the ENGINE provider (eg. hardware vendor) is providing
   you with a self-contained implementation in the form of a shared-library.
   The other use-case for "dynamic" is with applications that wish to
   maintain the smallest foot-print possible and so do not link in various
-  ENGINE implementations from OpenSSL, but instead leaves you to provide
+  ENGINE implementations from Opentls, but instead leaves you to provide
   them, if you want them, in the form of "dynamic"-loadable
   shared-libraries. It should be possible for hardware vendors to provide
   their own shared-libraries to support arbitrary hardware to work with
-  applications based on OpenSSL 0.9.7 or later. If you're using an
+  applications based on Opentls 0.9.7 or later. If you're using an
   application based on 0.9.7 (or later) and the support you desire is only
   announced for versions later than the one you need, ask the vendor to
   backport their ENGINE to the version you need.
@@ -146,7 +146,7 @@
     implementation from a shared-library. To see these control commands,
     use the command-line;
 
-       openssl engine -vvvv dynamic
+       opentls engine -vvvv dynamic
 
     The "SO_PATH" control command should be used to identify the
     shared-library that contains the ENGINE implementation, and "NO_VCHECK"
@@ -176,11 +176,11 @@
        ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0);
        ENGINE_ctrl_cmd_string(e, "CMD_FOO", "some input data", 0);
 
-    For testing, the "openssl engine" utility can be useful for this sort
+    For testing, the "opentls engine" utility can be useful for this sort
     of thing. For example the above code excerpt would achieve much the
     same result as;
 
-       openssl engine dynamic \
+       opentls engine dynamic \
                  -pre SO_PATH:/lib/libfoo.so \
                  -pre ID:foo \
                  -pre LOAD \
@@ -188,7 +188,7 @@
 
     Or to simply see the list of commands supported by the "foo" ENGINE;
 
-       openssl engine -vvvv dynamic \
+       opentls engine -vvvv dynamic \
                  -pre SO_PATH:/lib/libfoo.so \
                  -pre ID:foo \
                  -pre LOAD
@@ -199,11 +199,11 @@
     as the ENGINE to use, and the parameters/commands you pass would
     control the *actual* ENGINE used. Each command is actually a name-value
     pair and the value can sometimes be omitted (eg. the "LOAD" command).
-    Whilst the syntax demonstrated in "openssl engine" uses a colon to
+    Whilst the syntax demonstrated in "opentls engine" uses a colon to
     separate the command name from the value, applications may provide
     their own syntax for making that separation (eg. a win32 registry
     key-value pair may be used by some applications). The reason for the
-    "-pre" syntax in the "openssl engine" utility is that some commands
+    "-pre" syntax in the "opentls engine" utility is that some commands
     might be issued to an ENGINE *after* it has been initialised for use.
     Eg. if an ENGINE implementation requires a smart-card to be inserted
     during initialisation (or a PIN to be typed, or whatever), there may be
@@ -219,7 +219,7 @@
 
   How do I build a "dynamic" ENGINE?
   ----------------------------------
-    This question is trickier - currently OpenSSL bundles various ENGINE
+    This question is trickier - currently Opentls bundles various ENGINE
     implementations that are statically built in, and any application that
     calls the "ENGINE_load_builtin_engines()" function will automatically
     have all such ENGINEs available (and occupying memory). Applications
@@ -235,20 +235,20 @@
 
     Sounds good? Maybe, but currently building an ENGINE implementation as
     a shared-library that can be loaded by "dynamic" isn't automated in
-    OpenSSL's build process. It can be done manually quite easily however.
-    Such a shared-library can either be built with any OpenSSL code it
-    needs statically linked in, or it can link dynamically against OpenSSL
-    if OpenSSL itself is built as a shared library. The instructions are
+    Opentls's build process. It can be done manually quite easily however.
+    Such a shared-library can either be built with any Opentls code it
+    needs statically linked in, or it can link dynamically against Opentls
+    if Opentls itself is built as a shared library. The instructions are
     the same in each case, but in the former (statically linked any
-    dependencies on OpenSSL) you must ensure OpenSSL is built with
-    position-independent code ("PIC"). The default OpenSSL compilation may
+    dependencies on Opentls) you must ensure Opentls is built with
+    position-independent code ("PIC"). The default Opentls compilation may
     already specify the relevant flags to do this, but you should consult
     with your compiler documentation if you are in any doubt.
 
     This example will show building the "atalla" ENGINE in the
     crypto/engine/ directory as a shared-library for use via the "dynamic"
     ENGINE.
-    1) "cd" to the crypto/engine/ directory of a pre-compiled OpenSSL
+    1) "cd" to the crypto/engine/ directory of a pre-compiled Opentls
        source tree.
     2) Recompile at least one source file so you can see all the compiler
        flags (and syntax) being used to build normally. Eg;
@@ -260,14 +260,14 @@
 	 (b) change the output file from "hw_atalla.o" to something new,
              eg. "tmp_atalla.o"
     4) Link "tmp_atalla.o" into a shared-library using the top-level
-       OpenSSL libraries to resolve any dependencies. The syntax for doing
+       Opentls libraries to resolve any dependencies. The syntax for doing
        this depends heavily on your system/compiler and is a nightmare
        known well to anyone who has worked with shared-library portability
        before. 'gcc' on Linux, for example, would use the following syntax;
           gcc -shared -o dyn_atalla.so tmp_atalla.o -L../.. -lcrypto
-    5) Test your shared library using "openssl engine" as explained in the
+    5) Test your shared library using "opentls engine" as explained in the
        previous section. Eg. from the top-level directory, you might try;
-          apps/openssl engine -vvvv dynamic \
+          apps/opentls engine -vvvv dynamic \
               -pre SO_PATH:./crypto/engine/dyn_atalla.so -pre LOAD
        If the shared-library loads successfully, you will see both "-pre"
        commands marked as "SUCCESS" and the list of control commands
@@ -281,7 +281,7 @@
   ========
 
   It seems like the ENGINE part doesn't work too well with CryptoSwift on Win32.
-  A quick test done right before the release showed that trying "openssl speed
+  A quick test done right before the release showed that trying "opentls speed
   -engine cswift" generated errors. If the DSO gets enabled, an attempt is made
   to write at memory address 0x00000002.
 

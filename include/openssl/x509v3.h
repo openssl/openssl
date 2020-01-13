@@ -1,25 +1,25 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_X509V3_H
-# define OPENSSL_X509V3_H
+#ifndef OPENtls_X509V3_H
+# define OPENtls_X509V3_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_X509V3_H
 # endif
 
-# include <openssl/bio.h>
-# include <openssl/x509.h>
-# include <openssl/conf.h>
-# include <openssl/x509v3err.h>
+# include <opentls/bio.h>
+# include <opentls/x509.h>
+# include <opentls/conf.h>
+# include <opentls/x509v3err.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -383,17 +383,17 @@ struct ISSUING_DIST_POINT_st {
 # define KU_ENCIPHER_ONLY        0x0001
 # define KU_DECIPHER_ONLY        0x8000
 
-# define NS_SSL_CLIENT           0x80
-# define NS_SSL_SERVER           0x40
+# define NS_tls_CLIENT           0x80
+# define NS_tls_SERVER           0x40
 # define NS_SMIME                0x20
 # define NS_OBJSIGN              0x10
-# define NS_SSL_CA               0x04
+# define NS_tls_CA               0x04
 # define NS_SMIME_CA             0x02
 # define NS_OBJSIGN_CA           0x01
-# define NS_ANY_CA               (NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
+# define NS_ANY_CA               (NS_tls_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 
-# define XKU_SSL_SERVER          0x1
-# define XKU_SSL_CLIENT          0x2
+# define XKU_tls_SERVER          0x1
+# define XKU_tls_CLIENT          0x2
 # define XKU_SMIME               0x4
 # define XKU_CODE_SIGN           0x8
 # define XKU_SGC                 0x10
@@ -415,9 +415,9 @@ typedef struct x509_purpose_st {
     void *usr_data;
 } X509_PURPOSE;
 
-# define X509_PURPOSE_SSL_CLIENT         1
-# define X509_PURPOSE_SSL_SERVER         2
-# define X509_PURPOSE_NS_SSL_SERVER      3
+# define X509_PURPOSE_tls_CLIENT         1
+# define X509_PURPOSE_tls_SERVER         2
+# define X509_PURPOSE_NS_tls_SERVER      3
 # define X509_PURPOSE_SMIME_SIGN         4
 # define X509_PURPOSE_SMIME_ENCRYPT      5
 # define X509_PURPOSE_CRL_SIGN           6
@@ -556,7 +556,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                X509V3_CTX *ctx, int gen_type,
                                const char *value, int is_nc);
 
-# ifdef OPENSSL_CONF_H
+# ifdef OPENtls_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method,
                                X509V3_CTX *ctx, CONF_VALUE *cnf);
 GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
@@ -635,17 +635,17 @@ X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
                     int crit, unsigned long flags);
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 /* The new declarations are in crypto.h, but the old ones were here. */
-# define hex_to_string OPENSSL_buf2hexstr
-# define string_to_hex OPENSSL_hexstr2buf
+# define hex_to_string OPENtls_buf2hexstr
+# define string_to_hex OPENtls_hexstr2buf
 #endif
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
                         int ml);
 int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
                      int indent);
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
 #endif
 int X509V3_extensions_print(BIO *out, const char *title,
@@ -683,10 +683,10 @@ int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
 int X509_PURPOSE_get_id(const X509_PURPOSE *);
 
-STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
-void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
-STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
+STACK_OF(OPENtls_STRING) *X509_get1_email(X509 *x);
+STACK_OF(OPENtls_STRING) *X509_REQ_get1_email(X509_REQ *x);
+void X509_email_free(STACK_OF(OPENtls_STRING) *sk);
+STACK_OF(OPENtls_STRING) *X509_get1_ocsp(X509 *x);
 /* Flags for X509_check_* functions */
 
 /*
@@ -726,7 +726,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 DEFINE_STACK_OF(X509_POLICY_NODE)
 
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
 typedef struct ASRange_st {
     ASN1_INTEGER *min, *max;
 } ASRange;
@@ -870,7 +870,7 @@ int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
 int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
                                       IPAddrBlocks *ext, int allow_inheritance);
 
-#endif                         /* OPENSSL_NO_RFC3779 */
+#endif                         /* OPENtls_NO_RFC3779 */
 
 DEFINE_STACK_OF(ASN1_STRING)
 

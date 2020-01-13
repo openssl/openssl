@@ -17,26 +17,26 @@ evp_keymgmt_importkey_types, evp_keymgmt_exportkey_types
  #include "crypto/evp.h"
 
  void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                const OSSL_PARAM params[]);
+                                const Otls_PARAM params[]);
  void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                             const OSSL_PARAM params[]);
+                             const Otls_PARAM params[]);
  void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt, void *provdomparams);
  int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                              void *provdomparams, OSSL_PARAM params[]);
- const OSSL_PARAM *evp_keymgmt_importdomparams_types(const EVP_KEYMGMT *keymgmt);
- const OSSL_PARAM *evp_keymgmt_exportdomparams_types(const EVP_KEYMGMT *keymgmt);
+                              void *provdomparams, Otls_PARAM params[]);
+ const Otls_PARAM *evp_keymgmt_importdomparams_types(const EVP_KEYMGMT *keymgmt);
+ const Otls_PARAM *evp_keymgmt_exportdomparams_types(const EVP_KEYMGMT *keymgmt);
 
  void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                             const OSSL_PARAM params[]);
+                             const Otls_PARAM params[]);
  void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                          const OSSL_PARAM params[]);
+                          const Otls_PARAM params[]);
  void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
                            void *id, size_t idlen);
  void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
  int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                           OSSL_PARAM params[]);
- const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
- const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
+                           Otls_PARAM params[]);
+ const Otls_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
+ const Otls_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
 
 =head1 DESCRIPTION
 
@@ -95,15 +95,15 @@ if there are no such descriptors.
 
 =head1 HISTORY
 
-The functions described here were all added in OpenSSL 3.0.
+The functions described here were all added in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

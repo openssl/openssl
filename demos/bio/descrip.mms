@@ -1,10 +1,10 @@
 # This build description trusts that the following logical names are defined:
 #
-# For compilation: OPENSSL
-# For linking with shared libraries: OSSL$LIBCRYPTO_SHR and OSSL$LIBSSL_SHR
-# For linking with static libraries: OSSL$LIBCRYPTO and OSSL$LIBSSL
+# For compilation: OPENtls
+# For linking with shared libraries: Otls$LIBCRYPTO_SHR and Otls$LIBtls_SHR
+# For linking with static libraries: Otls$LIBCRYPTO and Otls$LIBtls
 #
-# These are normally defined with the OpenSSL startup procedure
+# These are normally defined with the Opentls startup procedure
 
 # By default, we link with the shared libraries
 SHARED = TRUE

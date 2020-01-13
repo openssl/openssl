@@ -1,19 +1,19 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "e_os.h"
 #include "internal/cryptlib.h"
 
-#include <openssl/objects.h>
-#include <openssl/ts.h>
-#include <openssl/pkcs7.h>
-#include <openssl/crypto.h>
+#include <opentls/objects.h>
+#include <opentls/ts.h>
+#include <opentls/pkcs7.h>
+#include <opentls/crypto.h>
 #include "ts_local.h"
 #include "crypto/ess.h"
 
@@ -54,7 +54,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
     return NULL;
 }
 
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(OPENtls_SYS_UNIX)
 
 static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
                        long *sec, long *usec)
@@ -109,7 +109,7 @@ TS_RESP_CTX *TS_RESP_CTX_new(void)
 {
     TS_RESP_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENtls_zalloc(sizeof(*ctx))) == NULL) {
         TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -137,7 +137,7 @@ void TS_RESP_CTX_free(TS_RESP_CTX *ctx)
     ASN1_INTEGER_free(ctx->seconds);
     ASN1_INTEGER_free(ctx->millis);
     ASN1_INTEGER_free(ctx->micros);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
@@ -759,13 +759,13 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
     if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
         goto err;
 
-    if ((tm = OPENSSL_gmtime(&time_sec, &tm_result)) == NULL)
+    if ((tm = OPENtls_gmtime(&time_sec, &tm_result)) == NULL)
         goto err;
 
     /*
      * Put "genTime_str" in GeneralizedTime format.  We work around the
      * restrictions imposed by rfc3280 (i.e. "GeneralizedTime values MUST
-     * NOT include fractional seconds") and OpenSSL related functions to
+     * NOT include fractional seconds") and Opentls related functions to
      * meet the rfc3161 requirement: "GeneralizedTime syntax can include
      * fraction-of-second details".
      */
@@ -779,7 +779,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
 
         /*
          * To make things a bit harder, X.690 | ISO/IEC 8825-1 provides the
-         * following restrictions for a DER-encoding, which OpenSSL
+         * following restrictions for a DER-encoding, which Opentls
          * (specifically ASN1_GENERALIZEDTIME_check() function) doesn't
          * support: "The encoding MUST terminate with a "Z" (which means
          * "Zulu" time). The decimal point element, if present, MUST be the

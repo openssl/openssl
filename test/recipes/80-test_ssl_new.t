@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -12,16 +12,16 @@ use warnings;
 
 use File::Basename;
 use File::Compare qw/compare_text/;
-use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
-use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
+use Opentls::Glob;
+use Opentls::Test qw/:DEFAULT srctop_dir srctop_file/;
+use Opentls::Test::Utils qw/disabled alldisabled available_protocols/;
 
-setup("test_ssl_new");
+setup("test_tls_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
-my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
+my @conf_srcs =  glob(srctop_file("test", "tls-tests", "*.conf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
 map { s/\^// } @conf_files if $^O eq "VMS";
@@ -32,13 +32,13 @@ plan tests => 30;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
-my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
+my $is_default_tls = (disabled("tls3") && !disabled("tls1") &&
                       !disabled("tls1_1") && !disabled("tls1_2") &&
                       !disabled("tls1_3"));
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
-my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
+my @all_pre_tls1_3 = ("tls3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
 my $no_tls_below1_3 = $no_tls || (disabled("tls1_2") && !disabled("tls1_3"));
 my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
@@ -52,7 +52,7 @@ my $no_ec2m = disabled("ec2m");
 my $no_ocsp = disabled("ocsp");
 
 # Add your test here if the test conf.in generates test cases and/or
-# expectations dynamically based on the OpenSSL compile-time config.
+# expectations dynamically based on the Opentls compile-time config.
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
   "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls
@@ -119,7 +119,7 @@ sub test_conf {
 
     my ($conf, $check_source, $skip) = @_;
 
-    my $conf_file = srctop_file("test", "ssl-tests", $conf);
+    my $conf_file = srctop_file("test", "tls-tests", $conf);
     my $tmp_file = "${conf}.$$.tmp";
     my $run_test = 1;
 
@@ -128,13 +128,13 @@ sub test_conf {
       my $input_file = $conf_file . ".in";
 
       skip 'failure', 2 unless
-        ok(run(perltest(["generate_ssl_tests.pl", $input_file],
+        ok(run(perltest(["generate_tls_tests.pl", $input_file],
                         interpreter_args => [ "-I", srctop_dir("util", "perl")],
                         stdout => $tmp_file)),
-           "Getting output from generate_ssl_tests.pl.");
+           "Getting output from generate_tls_tests.pl.");
 
     SKIP: {
-        # Test 2. Compare against existing output in test/ssl_tests.conf.
+        # Test 2. Compare against existing output in test/tls_tests.conf.
         skip "Skipping generated source test for $conf", 1
           if !$check_source;
 
@@ -146,7 +146,7 @@ sub test_conf {
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
-      ok(run(test(["ssl_test", $tmp_file])), "running ssl_test $conf");
+      ok(run(test(["tls_test", $tmp_file])), "running tls_test $conf");
     }
 
     unlink glob $tmp_file;

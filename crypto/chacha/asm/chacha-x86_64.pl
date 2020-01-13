@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # November 2014
@@ -100,7 +100,7 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
 $code.=<<___;
 .text
 
-.extern OPENSSL_ia32cap_P
+.extern OPENtls_ia32cap_P
 
 .align	64
 .Lzero:
@@ -132,7 +132,7 @@ $code.=<<___;
 .long	16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16
 .Lsigma:
 .asciz	"expand 32-byte k"
-.asciz	"ChaCha20 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"ChaCha20 for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 sub AUTOLOAD()          # thunk [simplified] 32-bit style perlasm
@@ -257,7 +257,7 @@ ChaCha20_ctr32:
 .cfi_startproc
 	cmp	\$0,$len
 	je	.Lno_data
-	mov	OPENSSL_ia32cap_P+4(%rip),%r10
+	mov	OPENtls_ia32cap_P+4(%rip),%r10
 ___
 $code.=<<___	if ($avx>2);
 	bt	\$48,%r10		# check for AVX512F
@@ -917,7 +917,7 @@ ChaCha20_4x:
 	mov		%r10,%r11
 ___
 $code.=<<___	if ($avx>1);
-	shr		\$32,%r10		# OPENSSL_ia32cap_P+8
+	shr		\$32,%r10		# OPENtls_ia32cap_P+8
 	test		\$`1<<5`,%r10		# test AVX2
 	jnz		.LChaCha20_8x
 ___

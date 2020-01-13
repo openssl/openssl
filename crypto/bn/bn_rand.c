@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,9 +12,9 @@
 #include "internal/cryptlib.h"
 #include "crypto/rand.h"
 #include "bn_local.h"
-#include <openssl/rand.h>
-#include <openssl/sha.h>
-#include <openssl/evp.h>
+#include <opentls/rand.h>
+#include <opentls/sha.h>
+#include <opentls/evp.h>
 
 typedef enum bnrand_flag_e {
     NORMAL, TESTING, PRIVATE
@@ -25,7 +25,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 {
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OPENtls_CTX *libctx = bn_get_lib_ctx(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -40,7 +40,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     bit = (bits - 1) % 8;
     mask = 0xff << (bit + 1);
 
-    buf = OPENSSL_malloc(bytes);
+    buf = OPENtls_malloc(bytes);
     if (buf == NULL) {
         BNerr(BN_F_BNRAND, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -90,7 +90,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
         goto err;
     ret = 1;
  err:
-    OPENSSL_clear_free(buf, bytes);
+    OPENtls_clear_free(buf, bytes);
     bn_check_top(rnd);
     return ret;
 
@@ -254,12 +254,12 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     unsigned char *k_bytes = NULL;
     int ret = 0;
     EVP_MD *md = NULL;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OPENtls_CTX *libctx = bn_get_lib_ctx(ctx);
 
     if (mdctx == NULL)
         goto err;
 
-    k_bytes = OPENSSL_malloc(num_k_bytes);
+    k_bytes = OPENtls_malloc(num_k_bytes);
     if (k_bytes == NULL)
         goto err;
 
@@ -308,7 +308,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
  err:
     EVP_MD_CTX_free(mdctx);
     EVP_MD_free(md);
-    OPENSSL_free(k_bytes);
-    OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
+    OPENtls_free(k_bytes);
+    OPENtls_cleanse(private_bytes, sizeof(private_bytes));
     return ret;
 }

@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,7 +12,7 @@
 
 #include "bio_local.h"
 
-#if defined(OPENSSL_NO_POSIX_IO)
+#if defined(OPENtls_NO_POSIX_IO)
 /*
  * Dummy placeholder for BIO_s_fd...
  */
@@ -44,7 +44,7 @@ const BIO_METHOD *BIO_s_fd(void)
  * in a user-land, non-global table. Well, in fact they are indexes
  * in stdio _iob[], and recall that _iob[] was the very reason why
  * "UPLINK" interface was introduced in first place. But one way on
- * another. Neither libcrypto or libssl use this BIO meaning that
+ * another. Neither libcrypto or libtls use this BIO meaning that
  * file descriptors can only be provided by application. Therefore
  * "UPLINK" calls are due...
  */

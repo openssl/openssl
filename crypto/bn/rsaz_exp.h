@@ -1,27 +1,27 @@
 /*
- * Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2012, Intel Corporation. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
  * (1) Intel Corporation, Israel Development Center, Haifa, Israel
  * (2) University of Haifa, Israel
  */
 
-#ifndef OSSL_CRYPTO_BN_RSAZ_EXP_H
-# define OSSL_CRYPTO_BN_RSAZ_EXP_H
+#ifndef Otls_CRYPTO_BN_RSAZ_EXP_H
+# define Otls_CRYPTO_BN_RSAZ_EXP_H
 
 # undef RSAZ_ENABLED
-# if defined(OPENSSL_BN_ASM_MONT) && \
+# if defined(OPENtls_BN_ASM_MONT) && \
         (defined(__x86_64) || defined(__x86_64__) || \
          defined(_M_AMD64) || defined(_M_X64))
 #  define RSAZ_ENABLED
 
-#  include <openssl/bn.h>
+#  include <opentls/bn.h>
 
 void RSAZ_1024_mod_exp_avx2(BN_ULONG result[16],
                             const BN_ULONG base_norm[16],

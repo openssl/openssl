@@ -1,17 +1,17 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 #include "ec_local.h"
-#include <openssl/err.h>
-#include <openssl/asn1t.h>
-#include <openssl/objects.h>
+#include <opentls/err.h>
+#include <opentls/asn1t.h>
+#include <opentls/objects.h>
 #include "internal/nelem.h"
 #include "crypto/asn1_dsa.h"
 
@@ -28,7 +28,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
 
     /* Find the last non-zero element of group->poly[] */
     for (i = 0;
-         i < (int)OSSL_NELEM(group->poly) && group->poly[i] != 0;
+         i < (int)Otls_NELEM(group->poly) && group->poly[i] != 0;
          i++)
         continue;
 
@@ -41,7 +41,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
         return 0;
 }
 
-#ifndef OPENSSL_NO_EC2M
+#ifndef OPENtls_NO_EC2M
 int EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
 {
     if (group == NULL)
@@ -157,7 +157,7 @@ typedef struct ec_privatekey_st {
     ASN1_BIT_STRING *publicKey;
 } EC_PRIVATEKEY;
 
-/* the OpenSSL ASN.1 definitions */
+/* the Opentls ASN.1 definitions */
 ASN1_SEQUENCE(X9_62_PENTANOMIAL) = {
         ASN1_EMBED(X9_62_PENTANOMIAL, k1, INT32),
         ASN1_EMBED(X9_62_PENTANOMIAL, k2, INT32),
@@ -280,7 +280,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
             goto err;
         }
     } else if (nid == NID_X9_62_characteristic_two_field)
-#ifdef OPENSSL_NO_EC2M
+#ifdef OPENtls_NO_EC2M
     {
         ECerr(EC_F_EC_ASN1_GROUP2FIELDID, EC_R_GF2M_NOT_SUPPORTED);
         goto err;
@@ -393,8 +393,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
      * definition of how to encode the field elements.
      */
     len = ((size_t)EC_GROUP_get_degree(group) + 7) / 8;
-    if ((a_buf = OPENSSL_malloc(len)) == NULL
-        || (b_buf = OPENSSL_malloc(len)) == NULL) {
+    if ((a_buf = OPENtls_malloc(len)) == NULL
+        || (b_buf = OPENtls_malloc(len)) == NULL) {
         ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -433,8 +433,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
     ok = 1;
 
  err:
-    OPENSSL_free(a_buf);
-    OPENSSL_free(b_buf);
+    OPENtls_free(a_buf);
+    OPENtls_free(b_buf);
     BN_free(tmp_1);
     BN_free(tmp_2);
     return ok;
@@ -488,7 +488,7 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         goto err;
     }
     if (ret->base == NULL && (ret->base = ASN1_OCTET_STRING_new()) == NULL) {
-        OPENSSL_free(buffer);
+        OPENtls_free(buffer);
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -590,7 +590,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
 
     /*
      * Now extract the curve parameters a and b. Note that, although SEC 1
-     * specifies the length of their encodings, historical versions of OpenSSL
+     * specifies the length of their encodings, historical versions of Opentls
      * encoded them incorrectly, so we must accept any length for backwards
      * compatibility.
      */
@@ -614,7 +614,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     /* get the field parameters */
     tmp = OBJ_obj2nid(params->fieldID->fieldType);
     if (tmp == NID_X9_62_characteristic_two_field)
-#ifdef OPENSSL_NO_EC2M
+#ifdef OPENtls_NO_EC2M
     {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_GF2M_NOT_SUPPORTED);
         goto err;
@@ -626,7 +626,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
         char_two = params->fieldID->p.char_two;
 
         field_bits = char_two->m;
-        if (field_bits > OPENSSL_ECC_MAX_FIELD_BITS) {
+        if (field_bits > OPENtls_ECC_MAX_FIELD_BITS) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_FIELD_TOO_LARGE);
             goto err;
         }
@@ -722,7 +722,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
         }
 
         field_bits = BN_num_bits(p);
-        if (field_bits > OPENSSL_ECC_MAX_FIELD_BITS) {
+        if (field_bits > OPENtls_ECC_MAX_FIELD_BITS) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_FIELD_TOO_LARGE);
             goto err;
         }
@@ -741,8 +741,8 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
 
     /* extract seed (optional) */
     if (params->curve->seed != NULL) {
-        OPENSSL_free(ret->seed);
-        if ((ret->seed = OPENSSL_malloc(params->curve->seed->length)) == NULL) {
+        OPENtls_free(ret->seed);
+        if ((ret->seed = OPENtls_malloc(params->curve->seed->length)) == NULL) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -833,7 +833,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
          */
         EC_GROUP *named_group = NULL;
 
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifndef OPENtls_NO_EC_NISTP_64_GCC_128
         /*
          * NID_wap_wsg_idm_ecid_wtls12 and NID_secp224r1 are both aliases for
          * the same curve, we prefer the SECP nid when matching explicit
@@ -841,7 +841,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
          */
         if (curve_name == NID_wap_wsg_idm_ecid_wtls12)
             curve_name = NID_secp224r1;
-#endif /* !def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
+#endif /* !def(OPENtls_NO_EC_NISTP_64_GCC_128) */
 
         if ((named_group = EC_GROUP_new_by_curve_name(curve_name)) == NULL) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_EC_LIB);
@@ -854,7 +854,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
          * Set the flag so that EC_GROUPs created from explicit parameters are
          * serialized using explicit parameters by default.
          */
-        EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
+        EC_GROUP_set_asn1_flag(ret, OPENtls_EC_EXPLICIT_CURVE);
 
         /*
          * If the input params do not contain the optional seed field we make
@@ -907,7 +907,7 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
                   EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
             return NULL;
         }
-        EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_NAMED_CURVE);
+        EC_GROUP_set_asn1_flag(ret, OPENtls_EC_NAMED_CURVE);
     } else if (params->type == 1) { /* the parameters are given by a
                                      * ECPARAMETERS structure */
         ret = EC_GROUP_new_from_ecparameters(params->value.parameters);
@@ -915,7 +915,7 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS, ERR_R_EC_LIB);
             return NULL;
         }
-        EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
+        EC_GROUP_set_asn1_flag(ret, OPENtls_EC_EXPLICIT_CURVE);
     } else if (params->type == 2) { /* implicitlyCA */
         return NULL;
     } else {
@@ -1120,8 +1120,8 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
     }
     ok = 1;
  err:
-    OPENSSL_clear_free(priv, privlen);
-    OPENSSL_free(pub);
+    OPENtls_clear_free(priv, privlen);
+    OPENtls_free(pub);
     EC_PRIVATEKEY_free(priv_key);
     return (ok ? ret : 0);
 }
@@ -1203,7 +1203,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
         return buf_len;
 
     if (*out == NULL) {
-        if ((*out = OPENSSL_malloc(buf_len)) == NULL) {
+        if ((*out = OPENtls_malloc(buf_len)) == NULL) {
             ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -1213,7 +1213,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
                             *out, buf_len, NULL)) {
         ECerr(EC_F_I2O_ECPUBLICKEY, ERR_R_EC_LIB);
         if (new_buffer) {
-            OPENSSL_free(*out);
+            OPENtls_free(*out);
             *out = NULL;
         }
         return 0;
@@ -1230,7 +1230,7 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {
-    ECDSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    ECDSA_SIG *sig = OPENtls_zalloc(sizeof(*sig));
     if (sig == NULL)
         ECerr(EC_F_ECDSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
     return sig;
@@ -1242,7 +1242,7 @@ void ECDSA_SIG_free(ECDSA_SIG *sig)
         return;
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
-    OPENSSL_free(sig);
+    OPENtls_free(sig);
 }
 
 ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **psig, const unsigned char **ppin, long len)

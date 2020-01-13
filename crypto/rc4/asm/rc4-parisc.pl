@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 
 # RC4 for PA-RISC.
@@ -57,7 +57,7 @@ if ($flavour =~ /64/) {
 $FRAME=4*$SIZE_T+$FRAME_MARKER;	# 4 saved regs + frame marker
 				#                [+ argument transfer]
 $SZ=1;				# defaults to RC4_CHAR
-if (open CONF,"<${dir}../../opensslconf.h") {
+if (open CONF,"<${dir}../../opentlsconf.h") {
     while(<CONF>) {
 	if (m/#\s*define\s+RC4_INT\s+(.*)/) {
 	    $SZ = ($1=~/char$/) ? 1 : 4;
@@ -314,7 +314,7 @@ L\$pic
 	.ALIGN	8
 L\$opts
 	.STRINGZ "rc4(4x,`$SZ==1?"char":"int"`)"
-	.STRINGZ "RC4 for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.STRINGZ "RC4 for PA-RISC, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`

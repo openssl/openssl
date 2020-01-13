@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Regression tests for ASN.1 parsing bugs. */
@@ -14,12 +14,12 @@
 
 #include "testutil.h"
 
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/bio.h>
+#include <opentls/err.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 #include "internal/nelem.h"
 
 static const ASN1_ITEM *item_type;
@@ -101,7 +101,7 @@ static int test_bad_asn1(void)
         && !TEST_false(ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE))
         ret = 0;
     BIO_free(bio);
-    OPENSSL_free(der);
+    OPENtls_free(der);
     ASN1_item_free(value, item_type);
     return ret;
 }
@@ -147,7 +147,7 @@ int setup_tests(void)
         return 0;
     }
 
-    for (i = 0; i < OSSL_NELEM(expected_errors); i++) {
+    for (i = 0; i < Otls_NELEM(expected_errors); i++) {
         if (strcmp(expected_errors[i].str, expected_error_string) == 0) {
             expected_error = expected_errors[i].code;
             break;

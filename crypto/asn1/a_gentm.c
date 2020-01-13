@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 #include "asn1_local.h"
 
 /* This is the primary function used to parse ASN1_GENERALIZEDTIME */
@@ -62,12 +62,12 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     struct tm *ts;
     struct tm data;
 
-    ts = OPENSSL_gmtime(&t, &data);
+    ts = OPENtls_gmtime(&t, &data);
     if (ts == NULL)
         return NULL;
 
     if (offset_day || offset_sec) {
-        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+        if (!OPENtls_gmtime_adj(ts, offset_day, offset_sec))
             return NULL;
     }
 

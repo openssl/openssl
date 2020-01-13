@@ -1,17 +1,17 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Mike Hamburg
  */
 
-#ifndef OSSL_CRYPTO_EC_CURVE448_POINT_448_H
-# define OSSL_CRYPTO_EC_CURVE448_POINT_448_H
+#ifndef Otls_CRYPTO_EC_CURVE448_POINT_448_H
+# define Otls_CRYPTO_EC_CURVE448_POINT_448_H
 
 # include "curve448utils.h"
 # include "field.h"
@@ -158,7 +158,7 @@ void curve448_scalar_halve(curve448_scalar_t out, const curve448_scalar_t a);
  * a (in): A scalar.
  * out (out): Will become a copy of a.
  */
-static ossl_inline void curve448_scalar_copy(curve448_scalar_t out,
+static otls_inline void curve448_scalar_copy(curve448_scalar_t out,
                                              const curve448_scalar_t a)
 {
     *out = *a;
@@ -171,7 +171,7 @@ static ossl_inline void curve448_scalar_copy(curve448_scalar_t out,
  * a (out): A copy of the point.
  * b (in): Any point.
  */
-static ossl_inline void curve448_point_copy(curve448_point_t a,
+static otls_inline void curve448_point_copy(curve448_point_t a,
                                             const curve448_point_t b)
 {
     *a = *b;
@@ -298,4 +298,4 @@ void curve448_scalar_destroy(curve448_scalar_t scalar);
 /* Overwrite point with zeros. */
 void curve448_point_destroy(curve448_point_t point);
 
-#endif                          /* OSSL_CRYPTO_EC_CURVE448_POINT_448_H */
+#endif                          /* Otls_CRYPTO_EC_CURVE448_POINT_448_H */

@@ -1,10 +1,10 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* test vectors from p1ovect1.txt */
@@ -14,21 +14,21 @@
 
 #include "internal/nelem.h"
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/bn.h>
+#include <opentls/crypto.h>
+#include <opentls/err.h>
+#include <opentls/rand.h>
+#include <opentls/bn.h>
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
+#ifdef OPENtls_NO_RSA
 int setup_tests(void)
 {
     /* No tests */
     return 1;
 }
 #else
-# include <openssl/rsa.h>
+# include <opentls/rsa.h>
 
 # define SetKey \
     RSA_set0_key(key,                                           \
@@ -270,7 +270,7 @@ err:
     return ret;
 }
 
-static int test_rsa_sslv23(int idx)
+static int test_rsa_tlsv23(int idx)
 {
     int ret = 0;
     RSA *key;
@@ -286,11 +286,11 @@ static int test_rsa_sslv23(int idx)
     clen = rsa_setkey(&key, ctext_ex, idx);
 
     num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
-                             RSA_SSLV23_PADDING);
+                             RSA_tlsV23_PADDING);
     if (!TEST_int_eq(num, clen))
         goto err;
 
-    num = RSA_private_decrypt(num, ctext, ptext, key, RSA_SSLV23_PADDING);
+    num = RSA_private_decrypt(num, ctext, ptext, key, RSA_tlsV23_PADDING);
     if (!TEST_mem_eq(ptext, num, ptext_ex, plen))
         goto err;
 
@@ -423,9 +423,9 @@ err:
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
-    ADD_ALL_TESTS(test_rsa_sslv23, 3);
+    ADD_ALL_TESTS(test_rsa_tlsv23, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
-    ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
+    ADD_ALL_TESTS(test_rsa_security_bit, Otls_NELEM(rsa_security_bits_cases));
     return 1;
 }
 #endif

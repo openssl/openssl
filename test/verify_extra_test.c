@@ -1,19 +1,19 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
+#include <opentls/crypto.h>
+#include <opentls/bio.h>
+#include <opentls/x509.h>
+#include <opentls/pem.h>
+#include <opentls/err.h>
 #include "testutil.h"
 
 static const char *roots_f;
@@ -179,7 +179,7 @@ static int test_store_ctx(void)
 
 OPT_TEST_DECLARE_USAGE("roots.pem untrusted.pem bad.pem\n")
 
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
 static int test_sm2_id(void)
 {
     /* we only need an X509 structure, no matter if it's a real SM2 cert */
@@ -271,7 +271,7 @@ int setup_tests(void)
 
     ADD_TEST(test_alt_chains_cert_forgery);
     ADD_TEST(test_store_ctx);
-#ifndef OPENSSL_NO_SM2
+#ifndef OPENtls_NO_SM2
     ADD_TEST(test_sm2_id);
     ADD_TEST(test_req_sm2_id);
 #endif

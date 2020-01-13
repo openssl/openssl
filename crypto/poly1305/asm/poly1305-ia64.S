@@ -1,5 +1,5 @@
 // ====================================================================
-// Written by Andy Polyakov, @dot-asm, initially for use in the OpenSSL
+// Written by Andy Polyakov, @dot-asm, initially for use in the Opentls
 // project.
 // ====================================================================
 //

@@ -1,17 +1,17 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 # ====================================================================
 #
 # This module implements Poly1305 hash for SPARCv9, vanilla, as well
@@ -77,7 +77,7 @@ poly1305_init:
 	save	%sp,-STACK_FRAME-16,%sp
 	nop
 
-	SPARC_LOAD_ADDRESS(OPENSSL_sparcv9cap_P,%g1)
+	SPARC_LOAD_ADDRESS(OPENtls_sparcv9cap_P,%g1)
 	ld	[%g1],%g1
 
 	and	%g1,SPARCV9_FMADD|SPARCV9_VIS3,%g1
@@ -1040,7 +1040,7 @@ $code.=<<___;
 .word	0x3e300000,0x00000000		! 2^(52+16+0-96)
 .word	0x40300000,0x00000000		! 2^(52+16+32-96)
 .word	0x42300000,0x00000000		! 2^(52+16+64-96)
-.asciz	"Poly1305 for SPARCv9/VIS3/FMA, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"Poly1305 for SPARCv9/VIS3/FMA, CRYPTOGAMS by <appro\@opentls.org>"
 .align	4
 ___
 }

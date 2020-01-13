@@ -1,15 +1,15 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 no strict 'refs';               # To be able to use strings as function refs
-use OpenSSL::Test;
-use OpenSSL::Test::Utils;
+use Opentls::Test;
+use Opentls::Test::Utils;
 use Errno qw(:POSIX);
 use POSIX qw(strerror);
 
@@ -31,13 +31,13 @@ setup('test_errstr');
 plan skip_all => 'This is unsupported for cross compiled configurations'
     if config('CROSS_COMPILE');
 
-# The same can be said when compiling OpenSSL with mingw configuration
+# The same can be said when compiling Opentls with mingw configuration
 # on Windows when built with msys perl.  Similar problems are also observed
 # in MSVC builds, depending on the perl implementation used.
 plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
     if $^O eq 'msys' or $^O eq 'MSWin32';
 
-plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
+plan skip_all => 'Opentls is configured "no-autoerrinit" or "no-err"'
     if disabled('autoerrinit') || disabled('err');
 
 # These are POSIX error names, which Errno implements as functions
@@ -46,7 +46,7 @@ my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
 
 if ($^O eq 'MSWin32') {
     # On Windows, these errors have been observed to not always be loaded by
-    # apps/openssl, while they are in perl, which causes a difference that we
+    # apps/opentls, while they are in perl, which causes a difference that we
     # consider a false alarm.  So we skip checking these errors.
     # Because we can't know exactly what symbols exist in a perticular perl
     # version, we resort to discovering them directly in the Errno package
@@ -100,8 +100,8 @@ foreach my $errname (@posix_errors) {
             $!
         };
 
-        # We know that the system reasons are in OpenSSL error library 2
-        my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
+        # We know that the system reasons are in Opentls error library 2
+        my @oerr = run(app([ qw(opentls errstr), sprintf("2%06x", $errnum) ]),
                        capture => 1);
         $oerr[0] =~ s|\R$||;
         @oerr = split_error($oerr[0]);
@@ -109,12 +109,12 @@ foreach my $errname (@posix_errors) {
     }
 }
 
-my @after = run(app([ qw(openssl errstr 2000080) ]), capture => 1);
+my @after = run(app([ qw(opentls errstr 2000080) ]), capture => 1);
 $after[0] =~ s|\R$||;
 @after = split_error($after[0]);
 ok($after[3] eq "reason(128)", "(128) '$after[3]' == 'reason(128)'");
 
-my @zero = run(app([ qw(openssl errstr 2000000) ]), capture => 1);
+my @zero = run(app([ qw(opentls errstr 2000000) ]), capture => 1);
 $zero[0] =~ s|\R$||;
 @zero = split_error($zero[0]);
 ok($zero[3] eq "system library", "(0) '$zero[3]' == 'system library'");

@@ -1,19 +1,19 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
+#include <opentls/hmac.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
@@ -29,14 +29,14 @@
 #define KDF_PBKDF2_MIN_ITERATIONS 1000
 #define KDF_PBKDF2_MIN_SALT_LEN   (128 / 8)
 
-static OSSL_OP_kdf_newctx_fn kdf_pbkdf2_new;
-static OSSL_OP_kdf_freectx_fn kdf_pbkdf2_free;
-static OSSL_OP_kdf_reset_fn kdf_pbkdf2_reset;
-static OSSL_OP_kdf_derive_fn kdf_pbkdf2_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kdf_pbkdf2_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kdf_pbkdf2_set_ctx_params;
+static Otls_OP_kdf_newctx_fn kdf_pbkdf2_new;
+static Otls_OP_kdf_freectx_fn kdf_pbkdf2_free;
+static Otls_OP_kdf_reset_fn kdf_pbkdf2_reset;
+static Otls_OP_kdf_derive_fn kdf_pbkdf2_derive;
+static Otls_OP_kdf_settable_ctx_params_fn kdf_pbkdf2_settable_ctx_params;
+static Otls_OP_kdf_set_ctx_params_fn kdf_pbkdf2_set_ctx_params;
 
-static int  pbkdf2_derive(const char *pass, size_t passlen,
+static int  pbkdf2_derive(const char *pass, size_t patlsen,
                           const unsigned char *salt, int saltlen, uint64_t iter,
                           const EVP_MD *digest, unsigned char *key,
                           size_t keylen, int extra_checks);
@@ -58,7 +58,7 @@ static void *kdf_pbkdf2_new(void *provctx)
 {
     KDF_PBKDF2 *ctx;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = OPENtls_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -70,9 +70,9 @@ static void *kdf_pbkdf2_new(void *provctx)
 
 static void kdf_pbkdf2_cleanup(KDF_PBKDF2 *ctx)
 {
-    ossl_prov_digest_reset(&ctx->digest);
-    OPENSSL_free(ctx->salt);
-    OPENSSL_clear_free(ctx->pass, ctx->pass_len);
+    otls_prov_digest_reset(&ctx->digest);
+    OPENtls_free(ctx->salt);
+    OPENtls_clear_free(ctx->pass, ctx->pass_len);
     memset(ctx, 0, sizeof(*ctx));
 }
 
@@ -82,7 +82,7 @@ static void kdf_pbkdf2_free(void *vctx)
 
     if (ctx != NULL) {
         kdf_pbkdf2_cleanup(ctx);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
     }
 }
 
@@ -96,30 +96,30 @@ static void kdf_pbkdf2_reset(void *vctx)
 
 static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
 {
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    Otls_PARAM params[2] = { Otls_PARAM_END, Otls_PARAM_END };
+    OPENtls_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+    params[0] = Otls_PARAM_construct_utf8_string(Otls_KDF_PARAM_DIGEST,
                                                  SN_sha1, 0);
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+    if (!otls_prov_digest_load_from_params(&ctx->digest, params, provctx))
         /* This is an error, but there is no way to indicate such directly */
-        ossl_prov_digest_reset(&ctx->digest);
+        otls_prov_digest_reset(&ctx->digest);
     ctx->iter = PKCS5_DEFAULT_ITER;
     ctx->lower_bound_checks = kdf_pbkdf2_default_checks;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
-                             const OSSL_PARAM *p)
+                             const Otls_PARAM *p)
 {
-    OPENSSL_clear_free(*buffer, *buflen);
+    OPENtls_clear_free(*buffer, *buflen);
     if (p->data_size == 0) {
-        if ((*buffer = OPENSSL_malloc(1)) == NULL) {
+        if ((*buffer = OPENtls_malloc(1)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     } else if (p->data != NULL) {
         *buffer = NULL;
-        if (!OSSL_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
+        if (!Otls_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
             return 0;
     }
     return 1;
@@ -129,7 +129,7 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md = otls_prov_digest_md(&ctx->digest);
 
     if (ctx->pass == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);
@@ -146,28 +146,28 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
                          md, key, keylen, ctx->lower_bound_checks);
 }
 
-static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int kdf_pbkdf2_set_ctx_params(void *vctx, const Otls_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const Otls_PARAM *p;
     KDF_PBKDF2 *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OPENtls_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int pkcs5;
     uint64_t iter, min_iter;
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
+    if (!otls_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS5)) != NULL) {
-        if (!OSSL_PARAM_get_int(p, &pkcs5))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_PKCS5)) != NULL) {
+        if (!Otls_PARAM_get_int(p, &pkcs5))
             return 0;
         ctx->lower_bound_checks = pkcs5 == 0;
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_PASSWORD)) != NULL)
         if (!pbkdf2_set_membuf(&ctx->pass, &ctx->pass_len, p))
             return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_SALT)) != NULL) {
         if (ctx->lower_bound_checks != 0
             && p->data_size < KDF_PBKDF2_MIN_SALT_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
@@ -177,8 +177,8 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ITER)) != NULL) {
-        if (!OSSL_PARAM_get_uint64(p, &iter))
+    if ((p = Otls_PARAM_locate_const(params, Otls_KDF_PARAM_ITER)) != NULL) {
+        if (!Otls_PARAM_get_uint64(p, &iter))
             return 0;
         min_iter = ctx->lower_bound_checks != 0 ? KDF_PBKDF2_MIN_ITERATIONS : 1;
         if (iter < min_iter) {
@@ -190,49 +190,49 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_pbkdf2_settable_ctx_params(void)
+static const Otls_PARAM *kdf_pbkdf2_settable_ctx_params(void)
 {
-    static const OSSL_PARAM known_settable_ctx_params[] = {
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_DIGEST, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SALT, NULL, 0),
-        OSSL_PARAM_uint64(OSSL_KDF_PARAM_ITER, NULL),
-        OSSL_PARAM_int(OSSL_KDF_PARAM_PKCS5, NULL),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_settable_ctx_params[] = {
+        Otls_PARAM_utf8_string(Otls_KDF_PARAM_PROPERTIES, NULL, 0),
+        Otls_PARAM_utf8_string(Otls_KDF_PARAM_DIGEST, NULL, 0),
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_PASSWORD, NULL, 0),
+        Otls_PARAM_octet_string(Otls_KDF_PARAM_SALT, NULL, 0),
+        Otls_PARAM_uint64(Otls_KDF_PARAM_ITER, NULL),
+        Otls_PARAM_int(Otls_KDF_PARAM_PKCS5, NULL),
+        Otls_PARAM_END
     };
     return known_settable_ctx_params;
 }
 
-static int kdf_pbkdf2_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int kdf_pbkdf2_get_ctx_params(void *vctx, Otls_PARAM params[])
 {
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, SIZE_MAX);
+    if ((p = Otls_PARAM_locate(params, Otls_KDF_PARAM_SIZE)) != NULL)
+        return Otls_PARAM_set_size_t(p, SIZE_MAX);
     return -2;
 }
 
-static const OSSL_PARAM *kdf_pbkdf2_gettable_ctx_params(void)
+static const Otls_PARAM *kdf_pbkdf2_gettable_ctx_params(void)
 {
-    static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
-        OSSL_PARAM_END
+    static const Otls_PARAM known_gettable_ctx_params[] = {
+        Otls_PARAM_size_t(Otls_KDF_PARAM_SIZE, NULL),
+        Otls_PARAM_END
     };
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_pbkdf2_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf2_new },
-    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pbkdf2_free },
-    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pbkdf2_reset },
-    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pbkdf2_derive },
-    { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
+const Otls_DISPATCH kdf_pbkdf2_functions[] = {
+    { Otls_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pbkdf2_new },
+    { Otls_FUNC_KDF_FREECTX, (void(*)(void))kdf_pbkdf2_free },
+    { Otls_FUNC_KDF_RESET, (void(*)(void))kdf_pbkdf2_reset },
+    { Otls_FUNC_KDF_DERIVE, (void(*)(void))kdf_pbkdf2_derive },
+    { Otls_FUNC_KDF_SETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_pbkdf2_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_set_ctx_params },
-    { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
+    { Otls_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_set_ctx_params },
+    { Otls_FUNC_KDF_GETTABLE_CTX_PARAMS,
       (void(*)(void))kdf_pbkdf2_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_get_ctx_params },
+    { Otls_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_pbkdf2_get_ctx_params },
     { 0, NULL }
 };
 
@@ -246,7 +246,7 @@ const OSSL_DISPATCH kdf_pbkdf2_functions[] = {
  *  - Minimum iteration count of 1000.
  *  - Randomly-generated portion of the salt shall be at least 128 bits.
  */
-static int pbkdf2_derive(const char *pass, size_t passlen,
+static int pbkdf2_derive(const char *pass, size_t patlsen,
                          const unsigned char *salt, int saltlen, uint64_t iter,
                          const EVP_MD *digest, unsigned char *key,
                          size_t keylen, int lower_bound_checks)
@@ -291,7 +291,7 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
         return 0;
     p = key;
     tkeylen = keylen;
-    if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL))
+    if (!HMAC_Init_ex(hctx_tpl, pass, patlsen, digest, NULL))
         goto err;
     hctx = HMAC_CTX_new();
     if (hctx == NULL)

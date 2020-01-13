@@ -1,18 +1,18 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/hmac.h>
-#include <openssl/opensslconf.h>
+#include <opentls/hmac.h>
+#include <opentls/opentlsconf.h>
 #include "hmac_local.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
@@ -47,7 +47,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         reset = 1;
 
         j = EVP_MD_block_size(md);
-        if (!ossl_assert(j <= (int)sizeof(keytmp)))
+        if (!otls_assert(j <= (int)sizeof(keytmp)))
             return 0;
         if (j < len) {
             if (!EVP_DigestInit_ex(ctx->md_ctx, md, impl)
@@ -82,13 +82,13 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     rv = 1;
  err:
     if (reset) {
-        OPENSSL_cleanse(keytmp, sizeof(keytmp));
-        OPENSSL_cleanse(pad, sizeof(pad));
+        OPENtls_cleanse(keytmp, sizeof(keytmp));
+        OPENtls_cleanse(pad, sizeof(pad));
     }
     return rv;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENtls_NO_DEPRECATED_1_1_0
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)
@@ -134,7 +134,7 @@ size_t HMAC_size(const HMAC_CTX *ctx)
 
 HMAC_CTX *HMAC_CTX_new(void)
 {
-    HMAC_CTX *ctx = OPENSSL_zalloc(sizeof(HMAC_CTX));
+    HMAC_CTX *ctx = OPENtls_zalloc(sizeof(HMAC_CTX));
 
     if (ctx != NULL) {
         if (!HMAC_CTX_reset(ctx)) {
@@ -160,7 +160,7 @@ void HMAC_CTX_free(HMAC_CTX *ctx)
         EVP_MD_CTX_free(ctx->i_ctx);
         EVP_MD_CTX_free(ctx->o_ctx);
         EVP_MD_CTX_free(ctx->md_ctx);
-        OPENSSL_free(ctx);
+        OPENtls_free(ctx);
     }
 }
 

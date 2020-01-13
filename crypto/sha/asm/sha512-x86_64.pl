@@ -1,14 +1,14 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
 # project. Rights for redistribution and usage in source and binary
 # forms are granted according to the License.
 # ====================================================================
@@ -268,7 +268,7 @@ ___
 $code=<<___;
 .text
 
-.extern	OPENSSL_ia32cap_P
+.extern	OPENtls_ia32cap_P
 .globl	$func
 .type	$func,\@function,3
 .align	16
@@ -276,7 +276,7 @@ $func:
 .cfi_startproc
 ___
 $code.=<<___ if ($SZ==4 || $avx);
-	lea	OPENSSL_ia32cap_P(%rip),%r11
+	lea	OPENtls_ia32cap_P(%rip),%r11
 	mov	0(%r11),%r9d
 	mov	4(%r11),%r10d
 	mov	8(%r11),%r11d
@@ -460,7 +460,7 @@ $TABLE:
 	.long	0x03020100,0x0b0a0908,0xffffffff,0xffffffff
 	.long	0xffffffff,0xffffffff,0x03020100,0x0b0a0908
 	.long	0xffffffff,0xffffffff,0x03020100,0x0b0a0908
-	.asciz	"SHA256 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA256 block transform for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 } else {
 $code.=<<___;
@@ -550,7 +550,7 @@ $TABLE:
 
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
 	.quad	0x0001020304050607,0x08090a0b0c0d0e0f
-	.asciz	"SHA512 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+	.asciz	"SHA512 block transform for x86_64, CRYPTOGAMS by <appro\@opentls.org>"
 ___
 }
 

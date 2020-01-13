@@ -1,25 +1,25 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_KDF_H
-# define OPENSSL_KDF_H
+#ifndef OPENtls_KDF_H
+# define OPENtls_KDF_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_KDF_H
 # endif
 
 # include <stdarg.h>
 # include <stddef.h>
-# include <openssl/types.h>
-# include <openssl/core.h>
+# include <opentls/types.h>
+# include <opentls/core.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -27,7 +27,7 @@ extern "C" {
 
 int EVP_KDF_up_ref(EVP_KDF *kdf);
 void EVP_KDF_free(EVP_KDF *kdf);
-EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_KDF *EVP_KDF_fetch(OPENtls_CTX *libctx, const char *algorithm,
                        const char *properties);
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
@@ -35,20 +35,20 @@ void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
 EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
 int EVP_KDF_number(const EVP_KDF *kdf);
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
-const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
+const Otls_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
 const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
 
 void EVP_KDF_reset(EVP_KDF_CTX *ctx);
 size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
-int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
-int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
-int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
-const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
-const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
-const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
+int EVP_KDF_get_params(EVP_KDF *kdf, Otls_PARAM params[]);
+int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, Otls_PARAM params[]);
+int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const Otls_PARAM params[]);
+const Otls_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
+const Otls_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
+const Otls_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
 
-void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KDF_do_all_provided(OPENtls_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
                              void *arg);
 void EVP_KDF_names_do_all(const EVP_KDF *kdf,
@@ -147,9 +147,9 @@ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
                               EVP_PKEY_CTRL_HKDF_MODE, mode, NULL)
 
-# define EVP_PKEY_CTX_set1_pbe_pass(pctx, pass, passlen) \
+# define EVP_PKEY_CTX_set1_pbe_pass(pctx, pass, patlsen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_PASS, passlen, (void *)(pass))
+                            EVP_PKEY_CTRL_PASS, patlsen, (void *)(pass))
 
 # define EVP_PKEY_CTX_set1_scrypt_salt(pctx, salt, saltlen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \

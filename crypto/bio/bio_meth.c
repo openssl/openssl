@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "bio_local.h"
@@ -35,11 +35,11 @@ int BIO_get_new_index(void)
 
 BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
-    BIO_METHOD *biom = OPENSSL_zalloc(sizeof(BIO_METHOD));
+    BIO_METHOD *biom = OPENtls_zalloc(sizeof(BIO_METHOD));
 
     if (biom == NULL
-            || (biom->name = OPENSSL_strdup(name)) == NULL) {
-        OPENSSL_free(biom);
+            || (biom->name = OPENtls_strdup(name)) == NULL) {
+        OPENtls_free(biom);
         BIOerr(BIO_F_BIO_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -50,8 +50,8 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
 void BIO_meth_free(BIO_METHOD *biom)
 {
     if (biom != NULL) {
-        OPENSSL_free(biom->name);
-        OPENSSL_free(biom);
+        OPENtls_free(biom->name);
+        OPENtls_free(biom);
     }
 }
 

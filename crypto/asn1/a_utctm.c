@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 #include "asn1_local.h"
 
 /* This is the primary function used to parse ASN1_UTCTIME */
@@ -57,12 +57,12 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     struct tm *ts;
     struct tm data;
 
-    ts = OPENSSL_gmtime(&t, &data);
+    ts = OPENtls_gmtime(&t, &data);
     if (ts == NULL)
         return NULL;
 
     if (offset_day || offset_sec) {
-        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+        if (!OPENtls_gmtime_adj(ts, offset_day, offset_sec))
             return NULL;
     }
 
@@ -77,10 +77,10 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     if (!asn1_utctime_to_tm(&stm, s))
         return -2;
 
-    if (OPENSSL_gmtime(&t, &ttm) == NULL)
+    if (OPENtls_gmtime(&t, &ttm) == NULL)
         return -2;
 
-    if (!OPENSSL_gmtime_diff(&day, &sec, &ttm, &stm))
+    if (!OPENtls_gmtime_diff(&day, &sec, &ttm, &stm))
         return -2;
 
     if (day > 0 || sec > 0)

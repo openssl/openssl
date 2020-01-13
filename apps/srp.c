@@ -1,35 +1,35 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  *
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
 
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_SRP
+#include <opentls/opentlsconf.h>
+#ifdef OPENtls_NO_SRP
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
-# include <openssl/conf.h>
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/txt_db.h>
-# include <openssl/buffer.h>
-# include <openssl/srp.h>
+# include <opentls/conf.h>
+# include <opentls/bio.h>
+# include <opentls/err.h>
+# include <opentls/txt_db.h>
+# include <opentls/buffer.h>
+# include <opentls/srp.h>
 # include "apps.h"
 # include "progs.h"
 
 # define BASE_SECTION    "srp"
-# define CONFIG_FILE "openssl.cnf"
+# define CONFIG_FILE "opentls.cnf"
 
 
 # define ENV_DATABASE            "srpvfile"
@@ -42,15 +42,15 @@ static int get_index(CA_DB *db, char *id, char type)
     if (id == NULL)
         return -1;
     if (type == DB_SRP_INDEX) {
-        for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-            pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+        for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+            pp = sk_OPENtls_PSTRING_value(db->db->data, i);
             if (pp[DB_srptype][0] == DB_SRP_INDEX
                 && strcmp(id, pp[DB_srpid]) == 0)
                 return i;
         }
     } else {
-        for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-            pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+        for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+            pp = sk_OPENtls_PSTRING_value(db->db->data, i);
 
             if (pp[DB_srptype][0] != DB_SRP_INDEX
                 && strcmp(id, pp[DB_srpid]) == 0)
@@ -65,7 +65,7 @@ static void print_entry(CA_DB *db, int indx, int verbose, char *s)
 {
     if (indx >= 0 && verbose) {
         int j;
-        char **pp = sk_OPENSSL_PSTRING_value(db->db->data, indx);
+        char **pp = sk_OPENtls_PSTRING_value(db->db->data, indx);
         BIO_printf(bio_err, "%s \"%s\"\n", s, pp[DB_srpid]);
         for (j = 0; j < DB_NUMBER; j++) {
             BIO_printf(bio_err, "  %d = \"%s\"\n", j, pp[j]);
@@ -81,7 +81,7 @@ static void print_index(CA_DB *db, int indexindex, int verbose)
 static void print_user(CA_DB *db, int userindex, int verbose)
 {
     if (verbose > 0) {
-        char **pp = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+        char **pp = sk_OPENtls_PSTRING_value(db->db->data, userindex);
 
         if (pp[DB_srptype][0] != 'I') {
             print_entry(db, userindex, verbose, "User entry");
@@ -105,7 +105,7 @@ static int update_index(CA_DB *db, char **row)
     if (!TXT_DB_insert(db->db, irow)) {
         BIO_printf(bio_err, "failed to update srpvfile\n");
         BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
-        OPENSSL_free(irow);
+        OPENtls_free(irow);
         return 0;
     }
     return 1;
@@ -142,16 +142,16 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
         if (verbose > 1)
             BIO_printf(bio_err, "Pass %s\n", password);
 
-        OPENSSL_assert(srp_usersalt != NULL);
+        OPENtls_assert(srp_usersalt != NULL);
         if ((gNid = SRP_create_verifier(user, password, &srp_usersalt,
                                         &verifier, N, g)) == NULL) {
             BIO_printf(bio_err, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
                 gNid = NULL;
-            OPENSSL_free(verifier);
+            OPENtls_free(verifier);
         }
-        OPENSSL_cleanse(password, len);
+        OPENtls_cleanse(password, len);
     }
     return gNid;
 }
@@ -180,7 +180,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
         } else {
             *srp_usersalt = salt;
         }
-        OPENSSL_cleanse(password, len);
+        OPENtls_cleanse(password, len);
         if (verbose > 1)
             BIO_printf(bio_err, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
                        gNid, salt, *srp_verifier);
@@ -204,7 +204,7 @@ const OPTIONS srp_options[] = {
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
     {"name", OPT_NAME, 's', "The particular srp definition to use"},
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
 
@@ -376,8 +376,8 @@ int srp_main(int argc, char **argv)
         goto end;
 
     /* Lets check some fields */
-    for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-        pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+    for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+        pp = sk_OPENtls_PSTRING_value(db->db->data, i);
 
         if (pp[DB_srptype][0] == DB_SRP_INDEX) {
             maxgN = i;
@@ -392,7 +392,7 @@ int srp_main(int argc, char **argv)
         BIO_printf(bio_err, "Database initialised\n");
 
     if (gNindex >= 0) {
-        gNrow = sk_OPENSSL_PSTRING_value(db->db->data, gNindex);
+        gNrow = sk_OPENtls_PSTRING_value(db->db->data, gNindex);
         print_entry(db, gNindex, verbose > 1, "Default g and N");
     } else if (maxgN > 0 && !SRP_get_default_gN(gN)) {
         BIO_printf(bio_err, "No g and N value for index \"%s\"\n", gN);
@@ -418,7 +418,7 @@ int srp_main(int argc, char **argv)
             if (user == NULL) {
                 BIO_printf(bio_err, "List all users\n");
 
-                for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
+                for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++)
                     print_user(db, i, 1);
             } else if (userindex < 0) {
                 BIO_printf(bio_err,
@@ -429,7 +429,7 @@ int srp_main(int argc, char **argv)
             if (userindex >= 0) {
                 /* reactivation of a new user */
                 char **row =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                    sk_OPENtls_PSTRING_value(db->db->data, userindex);
                 BIO_printf(bio_err, "user \"%s\" reactivated.\n", user);
                 row[DB_srptype][0] = 'V';
 
@@ -453,9 +453,9 @@ int srp_main(int argc, char **argv)
                     errors++;
                     goto end;
                 }
-                row[DB_srpid] = OPENSSL_strdup(user);
-                row[DB_srptype] = OPENSSL_strdup("v");
-                row[DB_srpgN] = OPENSSL_strdup(gNid);
+                row[DB_srpid] = OPENtls_strdup(user);
+                row[DB_srptype] = OPENtls_strdup("v");
+                row[DB_srpgN] = OPENtls_strdup(gNid);
 
                 if ((row[DB_srpid] == NULL)
                     || (row[DB_srpgN] == NULL)
@@ -463,14 +463,14 @@ int srp_main(int argc, char **argv)
                     || (row[DB_srpverifier] == NULL)
                     || (row[DB_srpsalt] == NULL)
                     || (userinfo
-                        && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo)) == NULL))
+                        && ((row[DB_srpinfo] = OPENtls_strdup(userinfo)) == NULL))
                     || !update_index(db, row)) {
-                    OPENSSL_free(row[DB_srpid]);
-                    OPENSSL_free(row[DB_srpgN]);
-                    OPENSSL_free(row[DB_srpinfo]);
-                    OPENSSL_free(row[DB_srptype]);
-                    OPENSSL_free(row[DB_srpverifier]);
-                    OPENSSL_free(row[DB_srpsalt]);
+                    OPENtls_free(row[DB_srpid]);
+                    OPENtls_free(row[DB_srpgN]);
+                    OPENtls_free(row[DB_srpinfo]);
+                    OPENtls_free(row[DB_srptype]);
+                    OPENtls_free(row[DB_srpverifier]);
+                    OPENtls_free(row[DB_srpsalt]);
                     goto end;
                 }
                 doupdatedb = 1;
@@ -484,7 +484,7 @@ int srp_main(int argc, char **argv)
             } else {
 
                 char **row =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                    sk_OPENtls_PSTRING_value(db->db->data, userindex);
                 char type = row[DB_srptype][0];
                 if (type == 'v') {
                     BIO_printf(bio_err,
@@ -504,7 +504,7 @@ int srp_main(int argc, char **argv)
                         if ((user_gN =
                              get_index(db, row[DB_srpgN], DB_SRP_INDEX)) >= 0)
                             irow =
-                                sk_OPENSSL_PSTRING_value(db->db->data,
+                                sk_OPENtls_PSTRING_value(db->db->data,
                                                          userindex);
 
                         if (!srp_verify_user
@@ -538,7 +538,7 @@ int srp_main(int argc, char **argv)
                     }
 
                     row[DB_srptype][0] = 'v';
-                    row[DB_srpgN] = OPENSSL_strdup(gNid);
+                    row[DB_srpgN] = OPENtls_strdup(gNid);
 
                     if (row[DB_srpid] == NULL
                         || row[DB_srpgN] == NULL
@@ -546,7 +546,7 @@ int srp_main(int argc, char **argv)
                         || row[DB_srpverifier] == NULL
                         || row[DB_srpsalt] == NULL
                         || (userinfo
-                            && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo))
+                            && ((row[DB_srpinfo] = OPENtls_strdup(userinfo))
                                 == NULL)))
                         goto end;
 
@@ -560,7 +560,7 @@ int srp_main(int argc, char **argv)
                            user);
                 errors++;
             } else {
-                char **xpp = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                char **xpp = sk_OPENtls_PSTRING_value(db->db->data, userindex);
 
                 BIO_printf(bio_err, "user \"%s\" revoked. t\n", user);
                 xpp[DB_srptype][0] = 'R';
@@ -579,8 +579,8 @@ int srp_main(int argc, char **argv)
 
     if (doupdatedb) {
         /* Lets check some fields */
-        for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
-            pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
+        for (i = 0; i < sk_OPENtls_PSTRING_num(db->db->data); i++) {
+            pp = sk_OPENtls_PSTRING_value(db->db->data, i);
 
             if (pp[DB_srptype][0] == 'v') {
                 pp[DB_srptype][0] = 'V';
@@ -611,8 +611,8 @@ int srp_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
 
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    OPENtls_free(passin);
+    OPENtls_free(passout);
     if (ret)
         ERR_print_errors(bio_err);
     NCONF_free(conf);

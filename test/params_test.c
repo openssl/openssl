@@ -1,21 +1,21 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
 /*
- * This program tests the use of OSSL_PARAM, currently in raw form.
+ * This program tests the use of Otls_PARAM, currently in raw form.
  */
 
 #include <string.h>
-#include <openssl/bn.h>
-#include <openssl/core.h>
-#include <openssl/params.h>
+#include <opentls/bn.h>
+#include <opentls/core.h>
+#include <opentls/params.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -36,36 +36,36 @@
 struct object_st {
     /*
      * Documented as a native integer, of the size given by sizeof(int).
-     * Assumed data type OSSL_PARAM_INTEGER
+     * Assumed data type Otls_PARAM_INTEGER
      */
     int p1;
     /*
      * Documented as a native double, of the size given by sizeof(double).
-     * Assumed data type OSSL_PARAM_REAL
+     * Assumed data type Otls_PARAM_REAL
      */
     double p2;
     /*
      * Documented as an arbitrarly large unsigned integer.
      * The data size must be large enough to accommodate.
-     * Assumed data type OSSL_PARAM_UNSIGNED_INTEGER
+     * Assumed data type Otls_PARAM_UNSIGNED_INTEGER
      */
     BIGNUM *p3;
     /*
      * Documented as a C string.
      * The data size must be large enough to accommodate.
-     * Assumed data type OSSL_PARAM_UTF8_STRING
+     * Assumed data type Otls_PARAM_UTF8_STRING
      */
     char *p4;
     size_t p4_l;
     /*
      * Documented as a C string.
-     * Assumed data type OSSL_PARAM_UTF8_STRING
+     * Assumed data type Otls_PARAM_UTF8_STRING
      */
     char p5[256];
     size_t p5_l;
     /*
      * Documented as a pointer to a constant C string.
-     * Assumed data type OSSL_PARAM_UTF8_PTR
+     * Assumed data type Otls_PARAM_UTF8_PTR
      */
     const char *p6;
     size_t p6_l;
@@ -81,7 +81,7 @@ struct object_st {
     "7778797a30313233343536373839"
 #define p4_init "BLAKE2s256"                    /* Random string */
 #define p5_init "Hellow World"                  /* Random string */
-#define p6_init OPENSSL_FULL_VERSION_STR        /* Static string */
+#define p6_init OPENtls_FULL_VERSION_STR        /* Static string */
 
 static void cleanup_object(void *vobj)
 {
@@ -89,20 +89,20 @@ static void cleanup_object(void *vobj)
 
     BN_free(obj->p3);
     obj->p3 = NULL;
-    OPENSSL_free(obj->p4);
+    OPENtls_free(obj->p4);
     obj->p4 = NULL;
-    OPENSSL_free(obj);
+    OPENtls_free(obj);
 }
 
 static void *init_object(void)
 {
-    struct object_st *obj = OPENSSL_zalloc(sizeof(*obj));
+    struct object_st *obj = OPENtls_zalloc(sizeof(*obj));
 
     obj->p1 = p1_init;
     obj->p2 = p2_init;
     if (!TEST_true(BN_hex2bn(&obj->p3, p3_init)))
         goto fail;
-    if (!TEST_ptr(obj->p4 = OPENSSL_strdup(p4_init)))
+    if (!TEST_ptr(obj->p4 = OPENtls_strdup(p4_init)))
         goto fail;
     strcpy(obj->p5, p5_init);
     obj->p6 = p6_init;
@@ -118,11 +118,11 @@ static void *init_object(void)
 /*
  * RAW provider, which handles the parameters in a very raw manner,
  * with no fancy API and very minimal checking.  The application that
- * calls these to set or request parameters MUST get its OSSL_PARAM
+ * calls these to set or request parameters MUST get its Otls_PARAM
  * array right.
  */
 
-static int raw_set_params(void *vobj, const OSSL_PARAM *params)
+static int raw_set_params(void *vobj, const Otls_PARAM *params)
 {
     struct object_st *obj = vobj;
 
@@ -137,8 +137,8 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
                                                  params->data_size, NULL)))
                 return 0;
         } else if (strcmp(params->key, "p4") == 0) {
-            OPENSSL_free(obj->p4);
-            if (!TEST_ptr(obj->p4 = OPENSSL_strndup(params->data,
+            OPENtls_free(obj->p4);
+            if (!TEST_ptr(obj->p4 = OPENtls_strndup(params->data,
                                                     params->data_size)))
                 return 0;
         } else if (strcmp(params->key, "p5") == 0) {
@@ -152,7 +152,7 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
     return 1;
 }
 
-static int raw_get_params(void *vobj, OSSL_PARAM *params)
+static int raw_get_params(void *vobj, Otls_PARAM *params)
 {
     struct object_st *obj = vobj;
 
@@ -186,8 +186,8 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
             strcpy(params->data, obj->p5);
         } else if (strcmp(params->key, "p6") == 0) {
             /*
-             * We COULD also use OPENSSL_FULL_VERSION_STR directly and
-             * use sizeof(OPENSSL_FULL_VERSION_STR) instead of calling
+             * We COULD also use OPENtls_FULL_VERSION_STR directly and
+             * use sizeof(OPENtls_FULL_VERSION_STR) instead of calling
              * strlen().
              * The caller wouldn't know the difference.
              */
@@ -204,35 +204,35 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
  * API provider, which handles the parameters using the API from params.h
  */
 
-static int api_set_params(void *vobj, const OSSL_PARAM *params)
+static int api_set_params(void *vobj, const Otls_PARAM *params)
 {
     struct object_st *obj = vobj;
-    const OSSL_PARAM *p = NULL;
+    const Otls_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate_const(params, "p1")) != NULL
-        && !TEST_true(OSSL_PARAM_get_int(p, &obj->p1)))
+    if ((p = Otls_PARAM_locate_const(params, "p1")) != NULL
+        && !TEST_true(Otls_PARAM_get_int(p, &obj->p1)))
         return 0;
-    if ((p = OSSL_PARAM_locate_const(params, "p2")) != NULL
-        && !TEST_true(OSSL_PARAM_get_double(p, &obj->p2)))
+    if ((p = Otls_PARAM_locate_const(params, "p2")) != NULL
+        && !TEST_true(Otls_PARAM_get_double(p, &obj->p2)))
         return 0;
-    if ((p = OSSL_PARAM_locate_const(params, "p3")) != NULL
-        && !TEST_true(OSSL_PARAM_get_BN(p, &obj->p3)))
+    if ((p = Otls_PARAM_locate_const(params, "p3")) != NULL
+        && !TEST_true(Otls_PARAM_get_BN(p, &obj->p3)))
         return 0;
-    if ((p = OSSL_PARAM_locate_const(params, "p4")) != NULL) {
-        OPENSSL_free(obj->p4);
+    if ((p = Otls_PARAM_locate_const(params, "p4")) != NULL) {
+        OPENtls_free(obj->p4);
         obj->p4 = NULL;
         /* If the value pointer is NULL, we get it automatically allocated */
-        if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &obj->p4, 0)))
+        if (!TEST_true(Otls_PARAM_get_utf8_string(p, &obj->p4, 0)))
             return 0;
     }
-    if ((p = OSSL_PARAM_locate_const(params, "p5")) != NULL) {
+    if ((p = Otls_PARAM_locate_const(params, "p5")) != NULL) {
         char *p5_ptr = obj->p5;
-        if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &p5_ptr, sizeof(obj->p5))))
+        if (!TEST_true(Otls_PARAM_get_utf8_string(p, &p5_ptr, sizeof(obj->p5))))
             return 0;
         obj->p5_l = strlen(obj->p5) + 1;
     }
-    if ((p = OSSL_PARAM_locate_const(params, "p6")) != NULL) {
-        if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
+    if ((p = Otls_PARAM_locate_const(params, "p6")) != NULL) {
+        if (!TEST_true(Otls_PARAM_get_utf8_ptr(p, &obj->p6)))
             return 0;
         obj->p6_l = strlen(obj->p6) + 1;
     }
@@ -240,28 +240,28 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
     return 1;
 }
 
-static int api_get_params(void *vobj, OSSL_PARAM *params)
+static int api_get_params(void *vobj, Otls_PARAM *params)
 {
     struct object_st *obj = vobj;
-    OSSL_PARAM *p = NULL;
+    Otls_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate(params, "p1")) != NULL
-        && !TEST_true(OSSL_PARAM_set_int(p, obj->p1)))
+    if ((p = Otls_PARAM_locate(params, "p1")) != NULL
+        && !TEST_true(Otls_PARAM_set_int(p, obj->p1)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p2")) != NULL
-        && !TEST_true(OSSL_PARAM_set_double(p, obj->p2)))
+    if ((p = Otls_PARAM_locate(params, "p2")) != NULL
+        && !TEST_true(Otls_PARAM_set_double(p, obj->p2)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p3")) != NULL
-        && !TEST_true(OSSL_PARAM_set_BN(p, obj->p3)))
+    if ((p = Otls_PARAM_locate(params, "p3")) != NULL
+        && !TEST_true(Otls_PARAM_set_BN(p, obj->p3)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p4")) != NULL
-        && !TEST_true(OSSL_PARAM_set_utf8_string(p, obj->p4)))
+    if ((p = Otls_PARAM_locate(params, "p4")) != NULL
+        && !TEST_true(Otls_PARAM_set_utf8_string(p, obj->p4)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p5")) != NULL
-        && !TEST_true(OSSL_PARAM_set_utf8_string(p, obj->p5)))
+    if ((p = Otls_PARAM_locate(params, "p5")) != NULL
+        && !TEST_true(Otls_PARAM_set_utf8_string(p, obj->p5)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, "p6")) != NULL
-        && !TEST_true(OSSL_PARAM_set_utf8_ptr(p, obj->p6)))
+    if ((p = Otls_PARAM_locate(params, "p6")) != NULL
+        && !TEST_true(Otls_PARAM_set_utf8_ptr(p, obj->p6)))
         return 0;
 
     return 1;
@@ -272,8 +272,8 @@ static int api_get_params(void *vobj, OSSL_PARAM *params)
  * a bit more code that's not necessary in these tests.
  */
 struct provider_dispatch_st {
-    int (*set_params)(void *obj, const OSSL_PARAM *params);
-    int (*get_params)(void *obj, OSSL_PARAM *params);
+    int (*set_params)(void *obj, const Otls_PARAM *params);
+    int (*get_params)(void *obj, Otls_PARAM *params);
 };
 
 /* "raw" provider */
@@ -344,60 +344,60 @@ static int init_app_variables(void)
 }
 
 /*
- * Here, we define test OSSL_PARAM arrays
+ * Here, we define test Otls_PARAM arrays
  */
 
-/* An array of OSSL_PARAM, specific in the most raw manner possible */
-static OSSL_PARAM static_raw_params[] = {
-    { "p1", OSSL_PARAM_INTEGER, &app_p1, sizeof(app_p1), 0 },
-    { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
-    { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
-    { "p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
+/* An array of Otls_PARAM, specific in the most raw manner possible */
+static Otls_PARAM static_raw_params[] = {
+    { "p1", Otls_PARAM_INTEGER, &app_p1, sizeof(app_p1), 0 },
+    { "p3", Otls_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
+    { "p4", Otls_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
+    { "p5", Otls_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
     /* sizeof(app_p6_init), because we know that's what we're using */
-    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
-    { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
+    { "p6", Otls_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
+    { "foo", Otls_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
     { NULL, 0, NULL, 0, 0 }
 };
 
-/* The same array of OSSL_PARAM, specified with the macros from params.h */
-static OSSL_PARAM static_api_params[] = {
-    OSSL_PARAM_int("p1", &app_p1),
-    OSSL_PARAM_BN("p3", &bignumbin, sizeof(bignumbin)),
-    OSSL_PARAM_DEFN("p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4)),
-    OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5)),
+/* The same array of Otls_PARAM, specified with the macros from params.h */
+static Otls_PARAM static_api_params[] = {
+    Otls_PARAM_int("p1", &app_p1),
+    Otls_PARAM_BN("p3", &bignumbin, sizeof(bignumbin)),
+    Otls_PARAM_DEFN("p4", Otls_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4)),
+    Otls_PARAM_DEFN("p5", Otls_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5)),
     /* sizeof(app_p6_init), because we know that's what we're using */
-    OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init)),
-    OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo)),
-    OSSL_PARAM_END
+    Otls_PARAM_DEFN("p6", Otls_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init)),
+    Otls_PARAM_DEFN("foo", Otls_PARAM_OCTET_STRING, &foo, sizeof(foo)),
+    Otls_PARAM_END
 };
 
 /*
  * The same array again, but constructed at run-time
- * This exercises the OSSL_PARAM constructor functions
+ * This exercises the Otls_PARAM constructor functions
  */
-static OSSL_PARAM *construct_api_params(void)
+static Otls_PARAM *construct_api_params(void)
 {
     size_t n = 0;
-    static OSSL_PARAM params[10];
+    static Otls_PARAM params[10];
 
-    params[n++] = OSSL_PARAM_construct_int("p1", &app_p1);
-    params[n++] = OSSL_PARAM_construct_BN("p3", bignumbin, sizeof(bignumbin));
-    params[n++] = OSSL_PARAM_construct_utf8_string("p4", app_p4,
+    params[n++] = Otls_PARAM_construct_int("p1", &app_p1);
+    params[n++] = Otls_PARAM_construct_BN("p3", bignumbin, sizeof(bignumbin));
+    params[n++] = Otls_PARAM_construct_utf8_string("p4", app_p4,
                                                    sizeof(app_p4));
-    params[n++] = OSSL_PARAM_construct_utf8_string("p5", app_p5,
+    params[n++] = Otls_PARAM_construct_utf8_string("p5", app_p5,
                                                    sizeof(app_p5));
     /* sizeof(app_p6_init), because we know that's what we're using */
-    params[n++] = OSSL_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
+    params[n++] = Otls_PARAM_construct_utf8_ptr("p6", (char **)&app_p6,
                                                 sizeof(app_p6_init));
-    params[n++] = OSSL_PARAM_construct_octet_string("foo", &foo, sizeof(foo));
-    params[n++] = OSSL_PARAM_construct_end();
+    params[n++] = Otls_PARAM_construct_octet_string("foo", &foo, sizeof(foo));
+    params[n++] = Otls_PARAM_construct_end();
 
     return params;
 }
 
 struct param_owner_st {
-    OSSL_PARAM *static_params;
-    OSSL_PARAM *(*constructed_params)(void);
+    Otls_PARAM *static_params;
+    Otls_PARAM *(*constructed_params)(void);
 };
 
 static const struct param_owner_st raw_params = {
@@ -431,12 +431,12 @@ static struct {
 };
 
 /* Generic tester of combinations of "providers" and params */
-static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_st *prov)
+static int test_case_variant(Otls_PARAM *params, const struct provider_dispatch_st *prov)
 {
     BIGNUM *verify_p3 = NULL;
     void *obj = NULL;
     int errcnt = 0;
-    OSSL_PARAM *p;
+    Otls_PARAM *p;
 
     /*
      * Initialize
@@ -456,18 +456,18 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, p1_init)        /* "provider" value */
         || !TEST_double_eq(app_p2, app_p2_init) /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p3"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p3"))
         || !TEST_ptr(BN_native2bn(bignumbin, p->return_size, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* "provider" value */
         || !TEST_str_eq(app_p4, p4_init)        /* "provider" value */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p5"))
         || !TEST_size_t_eq(p->return_size, sizeof(p5_init)) /* "provider" value */
         || !TEST_str_eq(app_p5, p5_init)        /* "provider" value */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p6"))
         || !TEST_size_t_eq(p->return_size, sizeof(p6_init)) /* "provider" value */
         || !TEST_str_eq(app_p6, p6_init)        /* "provider" value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "foo"))
         || !TEST_int_eq(p->return_size, 0))
         errcnt++;
 
@@ -506,20 +506,20 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, app_p1_init)    /* app value */
         || !TEST_double_eq(app_p2, app_p2_init) /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p3"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p3"))
         || !TEST_ptr(BN_native2bn(bignumbin, p->return_size, app_p3))
         || !TEST_BN_eq(app_p3, verify_p3)       /* app value */
         || !TEST_str_eq(app_p4, app_p4_init)    /* app value */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p5"))
         || !TEST_size_t_eq(p->return_size,
                            sizeof(app_p5_init)) /* app value */
         || !TEST_str_eq(app_p5, app_p5_init)    /* app value */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "p6"))
         || !TEST_size_t_eq(p->return_size,
                            sizeof(app_p6_init)) /* app value */
         || !TEST_str_eq(app_p6, app_p6_init)    /* app value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
+        || !TEST_ptr(p = Otls_PARAM_locate(params, "foo"))
         || !TEST_int_eq(p->return_size, 0))
         errcnt++;
 
@@ -545,6 +545,6 @@ static int test_case(int i)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_case, OSSL_NELEM(test_cases));
+    ADD_ALL_TESTS(test_case, Otls_NELEM(test_cases));
     return 1;
 }

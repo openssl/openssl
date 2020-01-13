@@ -1,21 +1,21 @@
 
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
-#include <openssl/x509v3.h>
-#include <openssl/core_names.h>
-#include <openssl/dh.h>
-#include <openssl/rsa.h>
+#include <opentls/engine.h>
+#include <opentls/evp.h>
+#include <opentls/x509v3.h>
+#include <opentls/core_names.h>
+#include <opentls/dh.h>
+#include <opentls/rsa.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
@@ -32,48 +32,48 @@ static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 /* This array needs to be in order of NIDs */
 static pmeth_fn standard_methods[] = {
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
     rsa_pkey_method,
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
     dh_pkey_method,
 # endif
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
     dsa_pkey_method,
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
     ec_pkey_method,
 # endif
     hmac_pkey_method,
-# ifndef OPENSSL_NO_CMAC
+# ifndef OPENtls_NO_CMAC
     cmac_pkey_method,
 # endif
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
     rsa_pss_pkey_method,
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
     dhx_pkey_method,
 # endif
-# ifndef OPENSSL_NO_SCRYPT
+# ifndef OPENtls_NO_SCRYPT
     scrypt_pkey_method,
 # endif
     tls1_prf_pkey_method,
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
     ecx25519_pkey_method,
     ecx448_pkey_method,
 # endif
     hkdf_pkey_method,
-# ifndef OPENSSL_NO_POLY1305
+# ifndef OPENtls_NO_POLY1305
     poly1305_pkey_method,
 # endif
-# ifndef OPENSSL_NO_SIPHASH
+# ifndef OPENtls_NO_SIPHASH
     siphash_pkey_method,
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
     ed25519_pkey_method,
     ed448_pkey_method,
 # endif
-# ifndef OPENSSL_NO_SM2
+# ifndef OPENtls_NO_SM2
     sm2_pkey_method,
 # endif
 };
@@ -118,7 +118,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 {
     EVP_PKEY_METHOD *pmeth;
 
-    pmeth = OPENSSL_zalloc(sizeof(*pmeth));
+    pmeth = OPENtls_zalloc(sizeof(*pmeth));
     if (pmeth == NULL) {
         EVPerr(EVP_F_EVP_PKEY_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -130,7 +130,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 }
 #endif /* FIPS_MODE */
 
-static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
+static EVP_PKEY_CTX *int_ctx_new(OPENtls_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *name, const char *propquery,
                                  int id)
@@ -152,7 +152,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      */
     if (pkey != NULL && pkey->pkey.ptr == NULL) {
         /* If we have an engine, something went wrong somewhere... */
-        if (!ossl_assert(e == NULL))
+        if (!otls_assert(e == NULL))
             return NULL;
         name = evp_first_name(pkey->pkeys[0].keymgmt->prov,
                               pkey->pkeys[0].keymgmt->name_id);
@@ -182,7 +182,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * since that can only happen internally, it's safe to make an
      * assertion.
      */
-    if (!ossl_assert(e == NULL || name == NULL))
+    if (!otls_assert(e == NULL || name == NULL))
         return NULL;
     if (e == NULL)
         name = OBJ_nid2sn(id);
@@ -198,7 +198,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      */
     libctx = NULL;
 
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     if (e == NULL && pkey != NULL)
         e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
@@ -222,7 +222,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         pmeth = EVP_PKEY_meth_find(id);
 
     if (pmeth == NULL) {
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
         ENGINE_finish(e);
 # endif
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
@@ -231,9 +231,9 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     /* END legacy */
 #endif /* FIPS_MODE */
  common:
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = OPENtls_zalloc(sizeof(*ret));
     if (ret == NULL) {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
         ENGINE_finish(e);
 #endif
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -262,14 +262,14 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
 
 /*- All methods below can also be used in FIPS_MODE */
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENtls_CTX *libctx,
                                          const char *name,
                                          const char *propquery)
 {
     return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey)
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENtls_CTX *libctx, EVP_PKEY *pkey)
 {
     return int_ctx_new(libctx, pkey, NULL, NULL, NULL, -1);
 }
@@ -313,10 +313,10 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENtls_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(ctx->engine);
 #endif
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx);
 }
 
 #ifndef FIPS_MODE
@@ -376,7 +376,7 @@ void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 {
     if (pmeth && (pmeth->flags & EVP_PKEY_FLAG_DYNAMIC))
-        OPENSSL_free(pmeth);
+        OPENtls_free(pmeth);
 }
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
@@ -400,14 +400,14 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
                 || (EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)
                     && pctx->op.sig.sigprovctx == NULL)))
         return NULL;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     /* Make sure it's safe to copy a pkey context using an ENGINE */
     if (pctx->engine && !ENGINE_init(pctx->engine)) {
         EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_ENGINE_LIB);
         return 0;
     }
 # endif
-    rctx = OPENSSL_zalloc(sizeof(*rctx));
+    rctx = OPENtls_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -425,18 +425,18 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         if (pctx->op.kex.exchange != NULL) {
             rctx->op.kex.exchange = pctx->op.kex.exchange;
             if (!EVP_KEYEXCH_up_ref(rctx->op.kex.exchange)) {
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
         }
         if (pctx->op.kex.exchprovctx != NULL) {
-            if (!ossl_assert(pctx->op.kex.exchange != NULL))
+            if (!otls_assert(pctx->op.kex.exchange != NULL))
                 return NULL;
             rctx->op.kex.exchprovctx
                 = pctx->op.kex.exchange->dupctx(pctx->op.kex.exchprovctx);
             if (rctx->op.kex.exchprovctx == NULL) {
                 EVP_KEYEXCH_free(rctx->op.kex.exchange);
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
             return rctx;
@@ -445,18 +445,18 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         if (pctx->op.sig.signature != NULL) {
             rctx->op.sig.signature = pctx->op.sig.signature;
             if (!EVP_SIGNATURE_up_ref(rctx->op.sig.signature)) {
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
         }
         if (pctx->op.sig.sigprovctx != NULL) {
-            if (!ossl_assert(pctx->op.sig.signature != NULL))
+            if (!otls_assert(pctx->op.sig.signature != NULL))
                 return NULL;
             rctx->op.sig.sigprovctx
                 = pctx->op.sig.signature->dupctx(pctx->op.sig.sigprovctx);
             if (rctx->op.sig.sigprovctx == NULL) {
                 EVP_SIGNATURE_free(rctx->op.sig.signature);
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
             return rctx;
@@ -465,18 +465,18 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         if (pctx->op.ciph.cipher != NULL) {
             rctx->op.ciph.cipher = pctx->op.ciph.cipher;
             if (!EVP_ASYM_CIPHER_up_ref(rctx->op.ciph.cipher)) {
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
         }
         if (pctx->op.ciph.ciphprovctx != NULL) {
-            if (!ossl_assert(pctx->op.ciph.cipher != NULL))
+            if (!otls_assert(pctx->op.ciph.cipher != NULL))
                 return NULL;
             rctx->op.ciph.ciphprovctx
                 = pctx->op.ciph.cipher->dupctx(pctx->op.ciph.ciphprovctx);
             if (rctx->op.ciph.ciphprovctx == NULL) {
                 EVP_ASYM_CIPHER_free(rctx->op.ciph.cipher);
-                OPENSSL_free(rctx);
+                OPENtls_free(rctx);
                 return NULL;
             }
             return rctx;
@@ -484,7 +484,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     }
 
     rctx->pmeth = pctx->pmeth;
-# ifndef OPENSSL_NO_ENGINE
+# ifndef OPENtls_NO_ENGINE
     rctx->engine = pctx->engine;
 # endif
 
@@ -535,7 +535,7 @@ int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth)
 
 size_t EVP_PKEY_meth_get_count(void)
 {
-    size_t rv = OSSL_NELEM(standard_methods);
+    size_t rv = Otls_NELEM(standard_methods);
 
     if (app_pkey_methods)
         rv += sk_EVP_PKEY_METHOD_num(app_pkey_methods);
@@ -544,18 +544,18 @@ size_t EVP_PKEY_meth_get_count(void)
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx)
 {
-    if (idx < OSSL_NELEM(standard_methods))
+    if (idx < Otls_NELEM(standard_methods))
         return (standard_methods[idx])();
     if (app_pkey_methods == NULL)
         return NULL;
-    idx -= OSSL_NELEM(standard_methods);
+    idx -= Otls_NELEM(standard_methods);
     if (idx >= (size_t)sk_EVP_PKEY_METHOD_num(app_pkey_methods))
         return NULL;
     return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
 }
 #endif
 
-int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, Otls_PARAM *params)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchprovctx != NULL
@@ -579,7 +579,7 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 }
 
 #ifndef FIPS_MODE
-int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, Otls_PARAM *params)
 {
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.sigprovctx != NULL
@@ -596,7 +596,7 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return 0;
 }
 
-const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
+const Otls_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
 {
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
@@ -611,7 +611,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
     return NULL;
 }
 
-const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
+const Otls_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
@@ -629,10 +629,10 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
     return NULL;
 }
 
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 {
-    OSSL_PARAM dh_pad_params[2];
+    Otls_PARAM dh_pad_params[2];
     unsigned int upad = pad;
 
     /* We use EVP_PKEY_CTX_ctrl return values */
@@ -646,8 +646,8 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_DH_PAD, pad, NULL);
 
-    dh_pad_params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &upad);
-    dh_pad_params[1] = OSSL_PARAM_construct_end();
+    dh_pad_params[0] = Otls_PARAM_construct_uint(Otls_EXCHANGE_PARAM_PAD, &upad);
+    dh_pad_params[1] = Otls_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
 }
@@ -655,7 +655,7 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
-    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
+    Otls_PARAM sig_md_params[3], *p = sig_md_params;
     /* 80 should be big enough */
     char name[80] = "";
     const EVP_MD *tmp;
@@ -671,10 +671,10 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
                                  EVP_PKEY_CTRL_GET_MD, 0, (void *)(md));
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_SIGNATURE_PARAM_DIGEST,
                                             name,
                                             sizeof(name));
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
         return 0;
@@ -690,7 +690,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
+    Otls_PARAM sig_md_params[3], *p = sig_md_params;
     size_t mdsize;
     const char *name;
 
@@ -713,16 +713,16 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
         name = EVP_MD_name(md);
     }
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+    *p++ = Otls_PARAM_construct_utf8_string(Otls_SIGNATURE_PARAM_DIGEST,
                                             /*
                                              * Cast away the const. This is read
                                              * only so should be safe
                                              */
                                             (char *)name,
                                             strlen(name) + 1);
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+    *p++ = Otls_PARAM_construct_size_t(Otls_SIGNATURE_PARAM_DIGEST_SIZE,
                                        &mdsize);
-    *p++ = OSSL_PARAM_construct_end();
+    *p++ = Otls_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, sig_md_params);
 }
@@ -731,7 +731,7 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
     switch (cmd) {
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
     case EVP_PKEY_CTRL_DH_PAD:
         return EVP_PKEY_CTX_set_dh_pad(ctx, p1);
 # endif
@@ -757,7 +757,7 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
     case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
     case EVP_PKEY_CTRL_PKCS7_DECRYPT:
-# ifndef OPENSSL_NO_CMS
+# ifndef OPENtls_NO_CMS
     case EVP_PKEY_CTRL_CMS_DECRYPT:
     case EVP_PKEY_CTRL_CMS_ENCRYPT:
 # endif
@@ -826,7 +826,7 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
 static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
                                     const char *value)
 {
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
     if (strcmp(name, "dh_pad") == 0) {
         int pad;
 
@@ -840,7 +840,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 
         if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) || ctx->op.sig.signature == NULL)
             return 0;
-        md = EVP_MD_fetch(ossl_provider_library_context(ctx->op.sig.signature->prov),
+        md = EVP_MD_fetch(otls_provider_library_context(ctx->op.sig.signature->prov),
                           value, NULL);
         if (md == NULL)
             return 0;
@@ -854,8 +854,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 
         if (strcmp(value, "pkcs1") == 0) {
             pm = RSA_PKCS1_PADDING;
-        } else if (strcmp(value, "sslv23") == 0) {
-            pm = RSA_SSLV23_PADDING;
+        } else if (strcmp(value, "tlsv23") == 0) {
+            pm = RSA_tlsV23_PADDING;
         } else if (strcmp(value, "none") == 0) {
             pm = RSA_NO_PADDING;
         } else if (strcmp(value, "oeap") == 0) {
@@ -884,12 +884,12 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         long lablen;
         int ret;
 
-        lab = OPENSSL_hexstr2buf(value, &lablen);
+        lab = OPENtls_hexstr2buf(value, &lablen);
         if (lab == NULL)
             return 0;
         ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);
         if (ret <= 0)
-            OPENSSL_free(lab);
+            OPENtls_free(lab);
         return ret;
     }
 
@@ -941,12 +941,12 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
     long binlen;
     int rv = -1;
 
-    bin = OPENSSL_hexstr2buf(hex, &binlen);
+    bin = OPENtls_hexstr2buf(hex, &binlen);
     if (bin == NULL)
         return 0;
     if (binlen <= INT_MAX)
         rv = ctx->pmeth->ctrl(ctx, cmd, binlen, bin);
-    OPENSSL_free(bin);
+    OPENtls_free(bin);
     return rv;
 }
 

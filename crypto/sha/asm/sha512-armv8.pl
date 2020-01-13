@@ -1,16 +1,16 @@
 #! /usr/bin/env perl
-# Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # ====================================================================
-# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
-# project. The module is, however, dual licensed under OpenSSL and
+# Written by Andy Polyakov <appro@opentls.org> for the Opentls
+# project. The module is, however, dual licensed under Opentls and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see http://www.opentls.org/~appro/cryptogams/.
 #
 # Permission to use under GPLv2 terms is granted.
 # ====================================================================
@@ -192,7 +192,7 @@ ___
 $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
-.extern	OPENSSL_armcap_P
+.extern	OPENtls_armcap_P
 #endif
 
 .text
@@ -202,8 +202,8 @@ $code.=<<___;
 .align	6
 $func:
 #ifndef	__KERNEL__
-	adrp	x16,OPENSSL_armcap_P
-	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
+	adrp	x16,OPENtls_armcap_P
+	ldr	w16,[x16,#:lo12:OPENtls_armcap_P]
 ___
 $code.=<<___	if ($SZ==4);
 	tst	w16,#ARMV8_SHA256
@@ -351,7 +351,7 @@ $code.=<<___ if ($SZ==4);
 ___
 $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
-.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@opentls.org>"
 .align	2
 ___
 
@@ -831,7 +831,7 @@ ___
 
 $code.=<<___;
 #if !defined(__KERNEL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
+.comm	OPENtls_armcap_P,4,4
 #endif
 ___
 

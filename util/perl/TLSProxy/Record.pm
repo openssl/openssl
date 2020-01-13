@@ -1,9 +1,9 @@
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 use strict;
 
@@ -40,8 +40,8 @@ use constant {
     VERS_TLS_1_2 => 0x0303,
     VERS_TLS_1_1 => 0x0302,
     VERS_TLS_1_0 => 0x0301,
-    VERS_SSL_3_0 => 0x0300,
-    VERS_SSL_LT_3_0 => 0x02ff
+    VERS_tls_3_0 => 0x0300,
+    VERS_tls_LT_3_0 => 0x02ff
 };
 
 my %tls_version = (
@@ -49,8 +49,8 @@ my %tls_version = (
     VERS_TLS_1_2, "TLS1.2",
     VERS_TLS_1_1, "TLS1.1",
     VERS_TLS_1_0, "TLS1.0",
-    VERS_SSL_3_0, "SSL3",
-    VERS_SSL_LT_3_0, "SSL<3"
+    VERS_tls_3_0, "tls3",
+    VERS_tls_LT_3_0, "tls<3"
 );
 
 #Class method to extract records from a packet of data
@@ -168,7 +168,7 @@ sub new
         $content_type,
         $version,
         $len,
-        $sslv2,
+        $tlsv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -179,7 +179,7 @@ sub new
         content_type => $content_type,
         version => $version,
         len => $len,
-        sslv2 => $sslv2,
+        tlsv2 => $tlsv2,
         len_real => $len_real,
         decrypt_len => $decrypt_len,
         data => $data,
@@ -282,7 +282,7 @@ sub reconstruct_record
     }
     $self->{sent} = 1;
 
-    if ($self->sslv2) {
+    if ($self->tlsv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
         if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
@@ -305,10 +305,10 @@ sub flight
     my $self = shift;
     return $self->{flight};
 }
-sub sslv2
+sub tlsv2
 {
     my $self = shift;
-    return $self->{sslv2};
+    return $self->{tlsv2};
 }
 sub len_real
 {

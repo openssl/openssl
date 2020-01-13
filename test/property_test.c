@@ -1,11 +1,11 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdarg.h>
@@ -21,7 +21,7 @@ static int add_property_names(const char *n, ...)
 
     va_start(args, n);
     do {
-        if (!TEST_int_ne(ossl_property_name(NULL, n, 1), 0))
+        if (!TEST_int_ne(otls_property_name(NULL, n, 1), 0))
             res = 0;
     } while ((n = va_arg(args, const char *)) != NULL);
     va_end(args);
@@ -39,30 +39,30 @@ static void down_ref(void *p)
 
 static int test_property_string(void)
 {
-    OSSL_METHOD_STORE *store;
+    Otls_METHOD_STORE *store;
     int res = 0;
-    OSSL_PROPERTY_IDX i, j;
+    Otls_PROPERTY_IDX i, j;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && TEST_int_eq(ossl_property_name(NULL, "fnord", 0), 0)
-        && TEST_int_ne(ossl_property_name(NULL, "fnord", 1), 0)
-        && TEST_int_ne(ossl_property_name(NULL, "name", 1), 0)
+    if (TEST_ptr(store = otls_method_store_new(NULL))
+        && TEST_int_eq(otls_property_name(NULL, "fnord", 0), 0)
+        && TEST_int_ne(otls_property_name(NULL, "fnord", 1), 0)
+        && TEST_int_ne(otls_property_name(NULL, "name", 1), 0)
         /* Property value checks */
-        && TEST_int_eq(ossl_property_value(NULL, "fnord", 0), 0)
-        && TEST_int_ne(i = ossl_property_value(NULL, "no", 0), 0)
-        && TEST_int_ne(j = ossl_property_value(NULL, "yes", 0), 0)
+        && TEST_int_eq(otls_property_value(NULL, "fnord", 0), 0)
+        && TEST_int_ne(i = otls_property_value(NULL, "no", 0), 0)
+        && TEST_int_ne(j = otls_property_value(NULL, "yes", 0), 0)
         && TEST_int_ne(i, j)
-        && TEST_int_eq(ossl_property_value(NULL, "yes", 1), j)
-        && TEST_int_eq(ossl_property_value(NULL, "no", 1), i)
-        && TEST_int_ne(i = ossl_property_value(NULL, "illuminati", 1), 0)
-        && TEST_int_eq(j = ossl_property_value(NULL, "fnord", 1), i + 1)
-        && TEST_int_eq(ossl_property_value(NULL, "fnord", 1), j)
+        && TEST_int_eq(otls_property_value(NULL, "yes", 1), j)
+        && TEST_int_eq(otls_property_value(NULL, "no", 1), i)
+        && TEST_int_ne(i = otls_property_value(NULL, "illuminati", 1), 0)
+        && TEST_int_eq(j = otls_property_value(NULL, "fnord", 1), i + 1)
+        && TEST_int_eq(otls_property_value(NULL, "fnord", 1), j)
         /* Check name and values are distinct */
-        && TEST_int_eq(ossl_property_value(NULL, "cold", 0), 0)
-        && TEST_int_ne(ossl_property_name(NULL, "fnord", 0),
-                       ossl_property_value(NULL, "fnord", 0)))
+        && TEST_int_eq(otls_property_value(NULL, "cold", 0), 0)
+        && TEST_int_ne(otls_property_name(NULL, "fnord", 0),
+                       otls_property_value(NULL, "fnord", 0)))
         res = 1;
-    ossl_method_store_free(store);
+    otls_method_store_free(store);
     return res;
 }
 
@@ -105,20 +105,20 @@ static const struct {
 
 static int test_property_parse(int n)
 {
-    OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *p = NULL, *q = NULL;
+    Otls_METHOD_STORE *store;
+    Otls_PROPERTY_LIST *p = NULL, *q = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = otls_method_store_new(NULL))
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
                               NULL)
-        && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query))
-        && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
+        && TEST_ptr(p = otls_parse_property(NULL, parser_tests[n].defn))
+        && TEST_ptr(q = otls_parse_query(NULL, parser_tests[n].query))
+        && TEST_int_eq(otls_property_match_count(q, p), parser_tests[n].e))
         r = 1;
-    ossl_property_free(p);
-    ossl_property_free(q);
-    ossl_method_store_free(store);
+    otls_property_free(p);
+    otls_property_free(q);
+    otls_method_store_free(store);
     return r;
 }
 
@@ -150,45 +150,45 @@ static const struct {
 
 static int test_property_merge(int n)
 {
-    OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *q_global = NULL, *q_local = NULL;
-    OSSL_PROPERTY_LIST *q_combined = NULL, *prop = NULL;
+    Otls_METHOD_STORE *store;
+    Otls_PROPERTY_LIST *q_global = NULL, *q_local = NULL;
+    Otls_PROPERTY_LIST *q_combined = NULL, *prop = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = otls_method_store_new(NULL))
         && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
                               NULL)
-        && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
-        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global))
-        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local))
-        && TEST_ptr(q_combined = ossl_property_merge(q_local, q_global))
-        && TEST_int_ge(ossl_property_match_count(q_combined, prop), 0))
+        && TEST_ptr(prop = otls_parse_property(NULL, merge_tests[n].prop))
+        && TEST_ptr(q_global = otls_parse_query(NULL, merge_tests[n].q_global))
+        && TEST_ptr(q_local = otls_parse_query(NULL, merge_tests[n].q_local))
+        && TEST_ptr(q_combined = otls_property_merge(q_local, q_global))
+        && TEST_int_ge(otls_property_match_count(q_combined, prop), 0))
         r = 1;
-    ossl_property_free(q_global);
-    ossl_property_free(q_local);
-    ossl_property_free(q_combined);
-    ossl_property_free(prop);
-    ossl_method_store_free(store);
+    otls_property_free(q_global);
+    otls_property_free(q_local);
+    otls_property_free(q_combined);
+    otls_property_free(prop);
+    otls_method_store_free(store);
     return r;
 }
 
 static int test_property_defn_cache(void)
 {
-    OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *red, *blue;
+    Otls_METHOD_STORE *store;
+    Otls_PROPERTY_LIST *red, *blue;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = otls_method_store_new(NULL))
         && add_property_names("red", "blue", NULL)
-        && TEST_ptr(red = ossl_parse_property(NULL, "red"))
-        && TEST_ptr(blue = ossl_parse_property(NULL, "blue"))
+        && TEST_ptr(red = otls_parse_property(NULL, "red"))
+        && TEST_ptr(blue = otls_parse_property(NULL, "blue"))
         && TEST_ptr_ne(red, blue)
-        && TEST_true(ossl_prop_defn_set(NULL, "red", red))
-        && TEST_true(ossl_prop_defn_set(NULL, "blue", blue))
-        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "red"), red)
-        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "blue"), blue))
+        && TEST_true(otls_prop_defn_set(NULL, "red", red))
+        && TEST_true(otls_prop_defn_set(NULL, "blue", blue))
+        && TEST_ptr_eq(otls_prop_defn_get(NULL, "red"), red)
+        && TEST_ptr_eq(otls_prop_defn_get(NULL, "blue"), blue))
         r = 1;
-    ossl_method_store_free(store);
+    otls_method_store_free(store);
     return r;
 }
 
@@ -212,19 +212,19 @@ static const struct {
 
 static int test_definition_compares(int n)
 {
-    OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *d = NULL, *q = NULL;
+    Otls_METHOD_STORE *store;
+    Otls_PROPERTY_LIST *d = NULL, *q = NULL;
     int r;
 
-    r = TEST_ptr(store = ossl_method_store_new(NULL))
+    r = TEST_ptr(store = otls_method_store_new(NULL))
         && add_property_names("alpha", "omega", NULL)
-        && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query))
-        && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
+        && TEST_ptr(d = otls_parse_property(NULL, definition_tests[n].defn))
+        && TEST_ptr(q = otls_parse_query(NULL, definition_tests[n].query))
+        && TEST_int_eq(otls_property_match_count(q, d), definition_tests[n].e);
 
-    ossl_property_free(d);
-    ossl_property_free(q);
-    ossl_method_store_free(store);
+    otls_property_free(d);
+    otls_property_free(q);
+    otls_method_store_free(store);
     return r;
 }
 
@@ -242,14 +242,14 @@ static int test_register_deregister(void)
     };
     size_t i;
     int ret = 0;
-    OSSL_METHOD_STORE *store;
+    Otls_METHOD_STORE *store;
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = otls_method_store_new(NULL))
         || !add_property_names("position", NULL))
         goto err;
 
-    for (i = 0; i < OSSL_NELEM(impls); i++)
-        if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
+    for (i = 0; i < Otls_NELEM(impls); i++)
+        if (!TEST_true(otls_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
                                              &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
@@ -257,22 +257,22 @@ static int test_register_deregister(void)
         }
 
     /* Deregister in a different order to registration */
-    for (i = 0; i < OSSL_NELEM(impls); i++) {
-        const size_t j = (1 + i * 3) % OSSL_NELEM(impls);
+    for (i = 0; i < Otls_NELEM(impls); i++) {
+        const size_t j = (1 + i * 3) % Otls_NELEM(impls);
         int nid = impls[j].nid;
         void *impl = impls[j].impl;
 
-        if (!TEST_true(ossl_method_store_remove(store, nid, impl))
-            || !TEST_false(ossl_method_store_remove(store, nid, impl))) {
+        if (!TEST_true(otls_method_store_remove(store, nid, impl))
+            || !TEST_false(otls_method_store_remove(store, nid, impl))) {
             TEST_note("iteration %zd, position %zd", i + 1, j + 1);
             goto err;
         }
     }
 
-    if (TEST_false(ossl_method_store_remove(store, impls[0].nid, impls[0].impl)))
+    if (TEST_false(otls_method_store_remove(store, impls[0].nid, impls[0].impl)))
         ret = 1;
 err:
-    ossl_method_store_free(store);
+    otls_method_store_free(store);
     return ret;
 }
 
@@ -307,62 +307,62 @@ static int test_property(void)
         { 1, "", "a" },
         { 3, "", "d" },
     };
-    OSSL_METHOD_STORE *store;
+    Otls_METHOD_STORE *store;
     size_t i;
     int ret = 0;
     void *result;
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = otls_method_store_new(NULL))
         || !add_property_names("fast", "colour", "sky", "furry", NULL))
         goto err;
 
-    for (i = 0; i < OSSL_NELEM(impls); i++)
-        if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
+    for (i = 0; i < Otls_NELEM(impls); i++)
+        if (!TEST_true(otls_method_store_add(store, NULL, impls[i].nid,
                                              impls[i].prop, impls[i].impl,
                                              &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
-    for (i = 0; i < OSSL_NELEM(queries); i++) {
-        OSSL_PROPERTY_LIST *pq = NULL;
+    for (i = 0; i < Otls_NELEM(queries); i++) {
+        Otls_PROPERTY_LIST *pq = NULL;
 
-        if (!TEST_true(ossl_method_store_fetch(store, queries[i].nid,
+        if (!TEST_true(otls_method_store_fetch(store, queries[i].nid,
                                                queries[i].prop, &result))
             || !TEST_str_eq((char *)result, queries[i].expected)) {
             TEST_note("iteration %zd", i + 1);
-            ossl_property_free(pq);
+            otls_property_free(pq);
             goto err;
         }
-        ossl_property_free(pq);
+        otls_property_free(pq);
     }
     ret = 1;
 err:
-    ossl_method_store_free(store);
+    otls_method_store_free(store);
     return ret;
 }
 
 static int test_query_cache_stochastic(void)
 {
     const int max = 10000, tail = 10;
-    OSSL_METHOD_STORE *store;
+    Otls_METHOD_STORE *store;
     int i, res = 0;
     char buf[50];
     void *result;
     int errors = 0;
     int v[10001];
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = otls_method_store_new(NULL))
         || !add_property_names("n", NULL))
         goto err;
 
     for (i = 1; i <= max; i++) {
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
-        if (!TEST_true(ossl_method_store_add(store, NULL, i, buf, "abc",
+        if (!TEST_true(otls_method_store_add(store, NULL, i, buf, "abc",
                                              &up_ref, &down_ref))
-                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i,
+                || !TEST_true(otls_method_store_cache_set(store, i, buf, v + i,
                                                           &up_ref, &down_ref))
-                || !TEST_true(ossl_method_store_cache_set(store, i, "n=1234",
+                || !TEST_true(otls_method_store_cache_set(store, i, "n=1234",
                                                           "miss", &up_ref,
                                                           &down_ref))) {
             TEST_note("iteration %d", i);
@@ -371,7 +371,7 @@ static int test_query_cache_stochastic(void)
     }
     for (i = 1; i <= max; i++) {
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
-        if (!ossl_method_store_cache_get(store, i, buf, &result)
+        if (!otls_method_store_cache_get(store, i, buf, &result)
             || result != v + i)
             errors++;
     }
@@ -379,17 +379,17 @@ static int test_query_cache_stochastic(void)
     res = TEST_int_gt(errors, tail) && TEST_int_lt(errors, max - tail);
 
 err:
-    ossl_method_store_free(store);
+    otls_method_store_free(store);
     return res;
 }
 
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
-    ADD_ALL_TESTS(test_property_parse, OSSL_NELEM(parser_tests));
-    ADD_ALL_TESTS(test_property_merge, OSSL_NELEM(merge_tests));
+    ADD_ALL_TESTS(test_property_parse, Otls_NELEM(parser_tests));
+    ADD_ALL_TESTS(test_property_merge, Otls_NELEM(merge_tests));
     ADD_TEST(test_property_defn_cache);
-    ADD_ALL_TESTS(test_definition_compares, OSSL_NELEM(definition_tests));
+    ADD_ALL_TESTS(test_definition_compares, Otls_NELEM(definition_tests));
     ADD_TEST(test_register_deregister);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);

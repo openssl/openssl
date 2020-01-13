@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # The inner loop instruction sequence and the IP/FP modifications are from
 # Svend Olaf Mikkelsen.
@@ -27,7 +27,7 @@ $output=pop and open STDOUT,">$output";
 $L="edi";
 $R="esi";
 $trans="ebp";
-$small_footprint=1 if (grep(/\-DOPENSSL_SMALL_FOOTPRINT/,@ARGV));
+$small_footprint=1 if (grep(/\-DOPENtls_SMALL_FOOTPRINT/,@ARGV));
 # one can discuss setting this variable to 1 unconditionally, as
 # the folded loop is only 3% slower than unrolled, but >7 times smaller
 

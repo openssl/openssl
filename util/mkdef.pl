@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 # Generate a linker version script suitable for the given platform
 # from a given ordinals file.
@@ -16,7 +16,7 @@ use Getopt::Long;
 use FindBin;
 use lib "$FindBin::Bin/perl";
 
-use OpenSSL::Ordinals;
+use Opentls::Ordinals;
 
 use lib '.';
 use configdata;
@@ -69,34 +69,34 @@ die "Please supply arguments\n"
 #     }' *.so*
 # libcrypto-opt.so.1.1
 # libcrypto.so -> libcrypto-opt.so.1.1
-# libssl-opt.so.1.1
-# libssl.so -> libssl-opt.so.1.1
+# libtls-opt.so.1.1
+# libtls.so -> libtls-opt.so.1.1
 #
 # whose SONAMEs and dependencies are:
 #
 # $ for l in *.so; do
 #     echo $l
-#     readelf -d $l | egrep 'SONAME|NEEDED.*(ssl|crypto)'
+#     readelf -d $l | egrep 'SONAME|NEEDED.*(tls|crypto)'
 #   done
 # libcrypto.so
 #  0x000000000000000e (SONAME)             Library soname: [libcrypto-opt.so.1.1]
-# libssl.so
+# libtls.so
 #  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
-#  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
+#  0x000000000000000e (SONAME)             Library soname: [libtls-opt.so.1.1]
 #
 # We case-fold the variant tag to upper case and replace all non-alnum
 # characters with "_".  This yields the following symbol versions:
 #
 # $ nm libcrypto.so | grep -w A
-# 0000000000000000 A OPENSSL_OPT_1_1_0
-# 0000000000000000 A OPENSSL_OPT_1_1_0a
-# 0000000000000000 A OPENSSL_OPT_1_1_0c
-# 0000000000000000 A OPENSSL_OPT_1_1_0d
-# 0000000000000000 A OPENSSL_OPT_1_1_0f
-# 0000000000000000 A OPENSSL_OPT_1_1_0g
-# $ nm libssl.so | grep -w A
-# 0000000000000000 A OPENSSL_OPT_1_1_0
-# 0000000000000000 A OPENSSL_OPT_1_1_0d
+# 0000000000000000 A OPENtls_OPT_1_1_0
+# 0000000000000000 A OPENtls_OPT_1_1_0a
+# 0000000000000000 A OPENtls_OPT_1_1_0c
+# 0000000000000000 A OPENtls_OPT_1_1_0d
+# 0000000000000000 A OPENtls_OPT_1_1_0f
+# 0000000000000000 A OPENtls_OPT_1_1_0g
+# $ nm libtls.so | grep -w A
+# 0000000000000000 A OPENtls_OPT_1_1_0
+# 0000000000000000 A OPENtls_OPT_1_1_0d
 #
 (my $SO_VARIANT = uc($target{"shlib_variant"} // '')) =~ s/\W/_/g;
 
@@ -112,11 +112,11 @@ my %OS_data = (
                      sort       => sorter_unix(),
                      platforms  => { UNIX                       => 1 } },
     VMS         => { writer     => \&writer_VMS,
-                     sort       => OpenSSL::Ordinals::by_number(),
+                     sort       => Opentls::Ordinals::by_number(),
                      platforms  => { VMS                        => 1 } },
     vms         => 'VMS',       # alias
     WINDOWS     => { writer     => \&writer_windows,
-                     sort       => OpenSSL::Ordinals::by_name(),
+                     sort       => Opentls::Ordinals::by_name(),
                      platforms  => { WIN32                      => 1,
                                      _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
@@ -146,7 +146,7 @@ $ordinal_opts{filter} =
             && platform_filter($item)
             && feature_filter($item);
     };
-my $ordinals = OpenSSL::Ordinals->new(from => $ordinals_file);
+my $ordinals = Opentls::Ordinals->new(from => $ordinals_file);
 
 my $writer = $OS->{writer};
 $writer = \&writer_ctest if $ctest;
@@ -201,7 +201,7 @@ sub feature_filter {
 }
 
 sub sorter_unix {
-    my $by_name = OpenSSL::Ordinals::by_name();
+    my $by_name = Opentls::Ordinals::by_name();
     my %weight = (
         'FUNCTION'      => 1,
         'VARIABLE'      => 2
@@ -220,7 +220,7 @@ sub sorter_unix {
 }
 
 sub sorter_linux {
-    my $by_version = OpenSSL::Ordinals::by_version();
+    my $by_version = Opentls::Ordinals::by_version();
     my $by_unix = sorter_unix();
 
     return sub {
@@ -249,14 +249,14 @@ sub writer_linux {
             print <<"_____";
 }${prevversion_s};
 _____
-            $prevversion_s = " OPENSSL${SO_VARIANT}_$thisversion";
+            $prevversion_s = " OPENtls${SO_VARIANT}_$thisversion";
             $thisversion = '';  # Trigger start of next section
         }
         unless ($thisversion) {
             $indent = 0;
             $thisversion = $_->version();
             $currversion_s = '';
-            $currversion_s = "OPENSSL${SO_VARIANT}_$thisversion "
+            $currversion_s = "OPENtls${SO_VARIANT}_$thisversion "
                 if $thisversion ne '*';
             print <<"_____";
 ${currversion_s}{
@@ -281,7 +281,7 @@ sub writer_aix {
 sub writer_windows {
     print <<"_____";
 ;
-; Definition file for the DLL version of the $libname library from OpenSSL
+; Definition file for the DLL version of the $libname library from Opentls
 ;
 
 LIBRARY         $libname

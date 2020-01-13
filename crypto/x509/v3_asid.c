@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -15,19 +15,19 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
-#include <openssl/x509.h>
+#include <opentls/conf.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509v3.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
-#include <openssl/bn.h>
+#include <opentls/bn.h>
 #include "ext_dat.h"
 
-#ifndef OPENSSL_NO_RFC3779
+#ifndef OPENtls_NO_RFC3779
 
 /*
- * OpenSSL ASN.1 template translation of RFC 3779 3.2.3.
+ * Opentls ASN.1 template translation of RFC 3779 3.2.3.
  */
 
 ASN1_SEQUENCE(ASRange) = {
@@ -80,17 +80,17 @@ static int i2r_ASIdentifierChoice(BIO *out,
                 if ((s = i2s_ASN1_INTEGER(NULL, aor->u.id)) == NULL)
                     return 0;
                 BIO_printf(out, "%*s%s\n", indent + 2, "", s);
-                OPENSSL_free(s);
+                OPENtls_free(s);
                 break;
             case ASIdOrRange_range:
                 if ((s = i2s_ASN1_INTEGER(NULL, aor->u.range->min)) == NULL)
                     return 0;
                 BIO_printf(out, "%*s%s-", indent + 2, "", s);
-                OPENSSL_free(s);
+                OPENtls_free(s);
                 if ((s = i2s_ASN1_INTEGER(NULL, aor->u.range->max)) == NULL)
                     return 0;
                 BIO_printf(out, "%s\n", s);
-                OPENSSL_free(s);
+                OPENtls_free(s);
                 break;
             default:
                 return 0;
@@ -234,7 +234,7 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
 static int extract_min_max(ASIdOrRange *aor,
                            ASN1_INTEGER **min, ASN1_INTEGER **max)
 {
-    if (!ossl_assert(aor != NULL))
+    if (!otls_assert(aor != NULL))
         return 0;
     switch (aor->type) {
     case ASIdOrRange_id:
@@ -400,7 +400,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
         /*
          * Make sure we're properly sorted (paranoia).
          */
-        if (!ossl_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0))
+        if (!otls_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0))
             goto done;
 
         /*
@@ -445,7 +445,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             ASRange *r;
             switch (a->type) {
             case ASIdOrRange_id:
-                if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
+                if ((r = OPENtls_malloc(sizeof(*r))) == NULL) {
                     X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
                               ERR_R_MALLOC_FAILURE);
                     goto done;
@@ -490,7 +490,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
     }
 
     /* Paranoia */
-    if (!ossl_assert(ASIdentifierChoice_is_canonical(choice)))
+    if (!otls_assert(ASIdentifierChoice_is_canonical(choice)))
         goto done;
 
     ret = 1;
@@ -592,7 +592,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
         } else {
-            char *s = OPENSSL_strdup(val->value);
+            char *s = OPENtls_strdup(val->value);
             if (s == NULL) {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -600,7 +600,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             s[i1] = '\0';
             min = s2i_ASN1_INTEGER(NULL, s);
             max = s2i_ASN1_INTEGER(NULL, s + i2);
-            OPENSSL_free(s);
+            OPENtls_free(s);
             if (min == NULL || max == NULL) {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -633,7 +633,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
 }
 
 /*
- * OpenSSL dispatch.
+ * Opentls dispatch.
  */
 const X509V3_EXT_METHOD v3_asid = {
     NID_sbgp_autonomousSysNum,  /* nid */
@@ -739,9 +739,9 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
     X509 *x;
 
-    if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
-            || !ossl_assert(ctx != NULL || ext != NULL)
-            || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
+    if (!otls_assert(chain != NULL && sk_X509_num(chain) > 0)
+            || !otls_assert(ctx != NULL || ext != NULL)
+            || !otls_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -791,7 +791,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
      */
     for (i++; i < sk_X509_num(chain); i++) {
         x = sk_X509_value(chain, i);
-        if (!ossl_assert(x != NULL)) {
+        if (!otls_assert(x != NULL)) {
             if (ctx != NULL)
                 ctx->error = X509_V_ERR_UNSPECIFIED;
             return 0;
@@ -841,7 +841,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (!ossl_assert(x != NULL)) {
+    if (!otls_assert(x != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -891,4 +891,4 @@ int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
     return asid_validate_path_internal(NULL, chain, ext);
 }
 
-#endif                          /* OPENSSL_NO_RFC3779 */
+#endif                          /* OPENtls_NO_RFC3779 */

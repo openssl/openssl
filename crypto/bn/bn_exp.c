@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
@@ -28,9 +28,9 @@
 #include "rsaz_exp.h"
 
 #undef SPARC_T4_MONT
-#if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
+#if defined(OPENtls_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
 # include "sparc_arch.h"
-extern unsigned int OPENSSL_sparcv9cap_P[];
+extern unsigned int OPENtls_sparcv9cap_P[];
 # define SPARC_T4_MONT
 #endif
 
@@ -123,7 +123,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
      *
      * "Real" timings [linux-elf, solaris-sparcv9-gcc configurations]
      * should be obtained when the new Montgomery reduction code
-     * has been integrated into OpenSSL.)
+     * has been integrated into Opentls.)
      */
 
 #define MONT_MUL_MOD
@@ -448,7 +448,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
      * API consumer.
      */
 #if defined(SPARC_T4_MONT)
-    if (OPENSSL_sparcv9cap_P[0] & (SPARCV9_VIS3 | SPARCV9_PREFER_FPU)) {
+    if (OPENtls_sparcv9cap_P[0] & (SPARCV9_VIS3 | SPARCV9_PREFER_FPU)) {
         j = mont->N.top;        /* borrow j */
         val[0]->d[0] = 1;       /* borrow val[0] */
         for (i = 1; i < j; i++)
@@ -690,12 +690,12 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     window = BN_window_bits_for_ctime_exponent_size(bits);
 #if defined(SPARC_T4_MONT)
     if (window >= 5 && (top & 15) == 0 && top <= 64 &&
-        (OPENSSL_sparcv9cap_P[1] & (CFR_MONTMUL | CFR_MONTSQR)) ==
-        (CFR_MONTMUL | CFR_MONTSQR) && (t4 = OPENSSL_sparcv9cap_P[0]))
+        (OPENtls_sparcv9cap_P[1] & (CFR_MONTMUL | CFR_MONTSQR)) ==
+        (CFR_MONTMUL | CFR_MONTSQR) && (t4 = OPENtls_sparcv9cap_P[0]))
         window = 5;
     else
 #endif
-#if defined(OPENSSL_BN_ASM_MONT5)
+#if defined(OPENtls_BN_ASM_MONT5)
     if (window >= 5) {
         window = 5;             /* ~5% improvement for RSA2048 sign, and even
                                  * for RSA4096 */
@@ -720,7 +720,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     else
 #endif
         if ((powerbufFree =
-             OPENSSL_malloc(powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH))
+             OPENtls_malloc(powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH))
             == NULL)
         goto err;
 
@@ -893,10 +893,10 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         /* back to 32-bit domain */
         tmp.top = top;
         bn_correct_top(&tmp);
-        OPENSSL_cleanse(np, top * sizeof(BN_ULONG));
+        OPENtls_cleanse(np, top * sizeof(BN_ULONG));
     } else
 #endif
-#if defined(OPENSSL_BN_ASM_MONT5)
+#if defined(OPENtls_BN_ASM_MONT5)
     if (window == 5 && top > 1) {
         /*
          * This optimization uses ideas from http://eprint.iacr.org/2011/239,
@@ -1079,7 +1079,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
              * is not only slower but also makes each bit vulnerable to
              * EM (and likely other) side-channel attacks like One&Done
              * (for details see "One&Done: A Single-Decryption EM-Based
-             *  Attack on OpenSSL's Constant-Time Blinded RSA" by M. Alam,
+             *  Attack on Opentls's Constant-Time Blinded RSA" by M. Alam,
              *  H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
              *  M. Prvulovic, in USENIX Security'18)
              */
@@ -1104,7 +1104,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
      * API consumer.
      */
 #if defined(SPARC_T4_MONT)
-    if (OPENSSL_sparcv9cap_P[0] & (SPARCV9_VIS3 | SPARCV9_PREFER_FPU)) {
+    if (OPENtls_sparcv9cap_P[0] & (SPARCV9_VIS3 | SPARCV9_PREFER_FPU)) {
         am.d[0] = 1;            /* borrow am */
         for (i = 1; i < top; i++)
             am.d[i] = 0;
@@ -1119,8 +1119,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     if (in_mont == NULL)
         BN_MONT_CTX_free(mont);
     if (powerbuf != NULL) {
-        OPENSSL_cleanse(powerbuf, powerbufLen);
-        OPENSSL_free(powerbufFree);
+        OPENtls_cleanse(powerbuf, powerbufLen);
+        OPENtls_free(powerbufFree);
     }
     BN_CTX_end(ctx);
     return ret;

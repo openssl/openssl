@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
+RAND_set_rand_method, RAND_get_rand_method, RAND_Opentls - select RAND method
 
 =head1 SYNOPSIS
 
- #include <openssl/rand.h>
+ #include <opentls/rand.h>
 
- RAND_METHOD *RAND_OpenSSL(void);
+ RAND_METHOD *RAND_Opentls(void);
 
  int RAND_set_rand_method(const RAND_METHOD *meth);
 
@@ -16,14 +16,14 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
 =head1 DESCRIPTION
 
-A B<RAND_METHOD> specifies the functions that OpenSSL uses for random number
+A B<RAND_METHOD> specifies the functions that Opentls uses for random number
 generation.
 
-RAND_OpenSSL() returns the default B<RAND_METHOD> implementation by OpenSSL.
+RAND_Opentls() returns the default B<RAND_METHOD> implementation by Opentls.
 This implementation ensures that the PRNG state is unique for each thread.
 
 If an B<ENGINE> is loaded that provides the RAND API, however, it will
-be used instead of the method returned by RAND_OpenSSL().
+be used instead of the method returned by RAND_Opentls().
 
 RAND_set_rand_method() makes B<meth> the method for PRNG use.  If an
 ENGINE was providing the method, it will be released first.
@@ -49,7 +49,7 @@ Each pointer may be NULL if the function is not implemented.
 =head1 RETURN VALUES
 
 RAND_set_rand_method() returns 1 on success and 0 on failure.
-RAND_get_rand_method() and RAND_OpenSSL() return pointers to the respective
+RAND_get_rand_method() and RAND_Opentls() return pointers to the respective
 methods.
 
 =head1 SEE ALSO
@@ -60,11 +60,11 @@ L<RAND(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

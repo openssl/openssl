@@ -1,18 +1,18 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stddef.h>
 #include <string.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/objects.h>
+#include <opentls/asn1.h>
+#include <opentls/asn1t.h>
+#include <opentls/objects.h>
 #include "crypto/asn1.h"
 #include "asn1_local.h"
 
@@ -62,7 +62,7 @@ static int asn1_item_flags_i2d(const ASN1_VALUE *val, unsigned char **out,
         len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags);
         if (len <= 0)
             return len;
-        if ((buf = OPENSSL_malloc(len)) == NULL) {
+        if ((buf = OPENtls_malloc(len)) == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_FLAGS_I2D, ERR_R_MALLOC_FAILURE);
             return -1;
         }
@@ -384,13 +384,13 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         if (sk_const_ASN1_VALUE_num(sk) < 2)
             do_sort = 0;
         else {
-            derlst = OPENSSL_malloc(sk_const_ASN1_VALUE_num(sk)
+            derlst = OPENtls_malloc(sk_const_ASN1_VALUE_num(sk)
                                     * sizeof(*derlst));
             if (derlst == NULL)
                 return 0;
-            tmpdat = OPENSSL_malloc(skcontlen);
+            tmpdat = OPENtls_malloc(skcontlen);
             if (tmpdat == NULL) {
-                OPENSSL_free(derlst);
+                OPENtls_free(derlst);
                 return 0;
             }
         }
@@ -427,8 +427,8 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         for (i = 0, tder = derlst; i < sk_const_ASN1_VALUE_num(sk); i++, tder++)
             (void)sk_const_ASN1_VALUE_set(sk, i, tder->field);
     }
-    OPENSSL_free(derlst);
-    OPENSSL_free(tmpdat);
+    OPENtls_free(derlst);
+    OPENtls_free(tmpdat);
     return 1;
 }
 

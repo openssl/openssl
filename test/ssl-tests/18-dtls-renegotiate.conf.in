@@ -1,10 +1,10 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 ## Test Renegotiation
@@ -12,8 +12,8 @@
 use strict;
 use warnings;
 
-package ssltests;
-use OpenSSL::Test::Utils;
+package tlstests;
+use Opentls::Test::Utils;
 
 our @tests = ();
 
@@ -50,10 +50,10 @@ foreach my $sctp ("No", "Yes")
             }
         },
         # Note: Unlike the TLS tests, we will never do resumption with server
-        # initiated reneg. This is because an OpenSSL DTLS client will always do a full
+        # initiated reneg. This is because an Opentls DTLS client will always do a full
         # handshake (i.e. it doesn't supply a session id) when it receives a
-        # HelloRequest. This is different to the OpenSSL TLS implementation where an
-        # OpenSSL client will always try an abbreviated handshake (i.e. it will supply
+        # HelloRequest. This is different to the Opentls TLS implementation where an
+        # Opentls client will always try an abbreviated handshake (i.e. it will supply
         # the session id). This goes all the way to commit 48ae85b6f when abbreviated
         # handshake support was first added. Neither behaviour is wrong, but the
         # discrepancy is strange. TODO: Should we harmonise the TLS and DTLS behaviour,

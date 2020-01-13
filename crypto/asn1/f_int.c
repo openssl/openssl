@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/asn1.h>
+#include <opentls/buffer.h>
+#include <opentls/asn1.h>
 
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 {
@@ -76,7 +76,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         again = (buf[i - 1] == '\\');
 
         for (j = 0; j < i; j++) {
-            if (!ossl_isxdigit(buf[j]))
+            if (!otls_isxdigit(buf[j]))
             {
                 i = j;
                 break;
@@ -101,15 +101,15 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_ODD_NUMBER_OF_CHARS);
-            OPENSSL_free(s);
+            OPENtls_free(s);
             return 0;
         }
         i /= 2;
         if (num + i > slen) {
-            sp = OPENSSL_clear_realloc(s, slen, num + i * 2);
+            sp = OPENtls_clear_realloc(s, slen, num + i * 2);
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
-                OPENSSL_free(s);
+                OPENtls_free(s);
                 return 0;
             }
             s = sp;
@@ -117,7 +117,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         }
         for (j = 0; j < i; j++, k += 2) {
             for (n = 0; n < 2; n++) {
-                m = OPENSSL_hexchar2int(bufp[k + n]);
+                m = OPENtls_hexchar2int(bufp[k + n]);
                 if (m < 0) {
                     ASN1err(ASN1_F_A2I_ASN1_INTEGER,
                             ASN1_R_NON_HEX_CHARACTERS);
@@ -138,7 +138,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     return 1;
  err:
     ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
-    OPENSSL_free(s);
+    OPENtls_free(s);
     return 0;
 }
 

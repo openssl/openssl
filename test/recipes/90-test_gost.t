@@ -1,36 +1,36 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
-use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Opentls::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_file/;
 
 setup("test_gost");
 
 # The GOST ciphers are dynamically loaded via the GOST engine, so we must be
 # able to support that. The engine also uses DSA, CMS and CMAC symbols, so we
 # skip this test on no-dsa, no-cms or no-cmac.
-plan skip_all => "GOST support is disabled in this OpenSSL build"
+plan skip_all => "GOST support is disabled in this Opentls build"
     if disabled("gost") || disabled("engine") || disabled("dynamic-engine")
        || disabled("dsa") || disabled("cms") || disabled("cmac");
 
-plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
+plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this Opentls build"
     if disabled("tls1_3") || disabled("tls1_2");
 
-plan skip_all => "EC is disabled in this OpenSSL build"
+plan skip_all => "EC is disabled in this Opentls build"
     if disabled("ec");
 
 
 plan skip_all => "No test GOST engine found"
-    if !$ENV{OPENSSL_GOST_ENGINE_SO};
+    if !$ENV{OPENtls_GOST_ENGINE_SO};
 
 plan tests => 1;
 
-$ENV{OPENSSL_CONF} = srctop_file("test", "recipes", "90-test_gost_data",
+$ENV{OPENtls_CONF} = srctop_file("test", "recipes", "90-test_gost_data",
                                  "gost.conf");
 
 ok(run(test(["gosttest",

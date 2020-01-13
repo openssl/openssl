@@ -1,10 +1,10 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "dso_local.h"
@@ -26,7 +26,7 @@ static int dl_pathbyaddr(void *addr, char *path, int sz);
 static void *dl_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dl = {
-    "OpenSSL 'dl' shared library method",
+    "Opentls 'dl' shared library method",
     dl_load,
     dl_unload,
     dl_bind_func,
@@ -39,7 +39,7 @@ static DSO_METHOD dso_meth_dl = {
     dl_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_openssl(void)
+DSO_METHOD *DSO_METHOD_opentls(void)
 {
     return &dso_meth_dl;
 }
@@ -70,7 +70,7 @@ static int dl_load(DSO *dso)
     if (ptr == NULL) {
         char errbuf[160];
         DSOerr(DSO_F_DL_LOAD, DSO_R_LOAD_FAILED);
-        if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+        if (opentls_strerror_r(errno, errbuf, sizeof(errbuf)))
             ERR_add_error_data(4, "filename(", filename, "): ", errbuf);
         goto err;
     }
@@ -86,7 +86,7 @@ static int dl_load(DSO *dso)
     return 1;
  err:
     /* Cleanup! */
-    OPENSSL_free(filename);
+    OPENtls_free(filename);
     if (ptr != NULL)
         shl_unload(ptr);
     return 0;
@@ -136,7 +136,7 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
     if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0) {
         char errbuf[160];
         DSOerr(DSO_F_DL_BIND_FUNC, DSO_R_SYM_FAILURE);
-        if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+        if (opentls_strerror_r(errno, errbuf, sizeof(errbuf)))
             ERR_add_error_data(4, "symname(", symname, "): ", errbuf);
         return NULL;
     }
@@ -156,7 +156,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      * if the second file specification is missing.
      */
     if (!filespec2 || filespec1[0] == '/') {
-        merged = OPENSSL_strdup(filespec1);
+        merged = OPENtls_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -166,7 +166,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      * If the first file specification is missing, the second one rules.
      */
     else if (!filespec1) {
-        merged = OPENSSL_strdup(filespec2);
+        merged = OPENtls_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -189,7 +189,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
             spec2len--;
             len--;
         }
-        merged = OPENSSL_malloc(len + 2);
+        merged = OPENtls_malloc(len + 2);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return NULL;
@@ -222,7 +222,7 @@ static char *dl_name_converter(DSO *dso, const char *filename)
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
             rsize += 3;         /* The length of "lib" */
     }
-    translated = OPENSSL_malloc(rsize);
+    translated = OPENtls_malloc(rsize);
     if (translated == NULL) {
         DSOerr(DSO_F_DL_NAME_CONVERTER, DSO_R_NAME_TRANSLATION_FAILED);
         return NULL;

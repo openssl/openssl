@@ -1,7 +1,7 @@
 Adding new libraries
 --------------------
 
-When adding a new sub-library to OpenSSL, assign it a library number
+When adding a new sub-library to Opentls, assign it a library number
 ERR_LIB_XXX, define a macro XXXerr() (both in err.h), add its
 name to ERR_str_libraries[] (in crypto/err/err.c), and add
 ERR_load_XXX_strings() to the ERR_load_crypto_strings() function
@@ -9,7 +9,7 @@ ERR_load_XXX_strings() to the ERR_load_crypto_strings() function
 
     L      XXX     xxx.h   xxx_err.c
 
-to crypto/err/openssl.ec, and add xxx_err.c to the Makefile.
+to crypto/err/opentls.ec, and add xxx_err.c to the Makefile.
 Running make errors will then generate a file xxx_err.c, and
 add all error codes used in the library to xxx.h.
 
@@ -25,8 +25,8 @@ Typically it will initially look like this:
 
     /* Include files */
 
-    #include <openssl/bio.h>
-    #include <openssl/x509.h>
+    #include <opentls/bio.h>
+    #include <opentls/x509.h>
 
     /* Macros, structures and function prototypes */
 
@@ -39,6 +39,6 @@ after this point will be overwritten when make errors is run.
 The closing #endif etc will be automatically added by the script.
 
 The generated C error code file xxx_err.c will load the header
-files stdio.h, openssl/err.h and openssl/xxx.h so the
+files stdio.h, opentls/err.h and opentls/xxx.h so the
 header file must load any additional header files containing any
 definitions it uses.

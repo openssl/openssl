@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/x509.h>
+#include <opentls/evp.h>
+#include <opentls/kdf.h>
+#include <opentls/x509.h>
 #include "internal/cryptlib.h"
 #include "internal/namemap.h"
 #include "crypto/objects.h"
@@ -72,13 +72,13 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
     return evp_get_cipherbyname_ex(NULL, name);
 }
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
+const EVP_CIPHER *evp_get_cipherbyname_ex(OPENtls_CTX *libctx, const char *name)
 {
     const EVP_CIPHER *cp;
-    OSSL_NAMEMAP *namemap;
+    Otls_NAMEMAP *namemap;
     int id;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_CIPHERS, NULL))
         return NULL;
 
     cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
@@ -92,12 +92,12 @@ const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
      * in turn.
      */
 
-    namemap = ossl_namemap_stored(libctx);
-    id = ossl_namemap_name2num(namemap, name);
+    namemap = otls_namemap_stored(libctx);
+    id = otls_namemap_name2num(namemap, name);
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp);
+    otls_namemap_doall_names(namemap, id, cipher_from_name, &cp);
 
     return cp;
 }
@@ -117,13 +117,13 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return evp_get_digestbyname_ex(NULL, name);
 }
 
-const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
+const EVP_MD *evp_get_digestbyname_ex(OPENtls_CTX *libctx, const char *name)
 {
     const EVP_MD *dp;
-    OSSL_NAMEMAP *namemap;
+    Otls_NAMEMAP *namemap;
     int id;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
+    if (!OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_DIGESTS, NULL))
         return NULL;
 
     dp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
@@ -137,12 +137,12 @@ const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
      * in turn.
      */
 
-    namemap = ossl_namemap_stored(libctx);
-    id = ossl_namemap_name2num(namemap, name);
+    namemap = otls_namemap_stored(libctx);
+    id = otls_namemap_name2num(namemap, name);
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, digest_from_name, &dp);
+    otls_namemap_doall_names(namemap, id, digest_from_name, &dp);
 
     return dp;
 }
@@ -187,7 +187,7 @@ void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
     struct doall_cipher dc;
 
     /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_CIPHERS, NULL);
 
     dc.fn = fn;
     dc.arg = arg;
@@ -201,7 +201,7 @@ void EVP_CIPHER_do_all_sorted(void (*fn) (const EVP_CIPHER *ciph,
     struct doall_cipher dc;
 
     /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_CIPHERS, NULL);
 
     dc.fn = fn;
     dc.arg = arg;
@@ -230,7 +230,7 @@ void EVP_MD_do_all(void (*fn) (const EVP_MD *md,
     struct doall_md dc;
 
     /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_DIGESTS, NULL);
 
     dc.fn = fn;
     dc.arg = arg;
@@ -243,7 +243,7 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
 {
     struct doall_md dc;
 
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_ADD_ALL_DIGESTS, NULL);
 
     dc.fn = fn;
     dc.arg = arg;

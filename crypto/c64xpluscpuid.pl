@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
@@ -16,19 +16,19 @@ $code.=<<___;
 	.asg	0,__TI_EABI__
 	.endif
 	.if	__TI_EABI__
-	.asg	OPENSSL_rdtsc,_OPENSSL_rdtsc
-	.asg	OPENSSL_cleanse,_OPENSSL_cleanse
+	.asg	OPENtls_rdtsc,_OPENtls_rdtsc
+	.asg	OPENtls_cleanse,_OPENtls_cleanse
 	.asg	CRYPTO_memcmp,_CRYPTO_memcmp
-	.asg	OPENSSL_atomic_add,_OPENSSL_atomic_add
-	.asg	OPENSSL_wipe_cpu,_OPENSSL_wipe_cpu
-	.asg	OPENSSL_instrument_bus,_OPENSSL_instrument_bus
-	.asg	OPENSSL_instrument_bus2,_OPENSSL_instrument_bus2
+	.asg	OPENtls_atomic_add,_OPENtls_atomic_add
+	.asg	OPENtls_wipe_cpu,_OPENtls_wipe_cpu
+	.asg	OPENtls_instrument_bus,_OPENtls_instrument_bus
+	.asg	OPENtls_instrument_bus2,_OPENtls_instrument_bus2
 	.endif
 
 	.asg	B3,RA
 
-	.global	_OPENSSL_rdtsc
-_OPENSSL_rdtsc:
+	.global	_OPENtls_rdtsc
+_OPENtls_rdtsc:
 	.asmfunc
 	B	RA
 	MVC	TSCL,B0
@@ -38,8 +38,8 @@ _OPENSSL_rdtsc:
 	MV	B1,A5
 	.endasmfunc
 
-	.global	_OPENSSL_cleanse
-_OPENSSL_cleanse:
+	.global	_OPENtls_cleanse
+_OPENtls_cleanse:
 	.asmfunc
 	ZERO	A3:A2
 ||	ZERO	B2
@@ -111,8 +111,8 @@ _CRYPTO_memcmp:
   [A0]	MVK	1,A4
 	.endasmfunc
 
-	.global	_OPENSSL_atomic_add
-_OPENSSL_atomic_add:
+	.global	_OPENtls_atomic_add
+_OPENtls_atomic_add:
 	.asmfunc
 	MV	A4,B0
 atomic_add?:
@@ -127,8 +127,8 @@ atomic_add?:
 	MV	B5,A4
 	.endasmfunc
 
-	.global	_OPENSSL_wipe_cpu
-_OPENSSL_wipe_cpu:
+	.global	_OPENtls_wipe_cpu
+_OPENtls_wipe_cpu:
 	.asmfunc
 	ZERO	A0
 ||	ZERO	B0
@@ -185,8 +185,8 @@ passthrough?:
   [A0]	BNOP	spinlock?,5
 	.endm
 
-	.global	_OPENSSL_instrument_bus
-_OPENSSL_instrument_bus:
+	.global	_OPENtls_instrument_bus
+_OPENtls_instrument_bus:
 	.asmfunc
 	MV	B4,B0			; reassign sizeof(output)
 ||	MV	A4,B4			; reassign output
@@ -227,8 +227,8 @@ bus_loop1?:
 	BNOP	RA,5
 	.endasmfunc
 
-	.global	_OPENSSL_instrument_bus2
-_OPENSSL_instrument_bus2:
+	.global	_OPENtls_instrument_bus2
+_OPENtls_instrument_bus2:
 	.asmfunc
 	MV	A6,B0			; reassign max
 ||	MV	B4,A6			; reassign sizeof(output)

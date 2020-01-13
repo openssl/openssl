@@ -122,39 +122,39 @@ OCSP_SIGNATURE_free,
 OCSP_SIGNATURE_new,
 OCSP_SINGLERESP_free,
 OCSP_SINGLERESP_new,
-OSSL_CMP_ITAV_free,
-OSSL_CMP_MSG_it,
-OSSL_CMP_MSG_free,
-OSSL_CMP_PKIHEADER_free,
-OSSL_CMP_PKIHEADER_it,
-OSSL_CMP_PKIHEADER_new,
-OSSL_CMP_PKISI_free,
-OSSL_CMP_PKISI_new,
-OSSL_CMP_PKISTATUS_it,
-OSSL_CRMF_CERTID_free,
-OSSL_CRMF_CERTID_it,
-OSSL_CRMF_CERTID_new,
-OSSL_CRMF_CERTTEMPLATE_free,
-OSSL_CRMF_CERTTEMPLATE_it,
-OSSL_CRMF_CERTTEMPLATE_new,
-OSSL_CRMF_ENCRYPTEDVALUE_free,
-OSSL_CRMF_ENCRYPTEDVALUE_it,
-OSSL_CRMF_ENCRYPTEDVALUE_new,
-OSSL_CRMF_MSGS_free,
-OSSL_CRMF_MSGS_it,
-OSSL_CRMF_MSGS_new,
-OSSL_CRMF_MSG_free,
-OSSL_CRMF_MSG_it,
-OSSL_CRMF_MSG_new,
-OSSL_CRMF_PBMPARAMETER_free,
-OSSL_CRMF_PBMPARAMETER_it,
-OSSL_CRMF_PBMPARAMETER_new,
-OSSL_CRMF_PKIPUBLICATIONINFO_free,
-OSSL_CRMF_PKIPUBLICATIONINFO_it,
-OSSL_CRMF_PKIPUBLICATIONINFO_new,
-OSSL_CRMF_SINGLEPUBINFO_free,
-OSSL_CRMF_SINGLEPUBINFO_it,
-OSSL_CRMF_SINGLEPUBINFO_new,
+Otls_CMP_ITAV_free,
+Otls_CMP_MSG_it,
+Otls_CMP_MSG_free,
+Otls_CMP_PKIHEADER_free,
+Otls_CMP_PKIHEADER_it,
+Otls_CMP_PKIHEADER_new,
+Otls_CMP_PKISI_free,
+Otls_CMP_PKISI_new,
+Otls_CMP_PKISTATUS_it,
+Otls_CRMF_CERTID_free,
+Otls_CRMF_CERTID_it,
+Otls_CRMF_CERTID_new,
+Otls_CRMF_CERTTEMPLATE_free,
+Otls_CRMF_CERTTEMPLATE_it,
+Otls_CRMF_CERTTEMPLATE_new,
+Otls_CRMF_ENCRYPTEDVALUE_free,
+Otls_CRMF_ENCRYPTEDVALUE_it,
+Otls_CRMF_ENCRYPTEDVALUE_new,
+Otls_CRMF_MSGS_free,
+Otls_CRMF_MSGS_it,
+Otls_CRMF_MSGS_new,
+Otls_CRMF_MSG_free,
+Otls_CRMF_MSG_it,
+Otls_CRMF_MSG_new,
+Otls_CRMF_PBMPARAMETER_free,
+Otls_CRMF_PBMPARAMETER_it,
+Otls_CRMF_PBMPARAMETER_new,
+Otls_CRMF_PKIPUBLICATIONINFO_free,
+Otls_CRMF_PKIPUBLICATIONINFO_it,
+Otls_CRMF_PKIPUBLICATIONINFO_new,
+Otls_CRMF_SINGLEPUBINFO_free,
+Otls_CRMF_SINGLEPUBINFO_it,
+Otls_CRMF_SINGLEPUBINFO_new,
 OTHERNAME_free,
 OTHERNAME_new,
 PBE2PARAM_free,
@@ -287,9 +287,9 @@ X509_dup,
 
 =head1 SYNOPSIS
 
-=for openssl generic
+=for opentls generic
 
- #include <openssl/asn1t.h>
+ #include <opentls/asn1t.h>
 
  DECLARE_ASN1_FUNCTIONS(type)
  IMPLEMENT_ASN1_FUNCTIONS(stname)
@@ -305,9 +305,9 @@ X509_dup,
 =head1 DESCRIPTION
 
 In the description below, B<I<TYPE>> is used
-as a placeholder for any of the OpenSSL datatypes, such as B<X509>.
+as a placeholder for any of the Opentls datatypes, such as B<X509>.
 
-The OpenSSL ASN1 parsing library templates are like a data-driven bytecode
+The Opentls ASN1 parsing library templates are like a data-driven bytecode
 interpreter.
 Every ASN1 object as a global variable, TYPE_it, that describes the item
 such as its fields.  (On systems which cannot export variables from shared
@@ -344,11 +344,11 @@ B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

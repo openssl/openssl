@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Part of the code in here was originally in conf.c, which is now removed */
@@ -13,13 +13,13 @@
 #include "internal/cryptlib.h"
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/conf.h>
-#include <openssl/conf_api.h>
+#include <opentls/conf.h>
+#include <opentls/conf_api.h>
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);
 
-/* Up until OpenSSL 0.9.5a, this was get_section */
+/* Up until Opentls 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
 {
     CONF_VALUE *v, vv;
@@ -32,7 +32,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
     return v;
 }
 
-/* Up until OpenSSL 0.9.5a, this was CONF_get_section */
+/* Up until Opentls 0.9.5a, this was CONF_get_section */
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
                                                const char *section)
 {
@@ -60,9 +60,9 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
     v = lh_CONF_VALUE_insert(conf->data, value);
     if (v != NULL) {
         (void)sk_CONF_VALUE_delete_ptr(ts, v);
-        OPENSSL_free(v->name);
-        OPENSSL_free(v->value);
-        OPENSSL_free(v);
+        OPENtls_free(v->name);
+        OPENtls_free(v->value);
+        OPENtls_free(v);
     }
     return 1;
 }
@@ -83,7 +83,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
             if (v != NULL)
                 return v->value;
             if (strcmp(section, "ENV") == 0) {
-                p = ossl_safe_getenv(name);
+                p = otls_safe_getenv(name);
                 if (p != NULL)
                     return p;
             }
@@ -96,12 +96,12 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         else
             return NULL;
     } else
-        return ossl_safe_getenv(name);
+        return otls_safe_getenv(name);
 }
 
 static unsigned long conf_value_hash(const CONF_VALUE *v)
 {
-    return (OPENSSL_LH_strhash(v->section) << 2) ^ OPENSSL_LH_strhash(v->name);
+    return (OPENtls_LH_strhash(v->section) << 2) ^ OPENtls_LH_strhash(v->name);
 }
 
 static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
@@ -145,7 +145,7 @@ void _CONF_free_data(CONF *conf)
     if (conf == NULL || conf->data == NULL)
         return;
 
-    /* evil thing to make sure the 'OPENSSL_free()' works as expected */
+    /* evil thing to make sure the 'OPENtls_free()' works as expected */
     lh_CONF_VALUE_set_down_load(conf->data, 0);
     lh_CONF_VALUE_doall_LH_CONF_VALUE(conf->data, value_free_hash, conf->data);
 
@@ -176,16 +176,16 @@ static void value_free_stack_doall(CONF_VALUE *a)
     sk = (STACK_OF(CONF_VALUE) *)a->value;
     for (i = sk_CONF_VALUE_num(sk) - 1; i >= 0; i--) {
         vv = sk_CONF_VALUE_value(sk, i);
-        OPENSSL_free(vv->value);
-        OPENSSL_free(vv->name);
-        OPENSSL_free(vv);
+        OPENtls_free(vv->value);
+        OPENtls_free(vv->name);
+        OPENtls_free(vv);
     }
     sk_CONF_VALUE_free(sk);
-    OPENSSL_free(a->section);
-    OPENSSL_free(a);
+    OPENtls_free(a->section);
+    OPENtls_free(a);
 }
 
-/* Up until OpenSSL 0.9.5a, this was new_section */
+/* Up until Opentls 0.9.5a, this was new_section */
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 {
     STACK_OF(CONF_VALUE) *sk = NULL;
@@ -194,10 +194,10 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 
     if ((sk = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
-    if ((v = OPENSSL_malloc(sizeof(*v))) == NULL)
+    if ((v = OPENtls_malloc(sizeof(*v))) == NULL)
         goto err;
     i = strlen(section) + 1;
-    if ((v->section = OPENSSL_malloc(i)) == NULL)
+    if ((v->section = OPENtls_malloc(i)) == NULL)
         goto err;
 
     memcpy(v->section, section, i);
@@ -212,7 +212,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
  err:
     sk_CONF_VALUE_free(sk);
     if (v != NULL)
-        OPENSSL_free(v->section);
-    OPENSSL_free(v);
+        OPENtls_free(v->section);
+    OPENtls_free(v);
     return NULL;
 }

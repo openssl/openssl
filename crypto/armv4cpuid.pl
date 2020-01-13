@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 # $output is the last argument if it looks like a file (it has an extension)
@@ -35,9 +35,9 @@ $code.=<<___;
 .text
 
 .align	5
-.global	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,%function
-OPENSSL_atomic_add:
+.global	OPENtls_atomic_add
+.type	OPENtls_atomic_add,%function
+OPENtls_atomic_add:
 #if __ARM_ARCH__>=6
 .Ladd:	ldrex	r2,[r0]
 	add	r3,r2,r1
@@ -69,11 +69,11 @@ OPENSSL_atomic_add:
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
 #endif
-.size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
+.size	OPENtls_atomic_add,.-OPENtls_atomic_add
 
-.global	OPENSSL_cleanse
-.type	OPENSSL_cleanse,%function
-OPENSSL_cleanse:
+.global	OPENtls_cleanse
+.type	OPENtls_cleanse,%function
+OPENtls_cleanse:
 	eor	ip,ip,ip
 	cmp	r1,#7
 #ifdef	__thumb2__
@@ -108,7 +108,7 @@ OPENSSL_cleanse:
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
 #endif
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+.size	OPENtls_cleanse,.-OPENtls_cleanse
 
 .global	CRYPTO_memcmp
 .type	CRYPTO_memcmp,%function
@@ -207,12 +207,12 @@ _armv8_pmull_probe:
 .size	_armv8_pmull_probe,.-_armv8_pmull_probe
 #endif
 
-.global	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,%function
-OPENSSL_wipe_cpu:
+.global	OPENtls_wipe_cpu
+.type	OPENtls_wipe_cpu,%function
+OPENtls_wipe_cpu:
 #if __ARM_MAX_ARCH__>=7
-	ldr	r0,.LOPENSSL_armcap
-	adr	r1,.LOPENSSL_armcap
+	ldr	r0,.LOPENtls_armcap
+	adr	r1,.LOPENtls_armcap
 	ldr	r0,[r1,r0]
 #ifdef	__APPLE__
 	ldr	r0,[r0]
@@ -246,11 +246,11 @@ OPENSSL_wipe_cpu:
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
 #endif
-.size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
+.size	OPENtls_wipe_cpu,.-OPENtls_wipe_cpu
 
-.global	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,%function
-OPENSSL_instrument_bus:
+.global	OPENtls_instrument_bus
+.type	OPENtls_instrument_bus,%function
+OPENtls_instrument_bus:
 	eor	r0,r0,r0
 #if __ARM_ARCH__>=5
 	bx	lr
@@ -259,11 +259,11 @@ OPENSSL_instrument_bus:
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
 #endif
-.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+.size	OPENtls_instrument_bus,.-OPENtls_instrument_bus
 
-.global	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,%function
-OPENSSL_instrument_bus2:
+.global	OPENtls_instrument_bus2
+.type	OPENtls_instrument_bus2,%function
+OPENtls_instrument_bus2:
 	eor	r0,r0,r0
 #if __ARM_ARCH__>=5
 	bx	lr
@@ -272,12 +272,12 @@ OPENSSL_instrument_bus2:
 	moveq	pc,lr
 	.word	0xe12fff1e	@ bx	lr
 #endif
-.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+.size	OPENtls_instrument_bus2,.-OPENtls_instrument_bus2
 
 .align	5
 #if __ARM_MAX_ARCH__>=7
-.LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-.
+.LOPENtls_armcap:
+.word	OPENtls_armcap_P-.
 #endif
 #if __ARM_ARCH__>=6
 .align	5
@@ -292,8 +292,8 @@ atomic_add_spinlock:
 .word	0
 #endif
 
-.comm	OPENSSL_armcap_P,4,4
-.hidden	OPENSSL_armcap_P
+.comm	OPENtls_armcap_P,4,4
+.hidden	OPENtls_armcap_P
 ___
 
 print $code;

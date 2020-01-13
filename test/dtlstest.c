@@ -1,19 +1,19 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <opentls/bio.h>
+#include <opentls/crypto.h>
+#include <opentls/tls.h>
+#include <opentls/err.h>
 
-#include "ssltestlib.h"
+#include "tlstestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -26,12 +26,12 @@ static unsigned int timer_cb_count;
 #define DUMMY_CERT_STATUS_LEN  12
 
 static unsigned char certstatus[] = {
-    SSL3_RT_HANDSHAKE, /* Content type */
+    tls3_RT_HANDSHAKE, /* Content type */
     0xfe, 0xfd, /* Record version */
     0, 1, /* Epoch */
     0, 0, 0, 0, 0, 0x0f, /* Record sequence number */
     0, DTLS1_HM_HEADER_LENGTH + DUMMY_CERT_STATUS_LEN - 2,
-    SSL3_MT_CERTIFICATE_STATUS, /* Cert Status handshake message type */
+    tls3_MT_CERTIFICATE_STATUS, /* Cert Status handshake message type */
     0, 0, DUMMY_CERT_STATUS_LEN, /* Message len */
     0, 5, /* Message sequence */
     0, 0, 0, /* Fragment offset */
@@ -42,7 +42,7 @@ static unsigned char certstatus[] = {
 
 #define RECORD_SEQUENCE 10
 
-static unsigned int timer_cb(SSL *s, unsigned int timer_us)
+static unsigned int timer_cb(tls *s, unsigned int timer_us)
 {
     ++timer_cb_count;
 
@@ -54,32 +54,32 @@ static unsigned int timer_cb(SSL *s, unsigned int timer_us)
 
 static int test_dtls_unprocessed(int testidx)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl1 = NULL, *clientssl1 = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *servertls1 = NULL, *clienttls1 = NULL;
     BIO *c_to_s_fbio, *c_to_s_mempacket;
     int testresult = 0;
 
     timer_cb_count = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
+    if (!TEST_true(tls_CTX_set_cipher_list(cctx, "AES128-SHA")))
         goto end;
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
     if (!TEST_ptr(c_to_s_fbio))
         goto end;
 
-    /* BIO is freed by create_ssl_connection on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
+    /* BIO is freed by create_tls_connection on error */
+    if (!TEST_true(create_tls_objects(sctx, cctx, &servertls1, &clienttls1,
                                       NULL, c_to_s_fbio)))
         goto end;
 
-    DTLS_set_timer_cb(clientssl1, timer_cb);
+    DTLS_set_timer_cb(clienttls1, timer_cb);
 
     if (testidx == 1)
         certstatus[RECORD_SEQUENCE] = 0xff;
@@ -89,19 +89,19 @@ static int test_dtls_unprocessed(int testidx)
      * get used because the message sequence number is too big. In test 1 we set
      * the record sequence number to be way off in the future.
      */
-    c_to_s_mempacket = SSL_get_wbio(clientssl1);
+    c_to_s_mempacket = tls_get_wbio(clienttls1);
     c_to_s_mempacket = BIO_next(c_to_s_mempacket);
     mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
                           sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
     /*
-     * Create the connection. We use "create_bare_ssl_connection" here so that
-     * we can force the connection to not do "SSL_read" once partly connected.
+     * Create the connection. We use "create_bare_tls_connection" here so that
+     * we can force the connection to not do "tls_read" once partly connected.
      * We don't want to accidentally read the dummy records we injected because
      * they will fail to decrypt.
      */
-    if (!TEST_true(create_bare_ssl_connection(serverssl1, clientssl1,
-                                              SSL_ERROR_NONE, 0)))
+    if (!TEST_true(create_bare_tls_connection(servertls1, clienttls1,
+                                              tls_ERROR_NONE, 0)))
         goto end;
 
     if (timer_cb_count == 0) {
@@ -111,17 +111,17 @@ static int test_dtls_unprocessed(int testidx)
 
     testresult = 1;
  end:
-    SSL_free(serverssl1);
-    SSL_free(clientssl1);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls1);
+    tls_free(clienttls1);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }
 
 #define CLI_TO_SRV_EPOCH_0_RECS 3
 #define CLI_TO_SRV_EPOCH_1_RECS 1
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if !defined(OPENtls_NO_EC) || !defined(OPENtls_NO_DH)
 # define SRV_TO_CLI_EPOCH_0_RECS 12
 #else
 /*
@@ -148,15 +148,15 @@ static int test_dtls_unprocessed(int testidx)
 
 static int test_dtls_drop_records(int idx)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     BIO *c_to_s_fbio, *mempackbio;
     int testresult = 0;
     int epoch = 0;
-    SSL_SESSION *sess = NULL;
+    tls_SESSION *sess = NULL;
     int cli_to_srv_epoch0, cli_to_srv_epoch1, srv_to_cli_epoch0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -164,18 +164,18 @@ static int test_dtls_drop_records(int idx)
 
     if (idx >= TOTAL_FULL_HAND_RECORDS) {
         /* We're going to do a resumption handshake. Get a session first. */
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+        if (!TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                           NULL, NULL))
-                || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                              SSL_ERROR_NONE))
-                || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+                || !TEST_true(create_tls_connection(servertls, clienttls,
+                              tls_ERROR_NONE))
+                || !TEST_ptr(sess = tls_get1_session(clienttls)))
             goto end;
 
-        SSL_shutdown(clientssl);
-        SSL_shutdown(serverssl);
-        SSL_free(serverssl);
-        SSL_free(clientssl);
-        serverssl = clientssl = NULL;
+        tls_shutdown(clienttls);
+        tls_shutdown(servertls);
+        tls_free(servertls);
+        tls_free(clienttls);
+        servertls = clienttls = NULL;
 
         cli_to_srv_epoch0 = CLI_TO_SRV_RESUME_EPOCH_0_RECS;
         cli_to_srv_epoch1 = CLI_TO_SRV_RESUME_EPOCH_1_RECS;
@@ -191,29 +191,29 @@ static int test_dtls_drop_records(int idx)
     if (!TEST_ptr(c_to_s_fbio))
         goto end;
 
-    /* BIO is freed by create_ssl_connection on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+    /* BIO is freed by create_tls_connection on error */
+    if (!TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                       NULL, c_to_s_fbio)))
         goto end;
 
     if (sess != NULL) {
-        if (!TEST_true(SSL_set_session(clientssl, sess)))
+        if (!TEST_true(tls_set_session(clienttls, sess)))
             goto end;
     }
 
-    DTLS_set_timer_cb(clientssl, timer_cb);
-    DTLS_set_timer_cb(serverssl, timer_cb);
+    DTLS_set_timer_cb(clienttls, timer_cb);
+    DTLS_set_timer_cb(servertls, timer_cb);
 
     /* Work out which record to drop based on the test number */
     if (idx >= cli_to_srv_epoch0 + cli_to_srv_epoch1) {
-        mempackbio = SSL_get_wbio(serverssl);
+        mempackbio = tls_get_wbio(servertls);
         idx -= cli_to_srv_epoch0 + cli_to_srv_epoch1;
         if (idx >= srv_to_cli_epoch0) {
             epoch = 1;
             idx -= srv_to_cli_epoch0;
         }
     } else {
-        mempackbio = SSL_get_wbio(clientssl);
+        mempackbio = tls_get_wbio(clienttls);
         if (idx >= cli_to_srv_epoch0) {
             epoch = 1;
             idx -= cli_to_srv_epoch0;
@@ -223,10 +223,10 @@ static int test_dtls_drop_records(int idx)
     BIO_ctrl(mempackbio, MEMPACKET_CTRL_SET_DROP_EPOCH, epoch, NULL);
     BIO_ctrl(mempackbio, MEMPACKET_CTRL_SET_DROP_REC, idx, NULL);
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(servertls, clienttls, tls_ERROR_NONE)))
         goto end;
 
-    if (sess != NULL && !TEST_true(SSL_session_reused(clientssl)))
+    if (sess != NULL && !TEST_true(tls_session_reused(clienttls)))
         goto end;
 
     /* If the test did what we planned then it should have dropped a record */
@@ -236,18 +236,18 @@ static int test_dtls_drop_records(int idx)
 
     testresult = 1;
  end:
-    SSL_SESSION_free(sess);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_SESSION_free(sess);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }
 
 static const char dummy_cookie[] = "0123456";
 
-static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+static int generate_cookie_cb(tls *tls, unsigned char *cookie,
                               unsigned int *cookie_len)
 {
     memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
@@ -255,7 +255,7 @@ static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
     return 1;
 }
 
-static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+static int verify_cookie_cb(tls *tls, const unsigned char *cookie,
                             unsigned int cookie_len)
 {
     return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
@@ -263,67 +263,67 @@ static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
 
 static int test_cookie(void)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
-    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
-    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
-    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
+    tls_CTX_set_options(sctx, tls_OP_COOKIE_EXCHANGE);
+    tls_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    tls_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+    if (!TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                       NULL, NULL))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE)))
+            || !TEST_true(create_tls_connection(servertls, clienttls,
+                                                tls_ERROR_NONE)))
         goto end;
 
     testresult = 1;
  end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }
 
 static int test_dtls_duplicate_records(void)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
+    tls_CTX *sctx = NULL, *cctx = NULL;
+    tls *servertls = NULL, *clienttls = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_tls_ctx_pair(DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+    if (!TEST_true(create_tls_objects(sctx, cctx, &servertls, &clienttls,
                                       NULL, NULL)))
         goto end;
 
-    DTLS_set_timer_cb(clientssl, timer_cb);
-    DTLS_set_timer_cb(serverssl, timer_cb);
+    DTLS_set_timer_cb(clienttls, timer_cb);
+    DTLS_set_timer_cb(servertls, timer_cb);
 
-    BIO_ctrl(SSL_get_wbio(clientssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
-    BIO_ctrl(SSL_get_wbio(serverssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+    BIO_ctrl(tls_get_wbio(clienttls), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+    BIO_ctrl(tls_get_wbio(servertls), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
 
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+    if (!TEST_true(create_tls_connection(servertls, clienttls, tls_ERROR_NONE)))
         goto end;
 
     testresult = 1;
  end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
+    tls_free(servertls);
+    tls_free(clienttls);
+    tls_CTX_free(sctx);
+    tls_CTX_free(cctx);
 
     return testresult;
 }

@@ -1,11 +1,11 @@
- OPENSSL INSTALLATION
+ OPENtls INSTALLATION
  --------------------
 
  This document describes installation on all supported operating
  systems (the Unix/Linux family (which includes Mac OS/X), OpenVMS,
  and Windows).
 
- To install OpenSSL, you will need:
+ To install Opentls, you will need:
 
   * A make implementation
   * Perl 5 with core modules (please read NOTES.PERL)
@@ -104,16 +104,16 @@
 
  If any of these steps fails, see section Installation in Detail below.
 
- This will build and install OpenSSL in the default location, which is:
+ This will build and install Opentls in the default location, which is:
 
   Unix:    normal installation directories under /usr/local
-  OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
-           OpenSSL version number with underscores instead of periods.
-  Windows: C:\Program Files\OpenSSL or C:\Program Files (x86)\OpenSSL
+  OpenVMS: SYS$COMMON:[OPENtls-'version'...], where 'version' is the
+           Opentls version number with underscores instead of periods.
+  Windows: C:\Program Files\Opentls or C:\Program Files (x86)\Opentls
 
  The installation directory should be appropriately protected to ensure
- unprivileged users cannot make changes to OpenSSL binaries or files, or install
- engines. If you already have a pre-installed version of OpenSSL as part of
+ unprivileged users cannot make changes to Opentls binaries or files, or install
+ engines. If you already have a pre-installed version of Opentls as part of
  your Operating System it is recommended that you do not overwrite the system
  version and instead install to somewhere else.
 
@@ -121,11 +121,11 @@
 
   On Unix:
 
-    $ ./config --prefix=/opt/openssl --openssldir=/usr/local/ssl
+    $ ./config --prefix=/opt/opentls --opentlsdir=/usr/local/tls
 
   On OpenVMS:
 
-    $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
+    $ @config --prefix=PROGRAM:[INSTALLS] --opentlsdir=SYS$MANAGER:[OPENtls]
 
  (Note: if you do add options to the configuration command, please make sure
  you've read more than just this Quick Start, such as relevant NOTES.* files,
@@ -138,23 +138,23 @@
 
  There are several options to ./config (or ./Configure) to customize
  the build (note that for Windows, the defaults for --prefix and
- --openssldir depend in what configuration is used and what Windows
- implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
+ --opentlsdir depend in what configuration is used and what Windows
+ implementation Opentls is built on.  More notes on this in NOTES.WIN):
 
   --api=x.y[.z]
-                   Build the OpenSSL libraries to support the API for
+                   Build the Opentls libraries to support the API for
                    the specified version.  If "no-deprecated" is also
                    given, don't build with support for deprecated APIs
                    in or below the specified version number. For example
                    "--api=1.1.0" with "no-deprecated" will remove
                    support for all APIS that were deprecated in
-                   OpenSSL version 1.1.0 or below.
+                   Opentls version 1.1.0 or below.
                    This is a rather specialized option for developers.
                    If you just intend to remove all deprecated APIs
                    entirely (up to the current version), only specify
                    "-no-deprecated" (see below).
                    If "--api" isn't given, it defaults to the current
-                   OpenSSL minor version.
+                   Opentls minor version.
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
@@ -176,11 +176,11 @@
                    "--cross-compile-prefix=mipsel-linux-gnu-" suffices
                    in such case. Needless to mention that you have to
                    invoke ./Configure, not ./config, and pass your target
-                   name explicitly. Also, note that --openssldir refers
+                   name explicitly. Also, note that --opentlsdir refers
                    to target's file system, not one you are building on.
 
   --debug
-                   Build OpenSSL with debugging symbols and zero optimization
+                   Build Opentls with debugging symbols and zero optimization
                    level.
 
   --libdir=DIR
@@ -190,31 +190,31 @@
                    only ".lib" files will be stored in this location. dll files
                    will always be installed to the "bin" directory.
 
-  --openssldir=DIR
-                   Directory for OpenSSL configuration files, and also the
+  --opentlsdir=DIR
+                   Directory for Opentls configuration files, and also the
                    default certificate and key store.  Defaults are:
 
-                   Unix:           /usr/local/ssl
-                   Windows:        C:\Program Files\Common Files\SSL
-                                or C:\Program Files (x86)\Common Files\SSL
-                   OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
+                   Unix:           /usr/local/tls
+                   Windows:        C:\Program Files\Common Files\tls
+                                or C:\Program Files (x86)\Common Files\tls
+                   OpenVMS:        SYS$COMMON:[OPENtls-COMMON]
 
   --prefix=DIR
                    The top of the installation directory tree.  Defaults are:
 
                    Unix:           /usr/local
-                   Windows:        C:\Program Files\OpenSSL
-                                or C:\Program Files (x86)\OpenSSL
-                   OpenVMS:        SYS$COMMON:[OPENSSL-'version']
+                   Windows:        C:\Program Files\Opentls
+                                or C:\Program Files (x86)\Opentls
+                   OpenVMS:        SYS$COMMON:[OPENtls-'version']
 
   --release
-                   Build OpenSSL without debugging symbols. This is the default.
+                   Build Opentls without debugging symbols. This is the default.
 
   --strict-warnings
                    This is a developer flag that switches on various compiler
-                   options recommended for OpenSSL development. It only works
+                   options recommended for Opentls development. It only works
                    when using gcc or clang as the compiler. If you are
-                   developing a patch for OpenSSL then it is recommended that
+                   developing a patch for Opentls then it is recommended that
                    you use this option where possible.
 
   --with-zlib-include=DIR
@@ -239,7 +239,7 @@
 
   --with-rand-seed=seed1[,seed2,...]
                    A comma separated list of seeding methods which will be tried
-                   by OpenSSL in order to obtain random input (a.k.a "entropy")
+                   by Opentls in order to obtain random input (a.k.a "entropy")
                    for seeding its cryptographically secure random number
                    generator (CSPRNG). The current seeding methods are:
 
@@ -296,7 +296,7 @@
 
   no-autoalginit
                    Don't automatically load all supported ciphers and digests.
-                   Typically OpenSSL will make available all of its supported
+                   Typically Opentls will make available all of its supported
                    ciphers and digests. For a statically linked application this
                    may be undesirable if small executable size is an objective.
                    This only affects libcrypto. Ciphers and digests will have to
@@ -305,19 +305,19 @@
                    force a non-shared build.
 
   no-autoerrinit
-                   Don't automatically load all libcrypto/libssl error strings.
-                   Typically OpenSSL will automatically load human readable
+                   Don't automatically load all libcrypto/libtls error strings.
+                   Typically Opentls will automatically load human readable
                    error strings. For a statically linked application this may
                    be undesirable if small executable size is an objective.
 
   no-autoload-config
-                   Don't automatically load the default openssl.cnf file.
-                   Typically OpenSSL will automatically load a system config
-                   file which configures default ssl options.
+                   Don't automatically load the default opentls.cnf file.
+                   Typically Opentls will automatically load a system config
+                   file which configures default tls options.
 
   enable-buildtest-c++
                    While testing, generate C++ buildtest files that
-                   simply check that the public OpenSSL header files
+                   simply check that the public Opentls header files
                    are usable standalone with C++.
 
                    Enabling this option demands extra care.  For any
@@ -339,7 +339,7 @@
                    Don't build support for CMS features
 
   no-comp
-                   Don't build support for SSL/TLS compression. If this option
+                   Don't build support for tls/TLS compression. If this option
                    is left enabled (the default), then compression will only
                    work if the zlib or zlib-dynamic options are also chosen.
 
@@ -405,7 +405,7 @@
                    Enable building of integration with external test suites.
                    This is a developer option and may not work on all platforms.
                    The only supported external test suite at the current time is
-                   the BoringSSL test suite. See the file test/README.external
+                   the Boringtls test suite. See the file test/README.external
                    for further details.
 
   no-filenames
@@ -440,7 +440,7 @@
 
   no-multiblock
                    Don't build support for writing multiple records in one
-                   go in libssl (Note: this is a different capability to the
+                   go in libtls (Note: this is a different capability to the
                    pipelining functionality).
 
   no-nextprotoneg
@@ -457,22 +457,22 @@
   no-pic
                    Don't build with support for Position Independent Code.
 
-  no-pinshared     By default OpenSSL will attempt to stay in memory until the
-                   process exits. This is so that libcrypto and libssl can be
+  no-pinshared     By default Opentls will attempt to stay in memory until the
+                   process exits. This is so that libcrypto and libtls can be
                    properly cleaned up automatically via an "atexit()" handler.
                    The handler is registered by libcrypto and cleans up both
                    libraries. On some platforms the atexit() handler will run on
                    unload of libcrypto (if it has been dynamically loaded)
                    rather than at process exit. This option can be used to stop
-                   OpenSSL from attempting to stay in memory until the process
+                   Opentls from attempting to stay in memory until the process
                    exits. This could lead to crashes if either libcrypto or
-                   libssl have already been unloaded at the point
+                   libtls have already been unloaded at the point
                    that the atexit handler is invoked, e.g. on a platform which
-                   calls atexit() on unload of the library, and libssl is
+                   calls atexit() on unload of the library, and libtls is
                    unloaded before libcrypto then a crash is likely to happen.
                    Applications can suppress running of the atexit() handler at
-                   run time by using the OPENSSL_INIT_NO_ATEXIT option to
-                   OPENSSL_init_crypto(). See the man page for it for further
+                   run time by using the OPENtls_INIT_NO_ATEXIT option to
+                   OPENtls_init_crypto(). See the man page for it for further
                    details.
 
   no-posix-io
@@ -519,8 +519,8 @@
                    such kernel, consider no-sse2. Both the 386 and
                    no-asm options imply no-sse2.
 
-  enable-ssl-trace
-                   Build with the SSL Trace capabilities (adds the "-trace"
+  enable-tls-trace
+                   Build with the tls Trace capabilities (adds the "-trace"
                    option to s_client and s_server).
 
   no-static-engine
@@ -529,10 +529,10 @@
 
   no-stdio
                    Don't use anything from the C header file "stdio.h" that
-                   makes use of the "FILE" type. Only libcrypto and libssl can
+                   makes use of the "FILE" type. Only libcrypto and libtls can
                    be built in this way. Using this option will suppress
                    building the command line applications. Additionally since
-                   the OpenSSL tests also use the command line applications the
+                   the Opentls tests also use the command line applications the
                    tests will also be skipped.
 
   no-tests
@@ -551,7 +551,7 @@
 
   enable-trace
                    Build with support for the integrated tracing api. See manual pages
-                   OSSL_trace_set_channel(3) and OSSL_trace_enabled(3) for details.
+                   Otls_trace_set_channel(3) and Otls_trace_enabled(3) for details.
 
   no-ts
                    Don't build Time Stamping Authority support.
@@ -575,15 +575,15 @@
   no-uplink
                    Don't build support for UPLINK interface.
 
-  enable-weak-ssl-ciphers
-                   Build support for SSL/TLS ciphers that are considered "weak"
+  enable-weak-tls-ciphers
+                   Build support for tls/TLS ciphers that are considered "weak"
                    (e.g. RC4 based ciphersuites).
 
   zlib
                    Build with support for zlib compression/decompression.
 
   zlib-dynamic
-                   Like "zlib", but has OpenSSL load the zlib library
+                   Like "zlib", but has Opentls load the zlib library
                    dynamically when needed.  This is only supported on systems
                    where loading of shared libraries is supported.
 
@@ -596,13 +596,13 @@
                    suitable compiler-specific option.
 
   no-<prot>
-                   Don't build support for negotiating the specified SSL/TLS
-                   protocol (one of ssl, ssl3, tls, tls1, tls1_1, tls1_2,
+                   Don't build support for negotiating the specified tls/TLS
+                   protocol (one of tls, tls3, tls, tls1, tls1_1, tls1_2,
                    tls1_3, dtls, dtls1 or dtls1_2). If "no-tls" is selected then
                    all of tls1, tls1_1, tls1_2 and tls1_3 are disabled.
                    Similarly "no-dtls" will disable dtls1 and dtls1_2. The
-                   "no-ssl" option is synonymous with "no-ssl3". Note this only
-                   affects version negotiation. OpenSSL will still provide the
+                   "no-tls" option is synonymous with "no-tls3". Note this only
+                   affects version negotiation. Opentls will still provide the
                    methods for applications to explicitly select the individual
                    protocol versions.
 
@@ -772,7 +772,7 @@
  Installation in Detail
  ----------------------
 
- 1a. Configure OpenSSL for your operation system automatically:
+ 1a. Configure Opentls for your operation system automatically:
 
      NOTE: This is not available on Windows.
 
@@ -786,7 +786,7 @@
      examples, please use the appropriate form for your platform.
 
      This guesses at your operating system (and compiler, if necessary) and
-     configures OpenSSL based on this guess. Run ./config -t to see
+     configures Opentls based on this guess. Run ./config -t to see
      if it guessed correctly. If you want to use a different compiler, you
      are cross-compiling for another platform, or the ./config guess was
      wrong for other reasons, go to step 1b. Otherwise go to step 2.
@@ -795,9 +795,9 @@
 
        $ ./config -d [[ options ]]
 
- 1b. Configure OpenSSL for your operating system manually
+ 1b. Configure Opentls for your operating system manually
 
-     OpenSSL knows about a range of different operating system, hardware and
+     Opentls knows about a range of different operating system, hardware and
      compiler combinations. To see the ones it knows about, run
 
        $ ./Configure                                    # Unix
@@ -828,62 +828,62 @@
 
      Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
      and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
-     and defines various macros in include/openssl/configuration.h (generated
-     from include/openssl/configuration.h.in).
+     and defines various macros in include/opentls/configuration.h (generated
+     from include/opentls/configuration.h.in).
 
- 1c. Configure OpenSSL for building outside of the source tree.
+ 1c. Configure Opentls for building outside of the source tree.
 
-     OpenSSL can be configured to build in a build directory separate from
+     Opentls can be configured to build in a build directory separate from
      the directory with the source code.  It's done by placing yourself in
      some other directory and invoking the configuration commands from
      there.
 
      Unix example:
 
-       $ mkdir /var/tmp/openssl-build
-       $ cd /var/tmp/openssl-build
-       $ /PATH/TO/OPENSSL/SOURCE/config [[ options ]]
+       $ mkdir /var/tmp/opentls-build
+       $ cd /var/tmp/opentls-build
+       $ /PATH/TO/OPENtls/SOURCE/config [[ options ]]
 
        or
 
-       $ /PATH/TO/OPENSSL/SOURCE/Configure {{ target }} [[ options ]]
+       $ /PATH/TO/OPENtls/SOURCE/Configure {{ target }} [[ options ]]
 
      OpenVMS example:
 
        $ set default sys$login:
-       $ create/dir [.tmp.openssl-build]
-       $ set default [.tmp.openssl-build]
-       $ @[PATH.TO.OPENSSL.SOURCE]config [[ options ]]
+       $ create/dir [.tmp.opentls-build]
+       $ set default [.tmp.opentls-build]
+       $ @[PATH.TO.OPENtls.SOURCE]config [[ options ]]
 
        or
 
-       $ @[PATH.TO.OPENSSL.SOURCE]Configure {{ target }} [[ options ]]
+       $ @[PATH.TO.OPENtls.SOURCE]Configure {{ target }} [[ options ]]
 
      Windows example:
 
        $ C:
-       $ mkdir \temp-openssl
-       $ cd \temp-openssl
-       $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {{ target }} [[ options ]]
+       $ mkdir \temp-opentls
+       $ cd \temp-opentls
+       $ perl d:\PATH\TO\OPENtls\SOURCE\Configure {{ target }} [[ options ]]
 
      Paths can be relative just as well as absolute.  Configure will
      do its best to translate them to relative paths whenever possible.
 
-  2. Build OpenSSL by running:
+  2. Build Opentls by running:
 
        $ make                                           # Unix
        $ mms                                            ! (or mmk) OpenVMS
        $ nmake                                          # Windows
 
-     This will build the OpenSSL libraries (libcrypto.a and libssl.a on
-     Unix, corresponding on other platforms) and the OpenSSL binary
-     ("openssl"). The libraries will be built in the top-level directory,
+     This will build the Opentls libraries (libcrypto.a and libtls.a on
+     Unix, corresponding on other platforms) and the Opentls binary
+     ("opentls"). The libraries will be built in the top-level directory,
      and the binary will be in the "apps" subdirectory.
 
      Troubleshooting:
 
      If the build fails, look at the output.  There may be reasons
-     for the failure that aren't problems in OpenSSL itself (like
+     for the failure that aren't problems in Opentls itself (like
      missing standard headers).
 
      If the build succeeded previously, but fails after a source or
@@ -897,14 +897,14 @@
      Assembler error messages can sometimes be sidestepped by using the
      "no-asm" configuration option.
 
-     Compiling parts of OpenSSL with gcc and others with the system
+     Compiling parts of Opentls with gcc and others with the system
      compiler will result in unresolved symbols on some systems.
 
      If you are still having problems you can get help by sending an email
-     to the openssl-users email list (see
-     https://www.openssl.org/community/mailinglists.html for details). If
-     it is a bug with OpenSSL itself, please open an issue on GitHub, at
-     https://github.com/openssl/openssl/issues. Please review the existing
+     to the opentls-users email list (see
+     https://www.opentls.org/community/mailinglists.html for details). If
+     it is a bug with Opentls itself, please open an issue on GitHub, at
+     https://github.com/opentls/opentls/issues. Please review the existing
      ones first; maybe the bug was already reported or has already been
      fixed.
 
@@ -918,7 +918,7 @@
      disable your privileges temporarily if your platform allows it).
 
      If some tests fail, look at the output.  There may be reasons for
-     the failure that isn't a problem in OpenSSL itself (like a
+     the failure that isn't a problem in Opentls itself (like a
      malfunction with Perl).  You may want increased verbosity, that
      can be accomplished like this:
 
@@ -954,17 +954,17 @@
      Have a look at the manual for the perl module Test::Harness to
      see what other HARNESS_* variables there are.
 
-     If you find a problem with OpenSSL itself, try removing any
+     If you find a problem with Opentls itself, try removing any
      compiler optimization flags from the CFLAGS line in Makefile and
      run "make clean; make" or corresponding.
 
      To report a bug please open an issue on GitHub, at
-     https://github.com/openssl/openssl/issues.
+     https://github.com/opentls/opentls/issues.
 
      For more details on how the make variables TESTS can be used,
      see section TESTS in Detail below.
 
-  4. If everything tests ok, install OpenSSL with
+  4. If everything tests ok, install Opentls with
 
        $ make install                                   # Unix
        $ mms install                                    ! OpenVMS
@@ -979,40 +979,40 @@
 
        Unix:
 
-         bin/           Contains the openssl binary and a few other
+         bin/           Contains the opentls binary and a few other
                         utility scripts.
-         include/openssl
+         include/opentls
                         Contains the header files needed if you want
                         to build your own programs that use libcrypto
-                        or libssl.
-         lib            Contains the OpenSSL library files.
-         lib/engines    Contains the OpenSSL dynamically loadable engines.
+                        or libtls.
+         lib            Contains the Opentls library files.
+         lib/engines    Contains the Opentls dynamically loadable engines.
 
-         share/man/man1 Contains the OpenSSL command line man-pages.
-         share/man/man3 Contains the OpenSSL library calls man-pages.
-         share/man/man5 Contains the OpenSSL configuration format man-pages.
-         share/man/man7 Contains the OpenSSL other misc man-pages.
+         share/man/man1 Contains the Opentls command line man-pages.
+         share/man/man3 Contains the Opentls library calls man-pages.
+         share/man/man5 Contains the Opentls configuration format man-pages.
+         share/man/man7 Contains the Opentls other misc man-pages.
 
-         share/doc/openssl/html/man1
-         share/doc/openssl/html/man3
-         share/doc/openssl/html/man5
-         share/doc/openssl/html/man7
+         share/doc/opentls/html/man1
+         share/doc/opentls/html/man3
+         share/doc/opentls/html/man5
+         share/doc/opentls/html/man7
                         Contains the HTML rendition of the man-pages.
 
        OpenVMS ('arch' is replaced with the architecture name, "Alpha"
        or "ia64", 'sover' is replaced with the shared library version
        (0101 for 1.1), and 'pz' is replaced with the pointer size
-       OpenSSL was built with):
+       Opentls was built with):
 
-         [.EXE.'arch']  Contains the openssl binary.
+         [.EXE.'arch']  Contains the opentls binary.
          [.EXE]         Contains a few utility scripts.
-         [.include.openssl]
+         [.include.opentls]
                         Contains the header files needed if you want
                         to build your own programs that use libcrypto
-                        or libssl.
-         [.LIB.'arch']  Contains the OpenSSL library files.
+                        or libtls.
+         [.LIB.'arch']  Contains the Opentls library files.
          [.ENGINES'sover''pz'.'arch']
-                        Contains the OpenSSL dynamically loadable engines.
+                        Contains the Opentls dynamically loadable engines.
          [.SYS$STARTUP] Contains startup, login and shutdown scripts.
                         These define appropriate logical names and
                         command symbols.
@@ -1021,7 +1021,7 @@
 
 
      Additionally, install will add the following directories under
-     OPENSSLDIR (the directory given with --openssldir or its default)
+     OPENtlsDIR (the directory given with --opentlsdir or its default)
      for you convenience:
 
          certs          Initially empty, this is the default location
@@ -1031,8 +1031,8 @@
          misc           Various scripts.
 
      The installation directory should be appropriately protected to ensure
-     unprivileged users cannot make changes to OpenSSL binaries or files, or
-     install engines. If you already have a pre-installed version of OpenSSL as
+     unprivileged users cannot make changes to Opentls binaries or files, or
+     install engines. If you already have a pre-installed version of Opentls as
      part of your Operating System it is recommended that you do not overwrite
      the system version and instead install to somewhere else.
 
@@ -1046,12 +1046,12 @@
      The specified destination directory will be prepended to all
      installation target paths.
 
-  Compatibility issues with previous OpenSSL versions:
+  Compatibility issues with previous Opentls versions:
 
   *  COMPILING existing applications
 
-     Starting with version 1.1.0, OpenSSL hides a number of structures
-     that were previously open.  This includes all internal libssl
+     Starting with version 1.1.0, Opentls hides a number of structures
+     that were previously open.  This includes all internal libtls
      structures and a number of EVP types.  Accessor functions have
      been added to allow controlled access to the structures' data.
 
@@ -1097,8 +1097,8 @@
  NM
                 The name of the nm executable to use.
 
- OPENSSL_LOCAL_CONFIG_DIR
-                OpenSSL comes with a database of information about how it
+ OPENtls_LOCAL_CONFIG_DIR
+                Opentls comes with a database of information about how it
                 should be built on different platforms as well as build file
                 templates for those platforms. The database is comprised of
                 ".conf" files in the Configurations directory.  The build
@@ -1108,13 +1108,13 @@
                 files.
                 In addition to the standard ".conf" and ".tmpl" files, it is
                 possible to create your own ".conf" and ".tmpl" files and store
-                them locally, outside the OpenSSL source tree. This environment
+                them locally, outside the Opentls source tree. This environment
                 variable can be set to the directory where these files are held
                 and will be considered by Configure before it looks in the
                 standard directories.
 
  PERL
-                The name of the Perl executable to use when building OpenSSL.
+                The name of the Perl executable to use when building Opentls.
                 This variable is used in config script only. Configure on the
                 other hand imposes the interpreter by which it itself was
                 executed on the whole build procedure.
@@ -1164,31 +1164,31 @@
 
  depend
                 Rebuild the dependencies in the Makefiles. This is a legacy
-                option that no longer needs to be used since OpenSSL 1.1.0.
+                option that no longer needs to be used since Opentls 1.1.0.
 
  install
-                Install all OpenSSL components.
+                Install all Opentls components.
 
  install_sw
-                Only install the OpenSSL software components.
+                Only install the Opentls software components.
 
  install_docs
-                Only install the OpenSSL documentation components.
+                Only install the Opentls documentation components.
 
  install_man_docs
-                Only install the OpenSSL man pages (Unix only).
+                Only install the Opentls man pages (Unix only).
 
  install_html_docs
-                Only install the OpenSSL html documentation.
+                Only install the Opentls html documentation.
 
  list-tests
                 Prints a list of all the self test names.
 
  test
-                Build and run the OpenSSL self tests.
+                Build and run the Opentls self tests.
 
  uninstall
-                Uninstall all OpenSSL components.
+                Uninstall all Opentls components.
 
  reconfigure
  reconf
@@ -1197,7 +1197,7 @@
 
  update
                 This is a developer option. If you are developing a patch for
-                OpenSSL you may need to use this if you want to update
+                Opentls you may need to use this if you want to update
                 automatically generated files; add new error codes or add new
                 (or change the visibility of) public API functions. (Unix only).
 
@@ -1235,10 +1235,10 @@
 
  $ make TESTS='alltests -test_fuzz' test
 
- Example: All tests that have a name starting with "test_ssl" but not those
- starting with "test_ssl_":
+ Example: All tests that have a name starting with "test_tls" but not those
+ starting with "test_tls_":
 
- $ make TESTS='test_ssl* -test_ssl_*' test
+ $ make TESTS='test_tls* -test_tls_*' test
 
  Example: Only test group 10:
 
@@ -1260,7 +1260,7 @@ random numbers is operating correctly (with a false positive rate of 0.01%):
  Note on multi-threading
  -----------------------
 
- For some systems, the OpenSSL Configure script knows what compiler options
+ For some systems, the Opentls Configure script knows what compiler options
  are needed to generate a library that is suitable for multi-threaded
  applications.  On these systems, support for multi-threading is enabled
  by default; use the "no-threads" option to disable (this should never be
@@ -1273,7 +1273,7 @@ random numbers is operating correctly (with a false positive rate of 0.01%):
  you can still use "no-threads" to suppress an annoying warning message
  from the Configure script.)
 
- OpenSSL provides built-in support for two threading models: pthreads (found on
+ Opentls provides built-in support for two threading models: pthreads (found on
  most UNIX/Linux systems), and Windows threads. No other threading models are
  supported. If your platform does not provide pthreads or Windows threads then
  you should Configure with the "no-threads" option.
@@ -1281,54 +1281,54 @@ random numbers is operating correctly (with a false positive rate of 0.01%):
  Notes on shared libraries
  -------------------------
 
- For most systems the OpenSSL Configure script knows what is needed to
- build shared libraries for libcrypto and libssl. On these systems
+ For most systems the Opentls Configure script knows what is needed to
+ build shared libraries for libcrypto and libtls. On these systems
  the shared libraries will be created by default. This can be suppressed and
  only static libraries created by using the "no-shared" option. On systems
- where OpenSSL does not know how to build shared libraries the "no-shared"
+ where Opentls does not know how to build shared libraries the "no-shared"
  option will be forced and only static libraries will be created.
 
  Shared libraries are named a little differently on different platforms.
- One way or another, they all have the major OpenSSL version number as
- part of the file name, i.e. for OpenSSL 1.1.x, 1.1 is somehow part of
+ One way or another, they all have the major Opentls version number as
+ part of the file name, i.e. for Opentls 1.1.x, 1.1 is somehow part of
  the name.
 
  On most POSIX platforms, shared libraries are named libcrypto.so.1.1
- and libssl.so.1.1.
+ and libtls.so.1.1.
 
- on Cygwin, shared libraries are named cygcrypto-1.1.dll and cygssl-1.1.dll
- with import libraries libcrypto.dll.a and libssl.dll.a.
+ on Cygwin, shared libraries are named cygcrypto-1.1.dll and cygtls-1.1.dll
+ with import libraries libcrypto.dll.a and libtls.dll.a.
 
  On Windows build with MSVC or using MingW, shared libraries are named
- libcrypto-1_1.dll and libssl-1_1.dll for 32-bit Windows, libcrypto-1_1-x64.dll
- and libssl-1_1-x64.dll for 64-bit x86_64 Windows, and libcrypto-1_1-ia64.dll
- and libssl-1_1-ia64.dll for IA64 Windows.  With MSVC, the import libraries
- are named libcrypto.lib and libssl.lib, while with MingW, they are named
- libcrypto.dll.a and libssl.dll.a.
+ libcrypto-1_1.dll and libtls-1_1.dll for 32-bit Windows, libcrypto-1_1-x64.dll
+ and libtls-1_1-x64.dll for 64-bit x86_64 Windows, and libcrypto-1_1-ia64.dll
+ and libtls-1_1-ia64.dll for IA64 Windows.  With MSVC, the import libraries
+ are named libcrypto.lib and libtls.lib, while with MingW, they are named
+ libcrypto.dll.a and libtls.dll.a.
 
  On VMS, shareable images (VMS speak for shared libraries) are named
- ossl$libcrypto0101_shr.exe and ossl$libssl0101_shr.exe.  However, when
- OpenSSL is specifically built for 32-bit pointers, the shareable images
- are named ossl$libcrypto0101_shr32.exe and ossl$libssl0101_shr32.exe
+ otls$libcrypto0101_shr.exe and otls$libtls0101_shr.exe.  However, when
+ Opentls is specifically built for 32-bit pointers, the shareable images
+ are named otls$libcrypto0101_shr32.exe and otls$libtls0101_shr32.exe
  instead, and when built for 64-bit pointers, they are named
- ossl$libcrypto0101_shr64.exe and ossl$libssl0101_shr64.exe.
+ otls$libcrypto0101_shr64.exe and otls$libtls0101_shr64.exe.
 
  Note on random number generation
  --------------------------------
 
  Availability of cryptographically secure random numbers is required for
- secret key generation. OpenSSL provides several options to seed the
+ secret key generation. Opentls provides several options to seed the
  internal CSPRNG. If not properly seeded, the internal CSPRNG will refuse
  to deliver random bytes and a "PRNG not seeded error" will occur.
 
  The seeding method can be configured using the --with-rand-seed option,
  which can be used to specify a comma separated list of seed methods.
- However in most cases OpenSSL will choose a suitable default method,
+ However in most cases Opentls will choose a suitable default method,
  so it is not necessary to explicitly provide this option. Note also
  that not all methods are available on all platforms.
 
  I) On operating systems which provide a suitable randomness source (in
- form  of a system call or system device), OpenSSL will use the optimal
+ form  of a system call or system device), Opentls will use the optimal
  available  method to seed the CSPRNG from the operating system's
  randomness sources. This corresponds to the option --with-rand-seed=os.
 

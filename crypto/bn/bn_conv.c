@@ -1,19 +1,19 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/err.h>
+#include <opentls/err.h>
 #include "crypto/ctype.h"
 #include "bn_local.h"
 
 static const char Hex[] = "0123456789ABCDEF";
 
-/* Must 'OPENSSL_free' the returned data */
+/* Must 'OPENtls_free' the returned data */
 char *BN_bn2hex(const BIGNUM *a)
 {
     int i, j, v, z = 0;
@@ -21,8 +21,8 @@ char *BN_bn2hex(const BIGNUM *a)
     char *p;
 
     if (BN_is_zero(a))
-        return OPENSSL_strdup("0");
-    buf = OPENSSL_malloc(a->top * BN_BYTES * 2 + 2);
+        return OPENtls_strdup("0");
+    buf = OPENtls_malloc(a->top * BN_BYTES * 2 + 2);
     if (buf == NULL) {
         BNerr(BN_F_BN_BN2HEX, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -48,7 +48,7 @@ char *BN_bn2hex(const BIGNUM *a)
 
 #ifndef FIPS_MODE
 /* No BIO_snprintf in FIPS_MODE */
-/* Must 'OPENSSL_free' the returned data */
+/* Must 'OPENtls_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 {
     int i = 0, num, ok = 0, n, tbytes;
@@ -68,8 +68,8 @@ char *BN_bn2dec(const BIGNUM *a)
     num = (i / 10 + i / 1000 + 1) + 1;
     tbytes = num + 3;   /* negative and terminator and one spare? */
     bn_data_num = num / BN_DEC_NUM + 1;
-    bn_data = OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
-    buf = OPENSSL_malloc(tbytes);
+    bn_data = OPENtls_malloc(bn_data_num * sizeof(BN_ULONG));
+    buf = OPENtls_malloc(tbytes);
     if (buf == NULL || bn_data == NULL) {
         BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -114,11 +114,11 @@ char *BN_bn2dec(const BIGNUM *a)
     }
     ok = 1;
  err:
-    OPENSSL_free(bn_data);
+    OPENtls_free(bn_data);
     BN_free(t);
     if (ok)
         return buf;
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     return NULL;
 }
 #endif
@@ -138,7 +138,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         a++;
     }
 
-    for (i = 0; i <= INT_MAX / 4 && ossl_isxdigit(a[i]); i++)
+    for (i = 0; i <= INT_MAX / 4 && otls_isxdigit(a[i]); i++)
         continue;
 
     if (i == 0 || i > INT_MAX / 4)
@@ -169,7 +169,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         l = 0;
         for (;;) {
             c = a[j - m];
-            k = OPENSSL_hexchar2int(c);
+            k = OPENtls_hexchar2int(c);
             if (k < 0)
                 k = 0;          /* paranoia */
             l = (l << 4) | k;
@@ -210,7 +210,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
         a++;
     }
 
-    for (i = 0; i <= INT_MAX / 4 && ossl_isdigit(a[i]); i++)
+    for (i = 0; i <= INT_MAX / 4 && otls_isdigit(a[i]); i++)
         continue;
 
     if (i == 0 || i > INT_MAX / 4)

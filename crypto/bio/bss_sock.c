@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -13,9 +13,9 @@
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
-#ifndef OPENSSL_NO_SOCK
+#ifndef OPENtls_NO_SOCK
 
-# include <openssl/bio.h>
+# include <opentls/bio.h>
 
 # ifdef WATT32
 /* Watt-32 uses same names */
@@ -65,7 +65,7 @@ BIO *BIO_new_socket(int fd, int close_flag)
     if (ret == NULL)
         return NULL;
     BIO_set_fd(ret, fd, close_flag);
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
     {
         /*
          * The new socket is created successfully regardless of ktls_enable.
@@ -108,7 +108,7 @@ static int sock_read(BIO *b, char *out, int outl)
 
     if (out != NULL) {
         clear_socket_error();
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
         if (BIO_get_ktls_recv(b))
             ret = ktls_read_record(b->num, out, outl);
         else
@@ -128,7 +128,7 @@ static int sock_write(BIO *b, const char *in, int inl)
     int ret = 0;
 
     clear_socket_error();
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
         unsigned char record_type = (intptr_t)b->ptr;
         ret = ktls_send_ctrl_message(b->num, record_type, in, inl);
@@ -151,7 +151,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
 #  ifdef __FreeBSD__
     struct tls_enable *crypto_info;
 #  else
@@ -185,7 +185,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_FLUSH:
         ret = 1;
         break;
-# ifndef OPENSSL_NO_KTLS
+# ifndef OPENtls_NO_KTLS
     case BIO_CTRL_SET_KTLS:
 #  ifdef __FreeBSD__
         crypto_info = (struct tls_enable *)ptr;
@@ -241,7 +241,7 @@ int BIO_sock_should_retry(int i)
 int BIO_sock_non_fatal_error(int err)
 {
     switch (err) {
-# if defined(OPENSSL_SYS_WINDOWS)
+# if defined(OPENtls_SYS_WINDOWS)
 #  if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
 #  endif
@@ -289,4 +289,4 @@ int BIO_sock_non_fatal_error(int err)
     return 0;
 }
 
-#endif                          /* #ifndef OPENSSL_NO_SOCK */
+#endif                          /* #ifndef OPENtls_NO_SOCK */

@@ -1,16 +1,16 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
-#include <openssl/trace.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include <opentls/trace.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
 
 #include "pcy_local.h"
 
@@ -70,9 +70,9 @@ static void tree_print(BIO *channel,
 }
 
 #define TREE_PRINT(str, tree, curr) \
-    OSSL_TRACE_BEGIN(X509V3_POLICY) { \
+    Otls_TRACE_BEGIN(X509V3_POLICY) { \
         tree_print(trc_out, "before tree_prune()", tree, curr); \
-    } OSSL_TRACE_END(X509V3_POLICY)
+    } Otls_TRACE_END(X509V3_POLICY)
 
 /*-
  * Return value: <= 0 on error, or positive bit mask:
@@ -158,7 +158,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         return ret;
 
     /* If we get this far initialize the tree */
-    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL) {
+    if ((tree = OPENtls_zalloc(sizeof(*tree))) == NULL) {
         X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;
     }
@@ -170,8 +170,8 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * policies of anyPolicy.  (RFC 5280 has the TA at depth 0 and the leaf at
      * depth n, we have the leaf at depth 0 and the TA at depth n).
      */
-    if ((tree->levels = OPENSSL_zalloc(sizeof(*tree->levels)*(n+1))) == NULL) {
-        OPENSSL_free(tree);
+    if ((tree->levels = OPENtls_zalloc(sizeof(*tree->levels)*(n+1))) == NULL) {
+        OPENtls_free(tree);
         X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;
     }
@@ -395,7 +395,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
             /* Delete any mapped data: see RFC3280 XXXX */
             if (node->data->flags & POLICY_DATA_FLAG_MAP_MASK) {
                 node->parent->nchild--;
-                OPENSSL_free(node);
+                OPENtls_free(node);
                 (void)sk_X509_POLICY_NODE_delete(nodes, i);
             }
         }
@@ -408,14 +408,14 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
             node = sk_X509_POLICY_NODE_value(nodes, i);
             if (node->nchild == 0) {
                 node->parent->nchild--;
-                OPENSSL_free(node);
+                OPENtls_free(node);
                 (void)sk_X509_POLICY_NODE_delete(nodes, i);
             }
         }
         if (curr->anyPolicy && !curr->anyPolicy->nchild) {
             if (curr->anyPolicy->parent)
                 curr->anyPolicy->parent->nchild--;
-            OPENSSL_free(curr->anyPolicy);
+            OPENtls_free(curr->anyPolicy);
             curr->anyPolicy = NULL;
         }
         if (curr == tree->levels) {
@@ -594,7 +594,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
 static void exnode_free(X509_POLICY_NODE *node)
 {
     if (node->data && (node->data->flags & POLICY_DATA_FLAG_EXTRA_NODE))
-        OPENSSL_free(node);
+        OPENtls_free(node);
 }
 
 void X509_policy_tree_free(X509_POLICY_TREE *tree)
@@ -615,8 +615,8 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
     }
 
     sk_X509_POLICY_DATA_pop_free(tree->extra_data, policy_data_free);
-    OPENSSL_free(tree->levels);
-    OPENSSL_free(tree);
+    OPENtls_free(tree->levels);
+    OPENtls_free(tree);
 
 }
 

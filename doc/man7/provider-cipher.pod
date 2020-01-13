@@ -6,15 +6,15 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
-=for openssl multiple includes
+=for opentls multiple includes
 
- #include <openssl/core_numbers.h>
- #include <openssl/core_names.h>
+ #include <opentls/core_numbers.h>
+ #include <opentls/core_names.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
   * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * pointers in Otls_DISPATCH arrays.
   */
 
  /* Context management */
@@ -37,18 +37,18 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
                       size_t outsize, const unsigned char *in, size_t inl);
 
  /* Cipher parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_params(void);
+ const Otls_PARAM *OP_cipher_gettable_params(void);
 
  /* Cipher operation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
+ const Otls_PARAM *OP_cipher_gettable_ctx_params(void);
+ const Otls_PARAM *OP_cipher_settable_ctx_params(void);
 
  /* Cipher parameters */
- int OP_cipher_get_params(OSSL_PARAM params[]);
+ int OP_cipher_get_params(Otls_PARAM params[]);
 
  /* Cipher operation parameters */
- int OP_cipher_get_ctx_params(void *cctx, OSSL_PARAM params[]);
- int OP_cipher_set_ctx_params(void *cctx, const OSSL_PARAM params[]);
+ int OP_cipher_get_ctx_params(void *cctx, Otls_PARAM params[]);
+ int OP_cipher_set_ctx_params(void *cctx, const Otls_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -61,41 +61,41 @@ L<EVP_EncryptUpdate(3)> and L<EVP_EncryptFinal(3)> (as well as the decrypt
 equivalents and other related functions).
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the provider's
+F<libcrypto> and the provider in B<Otls_DISPATCH> arrays via
+B<Otls_ALGORITHM> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+named B<Otls_{name}_fn>, and a helper function to retrieve the
+function pointer from an B<Otls_DISPATCH> element named
+B<Otls_get_{name}>.
 For example, the "function" OP_cipher_newctx() has these:
 
- typedef void *(OSSL_OP_cipher_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_cipher_newctx_fn
-     OSSL_get_OP_cipher_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(Otls_OP_cipher_newctx_fn)(void *provctx);
+ static otls_inline Otls_OP_cipher_newctx_fn
+     Otls_get_OP_cipher_newctx(const Otls_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+B<Otls_DISPATCH> arrays are indexed by numbers that are provided as
+macros in L<opentls-core_numbers.h(7)>, as follows:
 
- OP_cipher_newctx               OSSL_FUNC_CIPHER_NEWCTX
- OP_cipher_freectx              OSSL_FUNC_CIPHER_FREECTX
- OP_cipher_dupctx               OSSL_FUNC_CIPHER_DUPCTX
+ OP_cipher_newctx               Otls_FUNC_CIPHER_NEWCTX
+ OP_cipher_freectx              Otls_FUNC_CIPHER_FREECTX
+ OP_cipher_dupctx               Otls_FUNC_CIPHER_DUPCTX
 
- OP_cipher_encrypt_init         OSSL_FUNC_CIPHER_ENCRYPT_INIT
- OP_cipher_decrypt_init         OSSL_FUNC_CIPHER_DECRYPT_INIT
- OP_cipher_update               OSSL_FUNC_CIPHER_UPDATE
- OP_cipher_final                OSSL_FUNC_CIPHER_FINAL
- OP_cipher_cipher               OSSL_FUNC_CIPHER_CIPHER
+ OP_cipher_encrypt_init         Otls_FUNC_CIPHER_ENCRYPT_INIT
+ OP_cipher_decrypt_init         Otls_FUNC_CIPHER_DECRYPT_INIT
+ OP_cipher_update               Otls_FUNC_CIPHER_UPDATE
+ OP_cipher_final                Otls_FUNC_CIPHER_FINAL
+ OP_cipher_cipher               Otls_FUNC_CIPHER_CIPHER
 
- OP_cipher_get_params           OSSL_FUNC_CIPHER_GET_PARAMS
- OP_cipher_get_ctx_params       OSSL_FUNC_CIPHER_GET_CTX_PARAMS
- OP_cipher_set_ctx_params       OSSL_FUNC_CIPHER_SET_CTX_PARAMS
+ OP_cipher_get_params           Otls_FUNC_CIPHER_GET_PARAMS
+ OP_cipher_get_ctx_params       Otls_FUNC_CIPHER_GET_CTX_PARAMS
+ OP_cipher_set_ctx_params       Otls_FUNC_CIPHER_SET_CTX_PARAMS
 
- OP_cipher_gettable_params      OSSL_FUNC_CIPHER_GETTABLE_PARAMS
- OP_cipher_gettable_ctx_params  OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
- OP_cipher_settable_ctx_params  OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS
+ OP_cipher_gettable_params      Otls_FUNC_CIPHER_GETTABLE_PARAMS
+ OP_cipher_gettable_ctx_params  Otls_FUNC_CIPHER_GETTABLE_CTX_PARAMS
+ OP_cipher_settable_ctx_params  Otls_FUNC_CIPHER_SETTABLE_CTX_PARAMS
 
 A cipher algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions there must at least be a complete
@@ -173,7 +173,7 @@ I<outsize> bytes.
 
 =head2 Cipher Parameters
 
-See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+See L<Otls_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
 OP_cipher_get_params() gets details of the algorithm implementation
@@ -187,7 +187,7 @@ OP_cipher_get_ctx_params() gets cipher operation details details from
 the given provider side cipher context I<cctx> and stores them in I<params>.
 
 OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
-OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+OP_cipher_settable_ctx_params() all return constant B<Otls_PARAM> arrays
 as descriptors of the parameters that OP_cipher_get_params(),
 OP_cipher_get_ctx_params(), and OP_cipher_set_ctx_params() can handle,
 respectively.
@@ -197,18 +197,18 @@ parameters are relevant to, or are understood by all ciphers:
 
 =over 4
 
-=item "padding" (B<OSSL_CIPHER_PARAM_PADDING>) <unsigned integer>
+=item "padding" (B<Otls_CIPHER_PARAM_PADDING>) <unsigned integer>
 
 Sets the padding mode for the associated cipher ctx.
 Setting a value of 1 will turn padding on.
 Setting a value of 0 will turn padding off.
 
-=item "mode" (B<OSSL_CIPHER_PARAM_MODE>) <unsigned integer>
+=item "mode" (B<Otls_CIPHER_PARAM_MODE>) <unsigned integer>
 
 Gets the mode for the associated cipher algorithm.
 See L<EVP_CIPHER_mode(3)> for a list of valid modes.
 
-=item "blocksize" (B<OSSL_CIPHER_PARAM_BLOCK_SIZE>) <unsigned integer>
+=item "blocksize" (B<Otls_CIPHER_PARAM_BLOCK_SIZE>) <unsigned integer>
 
 Gets the block size for the associated cipher algorithm.
 The block size should be 1 for stream ciphers.
@@ -218,7 +218,7 @@ For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
 The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item "flags" (B<OSSL_CIPHER_PARAM_FLAGS>) <unsigned integer>
+=item "flags" (B<Otls_CIPHER_PARAM_FLAGS>) <unsigned integer>
 
 Gets any flags for the associated cipher algorithm.
 See L<EVP_CIPHER_meth_set_flags(3)> for a list of currently defined cipher
@@ -226,40 +226,40 @@ flags.
 The length of the "flags" parameter should equal that of an
 B<unsigned long int>.
 
-=item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
+=item "keylen" (B<Otls_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
 Gets the key length for the associated cipher algorithm.
 This can also be used to get or set the key length for the associated cipher
 ctx.
 The length of the "keylen" parameter should not exceed that of a B<size_t>.
 
-=item "ivlen" (B<OSSL_CIPHER_PARAM_IVLEN>) <unsigned integer>
+=item "ivlen" (B<Otls_CIPHER_PARAM_IVLEN>) <unsigned integer>
 
 Gets the IV length for the associated cipher algorithm.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item "iv" (B<OSSL_CIPHER_PARAM_IV>) <octet string OR octet ptr>
+=item "iv" (B<Otls_CIPHER_PARAM_IV>) <octet string OR octet ptr>
 
 Gets the IV for the associated cipher ctx.
 
-=item "num" (B<OSSL_CIPHER_PARAM_NUM>) <unsigned integer>
+=item "num" (B<Otls_CIPHER_PARAM_NUM>) <unsigned integer>
 
 Gets or sets the cipher specific "num" parameter for the associated cipher ctx.
 Built-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 
-=item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
+=item "tag" (B<Otls_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher ctx.
 See L<EVP_EncryptInit(3)/AEAD Interface>.
 
-=item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
+=item "taglen" (B<Otls_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
 Gets the tag length to be used for an AEAD cipher for the associated cipher ctx.
 It returns a default value if it has not been set.
 The length of the "taglen" parameter should not exceed that of a B<size_t>.
 
-=item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
+=item "tlsaad" (B<Otls_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
 =for comment TODO(3.0): Consider changing this interface so that all ciphers
 use the standard AEAD interface - rather than having this special purpose
@@ -269,13 +269,13 @@ Sets TLSv1.2 AAD information for the associated cipher ctx.
 TLSv1.2 AAD information is always 13 bytes in length and is as defined for the
 "additional_data" field described in section 6.2.3.3 of RFC5246.
 
-=item "tlsaadpad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD>) <unsigned integer>
+=item "tlsaadpad" (B<Otls_CIPHER_PARAM_AEAD_TLS1_AAD_PAD>) <unsigned integer>
 
 Gets the length of the tag that will be added to a TLS record for the AEAD
 tag for the associated cipher ctx.
 The length of the "tlsaadpad" parameter should not exceed that of a B<size_t>.
 
-=item "tlsivfixed" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
+=item "tlsivfixed" (B<Otls_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
 
 =for comment TODO(3.0): This interface needs completely redesigning!
 
@@ -310,58 +310,58 @@ Whether encrypting or decrypting the value written to I<*outl> in the
 OP_cipher_cipher call should be the length of the payload excluding the explicit
 IV length and the tag length.
 
-=item "ivlen" (B<OSSL_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
+=item "ivlen" (B<Otls_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
 
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
-=item "mackey" (B<OSSL_CIPHER_PARAM_AEAD_MAC_KEY>) <octet string>
+=item "mackey" (B<Otls_CIPHER_PARAM_AEAD_MAC_KEY>) <octet string>
 
 Sets the MAC key used by composite AEAD ciphers such as AES-CBC-HMAC-SHA256.
 
-=item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
+=item "randkey" (B<Otls_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
 cipher ctx. This is currently only supported by 3DES (which sets the key to
 odd parity).
 
-=item "alg_id_param" (B<OSSL_CIPHER_PARAM_ALG_ID>) <octet string>
+=item "alg_id_param" (B<Otls_CIPHER_PARAM_ALG_ID>) <octet string>
 
 Used to pass the DER encoded AlgorithmIdentifier parameter to or from
 the cipher implementation.  Functions like L<EVP_CIPHER_param_to_asn1(3)>
 and L<EVP_CIPHER_asn1_to_param(3)> use this parameter for any implementation
 that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 
-=item "rounds" (B<OSSL_CIPHER_PARAM_ROUNDS>) <unsigned integer>
+=item "rounds" (B<Otls_CIPHER_PARAM_ROUNDS>) <unsigned integer>
 
 Sets or gets the number of rounds to be used for a cipher.
 This is used by the RC5 cipher.
 
-=item "keybits" (B<OSSL_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
+=item "keybits" (B<Otls_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
 
 Gets or sets the effective keybits used for a RC2 cipher.
 The length of the "keybits" parameter should not exceed that of a B<size_t>.
 
-=item "speed" (B<OSSL_CIPHER_PARAM_SPEED>) <unsigned integer>
+=item "speed" (B<Otls_CIPHER_PARAM_SPEED>) <unsigned integer>
 
 Sets the speed option for the associated cipher ctx. This is only supported
 by AES SIV ciphers which disallow multiple operations by default.
 Setting "speed" to 1 allows another encrypt or decrypt operation to be
 performed. This is used for performance testing.
 
-=item "tlsivgen" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN>) <octet string>
+=item "tlsivgen" (B<Otls_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN>) <octet string>
 
 Gets the invocation field generated for encryption.
 Can only be called after "tlsivfixed" is set.
 This is only used for GCM mode.
 
-=item "tlsivinv" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV>) <octet string>
+=item "tlsivinv" (B<Otls_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV>) <octet string>
 
 Sets the invocation field used for decryption.
 Can only be called after "tlsivfixed" is set.
 This is only used for GCM mode.
 
-=item "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
+=item "tls1multi_enc" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
 
 Triggers a multiblock tls1 encrypt operation for a tls1 aware cipher that supports
 sending 4 or 8 records in one go.
@@ -371,31 +371,31 @@ headers itself.
 "tls1multi_encin" & "tls1multi_interleave" must also be set in order to supply
 values to the encrypt operation.
 
-=item "tls1multi_enclen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN>) <unsigned integer>
+=item "tls1multi_enclen" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN>) <unsigned integer>
 
 Get the total length of the record returned from the "tls1multi_enc" operation.
 
-=item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
+=item "tls1multi_interleave" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
 
 Sets or gets the number of records being sent in one go for a tls1 multiblock
 cipher operation (either 4 or 8 records).
 
-=item "tls1multi_encin" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) <octet string>
+=item "tls1multi_encin" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) <octet string>
 
 Supplies the data to encrypt for a tls1 multiblock cipher operation.
 
-=item "tls1multi_maxsndfrag" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT>) <unsigned integer>
+=item "tls1multi_maxsndfrag" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT>) <unsigned integer>
 
 Sets the maximum send fragment size for a tls1 multiblock cipher operation.
 It must be set before using "tls1multi_maxbufsz".
 The length of the "tls1multi_maxsndfrag" parameter should not exceed that of a B<size_t>.
 
-=item "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
+=item "tls1multi_maxbufsz" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
 
 Gets the maximum record length for a tls1 multiblock cipher operation.
 The length of the "tls1multi_maxbufsz" parameter should not exceed that of a B<size_t>.
 
-=item "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
+=item "tls1multi_aad" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
 
 Sets the authenticated additional data used by a tls1 multiblock cipher operation.
 The supplied data consists of 13 bytes of record data containing:
@@ -406,7 +406,7 @@ Byte 11-12: Input length (Always 0)
 
 "tls1multi_interleave" must also be set for this operation.
 
-=item "tls1multi_aadpacklen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) <unsigned integer>
+=item "tls1multi_aadpacklen" (B<Otls_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) <unsigned integer>
 
 Gets the result of running the "tls1multi_aad" operation.
 
@@ -423,7 +423,7 @@ OP_cipher_get_ctx_params() and OP_cipher_set_ctx_params() should return 1 for
 success or 0 on error.
 
 OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params() and
-OP_cipher_settable_ctx_params() should return a constant B<OSSL_PARAM>
+OP_cipher_settable_ctx_params() should return a constant B<Otls_PARAM>
 array, or NULL if none is offered.
 
 =head1 SEE ALSO
@@ -432,15 +432,15 @@ L<provider(7)>
 
 =head1 HISTORY
 
-The provider CIPHER interface was introduced in OpenSSL 3.0.
+The provider CIPHER interface was introduced in Opentls 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

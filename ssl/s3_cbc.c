@@ -1,18 +1,18 @@
 /*
- * Copyright 2012-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "internal/constant_time.h"
-#include "ssl_local.h"
+#include "tls_local.h"
 #include "internal/cryptlib.h"
 
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include <opentls/md5.h>
+#include <opentls/sha.h>
 
 /*
  * MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's
@@ -85,10 +85,10 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
 #define LARGEST_DIGEST_CTX SHA512_CTX
 
 /*
- * ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
- * which ssl3_cbc_digest_record supports.
+ * tls3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
+ * which tls3_cbc_digest_record supports.
  */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
+char tls3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 {
     switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
@@ -104,11 +104,11 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 }
 
 /*-
- * ssl3_cbc_digest_record computes the MAC of a decrypted, padded SSLv3/TLS
+ * tls3_cbc_digest_record computes the MAC of a decrypted, padded tlsv3/TLS
  * record.
  *
  *   ctx: the EVP_MD_CTX from which we take the hash function.
- *     ssl3_cbc_record_digest_supported must return true for this EVP_MD_CTX.
+ *     tls3_cbc_record_digest_supported must return true for this EVP_MD_CTX.
  *   md_out: the digest output. At most EVP_MAX_MD_SIZE bytes will be written.
  *   md_out_size: if non-NULL, the number of output bytes is written here.
  *   header: the 13-byte, TLS record header.
@@ -117,7 +117,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  *     once the padding has been removed.
  *   data_plus_mac_plus_padding_size: the public length of the whole
  *     record, including padding.
- *   is_sslv3: non-zero if we are to use SSLv3. Otherwise, TLS.
+ *   is_tlsv3: non-zero if we are to use tlsv3. Otherwise, TLS.
  *
  * On entry: by virtue of having been through one of the remove_padding
  * functions, above, we know that data_plus_mac_size is large enough to contain
@@ -125,7 +125,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * padding too. )
  * Returns 1 on success or 0 on error
  */
-int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+int tls3_cbc_digest_record(const EVP_MD_CTX *ctx,
                            unsigned char *md_out,
                            size_t *md_out_size,
                            const unsigned char header[13],
@@ -133,16 +133,16 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                            size_t data_plus_mac_size,
                            size_t data_plus_mac_plus_padding_size,
                            const unsigned char *mac_secret,
-                           size_t mac_secret_length, char is_sslv3)
+                           size_t mac_secret_length, char is_tlsv3)
 {
     union {
-        OSSL_UNION_ALIGN;
+        Otls_UNION_ALIGN;
         unsigned char c[sizeof(LARGEST_DIGEST_CTX)];
     } md_state;
     void (*md_final_raw) (void *ctx, unsigned char *md_out);
     void (*md_transform) (void *ctx, const unsigned char *block);
     size_t md_size, md_block_size = 64;
-    size_t sslv3_pad_length = 40, header_length, variance_blocks,
+    size_t tlsv3_pad_length = 40, header_length, variance_blocks,
         len, max_mac_bytes, num_blocks,
         num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
     size_t bits;          /* at most 18 bits */
@@ -166,7 +166,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      * This is a, hopefully redundant, check that allows us to forget about
      * many possible overflows later in this function.
      */
-    if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
+    if (!otls_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
         return 0;
 
     switch (EVP_MD_CTX_type(ctx)) {
@@ -177,7 +177,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         md_transform =
             (void (*)(void *ctx, const unsigned char *block))MD5_Transform;
         md_size = 16;
-        sslv3_pad_length = 48;
+        tlsv3_pad_length = 48;
         length_is_big_endian = 0;
         break;
     case NID_sha1:
@@ -226,22 +226,22 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         break;
     default:
         /*
-         * ssl3_cbc_record_digest_supported should have been called first to
+         * tls3_cbc_record_digest_supported should have been called first to
          * check that the hash function is supported.
          */
         if (md_out_size != NULL)
             *md_out_size = 0;
-        return ossl_assert(0);
+        return otls_assert(0);
     }
 
-    if (!ossl_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES)
-            || !ossl_assert(md_block_size <= MAX_HASH_BLOCK_SIZE)
-            || !ossl_assert(md_size <= EVP_MAX_MD_SIZE))
+    if (!otls_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES)
+            || !otls_assert(md_block_size <= MAX_HASH_BLOCK_SIZE)
+            || !otls_assert(md_size <= EVP_MAX_MD_SIZE))
         return 0;
 
     header_length = 13;
-    if (is_sslv3) {
-        header_length = mac_secret_length + sslv3_pad_length + 8 /* sequence
+    if (is_tlsv3) {
+        header_length = mac_secret_length + tlsv3_pad_length + 8 /* sequence
                                                                   * number */  +
             1 /* record type */  +
             2 /* record length */ ;
@@ -250,7 +250,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     /*
      * variance_blocks is the number of blocks of the hash that we have to
      * calculate in constant time because they could be altered by the
-     * padding value. In SSLv3, the padding must be minimal so the end of
+     * padding value. In tlsv3, the padding must be minimal so the end of
      * the plaintext varies by, at most, 15+20 = 35 bytes. (We conservatively
      * assume that the MAC size varies from 0..20 bytes.) In case the 9 bytes
      * of hash termination (0x80 + 64-bit length) don't fit in the final
@@ -262,11 +262,11 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      * short and there obviously cannot be this many blocks then
      * variance_blocks can be reduced.
      */
-    variance_blocks = is_sslv3 ? 2 : ( ((255 + 1 + md_size + md_block_size - 1) / md_block_size) + 1);
+    variance_blocks = is_tlsv3 ? 2 : ( ((255 + 1 + md_size + md_block_size - 1) / md_block_size) + 1);
     /*
      * From now on we're dealing with the MAC, which conceptually has 13
      * bytes of `header' before the start of the data (TLS) or 71/75 bytes
-     * (SSLv3)
+     * (tlsv3)
      */
     len = data_plus_mac_plus_padding_size + header_length;
     /*
@@ -313,28 +313,28 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     index_b = (mac_end_offset + md_length_size) / md_block_size;
     /*
      * bits is the hash-length in bits. It includes the additional hash block
-     * for the masked HMAC key, or whole of |header| in the case of SSLv3.
+     * for the masked HMAC key, or whole of |header| in the case of tlsv3.
      */
 
     /*
-     * For SSLv3, if we're going to have any starting blocks then we need at
+     * For tlsv3, if we're going to have any starting blocks then we need at
      * least two because the header is larger than a single block.
      */
-    if (num_blocks > variance_blocks + (is_sslv3 ? 1 : 0)) {
+    if (num_blocks > variance_blocks + (is_tlsv3 ? 1 : 0)) {
         num_starting_blocks = num_blocks - variance_blocks;
         k = md_block_size * num_starting_blocks;
     }
 
     bits = 8 * mac_end_offset;
-    if (!is_sslv3) {
+    if (!is_tlsv3) {
         /*
-         * Compute the initial HMAC block. For SSLv3, the padding and secret
+         * Compute the initial HMAC block. For tlsv3, the padding and secret
          * bytes are included in |header| because they take more than a
          * single block.
          */
         bits += 8 * md_block_size;
         memset(hmac_pad, 0, md_block_size);
-        if (!ossl_assert(mac_secret_length <= sizeof(hmac_pad)))
+        if (!otls_assert(mac_secret_length <= sizeof(hmac_pad)))
             return 0;
         memcpy(hmac_pad, mac_secret, mac_secret_length);
         for (i = 0; i < md_block_size; i++)
@@ -358,14 +358,14 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     }
 
     if (k > 0) {
-        if (is_sslv3) {
+        if (is_tlsv3) {
             size_t overhang;
 
             /*
-             * The SSLv3 header is larger than a single block. overhang is
+             * The tlsv3 header is larger than a single block. overhang is
              * the number of bytes beyond a single block that the header
              * consumes: either 7 bytes (SHA1) or 11 bytes (MD5). There are no
-             * ciphersuites in SSLv3 that are not SHA1 or MD5 based and
+             * ciphersuites in tlsv3 that are not SHA1 or MD5 based and
              * therefore we can be confident that the header_length will be
              * greater than |md_block_size|. However we add a sanity check just
              * in case
@@ -457,12 +457,12 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         goto err;
     if (EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ) <= 0)
         goto err;
-    if (is_sslv3) {
-        /* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */
-        memset(hmac_pad, 0x5c, sslv3_pad_length);
+    if (is_tlsv3) {
+        /* We repurpose |hmac_pad| to contain the tlsv3 pad2 block. */
+        memset(hmac_pad, 0x5c, tlsv3_pad_length);
 
         if (EVP_DigestUpdate(md_ctx, mac_secret, mac_secret_length) <= 0
-            || EVP_DigestUpdate(md_ctx, hmac_pad, sslv3_pad_length) <= 0
+            || EVP_DigestUpdate(md_ctx, hmac_pad, tlsv3_pad_length) <= 0
             || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     } else {

@@ -1,35 +1,35 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#include <openssl/core_numbers.h>
-#include <openssl/types.h>
+#include <opentls/core_numbers.h>
+#include <opentls/types.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 
-struct ossl_serializer_st {
-    OSSL_PROVIDER *prov;
+struct otls_serializer_st {
+    Otls_PROVIDER *prov;
     int id;
     const char *propdef;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_serializer_newctx_fn *newctx;
-    OSSL_OP_serializer_freectx_fn *freectx;
-    OSSL_OP_serializer_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_serializer_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_serializer_serialize_data_fn *serialize_data;
-    OSSL_OP_serializer_serialize_object_fn *serialize_object;
+    Otls_OP_serializer_newctx_fn *newctx;
+    Otls_OP_serializer_freectx_fn *freectx;
+    Otls_OP_serializer_set_ctx_params_fn *set_ctx_params;
+    Otls_OP_serializer_settable_ctx_params_fn *settable_ctx_params;
+    Otls_OP_serializer_serialize_data_fn *serialize_data;
+    Otls_OP_serializer_serialize_object_fn *serialize_object;
 };
 
-struct ossl_serializer_ctx_st {
-    OSSL_SERIALIZER *ser;
+struct otls_serializer_ctx_st {
+    Otls_SERIALIZER *ser;
     void *serctx;
 
     /*
@@ -37,13 +37,13 @@ struct ossl_serializer_ctx_st {
      * |do_output| must have intimate knowledge of this object.
      */
     const void *object;
-    int (*do_output)(OSSL_SERIALIZER_CTX *ctx, BIO *out);
+    int (*do_output)(Otls_SERIALIZER_CTX *ctx, BIO *out);
 
     /* For any function that needs a passphrase reader */
     const UI_METHOD *ui_method;
     void *ui_data;
     /*
-     * if caller used OSSL_SERIALIZER_CTX_set_passphrase_cb(), we need
+     * if caller used Otls_SERIALIZER_CTX_set_passphrase_cb(), we need
      * intermediary storage.
      */
     UI_METHOD *allocated_ui_method;

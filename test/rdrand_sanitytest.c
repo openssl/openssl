@@ -1,10 +1,10 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -15,10 +15,10 @@
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
-     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
+     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENtls_CPUID_OBJ)
 
-size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
-size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
+size_t OPENtls_ia32_rdrand_bytes(unsigned char *buf, size_t len);
+size_t OPENtls_ia32_rdseed_bytes(unsigned char *buf, size_t len);
 
 static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t),
     int rounds, int min_failures, int max_retries, int max_zero_words)
@@ -79,7 +79,7 @@ end:
 
 static int sanity_check_rdrand_bytes(void)
 {
-    return sanity_check_bytes(OPENSSL_ia32_rdrand_bytes, 1000, 0, 10, 10);
+    return sanity_check_bytes(OPENtls_ia32_rdrand_bytes, 1000, 0, 10, 10);
 }
 
 static int sanity_check_rdseed_bytes(void)
@@ -90,15 +90,15 @@ static int sanity_check_rdseed_bytes(void)
      * increased by the fact that we need either 4 or 8 samples depending on
      * the platform.
      */
-    return sanity_check_bytes(OPENSSL_ia32_rdseed_bytes, 1000, 1, 10000, 10);
+    return sanity_check_bytes(OPENtls_ia32_rdseed_bytes, 1000, 1, 10000, 10);
 }
 
 int setup_tests(void)
 {
-    OPENSSL_cpuid_setup();
+    OPENtls_cpuid_setup();
 
-    int have_rdseed = (OPENSSL_ia32cap_P[2] & (1 << 18)) != 0;
-    int have_rdrand = (OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0;
+    int have_rdseed = (OPENtls_ia32cap_P[2] & (1 << 18)) != 0;
+    int have_rdrand = (OPENtls_ia32cap_P[1] & (1 << (62 - 32))) != 0;
 
     if (have_rdrand) {
         ADD_TEST(sanity_check_rdrand_bytes);

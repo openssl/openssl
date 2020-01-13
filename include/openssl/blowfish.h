@@ -1,32 +1,32 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_BLOWFISH_H
-# define OPENSSL_BLOWFISH_H
+#ifndef OPENtls_BLOWFISH_H
+# define OPENtls_BLOWFISH_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_BLOWFISH_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_BF
-# include <openssl/e_os2.h>
+# ifndef OPENtls_NO_BF
+# include <opentls/e_os2.h>
 # ifdef  __cplusplus
 extern "C" {
 # endif
 
 # define BF_BLOCK        8
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 
 #  define BF_ENCRYPT      1
 #  define BF_DECRYPT      0
@@ -45,7 +45,7 @@ typedef struct bf_key_st {
     BF_LONG S[4 * 256];
 } BF_KEY;
 
-# endif /* OPENSSL_NO_DEPRECATED_3_0 */
+# endif /* OPENtls_NO_DEPRECATED_3_0 */
 
 DEPRECATEDIN_3_0(void BF_set_key(BF_KEY *key, int len,
                                  const unsigned char *data))

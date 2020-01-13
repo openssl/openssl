@@ -1,19 +1,19 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/ec.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
+#include <opentls/ec.h>
 #include "ec_local.h"
-#include <openssl/evp.h>
+#include <opentls/evp.h>
 #include "crypto/evp.h"
 
 /* EC pkey context structure */
@@ -42,7 +42,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx;
 
-    if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
+    if ((dctx = OPENtls_zalloc(sizeof(*dctx))) == NULL) {
         ECerr(EC_F_PKEY_EC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -76,7 +76,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->kdf_md = sctx->kdf_md;
     dctx->kdf_outlen = sctx->kdf_outlen;
     if (sctx->kdf_ukm) {
-        dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        dctx->kdf_ukm = OPENtls_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
         if (!dctx->kdf_ukm)
             return 0;
     } else
@@ -91,8 +91,8 @@ static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
         EC_KEY_free(dctx->co_key);
-        OPENSSL_free(dctx->kdf_ukm);
-        OPENSSL_free(dctx);
+        OPENtls_free(dctx->kdf_ukm);
+        OPENtls_free(dctx);
         ctx->data = NULL;
     }
 }
@@ -107,7 +107,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     const int sig_sz = ECDSA_size(ec);
 
     /* ensure cast to size_t is safe */
-    if (!ossl_assert(sig_sz > 0))
+    if (!otls_assert(sig_sz > 0))
         return 0;
 
     if (sig == NULL) {
@@ -148,7 +148,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
 static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 {
     int ret;
@@ -202,7 +202,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
         return 0;
     if (!pkey_ec_derive(ctx, NULL, &ktmplen))
         return 0;
-    if ((ktmp = OPENSSL_malloc(ktmplen)) == NULL) {
+    if ((ktmp = OPENtls_malloc(ktmplen)) == NULL) {
         ECerr(EC_F_PKEY_EC_KDF_DERIVE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -215,7 +215,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     rv = 1;
 
  err:
-    OPENSSL_clear_free(ktmp, ktmplen);
+    OPENtls_clear_free(ktmp, ktmplen);
     return rv;
 }
 #endif
@@ -243,7 +243,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         EC_GROUP_set_asn1_flag(dctx->gen_group, p1);
         return 1;
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
         if (p1 == -2) {
             if (dctx->cofactor_mode != -1)
@@ -305,7 +305,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_UKM:
-        OPENSSL_free(dctx->kdf_ukm);
+        OPENtls_free(dctx->kdf_ukm);
         dctx->kdf_ukm = p2;
         if (p2)
             dctx->kdf_ukmlen = p1;
@@ -372,7 +372,7 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
         if (strcmp(value, "explicit") == 0)
             param_enc = 0;
         else if (strcmp(value, "named_curve") == 0)
-            param_enc = OPENSSL_EC_NAMED_CURVE;
+            param_enc = OPENtls_EC_NAMED_CURVE;
         else
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
@@ -406,7 +406,7 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     if (ec == NULL)
         return 0;
     if (!(ret = EC_KEY_set_group(ec, dctx->gen_group))
-        || !ossl_assert(ret = EVP_PKEY_assign_EC_KEY(pkey, ec)))
+        || !otls_assert(ret = EVP_PKEY_assign_EC_KEY(pkey, ec)))
         EC_KEY_free(ec);
     return ret;
 }
@@ -424,7 +424,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     ec = EC_KEY_new();
     if (ec == NULL)
         return 0;
-    if (!ossl_assert(EVP_PKEY_assign_EC_KEY(pkey, ec))) {
+    if (!otls_assert(EVP_PKEY_assign_EC_KEY(pkey, ec))) {
         EC_KEY_free(ec);
         return 0;
     }
@@ -467,7 +467,7 @@ static const EVP_PKEY_METHOD ec_pkey_meth = {
     0,
 
     0,
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     pkey_ec_kdf_derive,
 #else
     0,

@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -13,32 +13,32 @@ use warnings;
 use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
-use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use Opentls::Glob;
+use Opentls::Test qw/:DEFAULT srctop_file/;
 
 setup("test_rehash");
 
-#If "openssl rehash -help" fails it's most likely because we're on a platform
+#If "opentls rehash -help" fails it's most likely because we're on a platform
 #that doesn't support the rehash command (e.g. Windows)
 plan skip_all => "test_rehash is not available on this platform"
-    unless run(app(["openssl", "rehash", "-help"]));
+    unless run(app(["opentls", "rehash", "-help"]));
 
 plan tests => 4;
 
 indir "rehash.$$" => sub {
     prepare();
-    ok(run(app(["openssl", "rehash", curdir()])),
+    ok(run(app(["opentls", "rehash", curdir()])),
        'Testing normal rehash operations');
 }, create => 1, cleanup => 1;
 
 indir "rehash.$$" => sub {
     prepare(sub { chmod 400, $_ foreach (@_); });
-    ok(run(app(["openssl", "rehash", curdir()])),
+    ok(run(app(["opentls", "rehash", curdir()])),
        'Testing rehash operations on readonly files');
 }, create => 1, cleanup => 1;
 
 indir "rehash.$$" => sub {
-    ok(run(app(["openssl", "rehash", curdir()])),
+    ok(run(app(["opentls", "rehash", curdir()])),
        'Testing rehash operations on empty directory');
 }, create => 1, cleanup => 1;
 
@@ -50,7 +50,7 @@ indir "rehash.$$" => sub {
           close FOO;
           skip "It's pointless to run the next test as root", 1;
       }
-      isnt(run(app(["openssl", "rehash", curdir()])), 1,
+      isnt(run(app(["opentls", "rehash", curdir()])), 1,
            'Testing rehash operations on readonly directory');
     }
     chmod 0700, curdir();       # make it writable again, so cleanup works

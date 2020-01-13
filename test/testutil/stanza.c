@@ -1,10 +1,10 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 #include <assert.h>
 #include <errno.h>
@@ -136,8 +136,8 @@ int test_readstanza(STANZA *s)
         }
 
         if (!TEST_int_lt(s->numpairs++, TESTMAXPAIRS)
-                || !TEST_ptr(pp->key = OPENSSL_strdup(key))
-                || !TEST_ptr(pp->value = OPENSSL_strdup(value)))
+                || !TEST_ptr(pp->key = OPENtls_strdup(key))
+                || !TEST_ptr(pp->value = OPENtls_strdup(value)))
             return 0;
         pp++;
     }
@@ -152,8 +152,8 @@ void test_clearstanza(STANZA *s)
     int i = s->numpairs;
 
     for ( ; --i >= 0; pp++) {
-        OPENSSL_free(pp->key);
-        OPENSSL_free(pp->value);
+        OPENtls_free(pp->key);
+        OPENtls_free(pp->value);
     }
     s->numpairs = 0;
 }

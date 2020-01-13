@@ -1,46 +1,46 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_DH_H
-# define OPENSSL_DH_H
+#ifndef OPENtls_DH_H
+# define OPENtls_DH_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_DH_H
 # endif
 
-# include <openssl/opensslconf.h>
+# include <opentls/opentlsconf.h>
 
-# ifndef OPENSSL_NO_DH
-# include <openssl/e_os2.h>
-# include <openssl/bio.h>
-# include <openssl/asn1.h>
-# include <openssl/types.h>
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/bn.h>
+# ifndef OPENtls_NO_DH
+# include <opentls/e_os2.h>
+# include <opentls/bio.h>
+# include <opentls/asn1.h>
+# include <opentls/types.h>
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
+#  include <opentls/bn.h>
 # endif
-# include <openssl/dherr.h>
+# include <opentls/dherr.h>
 
 # ifdef  __cplusplus
 extern "C" {
 # endif
 
-# ifndef OPENSSL_DH_MAX_MODULUS_BITS
-#  define OPENSSL_DH_MAX_MODULUS_BITS    10000
+# ifndef OPENtls_DH_MAX_MODULUS_BITS
+#  define OPENtls_DH_MAX_MODULUS_BITS    10000
 # endif
 
-# define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
+# define OPENtls_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# ifndef OPENtls_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
@@ -64,7 +64,7 @@ extern "C" {
 
 # define DH_FLAG_NON_FIPS_ALLOW                  0x0400
 
-/* Already defined in ossl_typ.h */
+/* Already defined in otls_typ.h */
 /* typedef struct dh_st DH; */
 /* typedef struct dh_method DH_METHOD; */
 
@@ -122,7 +122,7 @@ DECLARE_ASN1_ITEM(DHparams)
 
 DECLARE_ASN1_DUP_FUNCTION_name(DH, DHparams)
 
-const DH_METHOD *DH_OpenSSL(void);
+const DH_METHOD *DH_Opentls(void);
 
 void DH_set_default_method(const DH_METHOD *meth);
 const DH_METHOD *DH_get_default_method(void);
@@ -161,7 +161,7 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHparams)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHxparams)
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x);
 # endif
 int DHparams_print(BIO *bp, const DH *x);
@@ -175,7 +175,7 @@ DH *DH_get_2048_256(void);
 DH *DH_new_by_nid(int nid);
 int DH_get_nid(const DH *dh);
 
-# ifndef OPENSSL_NO_CMS
+# ifndef OPENtls_NO_CMS
 /* RFC2631 KDF */
 int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  const unsigned char *Z, size_t Zlen,
@@ -332,7 +332,7 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
 
 /* KDF types */
 # define EVP_PKEY_DH_KDF_NONE                            1
-# ifndef OPENSSL_NO_CMS
+# ifndef OPENtls_NO_CMS
 # define EVP_PKEY_DH_KDF_X9_42                           2
 # endif
 

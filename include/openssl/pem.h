@@ -1,27 +1,27 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
-#ifndef OPENSSL_PEM_H
-# define OPENSSL_PEM_H
+#ifndef OPENtls_PEM_H
+# define OPENtls_PEM_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <opentls/macros.h>
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define HEADER_PEM_H
 # endif
 
-# include <openssl/e_os2.h>
-# include <openssl/bio.h>
-# include <openssl/safestack.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/pemerr.h>
+# include <opentls/e_os2.h>
+# include <opentls/bio.h>
+# include <opentls/safestack.h>
+# include <opentls/evp.h>
+# include <opentls/x509.h>
+# include <opentls/pemerr.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -47,7 +47,7 @@ extern "C" {
 # define PEM_STRING_PKCS8INF     "PRIVATE KEY"
 # define PEM_STRING_DHPARAMS     "DH PARAMETERS"
 # define PEM_STRING_DHXPARAMS    "X9.42 DH PARAMETERS"
-# define PEM_STRING_SSL_SESSION  "SSL SESSION PARAMETERS"
+# define PEM_STRING_tls_SESSION  "tls SESSION PARAMETERS"
 # define PEM_STRING_DSAPARAMS    "DSA PARAMETERS"
 # define PEM_STRING_ECDSA_PUBLIC "ECDSA PUBLIC KEY"
 # define PEM_STRING_ECPARAMETERS "EC PARAMETERS"
@@ -74,15 +74,15 @@ extern "C" {
                                  const unsigned char *kstr, int klen,   \
                                  pem_password_cb *cb, void *u)
 
-# ifdef OPENSSL_NO_STDIO
+# ifdef OPENtls_NO_STDIO
 
 #  define IMPLEMENT_PEM_read_fp(name, type, str, asn1) /**/
 #  define IMPLEMENT_PEM_write_fp(name, type, str, asn1) /**/
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define IMPLEMENT_PEM_write_fp_const(name, type, str, asn1) /**/
 #  endif
 #  define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1) /**/
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1) /**/
 #  endif
 # else
@@ -101,7 +101,7 @@ extern "C" {
                               x, NULL, NULL, 0, NULL, NULL);            \
     }
 
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define IMPLEMENT_PEM_write_fp_const(name, type, str, asn1)  \
     IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 #  endif
@@ -113,7 +113,7 @@ extern "C" {
                               x, enc, kstr, klen, cb, u);               \
     }
 
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1)       \
     IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)
 #  endif
@@ -134,7 +134,7 @@ extern "C" {
                                   x, NULL,NULL,0,NULL,NULL);            \
     }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define IMPLEMENT_PEM_write_bio_const(name, type, str, asn1)   \
     IMPLEMENT_PEM_write_bio(name, type, str, asn1)
 # endif
@@ -146,7 +146,7 @@ extern "C" {
                                   x, enc, kstr, klen, cb, u);           \
     }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define IMPLEMENT_PEM_write_cb_bio_const(name, type, str, asn1)  \
     IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)
 # endif
@@ -155,7 +155,7 @@ extern "C" {
         IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
         IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define IMPLEMENT_PEM_write_const(name, type, str, asn1) \
         IMPLEMENT_PEM_write_bio_const(name, type, str, asn1) \
         IMPLEMENT_PEM_write_fp_const(name, type, str, asn1)
@@ -165,7 +165,7 @@ extern "C" {
         IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1) \
         IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define IMPLEMENT_PEM_write_cb_const(name, type, str, asn1) \
         IMPLEMENT_PEM_write_cb_bio_const(name, type, str, asn1) \
         IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1)
@@ -179,7 +179,7 @@ extern "C" {
         IMPLEMENT_PEM_read(name, type, str, asn1) \
         IMPLEMENT_PEM_write(name, type, str, asn1)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define IMPLEMENT_PEM_rw_const(name, type, str, asn1) \
         IMPLEMENT_PEM_read(name, type, str, asn1) \
         IMPLEMENT_PEM_write_const(name, type, str, asn1)
@@ -191,11 +191,11 @@ extern "C" {
 
 /* These are the same except they are for the declarations */
 
-# if defined(OPENSSL_NO_STDIO)
+# if defined(OPENtls_NO_STDIO)
 
 #  define DECLARE_PEM_read_fp(name, type) /**/
 #  define DECLARE_PEM_write_fp(name, type) /**/
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const(name, type) /**/
 #  endif
 #  define DECLARE_PEM_write_cb_fp(name, type) /**/
@@ -207,7 +207,7 @@ extern "C" {
 #  define DECLARE_PEM_write_fp(name, type)              \
     PEM_write_fnsig(name, type, FILE, write);
 
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const(name, type)       \
     PEM_write_fnsig(name, type, FILE, write);
 #  endif
@@ -224,7 +224,7 @@ extern "C" {
 #  define DECLARE_PEM_write_bio(name, type)             \
     PEM_write_fnsig(name, type, BIO, write_bio);
 
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENtls_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_bio_const(name, type)      \
     PEM_write_fnsig(name, type, BIO, write_bio);
 #  endif
@@ -235,7 +235,7 @@ extern "C" {
 # define DECLARE_PEM_write(name, type) \
         DECLARE_PEM_write_bio(name, type) \
         DECLARE_PEM_write_fp(name, type)
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define DECLARE_PEM_write_const(name, type) \
         DECLARE_PEM_write_bio_const(name, type) \
         DECLARE_PEM_write_fp_const(name, type)
@@ -249,7 +249,7 @@ extern "C" {
 # define DECLARE_PEM_rw(name, type) \
         DECLARE_PEM_read(name, type) \
         DECLARE_PEM_write(name, type)
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENtls_NO_DEPRECATED_3_0
 #  define DECLARE_PEM_rw_const(name, type) \
         DECLARE_PEM_read(name, type) \
         DECLARE_PEM_write_const(name, type)
@@ -290,7 +290,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                             const unsigned char *kstr, int klen,
                             pem_password_cb *cd, void *u);
 
-#ifndef OPENSSL_NO_STDIO
+#ifndef OPENtls_NO_STDIO
 int PEM_read(FILE *fp, char **name, char **header,
              unsigned char **data, long *len);
 int PEM_write(FILE *fp, const char *name, const char *hdr,
@@ -315,7 +315,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata);
 void PEM_proc_type(char *buf, int type);
 void PEM_dek_info(char *buf, const char *type, int len, const char *str);
 
-# include <openssl/symhacks.h>
+# include <opentls/symhacks.h>
 
 DECLARE_PEM_rw(X509, X509)
 DECLARE_PEM_rw(X509_AUX, X509)
@@ -327,22 +327,22 @@ DECLARE_PEM_rw(PKCS7, PKCS7)
 DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
 DECLARE_PEM_rw(PKCS8, X509_SIG)
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENtls_NO_RSA
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
 DECLARE_PEM_rw(RSAPublicKey, RSA)
 DECLARE_PEM_rw(RSA_PUBKEY, RSA)
 # endif
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 DECLARE_PEM_rw(DSAparams, DSA)
 # endif
-# ifndef OPENSSL_NO_EC
+# ifndef OPENtls_NO_EC
 DECLARE_PEM_rw(ECPKParameters, EC_GROUP)
 DECLARE_PEM_rw_cb(ECPrivateKey, EC_KEY)
 DECLARE_PEM_rw(EC_PUBKEY, EC_KEY)
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENtls_NO_DH
 DECLARE_PEM_rw(DHparams, DH)
 DECLARE_PEM_write(DHxparams, DH)
 # endif
@@ -370,7 +370,7 @@ int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
 EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                                   void *u);
 
-# ifndef OPENSSL_NO_STDIO
+# ifndef OPENtls_NO_STDIO
 int i2d_PKCS8PrivateKey_fp(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                            const char *kstr, int klen,
                            pem_password_cb *cb, void *u);
@@ -391,14 +391,14 @@ int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
-# ifndef OPENSSL_NO_DSA
+# ifndef OPENtls_NO_DSA
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk);
 int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk);
-#  ifndef OPENSSL_NO_RC4
+#  ifndef OPENtls_NO_RC4
 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u);
 int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
                 pem_password_cb *cb, void *u);

@@ -1,10 +1,10 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "../testutil.h"
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "internal/nelem.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 
 /*
  * Output a failed test first line.
@@ -138,7 +138,7 @@ void test_error(const char *file, int line, const char *desc, ...)
 void test_perror(const char *s)
 {
     /*
-     * Using openssl_strerror_r causes linking issues since it isn't
+     * Using opentls_strerror_r causes linking issues since it isn't
      * exported from libcrypto.so
      */
     TEST_error("%s: %s", s, strerror(errno));
@@ -180,9 +180,9 @@ int test_skip_c90(const char *desc, ...)
 }
 
 
-void test_openssl_errors(void)
+void test_opentls_errors(void)
 {
-    ERR_print_errors_cb(openssl_error_cb, NULL);
+    ERR_print_errors_cb(opentls_error_cb, NULL);
     ERR_clear_error();
 }
 
@@ -308,8 +308,8 @@ int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
       return 1;
     if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENtls_strnlen(s1, len),
+                                 s2, s2 == NULL ? 0 : OPENtls_strnlen(s2, len));
         return 0;
     }
     return 1;
@@ -322,8 +322,8 @@ int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
       return 1;
     if (s1 == NULL || strncmp(s1, s2, len) == 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENtls_strnlen(s1, len),
+                                 s2, s2 == NULL ? 0 : OPENtls_strnlen(s2, len));
         return 0;
     }
     return 1;

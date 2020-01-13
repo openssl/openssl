@@ -1,10 +1,10 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /*
@@ -19,20 +19,20 @@
 #include "cipher_aes.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn aes_freectx;
-static OSSL_OP_cipher_dupctx_fn aes_dupctx;
+static Otls_OP_cipher_freectx_fn aes_freectx;
+static Otls_OP_cipher_dupctx_fn aes_dupctx;
 
 static void aes_freectx(void *vctx)
 {
     PROV_AES_CTX *ctx = (PROV_AES_CTX *)vctx;
 
-    OPENSSL_clear_free(ctx,  sizeof(*ctx));
+    OPENtls_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *aes_dupctx(void *ctx)
 {
     PROV_AES_CTX *in = (PROV_AES_CTX *)ctx;
-    PROV_AES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_AES_CTX *ret = OPENtls_malloc(sizeof(*ret));
 
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);

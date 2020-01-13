@@ -1,16 +1,16 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <limits.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <opentls/asn1.h>
 #include "asn1_local.h"
 
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
@@ -114,7 +114,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     ret->flags |= (ASN1_STRING_FLAG_BITS_LEFT | i); /* set */
 
     if (len-- > 1) {            /* using one because of the bits left byte */
-        s = OPENSSL_malloc((int)len);
+        s = OPENtls_malloc((int)len);
         if (s == NULL) {
             i = ERR_R_MALLOC_FAILURE;
             goto err;
@@ -126,7 +126,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
         s = NULL;
 
     ret->length = (int)len;
-    OPENSSL_free(ret->data);
+    OPENtls_free(ret->data);
     ret->data = s;
     ret->type = V_ASN1_BIT_STRING;
     if (a != NULL)
@@ -162,7 +162,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
     if ((a->length < (w + 1)) || (a->data == NULL)) {
         if (!value)
             return 1;         /* Don't need to set */
-        c = OPENSSL_clear_realloc(a->data, a->length, w + 1);
+        c = OPENtls_clear_realloc(a->data, a->length, w + 1);
         if (c == NULL) {
             ASN1err(ASN1_F_ASN1_BIT_STRING_SET_BIT, ERR_R_MALLOC_FAILURE);
             return 0;

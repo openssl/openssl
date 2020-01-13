@@ -1,17 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <opentls/asn1t.h>
+#include <opentls/x509.h>
 #include "crypto/x509.h"
 #include "crypto/asn1.h"
 #include "x509_local.h"
@@ -89,7 +89,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
-    X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_NAME *ret = OPENtls_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         goto memerr;
@@ -105,7 +105,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
     if (ret) {
         sk_X509_NAME_ENTRY_free(ret->entries);
-        OPENSSL_free(ret);
+        OPENtls_free(ret);
     }
     return 0;
 }
@@ -120,8 +120,8 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
     BUF_MEM_free(a->bytes);
     sk_X509_NAME_ENTRY_pop_free(a->entries, X509_NAME_ENTRY_free);
-    OPENSSL_free(a->canon_enc);
-    OPENSSL_free(a);
+    OPENtls_free(a->canon_enc);
+    OPENtls_free(a);
     *pval = NULL;
 }
 
@@ -308,7 +308,7 @@ static int x509_name_canon(X509_NAME *a)
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
     int i, set = -1, ret = 0, len;
 
-    OPENSSL_free(a->canon_enc);
+    OPENtls_free(a->canon_enc);
     a->canon_enc = NULL;
     /* Special case: empty X509_NAME => null encoding */
     if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
@@ -358,7 +358,7 @@ static int x509_name_canon(X509_NAME *a)
         goto err;
     a->canon_enclen = len;
 
-    p = OPENSSL_malloc(a->canon_enclen);
+    p = OPENtls_malloc(a->canon_enclen);
     if (p == NULL) {
         X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -409,12 +409,12 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
     /*
      * Convert string in place to canonical form. Ultimately we may need to
      * handle a wider range of characters but for now ignore anything with
-     * MSB set and rely on the ossl_isspace() to fail on bad characters without
+     * MSB set and rely on the otls_isspace() to fail on bad characters without
      * needing isascii or range checks as well.
      */
 
     /* Ignore leading spaces */
-    while (len > 0 && ossl_isspace(*from)) {
+    while (len > 0 && otls_isspace(*from)) {
         from++;
         len--;
     }
@@ -422,7 +422,7 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
     to = from + len;
 
     /* Ignore trailing spaces */
-    while (len > 0 && ossl_isspace(to[-1])) {
+    while (len > 0 && otls_isspace(to[-1])) {
         to--;
         len--;
     }
@@ -432,12 +432,12 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
     i = 0;
     while (i < len) {
         /* If not ASCII set just copy across */
-        if (!ossl_isascii(*from)) {
+        if (!otls_isascii(*from)) {
             *to++ = *from++;
             i++;
         }
         /* Collapse multiple spaces */
-        else if (ossl_isspace(*from)) {
+        else if (otls_isspace(*from)) {
             /* Copy one space across */
             *to++ = ' ';
             /*
@@ -449,9 +449,9 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
                 from++;
                 i++;
             }
-            while (ossl_isspace(*from));
+            while (otls_isspace(*from));
         } else {
-            *to++ = ossl_tolower(*from);
+            *to++ = otls_tolower(*from);
             from++;
             i++;
         }
@@ -506,7 +506,7 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     if (b == NULL)
         return 0;
     if (*b == '\0') {
-        OPENSSL_free(b);
+        OPENtls_free(b);
         return 1;
     }
     s = b + 1;                  /* skip the first slash */
@@ -514,8 +514,8 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     c = s;
     for (;;) {
         if (((*s == '/') &&
-             (ossl_isupper(s[1]) && ((s[2] == '=') ||
-                                (ossl_isupper(s[2]) && (s[3] == '='))
+             (otls_isupper(s[1]) && ((s[2] == '=') ||
+                                (otls_isupper(s[2]) && (s[3] == '='))
               ))) || (*s == '\0'))
         {
             i = s - c;
@@ -534,11 +534,11 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
         l--;
     }
 
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return 1;
  err:
     X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
-    OPENSSL_free(b);
+    OPENtls_free(b);
     return 0;
 }
 

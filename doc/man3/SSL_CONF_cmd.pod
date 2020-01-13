@@ -2,29 +2,29 @@
 
 =head1 NAME
 
-SSL_CONF_cmd_value_type,
-SSL_CONF_cmd - send configuration command
+tls_CONF_cmd_value_type,
+tls_CONF_cmd - send configuration command
 
 =head1 SYNOPSIS
 
- #include <openssl/ssl.h>
+ #include <opentls/tls.h>
 
- int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
- int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
+ int tls_CONF_cmd(tls_CONF_CTX *cctx, const char *cmd, const char *value);
+ int tls_CONF_cmd_value_type(tls_CONF_CTX *cctx, const char *cmd);
 
 =head1 DESCRIPTION
 
-The function SSL_CONF_cmd() performs configuration operation B<cmd> with
+The function tls_CONF_cmd() performs configuration operation B<cmd> with
 optional parameter B<value> on B<ctx>. Its purpose is to simplify application
-configuration of B<SSL_CTX> or B<SSL> structures by providing a common
+configuration of B<tls_CTX> or B<tls> structures by providing a common
 framework for command line options or configuration files.
 
-SSL_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
+tls_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
 
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
 Currently supported B<cmd> names for command lines (i.e. when the
-flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
+flag B<tls_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
 are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
 prefix for command line commands is B<-> and that is reflected below.
@@ -49,7 +49,7 @@ specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
 
 If this option is not set then all signature algorithms supported by the
-OpenSSL library are permissible.
+Opentls library are permissible.
 
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
@@ -79,7 +79,7 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+applicable (e.g. B<X25519>, B<ffdhe2048>) or an Opentls OID name
 (e.g B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
@@ -98,14 +98,14 @@ servers
 
 The B<value> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The curve
-can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
+can be either the B<NIST> name (e.g. B<P-256>) or an Opentls OID name
 (e.g B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher>
 
 Sets the TLSv1.2 and below ciphersuite list to B<value>. This list will be
 combined with any configured TLSv1.3 ciphersuites. Note: syntax checking
-of B<value> is currently not performed unless a B<SSL> or B<SSL_CTX> structure is
+of B<value> is currently not performed unless a B<tls> or B<tls_CTX> structure is
 associated with B<cctx>.
 
 =item B<-ciphersuites>
@@ -113,14 +113,14 @@ associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to value. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
-See L<openssl-ciphers(1)> for more information.
+See L<opentls-ciphers(1)> for more information.
 
 
 =item B<-cert>
 
 Attempts to use the file B<value> as the certificate for the appropriate
-context. It currently uses SSL_CTX_use_certificate_chain_file() if an B<SSL_CTX>
-structure is set or SSL_use_certificate_file() with filetype PEM if an B<SSL>
+context. It currently uses tls_CTX_use_certificate_chain_file() if an B<tls_CTX>
+structure is set or tls_use_certificate_file() with filetype PEM if an B<tls>
 structure is set. This option is only supported if certificate operations
 are permitted.
 
@@ -129,7 +129,7 @@ are permitted.
 Attempts to use the file B<value> as the private key for the appropriate
 context. This option is only supported if certificate operations
 are permitted. Note: if no B<-key> option is set then a private key is
-not loaded unless the flag B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
+not loaded unless the flag B<tls_CONF_FLAG_REQUIRE_PRIVATE> is set.
 
 =item B<-dhparam>
 
@@ -146,12 +146,12 @@ B<value> must be >1 or <=16384.
 =item B<-no_renegotiation>
 
 Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
-B<SSL_OP_NO_RENEGOTIATION>.
+B<tls_OP_NO_RENEGOTIATION>.
 
 =item B<-min_protocol>, B<-max_protocol>
 
 Sets the minimum and maximum supported protocol.
-Currently supported protocol values are B<SSLv3>, B<TLSv1>,
+Currently supported protocol values are B<tlsv3>, B<TLSv1>,
 B<TLSv1.1>, B<TLSv1.2>, B<TLSv1.3> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS,
 and B<None> for no limit.
 If either bound is not specified then only the other bound applies,
@@ -159,61 +159,61 @@ if specified.
 To restrict the supported protocol versions use these commands rather
 than the deprecated alternative commands below.
 
-=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
+=item B<-no_tls3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
-Disables protocol support for SSLv3, TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
-setting the corresponding options B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>,
-B<SSL_OP_NO_TLSv1_1>, B<SSL_OP_NO_TLSv1_2> and B<SSL_OP_NO_TLSv1_3>
+Disables protocol support for tlsv3, TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
+setting the corresponding options B<tls_OP_NO_tlsv3>, B<tls_OP_NO_TLSv1>,
+B<tls_OP_NO_TLSv1_1>, B<tls_OP_NO_TLSv1_2> and B<tls_OP_NO_TLSv1_3>
 respectively. These options are deprecated, instead use B<-min_protocol> and
 B<-max_protocol>.
 
 =item B<-bugs>
 
-Various bug workarounds are set, same as setting B<SSL_OP_ALL>.
+Various bug workarounds are set, same as setting B<tls_OP_ALL>.
 
 =item B<-comp>
 
-Enables support for SSL/TLS compression, same as clearing
-B<SSL_OP_NO_COMPRESSION>.
-This command was introduced in OpenSSL 1.1.0.
-As of OpenSSL 1.1.0, compression is off by default.
+Enables support for tls/TLS compression, same as clearing
+B<tls_OP_NO_COMPRESSION>.
+This command was introduced in Opentls 1.1.0.
+As of Opentls 1.1.0, compression is off by default.
 
 =item B<-no_comp>
 
-Disables support for SSL/TLS compression, same as setting
-B<SSL_OP_NO_COMPRESSION>.
-As of OpenSSL 1.1.0, compression is off by default.
+Disables support for tls/TLS compression, same as setting
+B<tls_OP_NO_COMPRESSION>.
+As of Opentls 1.1.0, compression is off by default.
 
 =item B<-no_ticket>
 
-Disables support for session tickets, same as setting B<SSL_OP_NO_TICKET>.
+Disables support for session tickets, same as setting B<tls_OP_NO_TICKET>.
 
 =item B<-serverpref>
 
 Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
-Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+Equivalent to B<tls_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
 =item B<-prioritize_chacha>
 
 Prioritize ChaCha ciphers when the client has a ChaCha20 cipher at the top of
 its preference list. This usually indicates a client without AES hardware
-acceleration (e.g. mobile) is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+acceleration (e.g. mobile) is in use. Equivalent to B<tls_OP_PRIORITIZE_CHACHA>.
 Only used by servers. Requires B<-serverpref>.
 
 =item B<-no_resumption_on_reneg>
 
-set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
+set tls_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
 
 =item B<-legacyrenegotiation>
 
 permits the use of unsafe legacy renegotiation. Equivalent to setting
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
+B<tls_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 =item B<-legacy_server_connect>, B<-no_legacy_server_connect>
 
-permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
-clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
+permits or prohibits the use of unsafe legacy renegotiation for Opentls
+clients only. Equivalent to setting or clearing B<tls_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
 =item B<-allow_no_dhe_kex>
@@ -224,26 +224,26 @@ that there will be no forward secrecy for the resumed session.
 =item B<-strict>
 
 enables strict mode protocol handling. Equivalent to setting
-B<SSL_CERT_FLAG_TLS_STRICT>.
+B<tls_CERT_FLAG_TLS_STRICT>.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 
 Switches replay protection, on or off respectively. With replay protection on,
-OpenSSL will automatically detect if a session ticket has been used more than
+Opentls will automatically detect if a session ticket has been used more than
 once, TLSv1.3 has been negotiated, and early data is enabled on the server. A
 full handshake is forced if a session ticket is used a second or subsequent
 time. Anti-Replay is on by default unless overridden by a configuration file and
 is only used by servers. Anti-replay measures are required for compliance with
 the TLSv1.3 specification. Some applications may be able to mitigate the replay
-risks in other ways and in such cases the built-in OpenSSL functionality is not
-required. Switching off anti-replay is equivalent to B<SSL_OP_NO_ANTI_REPLAY>.
+risks in other ways and in such cases the built-in Opentls functionality is not
+required. Switching off anti-replay is equivalent to B<tls_OP_NO_ANTI_REPLAY>.
 
 =back
 
 =head1 SUPPORTED CONFIGURATION FILE COMMANDS
 
 Currently supported B<cmd> names for configuration files (i.e. when the
-flag B<SSL_CONF_FLAG_FILE> is set) are listed below. All configuration file
+flag B<tls_CONF_FLAG_FILE> is set) are listed below. All configuration file
 B<cmd> names are case insensitive so B<signaturealgorithms> is recognised
 as well as B<SignatureAlgorithms>. Unless otherwise stated the B<value> names
 are also case insensitive.
@@ -256,7 +256,7 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 
 Sets the ciphersuite list for TLSv1.2 and below to B<value>. This list will be
 combined with any configured TLSv1.3 ciphersuites. Note: syntax
-checking of B<value> is currently not performed unless an B<SSL> or B<SSL_CTX>
+checking of B<value> is currently not performed unless an B<tls> or B<tls_CTX>
 structure is associated with B<cctx>.
 
 =item B<Ciphersuites>
@@ -264,13 +264,13 @@ structure is associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to B<value>. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
-See L<openssl-ciphers(1)> for more information.
+See L<opentls-ciphers(1)> for more information.
 
 =item B<Certificate>
 
 Attempts to use the file B<value> as the certificate for the appropriate
-context. It currently uses SSL_CTX_use_certificate_chain_file() if an B<SSL_CTX>
-structure is set or SSL_use_certificate_file() with filetype PEM if an B<SSL>
+context. It currently uses tls_CTX_use_certificate_chain_file() if an B<tls_CTX>
+structure is set or tls_use_certificate_file() with filetype PEM if an B<tls>
 structure is set. This option is only supported if certificate operations
 are permitted.
 
@@ -279,7 +279,7 @@ are permitted.
 Attempts to use the file B<value> as the private key for the appropriate
 context. This option is only supported if certificate operations
 are permitted. Note: if no B<PrivateKey> option is set then a private key is
-not loaded unless the B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
+not loaded unless the B<tls_CONF_FLAG_REQUIRE_PRIVATE> is set.
 
 =item B<ChainCAFile>, B<ChainCAPath>, B<VerifyCAFile>, B<VerifyCAPath>
 
@@ -298,7 +298,7 @@ TLS.
 =item B<ServerInfoFile>
 
 Attempts to use the file B<value> in the "serverinfo" extension using the
-function SSL_CTX_use_serverinfo_file.
+function tls_CTX_use_serverinfo_file.
 
 =item B<DHParameters>
 
@@ -330,7 +330,7 @@ specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
 or B<rsa_pss_pss_sha256>.
 
 If this option is not set then all signature algorithms supported by the
-OpenSSL library are permissible.
+Opentls library are permissible.
 
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
@@ -360,7 +360,7 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
+applicable (e.g. B<X25519>, B<ffdhe2048>) or an Opentls OID name
 (e.g B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
@@ -374,23 +374,23 @@ This is a synonym for the "Groups" command.
 
 =item B<MinProtocol>
 
-This sets the minimum supported SSL, TLS or DTLS version.
+This sets the minimum supported tls, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<tlsv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The value B<None> will disable the limit.
 
 =item B<MaxProtocol>
 
-This sets the maximum supported SSL, TLS or DTLS version.
+This sets the maximum supported tls, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<tlsv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The value B<None> will disable the limit.
 
 =item B<Protocol>
 
-This can be used to enable or disable certain versions of the SSL,
+This can be used to enable or disable certain versions of the tls,
 TLS or DTLS protocol.
 
 The B<value> argument is a comma separated list of supported protocols
@@ -403,7 +403,7 @@ effect.
 Only enabling some protocol versions does not disable the other protocol
 versions.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<tlsv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
@@ -421,80 +421,80 @@ sure to also leave TLS 1.1 enabled.
 
 The B<value> argument is a comma separated list of various flags to set.
 If a flag string is preceded B<-> it is disabled.
-See the L<SSL_CTX_set_options(3)> function for more details of
+See the L<tls_CTX_set_options(3)> function for more details of
 individual options.
 
 Each option is listed below. Where an operation is enabled by default
 the B<-flag> syntax is needed to disable it.
 
 B<SessionTicket>: session ticket support, enabled by default. Inverse of
-B<SSL_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
-B<SSL_OP_NO_TICKET>.
+B<tls_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
+B<tls_OP_NO_TICKET>.
 
-B<Compression>: SSL/TLS compression support, enabled by default. Inverse
-of B<SSL_OP_NO_COMPRESSION>.
+B<Compression>: tls/TLS compression support, enabled by default. Inverse
+of B<tls_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
-SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
-is set by default. Inverse of B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS>.
+tls 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
+is set by default. Inverse of B<tls_OP_DONT_INSERT_EMPTY_FRAGMENTS>.
 
-B<Bugs>: enable various bug workarounds. Same as B<SSL_OP_ALL>.
+B<Bugs>: enable various bug workarounds. Same as B<tls_OP_ALL>.
 
 B<DHSingle>: enable single use DH keys, set by default. Inverse of
-B<SSL_OP_DH_SINGLE>. Only used by servers.
+B<tls_OP_DH_SINGLE>. Only used by servers.
 
 B<ECDHSingle>: enable single use ECDH keys, set by default. Inverse of
-B<SSL_OP_ECDH_SINGLE>. Only used by servers.
+B<tls_OP_ECDH_SINGLE>. Only used by servers.
 
 B<ServerPreference>: use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
-B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
+B<tls_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
 B<PrioritizeChaCha>: prioritizes ChaCha ciphers when the client has a
 ChaCha20 cipher at the top of its preference list. This usually indicates
-a mobile client is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+a mobile client is in use. Equivalent to B<tls_OP_PRIORITIZE_CHACHA>.
 Only used by servers.
 
 B<NoResumptionOnRenegotiation>: set
-B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
+B<tls_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
 B<NoRenegotiation>: disables all attempts at renegotiation in TLSv1.2 and
-earlier, same as setting B<SSL_OP_NO_RENEGOTIATION>.
+earlier, same as setting B<tls_OP_NO_RENEGOTIATION>.
 
 B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
-Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
+Equivalent to B<tls_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 B<UnsafeLegacyServerConnect>: permits the use of unsafe legacy renegotiation
-for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
+for Opentls clients only. Equivalent to B<tls_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
 B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
-default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
-B<-EncryptThenMac> is the same as setting B<SSL_OP_NO_ENCRYPT_THEN_MAC>.
+default. Inverse of B<tls_OP_NO_ENCRYPT_THEN_MAC>: that is,
+B<-EncryptThenMac> is the same as setting B<tls_OP_NO_ENCRYPT_THEN_MAC>.
 
 B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
 resumption. This means that there will be no forward secrecy for the resumed
-session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
+session. Equivalent to B<tls_OP_ALLOW_NO_DHE_KEX>.
 
 B<MiddleboxCompat>: If set then dummy Change Cipher Spec (CCS) messages are sent
 in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
 middleboxes that do not understand TLSv1.3 will not drop the connection. This
-option is set by default. A future version of OpenSSL may not set this by
-default. Equivalent to B<SSL_OP_ENABLE_MIDDLEBOX_COMPAT>.
+option is set by default. A future version of Opentls may not set this by
+default. Equivalent to B<tls_OP_ENABLE_MIDDLEBOX_COMPAT>.
 
-B<AntiReplay>: If set then OpenSSL will automatically detect if a session ticket
+B<AntiReplay>: If set then Opentls will automatically detect if a session ticket
 has been used more than once, TLSv1.3 has been negotiated, and early data is
 enabled on the server. A full handshake is forced if a session ticket is used a
 second or subsequent time. This option is set by default and is only used by
 servers. Anti-replay measures are required to comply with the TLSv1.3
 specification. Some applications may be able to mitigate the replay risks in
-other ways and in such cases the built-in OpenSSL functionality is not required.
-Disabling anti-replay is equivalent to setting B<SSL_OP_NO_ANTI_REPLAY>.
+other ways and in such cases the built-in Opentls functionality is not required.
+Disabling anti-replay is equivalent to setting B<tls_OP_NO_ANTI_REPLAY>.
 
 B<ExtendedMasterSecret>: use extended master secret extension, enabled by
-default. Inverse of B<SSL_OP_NO_EXTENDED_MASTER_SECRET>: that is,
-B<-ExtendedMasterSecret> is the same as setting B<SSL_OP_NO_EXTENDED_MASTER_SECRET>.
+default. Inverse of B<tls_OP_NO_EXTENDED_MASTER_SECRET>: that is,
+B<-ExtendedMasterSecret> is the same as setting B<tls_OP_NO_EXTENDED_MASTER_SECRET>.
 
 =item B<VerifyMode>
 
@@ -533,29 +533,29 @@ supported if certificate operations are permitted.
 
 =head1 SUPPORTED COMMAND TYPES
 
-The function SSL_CONF_cmd_value_type() currently returns one of the following
+The function tls_CONF_cmd_value_type() currently returns one of the following
 types:
 
 =over 4
 
-=item B<SSL_CONF_TYPE_UNKNOWN>
+=item B<tls_CONF_TYPE_UNKNOWN>
 
 The B<cmd> string is unrecognised, this return value can be use to flag
 syntax errors.
 
-=item B<SSL_CONF_TYPE_STRING>
+=item B<tls_CONF_TYPE_STRING>
 
 The value is a string without any specific structure.
 
-=item B<SSL_CONF_TYPE_FILE>
+=item B<tls_CONF_TYPE_FILE>
 
 The value is a filename.
 
-=item B<SSL_CONF_TYPE_DIR>
+=item B<tls_CONF_TYPE_DIR>
 
 The value is a directory name.
 
-=item B<SSL_CONF_TYPE_NONE>
+=item B<tls_CONF_TYPE_NONE>
 
 The value string is not used e.g. a command line option which doesn't take an
 argument.
@@ -567,48 +567,48 @@ argument.
 The order of operations is significant. This can be used to set either defaults
 or values which cannot be overridden. For example if an application calls:
 
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
- SSL_CONF_cmd(ctx, userparam, uservalue);
+ tls_CONF_cmd(ctx, "Protocol", "-tlsv3");
+ tls_CONF_cmd(ctx, userparam, uservalue);
 
-it will disable SSLv3 support by default but the user can override it. If
+it will disable tlsv3 support by default but the user can override it. If
 however the call sequence is:
 
- SSL_CONF_cmd(ctx, userparam, uservalue);
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
+ tls_CONF_cmd(ctx, userparam, uservalue);
+ tls_CONF_cmd(ctx, "Protocol", "-tlsv3");
 
-SSLv3 is B<always> disabled and attempt to override this by the user are
+tlsv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
-By checking the return code of SSL_CONF_cmd() it is possible to query if a
-given B<cmd> is recognised, this is useful if SSL_CONF_cmd() values are
+By checking the return code of tls_CONF_cmd() it is possible to query if a
+given B<cmd> is recognised, this is useful if tls_CONF_cmd() values are
 mixed with additional application specific operations.
 
-For example an application might call SSL_CONF_cmd() and if it returns
+For example an application might call tls_CONF_cmd() and if it returns
 -2 (unrecognised command) continue with processing of application specific
 commands.
 
-Applications can also use SSL_CONF_cmd() to process command lines though the
-utility function SSL_CONF_cmd_argv() is normally used instead. One way
+Applications can also use tls_CONF_cmd() to process command lines though the
+utility function tls_CONF_cmd_argv() is normally used instead. One way
 to do this is to set the prefix to an appropriate value using
-SSL_CONF_CTX_set1_prefix(), pass the current argument to B<cmd> and the
+tls_CONF_CTX_set1_prefix(), pass the current argument to B<cmd> and the
 following argument to B<value> (which may be NULL).
 
 In this case if the return value is positive then it is used to skip that
-number of arguments as they have been processed by SSL_CONF_cmd(). If -2 is
+number of arguments as they have been processed by tls_CONF_cmd(). If -2 is
 returned then B<cmd> is not recognised and application specific arguments
 can be checked instead. If -3 is returned a required argument is missing
 and an error is indicated. If 0 is returned some other error occurred and
 this can be reported back to the user.
 
-The function SSL_CONF_cmd_value_type() can be used by applications to
+The function tls_CONF_cmd_value_type() can be used by applications to
 check for the existence of a command or to perform additional syntax
 checking or translation of the command value. For example if the return
-value is B<SSL_CONF_TYPE_FILE> an application could translate a relative
+value is B<tls_CONF_TYPE_FILE> an application could translate a relative
 pathname to an absolute pathname.
 
 =head1 RETURN VALUES
 
-SSL_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
+tls_CONF_cmd() returns 1 if the value of B<cmd> is recognised and B<value> is
 B<NOT> used and 2 if both B<cmd> and B<value> are used. In other words it
 returns the number of arguments processed. This is useful when processing
 command lines.
@@ -627,80 +627,80 @@ additional information.
 
 Set supported signature algorithms:
 
- SSL_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
+ tls_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
 
 There are various ways to select the supported protocols.
 
-This set the minimum protocol version to TLSv1, and so disables SSLv3.
+This set the minimum protocol version to TLSv1, and so disables tlsv3.
 This is the recommended way to disable protocols.
 
- SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1");
+ tls_CONF_cmd(ctx, "MinProtocol", "TLSv1");
 
-The following also disables SSLv3:
+The following also disables tlsv3:
 
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
+ tls_CONF_cmd(ctx, "Protocol", "-tlsv3");
 
 The following will first enable all protocols, and then disable
-SSLv3.
+tlsv3.
 If no protocol versions were disabled before this has the same effect as
-"-SSLv3", but if some versions were disables this will re-enable them before
-disabling SSLv3.
+"-tlsv3", but if some versions were disables this will re-enable them before
+disabling tlsv3.
 
- SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3");
+ tls_CONF_cmd(ctx, "Protocol", "ALL,-tlsv3");
 
 Only enable TLSv1.2:
 
- SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1.2");
- SSL_CONF_cmd(ctx, "MaxProtocol", "TLSv1.2");
+ tls_CONF_cmd(ctx, "MinProtocol", "TLSv1.2");
+ tls_CONF_cmd(ctx, "MaxProtocol", "TLSv1.2");
 
 This also only enables TLSv1.2:
 
- SSL_CONF_cmd(ctx, "Protocol", "-ALL,TLSv1.2");
+ tls_CONF_cmd(ctx, "Protocol", "-ALL,TLSv1.2");
 
 Disable TLS session tickets:
 
- SSL_CONF_cmd(ctx, "Options", "-SessionTicket");
+ tls_CONF_cmd(ctx, "Options", "-SessionTicket");
 
 Enable compression:
 
- SSL_CONF_cmd(ctx, "Options", "Compression");
+ tls_CONF_cmd(ctx, "Options", "Compression");
 
 Set supported curves to P-256, P-384:
 
- SSL_CONF_cmd(ctx, "Curves", "P-256:P-384");
+ tls_CONF_cmd(ctx, "Curves", "P-256:P-384");
 
 =head1 SEE ALSO
 
-L<ssl(7)>,
-L<SSL_CONF_CTX_new(3)>,
-L<SSL_CONF_CTX_set_flags(3)>,
-L<SSL_CONF_CTX_set1_prefix(3)>,
-L<SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_cmd_argv(3)>,
-L<SSL_CTX_set_options(3)>
+L<tls(7)>,
+L<tls_CONF_CTX_new(3)>,
+L<tls_CONF_CTX_set_flags(3)>,
+L<tls_CONF_CTX_set1_prefix(3)>,
+L<tls_CONF_CTX_set_tls_ctx(3)>,
+L<tls_CONF_cmd_argv(3)>,
+L<tls_CTX_set_options(3)>
 
 =head1 HISTORY
 
-The SSL_CONF_cmd() function was added in OpenSSL 1.0.2.
+The tls_CONF_cmd() function was added in Opentls 1.0.2.
 
-The B<SSL_OP_NO_SSL2> option doesn't have effect since 1.1.0, but the macro
+The B<tls_OP_NO_tls2> option doesn't have effect since 1.1.0, but the macro
 is retained for backwards compatibility.
 
-The B<SSL_CONF_TYPE_NONE> was added in OpenSSL 1.1.0. In earlier versions of
-OpenSSL passing a command which didn't take an argument would return
-B<SSL_CONF_TYPE_UNKNOWN>.
+The B<tls_CONF_TYPE_NONE> was added in Opentls 1.1.0. In earlier versions of
+Opentls passing a command which didn't take an argument would return
+B<tls_CONF_TYPE_UNKNOWN>.
 
-B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
+B<MinProtocol> and B<MaxProtocol> where added in Opentls 1.1.0.
 
-B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
+B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in Opentls 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2012-2018 The Opentls Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
 in the file LICENSE in the source distribution or at
-L<https://www.openssl.org/source/license.html>.
+L<https://www.opentls.org/source/license.html>.
 
 =cut

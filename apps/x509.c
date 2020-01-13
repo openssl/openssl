@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,20 +12,20 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/asn1.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-#include <openssl/pem.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
+#include <opentls/bio.h>
+#include <opentls/asn1.h>
+#include <opentls/err.h>
+#include <opentls/bn.h>
+#include <opentls/evp.h>
+#include <opentls/x509.h>
+#include <opentls/x509v3.h>
+#include <opentls/objects.h>
+#include <opentls/pem.h>
+#ifndef OPENtls_NO_RSA
+# include <opentls/rsa.h>
 #endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
+#ifndef OPENtls_NO_DSA
+# include <opentls/dsa.h>
 #endif
 
 #undef POSTFIX
@@ -38,7 +38,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 int preserve_dates);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
-                        STACK_OF(OPENSSL_STRING) *sigopts, const char *serialfile,
+                        STACK_OF(OPENtls_STRING) *sigopts, const char *serialfile,
                         int create, int days, int clrext, CONF *conf,
                         const char *section, ASN1_INTEGER *sno, int reqfile,
                         int preserve_dates);
@@ -67,7 +67,7 @@ typedef enum OPTION_choice {
 const OPTIONS x509_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
+#ifndef OPENtls_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
 
@@ -108,7 +108,7 @@ const OPTIONS x509_options[] = {
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
     {"ext", OPT_EXT, 's', "Print various X509V3 extensions"},
     {"C", OPT_C, '-', "Print out C code forms"},
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
      "Print old-style (MD5) issuer hash value"},
     {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
@@ -173,7 +173,7 @@ int x509_main(int argc, char **argv)
     const unsigned long chtype = MBSTRING_ASC;
     const int multirdn = 0;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
-    STACK_OF(OPENSSL_STRING) *sigopts = NULL;
+    STACK_OF(OPENtls_STRING) *sigopts = NULL;
     X509 *x = NULL, *xca = NULL;
     X509_REQ *req = NULL, *rq = NULL;
     X509_STORE *ctx = NULL;
@@ -198,7 +198,7 @@ int x509_main(int argc, char **argv)
     int preserve_dates = 0;
     OPTION_CHOICE o;
     ENGINE *e = NULL;
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
     int subject_hash_old = 0, issuer_hash_old = 0;
 #endif
 
@@ -251,8 +251,8 @@ int x509_main(int argc, char **argv)
 
         case OPT_SIGOPT:
             if (!sigopts)
-                sigopts = sk_OPENSSL_STRING_new_null();
-            if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+                sigopts = sk_OPENtls_STRING_new_null();
+            if (!sigopts || !sk_OPENtls_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
         case OPT_DAYS:
@@ -431,7 +431,7 @@ int x509_main(int argc, char **argv)
         case OPT_BADSIG:
             badsig = 1;
             break;
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
         case OPT_SUBJECT_HASH_OLD:
             subject_hash_old = ++num;
             break;
@@ -702,14 +702,14 @@ int x509_main(int argc, char **argv)
                 BIO_puts(out, "\n");
             } else if (email == i || ocsp_uri == i) {
                 int j;
-                STACK_OF(OPENSSL_STRING) *emlst;
+                STACK_OF(OPENtls_STRING) *emlst;
                 if (email == i)
                     emlst = X509_get1_email(x);
                 else
                     emlst = X509_get1_ocsp(x);
-                for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
+                for (j = 0; j < sk_OPENtls_STRING_num(emlst); j++)
                     BIO_printf(out, "%s\n",
-                               sk_OPENSSL_STRING_value(emlst, j));
+                               sk_OPENtls_STRING_value(emlst, j));
                 X509_email_free(emlst);
             } else if (aliasout == i) {
                 unsigned char *alstr;
@@ -721,7 +721,7 @@ int x509_main(int argc, char **argv)
             } else if (subject_hash == i) {
                 BIO_printf(out, "%08lx\n", X509_subject_name_hash(x));
             }
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
             else if (subject_hash_old == i) {
                 BIO_printf(out, "%08lx\n", X509_subject_name_hash_old(x));
             }
@@ -729,7 +729,7 @@ int x509_main(int argc, char **argv)
             else if (issuer_hash == i) {
                 BIO_printf(out, "%08lx\n", X509_issuer_name_hash(x));
             }
-#ifndef OPENSSL_NO_MD5
+#ifndef OPENtls_NO_MD5
             else if (issuer_hash_old == i) {
                 BIO_printf(out, "%08lx\n", X509_issuer_name_hash_old(x));
             }
@@ -752,14 +752,14 @@ int x509_main(int argc, char **argv)
                     goto end;
                 }
                 BIO_printf(out, "Modulus=");
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENtls_NO_RSA
                 if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
                     const BIGNUM *n;
                     RSA_get0_key(EVP_PKEY_get0_RSA(pkey), &n, NULL, NULL);
                     BN_print(out, n);
                 } else
 #endif
-#ifndef OPENSSL_NO_DSA
+#ifndef OPENtls_NO_DSA
                 if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
                     const BIGNUM *dsapub = NULL;
                     DSA_get0_key(EVP_PKEY_get0_DSA(pkey), &dsapub, NULL);
@@ -801,7 +801,7 @@ int x509_main(int argc, char **argv)
                 d = (unsigned char *)m;
                 len = i2d_X509(x, &d);
                 print_array(out, "the_certificate", len, (unsigned char *)m);
-                OPENSSL_free(m);
+                OPENtls_free(m);
             } else if (text == i) {
                 X509_print_ex(out, x, get_nameopt(), certflag);
             } else if (startdate == i) {
@@ -943,14 +943,14 @@ int x509_main(int argc, char **argv)
     EVP_PKEY_free(Upkey);
     EVP_PKEY_free(CApkey);
     EVP_PKEY_free(fkey);
-    sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENtls_STRING_free(sigopts);
     X509_REQ_free(rq);
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
     ASN1_OBJECT_free(objtmp);
     release_engine(e);
-    OPENSSL_free(passin);
+    OPENtls_free(passin);
     return ret;
 }
 
@@ -984,14 +984,14 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile,
         goto end;
 
  end:
-    OPENSSL_free(buf);
+    OPENtls_free(buf);
     BN_free(serial);
     return bs;
 }
 
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
-                        STACK_OF(OPENSSL_STRING) *sigopts,
+                        STACK_OF(OPENtls_STRING) *sigopts,
                         const char *serialfile, int create,
                         int days, int clrext, CONF *conf, const char *section,
                         ASN1_INTEGER *sno, int reqfile, int preserve_dates)
@@ -1196,13 +1196,13 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
     }
 
     /* parse comma separated ext name string */
-    if ((tmp_ext_names = OPENSSL_strdup(ext_names)) == NULL)
+    if ((tmp_ext_names = OPENtls_strdup(ext_names)) == NULL)
         goto end;
     if ((nn = parse_ext_names(tmp_ext_names, NULL)) == 0) {
         BIO_printf(bio, "Invalid extension names: %s\n", ext_names);
         goto end;
     }
-    if ((names = OPENSSL_malloc(sizeof(char *) * nn)) == NULL)
+    if ((names = OPENtls_malloc(sizeof(char *) * nn)) == NULL)
         goto end;
     parse_ext_names(tmp_ext_names, names);
 
@@ -1236,7 +1236,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
     ret = X509V3_extensions_print(bio, NULL, exts2, 0, 0);
  end:
     sk_X509_EXTENSION_free(exts2);
-    OPENSSL_free(names);
-    OPENSSL_free(tmp_ext_names);
+    OPENtls_free(names);
+    OPENtls_free(tmp_ext_names);
     return ret;
 }

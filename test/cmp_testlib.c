@@ -1,16 +1,16 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2019 The Opentls Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "cmp_testlib.h"
-#include <openssl/rsa.h> /* needed in case config no-deprecated */
+#include <opentls/rsa.h> /* needed in case config no-deprecated */
 
 EVP_PKEY *load_pem_key(const char *file)
 {
@@ -40,11 +40,11 @@ X509 *load_pem_cert(const char *file)
     return cert;
 }
 
-OSSL_CMP_MSG *load_pkimsg(const char *file)
+Otls_CMP_MSG *load_pkimsg(const char *file)
 {
-    OSSL_CMP_MSG *msg;
+    Otls_CMP_MSG *msg;
 
-    (void)TEST_ptr((msg = ossl_cmp_msg_load(file)));
+    (void)TEST_ptr((msg = otls_cmp_msg_load(file)));
     return msg;
 }
 
@@ -76,9 +76,9 @@ EVP_PKEY *gen_rsa(void)
 /*
  * Checks whether the syntax of msg conforms to ASN.1
  */
-int valid_asn1_encoding(const OSSL_CMP_MSG *msg)
+int valid_asn1_encoding(const Otls_CMP_MSG *msg)
 {
-    return msg != NULL ? i2d_OSSL_CMP_MSG(msg, NULL) > 0 : 0;
+    return msg != NULL ? i2d_Otls_CMP_MSG(msg, NULL) > 0 : 0;
 }
 
 /*

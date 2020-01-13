@@ -1,10 +1,10 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2016 The Opentls Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
+# https://www.opentls.org/source/license.html
 
 
 use strict;
@@ -13,12 +13,12 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
-use OpenSSL::Test::Utils;
+use Opentls::Test qw/:DEFAULT srctop_dir srctop_file/;
+use Opentls::Test::Utils;
 
 setup("test_cms");
 
-plan skip_all => "CMS is not supported by this OpenSSL build"
+plan skip_all => "CMS is not supported by this Opentls build"
     if disabled("cms");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
@@ -206,7 +206,7 @@ my @smime_cms_tests = (
 
     [ "signed content MIME format, RSA key, signed receipt request",
       [ "-sign", "-in", $smcont, "-signer", catfile($smdir, "smrsa1.pem"), "-nodetach",
-	"-receipt_request_to", "test\@openssl.org", "-receipt_request_all",
+	"-receipt_request_to", "test\@opentls.org", "-receipt_request_all",
 	"-out", "test.cms" ],
       [ "-verify", "-in", "test.cms",
 	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
@@ -445,8 +445,8 @@ subtest "CMS => PKCS#7 compatibility tests\n" => sub {
 	  my $skip_reason = check_availability($$_[0]);
 	  skip $skip_reason, 1 if $skip_reason;
 
-	  ok(run(app(["openssl", "cms", @{$$_[1]}]))
-	     && run(app(["openssl", "smime", @{$$_[2]}]))
+	  ok(run(app(["opentls", "cms", @{$$_[1]}]))
+	     && run(app(["opentls", "smime", @{$$_[2]}]))
 	     && compare_text($smcont, "smtst.txt") == 0,
 	     $$_[0]);
 	}
@@ -460,8 +460,8 @@ subtest "CMS <= PKCS#7 compatibility tests\n" => sub {
 	  my $skip_reason = check_availability($$_[0]);
 	  skip $skip_reason, 1 if $skip_reason;
 
-	  ok(run(app(["openssl", "smime", @{$$_[1]}]))
-	     && run(app(["openssl", "cms", @{$$_[2]}]))
+	  ok(run(app(["opentls", "smime", @{$$_[1]}]))
+	     && run(app(["opentls", "cms", @{$$_[2]}]))
 	     && compare_text($smcont, "smtst.txt") == 0,
 	     $$_[0]);
 	}
@@ -476,8 +476,8 @@ subtest "CMS <=> CMS consistency tests\n" => sub {
 	  my $skip_reason = check_availability($$_[0]);
 	  skip $skip_reason, 1 if $skip_reason;
 
-	  ok(run(app(["openssl", "cms", @{$$_[1]}]))
-	     && run(app(["openssl", "cms", @{$$_[2]}]))
+	  ok(run(app(["opentls", "cms", @{$$_[1]}]))
+	     && run(app(["opentls", "cms", @{$$_[2]}]))
 	     && compare_text($smcont, "smtst.txt") == 0,
 	     $$_[0]);
 	}
@@ -487,8 +487,8 @@ subtest "CMS <=> CMS consistency tests\n" => sub {
 	  my $skip_reason = check_availability($$_[0]);
 	  skip $skip_reason, 1 if $skip_reason;
 
-	  ok(run(app(["openssl", "cms", @{$$_[1]}]))
-	     && run(app(["openssl", "cms", @{$$_[2]}]))
+	  ok(run(app(["opentls", "cms", @{$$_[1]}]))
+	     && run(app(["opentls", "cms", @{$$_[2]}]))
 	     && compare_text($smcont, "smtst.txt") == 0,
 	     $$_[0]);
 	}
@@ -504,8 +504,8 @@ subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
 	  my $skip_reason = check_availability($$_[0]);
 	  skip $skip_reason, 1 if $skip_reason;
 
-	  ok(run(app(["openssl", "cms", @{$$_[1]}]))
-	     && run(app(["openssl", "cms", @{$$_[2]}]))
+	  ok(run(app(["opentls", "cms", @{$$_[1]}]))
+	     && run(app(["opentls", "cms", @{$$_[2]}]))
 	     && compare_text($smcont, "smtst.txt") == 0,
 	     $$_[0]);
 	}
@@ -521,8 +521,8 @@ subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
 	    my $skip_reason = check_availability($$_[0]);
 	    skip $skip_reason, 1 if $skip_reason;
 
-	    ok(run(app(["openssl", "cms", @{$$_[1]}]))
-	       && run(app(["openssl", "cms", @{$$_[2]}]))
+	    ok(run(app(["opentls", "cms", @{$$_[1]}]))
+	       && run(app(["opentls", "cms", @{$$_[2]}]))
 	       && compare_text($smcont, "smtst.txt") == 0,
 	       $$_[0]);
 	  }
@@ -555,10 +555,10 @@ subtest "CMS Check the content type attribute is added for additional signers\n"
           my $skip_reason = check_availability($$_[0]);
           skip $skip_reason, 1 if $skip_reason;
 
-          ok(run(app(["openssl", "cms", @{$$_[1]}]))
-             && run(app(["openssl", "cms", @{$$_[2]}]))
+          ok(run(app(["opentls", "cms", @{$$_[1]}]))
+             && run(app(["opentls", "cms", @{$$_[2]}]))
              && contentType_matches("test2.cms") == 2
-             && run(app(["openssl", "cms", @{$$_[3]}])),
+             && run(app(["opentls", "cms", @{$$_[3]}])),
              $$_[0]);
         }
     }
@@ -569,7 +569,7 @@ subtest "CMS Check that bad attributes fail when verifying signers\n" => sub {
         (scalar @incorrect_attribute_cms_test);
 
     foreach my $name (@incorrect_attribute_cms_test) {
-        ok(!run(app(["openssl", "cms", "-verify", "-in",
+        ok(!run(app(["opentls", "cms", "-verify", "-in",
                      catfile($datadir, $name), "-inform", "DER", "-CAfile",
                      catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ])),
             $name);

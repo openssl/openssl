@@ -1,22 +1,22 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <string.h>
 
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
+#include <opentls/e_os2.h>
+#include <opentls/crypto.h>
 
 #include "internal/nelem.h"
-#include "ssl_test_ctx.h"
+#include "tls_test_ctx.h"
 #include "testutil.h"
 
-#ifdef OPENSSL_SYS_WINDOWS
+#ifdef OPENtls_SYS_WINDOWS
 # define strcasecmp _stricmp
 #endif
 
@@ -38,21 +38,21 @@ static int parse_boolean(const char *value, int *result)
     return 0;
 }
 
-#define IMPLEMENT_SSL_TEST_BOOL_OPTION(struct_type, name, field)        \
+#define IMPLEMENT_tls_TEST_BOOL_OPTION(struct_type, name, field)        \
     static int parse_##name##_##field(struct_type *ctx, const char *value) \
     {                                                                   \
         return parse_boolean(value, &ctx->field);                       \
     }
 
-#define IMPLEMENT_SSL_TEST_STRING_OPTION(struct_type, name, field)      \
+#define IMPLEMENT_tls_TEST_STRING_OPTION(struct_type, name, field)      \
     static int parse_##name##_##field(struct_type *ctx, const char *value) \
     {                                                                   \
-        OPENSSL_free(ctx->field);                                       \
-        ctx->field = OPENSSL_strdup(value);                             \
+        OPENtls_free(ctx->field);                                       \
+        ctx->field = OPENtls_strdup(value);                             \
         return TEST_ptr(ctx->field);                                    \
     }
 
-#define IMPLEMENT_SSL_TEST_INT_OPTION(struct_type, name, field)        \
+#define IMPLEMENT_tls_TEST_INT_OPTION(struct_type, name, field)        \
     static int parse_##name##_##field(struct_type *ctx, const char *value) \
     {                                                                   \
         ctx->field = atoi(value);                                       \
@@ -94,18 +94,18 @@ static const char *enum_name(const test_enum *enums, size_t num_enums,
 
 /* ExpectedResult */
 
-static const test_enum ssl_test_results[] = {
-    {"Success", SSL_TEST_SUCCESS},
-    {"ServerFail", SSL_TEST_SERVER_FAIL},
-    {"ClientFail", SSL_TEST_CLIENT_FAIL},
-    {"InternalError", SSL_TEST_INTERNAL_ERROR},
-    {"FirstHandshakeFailed", SSL_TEST_FIRST_HANDSHAKE_FAILED},
+static const test_enum tls_test_results[] = {
+    {"Success", tls_TEST_SUCCESS},
+    {"ServerFail", tls_TEST_SERVER_FAIL},
+    {"ClientFail", tls_TEST_CLIENT_FAIL},
+    {"InternalError", tls_TEST_INTERNAL_ERROR},
+    {"FirstHandshakeFailed", tls_TEST_FIRST_HANDSHAKE_FAILED},
 };
 
-__owur static int parse_expected_result(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_expected_result(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_test_results, OSSL_NELEM(ssl_test_results),
+    if (!parse_enum(tls_test_results, Otls_NELEM(tls_test_results),
                     &ret_value, value)) {
         return 0;
     }
@@ -113,78 +113,78 @@ __owur static int parse_expected_result(SSL_TEST_CTX *test_ctx, const char *valu
     return 1;
 }
 
-const char *ssl_test_result_name(ssl_test_result_t result)
+const char *tls_test_result_name(tls_test_result_t result)
 {
-    return enum_name(ssl_test_results, OSSL_NELEM(ssl_test_results), result);
+    return enum_name(tls_test_results, Otls_NELEM(tls_test_results), result);
 }
 
 /* ExpectedClientAlert / ExpectedServerAlert */
 
-static const test_enum ssl_alerts[] = {
-    {"UnknownCA", SSL_AD_UNKNOWN_CA},
-    {"HandshakeFailure", SSL_AD_HANDSHAKE_FAILURE},
-    {"UnrecognizedName", SSL_AD_UNRECOGNIZED_NAME},
-    {"BadCertificate", SSL_AD_BAD_CERTIFICATE},
-    {"NoApplicationProtocol", SSL_AD_NO_APPLICATION_PROTOCOL},
-    {"CertificateRequired", SSL_AD_CERTIFICATE_REQUIRED},
+static const test_enum tls_alerts[] = {
+    {"UnknownCA", tls_AD_UNKNOWN_CA},
+    {"HandshakeFailure", tls_AD_HANDSHAKE_FAILURE},
+    {"UnrecognizedName", tls_AD_UNRECOGNIZED_NAME},
+    {"BadCertificate", tls_AD_BAD_CERTIFICATE},
+    {"NoApplicationProtocol", tls_AD_NO_APPLICATION_PROTOCOL},
+    {"CertificateRequired", tls_AD_CERTIFICATE_REQUIRED},
 };
 
 __owur static int parse_alert(int *alert, const char *value)
 {
-    return parse_enum(ssl_alerts, OSSL_NELEM(ssl_alerts), alert, value);
+    return parse_enum(tls_alerts, Otls_NELEM(tls_alerts), alert, value);
 }
 
-__owur static int parse_client_alert(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_client_alert(tls_TEST_CTX *test_ctx, const char *value)
 {
     return parse_alert(&test_ctx->expected_client_alert, value);
 }
 
-__owur static int parse_server_alert(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_server_alert(tls_TEST_CTX *test_ctx, const char *value)
 {
     return parse_alert(&test_ctx->expected_server_alert, value);
 }
 
-const char *ssl_alert_name(int alert)
+const char *tls_alert_name(int alert)
 {
-    return enum_name(ssl_alerts, OSSL_NELEM(ssl_alerts), alert);
+    return enum_name(tls_alerts, Otls_NELEM(tls_alerts), alert);
 }
 
 /* ExpectedProtocol */
 
-static const test_enum ssl_protocols[] = {
+static const test_enum tls_protocols[] = {
      {"TLSv1.3", TLS1_3_VERSION},
      {"TLSv1.2", TLS1_2_VERSION},
      {"TLSv1.1", TLS1_1_VERSION},
      {"TLSv1", TLS1_VERSION},
-     {"SSLv3", SSL3_VERSION},
+     {"tlsv3", tls3_VERSION},
      {"DTLSv1", DTLS1_VERSION},
      {"DTLSv1.2", DTLS1_2_VERSION},
 };
 
-__owur static int parse_protocol(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_protocol(tls_TEST_CTX *test_ctx, const char *value)
 {
-    return parse_enum(ssl_protocols, OSSL_NELEM(ssl_protocols),
+    return parse_enum(tls_protocols, Otls_NELEM(tls_protocols),
                       &test_ctx->expected_protocol, value);
 }
 
-const char *ssl_protocol_name(int protocol)
+const char *tls_protocol_name(int protocol)
 {
-    return enum_name(ssl_protocols, OSSL_NELEM(ssl_protocols), protocol);
+    return enum_name(tls_protocols, Otls_NELEM(tls_protocols), protocol);
 }
 
 /* VerifyCallback */
 
-static const test_enum ssl_verify_callbacks[] = {
-    {"None", SSL_TEST_VERIFY_NONE},
-    {"AcceptAll", SSL_TEST_VERIFY_ACCEPT_ALL},
-    {"RejectAll", SSL_TEST_VERIFY_REJECT_ALL},
+static const test_enum tls_verify_callbacks[] = {
+    {"None", tls_TEST_VERIFY_NONE},
+    {"AcceptAll", tls_TEST_VERIFY_ACCEPT_ALL},
+    {"RejectAll", tls_TEST_VERIFY_REJECT_ALL},
 };
 
-__owur static int parse_client_verify_callback(SSL_TEST_CLIENT_CONF *client_conf,
+__owur static int parse_client_verify_callback(tls_TEST_CLIENT_CONF *client_conf,
                                                const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_verify_callbacks, OSSL_NELEM(ssl_verify_callbacks),
+    if (!parse_enum(tls_verify_callbacks, Otls_NELEM(tls_verify_callbacks),
                     &ret_value, value)) {
         return 0;
     }
@@ -192,26 +192,26 @@ __owur static int parse_client_verify_callback(SSL_TEST_CLIENT_CONF *client_conf
     return 1;
 }
 
-const char *ssl_verify_callback_name(ssl_verify_callback_t callback)
+const char *tls_verify_callback_name(tls_verify_callback_t callback)
 {
-    return enum_name(ssl_verify_callbacks, OSSL_NELEM(ssl_verify_callbacks),
+    return enum_name(tls_verify_callbacks, Otls_NELEM(tls_verify_callbacks),
                      callback);
 }
 
 /* ServerName */
 
-static const test_enum ssl_servername[] = {
-    {"None", SSL_TEST_SERVERNAME_NONE},
-    {"server1", SSL_TEST_SERVERNAME_SERVER1},
-    {"server2", SSL_TEST_SERVERNAME_SERVER2},
-    {"invalid", SSL_TEST_SERVERNAME_INVALID},
+static const test_enum tls_servername[] = {
+    {"None", tls_TEST_SERVERNAME_NONE},
+    {"server1", tls_TEST_SERVERNAME_SERVER1},
+    {"server2", tls_TEST_SERVERNAME_SERVER2},
+    {"invalid", tls_TEST_SERVERNAME_INVALID},
 };
 
-__owur static int parse_servername(SSL_TEST_CLIENT_CONF *client_conf,
+__owur static int parse_servername(tls_TEST_CLIENT_CONF *client_conf,
                                    const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_servername, OSSL_NELEM(ssl_servername),
+    if (!parse_enum(tls_servername, Otls_NELEM(tls_servername),
                     &ret_value, value)) {
         return 0;
     }
@@ -219,11 +219,11 @@ __owur static int parse_servername(SSL_TEST_CLIENT_CONF *client_conf,
     return 1;
 }
 
-__owur static int parse_expected_servername(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_servername(tls_TEST_CTX *test_ctx,
                                             const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_servername, OSSL_NELEM(ssl_servername),
+    if (!parse_enum(tls_servername, Otls_NELEM(tls_servername),
                     &ret_value, value)) {
         return 0;
     }
@@ -231,55 +231,55 @@ __owur static int parse_expected_servername(SSL_TEST_CTX *test_ctx,
     return 1;
 }
 
-const char *ssl_servername_name(ssl_servername_t server)
+const char *tls_servername_name(tls_servername_t server)
 {
-    return enum_name(ssl_servername, OSSL_NELEM(ssl_servername),
+    return enum_name(tls_servername, Otls_NELEM(tls_servername),
                      server);
 }
 
 /* ServerNameCallback */
 
-static const test_enum ssl_servername_callbacks[] = {
-    {"None", SSL_TEST_SERVERNAME_CB_NONE},
-    {"IgnoreMismatch", SSL_TEST_SERVERNAME_IGNORE_MISMATCH},
-    {"RejectMismatch", SSL_TEST_SERVERNAME_REJECT_MISMATCH},
+static const test_enum tls_servername_callbacks[] = {
+    {"None", tls_TEST_SERVERNAME_CB_NONE},
+    {"IgnoreMismatch", tls_TEST_SERVERNAME_IGNORE_MISMATCH},
+    {"RejectMismatch", tls_TEST_SERVERNAME_REJECT_MISMATCH},
     {"ClientHelloIgnoreMismatch",
-     SSL_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH},
+     tls_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH},
     {"ClientHelloRejectMismatch",
-     SSL_TEST_SERVERNAME_CLIENT_HELLO_REJECT_MISMATCH},
-    {"ClientHelloNoV12", SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12},
+     tls_TEST_SERVERNAME_CLIENT_HELLO_REJECT_MISMATCH},
+    {"ClientHelloNoV12", tls_TEST_SERVERNAME_CLIENT_HELLO_NO_V12},
 };
 
-__owur static int parse_servername_callback(SSL_TEST_SERVER_CONF *server_conf,
+__owur static int parse_servername_callback(tls_TEST_SERVER_CONF *server_conf,
                                             const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_servername_callbacks,
-                    OSSL_NELEM(ssl_servername_callbacks), &ret_value, value)) {
+    if (!parse_enum(tls_servername_callbacks,
+                    Otls_NELEM(tls_servername_callbacks), &ret_value, value)) {
         return 0;
     }
     server_conf->servername_callback = ret_value;
     return 1;
 }
 
-const char *ssl_servername_callback_name(ssl_servername_callback_t callback)
+const char *tls_servername_callback_name(tls_servername_callback_t callback)
 {
-    return enum_name(ssl_servername_callbacks,
-                     OSSL_NELEM(ssl_servername_callbacks), callback);
+    return enum_name(tls_servername_callbacks,
+                     Otls_NELEM(tls_servername_callbacks), callback);
 }
 
 /* SessionTicketExpected */
 
-static const test_enum ssl_session_ticket[] = {
-    {"Ignore", SSL_TEST_SESSION_TICKET_IGNORE},
-    {"Yes", SSL_TEST_SESSION_TICKET_YES},
-    {"No", SSL_TEST_SESSION_TICKET_NO},
+static const test_enum tls_session_ticket[] = {
+    {"Ignore", tls_TEST_SESSION_TICKET_IGNORE},
+    {"Yes", tls_TEST_SESSION_TICKET_YES},
+    {"No", tls_TEST_SESSION_TICKET_NO},
 };
 
-__owur static int parse_session_ticket(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_session_ticket(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_session_ticket, OSSL_NELEM(ssl_session_ticket),
+    if (!parse_enum(tls_session_ticket, Otls_NELEM(tls_session_ticket),
                     &ret_value, value)) {
         return 0;
     }
@@ -287,29 +287,29 @@ __owur static int parse_session_ticket(SSL_TEST_CTX *test_ctx, const char *value
     return 1;
 }
 
-const char *ssl_session_ticket_name(ssl_session_ticket_t server)
+const char *tls_session_ticket_name(tls_session_ticket_t server)
 {
-    return enum_name(ssl_session_ticket,
-                     OSSL_NELEM(ssl_session_ticket),
+    return enum_name(tls_session_ticket,
+                     Otls_NELEM(tls_session_ticket),
                      server);
 }
 
 /* CompressionExpected */
 
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, compression_expected)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CTX, test, compression_expected)
 
 /* SessionIdExpected */
 
-static const test_enum ssl_session_id[] = {
-    {"Ignore", SSL_TEST_SESSION_ID_IGNORE},
-    {"Yes", SSL_TEST_SESSION_ID_YES},
-    {"No", SSL_TEST_SESSION_ID_NO},
+static const test_enum tls_session_id[] = {
+    {"Ignore", tls_TEST_SESSION_ID_IGNORE},
+    {"Yes", tls_TEST_SESSION_ID_YES},
+    {"No", tls_TEST_SESSION_ID_NO},
 };
 
-__owur static int parse_session_id(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_session_id(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_session_id, OSSL_NELEM(ssl_session_id),
+    if (!parse_enum(tls_session_id, Otls_NELEM(tls_session_id),
                     &ret_value, value)) {
         return 0;
     }
@@ -317,24 +317,24 @@ __owur static int parse_session_id(SSL_TEST_CTX *test_ctx, const char *value)
     return 1;
 }
 
-const char *ssl_session_id_name(ssl_session_id_t server)
+const char *tls_session_id_name(tls_session_id_t server)
 {
-    return enum_name(ssl_session_id,
-                     OSSL_NELEM(ssl_session_id),
+    return enum_name(tls_session_id,
+                     Otls_NELEM(tls_session_id),
                      server);
 }
 
 /* Method */
 
-static const test_enum ssl_test_methods[] = {
-    {"TLS", SSL_TEST_METHOD_TLS},
-    {"DTLS", SSL_TEST_METHOD_DTLS},
+static const test_enum tls_test_methods[] = {
+    {"TLS", tls_TEST_METHOD_TLS},
+    {"DTLS", tls_TEST_METHOD_DTLS},
 };
 
-__owur static int parse_test_method(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_test_method(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_test_methods, OSSL_NELEM(ssl_test_methods),
+    if (!parse_enum(tls_test_methods, Otls_NELEM(tls_test_methods),
                     &ret_value, value)) {
         return 0;
     }
@@ -342,46 +342,46 @@ __owur static int parse_test_method(SSL_TEST_CTX *test_ctx, const char *value)
     return 1;
 }
 
-const char *ssl_test_method_name(ssl_test_method_t method)
+const char *tls_test_method_name(tls_test_method_t method)
 {
-    return enum_name(ssl_test_methods, OSSL_NELEM(ssl_test_methods), method);
+    return enum_name(tls_test_methods, Otls_NELEM(tls_test_methods), method);
 }
 
 /* NPN and ALPN options */
 
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, npn_protocols)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, npn_protocols)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_npn_protocol)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, alpn_protocols)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, alpn_protocols)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_alpn_protocol)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CLIENT_CONF, client, npn_protocols)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_SERVER_CONF, server, npn_protocols)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CTX, test, expected_npn_protocol)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CLIENT_CONF, client, alpn_protocols)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_SERVER_CONF, server, alpn_protocols)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CTX, test, expected_alpn_protocol)
 
 /* SRP options */
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, srp_user)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, srp_user)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, srp_password)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, srp_password)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CLIENT_CONF, client, srp_user)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_SERVER_CONF, server, srp_user)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CLIENT_CONF, client, srp_password)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_SERVER_CONF, server, srp_password)
 
 /* Session Ticket App Data options */
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_session_ticket_app_data)
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, session_ticket_app_data)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CTX, test, expected_session_ticket_app_data)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_SERVER_CONF, server, session_ticket_app_data)
 
 /* Handshake mode */
 
-static const test_enum ssl_handshake_modes[] = {
-    {"Simple", SSL_TEST_HANDSHAKE_SIMPLE},
-    {"Resume", SSL_TEST_HANDSHAKE_RESUME},
-    {"RenegotiateServer", SSL_TEST_HANDSHAKE_RENEG_SERVER},
-    {"RenegotiateClient", SSL_TEST_HANDSHAKE_RENEG_CLIENT},
-    {"KeyUpdateServer", SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER},
-    {"KeyUpdateClient", SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT},
-    {"PostHandshakeAuth", SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH},
+static const test_enum tls_handshake_modes[] = {
+    {"Simple", tls_TEST_HANDSHAKE_SIMPLE},
+    {"Resume", tls_TEST_HANDSHAKE_RESUME},
+    {"RenegotiateServer", tls_TEST_HANDSHAKE_RENEG_SERVER},
+    {"RenegotiateClient", tls_TEST_HANDSHAKE_RENEG_CLIENT},
+    {"KeyUpdateServer", tls_TEST_HANDSHAKE_KEY_UPDATE_SERVER},
+    {"KeyUpdateClient", tls_TEST_HANDSHAKE_KEY_UPDATE_CLIENT},
+    {"PostHandshakeAuth", tls_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH},
 };
 
-__owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_handshake_mode(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_handshake_modes, OSSL_NELEM(ssl_handshake_modes),
+    if (!parse_enum(tls_handshake_modes, Otls_NELEM(tls_handshake_modes),
                     &ret_value, value)) {
         return 0;
     }
@@ -389,27 +389,27 @@ __owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value
     return 1;
 }
 
-const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
+const char *tls_handshake_mode_name(tls_handshake_mode_t mode)
 {
-    return enum_name(ssl_handshake_modes, OSSL_NELEM(ssl_handshake_modes),
+    return enum_name(tls_handshake_modes, Otls_NELEM(tls_handshake_modes),
                      mode);
 }
 
 /* Renegotiation Ciphersuites */
 
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, reneg_ciphers)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CLIENT_CONF, client, reneg_ciphers)
 
 /* KeyUpdateType */
 
-static const test_enum ssl_key_update_types[] = {
-    {"KeyUpdateRequested", SSL_KEY_UPDATE_REQUESTED},
-    {"KeyUpdateNotRequested", SSL_KEY_UPDATE_NOT_REQUESTED},
+static const test_enum tls_key_update_types[] = {
+    {"KeyUpdateRequested", tls_KEY_UPDATE_REQUESTED},
+    {"KeyUpdateNotRequested", tls_KEY_UPDATE_NOT_REQUESTED},
 };
 
-__owur static int parse_key_update_type(SSL_TEST_CTX *test_ctx, const char *value)
+__owur static int parse_key_update_type(tls_TEST_CTX *test_ctx, const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_key_update_types, OSSL_NELEM(ssl_key_update_types),
+    if (!parse_enum(tls_key_update_types, Otls_NELEM(tls_key_update_types),
                     &ret_value, value)) {
         return 0;
     }
@@ -419,17 +419,17 @@ __owur static int parse_key_update_type(SSL_TEST_CTX *test_ctx, const char *valu
 
 /* CT Validation */
 
-static const test_enum ssl_ct_validation_modes[] = {
-    {"None", SSL_TEST_CT_VALIDATION_NONE},
-    {"Permissive", SSL_TEST_CT_VALIDATION_PERMISSIVE},
-    {"Strict", SSL_TEST_CT_VALIDATION_STRICT},
+static const test_enum tls_ct_validation_modes[] = {
+    {"None", tls_TEST_CT_VALIDATION_NONE},
+    {"Permissive", tls_TEST_CT_VALIDATION_PERMISSIVE},
+    {"Strict", tls_TEST_CT_VALIDATION_STRICT},
 };
 
-__owur static int parse_ct_validation(SSL_TEST_CLIENT_CONF *client_conf,
+__owur static int parse_ct_validation(tls_TEST_CLIENT_CONF *client_conf,
                                       const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_ct_validation_modes, OSSL_NELEM(ssl_ct_validation_modes),
+    if (!parse_enum(tls_ct_validation_modes, Otls_NELEM(tls_ct_validation_modes),
                     &ret_value, value)) {
         return 0;
     }
@@ -437,31 +437,31 @@ __owur static int parse_ct_validation(SSL_TEST_CLIENT_CONF *client_conf,
     return 1;
 }
 
-const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
+const char *tls_ct_validation_name(tls_ct_validation_t mode)
 {
-    return enum_name(ssl_ct_validation_modes, OSSL_NELEM(ssl_ct_validation_modes),
+    return enum_name(tls_ct_validation_modes, Otls_NELEM(tls_ct_validation_modes),
                      mode);
 }
 
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, use_sctp)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_client_sctp_label_bug)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_server_sctp_label_bug)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CTX, test, resumption_expected)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_SERVER_CONF, server, broken_session_ticket)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CTX, test, use_sctp)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CTX, test, enable_client_sctp_label_bug)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CTX, test, enable_server_sctp_label_bug)
 
 /* CertStatus */
 
-static const test_enum ssl_certstatus[] = {
-    {"None", SSL_TEST_CERT_STATUS_NONE},
-    {"GoodResponse", SSL_TEST_CERT_STATUS_GOOD_RESPONSE},
-    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE}
+static const test_enum tls_certstatus[] = {
+    {"None", tls_TEST_CERT_STATUS_NONE},
+    {"GoodResponse", tls_TEST_CERT_STATUS_GOOD_RESPONSE},
+    {"BadResponse", tls_TEST_CERT_STATUS_BAD_RESPONSE}
 };
 
-__owur static int parse_certstatus(SSL_TEST_SERVER_CONF *server_conf,
+__owur static int parse_certstatus(tls_TEST_SERVER_CONF *server_conf,
                                             const char *value)
 {
     int ret_value;
-    if (!parse_enum(ssl_certstatus, OSSL_NELEM(ssl_certstatus), &ret_value,
+    if (!parse_enum(tls_certstatus, Otls_NELEM(tls_certstatus), &ret_value,
                     value)) {
         return 0;
     }
@@ -469,23 +469,23 @@ __owur static int parse_certstatus(SSL_TEST_SERVER_CONF *server_conf,
     return 1;
 }
 
-const char *ssl_certstatus_name(ssl_cert_status_t cert_status)
+const char *tls_certstatus_name(tls_cert_status_t cert_status)
 {
-    return enum_name(ssl_certstatus,
-                     OSSL_NELEM(ssl_certstatus), cert_status);
+    return enum_name(tls_certstatus,
+                     Otls_NELEM(tls_certstatus), cert_status);
 }
 
 /* ApplicationData */
 
-IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
+IMPLEMENT_tls_TEST_INT_OPTION(tls_TEST_CTX, test, app_data_size)
 
 
 /* MaxFragmentSize */
 
-IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
+IMPLEMENT_tls_TEST_INT_OPTION(tls_TEST_CTX, test, max_fragment_size)
 
 /* Maximum-Fragment-Length TLS extension mode */
-static const test_enum ssl_max_fragment_len_mode[] = {
+static const test_enum tls_max_fragment_len_mode[] = {
     {"None", TLSEXT_max_fragment_length_DISABLED},
     { "512", TLSEXT_max_fragment_length_512},
     {"1024", TLSEXT_max_fragment_length_1024},
@@ -493,23 +493,23 @@ static const test_enum ssl_max_fragment_len_mode[] = {
     {"4096", TLSEXT_max_fragment_length_4096}
 };
 
-__owur static int parse_max_fragment_len_mode(SSL_TEST_CLIENT_CONF *client_conf,
+__owur static int parse_max_fragment_len_mode(tls_TEST_CLIENT_CONF *client_conf,
                                               const char *value)
 {
     int ret_value;
 
-    if (!parse_enum(ssl_max_fragment_len_mode,
-                    OSSL_NELEM(ssl_max_fragment_len_mode), &ret_value, value)) {
+    if (!parse_enum(tls_max_fragment_len_mode,
+                    Otls_NELEM(tls_max_fragment_len_mode), &ret_value, value)) {
         return 0;
     }
     client_conf->max_fragment_len_mode = ret_value;
     return 1;
 }
 
-const char *ssl_max_fragment_len_name(int MFL_mode)
+const char *tls_max_fragment_len_name(int MFL_mode)
 {
-    return enum_name(ssl_max_fragment_len_mode,
-                     OSSL_NELEM(ssl_max_fragment_len_mode), MFL_mode);
+    return enum_name(tls_max_fragment_len_mode,
+                     Otls_NELEM(tls_max_fragment_len_mode), MFL_mode);
 }
 
 
@@ -529,7 +529,7 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
         nid = OBJ_sn2nid(value);
     if (nid == NID_undef)
         nid = OBJ_ln2nid(value);
-#ifndef OPENSSL_NO_EC
+#ifndef OPENtls_NO_EC
     if (nid == NID_undef)
         nid = EC_curve_nist2nid(value);
 #endif
@@ -539,34 +539,34 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
     return 1;
 }
 
-__owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_tmp_key_type(tls_TEST_CTX *test_ctx,
                                               const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_tmp_key_type, value);
 }
 
-__owur static int parse_expected_server_cert_type(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_server_cert_type(tls_TEST_CTX *test_ctx,
                                                   const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_server_cert_type,
                                    value);
 }
 
-__owur static int parse_expected_server_sign_type(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_server_sign_type(tls_TEST_CTX *test_ctx,
                                                  const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_server_sign_type,
                                    value);
 }
 
-__owur static int parse_expected_client_cert_type(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_client_cert_type(tls_TEST_CTX *test_ctx,
                                                   const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_client_cert_type,
                                    value);
 }
 
-__owur static int parse_expected_client_sign_type(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_client_sign_type(tls_TEST_CTX *test_ctx,
                                                  const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_client_sign_type,
@@ -591,14 +591,14 @@ __owur static int parse_expected_sign_hash(int *ptype, const char *value)
     return 1;
 }
 
-__owur static int parse_expected_server_sign_hash(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_server_sign_hash(tls_TEST_CTX *test_ctx,
                                                   const char *value)
 {
     return parse_expected_sign_hash(&test_ctx->expected_server_sign_hash,
                                     value);
 }
 
-__owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_client_sign_hash(tls_TEST_CTX *test_ctx,
                                                   const char *value)
 {
     return parse_expected_sign_hash(&test_ctx->expected_client_sign_hash,
@@ -613,15 +613,15 @@ __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
     if (!strcmp(value, "empty"))
         *pnames = sk_X509_NAME_new_null();
     else
-        *pnames = SSL_load_client_CA_file(value);
+        *pnames = tls_load_client_CA_file(value);
     return *pnames != NULL;
 }
-__owur static int parse_expected_server_ca_names(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_server_ca_names(tls_TEST_CTX *test_ctx,
                                                  const char *value)
 {
     return parse_expected_ca_names(&test_ctx->expected_server_ca_names, value);
 }
-__owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
+__owur static int parse_expected_client_ca_names(tls_TEST_CTX *test_ctx,
                                                  const char *value)
 {
     return parse_expected_ca_names(&test_ctx->expected_client_ca_names, value);
@@ -629,22 +629,22 @@ __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
 
 /* ExpectedCipher */
 
-IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
+IMPLEMENT_tls_TEST_STRING_OPTION(tls_TEST_CTX, test, expected_cipher)
 
 /* Client and Server PHA */
 
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, enable_pha)
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_CLIENT_CONF, client, enable_pha)
+IMPLEMENT_tls_TEST_BOOL_OPTION(tls_TEST_SERVER_CONF, server, force_pha)
 
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
 typedef struct {
     const char *name;
-    int (*parse)(SSL_TEST_CTX *test_ctx, const char *value);
-} ssl_test_ctx_option;
+    int (*parse)(tls_TEST_CTX *test_ctx, const char *value);
+} tls_test_ctx_option;
 
-static const ssl_test_ctx_option ssl_test_ctx_options[] = {
+static const tls_test_ctx_option tls_test_ctx_options[] = {
     { "ExpectedResult", &parse_expected_result },
     { "ExpectedClientAlert", &parse_client_alert },
     { "ExpectedServerAlert", &parse_server_alert },
@@ -680,10 +680,10 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
 /* Nested client options. */
 typedef struct {
     const char *name;
-    int (*parse)(SSL_TEST_CLIENT_CONF *conf, const char *value);
-} ssl_test_client_option;
+    int (*parse)(tls_TEST_CLIENT_CONF *conf, const char *value);
+} tls_test_client_option;
 
-static const ssl_test_client_option ssl_test_client_options[] = {
+static const tls_test_client_option tls_test_client_options[] = {
     { "VerifyCallback", &parse_client_verify_callback },
     { "ServerName", &parse_servername },
     { "NPNProtocols", &parse_client_npn_protocols },
@@ -699,10 +699,10 @@ static const ssl_test_client_option ssl_test_client_options[] = {
 /* Nested server options. */
 typedef struct {
     const char *name;
-    int (*parse)(SSL_TEST_SERVER_CONF *conf, const char *value);
-} ssl_test_server_option;
+    int (*parse)(tls_TEST_SERVER_CONF *conf, const char *value);
+} tls_test_server_option;
 
-static const ssl_test_server_option ssl_test_server_options[] = {
+static const tls_test_server_option tls_test_server_options[] = {
     { "ServerNameCallback", &parse_servername_callback },
     { "NPNProtocols", &parse_server_npn_protocols },
     { "ALPNProtocols", &parse_server_alpn_protocols },
@@ -714,56 +714,56 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
 };
 
-SSL_TEST_CTX *SSL_TEST_CTX_new(void)
+tls_TEST_CTX *tls_TEST_CTX_new(void)
 {
-    SSL_TEST_CTX *ret;
+    tls_TEST_CTX *ret;
 
     /* The return code is checked by caller */
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) != NULL) {
+    if ((ret = OPENtls_zalloc(sizeof(*ret))) != NULL) {
         ret->app_data_size = default_app_data_size;
         ret->max_fragment_size = default_max_fragment_size;
     }
     return ret;
 }
 
-static void ssl_test_extra_conf_free_data(SSL_TEST_EXTRA_CONF *conf)
+static void tls_test_extra_conf_free_data(tls_TEST_EXTRA_CONF *conf)
 {
-    OPENSSL_free(conf->client.npn_protocols);
-    OPENSSL_free(conf->server.npn_protocols);
-    OPENSSL_free(conf->server2.npn_protocols);
-    OPENSSL_free(conf->client.alpn_protocols);
-    OPENSSL_free(conf->server.alpn_protocols);
-    OPENSSL_free(conf->server2.alpn_protocols);
-    OPENSSL_free(conf->client.reneg_ciphers);
-    OPENSSL_free(conf->server.srp_user);
-    OPENSSL_free(conf->server.srp_password);
-    OPENSSL_free(conf->server2.srp_user);
-    OPENSSL_free(conf->server2.srp_password);
-    OPENSSL_free(conf->client.srp_user);
-    OPENSSL_free(conf->client.srp_password);
-    OPENSSL_free(conf->server.session_ticket_app_data);
-    OPENSSL_free(conf->server2.session_ticket_app_data);
+    OPENtls_free(conf->client.npn_protocols);
+    OPENtls_free(conf->server.npn_protocols);
+    OPENtls_free(conf->server2.npn_protocols);
+    OPENtls_free(conf->client.alpn_protocols);
+    OPENtls_free(conf->server.alpn_protocols);
+    OPENtls_free(conf->server2.alpn_protocols);
+    OPENtls_free(conf->client.reneg_ciphers);
+    OPENtls_free(conf->server.srp_user);
+    OPENtls_free(conf->server.srp_password);
+    OPENtls_free(conf->server2.srp_user);
+    OPENtls_free(conf->server2.srp_password);
+    OPENtls_free(conf->client.srp_user);
+    OPENtls_free(conf->client.srp_password);
+    OPENtls_free(conf->server.session_ticket_app_data);
+    OPENtls_free(conf->server2.session_ticket_app_data);
 }
 
-static void ssl_test_ctx_free_extra_data(SSL_TEST_CTX *ctx)
+static void tls_test_ctx_free_extra_data(tls_TEST_CTX *ctx)
 {
-    ssl_test_extra_conf_free_data(&ctx->extra);
-    ssl_test_extra_conf_free_data(&ctx->resume_extra);
+    tls_test_extra_conf_free_data(&ctx->extra);
+    tls_test_extra_conf_free_data(&ctx->resume_extra);
 }
 
-void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
+void tls_TEST_CTX_free(tls_TEST_CTX *ctx)
 {
-    ssl_test_ctx_free_extra_data(ctx);
-    OPENSSL_free(ctx->expected_npn_protocol);
-    OPENSSL_free(ctx->expected_alpn_protocol);
-    OPENSSL_free(ctx->expected_session_ticket_app_data);
+    tls_test_ctx_free_extra_data(ctx);
+    OPENtls_free(ctx->expected_npn_protocol);
+    OPENtls_free(ctx->expected_alpn_protocol);
+    OPENtls_free(ctx->expected_session_ticket_app_data);
     sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
-    OPENSSL_free(ctx->expected_cipher);
-    OPENSSL_free(ctx);
+    OPENtls_free(ctx->expected_cipher);
+    OPENtls_free(ctx);
 }
 
-static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
+static int parse_client_options(tls_TEST_CLIENT_CONF *client, const CONF *conf,
                                 const char *client_section)
 {
     STACK_OF(CONF_VALUE) *sk_conf;
@@ -776,9 +776,9 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
         const CONF_VALUE *option = sk_CONF_VALUE_value(sk_conf, i);
-        for (j = 0; j < OSSL_NELEM(ssl_test_client_options); j++) {
-            if (strcmp(option->name, ssl_test_client_options[j].name) == 0) {
-                if (!ssl_test_client_options[j].parse(client, option->value)) {
+        for (j = 0; j < Otls_NELEM(tls_test_client_options); j++) {
+            if (strcmp(option->name, tls_test_client_options[j].name) == 0) {
+                if (!tls_test_client_options[j].parse(client, option->value)) {
                     TEST_info("Bad value %s for option %s",
                               option->value, option->name);
                     return 0;
@@ -796,7 +796,7 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
     return 1;
 }
 
-static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
+static int parse_server_options(tls_TEST_SERVER_CONF *server, const CONF *conf,
                                 const char *server_section)
 {
     STACK_OF(CONF_VALUE) *sk_conf;
@@ -809,9 +809,9 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
         const CONF_VALUE *option = sk_CONF_VALUE_value(sk_conf, i);
-        for (j = 0; j < OSSL_NELEM(ssl_test_server_options); j++) {
-            if (strcmp(option->name, ssl_test_server_options[j].name) == 0) {
-                if (!ssl_test_server_options[j].parse(server, option->value)) {
+        for (j = 0; j < Otls_NELEM(tls_test_server_options); j++) {
+            if (strcmp(option->name, tls_test_server_options[j].name) == 0) {
+                if (!tls_test_server_options[j].parse(server, option->value)) {
                     TEST_info("Bad value %s for option %s",
                                option->value, option->name);
                     return 0;
@@ -829,15 +829,15 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
     return 1;
 }
 
-SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
+tls_TEST_CTX *tls_TEST_CTX_create(const CONF *conf, const char *test_section)
 {
     STACK_OF(CONF_VALUE) *sk_conf = NULL;
-    SSL_TEST_CTX *ctx = NULL;
+    tls_TEST_CTX *ctx = NULL;
     int i;
     size_t j;
 
     if (!TEST_ptr(sk_conf = NCONF_get_section(conf, test_section))
-            || !TEST_ptr(ctx = SSL_TEST_CTX_new()))
+            || !TEST_ptr(ctx = tls_TEST_CTX_new()))
         goto err;
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
@@ -867,9 +867,9 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
                                       option->value))
                 goto err;
         } else {
-            for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
-                if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {
-                    if (!ssl_test_ctx_options[j].parse(ctx, option->value)) {
+            for (j = 0; j < Otls_NELEM(tls_test_ctx_options); j++) {
+                if (strcmp(option->name, tls_test_ctx_options[j].name) == 0) {
+                    if (!tls_test_ctx_options[j].parse(ctx, option->value)) {
                         TEST_info("Bad value %s for option %s",
                                    option->value, option->name);
                         goto err;
@@ -888,7 +888,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
     goto done;
 
  err:
-    SSL_TEST_CTX_free(ctx);
+    tls_TEST_CTX_free(ctx);
     ctx = NULL;
  done:
     return ctx;

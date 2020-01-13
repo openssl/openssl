@@ -1,10 +1,10 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
 
@@ -13,13 +13,13 @@
  */
 
 #include <stdio.h>
-#include <openssl/ct.h>
-#include <openssl/err.h>
+#include <opentls/ct.h>
+#include <opentls/err.h>
 #include "fuzzer.h"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    OPENtls_init_crypto(OPENtls_INIT_LOAD_CRYPTO_STRINGS, NULL);
     CRYPTO_free_ex_index(0, -1);
     ERR_clear_error();
     return 1;
@@ -38,7 +38,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         if (i2d_SCT_LIST(scts, &der)) {
             /* Silence unused result warning */
         }
-        OPENSSL_free(der);
+        OPENtls_free(der);
 
         SCT_LIST_free(scts);
     }

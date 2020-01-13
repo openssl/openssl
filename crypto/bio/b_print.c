@@ -1,10 +1,10 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include <stdio.h>
@@ -12,7 +12,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/ctype.h"
 #include "internal/numbers.h"
-#include <openssl/bio.h>
+#include <opentls/bio.h>
 
 /*
  * Copyright Patrick Powell 1995
@@ -78,7 +78,7 @@ static int _dopr(char **sbuffer, char **buffer,
 
 /* some handy macros */
 #define char_to_int(p) (p - '0')
-#define OSSL_MAX(p,q) ((p >= q) ? p : q)
+#define Otls_MAX(p,q) ((p >= q) ? p : q)
 
 static int
 _dopr(char **sbuffer,
@@ -143,7 +143,7 @@ _dopr(char **sbuffer,
             }
             break;
         case DP_S_MIN:
-            if (ossl_isdigit(ch)) {
+            if (otls_isdigit(ch)) {
                 min = 10 * min + char_to_int(ch);
                 ch = *format++;
             } else if (ch == '*') {
@@ -161,7 +161,7 @@ _dopr(char **sbuffer,
                 state = DP_S_MOD;
             break;
         case DP_S_MAX:
-            if (ossl_isdigit(ch)) {
+            if (otls_isdigit(ch)) {
                 if (max < 0)
                     max = 0;
                 max = 10 * max + char_to_int(ch);
@@ -220,7 +220,7 @@ _dopr(char **sbuffer,
                     value = va_arg(args, int64_t);
                     break;
                 case DP_C_SIZE:
-                    value = va_arg(args, ossl_ssize_t);
+                    value = va_arg(args, otls_ssize_t);
                     break;
                 default:
                     value = va_arg(args, int);
@@ -373,7 +373,7 @@ fmtstr(char **sbuffer,
     if (value == 0)
         value = "<NULL>";
 
-    strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
+    strln = OPENtls_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
 
     padlen = min - strln;
     if (min < 0 || padlen < 0)
@@ -458,13 +458,13 @@ fmtint(char **sbuffer,
 
     zpadlen = max - place;
     spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
+        min - Otls_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)
         spadlen = 0;
     if (flags & DP_F_ZERO) {
-        zpadlen = OSSL_MAX(zpadlen, spadlen);
+        zpadlen = Otls_MAX(zpadlen, spadlen);
         spadlen = 0;
     }
     if (flags & DP_F_MINUS)
@@ -806,11 +806,11 @@ doapr_outch(char **sbuffer,
             char **buffer, size_t *currlen, size_t *maxlen, int c)
 {
     /* If we haven't at least one buffer, someone has done a big booboo */
-    if (!ossl_assert(*sbuffer != NULL || buffer != NULL))
+    if (!otls_assert(*sbuffer != NULL || buffer != NULL))
         return 0;
 
     /* |currlen| must always be <= |*maxlen| */
-    if (!ossl_assert(*currlen <= *maxlen))
+    if (!otls_assert(*currlen <= *maxlen))
         return 0;
 
     if (buffer && *currlen == *maxlen) {
@@ -819,19 +819,19 @@ doapr_outch(char **sbuffer,
 
         *maxlen += BUFFER_INC;
         if (*buffer == NULL) {
-            if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL) {
+            if ((*buffer = OPENtls_malloc(*maxlen)) == NULL) {
                 BIOerr(BIO_F_DOAPR_OUTCH, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             if (*currlen > 0) {
-                if (!ossl_assert(*sbuffer != NULL))
+                if (!otls_assert(*sbuffer != NULL))
                     return 0;
                 memcpy(*buffer, *sbuffer, *currlen);
             }
             *sbuffer = NULL;
         } else {
             char *tmpbuf;
-            tmpbuf = OPENSSL_realloc(*buffer, *maxlen);
+            tmpbuf = OPENtls_realloc(*buffer, *maxlen);
             if (tmpbuf == NULL)
                 return 0;
             *buffer = tmpbuf;
@@ -878,12 +878,12 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
     dynbuf = NULL;
     if (!_dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, &ignored, format,
                 args)) {
-        OPENSSL_free(dynbuf);
+        OPENtls_free(dynbuf);
         return -1;
     }
     if (dynbuf) {
         ret = BIO_write(bio, dynbuf, (int)retlen);
-        OPENSSL_free(dynbuf);
+        OPENtls_free(dynbuf);
     } else {
         ret = BIO_write(bio, hugebuf, (int)retlen);
     }

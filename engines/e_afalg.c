@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 /* Required for vmsplice */
@@ -15,9 +15,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/engine.h>
-#include <openssl/async.h>
-#include <openssl/err.h>
+#include <opentls/engine.h>
+#include <opentls/async.h>
+#include <opentls/err.h>
 #include "internal/nelem.h"
 
 #include <sys/socket.h>
@@ -63,7 +63,7 @@ void engine_load_afalg_int(void)
 # define ALG_OP_TYPE     unsigned int
 # define ALG_OP_LEN      (sizeof(ALG_OP_TYPE))
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
+# ifdef OPENtls_NO_DYNAMIC_ENGINE
 void engine_load_afalg_int(void);
 # endif
 
@@ -101,27 +101,27 @@ static cbc_handles cbc_handle[] = {{AES_KEY_SIZE_128, NULL},
                                     {AES_KEY_SIZE_192, NULL},
                                     {AES_KEY_SIZE_256, NULL}};
 
-static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
+static otls_inline int io_setup(unsigned n, aio_context_t *ctx)
 {
     return syscall(__NR_io_setup, n, ctx);
 }
 
-static ossl_inline int eventfd(int n)
+static otls_inline int eventfd(int n)
 {
     return syscall(__NR_eventfd2, n, 0);
 }
 
-static ossl_inline int io_destroy(aio_context_t ctx)
+static otls_inline int io_destroy(aio_context_t ctx)
 {
     return syscall(__NR_io_destroy, ctx);
 }
 
-static ossl_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
+static otls_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
 {
     return syscall(__NR_io_submit, ctx, n, iocb);
 }
 
-static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
+static otls_inline int io_getevents(aio_context_t ctx, long min, long max,
                                struct io_event *events,
                                struct timespec *timeout)
 {
@@ -145,7 +145,7 @@ static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
 }
 
 static void afalg_waitfd_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
-                                 OSSL_ASYNC_FD waitfd, void *custom)
+                                 Otls_ASYNC_FD waitfd, void *custom)
 {
     close(waitfd);
 }
@@ -339,7 +339,7 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     return 1;
 }
 
-static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
+static otls_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
                                    const ALG_OP_TYPE op)
 {
     cmsg->cmsg_level = SOL_ALG;
@@ -361,7 +361,7 @@ static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
     memcpy(aiv->iv, iv, len);
 }
 
-static ossl_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
+static otls_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
                                 const int klen)
 {
     int ret;
@@ -384,8 +384,8 @@ static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
 
     memset(&sa, 0, sizeof(sa));
     sa.salg_family = AF_ALG;
-    OPENSSL_strlcpy((char *) sa.salg_type, ciphertype, sizeof(sa.salg_type));
-    OPENSSL_strlcpy((char *) sa.salg_name, ciphername, sizeof(sa.salg_name));
+    OPENtls_strlcpy((char *) sa.salg_type, ciphertype, sizeof(sa.salg_type));
+    OPENtls_strlcpy((char *) sa.salg_name, ciphername, sizeof(sa.salg_name));
 
     actx->bfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
     if (actx->bfd == -1) {
@@ -745,7 +745,7 @@ static int bind_afalg(ENGINE *e)
      * now, as bind_aflag can only be called by one thread at a
      * time.
      */
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for(i = 0; i < Otls_NELEM(afalg_cipher_nids); i++) {
         if (afalg_aes_cbc(afalg_cipher_nids[i]) == NULL) {
             AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
             return 0;
@@ -760,7 +760,7 @@ static int bind_afalg(ENGINE *e)
     return 1;
 }
 
-# ifndef OPENSSL_NO_DYNAMIC_ENGINE
+# ifndef OPENtls_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 {
     if (id && (strcmp(id, engine_afalg_id) != 0))
@@ -822,7 +822,7 @@ static int afalg_chk_platform(void)
     return 1;
 }
 
-# ifdef OPENSSL_NO_DYNAMIC_ENGINE
+# ifdef OPENtls_NO_DYNAMIC_ENGINE
 static ENGINE *engine_afalg(void)
 {
     ENGINE *ret = ENGINE_new();
@@ -864,7 +864,7 @@ static int afalg_finish(ENGINE *e)
 static int free_cbc(void)
 {
     short unsigned int i;
-    for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
+    for(i = 0; i < Otls_NELEM(afalg_cipher_nids); i++) {
         EVP_CIPHER_meth_free(cbc_handle[i]._hidden);
         cbc_handle[i]._hidden = NULL;
     }

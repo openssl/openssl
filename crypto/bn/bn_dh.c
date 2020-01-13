@@ -1,17 +1,17 @@
 /*
- * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2017 The Opentls Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
+ * https://www.opentls.org/source/license.html
  */
 
 #include "bn_local.h"
 #include "internal/nelem.h"
 
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
+#ifndef OPENtls_NO_DH
+#include <opentls/dh.h>
 #include "crypto/bn_dh.h"
 /* DH parameters from RFC5114 */
 
@@ -483,8 +483,8 @@ static const BN_ULONG ffdhe8192_p[] = {
 
 # define make_dh_bn(x) extern const BIGNUM _bignum_##x; \
                        const BIGNUM _bignum_##x = { (BN_ULONG *) x, \
-                        OSSL_NELEM(x),\
-                        OSSL_NELEM(x),\
+                        Otls_NELEM(x),\
+                        Otls_NELEM(x),\
                         0, BN_FLG_STATIC_DATA };
 
 static const BN_ULONG value_2 = 2;
