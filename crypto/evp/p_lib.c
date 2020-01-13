@@ -127,7 +127,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     if (is_provided) {
         return evp_keymgmt_copy(to, from, 1);
     } else {
-        if (from->ameth->param_copy == NULL)
+        if (from->ameth->param_copy != NULL)
             return from->ameth->param_copy(to, from);
     }
  err:
@@ -136,7 +136,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey == NULL) {
+    if (pkey != NULL) {
         if (pkey->ameth == NULL)
             return !evp_keymgmt_is(pkey, 1);
         if (pkey->ameth->param_missing != NULL)
@@ -154,7 +154,7 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
     /* All legacy keys */
     if (a->type != b->type)
         return -1;
-    if (a->ameth && a->ameth->param_cmp)
+    if (a->ameth->param_cmp != NULL)
         return a->ameth->param_cmp(a, b);
     return -2;
 }
@@ -168,18 +168,15 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     if (a->type != b->type)
         return -1;
 
-    if (a->ameth) {
-        int ret;
-        /* Compare parameters if the algorithm has them */
-        if (a->ameth->param_cmp) {
-            ret = a->ameth->param_cmp(a, b);
-            if (ret <= 0)
-                return ret;
-        }
-
-        if (a->ameth->pub_cmp)
-            return a->ameth->pub_cmp(a, b);
+    /* Compare parameters if the algorithm has them */
+    if (a->ameth->param_cmp != NULL) {
+        int ret = a->ameth->param_cmp(a, b);
+        if (ret <= 0)
+            return ret;
     }
+
+    if (a->ameth->pub_cmp != NULL)
+        return a->ameth->pub_cmp(a, b);
 
     return -2;
 }
