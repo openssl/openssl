@@ -341,7 +341,7 @@ OPENSSL_sk_sort                         346	3_0_0	EXIST::FUNCTION:
 CTLOG_STORE_load_file                   347	3_0_0	EXIST::FUNCTION:CT
 ASN1_SEQUENCE_it                        348	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_get_tst_info                349	3_0_0	EXIST::FUNCTION:TS
-RC4                                     350	3_0_0	EXIST::FUNCTION:RC4
+RC4                                     350	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC4
 PKCS7_stream                            352	3_0_0	EXIST::FUNCTION:
 i2t_ASN1_OBJECT                         353	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get0_generator                 354	3_0_0	EXIST::FUNCTION:EC
@@ -778,7 +778,7 @@ PKCS7_dataInit                          797	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_app_data               798	3_0_0	EXIST::FUNCTION:
 a2i_GENERAL_NAME                        799	3_0_0	EXIST::FUNCTION:
 SXNETID_new                             800	3_0_0	EXIST::FUNCTION:
-RC4_options                             801	3_0_0	EXIST::FUNCTION:RC4
+RC4_options                             801	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC4
 BIO_f_null                              802	3_0_0	EXIST::FUNCTION:
 EC_GROUP_set_curve_name                 803	3_0_0	EXIST::FUNCTION:EC
 d2i_PBE2PARAM                           804	3_0_0	EXIST::FUNCTION:
@@ -2960,7 +2960,7 @@ ASN1_TYPE_unpack_sequence               3024	3_0_0	EXIST::FUNCTION:
 X509_CRL_sign_ctx                       3025	3_0_0	EXIST::FUNCTION:
 X509_STORE_add_crl                      3026	3_0_0	EXIST::FUNCTION:
 PEM_write_RSAPrivateKey                 3027	3_0_0	EXIST::FUNCTION:RSA,STDIO
-RC4_set_key                             3028	3_0_0	EXIST::FUNCTION:RC4
+RC4_set_key                             3028	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC4
 EVP_CIPHER_CTX_cipher                   3029	3_0_0	EXIST::FUNCTION:
 PEM_write_bio_PKCS8PrivateKey_nid       3030	3_0_0	EXIST::FUNCTION:
 BN_MONT_CTX_new                         3031	3_0_0	EXIST::FUNCTION:

@@ -353,7 +353,7 @@ static const OPT_PAIR doit_choices[] = {
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
 #endif
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"rc4", D_RC4},
 #endif
 #ifndef OPENSSL_NO_DES
@@ -712,7 +712,7 @@ static int EVP_Digest_RMD160_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static RC4_KEY rc4_ks;
 static int RC4_loop(void *args)
 {
@@ -1973,7 +1973,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_CBC_SEED])
         SEED_set_key(key16, &seed_ks);
 #endif
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_RC4])
         RC4_set_key(&rc4_ks, 16, key16);
 #endif
@@ -2379,7 +2379,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_RC4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_RC4], c[D_RC4][testnum], lengths[testnum],
@@ -3492,7 +3492,7 @@ int speed_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", MD2_options());
 #endif
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", RC4_options());
 #endif
 #ifndef OPENSSL_NO_DES
