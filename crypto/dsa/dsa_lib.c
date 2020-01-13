@@ -29,13 +29,6 @@ void *DSA_get_ex_data(DSA *d, int idx)
     return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
-int DSA_security_bits(const DSA *d)
-{
-    if (d->p && d->q)
-        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
-    return -1;
-}
-
 #ifndef OPENSSL_NO_DH
 DH *DSA_dup_DH(const DSA *r)
 {
@@ -137,11 +130,6 @@ void DSA_set_flags(DSA *d, int flags)
 ENGINE *DSA_get0_engine(DSA *d)
 {
     return d->engine;
-}
-
-int DSA_bits(const DSA *dsa)
-{
-    return BN_num_bits(dsa->p);
 }
 
 int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
@@ -351,3 +339,14 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     return 1;
 }
 
+int DSA_security_bits(const DSA *d)
+{
+    if (d->p && d->q)
+        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    return -1;
+}
+
+int DSA_bits(const DSA *dsa)
+{
+    return BN_num_bits(dsa->p);
+}
