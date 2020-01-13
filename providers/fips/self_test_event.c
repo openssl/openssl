@@ -29,13 +29,11 @@ static void self_test_event_setparams(OSSL_ST_EVENT *ev)
     ev->params[n++] = OSSL_PARAM_construct_end();
 }
 
-void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg,
-                          OPENSSL_CTX *libctx)
+void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg)
 {
     if (ev == NULL)
         return;
 
-    ev->libctx = libctx;
     ev->cb = cb;
     ev->cb_arg = cbarg;
     ev->phase = "";

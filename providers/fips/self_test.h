@@ -39,7 +39,6 @@ typedef struct st_event_st
     const char *type;
     const char *desc;
     OSSL_CALLBACK *cb;
-    OPENSSL_CTX *libctx;
 
     /* callback related variables used to pass the state back to the user */
     OSSL_PARAM params[4];
@@ -50,8 +49,7 @@ typedef struct st_event_st
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
 int SELF_TEST_kats(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx);
 
-void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg,
-                          OPENSSL_CTX *libctx);
+void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg);
 void SELF_TEST_EVENT_onbegin(OSSL_ST_EVENT *ev, const char *type,
                              const char *desc);
 void SELF_TEST_EVENT_onend(OSSL_ST_EVENT *ev, int ret);
