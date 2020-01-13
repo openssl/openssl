@@ -69,7 +69,7 @@ static const unsigned char sha3_256_digest[] = {
     0x89, 0x77, 0x7f, 0x05, 0x1e, 0x40, 0x46, 0xae
 };
 
-static ST_KAT_DIGEST st_kat_digest_tests[] =
+static const ST_KAT_DIGEST st_kat_digest_tests[] =
 {
     {
          OSSL_SELF_TEST_DESC_MD_SHA1,
@@ -140,7 +140,7 @@ static const unsigned char aes_256_gcm_tag[] = {
     0x1d,0xa4,0x74,0xab
 };
 
-static ST_KAT_CIPHER st_kat_cipher_tests[] = {
+static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
     {
         {
             OSSL_SELF_TEST_DESC_CIPHER_TDES,
@@ -167,7 +167,7 @@ static ST_KAT_CIPHER st_kat_cipher_tests[] = {
 
 /*- KDF TEST DATA */
 
-static ST_KAT_NVP hkdf_ctrl[] =
+static const ST_KAT_NVP hkdf_ctrl[] =
 {
     { "digest", "SHA256" },
     { "key", "secret" },
@@ -175,11 +175,11 @@ static ST_KAT_NVP hkdf_ctrl[] =
     { "info", "label" },
     { NULL, NULL }
 };
-static unsigned char hkdf_expected[] = {
+static const unsigned char hkdf_expected[] = {
     0x2a, 0xc4, 0x36, 0x9f, 0x52, 0x59, 0x96, 0xf8, 0xde, 0x13
 };
 
-static ST_KAT_KDF st_kat_kdf_tests[] =
+static const ST_KAT_KDF st_kat_kdf_tests[] =
 {
     {
         OSSL_SELF_TEST_DESC_KDF_HKDF,

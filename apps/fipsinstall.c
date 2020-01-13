@@ -341,7 +341,7 @@ opthelp:
     if (self_test_log
             || self_test_corrupt_desc != NULL
             || self_test_corrupt_type != NULL)
-        OSSL_SELF_TEST_set_callback(NULL, self_test_events);
+        OSSL_SELF_TEST_set_callback(NULL, self_test_events, NULL);
 
     module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
     if (module_bio == NULL) {

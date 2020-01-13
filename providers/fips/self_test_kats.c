@@ -14,7 +14,7 @@
 #include "self_test.h"
 #include "self_test_data.inc"
 
-static int self_test_digest(ST_KAT_DIGEST *t, OSSL_ST_EVENT *event,
+static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_ST_EVENT *event,
                             OPENSSL_CTX *libctx)
 {
     int ok = 0;
@@ -52,7 +52,7 @@ err:
  * Used to hide the complexity of Authenticated ciphers.
  */
 static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
-                       ST_KAT_CIPHER *t, int enc)
+                       const ST_KAT_CIPHER *t, int enc)
 {
     unsigned char *in_tag = NULL;
     int pad = 0, tmp;
@@ -80,7 +80,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 }
 
 /* Test a single KAT for encrypt/decrypt */
-static int self_test_cipher(ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
+static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
                             OPENSSL_CTX *libctx)
 {
     int ret = 0, encrypt = 1, len, ct_len = 0, pt_len = 0;
@@ -136,7 +136,8 @@ end:
     return ret;
 }
 
-static int self_test_kdf(ST_KAT_KDF *t, OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
+                         OPENSSL_CTX *libctx)
 {
     int ret = 0;
     int i;

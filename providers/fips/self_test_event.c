@@ -29,7 +29,7 @@ static void self_test_event_setparams(OSSL_ST_EVENT *ev)
     ev->params[n++] = OSSL_PARAM_construct_end();
 }
 
-void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb,
+void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg,
                           OPENSSL_CTX *libctx)
 {
     if (ev == NULL)
@@ -37,6 +37,7 @@ void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb,
 
     ev->libctx = libctx;
     ev->cb = cb;
+    ev->cb_arg = cbarg;
     ev->phase = "";
     ev->type = "";
     ev->desc = "";
@@ -44,14 +45,15 @@ void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb,
 }
 
 /* Can be used during application testing to log that a test has started. */
-void SELF_TEST_EVENT_onbegin(OSSL_ST_EVENT *ev, const char *type, const char *desc)
+void SELF_TEST_EVENT_onbegin(OSSL_ST_EVENT *ev, const char *type,
+                             const char *desc)
 {
     if (ev != NULL && ev->cb != NULL) {
         ev->phase = OSSL_SELF_TEST_PHASE_START;
         ev->type = type;
         ev->desc = desc;
         self_test_event_setparams(ev);
-        (void)ev->cb(ev->params, ev->libctx);
+        (void)ev->cb(ev->params, ev->cb_arg);
     }
 }
 
@@ -62,9 +64,10 @@ void SELF_TEST_EVENT_onbegin(OSSL_ST_EVENT *ev, const char *type, const char *de
 void SELF_TEST_EVENT_onend(OSSL_ST_EVENT *ev, int ret)
 {
     if (ev != NULL && ev->cb != NULL) {
-        ev->phase = (ret == 1 ? OSSL_SELF_TEST_PHASE_PASS : OSSL_SELF_TEST_PHASE_FAIL);
+        ev->phase =
+            (ret == 1 ? OSSL_SELF_TEST_PHASE_PASS : OSSL_SELF_TEST_PHASE_FAIL);
         self_test_event_setparams(ev);
-        (void)ev->cb(ev->params, ev->libctx);
+        (void)ev->cb(ev->params, ev->cb_arg);
 
         ev->phase = OSSL_SELF_TEST_PHASE_NONE;
         ev->type = OSSL_SELF_TEST_TYPE_NONE;
@@ -85,7 +88,7 @@ void SELF_TEST_EVENT_oncorrupt_byte(OSSL_ST_EVENT *ev, unsigned char *bytes)
     if (ev != NULL && ev->cb != NULL) {
         ev->phase = OSSL_SELF_TEST_PHASE_CORRUPT;
         self_test_event_setparams(ev);
-        if (!ev->cb(ev->params, ev->libctx))
+        if (!ev->cb(ev->params, ev->cb_arg))
             bytes[0] ^= 1;
     }
 }

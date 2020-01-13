@@ -223,7 +223,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
             || st->module_checksum_data == NULL)
         goto end;
 
-    SELF_TEST_EVENT_init(&ev, st->event_cb, st->libctx);
+    SELF_TEST_EVENT_init(&ev, st->event_cb, st->event_cb_arg, st->libctx);
 
     module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
                                          &checksum_len);
