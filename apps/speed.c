@@ -368,7 +368,7 @@ static const OPT_PAIR doit_choices[] = {
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
 #endif
-#ifndef OPENSSL_NO_RC2
+#if !defined(OPENSSL_NO_RC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
 #endif
@@ -1452,7 +1452,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RC5
     RC5_32_KEY rc5_ks;
 #endif
-#ifndef OPENSSL_NO_RC2
+#if !defined(OPENSSL_NO_RC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     RC2_KEY rc2_ks;
 #endif
 #ifndef OPENSSL_NO_IDEA
@@ -1977,7 +1977,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_RC4])
         RC4_set_key(&rc4_ks, 16, key16);
 #endif
-#ifndef OPENSSL_NO_RC2
+#if !defined(OPENSSL_NO_RC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_RC2])
         RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
@@ -2604,7 +2604,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC2
+#if !defined(OPENSSL_NO_RC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_RC2]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
