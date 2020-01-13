@@ -37,33 +37,42 @@
      like 'EVP_DigestSignInit(...) <= 0' will continue to work undisturbed.
      [Richard Levitte]
 
-  *) All of the low level Blowfish functions have been deprecated including:
-     BF_set_key, BF_encrypt, BF_decrypt, BF_ecb_encrypt, BF_cbc_encrypt,
-     BF_cfb64_encrypt, BF_ofb64_encrypt, and BF_options.
-     Use of these low level functions has been informally discouraged for a long
-     time. Instead applications should use the high level EVP APIs, e.g.
-     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
-     equivalently named decrypt functions.
-     [Matt Caswell]
+  *) All of the low level cipher functions have been deprecated including:
+     AES_options, AES_set_encrypt_key, AES_set_decrypt_key, AES_encrypt,
+     AES_decrypt, AES_ecb_encrypt, AES_cbc_encrypt, AES_cfb128_encrypt,
+     AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ofb128_encrypt,
+     AES_wrap_key, AES_unwrap_key, BF_set_key, BF_encrypt, BF_decrypt,
+     BF_ecb_encrypt, BF_cbc_encrypt, BF_cfb64_encrypt, BF_ofb64_encrypt,
+     BF_options, Camellia_set_key, Camellia_encrypt, Camellia_decrypt,
+     Camellia_ecb_encrypt, Camellia_cbc_encrypt, Camellia_cfb128_encrypt,
+     Camellia_cfb1_encrypt, Camellia_cfb8_encrypt, Camellia_ofb128_encrypt,
+     Camellia_ctr128_encrypt, CAST_set_key, CAST_encrypt, CAST_decrypt,
+     CAST_ecb_encrypt, CAST_cbc_encrypt, CAST_cfb64_encrypt,
+     CAST_ofb64_encrypt, DES_options, DES_encrypt1, DES_encrypt2,
+     DES_encrypt3, DES_decrypt3, DES_cbc_encrypt, DES_ncbc_encrypt,
+     DES_pcbc_encrypt, DES_xcbc_encrypt, DES_cfb_encrypt, DES_cfb64_encrypt,
+     DES_ecb_encrypt, DES_ofb_encrypt, DES_ofb64_encrypt, DES_random_key,
+     DES_set_odd_parity, DES_check_key_parity, DES_is_weak_key, DES_set_key,
+     DES_key_sched, DES_set_key_checked, DES_set_key_unchecked,
+     DES_string_to_key, DES_string_to_2keys, DES_fixup_key_parity,
+     DES_ecb2_encrypt, DES_ede2_cbc_encrypt, DES_ede2_cfb64_encrypt,
+     DES_ede2_ofb64_encrypt, DES_ecb3_encrypt, DES_ede3_cbc_encrypt,
+     DES_ede3_cfb64_encrypt, DES_ede3_cfb_encrypt, DES_ede3_ofb64_encrypt,
+     DES_cbc_cksum, DES_quad_cksum, IDEA_encrypt, IDEA_options,
+     IDEA_ecb_encrypt, IDEA_set_encrypt_key, IDEA_set_decrypt_key,
+     IDEA_cbc_encrypt, IDEA_cfb64_encrypt, IDEA_ofb64_encrypt, RC2_set_key,
+     RC2_encrypt, RC2_decrypt, RC2_ecb_encrypt, RC2_cbc_encrypt,
+     RC2_cfb64_encrypt, RC2_ofb64_encrypt, RC4, RC4_options, RC4_set_key,
+     RC5_32_set_key, RC5_32_encrypt, RC5_32_decrypt, RC5_32_ecb_encrypt,
+     RC5_32_cbc_encrypt, RC5_32_cfb64_encrypt, RC5_32_ofb64_encrypt,
+     SEED_set_key, SEED_encrypt, SEED_decrypt, SEED_ecb_encrypt,
+     SEED_cbc_encrypt, SEED_cfb128_encrypt and SEED_ofb128_encrypt.
 
-  *) All of the low level CAST functions have been deprecated including:
-     CAST_set_key, CAST_ecb_encrypt, CAST_encrypt, CAST_decrypt,
-     CAST_cbc_encrypt, CAST_cfb64_encrypt and CAST_ofb64_encrypt
      Use of these low level functions has been informally discouraged for a long
      time. Instead applications should use the high level EVP APIs, e.g.
      EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
      equivalently named decrypt functions.
-     [Matt Caswell]
-
-  *) All of the low level Camelllia functions have been deprecated including:
-     Camellia_set_key, Camellia_encrypt, Camellia_decrypt, Camellia_ecb_encrypt,
-     Camellia_cbc_encrypt, Camellia_cfb128_encrypt, Camellia_cfb1_encrypt,
-     Camellia_cfb8_encrypt, Camellia_ofb128_encrypt and Camellia_ctr128_encrypt.
-     Use of these low level functions has been informally discouraged for a long
-     time. Instead applications should use the high level EVP APIs, e.g.
-     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
-     equivalently named decrypt functions.
-     [Matt Caswell]
+     [Matt Caswell and Paul Dale]
 
   *) Removed include/openssl/opensslconf.h.in and replaced it with
      include/openssl/configuration.h.in, which differs in not including
@@ -419,17 +428,7 @@
      for scripting purposes.
      [Richard Levitte]
 
-  *) All of the low level AES functions have been deprecated including:
-     AES_options, AES_set_encrypt_key, AES_set_decrypt_key, AES_encrypt,
-     AES_decrypt, AES_ecb_encrypt, AES_cbc_encrypt, AES_cfb128_encrypt,
-     AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ofb128_encrypt, AES_wrap_key and
-     AES_unwrap_key
-     Use of these low level functions has been informally discouraged for a long
-     time. Instead applications should use the high level EVP APIs, e.g.
-     EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
-     equivalently named decrypt functions.
-
-     The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have also been
+  *) The functions AES_ige_encrypt() and AES_bi_ige_encrypt() have been
      deprecated. These undocumented functions were never integrated into the EVP
      layer and implement the AES Infinite Garble Extension (IGE) mode and AES
      Bi-directional IGE mode. These modes were never formally standardised and
