@@ -623,6 +623,9 @@ int ocsp_main(int argc, char **argv)
     if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
         if (rdb == NULL || index_index(rdb) <= 0) {
+            BIO_printf(bio_err,
+                "Problem with index file: %s (could not load/parse file)\n",
+                ridx_filename);
             ret = 1;
             goto end;
         }
