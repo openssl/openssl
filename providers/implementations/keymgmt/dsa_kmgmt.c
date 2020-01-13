@@ -24,6 +24,8 @@ static OSSL_OP_keymgmt_importkey_fn dsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn dsa_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn dsa_get_key_params;
 
+#define DSA_DEFAULT_MD "SHA256"
+
 static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_p, *param_q, *param_g;
@@ -210,6 +212,9 @@ static ossl_inline int dsa_get_dpk_params(void *key, OSSL_PARAM params[])
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, DSA_size(dsa)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, DSA_DEFAULT_MD))
         return 0;
     return 1;
 }

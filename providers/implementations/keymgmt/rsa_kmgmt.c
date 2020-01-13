@@ -10,7 +10,9 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/types.h>
 #include "internal/param_build.h"
@@ -21,6 +23,8 @@
 static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn rsa_get_key_params;
+
+#define RSA_DEFAULT_MD "SHA256"
 
 DEFINE_STACK_OF(BIGNUM)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -259,6 +263,28 @@ static int rsa_get_key_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, RSA_size(rsa)))
         return 0;
+
+# if 0                           /* PSS support pending */
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
+        && RSA_get0_pss_params(rsa) != NULL) {
+        const EVP_MD *md, *mgf1md;
+        int min_saltlen;
+
+        if (!rsa_pss_get_param(RSA_get0_pss_params(rsa),
+                               &md, &mgf1md, &min_saltlen)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_utf8_string(p, EVP_MD_name(md)))
+            return 0;
+    }
+#endif
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+        && RSA_get0_pss_params(rsa) == NULL)
+        if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
+            return 0;
+
     return 1;
 }
 
