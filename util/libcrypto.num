@@ -140,7 +140,7 @@ PKCS12_BAGS_new                         142	3_0_0	EXIST::FUNCTION:
 CMAC_CTX_new                            143	3_0_0	EXIST::FUNCTION:CMAC
 ASIdentifierChoice_new                  144	3_0_0	EXIST::FUNCTION:RFC3779
 EVP_PKEY_asn1_set_public                145	3_0_0	EXIST::FUNCTION:
-IDEA_set_decrypt_key                    146	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_set_decrypt_key                    146	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 X509_STORE_CTX_set_flags                147	3_0_0	EXIST::FUNCTION:
 BIO_ADDR_rawmake                        148	3_0_0	EXIST::FUNCTION:SOCK
 EVP_PKEY_asn1_set_ctrl                  149	3_0_0	EXIST::FUNCTION:
@@ -642,7 +642,7 @@ PEM_SignInit                            658	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_key_length           659	3_0_0	EXIST::FUNCTION:
 X509_delete_ext                         660	3_0_0	EXIST::FUNCTION:
 OCSP_resp_get0_produced_at              661	3_0_0	EXIST::FUNCTION:OCSP
-IDEA_encrypt                            662	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_encrypt                            662	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 CRYPTO_nistcts128_encrypt_block         663	3_0_0	EXIST::FUNCTION:
 EVP_MD_do_all                           664	3_0_0	EXIST::FUNCTION:
 EC_KEY_oct2priv                         665	3_0_0	EXIST::FUNCTION:EC
@@ -954,7 +954,7 @@ BN_is_bit_set                           978	3_0_0	EXIST::FUNCTION:
 AES_ofb128_encrypt                      979	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_STORE_add_lookup                   980	3_0_0	EXIST::FUNCTION:
 ASN1_GENERALSTRING_new                  981	3_0_0	EXIST::FUNCTION:
-IDEA_options                            982	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_options                            982	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 d2i_X509_REQ                            983	3_0_0	EXIST::FUNCTION:
 i2d_TS_STATUS_INFO                      984	3_0_0	EXIST::FUNCTION:TS
 X509_PURPOSE_get_by_id                  985	3_0_0	EXIST::FUNCTION:
@@ -1844,7 +1844,7 @@ X509_STORE_CTX_set0_trusted_stack       1886	3_0_0	EXIST::FUNCTION:
 BIO_ADDR_service_string                 1887	3_0_0	EXIST::FUNCTION:SOCK
 ASN1_BOOLEAN_it                         1888	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_time_cb                 1889	3_0_0	EXIST::FUNCTION:TS
-IDEA_cbc_encrypt                        1890	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_cbc_encrypt                        1890	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 BN_CTX_secure_new                       1891	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_add_ext                     1892	3_0_0	EXIST::FUNCTION:OCSP
 CMS_uncompress                          1893	3_0_0	EXIST::FUNCTION:CMS
@@ -2448,7 +2448,7 @@ BIO_f_zlib                              2498	3_0_0	EXIST::FUNCTION:COMP,ZLIB
 AES_cfb128_encrypt                      2499	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ENGINE_set_EC                           2500	3_0_0	EXIST::FUNCTION:ENGINE
 d2i_ECPKParameters                      2501	3_0_0	EXIST::FUNCTION:EC
-IDEA_ofb64_encrypt                      2502	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_ofb64_encrypt                      2502	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 CAST_decrypt                            2503	3_0_0	EXIST::FUNCTION:CAST,DEPRECATEDIN_3_0
 TS_STATUS_INFO_get0_failure_info        2504	3_0_0	EXIST::FUNCTION:TS
 ENGINE_unregister_pkey_meths            2506	3_0_0	EXIST::FUNCTION:ENGINE
@@ -2531,7 +2531,7 @@ ENGINE_load_ssl_client_cert             2584	3_0_0	EXIST::FUNCTION:ENGINE
 X509_STORE_CTX_set_verify_cb            2585	3_0_0	EXIST::FUNCTION:
 CRYPTO_clear_realloc                    2586	3_0_0	EXIST::FUNCTION:
 OPENSSL_strnlen                         2587	3_0_0	EXIST::FUNCTION:
-IDEA_ecb_encrypt                        2588	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_ecb_encrypt                        2588	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 ASN1_STRING_set_default_mask            2589	3_0_0	EXIST::FUNCTION:
 TS_VERIFY_CTX_add_flags                 2590	3_0_0	EXIST::FUNCTION:TS
 FIPS_mode                               2591	3_0_0	EXIST::FUNCTION:
@@ -3102,7 +3102,7 @@ a2i_ASN1_INTEGER                        3166	3_0_0	EXIST::FUNCTION:
 OCSP_sendreq_bio                        3167	3_0_0	EXIST::FUNCTION:OCSP
 PKCS12_SAFEBAG_create_crl               3168	3_0_0	EXIST::FUNCTION:
 d2i_X509_NAME                           3169	3_0_0	EXIST::FUNCTION:
-IDEA_cfb64_encrypt                      3170	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_cfb64_encrypt                      3170	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 BN_mod_sub                              3171	3_0_0	EXIST::FUNCTION:
 ASN1_NULL_new                           3172	3_0_0	EXIST::FUNCTION:
 HMAC_Init                               3173	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
@@ -3129,7 +3129,7 @@ OCSP_request_verify                     3194	3_0_0	EXIST::FUNCTION:OCSP
 CRYPTO_THREAD_run_once                  3195	3_0_0	EXIST::FUNCTION:
 TS_REQ_print_bio                        3196	3_0_0	EXIST::FUNCTION:TS
 SCT_get_version                         3197	3_0_0	EXIST::FUNCTION:CT
-IDEA_set_encrypt_key                    3198	3_0_0	EXIST::FUNCTION:IDEA
+IDEA_set_encrypt_key                    3198	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 ENGINE_get_DH                           3199	3_0_0	EXIST::FUNCTION:ENGINE
 i2d_ASIdentifierChoice                  3200	3_0_0	EXIST::FUNCTION:RFC3779
 SRP_Calc_A                              3201	3_0_0	EXIST::FUNCTION:SRP
