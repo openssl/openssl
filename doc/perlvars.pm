@@ -140,8 +140,7 @@ $OpenSSL::safe::opt_version_item = "\n"
 . "See L<openssl(1)/TLS Version Options>.";
 
 # SSL connection options.
-# TODO(3.0) Not currently used.  The refactoring needs to be done, and
-# the options will probably be re-ordered.
+# TODO options will probably be re-ordered.
 $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-bugs>]\n"
 . "[B<-no_comp>]\n"

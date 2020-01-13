@@ -26,6 +26,7 @@
 /include/openssl/opensslv.h
 
 # Auto generated doc files
+# If you add to this list, make sure doc/man1/build.info is sync'd!
 doc/man1/openssl-ca.pod
 doc/man1/openssl-cms.pod
 doc/man1/openssl-crl.pod
