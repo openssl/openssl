@@ -233,7 +233,7 @@ d2i_ASN1_SET_ANY                        236	3_0_0	EXIST::FUNCTION:
 ASN1_item_i2d                           238	3_0_0	EXIST::FUNCTION:
 OCSP_copy_nonce                         239	3_0_0	EXIST::FUNCTION:OCSP
 OBJ_txt2nid                             240	3_0_0	EXIST::FUNCTION:
-SEED_set_key                            241	3_0_0	EXIST::FUNCTION:SEED
+SEED_set_key                            241	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 EC_KEY_clear_flags                      242	3_0_0	EXIST::FUNCTION:EC
 CMS_RecipientInfo_ktri_get0_algs        243	3_0_0	EXIST::FUNCTION:CMS
 i2d_EC_PUBKEY                           244	3_0_0	EXIST::FUNCTION:EC
@@ -360,7 +360,7 @@ CMS_signed_add1_attr_by_txt             366	3_0_0	EXIST::FUNCTION:CMS
 i2d_NETSCAPE_SPKAC                      367	3_0_0	EXIST::FUNCTION:
 X509V3_add_value_bool_nf                368	3_0_0	EXIST::FUNCTION:
 ASN1_item_verify                        369	3_0_0	EXIST::FUNCTION:
-SEED_ecb_encrypt                        370	3_0_0	EXIST::FUNCTION:SEED
+SEED_ecb_encrypt                        370	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 X509_PUBKEY_get0_param                  371	3_0_0	EXIST::FUNCTION:
 ASN1_i2d_fp                             372	3_0_0	EXIST::FUNCTION:STDIO
 BIO_new_mem_buf                         373	3_0_0	EXIST::FUNCTION:
@@ -971,7 +971,7 @@ BIO_printf                              995	3_0_0	EXIST::FUNCTION:
 a2i_IPADDRESS                           996	3_0_0	EXIST::FUNCTION:
 ERR_peek_error_line_data                997	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_unload_strings                      998	3_0_0	EXIST::FUNCTION:
-SEED_cfb128_encrypt                     999	3_0_0	EXIST::FUNCTION:SEED
+SEED_cfb128_encrypt                     999	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 ASN1_BIT_STRING_it                      1000	3_0_0	EXIST::FUNCTION:
 PKCS12_decrypt_skey                     1001	3_0_0	EXIST::FUNCTION:
 ENGINE_register_EC                      1002	3_0_0	EXIST::FUNCTION:ENGINE
@@ -2094,7 +2094,7 @@ ASN1_PRINTABLE_new                      2139	3_0_0	EXIST::FUNCTION:
 OBJ_NAME_new_index                      2140	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_add_alias                 2141	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get1_DSA                       2142	3_0_0	EXIST::FUNCTION:DSA
-SEED_cbc_encrypt                        2143	3_0_0	EXIST::FUNCTION:SEED
+SEED_cbc_encrypt                        2143	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 EVP_rc2_40_cbc                          2144	3_0_0	EXIST::FUNCTION:RC2
 ECDSA_SIG_new                           2145	3_0_0	EXIST::FUNCTION:EC
 i2d_PKCS8PrivateKey_nid_fp              2146	3_0_0	EXIST::FUNCTION:STDIO
@@ -2559,7 +2559,7 @@ OPENSSL_LH_node_usage_stats             2613	3_0_0	EXIST::FUNCTION:STDIO
 DIRECTORYSTRING_it                      2614	3_0_0	EXIST::FUNCTION:
 BIO_write                               2615	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext_by_OBJ              2616	3_0_0	EXIST::FUNCTION:OCSP
-SEED_encrypt                            2617	3_0_0	EXIST::FUNCTION:SEED
+SEED_encrypt                            2617	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 IPAddressRange_it                       2618	3_0_0	EXIST::FUNCTION:RFC3779
 PEM_read_bio_DSAPrivateKey              2619	3_0_0	EXIST::FUNCTION:DSA
 CMS_get0_type                           2620	3_0_0	EXIST::FUNCTION:CMS
@@ -2663,7 +2663,7 @@ i2d_TS_TST_INFO_bio                     2719	3_0_0	EXIST::FUNCTION:TS
 CMS_sign_receipt                        2720	3_0_0	EXIST::FUNCTION:CMS
 ENGINE_set_RAND                         2721	3_0_0	EXIST::FUNCTION:ENGINE
 X509_REVOKED_get_ext_by_OBJ             2722	3_0_0	EXIST::FUNCTION:
-SEED_decrypt                            2723	3_0_0	EXIST::FUNCTION:SEED
+SEED_decrypt                            2723	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 PEM_write_PKCS8PrivateKey               2724	3_0_0	EXIST::FUNCTION:STDIO
 ENGINE_new                              2725	3_0_0	EXIST::FUNCTION:ENGINE
 X509_check_issued                       2726	3_0_0	EXIST::FUNCTION:
@@ -2937,7 +2937,7 @@ RSA_padding_add_PKCS1_OAEP_mgf1         2999	3_0_0	EXIST::FUNCTION:RSA
 COMP_CTX_get_type                       3000	3_0_0	EXIST::FUNCTION:COMP
 TS_RESP_CTX_set_status_info             3001	3_0_0	EXIST::FUNCTION:TS
 BIO_f_nbio_test                         3002	3_0_0	EXIST::FUNCTION:
-SEED_ofb128_encrypt                     3003	3_0_0	EXIST::FUNCTION:SEED
+SEED_ofb128_encrypt                     3003	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 d2i_RSAPrivateKey_bio                   3004	3_0_0	EXIST::FUNCTION:RSA
 DH_KDF_X9_42                            3005	3_0_0	EXIST::FUNCTION:CMS,DH
 EVP_PKEY_meth_set_signctx               3006	3_0_0	EXIST::FUNCTION:

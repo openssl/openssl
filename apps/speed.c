@@ -380,7 +380,7 @@ static const OPT_PAIR doit_choices[] = {
     {"idea-cbc", D_CBC_IDEA},
     {"idea", D_CBC_IDEA},
 #endif
-#ifndef OPENSSL_NO_SEED
+#if !defined(OPENSSL_NO_SEED) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"seed-cbc", D_CBC_SEED},
     {"seed", D_CBC_SEED},
 #endif
@@ -1458,7 +1458,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
     IDEA_KEY_SCHEDULE idea_ks;
 #endif
-#ifndef OPENSSL_NO_SEED
+#if !defined(OPENSSL_NO_SEED) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     SEED_KEY_SCHEDULE seed_ks;
 #endif
 #if !defined(OPENSSL_NO_BF) && !defined(OPENSSL_NO_DEPRECATED_3_0)
@@ -1969,7 +1969,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_CBC_IDEA])
         IDEA_set_encrypt_key(key16, &idea_ks);
 #endif
-#ifndef OPENSSL_NO_SEED
+#if !defined(OPENSSL_NO_SEED) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_SEED])
         SEED_set_key(key16, &seed_ks);
 #endif
@@ -2585,7 +2585,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_SEED
+#if !defined(OPENSSL_NO_SEED) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_SEED]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
