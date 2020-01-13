@@ -556,8 +556,10 @@ end_of_options:
             goto end;
 
         db = load_index(dbfile, &db_attr);
-        if (db == NULL)
+        if (db == NULL) {
+            BIO_printf(bio_err, "Problem with index file: %s (could not load/parse file)\n", dbfile);
             goto end;
+        }
 
         if (index_index(db) <= 0)
             goto end;
@@ -684,8 +686,10 @@ end_of_options:
         goto end;
 
     db = load_index(dbfile, &db_attr);
-    if (db == NULL)
+    if (db == NULL) {
+        BIO_printf(bio_err, "Problem with index file: %s (could not load/parse file)\n", dbfile);
         goto end;
+    }
 
     /* Lets check some fields */
     for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
