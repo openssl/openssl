@@ -372,8 +372,10 @@ int srp_main(int argc, char **argv)
                    srpvfile);
 
     db = load_index(srpvfile, NULL);
-    if (db == NULL)
+    if (db == NULL) {
+        BIO_printf(bio_err, "Problem with index file: %s (could not load/parse file)\n", srpvfile);
         goto end;
+    }
 
     /* Lets check some fields */
     for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
