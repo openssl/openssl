@@ -9,6 +9,12 @@
 
 /* RC4_HMAC_MD5 cipher implementation */
 
+/*
+ * RC4 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc4_hmac_md5.h"
 
 #define NO_PAYLOAD_LENGTH ((size_t)-1)

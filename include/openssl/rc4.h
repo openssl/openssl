@@ -24,15 +24,18 @@
 extern "C" {
 #  endif
 
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rc4_key_st {
     RC4_INT x, y;
     RC4_INT data[256];
 } RC4_KEY;
+#  endif
 
-const char *RC4_options(void);
-void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data);
-void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
-         unsigned char *outdata);
+DEPRECATEDIN_3_0(const char *RC4_options(void))
+DEPRECATEDIN_3_0(void RC4_set_key(RC4_KEY *key, int len,
+                                  const unsigned char *data))
+DEPRECATEDIN_3_0(void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
+                          unsigned char *outdata))
 
 #  ifdef  __cplusplus
 }

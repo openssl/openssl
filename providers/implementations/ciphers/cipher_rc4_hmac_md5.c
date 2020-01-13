@@ -9,6 +9,12 @@
 
 /* Dispatch functions for RC4_HMAC_MD5 cipher */
 
+/*
+ * RC4 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
