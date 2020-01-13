@@ -46,7 +46,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         EVP_PKEY_CTX *pctx = NULL;
 
         if ((pctx = EVP_PKEY_CTX_new(pubk[i], NULL)) == NULL) {
-            EVPerr(EVP_F_EVP_OPENINIT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
