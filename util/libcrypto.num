@@ -251,7 +251,7 @@ SXNET_new                               255	3_0_0	EXIST::FUNCTION:
 EVP_camellia_256_ctr                    256	3_0_0	EXIST::FUNCTION:CAMELLIA
 d2i_PKCS8_PRIV_KEY_INFO                 257	3_0_0	EXIST::FUNCTION:
 EVP_md2                                 259	3_0_0	EXIST::FUNCTION:MD2
-RC2_ecb_encrypt                         260	3_0_0	EXIST::FUNCTION:RC2
+RC2_ecb_encrypt                         260	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 ENGINE_register_DH                      261	3_0_0	EXIST::FUNCTION:ENGINE
 ASN1_NULL_free                          262	3_0_0	EXIST::FUNCTION:
 EC_KEY_copy                             263	3_0_0	EXIST::FUNCTION:EC
@@ -604,7 +604,7 @@ X509at_get_attr                         618	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_it                          619	3_0_0	EXIST::FUNCTION:
 DES_ede3_ofb64_encrypt                  620	3_0_0	EXIST::FUNCTION:DES
 EC_KEY_METHOD_get_compute_key           621	3_0_0	EXIST::FUNCTION:EC
-RC2_cfb64_encrypt                       622	3_0_0	EXIST::FUNCTION:RC2
+RC2_cfb64_encrypt                       622	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 EVP_EncryptFinal_ex                     623	3_0_0	EXIST::FUNCTION:
 ERR_load_RSA_strings                    624	3_0_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_done               625	3_0_0	EXIST::FUNCTION:
@@ -1029,7 +1029,7 @@ BN_GF2m_mod_exp                         1055	3_0_0	EXIST::FUNCTION:EC2M
 OPENSSL_buf2hexstr                      1056	3_0_0	EXIST::FUNCTION:
 DES_encrypt2                            1057	3_0_0	EXIST::FUNCTION:DES
 DH_up_ref                               1058	3_0_0	EXIST::FUNCTION:DH
-RC2_ofb64_encrypt                       1059	3_0_0	EXIST::FUNCTION:RC2
+RC2_ofb64_encrypt                       1059	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 PKCS12_pbe_crypt                        1060	3_0_0	EXIST::FUNCTION:
 ASIdentifiers_free                      1061	3_0_0	EXIST::FUNCTION:RFC3779
 X509_VERIFY_PARAM_get0                  1062	3_0_0	EXIST::FUNCTION:
@@ -1097,7 +1097,7 @@ PKCS8_PRIV_KEY_INFO_it                  1123	3_0_0	EXIST::FUNCTION:
 RSA_OAEP_PARAMS_free                    1124	3_0_0	EXIST::FUNCTION:RSA
 ASN1_item_new                           1125	3_0_0	EXIST::FUNCTION:
 CRYPTO_cts128_encrypt                   1126	3_0_0	EXIST::FUNCTION:
-RC2_encrypt                             1127	3_0_0	EXIST::FUNCTION:RC2
+RC2_encrypt                             1127	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 PEM_write                               1128	3_0_0	EXIST::FUNCTION:STDIO
 EVP_CIPHER_meth_get_get_asn1_params     1129	3_0_0	EXIST::FUNCTION:
 i2d_OCSP_RESPBYTES                      1130	3_0_0	EXIST::FUNCTION:OCSP
@@ -1278,7 +1278,7 @@ UI_get_result_maxsize                   1306	3_0_0	EXIST::FUNCTION:
 PBEPARAM_it                             1307	3_0_0	EXIST::FUNCTION:
 TS_ACCURACY_set_seconds                 1308	3_0_0	EXIST::FUNCTION:TS
 UI_get0_action_string                   1309	3_0_0	EXIST::FUNCTION:
-RC2_decrypt                             1310	3_0_0	EXIST::FUNCTION:RC2
+RC2_decrypt                             1310	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 OPENSSL_atexit                          1311	3_0_0	EXIST::FUNCTION:
 CMS_add_standard_smimecap               1312	3_0_0	EXIST::FUNCTION:CMS
 PKCS7_add_attrib_content_type           1313	3_0_0	EXIST::FUNCTION:
@@ -1557,7 +1557,7 @@ UI_get0_output_string                   1591	3_0_0	EXIST::FUNCTION:
 ERR_get_error_line_data                 1592	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CTLOG_get0_name                         1593	3_0_0	EXIST::FUNCTION:CT
 ASN1_TBOOLEAN_it                        1594	3_0_0	EXIST::FUNCTION:
-RC2_set_key                             1595	3_0_0	EXIST::FUNCTION:RC2
+RC2_set_key                             1595	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 X509_REVOKED_get_ext_by_NID             1596	3_0_0	EXIST::FUNCTION:
 RSA_padding_add_none                    1597	3_0_0	EXIST::FUNCTION:RSA
 EVP_rc5_32_12_16_cbc                    1599	3_0_0	EXIST::FUNCTION:RC5
@@ -1692,7 +1692,7 @@ CMS_unsigned_get_attr                   1730	3_0_0	EXIST::FUNCTION:CMS
 EVP_aes_256_cbc                         1731	3_0_0	EXIST::FUNCTION:
 X509_check_ip_asc                       1732	3_0_0	EXIST::FUNCTION:
 PEM_write_bio_X509_AUX                  1733	3_0_0	EXIST::FUNCTION:
-RC2_cbc_encrypt                         1734	3_0_0	EXIST::FUNCTION:RC2
+RC2_cbc_encrypt                         1734	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC2
 TS_MSG_IMPRINT_new                      1735	3_0_0	EXIST::FUNCTION:TS
 EVP_ENCODE_CTX_new                      1736	3_0_0	EXIST::FUNCTION:
 BIO_f_base64                            1737	3_0_0	EXIST::FUNCTION:
