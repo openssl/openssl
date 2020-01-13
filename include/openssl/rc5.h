@@ -19,25 +19,25 @@
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_RC5
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 extern "C" {
-# endif
+#  endif
 
-# define RC5_ENCRYPT     1
-# define RC5_DECRYPT     0
+#  define RC5_ENCRYPT     1
+#  define RC5_DECRYPT     0
 
-# define RC5_32_INT unsigned int
+#  define RC5_32_INT unsigned int
 
-# define RC5_32_BLOCK            8
-# define RC5_32_KEY_LENGTH       16/* This is a default, max is 255 */
+#  define RC5_32_BLOCK            8
+#  define RC5_32_KEY_LENGTH       16/* This is a default, max is 255 */
 
 /*
  * This are the only values supported.  Tweak the code if you want more The
  * most supported modes will be RC5-32/12/16 RC5-32/16/8
  */
-# define RC5_8_ROUNDS    8
-# define RC5_12_ROUNDS   12
-# define RC5_16_ROUNDS   16
+#  define RC5_8_ROUNDS    8
+#  define RC5_12_ROUNDS   12
+#  define RC5_16_ROUNDS   16
 
 typedef struct rc5_key_st {
     /* Number of rounds */
@@ -61,9 +61,9 @@ void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                           long length, RC5_32_KEY *schedule,
                           unsigned char *ivec, int *num);
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
-# endif
+#  endif
 # endif
 
 #endif
