@@ -691,9 +691,39 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                       pctx);
 }
 
+static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
+                                     int arg1, void *arg2)
+{
+    if (pkey->pkeys[0].keymgmt == NULL)
+        return 0;
+    switch (op) {
+    case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+        {
+            char mdname[80] = "";
+            int nid;
+            int rv = EVP_PKEY_get_default_digest_name(pkey, mdname,
+                                                      sizeof(mdname));
+
+            if (rv <= 0)
+                return rv;
+            nid = OBJ_sn2nid(mdname);
+            if (nid == NID_undef)
+                nid = OBJ_ln2nid(mdname);
+            if (nid == NID_undef)
+                return 0;
+            *(int *)arg2 = nid;
+            return 1;
+        }
+    default:
+        return -2;
+    }
+}
+
 static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
 {
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
+    if (pkey->ameth == NULL)
+        return legacy_asn1_ctrl_to_param(pkey, op, arg1, arg2);
+    if (pkey->ameth->pkey_ctrl == NULL)
         return -2;
     return pkey->ameth->pkey_ctrl(pkey, op, arg1, arg2);
 }
@@ -701,6 +731,45 @@ static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 {
     return evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID, 0, pnid);
+}
+
+int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
+                                     char *mdname, size_t mdname_sz)
+{
+    if (pkey->ameth == NULL) {
+        OSSL_PARAM params[3];
+        char mddefault[100] = "";
+        char mdmandatory[100] = "";
+
+        params[0] =
+            OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST,
+                                             mddefault, sizeof(mddefault));
+        params[1] =
+            OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST,
+                                             mdmandatory,
+                                             sizeof(mdmandatory));
+        params[2] = OSSL_PARAM_construct_end();
+        if (!evp_keymgmt_get_key_params(pkey->pkeys[0].keymgmt,
+                                        pkey->pkeys[0].provdata,
+                                        params))
+            return 0;
+        if (mdmandatory[0] != '\0') {
+            OPENSSL_strlcpy(mdname, mdmandatory, mdname_sz);
+            return 2;
+        }
+        OPENSSL_strlcpy(mdname, mddefault, mdname_sz);
+        return 1;
+    }
+
+    {
+        int nid = NID_undef;
+        int rv = EVP_PKEY_get_default_digest_nid(pkey, &nid);
+        const char *name = rv > 0 ? OBJ_nid2sn(nid) : NULL;
+
+        if (rv > 0)
+            OPENSSL_strlcpy(mdname, name, mdname_sz);
+        return rv;
+    }
 }
 
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)

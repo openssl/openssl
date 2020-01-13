@@ -1178,6 +1178,8 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx);
 
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
+int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
+                                     char *mdname, size_t mdname_sz);
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid);
 
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,

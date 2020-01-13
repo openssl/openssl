@@ -158,6 +158,8 @@ extern "C" {
 #define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
 #define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
 #define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
+#define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
+#define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
 
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P        "p"
