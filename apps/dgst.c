@@ -542,6 +542,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
     if (key != NULL) {
         EVP_MD_CTX *ctx;
         size_t tmplen;
+
         BIO_get_md_ctx(bp, &ctx);
         if (!EVP_DigestSignFinal(ctx, NULL, &tmplen)) {
             BIO_printf(bio_err, "Error Signing Data\n");
