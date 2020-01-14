@@ -138,21 +138,30 @@ int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn)
 {
-    int sz = -1, secure = 0;
+    return ossl_param_bld_push_BN_pad(bld, key, bn,
+                                      bn == NULL ? 0 : BN_num_bytes(bn));
+}
+
+int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                               const BIGNUM *bn, size_t sz)
+{
+    int n, secure = 0;
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bn != NULL) {
-        sz = BN_num_bytes(bn);
-        if (sz < 0) {
-            CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_BN,
-                      CRYPTO_R_ZERO_LENGTH_NUMBER);
+        n = BN_num_bytes(bn);
+        if (n < 0) {
+            CRYPTOerr(0, CRYPTO_R_ZERO_LENGTH_NUMBER);
+            return 0;
+        }
+        if (sz < (size_t)n) {
+            CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
             return 0;
         }
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
             secure = 1;
     }
-    pd = param_push(bld, key, sz, sz >= 0 ? sz : 0,
-                    OSSL_PARAM_UNSIGNED_INTEGER, secure);
+    pd = param_push(bld, key, sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
     if (pd == NULL)
         return 0;
     pd->bn = bn;

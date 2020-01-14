@@ -8,9 +8,9 @@ ossl_param_bld_push_long, ossl_param_bld_push_ulong,
 ossl_param_bld_push_int32, ossl_param_bld_push_uint32,
 ossl_param_bld_push_int64, ossl_param_bld_push_uint64,
 ossl_param_bld_push_size_t, ossl_param_bld_push_double,
-ossl_param_bld_push_BN, ossl_param_bld_push_utf8_string,
-ossl_param_bld_push_utf8_ptr, ossl_param_bld_push_octet_string,
-ossl_param_bld_push_octet_ptr
+ossl_param_bld_push_BN, ossl_param_bld_push_BN_pad,
+ossl_param_bld_push_utf8_string, ossl_param_bld_push_utf8_ptr,
+ossl_param_bld_push_octet_string, ossl_param_bld_push_octet_ptr
 - functions to assist in the creation of OSSL_PARAM arrays
 
 =head1 SYNOPSIS
@@ -34,6 +34,8 @@ ossl_param_bld_push_octet_ptr
 
  int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                             const BIGNUM *bn);
+ int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                                const BIGNUM *bn, size_t sz);
 
  int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                      const char *buf, size_t bsize);
@@ -85,6 +87,15 @@ I<val> is stored by value and an expression or auto variable can be used.
 
 ossl_param_bld_push_BN() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
+If I<bn> is marked as being securely allocated, it's OSSL_PARAM representation
+will also be securely allocated.
+The I<bn> argument is stored by reference and the underlying BIGNUM object
+must exist until after ossl_param_bld_to_param() has been called.
+
+ossl_param_bld_push_BN_pad() is a function that will create an OSSL_PARAM object
+that holds the specified BIGNUM I<bn>.
+The object will be padded to occupy exactly I<sz> bytes, if insufficient space
+is specified an error results.
 If I<bn> is marked as being securely allocated, it's OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object

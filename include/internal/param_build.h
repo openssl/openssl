@@ -68,6 +68,8 @@ int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
                                double val);
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn);
+int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                               const BIGNUM *bn, size_t sz);
 int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                     const char *buf, size_t bsize);
 int ossl_param_bld_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
