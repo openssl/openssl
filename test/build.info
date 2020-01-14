@@ -33,7 +33,6 @@ IF[{- !$disabled{tests} -}]
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest \
-          hmactest \
           destest mdc2test \
           dhtest enginetest \
           ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
@@ -109,10 +108,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[pbelutest]=pbelutest.c
   INCLUDE[pbelutest]=../include ../apps/include
   DEPEND[pbelutest]=../libcrypto libtestutil.a
-
-  SOURCE[hmactest]=hmactest.c
-  INCLUDE[hmactest]=../include ../apps/include
-  DEPEND[hmactest]=../libcrypto libtestutil.a
 
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include ../apps/include
@@ -499,7 +494,7 @@ IF[{- !$disabled{tests} -}]
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdrand_sanitytest property_test ideatest \
                      rsa_sp800_56b_test bn_internal_test \
-                     rc2test rc4test rc5test \
+                     rc2test rc4test rc5test hmactest \
                      asn1_dsa_internal_test
 
     IF[{- !$disabled{poly1305} -}]
@@ -564,6 +559,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sparse_array_test]=sparse_array_test.c
     INCLUDE[sparse_array_test]=../crypto/include ../include ../apps/include
     DEPEND[sparse_array_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[hmactest]=hmactest.c
+    INCLUDE[hmactest]=../include ../apps/include
+    DEPEND[hmactest]=../libcrypto.a libtestutil.a
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../apps/include ../crypto/include

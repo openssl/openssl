@@ -113,7 +113,7 @@ EC_POINT_mul                            114	3_0_0	EXIST::FUNCTION:EC
 WHIRLPOOL_Final                         115	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,WHIRLPOOL
 CMS_get1_ReceiptRequest                 116	3_0_0	EXIST::FUNCTION:CMS
 BIO_sock_non_fatal_error                117	3_0_0	EXIST::FUNCTION:SOCK
-HMAC_Update                             118	3_0_0	EXIST::FUNCTION:
+HMAC_Update                             118	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 i2d_PKCS12                              119	3_0_0	EXIST::FUNCTION:
 EVP_BytesToKey                          120	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_pkey_asn1_meths      121	3_0_0	EXIST::FUNCTION:ENGINE
@@ -394,7 +394,7 @@ d2i_OCSP_REVOKEDINFO                    401	3_0_0	EXIST::FUNCTION:OCSP
 ASN1_STRING_print_ex_fp                 402	3_0_0	EXIST::FUNCTION:STDIO
 PKCS7_SIGNED_new                        403	3_0_0	EXIST::FUNCTION:
 CMS_get0_eContentType                   404	3_0_0	EXIST::FUNCTION:CMS
-HMAC_Final                              405	3_0_0	EXIST::FUNCTION:
+HMAC_Final                              405	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_CRL_delete_ext                     406	3_0_0	EXIST::FUNCTION:
 TS_TST_INFO_get_ordering                407	3_0_0	EXIST::FUNCTION:TS
 X509_get_extended_key_usage             408	3_0_0	EXIST::FUNCTION:
@@ -1234,7 +1234,7 @@ CMS_sign                                1261	3_0_0	EXIST::FUNCTION:CMS
 X509_STORE_add_cert                     1262	3_0_0	EXIST::FUNCTION:
 EC_GROUP_precompute_mult                1263	3_0_0	EXIST::FUNCTION:EC
 d2i_DISPLAYTEXT                         1265	3_0_0	EXIST::FUNCTION:
-HMAC_CTX_copy                           1266	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_copy                           1266	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CRYPTO_gcm128_init                      1267	3_0_0	EXIST::FUNCTION:
 i2d_X509_CINF                           1268	3_0_0	EXIST::FUNCTION:
 X509_REVOKED_delete_ext                 1269	3_0_0	EXIST::FUNCTION:
@@ -1291,7 +1291,7 @@ i2d_PKCS12_fp                           1319	3_0_0	EXIST::FUNCTION:STDIO
 EVP_PKEY_meth_get_init                  1320	3_0_0	EXIST::FUNCTION:
 X509_check_trust                        1321	3_0_0	EXIST::FUNCTION:
 b2i_PrivateKey                          1322	3_0_0	EXIST::FUNCTION:DSA
-HMAC_Init_ex                            1323	3_0_0	EXIST::FUNCTION:
+HMAC_Init_ex                            1323	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SMIME_read_CMS                          1324	3_0_0	EXIST::FUNCTION:CMS
 X509_subject_name_cmp                   1325	3_0_0	EXIST::FUNCTION:
 CRYPTO_ocb128_finish                    1326	3_0_0	EXIST::FUNCTION:OCB
@@ -1405,7 +1405,7 @@ ERR_lib_error_string                    1437	3_0_0	EXIST::FUNCTION:
 X509_ATTRIBUTE_set1_object              1438	3_0_0	EXIST::FUNCTION:
 i2d_ECPrivateKey_bio                    1439	3_0_0	EXIST::FUNCTION:EC
 BN_GENCB_free                           1440	3_0_0	EXIST::FUNCTION:
-HMAC_size                               1441	3_0_0	EXIST::FUNCTION:
+HMAC_size                               1441	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_get0_DH                        1442	3_0_0	EXIST::FUNCTION:DH
 d2i_OCSP_CRLID                          1443	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_set_padding              1444	3_0_0	EXIST::FUNCTION:
@@ -2029,7 +2029,7 @@ MDC2_Init                               2075	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 i2o_SCT                                 2076	3_0_0	EXIST::FUNCTION:CT
 d2i_TS_STATUS_INFO                      2077	3_0_0	EXIST::FUNCTION:TS
 ERR_error_string_n                      2078	3_0_0	EXIST::FUNCTION:
-HMAC                                    2079	3_0_0	EXIST::FUNCTION:
+HMAC                                    2079	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BN_mul                                  2080	3_0_0	EXIST::FUNCTION:
 BN_get0_nist_prime_384                  2081	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip_asc           2082	3_0_0	EXIST::FUNCTION:
@@ -2262,7 +2262,7 @@ PKCS12_SAFEBAG_get1_crl                 2309	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_get_default_mask            2310	3_0_0	EXIST::FUNCTION:
 X509_alias_set1                         2311	3_0_0	EXIST::FUNCTION:
 ASN1_item_unpack                        2312	3_0_0	EXIST::FUNCTION:
-HMAC_CTX_free                           2313	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_free                           2313	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EC_POINT_new                            2314	3_0_0	EXIST::FUNCTION:EC
 PKCS7_ISSUER_AND_SERIAL_digest          2315	3_0_0	EXIST::FUNCTION:
 EVP_des_ofb                             2316	3_0_0	EXIST::FUNCTION:DES
@@ -2914,7 +2914,7 @@ EVP_PKEY_set1_DH                        2976	3_0_0	EXIST::FUNCTION:DH
 DH_get_ex_data                          2977	3_0_0	EXIST::FUNCTION:DH
 CRYPTO_secure_malloc                    2978	3_0_0	EXIST::FUNCTION:
 TS_RESP_get_status_info                 2979	3_0_0	EXIST::FUNCTION:TS
-HMAC_CTX_new                            2980	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_new                            2980	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ENGINE_get_default_DH                   2981	3_0_0	EXIST::FUNCTION:ENGINE
 ECDSA_do_verify                         2982	3_0_0	EXIST::FUNCTION:EC
 DSO_flags                               2983	3_0_0	EXIST::FUNCTION:
@@ -3394,7 +3394,7 @@ TS_TST_INFO_set_msg_imprint             3464	3_0_0	EXIST::FUNCTION:TS
 CRYPTO_get_ex_data                      3465	3_0_0	EXIST::FUNCTION:
 X509_PURPOSE_get0_sname                 3466	3_0_0	EXIST::FUNCTION:
 RSA_verify_PKCS1_PSS                    3467	3_0_0	EXIST::FUNCTION:RSA
-HMAC_CTX_reset                          3468	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_reset                          3468	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_meth_set_init                  3469	3_0_0	EXIST::FUNCTION:
 X509_REQ_extension_nid                  3470	3_0_0	EXIST::FUNCTION:
 ENGINE_up_ref                           3471	3_0_0	EXIST::FUNCTION:ENGINE
@@ -3406,7 +3406,7 @@ SCT_set_source                          3476	3_0_0	EXIST::FUNCTION:CT
 DES_set_odd_parity                      3477	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DES
 CMAC_CTX_free                           3478	3_0_0	EXIST::FUNCTION:CMAC,DEPRECATEDIN_3_0
 d2i_ESS_ISSUER_SERIAL                   3479	3_0_0	EXIST::FUNCTION:
-HMAC_CTX_set_flags                      3480	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_set_flags                      3480	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 d2i_PKCS8_bio                           3481	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext_count               3482	3_0_0	EXIST::FUNCTION:OCSP
 PEM_read_bio_PKCS8_PRIV_KEY_INFO        3483	3_0_0	EXIST::FUNCTION:
@@ -4004,7 +4004,7 @@ X509_get_pathlen                        4092	3_0_0	EXIST::FUNCTION:
 ECDSA_SIG_set0                          4093	3_0_0	EXIST::FUNCTION:EC
 DSA_SIG_set0                            4094	3_0_0	EXIST::FUNCTION:DSA
 EVP_PKEY_get0_hmac                      4095	3_0_0	EXIST::FUNCTION:
-HMAC_CTX_get_md                         4096	3_0_0	EXIST::FUNCTION:
+HMAC_CTX_get_md                         4096	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 NAME_CONSTRAINTS_check_CN               4097	3_0_0	EXIST::FUNCTION:
 OCSP_resp_get0_id                       4098	3_0_0	EXIST::FUNCTION:OCSP
 OCSP_resp_get0_certs                    4099	3_0_0	EXIST::FUNCTION:OCSP
