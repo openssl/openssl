@@ -196,6 +196,8 @@ static int template_static_params_test(int n)
     OSSL_PARAM_BLD bld;
     OSSL_PARAM params[20], *p;
     BIGNUM *bn = NULL, *bn_r = NULL;
+    BIGNUM *bn0 = NULL, *bn0_r = NULL;
+    const size_t bn_bytes = 200;
     unsigned int i;
     char *utf = NULL;
     int res = 0;
@@ -204,7 +206,11 @@ static int template_static_params_test(int n)
     if (!TEST_true(ossl_param_bld_push_uint(&bld, "i", 6))
         || !TEST_ptr(bn = (n & 1) == 0 ? BN_new() : BN_secure_new())
         || !TEST_true(BN_set_word(bn, 1337))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bn", bn))
+        || !TEST_false(ossl_param_bld_push_BN_pad(&bld, "bn", bn, 0))
+        || !TEST_false(ossl_param_bld_push_BN_pad(&bld, "bn", bn, 1))
+        || !TEST_true(ossl_param_bld_push_BN_pad(&bld, "bn", bn, bn_bytes))
+        || !TEST_ptr(bn0 = BN_new())
+        || !TEST_true(ossl_param_bld_push_BN_pad(&bld, "bn0", bn0, 0))
         || !TEST_true(ossl_param_bld_push_utf8_string(&bld, "utf8_s", "bar",
                                                       0))
         || !TEST_ptr(ossl_param_bld_to_param_ex(&bld, params,
@@ -223,8 +229,15 @@ static int template_static_params_test(int n)
         || !TEST_true(OSSL_PARAM_get_BN(p, &bn_r))
         || !TEST_str_eq(p->key, "bn")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_size_t_le(p->data_size, sizeof(BN_ULONG))
+        || !TEST_size_t_eq(p->data_size, bn_bytes)
         || !TEST_uint_eq((unsigned int)BN_get_word(bn_r), 1337)
+        /* Check BIGNUM zero */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "bn0"))
+        || !TEST_true(OSSL_PARAM_get_BN(p, &bn0_r))
+        || !TEST_str_eq(p->key, "bn0")
+        || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
+        || !TEST_size_t_eq(p->data_size, 0)
+        || !TEST_uint_eq((unsigned int)BN_get_word(bn0_r), 0)
         /* Check UTF8 string */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_s"))
         || !TEST_str_eq(p->data, "bar")
@@ -236,6 +249,8 @@ err:
     OPENSSL_free(utf);
     BN_free(bn);
     BN_free(bn_r);
+    BN_free(bn0);
+    BN_free(bn0_r);
     return res;
 }
 
