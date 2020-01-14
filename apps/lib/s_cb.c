@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
 #include "apps.h"
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -729,10 +731,14 @@ void tlsext_cb(SSL *s, int client_server, int type,
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
-    unsigned char *buffer;
+    unsigned char *buffer = NULL;
     size_t length = 0;
     unsigned short port;
     BIO_ADDR *lpeer = NULL, *peer = NULL;
+    int res = 0;
+    EVP_MAC *hmac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM params[3], *p = params;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -770,13 +776,42 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
     /* Calculate HMAC of buffer using the secret */
-    HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, cookie, cookie_len);
-
+    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    if (hmac == NULL) {
+            BIO_printf(bio_err, "HMAC not found\n");
+            goto end;
+    }
+    ctx = EVP_MAC_CTX_new(hmac);
+    if (ctx == NULL) {
+            BIO_printf(bio_err, "HMAC context allocation failed\n");
+            goto end;
+    }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA1", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, cookie_secret,
+                                             COOKIE_SECRET_LENGTH);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+            BIO_printf(bio_err, "HMAC context parameter setting failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_init(ctx)) {
+            BIO_printf(bio_err, "HMAC context initialisation failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_update(ctx, buffer, length)) {
+            BIO_printf(bio_err, "HMAC context update failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_final(ctx, cookie, NULL, (size_t)cookie_len)) {
+            BIO_printf(bio_err, "HMAC context final failed\n");
+            goto end;
+    }
+    res = 1;
+end:
     OPENSSL_free(buffer);
     BIO_ADDR_free(lpeer);
 
-    return 1;
+    return res;
 }
 
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,

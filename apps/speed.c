@@ -279,7 +279,9 @@ const OPTIONS speed_options[] = {
 
     OPT_SECTION("Selection"),
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
+#endif
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
 #endif
@@ -340,7 +342,9 @@ static const OPT_PAIR doit_choices[] = {
 #endif
 #if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md5", D_MD5},
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     {"hmac", D_HMAC},
+# endif
 #endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"sha1", D_SHA1},
@@ -558,7 +562,9 @@ typedef struct loopargs_st {
     size_t outlen[EC_NUM];
 #endif
     EVP_CIPHER_CTX *ctx;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     HMAC_CTX *hctx;
+#endif
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     CMAC_CTX *cmac_ctx;
 #endif
@@ -635,6 +641,7 @@ static int MD5_loop(void *args)
     return count;
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 static int HMAC_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -650,6 +657,7 @@ static int HMAC_loop(void *args)
     }
     return count;
 }
+# endif
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -970,6 +978,7 @@ static int EVP_Digest_loop(void *args)
     return count;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static const EVP_MD *evp_hmac_md = NULL;
 static char *evp_hmac_name = NULL;
 static int EVP_HMAC_loop(void *args)
@@ -986,6 +995,7 @@ static int EVP_HMAC_loop(void *args)
     }
     return count;
 }
+#endif
 
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static const EVP_CIPHER *evp_cmac_cipher = NULL;
@@ -1617,6 +1627,7 @@ int speed_main(int argc, char **argv)
             doit[D_EVP] = 1;
             break;
         case OPT_HMAC:
+#ifndef OPENSSL_NO_DEPRECATED_3_0
             evp_hmac_md = EVP_get_digestbyname(opt_arg());
             if (evp_hmac_md == NULL) {
                 BIO_printf(bio_err, "%s: %s is an unknown digest\n",
@@ -1625,6 +1636,7 @@ int speed_main(int argc, char **argv)
             }
             doit[D_EVP_HMAC] = 1;
             break;
+#endif
         case OPT_CMAC:
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
             evp_cmac_cipher = EVP_get_cipherbyname(opt_arg());
@@ -2301,6 +2313,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_HMAC]) {
         static const char hmac_key[] = "This is a key...";
         int len = strlen(hmac_key);
@@ -2325,6 +2338,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             HMAC_CTX_free(loopargs[i].hctx);
     }
+# endif
 #endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_SHA1]) {
@@ -2790,6 +2804,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_EVP_HMAC] && evp_hmac_md != NULL) {
         const char *md_name = OBJ_nid2ln(EVP_MD_type(evp_hmac_md));
 
@@ -2807,6 +2822,7 @@ int speed_main(int argc, char **argv)
             print_result(D_EVP_HMAC, testnum, count, d);
         }
     }
+#endif
 
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_EVP_CMAC] && evp_cmac_cipher != NULL) {
@@ -3709,7 +3725,9 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].secret_b);
 #endif
     }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     OPENSSL_free(evp_hmac_name);
+#endif
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     OPENSSL_free(evp_cmac_name);
 #endif

@@ -21,6 +21,20 @@
      as well as words of caution.
      [Richard Levitte]
 
+  *) The SSL_CTX_set_tlsext_ticket_key_cb(3) function has been deprecated.
+     Instead used the new SSL_CTX_set_tlsext_ticket_key_evp_cb(3) function.
+     [Paul Dale]
+
+  *) All of the low level HMAC functions have been deprecated including:
+     HMAC, HMAC_size, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free,
+     HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_copy, HMAC_CTX_set_flags
+     and HMAC_CTX_get_md.
+     Use of these low level functions has been informally discouraged for a long
+     time.  Instead applications should use L<EVP_MAC_CTX_new(3)>,
+     L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)>
+     and L<EVP_MAC_final(3)>.
+     [Paul Dale]
+
   *) All of the low level CMAC functions have been deprecated including:
      CMAC_CTX_new, CMAC_CTX_cleanup, CMAC_CTX_free, CMAC_CTX_get0_cipher_ctx,
      CMAC_CTX_copy, CMAC_Init, CMAC_Update, CMAC_Final and CMAC_resume.
