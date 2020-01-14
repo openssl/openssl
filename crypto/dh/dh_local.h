@@ -33,7 +33,9 @@ struct dh_st {
     int seedlen;
     BIGNUM *counter;
     CRYPTO_REF_COUNT references;
+#ifndef FIPS_MODE
     CRYPTO_EX_DATA ex_data;
+#endif
     const DH_METHOD *meth;
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;

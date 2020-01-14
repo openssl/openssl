@@ -503,7 +503,9 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
         drbg->meth->uninstantiate(drbg);
     rand_pool_free(drbg->adin_pool);
     CRYPTO_THREAD_lock_free(drbg->lock);
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
+#endif
 
     if (drbg->secure)
         OPENSSL_secure_clear_free(drbg, sizeof(*drbg));
@@ -1098,6 +1100,7 @@ int rand_drbg_enable_locking(RAND_DRBG *drbg)
     return 1;
 }
 
+#ifndef FIPS_MODE
 /*
  * Get and set the EXDATA
  */
@@ -1110,7 +1113,7 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 {
     return CRYPTO_get_ex_data(&drbg->ex_data, idx);
 }
-
+#endif
 
 /*
  * The following functions provide a RAND_METHOD that works on the

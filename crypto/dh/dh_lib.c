@@ -78,8 +78,10 @@ DH *DH_new_method(ENGINE *engine)
 
     ret->flags = ret->meth->flags;
 
+#ifndef FIPS_MODE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data))
         goto err;
+#endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -112,7 +114,9 @@ void DH_free(DH *r)
     ENGINE_finish(r->engine);
 #endif
 
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
+#endif
 
     CRYPTO_THREAD_lock_free(r->lock);
 
@@ -139,6 +143,7 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
+#ifndef FIPS_MODE
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
@@ -148,6 +153,7 @@ void *DH_get_ex_data(DH *d, int idx)
 {
     return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
+#endif
 
 int DH_bits(const DH *dh)
 {

@@ -88,9 +88,11 @@ RSA *RSA_new_method(ENGINE *engine)
 #endif
 
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
+#ifndef FIPS_MODE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
         goto err;
     }
+#endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -123,7 +125,9 @@ void RSA_free(RSA *r)
     ENGINE_finish(r->engine);
 #endif
 
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
+#endif
 
     CRYPTO_THREAD_lock_free(r->lock);
 
@@ -155,6 +159,7 @@ int RSA_up_ref(RSA *r)
     return i > 1 ? 1 : 0;
 }
 
+#ifndef FIPS_MODE
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
@@ -164,6 +169,7 @@ void *RSA_get_ex_data(const RSA *r, int idx)
 {
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
+#endif
 
 /*
  * Define a scaling constant for our fixed point arithmetic.
