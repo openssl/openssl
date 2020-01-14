@@ -322,6 +322,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     int ret = 0;
     void *provkey = NULL;
     EVP_SIGNATURE *signature = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const char *supported_sig = NULL;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -334,33 +336,37 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx->keytype == NULL)
         goto legacy;
 
-    if (ctx->keymgmt == NULL)
-        ctx->keymgmt =
-            EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, ctx->propquery);
-    if (ctx->keymgmt != NULL) {
-        const char *supported_sig = NULL;
-
-        if (ctx->keymgmt->query_operation_name != NULL)
-            supported_sig =
-                ctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
-
-        /*
-         * If we didn't get a supported sig, assume there is one with the
-         * same name as the key type.
-         */
-        if (supported_sig == NULL)
-            supported_sig = ctx->keytype;
-
-        /*
-         * Because we cleared out old ops, we shouldn't need to worry about
-         * checking if signature is already there.
-         */
-        signature =
-            EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+    /* Ensure that the key is provided.  If not, go legacy */
+    tmp_keymgmt = ctx->keymgmt;
+    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
+                                     &tmp_keymgmt, ctx->propquery, 0);
+    if (provkey == NULL)
+        goto legacy;
+    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
     }
+    EVP_KEYMGMT_free(ctx->keymgmt);
+    ctx->keymgmt = tmp_keymgmt;
 
-    if (ctx->keymgmt == NULL
-        || signature == NULL
+    if (ctx->keymgmt->query_operation_name != NULL)
+        supported_sig = ctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+
+    /*
+     * If we didn't get a supported sig, assume there is one with the
+     * same name as the key type.
+     */
+    if (supported_sig == NULL)
+        supported_sig = ctx->keytype;
+
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if signature is already there.
+     */
+    signature =
+        EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+
+    if (signature == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
@@ -374,14 +380,6 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     }
 
     ctx->op.sig.signature = signature;
-
-    if (ctx->pkey != NULL) {
-        provkey =
-            evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
-        /* If export failed, legacy may be able to pick it up */
-        if (provkey == NULL)
-            goto legacy;
-    }
     ctx->op.sig.sigprovctx = signature->newctx(ossl_provider_ctx(signature->prov));
     if (ctx->op.sig.sigprovctx == NULL) {
         /* The provider key can stay in the cache */

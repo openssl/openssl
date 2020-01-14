@@ -21,6 +21,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     int ret = 0;
     void *provkey = NULL;
     EVP_ASYM_CIPHER *cipher = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const char *supported_ciph = NULL;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -33,33 +35,35 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx->keytype == NULL || ctx->engine != NULL)
         goto legacy;
 
-    if (ctx->keymgmt == NULL)
-        ctx->keymgmt =
-            EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, ctx->propquery);
-    if (ctx->keymgmt != NULL) {
-        const char *supported_ciph = NULL;
+    /* Ensure that the key is provided.  If not, go legacy */
+    tmp_keymgmt = ctx->keymgmt;
+    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
+                                     &tmp_keymgmt, ctx->propquery, 0);
+    if (provkey == NULL)
+        goto legacy;
+    EVP_KEYMGMT_up_ref(tmp_keymgmt);
+    EVP_KEYMGMT_free(ctx->keymgmt);
+    ctx->keymgmt = tmp_keymgmt;
 
-        if (ctx->keymgmt->query_operation_name != NULL)
-            supported_ciph =
-                ctx->keymgmt->query_operation_name(OSSL_OP_ASYM_CIPHER);
+    if (ctx->keymgmt->query_operation_name != NULL)
+        supported_ciph =
+            ctx->keymgmt->query_operation_name(OSSL_OP_ASYM_CIPHER);
 
-        /*
-         * If we didn't get a supported ciph, assume there is one with the
-         * same name as the key type.
-         */
-        if (supported_ciph == NULL)
-            supported_ciph = ctx->keytype;
+    /*
+     * If we didn't get a supported ciph, assume there is one with the
+     * same name as the key type.
+     */
+    if (supported_ciph == NULL)
+        supported_ciph = ctx->keytype;
 
-        /*
-         * Because we cleared out old ops, we shouldn't need to worry about
-         * checking if cipher is already there.
-         */
-        cipher =
-            EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
-    }
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if cipher is already there.
+     */
+    cipher =
+        EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
 
-    if (ctx->keymgmt == NULL
-        || cipher == NULL
+    if (cipher == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
             != EVP_ASYM_CIPHER_provider(cipher))) {
         /*
@@ -73,13 +77,6 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     }
 
     ctx->op.ciph.cipher = cipher;
-
-    if (ctx->pkey != NULL) {
-        provkey = evp_keymgmt_export_to_provider(ctx->pkey, ctx->keymgmt, 0);
-        /* If export failed, legacy may be able to pick it up */
-        if (provkey == NULL)
-            goto legacy;
-    }
     ctx->op.ciph.ciphprovctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
     if (ctx->op.ciph.ciphprovctx == NULL) {
         /* The provider key can stay in the cache */

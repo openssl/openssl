@@ -31,6 +31,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL;
+    const char *supported_sig = NULL;
     void *provkey = NULL;
     int ret;
 
@@ -71,33 +73,38 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         }
     }
 
-    if (locpctx->keymgmt == NULL)
-        locpctx->keymgmt = EVP_KEYMGMT_fetch(locpctx->libctx, locpctx->keytype,
-                                             locpctx->propquery);
-    if (locpctx->keymgmt != NULL) {
-        const char *supported_sig = NULL;
-
-        if (locpctx->keymgmt->query_operation_name != NULL)
-            supported_sig =
-                locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
-
-        /*
-         * If we didn't get a supported sig, assume there is one with the
-         * same name as the key type.
-         */
-        if (supported_sig == NULL)
-            supported_sig = locpctx->keytype;
-
-        /*
-         * Because we cleared out old ops, we shouldn't need to worry about
-         * checking if signature is already there.
-         */
-        signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
-                                        locpctx->propquery);
+    /* Ensure that the key is provided.  If not, go legacy */
+    tmp_keymgmt = locpctx->keymgmt;
+    provkey = evp_pkey_make_provided(locpctx->pkey, locpctx->libctx,
+                                     &tmp_keymgmt, locpctx->propquery, 0);
+    if (provkey == NULL)
+        goto legacy;
+    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
     }
+    EVP_KEYMGMT_free(locpctx->keymgmt);
+    locpctx->keymgmt = tmp_keymgmt;
 
-    if (locpctx->keymgmt == NULL
-        || signature == NULL
+    if (locpctx->keymgmt->query_operation_name != NULL)
+        supported_sig =
+            locpctx->keymgmt->query_operation_name(OSSL_OP_SIGNATURE);
+
+    /*
+     * If we didn't get a supported sig, assume there is one with the
+     * same name as the key type.
+     */
+    if (supported_sig == NULL)
+        supported_sig = locpctx->keytype;
+
+    /*
+     * Because we cleared out old ops, we shouldn't need to worry about
+     * checking if signature is already there.
+     */
+    signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
+                                    locpctx->propquery);
+
+    if (signature == NULL
         || (EVP_KEYMGMT_provider(locpctx->keymgmt)
             != EVP_SIGNATURE_provider(signature))) {
         /*
@@ -113,16 +120,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     /* No more legacy from here down to legacy: */
 
     locpctx->op.sig.signature = signature;
-
-    provkey =
-        evp_keymgmt_export_to_provider(locpctx->pkey, locpctx->keymgmt, 0);
-    /* If export failed, legacy may be able to pick it up */
-    if (provkey == NULL)
-        goto legacy;
-
     locpctx->operation = ver ? EVP_PKEY_OP_VERIFYCTX
                              : EVP_PKEY_OP_SIGNCTX;
-
     locpctx->op.sig.sigprovctx
         = signature->newctx(ossl_provider_ctx(signature->prov));
     if (locpctx->op.sig.sigprovctx == NULL) {

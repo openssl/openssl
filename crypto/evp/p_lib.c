@@ -27,6 +27,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
+#include "evp_local.h"
 
 static void evp_pkey_free_it(EVP_PKEY *key);
 
@@ -826,4 +827,48 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
             return pkey->ameth->pkey_size(pkey);
     }
     return 0;
+}
+
+void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                             EVP_KEYMGMT **keymgmt, const char *propquery,
+                             int domainparams)
+{
+    EVP_KEYMGMT *allocated_keymgmt = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL;
+    void *provdata = NULL;
+
+    if (pk == NULL)
+        return NULL;
+
+    if (keymgmt != NULL) {
+        tmp_keymgmt = *keymgmt;
+        *keymgmt = NULL;
+    }
+
+    if (tmp_keymgmt == NULL) {
+        EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk);
+
+        if (ctx != NULL && ctx->keytype != NULL)
+            tmp_keymgmt = allocated_keymgmt =
+                EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, propquery);
+        EVP_PKEY_CTX_free(ctx);
+    }
+
+    if (tmp_keymgmt != NULL)
+        provdata =
+            evp_keymgmt_export_to_provider(pk, tmp_keymgmt, domainparams);
+
+    /*
+     * If nothing was exported, |tmp_keymgmt| might point at a freed
+     * EVP_KEYMGMT, so we clear it to be safe.  It shouldn't be useful for
+     * the caller either way in that case.
+     */
+    if (provdata == NULL)
+        tmp_keymgmt = NULL;
+
+    if (keymgmt != NULL)
+        *keymgmt = tmp_keymgmt;
+
+    EVP_KEYMGMT_free(allocated_keymgmt);
+    return provdata;
 }
