@@ -280,7 +280,7 @@ const OPTIONS speed_options[] = {
     OPT_SECTION("Selection"),
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
     {"hmac", OPT_HMAC, 's', "HMAC using EVP-named digest"},
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher"},
 #endif
     {"decrypt", OPT_DECRYPT, '-',
@@ -559,7 +559,7 @@ typedef struct loopargs_st {
 #endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     CMAC_CTX *cmac_ctx;
 #endif
     GCM128_CONTEXT *gcm_ctx;
@@ -987,7 +987,7 @@ static int EVP_HMAC_loop(void *args)
     return count;
 }
 
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static const EVP_CIPHER *evp_cmac_cipher = NULL;
 static char *evp_cmac_name = NULL;
 
@@ -1626,7 +1626,7 @@ int speed_main(int argc, char **argv)
             doit[D_EVP_HMAC] = 1;
             break;
         case OPT_CMAC:
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
             evp_cmac_cipher = EVP_get_cipherbyname(opt_arg());
             if (evp_cmac_cipher == NULL) {
                 BIO_printf(bio_err, "%s: %s is an unknown cipher\n",
@@ -2808,7 +2808,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_EVP_CMAC] && evp_cmac_cipher != NULL) {
         const char *cipher_name = OBJ_nid2ln(EVP_CIPHER_type(evp_cmac_cipher));
 
@@ -3710,7 +3710,7 @@ int speed_main(int argc, char **argv)
 #endif
     }
     OPENSSL_free(evp_hmac_name);
-#ifndef OPENSSL_NO_CMAC
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     OPENSSL_free(evp_cmac_name);
 #endif
 
