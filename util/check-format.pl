@@ -960,6 +960,17 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
+    # special checks for missing brace before or after 'else'
+    if (my ($head, $tail) = m/(^|^.*\W)else(\W.*$|$)/) {
+        my $brace_before = $head =~ /}\s*$/; # '}' then any whitespace
+        my $brace_after  = $tail =~ /^\s*if\s*\(.*\)\s*{|\s*{/;
+        # possibly 'if (...)' (with potentially inner '(' and ')') then any whitespace then '{'
+        if (parens_balance($tail) == 0) { # else avoid false positive due to unfinished expr on current line
+            report("no '{' after '} else'") if $brace_before && !$brace_after;
+            report("no '}' before 'else ... {'") if !$brace_before && $brace_after;
+        }
+    }
+
   POSTPROCESS_DIRECTIVE:
     # on begin of multi-line preprocessor directive, adapt indent
     # need to use original line contents because trailing '\' may have been stripped above
