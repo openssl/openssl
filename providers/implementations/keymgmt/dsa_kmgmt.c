@@ -135,9 +135,8 @@ static int key_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 static void *dsa_importdomparams(void *provctx, const OSSL_PARAM params[])
 {
     DSA *dsa;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
 
-    if ((dsa = dsa_new(libctx)) == NULL
+    if ((dsa = DSA_new()) == NULL
         || !params_to_domparams(dsa, params)) {
         DSA_free(dsa);
         dsa = NULL;
@@ -166,9 +165,8 @@ static int dsa_exportdomparams(void *domparams,
 static void *dsa_importkey(void *provctx, const OSSL_PARAM params[])
 {
     DSA *dsa;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
 
-    if ((dsa = dsa_new(libctx)) == NULL
+    if ((dsa = DSA_new()) == NULL
         || !params_to_key(dsa, params)) {
         DSA_free(dsa);
         dsa = NULL;
