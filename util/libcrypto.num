@@ -1238,7 +1238,7 @@ HMAC_CTX_copy                           1266	3_0_0	EXIST::FUNCTION:
 CRYPTO_gcm128_init                      1267	3_0_0	EXIST::FUNCTION:
 i2d_X509_CINF                           1268	3_0_0	EXIST::FUNCTION:
 X509_REVOKED_delete_ext                 1269	3_0_0	EXIST::FUNCTION:
-RC5_32_cfb64_encrypt                    1270	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_cfb64_encrypt                    1270	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 TS_REQ_set_cert_req                     1271	3_0_0	EXIST::FUNCTION:TS
 TXT_DB_get_by_index                     1272	3_0_0	EXIST::FUNCTION:
 X509_check_ca                           1273	3_0_0	EXIST::FUNCTION:
@@ -1673,7 +1673,7 @@ UI_dup_verify_string                    1711	3_0_0	EXIST::FUNCTION:
 d2i_PKCS7_bio                           1712	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_digests              1713	3_0_0	EXIST::FUNCTION:ENGINE
 i2d_PublicKey                           1714	3_0_0	EXIST::FUNCTION:
-RC5_32_set_key                          1715	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_set_key                          1715	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 AES_unwrap_key                          1716	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_Cipher                              1717	3_0_0	EXIST::FUNCTION:
 AES_set_decrypt_key                     1718	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -1771,7 +1771,7 @@ OPENSSL_LH_delete                       1812	3_0_0	EXIST::FUNCTION:
 TS_STATUS_INFO_dup                      1813	3_0_0	EXIST::FUNCTION:TS
 X509v3_addr_get_range                   1814	3_0_0	EXIST::FUNCTION:RFC3779
 X509_EXTENSION_get_data                 1815	3_0_0	EXIST::FUNCTION:
-RC5_32_encrypt                          1816	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_encrypt                          1816	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 DIST_POINT_set_dpname                   1817	3_0_0	EXIST::FUNCTION:
 BIO_sock_info                           1818	3_0_0	EXIST::FUNCTION:SOCK
 OPENSSL_hexstr2buf                      1819	3_0_0	EXIST::FUNCTION:
@@ -1946,7 +1946,7 @@ GENERAL_NAME_it                         1991	3_0_0	EXIST::FUNCTION:
 EVP_des_ede_ecb                         1992	3_0_0	EXIST::FUNCTION:DES
 i2d_CRL_DIST_POINTS                     1993	3_0_0	EXIST::FUNCTION:
 PEM_write_bio_X509_REQ_NEW              1994	3_0_0	EXIST::FUNCTION:
-RC5_32_ofb64_encrypt                    1995	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_ofb64_encrypt                    1995	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 i2d_PKCS7                               1996	3_0_0	EXIST::FUNCTION:
 BN_mod_lshift_quick                     1997	3_0_0	EXIST::FUNCTION:
 DIST_POINT_NAME_it                      1998	3_0_0	EXIST::FUNCTION:
@@ -2694,7 +2694,7 @@ X509_REQ_to_X509                        2750	3_0_0	EXIST::FUNCTION:
 EVP_aes_192_wrap_pad                    2751	3_0_0	EXIST::FUNCTION:
 PKCS7_SIGN_ENVELOPE_new                 2752	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_policy_id                    2753	3_0_0	EXIST::FUNCTION:TS
-RC5_32_cbc_encrypt                      2754	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_cbc_encrypt                      2754	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 BN_is_zero                              2755	3_0_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_new                  2756	3_0_0	EXIST::FUNCTION:CT
 NETSCAPE_SPKI_it                        2757	3_0_0	EXIST::FUNCTION:
@@ -2856,7 +2856,7 @@ X509_STORE_CTX_free                     2917	3_0_0	EXIST::FUNCTION:
 AUTHORITY_KEYID_it                      2918	3_0_0	EXIST::FUNCTION:
 X509V3_get_value_int                    2919	3_0_0	EXIST::FUNCTION:
 ASN1_UTCTIME_set_string                 2920	3_0_0	EXIST::FUNCTION:
-RC5_32_decrypt                          2921	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_decrypt                          2921	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 i2d_X509_REQ_INFO                       2922	3_0_0	EXIST::FUNCTION:
 EVP_des_cfb1                            2923	3_0_0	EXIST::FUNCTION:DES
 OBJ_NAME_cleanup                        2924	3_0_0	EXIST::FUNCTION:
@@ -3477,7 +3477,7 @@ BN_dec2bn                               3549	3_0_0	EXIST::FUNCTION:
 CMS_decrypt                             3550	3_0_0	EXIST::FUNCTION:CMS
 BN_mpi2bn                               3551	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_cfb128                      3552	3_0_0	EXIST::FUNCTION:
-RC5_32_ecb_encrypt                      3554	3_0_0	EXIST::FUNCTION:RC5
+RC5_32_ecb_encrypt                      3554	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC5
 EVP_CIPHER_meth_new                     3555	3_0_0	EXIST::FUNCTION:
 i2d_RSA_OAEP_PARAMS                     3556	3_0_0	EXIST::FUNCTION:RSA
 SXNET_get_id_ulong                      3557	3_0_0	EXIST::FUNCTION:

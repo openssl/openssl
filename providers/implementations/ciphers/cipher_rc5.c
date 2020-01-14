@@ -9,6 +9,12 @@
 
 /* Dispatch functions for RC5 cipher modes ecb, cbc, ofb, cfb */
 
+/*
+ * RC5 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
