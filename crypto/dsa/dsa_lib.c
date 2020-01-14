@@ -19,11 +19,6 @@
 
 #ifndef FIPS_MODE
 
-DSA *DSA_new(void)
-{
-    return DSA_new_method(NULL);
-}
-
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
@@ -215,8 +210,10 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
 
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 
+#ifndef FIPS_MODE
     if (!crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
         goto err;
+#endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -235,9 +232,9 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_method(NULL, engine);
 }
 
-DSA *dsa_new(OPENSSL_CTX *libctx)
+DSA *DSA_new(void)
 {
-    return dsa_new_method(libctx, NULL);
+    return DSA_new_method(NULL);
 }
 
 void DSA_free(DSA *r)
@@ -259,7 +256,9 @@ void DSA_free(DSA *r)
     ENGINE_finish(r->engine);
 #endif
 
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
+#endif
 
     CRYPTO_THREAD_lock_free(r->lock);
 

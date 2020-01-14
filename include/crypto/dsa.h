@@ -9,6 +9,5 @@
 
 #include <openssl/dsa.h>
 
-DSA *dsa_new(OPENSSL_CTX *libctx);
 int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa);
