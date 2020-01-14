@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RC5 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc5.h"
 
 static int cipher_hw_rc5_initkey(PROV_CIPHER_CTX *ctx,

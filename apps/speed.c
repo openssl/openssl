@@ -372,7 +372,7 @@ static const OPT_PAIR doit_choices[] = {
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
 #endif
-#ifndef OPENSSL_NO_RC5
+#if !defined(OPENSSL_NO_RC5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"rc5-cbc", D_CBC_RC5},
     {"rc5", D_CBC_RC5},
 #endif
@@ -1449,7 +1449,7 @@ int speed_main(int argc, char **argv)
                                     EdDSA_SECONDS, SM2_SECONDS };
 
     /* What follows are the buffers and key material. */
-#ifndef OPENSSL_NO_RC5
+#if !defined(OPENSSL_NO_RC5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     RC5_32_KEY rc5_ks;
 #endif
 #if !defined(OPENSSL_NO_RC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
@@ -1981,7 +1981,7 @@ int speed_main(int argc, char **argv)
     if (doit[D_CBC_RC2])
         RC2_set_key(&rc2_ks, 16, key16, 128);
 #endif
-#ifndef OPENSSL_NO_RC5
+#if !defined(OPENSSL_NO_RC5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_RC5])
         if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
             BIO_printf(bio_err, "Failed setting RC5 key\n");
@@ -2628,7 +2628,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_RC5
+#if !defined(OPENSSL_NO_RC5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_RC5]) {
         if (async_jobs > 0) {
             BIO_printf(bio_err, "Async mode is not supported with %s\n",
