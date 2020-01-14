@@ -102,7 +102,7 @@ EVP_DigestSignFinal().
 
 =head1 RETURN VALUES
 
-EVP_DigestSignInit(), EVP_DigestSignUpdate(), EVP_DigestSignaFinal() and
+EVP_DigestSignInit(), EVP_DigestSignUpdate(), EVP_DigestSignFinal() and
 EVP_DigestSign() return 1 for success and 0 for failure.
 
 The error codes can be obtained from L<ERR_get_error(3)>.
