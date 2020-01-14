@@ -24,9 +24,9 @@
 #  define HMAC_MAX_MD_CBLOCK      128    /* Deprecated */
 # endif
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 size_t HMAC_size(const HMAC_CTX *e);
 HMAC_CTX *HMAC_CTX_new(void);
@@ -50,8 +50,8 @@ __owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
 const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
 
 #endif
