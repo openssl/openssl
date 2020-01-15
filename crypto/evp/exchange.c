@@ -185,6 +185,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     if (provkey == NULL)
         goto legacy;
     EVP_KEYMGMT_up_ref(tmp_keymgmt);
+    EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
 
     if (ctx->keymgmt->query_operation_name != NULL)
