@@ -47,8 +47,8 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     }
 
     /* make a random number and set the top and bottom bits */
-    b = flag == NORMAL ? rand_bytes_ex(libctx, buf, bytes)
-                       : rand_priv_bytes_ex(libctx, buf, bytes);
+    b = flag == NORMAL ? RAND_bytes_ex(libctx, buf, bytes)
+                       : RAND_priv_bytes_ex(libctx, buf, bytes);
     if (b <= 0)
         goto err;
 
@@ -60,7 +60,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
         unsigned char c;
 
         for (i = 0; i < bytes; i++) {
-            if (rand_bytes_ex(libctx, &c, 1) <= 0)
+            if (RAND_bytes_ex(libctx, &c, 1) <= 0)
                 goto err;
             if (c >= 128 && i > 0)
                 buf[i] = buf[i - 1];
@@ -280,7 +280,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         goto err;
     }
     for (done = 0; done < num_k_bytes;) {
-        if (!rand_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes)))
+        if (!RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes)))
             goto err;
 
         if (!EVP_DigestInit_ex(mdctx, md, NULL)

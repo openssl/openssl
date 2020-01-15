@@ -4918,3 +4918,5 @@ OSSL_SELF_TEST_get_callback             ?	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_dup                           ?	3_0_0	EXIST::FUNCTION:
 ASN1_UTCTIME_dup                        ?	3_0_0	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_dup                ?	3_0_0	EXIST::FUNCTION:
+RAND_priv_bytes_ex                      ?	3_0_0	EXIST::FUNCTION:
+RAND_bytes_ex                           ?	3_0_0	EXIST::FUNCTION:
