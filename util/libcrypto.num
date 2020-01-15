@@ -1001,7 +1001,7 @@ i2d_PKCS8PrivateKey_nid_bio             1026	3_0_0	EXIST::FUNCTION:
 ERR_put_error                           1027	3_0_0	NOEXIST::FUNCTION:
 ERR_add_error_data                      1028	3_0_0	EXIST::FUNCTION:
 X509_ALGORS_it                          1029	3_0_0	EXIST::FUNCTION:
-MD5_Update                              1030	3_0_0	EXIST::FUNCTION:MD5
+MD5_Update                              1030	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD5
 X509_policy_check                       1031	3_0_0	EXIST::FUNCTION:
 X509_CRL_METHOD_new                     1032	3_0_0	EXIST::FUNCTION:
 ASN1_ANY_it                             1033	3_0_0	EXIST::FUNCTION:
@@ -1252,7 +1252,7 @@ ASN1_INTEGER_set_int64                  1280	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_free                          1281	3_0_0	EXIST::FUNCTION:
 i2o_SCT_LIST                            1282	3_0_0	EXIST::FUNCTION:CT
 AES_encrypt                             1283	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-MD5_Init                                1284	3_0_0	EXIST::FUNCTION:MD5
+MD5_Init                                1284	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD5
 UI_add_error_string                     1285	3_0_0	EXIST::FUNCTION:
 X509_TRUST_cleanup                      1286	3_0_0	EXIST::FUNCTION:
 PEM_read_X509                           1287	3_0_0	EXIST::FUNCTION:STDIO
@@ -1835,7 +1835,7 @@ RSA_verify_ASN1_OCTET_STRING            1877	3_0_0	EXIST::FUNCTION:RSA
 SCT_set_log_entry_type                  1878	3_0_0	EXIST::FUNCTION:CT
 BN_new                                  1879	3_0_0	EXIST::FUNCTION:
 X509_OBJECT_retrieve_by_subject         1880	3_0_0	EXIST::FUNCTION:
-MD5_Final                               1881	3_0_0	EXIST::FUNCTION:MD5
+MD5_Final                               1881	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD5
 X509_STORE_set_verify_cb                1882	3_0_0	EXIST::FUNCTION:
 OCSP_REQUEST_print                      1883	3_0_0	EXIST::FUNCTION:OCSP
 CMS_add1_crl                            1884	3_0_0	EXIST::FUNCTION:CMS
@@ -1876,7 +1876,7 @@ CMS_SignedData_init                     1920	3_0_0	EXIST::FUNCTION:CMS
 X509_REQ_free                           1921	3_0_0	EXIST::FUNCTION:
 ASN1_INTEGER_set                        1922	3_0_0	EXIST::FUNCTION:
 EVP_DecodeFinal                         1923	3_0_0	EXIST::FUNCTION:
-MD5_Transform                           1925	3_0_0	EXIST::FUNCTION:MD5
+MD5_Transform                           1925	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD5
 SRP_create_verifier_BN                  1926	3_0_0	EXIST::FUNCTION:SRP
 ENGINE_register_all_EC                  1927	3_0_0	EXIST::FUNCTION:ENGINE
 EVP_camellia_128_ofb                    1928	3_0_0	EXIST::FUNCTION:CAMELLIA
@@ -3003,7 +3003,7 @@ EVP_des_ede_cfb64                       3067	3_0_0	EXIST::FUNCTION:DES
 d2i_RSAPrivateKey                       3068	3_0_0	EXIST::FUNCTION:RSA
 ERR_load_BN_strings                     3069	3_0_0	EXIST::FUNCTION:
 BF_encrypt                              3070	3_0_0	EXIST::FUNCTION:BF,DEPRECATEDIN_3_0
-MD5                                     3071	3_0_0	EXIST::FUNCTION:MD5
+MD5                                     3071	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD5
 BN_GF2m_arr2poly                        3072	3_0_0	EXIST::FUNCTION:EC2M
 EVP_PKEY_meth_get_ctrl                  3073	3_0_0	EXIST::FUNCTION:
 i2d_X509_REQ_bio                        3074	3_0_0	EXIST::FUNCTION:
