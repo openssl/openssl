@@ -31,6 +31,7 @@ my $version = undef;            # the version to use for the library
 my $OS = undef;                 # the operating system family
 my $verbose = 0;
 my $ctest = 0;
+my $debug = 0;
 
 # For VMS, some modules may have case insensitive names
 my $case_insensitive = 0;
@@ -193,7 +194,7 @@ sub feature_filter {
             my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
             $verdict = 0 if $config{api} >= $symdep;
             print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
-                if $1 == 0;
+                if $debug && $1 == 0;
         }
     }
 
