@@ -35,6 +35,10 @@ L<openssl_user_macros(7)>:
 
  #include <openssl/md5.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md);
 
  int MD5_Init(MD5_CTX *c);
