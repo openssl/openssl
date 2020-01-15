@@ -724,9 +724,17 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     SSL_CTX *serverctx = NULL;
     SSL_CTX *clientctx = NULL;
 
-    if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
-            || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
+    if (*sctx != NULL)
+        serverctx = *sctx;
+    else if (!TEST_ptr(serverctx = SSL_CTX_new(sm)))
         goto err;
+
+    if (cctx != NULL) {
+        if (*cctx != NULL)
+            clientctx = *cctx;
+        else if (!TEST_ptr(clientctx = SSL_CTX_new(cm)))
+            goto err;
+    }
 
     if ((min_proto_version > 0
          && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
