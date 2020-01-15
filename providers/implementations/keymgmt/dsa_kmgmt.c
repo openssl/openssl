@@ -197,10 +197,27 @@ static void *dsa_dupdomparams(void *domparams, int do_copy)
 {
     DSA *new = domparams;
 
-    if (do_copy)
-        new = DSAparams_dup(domparams);
-    else
-        DSA_up_ref(new);
+    if (do_copy) {
+        new = DSA_new();
+
+        if (new != NULL) {
+            BIGNUM *p = BN_dup(DSA_get0_p(domparams));
+            BIGNUM *g = BN_dup(DSA_get0_g(domparams));
+            BIGNUM *q = BN_dup(DSA_get0_q(domparams));
+
+            if (!DSA_set0_pqg(new, p, q, g)) {
+                BN_free(p);
+                BN_free(g);
+                BN_free(q);
+                DSA_free(new);
+                new = NULL;
+            }
+        }
+    } else {
+        if (!DSA_up_ref(new))
+            new = NULL;
+    }
+
     return new;
 }
 
