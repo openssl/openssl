@@ -89,38 +89,6 @@ static const OPENSSL_CTX_METHOD stored_namemap_method = {
  * =============
  */
 
-OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
-{
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
-                                &stored_namemap_method);
-}
-
-OSSL_NAMEMAP *ossl_namemap_new(void)
-{
-    OSSL_NAMEMAP *namemap;
-
-    if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) != NULL
-        && (namemap->lock = CRYPTO_THREAD_lock_new()) != NULL
-        && (namemap->namenum =
-            lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL)
-        return namemap;
-
-    ossl_namemap_free(namemap);
-    return NULL;
-}
-
-void ossl_namemap_free(OSSL_NAMEMAP *namemap)
-{
-    if (namemap == NULL || namemap->stored)
-        return;
-
-    lh_NAMENUM_ENTRY_doall(namemap->namenum, namenum_free);
-    lh_NAMENUM_ENTRY_free(namemap->namenum);
-
-    CRYPTO_THREAD_lock_free(namemap->lock);
-    OPENSSL_free(namemap);
-}
-
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
 {
     int rv = 0;
@@ -334,4 +302,108 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     }
 
     return number;
+}
+
+/*-
+ * Pre-population
+ * ==============
+ */
+
+#ifndef FIPS_MODE
+#include <openssl/evp.h>
+
+/* Creates an initial namemap with names found in the legacy method db */
+static void get_legacy_evp_names(const char *main_name, const char *alias,
+                                 void *arg)
+{
+    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+
+    /*
+     * We could check that the returned value is the same as main_id,
+     * but since this is a void function, there's no sane way to report
+     * the error.  The best we can do is trust ourselve to keep the legacy
+     * method database conflict free.
+     *
+     * This registers any alias with the same number as the main name.
+     * Should it be that the current |on| *has* the main name, this is
+     * simply a no-op.
+     */
+    if (alias != NULL) {
+        (void)ossl_namemap_add_name(arg, main_id, alias);
+    }
+}
+
+static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
+{
+    const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+
+    get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
+}
+
+static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
+{
+    const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
+    /* We don't want the pkey_type names, so we need some extra care */
+    int snid, lnid;
+
+    snid = OBJ_sn2nid(on->name);
+    lnid = OBJ_ln2nid(on->name);
+    if (snid != EVP_MD_pkey_type(md) && lnid != EVP_MD_pkey_type(md))
+        get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
+    else
+        get_legacy_evp_names(EVP_MD_name(md), NULL, arg);
+}
+#endif
+
+/*-
+ * Constructors / destructors
+ * ==========================
+ */
+
+OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
+{
+    OSSL_NAMEMAP *namemap =
+        openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
+                             &stored_namemap_method);
+
+#ifndef FIPS_MODE
+    if (namemap != NULL && ossl_namemap_empty(namemap)) {
+        /* Before pilfering, we make sure the legacy database is populated */
+        OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
+                            | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+
+        OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
+                        get_legacy_cipher_names, namemap);
+        OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
+                        get_legacy_md_names, namemap);
+    }
+#endif
+
+    return namemap;
+}
+
+OSSL_NAMEMAP *ossl_namemap_new(void)
+{
+    OSSL_NAMEMAP *namemap;
+
+    if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) != NULL
+        && (namemap->lock = CRYPTO_THREAD_lock_new()) != NULL
+        && (namemap->namenum =
+            lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL)
+        return namemap;
+
+    ossl_namemap_free(namemap);
+    return NULL;
+}
+
+void ossl_namemap_free(OSSL_NAMEMAP *namemap)
+{
+    if (namemap == NULL || namemap->stored)
+        return;
+
+    lh_NAMENUM_ENTRY_doall(namemap->namenum, namenum_free);
+    lh_NAMENUM_ENTRY_free(namemap->namenum);
+
+    CRYPTO_THREAD_lock_free(namemap->lock);
+    OPENSSL_free(namemap);
 }
