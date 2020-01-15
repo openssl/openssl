@@ -184,7 +184,10 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
                                      &tmp_keymgmt, ctx->propquery, 0);
     if (provkey == NULL)
         goto legacy;
-    EVP_KEYMGMT_up_ref(tmp_keymgmt);
+    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
     EVP_KEYMGMT_free(ctx->keymgmt);
     ctx->keymgmt = tmp_keymgmt;
 

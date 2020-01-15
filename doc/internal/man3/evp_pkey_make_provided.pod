@@ -34,7 +34,7 @@ I<pk> was successfully provided.  Otherwise, NULL is returned.
 
 =head1 NOTES
 
-Some functions calling evp_pkey_make_provided() may have received the a const
+Some functions calling evp_pkey_make_provided() may have received a const
 key, and may therefore have to cast the key to non-const form to call this
 function.  Since B<EVP_PKEY> is always dynamically allocated, this is OK.
 

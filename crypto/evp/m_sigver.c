@@ -79,7 +79,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                      &tmp_keymgmt, locpctx->propquery, 0);
     if (provkey == NULL)
         goto legacy;
-    EVP_KEYMGMT_up_ref(tmp_keymgmt);
+    if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
     EVP_KEYMGMT_free(locpctx->keymgmt);
     locpctx->keymgmt = tmp_keymgmt;
 
