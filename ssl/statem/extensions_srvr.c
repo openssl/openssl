@@ -1717,7 +1717,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    skey = ssl_generate_pkey(ckey);
+    skey = ssl_generate_pkey(s, ckey);
     if (skey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
                  ERR_R_MALLOC_FAILURE);

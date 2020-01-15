@@ -3049,7 +3049,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    ckey = ssl_generate_pkey(skey);
+    ckey = ssl_generate_pkey(s, skey);
     if (ckey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
@@ -3107,7 +3107,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    ckey = ssl_generate_pkey(skey);
+    ckey = ssl_generate_pkey(s, skey);
     if (ckey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,
                  ERR_R_MALLOC_FAILURE);
@@ -3173,7 +3173,9 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
+    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx,
+                                          X509_get0_pubkey(peer_cert),
+                                          s->ctx->propq);
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_MALLOC_FAILURE);
