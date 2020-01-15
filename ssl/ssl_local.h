@@ -2411,7 +2411,7 @@ __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
                                  size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
-__owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
+__owur EVP_PKEY *ssl_generate_pkey(SSL *s, EVP_PKEY *pm);
 __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
                       int genmaster);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);

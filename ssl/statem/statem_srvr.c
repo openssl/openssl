@@ -2568,7 +2568,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-        s->s3.tmp.pkey = ssl_generate_pkey(pkdhp);
+        s->s3.tmp.pkey = ssl_generate_pkey(s, pkdhp);
         if (s->s3.tmp.pkey == NULL) {
             /* SSLfatal() already called */
             goto err;
@@ -3013,7 +3013,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         return 0;
     }
 
-    ctx = EVP_PKEY_CTX_new(rsa, NULL);
+    ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, rsa, s->ctx->propq);
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
@@ -3296,7 +3296,7 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
         pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
     }
 
-    pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
+    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, pk, s->ctx->propq);
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
                  ERR_R_MALLOC_FAILURE);

@@ -4676,14 +4676,14 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 }
 
 /* Generate a private key from parameters */
-EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm)
+EVP_PKEY *ssl_generate_pkey(SSL *s, EVP_PKEY *pm)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
 
     if (pm == NULL)
         return NULL;
-    pctx = EVP_PKEY_CTX_new(pm, NULL);
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, pm, s->ctx->propq);
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
@@ -4716,6 +4716,11 @@ EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
         goto err;
     }
     gtype = ginf->flags & TLS_GROUP_TYPE;
+    /*
+     * TODO(3.0): Convert these EVP_PKEY_CTX_new_id calls to ones that take
+     * s->ctx->libctx and s->ctx->propq when keygen has been updated to be
+     * provider aware.
+     */
 # ifndef OPENSSL_NO_DH
     if (gtype == TLS_GROUP_FFDHE)
         pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, NULL);
@@ -4809,6 +4814,11 @@ EVP_PKEY *ssl_generate_param_group(uint16_t id)
         return NULL;
     }
 
+    /*
+     * TODO(3.0): Convert this EVP_PKEY_CTX_new_id call to one that takes
+     * s->ctx->libctx and s->ctx->propq when paramgen has been updated to be
+     * provider aware.
+     */
     pkey_ctx_id = (ginf->flags & TLS_GROUP_FFDHE)
                         ? EVP_PKEY_DH : EVP_PKEY_EC;
     pctx = EVP_PKEY_CTX_new_id(pkey_ctx_id, NULL);
@@ -4855,7 +4865,7 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
         return 0;
     }
 
-    pctx = EVP_PKEY_CTX_new(privkey, NULL);
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, privkey, s->ctx->propq);
 
     if (EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_derive_set_peer(pctx, pubkey) <= 0
