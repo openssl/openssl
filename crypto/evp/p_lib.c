@@ -83,7 +83,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     int is_provided = 0;
 
-    if (evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, 1)) {
+    if (evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, NULL, 1)) {
         /*
          * It's fine if the destination hasn't cached anything yet, that
          * simply makes it a blank page to be filled in with the
@@ -169,8 +169,9 @@ static int cmp_provided(const EVP_PKEY *a, const EVP_PKEY *b, int domainparams)
      * To do so, we must break constness to be able to cache keymgmt data,
      * but since we know that EVP_PKEYs are dynamically allocated, it's ok.
      */
-    if (!evp_pkey_make_provided((EVP_PKEY *)a, NULL, NULL, domainparams)
-        || !evp_pkey_make_provided((EVP_PKEY *)b, NULL, NULL, domainparams))
+    if (!evp_pkey_make_provided((EVP_PKEY *)a, NULL, NULL, NULL, domainparams)
+        || !evp_pkey_make_provided((EVP_PKEY *)b, NULL, NULL, NULL,
+                                   domainparams))
         return -2;
 
     return evp_keymgmt_cmp(a, b, 1);
