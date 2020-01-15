@@ -12,6 +12,7 @@
 
 # include <stdarg.h>
 # include <openssl/core.h>
+# include <openssl/self_test.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -134,6 +135,10 @@ OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
                                        va_list args))
+
+#define OSSL_FUNC_SELF_TEST_CB                28
+OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CTX *ctx, OSSL_CALLBACK **cb,
+                                         void **cbarg))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024

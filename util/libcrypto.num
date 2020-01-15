@@ -4913,3 +4913,5 @@ OSSL_CMP_MSG_get0_header                ?	3_0_0	EXIST::FUNCTION:CMP
 BIO_f_prefix                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_from_name              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_from_pkey              ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_set_callback             ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_get_callback             ?	3_0_0	EXIST::FUNCTION:

@@ -16,6 +16,9 @@ B<openssl fipsinstall>
 [B<-verify>]
 [B<-mac_name> I<macname>]
 [B<-macopt> I<nm>:I<v>]
+[B<-noout>]
+[B<-corrupt_desc> I<selftest_description>]
+[B<-corrupt_type> I<selftest_type>]
 
 =head1 DESCRIPTION
 
@@ -106,6 +109,20 @@ C<openssl list -digest-commands>.
 
 =back
 
+=item B<-noout>
+
+Disable logging of the self tests.
+
+=item B<-corrupt_desc> I<selftest_description>
+
+=item B<-corrupt_type> I<selftest_type>
+
+The corrupt options can be used to test failure of one or more self test(s) by
+name.
+Either option or both may be used to select the self test(s) to corrupt.
+Refer to the entries for "st-desc" and "st-type" in L<OSSL_PROVIDER-FIPS(7)> for
+values that can be used.
+
 =back
 
 =head1 EXAMPLES
@@ -123,6 +140,13 @@ Verify that the configuration file F<fips.conf> contains the correct info:
           -section_name fips_install -mac_name HMAC -macopt digest:SHA256 \
           -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 -verify
 
+Corrupt any self tests which have the description 'SHA1':
+
+ openssl fipsinstall -module ./fips.so -out fips.conf -provider_name fips \
+         -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
+         -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 \
+         -corrupt_desc', 'SHA1'
+
 =head1 NOTES
 
 The MAC mechanisms that are available will depend on the options
@@ -132,6 +156,7 @@ The command C<openssl list -mac-algorithms> command can be used to list them.
 =head1 SEE ALSO
 
 L<fips_config(5)>,
+L<OSSL_PROVIDER-FIPS(7)>,
 L<EVP_MAC(3)>
 
 =head1 COPYRIGHT

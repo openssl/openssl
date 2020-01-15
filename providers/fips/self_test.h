@@ -9,6 +9,7 @@
 
 #include <openssl/core_numbers.h>
 #include <openssl/types.h>
+#include <openssl/self_test.h>
 
 typedef struct self_test_post_params_st {
     /* FIPS module integrity check parameters */
@@ -25,8 +26,31 @@ typedef struct self_test_post_params_st {
     OSSL_BIO_new_membuf_fn *bio_new_buffer_cb;
     OSSL_BIO_read_ex_fn *bio_read_ex_cb;
     OSSL_BIO_free_fn *bio_free_cb;
+    OSSL_CALLBACK *event_cb;
+    void *event_cb_arg;
     OPENSSL_CTX *libctx;
 
 } SELF_TEST_POST_PARAMS;
 
+typedef struct st_event_st
+{
+    /* local state variables */
+    const char *phase;
+    const char *type;
+    const char *desc;
+    OSSL_CALLBACK *cb;
+
+    /* callback related variables used to pass the state back to the user */
+    OSSL_PARAM params[4];
+    void *cb_arg;
+
+} OSSL_ST_EVENT;
+
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
+int SELF_TEST_kats(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx);
+
+void SELF_TEST_EVENT_init(OSSL_ST_EVENT *ev, OSSL_CALLBACK *cb, void *cbarg);
+void SELF_TEST_EVENT_onbegin(OSSL_ST_EVENT *ev, const char *type,
+                             const char *desc);
+void SELF_TEST_EVENT_onend(OSSL_ST_EVENT *ev, int ret);
+void SELF_TEST_EVENT_oncorrupt_byte(OSSL_ST_EVENT *ev, unsigned char *bytes);
