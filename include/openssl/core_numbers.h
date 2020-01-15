@@ -80,6 +80,8 @@ OSSL_CORE_MAKE_FUNC(void,core_set_error_debug,
 OSSL_CORE_MAKE_FUNC(void,core_vset_error,
                     (const OSSL_PROVIDER *prov,
                      uint32_t reason, const char *fmt, va_list args))
+# define OSSL_FUNC_CORE_CLEAR_ERROR            8
+OSSL_CORE_MAKE_FUNC(void, core_clear_error, (const OSSL_PROVIDER *prov))
 
 /* Memory allocation, freeing, clearing. */
 #define OSSL_FUNC_CRYPTO_MALLOC               10
