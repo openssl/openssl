@@ -83,7 +83,8 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     int is_provided = 0;
 
-    if (evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, NULL, 1)) {
+    if (from->ameth == NULL
+        && evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, NULL, 1)) {
         /*
          * It's fine if the destination hasn't cached anything yet, that
          * simply makes it a blank page to be filled in with the
