@@ -370,7 +370,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
     if (namemap != NULL && ossl_namemap_empty(namemap)) {
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
-                            |OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+                            | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
 
         OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH,
                         get_legacy_cipher_names, namemap);
