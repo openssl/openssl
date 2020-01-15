@@ -1044,7 +1044,7 @@ X509_VERIFY_PARAM_set_flags             1070	3_0_0	EXIST::FUNCTION:
 X509_EXTENSION_set_data                 1071	3_0_0	EXIST::FUNCTION:
 ENGINE_get_EC                           1072	3_0_0	EXIST::FUNCTION:ENGINE
 ASN1_STRING_copy                        1073	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_encrypt_old                    1074	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_encrypt_old                    1074	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OPENSSL_LH_free                         1075	3_0_0	EXIST::FUNCTION:
 DES_is_weak_key                         1076	3_0_0	EXIST::FUNCTION:DES
 EVP_PKEY_verify                         1077	3_0_0	EXIST::FUNCTION:
@@ -3606,7 +3606,7 @@ X509_VERIFY_PARAM_inherit               3685	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get_curve_name                 3686	3_0_0	EXIST::FUNCTION:EC
 RSA_print                               3687	3_0_0	EXIST::FUNCTION:RSA
 i2d_ASN1_BMPSTRING                      3688	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_decrypt_old                    3689	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_decrypt_old                    3689	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_UTCTIME_cmp_time_t                 3690	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip               3691	3_0_0	EXIST::FUNCTION:
 OTHERNAME_free                          3692	3_0_0	EXIST::FUNCTION:
