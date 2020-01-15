@@ -587,10 +587,7 @@ reconfigure reconf:
 	  my $pod = $args{generator}->[0];
 	  return <<"EOF";
 $args{src}: "$pod"
-	pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. \\
-		 --podpath=man1:man3:man5:man7 "--infile=$pod" "--title=$title" \\
-	| \$(PERL) -pe ^"s^|href=\\^"http://man\\.he\\.net/^(man\\d/[^^\\^"]+^)^(?:\.html^)?^"^|href=\\^"../\$\$1.html^|g;^" \\
-	> \$\@
+	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});

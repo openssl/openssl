@@ -770,13 +770,10 @@ reconfigure reconf :
       if ($args{src} =~ /\.html$/) {
 	  my $title = basename($args{src}, ".html");
 	  my $pod = $args{generator}->[0];
+	  my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
 	  return <<"EOF";
 $args{src}: $pod
-	pipe pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. -
-		       --podpath=man1:man3:man5:man7 "--infile=$pod" -
-		      "--title=$title" -
-	| \$(PERL) -pe "s|href=""http://man\\.he\\.net/(man\d/[^""]+)(?:\\.html)?""|href=""../\$1.html|g;" -
-	> \$\@
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});
