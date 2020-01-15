@@ -338,6 +338,10 @@ B<NID_undef>.
 
 EVP_CIPHER_is_a() returns 1 if I<cipher> is an implementation of an
 algorithm that's identifiable with I<name>, otherwise 0.
+If I<cipher> is a legacy cipher (it's the return value from the likes
+of EVP_aes128() rather than the result of an EVP_CIPHER_fetch()), only
+cipher names registered with the default library context (see
+L<OPENSSL_CTX(3)>) will be considered.
 
 EVP_CIPHER_number() returns the internal dynamic number assigned to
 the I<cipher>.  This is only useful with fetched B<EVP_CIPHER>s.

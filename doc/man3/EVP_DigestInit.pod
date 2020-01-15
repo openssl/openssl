@@ -248,6 +248,11 @@ be initialized.
 Returns 1 if I<md> is an implementation of an algorithm that's
 identifiable with I<name>, otherwise 0.
 
+If I<md> is a legacy digest (it's the return value from the likes of
+EVP_sha256() rather than the result of an EVP_MD_fetch()), only cipher
+names registered with the default library context (see
+L<OPENSSL_CTX(3)>) will be considered.
+
 =item EVP_MD_number()
 
 Returns the internal dynamic number assigned to the I<md>.  This is

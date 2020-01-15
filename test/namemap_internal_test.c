@@ -108,6 +108,49 @@ static int test_cipherbyname(void)
     return 1;
 }
 
+/*
+ * Test that EVP_CIPHER_is_a() responds appropriately, even for ciphers that
+ * are entirely legacy.
+ */
+static int test_cipher_is_a(void)
+{
+    EVP_CIPHER *fetched = EVP_CIPHER_fetch(NULL, "AES-256-CCM", NULL);
+    int rv = 1;
+
+    if (!TEST_ptr_ne(fetched, NULL))
+        return 0;
+    if (!TEST_true(EVP_CIPHER_is_a(fetched, "id-aes256-CCM"))
+        || !TEST_false(EVP_CIPHER_is_a(fetched, "AES-128-GCM")))
+        rv = 0;
+    if (!TEST_true(EVP_CIPHER_is_a(EVP_aes_256_gcm(), "AES-256-GCM"))
+        || !TEST_false(EVP_CIPHER_is_a(EVP_aes_256_gcm(), "AES-128-CCM")))
+        rv = 0;
+
+    EVP_CIPHER_free(fetched);
+    return rv;
+}
+
+/*
+ * Test that EVP_MD_is_a() responds appropriately, even for MDs that are
+ * entirely legacy.
+ */
+static int test_digest_is_a(void)
+{
+    EVP_MD *fetched = EVP_MD_fetch(NULL, "SHA2-512", NULL);
+    int rv = 1;
+
+    if (!TEST_ptr_ne(fetched, NULL))
+        return 0;
+    if (!TEST_true(EVP_MD_is_a(fetched, "SHA512"))
+        || !TEST_false(EVP_MD_is_a(fetched, "SHA1")))
+        rv = 0;
+    if (!TEST_true(EVP_MD_is_a(EVP_sha256(), "SHA2-256"))
+        || !TEST_false(EVP_MD_is_a(EVP_sha256(), "SHA3-256")))
+        rv = 0;
+
+    EVP_MD_free(fetched);
+    return rv;
+}
 
 int setup_tests(void)
 {
@@ -115,5 +158,7 @@ int setup_tests(void)
     ADD_TEST(test_namemap_stored);
     ADD_TEST(test_digestbyname);
     ADD_TEST(test_cipherbyname);
+    ADD_TEST(test_digest_is_a);
+    ADD_TEST(test_cipher_is_a);
     return 1;
 }

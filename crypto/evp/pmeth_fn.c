@@ -393,7 +393,7 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
 {
-    return evp_is_a(cipher->prov, cipher->name_id, name);
+    return evp_is_a(cipher->prov, cipher->name_id, NULL, name);
 }
 
 int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)

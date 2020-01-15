@@ -381,11 +381,17 @@ const char *evp_first_name(OSSL_PROVIDER *prov, int name_id)
     return ossl_namemap_num2name(namemap, name_id, 0);
 }
 
-int evp_is_a(OSSL_PROVIDER *prov, int number, const char *name)
+int evp_is_a(OSSL_PROVIDER *prov, int number,
+             const char *legacy_name, const char *name)
 {
+    /*
+     * For a |prov| that is NULL, the library context will be NULL
+     */
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
+    if (prov == NULL)
+        number = ossl_namemap_name2num(namemap, legacy_name);
     return ossl_namemap_name2num(namemap, name) == number;
 }
 

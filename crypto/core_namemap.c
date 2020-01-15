@@ -294,7 +294,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         if (number == 0) {
             number = this_number;
         } else if (this_number != number) {
-            ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
+            ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
                            "Got number %d when expecting %d",
                            this_number, number);
             return 0;
