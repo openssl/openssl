@@ -36,9 +36,9 @@ lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.
 
 The EVP_PKEY_CTX_new_from_pkey() function allocates a public key algorithm
 context using the library context I<libctx> (see L<OPENSSL_CTX(3)>) and the
-algorithm specified by I<pkey> . None of the arguments are duplicated, so they
-must remain unchanged for the lifetime of the returned B<EVP_PKEY_CTX> or of
-any of its duplicates.
+algorithm specified by I<pkey> and the property query I<propquery>. None of the
+arguments are duplicated, so they must remain unchanged for the lifetime of the
+returned B<EVP_PKEY_CTX> or any of its duplicates.
 
 EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_from_name() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
