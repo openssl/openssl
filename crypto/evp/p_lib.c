@@ -915,7 +915,7 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     }
 
     if (tmp_keymgmt == NULL) {
-        EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk);
+        EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
 
         if (ctx != NULL && ctx->keytype != NULL)
             tmp_keymgmt = allocated_keymgmt =

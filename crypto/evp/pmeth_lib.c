@@ -186,17 +186,6 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         return NULL;
     if (e == NULL)
         name = OBJ_nid2sn(id);
-    propquery = NULL;
-    /*
-     * We were called using legacy data, or an EVP_PKEY, but an EVP_PKEY
-     * isn't tied to a specific library context, so we fall back to the
-     * default library context.
-     * TODO(v3.0): an EVP_PKEY that doesn't originate from a leagacy key
-     * structure only has the pkeys[] cache, where the first element is
-     * considered the "origin".  Investigate if that could be a suitable
-     * way to find a library context.
-     */
-    libctx = NULL;
 
 # ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
@@ -269,9 +258,10 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
     return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey)
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey,
+                                         const char *propquery)
 {
-    return int_ctx_new(libctx, pkey, NULL, NULL, NULL, -1);
+    return int_ctx_new(libctx, pkey, NULL, NULL, propquery, -1);
 }
 
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)

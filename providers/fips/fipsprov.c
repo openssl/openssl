@@ -268,7 +268,7 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         goto err;
 
     /* Create a EVP_PKEY_CTX to use for the signing operation */
-    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
+    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
     if (sctx == NULL
         || EVP_PKEY_sign_init(sctx) <= 0)
         goto err;
@@ -433,7 +433,7 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         goto err;
 
     /* Create a EVP_PKEY_CTX to perform key derivation */
-    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
+    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
     if (dctx == NULL)
         goto err;
 
