@@ -586,10 +586,11 @@ reconfigure reconf:
 
       if ($args{src} =~ /\.html$/) {
 	  my $title = basename($args{src}, ".html");
+	  my $pod = $args{generator}->[0];
 	  return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: "$pod"
 	pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. \\
-		 --podpath=man1:man3:man5:man7 "--infile=\$?" "--title=$title" \\
+		 --podpath=man1:man3:man5:man7 "--infile=$pod" "--title=$title" \\
 	| \$(PERL) -pe ^"s^|href=\\^"http://man\\.he\\.net/^(man\\d/[^^\\^"]+^)^(?:\.html^)?^"^|href=\\^"../\$\$1.html^|g;^" \\
 	> \$\@
 EOF
