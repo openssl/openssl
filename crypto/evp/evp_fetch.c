@@ -448,8 +448,7 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name)
 {
     /*
-     * For a |prov| that is NULL, the library context will be NULL, which
-     * is fine, because that's the only place legacy stuff is relevant.
+     * For a |prov| that is NULL, the library context will be NULL
      */
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
