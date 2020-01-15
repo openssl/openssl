@@ -75,31 +75,6 @@ DH *DSA_dup_DH(const DSA *r)
 }
 # endif /*  OPENSSL_NO_DH */
 
-const BIGNUM *DSA_get0_p(const DSA *d)
-{
-    return d->params.p;
-}
-
-const BIGNUM *DSA_get0_q(const DSA *d)
-{
-    return d->params.q;
-}
-
-const BIGNUM *DSA_get0_g(const DSA *d)
-{
-    return d->params.g;
-}
-
-const BIGNUM *DSA_get0_pub_key(const DSA *d)
-{
-    return d->pub_key;
-}
-
-const BIGNUM *DSA_get0_priv_key(const DSA *d)
-{
-    return d->priv_key;
-}
-
 void DSA_clear_flags(DSA *d, int flags)
 {
     d->flags &= ~flags;
@@ -320,4 +295,29 @@ int DSA_security_bits(const DSA *d)
 int DSA_bits(const DSA *dsa)
 {
     return BN_num_bits(dsa->params.p);
+}
+
+const BIGNUM *DSA_get0_p(const DSA *d)
+{
+    return d->p;
+}
+
+const BIGNUM *DSA_get0_q(const DSA *d)
+{
+    return d->q;
+}
+
+const BIGNUM *DSA_get0_g(const DSA *d)
+{
+    return d->g;
+}
+
+const BIGNUM *DSA_get0_pub_key(const DSA *d)
+{
+    return d->pub_key;
+}
+
+const BIGNUM *DSA_get0_priv_key(const DSA *d)
+{
+    return d->priv_key;
 }
