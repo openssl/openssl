@@ -12,7 +12,7 @@
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommonerr.h"
-#include "crypto/rand.h"
+#include <openssl/rand.h>
 #include "prov/provider_ctx.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
@@ -338,7 +338,7 @@ static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
         return 0;
 
     /* Use DRBG to generate random iv */
-    if (rand_bytes_ex(ctx->libctx, ctx->iv + offset, sz) <= 0)
+    if (RAND_bytes_ex(ctx->libctx, ctx->iv + offset, sz) <= 0)
         return 0;
     ctx->iv_state = IV_STATE_BUFFERED;
     ctx->iv_gen_rand = 1;
@@ -452,7 +452,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     if (len > 0)
         memcpy(ctx->iv, iv, len);
     if (ctx->enc
-        && rand_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len) <= 0)
+        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len) <= 0)
             return 0;
     ctx->iv_gen = 1;
     ctx->iv_state = IV_STATE_BUFFERED;
