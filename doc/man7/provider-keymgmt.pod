@@ -229,6 +229,8 @@ dimensions handled in the rest of the same provider.
 The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
 
+=back
+
 =head1 SEE ALSO
 
 L<provider(7)>
