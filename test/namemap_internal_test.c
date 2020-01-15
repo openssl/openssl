@@ -119,9 +119,11 @@ static int test_cipher_is_a(void)
 
     if (!TEST_ptr_ne(fetched, NULL))
         return 0;
-    if (!TEST_true(EVP_CIPHER_is_a(fetched, "id-aes256-CCM")))
+    if (!TEST_true(EVP_CIPHER_is_a(fetched, "id-aes256-CCM"))
+        || !TEST_false(EVP_CIPHER_is_a(fetched, "AES-128-GCM")))
         rv = 0;
-    if (!TEST_true(EVP_CIPHER_is_a(EVP_aes_256_gcm(), "AES-256-GCM")))
+    if (!TEST_true(EVP_CIPHER_is_a(EVP_aes_256_gcm(), "AES-256-GCM"))
+        || !TEST_false(EVP_CIPHER_is_a(EVP_aes_256_gcm(), "AES-128-CCM")))
         rv = 0;
 
     EVP_CIPHER_free(fetched);
@@ -139,9 +141,11 @@ static int test_digest_is_a(void)
 
     if (!TEST_ptr_ne(fetched, NULL))
         return 0;
-    if (!TEST_true(EVP_MD_is_a(fetched, "SHA512")))
+    if (!TEST_true(EVP_MD_is_a(fetched, "SHA512"))
+        || !TEST_false(EVP_MD_is_a(fetched, "SHA1")))
         rv = 0;
-    if (!TEST_true(EVP_MD_is_a(EVP_sha256(), "SHA2-256")))
+    if (!TEST_true(EVP_MD_is_a(EVP_sha256(), "SHA2-256"))
+        || !TEST_false(EVP_MD_is_a(EVP_sha256(), "SHA3-256")))
         rv = 0;
 
     EVP_MD_free(fetched);
