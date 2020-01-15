@@ -109,7 +109,7 @@ static int test_cipherbyname(void)
 }
 
 /*
- * Test that EVP_CIPHER_is_a() responds appropriately, even for cipherss that
+ * Test that EVP_CIPHER_is_a() responds appropriately, even for ciphers that
  * are entirely legacy.
  */
 static int test_cipher_is_a(void)
