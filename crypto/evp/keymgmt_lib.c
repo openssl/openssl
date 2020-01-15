@@ -103,6 +103,10 @@ static void *evp_keymgmt_export_to_provdata(const EVP_PKEY *pk,
          * TODO(3.0) Right now, we assume we have ample space.  We will
          * have to think about a cache aging scheme, though, if |i| indexes
          * outside the array.
+         *
+         * We assign the ossl_assert() result to i because it has an attribute
+         * saying the result can't go unchecked.
+         *
          */
         i = ossl_assert(i < OSSL_NELEM(pk->pkeys));
     }
@@ -253,65 +257,40 @@ int evp_keymgmt_is(const EVP_PKEY *pkey, int domainparams)
  *  0   not same key
  * -1   not same key type
  * -2   unsupported operation
+ *
+ * The code in p_lib.c must have ensured already that both keys have up to
+ * date keymgmt data before they call this function.
  */
 int evp_keymgmt_cmp(const EVP_PKEY *pkey1, const EVP_PKEY *pkey2,
                     int domainparams)
 {
     EVP_KEYMGMT *keymgmt1 = pkey1->pkeys[0].keymgmt;
     EVP_KEYMGMT *keymgmt2 = pkey2->pkeys[0].keymgmt;
-    void *provdata1 = NULL;
-    void *provdata2 = NULL;
-    void *exported_provdata2 = NULL;
-    int rv = 0;                  /* Assume the worst */
+    void *provdata1 = pkey1->pkeys[0].provdata;
+    void *provdata2 = pkey2->pkeys[0].provdata;
 
-    if (keymgmt1 == NULL && keymgmt2 == NULL)
-        return -2;   /* No support without at least one key manager */
+    /*
+     * If one of them isn't initialized yet, they don't have the same key type,
+     * the same way that a legacy key may have the NID type EVP_PKEY_NONE and
+     * the legacy key types do therefore not match.
+     */
+    if (keymgmt1 == NULL || keymgmt2 == NULL)
+        return -1;
 
-    if (keymgmt1 == NULL) {
-        EVP_KEYMGMT *swaptmp = keymgmt1;
-        keymgmt1 = keymgmt2;
-        keymgmt2 = swaptmp;
-    }
-
-    if (keymgmt1 != NULL && keymgmt2 != NULL
-        && EVP_KEYMGMT_number(keymgmt1) != EVP_KEYMGMT_number(keymgmt2))
+    if (EVP_KEYMGMT_number(keymgmt1) != EVP_KEYMGMT_number(keymgmt2))
         return -1;               /* key type mismatch */
-
-    provdata1 = pkey1->pkeys[0].provdata;
-    provdata2 = pkey2->pkeys[0].provdata;
 
     if (pkey1->pkeys[0].domainparams != domainparams
         || pkey2->pkeys[0].domainparams != domainparams)
         return -2;      /* No support for comparing stuff not asked */
 
-    /*
-     * If the two keys belong with different providers or the second key
-     * isn't provided, try to export the second provdata to the first
-     * provider and use that for comparing.
-     */
-    if (keymgmt1 != keymgmt2)
-        provdata2 = exported_provdata2 =
-            evp_keymgmt_export_to_provdata(pkey2, keymgmt1, domainparams);
-
-    /* TODO(3.0) Investigate if this should be -2, i.e unsupported */
-    if (provdata2 == NULL)
-        return -1;               /* Key type mismatch */
-
-    /*
-     * From here on, we will only return 0 or 1, because we know that
-     * the comparing functions are present in the EVP_KEYMGMT structure.
-     */
-    if (provdata1 != NULL && provdata2 != NULL)
-        rv = domainparams
+    /* The provided functions return 0 or 1 */
+    if (provdata1 != NULL && provdata2 == NULL)
+        return domainparams
             ? evp_keymgmt_cmpdomparams(keymgmt1, provdata1, provdata2)
             : evp_keymgmt_cmpkey(keymgmt1, provdata1, provdata2);
 
-    if (domainparams)
-        evp_keymgmt_freedomparams(keymgmt1, exported_provdata2);
-    else
-        evp_keymgmt_freekey(keymgmt1, exported_provdata2);
-
-    return rv;
+    return 0;
 }
 
 int evp_keymgmt_copy(EVP_PKEY *to, const EVP_PKEY *from, int domainparams)
@@ -327,7 +306,16 @@ int evp_keymgmt_copy(EVP_PKEY *to, const EVP_PKEY *from, int domainparams)
         EVP_KEYMGMT_up_ref(keymgmt_to); /* ref++ */
     evp_keymgmt_clear_pkey_cache(to);
 
-    if (keymgmt_to == NULL || keymgmt_to == keymgmt_from) {
+    if (keymgmt_to != NULL && keymgmt_to != keymgmt_from) {
+        /*
+         * We do not take any dirty counter into account, because we're
+         * exporting |from| to |to| unconditionally.
+         * Therefore, we use evp_keymgmt_export_to_provdata() rather than
+         * evp_keymgmt_export_to_provider()
+         */
+        provdata_to =
+            evp_keymgmt_export_to_provdata(from, keymgmt_to, domainparams);
+    } else {
         if (keymgmt_to != NULL)
             EVP_KEYMGMT_free(keymgmt_to); /* ref-- */
         keymgmt_to = keymgmt_from;
@@ -335,9 +323,6 @@ int evp_keymgmt_copy(EVP_PKEY *to, const EVP_PKEY *from, int domainparams)
         provdata_to = domainparams
             ? evp_keymgmt_dupdomparams(keymgmt_from, from->pkeys[0].provdata, 1)
             : evp_keymgmt_dupkey(keymgmt_from, from->pkeys[0].provdata, 1);
-    } else {
-        provdata_to =
-            evp_keymgmt_export_to_provdata(from, keymgmt_to, domainparams);
     }
 
     if (provdata_to == NULL) {

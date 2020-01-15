@@ -30,6 +30,7 @@
 #include "evp_local.h"
 
 static void evp_pkey_free_it(EVP_PKEY *key);
+static void evp_pkey_free_legacy(EVP_PKEY *x);
 
 #ifndef FIPS_MODE
 
@@ -82,7 +83,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     int is_provided = 0;
 
-    if (from->ameth == NULL) {
+    if (evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, 1)) {
         /*
          * It's fine if the destination hasn't cached anything yet, that
          * simply makes it a blank page to be filled in with the
@@ -95,7 +96,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             && (EVP_KEYMGMT_number(to->pkeys[0].keymgmt)
                 != EVP_KEYMGMT_number(from->pkeys[0].keymgmt))) {
             EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
-            goto err;
+            return 0;
         }
         is_provided = 1;
     } else {
@@ -104,13 +105,13 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
                 return 0;
         } else if (to->type != from->type) {
             EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
-            goto err;
+            return 0;
         }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
         EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_MISSING_PARAMETERS);
-        goto err;
+        return 0;
     }
 
     if (!EVP_PKEY_missing_parameters(to)) {
@@ -124,13 +125,19 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         return 0;
     }
 
+    /*
+     * If |from| is provided, we ONLY copy the provided bits, and therefore
+     * clear the legacy bits in |to|.
+     */
     if (is_provided) {
+        evp_pkey_free_legacy(to);
         return evp_keymgmt_copy(to, from, 1);
-    } else {
-        if (from->ameth->param_copy != NULL)
-            return from->ameth->param_copy(to, from);
     }
- err:
+
+    /* Legacy support */
+    if (from->ameth != NULL && from->ameth->param_copy != NULL)
+        return from->ameth->param_copy(to, from);
+
     return 0;
 }
 
@@ -145,13 +152,39 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
     return 0;
 }
 
+static int cmp_provided(const EVP_PKEY *a, const EVP_PKEY *b, int domainparams)
+{
+    /*
+     * TODO: when legacy is gone, we can remove this function and replace
+     * calls to it with calls to evp_keymgmt_cmp().
+     */
+
+    /* If none of the keys have a non-NULL keymgmt, it's pointless to try */
+    if (a->pkeys[0].keymgmt == NULL && b->pkeys[0].keymgmt == NULL)
+        return -2;
+
+    /*
+     * Ensure on the fly that they both have a keymgmt if at least one of
+     * them does.
+     * To do so, we must break constness to be able to cache keymgmt data,
+     * but since we know that EVP_PKEYs are dynamically allocated, it's ok.
+     */
+    if (!evp_pkey_make_provided((EVP_PKEY *)a, NULL, NULL, domainparams)
+        || !evp_pkey_make_provided((EVP_PKEY *)b, NULL, NULL, domainparams))
+        return -2;
+
+    return evp_keymgmt_cmp(a, b, 1);
+}
+
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    if (a->ameth == NULL || b->ameth == NULL)
-        /* at least provided EVP_PKEY */
-        return evp_keymgmt_cmp(a, b, 1);
+    int rv = cmp_provided(a, b, 1);
 
-    /* All legacy keys */
+    /* If unsupported with keymgmt, we try legacy */
+    if (rv != -2)
+        return rv;
+
+    /* Legacy code following.  TODO: remove it */
     if (a->type != b->type)
         return -1;
     if (a->ameth->param_cmp != NULL)
@@ -161,10 +194,13 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    if (a->ameth == NULL || b->ameth == NULL)
-        /* at least one of the EVP_PKEYs is provided */
-        return evp_keymgmt_cmp(a, b, 0);
+    int rv = cmp_provided(a, b, 0);
 
+    /* If unsupported with keymgmt, we try legacy */
+    if (rv != -2)
+        return rv;
+
+    /* Legacy code following.  TODO: remove it */
     if (a->type != b->type)
         return -1;
 
@@ -888,15 +924,13 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     return ((i > 1) ? 1 : 0);
 }
 
-static void evp_pkey_free_it(EVP_PKEY *x)
+static void evp_pkey_free_legacy(EVP_PKEY *x)
 {
-    /* internal function; x is never NULL */
-
-    evp_keymgmt_clear_pkey_cache(x);
-
-    if (x->ameth && x->ameth->pkey_free) {
-        x->ameth->pkey_free(x);
+    if (x->ameth != NULL) {
+        if (x->ameth->pkey_free != NULL)
+            x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
+        x->ameth = NULL;
     }
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(x->engine);
@@ -904,6 +938,15 @@ static void evp_pkey_free_it(EVP_PKEY *x)
     ENGINE_finish(x->pmeth_engine);
     x->pmeth_engine = NULL;
 #endif
+    x->type = x->save_type = NID_undef;
+}
+
+static void evp_pkey_free_it(EVP_PKEY *x)
+{
+    /* internal function; x is never NULL */
+
+    evp_keymgmt_clear_pkey_cache(x);
+    evp_pkey_free_legacy(x);
 }
 
 void EVP_PKEY_free(EVP_PKEY *x)
