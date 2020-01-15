@@ -289,7 +289,7 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 {
-    return evp_is_a(signature->prov, signature->name_id, name);
+    return evp_is_a(signature->prov, signature->name_id, NULL, name);
 }
 
 int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
