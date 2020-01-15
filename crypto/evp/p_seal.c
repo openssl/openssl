@@ -42,7 +42,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         goto err;
 
     for (i = 0; i < npubk; i++) {
-        size_t keylen = ekl[i];
+        size_t keylen = EVP_CIPHER_CTX_key_length(ctx);
         EVP_PKEY_CTX *pctx = NULL;
 
         if ((pctx = EVP_PKEY_CTX_new(pubk[i], NULL)) == NULL) {
@@ -51,8 +51,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         }
 
         if (!EVP_PKEY_encrypt_init(pctx)
-            || !EVP_PKEY_encrypt(pctx, ek[i], &keylen,
-                                 key, EVP_CIPHER_CTX_key_length(ctx)))
+            || !EVP_PKEY_encrypt(pctx, ek[i], &keylen, key, keylen))
             goto err;
         ekl[i] = (int)keylen;
         EVP_PKEY_CTX_free(pctx);
