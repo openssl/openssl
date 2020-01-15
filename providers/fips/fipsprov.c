@@ -54,6 +54,9 @@ OSSL_core_thread_start_fn *c_thread_start;
 static OSSL_core_new_error_fn *c_new_error;
 static OSSL_core_set_error_debug_fn *c_set_error_debug;
 static OSSL_core_vset_error_fn *c_vset_error;
+static OSSL_core_set_error_mark_fn *c_set_error_mark;
+static OSSL_core_clear_last_error_mark_fn *c_clear_last_error_mark;
+static OSSL_core_pop_error_to_mark_fn *c_pop_error_to_mark;
 static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
 static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
 static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
@@ -675,6 +678,15 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_VSET_ERROR:
             c_vset_error = OSSL_get_core_vset_error(in);
             break;
+        case OSSL_FUNC_CORE_SET_ERROR_MARK:
+            c_set_error_mark = OSSL_get_core_set_error_mark(in);
+            break;
+        case OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK:
+            c_clear_last_error_mark = OSSL_get_core_clear_last_error_mark(in);
+            break;
+        case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
+            c_pop_error_to_mark = OSSL_get_core_pop_error_to_mark(in);
+            break;
         case OSSL_FUNC_CRYPTO_MALLOC:
             c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
             break;
@@ -837,6 +849,21 @@ void ERR_set_error(int lib, int reason, const char *fmt, ...)
 void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
 {
     c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
+}
+
+int ERR_set_mark(void)
+{
+    return c_set_error_mark(NULL);
+}
+
+int ERR_clear_last_mark(void)
+{
+    return c_clear_last_error_mark(NULL);
+}
+
+int ERR_pop_to_mark(void)
+{
+    return c_pop_error_to_mark(NULL);
 }
 
 const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)

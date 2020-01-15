@@ -774,6 +774,9 @@ static OSSL_core_get_library_context_fn core_get_libctx;
 static OSSL_core_new_error_fn core_new_error;
 static OSSL_core_set_error_debug_fn core_set_error_debug;
 static OSSL_core_vset_error_fn core_vset_error;
+static OSSL_core_set_error_mark_fn core_set_error_mark;
+static OSSL_core_clear_last_error_mark_fn core_clear_last_error_mark;
+static OSSL_core_pop_error_to_mark_fn core_pop_error_to_mark;
 #endif
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_PROVIDER *prov)
@@ -857,6 +860,21 @@ static void core_vset_error(const OSSL_PROVIDER *prov,
         ERR_vset_error(prov->error_lib, (int)reason, fmt, args);
     }
 }
+
+static int core_set_error_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_set_mark();
+}
+
+static int core_clear_last_error_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_clear_last_mark();
+}
+
+static int core_pop_error_to_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_pop_to_mark();
+}
 #endif
 
 /*
@@ -872,6 +890,11 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
     { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },
+    { OSSL_FUNC_CORE_SET_ERROR_MARK, (void (*)(void))core_set_error_mark },
+    { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
+      (void (*)(void))core_clear_last_error_mark },
+    { OSSL_FUNC_CORE_POP_ERROR_TO_MARK,
+      (void (*)(void))core_pop_error_to_mark },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },

@@ -80,53 +80,60 @@ OSSL_CORE_MAKE_FUNC(void,core_set_error_debug,
 OSSL_CORE_MAKE_FUNC(void,core_vset_error,
                     (const OSSL_PROVIDER *prov,
                      uint32_t reason, const char *fmt, va_list args))
+# define OSSL_FUNC_CORE_SET_ERROR_MARK         8
+OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_PROVIDER *prov))
+# define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
+OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
+                    (const OSSL_PROVIDER *prov))
+# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
+OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_PROVIDER *prov))
 
 /* Memory allocation, freeing, clearing. */
-#define OSSL_FUNC_CRYPTO_MALLOC               10
+#define OSSL_FUNC_CRYPTO_MALLOC               20
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_ZALLOC               11
+#define OSSL_FUNC_CRYPTO_ZALLOC               21
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_FREE                 12
+#define OSSL_FUNC_CRYPTO_FREE                 22
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_FREE           13
+#define OSSL_FUNC_CRYPTO_CLEAR_FREE           23
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_clear_free, (void *ptr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_REALLOC              14
+#define OSSL_FUNC_CRYPTO_REALLOC              24
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_realloc, (void *addr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        15
+#define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        25
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_clear_realloc, (void *addr, size_t old_num, size_t num,
                                const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_MALLOC        16
+#define OSSL_FUNC_CRYPTO_SECURE_MALLOC        26
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ZALLOC        17
+#define OSSL_FUNC_CRYPTO_SECURE_ZALLOC        27
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_FREE          18
+#define OSSL_FUNC_CRYPTO_SECURE_FREE          28
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    19
+#define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    29
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file,
                                    int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     20
+#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     30
 OSSL_CORE_MAKE_FUNC(int,
         CRYPTO_secure_allocated, (const void *ptr))
-#define OSSL_FUNC_OPENSSL_CLEANSE             21
+#define OSSL_FUNC_OPENSSL_CLEANSE             31
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
 
 /* Bio functions provided by the core */
-#define OSSL_FUNC_BIO_NEW_FILE                23
-#define OSSL_FUNC_BIO_NEW_MEMBUF              24
-#define OSSL_FUNC_BIO_READ_EX                 25
-#define OSSL_FUNC_BIO_FREE                    26
-#define OSSL_FUNC_BIO_VPRINTF                 27
+#define OSSL_FUNC_BIO_NEW_FILE                40
+#define OSSL_FUNC_BIO_NEW_MEMBUF              41
+#define OSSL_FUNC_BIO_READ_EX                 42
+#define OSSL_FUNC_BIO_FREE                    43
+#define OSSL_FUNC_BIO_VPRINTF                 44
 
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_membuf, (const void *buf, int len))
@@ -136,7 +143,7 @@ OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
                                        va_list args))
 
-#define OSSL_FUNC_SELF_TEST_CB                28
+#define OSSL_FUNC_SELF_TEST_CB               100
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CTX *ctx, OSSL_CALLBACK **cb,
                                          void **cbarg))
 
