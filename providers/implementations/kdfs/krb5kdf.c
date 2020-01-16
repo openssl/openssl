@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.  We access the DES_set_odd_parity(3) function here.
+ */
+#include "internal/deprecated.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>

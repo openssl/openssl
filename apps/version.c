@@ -15,9 +15,6 @@
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
-#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -117,9 +114,6 @@ opthelp:
     if (options) {
         printf("options: ");
         printf(" %s", BN_options());
-#ifndef OPENSSL_NO_DES
-        printf(" %s", DES_options());
-#endif
         printf("\n");
     }
     if (cflags)

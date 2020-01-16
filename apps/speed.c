@@ -358,7 +358,7 @@ static const OPT_PAIR doit_choices[] = {
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"rc4", D_RC4},
 #endif
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
 #endif
@@ -729,7 +729,7 @@ static int RC4_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static unsigned char DES_iv[8];
 static DES_key_schedule sch[3];
 static int DES_ncbc_encrypt_loop(void *args)
@@ -1722,7 +1722,7 @@ int speed_main(int argc, char **argv)
             doit[i] = 1;
             continue;
         }
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (strcmp(algo, "des") == 0) {
             doit[D_CBC_DES] = doit[D_EDE3_DES] = 1;
             continue;
@@ -1945,7 +1945,7 @@ int speed_main(int argc, char **argv)
         loopargs[i].dsa_key[2] = get_dsa(2048);
     }
 #endif
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_DES] || doit[D_EDE3_DES]) {
         static DES_cblock keys[] = {
             { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 }, /* keys[0] */
@@ -2001,7 +2001,7 @@ int speed_main(int argc, char **argv)
         CAST_set_key(&cast_ks, 16, key16);
 #endif
 #ifndef SIGALRM
-# ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     BIO_printf(bio_err, "First we calculate the approximate speed ...\n");
     count = 10;
     do {
@@ -2397,7 +2397,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_CBC_DES]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_CBC_DES], c[D_CBC_DES][testnum],
@@ -3501,7 +3501,7 @@ int speed_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", RC4_options());
 #endif
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         printf("%s ", DES_options());
 #endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0

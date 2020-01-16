@@ -15,6 +15,13 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
+
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/crypto.h>
 #include "des_local.h"
 
