@@ -17,13 +17,14 @@
 static OSSL_OP_cipher_newctx_fn null_newctx;
 static void *null_newctx(void *provctx)
 {
-    return OPENSSL_zalloc(1);
+    static int dummy = 0;
+
+    return &dummy;
 }
 
 static OSSL_OP_cipher_freectx_fn null_freectx;
 static void null_freectx(void *vctx)
 {
-    OPENSSL_free(vctx);
 }
 
 static OSSL_OP_cipher_encrypt_init_fn null_init;
@@ -61,7 +62,8 @@ static int null_get_params(OSSL_PARAM params[])
 
 static const OSSL_PARAM null_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL)
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_END
 };
 
 static OSSL_OP_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
