@@ -419,6 +419,120 @@ err:
 
 /*
  * ECC Key validation as specified in SP800-56A R3.
+ * Section 5.6.2.3.3 ECC Full Public-Key Validation.
+ */
+int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
+{
+    int ret = 0;
+    EC_POINT *point = NULL;
+    const BIGNUM *order = NULL;
+
+    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* 5.6.2.3.3 (Step 1): Q != infinity */
+    if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
+        ECerr(0, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+
+    point = EC_POINT_new(eckey->group);
+    if (point == NULL)
+        return 0;
+
+    /* 5.6.2.3.3 (Step 2) Test if the public key is in range */
+    if (!ec_key_public_range_check(ctx, eckey)) {
+        ECerr(0, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    /* 5.6.2.3.3 (Step 3) is the pub_key on the elliptic curve */
+    if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
+        ECerr(0, EC_R_POINT_IS_NOT_ON_CURVE);
+        goto err;
+    }
+
+    order = eckey->group->order;
+    if (BN_is_zero(order)) {
+        ECerr(0, EC_R_INVALID_GROUP_ORDER);
+        goto err;
+    }
+    /* 5.6.2.3.3 (Step 4) : pub_key * order is the point at infinity. */
+    if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
+        ECerr(0, ERR_R_EC_LIB);
+        goto err;
+    }
+    if (!EC_POINT_is_at_infinity(eckey->group, point)) {
+        ECerr(0, EC_R_WRONG_ORDER);
+        goto err;
+    }
+    ret = 1;
+err:
+    EC_POINT_free(point);
+    return ret;
+}
+
+/*
+ * ECC Key validation as specified in SP800-56A R3.
+ * Section 5.6.2.1.2 Owner Assurance of Private-Key Validity
+ * The private key is in the range [1, order-1]
+ */
+int ec_key_private_check(const EC_KEY *eckey)
+{
+    if (eckey == NULL || eckey->group == NULL || eckey->priv_key == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (BN_cmp(eckey->priv_key, BN_value_one()) < 0
+        || BN_cmp(eckey->priv_key, eckey->group->order) >= 0) {
+        ECerr(0, EC_R_INVALID_PRIVATE_KEY);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * ECC Key validation as specified in SP800-56A R3.
+ * Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency (b)
+ * Check if generator * priv_key = pub_key
+ */
+int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx)
+{
+    int ret = 0;
+    EC_POINT *point = NULL;
+
+    if (eckey == NULL
+       || eckey->group == NULL
+       || eckey->pub_key == NULL
+       || eckey->priv_key == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    point = EC_POINT_new(eckey->group);
+    if (point == NULL)
+        goto err;
+
+
+    if (!EC_POINT_mul(eckey->group, point, eckey->priv_key, NULL, NULL, ctx)) {
+        ECerr(0, ERR_R_EC_LIB);
+        goto err;
+    }
+    if (EC_POINT_cmp(eckey->group, point, eckey->pub_key, ctx) != 0) {
+        ECerr(0, EC_R_INVALID_PRIVATE_KEY);
+        goto err;
+    }
+    ret = 1;
+err:
+    EC_POINT_free(point);
+    return ret;
+}
+
+
+/*
+ * ECC Key validation as specified in SP800-56A R3.
  *    Section 5.6.2.3.3 ECC Full Public-Key Validation
  *    Section 5.6.2.1.2 Owner Assurance of Private-Key Validity
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
@@ -431,81 +545,25 @@ int ec_key_simple_check_key(const EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
-    const BIGNUM *order = NULL;
-    EC_POINT *point = NULL;
 
-    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+    if (eckey == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-
-    /* 5.6.2.3.3 (Step 1): Q != infinity */
-    if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_AT_INFINITY);
-        goto err;
-    }
-
     if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL)
-        goto err;
+        return 0;
 
-    if ((point = EC_POINT_new(eckey->group)) == NULL)
+    if (!ec_key_public_check(eckey, ctx))
         goto err;
-
-    /* 5.6.2.3.3 (Step 2) Test if the public key is in range */
-    if (!ec_key_public_range_check(ctx, eckey)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_COORDINATES_OUT_OF_RANGE);
-        goto err;
-    }
-
-    /* 5.6.2.3.3 (Step 3) is the pub_key on the elliptic curve */
-    if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
-        goto err;
-    }
-
-    order = eckey->group->order;
-    if (BN_is_zero(order)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
-        goto err;
-    }
-    /* 5.6.2.3.3 (Step 4) : pub_key * order is the point at infinity. */
-    if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
-        goto err;
-    }
-    if (!EC_POINT_is_at_infinity(eckey->group, point)) {
-        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
-        goto err;
-    }
 
     if (eckey->priv_key != NULL) {
-        /*
-         * 5.6.2.1.2 Owner Assurance of Private-Key Validity
-         * The private key is in the range [1, order-1]
-         */
-        if (BN_cmp(eckey->priv_key, BN_value_one()) < 0
-                || BN_cmp(eckey->priv_key, order) >= 0) {
-            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
+        if (!ec_key_private_check(eckey)
+            || !ec_key_pairwise_check(eckey, ctx))
             goto err;
-        }
-        /*
-         * Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency (b)
-         * Check if generator * priv_key = pub_key
-         */
-        if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
-                          NULL, NULL, ctx)) {
-            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
-            goto err;
-        }
-        if (EC_POINT_cmp(eckey->group, point, eckey->pub_key, ctx) != 0) {
-            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
-            goto err;
-        }
     }
     ok = 1;
- err:
+err:
     BN_CTX_free(ctx);
-    EC_POINT_free(point);
     return ok;
 }
 

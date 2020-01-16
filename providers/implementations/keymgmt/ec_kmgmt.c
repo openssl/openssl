@@ -16,10 +16,10 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
-#include <openssl/ec.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include "crypto/bn.h"
+#include "crypto/ec.h"
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -32,6 +32,7 @@ static OSSL_OP_keymgmt_set_params_fn ec_set_params;
 static OSSL_OP_keymgmt_settable_params_fn ec_settable_params;
 static OSSL_OP_keymgmt_has_fn ec_has;
 static OSSL_OP_keymgmt_match_fn ec_match;
+static OSSL_OP_keymgmt_validate_fn ec_validate;
 static OSSL_OP_keymgmt_import_fn ec_import;
 static OSSL_OP_keymgmt_import_types_fn ec_import_types;
 static OSSL_OP_keymgmt_export_fn ec_export;
@@ -730,6 +731,35 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
     return 1;
 }
 
+static
+int ec_validate(void *keydata, int selection)
+{
+    EC_KEY *eck = keydata;
+    int ok = 0;
+    BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
+
+    if (ctx == NULL)
+        return 0;
+
+    if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && ec_key_public_check(eck, ctx);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && ec_key_private_check(eck);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        ok = ok && ec_key_pairwise_check(eck, ctx);
+
+    BN_CTX_free(ctx);
+    return ok;
+}
+
 const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
@@ -739,6 +769,7 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))ec_settable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))ec_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ec_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
