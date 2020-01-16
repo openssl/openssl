@@ -21,6 +21,7 @@ B<openssl passwd>
 [B<-noverify>]
 [B<-quiet>]
 [B<-table>]
+[B<-reverse>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 [I<password>]
 
@@ -92,6 +93,10 @@ Don't output warnings when passwords given at the command line are truncated.
 
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
+
+=item B<-reverse>
+
+When the B<-table> option is used, reverse the order of cleartext and hash.
 
 {- $OpenSSL::safe::opt_r_item -}
 

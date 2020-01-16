@@ -21,6 +21,14 @@ B<openssl> B<smime>
 [B<-in> I<file>]
 [B<-certfile> I<file>]
 [B<-signer> I<file>]
+[B<-nointern>]
+[B<-noverify>]
+[B<-nochain>]
+[B<-nosigs>]
+[B<-nocerts>]
+[B<-noattr>]
+[B<-nodetach>]
+[B<-nosmimecap>]
 [B<-recip> I< file>]
 [B<-inform> B<DER>|B<PEM>|B<SMIME>]
 [B<-outform> B<DER>|B<PEM>|B<SMIME>]
@@ -38,6 +46,7 @@ B<openssl> B<smime>
 [B<-stream>]
 [B<-md> I<digest>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 I<cert.pem> ...
@@ -178,7 +187,7 @@ Do not verify the signers certificate of a signed message.
 
 =item B<-nochain>
 
-Do not do chain verification of signers certificates: that is don't
+Do not do chain verification of signers certificates; that is, do not
 use the certificates in the signed message as untrusted CAs.
 
 =item B<-nosigs>
@@ -198,6 +207,17 @@ Normally when a message is signed a set of attributes are included which
 include the signing time and supported symmetric algorithms. With this
 option they are not included.
 
+=item B<-nodetach>
+
+When signing a message use opaque signing. This form is more resistant
+to translation by mail relays but it cannot be read by mail agents that
+do not support S/MIME.  Without this option cleartext signing with
+the MIME type multipart/signed is used.
+
+=item B<-nosmimecap>
+
+When signing a message, do not include the B<SMIMECapabilities> attribute.
+
 =item B<-binary>
 
 Normally the input message is converted to "canonical" format which is
@@ -209,13 +229,6 @@ is useful when handling binary data which may not be in MIME format.
 
 Normally the output file uses a single B<LF> as end of line. When this
 option is present B<CRLF> is used instead.
-
-=item B<-nodetach>
-
-When signing a message use opaque signing: this form is more resistant
-to translation by mail relays but it cannot be read by mail agents that
-do not support S/MIME.  Without this option cleartext signing with
-the MIME type multipart/signed is used.
 
 =item B<-certfile> I<file>
 
@@ -229,6 +242,14 @@ A signing certificate when signing or resigning a message, this option can be
 used multiple times if more than one signer is required. If a message is being
 verified then the signers certificates will be written to this file if the
 verification was successful.
+
+=item B<-nocerts>
+
+Don't include signers certificate when signing.
+
+=item B<-noattr>
+
+Don't include any signed attributes when signing.
 
 =item B<-recip> I<file>
 
@@ -262,6 +283,8 @@ address matches that specified in the From: address.
 Any verification errors cause the command to exit.
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

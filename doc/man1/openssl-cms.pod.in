@@ -11,8 +11,13 @@ B<openssl> B<cms>
 [B<-help>]
 [B<-encrypt>]
 [B<-decrypt>]
+[B<-debug_decrypt>]
 [B<-sign>]
 [B<-verify>]
+[B<-verify_retcode>]
+[B<-no_attr_verify>]
+[B<-nosigs>]
+[B<-no_content_verify>]
 [B<-cmsout>]
 [B<-resign>]
 [B<-cades>]
@@ -22,6 +27,7 @@ B<openssl> B<cms>
 [B<-digest_verify>]
 [B<-compress>]
 [B<-uncompress>]
+[B<-EncryptedData_decrypt>]
 [B<-EncryptedData_encrypt>]
 [B<-sign_receipt>]
 [B<-verify_receipt> I<receipt>]
@@ -33,7 +39,6 @@ B<openssl> B<cms>
 [B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-stream>]
 [B<-indef>]
-[B<-noindef>]
 [B<-noindef>]
 [B<-content> I<filename>]
 [B<-text>]
@@ -59,6 +64,7 @@ B<openssl> B<cms>
 [B<-receipt_request_from> I<emailaddress>]
 [B<-receipt_request_to> I<emailaddress>]
 [B<-receipt_request_print>]
+[B<-pwri_password> I<password>]
 [B<-secretkey> I<key>]
 [B<-secretkeyid> I<id>]
 [B<-econtent_type> I<type>]
@@ -71,6 +77,7 @@ B<openssl> B<cms>
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [I<cert.pem> ...]
 
 =for openssl ifdef des-wrap engine
@@ -123,6 +130,22 @@ to the output file.
 Verify signed mail. Expects a signed mail message on input and outputs
 the signed data. Both clear text and opaque signing is supported.
 
+=item B<-verify_retcode>
+
+Exit nonzero on verification failure.
+
+=item B<-no_attr_verify>
+
+Do not verify signed attribute signatures.
+
+=item B<-no_content_verify>
+
+Do not verify signed content signatures.
+
+=item B<-nosigs>
+
+Don't verify message signature.
+
 =item B<-cmsout>
 
 Takes an input message and writes out a PEM encoded CMS structure.
@@ -163,6 +186,11 @@ support for this option to work, otherwise it will output an error.
 Uncompress a CMS B<CompressedData> type and output the content. OpenSSL must be
 compiled with B<zlib> support for this option to work, otherwise it will
 output an error.
+
+=item B<-EncryptedData_decrypt>
+
+Decrypt content using supplied symmetric key and algorithm using a CMS
+B<EncryptedData> type and output the content.
 
 =item B<-EncryptedData_encrypt>
 
@@ -214,7 +242,7 @@ The signed receipt format for use with the B<-receipt_verify>; the default
 is B<SMIME>.
 See L<openssl(1)/Format Options> for details.
 
-=item B<-stream>, B<-indef>, B<-noindef>
+=item B<-stream>, B<-indef>
 
 The B<-stream> and B<-indef> options are equivalent and enable streaming I/O
 for encoding operations. This permits single pass processing of data without
@@ -385,6 +413,10 @@ option B<must> but supplied if a signed receipt it requested.
 For the B<-verify> operation print out the contents of any signed receipt
 requests.
 
+=item B<-pwri_password> I<password>
+
+Specify password for recipient.
+
 =item B<-secretkey> I<key>
 
 Specify symmetric key to use. The key must be supplied in hex format and be
@@ -441,6 +473,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 =item I<cert.pem> ...
 

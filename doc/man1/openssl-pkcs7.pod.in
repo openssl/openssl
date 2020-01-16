@@ -17,6 +17,7 @@ B<openssl> B<pkcs7>
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
+[B<-print>]
 [B<-print_certs>]
 [B<-text>]
 [B<-noout>]
@@ -29,8 +30,6 @@ B<openssl> B<pkcs7>
 This command processes PKCS#7 files.  Note that it only understands PKCS#7
 v 1.5 as specified in IETF RFC 2315.  It cannot currently parse CMS as
 described in IETF RFC 2630.
-
-There is no option to print out all the fields of a PKCS#7 file.
 
 =head1 OPTIONS
 
@@ -57,6 +56,10 @@ option is not specified.
 Specifies the output filename to write to or standard output by
 default.
 
+=item B<-print>
+
+Print out the full PKCS7 object.
+
 =item B<-print_certs>
 
 Prints out any certificates or CRLs contained in the file. They are
@@ -64,13 +67,13 @@ preceded by their subject and issuer names in one line format.
 
 =item B<-text>
 
-Prints out certificates details in full rather than just subject and
+Prints out certificate details in full rather than just subject and
 issuer names.
 
 =item B<-noout>
 
 Don't output the encoded version of the PKCS#7 structure (or certificates
-is B<-print_certs> is set).
+if B<-print_certs> is set).
 
 {- $OpenSSL::safe::opt_engine_item -}
 

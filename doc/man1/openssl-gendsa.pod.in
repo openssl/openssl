@@ -10,6 +10,7 @@ openssl-gendsa - generate a DSA private key from a set of parameters
 B<openssl> B<gendsa>
 [B<-help>]
 [B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -46,6 +47,11 @@ Print out a usage message.
 
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
+
+=item B<-passout> I<arg>
+
+The passphrase used for the output file.
+See L<openssl(1)/Pass Phrase Options>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 

@@ -8,6 +8,9 @@ openssl-ts - Time Stamping Authority tool (client/server)
 =head1 SYNOPSIS
 
 B<openssl> B<ts>
+B<-help>
+
+B<openssl> B<ts>
 B<-query>
 [B<-config> I<configfile>]
 [B<-data> I<file_to_hash>]
@@ -94,6 +97,14 @@ over HTTP or TCP yet as suggested in RFC 3161. The users must send the
 requests either by ftp or e-mail.
 
 =head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=back
 
 =head2 Timestamp Request generation
 

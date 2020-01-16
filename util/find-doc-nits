@@ -808,8 +808,14 @@ sub checkflags {
             }
             next;
         }
-        next unless /\[B<-([^ >]+)/;
-        my $opt = $1;
+        my $opt;
+        if ( /\[B<-([^ >]+)/ ) {
+            $opt = $1;
+        } elsif ( /^B<-([^ >]+)/ ) {
+            $opt = $1;
+        } else {
+            next;
+        }
         $opt = $1 if $opt =~ /I<(.*)/;
         $docopts{$1} = 1;
     }
@@ -826,7 +832,7 @@ sub checkflags {
     my @unimpl = sort grep { !defined $cmdopts{$_} } keys %docopts;
     foreach ( @unimpl ) {
         next if defined $skips{$_} || defined $localskips{$_};
-        err("$cmd documented but not implemented -$_");
+        err("$doc: $cmd does not implement -$_");
     }
 }
 
@@ -852,8 +858,9 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach my $cmd ( @commands ) {
         next if $cmd eq 'help' || $cmd eq 'exit';
-        my $doc = "doc/man1/$cmd.pod";
-        $doc = "doc/man1/openssl-$cmd.pod" if -f "doc/man1/openssl-$cmd.pod";
+        my $doc = "doc/man1/openssl-$cmd.pod";
+        # Handle "tsget" and "CA.pl" pod pages
+        $doc = "doc/man1/$cmd.pod" if -f "doc/man1/$cmd.pod";
         if ( ! -f "$doc" ) {
             err("$doc does not exist");
         } else {

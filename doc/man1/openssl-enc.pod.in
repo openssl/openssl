@@ -35,12 +35,13 @@ B<openssl> B<enc>|I<cipher>
 [B<-P>]
 [B<-bufsize> I<number>]
 [B<-nopad>]
+[B<-v>]
 [B<-debug>]
 [B<-none>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
-=for openssl ifdef z engine
+=for openssl ifdef z engine ciphers
 
 B<openssl> I<cipher> [B<...>]
 
@@ -175,6 +176,10 @@ Set the buffer size for I/O.
 =item B<-nopad>
 
 Disable standard block padding.
+
+=item B<-v>
+
+Verbose print; display some statistics about I/O and buffer sizes.
 
 =item B<-debug>
 
