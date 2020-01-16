@@ -511,3 +511,4 @@ SSL_CTX_set_default_verify_store        ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_file                ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_dir                 ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_store               ?	3_0_0	EXIST::FUNCTION:
+SSL_CTX_new_with_libctx                 ?	3_0_0	EXIST::FUNCTION:
