@@ -86,6 +86,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     if (!EVP_DigestUpdate(ctx, salt, saltlen))
         goto err;
     PBEPARAM_free(pbe);
+    pbe = NULL;
     if (!EVP_DigestFinal_ex(ctx, md_tmp, NULL))
         goto err;
     mdsize = EVP_MD_size(md);
