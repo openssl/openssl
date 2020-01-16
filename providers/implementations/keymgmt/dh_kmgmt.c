@@ -191,7 +191,7 @@ static int dh_exportkey(void *key, OSSL_CALLBACK *param_cb, void *cbarg)
  * Same function for domain parameters and for keys.
  * "dpk" = "domain parameters & keys"
  */
-static int dh_get_dpk_params(void *key, OSSL_PARAM params[])
+static ossl_inline int dh_get_dpk_params(void *key, OSSL_PARAM params[])
 {
     DH *dh = key;
     OSSL_PARAM *p;
@@ -202,7 +202,7 @@ static int dh_get_dpk_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
         && !OSSL_PARAM_set_int(p, DH_security_bits(dh)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SIZE)) != NULL
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, DH_size(dh)))
         return 0;
     return 1;
