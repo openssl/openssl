@@ -2763,7 +2763,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         unsigned char *sigbytes1, *sigbytes2, *tbs;
         size_t siglen = 0, tbslen;
 
-        if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
+        if (pkey == NULL || !tls1_lookup_md(s->ctx, lu, &md)) {
             /* Should never happen */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,

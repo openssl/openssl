@@ -86,7 +86,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
  err:
     EVP_MD_CTX_free(m5);
     EVP_MD_CTX_free(s1);
-    EVP_MD_free(md5);
+    ssl_evp_md_free(md5);
     return ret;
 }
 
@@ -257,13 +257,16 @@ int ssl3_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, &comp, 0)) {
+    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, NULL, NULL, &comp,
+                            0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
 #ifdef OPENSSL_NO_COMP
     s->s3.tmp.new_compression = NULL;

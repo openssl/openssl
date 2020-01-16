@@ -3146,6 +3146,10 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
         goto err;
 #endif
 
+    /* initialize cipher/digest methods table */
+    if (!ssl_load_ciphers(ret))
+        return 0;
+
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
 
@@ -3162,14 +3166,12 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     if (ret->param == NULL)
         goto err;
 
-    if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
-        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
-        goto err2;
-    }
-    if ((ret->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
-        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
-        goto err2;
-    }
+    /*
+     * If these aren't available from the provider we'll get NULL returns.
+     * That's fine but will cause errors later if SSLv3 is negotiated
+     */
+    ret->md5 = ssl_evp_md_fetch(libctx, NID_md5, propq);
+    ret->sha1 = ssl_evp_md_fetch(libctx, NID_sha1, propq);
 
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
         goto err;
@@ -3358,6 +3360,14 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
+
+    ssl_evp_md_free(a->md5);
+    ssl_evp_md_free(a->sha1);
+
+    for (i = 0; i < SSL_ENC_NUM_IDX; i++)
+        ssl_evp_cipher_free(a->ssl_cipher_methods[i]);
+    for (i = 0; i < SSL_MD_NUM_IDX; i++)
+        ssl_evp_md_free(a->ssl_digest_methods[i]);
 
     CRYPTO_THREAD_lock_free(a->lock);
 
@@ -5832,4 +5842,89 @@ void SSL_set_allow_early_data_cb(SSL *s,
 {
     s->allow_early_data_cb = cb;
     s->allow_early_data_cb_data = arg;
+}
+
+const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
+                                       int nid,
+                                       const char *properties)
+{
+    /*
+     * If there is an Engine available for this cipher we use the "implicit"
+     * form to ensure we use that engine later.
+     */
+    if (ENGINE_get_cipher_engine(nid) != NULL)
+        return EVP_get_cipherbynid(nid);
+
+    /* Otherwise we do an explicit fetch */
+    return EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
+}
+
+
+int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher)
+{
+    /* Don't up-ref an implicit EVP_CIPHER */
+    if (EVP_CIPHER_provider(cipher) == NULL)
+        return 1;
+
+    /*
+     * The cipher was explicitly fetched and therefore it is safe to cast
+     * away the const
+     */
+    return EVP_CIPHER_up_ref((EVP_CIPHER *)cipher);
+}
+
+void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
+{
+    if (cipher == NULL)
+        return;
+
+    if (EVP_CIPHER_provider(cipher) != NULL) {
+        /*
+         * The cipher was explicitly fetched and therefore it is safe to cast
+         * away the const
+         */
+        EVP_CIPHER_free((EVP_CIPHER *)cipher);
+    }
+}
+
+const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
+                               int nid,
+                               const char *properties)
+{
+    /*
+     * If there is an Engine available for this digest we use the "implicit"
+     * form to ensure we use that engine later.
+     */
+    if (ENGINE_get_digest_engine(nid) != NULL)
+        return EVP_get_digestbynid(nid);
+
+    /* Otherwise we do an explicit fetch */
+    return EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
+}
+
+int ssl_evp_md_up_ref(const EVP_MD *md)
+{
+    /* Don't up-ref an implicit EVP_MD */
+    if (EVP_MD_provider(md) == NULL)
+        return 1;
+
+    /*
+     * The digest was explicitly fetched and therefore it is safe to cast
+     * away the const
+     */
+    return EVP_MD_up_ref((EVP_MD *)md);
+}
+
+void ssl_evp_md_free(const EVP_MD *md)
+{
+    if (md == NULL)
+        return;
+
+    if (EVP_MD_provider(md) != NULL) {
+        /*
+         * The digest was explicitly fetched and therefore it is safe to cast
+         * away the const
+         */
+        EVP_MD_free((EVP_MD *)md);
+    }
 }

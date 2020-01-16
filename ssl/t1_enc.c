@@ -538,14 +538,16 @@ int tls1_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
-                            &comp, s->ext.use_etm)) {
+    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_type,
+                            &mac_secret_size, &comp, s->ext.use_etm)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
     s->s3.tmp.new_mac_secret_size = mac_secret_size;

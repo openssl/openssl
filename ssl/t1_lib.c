@@ -893,7 +893,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
     return NULL;
 }
 /* Lookup hash: return 0 if invalid or not enabled */
-int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
+int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 {
     const EVP_MD *md;
     if (lu == NULL)
@@ -902,7 +902,7 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
     if (lu->hash == NID_undef) {
         md = NULL;
     } else {
-        md = ssl_md(lu->hash_idx);
+        md = ssl_md(ctx, lu->hash_idx);
         if (md == NULL)
             return 0;
     }
@@ -919,13 +919,14 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  * with a 128 byte (1024 bit) key.
  */
 #define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
-static int rsa_pss_check_min_key_size(const RSA *rsa, const SIGALG_LOOKUP *lu)
+static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const RSA *rsa,
+                                      const SIGALG_LOOKUP *lu)
 {
     const EVP_MD *md;
 
     if (rsa == NULL)
         return 0;
-    if (!tls1_lookup_md(lu, &md) || md == NULL)
+    if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
     if (RSA_size(rsa) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
@@ -978,7 +979,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
 
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
             return NULL;
         if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             return NULL;
@@ -1183,7 +1184,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    if (!tls1_lookup_md(lu, &md)) {
+    if (!tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
                  SSL_R_UNKNOWN_DIGEST);
         return 0;
@@ -1670,7 +1671,7 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
     int secbits;
 
     /* See if sigalgs is recognised and if hash is enabled */
-    if (!tls1_lookup_md(lu, NULL))
+    if (!tls1_lookup_md(s->ctx, lu, NULL))
         return 0;
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
@@ -1728,7 +1729,7 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
     if (lu->hash == NID_undef)
         return 1;
     /* Security bits: half digest bits */
-    secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
+    secbits = EVP_MD_size(ssl_md(s->ctx, lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
     sigalgstr[0] = (lu->sigalg >> 8) & 0xff;
     sigalgstr[1] = lu->sigalg & 0xff;
@@ -2777,7 +2778,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
             || lu->sig == EVP_PKEY_RSA)
             continue;
         /* Check that we have a cert, and signature_algorithms_cert */
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
             continue;
         if ((pkey == NULL && !has_usable_cert(s, lu, -1))
                 || (pkey != NULL && !is_cert_usable(s, lu, x, pkey)))
@@ -2799,7 +2800,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 #endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
-            if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(tmppkey), lu))
+            if (!rsa_pss_check_min_key_size(s->ctx, EVP_PKEY_get0(tmppkey), lu))
                 continue;
         }
         break;
@@ -2885,7 +2886,9 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         /* validate that key is large enough for the signature algorithm */
                         EVP_PKEY *pkey = s->cert->pkeys[sig_idx].privatekey;
 
-                        if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(pkey), lu))
+                        if (!rsa_pss_check_min_key_size(s->ctx,
+                                                        EVP_PKEY_get0(pkey),
+                                                        lu))
                             continue;
                     }
 #ifndef OPENSSL_NO_EC

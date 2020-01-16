@@ -1376,8 +1376,8 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
              */
-            if (ssl_md(c->algorithm2)
-                    != ssl_md(s->session->cipher->algorithm2)) {
+            if (ssl_md(s->ctx, c->algorithm2)
+                    != ssl_md(s->ctx, s->session->cipher->algorithm2)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_F_SET_CLIENT_CIPHERSUITE,
                          SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED);
@@ -2337,7 +2337,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
+        if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
             goto err;

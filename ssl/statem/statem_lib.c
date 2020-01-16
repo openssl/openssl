@@ -247,7 +247,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
     pkey = s->s3.tmp.cert->privatekey;
 
-    if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
+    if (pkey == NULL || !tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -420,7 +420,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto err;
     }
 
-    if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
+    if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;

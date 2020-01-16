@@ -22,30 +22,6 @@
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 
-#define SSL_ENC_DES_IDX         0
-#define SSL_ENC_3DES_IDX        1
-#define SSL_ENC_RC4_IDX         2
-#define SSL_ENC_RC2_IDX         3
-#define SSL_ENC_IDEA_IDX        4
-#define SSL_ENC_NULL_IDX        5
-#define SSL_ENC_AES128_IDX      6
-#define SSL_ENC_AES256_IDX      7
-#define SSL_ENC_CAMELLIA128_IDX 8
-#define SSL_ENC_CAMELLIA256_IDX 9
-#define SSL_ENC_GOST89_IDX      10
-#define SSL_ENC_SEED_IDX        11
-#define SSL_ENC_AES128GCM_IDX   12
-#define SSL_ENC_AES256GCM_IDX   13
-#define SSL_ENC_AES128CCM_IDX   14
-#define SSL_ENC_AES256CCM_IDX   15
-#define SSL_ENC_AES128CCM8_IDX  16
-#define SSL_ENC_AES256CCM8_IDX  17
-#define SSL_ENC_GOST8912_IDX    18
-#define SSL_ENC_CHACHA_IDX      19
-#define SSL_ENC_ARIA128GCM_IDX  20
-#define SSL_ENC_ARIA256GCM_IDX  21
-#define SSL_ENC_NUM_IDX         22
-
 /* NB: make sure indices in these tables match values above */
 
 typedef struct {
@@ -79,8 +55,6 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
 };
 
-static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
-
 #define SSL_COMP_NULL_IDX       0
 #define SSL_COMP_ZLIB_IDX       1
 #define SSL_COMP_NUM_IDX        2
@@ -90,13 +64,6 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #ifndef OPENSSL_NO_COMP
 static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
 #endif
-
-/*
- * Constant SSL_MAX_DIGEST equal to size of digests array should be defined
- * in the ssl_local.h
- */
-
-#define SSL_MD_NUM_IDX  SSL_MAX_DIGEST
 
 /* NB: make sure indices in this table matches values above */
 static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
@@ -112,10 +79,6 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
     {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
     {0, NID_sha512}             /* SSL_MD_SHA512_IDX 11 */
-};
-
-static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* *INDENT-OFF* */
@@ -175,8 +138,6 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     /* MD5/SHA1, SHA224, SHA512 */
     NID_undef, NID_undef, NID_undef
 };
-
-static size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
 #define CIPHER_ADD      1
 #define CIPHER_KILL     2
@@ -355,41 +316,37 @@ static uint32_t disabled_mac_mask;
 static uint32_t disabled_mkey_mask;
 static uint32_t disabled_auth_mask;
 
-int ssl_load_ciphers(void)
+int ssl_load_ciphers(SSL_CTX *ctx)
 {
     size_t i;
     const ssl_cipher_table *t;
 
     disabled_enc_mask = 0;
-    ssl_sort_cipher_list();
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
-        if (t->nid == NID_undef) {
-            ssl_cipher_methods[i] = NULL;
-        } else {
-            const EVP_CIPHER *cipher = EVP_get_cipherbynid(t->nid);
-            ssl_cipher_methods[i] = cipher;
+        if (t->nid != NID_undef) {
+            const EVP_CIPHER *cipher
+                = ssl_evp_cipher_fetch(ctx->libctx, t->nid, ctx->propq);
+
+            ctx->ssl_cipher_methods[i] = cipher;
             if (cipher == NULL)
                 disabled_enc_mask |= t->mask;
         }
     }
     disabled_mac_mask = 0;
     for (i = 0, t = ssl_cipher_table_mac; i < SSL_MD_NUM_IDX; i++, t++) {
-        const EVP_MD *md = EVP_get_digestbynid(t->nid);
-        ssl_digest_methods[i] = md;
+        const EVP_MD *md
+            = ssl_evp_md_fetch(ctx->libctx, t->nid, ctx->propq);
+
+        ctx->ssl_digest_methods[i] = md;
         if (md == NULL) {
             disabled_mac_mask |= t->mask;
         } else {
             int tmpsize = EVP_MD_size(md);
             if (!ossl_assert(tmpsize >= 0))
                 return 0;
-            ssl_mac_secret_size[i] = tmpsize;
+            ctx->ssl_mac_secret_size[i] = tmpsize;
         }
     }
-    /* Make sure we can access MD5 and SHA1 */
-    if (!ossl_assert(ssl_digest_methods[SSL_MD_MD5_IDX] != NULL))
-        return 0;
-    if (!ossl_assert(ssl_digest_methods[SSL_MD_SHA1_IDX] != NULL))
-        return 0;
 
     disabled_mkey_mask = 0;
     disabled_auth_mask = 0;
@@ -422,14 +379,14 @@ int ssl_load_ciphers(void)
      */
     ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
-        ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
+        ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC;
 
     ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
         get_optional_pkey_id("gost-mac-12");
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
-        ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
+        ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC12;
 
@@ -482,9 +439,10 @@ static int load_builtin_compressions(void)
 }
 #endif
 
-int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
-                       const EVP_MD **md, int *mac_pkey_type,
-                       size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
+int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
+                       const EVP_CIPHER **enc, const EVP_MD **md,
+                       int *mac_pkey_type, size_t *mac_secret_size,
+                       SSL_COMP **comp, int use_etm)
 {
     int i;
     const SSL_CIPHER *c;
@@ -521,10 +479,18 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     if (i == -1) {
         *enc = NULL;
     } else {
-        if (i == SSL_ENC_NULL_IDX)
-            *enc = EVP_enc_null();
-        else
-            *enc = ssl_cipher_methods[i];
+        if (i == SSL_ENC_NULL_IDX) {
+            /*
+             * We assume we don't care about this coming from an ENGINE so
+             * just do a normal EVP_CIPHER_fetch instead of
+             * ssl_evp_cipher_fetch()
+             */
+            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
+        } else {
+            if (!ssl_evp_cipher_up_ref(ctx->ssl_cipher_methods[i]))
+                return 0;
+            *enc = ctx->ssl_cipher_methods[i];
+        }
     }
 
     i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
@@ -537,67 +503,80 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
         if (c->algorithm_mac == SSL_AEAD)
             mac_pkey_type = NULL;
     } else {
-        *md = ssl_digest_methods[i];
+        if (!ssl_evp_md_up_ref(ctx->ssl_digest_methods[i])) {
+            ssl_evp_cipher_free(*enc);
+            return 0;
+        }
+        *md = ctx->ssl_digest_methods[i];
         if (mac_pkey_type != NULL)
             *mac_pkey_type = ssl_mac_pkey_id[i];
         if (mac_secret_size != NULL)
-            *mac_secret_size = ssl_mac_secret_size[i];
+            *mac_secret_size = ctx->ssl_mac_secret_size[i];
     }
 
     if ((*enc != NULL) &&
         (*md != NULL || (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER))
         && (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
-        const EVP_CIPHER *evp;
+        const EVP_CIPHER *evp = NULL;
 
-        if (use_etm)
+        if (use_etm
+                || s->ssl_version >> 8 != TLS1_VERSION_MAJOR
+                || s->ssl_version < TLS1_VERSION)
             return 1;
 
-        if (s->ssl_version >> 8 != TLS1_VERSION_MAJOR ||
-            s->ssl_version < TLS1_VERSION)
-            return 1;
+        if (c->algorithm_enc == SSL_RC4
+                && c->algorithm_mac == SSL_MD5)
+            evp = ssl_evp_cipher_fetch(ctx->libctx, NID_rc4_hmac_md5,
+                                       ctx->propq);
+        else if (c->algorithm_enc == SSL_AES128
+                    && c->algorithm_mac == SSL_SHA1)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_128_cbc_hmac_sha1,
+                                       ctx->propq);
+        else if (c->algorithm_enc == SSL_AES256
+                    && c->algorithm_mac == SSL_SHA1)
+             evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                        NID_aes_256_cbc_hmac_sha1,
+                                        ctx->propq);
+        else if (c->algorithm_enc == SSL_AES128
+                    && c->algorithm_mac == SSL_SHA256)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_128_cbc_hmac_sha256,
+                                       ctx->propq);
+        else if (c->algorithm_enc == SSL_AES256
+                    && c->algorithm_mac == SSL_SHA256)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_256_cbc_hmac_sha256,
+                                       ctx->propq);
 
-        if (c->algorithm_enc == SSL_RC4 &&
-            c->algorithm_mac == SSL_MD5 &&
-            (evp = EVP_get_cipherbyname("RC4-HMAC-MD5")))
-            *enc = evp, *md = NULL;
-        else if (c->algorithm_enc == SSL_AES128 &&
-                 c->algorithm_mac == SSL_SHA1 &&
-                 (evp = EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
-            *enc = evp, *md = NULL;
-        else if (c->algorithm_enc == SSL_AES256 &&
-                 c->algorithm_mac == SSL_SHA1 &&
-                 (evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
-            *enc = evp, *md = NULL;
-        else if (c->algorithm_enc == SSL_AES128 &&
-                 c->algorithm_mac == SSL_SHA256 &&
-                 (evp = EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA256")))
-            *enc = evp, *md = NULL;
-        else if (c->algorithm_enc == SSL_AES256 &&
-                 c->algorithm_mac == SSL_SHA256 &&
-                 (evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA256")))
-            *enc = evp, *md = NULL;
+        if (evp != NULL) {
+            ssl_evp_cipher_free(*enc);
+            ssl_evp_md_free(*md);
+            *enc = evp;
+            *md = NULL;
+        }
         return 1;
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
-const EVP_MD *ssl_md(int idx)
+const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
 {
     idx &= SSL_HANDSHAKE_MAC_MASK;
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
         return NULL;
-    return ssl_digest_methods[idx];
+    return ctx->ssl_digest_methods[idx];
 }
 
 const EVP_MD *ssl_handshake_md(SSL *s)
 {
-    return ssl_md(ssl_get_algorithm2(s));
+    return ssl_md(s->ctx, ssl_get_algorithm2(s));
 }
 
 const EVP_MD *ssl_prf_md(SSL *s)
 {
-    return ssl_md(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
+    return ssl_md(s->ctx, ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
 
 #define ITEM_SEP(a) \
@@ -2094,7 +2073,7 @@ const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
         return NULL;
-    return ssl_digest_methods[idx];
+    return EVP_get_digestbynid(ssl_cipher_table_mac[idx].nid);
 }
 
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
