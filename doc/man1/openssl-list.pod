@@ -21,6 +21,8 @@ B<openssl list>
 [B<-public-key-methods>]
 [B<-engines>]
 [B<-disabled>]
+[B<-objects>]
+[B<-options> I<command>]
 
 =head1 DESCRIPTION
 
@@ -91,6 +93,14 @@ of the installation.
 
 Display a list of built in objects, i.e. OIDs with names.  They're listed in the
 format described in L<config(5)/ASN1 Object Configuration Module>.
+
+=item B<-options> I<command>
+
+Output a two-column list of the options accepted by the specified I<command>.
+The first is the option name, and the second is a one-character indication
+of what type of parameter it takes, if any.
+This is an internal option, used for checking that the documentation
+is complete.
 
 =back
 

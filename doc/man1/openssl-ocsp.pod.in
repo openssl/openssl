@@ -30,6 +30,7 @@ B<openssl> B<ocsp>
 [B<-host> I<host>:I<port>]
 [B<-multi> I<process-count>]
 [B<-header>]
+[B<-timeout> I<seconds>]
 [B<-path>]
 [B<-VAfile> I<file>]
 [B<-validity_period> I<n>]
@@ -52,6 +53,8 @@ B<openssl> B<ocsp>
 [B<-passin> I<arg>]
 [B<-rother> I<file>]
 [B<-rsigopt> I<nm>:I<v>]
+[B<-rmd> I<digest>]
+[B<-badsig>]
 [B<-resp_no_certs>]
 [B<-nmin> I<n>]
 [B<-ndays> I<n>]
@@ -327,6 +330,15 @@ see L<openssl(1)/Pass Phrase Options>.
 
 Pass options to the signature algorithm when signing OCSP responses.
 Names and values of these options are algorithm-specific.
+
+=item B<-rmd> I<digest>
+
+The digest to use when signing the response.
+
+=item B<-badsig>
+
+Corrupt the response signature before writing it; this can be useful
+for testing.
 
 =item B<-port> I<portnum>
 

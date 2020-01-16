@@ -89,6 +89,7 @@ const OPTIONS s_time_options[] = {
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
+    {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',

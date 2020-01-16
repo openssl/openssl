@@ -23,6 +23,7 @@ B<openssl> B<ca>
 [B<-crl_CA_compromise> I<time>]
 [B<-crldays> I<days>]
 [B<-crlhours> I<hours>]
+[B<-crlsec> I<seconds>]
 [B<-crlexts> I<section>]
 [B<-startdate> I<date>]
 [B<-enddate> I<date>]
@@ -325,6 +326,10 @@ now to place in the CRL nextUpdate field.
 =item B<-crlhours> I<num>
 
 The number of hours before the next CRL is due.
+
+=item B<-crlsec> I<num>
+
+The number of seconds before the next CRL is due.
 
 =item B<-revoke> I<filename>
 

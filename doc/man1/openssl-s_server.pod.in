@@ -50,6 +50,7 @@ B<openssl> B<s_server>
 [B<-id_prefix> I<val>]
 [B<-keymatexport> I<val>]
 [B<-keymatexportlen> I<+int>]
+[B<-CRLform> B<DER>|B<PEM>]
 [B<-CRL> I<infile>]
 [B<-crl_download>]
 [B<-cert_chain> I<infile>]
@@ -125,7 +126,9 @@ B<openssl> B<s_server>
 [B<-alpn> I<val>]
 [B<-keylogfile> I<outfile>]
 [B<-max_early_data> I<int>]
+[B<-recv_max_early_data> I<int>]
 [B<-early_data>]
+[B<-stateless>]
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-http_server_binmode>]
@@ -615,10 +618,19 @@ and any incoming early data (when used in conjunction with the B<-early_data>
 flag). The default value is approximately 16k. The argument must be an integer
 greater than or equal to 0.
 
+=item B<-recv_max_early_data> I<int>
+
+Specify the hard limit on the maximum number of early data bytes that will
+be accepted.
+
 =item B<-early_data>
 
 Accept early data where possible. Cannot be used in conjunction with B<-www>,
 B<-WWW>, B<-HTTP> or B<-rev>.
+
+=item B<-stateless>
+
+Require TLSv1.3 cookies.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 

@@ -17,11 +17,16 @@ B<openssl> B<s_time>
 [B<-new>]
 [B<-verify> I<depth>]
 [B<-time> I<seconds>]
-{- $OpenSSL::safe::opt_versiontls_synopsis -}
+[B<-ssl3>]
+[B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-tls1_3>]
 [B<-bugs>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
 {- $OpenSSL::safe::opt_name_synopsis -}
+[B<-cafile> I<file>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
@@ -117,7 +122,13 @@ can establish.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_versiontls_item -}
+=item B<-cafile> I<file>
+
+This is an obsolete synonym for B<-CAfile>.
+
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
+
+See L<openssl(1)/TLS Version Options>.
 
 =back
 
@@ -161,6 +172,10 @@ be able to measure the performance of all protocols with all servers.
 
 The B<-verify> option should really exit if the server verification
 fails.
+
+=head1 HISTORY
+
+The B<-cafile> option was deprecated in OpenSSL 3.0.
 
 =head1 SEE ALSO
 

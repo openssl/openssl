@@ -19,7 +19,9 @@ B<openssl> B<x509>
 [B<-serial>]
 [B<-hash>]
 [B<-subject_hash>]
+[B<-subject_hash_old>]
 [B<-issuer_hash>]
+[B<-issuer_hash_old>]
 [B<-ocspid>]
 [B<-subject>]
 [B<-issuer>]
@@ -44,6 +46,7 @@ B<openssl> B<x509>
 [B<-days> I<arg>]
 [B<-set_serial> I<n>]
 [B<-signkey> I<filename>]
+[B<-badsig>]
 [B<-passin> I<arg>]
 [B<-x509toreq>]
 [B<-req>]
@@ -52,11 +55,16 @@ B<openssl> B<x509>
 [B<-CAcreateserial>]
 [B<-CAserial> I<filename>]
 [B<-new>]
+[B<-next_serial>]
+[B<-nocert>]
 [B<-force_pubkey> I<filename>]
 [B<-subj> I<arg>]
 [B<-text>]
 [B<-ext> I<extensions>]
 [B<-certopt> I<option>]
+[B<-checkhost> I<host>]
+[B<-checkemail> I<host>]
+[B<-checkip> I<ipaddr>]
 [B<-C>]
 [B<-I<digest>>]
 [B<-clrext>]
@@ -154,6 +162,18 @@ Customise the output format used with B<-text>. The I<option> argument
 can be a single option or multiple options separated by commas. The
 B<-certopt> switch may be also be used more than once to set multiple
 options. See the L</Text Options> section for more information.
+
+=item B<-checkhost> I<host>
+
+Check that the certificate matches the specified host.
+
+=item B<-checkemail> I<email>
+
+Check that the certificate matches the specified email address.
+
+=item B<-checkip> I<ipaddr>
+
+Check that the certificate matches the specified IP address.
 
 =item B<-noout>
 
@@ -340,6 +360,11 @@ and the end date to a value determined by the B<-days> option.
 It retains any certificate extensions unless the B<-clrext> option is supplied;
 this includes, for example, any existing key identifier extensions.
 
+=item B<-badsig>
+
+Corrupt the signature before writing it; this can be useful
+for testing.
+
 =item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign or verify operations.
@@ -448,6 +473,14 @@ extension section format.
 Generate a certificate from scratch, not using an input certificate
 or certificate request. So the B<-in> option must not be used in this case.
 Instead, the B<-subj> and <-force_pubkey> options need to be given.
+
+=item B<-next_serial>
+
+Set the serial to be one more than the number in the certificate.
+
+=item B<-nocert>
+
+Do not generate or output a certificate.
 
 =item B<-force_pubkey> I<filename>
 

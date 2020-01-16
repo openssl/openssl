@@ -10,6 +10,8 @@ openssl-rsautl - RSA utility
 B<openssl> B<rsautl>
 [B<-help>]
 [B<-in> I<file>]
+[B<-passin> I<arg>]
+[B<-rev>]
 [B<-out> I<file>]
 [B<-inkey> I<file>]
 [B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
@@ -20,10 +22,16 @@ B<openssl> B<rsautl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-pkcs>]
+[B<-x931>]
+[B<-oaep>]
+[B<-ssl>]
+[B<-raw>]
+[B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 =for openssl ifdef engine
@@ -45,6 +53,15 @@ Print out a usage message.
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
+
+=item B<-passin> I<arg>
+
+The passphrase used in the output file.
+See see L<openssl(1)/Pass Phrase Options>.
+
+=item B<-rev>
+
+Reverse the order of the input.
 
 =item B<-out> I<filename>
 
@@ -85,9 +102,10 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
+=item B<-pkcs>, B<-oaep>, B<-x931> B<-ssl>, B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
+ANSI X9.31,
 special padding used in SSL v2 backwards compatible handshakes,
 or no padding, respectively.
 For signatures, only B<-pkcs> and B<-raw> can be used.
@@ -100,6 +118,8 @@ Hex dump the output data.
 
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verify> option.
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

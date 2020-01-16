@@ -22,6 +22,7 @@ B<openssl> B<req>
 [B<-modulus>]
 [B<-new>]
 [B<-newkey> I<arg>]
+[B<-pkeyopt> I<opt>:I<value>]
 [B<-nodes>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>]

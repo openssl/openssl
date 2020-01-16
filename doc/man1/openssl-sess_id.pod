@@ -13,6 +13,7 @@ B<openssl> B<sess_id>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-text>]
+[B<-cert>]
 [B<-noout>]
 [B<-context> I<ID>]
 

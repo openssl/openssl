@@ -11,12 +11,19 @@ B<openssl> B<crl>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
+[B<-gendelta> I<filename>]
+[B<-badsig>]
+[B<-verify>]
 [B<-noout>]
 [B<-hash>]
+[B<-hash_old>]
+[B<-fingerprint>]
+[B<-crlnumber>]
 [B<-issuer>]
 [B<-lastupdate>]
 [B<-nextupdate>]
@@ -42,6 +49,10 @@ Print out a usage message.
 The input and output formats of the CRL; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
+=item B<-key> I<filename>
+
+The private key to be used to sign the CRL.
+
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The format of the private key file; the default is B<PEM>.
@@ -57,13 +68,34 @@ option is not specified.
 Specifies the output filename to write to or standard output by
 default.
 
+=item B<-gendelta> I<filename>
+
+Output a comparison of the main CRL and the one specified here.
+
+=item B<-badsig>
+
+Corrupt the signature before writing it; this can be useful
+for testing.
+
 =item B<-text>
 
 Print out the CRL in text form.
 
+=item B<-verify>
+
+Verify the signature in the CRL.
+
 =item B<-noout>
 
 Don't output the encoded version of the CRL.
+
+=item B<-fingerprint>
+
+Output the fingerprint of the CRL.
+
+=item B<-crlnumber>
+
+Output the number of the CRL.
 
 =item B<-hash>
 

@@ -12,6 +12,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 I<num>
 
@@ -41,6 +42,8 @@ Perform base64 encoding on the output.
 =item B<-hex>
 
 Show the output as a hex string.
+
+{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

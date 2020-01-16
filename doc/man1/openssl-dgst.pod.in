@@ -12,6 +12,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-help>]
 [B<-c>]
 [B<-d>]
+[B<-debug>]
 [B<-list>]
 [B<-hex>]
 [B<-binary>]
@@ -25,10 +26,11 @@ B<openssl> B<dgst>|I<digest>
 [B<-signature> I<filename>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-hmac> I<key>]
+[B<-mac> I<alg>]
+[B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
-[B<-engine> I<id>]
-[B<-engine_impl> I<id>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+[B<-engine_impl> I<id>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 [I<file> ...]
 
@@ -62,7 +64,7 @@ supported digests, use the command C<list --digest-commands>.
 Print out the digest in two digit groups separated by colons, only relevant if
 the B<-hex> option is given as well.
 
-=item B<-d>
+=item B<-d>, B<-debug>
 
 Print out BIO debugging information.
 
@@ -177,7 +179,7 @@ Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 The engine is not used for digests unless the B<-engine_impl> option is
 used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
 
-=item B<-engine_impl>
+=item B<-engine_impl> I<id>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
