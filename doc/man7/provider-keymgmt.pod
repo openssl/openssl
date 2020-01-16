@@ -211,13 +211,13 @@ The value should be the cryptographic length of the cryptosystem to
 which the key belongs, in bits.  The definition of cryptographic
 length is specific to the key cryptosystem.
 
-=item "size" (B<OSSL_PKEY_PARAM_SIZE>) <integer>
+=item "max-size" (B<OSSL_PKEY_PARAM_MAX_SIZE>) <integer>
 
 The value should be the maximum size that a caller should allocate to
 safely store a signature (called I<sig> in L<provider-signature(7)>),
 the result of asymmmetric encryption / decryption (I<out> in
 L<provider-asym_cipher(7)>, a derived secret (I<secret> in
-L<provider-keyexch(7)> and similar data.
+L<provider-keyexch(7)>, and similar data).
 
 Because an EVP_KEYMGMT method is always tightly bound to another method
 (signature, asymmetric cipher, key exchange, ...) and must be of the

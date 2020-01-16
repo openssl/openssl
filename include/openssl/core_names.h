@@ -156,7 +156,7 @@ extern "C" {
 /* PKEY parameters */
 /* Common PKEY parameters */
 #define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
-#define OSSL_PKEY_PARAM_SIZE                "size" /* integer */
+#define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
 #define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
 
 /* Diffie-Hellman/DSA Parameters */

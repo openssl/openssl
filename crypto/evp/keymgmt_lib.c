@@ -189,7 +189,7 @@ void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
             params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_BITS, &bits);
             params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_SECURITY_BITS,
                                                  &security_bits);
-            params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_SIZE, &size);
+            params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_MAX_SIZE, &size);
             params[3] = OSSL_PARAM_construct_end();
             ok = domainparams
                 ? evp_keymgmt_get_domparam_params(keymgmt, provdata, params)
