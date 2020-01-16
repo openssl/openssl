@@ -28,6 +28,8 @@
       o All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224,
         SHA256, SHA384, SHA512 and Whirlpool digest functions have been
         deprecated.
+      o All of the low level AES, Blowfish, Camellia, CAST, DES, IDEA, RC2,
+        RC4, RC5 and SEED cipher functions have been deprecated.
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 1.1.1a [20 Nov 2018]
 
