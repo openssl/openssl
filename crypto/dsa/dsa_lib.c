@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,11 +11,11 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include <openssl/bn.h>
-#include "dsa_local.h"
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
-#include <openssl/dh.h>
+#include "dsa_local.h"
 #include "crypto/dsa.h"
+#include "crypto/dh.h" /* required by DSA_dup_DH() */
 
 #ifndef FIPS_MODE
 
@@ -29,34 +29,25 @@ void *DSA_get_ex_data(DSA *d, int idx)
     return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
 DH *DSA_dup_DH(const DSA *r)
 {
     /*
-     * DSA has p, q, g, optional pub_key, optional priv_key. DH has p,
-     * optional length, g, optional pub_key, optional priv_key, optional q.
+     * DSA has p, q, g, optional pub_key, optional priv_key.
+     * DH has p, optional length, g, optional pub_key,
+     * optional priv_key, optional q.
      */
-
     DH *ret = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (r == NULL)
         goto err;
     ret = DH_new();
     if (ret == NULL)
         goto err;
-    if (r->p != NULL || r->g != NULL || r->q != NULL) {
-        if (r->p == NULL || r->g == NULL || r->q == NULL) {
-            /* Shouldn't happen */
-            goto err;
-        }
-        p = BN_dup(r->p);
-        g = BN_dup(r->g);
-        q = BN_dup(r->q);
-        if (p == NULL || g == NULL || q == NULL || !DH_set0_pqg(ret, p, q, g))
-            goto err;
-        p = g = q = NULL;
-    }
+
+    if (!ffc_params_copy(dh_get0_params(ret), &r->params))
+        goto err;
 
     if (r->pub_key != NULL) {
         pub_key = BN_dup(r->pub_key);
@@ -77,29 +68,26 @@ DH *DSA_dup_DH(const DSA *r)
     return ret;
 
  err:
-    BN_free(p);
-    BN_free(g);
-    BN_free(q);
     BN_free(pub_key);
     BN_free(priv_key);
     DH_free(ret);
     return NULL;
 }
-#endif
+# endif /*  OPENSSL_NO_DH */
 
 const BIGNUM *DSA_get0_p(const DSA *d)
 {
-    return d->p;
+    return d->params.p;
 }
 
 const BIGNUM *DSA_get0_q(const DSA *d)
 {
-    return d->q;
+    return d->params.q;
 }
 
 const BIGNUM *DSA_get0_g(const DSA *d)
 {
-    return d->g;
+    return d->params.g;
 }
 
 const BIGNUM *DSA_get0_pub_key(const DSA *d)
@@ -250,9 +238,7 @@ void DSA_free(DSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->p);
-    BN_clear_free(r->q);
-    BN_clear_free(r->g);
+    ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -273,12 +259,7 @@ int DSA_up_ref(DSA *r)
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    if (p != NULL)
-        *p = d->p;
-    if (q != NULL)
-        *q = d->q;
-    if (g != NULL)
-        *g = d->g;
+    ffc_params_get0_pqg(&d->params, p, q, g);
 }
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -286,23 +267,12 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     /* If the fields p, q and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.
      */
-    if ((d->p == NULL && p == NULL)
-        || (d->q == NULL && q == NULL)
-        || (d->g == NULL && g == NULL))
+    if ((d->params.p == NULL && p == NULL)
+        || (d->params.q == NULL && q == NULL)
+        || (d->params.g == NULL && g == NULL))
         return 0;
 
-    if (p != NULL) {
-        BN_free(d->p);
-        d->p = p;
-    }
-    if (q != NULL) {
-        BN_free(d->q);
-        d->q = q;
-    }
-    if (g != NULL) {
-        BN_free(d->g);
-        d->g = g;
-    }
+    ffc_params_set0_pqg(&d->params, p, q, g);
     d->dirty_cnt++;
 
     return 1;
@@ -341,12 +311,13 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 
 int DSA_security_bits(const DSA *d)
 {
-    if (d->p && d->q)
-        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    if (d->params.p != NULL && d->params.q != NULL)
+        return BN_security_bits(BN_num_bits(d->params.p),
+                                BN_num_bits(d->params.q));
     return -1;
 }
 
 int DSA_bits(const DSA *dsa)
 {
-    return BN_num_bits(dsa->p);
+    return BN_num_bits(dsa->params.p);
 }

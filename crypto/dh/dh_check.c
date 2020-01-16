@@ -52,17 +52,19 @@ int DH_check_params(const DH *dh, int *ret)
     if (tmp == NULL)
         goto err;
 
-    if (!BN_is_odd(dh->p))
+    if (!BN_is_odd(dh->params.p))
         *ret |= DH_CHECK_P_NOT_PRIME;
-    if (BN_is_negative(dh->g) || BN_is_zero(dh->g) || BN_is_one(dh->g))
+    if (BN_is_negative(dh->params.g)
+        || BN_is_zero(dh->params.g)
+        || BN_is_one(dh->params.g))
         *ret |= DH_NOT_SUITABLE_GENERATOR;
-    if (BN_copy(tmp, dh->p) == NULL || !BN_sub_word(tmp, 1))
+    if (BN_copy(tmp, dh->params.p) == NULL || !BN_sub_word(tmp, 1))
         goto err;
-    if (BN_cmp(dh->g, tmp) >= 0)
+    if (BN_cmp(dh->params.g, tmp) >= 0)
         *ret |= DH_NOT_SUITABLE_GENERATOR;
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS)
+    if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS)
         *ret |= DH_MODULUS_TOO_SMALL;
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS)
         *ret |= DH_MODULUS_TOO_LARGE;
 
     ok = 1;
@@ -123,39 +125,40 @@ int DH_check(const DH *dh, int *ret)
     if (t2 == NULL)
         goto err;
 
-    if (dh->q) {
-        if (BN_cmp(dh->g, BN_value_one()) <= 0)
+    if (dh->params.q != NULL) {
+        if (BN_cmp(dh->params.g, BN_value_one()) <= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
-        else if (BN_cmp(dh->g, dh->p) >= 0)
+        else if (BN_cmp(dh->params.g, dh->params.p) >= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
         else {
             /* Check g^q == 1 mod p */
-            if (!BN_mod_exp(t1, dh->g, dh->q, dh->p, ctx))
+            if (!BN_mod_exp(t1, dh->params.g, dh->params.q, dh->params.p, ctx))
                 goto err;
             if (!BN_is_one(t1))
                 *ret |= DH_NOT_SUITABLE_GENERATOR;
         }
-        r = BN_check_prime(dh->q, ctx, NULL);
+        r = BN_check_prime(dh->params.q, ctx, NULL);
         if (r < 0)
             goto err;
         if (!r)
             *ret |= DH_CHECK_Q_NOT_PRIME;
         /* Check p == 1 mod q  i.e. q divides p - 1 */
-        if (!BN_div(t1, t2, dh->p, dh->q, ctx))
+        if (!BN_div(t1, t2, dh->params.p, dh->params.q, ctx))
             goto err;
         if (!BN_is_one(t2))
             *ret |= DH_CHECK_INVALID_Q_VALUE;
-        if (dh->j && BN_cmp(dh->j, t1))
+        if (dh->params.j != NULL
+            && BN_cmp(dh->params.j, t1))
             *ret |= DH_CHECK_INVALID_J_VALUE;
     }
 
-    r = BN_check_prime(dh->p, ctx, NULL);
+    r = BN_check_prime(dh->params.p, ctx, NULL);
     if (r < 0)
         goto err;
     if (!r)
         *ret |= DH_CHECK_P_NOT_PRIME;
-    else if (!dh->q) {
-        if (!BN_rshift1(t1, dh->p))
+    else if (dh->params.q == NULL) {
+        if (!BN_rshift1(t1, dh->params.p))
             goto err;
         r = BN_check_prime(t1, ctx, NULL);
         if (r < 0)
@@ -203,14 +206,14 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
         goto err;
     if (BN_cmp(pub_key, tmp) <= 0)
         *ret |= DH_CHECK_PUBKEY_TOO_SMALL;
-    if (BN_copy(tmp, dh->p) == NULL || !BN_sub_word(tmp, 1))
+    if (BN_copy(tmp, dh->params.p) == NULL || !BN_sub_word(tmp, 1))
         goto err;
     if (BN_cmp(pub_key, tmp) >= 0)
         *ret |= DH_CHECK_PUBKEY_TOO_LARGE;
 
-    if (dh->q != NULL) {
+    if (dh->params.q != NULL) {
         /* Check pub_key^q == 1 mod p */
-        if (!BN_mod_exp(tmp, pub_key, dh->q, dh->p, ctx))
+        if (!BN_mod_exp(tmp, pub_key, dh->params.q, dh->params.p, ctx))
             goto err;
         if (!BN_is_one(tmp))
             *ret |= DH_CHECK_PUBKEY_INVALID;
