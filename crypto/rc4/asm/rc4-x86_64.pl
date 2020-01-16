@@ -140,11 +140,12 @@ $code=<<___;
 .globl	RC4
 .type	RC4,\@function,4
 .align	16
-RC4:	or	$len,$len
+RC4:
+.cfi_startproc
+	or	$len,$len
 	jne	.Lentry
 	ret
 .Lentry:
-.cfi_startproc
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -529,6 +530,7 @@ RC4_set_key:
 .type	RC4_options,\@abi-omnipotent
 .align	16
 RC4_options:
+.cfi_startproc
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
@@ -541,6 +543,7 @@ RC4_options:
 	add	\$12,%rax
 .Ldone:
 	ret
+.cfi_endproc
 .align	64
 .Lopts:
 .asciz	"rc4(8x,int)"
