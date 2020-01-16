@@ -20,26 +20,27 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
                                BN_CTX *ctx)
 {
     int nid = NID_undef;
-#ifndef FIPS_MODE
     BN_CTX *new_ctx = NULL;
 
+    if (group == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new();
+        ctx = new_ctx = BN_CTX_new_ex(NULL);
         if (ctx == NULL) {
-            ECerr(EC_F_EC_GROUP_CHECK_NAMED_CURVE, ERR_R_MALLOC_FAILURE);
-            goto err;
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            return NID_undef;
         }
     }
-#endif
 
     nid = ec_curve_nid_from_params(group, ctx);
     if (nid > 0 && nist_only && EC_curve_nid2nist(nid) == NULL)
         nid = NID_undef;
 
-#ifndef FIPS_MODE
- err:
-    BN_CTX_free(ctx);
-#endif
+err:
+    BN_CTX_free(new_ctx);
     return nid;
 }
 
