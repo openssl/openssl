@@ -86,6 +86,11 @@ DH *DH_new_method(ENGINE *engine)
         goto err;
 #endif /* FIPS_MODE */
 
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
+        goto err;
+    }
+
     return ret;
 
  err:

@@ -316,7 +316,7 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
     OSSL_PARAM *params = NULL;
     OSSL_PARAM *params_peer = NULL;
     unsigned char secret[256];
-    size_t secret_len, kat_secret_len;
+    size_t secret_len, kat_secret_len = 0;
     OSSL_PARAM_BLD bld;
 
     /* DH KAT */
