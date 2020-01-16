@@ -71,8 +71,8 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
         goto err;
     }
 #endif
-    if (!dh->
-        meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->p, ctx, mont)) {
+    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->p, ctx,
+                              mont)) {
         DHerr(0, ERR_R_BN_LIB);
         goto err;
     }

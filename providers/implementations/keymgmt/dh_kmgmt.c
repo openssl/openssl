@@ -15,7 +15,6 @@
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
 
 static OSSL_OP_keymgmt_importdomparams_fn dh_importdomparams;
 static OSSL_OP_keymgmt_exportdomparams_fn dh_exportdomparams;

@@ -387,7 +387,7 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         "582d38f0a6165fb0d7e9b8799e42fd3220e332e98185a0c9429757b2"
         "d0d02c17dbaa1ff6ed93d7e73e241eaed90caf394d2bc6570f18c81f"
         "2be5d01a2ca99ff142b5d963f9f500325e7556f95849b3ffc7479486",
-        "be1d4596a3106bd5cb4f61c57ec5f100fb7a0c82a10b82526a97d1d9",
+        "be1d4596a3106bd5cb4f61c57ec5f100fb7a0c82a10b82526a97d1d9"
         "7d98eaf6",
         NULL
     };
