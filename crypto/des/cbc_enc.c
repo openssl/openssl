@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #define CBC_ENC_C__DONT_UPDATE_IV
 
 #include "ncbc_enc.c"           /* des_cbc_encrypt */

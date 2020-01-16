@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 
 #include "apps.h"
@@ -16,7 +19,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 # include <openssl/des.h>
 #endif
 #include <openssl/md5.h>
@@ -82,7 +85,7 @@ const OPTIONS passwd_options[] = {
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 #endif
 
@@ -168,7 +171,7 @@ int passwd_main(int argc, char **argv)
             mode = passwd_aixmd5;
             break;
         case OPT_CRYPT:
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
             if (mode != passwd_unset)
                 goto opthelp;
             mode = passwd_crypt;
@@ -205,7 +208,7 @@ int passwd_main(int argc, char **argv)
         mode = passwd_crypt;
     }
 
-#ifdef OPENSSL_NO_DES
+#if defined(OPENSSL_NO_DES) || defined(OPENSSL_NO_DEPRECATED_3_0)
     if (mode == passwd_crypt)
         goto opthelp;
 #endif
@@ -798,7 +801,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         size_t saltlen = 0;
         size_t i;
 
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (mode == passwd_crypt)
             saltlen = 2;
 #endif                         /* !OPENSSL_NO_DES */
@@ -841,7 +844,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
-#ifndef OPENSSL_NO_DES
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (mode == passwd_crypt)
         hash = DES_crypt(passwd, *salt_p);
 #endif

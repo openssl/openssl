@@ -114,10 +114,6 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hmactest]=../include ../apps/include
   DEPEND[hmactest]=../libcrypto libtestutil.a
 
-  SOURCE[destest]=destest.c
-  INCLUDE[destest]=../include ../apps/include
-  DEPEND[destest]=../libcrypto libtestutil.a
-
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include ../apps/include
   DEPEND[mdc2test]=../libcrypto libtestutil.a
@@ -580,6 +576,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../apps/include ../crypto/include
     DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[destest]=destest.c
+    INCLUDE[destest]=../include ../apps/include
+    DEPEND[destest]=../libcrypto.a libtestutil.a
 
     SOURCE[rc2test]=rc2test.c
     INCLUDE[rc2test]=../include ../apps/include
