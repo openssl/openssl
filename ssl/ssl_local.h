@@ -1076,7 +1076,7 @@ struct ssl_ctx_st {
     SSL_async_callback_fn async_cb;
     void *async_cb_arg;
 
-    const char *propq;
+    char *propq;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;

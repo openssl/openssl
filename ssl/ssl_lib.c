@@ -3032,8 +3032,8 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
-                        const SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new_from_ctx(OPENSSL_CTX *libctx, const char *propq,
+                              const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
 
@@ -3054,7 +3054,11 @@ SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
         goto err;
 
     ret->libctx = libctx;
-    ret->propq = propq;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
 
     ret->method = meth;
     ret->min_proto_version = 0;
@@ -3227,7 +3231,7 @@ SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
-    return SSL_CTX_new_ex(NULL, NULL, meth);
+    return SSL_CTX_new_from_ctx(NULL, NULL, meth);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
@@ -3302,6 +3306,8 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_secure_free(a->ext.secure);
 
     CRYPTO_THREAD_lock_free(a->lock);
+
+    OPENSSL_free(a->propq);
 
     OPENSSL_free(a);
 }
