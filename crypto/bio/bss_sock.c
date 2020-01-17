@@ -101,6 +101,8 @@ static int sock_read(BIO *b, char *out, int outl)
         if (ret <= 0) {
             if (BIO_sock_should_retry(ret))
                 BIO_set_retry_read(b);
+            else if (ret == 0)
+                b->flags |= BIO_FLAGS_IN_EOF;
         }
     }
     return ret;
@@ -150,6 +152,9 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         ret = 1;
+        break;
+    case BIO_CTRL_EOF:
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
         break;
     default:
         ret = 0;
