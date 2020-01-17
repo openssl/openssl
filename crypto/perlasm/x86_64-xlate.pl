@@ -101,6 +101,24 @@ elsif (!$gas)
     $decor="\$L\$";
 }
 
+my $cet_property = <<'_____';
+	.section ".note.gnu.property", "a"
+	.align 8
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz "GNU"
+1:
+	.align 8
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 3
+4:
+_____
 my $current_segment;
 my $current_function;
 my %globals;
@@ -1127,7 +1145,9 @@ my $vprotq = sub {
 # Intel Control-flow Enforcement Technology extension. All functions and
 # indirect branch targets will have to start with this instruction...
 
+my $used_cet = 0;
 my $endbranch = sub {
+    $used_cet = 1;
     (0xf3,0x0f,0x1e,0xfa);
 };
 
@@ -1213,6 +1233,7 @@ while(defined(my $line=<>)) {
     print $line,"\n";
 }
 
+print "$cet_property"			if ($gas && $used_cet);
 print "\n$current_segment\tENDS\n"	if ($current_segment && $masm);
 print "END\n"				if ($masm);
 
