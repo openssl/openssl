@@ -88,7 +88,7 @@ static int buffer_free(BIO *a)
 
 static int buffer_read(BIO *b, char *out, int outl)
 {
-    int i, num = 0;
+    int i;
     BIO_F_BUFFER_CTX *ctx;
 
     if (out == NULL)
@@ -97,7 +97,6 @@ static int buffer_read(BIO *b, char *out, int outl)
 
     if ((ctx == NULL) || (b->next_bio == NULL))
         return 0;
-    num = 0;
     BIO_clear_retry_flags(b);
 
  start:
@@ -109,11 +108,7 @@ static int buffer_read(BIO *b, char *out, int outl)
         memcpy(out, &(ctx->ibuf[ctx->ibuf_off]), i);
         ctx->ibuf_off += i;
         ctx->ibuf_len -= i;
-        num += i;
-        if (outl == i)
-            return num;
-        outl -= i;
-        out += i;
+        return i;
     }
 
     /*
@@ -123,21 +118,10 @@ static int buffer_read(BIO *b, char *out, int outl)
      * address space
      */
     if (outl > ctx->ibuf_size) {
-        for (;;) {
-            i = BIO_read(b->next_bio, out, outl);
-            if (i <= 0) {
-                BIO_copy_next_retry(b);
-                if (i < 0)
-                    return ((num > 0) ? num : i);
-                if (i == 0)
-                    return num;
-            }
-            num += i;
-            if (outl == i)
-                return num;
-            out += i;
-            outl -= i;
-        }
+        i = BIO_read(b->next_bio, out, outl);
+        if (i <= 0)
+            BIO_copy_next_retry(b);
+        return i;
     }
     /* else */
 
@@ -145,10 +129,7 @@ static int buffer_read(BIO *b, char *out, int outl)
     i = BIO_read(b->next_bio, ctx->ibuf, ctx->ibuf_size);
     if (i <= 0) {
         BIO_copy_next_retry(b);
-        if (i < 0)
-            return ((num > 0) ? num : i);
-        if (i == 0)
-            return num;
+        return i;
     }
     ctx->ibuf_off = 0;
     ctx->ibuf_len = i;
