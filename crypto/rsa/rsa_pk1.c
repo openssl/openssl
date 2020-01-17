@@ -251,8 +251,15 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     }
 
     OPENSSL_clear_free(em, num);
+#ifndef FIPS_MODE
+    /*
+     * This trick doesn't work in the FIPS provider because libcrypto manages
+     * the error stack. Instead we opt not to put an error on the stack at all
+     * in case of padding failure in the FIPS provider.
+     */
     RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, RSA_R_PKCS_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
+#endif
 
     return constant_time_select_int(good, mlen, -1);
 }

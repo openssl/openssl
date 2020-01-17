@@ -18,6 +18,7 @@
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
 #include "crypto/rsa.h"
 
 static OSSL_OP_keymgmt_new_fn rsa_newdata;
@@ -170,7 +171,9 @@ static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *tmpl)
 
 static void *rsa_newdata(void *provctx)
 {
-    return RSA_new();
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+
+    return rsa_new_with_ctx(libctx);
 }
 
 static void rsa_freedata(void *keydata)

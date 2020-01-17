@@ -12,6 +12,8 @@
 
 #include <openssl/rsa.h>
 
+RSA *rsa_new_with_ctx(OPENSSL_CTX *libctx);
+
 int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                         const STACK_OF(BIGNUM) *exps,
                         const STACK_OF(BIGNUM) *coeffs);

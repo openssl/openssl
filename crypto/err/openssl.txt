@@ -1824,13 +1824,13 @@ X509V3_F_X509_PURPOSE_SET:141:X509_PURPOSE_set
 X509_F_ADD_CERT_DIR:100:add_cert_dir
 X509_F_BUILD_CHAIN:106:build_chain
 X509_F_BY_FILE_CTRL:101:by_file_ctrl
+X509_F_CACHE_OBJECTS:163:cache_objects
 X509_F_CHECK_NAME_CONSTRAINTS:149:check_name_constraints
 X509_F_CHECK_POLICY:145:check_policy
 X509_F_COMMON_VERIFY_SM2:165:common_verify_sm2
 X509_F_DANE_I2D:107:dane_i2d
 X509_F_DIR_CTRL:102:dir_ctrl
 X509_F_GET_CERT_BY_SUBJECT:103:get_cert_by_subject
-X509_F_CACHE_OBJECTS:163:cache_objects
 X509_F_I2D_X509_AUX:151:i2d_X509_AUX
 X509_F_LOOKUP_CERTS_SK:152:lookup_certs_sk
 X509_F_NETSCAPE_SPKI_B64_DECODE:129:NETSCAPE_SPKI_b64_decode
@@ -2869,6 +2869,7 @@ RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R:168:mp coefficient not inverse of r
 RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D:169:mp exponent not congruent to d
 RSA_R_MP_R_NOT_PRIME:170:mp r not prime
 RSA_R_NO_PUBLIC_EXPONENT:140:no public exponent
+RSA_R_NULL_ARGUMENT:180:null argument
 RSA_R_NULL_BEFORE_BLOCK_MISSING:113:null before block missing
 RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES:172:n does not equal product of primes
 RSA_R_N_DOES_NOT_EQUAL_P_Q:127:n does not equal p q
