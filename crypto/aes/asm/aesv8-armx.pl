@@ -2237,4 +2237,4 @@ if ($flavour =~ /64/) {			######## 64-bit code
     }
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

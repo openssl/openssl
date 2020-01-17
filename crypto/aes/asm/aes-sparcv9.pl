@@ -1188,4 +1188,4 @@ ___
 $code =~ s/fmovs.*$//gm;
 
 print $code;
-close STDOUT;	# ensure flush
+close STDOUT or die "error closing STDOUT";	# ensure flush
