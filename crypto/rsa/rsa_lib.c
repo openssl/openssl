@@ -19,9 +19,12 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
+static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+
+#ifndef FIPS_MODE
 RSA *RSA_new(void)
 {
-    return RSA_new_method(NULL);
+    return rsa_new_intern(NULL, NULL);
 }
 
 const RSA_METHOD *RSA_get_method(const RSA *rsa)
@@ -51,27 +54,39 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
+    return rsa_new_intern(engine, NULL);
+}
+#endif
+
+RSA *rsa_new_with_ctx(OPENSSL_CTX *libctx)
+{
+    return rsa_new_intern(NULL, libctx);
+}
+
+static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
+{
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        RSAerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        RSAerr(0, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
 
+    ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (engine) {
         if (!ENGINE_init(engine)) {
-            RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            RSAerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -81,7 +96,7 @@ RSA *RSA_new_method(ENGINE *engine)
     if (ret->engine) {
         ret->meth = ENGINE_get_RSA(ret->engine);
         if (ret->meth == NULL) {
-            RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            RSAerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -95,7 +110,7 @@ RSA *RSA_new_method(ENGINE *engine)
 #endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_INIT_FAIL);
+        RSAerr(0, ERR_R_INIT_FAIL);
         goto err;
     }
 
@@ -121,7 +136,7 @@ void RSA_free(RSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(r->engine);
 #endif
 
@@ -139,8 +154,11 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
+    /* TODO(3.0): Support PSS in FIPS_MODE */
+#ifndef FIPS_MODE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
+#endif
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free(r->bignum_data);
@@ -302,6 +320,7 @@ int RSA_security_bits(const RSA *rsa)
 {
     int bits = BN_num_bits(rsa->n);
 
+#ifndef FIPS_MODE
     if (rsa->version == RSA_ASN1_VERSION_MULTI) {
         /* This ought to mean that we have private key at hand. */
         int ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
@@ -309,6 +328,7 @@ int RSA_security_bits(const RSA *rsa)
         if (ex_primes <= 0 || (ex_primes + 2) > rsa_multip_cap(bits))
             return 0;
     }
+#endif
     return rsa_compute_security_bits(bits);
 }
 
@@ -394,6 +414,7 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     return 1;
 }
 
+#ifndef FIPS_MODE
 /*
  * Is it better to export RSA_PRIME_INFO structure
  * and related functions to let user pass a triplet?
@@ -462,6 +483,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
     sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
     return 0;
 }
+#endif
 
 void RSA_get0_key(const RSA *r,
                   const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
@@ -482,6 +504,7 @@ void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
         *q = r->q;
 }
 
+#ifndef FIPS_MODE
 int RSA_get_multi_prime_extra_count(const RSA *r)
 {
     int pnum;
@@ -511,6 +534,7 @@ int RSA_get0_multi_prime_factors(const RSA *r, const BIGNUM *primes[])
 
     return 1;
 }
+#endif
 
 void RSA_get0_crt_params(const RSA *r,
                          const BIGNUM **dmp1, const BIGNUM **dmq1,
@@ -524,6 +548,7 @@ void RSA_get0_crt_params(const RSA *r,
         *iqmp = r->iqmp;
 }
 
+#ifndef FIPS_MODE
 int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
                                     const BIGNUM *coeffs[])
 {
@@ -549,6 +574,7 @@ int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
 
     return 1;
 }
+#endif
 
 const BIGNUM *RSA_get0_n(const RSA *r)
 {
@@ -590,10 +616,13 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
     return r->iqmp;
 }
 
+/* TODO(3.0): Temporary until we move PSS support into the FIPS module */
+#ifndef FIPS_MODE
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
     return r->pss;
 }
+#endif
 
 void RSA_clear_flags(RSA *r, int flags)
 {
@@ -616,6 +645,7 @@ int RSA_get_version(RSA *r)
     return r->version;
 }
 
+#ifndef FIPS_MODE
 ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
@@ -630,6 +660,7 @@ int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
         return -1;
      return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }
+#endif
 
 DEFINE_STACK_OF(BIGNUM)
 
@@ -637,7 +668,9 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                         const STACK_OF(BIGNUM) *exps,
                         const STACK_OF(BIGNUM) *coeffs)
 {
+#ifndef FIPS_MODE
     STACK_OF(RSA_PRIME_INFO) *prime_infos, *old_infos = NULL;
+#endif
     int pnum;
 
     if (primes == NULL || exps == NULL || coeffs == NULL)
@@ -656,9 +689,12 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                                 sk_BIGNUM_value(coeffs, 0)))
         return 0;
 
+#ifndef FIPS_MODE
     old_infos = r->prime_infos;
+#endif
 
     if (pnum > 2) {
+#ifndef FIPS_MODE
         int i;
 
         prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
@@ -695,8 +731,12 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
             r->prime_infos = old_infos;
             goto err;
         }
+#else
+        return 0;
+#endif
     }
 
+#ifndef FIPS_MODE
     if (old_infos != NULL) {
         /*
          * This is hard to deal with, since the old infos could
@@ -706,15 +746,18 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
          */
         sk_RSA_PRIME_INFO_pop_free(old_infos, rsa_multip_info_free);
     }
+#endif
 
     r->version = pnum > 2 ? RSA_ASN1_VERSION_MULTI : RSA_ASN1_VERSION_DEFAULT;
     r->dirty_cnt++;
 
     return 1;
+#ifndef FIPS_MODE
  err:
     /* r, d, t should not be freed */
     sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
     return 0;
+#endif
 }
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -723,29 +766,34 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                         STACK_OF(BIGNUM_const) *exps,
                         STACK_OF(BIGNUM_const) *coeffs)
 {
+#ifndef FIPS_MODE
     RSA_PRIME_INFO *pinfo;
     int i, pnum;
+#endif
 
     if (r == NULL)
         return 0;
-
-    pnum = RSA_get_multi_prime_extra_count(r);
 
     sk_BIGNUM_const_push(primes, RSA_get0_p(r));
     sk_BIGNUM_const_push(primes, RSA_get0_q(r));
     sk_BIGNUM_const_push(exps, RSA_get0_dmp1(r));
     sk_BIGNUM_const_push(exps, RSA_get0_dmq1(r));
     sk_BIGNUM_const_push(coeffs, RSA_get0_iqmp(r));
+
+#ifndef FIPS_MODE
+    pnum = RSA_get_multi_prime_extra_count(r);
     for (i = 0; i < pnum; i++) {
         pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
         sk_BIGNUM_const_push(primes, pinfo->r);
         sk_BIGNUM_const_push(exps, pinfo->d);
         sk_BIGNUM_const_push(coeffs, pinfo->t);
     }
+#endif
 
     return 1;
 }
 
+#ifndef FIPS_MODE
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
 {
     OSSL_PARAM pad_params[2], *p = pad_params;
@@ -1129,3 +1177,4 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
 
     return (int)labellen;
 }
+#endif

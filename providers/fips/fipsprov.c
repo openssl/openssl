@@ -805,6 +805,11 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_asym_cipher[] = {
+    { "RSA:rsaEncryption", "fips=yes", rsa_asym_cipher_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", "fips=yes", dh_keymgmt_functions },
@@ -812,6 +817,7 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA", "fips=yes", dsa_keymgmt_functions },
 #endif
+    { "RSA:rsaEncryption", "default=yes", rsa_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 
@@ -836,6 +842,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
         return fips_keyexch;
     case OSSL_OP_SIGNATURE:
         return fips_signature;
+    case OSSL_OP_ASYM_CIPHER:
+        return fips_asym_cipher;
     }
     return NULL;
 }

@@ -18,6 +18,7 @@
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
 #include "crypto/rsa.h"
 
 static OSSL_OP_keymgmt_new_fn rsa_newdata;
@@ -170,7 +171,9 @@ static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *tmpl)
 
 static void *rsa_newdata(void *provctx)
 {
-    return RSA_new();
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+
+    return rsa_new_with_ctx(libctx);
 }
 
 static void rsa_freedata(void *keydata)
@@ -321,7 +324,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         && !OSSL_PARAM_set_int(p, RSA_size(rsa)))
         return 0;
 
-# if 0                           /* PSS support pending */
+# if 0  /* TODO(3.0): PSS support pending */
     if ((p = OSSL_PARAM_locate(params,
                                OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
         && RSA_get0_pss_params(rsa) != NULL) {
@@ -338,9 +341,14 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
     }
 #endif
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && RSA_get0_pss_params(rsa) == NULL)
+/* TODO(3.0): PSS support pending */
+#if 0
+            && RSA_get0_pss_params(rsa) == NULL
+#endif
+            ) {
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
+    }
 
     return 1;
 }
