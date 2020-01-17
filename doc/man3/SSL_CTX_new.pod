@@ -3,13 +3,14 @@
 =head1 NAME
 
 TLSv1_2_method, TLSv1_2_server_method, TLSv1_2_client_method,
-SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_up_ref, SSLv3_method, SSLv3_server_method,
-SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method,
-TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, TLS_method,
-TLS_server_method, TLS_client_method, SSLv23_method, SSLv23_server_method,
-SSLv23_client_method, DTLS_method, DTLS_server_method, DTLS_client_method,
-DTLSv1_method, DTLSv1_server_method, DTLSv1_client_method,
-DTLSv1_2_method, DTLSv1_2_server_method, DTLSv1_2_client_method
+SSL_CTX_new, SSL_CTX_new_from_ctx, SSL_CTX_up_ref, SSLv3_method,
+SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method,
+TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method,
+TLSv1_1_client_method, TLS_method, TLS_server_method, TLS_client_method,
+SSLv23_method, SSLv23_server_method, SSLv23_client_method, DTLS_method,
+DTLS_server_method, DTLS_client_method, DTLSv1_method, DTLSv1_server_method,
+DTLSv1_client_method, DTLSv1_2_method, DTLSv1_2_server_method,
+DTLSv1_2_client_method
 - create a new SSL_CTX object as framework for TLS/SSL or DTLS enabled
 functions
 
@@ -17,8 +18,8 @@ functions
 
  #include <openssl/ssl.h>
 
- SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
-                         const SSL_METHOD *method);
+ SSL_CTX *SSL_CTX_new_from_ctx(OPENSSL_CTX *libctx, const char *propq,
+                               const SSL_METHOD *method);
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
  int SSL_CTX_up_ref(SSL_CTX *ctx);
 
@@ -72,22 +73,22 @@ functions
 
 =head1 DESCRIPTION
 
-SSL_CTX_new_ex() creates a new B<SSL_CTX> object as a framework to
+SSL_CTX_new_from_ctx() creates a new B<SSL_CTX> object as a framework to
 establish TLS/SSL or DTLS enabled connections using the library context
 I<libctx> (see L<OPENSSL_CTX(3)>). Any cryptographic algorithms that are used
-by any SSL objects will be fetched from the I<libctx> using the property query
-string I<propq> (see L<provider(7)/Fetching algorithms>. Either the I<libctx>
-or I<propq> parameters may be NULL. Note that the I<propq> value is not
-duplicated and is assumed to exist for the lifetime of the SSL_CTX object.
+by any B<SSL> objects created from this B<SSL_CTX> will be fetched from the
+I<libctx> using the property query string I<propq> (see
+L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or I<propq>
+parameters may be NULL.
 
-SSL_CTX_new() does the same as SSL_CTX_new_ex() except that the default library
-context is used and no property query string is specified.
+SSL_CTX_new() does the same as SSL_CTX_new_from_ctx() except that the default
+library context is used and no property query string is specified.
 
 An B<SSL_CTX> object is reference counted. Creating an B<SSL_CTX> object for the
-first time increments the reference count. Freeing it (using SSL_CTX_free)
-decrements it. When the reference count drops to zero, any memory or resources
-allocated to the B<SSL_CTX> object are freed. SSL_CTX_up_ref() increments the
-reference count for an existing B<SSL_CTX> structure.
+first time increments the reference count. Freeing the B<SSL_CTX> (using
+SSL_CTX_free) decrements it. When the reference count drops to zero, any memory
+or resources allocated to the B<SSL_CTX> object are freed. SSL_CTX_up_ref()
+increments the reference count for an existing B<SSL_CTX> structure.
 
 =head1 NOTES
 
@@ -223,7 +224,7 @@ and TLS_client_method() functions were added in OpenSSL 1.1.0.
 
 All version-specific methods were deprecated in OpenSSL 1.1.0.
 
-SSL_CTX_new_ex() was added in OpenSSL 3.0.
+SSL_CTX_new_from_ctx() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
