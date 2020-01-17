@@ -1513,7 +1513,7 @@ if ($strict_warnings)
                 }
         }
 
-if (grep { $_ eq '-static' } @{$config{LDFLAGS}}) {
+if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
