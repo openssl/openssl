@@ -25,6 +25,7 @@
 #include "crypto/engine.h"
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
+#define TLS1_1_VERSION  0x0302
 
 #if CRYPTO_ALGORITHM_MIN < CRYPTO_ALGORITHM_MAX
 # define CHECK_BSD_STYLE_MACROS
@@ -60,10 +61,14 @@ struct cipher_ctx {
     struct session_op sess;
     int op;                      /* COP_ENCRYPT or COP_DECRYPT */
     unsigned long mode;          /* EVP_CIPH_*_MODE */
+    unsigned char *aad;
+    unsigned int aad_len;
+    unsigned int len;
 
     /* to handle ctr mode being a stream cipher */
     unsigned char partial[EVP_MAX_BLOCK_LENGTH];
     unsigned int blocksize, num;
+    unsigned int tls_ver;
 };
 
 static const struct cipher_data_st {
@@ -73,49 +78,68 @@ static const struct cipher_data_st {
     int ivlen;
     int flags;
     int devcryptoid;
+    int mackeylen;
 } cipher_data[] = {
 #ifndef OPENSSL_NO_DES
-    { NID_des_cbc, 8, 8, 8, EVP_CIPH_CBC_MODE, CRYPTO_DES_CBC },
-    { NID_des_ede3_cbc, 8, 24, 8, EVP_CIPH_CBC_MODE, CRYPTO_3DES_CBC },
+    { NID_des_cbc, 8, 8, 8, EVP_CIPH_CBC_MODE, CRYPTO_DES_CBC, 0 },
+    { NID_des_ede3_cbc, 8, 24, 8, EVP_CIPH_CBC_MODE, CRYPTO_3DES_CBC, 0 },
 #endif
 #ifndef OPENSSL_NO_BF
-    { NID_bf_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_BLF_CBC },
+    { NID_bf_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_BLF_CBC, 0 },
 #endif
 #ifndef OPENSSL_NO_CAST
-    { NID_cast5_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_CAST_CBC },
+    { NID_cast5_cbc, 8, 16, 8, EVP_CIPH_CBC_MODE, CRYPTO_CAST_CBC, 0 },
 #endif
-    { NID_aes_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
-    { NID_aes_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
-    { NID_aes_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
+    { NID_aes_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC, 0 },
+    { NID_aes_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC, 0 },
+    { NID_aes_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC, 0 },
+    { NID_aes_128_cbc_hmac_sha1, 16, 16, 16,
+            EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_AEAD_CIPHER,
+            CRYPTO_TLS10_AES_CBC_HMAC_SHA1, 20 },
+    { NID_aes_256_cbc_hmac_sha1, 16, 32, 16,
+            EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_AEAD_CIPHER,
+            CRYPTO_TLS11_AES_CBC_HMAC_SHA1, 20 },
+    { NID_aes_128_cbc_hmac_sha256, 16, 16, 16,
+           EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_AEAD_CIPHER,
+           CRYPTO_TLS12_AES_CBC_HMAC_SHA256, 32 },
+    { NID_aes_256_cbc_hmac_sha256, 16, 32, 16,
+           EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_AEAD_CIPHER,
+           CRYPTO_TLS12_AES_CBC_HMAC_SHA256, 32 },
 #ifndef OPENSSL_NO_RC4
-    { NID_rc4, 1, 16, 0, EVP_CIPH_STREAM_CIPHER, CRYPTO_ARC4 },
+    { NID_rc4, 1, 16, 0, EVP_CIPH_STREAM_CIPHER, CRYPTO_ARC4, 0 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_CTR)
-    { NID_aes_128_ctr, 16, 128 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
-    { NID_aes_192_ctr, 16, 192 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
-    { NID_aes_256_ctr, 16, 256 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
+    { NID_aes_128_ctr, 16, 128 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR, 0 },
+    { NID_aes_192_ctr, 16, 192 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR, 0 },
+    { NID_aes_256_ctr, 16, 256 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR, 0 },
 #endif
 #if 0                            /* Not yet supported */
-    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
-    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS },
+    { NID_aes_128_xts, 16, 128 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS,
+            0 },
+    { NID_aes_256_xts, 16, 256 / 8 * 2, 16, EVP_CIPH_XTS_MODE, CRYPTO_AES_XTS,
+            0 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_ECB)
-    { NID_aes_128_ecb, 16, 128 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
-    { NID_aes_192_ecb, 16, 192 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
-    { NID_aes_256_ecb, 16, 256 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB },
+    { NID_aes_128_ecb, 16, 128 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB, 0 },
+    { NID_aes_192_ecb, 16, 192 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB, 0 },
+    { NID_aes_256_ecb, 16, 256 / 8, 0, EVP_CIPH_ECB_MODE, CRYPTO_AES_ECB, 0 },
 #endif
 #if 0                            /* Not yet supported */
-    { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
-    { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
-    { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM },
+    { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM, 0 },
+    { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM, 0 },
+    { NID_aes_256_gcm, 16, 256 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM, 0 },
+#endif
+#ifdef OPENSSL_NXP_CAAM
+    { NID_aes_128_gcm, 16, 128 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM, 0 },
+    { NID_aes_192_gcm, 16, 192 / 8, 16, EVP_CIPH_GCM_MODE, CRYPTO_AES_GCM, 0 },
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
     { NID_camellia_128_cbc, 16, 128 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+      CRYPTO_CAMELLIA_CBC, 0 },
     { NID_camellia_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+      CRYPTO_CAMELLIA_CBC, 0 },
     { NID_camellia_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE,
-      CRYPTO_CAMELLIA_CBC },
+      CRYPTO_CAMELLIA_CBC, 0 },
 #endif
 };
 
@@ -139,6 +163,193 @@ static size_t get_cipher_data_index(int nid)
 static const struct cipher_data_st *get_cipher_data(int nid)
 {
     return &cipher_data[get_cipher_data_index(nid)];
+}
+
+/*
+ * Save the encryption key provided by upper layers. This function is called
+ * by EVP_CipherInit_ex to initialize the algorithm's extra data. We can't do
+ * much here because the mac key is not available. The next call should/will
+ * be to cryptodev_cbc_hmac_sha1_ctrl with parameter
+ * EVP_CTRL_AEAD_SET_MAC_KEY, to set the hmac key. There we call CIOCGSESSION
+ * with both the crypto and hmac keys.
+ */
+static int cryptodev_init_aead_key(EVP_CIPHER_CTX *ctx,
+                const unsigned char *key, const unsigned char *iv, int enc)
+{
+    struct cipher_ctx *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct session_op *sess = &state->sess;
+    int cipher = -1, i;
+
+    for (i = 0; cipher_data[i].devcryptoid; i++) {
+        if (EVP_CIPHER_CTX_nid(ctx) == cipher_data[i].nid &&
+            EVP_CIPHER_CTX_iv_length(ctx) <= cipher_data[i].ivlen &&
+            EVP_CIPHER_CTX_key_length(ctx) == cipher_data[i].keylen) {
+            cipher = cipher_data[i].devcryptoid;
+            break;
+        }
+    }
+
+    if (!cipher_data[i].devcryptoid)
+        return (0);
+
+    memset(sess, 0, sizeof(*sess));
+
+    sess->key = (void *) key;
+    sess->keylen = EVP_CIPHER_CTX_key_length(ctx);
+    sess->cipher = cipher;
+
+    /* for whatever reason, (1) means success */
+    return 1;
+}
+
+static int cryptodev_aead_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                                 const unsigned char *in, size_t len)
+{
+    struct crypt_auth_op cryp;
+    struct cipher_ctx *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
+    struct session_op *sess = &state->sess;
+    const void *iiv;
+    unsigned char save_iv[EVP_MAX_IV_LENGTH];
+
+    if (cfd < 0)
+        return (0);
+    if (!len)
+        return (1);
+    if ((len % EVP_CIPHER_CTX_block_size(ctx)) != 0)
+        return (0);
+
+    memset(&cryp, 0, sizeof(cryp));
+
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            iiv = in + len - EVP_CIPHER_CTX_iv_length(ctx);
+            memcpy(save_iv, iiv, EVP_CIPHER_CTX_iv_length(ctx));
+
+            if (state->tls_ver >= TLS1_1_VERSION) {
+                memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), in,
+                       EVP_CIPHER_CTX_iv_length(ctx));
+                in += EVP_CIPHER_CTX_iv_length(ctx);
+                out += EVP_CIPHER_CTX_iv_length(ctx);
+                len -= EVP_CIPHER_CTX_iv_length(ctx);
+            }
+        }
+        cryp.iv = (void *) EVP_CIPHER_CTX_iv(ctx);
+    } else
+        cryp.iv = NULL;
+
+    /* TODO: make a seamless integration with cryptodev flags */
+    switch (EVP_CIPHER_CTX_nid(ctx)) {
+    case NID_aes_128_cbc_hmac_sha1:
+    case NID_aes_256_cbc_hmac_sha1:
+    case NID_aes_128_cbc_hmac_sha256:
+    case NID_aes_256_cbc_hmac_sha256:
+        cryp.flags = COP_FLAG_AEAD_TLS_TYPE;
+    }
+    cryp.ses = sess->ses;
+    cryp.len = state->len;
+    cryp.src = (void *) in;
+    cryp.dst = (void *) out;
+    cryp.auth_src = state->aad;
+    cryp.auth_len = state->aad_len;
+
+    cryp.op = EVP_CIPHER_CTX_encrypting(ctx) ? COP_ENCRYPT : COP_DECRYPT;
+
+    if (ioctl(cfd, CIOCAUTHCRYPT, &cryp) == -1) {
+        /*
+         * XXX need better errror handling this can fail for a number of
+         * different reasons.
+         */
+        return 0;
+    }
+
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        if (EVP_CIPHER_CTX_encrypting(ctx))
+            iiv = out + len - EVP_CIPHER_CTX_iv_length(ctx);
+        else
+            iiv = save_iv;
+
+        memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), iiv,
+               EVP_CIPHER_CTX_iv_length(ctx));
+    }
+    return 1;
+}
+
+static int cryptodev_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type,
+                                        int arg, void *ptr)
+{
+    switch (type) {
+    case EVP_CTRL_AEAD_SET_MAC_KEY:
+        {
+        /* TODO: what happens with hmac keys larger than 64 bytes? */
+            struct cipher_ctx *state =
+                EVP_CIPHER_CTX_get_cipher_data(ctx);
+            struct session_op *sess = &state->sess;
+
+            /* the rest should have been set in cryptodev_init_aead_key */
+            sess->mackey = ptr;
+            sess->mackeylen = arg;
+            if (ioctl(cfd, CIOCGSESSION, sess) == -1)
+                return 0;
+
+            return 1;
+        }
+    case EVP_CTRL_AEAD_TLS1_AAD:
+        {
+            /* ptr points to the associated data buffer of 13 bytes */
+            struct cipher_ctx *state =
+                EVP_CIPHER_CTX_get_cipher_data(ctx);
+            unsigned char *p = ptr;
+            unsigned int cryptlen = p[arg - 2] << 8 | p[arg - 1];
+            unsigned int maclen;
+            unsigned int blocksize = EVP_CIPHER_CTX_block_size(ctx);
+            int ret;
+
+            state->tls_ver = p[arg - 4] << 8 | p[arg - 3];
+            state->aad = ptr;
+            state->aad_len = arg;
+
+            /* TODO: this should be an extension of EVP_CIPHER struct */
+            switch (EVP_CIPHER_CTX_nid(ctx)) {
+            case NID_aes_128_cbc_hmac_sha1:
+            case NID_aes_256_cbc_hmac_sha1:
+                maclen = SHA_DIGEST_LENGTH;
+                break;
+            case NID_aes_128_cbc_hmac_sha256:
+            case NID_aes_256_cbc_hmac_sha256:
+                maclen = SHA256_DIGEST_LENGTH;
+                break;
+            default:
+            /*
+             * Only above 4 supported NIDs are used to enter to this
+             * function. If any other NID reaches this function,
+             * there's a grave coding error further down.
+             */
+                assert("Code that never should be reached" == NULL);
+                return -1;
+            }
+
+            /* space required for encryption (not only TLS padding) */
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {
+                if (state->tls_ver >= TLS1_1_VERSION) {
+                    p[arg - 2] = (cryptlen - blocksize) >> 8;
+                    p[arg - 1] = (cryptlen - blocksize);
+                }
+                ret = (int)(((cryptlen + maclen +
+                      blocksize) & -blocksize) - cryptlen);
+            } else {
+                if (state->tls_ver >= TLS1_1_VERSION) {
+                    cryptlen -= blocksize;
+                    p[arg - 2] = cryptlen >> 8;
+                    p[arg - 1] = cryptlen;
+                }
+                ret = maclen;
+            }
+            state->len = cryptlen;
+            return ret;
+        }
+    default:
+        return -1;
+    }
 }
 
 /*
@@ -340,18 +551,32 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
 static int known_cipher_nids[OSSL_NELEM(cipher_data)];
 static int known_cipher_nids_amount = -1; /* -1 indicates not yet initialised */
 static EVP_CIPHER *known_cipher_methods[OSSL_NELEM(cipher_data)] = { NULL, };
+int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                const unsigned char *iv, int enc);
+int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                const unsigned char *in, size_t inl);
+int (*ctrl)(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
 static void prepare_cipher_methods(void)
 {
     size_t i;
     struct session_op sess;
     unsigned long cipher_mode;
+    unsigned long flags;
 
     memset(&sess, 0, sizeof(sess));
     sess.key = (void *)"01234567890123456789012345678901234567890123456789";
+    sess.mackey = (void *)"123456789ABCDEFGHIJKLMNO";
 
     for (i = 0, known_cipher_nids_amount = 0;
          i < OSSL_NELEM(cipher_data); i++) {
+
+        init  = cipher_init;
+        ctrl  = cipher_ctrl;
+        flags = cipher_data[i].flags
+                | EVP_CIPH_CUSTOM_COPY
+                | EVP_CIPH_CTRL_INIT
+                | EVP_CIPH_FLAG_DEFAULT_ASN1;
 
         /*
          * Check that the algo is really availably by trying to open and close
@@ -359,11 +584,26 @@ static void prepare_cipher_methods(void)
          */
         sess.cipher = cipher_data[i].devcryptoid;
         sess.keylen = cipher_data[i].keylen;
+        sess.mackeylen = cipher_data[i].mackeylen;
+
+        cipher_mode = cipher_data[i].flags & EVP_CIPH_MODE;
+
+        do_cipher = (cipher_mode == EVP_CIPH_CTR_MODE ?
+                                              ctr_do_cipher :
+                                              cipher_do_cipher);
+        if (cipher_data[i].nid == NID_aes_128_cbc_hmac_sha1
+                || cipher_data[i].nid == NID_aes_256_cbc_hmac_sha1
+                || cipher_data[i].nid == NID_aes_128_cbc_hmac_sha256
+                || cipher_data[i].nid == NID_aes_256_cbc_hmac_sha256) {
+                init = cryptodev_init_aead_key;
+                do_cipher = cryptodev_aead_cipher;
+                ctrl = cryptodev_cbc_hmac_sha1_ctrl;
+                flags = cipher_data[i].flags;
+        }
+
         if (ioctl(cfd, CIOCGSESSION, &sess) < 0
             || ioctl(cfd, CIOCFSESSION, &sess.ses) < 0)
             continue;
-
-        cipher_mode = cipher_data[i].flags & EVP_CIPH_MODE;
 
         if ((known_cipher_methods[i] =
                  EVP_CIPHER_meth_new(cipher_data[i].nid,
@@ -373,16 +613,12 @@ static void prepare_cipher_methods(void)
             || !EVP_CIPHER_meth_set_iv_length(known_cipher_methods[i],
                                               cipher_data[i].ivlen)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
-                                          cipher_data[i].flags
-                                          | EVP_CIPH_CUSTOM_COPY
-                                          | EVP_CIPH_CTRL_INIT
-                                          | EVP_CIPH_FLAG_DEFAULT_ASN1)
-            || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
+                                          flags)
+            || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
-                                     cipher_mode == EVP_CIPH_CTR_MODE ?
-                                              ctr_do_cipher :
-                                              cipher_do_cipher)
-            || !EVP_CIPHER_meth_set_ctrl(known_cipher_methods[i], cipher_ctrl)
+                                              do_cipher)
+            /* AEAD Support to be added. */
+            || !EVP_CIPHER_meth_set_ctrl(known_cipher_methods[i], ctrl)
             || !EVP_CIPHER_meth_set_cleanup(known_cipher_methods[i],
                                             cipher_cleanup)
             || !EVP_CIPHER_meth_set_impl_ctx_size(known_cipher_methods[i],
@@ -393,6 +629,12 @@ static void prepare_cipher_methods(void)
             known_cipher_nids[known_cipher_nids_amount++] =
                 cipher_data[i].nid;
         }
+
+        if (cipher_data[i].nid == NID_aes_128_cbc_hmac_sha1
+                || cipher_data[i].nid == NID_aes_256_cbc_hmac_sha1
+                || cipher_data[i].nid == NID_aes_128_cbc_hmac_sha256
+                || cipher_data[i].nid == NID_aes_256_cbc_hmac_sha256)
+                EVP_add_cipher(known_cipher_methods[i]);
     }
 }
 
