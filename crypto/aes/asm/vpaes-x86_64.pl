@@ -178,6 +178,181 @@ _vpaes_encrypt_core:
 .size	_vpaes_encrypt_core,.-_vpaes_encrypt_core
 
 ##
+##  _aes_encrypt_core_2x
+##
+##  AES-encrypt %xmm0 and %xmm6 in parallel.
+##
+##  Inputs:
+##     %xmm0 and %xmm6 = input
+##     %xmm9 and %xmm10 as in _vpaes_preheat
+##    (%rdx) = scheduled keys
+##
+##  Output in %xmm0 and %xmm6
+##  Clobbers  %xmm1-%xmm5, %xmm7, %xmm8, %xmm11-%xmm13, %r9, %r10, %r11, %rax
+##  Preserves %xmm14 and %xmm15
+##
+##  This function stitches two parallel instances of _vpaes_encrypt_core. x86_64
+##  provides 16 XMM registers. _vpaes_encrypt_core computes over six registers
+##  (%xmm0-%xmm5) and additionally uses seven registers with preloaded constants
+##  from _vpaes_preheat (%xmm9-%xmm15). This does not quite fit two instances,
+##  so we spill some of %xmm9 through %xmm15 back to memory. We keep %xmm9 and
+##  %xmm10 in registers as these values are used several times in a row. The
+##  remainder are read once per round and are spilled to memory. This leaves two
+##  registers preserved for the caller.
+##
+##  Thus, of the two _vpaes_encrypt_core instances, the first uses (%xmm0-%xmm5)
+##  as before. The second uses %xmm6-%xmm8,%xmm11-%xmm13. (Add 6 to %xmm2 and
+##  below. Add 8 to %xmm3 and up.) Instructions in the second instance are
+##  indented by one space.
+##
+##
+.type	_vpaes_encrypt_core_2x,\@abi-omnipotent
+.align 16
+_vpaes_encrypt_core_2x:
+.cfi_startproc
+	mov	%rdx,	%r9
+	mov	\$16,	%r11
+	mov	240(%rdx),%eax
+	movdqa	%xmm9,	%xmm1
+	 movdqa	%xmm9,	%xmm7
+	movdqa	.Lk_ipt(%rip), %xmm2	# iptlo
+	 movdqa	%xmm2,	%xmm8
+	pandn	%xmm0,	%xmm1
+	 pandn	%xmm6,	%xmm7
+	movdqu	(%r9),	%xmm5		# round0 key
+	 # Also use %xmm5 in the second instance.
+	psrld	\$4,	%xmm1
+	 psrld	\$4,	%xmm7
+	pand	%xmm9,	%xmm0
+	 pand	%xmm9,	%xmm6
+	pshufb	%xmm0,	%xmm2
+	 pshufb	%xmm6,	%xmm8
+	movdqa	.Lk_ipt+16(%rip), %xmm0	# ipthi
+	 movdqa	%xmm0,	%xmm6
+	pshufb	%xmm1,	%xmm0
+	 pshufb	%xmm7,	%xmm6
+	pxor	%xmm5,	%xmm2
+	 pxor	%xmm5,	%xmm8
+	add	\$16,	%r9
+	pxor	%xmm2,	%xmm0
+	 pxor	%xmm8,	%xmm6
+	lea	.Lk_mc_backward(%rip),%r10
+	jmp	.Lenc2x_entry
+
+.align 16
+.Lenc2x_loop:
+	# middle of middle round
+	movdqa  .Lk_sb1(%rip),	%xmm4		# 4 : sb1u
+	movdqa  .Lk_sb1+16(%rip),%xmm0		# 0 : sb1t
+	 movdqa	%xmm4,	%xmm12
+	 movdqa	%xmm0,	%xmm6
+	pshufb  %xmm2,	%xmm4			# 4 = sb1u
+	 pshufb	%xmm8,	%xmm12
+	pshufb  %xmm3,	%xmm0			# 0 = sb1t
+	 pshufb	%xmm11,	%xmm6
+	pxor	%xmm5,	%xmm4			# 4 = sb1u + k
+	 pxor	%xmm5,	%xmm12
+	movdqa  .Lk_sb2(%rip),	%xmm5		# 4 : sb2u
+	 movdqa	%xmm5,	%xmm13
+	pxor	%xmm4,	%xmm0			# 0 = A
+	 pxor	%xmm12,	%xmm6
+	movdqa	-0x40(%r11,%r10), %xmm1		# .Lk_mc_forward[]
+	 # Also use %xmm1 in the second instance.
+	pshufb	%xmm2,	%xmm5			# 4 = sb2u
+	 pshufb	%xmm8,	%xmm13
+	movdqa	(%r11,%r10), %xmm4		# .Lk_mc_backward[]
+	 # Also use %xmm4 in the second instance.
+	movdqa	.Lk_sb2+16(%rip), %xmm2		# 2 : sb2t
+	 movdqa	%xmm2,	%xmm8
+	pshufb	%xmm3,  %xmm2			# 2 = sb2t
+	 pshufb	%xmm11,	%xmm8
+	movdqa	%xmm0,  %xmm3			# 3 = A
+	 movdqa	%xmm6,	%xmm11
+	pxor	%xmm5,	%xmm2			# 2 = 2A
+	 pxor	%xmm13,	%xmm8
+	pshufb  %xmm1,  %xmm0			# 0 = B
+	 pshufb	%xmm1,	%xmm6
+	add	\$16,	%r9			# next key
+	pxor	%xmm2,  %xmm0			# 0 = 2A+B
+	 pxor	%xmm8,	%xmm6
+	pshufb	%xmm4,	%xmm3			# 3 = D
+	 pshufb	%xmm4,	%xmm11
+	add	\$16,	%r11			# next mc
+	pxor	%xmm0,	%xmm3			# 3 = 2A+B+D
+	 pxor	%xmm6,	%xmm11
+	pshufb  %xmm1,	%xmm0			# 0 = 2B+C
+	 pshufb	%xmm1,	%xmm6
+	and	\$0x30,	%r11			# ... mod 4
+	sub	\$1,%rax			# nr--
+	pxor	%xmm3,	%xmm0			# 0 = 2A+3B+C+D
+	 pxor	%xmm11,	%xmm6
+
+.Lenc2x_entry:
+	# top of round
+	movdqa  %xmm9, 	%xmm1	# 1 : i
+	 movdqa	%xmm9,	%xmm7
+	movdqa	.Lk_inv+16(%rip), %xmm5	# 2 : a/k
+	 movdqa	%xmm5,	%xmm13
+	pandn	%xmm0, 	%xmm1	# 1 = i<<4
+	 pandn	%xmm6,	%xmm7
+	psrld	\$4,   	%xmm1   # 1 = i
+	 psrld	\$4,	%xmm7
+	pand	%xmm9, 	%xmm0   # 0 = k
+	 pand	%xmm9,	%xmm6
+	pshufb  %xmm0,  %xmm5	# 2 = a/k
+	 pshufb	%xmm6,	%xmm13
+	movdqa	%xmm10,	%xmm3  	# 3 : 1/i
+	 movdqa	%xmm10,	%xmm11
+	pxor	%xmm1,	%xmm0	# 0 = j
+	 pxor	%xmm7,	%xmm6
+	pshufb  %xmm1, 	%xmm3  	# 3 = 1/i
+	 pshufb	%xmm7,	%xmm11
+	movdqa	%xmm10,	%xmm4  	# 4 : 1/j
+	 movdqa	%xmm10,	%xmm12
+	pxor	%xmm5, 	%xmm3  	# 3 = iak = 1/i + a/k
+	 pxor	%xmm13,	%xmm11
+	pshufb	%xmm0, 	%xmm4  	# 4 = 1/j
+	 pshufb	%xmm6,	%xmm12
+	movdqa	%xmm10,	%xmm2  	# 2 : 1/iak
+	 movdqa	%xmm10,	%xmm8
+	pxor	%xmm5, 	%xmm4  	# 4 = jak = 1/j + a/k
+	 pxor	%xmm13,	%xmm12
+	pshufb  %xmm3,	%xmm2  	# 2 = 1/iak
+	 pshufb	%xmm11,	%xmm8
+	movdqa	%xmm10, %xmm3   # 3 : 1/jak
+	 movdqa	%xmm10,	%xmm11
+	pxor	%xmm0, 	%xmm2  	# 2 = io
+	 pxor	%xmm6,	%xmm8
+	pshufb  %xmm4,  %xmm3   # 3 = 1/jak
+	 pshufb	%xmm12,	%xmm11
+	movdqu	(%r9),	%xmm5
+	 # Also use %xmm5 in the second instance.
+	pxor	%xmm1,  %xmm3   # 3 = jo
+	 pxor	%xmm7,	%xmm11
+	jnz	.Lenc2x_loop
+
+	# middle of last round
+	movdqa	-0x60(%r10), %xmm4	# 3 : sbou	.Lk_sbo
+	movdqa	-0x50(%r10), %xmm0	# 0 : sbot	.Lk_sbo+16
+	 movdqa	%xmm4,	%xmm12
+	 movdqa	%xmm0,	%xmm6
+	pshufb  %xmm2,  %xmm4	# 4 = sbou
+	 pshufb	%xmm8,	%xmm12
+	pxor	%xmm5,  %xmm4	# 4 = sb1u + k
+	 pxor	%xmm5,	%xmm12
+	pshufb  %xmm3,	%xmm0	# 0 = sb1t
+	 pshufb	%xmm11,	%xmm6
+	movdqa	0x40(%r11,%r10), %xmm1		# .Lk_sr[]
+	 # Also use %xmm1 in the second instance.
+	pxor	%xmm4,	%xmm0	# 0 = A
+	 pxor	%xmm12,	%xmm6
+	pshufb	%xmm1,	%xmm0
+	 pshufb	%xmm1,	%xmm6
+	ret
+.cfi_endproc
+.size	_vpaes_encrypt_core_2x,.-_vpaes_encrypt_core_2x
+
+##
 ##  Decryption core
 ##
 ##  Same API as encryption core.
@@ -978,6 +1153,111 @@ $code.=<<___;
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
 ___
 }
+{
+my ($inp,$out,$blocks,$key,$ivp)=("%rdi","%rsi","%rdx","%rcx","%r8");
+# void vpaes_ctr32_encrypt_blocks(const uint8_t *inp, uint8_t *out,
+#                                 size_t blocks, const AES_KEY *key,
+#                                 const uint8_t ivp[16]);
+$code.=<<___;
+.globl	${PREFIX}_ctr32_encrypt_blocks
+.type	${PREFIX}_ctr32_encrypt_blocks,\@function,5
+.align	16
+${PREFIX}_ctr32_encrypt_blocks:
+.cfi_startproc
+	# _vpaes_encrypt_core and _vpaes_encrypt_core_2x expect the key in %rdx.
+	xchg	$key, $blocks
+___
+($blocks,$key)=($key,$blocks);
+$code.=<<___;
+	test	$blocks, $blocks
+	jz	.Lctr32_abort
+___
+$code.=<<___ if ($win64);
+	lea	-0xb8(%rsp),%rsp
+	movaps	%xmm6,0x10(%rsp)
+	movaps	%xmm7,0x20(%rsp)
+	movaps	%xmm8,0x30(%rsp)
+	movaps	%xmm9,0x40(%rsp)
+	movaps	%xmm10,0x50(%rsp)
+	movaps	%xmm11,0x60(%rsp)
+	movaps	%xmm12,0x70(%rsp)
+	movaps	%xmm13,0x80(%rsp)
+	movaps	%xmm14,0x90(%rsp)
+	movaps	%xmm15,0xa0(%rsp)
+.Lctr32_body:
+___
+$code.=<<___;
+	movdqu	($ivp), %xmm0		# Load IV.
+	movdqa	.Lctr_add_one(%rip), %xmm8
+	sub	$inp, $out		# This allows only incrementing $inp.
+	call	_vpaes_preheat
+	movdqa	%xmm0, %xmm6
+	pshufb	.Lrev_ctr(%rip), %xmm6
+
+	test	\$1, $blocks
+	jz	.Lctr32_prep_loop
+
+	# Handle one block so the remaining block count is even for
+	# _vpaes_encrypt_core_2x.
+	movdqu	($inp), %xmm7		# Load input.
+	call	_vpaes_encrypt_core
+	pxor	%xmm7, %xmm0
+	paddd	%xmm8, %xmm6
+	movdqu	%xmm0, ($out,$inp)
+	sub	\$1, $blocks
+	lea	16($inp), $inp
+	jz	.Lctr32_done
+
+.Lctr32_prep_loop:
+	# _vpaes_encrypt_core_2x leaves only %xmm14 and %xmm15 as spare
+	# registers. We maintain two byte-swapped counters in them.
+	movdqa	%xmm6, %xmm14
+	movdqa	%xmm6, %xmm15
+	paddd	%xmm8, %xmm15
+
+.Lctr32_loop:
+	movdqa	.Lrev_ctr(%rip), %xmm1	# Set up counters.
+	movdqa	%xmm14, %xmm0
+	movdqa	%xmm15, %xmm6
+	pshufb	%xmm1, %xmm0
+	pshufb	%xmm1, %xmm6
+	call	_vpaes_encrypt_core_2x
+	movdqu	($inp), %xmm1		# Load input.
+	movdqu	16($inp), %xmm2
+	movdqa	.Lctr_add_two(%rip), %xmm3
+	pxor	%xmm1, %xmm0		# XOR input.
+	pxor	%xmm2, %xmm6
+	paddd	%xmm3, %xmm14		# Increment counters.
+	paddd	%xmm3, %xmm15
+	movdqu	%xmm0, ($out,$inp)	# Write output.
+	movdqu	%xmm6, 16($out,$inp)
+	sub	\$2, $blocks		# Advance loop.
+	lea	32($inp), $inp
+	jnz	.Lctr32_loop
+
+.Lctr32_done:
+___
+$code.=<<___ if ($win64);
+	movaps	0x10(%rsp),%xmm6
+	movaps	0x20(%rsp),%xmm7
+	movaps	0x30(%rsp),%xmm8
+	movaps	0x40(%rsp),%xmm9
+	movaps	0x50(%rsp),%xmm10
+	movaps	0x60(%rsp),%xmm11
+	movaps	0x70(%rsp),%xmm12
+	movaps	0x80(%rsp),%xmm13
+	movaps	0x90(%rsp),%xmm14
+	movaps	0xa0(%rsp),%xmm15
+	lea	0xb8(%rsp),%rsp
+.Lctr32_epilogue:
+___
+$code.=<<___;
+.Lctr32_abort:
+	ret
+.cfi_endproc
+.size	${PREFIX}_ctr32_encrypt_blocks,.-${PREFIX}_ctr32_encrypt_blocks
+___
+}
 $code.=<<___;
 ##
 ##  _aes_preheat
@@ -1101,6 +1381,17 @@ _vpaes_consts:
 .Lk_dsbo:	# decryption sbox final output
 	.quad	0x1387EA537EF94000, 0xC7AA6DB9D4943E2D
 	.quad	0x12D7560F93441D00, 0xCA4B8159D8C58E9C
+
+# .Lrev_ctr is a permutation which byte-swaps the counter portion of the IV.
+.Lrev_ctr:
+	.quad	0x0706050403020100, 0x0c0d0e0f0b0a0908
+# .Lctr_add_* may be added to a byte-swapped xmm register to increment the
+# counter. The register must be byte-swapped again to form the actual input.
+.Lctr_add_one:
+	.quad	0x0000000000000000, 0x0000000100000000
+.Lctr_add_two:
+	.quad	0x0000000000000000, 0x0000000200000000
+
 .asciz	"Vector Permutation AES for x86_64/SSSE3, Mike Hamburg (Stanford University)"
 .align	64
 .size	_vpaes_consts,.-_vpaes_consts
@@ -1216,6 +1507,10 @@ se_handler:
 	.rva	.LSEH_end_${PREFIX}_cbc_encrypt
 	.rva	.LSEH_info_${PREFIX}_cbc_encrypt
 
+	.rva	.LSEH_begin_${PREFIX}_ctr32_encrypt_blocks
+	.rva	.LSEH_end_${PREFIX}_ctr32_encrypt_blocks
+	.rva	.LSEH_info_${PREFIX}_ctr32_encrypt_blocks
+
 .section	.xdata
 .align	8
 .LSEH_info_${PREFIX}_set_encrypt_key:
@@ -1238,6 +1533,10 @@ se_handler:
 	.byte	9,0,0,0
 	.rva	se_handler
 	.rva	.Lcbc_body,.Lcbc_epilogue		# HandlerData[]
+.LSEH_info_${PREFIX}_ctr32_encrypt_blocks:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lctr32_body,.Lctr32_epilogue		# HandlerData[]
 ___
 }
 
