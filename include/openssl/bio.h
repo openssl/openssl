@@ -200,6 +200,7 @@ extern "C" {
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
 # define BIO_FLAGS_NONCLEAR_RST  0x400
+# define BIO_FLAGS_IN_EOF        0x800
 
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
