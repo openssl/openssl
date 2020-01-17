@@ -281,7 +281,7 @@ static int rsa_get_key_params(void *key, OSSL_PARAM params[])
     }
 #endif
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && RSA_get0_pss_params(rsa) == NULL) {
+        && RSA_get0_pss_params(rsa) == NULL)
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
 
