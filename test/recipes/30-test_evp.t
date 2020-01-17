@@ -31,9 +31,9 @@ my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built
 push @configs, 'fips.cnf' unless $no_fips;
 
-my @files = qw( evpciph.txt evpdigest.txt );
+my @files = qw( evpciph.txt evpdigest.txt evppkey.txt);
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
-    evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpccmcavs.txt );
+    evppbe.txt evppkey_ecc.txt evpcase.txt evpccmcavs.txt );
 my @ideafiles = qw( evpciph_idea.txt );
 push @defltfiles, @ideafiles unless disabled("idea");
 
