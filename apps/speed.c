@@ -16,6 +16,7 @@
 #define ECDH_SECONDS    10
 #define EdDSA_SECONDS   10
 #define SM2_SECONDS     10
+#define FFDH_SECONDS    10
 
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
@@ -98,6 +99,9 @@
 # include <openssl/rsa.h>
 # include "./testrsa.h"
 #endif
+#ifndef OPENSSL_NO_DH
+# include <openssl/dh.h>
+#endif
 #include <openssl/x509.h>
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 # include <openssl/dsa.h>
@@ -125,6 +129,7 @@
 #define MAX_MISALIGNMENT 63
 #define MAX_ECDH_SIZE   256
 #define MISALIGN        64
+#define MAX_FFDH_SIZE 1024
 
 typedef struct openssl_speed_sec_st {
     int sym;
@@ -134,6 +139,7 @@ typedef struct openssl_speed_sec_st {
     int ecdh;
     int eddsa;
     int sm2;
+    int ffdh;
 } openssl_speed_sec_t;
 
 static volatile int run = 0;
@@ -435,6 +441,22 @@ static const OPT_PAIR rsa_choices[RSA_NUM] = {
 static double rsa_results[RSA_NUM][2];  /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_RSA */
 
+#ifndef OPENSSL_NO_DH
+enum ff_params_t {
+    R_FFDH_2048, R_FFDH_3072, R_FFDH_4096, R_FFDH_6144, R_FFDH_8192, FFDH_NUM
+};
+
+static const OPT_PAIR ffdh_choices[FFDH_NUM] = {
+    {"ffdh2048", R_FFDH_2048},
+    {"ffdh3072", R_FFDH_3072},
+    {"ffdh4096", R_FFDH_4096},
+    {"ffdh6144", R_FFDH_6144},
+    {"ffdh8192", R_FFDH_8192},
+};
+
+static double ffdh_results[FFDH_NUM][1];  /* 1 op: derivation */
+#endif /* OPENSSL_NO_DH */
+
 #ifndef OPENSSL_NO_EC
 enum ec_curves_t {
     R_EC_P160, R_EC_P192, R_EC_P224, R_EC_P256, R_EC_P384, R_EC_P521,
@@ -561,6 +583,11 @@ typedef struct loopargs_st {
     unsigned char *secret_a;
     unsigned char *secret_b;
     size_t outlen[EC_NUM];
+#endif
+#ifndef OPENSSL_NO_DH
+    EVP_PKEY_CTX *ffdh_ctx[FFDH_NUM];
+    unsigned char *secret_ff_a;
+    unsigned char *secret_ff_b;
 #endif
     EVP_CIPHER_CTX *ctx;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1067,6 +1094,24 @@ static int RSA_verify_loop(void *args)
 }
 #endif
 
+#ifndef OPENSSL_NO_DH
+static long ffdh_c[FFDH_NUM][1];
+
+static int FFDH_derive_key_loop(void *args)
+{
+        loopargs_t *tempargs = *(loopargs_t **) args;
+        EVP_PKEY_CTX *ffdh_ctx = tempargs->ffdh_ctx[testnum];
+        unsigned char *derived_secret = tempargs->secret_ff_a;
+        size_t outlen = MAX_FFDH_SIZE;
+        int count;
+
+        for (count = 0; COND(ffdh_c[testnum][0]); count++)
+            EVP_PKEY_derive(ffdh_ctx, derived_secret, &outlen);
+
+        return count;
+}
+#endif /* OPENSSL_NO_DH */
+
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static long dsa_c[DSA_NUM][2];
 static int DSA_sign_loop(void *args)
@@ -1463,7 +1508,8 @@ int speed_main(int argc, char **argv)
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
-                                    EdDSA_SECONDS, SM2_SECONDS };
+                                    EdDSA_SECONDS, SM2_SECONDS,
+                                    FFDH_SECONDS };
 
     /* What follows are the buffers and key material. */
 #if !defined(OPENSSL_NO_RC5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
@@ -1521,6 +1567,23 @@ int speed_main(int argc, char **argv)
     uint8_t rsa_doit[RSA_NUM] = { 0 };
     int primes = RSA_DEFAULT_PRIME_NUM;
 #endif
+#ifndef OPENSSL_NO_DH
+    typedef struct ffdh_params_st {
+        const char *name;
+        unsigned int nid;
+        unsigned int bits;
+    } FFDH_PARAMS;
+
+    static const FFDH_PARAMS ffdh_params[FFDH_NUM] = {
+        {"ffdh2048", NID_ffdhe2048, 2048},
+        {"ffdh3072", NID_ffdhe3072, 3072},
+        {"ffdh4096", NID_ffdhe4096, 4096},
+        {"ffdh6144", NID_ffdhe6144, 6144},
+        {"ffdh8192", NID_ffdhe8192, 8192}
+    };
+    uint8_t ffdh_doit[FFDH_NUM] = { 0 };
+
+#endif /* OPENSSL_NO_DH */
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
@@ -1720,7 +1783,7 @@ int speed_main(int argc, char **argv)
         case OPT_SECONDS:
             seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa
                         = seconds.ecdh = seconds.eddsa
-                        = seconds.sm2 = atoi(opt_arg());
+                        = seconds.sm2 = seconds.ffdh = atoi(opt_arg());
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
@@ -1763,6 +1826,18 @@ int speed_main(int argc, char **argv)
             }
             if (opt_found(algo, rsa_choices, &i)) {
                 rsa_doit[i] = 1;
+                continue;
+            }
+        }
+#endif
+#ifndef OPENSSL_NO_DH
+        if (strncmp(algo, "ffdh", 4) == 0) {
+            if (algo[4] == '\0') {
+                memset(ffdh_doit, 1, sizeof(ffdh_doit));
+                continue;
+            }
+            if (opt_found(algo, ffdh_choices, &i)) {
+                ffdh_doit[i] = 2;
                 continue;
             }
         }
@@ -1902,6 +1977,10 @@ int speed_main(int argc, char **argv)
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
 #endif
+#ifndef OPENSSL_NO_DH
+        loopargs[i].secret_ff_a = app_malloc(MAX_FFDH_SIZE, "FFDH secret a");
+        loopargs[i].secret_ff_b = app_malloc(MAX_FFDH_SIZE, "FFDH secret b");
+#endif
     }
 
 #ifndef NO_FORK
@@ -1918,6 +1997,9 @@ int speed_main(int argc, char **argv)
         doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         memset(rsa_doit, 1, sizeof(rsa_doit));
+#endif
+#ifndef OPENSSL_NO_DH
+        memset(ffdh_doit, 1, sizeof(ffdh_doit));
 #endif
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         memset(dsa_doit, 1, sizeof(dsa_doit));
@@ -2110,7 +2192,7 @@ int speed_main(int argc, char **argv)
         c[D_IGE_256_AES][i] = c[D_IGE_256_AES][i - 1] * l0 / l1;
     }
 
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#  if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     rsa_c[R_RSA_512][0] = count / 2000;
     rsa_c[R_RSA_512][1] = count / 400;
     for (i = 1; i < RSA_NUM; i++) {
@@ -2259,6 +2341,19 @@ int speed_main(int argc, char **argv)
     sm2_c[R_EC_SM2P256][0] = count / 1800;
 #   endif
 #  endif                          /* OPENSSL_NO_EC */
+
+#  ifndef OPENSSL_NO_DH
+    ffdh_c[R_FFDH_2048][0] = count / 1000;
+    for (i = R_FFDH_3072; i <= R_FFDH_8192; i++) {
+        ffdh_c[i][0] = ffdh_c[i - 1][0] / 2;
+        if (ffdh_doit[i] <= 1 && ffdh_c[i][0] == 0) {
+            ffdh_doit[i] = 0;
+        } else {
+            if (ffdh_c[i][0] == 0)
+                ffdh_c[i][0] = 1;
+        }
+    }
+#  endif /* OPENSSL_NO_DH */
 
 # else
 /* not worth fixing */
@@ -3510,8 +3605,188 @@ int speed_main(int argc, char **argv)
         }
     }
 # endif                         /* OPENSSL_NO_SM2 */
-
 #endif                          /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_DH
+    for (testnum = 0; testnum < FFDH_NUM; testnum++) {
+        int ffdh_checks = 1;
+
+        if (!ffdh_doit[testnum])
+            continue;
+
+        for (i = 0; i < loopargs_len; i++) {
+            EVP_PKEY *pkey_A = NULL;
+            EVP_PKEY *pkey_B = NULL;
+            EVP_PKEY_CTX *ffdh_ctx = NULL;
+            EVP_PKEY_CTX *test_ctx = NULL;
+            size_t secret_size;
+            size_t test_out;
+
+            /* Ensure that the error queue is empty */
+            if (ERR_peek_error()) {
+                BIO_printf(bio_err,
+                           "WARNING: the error queue contains previous unhandled errors.\n");
+                ERR_print_errors(bio_err);
+            }
+
+            pkey_A = EVP_PKEY_new();
+            if (!pkey_A) {
+                BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            pkey_B = EVP_PKEY_new();
+            if (!pkey_B) {
+                BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            ffdh_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, NULL);
+            if (!ffdh_ctx) {
+                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            if (EVP_PKEY_keygen_init(ffdh_ctx) <= 0) {
+                BIO_printf(bio_err, "Error while initialising EVP_PKEY_CTX.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (EVP_PKEY_CTX_set_dh_nid(ffdh_ctx, ffdh_params[testnum].nid) <= 0) {
+                BIO_printf(bio_err, "Error setting DH key size for keygen.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            if (EVP_PKEY_keygen(ffdh_ctx, &pkey_A) <= 0 ||
+                EVP_PKEY_keygen(ffdh_ctx, &pkey_B) <= 0) {
+                BIO_printf(bio_err, "FFDH key generation failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            EVP_PKEY_CTX_free(ffdh_ctx);
+
+            /* check if the derivation works correctly both ways so that
+             * we know if future derive calls will fail, and we can skip
+             * error checking in benchmarked code */
+            ffdh_ctx = EVP_PKEY_CTX_new(pkey_A, NULL);
+            if (!ffdh_ctx) {
+                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (EVP_PKEY_derive_init(ffdh_ctx) <= 0) {
+                BIO_printf(bio_err, "FFDH derivation context init failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (EVP_PKEY_derive_set_peer(ffdh_ctx, pkey_B) <= 0) {
+                BIO_printf(bio_err, "Assigning peer key for derivation failed.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (EVP_PKEY_derive(ffdh_ctx, NULL, &secret_size) <= 0) {
+                BIO_printf(bio_err, "Checking size of shared secret failed.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (secret_size > MAX_FFDH_SIZE) {
+                BIO_printf(bio_err, "Assertion failure: shared secret too large.\n");
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (EVP_PKEY_derive(ffdh_ctx,
+                                loopargs[i].secret_ff_a,
+                                &secret_size) <= 0) {
+                BIO_printf(bio_err, "Shared secret derive failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            /* Now check from side B */
+            test_ctx = EVP_PKEY_CTX_new(pkey_B, NULL);
+            if (!test_ctx) {
+                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+            if (!EVP_PKEY_derive_init(test_ctx) ||
+                !EVP_PKEY_derive_set_peer(test_ctx, pkey_A) ||
+                !EVP_PKEY_derive(test_ctx, NULL, &test_out) ||
+                !EVP_PKEY_derive(test_ctx, loopargs[i].secret_ff_b, &test_out) ||
+                test_out != secret_size) {
+                BIO_printf(bio_err, "FFDH computation failure.\n");
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            /* compare the computed secrets */
+            if (CRYPTO_memcmp(loopargs[i].secret_ff_a,
+                              loopargs[i].secret_ff_b, secret_size)) {
+                BIO_printf(bio_err, "FFDH computations don't match.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                ffdh_checks = 0;
+                break;
+            }
+
+            loopargs[i].ffdh_ctx[testnum] = ffdh_ctx;
+
+            EVP_PKEY_free(pkey_A);
+            pkey_A = NULL;
+            EVP_PKEY_free(pkey_B);
+            pkey_B = NULL;
+            EVP_PKEY_CTX_free(test_ctx);
+            test_ctx = NULL;
+        }
+        if (ffdh_checks != 0) {
+            pkey_print_message("", "ffdh", ffdh_c[testnum][0],
+                               ffdh_params[testnum].bits, seconds.ffdh);
+            Time_F(START);
+            count =
+                run_benchmark(async_jobs, FFDH_derive_key_loop, loopargs);
+            d = Time_F(STOP);
+            BIO_printf(bio_err,
+                       mr ? "+R12:%ld:%d:%.2f\n" :
+                       "%ld %u-bits FFDH ops in %.2fs\n", count,
+                       ffdh_params[testnum].bits, d);
+            ffdh_results[testnum][0] = (double)count / d;
+            rsa_count = count;
+        };
+        if (rsa_count <= 1) {
+            /* if longer than 10s, don't do any more */
+            stop_it(ffdh_doit, testnum);
+        }
+    }
+#endif  /* OPENSSL_NO_DH */
 #ifndef NO_FORK
  show_res:
 #endif
@@ -3688,6 +3963,26 @@ int speed_main(int argc, char **argv)
     }
 # endif
 #endif                          /* OPENSSL_NO_EC */
+#ifndef OPENSSL_NO_DH
+    testnum = 1;
+    for (k = 0; k < FFDH_NUM; k++) {
+        if (!ffdh_doit[k])
+            continue;
+        if (testnum && !mr) {
+            printf("%23sop     op/s\n", " ");
+            testnum = 0;
+        }
+        if (mr)
+            printf("+F8:%u:%u:%f:%f\n",
+                   k, ffdh_params[k].bits,
+                   ffdh_results[k][0], 1.0 / ffdh_results[k][0]);
+
+        else
+            printf("%4u bits ffdh %8.4fs %8.1f\n",
+                   ffdh_params[k].bits,
+                   1.0 / ffdh_results[k][0], ffdh_results[k][0]);
+    }
+#endif /* OPENSSL_NO_DH */
 
     ret = 0;
 
@@ -3700,6 +3995,13 @@ int speed_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         for (k = 0; k < RSA_NUM; k++)
             RSA_free(loopargs[i].rsa_key[k]);
+#endif
+#ifndef OPENSSL_NO_DH
+        OPENSSL_free(loopargs[i].secret_ff_a);
+        OPENSSL_free(loopargs[i].secret_ff_b);
+        for (k = 0; k < FFDH_NUM; k++) {
+            EVP_PKEY_CTX_free(loopargs[i].ffdh_ctx[k]);
+        }
 #endif
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         for (k = 0; k < DSA_NUM; k++)
@@ -3982,7 +4284,20 @@ static int do_multi(int multi, int size_num)
                 sm2_results[k][1] += d;
             }
 #  endif /* OPENSSL_NO_SM2 */
-# endif
+# endif /* OPENSSL_NO_EC */
+# ifndef OPENSSL_NO_DH
+            else if (strncmp(buf, "+F8:", 4) == 0) {
+                int k;
+                double d;
+
+                p = buf + 4;
+                k = atoi(sstrsep(&p, sep));
+                sstrsep(&p, sep);
+
+                d = atof(sstrsep(&p, sep));
+                ffdh_results[k][0] += d;
+            }
+# endif /* OPENSSL_NO_DH */
 
             else if (strncmp(buf, "+H:", 3) == 0) {
                 ;
