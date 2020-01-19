@@ -18,7 +18,7 @@
 #include "../packet_local.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
-        !(      defined(AES_ASM) &&     ( \
+        !(      defined(AESNI_ASM) &&   ( \
                 defined(__x86_64)       || defined(__x86_64__)  || \
                 defined(_M_AMD64)       || defined(_M_X64)      ) \
         )
