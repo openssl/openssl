@@ -170,11 +170,11 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   SOURCE[evp_extra_test]=evp_extra_test.c
-  INCLUDE[evp_extra_test]=../include ../apps/include ../crypto/include
+  INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
-  INCLUDE[evp_fetch_prov_test]=../include ../apps/include ../crypto/include
+  INCLUDE[evp_fetch_prov_test]=../include ../apps/include
   DEPEND[evp_fetch_prov_test]=../libcrypto libtestutil.a
   IF[{- $disabled{fips} || !$target{dso_scheme} -}]
     DEFINE[evp_extra_test]=NO_FIPS_MODULE
@@ -375,13 +375,13 @@ IF[{- !$disabled{tests} -}]
   DEPEND[recordlentest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[drbgtest]=drbgtest.c
-  INCLUDE[drbgtest]=../include ../apps/include ../crypto/include
+  INCLUDE[drbgtest]=../include ../apps/include
   DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data_ctr.c \
                          drbg_cavs_data_hash.c drbg_cavs_data_hmac.c
 
-  INCLUDE[drbg_cavs_test]=../include ../apps/include . .. ../crypto/include
+  INCLUDE[drbg_cavs_test]=../include ../apps/include . ..
   DEPEND[drbg_cavs_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
@@ -425,7 +425,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{shared} -}]
     PROGRAMS{noinst}=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
-    INCLUDE[shlibloadtest]=../include ../apps/include ../crypto/include
+    INCLUDE[shlibloadtest]=../include ../apps/include
   ENDIF
 
   # cipher_overhead_test uses internal symbols, so it must be linked with
@@ -526,19 +526,19 @@ IF[{- !$disabled{tests} -}]
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
-    INCLUDE[poly1305_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[poly1305_internal_test]=.. ../include ../apps/include
     DEPEND[poly1305_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[chacha_internal_test]=chacha_internal_test.c
-    INCLUDE[chacha_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[chacha_internal_test]=.. ../include ../apps/include
     DEPEND[chacha_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[asn1_internal_test]=asn1_internal_test.c
-    INCLUDE[asn1_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[asn1_internal_test]=.. ../include ../apps/include
     DEPEND[asn1_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[modes_internal_test]=modes_internal_test.c
-    INCLUDE[modes_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[modes_internal_test]=.. ../include ../apps/include
     DEPEND[modes_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[x509_internal_test]=x509_internal_test.c
@@ -566,19 +566,19 @@ IF[{- !$disabled{tests} -}]
     DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sparse_array_test]=sparse_array_test.c
-    INCLUDE[sparse_array_test]=../crypto/include ../include ../apps/include
+    INCLUDE[sparse_array_test]=../include ../apps/include
     DEPEND[sparse_array_test]=../libcrypto.a libtestutil.a
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
-    INCLUDE[siphash_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[siphash_internal_test]=.. ../include ../apps/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm2_internal_test]=sm2_internal_test.c
-    INCLUDE[sm2_internal_test]=../include ../apps/include ../crypto/include
+    INCLUDE[sm2_internal_test]=../include ../apps/include
     DEPEND[sm2_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm4_internal_test]=sm4_internal_test.c
-    INCLUDE[sm4_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[sm4_internal_test]=.. ../include ../apps/include
     DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[rc2test]=rc2test.c
@@ -594,7 +594,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[rc5test]=../libcrypto.a libtestutil.a
 
     SOURCE[ec_internal_test]=ec_internal_test.c
-    INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include ../crypto/include
+    INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include
     DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[curve448_internal_test]=curve448_internal_test.c
@@ -618,7 +618,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[asn1_dsa_internal_test]=asn1_dsa_internal_test.c
-    INCLUDE[asn1_dsa_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[asn1_dsa_internal_test]=.. ../include ../apps/include
     DEPEND[asn1_dsa_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[keymgmt_internal_test]=keymgmt_internal_test.c

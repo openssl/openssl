@@ -524,6 +524,7 @@ clean: libclean
 
 distclean: clean
 	$(RM) configdata.pm
+	$(RM) -r doc/man doc/html
 	$(RM) Makefile
 
 # We check if any depfile is newer than Makefile and decide to
