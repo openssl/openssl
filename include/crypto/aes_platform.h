@@ -25,6 +25,14 @@ void vpaes_cbc_encrypt(const unsigned char *in,
                        unsigned char *out,
                        size_t length,
                        const AES_KEY *key, unsigned char *ivec, int enc);
+#  if defined(__x86_64) || defined(__x86_64__) \
+      || defined(_M_AMD64) || defined(_M_X64)
+void vpaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
+                                size_t len, const AES_KEY *key,
+                                const unsigned char ivec[16]);
+#  else
+#   define vpaes_ctr32_encrypt_blocks NULL
+#  endif
 # endif /* VPAES_ASM */
 
 # ifdef BSAES_ASM

@@ -98,8 +98,11 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
     if (VPAES_CAPABLE) {
         ret = vpaes_set_encrypt_key(key, keylen * 8, ks);
         dat->block = (block128_f)vpaes_encrypt;
-        dat->stream.cbc = (dat->mode == EVP_CIPH_CBC_MODE)
-                          ? (cbc128_f)vpaes_cbc_encrypt : NULL;
+        dat->stream.cbc = NULL;
+        if (dat->mode == EVP_CIPH_CBC_MODE)
+            dat->stream.cbc = (cbc128_f)vpaes_cbc_encrypt;
+        else if (dat->mode == EVP_CIPH_CTR_MODE)
+            dat->stream.ctr = (ctr128_f)vpaes_ctr32_encrypt_blocks;
     } else
 #endif
     {

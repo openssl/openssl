@@ -2374,8 +2374,12 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         ret = vpaes_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                     &dat->ks.ks);
         dat->block = (block128_f) vpaes_encrypt;
-        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-            (cbc128_f) vpaes_cbc_encrypt : NULL;
+        dat->stream.cbc = NULL;
+        if (mode == EVP_CIPH_CBC_MODE)
+            dat->stream.cbc = (cbc128_f) vpaes_cbc_encrypt;
+        else
+        if (mode == EVP_CIPH_CTR_MODE)
+            dat->stream.ctr = (ctr128_f) vpaes_ctr32_encrypt_blocks;
     } else
 #endif
     {
@@ -2726,7 +2730,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                 vpaes_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks.ks);
                 CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
                                    (block128_f) vpaes_encrypt);
-                gctx->ctr = NULL;
+                gctx->ctr = (ctr128_f) vpaes_ctr32_encrypt_blocks;
                 break;
             } else
 #endif
