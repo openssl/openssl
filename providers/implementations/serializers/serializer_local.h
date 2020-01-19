@@ -54,7 +54,7 @@ int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder);
 int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder);
 
 int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
-                                   const BIGNUM *n);
+                                   const BIGNUM *bn);
 int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv);
 
 enum dh_print_type {
