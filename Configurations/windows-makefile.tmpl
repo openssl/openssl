@@ -416,23 +416,32 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	-rmdir /Q /S $(HTMLDOCS1_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS3_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
-	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
-	-del /Q /F $(MODULES)
-	-del /Q /F $(SCRIPTS)
-	-del /Q /F $(GENERATED_MANDATORY)
-	-del /Q /F $(GENERATED)
+	-"$(PERL)" -e "while (<>) { chomp; @list = split(' ', $$_); foreach $$file (@list) { unlink $$file; } }" < <<
+$(MODULES)
+$(SCRIPTS)
+$(GENERATED_MANDATORY)
+$(GENERATED)
+pod2htmd.tmp pod2htmi.tmp
+<<
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F engines\*.lib engines\*.exp
+	-del /Q /S /F providers\*.lib providers\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
-	-del /Q /S /F test\*.exp
-	-rmdir /Q /S test\test-runs
+	-del /Q /S /F test\*.lib test\*.exp .\*.res
+	-"$(PERL)" -e "use File::Path; while (<>) { chomp; @list = split(' ', $$_); foreach $$file (@list) { rmtree($$file); } }" < <<
+$(HTMLDOCS1_BLDDIRS)
+$(HTMLDOCS3_BLDDIRS)
+$(HTMLDOCS5_BLDDIRS)
+$(HTMLDOCS7_BLDDIRS)
+test\test-runs
+<<
 
 distclean: clean
 	-del /Q /F configdata.pm
+	-"$(PERL)" -e "use File::Path; while (<>) { chomp; @list = split(' ', $$_); foreach $$file (@list) { rmtree($$file); } }" < <<
+doc\man doc\html
+<<
 	-del /Q /F makefile
 
 depend:
