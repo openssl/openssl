@@ -115,6 +115,14 @@ void vpaes_cbc_encrypt(const unsigned char *in,
                        unsigned char *out,
                        size_t length,
                        const AES_KEY *key, unsigned char *ivec, int enc);
+# if defined(__x86_64) || defined(__x86_64__) \
+     || defined(_M_AMD64) || defined(_M_X64)
+void vpaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
+                                size_t len, const AES_KEY *key,
+                                const unsigned char ivec[16]);
+# else
+#  define vpaes_ctr32_encrypt_blocks NULL
+# endif
 #endif
 #ifdef BSAES_ASM
 void bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
@@ -186,9 +194,6 @@ extern unsigned int OPENSSL_ia32cap_P[];
 
 # ifdef VPAES_ASM
 #  define VPAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
-# endif
-# ifdef BSAES_ASM
-#  define BSAES_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(41-32)))
 # endif
 /*
  * AES-NI section
@@ -2675,8 +2680,11 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         ret = vpaes_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                     &dat->ks.ks);
         dat->block = (block128_f) vpaes_encrypt;
-        dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-            (cbc128_f) vpaes_cbc_encrypt : NULL;
+        dat->stream.cbc = NULL;
+        if (mode == EVP_CIPH_CBC_MODE)
+            dat->stream.cbc = (cbc128_f) vpaes_cbc_encrypt;
+        else if (mode == EVP_CIPH_CTR_MODE)
+            dat->stream.ctr = (ctr128_f) vpaes_ctr32_encrypt_blocks;
     } else
 #endif
     {
@@ -3018,7 +3026,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                 vpaes_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks.ks);
                 CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
                                    (block128_f) vpaes_encrypt);
-                gctx->ctr = NULL;
+                gctx->ctr = (ctr128_f) vpaes_ctr32_encrypt_blocks;
                 break;
             } else
 #endif
