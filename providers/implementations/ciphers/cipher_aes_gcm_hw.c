@@ -43,7 +43,8 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 # ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
-        GCM_HW_SET_KEY_CTR_FN(ks, vpaes_set_encrypt_key, vpaes_encrypt, NULL);
+        GCM_HW_SET_KEY_CTR_FN(ks, vpaes_set_encrypt_key, vpaes_encrypt,
+                              vpaes_ctr32_encrypt_blocks);
     } else
 # endif /* VPAES_CAPABLE */
 
