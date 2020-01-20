@@ -4912,6 +4912,9 @@ ASN1_GENERALIZEDTIME_dup                ?	3_0_0	EXIST::FUNCTION:
 RAND_priv_bytes_ex                      ?	3_0_0	EXIST::FUNCTION:
 RAND_bytes_ex                           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_default_digest_name        ?	3_0_0	EXIST::FUNCTION:
+CMS_decrypt_set1_pkey_and_peer          ?	3_0_0	EXIST::FUNCTION:CMS
+CMS_add1_recipient                      ?	3_0_0	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_kari_set0_pkey_and_peer ?	3_0_0	EXIST::FUNCTION:CMS
 PKCS8_pkey_add1_attr                    ?	3_0_0	EXIST::FUNCTION:
 PKCS8_pkey_add1_attr_by_OBJ             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_private_check                  ?	3_0_0	EXIST::FUNCTION:

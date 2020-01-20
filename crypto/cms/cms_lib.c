@@ -133,11 +133,13 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
     switch (OBJ_obj2nid(cms->contentType)) {
 
     case NID_pkcs7_data:
-    case NID_pkcs7_enveloped:
     case NID_pkcs7_encrypted:
     case NID_id_smime_ct_compressedData:
         /* Nothing to do */
         return 1;
+
+    case NID_pkcs7_enveloped:
+        return cms_EnvelopedData_final(cms, cmsbio);
 
     case NID_pkcs7_signed:
         return cms_SignedData_final(cms, cmsbio);

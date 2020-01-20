@@ -402,13 +402,16 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
 int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
 ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si);
 
-BIO *cms_EnvelopedData_init_bio(const CMS_ContentInfo *cms);
+BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
+int cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain);
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms);
 int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd);
 int cms_pkey_get_ri_type(EVP_PKEY *pk);
+int cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type);
 /* KARI routines */
 int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
-                                EVP_PKEY *pk, unsigned int flags);
+                                EVP_PKEY *recipPubKey, X509 *originator,
+                                EVP_PKEY *originatorPrivKey, unsigned int flags);
 int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri);
 
