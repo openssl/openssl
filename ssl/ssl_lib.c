@@ -3032,8 +3032,8 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new_from_ctx(OPENSSL_CTX *libctx, const char *propq,
-                              const SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                 const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
 
@@ -3231,7 +3231,7 @@ SSL_CTX *SSL_CTX_new_from_ctx(OPENSSL_CTX *libctx, const char *propq,
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
-    return SSL_CTX_new_from_ctx(NULL, NULL, meth);
+    return SSL_CTX_new_with_libctx(NULL, NULL, meth);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
