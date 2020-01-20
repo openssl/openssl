@@ -112,7 +112,8 @@ sent by the server in parameter B<hint>, a buffer B<identity> of
 length B<max_identity_len> bytes where the resulting
 B<NUL>-terminated identity is to be stored, and a buffer B<psk> of
 length B<max_psk_len> bytes where the resulting pre-shared key is to
-be stored.
+be stored. Note that B<max_identity_len> includes the terminating B<NUL>
+byte, thus the maximum length of the identity is one byte less.
 
 The callback for use in TLSv1.2 will also work in TLSv1.3 although it is
 recommended to use SSL_CTX_set_psk_use_session_callback()
