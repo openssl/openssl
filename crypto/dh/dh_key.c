@@ -341,13 +341,6 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     return ret;
 }
 
-static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
-                         const BIGNUM *a, const BIGNUM *p,
-                         const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
-{
-    return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
-}
-
 int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
 {
     int err_reason = DH_R_BN_ERROR;

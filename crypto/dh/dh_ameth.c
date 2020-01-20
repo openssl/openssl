@@ -329,7 +329,7 @@ static int int_dh_size(const EVP_PKEY *pkey)
 
 static int dh_bits(const EVP_PKEY *pkey)
 {
-    return BN_num_bits(pkey->pkey.dh->params.p);
+    return DH_bits(pkey->pkey.dh);
 }
 
 static int dh_security_bits(const EVP_PKEY *pkey)
@@ -381,9 +381,9 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 static int dh_missing_parameters(const EVP_PKEY *a)
 {
-    return (a->pkey.dh == NULL
-            || a->pkey.dh->params.p == NULL
-            || a->pkey.dh->params.g == NULL);
+    return a->pkey.dh == NULL
+        || a->pkey.dh->params.p == NULL
+        || a->pkey.dh->params.g == NULL;
 }
 
 static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -752,6 +752,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 static int dh_cms_decrypt(CMS_RecipientInfo *ri)
 {
     EVP_PKEY_CTX *pctx;
+
     pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
 
     if (pctx == NULL)

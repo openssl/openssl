@@ -280,9 +280,9 @@ static int dsa_missing_parameters(const EVP_PKEY *pkey)
     DSA *dsa;
     dsa = pkey->pkey.dsa;
     return dsa == NULL
-           || dsa->params.p == NULL
-           || dsa->params.q == NULL
-           || dsa->params.g == NULL;
+        || dsa->params.p == NULL
+        || dsa->params.q == NULL
+        || dsa->params.g == NULL;
 }
 
 static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)

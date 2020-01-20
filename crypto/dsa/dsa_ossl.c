@@ -420,6 +420,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 static int dsa_init(DSA *dsa)
 {
     dsa->flags |= DSA_FLAG_CACHE_MONT_P;
+    ffc_params_init(&dsa->params);
     return 1;
 }
 
