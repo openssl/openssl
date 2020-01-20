@@ -5165,6 +5165,24 @@
 #define SN_ffdhe8192            "ffdhe8192"
 #define NID_ffdhe8192           1130
 
+#define SN_modp_1536            "modp_1536"
+#define NID_modp_1536           1212
+
+#define SN_modp_2048            "modp_2048"
+#define NID_modp_2048           1213
+
+#define SN_modp_3072            "modp_3072"
+#define NID_modp_3072           1214
+
+#define SN_modp_4096            "modp_4096"
+#define NID_modp_4096           1215
+
+#define SN_modp_6144            "modp_6144"
+#define NID_modp_6144           1216
+
+#define SN_modp_8192            "modp_8192"
+#define NID_modp_8192           1217
+
 #define SN_ISO_UA               "ISO-UA"
 #define NID_ISO_UA              1150
 #define OBJ_ISO_UA              OBJ_member_body,804L
