@@ -4912,3 +4912,5 @@ ASN1_UTCTIME_dup                        ?	3_0_0	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_dup                ?	3_0_0	EXIST::FUNCTION:
 RAND_priv_bytes_ex                      ?	3_0_0	EXIST::FUNCTION:
 RAND_bytes_ex                           ?	3_0_0	EXIST::FUNCTION:
+PKCS8_pkey_add1_attr                    ?	3_0_0	EXIST::FUNCTION:
+PKCS8_pkey_add1_attr_by_OBJ             ?	3_0_0	EXIST::FUNCTION:
