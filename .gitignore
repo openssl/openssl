@@ -26,7 +26,7 @@
 /include/openssl/opensslv.h
 
 # Auto generated doc files
-# If you add to this list, make sure doc/man1/build.info is sync'd!
+# Keep this in sync with doc/man1/build.info
 doc/man1/openssl-ca.pod
 doc/man1/openssl-cms.pod
 doc/man1/openssl-crl.pod
@@ -37,12 +37,9 @@ doc/man1/openssl-dsaparam.pod
 doc/man1/openssl-ec.pod
 doc/man1/openssl-ecparam.pod
 doc/man1/openssl-enc.pod
-doc/man1/openssl-engine.pod
 doc/man1/openssl-gendsa.pod
 doc/man1/openssl-genpkey.pod
 doc/man1/openssl-genrsa.pod
-doc/man1/openssl-info.pod
-doc/man1/openssl-list.pod
 doc/man1/openssl-ocsp.pod
 doc/man1/openssl-passwd.pod
 doc/man1/openssl-pkcs12.pod
@@ -66,7 +63,6 @@ doc/man1/openssl-storeutl.pod
 doc/man1/openssl-ts.pod
 doc/man1/openssl-verify.pod
 doc/man1/openssl-x509.pod
-doc/man1/openssl.pod
 
 # error code files
 /crypto/err/openssl.txt.old
