@@ -11,6 +11,45 @@
 # define OSSL_INTERNAL_FFC_H
 
 # include <openssl/bn.h>
+# include <openssl/evp.h>
+# include <openssl/dh.h> /* Uses Error codes from DH */
+
+/* Default value for gindex when canonical generation of g is not used */
+# define FFC_UNVERIFIABLE_GINDEX -1
+
+/* The different types of FFC keys */
+# define FFC_PARAM_TYPE_DSA  0
+# define FFC_PARAM_TYPE_DH   1
+
+/* Return codes for generation and validation of FFC parameters */
+#define FFC_PARAMS_RET_STATUS_FAILED         0
+#define FFC_PARAMS_RET_STATUS_SUCCESS        1
+/* Returned if validating and g is only partially verifiable */
+#define FFC_PARAMS_RET_STATUS_UNVERIFIABLE_G 2
+
+/* Validation flags */
+# define FFC_PARAMS_GENERATE     0x00
+# define FFC_PARAMS_VALIDATE_PQ  0x01
+# define FFC_PARAMS_VALIDATE_G   0x02
+# define FFC_PARAMS_VALIDATE_ALL (FFC_PARAMS_VALIDATE_PQ | FFC_PARAMS_VALIDATE_G)
+
+# define FFC_CHECK_P_NOT_PRIME                DH_CHECK_P_NOT_PRIME
+# define FFC_CHECK_P_NOT_SAFE_PRIME           DH_CHECK_P_NOT_SAFE_PRIME
+# define FFC_CHECK_UNKNOWN_GENERATOR          DH_UNABLE_TO_CHECK_GENERATOR
+# define FFC_CHECK_NOT_SUITABLE_GENERATOR     DH_NOT_SUITABLE_GENERATOR
+# define FFC_CHECK_Q_NOT_PRIME                DH_CHECK_Q_NOT_PRIME
+# define FFC_CHECK_INVALID_Q_VALUE            DH_CHECK_INVALID_Q_VALUE
+# define FFC_CHECK_INVALID_J_VALUE            DH_CHECK_INVALID_J_VALUE
+# define FFC_CHECK_BAD_LN_PAIR                0x00080
+# define FFC_CHECK_INVALID_SEED_SIZE          0x00100
+# define FFC_CHECK_MISSING_SEED_OR_COUNTER    0x00200
+# define FFC_CHECK_INVALID_G                  0x00400
+# define FFC_CHECK_INVALID_PQ                 0x00800
+# define FFC_CHECK_INVALID_COUNTER            0x01000
+# define FFC_CHECK_P_MISMATCH                 0x02000
+# define FFC_CHECK_Q_MISMATCH                 0x04000
+# define FFC_CHECK_G_MISMATCH                 0x08000
+# define FFC_CHECK_COUNTER_MISMATCH           0x10000
 
 /*
  * Finite field cryptography (FFC) domain parameters are used by DH and DSA.
@@ -33,6 +72,12 @@ typedef struct ffc_params_st {
     int pcounter;
     int nid; /* The identity of a named group */
 
+    /*
+     * Required for FIPS186_4 generation & validation of canonical g.
+     * It uses unverifiable g if this value is -1.
+     */
+    int gindex;
+    int h; /* loop counter for unverifiable g */
 } FFC_PARAMS;
 
 void ffc_params_init(FFC_PARAMS *params);
@@ -54,5 +99,29 @@ int ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q);
 #ifndef FIPS_MODE
 int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
 #endif /* FIPS_MODE */
+
+
+int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                  int type, size_t L, size_t N,
+                                  const EVP_MD *evpmd, int *res, BN_GENCB *cb);
+int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                  int type, size_t L, size_t N,
+                                  const EVP_MD *evpmd, int *res, BN_GENCB *cb);
+
+int ffc_param_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                   int type, size_t L, size_t N,
+                                   const EVP_MD *evpmd, int validate_flags,
+                                   int *res, BN_GENCB *cb);
+int ffc_param_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                   int type, size_t L, size_t N,
+                                   const EVP_MD *evpmd, int validate_flags,
+                                   int *res, BN_GENCB *cb);
+
+int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
+                             int N, int s, BIGNUM *priv);
+
+int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
+                                       const BIGNUM *p, const BIGNUM *q,
+                                       const BIGNUM *g, BIGNUM *tmp, int *ret);
 
 #endif /* OSSL_INTERNAL_FFC_H */

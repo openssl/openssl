@@ -17,6 +17,7 @@ void ffc_params_init(FFC_PARAMS *params)
 {
     memset(params, 0, sizeof(FFC_PARAMS));
     params->pcounter = -1;
+    params->gindex = FFC_UNVERIFIABLE_GINDEX;
 }
 
 void ffc_params_cleanup(FFC_PARAMS *params)

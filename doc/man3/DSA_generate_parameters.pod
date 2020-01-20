@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-DSA_generate_parameters_ex, DSA_generate_parameters - generate DSA parameters
+DSA_generate_parameters_ex, DSA_generate_parameters_ctx, DSA_generate_parameters, DSA_generate_ffc_parameters
+- generate DSA parameters
 
 =head1 SYNOPSIS
 
@@ -12,6 +13,12 @@ DSA_generate_parameters_ex, DSA_generate_parameters - generate DSA parameters
                                 const unsigned char *seed, int seed_len,
                                 int *counter_ret, unsigned long *h_ret,
                                 BN_GENCB *cb);
+ int DSA_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
+                                 const unsigned char *seed_in, int seed_len,
+                                 int *counter_ret, unsigned long *h_ret,
+                                 BN_GENCB *cb)
+ int DSA_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
+                                int qbits, int gindex, BN_GENCB *cb);
 
 Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -32,6 +39,19 @@ greater than or equal to 2048 bits, the length of q is set to 256 bits.
 
 If B<seed> is NULL, the primes will be generated at random.
 If B<seed_len> is less than the length of q, an error is returned.
+
+DSA_generate_parameters_ctx() is identical to DSA_generate_parameters_ex()
+except that it also passes a B<libctx>.
+
+DSA_generate_ffc_parameters() can be used to generate FFC domain parameters that
+can be validated as per the FIPS186-4 standard.
+
+B<libctx> is the library context associated with this operation.
+B<bits> is the length in bits of p.
+B<qbits> is the length in bits of q.
+B<gindex> is the index for generation and validation the value of generator g.
+See FIPS186-4 Section A.2.3 "Verifiable Canonical Generation of the
+Generator g". Use -1 for Unverifiable Generation of the generator g.
 
 DSA_generate_parameters_ex() places the iteration count in
 *B<counter_ret> and a counter used for finding a generator in
@@ -113,6 +133,7 @@ L<DSA_free(3)>, L<BN_generate_prime(3)>
 
 DSA_generate_parameters() was deprecated in OpenSSL 0.9.8; use
 DSA_generate_parameters_ex() instead.
+DSA_generate_ffc_parameters() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

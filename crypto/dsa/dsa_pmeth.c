@@ -197,7 +197,7 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DSA *dsa = NULL;
     DSA_PKEY_CTX *dctx = ctx->data;
     BN_GENCB *pcb;
-    int ret;
+    int ret, res;
 
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
@@ -211,8 +211,9 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         BN_GENCB_free(pcb);
         return 0;
     }
-    ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
-                               NULL, 0, NULL, NULL, NULL, pcb);
+    ret = ffc_params_FIPS186_4_generate(NULL, &dsa->params, FFC_PARAM_TYPE_DSA,
+                                        dctx->nbits, dctx->qbits, dctx->pmd,
+                                        &res, pcb);
     BN_GENCB_free(pcb);
     if (ret)
         EVP_PKEY_assign_DSA(pkey, dsa);

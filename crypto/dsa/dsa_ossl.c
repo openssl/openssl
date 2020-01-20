@@ -318,6 +318,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     BN_MONT_CTX *mont = NULL;
     const BIGNUM *r, *s;
     int ret = -1, i;
+
     if (dsa->params.p == NULL
         || dsa->params.q == NULL
         || dsa->params.g == NULL) {
@@ -421,6 +422,7 @@ static int dsa_init(DSA *dsa)
 {
     dsa->flags |= DSA_FLAG_CACHE_MONT_P;
     ffc_params_init(&dsa->params);
+    dsa->dirty_cnt++;
     return 1;
 }
 

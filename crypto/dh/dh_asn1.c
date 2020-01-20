@@ -85,6 +85,7 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     FFC_PARAMS *params;
     int_dhx942_dh *dhx = NULL;
     DH *dh = NULL;
+
     dh = DH_new();
     if (dh == NULL)
         return NULL;

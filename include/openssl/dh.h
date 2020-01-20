@@ -149,6 +149,8 @@ DEPRECATEDIN_0_9_8(DH *DH_generate_parameters(int prime_len, int generator,
 /* New version */
 int DH_generate_parameters_ex(DH *dh, int prime_len, int generator,
                               BN_GENCB *cb);
+int DH_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
+                               int qbits, int gindex, BN_GENCB *cb);
 
 int DH_check_params_ex(const DH *dh);
 int DH_check_ex(const DH *dh);
