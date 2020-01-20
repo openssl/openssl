@@ -775,6 +775,13 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
+    /*
+     * GOST CMS format is different for different cipher algorithms.
+     * Most of other algorithms don't have such a difference
+     * so this ctrl is just ignored.
+     */
+    if (cmd == EVP_PKEY_CTRL_CIPHER)
+        return -2;
 # ifndef OPENSSL_NO_DH
     if (keytype == EVP_PKEY_DH) {
         switch (cmd) {
