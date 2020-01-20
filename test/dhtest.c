@@ -676,6 +676,38 @@ static int rfc7919_test(void)
     DH_free(b);
     return ret;
 }
+
+static int prime_groups[] = {
+    NID_ffdhe2048,
+    NID_ffdhe3072,
+    NID_ffdhe4096,
+    NID_ffdhe6144,
+    NID_ffdhe8192,
+    NID_modp_2048,
+    NID_modp_3072,
+    NID_modp_4096,
+    NID_modp_6144,
+};
+
+static int dh_test_prime_groups(int index)
+{
+    int ok = 0;
+    DH *dh = NULL;
+    const BIGNUM *p, *q, *g;
+
+    if (!TEST_ptr(dh = DH_new_by_nid(prime_groups[index])))
+        goto err;
+    DH_get0_pqg(dh, &p, &q, &g);
+    if (!TEST_ptr(p) || !TEST_ptr(q) || !TEST_ptr(g))
+        goto err;
+
+    if (!TEST_int_eq(DH_get_nid(dh), prime_groups[index]))
+        goto err;
+    ok = 1;
+err:
+    DH_free(dh);
+    return ok;
+}
 #endif
 
 
@@ -687,6 +719,7 @@ int setup_tests(void)
     ADD_TEST(dh_test);
     ADD_TEST(rfc5114_test);
     ADD_TEST(rfc7919_test);
+    ADD_ALL_TESTS(dh_test_prime_groups, OSSL_NELEM(prime_groups));
 #endif
     return 1;
 }

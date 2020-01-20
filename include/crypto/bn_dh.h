@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,3 +22,10 @@ extern const BIGNUM _bignum_ffdhe4096_p;
 extern const BIGNUM _bignum_ffdhe6144_p;
 extern const BIGNUM _bignum_ffdhe8192_p;
 extern const BIGNUM _bignum_const_2;
+
+extern const BIGNUM _bignum_modp_1536_p;
+extern const BIGNUM _bignum_modp_2048_p;
+extern const BIGNUM _bignum_modp_3072_p;
+extern const BIGNUM _bignum_modp_4096_p;
+extern const BIGNUM _bignum_modp_6144_p;
+extern const BIGNUM _bignum_modp_8192_p;
