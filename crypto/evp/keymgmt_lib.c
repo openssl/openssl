@@ -119,6 +119,7 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 {
     void *provdata = NULL;
     size_t i;
+    int domainparams = -1;
 
     /*
      * If there is an underlying legacy key and it has changed, invalidate
@@ -143,18 +144,24 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
     for (i = 0;
          i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
          i++) {
+        if (domainparams == -1)
+            domainparams = pk->pkeys[i].domainparams;
         if (keymgmt == pk->pkeys[i].keymgmt
-            && want_domainparams == pk->pkeys[i].domainparams)
+            && (want_domainparams == -1
+                || want_domainparams == domainparams))
             return pk->pkeys[i].provdata;
     }
 
-    provdata = evp_keymgmt_export_to_provdata(pk, keymgmt, want_domainparams);
+    if (domainparams == -1)
+        domainparams = want_domainparams;
+
+    provdata = evp_keymgmt_export_to_provdata(pk, keymgmt, domainparams);
 
     /* Synchronize the dirty count, but only if we exported successfully */
     if (pk->pkey.ptr != NULL && provdata != NULL)
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
 
-    evp_keymgmt_cache_pkey(pk, i, keymgmt, provdata, want_domainparams);
+    evp_keymgmt_cache_pkey(pk, i, keymgmt, provdata, domainparams);
 
     return provdata;
 }
