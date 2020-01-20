@@ -1,4 +1,5 @@
 
+# Keep this in sync with .gitignore!
 DEPEND[]= \
          openssl-ca.pod \
          openssl-cms.pod \
@@ -7,8 +8,8 @@ DEPEND[]= \
          openssl-dhparam.pod \
          openssl-dsa.pod \
          openssl-dsaparam.pod \
-         openssl-ecparam.pod \
          openssl-ec.pod \
+         openssl-ecparam.pod \
          openssl-enc.pod \
          openssl-gendsa.pod \
          openssl-genpkey.pod \
@@ -16,8 +17,8 @@ DEPEND[]= \
          openssl-ocsp.pod \
          openssl-passwd.pod \
          openssl-pkcs12.pod \
-         openssl-pkcs8.pod \
          openssl-pkcs7.pod \
+         openssl-pkcs8.pod \
          openssl-pkey.pod \
          openssl-pkeyparam.pod \
          openssl-pkeyutl.pod \
@@ -31,8 +32,8 @@ DEPEND[]= \
          openssl-smime.pod \
          openssl-speed.pod \
          openssl-spkac.pod \
-         openssl-storeutl.pod \
          openssl-srp.pod \
+         openssl-storeutl.pod \
          openssl-ts.pod \
          openssl-verify.pod \
          openssl-x509.pod
@@ -51,10 +52,11 @@ DEPEND[openssl-dsa.pod]=../perlvars.pm
 GENERATE[openssl-dsa.pod]=openssl-dsa.pod.in
 DEPEND[openssl-dsaparam.pod]=../perlvars.pm
 GENERATE[openssl-dsaparam.pod]=openssl-dsaparam.pod.in
+DEPEND[openssl-ec.pod]=../perlvars.pm
+GENERATE[openssl-ec.pod]=openssl-ec.pod.in
 DEPEND[openssl-ecparam.pod]=../perlvars.pm
 GENERATE[openssl-ecparam.pod]=openssl-ecparam.pod.in
 DEPEND[openssl-ec.pod]=../perlvars.pm
-GENERATE[openssl-ec.pod]=openssl-ec.pod.in
 DEPEND[openssl-enc.pod]=../perlvars.pm
 GENERATE[openssl-enc.pod]=openssl-enc.pod.in
 DEPEND[openssl-gendsa.pod]=../perlvars.pm
@@ -99,10 +101,10 @@ DEPEND[openssl-speed.pod]=../perlvars.pm
 GENERATE[openssl-speed.pod]=openssl-speed.pod.in
 DEPEND[openssl-spkac.pod]=../perlvars.pm
 GENERATE[openssl-spkac.pod]=openssl-spkac.pod.in
-DEPEND[openssl-storeutl.pod]=../perlvars.pm
-GENERATE[openssl-storeutl.pod]=openssl-storeutl.pod.in
 DEPEND[openssl-srp.pod]=../perlvars.pm
 GENERATE[openssl-srp.pod]=openssl-srp.pod.in
+DEPEND[openssl-storeutl.pod]=../perlvars.pm
+GENERATE[openssl-storeutl.pod]=openssl-storeutl.pod.in
 DEPEND[openssl-ts.pod]=../perlvars.pm
 GENERATE[openssl-ts.pod]=openssl-ts.pod.in
 DEPEND[openssl-verify.pod]=../perlvars.pm
