@@ -7,13 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include "internal/nelem.h"
 #include "internal/sizes.h"
+#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
@@ -51,6 +56,12 @@ typedef struct {
     DSA *dsa;
     size_t mdsize;
     char mdname[OSSL_MAX_NAME_SIZE];
+
+    /* The Algorithm Identifier of the combined signature agorithm */
+    unsigned char aid[OSSL_MAX_ALGORITHM_ID_SIZE];
+    size_t  aid_len;
+
+    /* main digest */
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
 } PROV_DSA_CTX;
@@ -116,23 +127,67 @@ static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
     return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
 }
 
+static int get_md_nid(const EVP_MD *md)
+{
+    /*
+     * Because the DSA library deals with NIDs, we need to translate.
+     * We do so using EVP_MD_is_a(), and therefore need a name to NID
+     * map.
+     */
+    static const OSSL_ITEM name_to_nid[] = {
+        { NID_sha1,   OSSL_DIGEST_NAME_SHA1   },
+        { NID_sha224, OSSL_DIGEST_NAME_SHA224 },
+        { NID_sha256, OSSL_DIGEST_NAME_SHA256 },
+    };
+    size_t i;
+    int mdnid = -1;
+
+    if (md == NULL)
+        return -1;
+
+    for (i = 0; i < OSSL_NELEM(name_to_nid); i++) {
+        if (EVP_MD_is_a(md, name_to_nid[i].ptr)) {
+            mdnid = (int)name_to_nid[i].id;
+            break;
+        }
+    }
+
+    if (mdnid == -1) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        return -1;
+    }
+
+    return mdnid;
+}
+
 static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
                                       const char *props, void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    EVP_MD *md;
+    EVP_MD *md = EVP_MD_fetch(pdsactx->libctx, mdname, props);
+    int md_nid = get_md_nid(md);
+    size_t algorithmidentifier_len = 0;
+    const unsigned char *algorithmidentifier =
+        dsa_algorithmidentifier_encoding(md_nid, &algorithmidentifier_len);
 
+    EVP_MD_CTX_free(pdsactx->mdctx);
+    EVP_MD_free(pdsactx->md);
+    pdsactx->mdctx = NULL;
+    pdsactx->md = NULL;
+
+    if (md == NULL || algorithmidentifier == NULL)
+        return 0;
     if (!dsa_signature_init(vpdsactx, vdsa))
         return 0;
 
-    md = EVP_MD_fetch(pdsactx->libctx, mdname, props);
-    if (md == NULL)
-        return 0;
     pdsactx->md = md;
     pdsactx->mdsize = EVP_MD_size(md);
     pdsactx->mdctx = EVP_MD_CTX_new();
     if (pdsactx->mdctx == NULL)
         return 0;
+
+    memcpy(pdsactx->aid, algorithmidentifier, algorithmidentifier_len);
+    pdsactx->aid_len = algorithmidentifier_len;
 
     if (!EVP_DigestInit_ex(pdsactx->mdctx, md, NULL))
         return 0;
@@ -254,6 +309,11 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
     if (pdsactx == NULL || params == NULL)
         return 0;
 
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_string(p, pdsactx->aid, pdsactx->aid_len))
+        return 0;
+
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, pdsactx->mdsize))
         return 0;
@@ -268,6 +328,7 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 }
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_END
