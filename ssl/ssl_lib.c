@@ -3322,16 +3322,20 @@ void ssl_set_masks(SSL *s)
         if (ecdsa_ok)
             mask_a |= SSL_aECDSA;
     }
-    /* Allow Ed25519 for TLS 1.2 if peer supports it */
+    /* Allow Ed25519 for (D)TLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED25519)
             && pvalid[SSL_PKEY_ED25519] & CERT_PKEY_EXPLICIT_SIGN
-            && TLS1_get_version(s) == TLS1_2_VERSION)
+            && (TLS1_get_version(s) == TLS1_2_VERSION
+                || (SSL_IS_DTLS(s)
+                    && DTLS_VERSION_GE(s->version, DTLS1_2_VERSION))))
             mask_a |= SSL_aECDSA;
 
-    /* Allow Ed448 for TLS 1.2 if peer supports it */
+    /* Allow Ed448 for (D)TLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED448)
             && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
-            && TLS1_get_version(s) == TLS1_2_VERSION)
+            && (TLS1_get_version(s) == TLS1_2_VERSION
+                || (SSL_IS_DTLS(s)
+                    && DTLS_VERSION_GE(s->version, DTLS1_2_VERSION))))
             mask_a |= SSL_aECDSA;
 #endif
 
