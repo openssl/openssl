@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,7 @@
 #include <openssl/ec.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
+#include "crypto/bn.h"
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -177,9 +178,58 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
                                    pub_key, pub_key_len, NULL))
         goto err;
 
-    if (param_priv_key != NULL && include_private
-            && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
-        goto err;
+    if (param_priv_key != NULL && include_private) {
+        int fixed_top;
+        const BIGNUM *order;
+
+        /*
+         * Key import/export should never leak the bit length of the secret
+         * scalar in the key.
+         *
+         * For this reason, on export we use padded BIGNUMs with fixed length.
+         *
+         * When importing we also should make sure that, even if short lived,
+         * the newly created BIGNUM is marked with the BN_FLG_CONSTTIME flag as
+         * soon as possible, so that any processing of this BIGNUM might opt for
+         * constant time implementations in the backend.
+         *
+         * Setting the BN_FLG_CONSTTIME flag alone is never enough, we also have
+         * to preallocate the BIGNUM internal buffer to a fixed public size big
+         * enough that operations performed during the processing never trigger
+         * a realloc which would leak the size of the scalar through memory
+         * accesses.
+         *
+         * Fixed Length
+         * ------------
+         *
+         * The order of the large prime subgroup of the curve is our choice for
+         * a fixed public size, as that is generally the upper bound for
+         * generating a private key in EC cryptosystems and should fit all valid
+         * secret scalars.
+         *
+         * For padding on export we just use the bit length of the order
+         * converted to bytes (rounding up).
+         *
+         * For preallocating the BIGNUM storage we look at the number of "words"
+         * required for the internal representation of the order, and we
+         * preallocate 2 extra "words" in case any of the subsequent processing
+         * might temporarily overflow the order length.
+         */
+        order = EC_GROUP_get0_order(ecg);
+        if (order == NULL || BN_is_zero(order))
+            goto err;
+
+        fixed_top = bn_get_top(order) + 2;
+
+        if ((priv_key = BN_new()) == NULL)
+            goto err;
+        if (bn_wexpand(priv_key, fixed_top) == NULL)
+            goto err;
+        BN_set_flags(priv_key, BN_FLG_CONSTTIME);
+
+        if (!OSSL_PARAM_get_BN(param_priv_key, &priv_key))
+            goto err;
+    }
 
     if (priv_key != NULL
             && !EC_KEY_set_private_key(ec, priv_key))
@@ -234,11 +284,52 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
                                           pub_key, pub_key_len))
         goto err;
 
-    if (priv_key != NULL && include_private
-            && !ossl_param_bld_push_BN(tmpl,
-                                       OSSL_PKEY_PARAM_PRIV_KEY,
-                                       priv_key))
-        goto err;
+    if (priv_key != NULL && include_private) {
+        size_t sz;
+        int ecbits;
+
+        /*
+         * Key import/export should never leak the bit length of the secret
+         * scalar in the key.
+         *
+         * For this reason, on export we use padded BIGNUMs with fixed length.
+         *
+         * When importing we also should make sure that, even if short lived,
+         * the newly created BIGNUM is marked with the BN_FLG_CONSTTIME flag as
+         * soon as possible, so that any processing of this BIGNUM might opt for
+         * constant time implementations in the backend.
+         *
+         * Setting the BN_FLG_CONSTTIME flag alone is never enough, we also have
+         * to preallocate the BIGNUM internal buffer to a fixed public size big
+         * enough that operations performed during the processing never trigger
+         * a realloc which would leak the size of the scalar through memory
+         * accesses.
+         *
+         * Fixed Length
+         * ------------
+         *
+         * The order of the large prime subgroup of the curve is our choice for
+         * a fixed public size, as that is generally the upper bound for
+         * generating a private key in EC cryptosystems and should fit all valid
+         * secret scalars.
+         *
+         * For padding on export we just use the bit length of the order
+         * converted to bytes (rounding up).
+         *
+         * For preallocating the BIGNUM storage we look at the number of "words"
+         * required for the internal representation of the order, and we
+         * preallocate 2 extra "words" in case any of the subsequent processing
+         * might temporarily overflow the order length.
+         */
+        ecbits = EC_GROUP_order_bits(ecg);
+        if (ecbits <= 0)
+            goto err;
+        sz = (ecbits + 7 ) / 8;
+        if (!ossl_param_bld_push_BN_pad(tmpl,
+                                        OSSL_PKEY_PARAM_PRIV_KEY,
+                                        priv_key, sz))
+            goto err;
+    }
 
     ret = 1;
 
