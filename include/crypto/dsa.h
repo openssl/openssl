@@ -11,3 +11,5 @@
 
 int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa);
+
+const unsigned char *dsa_algorithmidentifier_encoding(int md_nid, size_t *len);
