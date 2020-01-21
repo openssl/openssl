@@ -16,13 +16,13 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
+#include <openssl/dh.h>
 #include <openssl/params.h>
-#include "internal/param_build.h"
-#include "crypto/dh.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dh.h"
+#include "internal/param_build.h"
 
 static OSSL_OP_keymgmt_new_fn dh_newdata;
 static OSSL_OP_keymgmt_free_fn dh_freedata;
@@ -30,6 +30,7 @@ static OSSL_OP_keymgmt_get_params_fn dh_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn dh_gettable_params;
 static OSSL_OP_keymgmt_has_fn dh_has;
 static OSSL_OP_keymgmt_match_fn dh_match;
+static OSSL_OP_keymgmt_validate_fn dh_validate;
 static OSSL_OP_keymgmt_import_fn dh_import;
 static OSSL_OP_keymgmt_import_types_fn dh_import_types;
 static OSSL_OP_keymgmt_export_fn dh_export;
@@ -316,6 +317,46 @@ static const OSSL_PARAM *dh_gettable_params(void)
     return dh_params;
 }
 
+static int dh_validate_public(DH *dh)
+{
+    const BIGNUM *pub_key = NULL;
+
+    DH_get0_key(dh, &pub_key, NULL);
+    return DH_check_pub_key_ex(dh, pub_key);
+}
+
+static int dh_validate_private(DH *dh)
+{
+    int status = 0;
+    const BIGNUM *priv_key = NULL;
+
+    DH_get0_key(dh, NULL, &priv_key);
+    return dh_check_priv_key(dh, priv_key, &status);;
+}
+
+static int dh_validate(void *keydata, int selection)
+{
+    DH *dh = keydata;
+    int ok = 0;
+
+    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && DH_check_params_ex(dh);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && dh_validate_public(dh);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && dh_validate_private(dh);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
+            == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        ok = ok && dh_check_pairwise(dh);
+    return ok;
+}
+
 const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dh_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dh_freedata },
@@ -323,6 +364,7 @@ const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dh_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dh_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))dh_match },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))dh_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dh_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dh_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
