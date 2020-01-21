@@ -15,7 +15,6 @@
 
 int dsa_check_params(const DSA *dsa, int *ret)
 {
-    int nid;
     /*
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
