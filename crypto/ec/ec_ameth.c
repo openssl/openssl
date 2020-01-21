@@ -663,19 +663,60 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     if (priv_key != NULL) {
+        size_t sz;
+        int ecbits;
+        int ecdh_cofactor_mode;
+
+        /*
+         * Key import/export should never leak the bit length of the secret
+         * scalar in the key.
+         *
+         * For this reason, on export we use padded BIGNUMs with fixed length.
+         *
+         * When importing we also should make sure that, even if short lived,
+         * the newly created BIGNUM is marked with the BN_FLG_CONSTTIME flag as
+         * soon as possible, so that any processing of this BIGNUM might opt for
+         * constant time implementations in the backend.
+         *
+         * Setting the BN_FLG_CONSTTIME flag alone is never enough, we also have
+         * to preallocate the BIGNUM internal buffer to a fixed public size big
+         * enough that operations performed during the processing never trigger
+         * a realloc which would leak the size of the scalar through memory
+         * accesses.
+         *
+         * Fixed Length
+         * ------------
+         *
+         * The order of the large prime subgroup of the curve is our choice for
+         * a fixed public size, as that is generally the upper bound for
+         * generating a private key in EC cryptosystems and should fit all valid
+         * secret scalars.
+         *
+         * For padding on export we just use the bit length of the order
+         * converted to bytes (rounding up).
+         *
+         * For preallocating the BIGNUM storage we look at the number of "words"
+         * required for the internal representation of the order, and we
+         * preallocate 2 extra "words" in case any of the subsequent processing
+         * might temporarily overflow the order length.
+         */
+        ecbits = EC_GROUP_order_bits(ecg);
+        if (ecbits <= 0)
+            goto err;
+
+        sz = (ecbits + 7 ) / 8;
+        if (!ossl_param_bld_push_BN_pad(&tmpl,
+                                        OSSL_PKEY_PARAM_PRIV_KEY,
+                                        priv_key, sz))
+            goto err;
+
         /*
          * The ECDH Cofactor Mode is defined only if the EC_KEY actually
          * contains a private key, so we check for the flag and export it only
          * in this case.
          */
-        int ecdh_cofactor_mode =
+        ecdh_cofactor_mode =
             (EC_KEY_get_flags(eckey) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
-
-        /* Export the actual private key */
-        if (!ossl_param_bld_push_BN(&tmpl,
-                                    OSSL_PKEY_PARAM_PRIV_KEY,
-                                    priv_key))
-            goto err;
 
         /* Export the ECDH_COFACTOR_MODE parameter */
         if (!ossl_param_bld_push_int(&tmpl,
