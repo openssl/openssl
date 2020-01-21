@@ -158,6 +158,8 @@ extern "C" {
 #define OSSL_PKEY_PARAM_BITS                "bits" /* integer */
 #define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
 #define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
+#define OSSL_PKEY_PARAM_DIGEST              OSSL_ALG_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_DIGEST_SIZE         "digest-size"
 #define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
 
@@ -200,8 +202,9 @@ extern "C" {
 #define OSSL_EXCHANGE_PARAM_PAD      "pad" /* uint */
 
 /* Signature parameters */
-#define OSSL_SIGNATURE_PARAM_DIGEST         OSSL_ALG_PARAM_DIGEST
-#define OSSL_SIGNATURE_PARAM_DIGEST_SIZE    "digest-size"
+#define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"
+#define OSSL_SIGNATURE_PARAM_DIGEST             OSSL_PKEY_PARAM_DIGEST
+#define OSSL_SIGNATURE_PARAM_DIGEST_SIZE        OSSL_PKEY_PARAM_DIGEST_SIZE
 
 /* Asym cipher parameters */
 #define OSSL_ASYM_CIPHER_PARAM_PAD_MODE                 "pad-mode"
