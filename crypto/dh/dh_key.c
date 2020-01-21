@@ -175,6 +175,34 @@ int DH_generate_key(DH *dh)
 }
 #endif /* FIPS_MODE */
 
+int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
+                           BIGNUM *pub_key)
+{
+    int ret = 0;
+    BIGNUM *prk = BN_new();
+    BN_MONT_CTX *mont = NULL;
+
+    if (prk == NULL)
+        return 0;
+
+    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
+        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
+                                      dh->lock, dh->params.p, ctx);
+        if (mont == NULL)
+            goto err;
+    }
+    BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
+
+    /* pub_key = g^priv_key mod p */
+    if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
+                              ctx, mont))
+        goto err;
+    ret = 1;
+err:
+    BN_clear_free(prk);
+    return ret;
+}
+
 static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
 {
     int ok = 0;
@@ -183,7 +211,6 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
     unsigned l;
 #endif
     BN_CTX *ctx = NULL;
-    BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
@@ -205,23 +232,17 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
         if (priv_key == NULL)
             goto err;
         generate_new_key = 1;
-    } else
+    } else {
         priv_key = dh->priv_key;
+    }
 
     if (dh->pub_key == NULL) {
         pub_key = BN_new();
         if (pub_key == NULL)
             goto err;
-    } else
+    } else {
         pub_key = dh->pub_key;
-
-    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->params.p, ctx);
-        if (!mont)
-            goto err;
     }
-
     if (generate_new_key) {
         /* Is it an approved safe prime ?*/
         if (DH_get_nid(dh) != NID_undef) {
@@ -274,22 +295,8 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
         }
     }
 
-    {
-        BIGNUM *prk = BN_new();
-
-        if (prk == NULL)
-            goto err;
-        BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-
-        /* pub_key = g^priv_key mod p */
-        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
-                                  ctx, mont)) {
-            BN_clear_free(prk);
-            goto err;
-        }
-        /* We MUST free prk before any further use of priv_key */
-        BN_clear_free(prk);
-    }
+    if (!dh_generate_public_key(ctx, dh, priv_key, pub_key))
+        goto err;
 
     dh->pub_key = pub_key;
     dh->priv_key = priv_key;

@@ -38,6 +38,25 @@ int dsa_generate_key_ctx(OPENSSL_CTX *libctx, DSA *dsa)
     return dsa_builtin_keygen(libctx, dsa);
 }
 
+int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
+                            BIGNUM *pub_key)
+{
+    int ret = 0;
+    BIGNUM *prk = BN_new();
+
+    if (prk == NULL)
+        return 0;
+    BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
+
+    /* pub_key = g ^ priv_key mod p */
+    if (!BN_mod_exp(pub_key, dsa->params.g, prk, dsa->params.p, ctx))
+        goto err;
+    ret = 1;
+err:
+    BN_clear_free(prk);
+    return ret;
+}
+
 static int dsa_builtin_keygen(OPENSSL_CTX *libctx, DSA *dsa)
 {
     int ok = 0;
@@ -65,21 +84,8 @@ static int dsa_builtin_keygen(OPENSSL_CTX *libctx, DSA *dsa)
         pub_key = dsa->pub_key;
     }
 
-    {
-        BIGNUM *prk = BN_new();
-
-        if (prk == NULL)
-            goto err;
-        BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-
-        /* pub_key = g ^ priv_key mod p */
-        if (!BN_mod_exp(pub_key, dsa->params.g, prk, dsa->params.p, ctx)) {
-            BN_free(prk);
-            goto err;
-        }
-        /* We MUST free prk before any further use of priv_key */
-        BN_free(prk);
-    }
+    if (!dsa_generate_public_key(ctx, dsa, priv_key, pub_key))
+        goto err;
 
     dsa->priv_key = priv_key;
     dsa->pub_key = pub_key;
