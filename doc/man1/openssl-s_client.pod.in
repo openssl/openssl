@@ -7,13 +7,16 @@ openssl-s_client - SSL/TLS client program
 
 =head1 SYNOPSIS
 
-B<openssl> B<s_client>
+=for comment Keep the order/grouping in sync with apps/s_client.c!
+B<openssl> B<s_client> [I<options>] [I<host>:I<port>]
+
 [B<-help>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 [B<-ssl_client_engine> I<id>]
 [B<-ct>]
 [B<-noct>]
 [B<-ctlogfile> I<filename>]
+
 [B<-connect> I<host:port>]
 [B<-bind> I<host:port>]
 [B<-proxy> I<host:port>]
@@ -27,6 +30,7 @@ B<openssl> B<s_client>
 [B<-max_pipelines>]
 [B<-read_buf>]
 [B<-fallback_scsv>]
+
 [B<-verify> I<depth>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>]
@@ -42,9 +46,11 @@ B<openssl> B<s_client>
 [B<-psk_identity> I<identity>]
 [B<-psk> I<key>]
 [B<-psk_session> I<file>]
+
 [B<-reconnect>]
 [B<-sess_out> I<filename>]
 [B<-sess_in> I<filename>]
+
 [B<-crlf>]
 [B<-quiet>]
 [B<-ign_eof>]
@@ -53,6 +59,7 @@ B<openssl> B<s_client>
 [B<-xmpphost> I<hostname>]
 [B<-brief>]
 [B<-prexit>]
+
 [B<-showcerts>]
 [B<-debug>]
 [B<-msg>]
@@ -68,6 +75,7 @@ B<openssl> B<s_client>
 [B<-alpn> I<protocols>]
 [B<-async>]
 [B<-nbio>]
+
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_s_synopsis -}
 [B<-sctp>]
@@ -75,7 +83,9 @@ B<openssl> B<s_client>
 [B<-nextprotoneg> I<protocols>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
+
 {- $OpenSSL::safe::opt_r_synopsis -}
+
 {- $OpenSSL::safe::opt_v_synopsis -}
 [B<-cert_chain> I<filename>]
 [B<-build_chain>]
@@ -84,8 +94,8 @@ B<openssl> B<s_client>
 [B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
 [B<-chainCAstore> I<uri>]
+
 {- $OpenSSL::safe::opt_x_synopsis -}
-[I<host>:I<port>]
 
 =for openssl ifdef engine ssl_client_engine ct noct ctlogfile
 

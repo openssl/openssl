@@ -604,6 +604,7 @@ typedef enum OPTION_choice {
     OPT_R_ENUM
 } OPTION_CHOICE;
 
+/* Keep the order/grouping in sync with doc/man1/openssl-s_client.pod.in! */
 const OPTIONS s_client_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [host:port]\n"},
 
