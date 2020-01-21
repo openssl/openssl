@@ -331,7 +331,7 @@ static int test_fromdata_rsa(void)
 static int test_fromdata_dh(void)
 {
     int ret = 0;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL, *key_ctx = NULL;
     EVP_PKEY *pk = NULL;
     /*
      * 32-bit DH key, extracted from this command,
@@ -367,9 +367,19 @@ static int test_fromdata_dh(void)
     ret = test_print_key_using_pem("DH", pk)
           && test_print_key_using_serializer("DH", pk);
 
+    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
+        goto err;
+
+    if (!TEST_false(EVP_PKEY_check(key_ctx))
+        || !TEST_true(EVP_PKEY_public_check(key_ctx))
+        || !TEST_false(EVP_PKEY_private_check(key_ctx)) /* Need a q */
+        || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+        goto err;
+
  err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(key_ctx);
 
     return ret;
 }
@@ -551,7 +561,6 @@ err:
 }
 
 #endif /* OPENSSL_NO_EC */
-
 
 int setup_tests(void)
 {
