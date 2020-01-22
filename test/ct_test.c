@@ -160,6 +160,10 @@ static int compare_extension_printout(X509_EXTENSION *extension,
                                            X509V3_EXT_DEFAULT, 0)))
         goto end;
 
+    /* Append \n because it's easier to create files that end with one. */
+    if (!TEST_true(BIO_write(text_buffer, "\n", 1)))
+        goto end;
+
     /* Append \0 because we're about to use the buffer contents as a string. */
     if (!TEST_true(BIO_write(text_buffer, "\0", 1)))
         goto end;

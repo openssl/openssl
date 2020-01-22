@@ -375,3 +375,6 @@ openssl req -new -nodes -subj "/CN=localhost" \
     -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
     ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \
     server-pss-restrict-cert rootkey rootcert
+
+# CT entry
+./mkcert.sh genct server.example embeddedSCTs1-key embeddedSCTs1 embeddedSCTs1_issuer-key embeddedSCTs1_issuer ct-server-key
