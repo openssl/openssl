@@ -17,6 +17,7 @@
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */
 #include <openssl/ssl.h>
 #include "internal/constant_time.h"
+#include "internal/sizes.h"
 #include "crypto/rsa.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
@@ -322,8 +323,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     const OSSL_PARAM *p;
-    /* Should be big enough */
-    char mdname[80], mdprops[80] = { '\0' };
+    char mdname[OSSL_MAX_NAME_SIZE];
+    char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
     char *str = mdname;
     int pad_mode;
 
