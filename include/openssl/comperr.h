@@ -31,6 +31,10 @@
 #  define COMP_R_ZLIB_DEFLATE_ERROR                        99
 #  define COMP_R_ZLIB_INFLATE_ERROR                        100
 #  define COMP_R_ZLIB_NOT_SUPPORTED                        101
+#  define COMP_R_ZSTD_COMPRESS_ERROR                       107
+#  define COMP_R_ZSTD_DECODE_ERROR                         108
+#  define COMP_R_ZSTD_DECOMPRESS_ERROR                     109
+#  define COMP_R_ZSTD_NOT_SUPPORTED                        110
 
 # endif
 #endif

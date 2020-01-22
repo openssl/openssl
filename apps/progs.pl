@@ -188,7 +188,7 @@ EOF
         "camellia-128-cbc", "camellia-128-ecb",
         "camellia-192-cbc", "camellia-192-ecb",
         "camellia-256-cbc", "camellia-256-ecb",
-        "base64", "zlib", "brotli",
+        "base64", "zlib", "brotli", "zstd",
         "des", "des3", "desx", "idea", "seed", "rc4", "rc4-40",
         "rc2", "bf", "cast", "rc5",
         "des-ecb", "des-ede", "des-ede3",
@@ -209,6 +209,8 @@ EOF
             print "#ifdef ZLIB\n${str}#endif\n";
         } elsif ($cmd eq "brotli") {
             print "#ifdef BROTLI\n${str}#endif\n";
+        } elsif ($cmd eq "zstd") {
+            print "#ifdef ZSTD\n${str}#endif\n";
         } elsif (grep { $algo eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($algo) . "\n${str}#endif\n";
         } elsif (my $disabler = $cipher_disabler{$algo}) {

@@ -13,8 +13,11 @@ COMP_expand_block,
 COMP_zlib,
 COMP_brotli,
 COMP_brotli_oneshot,
+COMP_zstd,
+COMP_zstd_oneshot,
 BIO_f_zlib,
-BIO_f_brotli
+BIO_f_brotli,
+BIO_f_zstd
 - Compression support
 
 =head1 SYNOPSIS
@@ -36,9 +39,12 @@ BIO_f_brotli
  COMP_METHOD *COMP_zlib(void);
  COMP_METHOD *COMP_brotli(void);
  COMP_METHOD *COMP_brotli_oneshot(void);
+ COMP_METHOD *COMP_zstd(void);
+ COMP_METHOD *COMP_zstd_oneshot(void);
 
  const BIO_METHOD *BIO_f_zlib(void);
  const BIO_METHOD *BIO_f_brotli(void);
+ const BIO_METHOD *BIO_f_zstd(void);
 
 =head1 DESCRIPTION
 
@@ -78,9 +84,17 @@ COMP_brotli() returns a B<COMP_METHOD> for stream-based Brotli compression.
 
 COMP_brotli_oneshot() returns a B<COMP_METHOD> for one-shot Brotli compression.
 
+=item *
+
+COMP_zstd() returns a B<COMP_METHOD> for stream-based Zstandard compression.
+
+=item *
+
+COMP_zstd_oneshot() returns a B<COMP_METHOD> for one-shot Zstandard compression.
+
 =back
 
-BIO_f_zlib() and BIO_f_brotli() each return a B<BIO_METHOD> that may be used to
+BIO_f_zlib(), BIO_f_brotli() BIO_f_zstd() each return a B<BIO_METHOD> that may be used to
 create a B<BIO> via B<BIO_new> to read and write compressed files or streams.
 The functions are only available if the coresponding algorithm is compiled into
 the OpenSSL library.
@@ -98,6 +112,8 @@ ZLIB may be found at L<https://zlib.net>
 
 Brotli may be found at L<https://github.com/google/brotli>.
 
+Brotli may be found at L<https://github.com/facebook/zstd>.
+
 Compression of SSL/TLS records is not recommended, as it has been
 shown to lead to the CRIME attack L<https://en.wikipedia.org/wiki/CRIME>.
 It is disabled by default by may be enabled by clearing the
@@ -108,19 +124,21 @@ in draft-ietf-tls-certificate-compression
 L<https://www.ietf.org/id/draft-ietf-tls-certificate-compression-05.txt>.
 It may be disabled via the SSL_OP_NO_CERTIFICATE_COMPRESSION option.
 
-COMP_zlib() and COMP_brotli() are both stream-based compression methods.
+COMP_zlib(), COMP_brotli() and COMP_zstd() are stream-based compression methods.
 State is maintained between calls. If an error is returned, the stream is
 corrupted, and should be closed.
 
-COMP_zlib_oneshot() is not stream-based, it does not maintain state
-between calls. An error in one call does not future calls.
+COMP_brotli_oneshot() and COMP_zstd_oneshot() are not stream-based. These
+metods do not maintain state between calls. An error in one call does affect
+not future calls.
 
 =head1 RETURN VALUES
 
 COMP_CTX_new() returns a B<COMP_CTX> on success, or NULL on failure.
 
-COMP_CTX_get_method(), COMP_zlib(), COMP_brotli(), and COMP_brotli_oneshot()
-return a B<COMP_METHOD> on success, or NULL on failure.
+COMP_CTX_get_method(), COMP_zlib(), COMP_brotli(), COMP_brotli_oneshot(),
+COMP_zstd(), and COMP_zstd_oneshot() return a B<COMP_METHOD> on success,
+or NULL on failure.
 
 COMP_CTX_get_type() and COMP_get_type() return a NID value. On failure,
 NID_undef is returned.
@@ -132,7 +150,7 @@ bytes stored in the output buffer B<out>. This may be 0. On failure,
 COMP_get_name() returns a B<const char *> that must not be freed
 on success, or NULL on failure.
 
-BIO_f_zlib() and BIO_f_brotli() return a B<BIO_METHOD>.
+BIO_f_zlib(), BIO_f_brotli() and BIO_f_zstd() return a B<BIO_METHOD>.
 
 =head1 SEE ALSO
 
@@ -140,11 +158,11 @@ L<BIO_new(3)>
 
 =head1 HISTORY
 
-Brotli functions were added in OpenSSL 3.0.0.
+Brotli and Zstandard functions were added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
