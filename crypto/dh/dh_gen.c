@@ -81,9 +81,9 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
 
     /* Make sure 'ret' has the necessary elements */
-    if (!ret->params.p && ((ret->params.p = BN_new()) == NULL))
+    if (ret->params.p == NULL && ((ret->params.p = BN_new()) == NULL))
         goto err;
-    if (!ret->params.g && ((ret->params.g = BN_new()) == NULL))
+    if (ret->params.g == NULL && ((ret->params.g = BN_new()) == NULL))
         goto err;
 
     if (generator <= 1) {
