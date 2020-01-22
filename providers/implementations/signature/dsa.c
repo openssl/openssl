@@ -140,10 +140,10 @@ static int get_md_nid(const EVP_MD *md)
         { NID_sha256, OSSL_DIGEST_NAME_SHA256 },
     };
     size_t i;
-    int mdnid = -1;
+    int mdnid = NID_undef;
 
     if (md == NULL)
-        return -1;
+        goto end;
 
     for (i = 0; i < OSSL_NELEM(name_to_nid); i++) {
         if (EVP_MD_is_a(md, name_to_nid[i].ptr)) {
@@ -152,11 +152,10 @@ static int get_md_nid(const EVP_MD *md)
         }
     }
 
-    if (mdnid == -1) {
+    if (mdnid == NID_undef)
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-        return -1;
-    }
 
+ end:
     return mdnid;
 }
 
