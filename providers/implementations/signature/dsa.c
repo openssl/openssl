@@ -50,7 +50,6 @@ typedef struct {
     OPENSSL_CTX *libctx;
     DSA *dsa;
     size_t mdsize;
-    /* Should be big enough */
     char mdname[OSSL_MAX_NAME_SIZE];
     EVP_MD *md;
     EVP_MD_CTX *mdctx;

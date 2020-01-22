@@ -323,7 +323,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     const OSSL_PARAM *p;
-    /* Should be big enough */
     char mdname[OSSL_MAX_NAME_SIZE];
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
     char *str = mdname;
