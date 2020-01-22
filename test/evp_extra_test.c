@@ -1288,23 +1288,20 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
      */
     params = EVP_PKEY_CTX_settable_params(ctx);
     if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
-                            0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[2].key))
+        || !TEST_ptr(OSSL_PARAM_locate_const(params,
+                                             OSSL_SIGNATURE_PARAM_DIGEST_SIZE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(params,
+                                             OSSL_SIGNATURE_PARAM_DIGEST)))
         goto err;
 
-    /* Gettable params are the same as the settable ones */
     params = EVP_PKEY_CTX_gettable_params(ctx);
     if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key,
-                            OSSL_SIGNATURE_PARAM_DIGEST_SIZE), 0)
-            || !TEST_int_eq(strcmp(params[1].key, OSSL_SIGNATURE_PARAM_DIGEST),
-                            0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[2].key))
+        || !TEST_ptr(OSSL_PARAM_locate_const(params,
+                                             OSSL_SIGNATURE_PARAM_ALGORITHM_ID))
+        || !TEST_ptr(OSSL_PARAM_locate_const(params,
+                                             OSSL_SIGNATURE_PARAM_DIGEST_SIZE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(params,
+                                             OSSL_SIGNATURE_PARAM_DIGEST)))
         goto err;
 
     /*
