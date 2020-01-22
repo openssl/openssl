@@ -341,6 +341,7 @@ const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt)
     if (keymgmt->gettable_key_params == NULL)
         return NULL;
     return keymgmt->gettable_key_params();
+}
 
 int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *provkey)
 {
