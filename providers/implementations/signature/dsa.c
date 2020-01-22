@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include "internal/sizes.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
@@ -50,7 +51,7 @@ typedef struct {
     DSA *dsa;
     size_t mdsize;
     /* Should be big enough */
-    char mdname[80];
+    char mdname[OSSL_MAX_NAME_SIZE];
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
 } PROV_DSA_CTX;
