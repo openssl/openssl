@@ -288,4 +288,56 @@ gennocn() {
 	cert "$cert" "" -signkey "${key}.pem" -set_serial 1 -days -1 "$@"
 }
 
+genct() {
+    local OPTIND=1
+    local purpose=serverAuth
+
+    while getopts p: o
+    do
+        case $o in
+        p) purpose="$OPTARG";;
+        *) echo "Usage: $0 genct [-p EKU] cn keyname certname cakeyname cacertname ctlogkey" >&2
+           return 1;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
+    local cn=$1; shift
+    local key=$1; shift
+    local cert=$1; shift
+    local cakey=$1; shift
+    local ca=$1; shift
+    local logkey=$1; shift
+
+    exts=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n[alts]\n%s\n" \
+	    "subjectKeyIdentifier = hash" \
+	    "authorityKeyIdentifier = keyid, issuer" \
+	    "basicConstraints = CA:false" \
+	    "extendedKeyUsage = $purpose" \
+            "1.3.6.1.4.1.11129.2.4.3 = critical,ASN1:NULL"\
+	    "subjectAltName = @alts" "DNS=${cn}")
+    csr=$(req "$key" "CN = $cn") || return 1
+    echo "$csr" |
+	cert "$cert" "$exts" -CA "${ca}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}" "$@"
+    cat ${cert}.pem ${ca}.pem > ${cert}-chain.pem
+    go run github.com/google/certificate-transparency-go/ctutil/sctgen \
+       --log_private_key ${logkey}.pem \
+       --timestamp="2020-01-01T00:00:00Z" \
+       --cert_chain ${cert}-chain.pem \
+       --tls_out ${cert}.tlssct
+    rm ${cert}-chain.pem
+    filesize=$(wc -c <${cert}.tlssct)
+    exts=$(printf "%s\n%s\n%s\n%s\n%s%04X%04X%s\n%s\n[alts]\n%s\n" \
+	    "subjectKeyIdentifier = hash" \
+	    "authorityKeyIdentifier = keyid, issuer" \
+	    "basicConstraints = CA:false" \
+	    "extendedKeyUsage = $purpose" \
+	    "1.3.6.1.4.1.11129.2.4.2 = ASN1:FORMAT:HEX,OCT:" $((filesize+2)) $filesize `xxd -p ${cert}.tlssct | tr -d '\n'` \
+	    "subjectAltName = @alts" "DNS=${cn}")
+    echo "$csr" |
+	cert "$cert" "$exts" -CA "${ca}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}" "$@"
+}
+
 "$@"
