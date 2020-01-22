@@ -804,9 +804,9 @@ steps that are detailed in the following paragraphs.
 
 First, a certificate chain is built up starting from the supplied certificate
 and ending in a root CA.  It is an error if the whole chain cannot be
-built up.  The chain is built up by looking up the issuers certificate
-of the current certificate.  If a certificate is found which is its own
-issuer it is assumed to be the root CA.
+built up.  The chain is built up by looking up the certificate that
+signed (or issued) the certificate. It then repeats the process, until
+it gets to a certificate that is self-issued.
 
 The process of looking up the issuer's certificate itself involves a number
 of steps.  After all certificates whose subject name matches the issuer
@@ -836,9 +836,10 @@ previous versions of OpenSSL, a certificate with no trust settings is
 considered to be valid for all purposes.
 
 The fourth, and final, step is to check the validity of the certificate
-chain. The validity period is checked against the current system time
+chain. The validity period is checked against the system time
 and the C<notBefore> and C<notAfter> dates in the certificate. The certificate
-signatures are also checked at this point.
+signatures are also checked at this point. The B<-attime> flag may be
+used to specify a time other than "now."
 
 If all operations complete successfully then certificate is considered
 valid. If any operation fails then the certificate is not valid.
