@@ -93,8 +93,8 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     }
 
     /*
-     * Step(2) :If point tmp is at affinity then clear intermediate values and
-     * exit.Note: getting affine coordinates returns 0 if point is at infinity.
+     * Step(2) : If point tmp is at infinity then clear intermediate values and
+     * exit. Note: getting affine coordinates returns 0 if point is at infinity.
      * Step(3a) : Get x-coordinate of point x = tmp.x
      */
     if (!EC_POINT_get_affine_coordinates(group, tmp, x, NULL, ctx)) {
