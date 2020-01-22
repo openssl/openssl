@@ -323,4 +323,4 @@ $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/(srlg\s+)(%r[0-9]+),/$1$2,$2,/gm;
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

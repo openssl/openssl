@@ -1,6 +1,6 @@
 =pod
 
-=for openssl foreign manuals: atexit(3)
+=for openssl foreign manual atexit(3)
 
 =head1 NAME
 

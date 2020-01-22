@@ -3032,12 +3032,13 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                 const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
 
     if (meth == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_NULL_SSL_METHOD_PASSED);
+        SSLerr(0, SSL_R_NULL_SSL_METHOD_PASSED);
         return NULL;
     }
 
@@ -3045,12 +3046,19 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         return NULL;
 
     if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
+        SSLerr(0, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         goto err;
+
+    ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
 
     ret->method = meth;
     ret->min_proto_version = 0;
@@ -3063,7 +3071,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -3092,7 +3100,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 OSSL_default_cipher_list(), ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
+        SSLerr(0, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
     }
 
@@ -3101,11 +3109,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 
     if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
+        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
         goto err2;
     }
     if ((ret->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
+        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
         goto err2;
     }
 
@@ -3215,10 +3223,15 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     return ret;
  err:
-    SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+    SSLerr(0, ERR_R_MALLOC_FAILURE);
  err2:
     SSL_CTX_free(ret);
     return NULL;
+}
+
+SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+{
+    return SSL_CTX_new_with_libctx(NULL, NULL, meth);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
@@ -3293,6 +3306,8 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_secure_free(a->ext.secure);
 
     CRYPTO_THREAD_lock_free(a->lock);
+
+    OPENSSL_free(a->propq);
 
     OPENSSL_free(a);
 }

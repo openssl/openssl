@@ -738,6 +738,8 @@ typedef struct ssl_ctx_ext_secure_st {
 } SSL_CTX_EXT_SECURE;
 
 struct ssl_ctx_st {
+    OPENSSL_CTX *libctx;
+
     const SSL_METHOD *method;
     STACK_OF(SSL_CIPHER) *cipher_list;
     /* same as above but sorted for lookup */
@@ -1073,6 +1075,8 @@ struct ssl_ctx_st {
     /* Callback for SSL async handling */
     SSL_async_callback_fn async_cb;
     void *async_cb_arg;
+
+    char *propq;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;

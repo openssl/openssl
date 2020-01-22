@@ -1524,6 +1524,8 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+__owur SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                        const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);

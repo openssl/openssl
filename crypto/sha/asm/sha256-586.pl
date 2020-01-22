@@ -1292,4 +1292,4 @@ sub bodyx_00_15 () {			# +10%
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

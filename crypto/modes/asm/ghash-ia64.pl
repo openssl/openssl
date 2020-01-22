@@ -467,4 +467,4 @@ $code =~ s/mux1(\s+)\S+\@rev/nop.i$1 0x0/gm      if ($big_endian);
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

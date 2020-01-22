@@ -89,7 +89,7 @@ See the individual functions above.
 
 =head1 SEE ALSO
 
-L<OSSL_CMP_CTX_new(3)>, L<ossl_cmp_certreq_new(3)>
+L<OSSL_CMP_CTX_new(3)>, L<ossl_cmp_certReq_new(3)>
 
 =head1 HISTORY
 

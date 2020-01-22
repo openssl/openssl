@@ -116,14 +116,14 @@ hashed names for all files with F<.pem> suffix in a given directory.
 
 B<X509_LOOKUP_store> is a method that allows access to any store of
 certificates and CRLs through any loader supported by
-L<OSSL_STORE(3)>.
+L<ossl_store(7)>.
 It works with the help of URIs, which can be direct references to
 certificates or CRLs, but can also be references to catalogues of such
 objects (that behave like directories).
 
 This method overlaps the L</File Method> and L</Hashed Directory Method>
 because of the 'file:' scheme loader.
-It does no caching of its own, but can use a caching L<OSSL_STORE(3)>
+It does no caching of its own, but can use a caching L<ossl_store(7)>
 loader, and therefore depends on the loader's capability.
 
 =head1 RETURN VALUES
@@ -141,7 +141,7 @@ L<X509_STORE_load_locations(3)>,
 L<X509_store_add_lookup(3)>,
 L<SSL_CTX_load_verify_locations(3)>,
 L<X509_LOOKUP_meth_new(3)>,
-L<OSSL_STORE(3)>
+L<ossl_store(7)>
 
 =head1 HISTORY
 

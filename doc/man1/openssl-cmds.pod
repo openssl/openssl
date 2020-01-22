@@ -55,7 +55,7 @@ version,
 x509
 - OpenSSL application commands
 
-=for comment foreign manuals: apropos(1)
+=for openssl foreign manual apropos(1)
 
 =head1 SYNOPSIS
 
@@ -135,6 +135,8 @@ L<openssl-version(1)>,
 L<openssl-x509(1)>,
 
 =head1 HISTORY
+
+=for openssl foreign manual apropos(1)
 
 Initially, the manual page entry for the C<openssl I<cmd>> command used
 to be available at I<cmd>(1). Later, the alias B<openssl-I<cmd>>(1) was

@@ -35,7 +35,6 @@ is still owned by the B<PKCS12_SAFEBAG> in which it resides.
 =head1 SEE ALSO
 
 L<PKCS12_get_friendlyname(3)>,
-L<PKCS12_get_localkeyid(3)>,
 L<PKCS12_add_friendlyname_asc(3)>
 
 =head1 COPYRIGHT
