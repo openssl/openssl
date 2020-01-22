@@ -41,8 +41,8 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         goto err;
     }
 
-    if (!EVP_PKEY_decrypt_init(pctx)
-        || !EVP_PKEY_decrypt(pctx, NULL, &keylen, ek, ekl))
+    if (EVP_PKEY_decrypt_init(pctx) <= 0
+        || EVP_PKEY_decrypt(pctx, NULL, &keylen, ek, ekl) <= 0)
         goto err;
 
     if ((key = OPENSSL_malloc(keylen)) == NULL) {
@@ -50,7 +50,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         goto err;
     }
 
-    if (!EVP_PKEY_decrypt(pctx, key, &keylen, ek, ekl))
+    if (EVP_PKEY_decrypt(pctx, key, &keylen, ek, ekl) <= 0)
         goto err;
 
     if (!EVP_CIPHER_CTX_set_key_length(ctx, keylen)

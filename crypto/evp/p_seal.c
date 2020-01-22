@@ -50,8 +50,8 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
             goto err;
         }
 
-        if (!EVP_PKEY_encrypt_init(pctx)
-            || !EVP_PKEY_encrypt(pctx, ek[i], &keylen, key, keylen))
+        if (EVP_PKEY_encrypt_init(pctx) <= 0
+            || EVP_PKEY_encrypt(pctx, ek[i], &keylen, key, keylen) <= 0)
             goto err;
         ekl[i] = (int)keylen;
         EVP_PKEY_CTX_free(pctx);
