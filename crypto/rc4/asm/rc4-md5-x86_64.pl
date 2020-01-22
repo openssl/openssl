@@ -660,4 +660,4 @@ $code =~ s/#rc4#//gm	if ($rc4);
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";
