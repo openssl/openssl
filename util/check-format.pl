@@ -12,8 +12,8 @@
 # - check formatting of C source according to OpenSSL coding style
 #
 # usage:
-#   check-format.pl [-l|--sloppy-len] [-s|--sloppy-spc]
-#                   [-c|--sloppy-cmt] [-m|--sloppy-macro]
+#   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
+#                   [-s|--sloppy-spc] [-c|--sloppy-cmt] [-m|--sloppy-macro]
 #                   [-h|--sloppy-hang] [-1|--1-stmt]
 #                   <files>
 #
@@ -23,17 +23,18 @@
 # Still it should be useful for detecting most typical glitches.
 #
 # options:
-#  -l | --sloppy-len   increases accepted max line length from 80 to 84
-#  -s | --sloppy-spc   disables reporting whitespace nits
-#  -c | --sloppy-cmt   do not check indentation of comments
+#  -l | --sloppy-len   increase accepted max line length from 80 to 84
+#  -l | --sloppy-bodylen do not report function body length > 200
+#  -s | --sloppy-spc   do not report whitespace nits
+#  -c | --sloppy-cmt   do not report indentation of comments
 #                      Otherwise for each multi-line comment the indentation of
 #                      its lines is checked for consistency. For each comment
 #                      that does not begin to the right of normal code its
 #                      indentation must be as for normal code, while in case it
 #                      also has no normal code to its right it is considered to
 #                      refer to the following line and may be indented equally.
-#  -m | --sloppy-macro allows missing extra indentation of macro bodies
-#  -h | --sloppy-hang  when checking hanging indentation, suppresses reports for
+#  -m | --sloppy-macro allow missing extra indentation of macro bodies
+#  -h | --sloppy-hang  when checking hanging indentation, do not report
 #                      * same indentation as on line before
 #                      * same indentation as non-hanging indent level
 #                      * indentation moved left (not beyond non-hanging indent)
@@ -85,12 +86,14 @@ use strict;
 use POSIX;
 
 use constant INDENT_LEVEL => 4;
-use constant MAX_LENGTH => 80;
+use constant MAX_LINE_LENGTH => 80;
+use constant MAX_BODY_LENGTH => 200;
 
 # global variables @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 # command-line options
-my $max_length = MAX_LENGTH;
+my $max_length = MAX_LINE_LENGTH;
+my $sloppy_bodylen = 0;
 my $sloppy_SPC = 0;
 my $sloppy_hang = 0;
 my $sloppy_cmt = 0;
@@ -101,6 +104,8 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     my $arg = $1; shift;
     if ($arg =~ m/^(l|-sloppy-len)$/) {
         $max_length += INDENT_LEVEL;
+    } elsif ($arg =~ m/^(b|-sloppy-bodylen)$/) {
+        $sloppy_bodylen = 1;
     } elsif ($arg =~ m/^(s|-sloppy-spc)$/) {
         $sloppy_SPC = 1;
     } elsif ($arg =~ m/^(c|-sloppy-cmt)$/) {
@@ -112,7 +117,7 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
     } elsif ($arg =~ m/^(1|-1-stmt)$/) {
         $extended_1_stmt = 1;
     } else {
-        die("unknown option: $arg");
+        die("unknown option: -$arg");
     }
 }
 
@@ -132,7 +137,11 @@ my $count;                 # -1 or number of leading whitespace characters (exce
 my $count_before;          # number of leading whitespace characters (except line ending chars) in $contents_before
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
+my $line_body_start;       # number of line where last function body started, or 0
+my $line_function_start;   # number of line where last function definition started, used if $line_body_start != 0
+my $last_function_header;  # header containing name of last function defined, used if $line_function_start != 0
 my $line_opening_brace;    # number of previous line with opening brace after do/while/for, optionally for if/else
+
 my $keyword_opening_brace; # name of previous keyword, used if $line_opening_brace != 0
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $block_indent;          # currently required normal indentation at block/statement level
@@ -187,6 +196,7 @@ sub reset_file_state {
     $block_indent = 0;
     $ifdef__cplusplus = 0;
     $in_multiline_string = 0;
+    $line_body_start = 0;
     $line_opening_brace = 0;
     $in_typedecl = 0;
     $in_directive = 0;
@@ -322,7 +332,8 @@ sub check_indent { # used for lines outside multi-line string literals
 
         # do not report if contents have been shifted left of nested expr indent (but not as far as stmt indent)
         # apparently aligned to the right in order to fit within line length limit
-        return if $stmt_indent < $count && $count < $expr_indent && length($contents) == MAX_LENGTH + length("\n");
+        return if $stmt_indent < $count && $count < $expr_indent &&
+            length($contents) == MAX_LINE_LENGTH + length("\n");
     }
 
     report("indent = $count != $ref_indent for $ref_desc".
@@ -571,7 +582,7 @@ while (<>) { # loop over all lines of all input files
           && length($1) < $max_length)
         # this allows over-long trailing string literals with beginning col before $max_length
         ) {
-        report("line length = $len > ".MAX_LENGTH);
+        report("line length = $len > ".MAX_LINE_LENGTH);
     }
 
     # handle C++ / C99 - style end-of-line comments
@@ -748,6 +759,13 @@ while (<>) { # loop over all lines of all input files
         if (my ($head, $before, $tail) = m/^([\s@]*([^{}]*)\})[\s@]*(.*)$/) { # leading closing '}', but possibly
                                                                               # with non-whitespace non-'{' before
             report("code after '}'") unless $tail eq "" || $tail =~ m/(else|while|OSSL_TRACE_END)(\W|$)/;
+            my $outermost_level = @nested_block_indents == 1 && @nested_block_indents[0] == 0;
+            if (!$sloppy_bodylen && $outermost_level && $line_body_start != 0) {
+                my $body_len = $line - $line_body_start - 1;
+                report_flexibly($line_function_start, "function body length = $body_len > ".MAX_BODY_LENGTH." lines",
+                    $last_function_header) if $body_len > MAX_BODY_LENGTH;
+                $line_body_start = 0;
+            }
             if ($before ne "") { # non-whitespace non-'{' before '}'
                 report("code before '}'");
             } else { # leading '}', any preceding blinded comment must not be matched
@@ -937,14 +955,20 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
+    # remember line number and header containing name of last function defined for reports w.r.t. MAX_BODY_LENGTH
+    if ($outermost_level && m/(\w+)\s*\(/ && $1 ne "STACK_OF") {
+        $line_function_start = $line;
+        $last_function_header = $contents;
+    }
+
     # special checks for last, typically trailing opening brace '{' in line
     if (my ($head, $tail) = m/^(.*)\{(.*)$/) { # match last .. '{'
         if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) {
-                if (!$assignment_start && !$bak_in_expr &&
+                if (!$assignment_start && !$bak_in_expr) {
                     # at end of function definition header (or stmt or var definition)
-                    $head ne "") {
-                    report("'{' not at beginning");
+                    report("'{' not at beginning") if $head ne "";
+                    $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line;
                 }
             } else {
                 $line_opening_brace = $line if $keyword_opening_brace =~ m/do|while|for/;
