@@ -165,6 +165,8 @@ extern "C" {
 # define BIO_CTRL_SET_INDENT                    80
 # define BIO_CTRL_GET_INDENT                    81
 
+#define BIO_CTRL_DGRAM_SAVE_RECORD_TYPE        82
+
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
      BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL)

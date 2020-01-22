@@ -1203,6 +1203,19 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                 && type != SSL3_RT_APPLICATION_DATA) {
                 BIO_set_ktls_ctrl_msg(s->wbio, type);
             }
+
+            /*
+             * As per RFC 6083, section 4.4, all DTLS messages of the ChangeCipherSpec, Alert, or Handshake
+             * MUST be transported on stream 0 and for ApplicationData, there is a provision to use multiple
+             * streams. When custom SCTP implementation (not lksctp) is used then custom BIO METHODS are
+             * registered to OpenSSL. We can save the record_type here and based on the whether it is
+             * RT_APPLICATION_DATA or RT_HANDSHAKE, stream_id can be selected during the below write method.
+             */
+#ifndef OPENSSL_NO_SCTP
+            if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
+                BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SAVE_RECORD_TYPE, type, NULL);
+            }
+#endif
             /* TODO(size_t): Convert this call */
             i = BIO_write(s->wbio, (char *)
                           &(SSL3_BUFFER_get_buf(&wb[currbuf])

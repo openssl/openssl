@@ -133,6 +133,7 @@ typedef struct bio_dgram_sctp_data_st {
     int ccs_sent;
     int save_shutdown;
     int peer_auth_tested;
+    int record_type;
 } bio_dgram_sctp_data;
 # endif
 
@@ -1571,6 +1572,9 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
         return dgram_sctp_wait_for_dry(b);
     case BIO_CTRL_DGRAM_SCTP_MSG_WAITING:
         return dgram_sctp_msg_waiting(b);
+    case BIO_CTRL_DGRAM_SAVE_RECORD_TYPE:
+        data->record_type = (int)num;
+        break;
 
     default:
         /*
