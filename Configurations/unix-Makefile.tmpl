@@ -681,7 +681,7 @@ install_dev: install_runtime_libs
 	@install oqs/lib/liboqs.a $(DESTDIR)$(libdir)
 ifneq (,$(wildcard oqs/lib/liboqs.so.0.0.0))
 	@install oqs/lib/liboqs.so.0.0.0 $(DESTDIR)$(libdir)
-	@cd $(DESTDIR)$(libdir) && ln -sf liboqs.so.0.0.0 liboqs.so && cd -
+	@cd $(DESTDIR)$(libdir) && ln -sf liboqs.so.0.0.0 liboqs.so && ln -sf liboqs.so.0.0.0 liboqs.so.0 && cd -
 endif
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/liboqs.pc
 
