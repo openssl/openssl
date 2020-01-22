@@ -164,35 +164,48 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
                                       const char *props, void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    EVP_MD *md = EVP_MD_fetch(pdsactx->libctx, mdname, props);
-    int md_nid = get_md_nid(md);
+    EVP_MD *md;
     size_t algorithmidentifier_len = 0;
-    const unsigned char *algorithmidentifier =
-        dsa_algorithmidentifier_encoding(md_nid, &algorithmidentifier_len);
+    const unsigned char *algorithmidentifier;
 
     EVP_MD_CTX_free(pdsactx->mdctx);
     EVP_MD_free(pdsactx->md);
     pdsactx->mdctx = NULL;
+    pdsactx->mdsize = 0;
     pdsactx->md = NULL;
 
-    if (md == NULL || algorithmidentifier == NULL)
-        return 0;
     if (!dsa_signature_init(vpdsactx, vdsa))
         return 0;
+
+    md = EVP_MD_fetch(pdsactx->libctx, mdname, props);
+    algorithmidentifier =
+        dsa_algorithmidentifier_encoding(get_md_nid(md),
+                                         &algorithmidentifier_len);
+
+    if (algorithmidentifier == NULL)
+        goto error;
 
     pdsactx->md = md;
     pdsactx->mdsize = EVP_MD_size(md);
     pdsactx->mdctx = EVP_MD_CTX_new();
     if (pdsactx->mdctx == NULL)
-        return 0;
+        goto error;
 
     memcpy(pdsactx->aid, algorithmidentifier, algorithmidentifier_len);
     pdsactx->aid_len = algorithmidentifier_len;
 
     if (!EVP_DigestInit_ex(pdsactx->mdctx, md, NULL))
-        return 0;
+        goto error;
 
     return 1;
+
+ error:
+    EVP_MD_CTX_free(pdsactx->mdctx);
+    EVP_MD_free(pdsactx->md);
+    pdsactx->mdctx = NULL;
+    pdsactx->mdsize = 0;
+    pdsactx->md = NULL;
+    return 0;
 }
 
 int dsa_digest_signverify_update(void *vpdsactx, const unsigned char *data,
