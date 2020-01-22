@@ -132,7 +132,7 @@ static int test_fromdata_rsa(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 4))
         goto err;
 
-    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk)))
+    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
         goto err;
 
     if (!TEST_true(EVP_PKEY_check(key_ctx))
