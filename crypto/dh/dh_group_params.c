@@ -34,7 +34,8 @@ static DH *dh_param_init(const BIGNUM *p, int32_t nbits)
     dh->params.p = (BIGNUM *)p;
     dh->params.q = (BIGNUM *)q;
     dh->params.g = (BIGNUM *)&_bignum_const_2;
-    dh->length = nbits; /* Private key length = 2 * s */
+    /* Private key length = 2 * max_target_security_strength */
+    dh->length = nbits;
     dh->dirty_cnt++;
     return dh;
 }
