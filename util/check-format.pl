@@ -53,7 +53,7 @@
 #   {
 #       stmt;
 #   }
-#   except within if .. else constructs where some branch contains more than one
+#   except within if ... else constructs where some branch contains more than one
 #   statement. Since the exception is hard to recognize when such branches occur
 #   after the current position (such that false positives would be reported)
 #   the tool by checks for this rule by defaul only for do/while/for bodies.
@@ -146,7 +146,7 @@ my $keyword_opening_brace; # name of previous keyword, used if $line_opening_bra
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $block_indent;          # currently required normal indentation at block/statement level
 my $hanging_offset;        # extra indent, which may be nested, for just one hanging statement or expr or typedef
-my @in_do_hanging_offsets; # stack of hanging offsets for nested 'do' .. 'while'
+my @in_do_hanging_offsets; # stack of hanging offsets for nested 'do' ... 'while'
 my @in_if_hanging_offsets; # stack of hanging offsets for nested 'if' (but not its potential 'else' branch)
 my $if_maybe_terminated;   # 'if' ends and $hanging_offset should be reset unless the next line starts with 'else'
 my @nested_block_indents;  # stack of indentations at block/statement level, needed due to hanging statements
@@ -154,7 +154,7 @@ my @nested_hanging_offsets;# stack of nested $hanging_offset values, in parallel
 my @nested_in_typedecl;    # stack of nested $in_typedecl values, partly in parallel to @nested_block_indents
 my @nested_indents;        # stack of hanging indents due to parentheses, braces, brackets, or conditionals
 my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in parallel to @nested_indents
-my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' .. ':')
+my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' ... ':')
 my $expr_indent;           # resulting hanging indent within (multi-line) expressions including type exprs, else 0
 my $hanging_symbol;        # character ('(', '{', '[', not: '?') responsible for $expr_indent, if $expr_indent != 0
 my $in_expr;               # in expression after if/while/for/switch/return/enum/LHS of assignment
@@ -576,7 +576,7 @@ while (<>) { # loop over all lines of all input files
 
     # check for over-long lines,
     # while allowing trailing (also multi-line) string literals to go past $max_length
-    my $len = length; # total line length (without trailing \n)
+    my $len = length; # total line length (without trailing '\n')
     if ($len > $max_length &&
         !(m/^(.*)"[^"]*"\s*[\)\}\]]*[,;]?\s*$/ # string literal terminated by '"' (or '\'), then maybe )}],;
           && length($1) < $max_length)
@@ -776,6 +776,15 @@ while (<>) { # loop over all lines of all input files
                 # in effect $local_offset = -INDENT_LEVEL relative to $block_indent + $hanging_offset values before
             }
         }
+
+        # handle opening brace '{' after if/else/while/for/switch/do on line before
+        if ($hanging_offset > 0 && m/^[\s@]*{/ && # leading opening '{'
+            $line_before > 0 &&
+            $contents_before_ =~ m/(^|^.*\W)(if|else|while|for|switch|do)(\W.*$|$)/) {
+            $keyword_opening_brace = $1;
+            $hanging_offset -= INDENT_LEVEL; # cancel newly hanging_offset
+        }
+
         if (m/^[\s@]*(case|default)(\W|$)/) { # leading 'case' or 'default'
             $local_offset = -INDENT_LEVEL;
         } else {
@@ -867,7 +876,7 @@ while (<>) { # loop over all lines of all input files
         if ($mid eq "while" && @in_do_hanging_offsets != 0) {
             $hanging_offset = pop @in_do_hanging_offsets;
         } else {
-            $hanging_offset += INDENT_LEVEL;
+            $hanging_offset += INDENT_LEVEL; # tentatively set hanging_offset, may be canceled by following '{'
         }
     }
 
@@ -878,10 +887,10 @@ while (<>) { # loop over all lines of all input files
         report("code after '$mid'" ) if $tail =~ m/[^\s\@{]/# trailing non-whitespace non-comment non-'{' (non-'\')
                                                     && !($mid eq "else" && $tail =~ m/[\s@]*if(\W|$)/);
         if ($mid eq "do") { # workarounds for code before 'do'
-            if ($head =~ m/(^|^.*\W)(else)(\W.*$|$)/) { # 'else' .. 'do'
-                $hanging_offset += INDENT_LEVEL;
+            if ($head =~ m/(^|^.*\W)(else)(\W.*$|$)/) { # 'else' ... 'do'
+                $hanging_offset += INDENT_LEVEL; # tentatively set hanging_offset, may be canceled by following '{'
             }
-            if ($head =~ m/;/) { # terminator ';' .. 'do'
+            if ($head =~ m/;/) { # terminator ';' ... 'do'
                 @in_if_hanging_offsets = (); # note there is nothing like "unclosed 'if'"
                 $hanging_offset = 0;
             }
@@ -896,7 +905,7 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
-    # set $hanging_offset and $in_typedecl for type declaration
+    # set $in_typedecl and potentially $hanging_offset for type declaration
     if (!$in_expr && @nested_indents == 0 && # not in expression
         m/(^|^.*\W)(typedef|struct|union|enum)(\W.*|$)$/ &&
         parens_balance($1) == 0) { # not in newly started expression
@@ -947,7 +956,7 @@ while (<>) { # loop over all lines of all input files
     # also if $in_expr is 0: in statement/type declaration/variable definition/function header
     $expr_indent = 0;
     for (my $i = -1; $i >= -@nested_symbols; $i--) {
-        if (@nested_symbols[$i] ne "?") { # conditionals '?' .. ':' are treated specially in check_indent()
+        if (@nested_symbols[$i] ne "?") { # conditionals '?' ... ':' are treated specially in check_indent()
             $hanging_symbol = @nested_symbols[$i];
             $expr_indent = $nested_indents[$i];
             # $expr_indent is guaranteed to be != 0 unless @nested_indents contains just outer conditionals
@@ -962,7 +971,7 @@ while (<>) { # loop over all lines of all input files
     }
 
     # special checks for last, typically trailing opening brace '{' in line
-    if (my ($head, $tail) = m/^(.*)\{(.*)$/) { # match last .. '{'
+    if (my ($head, $tail) = m/^(.*)\{(.*)$/) { # match last ... '{'
         if ($in_directive == 0 && !$in_expr && $in_typedecl == 0) {
             if ($outermost_level) {
                 if (!$assignment_start && !$bak_in_expr) {
@@ -976,7 +985,7 @@ while (<>) { # loop over all lines of all input files
                 $line_opening_brace = $line if $keyword_opening_brace =~ m/if|else/ && $extended_1_stmt &&
                 # TODO prevent false positives for if/else where braces around single-statement branches
                 # should be avoided but only if all branches have just single statements
-                # The following helps detecting the exception when handling multiple 'if .. else' branches:
+                # The following helps detecting the exception when handling multiple 'if ... else' branches:
                     !($keyword_opening_brace eq "else" && $line_opening_brace < $line_before2);
             }
             report("code after '{'") if $tail=~ m/[^\s\@]/ && # trailing non-whitespace non-comment (non-'\')
@@ -984,14 +993,51 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
-    # special checks for missing brace before or after 'else'
+    # check for opening brace after if/while/for/switch/do not on same line
+    # note that "no '{' on same line after '} else'" is handled further below
+    if (/^[\s@]*{/ && # leading '{'
+        $line_before > 0 &&
+        (my ($head, $mid, $tail) = ($contents_before_ =~ m/(^|^.*\W)(if|while|for|switch|do)(\W.*$|$)/))) {
+        my $brace_after  = $tail =~ /^[\s@]*{/; # any whitespace or comments then '{'
+        report("'{' not on same line as preceding '$mid'") if !$brace_after;
+    }
+    # check for closing brace on line before 'else' not followed by leading '{'
+    elsif (my ($head, $tail) = m/(^|^.*\W)else(\W.*$|$)/) {
+        if (parens_balance($tail) == 0 &&  # avoid false positive due to unfinished expr on current line
+            !($tail =~ m/{/) && # after 'else' no '{' on same line
+            !($head =~ m/}[\s@]*$/) && # not: '}' then any whitespace or comments before 'else'
+            $line_before > 0 && $contents_before_ =~ /}[\s@]*$/) { # trailing '}' on line before
+            report("no '{' after '} else'");
+        }
+    }
+
+    # check for closing brace before 'while' not on same line
+    if (my ($head, $tail) = m/(^|^.*\W)while(\W.*$|$)/) {
+        my $brace_before = $head =~ m/}[\s@]*$/; # '}' then any whitespace or comments
+        # possibly 'if (...)' (with potentially inner '(' and ')') then any whitespace or comments then '{'
+        if (!$brace_before &&
+            # does not work here: @in_do_hanging_offsets != 0 && #'while' terminates loop
+            parens_balance($tail) == 0 &&  # avoid false positive due to unfinished expr on current line
+            $tail =~ /;/ && # 'while' terminates loop (by ';')
+            $line_before > 0 &&
+            $contents_before_ =~ /}[\s@]*$/) { # on line before: '}' then any whitespace or comments
+                report("'while' not on same line as preceding '}'");
+            }
+    }
+
+    # check for missing brace on same line before or after 'else'
     if (my ($head, $tail) = m/(^|^.*\W)else(\W.*$|$)/) {
-        my $brace_before = $head =~ /}\s*$/; # '}' then any whitespace
-        my $brace_after  = $tail =~ /^\s*if\s*\(.*\)\s*{|\s*{/;
-        # possibly 'if (...)' (with potentially inner '(' and ')') then any whitespace then '{'
-        if (parens_balance($tail) == 0) { # else avoid false positive due to unfinished expr on current line
-            report("no '{' after '} else'") if $brace_before && !$brace_after;
-            report("no '}' before 'else ... {'") if !$brace_before && $brace_after;
+        my $brace_before = $head =~ /}[\s@]*$/; # '}' then any whitespace or comments
+        my $brace_after  = $tail =~ /^[\s@]*if[\s@]*\(.*\)[\s@]*{|[\s@]*{/;
+        # possibly 'if (...)' (with potentially inner '(' and ')') then any whitespace or comments then '{'
+        if (!$brace_before) {
+            if ($line_before > 0 && $contents_before_ =~ /}[\s@]*$/) {
+                report("'else' not on same line as preceding '}'");
+            } elsif (parens_balance($tail) == 0) { # avoid false positive due to unfinished expr on current line
+                report("no '}' on same line before 'else ... {'") if $brace_after;
+            }
+        } elsif (parens_balance($tail) == 0) { # avoid false positive due to unfinished expr on current line
+            report("no '{' on same line after '} else'") if $brace_before && !$brace_after;
         }
     }
 
@@ -1049,10 +1095,10 @@ while (<>) { # loop over all lines of all input files
         # report unclosed expression-level nesting
         check_nested_nonblock_indents("expr at EOF"); # also adapts @nested_block_indents
 
-        # sanity-check balance of block-level { .. } via final $block_indent at end of file
+        # sanity-check balance of block-level { ... } via final $block_indent at end of file
         report_flexibly($line, +@nested_block_indents." unclosed '{'", "(EOF)\n") if @nested_block_indents != 0;
 
-        # sanity-check balance of #if .. #endif via final preprocessor directive indent at end of file
+        # sanity-check balance of #if ... #endif via final preprocessor directive indent at end of file
         report_flexibly($line, "$directive_nesting unclosed '#if'", "(EOF)\n") if $directive_nesting != 0;
 
         reset_file_state();

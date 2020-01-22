@@ -104,9 +104,11 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
        s. e_member) /*@ space after '.', reported unless sloppy-spc */
          xx = a + b /*@ extra single-statement indent off by 1 */
                + 0; /*@ two times extra single-statement indent off by 3 */
-    if (a ++) {     /*@ space before postfix '++', reported unless sloppy-spc */
+    if (a ++)       /*@ space before postfix '++', reported unless sloppy-spc */
+    {               /*@ {' not on same line as preceding 'if' */
         c;          /*@0 single stmt in braces, reported on 1-stmt */
-    }else {         /*@ no space after '}', reported unless sloppy-spc */
+    } else          /*@ no '{' on same line after '} else' */
+      {             /*@ statement indent off by 2 */
         d;          /*@0 single stmt in braces, reported on 1-stmt */
           }         /*@ statement indent off by 6 */
     if (1) f(a,     /*@ (non-brace) code after end of 'if' condition */
@@ -117,7 +119,8 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     do{             /*@ no space before '{', reported unless sloppy-spc */
         f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
            4);      /*@0 false negative: should report single stmt in braces */
-    } while (a+ 0); /*@ no space before '+', reported unless sloppy-spc */
+    }               /*@0 'while' not on same line as preceding '}' */
+    while (a+ 0);   /*@2 no space before '+', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
     case(2):        /*@ no space after 'case', reported unless sloppy-spc */

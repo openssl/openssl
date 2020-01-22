@@ -91,10 +91,10 @@ int f(void) /*
         while (2);
 
     if (1)
-        {
-            c;
-            d;
-        }
+    { /*@ brace after 'if' not on same line just to construct case */
+        c;
+        d;
+    }
     /* this comment is correctly indented if it refers to the following line */
     d;
 
@@ -134,9 +134,9 @@ int f()
     c;
     if (1)
         if (2)
-            {
-                c;
-            }
+        { /*@ brace after 'if' not on same line just to construct case */
+            c;
+        }
     e;
     const usign = {
                    0xDF,
