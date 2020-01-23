@@ -648,7 +648,7 @@ by the client in binary mode.
 
 {- $OpenSSL::safe::opt_v_item -}
 
-If the server requests a client certificate, than
+If the server requests a client certificate, then
 verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
 
