@@ -280,7 +280,7 @@ static void aes_cbc_hmac_sha1_freectx(void *vctx)
     PROV_AES_HMAC_SHA1_CTX *ctx = (PROV_AES_HMAC_SHA1_CTX *)vctx;
 
     if (ctx != NULL)
-        OPENSSL_clear_free(ctx, sizeof(ctx));
+        OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
@@ -301,7 +301,7 @@ static void aes_cbc_hmac_sha256_freectx(void *vctx)
     PROV_AES_HMAC_SHA256_CTX *ctx = (PROV_AES_HMAC_SHA256_CTX *)vctx;
 
     if (ctx != NULL)
-        OPENSSL_clear_free(ctx, sizeof(ctx));
+        OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)               \
