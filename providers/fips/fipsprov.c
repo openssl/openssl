@@ -26,6 +26,7 @@
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/nelem.h"
+#include "internal/param_build.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -125,65 +126,80 @@ static OSSL_PARAM core_params[] =
 };
 
 /*
- * This routine is currently necessary as bn params are currently processed
- * using BN_native2bn when raw data is received. This means we need to do
- * magic to reverse the order of the bytes to match native format.
- * The array of hexdata is to get around compilers that dont like
+ * Convert a string into a bignumber.
+ * The array of hex_data is used to get around compilers that dont like
  * strings longer than 509 bytes,
  */
-static int rawnative_fromhex(const char *hex_data[],
-                             unsigned char **native, size_t *nativelen)
+static int hextobn(const char *hex_data[], BIGNUM **bn)
 {
     int ret = 0;
-    unsigned char *data = NULL;
-    BIGNUM *bn = NULL;
-    int i, slen, datalen, sz;
+    int i, slen;
     char *str = NULL;
 
+    /* Get the total length of the strings */
     for (slen = 0, i = 0; hex_data[i] != NULL; ++i)
         slen += strlen(hex_data[i]);
+
+    /* Add 1 for the string terminator */
     str = OPENSSL_zalloc(slen + 1);
     if (str == NULL)
         return 0;
+
+    /* join the strings together into 1 buffer */
     for (i = 0; hex_data[i] != NULL; ++i)
         strcat(str, hex_data[i]);
 
-    if (BN_hex2bn(&bn, str) <= 0)
-        return 0;
-
-    datalen = slen / 2;
-    data = (unsigned char *)str; /* reuse the str buffer */
-
-    sz = BN_bn2nativepad(bn, data, datalen);
-    if (sz <= 0)
+    if (BN_hex2bn(bn, str) <= 0)
         goto err;
     ret = 1;
-    *native = data;
-    *nativelen = datalen;
-    data = NULL; /* so it does not get freed */
 err:
-    BN_free(bn);
-    OPENSSL_free(data);
+    OPENSSL_free(str);
     return ret;
 }
 
-/* TODO(3.0): To be removed */
-static int dummy_evp_call(void *provctx)
+static int hextobin(const char *hex_data[], unsigned char **out, size_t *len)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
-    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
-    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
+    int ret = 0, sz;
+    BIGNUM *bn = NULL;
+    unsigned char *buf = NULL;
+
+    if (!hextobn(hex_data, &bn))
+        return 0;
+    sz = BN_num_bytes(bn);
+    buf = OPENSSL_zalloc(sz);
+    if (buf == NULL)
+        goto err;
+    if (BN_bn2binpad(bn, buf, sz) <= 0)
+        goto err;
+
+    *out = buf;
+    *len = sz;
+    buf = NULL; /* Set to NULL so it is not freed */
+    ret = 1;
+err:
+    OPENSSL_free(buf);
+    BN_free(bn);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DSA
+static int dsa_key_signature_test(OPENSSL_CTX *libctx)
+{
+    int ret = 0;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    BIGNUM *pub = NULL, *priv = NULL;
+    OSSL_PARAM *params = NULL, *params_sig = NULL;
+    OSSL_PARAM_BLD bld;
     EVP_PKEY_CTX *sctx = NULL, *kctx = NULL;
     EVP_PKEY *pkey = NULL;
-    OSSL_PARAM *p;
-    OSSL_PARAM params[16];
     unsigned char sig[64];
-    size_t siglen, sigdgstlen;
-    unsigned char *dsa_p = NULL, *dsa_q = NULL, *dsa_g = NULL;
-    unsigned char *dsa_pub = NULL, *dsa_priv = NULL;
-    size_t dsa_p_len, dsa_q_len, dsa_g_len, dsa_pub_len, dsa_priv_len;
+    size_t siglen;
 
+    static const unsigned char dgst[SHA256_DIGEST_LENGTH] = {
+        0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
+        0x48, 0xa1, 0xd6, 0x5d, 0xfc, 0x2d, 0x4b, 0x1f, 0xa3, 0xd6, 0x77, 0x28,
+        0x4a, 0xdd, 0xd2, 0x00, 0x12, 0x6d, 0x90, 0x69
+    };
     /* dsa 2048 */
     static const char *dsa_p_hex[] = {
         "a29b8872ce8b8423b7d5d21d4b02f57e03e9e6b8a258dc16611ba098ab543415"
@@ -226,14 +242,237 @@ static int dummy_evp_call(void *provctx)
         "6ccaeef6d73b4e80f11c17b8e9627c036635bac39423505e407e5cb7",
         NULL
     };
-    char msg[] = "Hello World!";
-    const unsigned char exptd[] = {
-        0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
-        0x48, 0xa1, 0xd6, 0x5d, 0xfc, 0x2d, 0x4b, 0x1f, 0xa3, 0xd6, 0x77, 0x28,
-        0x4a, 0xdd, 0xd2, 0x00, 0x12, 0x6d, 0x90, 0x69
+
+    if (!hextobn(dsa_p_hex, &p)
+        || !hextobn(dsa_q_hex, &q)
+        || !hextobn(dsa_g_hex, &g)
+        || !hextobn(dsa_pub_hex, &pub)
+        || !hextobn(dsa_priv_hex, &priv))
+        goto err;
+
+    ossl_param_bld_init(&bld);
+    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DSA_PUB_KEY, pub)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DSA_PRIV_KEY, priv))
+        goto err;
+    params = ossl_param_bld_to_param(&bld);
+
+    /* Create a EVP_PKEY_CTX to load the DSA key into */
+    kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
+    if (kctx == NULL || params == NULL)
+        goto err;
+    if (EVP_PKEY_key_fromdata_init(kctx) <= 0
+        || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
+        goto err;
+
+    /* Create a EVP_PKEY_CTX to use for the signing operation */
+    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
+    if (sctx == NULL
+        || EVP_PKEY_sign_init(sctx) <= 0)
+        goto err;
+
+    /* set signature parameters */
+    ossl_param_bld_init(&bld);
+    if (!ossl_param_bld_push_utf8_string(&bld, OSSL_SIGNATURE_PARAM_DIGEST,
+                                         SN_sha256,strlen(SN_sha256) + 1)
+        || !ossl_param_bld_push_size_t(&bld, OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
+                                       SHA256_DIGEST_LENGTH))
+        goto err;
+    params_sig = ossl_param_bld_to_param(&bld);
+    if (EVP_PKEY_CTX_set_params(sctx, params_sig) <= 0)
+        goto err;
+
+    if (EVP_PKEY_sign(sctx, sig, &siglen, dgst, sizeof(dgst)) <= 0
+        || EVP_PKEY_verify_init(sctx) <= 0
+        || EVP_PKEY_verify(sctx, sig, siglen, dgst, sizeof(dgst)) <= 0)
+        goto err;
+    ret = 1;
+err:
+    ossl_param_bld_free(params);
+    ossl_param_bld_free(params_sig);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(pub);
+    BN_free(priv);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(sctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_DSA */
+
+#ifndef OPENSSL_NO_DH
+static int dh_key_exchange_test(OPENSSL_CTX *libctx)
+{
+    int ret = 0;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    BIGNUM *pub = NULL, *priv = NULL, *pub_peer = NULL;
+    unsigned char *kat_secret = NULL;
+    EVP_PKEY_CTX *kactx = NULL, *dctx = NULL;
+    EVP_PKEY *pkey = NULL, *peerkey = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM *params_peer = NULL;
+    unsigned char secret[256];
+    size_t secret_len, kat_secret_len = 0;
+    OSSL_PARAM_BLD bld;
+
+    /* DH KAT */
+    static const char *dh_p_hex[] = {
+        "dcca1511b2313225f52116e1542789e001f0425bccc7f366f7406407f1c9fa8b"
+        "e610f1778bb170be39dbb76f85bf24ce6880adb7629f7c6d015e61d43fa3ee4d"
+        "e185f2cfd041ffde9d418407e15138bb021daeb35f762d1782acc658d32bd4b0"
+        "232c927dd38fa097b3d1859fa8acafb98f066608fc644ec7ddb6f08599f92ac1",
+        "b59825da8432077def695646063c20823c9507ab6f0176d4730d990dbbe6361c"
+        "d8b2b94d3d2f329b82099bd661f42950f403df3ede62a33188b02798ba823f44"
+        "b946fe9df677a0c5a1238eaa97b70f80da8cac88e092b1127060ffbf45579994"
+        "011dc2faa5e7f6c76245e1cc312231c17d1ca6b19007ef0db99f9cb60e1d5f69",
+        NULL
     };
-    unsigned int dgstlen = 0;
+    static const char *dh_q_hex[] = {
+        "898b226717ef039e603e82e5c7afe48374ac5f625c54f1ea11acb57d",
+        NULL
+    };
+    static const char *dh_g_hex[] = {
+        "5ef7b88f2df60139351dfbfe1266805fdf356cdfd13a4da0050c7ede"
+        "246df59f6abf96ade5f2b28ffe88d6bce7f7894a3d535fc82126ddd4"
+        "24872e16b838df8c51e9016f889c7c203e98a8b631f9c72563d38a49"
+        "589a0753d358e783318cefd9677c7b2dbb77d6dce2a1963795ca64b9",
+        "2d1c9aac6d0e8d431de5e50060dff78689c9eca1c1248c16ed09c7ad",
+        "412a17406d2b525aa1cabb237b9734ec7b8ce3fae02f29c5efed30d6"
+        "9187da109c2c9fe2aadbb0c22af54c616655000c431c6b4a379763b0"
+        "a91658efc84e8b06358c8b4f213710fd10172cf39b830c2dd84a0c8a"
+        "b82516ecab995fa4215e023e4ecf8074c39d6c88b70d1ee4e96fdc20",
+        "ea115c32",
+        NULL
+    };
+    static const char *dh_priv_hex[] = {
+        "1433e0b5a917b60a3023f2f8aa2c2d70d2968aba9aeac81540b8fce6",
+        NULL
+    };
+    static const char *dh_pub_hex[] = {
+        "95dd338d29e5710492b918317b72a36936e1951a2ee5a5591699c048"
+        "6d0d4f9bdd6d5a3f6b98890c62b37652d36e712111e68a7355372506"
+        "99efe330537391fbc2c548bc5ac3e5b23386c3eef5eb43c099d70a52"
+        "02687e83964248fca91f40908e8fb3319315f6d2606d7f7cd52cc6e7",
+        "c5843afb22519cf0f0f9d3a0a4e8c88899efede7364351fb6a363ee7"
+        "17e5445adab4c931a6483997b87dad83677e4d1d3a7775e0f6d00fdf"
+        "73c7ad801e665a0e5a796d0a0380a19fa182efc8a04f5e4db90d1a86"
+        "37f95db16436bdc8f3fc096c4ff7f234be8fef479ac4b0dc4b77263e",
+        "07d9959de0f1bf3f0ae3d9d50e4b89c99e3ea1217343dd8c6581acc4"
+        "959c91d3",
+        NULL
+    };
+    static const char *dh_peer_pub_hex[] = {
+        "1fc1da341d1a846a96b7be24340f877dd010aa0356d5ad58aae9c7b0"
+        "8f749a32235110b5d88eb5dbfa978d27ecc530f02d3114005b64b1c0"
+        "e024cb8ae21698bca9e60d42808622f181c56e1de7a96e6efee9d665"
+        "67e91b977042c7e3d0448f05fb77f522b9bfc8d33cc3c31ed3b31f0f",
+        "ecb6db4f6ea311e77afdbcd47aee1bb150f216873578fb96468e8f9f"
+        "3de8efbfce75624b1df05322a34f1463e839e8984c4ad0a96e1ac842"
+        "e5318cc23c062a8ca171b8d575980dde7fc56f1536523820d43192bf"
+        "d51e8e228978aca5b94472f339caeb9931b42be301268bc99789c9b2",
+        "5571c3c0e4cb3f007f1a511cbb53c8519cdd1302abca6c0f34f96739"
+        "f17ff48b",
+        NULL
+    };
+    static const char *dh_secret_exptd_hex[] = {
+        "08ff33bb2ecff49a7d4a7912aeb1bb6ab511641b4a76770c8cc1bcc2"
+        "33343dfe700d11813d2c9ed23b211ca9e8786921edca283c68b16153"
+        "fa01e91ab82c90ddab4a95816770a98710e14c92ab83b6e46e1e426e"
+        "e852430d6187daa3720a6bcd73235c6b0f941f3364f50420551a4bfe",
+        "afe2bc438505a59a4a40daca7a895a73db575c74c13a23ad8832957d"
+        "582d38f0a6165fb0d7e9b8799e42fd3220e332e98185a0c9429757b2"
+        "d0d02c17dbaa1ff6ed93d7e73e241eaed90caf394d2bc6570f18c81f"
+        "2be5d01a2ca99ff142b5d963f9f500325e7556f95849b3ffc7479486",
+        "be1d4596a3106bd5cb4f61c57ec5f100fb7a0c82a10b82526a97d1d9"
+        "7d98eaf6",
+        NULL
+    };
+
+    if (!hextobn(dh_p_hex, &p)
+        || !hextobn(dh_q_hex, &q)
+        || !hextobn(dh_g_hex, &g)
+        || !hextobn(dh_pub_hex, &pub)
+        || !hextobn(dh_priv_hex, &priv)
+        || !hextobn(dh_peer_pub_hex, &pub_peer)
+        || !hextobin(dh_secret_exptd_hex, &kat_secret, &kat_secret_len))
+        goto err;
+
+    ossl_param_bld_init(&bld);
+    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PUB_KEY, pub)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PRIV_KEY, priv))
+        goto err;
+    params = ossl_param_bld_to_param(&bld);
+
+    ossl_param_bld_init(&bld);
+    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_peer))
+        goto err;
+
+    params_peer = ossl_param_bld_to_param(&bld);
+    if (params == NULL || params_peer == NULL)
+        goto err;
+
+    /* Create a EVP_PKEY_CTX to load the DH keys into */
+    kactx = EVP_PKEY_CTX_new_from_name(libctx, "DH", "");
+    if (kactx == NULL)
+        goto err;
+    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &pkey, params) <= 0)
+        goto err;
+    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &peerkey, params_peer) <= 0)
+        goto err;
+
+    /* Create a EVP_PKEY_CTX to perform key derivation */
+    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
+    if (dctx == NULL)
+        goto err;
+
+    if (EVP_PKEY_derive_init(dctx) <= 0
+        || EVP_PKEY_derive_set_peer(dctx, peerkey) <= 0
+        || EVP_PKEY_derive(dctx, secret, &secret_len) <= 0)
+        goto err;
+
+    if (secret_len != kat_secret_len
+        || memcmp(secret, kat_secret, secret_len) != 0)
+        goto err;
+    ret = 1;
+err:
+    ossl_param_bld_free(params_peer);
+    ossl_param_bld_free(params);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(pub);
+    BN_free(priv);
+    BN_free(pub_peer);
+    OPENSSL_free(kat_secret);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(peerkey);
+    EVP_PKEY_CTX_free(kactx);
+    EVP_PKEY_CTX_free(dctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_DH */
+
+/* TODO(3.0): To be removed */
+static int dummy_evp_call(void *provctx)
+{
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
     unsigned char dgst[SHA256_DIGEST_LENGTH];
+    unsigned int dgstlen;
     int ret = 0;
     BN_CTX *bnctx = NULL;
     BIGNUM *a = NULL, *b = NULL;
@@ -242,6 +481,13 @@ static int dummy_evp_call(void *provctx)
 #ifndef OPENSSL_NO_EC
     EC_KEY *key = NULL;
 #endif
+
+    static const char msg[] = "Hello World!";
+    static const unsigned char exptd[] = {
+        0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
+        0x48, 0xa1, 0xd6, 0x5d, 0xfc, 0x2d, 0x4b, 0x1f, 0xa3, 0xd6, 0x77, 0x28,
+        0x4a, 0xdd, 0xd2, 0x00, 0x12, 0x6d, 0x90, 0x69
+    };
 
     if (ctx == NULL || sha256 == NULL || drbg == NULL || kdf == NULL)
         goto err;
@@ -284,54 +530,17 @@ static int dummy_evp_call(void *provctx)
     if (!EC_KEY_generate_key(key))
         goto err;
 #endif
-    if (!rawnative_fromhex(dsa_p_hex, &dsa_p, &dsa_p_len)
-            || !rawnative_fromhex(dsa_q_hex, &dsa_q, &dsa_q_len)
-            || !rawnative_fromhex(dsa_g_hex, &dsa_g, &dsa_g_len)
-            || !rawnative_fromhex(dsa_pub_hex, &dsa_pub, &dsa_pub_len)
-            || !rawnative_fromhex(dsa_priv_hex, &dsa_priv, &dsa_priv_len))
+
+#ifndef OPENSSL_NO_DSA
+    if (!dsa_key_signature_test(libctx))
         goto err;
+#endif
 
-    p = params;
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_P, dsa_p, dsa_p_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_Q, dsa_q, dsa_q_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_FFC_G, dsa_g, dsa_g_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DSA_PUB_KEY,
-                                   dsa_pub, dsa_pub_len);
-    *p++ = OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_DSA_PRIV_KEY,
-                                   dsa_priv, dsa_priv_len);
-    *p = OSSL_PARAM_construct_end();
-
-    kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
-    if (kctx == NULL)
+#ifndef OPENSSL_NO_DH
+    if (!dh_key_exchange_test(libctx))
         goto err;
-    if (EVP_PKEY_key_fromdata_init(kctx) <= 0
-            || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
-        goto err;
+#endif /* OPENSSL_NO_DH */
 
-    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey);
-    if (sctx == NULL)
-        goto err;;
-
-    if (EVP_PKEY_sign_init(sctx) <= 0)
-        goto err;
-
-    /* set signature parameters */
-    sigdgstlen = SHA256_DIGEST_LENGTH;
-    p = params;
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-                                            SN_sha256,
-                                            strlen(SN_sha256) + 1);
-
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                       &sigdgstlen);
-    *p = OSSL_PARAM_construct_end();
-    if (EVP_PKEY_CTX_set_params(sctx, params) <= 0)
-        goto err;
-
-    if (EVP_PKEY_sign(sctx, sig, &siglen, dgst, sizeof(dgst)) <= 0
-            || EVP_PKEY_verify_init(sctx) <= 0
-            || EVP_PKEY_verify(sctx, sig, siglen, dgst, sizeof(dgst)) <= 0)
-        goto err;
     ret = 1;
  err:
     BN_CTX_end(bnctx);
@@ -344,14 +553,6 @@ static int dummy_evp_call(void *provctx)
 #ifndef OPENSSL_NO_EC
     EC_KEY_free(key);
 #endif
-    OPENSSL_free(dsa_p);
-    OPENSSL_free(dsa_q);
-    OPENSSL_free(dsa_g);
-    OPENSSL_free(dsa_pub);
-    OPENSSL_free(dsa_priv);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(kctx);
-    EVP_PKEY_CTX_free(sctx);
     return ret;
 }
 
@@ -588,6 +789,13 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_keyexch[] = {
+#ifndef OPENSSL_NO_DH
+    { "DH:dhKeyAgreement", "fips=yes", dh_keyexch_functions },
+#endif
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "fips=yes", dsa_signature_functions },
@@ -596,6 +804,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
 };
 
 static const OSSL_ALGORITHM fips_keymgmt[] = {
+#ifndef OPENSSL_NO_DH
+    { "DH:dhKeyAgreement", "fips=yes", dh_keymgmt_functions },
+#endif
 #ifndef OPENSSL_NO_DSA
     { "DSA", "fips=yes", dsa_keymgmt_functions },
 #endif
@@ -619,6 +830,8 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
         return fips_kdfs;
     case OSSL_OP_KEYMGMT:
         return fips_keymgmt;
+    case OSSL_OP_KEYEXCH:
+        return fips_keyexch;
     case OSSL_OP_SIGNATURE:
         return fips_signature;
     }

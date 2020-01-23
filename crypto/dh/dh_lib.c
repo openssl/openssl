@@ -12,8 +12,10 @@
 #include "internal/refcount.h"
 #include <openssl/bn.h>
 #include "dh_local.h"
+#include "crypto/dh.h"
 #include <openssl/engine.h>
 
+#ifndef FIPS_MODE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
     /*
@@ -33,6 +35,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
         meth->init(dh);
     return 1;
 }
+#endif /* !FIPS_MODE */
 
 DH *DH_new(void)
 {
@@ -57,7 +60,7 @@ DH *DH_new_method(ENGINE *engine)
     }
 
     ret->meth = DH_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -81,7 +84,7 @@ DH *DH_new_method(ENGINE *engine)
 #ifndef FIPS_MODE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data))
         goto err;
-#endif
+#endif /* FIPS_MODE */
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -110,11 +113,10 @@ void DH_free(DH *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(FIPS_MODE)
+# if !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(r->engine);
-#endif
-
-#ifndef FIPS_MODE
+# endif
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 #endif
 
@@ -176,7 +178,6 @@ int DH_security_bits(const DH *dh)
         N = -1;
     return BN_security_bits(BN_num_bits(dh->p), N);
 }
-
 
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
@@ -293,7 +294,9 @@ void DH_set_flags(DH *dh, int flags)
     dh->flags |= flags;
 }
 
+#ifndef FIPS_MODE
 ENGINE *DH_get0_engine(DH *dh)
 {
     return dh->engine;
 }
+#endif /*FIPS_MODE */

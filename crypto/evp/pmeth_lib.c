@@ -282,16 +282,16 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         EVP_SIGNATURE_free(ctx->op.sig.signature);
         ctx->op.sig.sigprovctx = NULL;
         ctx->op.sig.signature = NULL;
-    }
-/* TODO(3.0): add dependancies and uncomment this when available for fips mode */
-#ifndef FIPS_MODE
-    else if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+    } else if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
         if (ctx->op.kex.exchprovctx != NULL && ctx->op.kex.exchange != NULL)
             ctx->op.kex.exchange->freectx(ctx->op.kex.exchprovctx);
         EVP_KEYEXCH_free(ctx->op.kex.exchange);
         ctx->op.kex.exchprovctx = NULL;
         ctx->op.kex.exchange = NULL;
-    } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+    }
+/* TODO(3.0): add dependancies and uncomment this when available for fips mode */
+#ifndef FIPS_MODE
+    else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         if (ctx->op.ciph.ciphprovctx != NULL && ctx->op.ciph.cipher != NULL)
             ctx->op.ciph.cipher->freectx(ctx->op.ciph.ciphprovctx);
         EVP_ASYM_CIPHER_free(ctx->op.ciph.cipher);
