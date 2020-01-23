@@ -491,7 +491,7 @@ Represents an ASN1 OBJECT IDENTIFIER.
 
 Represents a PKCS#3 DH parameters structure.
 
-=item B<DHparamx>
+=item B<DHxparams>
 
 Represents an ANSI X9.42 DH parameters structure.
 
