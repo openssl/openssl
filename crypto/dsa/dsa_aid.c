@@ -26,14 +26,20 @@ ENCODE_ALGORITHMIDENTIFIER_SHA(sha, 13);
 ENCODE_ALGORITHMIDENTIFIER_SHA(sha1, 27);
 
 /* dsaWithSHA OIDs are of the form: (2 16 840 1 101 3 4 3 |n|) */
-#define ENCODE_ALGORITHMIDENTIFIER_SHA2(name, n)                         \
+#define ENCODE_ALGORITHMIDENTIFIER_SHAx(name, n)                         \
     static const unsigned char algorithmidentifier_##name##_der[] = {   \
         ASN1_SEQUENCE, 0x0b,                                            \
           ASN1_OID, 0x09, 2 * 40 + 16, 0x86, 0x48, 1, 101, 3, 4, 3, n   \
 }
 
-ENCODE_ALGORITHMIDENTIFIER_SHA2(sha224, 1);
-ENCODE_ALGORITHMIDENTIFIER_SHA2(sha256, 2);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha224, 1);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha256, 2);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha384, 3);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha512, 4);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha3_224, 5);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha3_256, 6);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha3_384, 7);
+ENCODE_ALGORITHMIDENTIFIER_SHAx(sha3_512, 8);
 
 #define MD_CASE(name)                                                   \
     case NID_##name:                                                    \
@@ -47,6 +53,12 @@ const unsigned char *dsa_algorithmidentifier_encoding(int md_nid, size_t *len)
         MD_CASE(sha1);
         MD_CASE(sha224);
         MD_CASE(sha256);
+        MD_CASE(sha384);
+        MD_CASE(sha512);
+        MD_CASE(sha3_224);
+        MD_CASE(sha3_256);
+        MD_CASE(sha3_384);
+        MD_CASE(sha3_512);
     default:
         return NULL;
     }
