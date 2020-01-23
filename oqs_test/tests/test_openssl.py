@@ -5,12 +5,12 @@ import time
 
 kex_algs_master_111 = [
     'oqs_kem_default',
-    'p256-oqs_kem_default',
+    'p256_oqs_kem_default',
 ##### OQS_TEMPLATE_FRAGMENT_KEX_ALGS_MASTER_START
     # post-quantum key exchanges
     'frodo640aes','frodo640shake','frodo976aes','frodo976shake','frodo1344aes','frodo1344shake','bike1l1cpa','bike1l3cpa','bike1l1fo','bike1l3fo','kyber512','kyber768','kyber1024','newhope512cca','newhope1024cca','ntru_hps2048509','ntru_hps2048677','ntru_hps4096821','ntru_hrss701','lightsaber','saber','firesaber','sidhp434','sidhp503','sidhp610','sidhp751','sikep434','sikep503','sikep610','sikep751',
     # post-quantum + classical key exchanges
-    'p256-frodo640aes','p256-frodo640shake','p256-frodo976aes','p256-frodo976shake','p256-frodo1344aes','p256-frodo1344shake','p256-bike1l1cpa','p256-bike1l3cpa','p256-bike1l1fo','p256-bike1l3fo','p256-kyber512','p256-kyber768','p256-kyber1024','p256-newhope512cca','p256-newhope1024cca','p256-ntru_hps2048509','p256-ntru_hps2048677','p256-ntru_hps4096821','p256-ntru_hrss701','p256-lightsaber','p256-saber','p256-firesaber','p256-sidhp434','p256-sidhp503','p256-sidhp610','p256-sidhp751','p256-sikep434','p256-sikep503','p256-sikep610','p256-sikep751',
+    'p256_frodo640aes','p256_frodo640shake','p256_frodo976aes','p256_frodo976shake','p256_frodo1344aes','p256_frodo1344shake','p256_bike1l1cpa','p256_bike1l3cpa','p256_bike1l1fo','p256_bike1l3fo','p256_kyber512','p256_kyber768','p256_kyber1024','p256_newhope512cca','p256_newhope1024cca','p256_ntru_hps2048509','p256_ntru_hps2048677','p256_ntru_hps4096821','p256_ntru_hrss701','p256_lightsaber','p256_saber','p256_firesaber','p256_sidhp434','p256_sidhp503','p256_sidhp610','p256_sidhp751','p256_sikep434','p256_sikep503','p256_sikep610','p256_sikep751',
 ##### OQS_TEMPLATE_FRAGMENT_KEX_ALGS_MASTER_END
     ]
 sig_algs_master_111 = [
@@ -18,9 +18,9 @@ sig_algs_master_111 = [
     'ecdsa',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_START
     # post-quantum signatures
-    'oqsdefault','dilithium2','dilithium3','dilithium4','picnicl1fs','picnic2l1fs','qteslapi','qteslapiii',
+    'oqs_sig_default','dilithium2','dilithium3','dilithium4','picnicl1fs','picnic2l1fs','qteslapi','qteslapiii',
     # post-quantum + classical signatures
-    'p256_oqsdefault','rsa3072_oqsdefault','p256_dilithium2','rsa3072_dilithium2','p384_dilithium4','p256_picnicl1fs','rsa3072_picnicl1fs','p256_picnic2l1fs','rsa3072_picnic2l1fs','p256_qteslapi','rsa3072_qteslapi','p384_qteslapiii',
+    'p256_oqs_sig_default','rsa3072_oqs_sig_default','p256_dilithium2','rsa3072_dilithium2','p384_dilithium4','p256_picnicl1fs','rsa3072_picnicl1fs','p256_picnic2l1fs','rsa3072_picnic2l1fs','p256_qteslapi','rsa3072_qteslapi','p384_qteslapiii',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_MASTER_END
     ]
 

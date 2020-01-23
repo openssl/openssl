@@ -76,9 +76,9 @@ static char* get_oqs_alg_name(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_START
-    case NID_oqsdefault:
-    case NID_p256_oqsdefault:
-    case NID_rsa3072_oqsdefault:
+    case NID_oqs_sig_default:
+    case NID_p256_oqs_sig_default:
+    case NID_rsa3072_oqs_sig_default:
       return OQS_SIG_alg_default;
     case NID_dilithium2:
     case NID_p256_dilithium2:
@@ -115,8 +115,8 @@ static int is_oqs_hybrid_alg(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_START
-    case NID_p256_oqsdefault:
-    case NID_rsa3072_oqsdefault:
+    case NID_p256_oqs_sig_default:
+    case NID_rsa3072_oqs_sig_default:
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
     case NID_p384_dilithium4:
@@ -140,13 +140,13 @@ static int get_classical_nid(int hybrid_id)
   switch (hybrid_id)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_START
-    case NID_rsa3072_oqsdefault:
+    case NID_rsa3072_oqs_sig_default:
     case NID_rsa3072_dilithium2:
     case NID_rsa3072_picnicl1fs:
     case NID_rsa3072_picnic2l1fs:
     case NID_rsa3072_qteslapi:
       return NID_rsaEncryption;
-    case NID_p256_oqsdefault:
+    case NID_p256_oqs_sig_default:
     case NID_p256_dilithium2:
     case NID_p256_picnicl1fs:
     case NID_p256_picnic2l1fs:
@@ -166,9 +166,9 @@ static int get_oqs_nid(int hybrid_id)
   switch (hybrid_id)
   {
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_START
-    case NID_p256_oqsdefault:
-    case NID_rsa3072_oqsdefault:
-      return NID_oqsdefault;
+    case NID_p256_oqs_sig_default:
+    case NID_rsa3072_oqs_sig_default:
+      return NID_oqs_sig_default;
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
       return NID_dilithium2;
@@ -229,9 +229,9 @@ static int get_oqs_security_bits(int openssl_nid)
   switch (openssl_nid)
   {
 ///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_START
-    case NID_oqsdefault:
-    case NID_p256_oqsdefault:
-    case NID_rsa3072_oqsdefault:
+    case NID_oqs_sig_default:
+    case NID_p256_oqs_sig_default:
+    case NID_rsa3072_oqs_sig_default:
       return 128;
     case NID_dilithium2:
     case NID_p256_dilithium2:
@@ -827,9 +827,9 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     if (
     (
 ///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_START
-        nid != NID_oqsdefault &&
-        nid != NID_p256_oqsdefault &&
-        nid != NID_rsa3072_oqsdefault &&
+        nid != NID_oqs_sig_default &&
+        nid != NID_p256_oqs_sig_default &&
+        nid != NID_rsa3072_oqs_sig_default &&
         nid != NID_dilithium2 &&
         nid != NID_p256_dilithium2 &&
         nid != NID_rsa3072_dilithium2 &&
@@ -1202,9 +1202,9 @@ DEFINE_OQS_SIGN_INFO_SET(ALG, NID_ALG)                                \
 DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                              \
 DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_START
-DEFINE_OQS_EVP_METHODS(oqsdefault, NID_oqsdefault, "oqsdefault", "OpenSSL OQS Default Signature Algorithm algorithm")
-DEFINE_OQS_EVP_METHODS(p256_oqsdefault, NID_p256_oqsdefault, "p256_oqsdefault", "OpenSSL ECDSA p256 OQS Default Signature Algorithm algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_oqsdefault, NID_rsa3072_oqsdefault, "rsa3072_oqsdefault", "OpenSSL RSA3072 OQS Default Signature Algorithm algorithm")
+DEFINE_OQS_EVP_METHODS(oqs_sig_default, NID_oqs_sig_default, "oqs_sig_default", "OpenSSL OQS Default Signature Algorithm algorithm")
+DEFINE_OQS_EVP_METHODS(p256_oqs_sig_default, NID_p256_oqs_sig_default, "p256_oqs_sig_default", "OpenSSL ECDSA p256 OQS Default Signature Algorithm algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_oqs_sig_default, NID_rsa3072_oqs_sig_default, "rsa3072_oqs_sig_default", "OpenSSL RSA3072 OQS Default Signature Algorithm algorithm")
 DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium-2 algorithm")
 DEFINE_OQS_EVP_METHODS(p256_dilithium2, NID_p256_dilithium2, "p256_dilithium2", "OpenSSL ECDSA p256 Dilithium-2 algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2, NID_rsa3072_dilithium2, "rsa3072_dilithium2", "OpenSSL RSA3072 Dilithium-2 algorithm")

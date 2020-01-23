@@ -46,8 +46,6 @@ def load_config():
 
 config = load_config()
 
-# kems
-populate('ssl/ssl_oqs_extra.h', config, '/////')
 # sigs
 populate('crypto/asn1/standard_methods.h', config, '/////')
 populate('crypto/ec/oqs_meth.c', config, '/////')

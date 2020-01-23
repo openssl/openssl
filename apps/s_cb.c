@@ -245,11 +245,11 @@ static const char *get_sigtype(int nid)
         return "gost2012_512";
 
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_START
-    case NID_oqsdefault:
+    case NID_oqs_sig_default:
         return "OQS Default Signature Algorithm";
-    case NID_p256_oqsdefault:
+    case NID_p256_oqs_sig_default:
         return "ECDSA p256 - OQS Default Signature Algorithm";
-    case NID_rsa3072_oqsdefault:
+    case NID_rsa3072_oqs_sig_default:
         return "RSA3072 - OQS Default Signature Algorithm";
     case NID_dilithium2:
         return "Dilithium-2";
@@ -470,38 +470,38 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0221: return "sikep610";
   case 0x0222: return "sikep751";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
-  case 0x02FF: return "p256-oqs_kem_default hybrid";
+  case 0x02FF: return "p256_oqs_kem_default hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
-  case 0x0300: return "p256-frodo640aes hybrid";
-  case 0x0301: return "p256-frodo640shake hybrid";
-  case 0x0302: return "p256-frodo976aes hybrid";
-  case 0x0303: return "p256-frodo976shake hybrid";
-  case 0x0304: return "p256-frodo1344aes hybrid";
-  case 0x0305: return "p256-frodo1344shake hybrid";
-  case 0x0306: return "p256-bike1l1cpa hybrid";
-  case 0x0307: return "p256-bike1l3cpa hybrid";
-  case 0x0323: return "p256-bike1l1fo hybrid";
-  case 0x0324: return "p256-bike1l3fo hybrid";
-  case 0x030F: return "p256-kyber512 hybrid";
-  case 0x0310: return "p256-kyber768 hybrid";
-  case 0x0311: return "p256-kyber1024 hybrid";
-  case 0x0312: return "p256-newhope512cca hybrid";
-  case 0x0313: return "p256-newhope1024cca hybrid";
-  case 0x0314: return "p256-ntru_hps2048509 hybrid";
-  case 0x0315: return "p256-ntru_hps2048677 hybrid";
-  case 0x0316: return "p256-ntru_hps4096821 hybrid";
-  case 0x0317: return "p256-ntru_hrss701 hybrid";
-  case 0x0318: return "p256-lightsaber hybrid";
-  case 0x0319: return "p256-saber hybrid";
-  case 0x031A: return "p256-firesaber hybrid";
-  case 0x031B: return "p256-sidhp434 hybrid";
-  case 0x031C: return "p256-sidhp503 hybrid";
-  case 0x031D: return "p256-sidhp610 hybrid";
-  case 0x031E: return "p256-sidhp751 hybrid";
-  case 0x031F: return "p256-sikep434 hybrid";
-  case 0x0320: return "p256-sikep503 hybrid";
-  case 0x0321: return "p256-sikep610 hybrid";
-  case 0x0322: return "p256-sikep751 hybrid";
+  case 0x0300: return "p256_frodo640aes hybrid";
+  case 0x0301: return "p256_frodo640shake hybrid";
+  case 0x0302: return "p256_frodo976aes hybrid";
+  case 0x0303: return "p256_frodo976shake hybrid";
+  case 0x0304: return "p256_frodo1344aes hybrid";
+  case 0x0305: return "p256_frodo1344shake hybrid";
+  case 0x0306: return "p256_bike1l1cpa hybrid";
+  case 0x0307: return "p256_bike1l3cpa hybrid";
+  case 0x0323: return "p256_bike1l1fo hybrid";
+  case 0x0324: return "p256_bike1l3fo hybrid";
+  case 0x030F: return "p256_kyber512 hybrid";
+  case 0x0310: return "p256_kyber768 hybrid";
+  case 0x0311: return "p256_kyber1024 hybrid";
+  case 0x0312: return "p256_newhope512cca hybrid";
+  case 0x0313: return "p256_newhope1024cca hybrid";
+  case 0x0314: return "p256_ntru_hps2048509 hybrid";
+  case 0x0315: return "p256_ntru_hps2048677 hybrid";
+  case 0x0316: return "p256_ntru_hps4096821 hybrid";
+  case 0x0317: return "p256_ntru_hrss701 hybrid";
+  case 0x0318: return "p256_lightsaber hybrid";
+  case 0x0319: return "p256_saber hybrid";
+  case 0x031A: return "p256_firesaber hybrid";
+  case 0x031B: return "p256_sidhp434 hybrid";
+  case 0x031C: return "p256_sidhp503 hybrid";
+  case 0x031D: return "p256_sidhp610 hybrid";
+  case 0x031E: return "p256_sidhp751 hybrid";
+  case 0x031F: return "p256_sikep434 hybrid";
+  case 0x0320: return "p256_sikep503 hybrid";
+  case 0x0321: return "p256_sikep610 hybrid";
+  case 0x0322: return "p256_sikep751 hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }

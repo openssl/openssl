@@ -14,7 +14,6 @@
 #include <openssl/objects.h>
 #include <openssl/dh.h>
 #include "internal/nelem.h"
-#include "ssl_oqs_extra.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
@@ -242,9 +241,6 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
     nid = EC_curve_nist2nid(value);
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
-    if (nid == NID_undef) {
-      nid = OQS_nid_from_string(value);
-    }
     if (nid == 0)
         return 0;
     ecdh = EC_KEY_new_by_curve_name(nid);

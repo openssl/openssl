@@ -77,22 +77,22 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - **SIDH** and **SIKE**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`, `sikep434`, `sikep503`, `sikep610`, `sikep751`
 
 The following hybrid algorithms are supported only for L1 schemes; they combine an L1 quantum-safe algorithm listed above with ECDH that uses NIST's P256 curve:
-- `p256-<KEX>`, where ``<KEX>`` is any one of the L1 algorithms listed above.
+- `p256_<KEX>`, where ``<KEX>`` is any one of the L1 algorithms listed above.
 
 #### Authentication
 
 The following digital signature algorithms from liboqs are supported (assuming they have been enabled in liboqs):
 
-- `oqsdefault` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
+- `oqs_sig_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows)
 - **Picnic**: `picnicl1fs`
 - **qTesla**: `qteslapi`, `qteslapiii`
 
 The following hybrid algorithms are supported; they combine a quantum-safe algorithm listed above with a traditional digital signature algorithm (`<SIG>` is any one of the algorithms listed above):
 
-- if `<SIG>` has L1 security, then the fork provides the methods `rsa3072-<SIG>` and `p256-<SIG>`, which combine `<SIG>` with RSA3072 and with ECDSA using NIST's P256 curve respectively.
-- if `<SIG>` has L3 security, the fork provides the method `p384-<SIG>`, which combines `<SIG>` with ECDSA using NIST's P384 curve.
-- if `<SIG>` has L5 security, the fork provides the method `p521-<SIG>`, which combines `<SIG>` with ECDSA using NIST's P521 curve.
+- if `<SIG>` has L1 security, then the fork provides the methods `rsa3072_<SIG>` and `p256_<SIG>`, which combine `<SIG>` with RSA3072 and with ECDSA using NIST's P256 curve respectively.
+- if `<SIG>` has L3 security, the fork provides the method `p384_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P384 curve.
+- if `<SIG>` has L5 security, the fork provides the method `p521_<SIG>`, which combines `<SIG>` with ECDSA using NIST's P521 curve.
 
 ## Quickstart
 
