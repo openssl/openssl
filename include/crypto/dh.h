@@ -8,6 +8,7 @@
  */
 
 #include <openssl/dh.h>
+#include "internal/ffc.h"
 
 int dh_compute_key(OPENSSL_CTX *ctx, unsigned char *key, const BIGNUM *pub_key,
                    DH *dh);
