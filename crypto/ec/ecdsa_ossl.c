@@ -73,7 +73,7 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
 
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                             BIGNUM **kinvp, BIGNUM **rp,
-                            const unsigned char *dgst, int dlen)
+                            const unsigned char *dgst, int dlen, int hashnid)
 {
     BN_CTX *ctx = NULL;
     BIGNUM *k = NULL, *r = NULL, *X = NULL;
@@ -83,6 +83,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     int ret = 0;
     int order_bits;
     const BIGNUM *priv_key;
+    int kgen = 0;
 
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
@@ -126,21 +127,32 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         goto err;
 
     do {
-        /* get random k */
+        /* get random or deterministic k */
         do {
             if (dgst != NULL) {
-                if (!BN_generate_dsa_nonce(k, order, priv_key,
-                                           dgst, dlen, ctx)) {
-                    ECerr(EC_F_ECDSA_SIGN_SETUP,
-                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
-                    goto err;
+                if(hashnid <= 0) { /* random */
+                    kgen = BN_generate_dsa_nonce(k, order, priv_key,
+                                                 dgst, dlen, ctx);
+                } else { /* deterministic */
+#ifndef FIPS_MODE
+                    kgen = bn_generate_dsa_deterministic_nonce(k, order, priv_key,
+                                                               dgst, dlen, hashnid, ctx);
+#else
+                    kgen = 0; /* FIPS_MODE is not compatiable with deterministic ECDSA signature */
+                    ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_INVALID_ARGUMENT);
+#endif
                 }
-            } else {
-                if (!BN_priv_rand_range_ex(k, order, ctx)) {
-                    ECerr(EC_F_ECDSA_SIGN_SETUP,
-                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
-                    goto err;
+            } else { /* dgst = NULL */
+                if (hashnid > 0) {
+                    kgen = 0; /* dgst must be set if use deterministic K generation */
+                    ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_INVALID_ARGUMENT);
+                } else {
+                    kgen = BN_priv_rand_range_ex(k, order, ctx);
                 }
+            }
+            if (!kgen) {
+                ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                goto err;
             }
         } while (BN_is_zero(k));
 
@@ -186,10 +198,33 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     return ret;
 }
 
+int ossl_ecdsa_deterministic_sign(int type, const unsigned char *dgst, int dlen,
+                                  unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
+{
+    ECDSA_SIG *s;
+    const BIGNUM *ckinv, *cr;
+    BIGNUM *kinv = NULL, *r = NULL;
+
+    if (!ecdsa_sign_setup(eckey, NULL, &kinv, &r, dgst, dlen, type))
+        return 0;
+    ckinv = kinv;
+    cr = r;
+    s = ECDSA_do_sign_ex(dgst, dlen, ckinv, cr, eckey);
+    if (s == NULL) {
+        *siglen = 0;
+        return 0;
+    }
+    *siglen = i2d_ECDSA_SIG(s, &sig);
+    ECDSA_SIG_free(s);
+    BN_clear_free(kinv);
+    BN_clear_free(r);
+    return 1;
+}
+
 int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                             BIGNUM **rp)
 {
-    return ecdsa_sign_setup(eckey, ctx_in, kinvp, rp, NULL, 0);
+    return ecdsa_sign_setup(eckey, ctx_in, kinvp, rp, NULL, 0, 0);
 }
 
 ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
@@ -258,7 +293,7 @@ ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     do {
         if (in_kinv == NULL || in_r == NULL) {
-            if (!ecdsa_sign_setup(eckey, ctx, &kinv, &ret->r, dgst, dgst_len)) {
+            if (!ecdsa_sign_setup(eckey, ctx, &kinv, &ret->r, dgst, dgst_len, 0)) {
                 ECerr(EC_F_ECDSA_SIMPLE_SIGN_SIG, ERR_R_ECDSA_LIB);
                 goto err;
             }

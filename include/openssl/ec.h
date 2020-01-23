@@ -1492,6 +1492,16 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
                                    int len);
 int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
+# define EVP_PKEY_CTX_set_ecdsa_nonce_type(ctx, nonce) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
+                                EVP_PKEY_OP_SIGN, \
+                                EVP_PKEY_CTRL_EC_NONCE_TYPE, nonce, NULL)
+
+# define EVP_PKEY_CTX_get_ecdsa_nonce_type(ctx) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
+                                EVP_PKEY_OP_SIGN, \
+                                EVP_PKEY_CTRL_EC_NONCE_TYPE, -2, NULL)
+
 /* SM2 will skip the operation check so no need to pass operation here */
 #  define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
         EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
@@ -1518,6 +1528,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #  define EVP_PKEY_CTRL_SET1_ID                       15
 #  define EVP_PKEY_CTRL_GET1_ID                       16
 #  define EVP_PKEY_CTRL_GET1_ID_LEN                   17
+#  define EVP_PKEY_CTRL_EC_NONCE_TYPE                 (EVP_PKEY_ALG_CTRL + 14)
 
 /* KDF types */
 #  define EVP_PKEY_ECDH_KDF_NONE                      1
@@ -1528,6 +1539,10 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
  *  This identifier is retained for backwards compatibility
  */
 #  define EVP_PKEY_ECDH_KDF_X9_62   EVP_PKEY_ECDH_KDF_X9_63
+
+/* ECDSA K (nonce) types */
+#  define EVP_PKEY_ECDSA_NONCE_RANDOM                 1
+#  define EVP_PKEY_ECDSA_NONCE_DETERMINISTIC          2
 
 #  ifdef  __cplusplus
 }
