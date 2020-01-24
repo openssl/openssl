@@ -193,7 +193,11 @@ the B<padding> must be >1 or <=16384.
 
 =item B<-debug_broken_protocol>
 
+Ignored.
+
 =item B<-no_middlebox>
+
+Turn off "middlebox compatibility", as described below.
 
 =back
 

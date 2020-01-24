@@ -50,7 +50,9 @@ B<-verify>
 [B<-queryfile> I<request.tsq>]
 [B<-in> I<response.tsr>]
 [B<-token_in>]
-{- $OpenSSL::safe::opt_trust_synopsis -}
+[B<-CAfile> I<file>]
+[B<-CApath> I<dir>]
+[B<-CAstore> I<uri>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 
 =for openssl ifdef engine
@@ -330,8 +332,9 @@ certificate. This file must contain the TSA signing certificate and
 all intermediate CA certificates unless the response includes them.
 (Optional)
 
-{- $OpenSSL::safe::opt_trust_item -}
+=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
+See L<openssl(1)/Trusted Certificate Options> for details.
 At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
 
 {- $OpenSSL::safe::opt_v_item -}
