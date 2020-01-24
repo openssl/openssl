@@ -154,10 +154,11 @@ int tls1_change_cipher_state(SSL *s, int which)
 # ifdef __FreeBSD__
     struct tls_enable crypto_info;
 # else
-    struct tls12_crypto_info_aes_gcm_128 crypto_info;
+    struct tls_crypto_info_all crypto_info;
     unsigned char geniv[12];
     int count_unprocessed;
     int bit;
+    unsigned char *rec_seq;
 # endif
     BIO *bio;
 #endif
@@ -432,13 +433,30 @@ int tls1_change_cipher_state(SSL *s, int which)
     crypto_info.tls_vmajor = (s->version >> 8) & 0x000000ff;
     crypto_info.tls_vminor = (s->version & 0x000000ff);
 # else
-    /* check that cipher is AES_GCM_128 */
-    if (EVP_CIPHER_nid(c) != NID_aes_128_gcm
-        || EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE
-        || EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_GCM_128_KEY_SIZE)
+    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 */
+    switch (EVP_CIPHER_nid(c))
+    {
+    case NID_aes_128_gcm:
+        if (EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE ||
+            EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_GCM_128_KEY_SIZE)
+          goto skip_ktls;
+        break;
+    case NID_aes_256_gcm:
+        if (EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE ||
+            EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_GCM_256_KEY_SIZE)
+          goto skip_ktls;
+        break;
+    case NID_aes_128_ccm:
+        if (EVP_CIPHER_mode(c) != EVP_CIPH_CCM_MODE ||
+            EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_CCM_128_KEY_SIZE ||
+            EVP_CIPHER_CTX_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
+          goto skip_ktls;
+        break;
+    default:
         goto skip_ktls;
+    }
 
-    /* check version is 1.2 */
+    /* check version */
     if (s->version != TLS1_2_VERSION)
         goto skip_ktls;
 # endif
@@ -470,23 +488,67 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 # ifndef __FreeBSD__
     memset(&crypto_info, 0, sizeof(crypto_info));
-    crypto_info.info.cipher_type = TLS_CIPHER_AES_GCM_128;
-    crypto_info.info.version = s->version;
+    switch (EVP_CIPHER_nid(c))
+    {
+    case NID_aes_128_gcm:
+        crypto_info.gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+        crypto_info.gcm128.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.gcm128);
+        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GET_IV,
+                            EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                            geniv);
+        memcpy(crypto_info.gcm128.iv, geniv + EVP_GCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_GCM_128_IV_SIZE);
+        memcpy(crypto_info.gcm128.salt, geniv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info.gcm128.key, key, EVP_CIPHER_key_length(c));
+        if (which & SSL3_CC_WRITE)
+            memcpy(crypto_info.gcm128.rec_seq, &s->rlayer.write_sequence,
+                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        else
+            memcpy(crypto_info.gcm128.rec_seq, &s->rlayer.read_sequence,
+                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        rec_seq = crypto_info.gcm128.rec_seq;
+        break;
+    case NID_aes_256_gcm:
+        crypto_info.gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
+        crypto_info.gcm256.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.gcm256);
 
-    EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GET_IV,
-                        EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN,
-                        geniv);
-    memcpy(crypto_info.iv, geniv + EVP_GCM_TLS_FIXED_IV_LEN,
-           TLS_CIPHER_AES_GCM_128_IV_SIZE);
-    memcpy(crypto_info.salt, geniv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
-    memcpy(crypto_info.key, key, EVP_CIPHER_key_length(c));
-    if (which & SSL3_CC_WRITE)
-        memcpy(crypto_info.rec_seq, &s->rlayer.write_sequence,
-                TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-    else
-        memcpy(crypto_info.rec_seq, &s->rlayer.read_sequence,
-                TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GET_IV,
+                            EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                            geniv);
+        memcpy(crypto_info.gcm256.iv, geniv + EVP_GCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_GCM_256_IV_SIZE);
+        memcpy(crypto_info.gcm256.salt, geniv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
+        memcpy(crypto_info.gcm256.key, key, EVP_CIPHER_key_length(c));
+        if (which & SSL3_CC_WRITE)
+            memcpy(crypto_info.gcm256.rec_seq, &s->rlayer.write_sequence,
+                    TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
+        else
+            memcpy(crypto_info.gcm256.rec_seq, &s->rlayer.read_sequence,
+                    TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
+        rec_seq = crypto_info.gcm256.rec_seq;
+        break;
+    case NID_aes_128_ccm:
+        crypto_info.ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
+        crypto_info.ccm128.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.ccm128);
 
+        memcpy(crypto_info.ccm128.iv, iv + EVP_CCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_CCM_128_IV_SIZE);
+        memcpy(crypto_info.ccm128.salt, iv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info.ccm128.key, key, EVP_CIPHER_key_length(c));
+        if (which & SSL3_CC_WRITE)
+            memcpy(crypto_info.ccm128.rec_seq, &s->rlayer.write_sequence,
+                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        else
+            memcpy(crypto_info.ccm128.rec_seq, &s->rlayer.read_sequence,
+                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        rec_seq = crypto_info.ccm128.rec_seq;
+        break;
+    default:
+        goto skip_ktls;
+    }
     if (which & SSL3_CC_READ) {
         count_unprocessed = count_unprocessed_records(s);
         if (count_unprocessed < 0)
@@ -495,8 +557,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         /* increment the crypto_info record sequence */
         while (count_unprocessed) {
             for (bit = 7; bit >= 0; bit--) { /* increment */
-                ++crypto_info.rec_seq[bit];
-                if (crypto_info.rec_seq[bit] != 0)
+                ++rec_seq[bit];
+                if (rec_seq[bit] != 0)
                     break;
             }
             count_unprocessed--;
