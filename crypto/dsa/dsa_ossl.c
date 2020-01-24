@@ -71,7 +71,9 @@ DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
     DSA_SIG *ret = NULL;
     int rv = 0;
 
-    if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
+    if (dsa->params.p == NULL
+        || dsa->params.q == NULL
+        || dsa->params.g == NULL) {
         reason = DSA_R_MISSING_PARAMETERS;
         goto err;
     }
@@ -102,13 +104,13 @@ DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
     if (!dsa_sign_setup(dsa, ctx, &kinv, &ret->r, dgst, dlen))
         goto err;
 
-    if (dlen > BN_num_bytes(dsa->q))
+    if (dlen > BN_num_bytes(dsa->params.q))
         /*
          * if the digest length is greater than the size of q use the
          * BN_num_bits(dsa->q) leftmost bits of the digest, see fips 186-3,
          * 4.2
          */
-        dlen = BN_num_bytes(dsa->q);
+        dlen = BN_num_bytes(dsa->params.q);
     if (BN_bin2bn(dgst, dlen, m) == NULL)
         goto err;
 
@@ -124,7 +126,7 @@ DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
 
     /* Generate a blinding value */
     do {
-        if (!BN_priv_rand_ex(blind, BN_num_bits(dsa->q) - 1,
+        if (!BN_priv_rand_ex(blind, BN_num_bits(dsa->params.q) - 1,
                              BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
             goto err;
     } while (BN_is_zero(blind));
@@ -133,27 +135,27 @@ DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
     BN_set_flags(tmp, BN_FLG_CONSTTIME);
 
     /* tmp := blind * priv_key * r mod q */
-    if (!BN_mod_mul(tmp, blind, dsa->priv_key, dsa->q, ctx))
+    if (!BN_mod_mul(tmp, blind, dsa->priv_key, dsa->params.q, ctx))
         goto err;
-    if (!BN_mod_mul(tmp, tmp, ret->r, dsa->q, ctx))
+    if (!BN_mod_mul(tmp, tmp, ret->r, dsa->params.q, ctx))
         goto err;
 
     /* blindm := blind * m mod q */
-    if (!BN_mod_mul(blindm, blind, m, dsa->q, ctx))
+    if (!BN_mod_mul(blindm, blind, m, dsa->params.q, ctx))
         goto err;
 
     /* s : = (blind * priv_key * r) + (blind * m) mod q */
-    if (!BN_mod_add_quick(ret->s, tmp, blindm, dsa->q))
+    if (!BN_mod_add_quick(ret->s, tmp, blindm, dsa->params.q))
         goto err;
 
     /* s := s * k^-1 mod q */
-    if (!BN_mod_mul(ret->s, ret->s, kinv, dsa->q, ctx))
+    if (!BN_mod_mul(ret->s, ret->s, kinv, dsa->params.q, ctx))
         goto err;
 
     /* s:= s * blind^-1 mod q */
-    if (BN_mod_inverse(blind, blind, dsa->q, ctx) == NULL)
+    if (BN_mod_inverse(blind, blind, dsa->params.q, ctx) == NULL)
         goto err;
-    if (!BN_mod_mul(ret->s, ret->s, blind, dsa->q, ctx))
+    if (!BN_mod_mul(ret->s, ret->s, blind, dsa->params.q, ctx))
         goto err;
 
     /*
@@ -197,13 +199,15 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     int ret = 0;
     int q_bits, q_words;
 
-    if (!dsa->p || !dsa->q || !dsa->g) {
+    if (!dsa->params.p || !dsa->params.q || !dsa->params.g) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
         return 0;
     }
 
     /* Reject obviously invalid parameters */
-    if (BN_is_zero(dsa->p) || BN_is_zero(dsa->q) || BN_is_zero(dsa->g)) {
+    if (BN_is_zero(dsa->params.p)
+        || BN_is_zero(dsa->params.q)
+        || BN_is_zero(dsa->params.g)) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_INVALID_PARAMETERS);
         return 0;
     }
@@ -225,8 +229,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         ctx = ctx_in;
 
     /* Preallocate space */
-    q_bits = BN_num_bits(dsa->q);
-    q_words = bn_get_top(dsa->q);
+    q_bits = BN_num_bits(dsa->params.q);
+    q_words = bn_get_top(dsa->params.q);
     if (!bn_wexpand(k, q_words + 2)
         || !bn_wexpand(l, q_words + 2))
         goto err;
@@ -238,10 +242,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
              * We calculate k from SHA512(private_key + H(message) + random).
              * This protects the private key from a weak PRNG.
              */
-            if (!BN_generate_dsa_nonce(k, dsa->q, dsa->priv_key, dgst,
+            if (!BN_generate_dsa_nonce(k, dsa->params.q, dsa->priv_key, dgst,
                                        dlen, ctx))
                 goto err;
-        } else if (!BN_priv_rand_range_ex(k, dsa->q, ctx))
+        } else if (!BN_priv_rand_range_ex(k, dsa->params.q, ctx))
             goto err;
     } while (BN_is_zero(k));
 
@@ -250,7 +254,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-                                    dsa->lock, dsa->p, ctx))
+                                    dsa->lock, dsa->params.p, ctx))
             goto err;
     }
 
@@ -269,26 +273,27 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
      * The fix is to rework BN so these gymnastics aren't required.
      */
-    if (!BN_add(l, k, dsa->q)
-        || !BN_add(k, l, dsa->q))
+    if (!BN_add(l, k, dsa->params.q)
+        || !BN_add(k, l, dsa->params.q))
         goto err;
 
     BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
-            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
-                                       dsa->method_mont_p))
+            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->params.g, k, dsa->params.p,
+                                       ctx, dsa->method_mont_p))
                 goto err;
     } else {
-            if (!BN_mod_exp_mont(r, dsa->g, k, dsa->p, ctx, dsa->method_mont_p))
+            if (!BN_mod_exp_mont(r, dsa->params.g, k, dsa->params.p, ctx,
+                                 dsa->method_mont_p))
                 goto err;
     }
 
-    if (!BN_mod(r, r, dsa->q, ctx))
+    if (!BN_mod(r, r, dsa->params.q, ctx))
         goto err;
 
     /* Compute part of 's = inv(k) (m + xr) mod q' */
-    if ((kinv = dsa_mod_inverse_fermat(k, dsa->q, ctx)) == NULL)
+    if ((kinv = dsa_mod_inverse_fermat(k, dsa->params.q, ctx)) == NULL)
         goto err;
 
     BN_clear_free(*kinvp);
@@ -313,19 +318,21 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     BN_MONT_CTX *mont = NULL;
     const BIGNUM *r, *s;
     int ret = -1, i;
-    if (!dsa->p || !dsa->q || !dsa->g) {
+    if (dsa->params.p == NULL
+        || dsa->params.q == NULL
+        || dsa->params.g == NULL) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
         return -1;
     }
 
-    i = BN_num_bits(dsa->q);
+    i = BN_num_bits(dsa->params.q);
     /* fips 186-3 allows only different sizes for q */
     if (i != 160 && i != 224 && i != 256) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_BAD_Q_VALUE);
         return -1;
     }
 
-    if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dsa->params.p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MODULUS_TOO_LARGE);
         return -1;
     }
@@ -339,12 +346,12 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     DSA_SIG_get0(sig, &r, &s);
 
     if (BN_is_zero(r) || BN_is_negative(r) ||
-        BN_ucmp(r, dsa->q) >= 0) {
+        BN_ucmp(r, dsa->params.q) >= 0) {
         ret = 0;
         goto err;
     }
     if (BN_is_zero(s) || BN_is_negative(s) ||
-        BN_ucmp(s, dsa->q) >= 0) {
+        BN_ucmp(s, dsa->params.q) >= 0) {
         ret = 0;
         goto err;
     }
@@ -352,7 +359,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     /*
      * Calculate W = inv(S) mod Q save W in u2
      */
-    if ((BN_mod_inverse(u2, s, dsa->q, ctx)) == NULL)
+    if ((BN_mod_inverse(u2, s, dsa->params.q, ctx)) == NULL)
         goto err;
 
     /* save M in u1 */
@@ -367,32 +374,32 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
         goto err;
 
     /* u1 = M * w mod q */
-    if (!BN_mod_mul(u1, u1, u2, dsa->q, ctx))
+    if (!BN_mod_mul(u1, u1, u2, dsa->params.q, ctx))
         goto err;
 
     /* u2 = r * w mod q */
-    if (!BN_mod_mul(u2, r, u2, dsa->q, ctx))
+    if (!BN_mod_mul(u2, r, u2, dsa->params.q, ctx))
         goto err;
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-                                      dsa->lock, dsa->p, ctx);
+                                      dsa->lock, dsa->params.p, ctx);
         if (!mont)
             goto err;
     }
 
     if (dsa->meth->dsa_mod_exp != NULL) {
-        if (!dsa->meth->dsa_mod_exp(dsa, t1, dsa->g, u1, dsa->pub_key, u2,
-                                    dsa->p, ctx, mont))
+        if (!dsa->meth->dsa_mod_exp(dsa, t1, dsa->params.g, u1, dsa->pub_key, u2,
+                                    dsa->params.p, ctx, mont))
             goto err;
     } else {
-        if (!BN_mod_exp2_mont(t1, dsa->g, u1, dsa->pub_key, u2, dsa->p, ctx,
-                              mont))
+        if (!BN_mod_exp2_mont(t1, dsa->params.g, u1, dsa->pub_key, u2,
+                              dsa->params.p, ctx, mont))
             goto err;
     }
 
     /* let u1 = u1 mod q */
-    if (!BN_mod(u1, t1, dsa->q, ctx))
+    if (!BN_mod(u1, t1, dsa->params.q, ctx))
         goto err;
 
     /*
@@ -413,6 +420,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 static int dsa_init(DSA *dsa)
 {
     dsa->flags |= DSA_FLAG_CACHE_MONT_P;
+    ffc_params_init(&dsa->params);
     return 1;
 }
 

@@ -9,6 +9,7 @@
 
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
+#include "internal/ffc.h"
 
 struct dsa_st {
     /*
@@ -17,9 +18,7 @@ struct dsa_st {
      */
     int pad;
     int32_t version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
+    FFC_PARAMS params;
     BIGNUM *pub_key;            /* y public key */
     BIGNUM *priv_key;           /* x private key */
     int flags;

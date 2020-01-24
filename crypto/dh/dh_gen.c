@@ -81,9 +81,9 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
 
     /* Make sure 'ret' has the necessary elements */
-    if (!ret->p && ((ret->p = BN_new()) == NULL))
+    if (ret->params.p == NULL && ((ret->params.p = BN_new()) == NULL))
         goto err;
-    if (!ret->g && ((ret->g = BN_new()) == NULL))
+    if (ret->params.g == NULL && ((ret->params.g = BN_new()) == NULL))
         goto err;
 
     if (generator <= 1) {
@@ -115,11 +115,11 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         g = generator;
     }
 
-    if (!BN_generate_prime_ex(ret->p, prime_len, 1, t1, t2, cb))
+    if (!BN_generate_prime_ex(ret->params.p, prime_len, 1, t1, t2, cb))
         goto err;
     if (!BN_GENCB_call(cb, 3, 0))
         goto err;
-    if (!BN_set_word(ret->g, g))
+    if (!BN_set_word(ret->params.g, g))
         goto err;
     ret->dirty_cnt++;
     ok = 1;

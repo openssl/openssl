@@ -34,12 +34,12 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
     int check_result;
 #endif
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(0, DH_R_MODULUS_TOO_LARGE);
         goto err;
     }
 
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
         DHerr(0, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
@@ -59,7 +59,7 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
+                                      dh->lock, dh->params.p, ctx);
         BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
         if (!mont)
             goto err;
@@ -71,7 +71,7 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
         goto err;
     }
 #endif
-    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->p, ctx,
+    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p, ctx,
                               mont)) {
         DHerr(0, ERR_R_BN_LIB);
         goto err;
@@ -101,7 +101,7 @@ int dh_compute_key_padded(OPENSSL_CTX *libctx, unsigned char *key,
 #endif
     if (rv <= 0)
         return rv;
-    pad = BN_num_bytes(dh->p) - rv;
+    pad = BN_num_bytes(dh->params.p) - rv;
     if (pad > 0) {
         memmove(key + pad, key, rv);
         memset(key, 0, pad);
@@ -159,6 +159,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
+    ffc_params_init(&dh->params);
     return 1;
 }
 
@@ -189,12 +190,12 @@ static int generate_key(DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
@@ -220,28 +221,29 @@ static int generate_key(DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
+                                      dh->lock, dh->params.p, ctx);
         if (!mont)
             goto err;
     }
 
     if (generate_new_key) {
-        if (dh->q) {
+        if (dh->params.q != NULL) {
             do {
-                if (!BN_priv_rand_range(priv_key, dh->q))
+                if (!BN_priv_rand_range(priv_key, dh->params.q))
                     goto err;
             }
             while (BN_is_zero(priv_key) || BN_is_one(priv_key));
         } else {
             /* secret exponent length */
-            l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
+            l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
             if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
             /*
              * We handle just one known case where g is a quadratic non-residue:
              * for g = 2: p % 8 == 3
              */
-            if (BN_is_word(dh->g, DH_GENERATOR_2) && !BN_is_bit_set(dh->p, 2)) {
+            if (BN_is_word(dh->params.g, DH_GENERATOR_2)
+                && !BN_is_bit_set(dh->params.p, 2)) {
                 /* clear bit 0, since it won't be a secret anyway */
                 if (!BN_clear_bit(priv_key, 0))
                     goto err;
@@ -256,7 +258,8 @@ static int generate_key(DH *dh)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
-        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont)) {
+        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
+                                  ctx, mont)) {
             BN_clear_free(prk);
             goto err;
         }
@@ -279,6 +282,7 @@ static int generate_key(DH *dh)
     BN_CTX_free(ctx);
     return ok;
 }
+
 
 int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
 {
