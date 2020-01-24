@@ -239,6 +239,20 @@ static int test_builtin(int n)
 
     temp = ECDSA_size(eckey);
 
+    /*
+     * The SM2 curve normally means dealing with EVP_PKEY_SM2 and what that
+     * demands in terms of different computations as well as the mandatory
+     * presence of the SM2 identity.
+     *
+     * In this test, however, we want to test running "normal" EC computations
+     * with the SM2 curve, so we need to forcedly switch the EVP_PKEY type
+     * to EVP_PKEY_EC.
+     */
+    if (nid == NID_sm2)
+        if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_EC))
+            || !TEST_true(EVP_PKEY_set_alias_type(pkey_neg, EVP_PKEY_EC)))
+            goto err;
+
     if (!TEST_int_ge(temp, 0)
         || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
         /* create a signature */
