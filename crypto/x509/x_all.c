@@ -19,176 +19,78 @@
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 
-#ifndef OPENSSL_NO_SM2
-
-# include "crypto/asn1.h"
-# include "crypto/evp.h"
-
-static int common_verify_sm2(void *data, EVP_PKEY *pkey,
-                             int mdnid, int pknid, int req)
+static void clean_id_ctx(EVP_MD_CTX *ctx)
 {
-    X509 *x = NULL;
-    X509_REQ *r = NULL;
+    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+
+    EVP_PKEY_CTX_free(pctx);
+    EVP_MD_CTX_free(ctx);
+}
+
+static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
+{
     EVP_MD_CTX *ctx = NULL;
-    unsigned char *buf_in = NULL;
-    int ret = -1, inl = 0;
-    size_t inll = 0;
     EVP_PKEY_CTX *pctx = NULL;
-    const EVP_MD *type = EVP_get_digestbynid(mdnid);
-    ASN1_BIT_STRING *signature = NULL;
-    ASN1_OCTET_STRING *sm2_id = NULL;
-    ASN1_VALUE *tbv = NULL;
 
-    if (type == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2,
-                ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
-        goto err;
+    if ((ctx = EVP_MD_CTX_new()) == NULL
+        || (pctx = EVP_PKEY_CTX_new(r, NULL)) == NULL) {
+        X509err(0, ERR_R_MALLOC_FAILURE);
+        goto error;
     }
 
-    if (pkey == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
+    if (id != NULL) {
+        if (EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
+            X509err(0, ERR_R_MALLOC_FAILURE);
+            goto error;
+        }
     }
 
-    if (req == 1) {
-        r = (X509_REQ *)data;
-        signature = r->signature;
-        sm2_id = r->sm2_id;
-        tbv = (ASN1_VALUE *)&r->req_info;
-    } else {
-        x = (X509 *)data;
-        signature = &x->signature;
-        sm2_id = x->sm2_id;
-        tbv = (ASN1_VALUE *)&x->cert_info;
-    }
-
-    if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
-        return -1;
-    }
-
-    ctx = EVP_MD_CTX_new();
-    if (ctx == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    /* Check public key OID matches public key type */
-    if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
-        goto err;
-    }
-
-    if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-    pctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (pctx == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-    /* NOTE: we tolerate no actual ID, to provide maximum flexibility */
-    if (sm2_id != NULL
-            && EVP_PKEY_CTX_set1_id(pctx, sm2_id->data, sm2_id->length) != 1) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
 
-    if (!EVP_DigestVerifyInit(ctx, NULL, type, NULL, pkey)) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-
-    inl = ASN1_item_i2d(tbv, &buf_in,
-                        req == 1 ?
-                        ASN1_ITEM_rptr(X509_REQ_INFO) :
-                        ASN1_ITEM_rptr(X509_CINF));
-    if (inl <= 0) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    if (buf_in == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    inll = inl;
-
-    ret = EVP_DigestVerify(ctx, signature->data,
-                           (size_t)signature->length, buf_in, inl);
-    if (ret <= 0) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        goto err;
-    }
-    ret = 1;
- err:
-    OPENSSL_clear_free(buf_in, inll);
-    EVP_MD_CTX_free(ctx);
+    return ctx;
+ error:
     EVP_PKEY_CTX_free(pctx);
-    return ret;
+    EVP_MD_CTX_free(ctx);
+    return NULL;
 }
-
-static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
-{
-    return common_verify_sm2(x, pkey, mdnid, pknid, 0);
-}
-
-static int x509_req_verify_sm2(X509_REQ *x, EVP_PKEY *pkey,
-                               int mdnid, int pknid)
-{
-    return common_verify_sm2(x, pkey, mdnid, pknid, 1);
-}
-
-#endif
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
-#ifndef OPENSSL_NO_SM2
-    int mdnid, pknid;
-#endif
+    int rv = 0;
+    EVP_MD_CTX *ctx = NULL;
+    ASN1_OCTET_STRING *id = NULL;
 
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
 #ifndef OPENSSL_NO_SM2
-    /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
-                             &mdnid, &pknid)) {
-        X509err(X509_F_X509_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
-        return 0;
-    }
-
-    if (pknid == NID_sm2)
-        return x509_verify_sm2(a, r, mdnid, pknid);
+    id = a->sm2_id;
 #endif
 
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-                             &a->signature, &a->cert_info, r));
+    if ((ctx = make_id_ctx(r, id)) != NULL) {
+        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+                                  &a->signature, &a->cert_info, ctx);
+        clean_id_ctx(ctx);
+    }
+    return rv;
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
+    int rv = 0;
+    EVP_MD_CTX *ctx = NULL;
+    ASN1_OCTET_STRING *id = NULL;
+
 #ifndef OPENSSL_NO_SM2
-    int mdnid, pknid;
-
-    /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
-                             &mdnid, &pknid)) {
-        X509err(X509_F_X509_REQ_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
-        return 0;
-    }
-
-    if (pknid == NID_sm2)
-        return x509_req_verify_sm2(a, r, mdnid, pknid);
+    id = a->sm2_id;
 #endif
 
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
-                             &a->sig_alg, a->signature, &a->req_info, r));
+    if ((ctx = make_id_ctx(r, id)) != NULL) {
+        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
+                                  a->signature, &a->req_info, ctx);
+        clean_id_ctx(ctx);
+    }
+    return rv;
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
