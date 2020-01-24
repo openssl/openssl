@@ -526,7 +526,12 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
         break;
-
+    case BIO_CTRL_EOF:
+        if (b->next_bio == NULL)
+            ret = 0;
+        else
+            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        break;
     default:
         ret = 0;
         break;
