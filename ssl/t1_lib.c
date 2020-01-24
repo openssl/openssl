@@ -7,11 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need access to the deprecated low level HMAC APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/core_names.h>
 #include <openssl/ocsp.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -1417,7 +1421,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_TICKET_STATUS ret = SSL_TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    HMAC_CTX *hctx = NULL;
+    SSL_HMAC *hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
 
@@ -1447,7 +1451,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
 
     /* Initialize session ticket encryption and HMAC contexts */
-    hctx = HMAC_CTX_new();
+    hctx = ssl_hmac_new(tctx);
     if (hctx == NULL) {
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
@@ -1457,11 +1461,28 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
     }
-    if (tctx->ext.ticket_key_cb) {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (tctx->ext.ticket_key_evp_cb != NULL || tctx->ext.ticket_key_cb != NULL)
+#else
+    if (tctx->ext.ticket_key_evp_cb != NULL)
+#endif
+    {
         unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->ext.ticket_key_cb(s, nctick,
+        int rv = 0;
+
+        if (tctx->ext.ticket_key_evp_cb != NULL)
+            rv = tctx->ext.ticket_key_evp_cb(s, nctick,
+                                             nctick + TLSEXT_KEYNAME_LENGTH,
+                                             ctx,
+                                             ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                                             0);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        else if (tctx->ext.ticket_key_cb != NULL)
+            /* if 0 is returned, write an empty ticket */
+            rv = tctx->ext.ticket_key_cb(s, nctick,
                                          nctick + TLSEXT_KEYNAME_LENGTH,
-                                         ctx, hctx, 0);
+                                         ctx, ssl_hmac_get0_HMAC_CTX(hctx), 0);
+#endif
         if (rv < 0) {
             ret = SSL_TICKET_FATAL_ERR_OTHER;
             goto end;
@@ -1479,9 +1500,9 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             ret = SSL_TICKET_NO_DECRYPT;
             goto end;
         }
-        if (HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
-                         sizeof(tctx->ext.secure->tick_hmac_key),
-                         EVP_sha256(), NULL) <= 0
+        if (ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
+                          sizeof(tctx->ext.secure->tick_hmac_key),
+                          "SHA256") <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
                                   tctx->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
@@ -1495,7 +1516,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    mlen = HMAC_size(hctx);
+    mlen = ssl_hmac_size(hctx);
     if (mlen == 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
@@ -1509,8 +1530,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    if (HMAC_Update(hctx, etick, eticklen) <= 0
-        || HMAC_Final(hctx, tick_hmac, NULL) <= 0) {
+    if (ssl_hmac_update(hctx, etick, eticklen) <= 0
+        || ssl_hmac_final(hctx, tick_hmac, NULL, sizeof(tick_hmac)) <= 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
     }
@@ -1573,7 +1594,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 
  end:
     EVP_CIPHER_CTX_free(ctx);
-    HMAC_CTX_free(hctx);
+    ssl_hmac_free(hctx);
 
     /*
      * If set, the decrypt_ticket_cb() is called unless a fatal error was
@@ -2979,3 +3000,118 @@ uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 {
     return session->ext.max_fragment_len_mode;
 }
+
+/*
+ * Helper functions for HMAC access with legacy support included.
+ */
+SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
+{
+    SSL_HMAC *ret = OPENSSL_zalloc(sizeof(*ret));
+    EVP_MAC *mac = NULL;
+
+    if (ret == NULL)
+        return NULL;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->ext.ticket_key_evp_cb == NULL
+            && ctx->ext.ticket_key_cb != NULL) {
+        ret->old_ctx = HMAC_CTX_new();
+        if (ret->old_ctx == NULL)
+            goto err;
+        return ret;
+    }
+#endif
+    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", NULL);
+    if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
+        goto err;
+    EVP_MAC_free(mac);
+    return ret;
+ err:
+    EVP_MAC_CTX_free(ret->ctx);
+    EVP_MAC_free(mac);
+    OPENSSL_free(ret);
+    return NULL;
+}
+
+void ssl_hmac_free(SSL_HMAC *ctx)
+{
+    if (ctx != NULL) {
+        EVP_MAC_CTX_free(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        HMAC_CTX_free(ctx->old_ctx);
+#endif
+        OPENSSL_free(ctx);
+    }
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->old_ctx;
+}
+#endif
+
+EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->ctx;
+}
+
+int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+{
+    OSSL_PARAM params[3], *p = params;
+
+    if (ctx->ctx != NULL) {
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md, 0);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, len);
+        *p = OSSL_PARAM_construct_end();
+        if (EVP_MAC_CTX_set_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
+            return 1;
+    }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Init_ex(ctx->old_ctx, key, len,
+                            EVP_get_digestbyname(md), NULL);
+#endif
+    return 0;
+}
+
+int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_update(ctx->ctx, data, len);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Update(ctx->old_ctx, data, len);
+#endif
+    return 0;
+}
+
+int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
+                   size_t max_size)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_final(ctx->ctx, md, len, max_size);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL) {
+        unsigned int l;
+
+        if (HMAC_Final(ctx->old_ctx, md, &l) > 0) {
+            if (len != NULL)
+                *len = l;
+            return 1;
+        }
+    }
+#endif
+    return 0;
+}
+
+size_t ssl_hmac_size(const SSL_HMAC *ctx)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_size(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_size(ctx->old_ctx);
+#endif
+    return 0;
+}
+

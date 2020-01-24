@@ -317,8 +317,9 @@ static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
     return 1;
 }
 
-static int broken_session_ticket_cb(SSL *s, unsigned char *key_name, unsigned char *iv,
-                                    EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+static int broken_session_ticket_cb(SSL *s, unsigned char *key_name,
+                                    unsigned char *iv, EVP_CIPHER_CTX *ctx,
+                                    EVP_MAC_CTX *hctx, int enc)
 {
     return 0;
 }
@@ -326,7 +327,7 @@ static int broken_session_ticket_cb(SSL *s, unsigned char *key_name, unsigned ch
 static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
                                          unsigned char *iv,
                                          EVP_CIPHER_CTX *ctx,
-                                         HMAC_CTX *hctx, int enc)
+                                         EVP_MAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
@@ -585,11 +586,12 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
      * session (assigned via SNI), and should never be invoked
      */
     if (server2_ctx != NULL)
-        SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx,
-                                         do_not_call_session_ticket_cb);
+        SSL_CTX_set_tlsext_ticket_key_evp_cb(server2_ctx,
+                                             do_not_call_session_ticket_cb);
 
     if (extra->server.broken_session_ticket) {
-        SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_cb);
+        SSL_CTX_set_tlsext_ticket_key_evp_cb(server_ctx,
+                                             broken_session_ticket_cb);
     }
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (extra->server.npn_protocols != NULL) {

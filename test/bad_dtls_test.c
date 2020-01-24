@@ -29,6 +29,8 @@
  */
 #include <string.h>
 
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include <openssl/opensslconf.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -278,11 +280,13 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     static unsigned char seq[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     static unsigned char ver[2] = { 0x01, 0x00 }; /* DTLS1_BAD_VER */
     unsigned char lenbytes[2];
-    HMAC_CTX *ctx;
+    EVP_MAC *hmac;
+    EVP_MAC_CTX *ctx;
     EVP_CIPHER_CTX *enc_ctx;
     unsigned char iv[16];
     unsigned char pad;
     unsigned char *enc;
+    OSSL_PARAM params[3];
 
     seq[0] = (seqnr >> 40) & 0xff;
     seq[1] = (seqnr >> 32) & 0xff;
@@ -300,18 +304,26 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     memcpy(enc, msg, len);
 
     /* Append HMAC to data */
-    ctx = HMAC_CTX_new();
-    HMAC_Init_ex(ctx, mac_key, 20, EVP_sha1(), NULL);
-    HMAC_Update(ctx, epoch, 2);
-    HMAC_Update(ctx, seq, 6);
-    HMAC_Update(ctx, &type, 1);
-    HMAC_Update(ctx, ver, 2); /* Version */
+    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    ctx = EVP_MAC_CTX_new(hmac);
+    EVP_MAC_free(hmac);
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 "SHA1", 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                                  mac_key, 20);
+    params[2] = OSSL_PARAM_construct_end();
+    EVP_MAC_CTX_set_params(ctx, params);
+    EVP_MAC_init(ctx);
+    EVP_MAC_update(ctx, epoch, 2);
+    EVP_MAC_update(ctx, seq, 6);
+    EVP_MAC_update(ctx, &type, 1);
+    EVP_MAC_update(ctx, ver, 2); /* Version */
     lenbytes[0] = (unsigned char)(len >> 8);
     lenbytes[1] = (unsigned char)(len);
-    HMAC_Update(ctx, lenbytes, 2); /* Length */
-    HMAC_Update(ctx, enc, len); /* Finally the data itself */
-    HMAC_Final(ctx, enc + len, NULL);
-    HMAC_CTX_free(ctx);
+    EVP_MAC_update(ctx, lenbytes, 2); /* Length */
+    EVP_MAC_update(ctx, enc, len); /* Finally the data itself */
+    EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH);
+    EVP_MAC_CTX_free(ctx);
 
     /* Append padding bytes */
     len += SHA_DIGEST_LENGTH;

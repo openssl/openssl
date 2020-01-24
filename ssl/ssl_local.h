@@ -737,6 +737,32 @@ typedef struct ssl_ctx_ext_secure_st {
     unsigned char tick_aes_key[TLSEXT_TICK_KEY_LENGTH];
 } SSL_CTX_EXT_SECURE;
 
+/*
+ * Helper function for HMAC
+ * The structure should be considered opaque, it will change once the low
+ * level deprecated calls are removed.  At that point it can be replaced
+ * by EVP_MAC_CTX and most of the functions converted to macros or inlined
+ * directly.
+ */
+typedef struct ssl_hmac_st {
+    EVP_MAC_CTX *ctx;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    HMAC_CTX *old_ctx;
+# endif
+} SSL_HMAC;
+
+SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx);
+void ssl_hmac_free(SSL_HMAC *ctx);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx);
+# endif
+EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx);
+int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
+int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len);
+int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
+                   size_t max_size);
+size_t ssl_hmac_size(const SSL_HMAC *ctx);
+
 struct ssl_ctx_st {
     OPENSSL_CTX *libctx;
 
@@ -936,10 +962,16 @@ struct ssl_ctx_st {
         /* RFC 4507 session ticket keys */
         unsigned char tick_key_name[TLSEXT_KEYNAME_LENGTH];
         SSL_CTX_EXT_SECURE *secure;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
         /* Callback to support customisation of ticket key setting */
         int (*ticket_key_cb) (SSL *ssl,
                               unsigned char *name, unsigned char *iv,
                               EVP_CIPHER_CTX *ectx, HMAC_CTX *hctx, int enc);
+#endif
+        int (*ticket_key_evp_cb) (SSL *ssl,
+                                  unsigned char *name, unsigned char *iv,
+                                  EVP_CIPHER_CTX *ectx, EVP_MAC_CTX *hctx,
+                                  int enc);
 
         /* certificate status request info */
         /* Callback for status request */

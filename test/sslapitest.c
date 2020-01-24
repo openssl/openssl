@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * We need access to the deprecated low level HMAC APIs for legacy purposes
+ * when the deprecated calls are not hidden
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -19,6 +27,7 @@
 #include <openssl/txt_db.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
+#include <openssl/core_names.h>
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -6077,6 +6086,7 @@ static SSL_TICKET_RETURN dec_tick_cb(SSL *s, SSL_SESSION *ss,
 
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int tick_key_cb(SSL *s, unsigned char key_name[16],
                        unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx,
                        HMAC_CTX *hctx, int enc)
@@ -6094,6 +6104,32 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
 
     return tick_key_renew ? 2 : 1;
 }
+#endif
+
+static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
+                           unsigned char iv[EVP_MAX_IV_LENGTH],
+                           EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx, int enc)
+{
+    const unsigned char tick_aes_key[16] = "0123456789abcdef";
+    unsigned char tick_hmac_key[16] = "0123456789abcdef";
+    OSSL_PARAM params[3];
+
+    tick_key_cb_called = 1;
+    memset(iv, 0, AES_BLOCK_SIZE);
+    memset(key_name, 0, 16);
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                                  tick_hmac_key,
+                                                  sizeof(tick_hmac_key));
+    params[2] = OSSL_PARAM_construct_end();
+    if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, tick_aes_key, iv, enc)
+            || !EVP_MAC_CTX_set_params(hctx, params)
+            || !EVP_MAC_init(hctx))
+        return -1;
+
+    return tick_key_renew ? 2 : 1;
+}
 
 /*
  * Test the various ticket callbacks
@@ -6105,10 +6141,14 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
  * Test 5: TLSv1.3, no ticket key callback, ticket, no renewal
  * Test 6: TLSv1.2, no ticket key callback, ticket, renewal
  * Test 7: TLSv1.3, no ticket key callback, ticket, renewal
- * Test 8: TLSv1.2, ticket key callback, ticket, no renewal
- * Test 9: TLSv1.3, ticket key callback, ticket, no renewal
- * Test 10: TLSv1.2, ticket key callback, ticket, renewal
- * Test 11: TLSv1.3, ticket key callback, ticket, renewal
+ * Test 8: TLSv1.2, old ticket key callback, ticket, no renewal
+ * Test 9: TLSv1.3, old ticket key callback, ticket, no renewal
+ * Test 10: TLSv1.2, old ticket key callback, ticket, renewal
+ * Test 11: TLSv1.3, old ticket key callback, ticket, renewal
+ * Test 12: TLSv1.2, ticket key callback, ticket, no renewal
+ * Test 13: TLSv1.3, ticket key callback, ticket, no renewal
+ * Test 14: TLSv1.2, ticket key callback, ticket, renewal
+ * Test 15: TLSv1.3, ticket key callback, ticket, renewal
  */
 static int test_ticket_callbacks(int tst)
 {
@@ -6125,11 +6165,15 @@ static int test_ticket_callbacks(int tst)
     if (tst % 2 == 1)
         return 1;
 #endif
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+    if (tst >= 8 && tst <= 11)
+        return 1;
+#endif
 
     gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
 
     /* Which tests the ticket key callback should request renewal for */
-    if (tst == 10 || tst == 11)
+    if (tst == 10 || tst == 11 || tst == 14 || tst == 15)
         tick_key_renew = 1;
     else
         tick_key_renew = 0;
@@ -6179,9 +6223,15 @@ static int test_ticket_callbacks(int tst)
                                                  NULL)))
         goto end;
 
-    if (tst >= 8
-            && !TEST_true(SSL_CTX_set_tlsext_ticket_key_cb(sctx, tick_key_cb)))
-        goto end;
+    if (tst >= 12) {
+        if (!TEST_true(SSL_CTX_set_tlsext_ticket_key_evp_cb(sctx, tick_key_evp_cb)))
+            goto end;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    } else if (tst >= 8) {
+        if (!TEST_true(SSL_CTX_set_tlsext_ticket_key_cb(sctx, tick_key_cb)))
+            goto end;
+#endif
+    }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
@@ -7060,7 +7110,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_info_callback, 6);
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
-    ADD_ALL_TESTS(test_ticket_callbacks, 12);
+    ADD_ALL_TESTS(test_ticket_callbacks, 16);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);

@@ -4008,12 +4008,14 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         ctx->ext.status_cb = (int (*)(SSL *, void *))fp;
         break;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
         ctx->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
                                              unsigned char *,
                                              EVP_CIPHER_CTX *,
                                              HMAC_CTX *, int))fp;
         break;
+#endif
 
 #ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_SRP_VERIFY_PARAM_CB:
@@ -4039,6 +4041,14 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     default:
         return 0;
     }
+    return 1;
+}
+
+int SSL_CTX_set_tlsext_ticket_key_evp_cb
+    (SSL_CTX *ctx, int (*fp)(SSL *, unsigned char *, unsigned char *,
+                             EVP_CIPHER_CTX *, EVP_MAC_CTX *, int))
+{
+    ctx->ext.ticket_key_evp_cb = fp;
     return 1;
 }
 

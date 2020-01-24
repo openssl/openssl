@@ -327,9 +327,14 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define SSL_CTX_get_tlsext_status_type(ssl) \
         SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0,NULL)
 
-# define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
         SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,\
                 (void (*)(void))cb)
+# endif
+int SSL_CTX_set_tlsext_ticket_key_evp_cb
+    (SSL_CTX *ctx, int (*fp)(SSL *, unsigned char *, unsigned char *,
+                             EVP_CIPHER_CTX *, EVP_MAC_CTX *, int));
 
 /* PSK ciphersuites from 4279 */
 # define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
