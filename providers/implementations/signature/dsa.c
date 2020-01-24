@@ -136,8 +136,14 @@ static int get_md_nid(const EVP_MD *md)
      */
     static const OSSL_ITEM name_to_nid[] = {
         { NID_sha1,   OSSL_DIGEST_NAME_SHA1   },
-        { NID_sha224, OSSL_DIGEST_NAME_SHA224 },
-        { NID_sha256, OSSL_DIGEST_NAME_SHA256 },
+        { NID_sha224, OSSL_DIGEST_NAME_SHA2_224 },
+        { NID_sha256, OSSL_DIGEST_NAME_SHA2_256 },
+        { NID_sha384, OSSL_DIGEST_NAME_SHA2_384 },
+        { NID_sha512, OSSL_DIGEST_NAME_SHA2_512 },
+        { NID_sha3_224, OSSL_DIGEST_NAME_SHA3_224 },
+        { NID_sha3_256, OSSL_DIGEST_NAME_SHA3_256 },
+        { NID_sha3_384, OSSL_DIGEST_NAME_SHA3_384 },
+        { NID_sha3_512, OSSL_DIGEST_NAME_SHA3_512 },
     };
     size_t i;
     int mdnid = NID_undef;
