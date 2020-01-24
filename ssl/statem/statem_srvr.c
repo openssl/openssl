@@ -743,7 +743,15 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_CHANGE:
         if (SSL_IS_TLS13(s))
             break;
-        s->session->cipher = s->s3->tmp.new_cipher;
+        /* Writes to s->session are only safe for initial handshakes */
+        if (s->session->cipher == NULL) {
+            s->session->cipher = s->s3->tmp.new_cipher;
+        } else if (s->session->cipher != s->s3->tmp.new_cipher) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_OSSL_STATEM_SERVER_PRE_WORK,
+                     ERR_R_INTERNAL_ERROR);
+            return WORK_ERROR;
+        }
         if (!s->method->ssl3_enc->setup_key_block(s)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
