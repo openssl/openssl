@@ -507,9 +507,9 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
             /* For SM2, the only valid digest-alg is SM3 */
             *(int *)arg2 = NID_sm3;
-        } else {
-            *(int *)arg2 = NID_sha256;
+            return 2;            /* Make it mandatory */
         }
+        *(int *)arg2 = NID_sha256;
         return 1;
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
