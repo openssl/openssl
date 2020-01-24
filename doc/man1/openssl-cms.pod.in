@@ -55,6 +55,7 @@ B<openssl> B<cms>
 [B<-crlfeol>]
 [B<-asciicrlf>]
 [B<-nodetach>]
+[B<-certfile> I<file>]
 [B<-certsout> I<file>]
 [B<-signer> I<file>]
 [B<-recip> I<file>]

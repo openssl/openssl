@@ -38,7 +38,8 @@ $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-verify_hostname> I<hostname>]\n"
 . "[B<-verify_ip> I<ip>]\n"
 . "[B<-verify_name> I<name>]\n"
-. "[B<-x509_strict>]\n";
+. "[B<-x509_strict>]\n"
+. "[B<-issuer_checks>]\n";
 $OpenSSL::safe::opt_v_item = ""
 . "=item B<-allow_proxy_certs>, B<-attime>, B<-no_check_time>,\n"
 . "B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,\n"
@@ -47,7 +48,7 @@ $OpenSSL::safe::opt_v_item = ""
 . "B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,\n"
 . "B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,\n"
 . "B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,\n"
-. "B<-verify_ip>, B<-verify_name>, B<-x509_strict>\n"
+. "B<-verify_ip>, B<-verify_name>, B<-x509_strict> B<-issuer_checks>\n"
 . "\n"
 . "Set various options of certificate chain verification.\n"
 . "See L<openssl(1)/Verification Options> for details.";
