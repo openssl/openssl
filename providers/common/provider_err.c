@@ -26,6 +26,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "both mode and mode int"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_CIPHER_OPERATION_FAILED),
     "cipher operation failed"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_DURING_DERIVATION),
+    "failed during derivation"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_DECRYPT), "failed to decrypt"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_GENERATE_KEY),
     "failed to generate key"},

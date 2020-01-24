@@ -18,6 +18,8 @@
 #include <openssl/x509.h>
 #include <openssl/ec.h>
 #include <openssl/rand.h>
+#include <openssl/core_names.h>
+#include "internal/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/ecx.h"
@@ -401,6 +403,48 @@ static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
     return 1;
 }
 
+static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    /*
+     * We provide no mechanism to "update" an ECX key once it has been set,
+     * therefore we do not have to maintain a dirty count.
+     */
+    return 1;
+}
+
+static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                              EVP_KEYMGMT *to_keymgmt)
+{
+    const ECX_KEY *key = from->pkey.ecx;
+    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM *params = NULL;
+    int rv = 0;
+
+    ossl_param_bld_init(&tmpl);
+
+    /* A key must at least have a public part */
+    if (!ossl_param_bld_push_octet_string(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+                                          key->pubkey, key->keylen))
+        goto err;
+
+    if (key->privkey != NULL) {
+        if (!ossl_param_bld_push_octet_string(&tmpl,
+                                              OSSL_PKEY_PARAM_PRIV_KEY,
+                                              key->privkey, key->keylen))
+            goto err;
+    }
+
+    params = ossl_param_bld_to_param(&tmpl);
+
+    /* We export, the provider imports */
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
+                            params);
+
+ err:
+    ossl_param_bld_free(params);
+    return rv;
+}
+
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     EVP_PKEY_X25519,
     EVP_PKEY_X25519,
@@ -442,6 +486,8 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_set_pub_key,
     ecx_get_priv_key,
     ecx_get_pub_key,
+    ecx_pkey_dirty_cnt,
+    ecx_pkey_export_to
 };
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
@@ -485,6 +531,8 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_set_pub_key,
     ecx_get_priv_key,
     ecx_get_pub_key,
+    ecx_pkey_dirty_cnt,
+    ecx_pkey_export_to
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
