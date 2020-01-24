@@ -111,6 +111,55 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
 #  if defined(OPENSSL_SYS_LINUX)
 #   include <linux/version.h>
 
+#   if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+
+struct tls_crypto_info {
+    unsigned short version;
+    unsigned short cipher_type;
+};
+
+#   else
+#    include <linux/tls.h>
+#   endif
+
+#   if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+#    define TLS_CIPHER_AES_CCM_128				53
+#    define TLS_CIPHER_AES_CCM_128_IV_SIZE			8
+#    define TLS_CIPHER_AES_CCM_128_KEY_SIZE		16
+#    define TLS_CIPHER_AES_CCM_128_SALT_SIZE		4
+#    define TLS_CIPHER_AES_CCM_128_TAG_SIZE		16
+#    define TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE		8
+
+struct tls12_crypto_info_aes_ccm_128 {
+	struct tls_crypto_info info;
+	unsigned char iv[TLS_CIPHER_AES_CCM_128_IV_SIZE];
+	unsigned char key[TLS_CIPHER_AES_CCM_128_KEY_SIZE];
+	unsigned char salt[TLS_CIPHER_AES_CCM_128_SALT_SIZE];
+	unsigned char rec_seq[TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE];
+};
+
+#   endif
+#   if LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+#    define TLS_1_3_VERSION_MAJOR	0x3
+#    define TLS_1_3_VERSION_MINOR	0x4
+#    define TLS_1_3_VERSION		TLS_VERSION_NUMBER(TLS_1_3)
+
+#    define TLS_CIPHER_AES_GCM_256				52
+#    define TLS_CIPHER_AES_GCM_256_IV_SIZE			8
+#    define TLS_CIPHER_AES_GCM_256_KEY_SIZE		32
+#    define TLS_CIPHER_AES_GCM_256_SALT_SIZE		4
+#    define TLS_CIPHER_AES_GCM_256_TAG_SIZE		16
+#    define TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE		8
+
+struct tls12_crypto_info_aes_gcm_256 {
+	struct tls_crypto_info info;
+	unsigned char iv[TLS_CIPHER_AES_GCM_256_IV_SIZE];
+	unsigned char key[TLS_CIPHER_AES_GCM_256_KEY_SIZE];
+	unsigned char salt[TLS_CIPHER_AES_GCM_256_SALT_SIZE];
+	unsigned char rec_seq[TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE];
+};
+
+#   endif
 #   define K_MAJ   4
 #   define K_MIN1  13
 #   define K_MIN2  0
@@ -132,11 +181,6 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
 #    define TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE             8
 
 #    define TLS_SET_RECORD_TYPE     1
-
-struct tls_crypto_info {
-    unsigned short version;
-    unsigned short cipher_type;
-};
 
 struct tls12_crypto_info_aes_gcm_128 {
     struct tls_crypto_info info;
@@ -179,7 +223,6 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t s
 
 #    include <sys/sendfile.h>
 #    include <netinet/tcp.h>
-#    include <linux/tls.h>
 #    include <linux/socket.h>
 #    include "openssl/ssl3.h"
 #    include "openssl/tls1.h"
@@ -197,6 +240,14 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t s
 #     define TLS_RX                  2
 #    endif
 
+struct tls_crypto_info_all {
+    union {
+        struct tls12_crypto_info_aes_gcm_128 gcm128;
+        struct tls12_crypto_info_aes_gcm_256 gcm256;
+        struct tls12_crypto_info_aes_ccm_128 ccm128;
+    };
+    size_t tls_crypto_info_len;
+};
 /*
  * When successful, this socket option doesn't change the behaviour of the
  * TCP socket, except changing the TCP setsockopt handler to enable the
