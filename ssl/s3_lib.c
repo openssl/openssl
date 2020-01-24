@@ -4639,7 +4639,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         OPENSSL_clear_free(s->s3->tmp.psk, psklen);
         s->s3->tmp.psk = NULL;
         if (!s->method->ssl3_enc->generate_master_secret(s,
-                    s->session->master_key,pskpms, pskpmslen,
+                    s->session->master_key, pskpms, pskpmslen,
                     &s->session->master_key_length)) {
             OPENSSL_clear_free(pskpms, pskpmslen);
             /* SSLfatal() already called */
