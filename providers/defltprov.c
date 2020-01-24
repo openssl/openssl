@@ -372,6 +372,10 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", "default=yes", dh_keyexch_functions },
 #endif
+#ifndef OPENSSL_NO_EC
+    { "X25519", "default=yes", x25519_keyexch_functions },
+    { "X448", "default=yes", x448_keyexch_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

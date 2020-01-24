@@ -57,6 +57,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_BN_ERROR                                  160
 # define PROV_R_BOTH_MODE_AND_MODE_INT                    127
 # define PROV_R_CIPHER_OPERATION_FAILED                   102
+# define PROV_R_FAILED_DURING_DERIVATION                  164
 # define PROV_R_FAILED_TO_DECRYPT                         162
 # define PROV_R_FAILED_TO_GENERATE_KEY                    121
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
