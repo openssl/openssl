@@ -18,8 +18,6 @@
 /* EC pkey context structure */
 
 typedef struct {
-    /* Key and paramgen group */
-    EC_GROUP *gen_group;
     /* message digest */
     const EVP_MD *md;
     /* Distinguishing Identifier, ISO/IEC 15946-3 */
@@ -47,7 +45,6 @@ static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
     SM2_PKEY_CTX *smctx = ctx->data;
 
     if (smctx != NULL) {
-        EC_GROUP_free(smctx->gen_group);
         OPENSSL_free(smctx->id);
         OPENSSL_free(smctx);
         ctx->data = NULL;
@@ -62,13 +59,6 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
         return 0;
     sctx = src->data;
     dctx = dst->data;
-    if (sctx->gen_group != NULL) {
-        dctx->gen_group = EC_GROUP_dup(sctx->gen_group);
-        if (dctx->gen_group == NULL) {
-            pkey_sm2_cleanup(dst);
-            return 0;
-        }
-    }
     if (sctx->id != NULL) {
         dctx->id = OPENSSL_malloc(sctx->id_len);
         if (dctx->id == NULL) {
@@ -163,26 +153,21 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
 static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     SM2_PKEY_CTX *smctx = ctx->data;
-    EC_GROUP *group;
     uint8_t *tmp_id;
 
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
-        group = EC_GROUP_new_by_curve_name(p1);
-        if (group == NULL) {
+        /*
+         * This control could be removed, which would signal it being
+         * unsupported.  However, that means that when the caller uses
+         * the correct curve, it may interpret the unsupported signal
+         * as an error, so it's better to accept the control, check the
+         * value and return a corresponding value.
+         */
+        if (p1 != NID_sm2) {
             SM2err(SM2_F_PKEY_SM2_CTRL, SM2_R_INVALID_CURVE);
             return 0;
         }
-        EC_GROUP_free(smctx->gen_group);
-        smctx->gen_group = group;
-        return 1;
-
-    case EVP_PKEY_CTRL_EC_PARAM_ENC:
-        if (smctx->gen_group == NULL) {
-            SM2err(SM2_F_PKEY_SM2_CTRL, SM2_R_NO_PARAMETERS_SET);
-            return 0;
-        }
-        EC_GROUP_set_asn1_flag(smctx->gen_group, p1);
         return 1;
 
     case EVP_PKEY_CTRL_MD:
@@ -309,6 +294,38 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
+static int pkey_sm2_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
+    EC_KEY *ec = NULL;
+    int ret;
+
+    ec = EC_KEY_new_by_curve_name(NID_sm2);
+    if (ec == NULL)
+        return 0;
+    if (!ossl_assert(ret = EVP_PKEY_assign_EC_KEY(pkey, ec)))
+        EC_KEY_free(ec);
+    return ret;
+}
+
+static int pkey_sm2_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
+    EC_KEY *ec = NULL;
+
+    ec = EC_KEY_new_by_curve_name(NID_sm2);
+    if (ec == NULL)
+        return 0;
+    if (!ossl_assert(EVP_PKEY_assign_EC_KEY(pkey, ec))) {
+        EC_KEY_free(ec);
+        return 0;
+    }
+    /* Note: if error is returned, we count on caller to free pkey->pkey.ec */
+    if (ctx->pkey != NULL
+        && !EVP_PKEY_copy_parameters(pkey, ctx->pkey))
+        return 0;
+
+    return EC_KEY_generate_key(ec);
+}
+
 static const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     0,
@@ -317,10 +334,10 @@ static const EVP_PKEY_METHOD sm2_pkey_meth = {
     pkey_sm2_cleanup,
 
     0,
-    0,
+    pkey_sm2_paramgen,
 
     0,
-    0,
+    pkey_sm2_keygen,
 
     0,
     pkey_sm2_sign,
