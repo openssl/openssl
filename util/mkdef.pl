@@ -100,10 +100,6 @@ die "Please supply arguments\n"
 #
 (my $SO_VARIANT = uc($target{"shlib_variant"} // '')) =~ s/\W/_/g;
 
-my $apiv = undef;
-$apiv = sprintf "%x%02x%02x", split(/\./, $config{api})
-    if $config{api};
-
 my $libname = platform->sharedname($name);
 
 my %OS_data = (
@@ -191,11 +187,13 @@ sub feature_filter {
 
     my $verdict = ! grep { $disabled_uc{$_} } @features;
 
-    if ($apiv) {
+    if ($disabled{deprecated}) {
         foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)(?:_(\d+)_(\d+))?$/;
-            my $symdep = sprintf "%x%02x%02x", $1, ($2 // 0), ($3 // 0);
-            $verdict = 0 if $apiv ge $symdep;
+            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+            my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
+            $verdict = 0 if $config{api} >= $symdep;
+            print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
+                if $1 == 0;
         }
     }
 
@@ -323,7 +321,10 @@ sub writer_VMS {
 
     my $last_num = 0;
     foreach (@_) {
-        while (++$last_num < $_->number()) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
+        while (++$last_num < $this_num) {
             push @slot_collection, $collector->(); # Just occupy a slot
         }
         my $type = {
@@ -406,12 +407,20 @@ int main()
 {
 _____
 
+    my $last_num = 0;
     for (@_) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
         if ($_->type() eq 'VARIABLE') {
-            print "\textern int ", $_->name(), '; /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '; /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         } else {
-            print "\textern int ", $_->name(), '(); /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '(); /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         }
+
+        $last_num = $this_num;
     }
     print <<'_____';
 }

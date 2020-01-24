@@ -162,6 +162,38 @@ MISC_SCRIPTS={-
                                && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                         @{$unified_info{scripts}}))
 -}
+HTMLDOCS1={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
+                        @{$unified_info{htmldocs}->{man1}})) -}
+HTMLDOCS3={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
+                        @{$unified_info{htmldocs}->{man3}})) -}
+HTMLDOCS5={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
+                        @{$unified_info{htmldocs}->{man5}})) -}
+HTMLDOCS7={-
+        join(" \\\n" . ' ' x 10,
+             fill_lines(" ", $COLUMNS - 10, map { platform->bin($_) }
+                        @{$unified_info{htmldocs}->{man7}})) -}
+MANDOCS1={-
+        join(" \\\n" . ' ' x 9,
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
+                        @{$unified_info{mandocs}->{man1}})) -}
+MANDOCS3={-
+        join(" \\\n" . ' ' x 9,
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
+                        @{$unified_info{mandocs}->{man3}})) -}
+MANDOCS5={-
+        join(" \\\n" . ' ' x 9,
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
+                        @{$unified_info{mandocs}->{man5}})) -}
+MANDOCS7={-
+        join(" \\\n" . ' ' x 9,
+             fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
+                        @{$unified_info{mandocs}->{man7}})) -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 catfile("apps","openssl") -}
@@ -300,8 +332,15 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
                           $target{shared_cppflag} || (),
                           (map { '-D'.$_ }
+                               @{$target{lib_defines} || ()},
+                               @{$target{shared_defines} || ()},
                                @{$config{lib_defines} || ()},
                                @{$config{shared_defines} || ()}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{lib_includes}},
+                               @{$target{shared_includes}},
+                               @{$config{lib_includes}},
+                               @{$config{shared_includes}}),
                           @{$config{lib_cppflags}},
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
@@ -327,8 +366,15 @@ LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
                           $target{module_cppflags} || (),
                           (map { '-D'.$_ }
+                               @{$target{dso_defines}},
+                               @{$target{module_defines}},
                                @{$config{dso_defines} || ()},
                                @{$config{module_defines} || ()}),
+                          (map { '-I'.quotify1($_) }
+                               @{$target{dso_includes}},
+                               @{$target{module_includes}},
+                               @{$config{dso_includes}},
+                               @{$config{module_includes}}),
                           @{$config{dso_cppflags}},
                           @{$config{module_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -387,10 +433,14 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
+{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
+
+build_docs: build_man_docs build_html_docs
+build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
+build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
@@ -402,12 +452,14 @@ build_apps build_tests: build_programs
 
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
-build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
+build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 	@ : {- output_off() if $disabled{makedepend}; "" -}
 	@echo "Warning: consider configuring with no-makedepend, because if"
 	@echo "         target system doesn't have $(PERL),"
 	@echo "         then make will fail..."
 	@ : {- output_on() if $disabled{makedepend}; "" -}
+
+all: build_sw build_docs
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils
@@ -421,8 +473,7 @@ test: tests
 	  EXE_EXT={- platform->binext() -} \
 	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
 	  OPENSSL_MODULES=`cd ../$(BLDDIR)/providers 2>/dev/null && pwd` \
-	  OPENSSL_DEBUG_MEMORY=on \
-	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
+	  $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
@@ -458,10 +509,12 @@ libclean:
 	$(RM) *{- platform->defext() -}
 
 clean: libclean
+	$(RM) $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
+	$(RM) $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' -print`
-	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' -print`
+	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -print`
+	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
@@ -764,29 +817,131 @@ uninstall_runtime_libs:
 	@ : {- output_on() unless windowsdll(); "" -}
 
 
-install_man_docs:
+install_man_docs: build_man_docs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MANDIR)/man1
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MANDIR)/man3
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MANDIR)/man5
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MANDIR)/man7
 	@$(ECHO) "*** Installing manpages"
-	$(PERL) $(SRCDIR)/util/process_docs.pl \
-		--destdir=$(DESTDIR)$(MANDIR) --type=man --suffix=$(MANSUFFIX)
+	@set -e; for x in dummy $(MANDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man1/$$fn"; \
+		cp $$x $(DESTDIR)$(MANDIR)/man1/$$fn$(MANSUFFIX); \
+		chmod 755 $(DESTDIR)$(MANDIR)/man1/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man3/$$fn"; \
+		cp $$x $(DESTDIR)$(MANDIR)/man3/$$fn$(MANSUFFIX); \
+		chmod 755 $(DESTDIR)$(MANDIR)/man3/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man5/$$fn"; \
+		cp $$x $(DESTDIR)$(MANDIR)/man5/$$fn$(MANSUFFIX); \
+		chmod 755 $(DESTDIR)$(MANDIR)/man5/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man7/$$fn"; \
+		cp $$x $(DESTDIR)$(MANDIR)/man7/$$fn$(MANSUFFIX); \
+		chmod 755 $(DESTDIR)$(MANDIR)/man7/$$fn$(MANSUFFIX); \
+	done
 
 uninstall_man_docs:
 	@$(ECHO) "*** Uninstalling manpages"
-	$(PERL) $(SRCDIR)/util/process_docs.pl \
-		--destdir=$(DESTDIR)$(MANDIR) --type=man --suffix=$(MANSUFFIX) \
-		--remove
+	@set -e; for x in dummy $(MANDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man1/$$fn"; \
+		$(RM) $(DESTDIR)$(MANDIR)/man1/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man3/$$fn"; \
+		$(RM) $(DESTDIR)$(MANDIR)/man3/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man5/$$fn"; \
+		$(RM) $(DESTDIR)$(MANDIR)/man5/$$fn$(MANSUFFIX); \
+	done
+	@set -e; for x in dummy $(MANDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man7/$$fn"; \
+		$(RM) $(DESTDIR)$(MANDIR)/man7/$$fn$(MANSUFFIX); \
+	done
 
-install_html_docs:
+install_html_docs: build_html_docs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man1
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man3
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man5
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(HTMLDIR)/man7
 	@$(ECHO) "*** Installing HTML manpages"
-	$(PERL) $(SRCDIR)/util/process_docs.pl \
-		--destdir=$(DESTDIR)$(HTMLDIR) --type=html
+	@set -e; for x in dummy $(HTMLDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man1/$$fn"; \
+		cp $$x $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
+		chmod 755 $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man3/$$fn"; \
+		cp $$x $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
+		chmod 755 $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man5/$$fn"; \
+		cp $$x $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
+		chmod 755 $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man7/$$fn"; \
+		cp $$x $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
+		chmod 755 $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
+	done
 
 uninstall_html_docs:
-	@$(ECHO) "*** Uninstalling manpages"
-	$(PERL) $(SRCDIR)/util/process_docs.pl \
-		--destdir=$(DESTDIR)$(HTMLDIR) --type=html --remove
-
+	@$(ECHO) "*** Uninstalling HTML manpages"
+	@set -e; for x in dummy $(HTMLDOCS1); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man1/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS3); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man3/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS5); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man5/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
+	done
+	@set -e; for x in dummy $(HTMLDOCS7); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(HTMLDIR)/man7/$$fn"; \
+		$(RM) $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
+	done
 
 # Developer targets (note: these are only available on Unix) #########
 
@@ -797,7 +952,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 .PHONY: doc-nits
 doc-nits: build_generated
-	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -e )
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -l -e )
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -1027,7 +1182,27 @@ reconfigure reconf:
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
-      if (platform->isdef($args{src})) {
+      if ($args{src} =~ /\.html$/) {
+	  my $title = basename($args{src}, ".html");
+	  my $pod = $args{generator}->[0];
+	  return <<"EOF";
+$args{src}: $pod
+	pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. \\
+		 --podpath=man1:man3:man5:man7 --infile=$pod "--title=$title" \\
+	| \$(PERL) -pe 's|href="http://man\\.he\\.net/(man\\d/[^"]+)(?:\\.html)?"|href="../\$1.html|g;' \\
+	> \$\@
+EOF
+      } elsif ($args{src} =~ /\.(\d)$/) {
+	  my $section = $1;
+	  my $name = uc basename($args{src}, ".$section");
+	  my $pod = $args{generator}->[0];
+	  return <<"EOF";
+$args{src}: $pod
+	pod2man --name=$name --section=$section --center=OpenSSL \\
+		--release=\$(VERSION) $pod \\
+	> \$\@
+EOF
+      } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';

@@ -150,13 +150,6 @@ static int test_func(int test)
     return result;
 }
 
-int global_init(void)
-{
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    return 1;
-}
-
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)

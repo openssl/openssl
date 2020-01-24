@@ -364,7 +364,7 @@ secure renegotiation and 0 if it does not.
 L<ssl(7)>, L<SSL_new(3)>, L<SSL_clear(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
 L<SSL_CTX_set_min_proto_version(3)>,
-L<dhparam(1)>
+L<openssl-dhparam(1)>
 
 =head1 HISTORY
 

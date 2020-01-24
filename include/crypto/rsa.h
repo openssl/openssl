@@ -18,4 +18,8 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                         STACK_OF(BIGNUM_const) *exps,
                         STACK_OF(BIGNUM_const) *coeffs);
+
+int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
+                                       const unsigned char *from, size_t flen,
+                                       int client_version, int alt_version);
 #endif

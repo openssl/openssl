@@ -31,7 +31,7 @@ I<issuer> or some B<X509_V_ERR*> constant to indicate an error.
 
 L<X509_verify_cert(3)>,
 L<X509_check_ca(3)>,
-L<verify(1)>
+L<openssl-verify(1)>
 
 =head1 COPYRIGHT
 

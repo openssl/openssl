@@ -248,6 +248,11 @@ be initialized.
 Returns 1 if I<md> is an implementation of an algorithm that's
 identifiable with I<name>, otherwise 0.
 
+If I<md> is a legacy digest (it's the return value from the likes of
+EVP_sha256() rather than the result of an EVP_MD_fetch()), only cipher
+names registered with the default library context (see
+L<OPENSSL_CTX(3)>) will be considered.
+
 =item EVP_MD_number()
 
 Returns the internal dynamic number assigned to the I<md>.  This is
@@ -591,7 +596,7 @@ digest name passed on the command line.
 =head1 SEE ALSO
 
 L<EVP_MD_meth_new(3)>,
-L<dgst(1)>,
+L<openssl-dgst(1)>,
 L<evp(7)>,
 L<OSSL_PROVIDER(3)>,
 L<OSSL_PARAM(3)>

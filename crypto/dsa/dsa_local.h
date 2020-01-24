@@ -9,6 +9,7 @@
 
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
+#include "internal/ffc.h"
 
 struct dsa_st {
     /*
@@ -17,16 +18,16 @@ struct dsa_st {
      */
     int pad;
     int32_t version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
+    FFC_PARAMS params;
     BIGNUM *pub_key;            /* y public key */
     BIGNUM *priv_key;           /* x private key */
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
     CRYPTO_REF_COUNT references;
+#ifndef FIPS_MODE
     CRYPTO_EX_DATA ex_data;
+#endif
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
@@ -78,3 +79,6 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
                           size_t seed_len, int idx, unsigned char *seed_out,
                           int *counter_ret, unsigned long *h_ret,
                           BN_GENCB *cb);
+
+DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
+                         int dlen, DSA *dsa);

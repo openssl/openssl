@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_OCSPERR_H
 # endif
 
@@ -33,7 +33,7 @@ int ERR_load_OCSP_strings(void);
 /*
  * OCSP function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define OCSP_F_D2I_OCSP_NONCE                            0
 #   define OCSP_F_OCSP_BASIC_ADD1_STATUS                    0
 #   define OCSP_F_OCSP_BASIC_SIGN                           0

@@ -312,10 +312,7 @@ int main(int argc, char **argv)
         fprintf(stderr,
                 "OpenSSL build is not ASYNC capable - skipping async tests\n");
     } else {
-        CRYPTO_set_mem_debug(1);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-        if (       !test_ASYNC_init_thread()
+        if (!test_ASYNC_init_thread()
                 || !test_ASYNC_callback_status()
                 || !test_ASYNC_start_job()
                 || !test_ASYNC_get_current_job()

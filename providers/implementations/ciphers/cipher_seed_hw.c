@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SEED low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_seed.h"
 
 static int cipher_hw_seed_initkey(PROV_CIPHER_CTX *ctx,

@@ -244,15 +244,15 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
 }
 
 /* A TJH addition */
-int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
-                            unsigned char *kstr, int klen,
+int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
+                            const unsigned char *kstr, int klen,
                             pem_password_cb *cb, void *u)
 {
     int i, ret = 0;
     unsigned char *data = NULL;
     const char *objstr = NULL;
     char buf[PEM_BUFSIZE];
-    unsigned char *iv = NULL;
+    const unsigned char *iv = NULL;
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
@@ -301,7 +301,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
             PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),
-                         (char *)iv);
+                         (const char *)iv);
 
             /* use the normal code to write things out */
             i = PEM_write_bio(bp, PEM_STRING_RSA, buf, data, i);

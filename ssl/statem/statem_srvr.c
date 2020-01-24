@@ -24,8 +24,24 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
+#include <openssl/asn1t.h>
 
 #define TICKET_NONCE_SIZE       8
+
+typedef struct {
+  ASN1_TYPE *kxBlob;
+  ASN1_TYPE *opaqueBlob;
+} GOST_KX_MESSAGE;
+
+DECLARE_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
+
+ASN1_SEQUENCE(GOST_KX_MESSAGE) = {
+  ASN1_SIMPLE(GOST_KX_MESSAGE,  kxBlob, ASN1_ANY),
+  ASN1_OPT(GOST_KX_MESSAGE, opaqueBlob, ASN1_ANY),
+} ASN1_SEQUENCE_END(GOST_KX_MESSAGE)
+
+IMPLEMENT_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
 
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 
@@ -2746,8 +2762,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         EVP_PKEY *pkey = s->s3.tmp.cert->privatekey;
         const EVP_MD *md;
         unsigned char *sigbytes1, *sigbytes2, *tbs;
-        size_t siglen, tbslen;
-        int rv;
+        size_t siglen = 0, tbslen;
 
         if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
             /* Should never happen */
@@ -2770,15 +2785,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        /*
-         * Create the signature. We don't know the actual length of the sig
-         * until after we've created it, so we reserve enough bytes for it
-         * up front, and then properly allocate them in the WPACKET
-         * afterwards.
-         */
-        siglen = EVP_PKEY_size(pkey);
-        if (!WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
-            || EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
+
+        if (EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
@@ -2800,15 +2808,19 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
-        rv = EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen);
-        OPENSSL_free(tbs);
-        if (rv <= 0 || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
-            || sigbytes1 != sigbytes2) {
+
+        if (EVP_DigestSign(md_ctx, NULL, &siglen, tbs, tbslen) <=0
+                || !WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
+                || EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen) <= 0
+                || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
+                || sigbytes1 != sigbytes2) {
+            OPENSSL_free(tbs);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        OPENSSL_free(tbs);
     }
 
     EVP_MD_CTX_free(md_ctx);
@@ -2832,7 +2844,8 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
             OPENSSL_free(s->pha_context);
             s->pha_context_len = 32;
             if ((s->pha_context = OPENSSL_malloc(s->pha_context_len)) == NULL
-                    || RAND_bytes(s->pha_context, s->pha_context_len) <= 0
+                    || RAND_bytes_ex(s->ctx->libctx, s->pha_context,
+                                     s->pha_context_len) <= 0
                     || !WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
@@ -2966,16 +2979,15 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt)
 static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 {
 #ifndef OPENSSL_NO_RSA
-    unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
-    int decrypt_len;
-    unsigned char decrypt_good, version_good;
-    size_t j, padding_len;
+    size_t outlen;
     PACKET enc_premaster;
-    RSA *rsa = NULL;
+    EVP_PKEY *rsa = NULL;
     unsigned char *rsa_decrypt = NULL;
     int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM params[3], *p = params;
 
-    rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA].privatekey);
+    rsa = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
     if (rsa == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_MISSING_RSA_CERTIFICATE);
@@ -2994,130 +3006,70 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         }
     }
 
-    /*
-     * We want to be sure that the plaintext buffer size makes it safe to
-     * iterate over the entire size of a premaster secret
-     * (SSL_MAX_MASTER_KEY_LENGTH). Reject overly short RSA keys because
-     * their ciphertext cannot accommodate a premaster secret anyway.
-     */
-    if (RSA_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 RSA_R_KEY_SIZE_TOO_SMALL);
-        return 0;
-    }
-
-    rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
+    outlen = SSL_MAX_MASTER_KEY_LENGTH;
+    rsa_decrypt = OPENSSL_malloc(outlen);
     if (rsa_decrypt == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
+    ctx = EVP_PKEY_CTX_new(rsa, NULL);
+    if (ctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
     /*
      * We must not leak whether a decryption failure occurs because of
      * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
-     * section 7.4.7.1). The code follows that advice of the TLS RFC and
-     * generates a random premaster secret for the case that the decrypt
-     * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
+     * section 7.4.7.1). We use the special padding type
+     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automaticaly decrypt the
+     * RSA, check the padding and check that the client version is as expected
+     * in the premaster secret. If any of that fails then the function appears
+     * to return successfully but with a random result. The call below could
+     * still fail if the input is publicly invalid.
+     * See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
-
-    if (RAND_priv_bytes(rand_premaster_secret,
-                      sizeof(rand_premaster_secret)) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * Decrypt with no padding. PKCS#1 padding will be removed as part of
-     * the timing-sensitive code below.
-     */
-     /* TODO(size_t): Convert this function */
-    decrypt_len = (int)RSA_private_decrypt((int)PACKET_remaining(&enc_premaster),
-                                           PACKET_data(&enc_premaster),
-                                           rsa_decrypt, rsa, RSA_NO_PADDING);
-    if (decrypt_len < 0) {
-        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Check the padding. See RFC 3447, section 7.2.2. */
-
-    /*
-     * The smallest padded premaster is 11 bytes of overhead. Small keys
-     * are publicly invalid, so this may return immediately. This ensures
-     * PS is at least 8 bytes.
-     */
-    if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
+    if (EVP_PKEY_decrypt_init(ctx) <= 0
+            || EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_WITH_TLS_PADDING) <= 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
 
-    padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
-    decrypt_good = constant_time_eq_int_8(rsa_decrypt[0], 0) &
-        constant_time_eq_int_8(rsa_decrypt[1], 2);
-    for (j = 2; j < padding_len - 1; j++) {
-        decrypt_good &= ~constant_time_is_zero_8(rsa_decrypt[j]);
-    }
-    decrypt_good &= constant_time_is_zero_8(rsa_decrypt[padding_len - 1]);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION,
+                                     (unsigned int *)&s->client_version);
+   if ((s->options & SSL_OP_TLS_ROLLBACK_BUG) != 0)
+        *p++ = OSSL_PARAM_construct_uint(
+            OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION,
+            (unsigned int *)&s->version);
+    *p++ = OSSL_PARAM_construct_end();
 
-    /*
-     * If the version in the decrypted pre-master secret is correct then
-     * version_good will be 0xff, otherwise it'll be zero. The
-     * Klima-Pokorny-Rosa extension of Bleichenbacher's attack
-     * (http://eprint.iacr.org/2003/052/) exploits the version number
-     * check as a "bad version oracle". Thus version checks are done in
-     * constant time and are treated like any other decryption error.
-     */
-    version_good =
-        constant_time_eq_8(rsa_decrypt[padding_len],
-                           (unsigned)(s->client_version >> 8));
-    version_good &=
-        constant_time_eq_8(rsa_decrypt[padding_len + 1],
-                           (unsigned)(s->client_version & 0xff));
-
-    /*
-     * The premaster secret must contain the same version number as the
-     * ClientHello to detect version rollback attacks (strangely, the
-     * protocol does not offer such protection for DH ciphersuites).
-     * However, buggy clients exist that send the negotiated protocol
-     * version instead if the server does not support the requested
-     * protocol version. If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such
-     * clients.
-     */
-    if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
-        unsigned char workaround_good;
-        workaround_good = constant_time_eq_8(rsa_decrypt[padding_len],
-                                             (unsigned)(s->version >> 8));
-        workaround_good &=
-            constant_time_eq_8(rsa_decrypt[padding_len + 1],
-                               (unsigned)(s->version & 0xff));
-        version_good |= workaround_good;
+    if (!EVP_PKEY_CTX_set_params(ctx, params)
+            || EVP_PKEY_decrypt(ctx, rsa_decrypt, &outlen,
+                                PACKET_data(&enc_premaster),
+                                PACKET_remaining(&enc_premaster)) <= 0) {
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
 
     /*
-     * Both decryption and version must be good for decrypt_good to
-     * remain non-zero (0xff).
+     * This test should never fail (otherwise we should have failed above) but
+     * we double check anyway.
      */
-    decrypt_good &= version_good;
-
-    /*
-     * Now copy rand_premaster_secret over from p using
-     * decrypt_good_mask. If decryption failed, then p does not
-     * contain valid plaintext, however, a check above guarantees
-     * it is still sufficiently large to read from.
-     */
-    for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-        rsa_decrypt[padding_len + j] =
-            constant_time_select_8(decrypt_good,
-                                   rsa_decrypt[padding_len + j],
-                                   rand_premaster_secret[j]);
+    if (outlen != SSL_MAX_MASTER_KEY_LENGTH) {
+        OPENSSL_cleanse(rsa_decrypt, SSL_MAX_MASTER_KEY_LENGTH);
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
     }
 
-    if (!ssl_generate_master_secret(s, rsa_decrypt + padding_len,
-                                    sizeof(rand_premaster_secret), 0)) {
+    /* Also cleanses rsa_decrypt (on success or failure) */
+    if (!ssl_generate_master_secret(s, rsa_decrypt,
+                                    SSL_MAX_MASTER_KEY_LENGTH, 0)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -3125,6 +3077,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     ret = 1;
  err:
     OPENSSL_free(rsa_decrypt);
+    EVP_PKEY_CTX_free(ctx);
     return ret;
 #else
     /* Should never happen */
@@ -3323,9 +3276,9 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     const unsigned char *start;
     size_t outlen = 32, inlen;
     unsigned long alg_a;
-    unsigned int asn1id, asn1len;
+    GOST_KX_MESSAGE *pKX = NULL;
+    const unsigned char *ptr;
     int ret = 0;
-    PACKET encdata;
 
     /* Get our certificate private key */
     alg_a = s->s3.tmp.new_cipher->algorithm_auth;
@@ -3366,42 +3319,33 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
         if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
             ERR_clear_error();
     }
-    /* Decrypt session key */
-    if (!PACKET_get_1(pkt, &asn1id)
-            || asn1id != (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)
-            || !PACKET_peek_1(pkt, &asn1len)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                 SSL_R_DECRYPTION_FAILED);
-        goto err;
-    }
-    if (asn1len == 0x81) {
-        /*
-         * Long form length. Should only be one byte of length. Anything else
-         * isn't supported.
-         * We did a successful peek before so this shouldn't fail
-         */
-        if (!PACKET_forward(pkt, 1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                     SSL_R_DECRYPTION_FAILED);
-            goto err;
-        }
-    } else  if (asn1len >= 0x80) {
-        /*
-         * Indefinite length, or more than one long form length bytes. We don't
-         * support it
-         */
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                 SSL_R_DECRYPTION_FAILED);
-        goto err;
-    } /* else short form length */
 
-    if (!PACKET_as_length_prefixed_1(pkt, &encdata)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+    ptr = PACKET_data(pkt);
+    /* Some implementations provide extra data in the opaqueBlob
+     * We have nothing to do with this blob so we just skip it */
+    pKX = d2i_GOST_KX_MESSAGE(NULL, &ptr, PACKET_remaining(pkt));
+    if (pKX == NULL
+       || pKX->kxBlob == NULL
+       || ASN1_TYPE_get(pKX->kxBlob) != V_ASN1_SEQUENCE) {
+         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                  SSL_R_DECRYPTION_FAILED);
+         goto err;
+    }
+
+    if (!PACKET_forward(pkt, ptr - PACKET_data(pkt))) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
-    inlen = PACKET_remaining(&encdata);
-    start = PACKET_data(&encdata);
+
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+
+    inlen = pKX->kxBlob->value.sequence->length;
+    start = pKX->kxBlob->value.sequence->data;
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
                          inlen) <= 0) {
@@ -3423,6 +3367,7 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     ret = 1;
  err:
     EVP_PKEY_CTX_free(pkey_ctx);
+    GOST_KX_MESSAGE_free(pKX);
     return ret;
 #else
     /* Should never happen */
@@ -3941,7 +3886,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
         const EVP_CIPHER *cipher = EVP_aes_256_cbc();
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (RAND_bytes(iv, iv_len) <= 0
+        if (RAND_bytes_ex(s->ctx->libctx, iv, iv_len) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
                                        tctx->ext.secure->tick_aes_key, iv)
                 || !HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
@@ -4071,7 +4016,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
-        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
+        if (RAND_bytes_ex(s->ctx->libctx, age_add_u.age_add_c,
+                          sizeof(age_add_u)) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
                      ERR_R_INTERNAL_ERROR);

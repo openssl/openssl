@@ -261,7 +261,7 @@ ossl_provider_library_context() return a pointer to the library context.
 This may be NULL, and is perfectly valid, as it denotes the default
 global library context.
 
-ossl_provider_teardown() doesnt't return any value.
+ossl_provider_teardown() doesn't return any value.
 
 ossl_provider_gettable_params() returns a pointer to a constant
 I<OSSL_PARAM> array if this function is available in the provider,

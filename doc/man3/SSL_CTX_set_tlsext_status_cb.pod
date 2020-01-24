@@ -106,6 +106,10 @@ SSL_get_tlsext_status_type() returns B<TLSEXT_STATUSTYPE_ocsp> on the client
 side if SSL_set_tlsext_status_type() was previously called, or on the server
 side if the client requested OCSP stapling. Otherwise -1 is returned.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 HISTORY
 
 The SSL_get_tlsext_status_type(), SSL_CTX_get_tlsext_status_type()

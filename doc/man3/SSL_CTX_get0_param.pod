@@ -46,6 +46,7 @@ Check hostname matches "www.foo.com" in peer certificate:
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
 
 =head1 HISTORY

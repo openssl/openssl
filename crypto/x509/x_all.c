@@ -590,6 +590,30 @@ int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8)
 }
 
 #ifndef OPENSSL_NO_STDIO
+X509_PUBKEY *d2i_X509_PUBKEY_fp(FILE *fp, X509_PUBKEY **xpk)
+{
+    return ASN1_d2i_fp_of(X509_PUBKEY, X509_PUBKEY_new, d2i_X509_PUBKEY,
+                          fp, xpk);
+}
+
+int i2d_X509_PUBKEY_fp(FILE *fp, const X509_PUBKEY *xpk)
+{
+    return ASN1_i2d_fp_of(X509_PUBKEY, i2d_X509_PUBKEY, fp, xpk);
+}
+#endif
+
+X509_PUBKEY *d2i_X509_PUBKEY_bio(BIO *bp, X509_PUBKEY **xpk)
+{
+    return ASN1_d2i_bio_of(X509_PUBKEY, X509_PUBKEY_new, d2i_X509_PUBKEY,
+                           bp, xpk);
+}
+
+int i2d_X509_PUBKEY_bio(BIO *bp, const X509_PUBKEY *xpk)
+{
+    return ASN1_i2d_bio_of(X509_PUBKEY, i2d_X509_PUBKEY, bp, xpk);
+}
+
+#ifndef OPENSSL_NO_STDIO
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
                                                 PKCS8_PRIV_KEY_INFO **p8inf)
 {

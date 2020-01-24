@@ -38,8 +38,8 @@ typedef struct ossl_method_construct_method_st {
                const OSSL_PROVIDER *prov, int operation_id, const char *name,
                const char *propdef, void *data);
     /* Construct a new method */
-    void *(*construct)(const char *name, const OSSL_DISPATCH *fns,
-                       OSSL_PROVIDER *prov, void *data);
+    void *(*construct)(const OSSL_ALGORITHM *algodef, OSSL_PROVIDER *prov,
+                       void *data);
     /* Destruct a method */
     void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;

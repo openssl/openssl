@@ -38,7 +38,7 @@ static int dsa_builtin_keygen(DSA *dsa)
         priv_key = dsa->priv_key;
 
     do
-        if (!BN_priv_rand_range(priv_key, dsa->q))
+        if (!BN_priv_rand_range(priv_key, dsa->params.q))
             goto err;
     while (BN_is_zero(priv_key)) ;
 
@@ -55,7 +55,7 @@ static int dsa_builtin_keygen(DSA *dsa)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
-        if (!BN_mod_exp(pub_key, dsa->g, prk, dsa->p, ctx)) {
+        if (!BN_mod_exp(pub_key, dsa->params.g, prk, dsa->params.p, ctx)) {
             BN_free(prk);
             goto err;
         }

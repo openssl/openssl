@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BIO_H
 # endif
 
@@ -160,13 +160,16 @@ extern "C" {
 # define BIO_CTRL_DGRAM_SCTP_WAIT_FOR_DRY       77
 # define BIO_CTRL_DGRAM_SCTP_MSG_WAITING        78
 
+/* BIO_f_prefix controls */
+# define BIO_CTRL_SET_PREFIX                    79
+# define BIO_CTRL_SET_INDENT                    80
+# define BIO_CTRL_GET_INDENT                    81
+
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL)
 #  define BIO_get_ktls_recv(b)         \
-     (BIO_method_type(b) == BIO_TYPE_SOCKET \
-      && BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL))
+     BIO_ctrl(b, BIO_CTRL_GET_KTLS_RECV, 0, NULL)
 # else
 #  define BIO_get_ktls_send(b)  (0)
 #  define BIO_get_ktls_recv(b)  (0)
@@ -183,7 +186,7 @@ extern "C" {
 # define BIO_FLAGS_IO_SPECIAL    0x04
 # define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
 # define BIO_FLAGS_SHOULD_RETRY  0x08
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /* This #define was replaced by an internal constant and should not be used. */
 #  define BIO_FLAGS_UPLINK       0
 # endif
@@ -554,6 +557,11 @@ int BIO_ctrl_reset_read_request(BIO *b);
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 
+/* ctrl macros for BIO_f_prefix */
+# define BIO_set_prefix(b,p) BIO_ctrl((b), BIO_CTRL_SET_PREFIX, 0, (void *)(p))
+# define BIO_set_indent(b,i) BIO_ctrl((b), BIO_CTRL_SET_INDENT, (i), NULL)
+# define BIO_get_indent(b) BIO_ctrl((b), BIO_CTRL_GET_INDENT, 0, NULL)
+
 #define BIO_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, l, p, newf, dupf, freef)
 int BIO_set_ex_data(BIO *bio, int idx, void *data);
@@ -632,6 +640,7 @@ const BIO_METHOD *BIO_f_null(void);
 const BIO_METHOD *BIO_f_buffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
+const BIO_METHOD *BIO_f_prefix(void);
 # ifndef OPENSSL_NO_DGRAM
 const BIO_METHOD *BIO_s_datagram(void);
 int BIO_dgram_non_fatal_error(int error);
@@ -706,7 +715,7 @@ int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
 int BIO_sock_init(void);
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define BIO_sock_cleanup() while(0) continue
 # endif
 int BIO_set_tcp_ndelay(int sock, int turn_on);

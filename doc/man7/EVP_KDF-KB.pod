@@ -80,15 +80,15 @@ Label "label", and Context "context".
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         "SHA256", 0);
+                                         "SHA2-256", 0);
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                          "HMAC", 0);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", strlen("secret"))
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                          "context", strlen("context"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", strlen("label"));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                          "context", strlen("context"));
  *p = OSSL_PARAM_construct_end();
  if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
      error("EVP_KDF_CTX_set_params");
@@ -116,9 +116,9 @@ Label "label", and IV "sixteen bytes iv".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", strlen("secret"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                          "context", strlen("context"));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", strlen("label"));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                          "context", strlen("context"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           iv, strlen(iv));
  *p = OSSL_PARAM_construct_end();
@@ -136,9 +136,7 @@ NIST SP800-108, IETF RFC 6803, IETF RFC 8009.
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_CTX_new_id(3)>,
 L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_ctrl(3)>,
 L<EVP_KDF_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>

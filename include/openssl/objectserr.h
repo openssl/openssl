@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_OBJERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_OBJ_strings(void);
 /*
  * OBJ function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define OBJ_F_OBJ_ADD_OBJECT                             0
 #  define OBJ_F_OBJ_ADD_SIGID                              0
 #  define OBJ_F_OBJ_CREATE                                 0

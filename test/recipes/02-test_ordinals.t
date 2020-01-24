@@ -41,8 +41,11 @@ sub testordinals
         #Some ordinals can be repeated, e.g. if one is VMS and another is !VMS
         $newqual = $tokens[4];
         $newqual =~ s/!//g;
-        if ($cnt > $tokens[1]
-                || ($cnt == $tokens[1] && ($qualifier ne $newqual
+        my $number = $tokens[1];
+        $number = $cnt + 1 if $number eq '?';
+        $number = $cnt if $number eq '?+';
+        if ($cnt > $number
+                || ($cnt == $number && ($qualifier ne $newqual
                                            || $qualifier eq ""))) {
             print STDERR "Invalid ordinal detected: ".$tokens[1]."\n";
             $ret = 0;

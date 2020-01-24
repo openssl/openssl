@@ -52,6 +52,10 @@ failure.
 SSL_CTX_get_num_tickets() and SSL_get_num_tickets() return the number of tickets
 that have been previously set.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 HISTORY
 
 These functions were added in OpenSSL 1.1.1.

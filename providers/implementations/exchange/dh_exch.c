@@ -13,6 +13,8 @@
 #include <openssl/dh.h>
 #include <openssl/params.h>
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "crypto/dh.h"
 
 static OSSL_OP_keyexch_newctx_fn dh_newctx;
 static OSSL_OP_keyexch_init_fn dh_init;
@@ -30,6 +32,7 @@ static OSSL_OP_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
  */
 
 typedef struct {
+    OPENSSL_CTX *libctx;
     DH *dh;
     DH *dhpeer;
     unsigned int pad : 1;
@@ -37,7 +40,12 @@ typedef struct {
 
 static void *dh_newctx(void *provctx)
 {
-    return OPENSSL_zalloc(sizeof(PROV_DH_CTX));
+    PROV_DH_CTX *pdhctx = OPENSSL_zalloc(sizeof(PROV_DH_CTX));
+
+    if (pdhctx == NULL)
+        return NULL;
+    pdhctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    return pdhctx;
 }
 
 static int dh_init(void *vpdhctx, void *vdh)
@@ -83,8 +91,10 @@ static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
         return 0;
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
-    ret = (pdhctx->pad) ? DH_compute_key_padded(secret, pub_key, pdhctx->dh)
-                        : DH_compute_key(secret, pub_key, pdhctx->dh);
+    if (pdhctx->pad)
+        ret = dh_compute_key_padded(pdhctx->libctx, secret, pub_key, pdhctx->dh);
+    else
+        ret = dh_compute_key(pdhctx->libctx, secret, pub_key, pdhctx->dh);
     if (ret <= 0)
         return 0;
 

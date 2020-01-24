@@ -15,7 +15,7 @@ used with EVP_MAC_fetch():
 
 =over 4
 
-=item "Poly1305", "default=yes"
+=item "POLY1305", "default=yes"
 
 =back
 

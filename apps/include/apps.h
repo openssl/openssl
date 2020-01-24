@@ -58,20 +58,6 @@ extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
 
-BIO_METHOD *apps_bf_prefix(void);
-/*
- * The control used to set the prefix with BIO_ctrl()
- * We make it high enough so the chance of ever clashing with the BIO library
- * remains unlikely for the foreseeable future and beyond.
- */
-#define PREFIX_CTRL_SET_PREFIX  (1 << 15)
-/*
- * apps_bf_prefix() returns a dynamically created BIO_METHOD, which we
- * need to destroy at some point.  When created internally, it's stored
- * in an internal pointer which can be freed with the following function
- */
-void destroy_prefix_method(void);
-
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
@@ -126,11 +112,13 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *cert_descrip);
-X509_STORE *setup_verify(const char *CAfile, const char *CApath,
-                         int noCAfile, int noCApath);
-__owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                                    const char *CApath, int noCAfile,
-                                    int noCApath);
+X509_STORE *setup_verify(const char *CAfile, int noCAfile,
+                         const char *CApath, int noCApath,
+                         const char *CAstore, int noCAstore);
+__owur int ctx_set_verify_locations(SSL_CTX *ctx,
+                                    const char *CAfile, int noCAfile,
+                                    const char *CApath, int noCApath,
+                                    const char *CAstore, int noCAstore);
 
 #ifndef OPENSSL_NO_CT
 

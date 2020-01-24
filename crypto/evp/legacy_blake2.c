@@ -7,25 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include "crypto/evp.h"
+#include "prov/blake2.h"        /* diverse BLAKE2 macros */
+#include "legacy_meth.h"
 
-#ifndef OPENSSL_NO_BLAKE2
+#define blake2b_init blake2b512_init
+#define blake2s_init blake2s256_init
 
-# include <openssl/obj_mac.h>
-# include "crypto/evp.h"
-# include "prov/blake2.h"        /* diverse BLAKE2 macros */
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2s_int, blake2s)
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2b_int, blake2b)
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,
     0,
     BLAKE2B_DIGEST_LENGTH,
     0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    BLAKE2B_BLOCKBYTES,
+    LEGACY_EVP_MD_METH_TABLE(blake2b_int_init, blake2b_int_update,
+                             blake2b_int_final, NULL, BLAKE2B_BLOCKBYTES),
 };
 
 const EVP_MD *EVP_blake2b512(void)
@@ -38,17 +36,11 @@ static const EVP_MD blake2s_md = {
     0,
     BLAKE2S_DIGEST_LENGTH,
     0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    BLAKE2S_BLOCKBYTES,
+    LEGACY_EVP_MD_METH_TABLE(blake2s_int_init, blake2s_int_update,
+                             blake2s_int_final, NULL, BLAKE2S_BLOCKBYTES),
 };
 
 const EVP_MD *EVP_blake2s256(void)
 {
     return &blake2s_md;
 }
-
-#endif /* OPENSSL_NO_BLAKE2 */

@@ -1,2 +1,0 @@
-# This source is common for all digests in all our providers.
-SOURCE[../../libcommon.a]=digest_common.c

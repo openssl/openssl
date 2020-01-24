@@ -35,8 +35,7 @@ static void *keymgmt_new(void)
 
 static void *keymgmt_from_dispatch(int name_id,
                                    const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov,
-                                   void *unused)
+                                   OSSL_PROVIDER *prov)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
@@ -82,6 +81,16 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->exportdomparam_types =
                 OSSL_get_OP_keymgmt_exportdomparam_types(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS:
+            if (keymgmt->get_domparam_params == NULL)
+                keymgmt->get_domparam_params =
+                    OSSL_get_OP_keymgmt_get_domparam_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS:
+            if (keymgmt->gettable_domparam_params == NULL)
+                keymgmt->gettable_domparam_params =
+                    OSSL_get_OP_keymgmt_gettable_domparam_params(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_IMPORTKEY:
             if (keymgmt->importkey != NULL)
                 break;
@@ -119,6 +128,22 @@ static void *keymgmt_from_dispatch(int name_id,
             keymgmt->exportkey_types =
                 OSSL_get_OP_keymgmt_exportkey_types(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS:
+            if (keymgmt->get_key_params == NULL)
+                keymgmt->get_key_params =
+                    OSSL_get_OP_keymgmt_get_key_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS:
+            if (keymgmt->gettable_key_params == NULL)
+                keymgmt->gettable_key_params =
+                    OSSL_get_OP_keymgmt_gettable_key_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
+            if (keymgmt->query_operation_name != NULL)
+                break;
+            keymgmt->query_operation_name =
+                OSSL_get_OP_keymgmt_query_operation_name(fns);
+            break;
         }
     }
     /*
@@ -138,10 +163,14 @@ static void *keymgmt_from_dispatch(int name_id,
             && keymgmt->importdomparams == NULL)
         || (keymgmt->exportdomparam_types != NULL
             && keymgmt->exportdomparams == NULL)
+        || (keymgmt->gettable_domparam_params != NULL
+            && keymgmt->get_domparam_params == NULL)
         || (keymgmt->importkey_types != NULL
             && keymgmt->importkey == NULL)
         || (keymgmt->exportkey_types != NULL
-            && keymgmt->exportkey == NULL)) {
+            && keymgmt->exportkey == NULL)
+        || (keymgmt->gettable_key_params != NULL
+            && keymgmt->get_key_params == NULL)) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
@@ -158,7 +187,7 @@ EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
 {
     return evp_generic_fetch_by_number(ctx,
                                        OSSL_OP_KEYMGMT, name_id, properties,
-                                       keymgmt_from_dispatch, NULL,
+                                       keymgmt_from_dispatch,
                                        (int (*)(void *))EVP_KEYMGMT_up_ref,
                                        (void (*)(void *))EVP_KEYMGMT_free);
 }
@@ -167,7 +196,7 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                             keymgmt_from_dispatch, NULL,
+                             keymgmt_from_dispatch,
                              (int (*)(void *))EVP_KEYMGMT_up_ref,
                              (void (*)(void *))EVP_KEYMGMT_free);
 }
@@ -207,7 +236,7 @@ int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt)
 
 int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name)
 {
-    return evp_is_a(keymgmt->prov, keymgmt->name_id, name);
+    return evp_is_a(keymgmt->prov, keymgmt->name_id, NULL, name);
 }
 
 void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
@@ -216,7 +245,7 @@ void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
                        (void (*)(void *, void *))fn, arg,
-                       keymgmt_from_dispatch, NULL,
+                       keymgmt_from_dispatch,
                        (void (*)(void *))EVP_KEYMGMT_free);
 }
 

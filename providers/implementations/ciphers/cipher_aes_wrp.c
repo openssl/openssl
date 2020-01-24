@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement provider AES ciphers.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_aes.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
@@ -163,6 +169,11 @@ static int aes_wrap_cipher(void *vctx,
 {
     PROV_AES_WRAP_CTX *ctx = (PROV_AES_WRAP_CTX *)vctx;
     size_t len;
+
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);

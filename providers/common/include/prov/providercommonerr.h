@@ -23,7 +23,7 @@ int ERR_load_PROV_strings(void);
 /*
  * PROV function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PROV_F_AESNI_INIT_KEY                            0
 #  define PROV_F_AES_BLOCK_FINAL                           0
 #  define PROV_F_AES_BLOCK_UPDATE                          0
@@ -53,8 +53,11 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_BAD_DECRYPT                               100
 # define PROV_R_BAD_ENCODING                              141
 # define PROV_R_BAD_LENGTH                                142
+# define PROV_R_BAD_TLS_CLIENT_VERSION                    161
+# define PROV_R_BN_ERROR                                  160
 # define PROV_R_BOTH_MODE_AND_MODE_INT                    127
 # define PROV_R_CIPHER_OPERATION_FAILED                   102
+# define PROV_R_FAILED_TO_DECRYPT                         162
 # define PROV_R_FAILED_TO_GENERATE_KEY                    121
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
@@ -67,6 +70,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IVLEN                             116
 # define PROV_R_INVALID_IV_LENGTH                         109
+# define PROV_R_INVALID_KEY                               158
 # define PROV_R_INVALID_KEYLEN                            117
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
@@ -94,6 +98,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
 # define PROV_R_NO_KEY_SET                                114
 # define PROV_R_OUTPUT_BUFFER_TOO_SMALL                   106
+# define PROV_R_READ_KEY                                  159
 # define PROV_R_TAG_NOTSET                                119
 # define PROV_R_TAG_NOT_NEEDED                            120
 # define PROV_R_UNABLE_TO_LOAD_SHA1                       143

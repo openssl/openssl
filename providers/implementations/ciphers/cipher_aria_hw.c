@@ -29,10 +29,13 @@ static int cipher_hw_aria_initkey(PROV_CIPHER_CTX *dat,
     return 1;
 }
 
+IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aria_copyctx, PROV_ARIA_CTX)
+
 # define PROV_CIPHER_HW_aria_mode(mode)                                        \
 static const PROV_CIPHER_HW aria_##mode = {                                    \
     cipher_hw_aria_initkey,                                                    \
-    cipher_hw_chunked_##mode                                                   \
+    cipher_hw_chunked_##mode,                                                  \
+    cipher_hw_aria_copyctx                                                     \
 };                                                                             \
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_##mode(size_t keybits)               \
 {                                                                              \

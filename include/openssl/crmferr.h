@@ -27,7 +27,7 @@ int ERR_load_CRMF_strings(void);
 /*
  * CRMF function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  0
 #   define CRMF_F_OSSL_CRMF_CERTID_GEN                      0
 #   define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               0

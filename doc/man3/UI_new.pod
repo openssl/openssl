@@ -205,7 +205,7 @@ are assumed to be encoded according to the current locale or (for
 Windows) code page.
 For applications having different demands, these strings need to be
 converted appropriately by the caller.
-For Windows, if the OPENSSL_WIN32_UTF8 environment variable is set,
+For Windows, if the B<OPENSSL_WIN32_UTF8> environment variable is set,
 the built-in method UI_OpenSSL() will produce UTF-8 encoded strings
 instead.
 

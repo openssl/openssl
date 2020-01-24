@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_ASN1_H
 # endif
 
@@ -25,9 +25,7 @@
 # include <openssl/symhacks.h>
 
 # include <openssl/types.h>
-# if !OPENSSL_API_1_1_0
-#  include <openssl/bn.h>
-# endif
+# include <openssl/bn.h>
 
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN
@@ -278,7 +276,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 # define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(const type *,unsigned char **)
 # define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
 
-TYPEDEF_D2I2D_OF(void);
+typedef void *d2i_of_void(void **, const unsigned char **, long);
+typedef int i2d_of_void(const void *, unsigned char **);
 
 /*-
  * The following macros and typedefs allow an ASN1_ITEM
@@ -599,6 +598,10 @@ DECLARE_ASN1_FUNCTIONS(ASN1_GENERALSTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UTCTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_TIME)
+
+DECLARE_ASN1_DUP_FUNCTION(ASN1_TIME)
+DECLARE_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
+DECLARE_ASN1_DUP_FUNCTION(ASN1_GENERALIZEDTIME)
 
 DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
 

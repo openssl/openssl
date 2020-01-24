@@ -9,6 +9,12 @@
 
 /* Dispatch functions for RC4 ciphers */
 
+/*
+ * RC4 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc4.h"
 #include "prov/implementations.h"
 
@@ -71,13 +77,13 @@ const OSSL_DISPATCH alg##kbits##_functions[] = {                               \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
       (void (*)(void))cipher_generic_get_ctx_params },                         \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
-      (void (*)(void))cipher_generic_set_ctx_params },                         \
+      (void (*)(void))cipher_var_keylen_set_ctx_params },                      \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
       (void (*)(void))cipher_generic_gettable_params },                        \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
       (void (*)(void))cipher_generic_gettable_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cipher_generic_settable_ctx_params },                     \
+     (void (*)(void))cipher_var_keylen_settable_ctx_params },                  \
     { 0, NULL }                                                                \
 };
 

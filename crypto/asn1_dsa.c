@@ -99,7 +99,7 @@ int encode_der_integer(WPACKET *pkt, const BIGNUM *n)
 /*
  * Outputs the DER encoding of a DSA-Sig-Value or ECDSA-Sig-Value to pkt. pkt
  * may be initialised with a NULL buffer which enables pkt to be used to
- * calulate how many bytes would be needed.
+ * calculate how many bytes would be needed.
  *
  * Returns 1 on success or 0 on error.
  */

@@ -1,0 +1,6 @@
+LIBS=../../libcrypto
+
+$COMMON=ffc_params.c
+
+SOURCE[../../libcrypto]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON

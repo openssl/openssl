@@ -21,9 +21,16 @@ struct evp_pkey_ctx_st {
     /* Actual operation */
     int operation;
 
-    /* Algorithm name and properties associated with this context */
-    const char *algorithm;
+    /*
+     * Library context, Key type name and properties associated
+     * with this context
+     */
+    OPENSSL_CTX *libctx;
+    const char *keytype;
     const char *propquery;
+
+    /* cached key manager */
+    EVP_KEYMGMT *keymgmt;
 
     union {
         struct {
@@ -35,6 +42,11 @@ struct evp_pkey_ctx_st {
             EVP_SIGNATURE *signature;
             void *sigprovctx;
         } sig;
+
+        struct {
+            EVP_ASYM_CIPHER *cipher;
+            void *ciphprovctx;
+        } ciph;
     } op;
 
     /* Legacy fields below */
@@ -553,6 +565,13 @@ struct evp_pkey_st {
      * a copy of that key's dirty count.
      */
     size_t dirty_cnt_copy;
+
+    /* Cache of domain parameter / key information */
+    struct {
+        int bits;
+        int security_bits;
+        int size;
+    } cache;
 } /* EVP_PKEY */ ;
 
 #define EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx) \
@@ -565,6 +584,10 @@ struct evp_pkey_st {
 #define EVP_PKEY_CTX_IS_DERIVE_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_DERIVE)
 
+#define EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_ENCRYPT \
+     || (ctx)->operation == EVP_PKEY_OP_DECRYPT)
+
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
@@ -574,6 +597,11 @@ void evp_app_cleanup_int(void);
 void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                      int domainparams);
 void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
+void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
+                            void *provdata, int domainparams);
+void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                           const OSSL_PARAM params[], int domainparams);
+
 
 /* KEYMGMT provider interface functions */
 void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
@@ -583,11 +611,16 @@ void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
 void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
                                void *provdomparams);
 int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                                void *provdomparams, OSSL_PARAM params[]);
+                                void *provdomparams,
+                                OSSL_CALLBACK *param_cb, void *cbarg);
 const OSSL_PARAM *
 evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *
 evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_get_domparam_params(const EVP_KEYMGMT *keymgmt,
+                                    void *provdomparam, OSSL_PARAM params[]);
+const OSSL_PARAM *
+evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt);
 
 void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
                             const OSSL_PARAM params[]);
@@ -596,10 +629,13 @@ void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
 void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
                           void *id, size_t idlen);
 void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt,
-                               void *provkey, OSSL_PARAM params[]);
+int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
+                          OSSL_CALLBACK *param_cb, void *cbarg);
 const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
+                               void *provkey, OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt);
 
 /* Pulling defines out of C source files */
 
@@ -615,3 +651,7 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 #define EVP_ENCODE_CTX_NO_NEWLINES          1
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
+
+const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
+const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
+

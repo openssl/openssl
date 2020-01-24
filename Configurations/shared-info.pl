@@ -84,4 +84,16 @@ my %shared_info;
             shared_sonameflag => '-h ',
         };
     },
+    'solaris-gcc-shared' => sub {
+        return $shared_info{'linux-shared'} if detect_gnu_ld();
+        return {
+            # Note: we should also have -shared here, but because some
+            # config targets define it with an added -static-libgcc
+            # following it, we don't want to change the order.  This
+            # forces all solaris gcc config targets to define shared_ldflag
+            shared_ldflag     => '-Wl,-Bsymbolic',
+            shared_defflag    => "-Wl,-M,",
+            shared_sonameflag => "-Wl,-h,",
+        };
+    },
 );

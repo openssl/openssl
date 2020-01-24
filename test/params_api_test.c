@@ -548,7 +548,7 @@ static int test_param_construct(void)
     if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "bignum"))
         || !TEST_ptr(bn = BN_lebin2bn(bn_val, (int)sizeof(bn_val), NULL))
         || !TEST_true(OSSL_PARAM_set_BN(cp, bn))
-        || !TEST_size_t_eq(cp->return_size, sizeof(bn_val)))
+        || !TEST_size_t_eq(cp->data_size, cp->return_size))
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;

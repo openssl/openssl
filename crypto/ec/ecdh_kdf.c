@@ -48,7 +48,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
  * The old name for ecdh_KDF_X9_63
  * Retained for ABI compatibility
  */
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,

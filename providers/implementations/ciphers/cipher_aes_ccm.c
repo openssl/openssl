@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
+
 /* Dispatch functions for AES CCM mode */
 
-#include "prov/ciphercommon.h"
-#include "prov/cipher_ccm.h"
+#include "cipher_aes_ccm.h"
 #include "prov/implementations.h"
 
 static void *aes_ccm_newctx(void *provctx, size_t keybits)

@@ -27,7 +27,7 @@
 
 static int openssl_configured = 0;
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void OPENSSL_config(const char *appname)
 {
     OPENSSL_INIT_SETTINGS settings;

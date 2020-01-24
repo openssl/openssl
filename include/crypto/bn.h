@@ -111,4 +111,7 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
 
 OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx);
+
+extern const BIGNUM bn_inv_sqrt_2;
+
 #endif

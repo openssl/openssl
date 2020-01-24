@@ -503,7 +503,9 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
         drbg->meth->uninstantiate(drbg);
     rand_pool_free(drbg->adin_pool);
     CRYPTO_THREAD_lock_free(drbg->lock);
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
+#endif
 
     if (drbg->secure)
         OPENSSL_secure_clear_free(drbg, sizeof(*drbg));
@@ -1098,6 +1100,7 @@ int rand_drbg_enable_locking(RAND_DRBG *drbg)
     return 1;
 }
 
+#ifndef FIPS_MODE
 /*
  * Get and set the EXDATA
  */
@@ -1110,7 +1113,7 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 {
     return CRYPTO_get_ex_data(&drbg->ex_data, idx);
 }
-
+#endif
 
 /*
  * The following functions provide a RAND_METHOD that works on the
@@ -1350,7 +1353,12 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
         ctx = openssl_ctx_get_concrete(ctx);
-        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
+        /*
+         * If the private_drbg is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->private_drbg) == NULL
+                && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
@@ -1378,7 +1386,12 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
         ctx = openssl_ctx_get_concrete(ctx);
-        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
+        /*
+         * If the public_drbg is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->public_drbg) == NULL
+                && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);

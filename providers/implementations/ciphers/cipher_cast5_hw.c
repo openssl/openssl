@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * CAST low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_cast.h"
 
 static int cipher_hw_cast5_initkey(PROV_CIPHER_CTX *ctx,

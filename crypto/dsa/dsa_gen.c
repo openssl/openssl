@@ -274,14 +274,16 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     ok = 1;
  err:
     if (ok) {
-        BN_free(ret->p);
-        BN_free(ret->q);
-        BN_free(ret->g);
-        ret->p = BN_dup(p);
-        ret->q = BN_dup(q);
-        ret->g = BN_dup(g);
+        BN_free(ret->params.p);
+        BN_free(ret->params.q);
+        BN_free(ret->params.g);
+        ret->params.p = BN_dup(p);
+        ret->params.q = BN_dup(q);
+        ret->params.g = BN_dup(g);
         ret->dirty_cnt++;
-        if (ret->p == NULL || ret->q == NULL || ret->g == NULL) {
+        if (ret->params.p == NULL
+            || ret->params.q == NULL
+            || ret->params.g == NULL) {
             ok = 0;
             goto err;
         }
@@ -343,7 +345,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 
     mdsize = EVP_MD_size(evpmd);
     /* If unverifiable g generation only don't need seed */
-    if (!ret->p || !ret->q || idx >= 0) {
+    if (!ret->params.p || !ret->params.q || idx >= 0) {
         if (seed_len == 0)
             seed_len = mdsize;
 
@@ -379,9 +381,9 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         goto err;
 
     /* if p, q already supplied generate g only */
-    if (ret->p && ret->q) {
-        p = ret->p;
-        q = ret->q;
+    if (ret->params.p && ret->params.q) {
+        p = ret->params.p;
+        q = ret->params.q;
         if (idx >= 0)
             memcpy(seed_tmp, seed, seed_len);
         goto g_only;
@@ -583,17 +585,19 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     ok = 1;
  err:
     if (ok == 1) {
-        if (p != ret->p) {
-            BN_free(ret->p);
-            ret->p = BN_dup(p);
+        if (p != ret->params.p) {
+            BN_free(ret->params.p);
+            ret->params.p = BN_dup(p);
         }
-        if (q != ret->q) {
-            BN_free(ret->q);
-            ret->q = BN_dup(q);
+        if (q != ret->params.q) {
+            BN_free(ret->params.q);
+            ret->params.q = BN_dup(q);
         }
-        BN_free(ret->g);
-        ret->g = BN_dup(g);
-        if (ret->p == NULL || ret->q == NULL || ret->g == NULL) {
+        BN_free(ret->params.g);
+        ret->params.g = BN_dup(g);
+        if (ret->params.p == NULL
+            || ret->params.q == NULL
+            || ret->params.g == NULL) {
             ok = -1;
             goto err;
         }

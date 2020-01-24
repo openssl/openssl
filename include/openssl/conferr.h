@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CONFERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_CONF_strings(void);
 /*
  * CONF function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define CONF_F_CONF_DUMP_FP                              0
 #  define CONF_F_CONF_LOAD                                 0
 #  define CONF_F_CONF_LOAD_FP                              0
@@ -59,7 +59,9 @@ int ERR_load_CONF_strings(void);
  * CONF reason codes.
  */
 # define CONF_R_ERROR_LOADING_DSO                         110
+# define CONF_R_INVALID_PRAGMA                            122
 # define CONF_R_LIST_CANNOT_BE_NULL                       115
+# define CONF_R_MANDATORY_BRACES_IN_VARIABLE_EXPANSION    123
 # define CONF_R_MISSING_CLOSE_SQUARE_BRACKET              100
 # define CONF_R_MISSING_EQUAL_SIGN                        101
 # define CONF_R_MISSING_INIT_FUNCTION                     112

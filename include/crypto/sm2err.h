@@ -27,7 +27,7 @@ int ERR_load_SM2_strings(void);
 /*
  * SM2 function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define SM2_F_PKEY_SM2_COPY                              0
 #   define SM2_F_PKEY_SM2_CTRL                              0
 #   define SM2_F_PKEY_SM2_CTRL_STR                          0

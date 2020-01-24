@@ -46,7 +46,7 @@ $small_footprint=1 if (grep(/\-DOPENSSL_SMALL_FOOTPRINT/,@ARGV));
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
 
 sub DES_encrypt_internal()
 	{

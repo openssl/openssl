@@ -38,31 +38,37 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS rsautl_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"sign", OPT_SIGN, '-', "Sign with private key"},
+    {"verify", OPT_VERIFY, '-', "Verify with public key"},
+    {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
+    {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
     {"inkey", OPT_INKEY, 's', "Input key"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
+    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
     {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
     {"raw", OPT_RSA_RAW, '-', "Use no padding"},
     {"pkcs", OPT_PKCS, '-', "Use PKCS#1 v1.5 padding (default)"},
+    {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
     {"oaep", OPT_OAEP, '-', "Use PKCS#1 OAEP"},
-    {"sign", OPT_SIGN, '-', "Sign with private key"},
-    {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"asn1parse", OPT_ASN1PARSE, '-',
      "Run output through asn1parse; useful with -verify"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
-    {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
-    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
-    {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
-    {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {NULL}
 };
 

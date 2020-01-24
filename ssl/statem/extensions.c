@@ -949,7 +949,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      */
     if (s->server) {
         /* TODO(OpenSSL1.2) revisit !sent case */
-        if (sent && ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
+        if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
             s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
@@ -1446,7 +1446,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
     unsigned char *early_secret;
 #ifdef CHARSET_EBCDIC
-    static const unsigned char resumption_label[] = { 0x72, 0x65, 0x64, 0x20, 0x62, 0x69, 0x6E, 0x64, 0x65, 0x72, 0x00 };
+    static const unsigned char resumption_label[] = { 0x72, 0x65, 0x73, 0x20, 0x62, 0x69, 0x6E, 0x64, 0x65, 0x72, 0x00 };
     static const unsigned char external_label[]   = { 0x65, 0x78, 0x74, 0x20, 0x62, 0x69, 0x6E, 0x64, 0x65, 0x72, 0x00 };
 #else
     static const unsigned char resumption_label[] = "res binder";

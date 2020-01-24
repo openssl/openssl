@@ -20,9 +20,14 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS nseq_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
+
+    OPT_SECTION("Output"),
+    {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
     {"out", OPT_OUT, '>', "Output file"},
     {NULL}
 };

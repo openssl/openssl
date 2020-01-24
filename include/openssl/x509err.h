@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_X509ERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_X509_strings(void);
 /*
  * X509 function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define X509_F_ADD_CERT_DIR                              0
 #  define X509_F_BUILD_CHAIN                               0
 #  define X509_F_BY_FILE_CTRL                              0

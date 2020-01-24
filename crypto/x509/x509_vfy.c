@@ -1851,6 +1851,31 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
     return ret;
 }
 
+/*
+ * Return 0 if time should not be checked or reference time is in range,
+ * or else 1 if it is past the end, or -1 if it is before the start
+ */
+int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
+                       const ASN1_TIME *start, const ASN1_TIME *end)
+{
+    time_t ref_time;
+    time_t *time = NULL;
+    unsigned long flags = vpm == NULL ? 0 : X509_VERIFY_PARAM_get_flags(vpm);
+
+    if ((flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
+        ref_time = X509_VERIFY_PARAM_get_time(vpm);
+        time = &ref_time;
+    } else if ((flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
+        return 0; /* this means ok */
+    } /* else reference time is the current time */
+
+    if (end != NULL && X509_cmp_time(end, time) < 0)
+        return 1;
+    if (start != NULL && X509_cmp_time(start, time) > 0)
+        return -1;
+    return 0;
+}
+
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
 {
     return X509_time_adj(s, adj, NULL);

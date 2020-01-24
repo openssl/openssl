@@ -9,6 +9,12 @@
 
 /* Internal tests for the modes module */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to test the modes code
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 

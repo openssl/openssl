@@ -455,10 +455,12 @@ static int cmd_ServerInfoFile(SSL_CONF_CTX *cctx, const char *value)
 }
 
 static int do_store(SSL_CONF_CTX *cctx,
-                    const char *CAfile, const char *CApath, int verify_store)
+                    const char *CAfile, const char *CApath, const char *CAstore,
+                    int verify_store)
 {
     CERT *cert;
     X509_STORE **st;
+
     if (cctx->ctx)
         cert = cctx->ctx->cert;
     else if (cctx->ssl)
@@ -471,27 +473,44 @@ static int do_store(SSL_CONF_CTX *cctx,
         if (*st == NULL)
             return 0;
     }
-    return X509_STORE_load_locations(*st, CAfile, CApath) > 0;
+
+    if (CAfile != NULL && !X509_STORE_load_file(*st, CAfile))
+        return 0;
+    if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
+        return 0;
+    if (CAstore != NULL && !X509_STORE_load_store(*st, CAstore))
+        return 0;
+    return 1;
 }
 
 static int cmd_ChainCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, NULL, value, 0);
+    return do_store(cctx, NULL, value, NULL, 0);
 }
 
 static int cmd_ChainCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, value, NULL, 0);
+    return do_store(cctx, value, NULL, NULL, 0);
+}
+
+static int cmd_ChainCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, NULL, value, 0);
 }
 
 static int cmd_VerifyCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, NULL, value, 1);
+    return do_store(cctx, NULL, value, NULL, 1);
 }
 
 static int cmd_VerifyCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
-    return do_store(cctx, value, NULL, 1);
+    return do_store(cctx, value, NULL, NULL, 1);
+}
+
+static int cmd_VerifyCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return do_store(cctx, NULL, NULL, value, 1);
 }
 
 static int cmd_RequestCAFile(SSL_CONF_CTX *cctx, const char *value)
@@ -520,6 +539,20 @@ static int cmd_RequestCAPath(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
     return cmd_RequestCAPath(cctx, value);
+}
+
+static int cmd_RequestCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    if (cctx->canames == NULL)
+        cctx->canames = sk_X509_NAME_new_null();
+    if (cctx->canames == NULL)
+        return 0;
+    return SSL_add_store_cert_subjects_to_stack(cctx->canames, value);
+}
+
+static int cmd_ClientCAStore(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAStore(cctx, value);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -651,10 +684,14 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(ChainCAFile, "chainCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(ChainCAStore, "chainCAstore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
     SSL_CONF_CMD(VerifyCAPath, "verifyCApath", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(VerifyCAFile, "verifyCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(VerifyCAStore, "verifyCAstore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
     SSL_CONF_CMD(RequestCAFile, "requestCAFile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(ClientCAFile, NULL,
@@ -665,6 +702,11 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD(ClientCAPath, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
+    SSL_CONF_CMD(RequestCAStore, "requestCAStore", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
+    SSL_CONF_CMD(ClientCAStore, NULL,
+                 SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_STORE),
 #ifndef OPENSSL_NO_DH
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,

@@ -884,7 +884,6 @@ int main(int argc, char *argv[])
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
         { APP_CALLBACK_STRING, 0 };
-    char *p;
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
@@ -922,12 +921,6 @@ int main(int argc, char *argv[])
     debug = 0;
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
     bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     s_cctx = SSL_CONF_CTX_new();
@@ -1492,12 +1485,15 @@ int main(int argc, char *argv[])
     (void)no_dhe;
 #endif
 
-    if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
-        (!SSL_CTX_load_verify_locations(s_ctx2, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(s_ctx2)) ||
-        (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(c_ctx))) {
+    if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
+          || SSL_CTX_load_verify_dir(s_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx)
+        || !(SSL_CTX_load_verify_file(s_ctx2, CAfile)
+             || SSL_CTX_load_verify_dir(s_ctx2, CApath))
+        || !SSL_CTX_set_default_verify_paths(s_ctx2)
+        || !(SSL_CTX_load_verify_file(c_ctx, CAfile)
+             || SSL_CTX_load_verify_dir(c_ctx, CApath))
+        || !SSL_CTX_set_default_verify_paths(c_ctx)) {
         ERR_print_errors(bio_err);
     }
 
@@ -1857,10 +1853,6 @@ int main(int argc, char *argv[])
     SSL_SESSION_free(server_sess);
     SSL_SESSION_free(client_sess);
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = EXIT_FAILURE;
-#endif
     BIO_free(bio_err);
     EXIT(ret);
 }

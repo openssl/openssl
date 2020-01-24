@@ -70,7 +70,7 @@ if ($sse2) {
 	$avx = ($1>=2.09) + ($1>=2.10);
 	}
 
-	if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|based on LLVM) ([3-9]\.[0-9]+)/) {
+	if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|based on LLVM) ([0-9]+\.[0-9]+)/) {
 		$avx = ($2>=3.0) + ($2>3.0);
 	}
 }
@@ -1811,4 +1811,4 @@ sub vlazy_reduction {
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

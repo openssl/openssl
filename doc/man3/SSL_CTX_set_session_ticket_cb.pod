@@ -43,7 +43,7 @@ decryption has been attempted and any session ticket application data is
 available. If ticket decryption was successful then the B<ss> argument contains
 the session data. The B<keyname> and B<keyname_len> arguments identify the key
 used to decrypt the session ticket. The B<status> argument is the result of the
-ticket decryption. See the L<NOTES> section below for further details. The value
+ticket decryption. See the L</NOTES> section below for further details. The value
 of B<arg> is the same as that given to SSL_CTX_set_session_ticket_cb(). The
 B<dec_cb> callback is defined as type B<SSL_CTX_decrypt_session_ticket_fn>.
 
@@ -168,7 +168,7 @@ failure.
 The B<gen_cb> callback must return 1 to continue the connection. A return of 0
 will terminate the connection with an INTERNAL_ERROR alert.
 
-The B<dec_cb> callback must return a value as described in L<NOTES> above.
+The B<dec_cb> callback must return a value as described in L</NOTES> above.
 
 =head1 SEE ALSO
 

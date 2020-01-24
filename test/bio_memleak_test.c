@@ -221,13 +221,6 @@ finish:
     return ok;
 }
 
-int global_init(void)
-{
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    return 1;
-}
-
 int setup_tests(void)
 {
     ADD_TEST(test_bio_memleak);

@@ -640,8 +640,11 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
     p->return_size = bytes;
     if (p->data == NULL)
         return 1;
-    return p->data_size >= bytes
-        && BN_bn2nativepad(val, p->data, bytes) >= 0;
+    if (p->data_size >= bytes) {
+        p->return_size = p->data_size;
+        return BN_bn2nativepad(val, p->data, p->data_size) >= 0;
+    }
+    return 0;
 }
 
 OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
@@ -773,6 +776,9 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
     if (used_len != NULL)
         *used_len = sz;
 
+    if (sz == 0)
+        return 1;
+
     if (*val == NULL) {
         char *const q = OPENSSL_malloc(sz);
 
@@ -889,9 +895,8 @@ int OSSL_PARAM_set_utf8_ptr(OSSL_PARAM *p, const char *val)
     if (p == NULL)
         return 0;
     p->return_size = 0;
-    if (val == NULL)
-        return 0;
-    return set_ptr_internal(p, val, OSSL_PARAM_UTF8_PTR, strlen(val) + 1);
+    return set_ptr_internal(p, val, OSSL_PARAM_UTF8_PTR,
+                            val == NULL ? 0 : strlen(val) + 1);
 }
 
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
@@ -900,8 +905,6 @@ int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
     if (p == NULL)
         return 0;
     p->return_size = 0;
-    if (val == NULL)
-        return 0;
     return set_ptr_internal(p, val, OSSL_PARAM_OCTET_PTR, used_len);
 }
 

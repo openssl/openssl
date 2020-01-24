@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_X509_H
 # endif
 
@@ -27,7 +27,7 @@
 # include <openssl/safestack.h>
 # include <openssl/ec.h>
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
 #  include <openssl/dh.h>
@@ -424,6 +424,8 @@ int i2d_ECPrivateKey_fp(FILE *fp, const EC_KEY *eckey);
 #  endif
 X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8);
 int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8);
+X509_PUBKEY *d2i_X509_PUBKEY_fp(FILE *fp, X509_PUBKEY **xpk);
+int i2d_X509_PUBKEY_fp(FILE *fp, const X509_PUBKEY *xpk);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
                                                 PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf);
@@ -462,6 +464,8 @@ int i2d_ECPrivateKey_bio(BIO *bp, const EC_KEY *eckey);
 #  endif
 X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8);
 int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8);
+X509_PUBKEY *d2i_X509_PUBKEY_bio(BIO *bp, X509_PUBKEY **xpk);
+int i2d_X509_PUBKEY_bio(BIO *bp, const X509_PUBKEY *xpk);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
                                                  PKCS8_PRIV_KEY_INFO **p8inf);
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf);
@@ -491,6 +495,8 @@ DECLARE_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
 
 int X509_cmp_time(const ASN1_TIME *s, time_t *t);
 int X509_cmp_current_time(const ASN1_TIME *s);
+int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
+                       const ASN1_TIME *start, const ASN1_TIME *end);
 ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
 ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
                             int offset_day, long offset_sec, time_t *t);
@@ -658,7 +664,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define X509_get_notBefore X509_getm_notBefore
 #  define X509_get_notAfter X509_getm_notAfter
 #  define X509_set_notBefore X509_set1_notBefore
@@ -724,7 +730,7 @@ int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 int X509_CRL_up_ref(X509_CRL *crl);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
 #  define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
 #endif
@@ -1028,8 +1034,12 @@ int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg,
 
 const STACK_OF(X509_ATTRIBUTE) *
 PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_add1_attr(PKCS8_PRIV_KEY_INFO *p8, X509_ATTRIBUTE *attr);
 int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
                                 const unsigned char *bytes, int len);
+int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj,
+                                int type, const unsigned char *bytes, int len);
+
 
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
                            int ptype, void *pval,

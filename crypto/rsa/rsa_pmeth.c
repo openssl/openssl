@@ -104,7 +104,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey))) == NULL) {
+    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(pk->pkey->pkey.rsa))) == NULL) {
         RSAerr(RSA_F_SETUP_TBUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -147,7 +147,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 return ret;
             ret = sltmp;
         } else if (rctx->pad_mode == RSA_X931_PADDING) {
-            if ((size_t)EVP_PKEY_size(ctx->pkey) < tbslen + 1) {
+            if ((size_t)RSA_size(rsa) < tbslen + 1) {
                 RSAerr(RSA_F_PKEY_RSA_SIGN, RSA_R_KEY_SIZE_TOO_SMALL);
                 return -1;
             }

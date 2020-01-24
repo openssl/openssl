@@ -525,7 +525,7 @@ int SRP_VBASE_add0_user(SRP_VBASE *vb, SRP_user_pwd *user_pwd)
     return 1;
 }
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * DEPRECATED: use SRP_VBASE_get1_by_user instead.
  * This method ignores the configured seed and fails for an unknown user.

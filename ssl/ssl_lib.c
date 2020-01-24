@@ -2061,11 +2061,11 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         return -1;
     }
 
-#ifndef OPENSSL_NO_KTLS
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
+#ifdef OPENSSL_NO_KTLS
+    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR, "calling sendfile()");
+    return -1;
 #else
-    ret = -1;
-#endif
+    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
     if (ret < 0) {
 #if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
         if ((get_last_sys_error() == EAGAIN) ||
@@ -2074,16 +2074,12 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
             BIO_set_retry_write(s->wbio);
         else
 #endif
-#ifdef OPENSSL_NO_KTLS
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                          "calling sendfile()");
-#else
             SSLerr(SSL_F_SSL_SENDFILE, SSL_R_UNINITIALIZED);
-#endif
         return ret;
     }
     s->rwstate = SSL_NOTHING;
     return ret;
+#endif
 }
 
 int SSL_write(SSL *s, const void *buf, int num)
@@ -3036,12 +3032,13 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                 const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
 
     if (meth == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_NULL_SSL_METHOD_PASSED);
+        SSLerr(0, SSL_R_NULL_SSL_METHOD_PASSED);
         return NULL;
     }
 
@@ -3049,12 +3046,19 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         return NULL;
 
     if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
+        SSLerr(0, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         goto err;
+
+    ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
 
     ret->method = meth;
     ret->min_proto_version = 0;
@@ -3067,7 +3071,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -3096,7 +3100,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 OSSL_default_cipher_list(), ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
+        SSLerr(0, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
     }
 
@@ -3105,11 +3109,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 
     if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
+        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
         goto err2;
     }
     if ((ret->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
+        SSLerr(0, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
         goto err2;
     }
 
@@ -3133,16 +3137,16 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
     /* Setup RFC5077 ticket keys */
-    if ((RAND_bytes(ret->ext.tick_key_name,
-                    sizeof(ret->ext.tick_key_name)) <= 0)
-        || (RAND_priv_bytes(ret->ext.secure->tick_hmac_key,
-                       sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
-        || (RAND_priv_bytes(ret->ext.secure->tick_aes_key,
-                       sizeof(ret->ext.secure->tick_aes_key)) <= 0))
+    if ((RAND_bytes_ex(libctx, ret->ext.tick_key_name,
+                       sizeof(ret->ext.tick_key_name)) <= 0)
+        || (RAND_priv_bytes_ex(libctx, ret->ext.secure->tick_hmac_key,
+                               sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
+        || (RAND_priv_bytes_ex(libctx, ret->ext.secure->tick_aes_key,
+                               sizeof(ret->ext.secure->tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
-    if (RAND_priv_bytes(ret->ext.cookie_hmac_key,
-                   sizeof(ret->ext.cookie_hmac_key)) <= 0)
+    if (RAND_priv_bytes_ex(libctx, ret->ext.cookie_hmac_key,
+                           sizeof(ret->ext.cookie_hmac_key)) <= 0)
         goto err;
 
 #ifndef OPENSSL_NO_SRP
@@ -3219,10 +3223,15 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     return ret;
  err:
-    SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+    SSLerr(0, ERR_R_MALLOC_FAILURE);
  err2:
     SSL_CTX_free(ret);
     return NULL;
+}
+
+SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+{
+    return SSL_CTX_new_with_libctx(NULL, NULL, meth);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
@@ -3297,6 +3306,8 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_secure_free(a->ext.secure);
 
     CRYPTO_THREAD_lock_free(a->lock);
+
+    OPENSSL_free(a->propq);
 
     OPENSSL_free(a);
 }
@@ -4185,10 +4196,13 @@ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
     lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
     if (lookup == NULL)
         return 0;
+
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
     X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    /* Clear any errors if the default directory does not exist */
-    ERR_clear_error();
+    ERR_pop_to_mark();
 
     return 1;
 }
@@ -4201,19 +4215,62 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     if (lookup == NULL)
         return 0;
 
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
     X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    /* Clear any errors if the default file does not exist */
-    ERR_clear_error();
+    ERR_pop_to_mark();
 
     return 1;
 }
 
+int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_store());
+    if (lookup == NULL)
+        return 0;
+
+    /* We ignore errors, in case the directory doesn't exist */
+    ERR_set_mark();
+
+    X509_LOOKUP_add_store(lookup, NULL);
+
+    ERR_pop_to_mark();
+
+    return 1;
+}
+
+int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile)
+{
+    return X509_STORE_load_file(ctx->cert_store, CAfile);
+}
+
+int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath)
+{
+    return X509_STORE_load_path(ctx->cert_store, CApath);
+}
+
+int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
+{
+    return X509_STORE_load_store(ctx->cert_store, CAstore);
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath)
 {
-    return X509_STORE_load_locations(ctx->cert_store, CAfile, CApath);
+    if (CAfile == NULL && CApath == NULL)
+        return 0;
+    if (CAfile != NULL && !SSL_CTX_load_verify_file(ctx, CAfile))
+        return 0;
+    if (CApath != NULL && !SSL_CTX_load_verify_dir(ctx, CApath))
+        return 0;
+    return 1;
 }
+#endif
 
 void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val))
@@ -4626,7 +4683,7 @@ int SSL_is_server(const SSL *s)
     return s->server;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void SSL_set_debug(SSL *s, int debug)
 {
     /* Old function was do-nothing anyway... */

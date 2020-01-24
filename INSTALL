@@ -141,14 +141,20 @@
  --openssldir depend in what configuration is used and what Windows
  implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
-  --api=x.y.z
-                   Don't build with support for deprecated APIs below the
-                   specified version number. For example "--api=1.1.0" will
-                   remove support for all APIS that were deprecated in OpenSSL
-                   version 1.1.0 or below. This is a rather specialized option
-                   for developers. If you just intend to remove all deprecated
-                   APIs entirely (up to the current version), it is easier
-                   to add the 'no-deprecated' option instead (see below).
+  --api=x.y[.z]
+                   Build the OpenSSL libraries to support the API for
+                   the specified version.  If "no-deprecated" is also
+                   given, don't build with support for deprecated APIs
+                   in or below the specified version number. For example
+                   "--api=1.1.0" with "no-deprecated" will remove
+                   support for all APIS that were deprecated in
+                   OpenSSL version 1.1.0 or below.
+                   This is a rather specialized option for developers.
+                   If you just intend to remove all deprecated APIs
+                   entirely (up to the current version), only specify
+                   "-no-deprecated" (see below).
+                   If "--api" isn't given, it defaults to the current
+                   OpenSSL minor version.
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
@@ -338,27 +344,20 @@
                    work if the zlib or zlib-dynamic options are also chosen.
 
   enable-crypto-mdebug
-                   Build support for debugging memory allocated via
-                   OPENSSL_malloc() or OPENSSL_zalloc().
+                   This now only enables the failed-malloc feature.
 
   enable-crypto-mdebug-backtrace
-                   As for crypto-mdebug, but additionally provide backtrace
-                   information for allocated memory.
-                   TO BE USED WITH CARE: this uses GNU C functionality, and
-                   is therefore not usable for non-GNU config targets.  If
-                   your build complains about the use of '-rdynamic' or the
-                   lack of header file execinfo.h, this option is not for you.
-                   ALSO NOTE that even though execinfo.h is available on your
-                   system (through Gnulib), the functions might just be stubs
-                   that do nothing.
+                   This is a no-op; the project uses the compiler's
+                   address/leak sanitizer instead.
 
   no-ct
                    Don't build support for Certificate Transparency.
 
   no-deprecated
-                   Don't build with support for any deprecated APIs. This is the
-                   same as using "--api" and supplying the latest version
-                   number.
+                   Don't build with support for deprecated APIs up
+                   until and including the version given with
+                   "--api" (or the current version of "--api" wasn't
+                   given).
 
   no-dgram
                    Don't build support for datagram based BIOs. Selecting this
@@ -829,8 +828,8 @@
 
      Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
      and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
-     and defines various macros in include/openssl/opensslconf.h (generated from
-     include/openssl/opensslconf.h.in).
+     and defines various macros in include/openssl/configuration.h (generated
+     from include/openssl/configuration.h.in).
 
  1c. Configure OpenSSL for building outside of the source tree.
 
@@ -1122,7 +1121,7 @@
 
  HASHBANGPERL
                 The command string for the Perl executable to insert in the
-                #! line of perl scripts that will be publically installed.
+                #! line of perl scripts that will be publicly installed.
                 Default: /usr/bin/env perl
                 Note: the value of this variable is added to the same scripts
                 on all platforms, but it's only relevant on Unix-like platforms.
@@ -1149,7 +1148,15 @@
  described here. Examine the Makefiles themselves for the full list.
 
  all
-                The default target to build all the software components.
+                The target to build all the software components and
+                documentation.
+
+ build_sw
+                Build all the software components.
+                THIS IS THE DEFAULT TARGET.
+
+ build_docs
+                Build all documentation components.
 
  clean
                 Remove all build artefacts and return the directory to a "clean"

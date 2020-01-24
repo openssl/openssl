@@ -34,12 +34,10 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
     for (i = 0; i < a->top; i++) {
         t = *(ap++);
         *(rp++) = ((t << 1) | c) & BN_MASK2;
-        c = (t & BN_TBIT) ? 1 : 0;
+        c = t >> (BN_BITS2 - 1);
     }
-    if (c) {
-        *rp = 1;
-        r->top++;
-    }
+    *rp = c;
+    r->top += c;
     bn_check_top(r);
     return 1;
 }
@@ -47,7 +45,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 int BN_rshift1(BIGNUM *r, const BIGNUM *a)
 {
     BN_ULONG *ap, *rp, t, c;
-    int i, j;
+    int i;
 
     bn_check_top(r);
     bn_check_top(a);
@@ -58,23 +56,22 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     }
     i = a->top;
     ap = a->d;
-    j = i - (ap[i - 1] == 1);
     if (a != r) {
-        if (bn_wexpand(r, j) == NULL)
+        if (bn_wexpand(r, i) == NULL)
             return 0;
         r->neg = a->neg;
     }
     rp = r->d;
+    r->top = i;
     t = ap[--i];
-    c = (t & 1) ? BN_TBIT : 0;
-    if (t >>= 1)
-        rp[i] = t;
+    rp[i] = t >> 1;
+    c = t << (BN_BITS2 - 1);
+    r->top -= (t == 1);
     while (i > 0) {
         t = ap[--i];
         rp[i] = ((t >> 1) & BN_MASK2) | c;
-        c = (t & 1) ? BN_TBIT : 0;
+        c = t << (BN_BITS2 - 1);
     }
-    r->top = j;
     if (!r->top)
         r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);

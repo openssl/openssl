@@ -35,7 +35,11 @@ PEM_write_bio_PKCS8_PRIV_KEY_INFO,
 PEM_read_SSL_SESSION,
 PEM_read_bio_SSL_SESSION,
 PEM_write_SSL_SESSION,
-PEM_write_bio_SSL_SESSION
+PEM_write_bio_SSL_SESSION,
+PEM_read_X509_PUBKEY,
+PEM_read_bio_X509_PUBKEY,
+PEM_write_X509_PUBKEY,
+PEM_write_bio_X509_PUBKEY
 - PEM object encoding routines
 
 =head1 SYNOPSIS

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include "crypto/rand.h"
 #include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
@@ -71,14 +72,15 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         do {                                                            \
             add_seeds_string(label "(");                                \
             {                                                           \
-                const char *dev[] = strlist;                            \
+                const char *dev[] =  { strlist, NULL };                 \
+                const char **p;                                         \
                 int first = 1;                                          \
                                                                         \
-                for (; *dev != NULL; dev++) {                           \
+                for (p = dev; *p != NULL; p++) {                        \
                     if (!first)                                         \
                         OPENSSL_strlcat(seeds, " ", sizeof(seeds));     \
                     first = 0;                                          \
-                    OPENSSL_strlcat(seeds, *dev, sizeof(seeds));        \
+                    OPENSSL_strlcat(seeds, *p, sizeof(seeds));          \
                 }                                                       \
             }                                                           \
             OPENSSL_strlcat(seeds, ")", sizeof(seeds));                 \
@@ -100,10 +102,10 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("getrandom-syscall");
 #endif
 #ifdef OPENSSL_RAND_SEED_DEVRANDOM
-        add_seeds_stringlist("random-device", { DEVRANDOM, NULL });
+        add_seeds_stringlist("random-device", DEVRANDOM);
 #endif
 #ifdef OPENSSL_RAND_SEED_EGD
-        add_seeds_stringlist("EGD", { DEVRANDOM_EGD, NULL });
+        add_seeds_stringlist("EGD", DEVRANDOM_EGD);
 #endif
 #ifdef OPENSSL_RAND_SEED_OS
         add_seeds_string("os-specific");

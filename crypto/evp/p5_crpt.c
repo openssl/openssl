@@ -51,11 +51,13 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     ivl = EVP_CIPHER_iv_length(cipher);
     if (ivl < 0 || ivl > 16) {
         EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_INVALID_IV_LENGTH);
+        PBEPARAM_free(pbe);
         return 0;
     }
     kl = EVP_CIPHER_key_length(cipher);
     if (kl < 0 || kl > (int)sizeof(md_tmp)) {
         EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        PBEPARAM_free(pbe);
         return 0;
     }
 
@@ -84,6 +86,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     if (!EVP_DigestUpdate(ctx, salt, saltlen))
         goto err;
     PBEPARAM_free(pbe);
+    pbe = NULL;
     if (!EVP_DigestFinal_ex(ctx, md_tmp, NULL))
         goto err;
     mdsize = EVP_MD_size(md);
@@ -106,6 +109,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
     rv = 1;
  err:
+    PBEPARAM_free(pbe);
     EVP_MD_CTX_free(ctx);
     return rv;
 }

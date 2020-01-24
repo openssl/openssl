@@ -426,6 +426,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
+        (BIO_get_ktls_send(s->wbio) == 0) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
@@ -985,7 +986,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * in the wb->buf
          */
 
-        if (!SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (!BIO_get_ktls_send(s->wbio) && !SSL_WRITE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)

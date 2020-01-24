@@ -6,7 +6,8 @@ about: Propose a feature you would like to see added in the software
 ---
 
 <!--
-Thank you for your feature request.
+Thank you for your feature request. If this is your first one,
+please take the time to read the following lines before posting it.
 
 NOTE:
 

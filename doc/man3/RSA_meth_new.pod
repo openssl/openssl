@@ -125,8 +125,7 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
 
 The B<RSA_METHOD> type is a structure used for the provision of custom
 RSA implementations. It provides a set of functions used by OpenSSL
-for the implementation of the various RSA capabilities. See the L<rsa>
-page for more information.
+for the implementation of the various RSA capabilities.
 
 RSA_meth_new() creates a new B<RSA_METHOD> structure. It should be
 given a unique B<name> and a set of B<flags>. The B<name> should be a

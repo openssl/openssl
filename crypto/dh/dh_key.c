@@ -11,32 +11,97 @@
 #include "internal/cryptlib.h"
 #include "dh_local.h"
 #include "crypto/bn.h"
+#include "crypto/dh.h"
 
+#ifndef FIPS_MODE
 static int generate_key(DH *dh);
-static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
+#endif /* FIPS_MODE */
+
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
                          const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
 
-int DH_generate_key(DH *dh)
+int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
+                   const BIGNUM *pub_key, DH *dh)
 {
-    return dh->meth->generate_key(dh);
+    BN_CTX *ctx = NULL;
+    BN_MONT_CTX *mont = NULL;
+    BIGNUM *tmp;
+    int ret = -1;
+#ifndef FIPS_MODE
+    int check_result;
+#endif
+
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+        DHerr(0, DH_R_MODULUS_TOO_LARGE);
+        goto err;
+    }
+
+    if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
+        DHerr(0, DH_R_MODULUS_TOO_SMALL);
+        return 0;
+    }
+
+    ctx = BN_CTX_new_ex(libctx);
+    if (ctx == NULL)
+        goto err;
+    BN_CTX_start(ctx);
+    tmp = BN_CTX_get(ctx);
+    if (tmp == NULL)
+        goto err;
+
+    if (dh->priv_key == NULL) {
+        DHerr(0, DH_R_NO_PRIVATE_VALUE);
+        goto err;
+    }
+
+    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
+        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
+                                      dh->lock, dh->params.p, ctx);
+        BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
+        if (!mont)
+            goto err;
+    }
+/* TODO(3.0) : Solve in a PR related to Key validation for DH */
+#ifndef FIPS_MODE
+    if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
+        DHerr(0, DH_R_INVALID_PUBKEY);
+        goto err;
+    }
+#endif
+    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p, ctx,
+                              mont)) {
+        DHerr(0, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    ret = BN_bn2bin(tmp, key);
+ err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    return ret;
 }
 
-int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
-    return dh->meth->compute_key(key, pub_key, dh);
+    return dh_compute_key(NULL, key, pub_key, dh);
 }
 
-int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+int dh_compute_key_padded(OPENSSL_CTX *libctx, unsigned char *key,
+                          const BIGNUM *pub_key, DH *dh)
 {
     int rv, pad;
+
+#ifdef FIPS_MODE
+    rv = dh_compute_key(libctx, key, pub_key, dh);
+#else
     rv = dh->meth->compute_key(key, pub_key, dh);
+#endif
     if (rv <= 0)
         return rv;
-    pad = BN_num_bytes(dh->p) - rv;
+    pad = BN_num_bytes(dh->params.p) - rv;
     if (pad > 0) {
         memmove(key + pad, key, rv);
         memset(key, 0, pad);
@@ -44,9 +109,25 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     return rv + pad;
 }
 
+#ifndef FIPS_MODE
+int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+{
+    return dh->meth->compute_key(key, pub_key, dh);
+}
+
+int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+{
+    return dh_compute_key_padded(NULL, key, pub_key, dh);
+}
+#endif
+
 static DH_METHOD dh_ossl = {
     "OpenSSL DH Method",
+#ifndef FIPS_MODE
     generate_key,
+#else
+    NULL, /* TODO(3.0) : solve this in a keygen related PR */
+#endif
     compute_key,
     dh_bn_mod_exp,
     dh_init,
@@ -63,14 +144,41 @@ const DH_METHOD *DH_OpenSSL(void)
     return &dh_ossl;
 }
 
+const DH_METHOD *DH_get_default_method(void)
+{
+    return default_DH_method;
+}
+
+static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
+                         const BIGNUM *a, const BIGNUM *p,
+                         const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
+{
+    return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+}
+
+static int dh_init(DH *dh)
+{
+    dh->flags |= DH_FLAG_CACHE_MONT_P;
+    ffc_params_init(&dh->params);
+    return 1;
+}
+
+static int dh_finish(DH *dh)
+{
+    BN_MONT_CTX_free(dh->method_mont_p);
+    return 1;
+}
+
+#ifndef FIPS_MODE
+
 void DH_set_default_method(const DH_METHOD *meth)
 {
     default_DH_method = meth;
 }
 
-const DH_METHOD *DH_get_default_method(void)
+int DH_generate_key(DH *dh)
 {
-    return default_DH_method;
+    return dh->meth->generate_key(dh);
 }
 
 static int generate_key(DH *dh)
@@ -82,12 +190,12 @@ static int generate_key(DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
@@ -113,28 +221,29 @@ static int generate_key(DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
+                                      dh->lock, dh->params.p, ctx);
         if (!mont)
             goto err;
     }
 
     if (generate_new_key) {
-        if (dh->q) {
+        if (dh->params.q != NULL) {
             do {
-                if (!BN_priv_rand_range(priv_key, dh->q))
+                if (!BN_priv_rand_range(priv_key, dh->params.q))
                     goto err;
             }
             while (BN_is_zero(priv_key) || BN_is_one(priv_key));
         } else {
             /* secret exponent length */
-            l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
+            l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
             if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
             /*
              * We handle just one known case where g is a quadratic non-residue:
              * for g = 2: p % 8 == 3
              */
-            if (BN_is_word(dh->g, DH_GENERATOR_2) && !BN_is_bit_set(dh->p, 2)) {
+            if (BN_is_word(dh->params.g, DH_GENERATOR_2)
+                && !BN_is_bit_set(dh->params.p, 2)) {
                 /* clear bit 0, since it won't be a secret anyway */
                 if (!BN_clear_bit(priv_key, 0))
                     goto err;
@@ -149,7 +258,8 @@ static int generate_key(DH *dh)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
-        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont)) {
+        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
+                                  ctx, mont)) {
             BN_clear_free(prk);
             goto err;
         }
@@ -173,81 +283,6 @@ static int generate_key(DH *dh)
     return ok;
 }
 
-static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
-{
-    BN_CTX *ctx = NULL;
-    BN_MONT_CTX *mont = NULL;
-    BIGNUM *tmp;
-    int ret = -1;
-    int check_result;
-
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_LARGE);
-        goto err;
-    }
-
-    if (BN_num_bits(dh->p) < DH_MIN_MODULUS_BITS) {
-        DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_SMALL);
-        return 0;
-    }
-
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
-        goto err;
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL)
-        goto err;
-
-    if (dh->priv_key == NULL) {
-        DHerr(DH_F_COMPUTE_KEY, DH_R_NO_PRIVATE_VALUE);
-        goto err;
-    }
-
-    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
-        BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
-        if (!mont)
-            goto err;
-    }
-
-    if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
-        DHerr(DH_F_COMPUTE_KEY, DH_R_INVALID_PUBKEY);
-        goto err;
-    }
-
-    if (!dh->
-        meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->p, ctx, mont)) {
-        DHerr(DH_F_COMPUTE_KEY, ERR_R_BN_LIB);
-        goto err;
-    }
-
-    ret = BN_bn2bin(tmp, key);
- err:
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
-    return ret;
-}
-
-static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
-                         const BIGNUM *a, const BIGNUM *p,
-                         const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
-{
-    return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
-}
-
-static int dh_init(DH *dh)
-{
-    dh->flags |= DH_FLAG_CACHE_MONT_P;
-    return 1;
-}
-
-static int dh_finish(DH *dh)
-{
-    BN_MONT_CTX_free(dh->method_mont_p);
-    return 1;
-}
 
 int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
 {
@@ -311,3 +346,4 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
     *pbuf_out = pbuf;
     return p_size;
 }
+#endif /* FIPS_MODE */

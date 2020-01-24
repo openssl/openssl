@@ -68,7 +68,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -1613,4 +1613,4 @@ foreach (split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";

@@ -1,0 +1,16 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$SERIALIZER_GOAL=../../libimplementations.a
+$RSA_GOAL=../../libimplementations.a
+$DH_GOAL=../../libimplementations.a
+$DSA_GOAL=../../libimplementations.a
+
+SOURCE[$SERIALIZER_GOAL]=serializer_common.c
+SOURCE[$RSA_GOAL]=serializer_rsa.c serializer_rsa_priv.c serializer_rsa_pub.c
+IF[{- !$disabled{dh} -}]
+  SOURCE[$DH_GOAL]=serializer_dh.c serializer_dh_priv.c serializer_dh_pub.c serializer_dh_param.c
+ENDIF
+IF[{- !$disabled{dsa} -}]
+  SOURCE[$DSA_GOAL]=serializer_dsa.c serializer_dsa_priv.c serializer_dsa_pub.c serializer_dsa_param.c
+ENDIF

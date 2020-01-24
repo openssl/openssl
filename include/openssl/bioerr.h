@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BIOERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_BIO_strings(void);
 /*
  * BIO function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define BIO_F_ACPT_STATE                                 0
 #  define BIO_F_ADDRINFO_WRAP                              0
 #  define BIO_F_ADDR_STRINGS                               0

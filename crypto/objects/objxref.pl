@@ -14,12 +14,8 @@ my %oid_tbl;
 
 my ($mac_file, $xref_file) = @ARGV;
 
-# Output year depends on the year of the script and the input file.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($mac_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
-$iYEAR = [localtime([stat($xref_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 
 open(IN, $mac_file) || die "Can't open $mac_file, $!\n";
 

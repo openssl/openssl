@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Camellia low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_CAMELLIA
 NON_EMPTY_TRANSLATION_UNIT
@@ -19,7 +25,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/camellia.h>
 # include "crypto/evp.h"
 # include "crypto/modes.h"
-# include "crypto/ciphermode_platform.h"
+# include "crypto/cmll_platform.h"
 
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);

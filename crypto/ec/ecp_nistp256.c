@@ -1241,6 +1241,7 @@ static void point_add(felem x3, felem y3, felem z3,
     longfelem tmp, tmp2;
     smallfelem small1, small2, small3, small4, small5;
     limb x_equal, y_equal, z1_is_zero, z2_is_zero;
+    limb points_equal;
 
     felem_shrink(small3, z1);
 
@@ -1340,7 +1341,26 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_shrink(small1, ftmp5);
     y_equal = smallfelem_is_zero(small1);
 
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+    /*
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
+     *
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero));
+
+    if (points_equal) {
+        /*
+         * This is obviously not constant-time but, as mentioned before, this
+         * case never happens during single point multiplication, so there is no
+         * timing leak for ECDH or ECDSA signing.
+         */
         point_double(x3, y3, z3, x1, y1, z1);
         return;
     }

@@ -76,7 +76,8 @@ static int cipher_hw_camellia_t4_initkey(PROV_CIPHER_CTX *dat,
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW t4_camellia_##mode = {                             \
     cipher_hw_camellia_t4_initkey,                                             \
-    cipher_hw_generic_##mode                                                   \
+    cipher_hw_generic_##mode,                                                  \
+    cipher_hw_camellia_copyctx                                                 \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
 if (SPARC_CMLL_CAPABLE)                                                        \

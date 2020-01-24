@@ -12,8 +12,11 @@
 #include "internal/refcount.h"
 #include <openssl/bn.h>
 #include "dh_local.h"
+#include "crypto/dh.h"
 #include <openssl/engine.h>
+#include "crypto/dh.h"
 
+#ifndef FIPS_MODE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
     /*
@@ -33,6 +36,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
         meth->init(dh);
     return 1;
 }
+#endif /* !FIPS_MODE */
 
 DH *DH_new(void)
 {
@@ -57,7 +61,7 @@ DH *DH_new_method(ENGINE *engine)
     }
 
     ret->meth = DH_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -78,8 +82,10 @@ DH *DH_new_method(ENGINE *engine)
 
     ret->flags = ret->meth->flags;
 
+#ifndef FIPS_MODE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data))
         goto err;
+#endif /* FIPS_MODE */
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
@@ -108,20 +114,16 @@ void DH_free(DH *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(FIPS_MODE)
+# if !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(r->engine);
-#endif
-
+# endif
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
+#endif
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->p);
-    BN_clear_free(r->g);
-    BN_clear_free(r->q);
-    BN_clear_free(r->j);
-    OPENSSL_free(r->seed);
-    BN_clear_free(r->counter);
+    ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -139,6 +141,7 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
+#ifndef FIPS_MODE
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
@@ -148,39 +151,34 @@ void *DH_get_ex_data(DH *d, int idx)
 {
     return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
+#endif
 
 int DH_bits(const DH *dh)
 {
-    return BN_num_bits(dh->p);
+    return BN_num_bits(dh->params.p);
 }
 
 int DH_size(const DH *dh)
 {
-    return BN_num_bytes(dh->p);
+    return BN_num_bytes(dh->params.p);
 }
 
 int DH_security_bits(const DH *dh)
 {
     int N;
-    if (dh->q)
-        N = BN_num_bits(dh->q);
+    if (dh->params.q != NULL)
+        N = BN_num_bits(dh->params.q);
     else if (dh->length)
         N = dh->length;
     else
         N = -1;
-    return BN_security_bits(BN_num_bits(dh->p), N);
+    return BN_security_bits(BN_num_bits(dh->params.p), N);
 }
-
 
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    if (p != NULL)
-        *p = dh->p;
-    if (q != NULL)
-        *q = dh->q;
-    if (g != NULL)
-        *g = dh->g;
+    ffc_params_get0_pqg(&dh->params, p, q, g);
 }
 
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -188,26 +186,14 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     /* If the fields p and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.  q may remain NULL.
      */
-    if ((dh->p == NULL && p == NULL)
-        || (dh->g == NULL && g == NULL))
+    if ((dh->params.p == NULL && p == NULL)
+        || (dh->params.g == NULL && g == NULL))
         return 0;
 
-    if (p != NULL) {
-        BN_free(dh->p);
-        dh->p = p;
-    }
-    if (q != NULL) {
-        BN_free(dh->q);
-        dh->q = q;
-    }
-    if (g != NULL) {
-        BN_free(dh->g);
-        dh->g = g;
-    }
+    ffc_params_set0_pqg(&dh->params, p, q, g);
 
-    if (q != NULL) {
+    if (q != NULL)
         dh->length = BN_num_bits(q);
-    }
 
     dh->dirty_cnt++;
     return 1;
@@ -249,17 +235,17 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 
 const BIGNUM *DH_get0_p(const DH *dh)
 {
-    return dh->p;
+    return dh->params.p;
 }
 
 const BIGNUM *DH_get0_q(const DH *dh)
 {
-    return dh->q;
+    return dh->params.q;
 }
 
 const BIGNUM *DH_get0_g(const DH *dh)
 {
-    return dh->g;
+    return dh->params.g;
 }
 
 const BIGNUM *DH_get0_priv_key(const DH *dh)
@@ -287,7 +273,14 @@ void DH_set_flags(DH *dh, int flags)
     dh->flags |= flags;
 }
 
+#ifndef FIPS_MODE
 ENGINE *DH_get0_engine(DH *dh)
 {
     return dh->engine;
+}
+#endif /*FIPS_MODE */
+
+FFC_PARAMS *dh_get0_params(DH *dh)
+{
+    return &dh->params;
 }

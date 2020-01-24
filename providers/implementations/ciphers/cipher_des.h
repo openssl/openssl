@@ -8,6 +8,7 @@
  */
 
 #include <openssl/des.h>
+#include "crypto/des_platform.h"
 
 /* TODO(3.0) Figure out what flags need to be here */
 #define TDES_FLAGS (EVP_CIPH_RAND_KEY)

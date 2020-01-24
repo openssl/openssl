@@ -13,6 +13,8 @@
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
+#include <openssl/core_names.h>
+#include <openssl/self_test.h>
 #include "apps.h"
 #include "progs.h"
 
@@ -25,28 +27,39 @@
 #define VERSION_VAL  "1"
 #define INSTALL_STATUS_VAL "INSTALL_SELF_TEST_KATS_RUN"
 
+static OSSL_CALLBACK self_test_events;
+static char *self_test_corrupt_desc = NULL;
+static char *self_test_corrupt_type = NULL;
+static int self_test_log = 1;
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN, OPT_OUT, OPT_MODULE,
-    OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY
+    OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY,
+    OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {OPT_MORE_STR, 0, 0, "e.g: openssl fipsinstall -provider_name fips"
-     "-section_name fipsinstall -out fips.conf -module ./fips.so"
-     "-mac_name HMAC -macopt digest:SHA256 -macopt hexkey:00"},
-    {"verify", OPT_VERIFY, '-', "Verification mode, i.e verify a config file "
-     "instead of generating one"},
-    {"in", OPT_IN, '<', "Input config file, used when verifying"},
-    {"out", OPT_OUT, '>', "Output config file, used when generating"},
+    {"verify", OPT_VERIFY, '-',
+        "Verify a config file instead of generating one"},
     {"module", OPT_MODULE, '<', "File name of the provider module"},
     {"provider_name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section_name", OPT_SECTION_NAME, 's',
      "FIPS Provider config section name (optional)"},
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input config file, used when verifying"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output config file, used when generating"},
     {"mac_name", OPT_MAC_NAME, 's', "MAC name"},
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
                                 "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
+    {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
+    {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
+    {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
     {NULL}
 };
 
@@ -168,7 +181,7 @@ static CONF *generate_config_and_load(const char *prov_name,
     if (conf == NULL)
         goto end;
 
-    if (!CONF_modules_load(conf, NULL, 0))
+    if (CONF_modules_load(conf, NULL, 0) <= 0)
         goto end;
     BIO_free(mem_bio);
     return conf;
@@ -285,6 +298,15 @@ opthelp:
         case OPT_OUT:
             out_fname = opt_arg();
             break;
+        case OPT_NO_LOG:
+            self_test_log = 0;
+            break;
+        case OPT_CORRUPT_DESC:
+            self_test_corrupt_desc = opt_arg();
+            break;
+        case OPT_CORRUPT_TYPE:
+            self_test_corrupt_type = opt_arg();
+            break;
         case OPT_PROV_NAME:
             prov_name = opt_arg();
             break;
@@ -315,6 +337,11 @@ opthelp:
         || opts == NULL
         || argc != 0)
         goto opthelp;
+
+    if (self_test_log
+            || self_test_corrupt_desc != NULL
+            || self_test_corrupt_type != NULL)
+        OSSL_SELF_TEST_set_callback(NULL, self_test_events, NULL);
 
     module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
     if (module_bio == NULL) {
@@ -416,5 +443,55 @@ end:
     EVP_MAC_CTX_free(ctx);
     OPENSSL_free(read_buffer);
     free_config_and_unload(conf);
+    return ret;
+}
+
+static int self_test_events(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = NULL;
+    const char *phase = NULL, *type = NULL, *desc = NULL;
+    int ret = 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    phase = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_DESC);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    desc = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    type = (const char *)p->data;
+
+    if (self_test_log) {
+        if (strcmp(phase, OSSL_SELF_TEST_PHASE_START) == 0)
+            BIO_printf(bio_out, "%s : (%s) : ", desc, type);
+        else if (strcmp(phase, OSSL_SELF_TEST_PHASE_PASS) == 0
+                 || strcmp(phase, OSSL_SELF_TEST_PHASE_FAIL) == 0)
+            BIO_printf(bio_out, "%s\n", phase);
+    }
+    /*
+     * The self test code will internally corrupt the KAT test result if an
+     * error is returned during the corrupt phase.
+     */
+    if (strcmp(phase, OSSL_SELF_TEST_PHASE_CORRUPT) == 0
+            && (self_test_corrupt_desc != NULL
+                || self_test_corrupt_type != NULL)) {
+        if (self_test_corrupt_desc != NULL
+                && strcmp(self_test_corrupt_desc, desc) != 0)
+            goto end;
+        if (self_test_corrupt_type != NULL
+                && strcmp(self_test_corrupt_type, type) != 0)
+            goto end;
+        BIO_printf(bio_out, "%s ", phase);
+        goto err;
+    }
+end:
+    ret = 1;
+err:
     return ret;
 }

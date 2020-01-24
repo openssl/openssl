@@ -27,7 +27,7 @@
 # - code was made position-independent;
 # - rounds were folded into a loop resulting in >5x size reduction
 #   from 12.5KB to 2.2KB;
-# - above was possibile thanks to mixcolumns() modification that
+# - above was possible thanks to mixcolumns() modification that
 #   allowed to feed its output back to aesenc[last], this was
 #   achieved at cost of two additional inter-registers moves;
 # - some instruction reordering and interleaving;
@@ -3238,4 +3238,4 @@ $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT";
