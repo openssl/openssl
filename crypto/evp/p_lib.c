@@ -401,7 +401,18 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 # endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
+    int alias = type;
+
+    if (EVP_PKEY_type(type) == EVP_PKEY_EC) {
+        const EC_GROUP *group = EC_KEY_get0_group(key);
+
+        if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
+            alias = EVP_PKEY_SM2;
+    }
+
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
+        return 0;
+    if (!EVP_PKEY_set_alias_type(pkey, alias))
         return 0;
     pkey->pkey.ptr = key;
     return (key != NULL);
@@ -519,7 +530,7 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 
 EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 {
-    if (pkey->type != EVP_PKEY_EC) {
+    if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
         EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
     }
