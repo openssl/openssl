@@ -3399,8 +3399,6 @@ int speed_main(int argc, char **argv)
             /* attach it sooner to rely on main final cleanup */
             loopargs[i].sm2_pkey[testnum] = sm2_pkey;
             loopargs[i].sigsize = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
-            if (!EVP_PKEY_set_alias_type(sm2_pkey, EVP_PKEY_SM2))
-                break;
 
             sm2_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
             sm2_vfy_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
