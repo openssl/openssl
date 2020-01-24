@@ -637,6 +637,9 @@ int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *data,
 
 int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *algor1,
                      ASN1_BIT_STRING *signature, void *data, EVP_PKEY *pkey);
+int ASN1_item_verify_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                         ASN1_BIT_STRING *signature, void *data,
+                         EVP_MD_CTX *ctx);
 
 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1,
                    X509_ALGOR *algor2, ASN1_BIT_STRING *signature, void *data,
