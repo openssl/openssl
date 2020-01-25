@@ -315,10 +315,11 @@ static int pkey_sm2_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         return 0;
     }
     /* Note: if error is returned, we count on caller to free pkey->pkey.ec */
-    if (ctx->pkey != NULL)
-        ret = EVP_PKEY_copy_parameters(pkey, ctx->pkey);
+    if (ctx->pkey != NULL
+        && !EVP_PKEY_copy_parameters(pkey, ctx->pkey))
+        return 0;
 
-    return ret ? EC_KEY_generate_key(ec) : 0;
+    return EC_KEY_generate_key(ec);
 }
 
 static const EVP_PKEY_METHOD sm2_pkey_meth = {
