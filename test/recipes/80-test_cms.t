@@ -27,7 +27,7 @@ my $smcont   = srctop_file("test", "smcont.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
-plan tests => 6;
+plan tests => 7;
 
 my @smime_pkcs7_tests = (
 
@@ -628,6 +628,24 @@ subtest "CMS Check that bad attributes fail when verifying signers\n" => sub {
                      catfile($datadir, $name), "-inform", "DER", "-CAfile",
                      catfile($smdir, "smroot.pem"), "-out", $out ])),
             $name);
+    }
+};
+
+subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
+    plan tests => 1;
+
+    SKIP: {
+        skip "EC isn't supported in this build", 1
+            if disabled("ec");
+
+        my $out = "smtst.txt";
+
+        ok(run(app(["openssl", "cms", "-decrypt",
+                    "-inkey", catfile($smdir, "smec3.pem"),
+                    "-in", catfile($datadir, "ciphertext_from_1_1_1.cms"),
+                    "-out", $out ]))
+           && compare_text($smcont, $out) == 0,
+           "Decrypt message from OpenSSL 1.1.1");
     }
 };
 
