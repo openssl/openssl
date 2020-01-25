@@ -945,6 +945,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s)
+                && !BIO_get_ktls_send(s->wbio)
                 && s->enc_write_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || type != SSL3_RT_ALERT)) {
