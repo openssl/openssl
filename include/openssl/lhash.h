@@ -127,9 +127,8 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
 # define DEFINE_LHASH_OF(type) \
     LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
-    static ossl_inline LHASH_OF(type) * \
-        lh_##type##_new(unsigned long (*hfn)(const type *), \
-                        int (*cfn)(const type *, const type *)) \
+    static ossl_unused ossl_inline LHASH_OF(type) *lh_##type##_new(unsigned long (*hfn)(const type *), \
+                                                                   int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
             OPENSSL_LH_new((OPENSSL_LH_HASHFUNC)hfn, (OPENSSL_LH_COMPFUNC)cfn); \
