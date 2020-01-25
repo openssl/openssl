@@ -305,7 +305,6 @@ static int pkey_sm2_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_sm2_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
-    int ret;
 
     ec = EC_KEY_new_by_curve_name(NID_sm2);
     if (ec == NULL)
