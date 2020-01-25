@@ -675,6 +675,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{shared} -}]
     PROGRAMS{noinst}=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
+    DEFINE[tls13secretstest]=OPENSSL_NO_KTLS
     SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../crypto/packet.c
     INCLUDE[tls13secretstest]=.. ../include ../apps/include
     DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
