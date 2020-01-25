@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 #include "ssl_local.h"
+#include "internal/ktls.h"
+#include "record/record_local.h"
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
@@ -409,9 +411,9 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
                                     const unsigned char *hash,
                                     const unsigned char *label,
                                     size_t labellen, unsigned char *secret,
-                                    unsigned char *iv, EVP_CIPHER_CTX *ciph_ctx)
+                                    unsigned char *key, unsigned char *iv,
+                                    EVP_CIPHER_CTX *ciph_ctx)
 {
-    unsigned char key[EVP_MAX_KEY_LENGTH];
     size_t ivlen, keylen, taglen;
     int hashleni = EVP_MD_size(md);
     size_t hashlen;
@@ -469,7 +471,6 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
     return 1;
  err:
-    OPENSSL_cleanse(key, sizeof(key));
     return 0;
 }
 
@@ -495,6 +496,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     static const unsigned char early_exporter_master_secret[] = "e exp master";
 #endif
     unsigned char *iv;
+    unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;
@@ -508,6 +510,12 @@ int tls13_change_cipher_state(SSL *s, int which)
     int ret = 0;
     const EVP_MD *md = NULL;
     const EVP_CIPHER *cipher = NULL;
+#ifndef OPENSSL_NO_KTLS
+# ifndef __FreeBSD__
+    struct tls_crypto_info_all crypto_info;
+    BIO *bio;
+# endif
+#endif
 
     if (which & SSL3_CC_READ) {
         if (s->enc_read_ctx != NULL) {
@@ -722,8 +730,8 @@ int tls13_change_cipher_state(SSL *s, int which)
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
-                                  insecret, hash, label, labellen, secret, iv,
-                                  ciph_ctx)) {
+                                  insecret, hash, label, labellen, secret, key,
+                                  iv, ciph_ctx)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -764,12 +772,119 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->statem.enc_write_state = ENC_WRITE_STATE_WRITE_PLAIN_ALERTS;
     else
         s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
+#ifndef OPENSSL_NO_KTLS
+# ifndef __FreeBSD__
+    if (!(which & SSL3_CC_WRITE)
+        || ((which & SSL3_CC_WRITE) && (s->mode & SSL_MODE_NO_KTLS_TX)))
+        goto skip_ktls;
+
+    /* ktls supports only the maximum fragment size */
+    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
+        goto skip_ktls;
+
+    /* check whether cipher is known */
+    if (cipher == NULL)
+        goto skip_ktls;
+
+    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 */
+    switch (EVP_CIPHER_nid(cipher))
+    {
+    case NID_aes_128_gcm:
+        if (EVP_CIPHER_mode(cipher) != EVP_CIPH_GCM_MODE ||
+            EVP_CIPHER_key_length(cipher) != TLS_CIPHER_AES_GCM_128_KEY_SIZE)
+          goto skip_ktls;
+        break;
+    case NID_aes_256_gcm:
+        if (EVP_CIPHER_mode(cipher) != EVP_CIPH_GCM_MODE ||
+            EVP_CIPHER_key_length(cipher) != TLS_CIPHER_AES_GCM_256_KEY_SIZE)
+          goto skip_ktls;
+        break;
+    case NID_aes_128_ccm:
+        if (EVP_CIPHER_mode(cipher) != EVP_CIPH_CCM_MODE ||
+            EVP_CIPHER_key_length(cipher) != TLS_CIPHER_AES_CCM_128_KEY_SIZE ||
+            EVP_CIPHER_CTX_tag_length(ciph_ctx) != EVP_CCM_TLS_TAG_LEN)
+          goto skip_ktls;
+        break;
+    default:
+        goto skip_ktls;
+    }
+
+    bio = s->wbio;
+
+    if (!ossl_assert(bio != NULL)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
+    if (BIO_flush(bio) <= 0)
+        goto skip_ktls;
+
+    /* ktls doesn't support renegotiation */
+    if (BIO_get_ktls_send(bio)) {
+        SSLfatal(s, SSL_AD_NO_RENEGOTIATION, SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    memset(&crypto_info, 0, sizeof(crypto_info));
+    switch (EVP_CIPHER_nid(cipher))
+    {
+    case NID_aes_128_gcm:
+        crypto_info.gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+        crypto_info.gcm128.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.gcm128);
+        memcpy(crypto_info.gcm128.iv, iv + EVP_GCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_GCM_128_IV_SIZE);
+        memcpy(crypto_info.gcm128.salt, iv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info.gcm128.key, key, EVP_CIPHER_key_length(cipher));
+        memcpy(crypto_info.gcm128.rec_seq, &s->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        break;
+    case NID_aes_256_gcm:
+        crypto_info.gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
+        crypto_info.gcm256.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.gcm256);
+
+        memcpy(crypto_info.gcm256.iv, iv + EVP_GCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_GCM_256_IV_SIZE);
+        memcpy(crypto_info.gcm256.salt, iv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
+        memcpy(crypto_info.gcm256.key, key, EVP_CIPHER_key_length(cipher));
+        memcpy(crypto_info.gcm256.rec_seq, &s->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
+        break;
+    case NID_aes_128_ccm:
+        crypto_info.ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
+        crypto_info.ccm128.info.version = s->version;
+        crypto_info.tls_crypto_info_len = sizeof(crypto_info.ccm128);
+
+        memcpy(crypto_info.ccm128.iv, iv + EVP_CCM_TLS_FIXED_IV_LEN,
+            TLS_CIPHER_AES_CCM_128_IV_SIZE);
+        memcpy(crypto_info.ccm128.salt, iv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info.ccm128.key, key, EVP_CIPHER_key_length(cipher));
+        memcpy(crypto_info.ccm128.rec_seq, &s->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        break;
+    default:
+        goto skip_ktls;
+    }
+
+    /* ktls works with user provided buffers directly */
+    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
+        ssl3_release_write_buffer(s);
+        SSL_set_options(s, SSL_OP_NO_RENEGOTIATION);
+    }
+
+# endif
+skip_ktls:
+#endif
     ret = 1;
  err:
     if ((which & SSL3_CC_EARLY) != 0) {
         /* We up-refed this so now we need to down ref */
         ssl_evp_cipher_free(cipher);
     }
+    OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(secret, sizeof(secret));
     return ret;
 }
@@ -783,6 +898,7 @@ int tls13_update_key(SSL *s, int sending)
 #endif
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen = EVP_MD_size(md);
+    unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char *insecret, *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     EVP_CIPHER_CTX *ciph_ctx;
@@ -807,8 +923,8 @@ int tls13_update_key(SSL *s, int sending)
     if (!derive_secret_key_and_iv(s, sending, ssl_handshake_md(s),
                                   s->s3.tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
-                                  sizeof(application_traffic) - 1, secret, iv,
-                                  ciph_ctx)) {
+                                  sizeof(application_traffic) - 1, secret, key,
+                                  iv, ciph_ctx)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -818,6 +934,7 @@ int tls13_update_key(SSL *s, int sending)
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;
  err:
+    OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(secret, sizeof(secret));
     return ret;
 }
