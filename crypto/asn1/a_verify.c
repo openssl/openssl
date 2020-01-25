@@ -102,6 +102,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     rv = ASN1_item_verify_ctx(it, a, signature, asn, ctx);
 
  err:
+    EVP_PKEY_CTX_free(pctx);
     EVP_MD_CTX_free(ctx);
     return rv;
 }
