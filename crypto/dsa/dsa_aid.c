@@ -19,7 +19,7 @@
 #define ENCODE_ALGORITHMIDENTIFIER_SHA(name, n)                         \
     static const unsigned char algorithmidentifier_##name##_der[] = {   \
         ASN1_SEQUENCE, 0x07,                                            \
-          ASN1_OID, 0x09, 1 * 40 + 3, 14, 3, 2, n                       \
+          ASN1_OID, 0x05, 1 * 40 + 3, 14, 3, 2, n                       \
 }
 
 ENCODE_ALGORITHMIDENTIFIER_SHA(sha, 13);
