@@ -305,6 +305,34 @@ void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
 }
 
 /*
+ * Set the |drbg|'s callback data pointer for the entropy and nonce callbacks
+ *
+ * The ownership of the context data remains with the caller,
+ * i.e., it is the caller's responsibility to keep it available as long
+ * as it is need by the callbacks and free it after use.
+ *
+ * Setting the callback data is allowed only if the drbg has not been
+ * initialized yet. Otherwise, the operation will fail.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data)
+{
+    if (drbg->state != DRBG_UNINITIALISED
+        || drbg->parent != NULL)
+        return 0;
+
+    drbg->callback_data = data;
+    return 1;
+}
+
+/* Retrieve the callback data pointer */
+void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg)
+{
+    return drbg->callback_data;
+}
+
+/*
  * Set/initialize |drbg| to be of type |type|, with optional |flags|.
  *
  * If |type| and |flags| are zero, use the defaults

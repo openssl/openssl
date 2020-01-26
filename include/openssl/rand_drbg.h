@@ -150,6 +150,10 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
 
+int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data);
+
+void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
+
 # ifdef  __cplusplus
 }
 # endif

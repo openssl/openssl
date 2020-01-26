@@ -69,7 +69,7 @@ sufficient to allow the connection to continue.
 The TLS handshake is aborted if the verification mode is not B<SSL_VERIFY_NONE>
 and the callback returns a non-positive result.
 
-An arbitrary callback context argument, B<arg>, can be passed in when setting
+An arbitrary callback data argument, B<arg>, can be passed in when setting
 the callback.
 This will be passed to the callback whenever it is invoked.
 Ownership of this context remains with the caller.

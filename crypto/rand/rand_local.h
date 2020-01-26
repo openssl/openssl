@@ -328,6 +328,8 @@ struct rand_drbg_st {
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     RAND_DRBG_get_nonce_fn get_nonce;
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+
+    void *callback_data;
 };
 
 /* The global RAND method, and the global buffer and DRBG instance. */
