@@ -4918,3 +4918,5 @@ PKCS8_pkey_add1_attr_by_OBJ             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_private_check                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_pairwise_check                 ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_verify_ctx                    ?	3_0_0	EXIST::FUNCTION:
+RAND_DRBG_set_callback_data             ?	3_0_0	EXIST::FUNCTION:
+RAND_DRBG_get_callback_data             ?	3_0_0	EXIST::FUNCTION:
