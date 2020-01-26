@@ -20,7 +20,15 @@
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_SM2
-static EVP_MD_CTX *verify_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
+static void clean_id_ctx(EVP_MD_CTX *ctx)
+{
+    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+
+    EVP_PKEY_CTX_free(pctx);
+    EVP_MD_CTX_free(ctx);
+}
+
+static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
 {
     EVP_MD_CTX *ctx = NULL;
 
@@ -31,8 +39,7 @@ static EVP_MD_CTX *verify_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
             || (ctx = EVP_MD_CTX_new()) == NULL
             || EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
             X509err(0, ERR_R_MALLOC_FAILURE);
-            EVP_PKEY_CTX_free(pctx);
-            EVP_MD_CTX_free(ctx);
+            clean_id_ctx(ctx);
             return 0;
         }
 
@@ -53,7 +60,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
         return 0;
 
 #ifndef OPENSSL_NO_SM2
-    ctx = verify_id_ctx(r, a->sm2_id);
+    ctx = make_id_ctx(r, a->sm2_id);
 #endif
 
     if (ctx == NULL)
@@ -62,7 +69,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 
     rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                               &a->signature, &a->cert_info, ctx);
-    EVP_MD_CTX_free(ctx);
+    clean_id_ctx(ctx);
     return rv;
 }
 
@@ -72,7 +79,7 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
     EVP_MD_CTX *ctx = NULL;
 
 #ifndef OPENSSL_NO_SM2
-    ctx = verify_id_ctx(r, a->sm2_id);
+    ctx = make_id_ctx(r, a->sm2_id);
 #endif
 
     if (ctx == NULL)
@@ -81,7 +88,7 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 
     rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
                               a->signature, &a->req_info, ctx);
-    EVP_MD_CTX_free(ctx);
+    clean_id_ctx(ctx);
     return rv;
 }
 
