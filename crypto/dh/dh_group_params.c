@@ -16,7 +16,7 @@
 #include <openssl/objects.h>
 #include "crypto/bn_dh.h"
 
-static DH *dh_param_init(const BIGNUM *p, int32_t nbits)
+static DH *dh_param_init(int nid, const BIGNUM *p, int32_t nbits)
 {
     BIGNUM *q = NULL;
     DH *dh = DH_new();
@@ -31,6 +31,7 @@ static DH *dh_param_init(const BIGNUM *p, int32_t nbits)
         DH_free(dh);
         return NULL;
     }
+    dh->params.nid = nid;
     dh->params.p = (BIGNUM *)p;
     dh->params.q = (BIGNUM *)q;
     dh->params.g = (BIGNUM *)&_bignum_const_2;
@@ -49,38 +50,41 @@ DH *DH_new_by_nid(int nid)
      */
     switch (nid) {
     case NID_ffdhe2048:
-        return dh_param_init(&_bignum_ffdhe2048_p, 225);
+        return dh_param_init(nid, &_bignum_ffdhe2048_p, 225);
     case NID_ffdhe3072:
-        return dh_param_init(&_bignum_ffdhe3072_p, 275);
+        return dh_param_init(nid, &_bignum_ffdhe3072_p, 275);
     case NID_ffdhe4096:
-        return dh_param_init(&_bignum_ffdhe4096_p, 325);
+        return dh_param_init(nid, &_bignum_ffdhe4096_p, 325);
     case NID_ffdhe6144:
-        return dh_param_init(&_bignum_ffdhe6144_p, 375);
+        return dh_param_init(nid, &_bignum_ffdhe6144_p, 375);
     case NID_ffdhe8192:
-        return dh_param_init(&_bignum_ffdhe8192_p, 400);
+        return dh_param_init(nid, &_bignum_ffdhe8192_p, 400);
 #ifndef FIPS_MODE
     case NID_modp_1536:
-        return dh_param_init(&_bignum_modp_1536_p, 190);
+        return dh_param_init(nid, &_bignum_modp_1536_p, 190);
 #endif
     case NID_modp_2048:
-        return dh_param_init(&_bignum_modp_2048_p, 225);
+        return dh_param_init(nid, &_bignum_modp_2048_p, 225);
     case NID_modp_3072:
-        return dh_param_init(&_bignum_modp_3072_p, 275);
+        return dh_param_init(nid, &_bignum_modp_3072_p, 275);
     case NID_modp_4096:
-        return dh_param_init(&_bignum_modp_4096_p, 325);
+        return dh_param_init(nid, &_bignum_modp_4096_p, 325);
     case NID_modp_6144:
-        return dh_param_init(&_bignum_modp_6144_p, 375);
+        return dh_param_init(nid, &_bignum_modp_6144_p, 375);
     case NID_modp_8192:
-        return dh_param_init(&_bignum_modp_8192_p, 400);
+        return dh_param_init(nid, &_bignum_modp_8192_p, 400);
     default:
         DHerr(DH_F_DH_NEW_BY_NID, DH_R_INVALID_PARAMETER_NID);
         return NULL;
     }
 }
 
-int DH_get_nid(const DH *dh)
+int DH_get_nid(DH *dh)
 {
-    int nid;
+    int nid = dh->params.nid;
+
+    if (nid != NID_undef)
+        return nid;
 
     if (BN_get_word(dh->params.g) != 2)
         return NID_undef;
@@ -111,7 +115,7 @@ int DH_get_nid(const DH *dh)
     else
         return NID_undef;
 
-    /* Verify q is correct if it exists */
+    /* Verify q is correct if it exists - reset the nid if it is not correct */
     if (dh->params.q != NULL) {
         BIGNUM *q = BN_dup(dh->params.p);
 
@@ -120,5 +124,6 @@ int DH_get_nid(const DH *dh)
             nid = NID_undef;
         BN_free(q);
     }
+    dh->params.nid = nid; /* cache the nid */
     return nid;
 }

@@ -8,7 +8,7 @@ DH_new_by_nid, DH_get_nid - get or find DH named parameters
 
  #include <openssl/dh.h>
  DH *DH_new_by_nid(int nid);
- int *DH_get_nid(const DH *dh);
+ int *DH_get_nid(DH *dh);
 
 =head1 DESCRIPTION
 

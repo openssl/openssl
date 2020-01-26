@@ -1463,7 +1463,7 @@ static int test_EVP_PKEY_set1_DH(void)
         goto err;
 
     if(!TEST_true(EVP_PKEY_set1_DH(pkey2, pkcs3dh))
-            || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DHX))
+            || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DH))
         goto err;
 
     ret = 1;

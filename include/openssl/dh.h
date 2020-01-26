@@ -173,7 +173,7 @@ DH *DH_get_2048_256(void);
 
 /* Named parameters, currently RFC7919 and RFC3526 */
 DH *DH_new_by_nid(int nid);
-int DH_get_nid(const DH *dh);
+int DH_get_nid(DH *dh);
 
 # ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
