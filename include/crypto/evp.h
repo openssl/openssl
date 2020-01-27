@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_numbers.h>
 #include "internal/refcount.h"
+#include "crypto/ecx.h"
 
 /*
  * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
@@ -494,23 +495,6 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
-
-
-# ifndef OPENSSL_NO_EC
-
-#define X25519_KEYLEN        32
-#define X448_KEYLEN          56
-#define ED25519_KEYLEN       32
-#define ED448_KEYLEN         57
-
-#define MAX_KEYLEN  ED448_KEYLEN
-
-typedef struct {
-    unsigned char pubkey[MAX_KEYLEN];
-    unsigned char *privkey;
-} ECX_KEY;
-
-#endif
 
 /*
  * Type needs to be a bit field Sub-type needs to be for variations on the
