@@ -275,6 +275,51 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
+static int check_key_signature(const EVP_PKEY *pub, const EVP_PKEY *priv)
+{
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(priv, NULL);
+    unsigned char digest[SHA_DIGEST_LENGTH];
+    unsigned char *sig = NULL;
+    size_t siglen;
+    int ret = 0;
+
+    if (ctx == NULL)
+        return 0;
+
+    /* We just sign dummy data. It could be random, but there's no point */
+    memset(digest, 0x5a, sizeof(digest));
+
+    if (!EVP_PKEY_sign_init(ctx))
+        goto out;
+    if (!EVP_PKEY_sign(ctx, NULL, &siglen, digest, sizeof(digest)))
+        goto out;
+    sig = OPENSSL_malloc(siglen);
+    if (!sig)
+        goto out;
+    if (!EVP_PKEY_sign(ctx, sig, &siglen, digest, sizeof(digest)))
+        goto out;
+    EVP_PKEY_CTX_free(ctx);
+
+    /* Now verify it */
+    ctx = EVP_PKEY_CTX_new(pub, NULL);
+    if (!EVP_PKEY_verify_init(ctx))
+        goto out;
+    if (!EVP_PKEY_verify(ctx, sig, siglen, digest, sizeof(digest)))
+        goto out;
+
+    /* At this point we could pass the now-verified pubkey to the
+     * EVP implementation of the private key. Perhaps it wants to
+     * take a copy of the public key information so that a simple
+     * EVP_PKEY_cmp() *will* work next time? */
+
+    ret = 1;
+ out:
+    OPENSSL_free(sig);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+
 int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
     const EVP_PKEY *xk;
@@ -297,7 +342,9 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
         X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
-        X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
+        ret = check_key_signature(xk, k);
+        if (ret != 1)
+            X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
     }
     if (ret > 0)
         return 1;
