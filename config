@@ -908,8 +908,12 @@ fi
 
 OUT="$OUT"
 
-$PERL $THERE/Configure LIST | grep "$OUT" > /dev/null
-if [ $? = "0" ]; then
+if [ "$OUT" = "darwin64-x86_64-cc" ]; then
+    echo "WARNING! If you wish to build 32-bit libraries, then you have to"
+    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
+fi
+
+if $PERL $THERE/Configure LIST | grep "$OUT" > /dev/null; then
   if [ "$VERBOSE" = "true" ]; then
     echo /usr/bin/env \
 	 __CNF_CPPDEFINES="'$__CNF_CPPDEFINES'" \
@@ -939,8 +943,5 @@ else
   exit 1
 fi
 
-if [ "$OUT" = "darwin64-x86_64-cc" ]; then
-    echo "WARNING! If you wish to build 32-bit libraries, then you have to"
-    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
-fi
+# Do not add anothing from here on, so we don't lose the Configure exit code
 )
