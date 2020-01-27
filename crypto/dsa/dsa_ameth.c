@@ -530,11 +530,11 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
         return 0;
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                 pub_key))
         return 0;
     if (priv_key != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY,
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                     priv_key))
             return 0;
     }

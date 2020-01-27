@@ -178,8 +178,8 @@ static int test_fromdata_dh(void)
         0x2,                     /* G */
     };
     OSSL_PARAM fromdata_params[] = {
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_DH_PRIV_KEY, &key_numbers[PRIV_KEY]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_DH_PUB_KEY, &key_numbers[PUB_KEY]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_PRIV_KEY, &key_numbers[PRIV_KEY]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_PUB_KEY, &key_numbers[PUB_KEY]),
         OSSL_PARAM_ulong(OSSL_PKEY_PARAM_FFC_P, &key_numbers[FFC_P]),
         OSSL_PARAM_ulong(OSSL_PKEY_PARAM_FFC_G, &key_numbers[FFC_G]),
         OSSL_PARAM_END

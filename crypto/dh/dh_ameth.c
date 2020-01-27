@@ -505,10 +505,10 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             return 0;
     }
     /* A key must at least have a public part. */
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
         return 0;
     if (priv_key != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                     priv_key))
             return 0;
     }
