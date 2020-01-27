@@ -1,0 +1,8 @@
+
+ : oqs_kem_default : oqs_kem_default
+ : p256_oqs_kem_default : p256_oqs_kem_default
+{%- for kem in config['kems'] %}
+ : {{ kem['name_group'] }} : {{ kem['name_group'] }}
+ : p256_{{ kem['name_group'] }} : p256_{{ kem['name_group'] }}
+{%- endfor %}
+
