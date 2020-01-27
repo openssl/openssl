@@ -26,7 +26,6 @@
 
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/dh.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
@@ -540,16 +539,8 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
-    int type = EVP_PKEY_DH;
-    int ret;
-
-    /*
-     * Use DHX for any DH key that has a q parameter,
-     * except for named groups (for backwards compatibility reasons).
-     */
-    if (DH_get0_q(key) != NULL && dh_get0_nid(key) == NID_undef)
-        type = EVP_PKEY_DHX;
-    ret = EVP_PKEY_assign(pkey, type, key);
+    int type = DH_get0_q(key) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
+    int ret = EVP_PKEY_assign(pkey, type, key);
 
     if (ret)
         DH_up_ref(key);
