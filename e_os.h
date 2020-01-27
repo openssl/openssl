@@ -65,7 +65,6 @@
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
-#   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
 #   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
