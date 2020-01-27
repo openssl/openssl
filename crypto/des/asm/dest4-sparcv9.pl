@@ -623,4 +623,4 @@ ___
 
 &emit_assembler();
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

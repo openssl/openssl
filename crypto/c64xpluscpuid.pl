@@ -284,4 +284,4 @@ bus_loop2_done?:
 ___
 
 print $code;
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";
