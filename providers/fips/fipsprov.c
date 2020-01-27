@@ -258,8 +258,8 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
     if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DSA_PUB_KEY, pub)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DSA_PRIV_KEY, priv))
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
     params = ossl_param_bld_to_param(&bld);
 
@@ -407,8 +407,8 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
     if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PUB_KEY, pub)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PRIV_KEY, priv))
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
     params = ossl_param_bld_to_param(&bld);
 
@@ -416,7 +416,7 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
     if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_peer))
+        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub_peer))
         goto err;
 
     params_peer = ossl_param_bld_to_param(&bld);
