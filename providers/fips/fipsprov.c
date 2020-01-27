@@ -966,12 +966,12 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     }
 
     if (stcbfn != NULL && c_get_libctx != NULL) {
-        stcbfn(c_get_libctx(provider), &selftest_params.event_cb,
-               &selftest_params.event_cb_arg);
+        stcbfn(c_get_libctx(provider), &selftest_params.cb,
+               &selftest_params.cb_arg);
     }
     else {
-        selftest_params.event_cb = NULL;
-        selftest_params.event_cb_arg = NULL;
+        selftest_params.cb = NULL;
+        selftest_params.cb_arg = NULL;
     }
 
     if (!c_get_params(provider, core_params))
