@@ -1180,10 +1180,11 @@ DEPRECATEDIN_3_0(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                                     const unsigned char *sinfo, size_t sinfolen,
                                     const EVP_MD *md))
 
-int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                     const EC_KEY *ecdh,
-                     void *(*KDF) (const void *in, size_t inlen,
-                                   void *out, size_t *outlen));
+DEPRECATEDIN_3_0(int ECDH_compute_key(void *out, size_t outlen,
+                                      const EC_POINT *pub_key,
+                                      const EC_KEY *ecdh,
+                                      void *(*KDF)(const void *in, size_t inlen,
+                                                   void *out, size_t *outlen)))
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 
