@@ -18,6 +18,12 @@
  *                          256 Bit Primes"
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 
 #include "internal/cryptlib.h"

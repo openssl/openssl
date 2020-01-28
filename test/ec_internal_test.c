@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Low level APIs are deprecated for public use, but still ok for internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/nelem.h"
 #include "testutil.h"
 #include <openssl/ec.h>

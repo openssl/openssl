@@ -24,6 +24,12 @@
  */
 
 /*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+/*
  * A 64-bit implementation of the NIST P-224 elliptic curve point multiplication
  *
  * Inspired by Daniel J. Bernstein's public domain nistp224 implementation

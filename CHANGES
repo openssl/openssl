@@ -22,6 +22,30 @@
      However, code that does the latter will still work as before.
      [Richard Levitte]
 
+  *) Deprecated low level ECDH and ECDSA functions.  These include:
+
+     ECDH_compute_key, ECDSA_do_sign, ECDSA_do_sign_ex, ECDSA_do_verify,
+     ECDSA_sign_setup, ECDSA_sign, ECDSA_sign_ex, ECDSA_verify and
+     ECDSA_size.
+
+     Use of these low level functions has been informally discouraged for a long
+     time.  Instead applications should use the EVP_PKEY_derive(3),
+     EVP_DigestSign(3) and EVP_DigestVerify(3) functions.
+     [Paul Dale]
+
+  *) Deprecated the EC_KEY_METHOD functions.  These include:
+
+     EC_KEY_METHOD_new, EC_KEY_METHOD_free, EC_KEY_METHOD_set_init,
+     EC_KEY_METHOD_set_keygen, EC_KEY_METHOD_set_compute_key,
+     EC_KEY_METHOD_set_sign, EC_KEY_METHOD_set_verify,
+     EC_KEY_METHOD_get_init, EC_KEY_METHOD_get_keygen,
+     EC_KEY_METHOD_get_compute_key, EC_KEY_METHOD_get_sign and
+     EC_KEY_METHOD_get_verify.
+
+     Instead applications and extension writers should use the OSSL_PROVIDER
+     APIs.
+     [Paul Dale]
+
   *) Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
      and EVP_PKEY_decrypt() instead.
      Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()
@@ -60,21 +84,21 @@
   *) All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
      SHA384, SHA512 and Whirlpool digest functions have been deprecated.
      These include:
-         MD2, MD2_options, MD2_Init, MD2_Update, MD2_Final, MD4, MD4_Init,
-         MD4_Update, MD4_Final, MD4_Transform, MD5, MD5_Init, MD5_Update,
-         MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
-         RIPEMD160, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
-         RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final,
-         SHA1_Transform, SHA224_Init, SHA224_Update, SHA224_Final,
-         SHA224_Transform, SHA256_Init, SHA256_Update, SHA256_Final,
-         SHA256_Transform, SHA384, SHA384_Init, SHA384_Update, SHA384_Final,
-         SHA512, SHA512_Init, SHA512_Update, SHA512_Final, SHA512_Transform,
-         WHIRLPOOL, WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_BitUpdate
-         and WHIRLPOOL_Final.
 
-     Use of these low level functions has been informally discouraged for a long
-     time.  Instead applications should instead use the EVP_DigestInit_ex,
-     EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions.
+     MD2, MD2_options, MD2_Init, MD2_Update, MD2_Final, MD4, MD4_Init,
+     MD4_Update, MD4_Final, MD4_Transform, MD5, MD5_Init, MD5_Update,
+     MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
+     RIPEMD160, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
+     RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_Transform,
+     SHA224_Init, SHA224_Update, SHA224_Final, SHA224_Transform, SHA256_Init,
+     SHA256_Update, SHA256_Final, SHA256_Transform, SHA384, SHA384_Init,
+     SHA384_Update, SHA384_Final, SHA512, SHA512_Init, SHA512_Update,
+     SHA512_Final, SHA512_Transform, WHIRLPOOL, WHIRLPOOL_Init,
+     WHIRLPOOL_Update, WHIRLPOOL_BitUpdate and WHIRLPOOL_Final.
+
+     Use of these low level functions has been informally discouraged
+     for a long time.  Applications should use the EVP_DigestInit_ex(3),
+     EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions instead.
      [Paul Dale]
 
   *) Corrected the documentation of the return values from the EVP_DigestSign*
@@ -87,6 +111,7 @@
      [Richard Levitte]
 
   *) All of the low level cipher functions have been deprecated including:
+
      AES_options, AES_set_encrypt_key, AES_set_decrypt_key, AES_encrypt,
      AES_decrypt, AES_ecb_encrypt, AES_cbc_encrypt, AES_cfb128_encrypt,
      AES_cfb1_encrypt, AES_cfb8_encrypt, AES_ofb128_encrypt,
@@ -117,10 +142,10 @@
      SEED_set_key, SEED_encrypt, SEED_decrypt, SEED_ecb_encrypt,
      SEED_cbc_encrypt, SEED_cfb128_encrypt and SEED_ofb128_encrypt.
 
-     Use of these low level functions has been informally discouraged for a long
-     time. Instead applications should use the high level EVP APIs, e.g.
+     Use of these low level functions has been informally discouraged for
+     a long time. Applications should use the high level EVP APIs, e.g.
      EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
-     equivalently named decrypt functions.
+     equivalently named decrypt functions instead.
      [Matt Caswell and Paul Dale]
 
   *) Removed include/openssl/opensslconf.h.in and replaced it with
