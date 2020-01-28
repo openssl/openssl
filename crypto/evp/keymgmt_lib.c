@@ -18,7 +18,7 @@
 
 struct import_data_st {
     void *provctx;
-    void *(*importfn)(void *provctx, const OSSL_PARAM params[]);
+    void *(*importfn)(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[]);
 
     /* Result */
     void *provdata;
@@ -92,7 +92,9 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         struct import_data_st import_data;
 
         import_data.importfn =
-            want_domainparams ? keymgmt->importdomparams : keymgmt->importkey;
+            want_domainparams
+            ? evp_keymgmt_importdomparams
+            : evp_keymgmt_importkey;
         import_data.provdata = NULL;
 
         /*
@@ -102,10 +104,11 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return NULL;
 
         for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            int (*exportfn)(void *provctx, OSSL_CALLBACK *cb, void *cbarg) =
+            int (*exportfn)(const EVP_KEYMGMT *keymgmt, void *provdata,
+                            OSSL_CALLBACK *cb, void *cbarg) =
                 want_domainparams
-                ? pk->pkeys[j].keymgmt->exportdomparams
-                : pk->pkeys[j].keymgmt->exportkey;
+                ? evp_keymgmt_exportdomparams
+                : evp_keymgmt_exportkey;
 
             if (exportfn != NULL) {
                 import_data.provctx =
@@ -119,7 +122,8 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                  * forgets to check the return value.
 
                  */
-                if (exportfn(pk->pkeys[j].provdata, &try_import, &import_data)
+                if (exportfn(pk->pkeys[j].keymgmt, pk->pkeys[j].provdata,
+                             &try_import, &import_data)
                     && (provdata = import_data.provdata) != NULL)
                     break;
             }
@@ -152,9 +156,9 @@ void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
             pk->pkeys[i].keymgmt = NULL;
             pk->pkeys[i].provdata = NULL;
             if (pk->pkeys[i].domainparams)
-                keymgmt->freedomparams(provdata);
+                evp_keymgmt_freedomparams(keymgmt, provdata);
             else
-                keymgmt->freekey(provdata);
+                evp_keymgmt_freekey(keymgmt, provdata);
             EVP_KEYMGMT_free(keymgmt);
         }
 
@@ -206,10 +210,9 @@ void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
 void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            const OSSL_PARAM params[], int domainparams)
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
     void *provdata = domainparams
-        ? keymgmt->importdomparams(provctx, params)
-        : keymgmt->importkey(provctx, params);
+        ? evp_keymgmt_importdomparams(keymgmt, params)
+        : evp_keymgmt_importkey(keymgmt, params);
 
     evp_keymgmt_clear_pkey_cache(target);
     evp_keymgmt_cache_pkey(target, 0, keymgmt, provdata, domainparams);
