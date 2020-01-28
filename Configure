@@ -11,6 +11,7 @@
 
 use 5.10.0;
 use strict;
+use warnings;
 use Config;
 use FindBin;
 use lib "$FindBin::Bin/util/perl";
@@ -576,7 +577,7 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
                               => [ @list ] );
     unshift @list, $second;
 }
-my @list = (reverse @dtls);
+@list = (reverse @dtls);
 while ((my $first, my $second) = (shift @list, shift @list)) {
     last unless @list;
     push @disable_cascades, ( sub { !$disabled{$first} && $disabled{$second} }
@@ -2086,7 +2087,7 @@ EOF
                     # We also recognise resource files
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } else {
@@ -2119,7 +2120,7 @@ EOF
                     # We also recognise resource files
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.ld$/) {
