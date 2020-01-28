@@ -24,6 +24,12 @@
  */
 
 /*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+/*
  * A 64-bit implementation of the NIST P-521 elliptic curve point multiplication
  *
  * OpenSSL integration was taken from Emilia Kasper's work in ecp_nistp224.c.

@@ -1110,6 +1110,7 @@ static int DSA_verify_loop(void *args)
 #endif
 
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 static long ecdsa_c[ECDSA_NUM][2];
 static int ECDSA_sign_loop(void *args)
 {
@@ -1150,6 +1151,7 @@ static int ECDSA_verify_loop(void *args)
     }
     return count;
 }
+# endif
 
 /* ******************************************************************** */
 static long ecdh_c[EC_NUM][1];
@@ -3020,6 +3022,7 @@ int speed_main(int argc, char **argv)
 #endif                          /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     for (testnum = 0; testnum < ECDSA_NUM; testnum++) {
         int st = 1;
 
@@ -3102,6 +3105,7 @@ int speed_main(int argc, char **argv)
             }
         }
     }
+# endif
 
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int ecdh_checks = 1;
@@ -3398,7 +3402,7 @@ int speed_main(int argc, char **argv)
             st = 0; /* set back to zero */
             /* attach it sooner to rely on main final cleanup */
             loopargs[i].sm2_pkey[testnum] = sm2_pkey;
-            loopargs[i].sigsize = ECDSA_size(EVP_PKEY_get0_EC_KEY(sm2_pkey));
+            loopargs[i].sigsize = EVP_PKEY_size(sm2_pkey);
 
             sm2_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
             sm2_vfy_pctx = EVP_PKEY_CTX_new(sm2_pkey, NULL);
@@ -3406,6 +3410,7 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_CTX_free(sm2_vfy_pctx);
                 break;
             }
+
             /* attach them directly to respective ctx */
             EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_ctx[testnum], sm2_pctx);
             EVP_MD_CTX_set_pkey_ctx(loopargs[i].sm2_vfy_ctx[testnum], sm2_vfy_pctx);

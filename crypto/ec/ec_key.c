@@ -8,6 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_local.h"
