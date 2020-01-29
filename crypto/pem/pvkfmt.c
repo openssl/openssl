@@ -12,6 +12,12 @@
  * and PRIVATEKEYBLOB).
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/rand.h>

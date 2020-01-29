@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include "prov/bio.h"             /* ossl_prov_bio_printf() */

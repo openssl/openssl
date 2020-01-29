@@ -19,6 +19,7 @@
 #include <string.h>
 #include <openssl/err.h>
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 DSA_METHOD *DSA_meth_new(const char *name, int flags)
 {
     DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(*dsam));
@@ -222,3 +223,4 @@ int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *))
     dsam->dsa_keygen = keygen;
     return 1;
 }
+#endif

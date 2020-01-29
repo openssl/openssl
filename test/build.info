@@ -35,7 +35,7 @@ IF[{- !$disabled{tests} -}]
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
           dhtest enginetest \
-          ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
+          ssltest_old exptest rsa_test \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
           v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -120,14 +120,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ssltest_old]=ssltest_old.c
   INCLUDE[ssltest_old]=.. ../include ../apps/include
   DEPEND[ssltest_old]=../libcrypto ../libssl
-
-  SOURCE[dsatest]=dsatest.c
-  INCLUDE[dsatest]=../include ../apps/include
-  DEPEND[dsatest]=../libcrypto libtestutil.a
-
-  SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
-  INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
-  DEPEND[dsa_no_digest_size_test]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
@@ -502,7 +494,7 @@ IF[{- !$disabled{tests} -}]
                      rdrand_sanitytest property_test ideatest \
                      rsa_sp800_56b_test bn_internal_test ecdsatest \
                      rc2test rc4test rc5test hmactest \
-                     asn1_dsa_internal_test
+                     asn1_dsa_internal_test dsatest dsa_no_digest_size_test
 
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
@@ -543,9 +535,18 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[x509_internal_test]=.. ../include ../apps/include
     DEPEND[x509_internal_test]=../libcrypto.a libtestutil.a
 
+
     SOURCE[ecdsatest]=ecdsatest.c
     INCLUDE[ecdsatest]=../include ../apps/include
     DEPEND[ecdsatest]=../libcrypto.a libtestutil.a
+
+    SOURCE[dsatest]=dsatest.c
+    INCLUDE[dsatest]=../include ../apps/include
+    DEPEND[dsatest]=../libcrypto.a libtestutil.a
+
+    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+    INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
+    DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
