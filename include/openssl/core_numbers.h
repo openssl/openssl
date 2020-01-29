@@ -416,8 +416,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 
 /* Key information */
-#define OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS            27
-#define OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS       28
+# define OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS           27
+# define OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS      28
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_key_params,
                     (void *key, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_key_params, (void))
@@ -426,6 +426,16 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_key_params, (void))
 # define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME     40
 OSSL_CORE_MAKE_FUNC(const char *,OP_keymgmt_query_operation_name,
                     (int operation_id))
+
+/* Key validation */
+# define OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS       29
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC          30
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE         31
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE        32
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_domparams, (void *key))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_public, (void *key))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_private, (void *key))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_pairwise, (void *key))
 
 /* Key Exchange */
 

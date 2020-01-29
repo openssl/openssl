@@ -30,6 +30,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OP_keymgmt_get_domparam_params(void *domparams, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_domparam_params(void);
 
+ /* Key domain parameter validation */
+ int OP_keymgmt_validate_domparams(void *key);
+
  /* Key creation and destruction */
  void *OP_keymgmt_importkey(void *provctx, const OSSL_PARAM params[]);
  void *OP_keymgmt_genkey(void *provctx,
@@ -47,6 +50,11 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key information */
  int OP_keymgmt_get_key_params(void *key, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_key_params(void);
+
+ /* Key validation */
+ int OP_keymgmt_validate_public(void *key);
+ int OP_keymgmt_validate_private(void *key);
+ int OP_keymgmt_validate_pairwise(void *key);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -108,6 +116,11 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
 
  OP_keymgmt_query_operation_name OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME
 
+ OP_keymgmt_validate_domparams   OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS
+ OP_keymgmt_validate_public      OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC
+ OP_keymgmt_validate_private     OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE
+ OP_keymgmt_validate_pairwise    OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE
+
 =head2 Domain Parameter Functions
 
 OP_keymgmt_importdomparams() should create a provider side structure
@@ -142,6 +155,9 @@ see L</Information Parameters>.
 OP_keymgmt_gettable_domparam_params() should return a constant array
 of descriptor B<OSSL_PARAM>, for parameters that
 OP_keymgmt_get_domparam_params() can handle.
+
+OP_keymgmt_validate_domparams() should return a value of 1 if the
+domain parameters are valid, or 0 for invalid.
 
 =head2 Key functions
 
@@ -184,6 +200,14 @@ with the given I<key>, see L</Information Parameters>.
 OP_keymgmt_gettable_key_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that
 OP_keymgmt_get_key_params() can handle.
+
+OP_keymgmt_validate_public() should return 1 if the public component of the
+key is valid, or 0 if invalid.
+OP_keymgmt_validate_private() should return 1 if the private component of the
+key is valid, or 0 if invalid.
+OP_keymgmt_validate_pairwise() should return 1 if the the pairwise consistency
+of the key is valid, or 0 if invalid.
+
 
 =head2 Supported operations
 
@@ -241,7 +265,7 @@ The KEYMGMT interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

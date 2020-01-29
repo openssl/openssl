@@ -342,3 +342,26 @@ const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt)
         return NULL;
     return keymgmt->gettable_key_params();
 }
+
+int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    /* if domainparams are not supported - then pass */
+    if (keymgmt->validatedomparams == NULL)
+        return 1;
+    return keymgmt->validatedomparams(provkey);
+}
+
+int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validatepublic(provkey);
+}
+
+int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validateprivate(provkey);
+}
+
+int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validatepairwise(provkey);
+}

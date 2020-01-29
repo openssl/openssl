@@ -23,6 +23,9 @@
 static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
 static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
 static OSSL_OP_keymgmt_get_key_params_fn rsa_get_key_params;
+static OSSL_OP_keymgmt_validate_public_fn rsa_validatekey_public;
+static OSSL_OP_keymgmt_validate_private_fn rsa_validatekey_private;
+static OSSL_OP_keymgmt_validate_pairwise_fn rsa_validatekey_pairwise;
 
 #define RSA_DEFAULT_MD "SHA256"
 
@@ -288,6 +291,27 @@ static int rsa_get_key_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
+static int rsa_validatekey_public(void *key)
+{
+    RSA *rsa = key;
+
+    return rsa_validate_public(rsa);
+}
+
+static int rsa_validatekey_private(void *key)
+{
+    RSA *rsa = key;
+
+    return rsa_validate_private(rsa);
+}
+
+static int rsa_validatekey_pairwise(void *key)
+{
+    RSA *rsa = key;
+
+    return rsa_validate_pairwise(rsa);
+}
+
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))rsa_importkey },
     { OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES, (void (*)(void))rsa_importkey_types },
@@ -295,5 +319,11 @@ const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES, (void (*)(void))rsa_exportkey_types },
     { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))RSA_free },
     { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))rsa_get_key_params },
+    { OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC,
+          (void (*)(void))rsa_validatekey_public },
+    { OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE,
+          (void (*)(void))rsa_validatekey_private },
+    { OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE,
+          (void (*)(void))rsa_validatekey_pairwise },
     { 0, NULL }
 };

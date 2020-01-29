@@ -92,7 +92,7 @@ err:
 static int test_fromdata_rsa(void)
 {
     int ret = 0;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL, *key_ctx = NULL;
     EVP_PKEY *pk = NULL;
     /*
      * 32-bit RSA key, extracted from this command,
@@ -132,11 +132,21 @@ static int test_fromdata_rsa(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 4))
         goto err;
 
+    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_check(key_ctx))
+        || !TEST_true(EVP_PKEY_public_check(key_ctx))
+        || !TEST_true(EVP_PKEY_private_check(key_ctx))
+        || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+        goto err;
+
     ret = test_print_key_using_pem(pk)
         | test_print_key_using_serializer(pk);
 
  err:
     EVP_PKEY_free(pk);
+    EVP_PKEY_CTX_free(key_ctx);
     EVP_PKEY_CTX_free(ctx);
 
     return ret;

@@ -637,6 +637,12 @@ int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
                                void *provkey, OSSL_PARAM params[]);
 const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt);
 
+int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *provkey);
+int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *provkey);
+int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *provkey);
+int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *provkey);
+
+
 /* Pulling defines out of C source files */
 
 #define EVP_RC4_KEY_SIZE 16
