@@ -9,7 +9,10 @@ openssl-s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-help>]
+[B<-ssl_config> I<file>]
 [B<-connect> I<host:port>]
+[B<-host> I<hostname>]
+[B<-port> I<port>]
 [B<-bind> I<host:port>]
 [B<-proxy> I<host:port>]
 [B<-proxy_user> I<userid>]
@@ -21,9 +24,15 @@ B<openssl> B<s_client>
 [B<-noservername>]
 [B<-verify> I<depth>]
 [B<-verify_return_error>]
+[B<-verify_quiet>]
+[B<-verifyCAfile> I<filename>]
+[B<-verifyCApath> I<dir>]
+[B<-verifyCAstore> I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>]
+[B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
+[B<-crl_download>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>]
 [B<-cert_chain> I<filename>]
@@ -39,8 +48,18 @@ B<openssl> B<s_client>
 [B<-build_chain>]
 [B<-reconnect>]
 [B<-showcerts>]
+[B<-prexit>]
 [B<-debug>]
+[B<-trace>]
+[B<-nocommands>]
+[B<-security_debug>]
+[B<-security_debug_verbose>]
 [B<-msg>]
+[B<-timeout>]
+[B<-mtu> I<size>]
+[B<-keymatexport> I<label>]
+[B<-keymatexportlen> I<len>]
+[B<-msgfile> I<filename>]
 [B<-nbio_test>]
 [B<-state>]
 [B<-nbio>]
@@ -55,6 +74,7 @@ B<openssl> B<s_client>
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-maxfraglen> I<len>]
 [B<-max_send_frag>]
 [B<-split_send_frag>]
 [B<-max_pipelines>]
@@ -62,6 +82,7 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
+[B<-brief>]
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
@@ -69,11 +90,13 @@ B<openssl> B<s_client>
 [B<-ciphersuites> I<val>]
 [B<-serverpref>]
 [B<-starttls> I<protocol>]
+[B<-name> I<hostname>]
 [B<-xmpphost> I<hostname>]
 [B<-name> I<hostname>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
 [B<-sess_out> I<filename>]
+[B<-serverinfo> I<types>]
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
@@ -85,12 +108,20 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
+[B<-use_srtp> I<value>]
+[B<-srpuser> I<value>]
+[B<-srppass> I<value>]
+[B<-srp_lateuser>]
+[B<-srp_moregroups>]
+[B<-srp_strength> I<number>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
 
@@ -123,12 +154,24 @@ manual page.
 
 Print out a usage message.
 
+=item B<-ssl_config> I<filename>
+
+Use the specified configuration file.
+
 =item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
 If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
+
+=item B<-host> I<hostname>
+
+Host to connect to; use B<-connect> instead.
+
+=item B<-port> I<port>
+
+Connect to the specified port; use B<-connect> instead.
 
 =item B<-bind> I<host:port>
 
@@ -199,10 +242,18 @@ not to use a certificate.
 
 The certificate format to use: DER or PEM. PEM is the default.
 
+=item B<-CRL> I<filename>
+
+CRL file to use to check the server's certificate.
+
 =item B<-CRLform> B<DER>|B<PEM>
 
 The CRL format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
+
+=item B<-crl_download>
+
+Download CRL from distribution points in the certificate.
 
 =item B<-key> I<keyfile>
 
@@ -242,6 +293,24 @@ will never fail due to a server certificate verify failure.
 
 Return verification errors instead of continuing. This will typically
 abort the handshake with a fatal error.
+
+=item B<-verify_quiet>
+
+Limit verify output to only errors.
+
+=item B<-verifyCAfile> I<filename>
+
+CA file for verifying the server's certificate, in PEM format.
+
+=item B<-verifyCApath> I<dir>
+
+Use the specified directory as a certificate store path to verify
+the server's CA certificate.
+
+=item B<-verifyCAstore> I<uri>
+
+Use the specified URI as a store URI to verify the server's certificate.
+
 
 =item B<-chainCApath> I<directory>
 
@@ -350,7 +419,37 @@ Prints out the SSL session states.
 
 Print extensive debugging information including a hex dump of all traffic.
 
+=item B<-nocommands>
+
+Do not use interactive command letters.
+
+=item B<-security_debug>
+
+Enable security debug messages.
+
+=item B<-security_debug_verbose>
+
+Output more security debug output.
+
 =item B<-msg>
+
+Show protocol messages.
+
+=item B<-timeout>
+
+Enable send/receive timeout on DTLS connections.
+
+=item B<-mtu> I<size>
+
+Set MTU of the link layer to the specified size.
+
+=item B<-keymatexport> I<label>
+
+Export keying material using the specified label.
+
+=item B<-keymatexportlen> I<len>
+
+Export the specified number of bytes of keyint material; default is 20.
 
 Show all protocol messages with hex dump.
 
@@ -359,7 +458,7 @@ Show all protocol messages with hex dump.
 Show verbose trace output of protocol messages. OpenSSL needs to be compiled
 with B<enable-ssl-trace> for this option to work.
 
-=item B<-msgfile>
+=item B<-msgfile> I<filename>
 
 File to send output of B<-msg> or B<-trace> to, default standard output.
 
@@ -432,6 +531,11 @@ Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
+
+=item B<-maxfraglen> I<len>
+
+Enable Maximum Fragment Length Negotiation; allowed values are
+C<512>, C<1024>, C<2048>, and C<4096>.
 
 =item B<-max_send_frag> I<int>
 
@@ -618,6 +722,30 @@ data and when the server accepts the early data.
 For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
 happen whether or not a certificate has been provided via B<-cert>.
 
+=item B<-use_srtp> I<value>
+
+Offer SRTP key management, where B<value> is a colon-separated profile list.
+
+=item B<-srpuser> I<value>
+
+Set the SRP username to the specified value.
+
+=item B<-srppass> I<value>
+
+Set the SRP password to the specified value.
+
+=item B<-srp_lateuser>
+
+SRP username for the second ClientHello message.
+
+=item B<-srp_moregroups>
+
+Tolerate other than the known B<g> and B<N> values.
+
+=item B<-srp_strength> I<number>
+
+Set the minimal acceptable length, in bits, for B<N>.
+
 {- $OpenSSL::safe::opt_version_item -}
 
 {- $OpenSSL::safe::opt_name_item -}
@@ -626,9 +754,15 @@ happen whether or not a certificate has been provided via B<-cert>.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
+{- $OpenSSL::safe::opt_s_item -}
+
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+=item B<-ssl_client_engine> I<id>
+
+Specify engine to be used for client certificate operations.
 
 {- $OpenSSL::safe::opt_v_item -}
 
