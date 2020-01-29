@@ -91,14 +91,14 @@ resumption occurred
 If the session from the orignal handshake had a servername accepted by the
 server then it will return that servername.
 
-Otherwise it returns the servername set via SSL_set_tlsext_host_name() (or NULL
-if it was not called).
+Otherwise it returns the servername set via SSL_set_tlsext_host_name() or NULL
+if it was not called.
 
 =item On the client, during or after the handshake and a TLSv1.2 (or below)
 resumption did not occur
 
-It will return the servername set via SSL_set_tlsext_host_name() (or NULL if it
-was not called).
+It will return the servername set via SSL_set_tlsext_host_name() or NULL if it
+was not called.
 
 =item On the server, before the handshake
 
@@ -119,7 +119,7 @@ handshake or NULL if none was requested.
 =back
 
 Note that the ClientHello callback occurs before a servername extension from the
-client is processed. The servername, certificate and alpn callbacks occur after
+client is processed. The servername, certificate and ALPN callbacks occur after
 a servername extension from the client is processed.
 
 SSL_get_servername_type() returns the servername type or -1 if no servername
@@ -159,7 +159,7 @@ Prior to 1.1.1e, when the client requested a servername in an initial TLSv1.2
 handshake, the server accepted it, and then the client successfully resumed but
 set a different explict servername in the second handshake then when called by
 the client it returned the servername from the second handshake. This has now
-been changed to the servername requested in the original handshake.
+been changed to return the servername requested in the original handshake.
 
 Also prior to 1.1.1e, if the client sent a servername in the first handshake but
 the server did not accept it, and then a second handshake occured where TLSv1.2
