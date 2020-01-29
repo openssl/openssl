@@ -81,6 +81,7 @@ int dsa_main(int argc, char **argv)
     int pvk_encr = 2;
 # endif
     int private = 0;
+    EVP_PKEY *pkey = NULL;
 
     prog = opt_init(argc, argv, dsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -160,19 +161,14 @@ int dsa_main(int argc, char **argv)
     }
 
     BIO_printf(bio_err, "read DSA key\n");
-    {
-        EVP_PKEY *pkey;
+    if (pubin)
+        pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+    else
+        pkey = load_key(infile, informat, 1, passin, e, "Private Key");
 
-        if (pubin)
-            pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
-        else
-            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+    if (pkey != NULL)
+        dsa = EVP_PKEY_get1_DSA(pkey);
 
-        if (pkey != NULL) {
-            dsa = EVP_PKEY_get1_DSA(pkey);
-            EVP_PKEY_free(pkey);
-        }
-    }
     if (dsa == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
         ERR_print_errors(bio_err);
@@ -185,7 +181,7 @@ int dsa_main(int argc, char **argv)
 
     if (text) {
         assert(pubin || private);
-        if (!DSA_print(out, dsa, 0)) {
+        if (!EVP_PKEY_print_private(out, pkey, 0, NULL)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
@@ -261,6 +257,7 @@ int dsa_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    EVP_PKEY_free(pkey);
     BIO_free_all(out);
     DSA_free(dsa);
     release_engine(e);

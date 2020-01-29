@@ -88,7 +88,7 @@ d2i_OCSP_RESPBYTES                      89	3_0_0	EXIST::FUNCTION:OCSP
 TS_REQ_get_ext_by_NID                   90	3_0_0	EXIST::FUNCTION:TS
 ASN1_item_ndef_i2d                      91	3_0_0	EXIST::FUNCTION:
 OCSP_archive_cutoff_new                 92	3_0_0	EXIST::FUNCTION:OCSP
-DSA_size                                93	3_0_0	EXIST::FUNCTION:DSA
+DSA_size                                93	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 IPAddressRange_free                     94	3_0_0	EXIST::FUNCTION:RFC3779
 CMS_ContentInfo_free                    95	3_0_0	EXIST::FUNCTION:CMS
 BIO_accept                              96	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SOCK
@@ -96,7 +96,7 @@ X509_VERIFY_PARAM_set1_policies         97	3_0_0	EXIST::FUNCTION:
 SCT_set0_extensions                     98	3_0_0	EXIST::FUNCTION:CT
 PKCS5_pbe2_set_scrypt                   99	3_0_0	EXIST::FUNCTION:SCRYPT
 X509_find_by_subject                    100	3_0_0	EXIST::FUNCTION:
-DSAparams_print                         101	3_0_0	EXIST::FUNCTION:DSA
+DSAparams_print                         101	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 BF_set_key                              102	3_0_0	EXIST::FUNCTION:BF,DEPRECATEDIN_3_0
 d2i_DHparams                            103	3_0_0	EXIST::FUNCTION:DH
 i2d_PKCS7_ENC_CONTENT                   104	3_0_0	EXIST::FUNCTION:
@@ -222,7 +222,7 @@ ASN1_put_eoc                            225	3_0_0	EXIST::FUNCTION:
 EVP_MD_meth_set_input_blocksize         226	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_attrs               227	3_0_0	EXIST::FUNCTION:
 PKCS8_get_attr                          228	3_0_0	EXIST::FUNCTION:
-DSAparams_print_fp                      229	3_0_0	EXIST::FUNCTION:DSA,STDIO
+DSAparams_print_fp                      229	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA,STDIO
 EC_POINT_set_Jprojective_coordinates_GFp 230	3_0_0	EXIST::FUNCTION:EC
 DIST_POINT_NAME_new                     231	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_file                        232	3_0_0	EXIST::FUNCTION:
@@ -269,7 +269,7 @@ CRYPTO_gcm128_tag                       274	3_0_0	EXIST::FUNCTION:
 OCSP_parse_url                          275	3_0_0	EXIST::FUNCTION:OCSP
 UI_get0_test_string                     276	3_0_0	EXIST::FUNCTION:
 CRYPTO_secure_free                      277	3_0_0	EXIST::FUNCTION:
-DSA_print_fp                            278	3_0_0	EXIST::FUNCTION:DSA,STDIO
+DSA_print_fp                            278	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA,STDIO
 X509_get_ext_d2i                        279	3_0_0	EXIST::FUNCTION:
 d2i_PKCS7_ENC_CONTENT                   280	3_0_0	EXIST::FUNCTION:
 BUF_MEM_grow                            281	3_0_0	EXIST::FUNCTION:
@@ -1954,7 +1954,7 @@ PEM_read_PrivateKey                     1999	3_0_0	EXIST::FUNCTION:STDIO
 X509V3_get_d2i                          2000	3_0_0	EXIST::FUNCTION:
 PKCS7_SIGNER_INFO_sign                  2001	3_0_0	EXIST::FUNCTION:
 TS_TST_INFO_free                        2002	3_0_0	EXIST::FUNCTION:TS
-DSA_security_bits                       2003	3_0_0	EXIST::FUNCTION:DSA
+DSA_security_bits                       2003	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 X509v3_addr_is_canonical                2004	3_0_0	EXIST::FUNCTION:RFC3779
 BN_mod_mul_reciprocal                   2005	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_version                      2006	3_0_0	EXIST::FUNCTION:TS
@@ -3564,7 +3564,7 @@ SCT_get0_signature                      3641	3_0_0	EXIST::FUNCTION:CT
 DISPLAYTEXT_it                          3643	3_0_0	EXIST::FUNCTION:
 OPENSSL_gmtime_adj                      3644	3_0_0	EXIST::FUNCTION:
 ASN1_INTEGER_dup                        3645	3_0_0	EXIST::FUNCTION:
-DSA_print                               3646	3_0_0	EXIST::FUNCTION:DSA
+DSA_print                               3646	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 X509_REQ_set_extension_nids             3647	3_0_0	EXIST::FUNCTION:
 X509_free                               3648	3_0_0	EXIST::FUNCTION:
 ERR_load_ERR_strings                    3649	3_0_0	EXIST::FUNCTION:
@@ -4045,7 +4045,7 @@ X509_STORE_unlock                       4133	3_0_0	EXIST::FUNCTION:
 X509_STORE_lock                         4134	3_0_0	EXIST::FUNCTION:
 X509_set_proxy_pathlen                  4135	3_0_0	EXIST::FUNCTION:
 X509_get_proxy_pathlen                  4136	3_0_0	EXIST::FUNCTION:
-DSA_bits                                4137	3_0_0	EXIST::FUNCTION:DSA
+DSA_bits                                4137	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 EVP_PKEY_set1_tls_encodedpoint          4138	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get1_tls_encodedpoint          4139	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_get0_data                   4140	3_0_0	EXIST::FUNCTION:
