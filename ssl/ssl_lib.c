@@ -1218,9 +1218,6 @@ void SSL_free(SSL *s)
 
     sk_X509_pop_free(s->verified_chain, X509_free);
 
-    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
-    ssl_evp_md_free(s->s3.tmp.new_hash);
-
     if (s->method != NULL)
         s->method->ssl_free(s);
 

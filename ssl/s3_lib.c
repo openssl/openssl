@@ -3317,6 +3317,9 @@ void ssl3_free(SSL *s)
     s->s3.tmp.pkey = NULL;
 #endif
 
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
+    ssl_evp_md_free(s->s3.tmp.new_hash);
+
     OPENSSL_free(s->s3.tmp.ctype);
     sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
     OPENSSL_free(s->s3.tmp.ciphers_raw);
@@ -4299,7 +4302,12 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             if (prefer_sha256) {
                 const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
 
-                if (EVP_MD_is_a(ssl_md(s->ctx, tmp->algorithm2), "SHA-256")) {
+                /*
+                 * TODO: When there are no more legacy digests we can just use
+                 * OSSL_DIGEST_NAME_SHA2_256 instead of calling OBJ_nid2sn
+                 */
+                if (EVP_MD_is_a(ssl_md(s->ctx, tmp->algorithm2),
+                                       OBJ_nid2sn(NID_sha256))) {
                     ret = tmp;
                     break;
                 }

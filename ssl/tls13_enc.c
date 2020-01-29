@@ -315,6 +315,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     const char *mdname = EVP_MD_name(ssl_handshake_md(s));
     EVP_MAC *hmac = EVP_MAC_fetch(s->ctx->libctx, "HMAC", s->ctx->propq);
     unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned char finsecret[EVP_MAX_MD_SIZE];
     size_t hashlen, ret = 0;
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[4], *p = params;
@@ -339,23 +340,21 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     }
 
     if (str == s->method->ssl3_enc->server_finished_label) {
-        *p++ = OSSL_PARAM_construct_octet_string("key",
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                  s->server_finished_secret,
                                                  hashlen);
     } else if (SSL_IS_FIRST_HANDSHAKE(s)) {
-        *p++ = OSSL_PARAM_construct_octet_string("key",
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                  s->client_finished_secret,
                                                  hashlen);
     } else {
-        unsigned char finsecret[EVP_MAX_MD_SIZE];
-
         if (!tls13_derive_finishedkey(s, ssl_handshake_md(s),
                                       s->client_app_traffic_secret,
                                       finsecret, hashlen))
             goto err;
 
-        *p++ = OSSL_PARAM_construct_octet_string("key", finsecret, hashlen);
-        OPENSSL_cleanse(finsecret, sizeof(finsecret));
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, finsecret,
+                                                 hashlen);
     }
     *p++ = OSSL_PARAM_construct_end();
 
@@ -373,6 +372,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
 
     ret = hashlen;
  err:
+    OPENSSL_cleanse(finsecret, sizeof(finsecret));
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(hmac);
     return ret;

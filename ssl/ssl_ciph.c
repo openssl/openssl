@@ -517,7 +517,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if ((*enc != NULL) &&
         (*md != NULL || (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER))
         && (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
-        const EVP_CIPHER *evp;
+        const EVP_CIPHER *evp = NULL;
 
         if (use_etm
                 || s->ssl_version >> 8 != TLS1_VERSION_MAJOR
@@ -525,43 +525,40 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
             return 1;
 
         if (c->algorithm_enc == SSL_RC4 &&
-            c->algorithm_mac == SSL_MD5 &&
-            (evp = ssl_evp_cipher_fetch(ctx->libctx, NID_rc4_hmac_md5,
-                                        ctx->propq)))
-            *enc = evp, *md = NULL;
+                c->algorithm_mac == SSL_MD5)
+            evp = ssl_evp_cipher_fetch(ctx->libctx, NID_rc4_hmac_md5,
+                                       ctx->propq);
         else if (c->algorithm_enc == SSL_AES128 &&
-                 c->algorithm_mac == SSL_SHA1 &&
-                 (evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                             NID_aes_128_cbc_hmac_sha1,
-                                             ctx->propq)))
-            *enc = evp, *md = NULL;
+                    c->algorithm_mac == SSL_SHA1)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_128_cbc_hmac_sha1,
+                                       ctx->propq);
         else if (c->algorithm_enc == SSL_AES256 &&
-                 c->algorithm_mac == SSL_SHA1 &&
-                 (evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                             NID_aes_256_cbc_hmac_sha1,
-                                             ctx->propq)))
-            *enc = evp, *md = NULL;
+                    c->algorithm_mac == SSL_SHA1)
+             evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                        NID_aes_256_cbc_hmac_sha1,
+                                        ctx->propq);
         else if (c->algorithm_enc == SSL_AES128 &&
-                 c->algorithm_mac == SSL_SHA256 &&
-                 (evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                             NID_aes_128_cbc_hmac_sha256,
-                                             ctx->propq)))
-            *enc = evp, *md = NULL;
+                    c->algorithm_mac == SSL_SHA256)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_128_cbc_hmac_sha256,
+                                       ctx->propq);
         else if (c->algorithm_enc == SSL_AES256 &&
-                 c->algorithm_mac == SSL_SHA256 &&
-                 (evp = ssl_evp_cipher_fetch(ctx->libctx,
-                                             NID_aes_256_cbc_hmac_sha256,
-                                             ctx->propq)))
-            *enc = evp, *md = NULL;
+                    c->algorithm_mac == SSL_SHA256)
+            evp = ssl_evp_cipher_fetch(ctx->libctx,
+                                       NID_aes_256_cbc_hmac_sha256,
+                                       ctx->propq);
 
-        if (*enc == NULL) {
+        if (evp != NULL) {
+            ssl_evp_cipher_free(*enc);
             ssl_evp_md_free(*md);
-            return 0;
+            *enc = evp;
+            *md = NULL;
         }
         return 1;
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
 const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
