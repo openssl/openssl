@@ -19,33 +19,33 @@
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_DSA
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 extern "C" {
-# endif
-# include <openssl/e_os2.h>
-# include <openssl/asn1.h>
-# include <openssl/bio.h>
-# include <openssl/crypto.h>
-# include <openssl/types.h>
-# include <openssl/bn.h>
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  include <openssl/dh.h>
-# endif
-# include <openssl/dsaerr.h>
+#  endif
+#  include <openssl/e_os2.h>
+#  include <openssl/asn1.h>
+#  include <openssl/bio.h>
+#  include <openssl/crypto.h>
+#  include <openssl/types.h>
+#  include <openssl/bn.h>
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#   include <openssl/dh.h>
+#  endif
+#  include <openssl/dsaerr.h>
 
-# ifndef OPENSSL_DSA_MAX_MODULUS_BITS
-#  define OPENSSL_DSA_MAX_MODULUS_BITS   10000
-# endif
+#  ifndef OPENSSL_DSA_MAX_MODULUS_BITS
+#   define OPENSSL_DSA_MAX_MODULUS_BITS   10000
+#  endif
 
-# define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
+#  define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
-# define DSA_FLAG_CACHE_MONT_P   0x01
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#  define DSA_FLAG_CACHE_MONT_P   0x01
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
-#  define DSA_FLAG_NO_EXP_CONSTTIME       0x00
-# endif
+#   define DSA_FLAG_NO_EXP_CONSTTIME       0x00
+#  endif
 
 /*
  * If this flag is set the DSA method is FIPS compliant and can be used in
@@ -54,7 +54,7 @@ extern "C" {
  * result is compliant.
  */
 
-# define DSA_FLAG_FIPS_METHOD                    0x0400
+#  define DSA_FLAG_FIPS_METHOD                    0x0400
 
 /*
  * If this flag is set the operations normally disabled in FIPS mode are
@@ -62,8 +62,8 @@ extern "C" {
  * usage is compliant.
  */
 
-# define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
-# define DSA_FLAG_FIPS_CHECKED                   0x0800
+#  define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
+#  define DSA_FLAG_FIPS_CHECKED                   0x0800
 
 /* Already defined in ossl_typ.h */
 /* typedef struct dsa_st DSA; */
@@ -71,12 +71,16 @@ extern "C" {
 
 typedef struct DSA_SIG_st DSA_SIG;
 
-# define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
-                (char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
-# define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
-                (unsigned char *)(x))
-# define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
-# define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of(DSA,i2d_DSAparams,bp,x)
+#  define d2i_DSAparams_fp(fp, x) \
+        (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
+                           (char *(*)())d2i_DSAparams, (fp), \
+                           (unsigned char **)(x))
+#  define i2d_DSAparams_fp(fp, x) \
+        ASN1_i2d_fp(i2d_DSAparams,(fp), (unsigned char *)(x))
+#  define d2i_DSAparams_bio(bp, x) \
+        ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSAparams, bp, x)
+#  define i2d_DSAparams_bio(bp, x) \
+        ASN1_i2d_bio_of(DSA, i2d_DSAparams, bp, x)
 
 DECLARE_ASN1_DUP_FUNCTION_name(DSA, DSAparams)
 DSA_SIG *DSA_SIG_new(void);
@@ -110,8 +114,8 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa);
-#define DSA_get_ex_new_index(l, p, newf, dupf, freef) \
-    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, l, p, newf, dupf, freef)
+#  define DSA_get_ex_new_index(l, p, newf, dupf, freef) \
+        CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, l, p, newf, dupf, freef)
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
@@ -139,44 +143,44 @@ int DSA_generate_key(DSA *a);
 
 int DSAparams_print(BIO *bp, const DSA *x);
 int DSA_print(BIO *bp, const DSA *x, int off);
-# ifndef OPENSSL_NO_STDIO
+#  ifndef OPENSSL_NO_STDIO
 int DSAparams_print_fp(FILE *fp, const DSA *x);
 int DSA_print_fp(FILE *bp, const DSA *x, int off);
-# endif
+#  endif
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define DSS_prime_checks 64
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#   define DSS_prime_checks 64
 /*
  * Primality test according to FIPS PUB 186-4, Appendix C.3. Since we only
  * have one value here we set the number of checks to 64 which is the 128 bit
  * security level that is the highest level and valid for creating a 3072 bit
  * DSA key.
  */
-#  define DSA_is_prime(n, callback, cb_arg) \
-           BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
-# endif
+#   define DSA_is_prime(n, callback, cb_arg) \
+            BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
+#  endif
 
-# ifndef OPENSSL_NO_DH
+#  ifndef OPENSSL_NO_DH
 /*
  * Convert DSA structure (key or just parameters) into DH structure (be
  * careful to avoid small subgroup attacks when using this!)
  */
 DH *DSA_dup_DH(const DSA *r);
-# endif
+#  endif
 
-# define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                                EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL)
-# define EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, qbits) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                                EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL)
-# define EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                                EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md))
+#  define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
+                           EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL)
+#  define EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, qbits) \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
+                           EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL)
+#  define EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md) \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
+                           EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md))
 
-# define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
-# define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
-# define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
+#  define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
+#  define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
+#  define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
 
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
@@ -240,7 +244,6 @@ int DSA_meth_set_paramgen(DSA_METHOD *dsam,
                          unsigned long *, BN_GENCB *));
 int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
 int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
-
 
 #  ifdef  __cplusplus
 }
