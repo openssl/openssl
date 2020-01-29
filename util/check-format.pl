@@ -837,6 +837,8 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
+    report("one-letter name '$2'") if (m/(^|.*\W)([lIO])(\W.*|$)/); # single-letter name 'l', 'I', or 'O'
+
     # TODO report empty line within local variable definitions
 
     # TODO report missing empty line after local variable definitions

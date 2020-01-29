@@ -69,7 +69,8 @@ void main(int n) {  /*@ opening brace at end of function definition header */
 )                   /*@ unexpected closing paren outside expr */
 #endif              /*@ unexpected #endif */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
-      int b)        /*@ hanging expr indent off by -1 */
+      int b,        /*@ hanging expr indent off by -1 */
+       long l)      /*@ one-letter name 'l' */
 { int               /*@ code after '{' opening a block */
     xx = 1) +       /*@ unexpected closing parenthesis */
         2] -        /*@ unexpected closing bracket */
