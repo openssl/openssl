@@ -2753,7 +2753,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     return buf;
 }
 
-/*
+/**
  * Return the requested servername (SNI) value. Note that the behaviour varies
  * depending on:
  * - whether this is called by the client or the server,
@@ -2761,7 +2761,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
  * - if a resumption or normal handshake is being attempted/has occurred
  * - whether we have negotiated TLSv1.2 (or below) or TLSv1.3
  * 
- * Note that only host_name types are defined (RFC 3546).
+ * Note that only the host_name type is defined (RFC 3546).
  */
 const char *SSL_get_servername(const SSL *s, const int type)
 {
@@ -2774,7 +2774,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
         return NULL;
 
     if (server) {
-        /*
+        /**
          * Server side
          * In TLSv1.3 on the server SNI is not associated with the session
          * but in TLSv1.2 or below it is.
@@ -2793,7 +2793,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
          if (s->hit && !SSL_IS_TLS13(s))
             return s->session->ext.hostname;
     } else {
-        /*
+        /**
          * Client side
          *
          * Before the handshake:
