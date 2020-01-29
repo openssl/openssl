@@ -93,6 +93,17 @@
      and L<EVP_MAC_final(3)>.
      [Paul Dale]
 
+  *) Over two thousand fixes were made to the documentation, including:
+     - Common options (such as -rand/-writerand, TLS version control, etc)
+       were refactored and point to newly-enhanced descriptions in openssl.pod.
+     - Added style conformance for all options (with help from Richard Levitte),
+       documented all reported missing options, added a CI build to check
+       that all options are documented and that no unimplemented options
+       are documented.
+     - Documented some internals, such as all use of environment variables.
+     - Addressed all internal broken L<> references.
+     [Rich Salz]
+
   *) All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
      SHA384, SHA512 and Whirlpool digest functions have been deprecated.
      These include:
@@ -304,15 +315,6 @@
      EVP_DigestVerifyUpdate() have been converted to functions. See the man
      pages for further details.
      [Matt Caswell]
-
-  *) Most common options (such as -rand/-writerand, TLS version control, etc)
-     were refactored and point to newly-enhanced descriptions in openssl.pod
-     [Rich Salz]
-
-  *) Over two thousand fixes were made to the documentation, including:
-     adding missing command flags, better style conformance, documentation
-     of internals, etc.
-     [Rich Salz, Richard Levitte]
 
   *) s390x assembly pack: add hardware-support for P-256, P-384, P-521,
      X25519, X448, Ed25519 and Ed448.

@@ -22,6 +22,10 @@ use OpenSSL::Util::Pod;
 # Set to 1 for debug output
 my $debug = 0;
 
+# Where to find openssl command
+my $BLDTOP  = $ENV{BLDTOP} || ".";
+my $openssl = "$BLDTOP/util/opensslwrap.sh";
+
 # Options.
 our($opt_d);
 our($opt_e);
@@ -787,7 +791,7 @@ sub checkflags {
     my %localskips;
 
     # Get the list of options in the command.
-    open CFH, "./apps/openssl list --options $cmd|"
+    open CFH, "$openssl list --options $cmd|"
         or die "Can list options for $cmd, $!";
     while ( <CFH> ) {
         chop;
@@ -847,7 +851,7 @@ if ( $opt_c ) {
     my @commands = ();
 
     # Get list of commands.
-    open FH, "./apps/openssl list -1 -commands|"
+    open FH, "$openssl list -1 -commands|"
         or die "Can't list commands, $!";
     while ( <FH> ) {
         chop;
@@ -869,7 +873,7 @@ if ( $opt_c ) {
     }
 
     # See what help is missing.
-    open FH, "./apps/openssl list --missing-help |"
+    open FH, "$openssl list --missing-help |"
         or die "Can't list missing help, $!";
     while ( <FH> ) {
         chop;
