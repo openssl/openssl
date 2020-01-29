@@ -332,6 +332,23 @@ Gets or sets the output size of the digest algorithm used for the input to the
 signature functions.
 The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 
+= item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
+
+Gets the DER encoded AlgorithmIdentifier that corresponds to the combination of
+signature algorithm and digest algorithm for the signature operation.
+
+=item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
+
+Sets a flag to modify the sign operation to return an error if the initial
+calculated signature is invalid.
+In the normal mode of operation - new random values are chosen until the
+signature operation succeeds.
+By default it retries until a signature is calculated. 
+Setting the value to 0 causes the sign operation to retry,
+otherwise the sign operation is only tried once and returns whether or not it
+was successful.
+Known answer tests can be performed if the random generator is overriden to
+supply known values that either pass or fail.
 
 =back
 

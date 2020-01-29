@@ -388,6 +388,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519:Ed25519", "provider=default", ed25519_signature_functions },
     { "ED448:Ed448", "provider=default", ed448_signature_functions },
+    { "ECDSA:id-ecPublicKey", "provider=default", ecdsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };

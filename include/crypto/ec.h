@@ -14,7 +14,6 @@
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
-
 #  include <openssl/ec.h>
 
 /*-
@@ -56,5 +55,6 @@ int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
 OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_curve_nid2name(int nid);
 int ec_curve_name2nid(const char *name);
+const unsigned char *ecdsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 # endif /* OPENSSL_NO_EC */
 #endif

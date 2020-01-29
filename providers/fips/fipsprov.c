@@ -807,6 +807,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { "DSA:dsaEncryption", "provider=fips,fips=yes", dsa_signature_functions },
 #endif
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_signature_functions },
+#ifndef OPENSSL_NO_EC
+    { "ECDSA:id-ecPublicKey", "provider=fips,fips=yes", ecdsa_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

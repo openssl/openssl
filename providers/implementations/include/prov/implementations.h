@@ -274,6 +274,8 @@ extern const OSSL_DISPATCH dsa_signature_functions[];
 extern const OSSL_DISPATCH rsa_signature_functions[];
 extern const OSSL_DISPATCH ed25519_signature_functions[];
 extern const OSSL_DISPATCH ed448_signature_functions[];
+extern const OSSL_DISPATCH ecdsa_signature_functions[];
+
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
