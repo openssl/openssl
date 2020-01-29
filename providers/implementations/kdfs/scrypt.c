@@ -75,7 +75,7 @@ static void kdf_scrypt_free(void *vctx)
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
     if (ctx != NULL) {
-        EVP_MD_meth_free(ctx->sha256);
+        EVP_MD_free(ctx->sha256);
         kdf_scrypt_reset(ctx);
         OPENSSL_free(ctx);
     }
