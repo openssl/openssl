@@ -158,8 +158,14 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
-        if (p1 != NID_sm2
-            || (group = EC_GROUP_new_by_curve_name(p1)) == NULL) {
+        /*
+         * This control could be removed, which would signal it being
+         * unsupported.  However, that means that when the caller uses
+         * the correct curve, it may interpret the unsupported signal
+         * as an error, so it's better to accept the control, check the
+         * value and return a corresponding value.
+         */
+        if (p1 != NID_sm2) {
             SM2err(SM2_F_PKEY_SM2_CTRL, SM2_R_INVALID_CURVE);
             return 0;
         }
