@@ -1209,3 +1209,9 @@ id_on_SmtpUTF8Mailbox		1208
 XmppAddr		1209
 SRVName		1210
 NAIRealm		1211
+modp_1536		1212
+modp_2048		1213
+modp_3072		1214
+modp_4096		1215
+modp_6144		1216
+modp_8192		1217

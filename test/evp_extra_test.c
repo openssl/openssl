@@ -1444,16 +1444,25 @@ static int test_decrypt_null_chunks(void)
 #ifndef OPENSSL_NO_DH
 static int test_EVP_PKEY_set1_DH(void)
 {
-    DH *x942dh, *pkcs3dh;
-    EVP_PKEY *pkey1, *pkey2;
+    DH *x942dh = NULL, *noqdh = NULL;
+    EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     int ret = 0;
+    BIGNUM *p, *g = NULL;
+
+    if (!TEST_ptr(p = BN_new())
+            || !TEST_ptr(g = BN_new())
+            || !BN_set_word(p, 9999)
+            || !BN_set_word(g, 2)
+            || !TEST_ptr(noqdh = DH_new())
+            || !DH_set0_pqg(noqdh, p, NULL, g))
+        goto err;
+    p = g = NULL;
 
     x942dh = DH_get_2048_256();
-    pkcs3dh = DH_new_by_nid(NID_ffdhe2048);
     pkey1 = EVP_PKEY_new();
     pkey2 = EVP_PKEY_new();
     if (!TEST_ptr(x942dh)
-            || !TEST_ptr(pkcs3dh)
+            || !TEST_ptr(noqdh)
             || !TEST_ptr(pkey1)
             || !TEST_ptr(pkey2))
         goto err;
@@ -1462,17 +1471,18 @@ static int test_EVP_PKEY_set1_DH(void)
             || !TEST_int_eq(EVP_PKEY_id(pkey1), EVP_PKEY_DHX))
         goto err;
 
-
-    if(!TEST_true(EVP_PKEY_set1_DH(pkey2, pkcs3dh))
+    if(!TEST_true(EVP_PKEY_set1_DH(pkey2, noqdh))
             || !TEST_int_eq(EVP_PKEY_id(pkey2), EVP_PKEY_DH))
         goto err;
 
     ret = 1;
  err:
+    BN_free(p);
+    BN_free(g);
     EVP_PKEY_free(pkey1);
     EVP_PKEY_free(pkey2);
     DH_free(x942dh);
-    DH_free(pkcs3dh);
+    DH_free(noqdh);
 
     return ret;
 }

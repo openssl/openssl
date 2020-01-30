@@ -1088,7 +1088,7 @@ static const unsigned char so[7845] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7836] OBJ_NAIRealm */
 };
 
-#define NUM_NID 1212
+#define NUM_NID 1218
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2302,9 +2302,15 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-on-xmppAddr", "XmppAddr", NID_XmppAddr, 8, &so[7820]},
     {"id-on-dnsSRV", "SRVName", NID_SRVName, 8, &so[7828]},
     {"id-on-NAIRealm", "NAIRealm", NID_NAIRealm, 8, &so[7836]},
+    {"modp_1536", "modp_1536", NID_modp_1536},
+    {"modp_2048", "modp_2048", NID_modp_2048},
+    {"modp_3072", "modp_3072", NID_modp_3072},
+    {"modp_4096", "modp_4096", NID_modp_4096},
+    {"modp_6144", "modp_6144", NID_modp_6144},
+    {"modp_8192", "modp_8192", NID_modp_8192},
 };
 
-#define NUM_SN 1203
+#define NUM_SN 1209
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3163,6 +3169,12 @@ static const unsigned int sn_objs[NUM_SN] = {
      506,    /* "mime-mhs-bodies" */
      505,    /* "mime-mhs-headings" */
      488,    /* "mobileTelephoneNumber" */
+    1212,    /* "modp_1536" */
+    1213,    /* "modp_2048" */
+    1214,    /* "modp_3072" */
+    1215,    /* "modp_4096" */
+    1216,    /* "modp_6144" */
+    1217,    /* "modp_8192" */
      136,    /* "msCTLSign" */
      135,    /* "msCodeCom" */
      134,    /* "msCodeInd" */
@@ -3511,7 +3523,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1203
+#define NUM_LN 1209
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4360,6 +4372,12 @@ static const unsigned int ln_objs[NUM_LN] = {
      506,    /* "mime-mhs-bodies" */
      505,    /* "mime-mhs-headings" */
      488,    /* "mobileTelephoneNumber" */
+    1212,    /* "modp_1536" */
+    1213,    /* "modp_2048" */
+    1214,    /* "modp_3072" */
+    1215,    /* "modp_4096" */
+    1216,    /* "modp_6144" */
+    1217,    /* "modp_8192" */
      481,    /* "nSRecord" */
      173,    /* "name" */
      681,    /* "onBasis" */

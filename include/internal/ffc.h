@@ -31,6 +31,7 @@ typedef struct ffc_params_st {
     size_t seedlen;
     /* Required for FIPS186_4 validation of p and q */
     int pcounter;
+    int nid; /* The identity of a named group */
 
 } FFC_PARAMS;
 

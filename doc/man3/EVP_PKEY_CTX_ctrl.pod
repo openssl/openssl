@@ -410,10 +410,11 @@ prime B<p>.
 If B<pad> is zero (the default) then no padding is performed.
 
 EVP_PKEY_CTX_set_dh_nid() sets the DH parameters to values corresponding to
-B<nid> as defined in RFC7919. The B<nid> parameter must be B<NID_ffdhe2048>,
-B<NID_ffdhe3072>, B<NID_ffdhe4096>, B<NID_ffdhe6144>, B<NID_ffdhe8192>
-or B<NID_undef> to clear the stored value. This macro can be called during
-parameter or key generation.
+B<nid> as defined in RFC7919 or RFC3526. The B<nid> parameter must be
+B<NID_ffdhe2048>, B<NID_ffdhe3072>, B<NID_ffdhe4096>, B<NID_ffdhe6144>,
+B<NID_ffdhe8192>, B<NID_modp_1536>, B<NID_modp_2048>, B<NID_modp_3072>,
+B<NID_modp_4096>, B<NID_modp_6144>, B<NID_modp_8192> or B<NID_undef> to clear
+the stored value. This macro can be called during parameter or key generation.
 The nid parameter and the rfc5114 parameter are mutually exclusive.
 
 The EVP_PKEY_CTX_set_dh_rfc5114() and EVP_PKEY_CTX_set_dhx_rfc5114() macros are

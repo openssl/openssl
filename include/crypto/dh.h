@@ -15,3 +15,4 @@ int dh_compute_key(OPENSSL_CTX *ctx, unsigned char *key, const BIGNUM *pub_key,
 int dh_compute_key_padded(OPENSSL_CTX *ctx, unsigned char *key,
                           const BIGNUM *pub_key, DH *dh);
 FFC_PARAMS *dh_get0_params(DH *dh);
+int dh_get0_nid(const DH *dh);

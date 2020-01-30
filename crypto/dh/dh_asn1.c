@@ -100,7 +100,7 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     }
 
     params = &dh->params;
-    ffc_params_set0_pqg(params, dhx->p, dhx->q, dhx->g);
+    DH_set0_pqg(dh, dhx->p, dhx->q, dhx->g);
     ffc_params_set0_j(params, dhx->j);
 
     if (dhx->vparams != NULL) {

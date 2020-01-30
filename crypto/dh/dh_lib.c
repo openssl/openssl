@@ -191,6 +191,8 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         return 0;
 
     ffc_params_set0_pqg(&dh->params, p, q, g);
+    dh->params.nid = NID_undef;
+    DH_get_nid(dh); /* Check if this is a named group and cache it */
 
     if (q != NULL)
         dh->length = BN_num_bits(q);
@@ -283,4 +285,8 @@ ENGINE *DH_get0_engine(DH *dh)
 FFC_PARAMS *dh_get0_params(DH *dh)
 {
     return &dh->params;
+}
+int dh_get0_nid(const DH *dh)
+{
+    return dh->params.nid;
 }

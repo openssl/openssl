@@ -329,8 +329,21 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     DH *dh = NULL;
     DH_PKEY_CTX *dctx = ctx->data;
-    BN_GENCB *pcb;
+    BN_GENCB *pcb = NULL;
     int ret;
+
+    /*
+     * Look for a safe prime group for key establishment. Which uses
+     * either RFC_3526 (modp_XXXX) or RFC_7919 (ffdheXXXX).
+     */
+    if (dctx->param_nid != NID_undef) {
+        if ((dh = DH_new_by_nid(dctx->param_nid)) == NULL)
+            return 0;
+        EVP_PKEY_assign(pkey, EVP_PKEY_DH, dh);
+        return 1;
+    }
+
+#ifndef FIPS_MODE
     if (dctx->rfc5114_param) {
         switch (dctx->rfc5114_param) {
         case 1:
@@ -351,24 +364,18 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
         return 1;
     }
+#endif /* FIPS_MODE */
 
-    if (dctx->param_nid != 0) {
-        if ((dh = DH_new_by_nid(dctx->param_nid)) == NULL)
-            return 0;
-        EVP_PKEY_assign(pkey, EVP_PKEY_DH, dh);
-        return 1;
-    }
-
-    if (ctx->pkey_gencb) {
+    if (ctx->pkey_gencb != NULL) {
         pcb = BN_GENCB_new();
         if (pcb == NULL)
             return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
-    } else
-        pcb = NULL;
+    }
 #ifndef OPENSSL_NO_DSA
     if (dctx->use_dsa) {
         DSA *dsa_dh;
+
         dsa_dh = dsa_dh_generate(dctx, pcb);
         BN_GENCB_free(pcb);
         if (dsa_dh == NULL)
@@ -401,11 +408,11 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DH_PKEY_CTX *dctx = ctx->data;
     DH *dh = NULL;
 
-    if (ctx->pkey == NULL && dctx->param_nid == 0) {
+    if (ctx->pkey == NULL && dctx->param_nid == NID_undef) {
         DHerr(DH_F_PKEY_DH_KEYGEN, DH_R_NO_PARAMETERS_SET);
         return 0;
     }
-    if (dctx->param_nid != 0)
+    if (dctx->param_nid != NID_undef)
         dh = DH_new_by_nid(dctx->param_nid);
     else
         dh = DH_new();
