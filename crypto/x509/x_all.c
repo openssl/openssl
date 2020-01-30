@@ -33,7 +33,7 @@ static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
     EVP_PKEY_CTX *pctx = NULL;
 
     if ((ctx = EVP_MD_CTX_new()) == NULL
-        (pctx = EVP_PKEY_CTX_new(r, NULL)) == NULL) {
+        || (pctx = EVP_PKEY_CTX_new(r, NULL)) == NULL) {
         X509err(0, ERR_R_MALLOC_FAILURE);
         goto error;
     }
@@ -58,7 +58,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
-    ASN1_OBJECT_STRING *id = NULL;
+    ASN1_OCTET_STRING *id = NULL;
 
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
@@ -79,7 +79,7 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
-    ASN1_OBJECT_STRING *id = NULL;
+    ASN1_OCTET_STRING *id = NULL;
 
 #ifndef OPENSSL_NO_SM2
     id = a->sm2_id;
