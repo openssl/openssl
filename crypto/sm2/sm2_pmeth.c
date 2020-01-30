@@ -153,7 +153,6 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
 static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     SM2_PKEY_CTX *smctx = ctx->data;
-    EC_GROUP *group;
     uint8_t *tmp_id;
 
     switch (type) {
