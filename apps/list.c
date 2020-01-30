@@ -629,6 +629,7 @@ const OPTIONS list_options[] = {
     {"1", OPT_ONE, '-', "List in one column"},
     {"verbose", OPT_VERBOSE, '-', "Verbose listing"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
+    {"standard-commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
      "List of message digest commands"},
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
