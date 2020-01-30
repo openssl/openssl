@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 9;
+plan tests => 10;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
@@ -92,3 +92,10 @@ ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
             '-section_name', 'fips_install', '-corrupt_desc', 'SHA3'])),
    "fipsinstall fails when the digest result is corrupted");
+
+# corrupt DRBG
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install', '-corrupt_desc', 'CTR'])),
+   "fipsinstall fails when the DRBG CTR result is corrupted");
