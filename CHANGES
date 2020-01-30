@@ -9,6 +9,19 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Reworked the treatment of EC EVP_PKEYs with the SM2 curve to
+     automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC.
+     This means that applications don't have to look at the curve NID and
+     'EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)' to get SM2 computations.
+     However, they still can, that EVP_PKEY_set_alias_type() call acts as
+     a no-op when the EVP_PKEY is already of the given type.
+
+     Parameter and key generation is also reworked to make it possible
+     to generate EVP_PKEY_SM2 parameters and keys without having to go
+     through EVP_PKEY_EC generation and then change the EVP_PKEY type.
+     However, code that does the latter will still work as before.
+     [Richard Levitte]
+
   *) Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
      and EVP_PKEY_decrypt() instead.
      Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()
