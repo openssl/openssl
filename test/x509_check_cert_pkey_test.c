@@ -122,6 +122,11 @@ const OPTIONS *test_get_options(void)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(c = test_get_argument(0))
             || !TEST_ptr(k = test_get_argument(1))
             || !TEST_ptr(t = test_get_argument(2))

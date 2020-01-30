@@ -250,6 +250,11 @@ OPT_TEST_DECLARE_USAGE("sessionfile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(sessionfile = test_get_argument(0)))
         return 0;
 

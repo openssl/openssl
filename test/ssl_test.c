@@ -506,6 +506,11 @@ int setup_tests(void)
 {
     long num_tests;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(conf = NCONF_new(NULL))
             /* argv[1] should point to the test conf file */
             || !TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0)

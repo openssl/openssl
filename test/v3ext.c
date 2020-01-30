@@ -41,6 +41,11 @@ OPT_TEST_DECLARE_USAGE("cert.pem\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(infile = test_get_argument(0)))
         return 0;
 

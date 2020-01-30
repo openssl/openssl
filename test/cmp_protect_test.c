@@ -455,6 +455,11 @@ int setup_tests(void)
     char *root_f;
     char *intermediate_f;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH);
     if (!TEST_ptr(server_f = test_get_argument(0))
             || !TEST_ptr(ir_protected_f = test_get_argument(1))

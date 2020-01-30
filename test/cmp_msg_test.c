@@ -538,6 +538,11 @@ void cleanup_tests(void)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(server_cert_f = test_get_argument(0))
             || !TEST_ptr(pkcs10_f = test_get_argument(1))) {
         TEST_error("usage: cmp_msg_test server.crt pkcs10.der\n");

@@ -244,6 +244,11 @@ OPT_TEST_DECLARE_USAGE("conf_file\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(conf = NCONF_new(NULL)))
         return 0;
     /* argument should point to test/ssl_test_ctx_test.conf */
