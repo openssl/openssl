@@ -127,6 +127,11 @@ int setup_tests(void)
         {"compare", ASN1_COMPARE}
     };
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(test_type_name = test_get_argument(0))
             || !TEST_ptr(expected_error_string = test_get_argument(1))
             || !TEST_ptr(test_file = test_get_argument(2)))

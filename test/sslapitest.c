@@ -7127,6 +7127,11 @@ OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(certsdir = test_get_argument(0))
             || !TEST_ptr(srpvfile = test_get_argument(1))
             || !TEST_ptr(tmpfilename = test_get_argument(2)))

@@ -156,6 +156,11 @@ int setup_tests(void)
 {
     char *cert, *pkey;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(pkey = test_get_argument(1)))
         return 0;

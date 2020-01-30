@@ -82,6 +82,11 @@ OPT_TEST_DECLARE_USAGE("certfile1 privkeyfile1 certfile2 privkeyfile2\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(cert1 = test_get_argument(0))
             || !TEST_ptr(privkey1 = test_get_argument(1))
             || !TEST_ptr(cert2 = test_get_argument(2))

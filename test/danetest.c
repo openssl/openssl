@@ -413,6 +413,11 @@ OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(basedomain = test_get_argument(0))
             || !TEST_ptr(CAfile = test_get_argument(1))
             || !TEST_ptr(tlsafile = test_get_argument(2)))

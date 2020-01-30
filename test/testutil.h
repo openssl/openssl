@@ -194,6 +194,12 @@ char *test_get_argument(size_t n);
 size_t test_get_argument_count(void);
 
 /*
+ * Skip over common test options. Should be called before calling
+ * test_get_argument()
+ */
+int test_skip_common_options(void);
+
+/*
  * Internal helpers. Test programs shouldn't use these directly, but should
  * rather link to one of the helper main() methods.
  */
