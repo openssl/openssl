@@ -119,11 +119,6 @@ CRL to PKCS#7 Conversion.
 Message Digest calculation. MAC calculations are superseded by
 L<openssl-mac(1)>.
 
-=item B<dh>
-
-Diffie-Hellman Parameter Management.
-Obsoleted by L<openssl-dhparam(1)>.
-
 =item B<dhparam>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
@@ -158,10 +153,9 @@ Engine (loadable module) information and manipulation.
 
 Error Number to Error String Conversion.
 
-=item B<gendh>
+=item B<fipsinstall>
 
-Generation of Diffie-Hellman Parameters.
-Obsoleted by L<openssl-dhparam(1)>.
+FIPS configuration installation.
 
 =item B<gendsa>
 
@@ -176,6 +170,10 @@ Generation of Private Key or Parameters.
 
 Generation of RSA Private Key. Superseded by L<openssl-genpkey(1)>.
 
+=item B<help>
+
+Display information about a command's options.
+
 =item B<info>
 
 Display diverse information built into the OpenSSL libraries.
@@ -183,6 +181,10 @@ Display diverse information built into the OpenSSL libraries.
 =item B<kdf>
 
 Key Derivation Functions.
+
+=item B<list>
+
+List algorithms and features.
 
 =item B<mac>
 
@@ -227,6 +229,10 @@ Public key algorithm cryptographic operation utility.
 =item B<prime>
 
 Compute prime numbers.
+
+=item B<provider>
+
+Load and query providers.
 
 =item B<rand>
 
