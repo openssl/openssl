@@ -1727,7 +1727,7 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
     return ret;
 }
 
-static int do_sign_cleanup(EVP_MD_CTX *ctx, EVP_PKEY *pkey)
+static void do_sign_cleanup(EVP_MD_CTX *ctx, EVP_PKEY *pkey)
 {
     /*
      * With SM2, do_sign_init() attached an EVP_PKEY_CTX to the EVP_MD_CTX,
@@ -1739,7 +1739,6 @@ static int do_sign_cleanup(EVP_MD_CTX *ctx, EVP_PKEY *pkey)
         EVP_MD_CTX_set_pkey_ctx(ctx, NULL);
         EVP_PKEY_CTX_free(pctx);
     }
-    return 1;
 }
 
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
@@ -1748,10 +1747,10 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0
-        && X509_sign_ctx(x, mctx) > 0
-        && do_sign_cleanup(mctx, pkey) > 0)
-        rv = 1;
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
     return rv;
 }
@@ -1762,10 +1761,10 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0
-        && X509_REQ_sign_ctx(x, mctx) > 0
-        && do_sign_cleanup(mctx, pkey) > 0)
-        rv = 1;
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_REQ_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
     return rv;
 }
@@ -1776,10 +1775,10 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0
-        && X509_CRL_sign_ctx(x, mctx) > 0
-        && do_sign_cleanup(mctx, pkey) > 0)
-        rv = 1;
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+        rv = (X509_CRL_sign_ctx(x, mctx) > 0);
+        do_sign_cleanup(mctx, pkey);
+    }
     EVP_MD_CTX_free(mctx);
     return rv;
 }
