@@ -17,16 +17,16 @@ localCheckout: &localCheckout
     - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
     - run:
         name: Clone liboqs
-        command: cd oqs_test && scripts/clone_liboqs.sh
+        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
     - run:
         name: Build liboqs
-        command: cd oqs_test && scripts/build_liboqs.sh
+        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
     - run:
         name: Build OpenSSL
-        command: cd oqs_test && scripts/build_openssl.sh
+        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
     - run:
         name: Run unit tests
-        command: cd oqs_test && mkdir -p test-results && LD_LIBRARY_PATH=$(dirname $PWD) python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml
+        command: cd oqs_test && mkdir -p test-results && scripts/git_no_checkin_in_last_day.sh || (LD_LIBRARY_PATH=$(dirname $PWD) python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
@@ -38,17 +38,17 @@ jobs:
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
-  ubuntu-xenial-x86_64:
+  ubuntu-bionic-x86_64:
     <<: *openssljob
     environment:
-      IMAGE: dstebila/liboqs:ubuntu-xenial-x86_64-0.1.0
+      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
-  ubuntu-xenial-x86_64-shared:
+  ubuntu-bionic-x86_64-shared:
     <<: *openssljob
     environment:
-      IMAGE: dstebila/liboqs:ubuntu-xenial-x86_64-0.1.0
+      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
@@ -58,9 +58,7 @@ workflows:
   version: 2
   build:
     jobs:
-      - debian-buster-amd64
-      - ubuntu-xenial-x86_64
-      - ubuntu-xenial-x86_64-shared
+      - ubuntu-bionic-x86_64
   nightly:
     triggers:
       - schedule:
@@ -71,5 +69,5 @@ workflows:
                 - OQS-OpenSSL_1_1_1-stable
     jobs:
       - debian-buster-amd64
-      - ubuntu-xenial-x86_64
-      - ubuntu-xenial-x86_64-shared
+      - ubuntu-bionic-x86_64
+      - ubuntu-bionic-x86_64-shared
