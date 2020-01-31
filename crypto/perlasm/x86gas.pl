@@ -124,6 +124,7 @@ sub ::function_begin_B
     push(@out,".align\t$align\n");
     push(@out,"$func:\n");
     push(@out,"$begin:\n")		if ($global);
+    &::endbranch();
     $::stack=4;
 }
 
