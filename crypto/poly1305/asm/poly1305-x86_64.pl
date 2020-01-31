@@ -2806,6 +2806,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vpmadd52:
 .cfi_startproc
+	endbranch
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52		# too short
 
@@ -3739,6 +3740,7 @@ $code.=<<___;
 .align	32
 poly1305_emit_base2_44:
 .cfi_startproc
+	endbranch
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
 	mov	16($ctx),%r10

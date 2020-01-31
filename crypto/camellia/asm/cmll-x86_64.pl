@@ -685,6 +685,7 @@ $code.=<<___;
 .align	16
 Camellia_cbc_encrypt:
 .cfi_startproc
+	endbranch
 	cmp	\$0,%rdx
 	je	.Lcbc_abort
 	push	%rbx
