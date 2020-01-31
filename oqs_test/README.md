@@ -12,7 +12,7 @@ First make sure you have **installed the dependencies** for the target OS as ind
 Testing on Linux and macOS
 --------------------------
 
-The scripts have been tested on macOS 10.14, Debian 10 (Buster), Ubuntu 14.04, Ubuntu 16.04, and Ubuntu 18.04.
+The scripts have been tested on macOS 10.14, Debian 10 (Buster) and Ubuntu 18.04 (Bionic).
 
 ### Running directly
 
@@ -34,8 +34,8 @@ You can locally run any of the integration tests that CircleCI runs.  First, you
 where `<jobname>` is one of the following:
 
 - `debian-buster-amd64`
-- `ubuntu-xenial-x86_64`
-- `ubuntu-xenial-x86_64-shared`
+- `ubuntu-bionic-x86_64`
+- `ubuntu-bionic-x86_64-shared`
 
 By default, these jobs will use the current Github versions of liboqs and OQS-OpenSSL.  You can override these by passing environment variables to CircleCI:
 
