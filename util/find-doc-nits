@@ -677,9 +677,6 @@ sub printem {
         $func .= '(3)';         # We know they're all in section 3
         next if exists $name_map{$func} || defined $seen{$func};
 
-        # Skip ASN1 utilities
-        next if $func =~ /^ASN1_/;
-
         # Skip functions known to be missing.
         next if $opt_v && grep( /^\Q$func\E$/, @missing);
 
