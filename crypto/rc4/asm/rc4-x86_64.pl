@@ -142,6 +142,7 @@ $code=<<___;
 .align	16
 RC4:
 .cfi_startproc
+	endbranch
 	or	$len,$len
 	jne	.Lentry
 	ret
@@ -457,6 +458,7 @@ $code.=<<___;
 .align	16
 RC4_set_key:
 .cfi_startproc
+	endbranch
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -531,6 +533,7 @@ RC4_set_key:
 .align	16
 RC4_options:
 .cfi_startproc
+	endbranch
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx

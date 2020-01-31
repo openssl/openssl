@@ -277,6 +277,7 @@ $code.=<<___;
 .align	16
 ${PREFIX}_encrypt:
 .cfi_startproc
+	endbranch
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -295,6 +296,7 @@ $code.=<<___;
 .align	16
 ${PREFIX}_decrypt:
 .cfi_startproc
+	endbranch
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -615,6 +617,7 @@ $code.=<<___;
 .align	16
 aesni_ecb_encrypt:
 .cfi_startproc
+	endbranch
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -987,6 +990,7 @@ $code.=<<___;
 .align	16
 aesni_ccm64_encrypt_blocks:
 .cfi_startproc
+	endbranch
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -1079,6 +1083,7 @@ $code.=<<___;
 .align	16
 aesni_ccm64_decrypt_blocks:
 .cfi_startproc
+	endbranch
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -1205,6 +1210,7 @@ $code.=<<___;
 .align	16
 aesni_ctr32_encrypt_blocks:
 .cfi_startproc
+	endbranch
 	cmp	\$1,$len
 	jne	.Lctr32_bulk
 
@@ -1777,6 +1783,7 @@ $code.=<<___;
 .align	16
 aesni_xts_encrypt:
 .cfi_startproc
+	endbranch
 	lea	(%rsp),%r11			# frame pointer
 .cfi_def_cfa_register	%r11
 	push	%rbp
@@ -2260,6 +2267,7 @@ $code.=<<___;
 .align	16
 aesni_xts_decrypt:
 .cfi_startproc
+	endbranch
 	lea	(%rsp),%r11			# frame pointer
 .cfi_def_cfa_register	%r11
 	push	%rbp
@@ -2785,6 +2793,7 @@ $code.=<<___;
 .align	32
 aesni_ocb_encrypt:
 .cfi_startproc
+	endbranch
 	lea	(%rsp),%rax
 	push	%rbx
 .cfi_push	%rbx
@@ -3251,6 +3260,7 @@ __ocb_encrypt1:
 .align	32
 aesni_ocb_decrypt:
 .cfi_startproc
+	endbranch
 	lea	(%rsp),%rax
 	push	%rbx
 .cfi_push	%rbx
@@ -3739,6 +3749,7 @@ $code.=<<___;
 .align	16
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc
+	endbranch
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 

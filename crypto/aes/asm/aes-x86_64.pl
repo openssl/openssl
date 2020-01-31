@@ -606,6 +606,7 @@ $code.=<<___;
 asm_AES_encrypt:
 AES_encrypt:
 .cfi_startproc
+	endbranch
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1226,6 +1227,7 @@ $code.=<<___;
 asm_AES_decrypt:
 AES_decrypt:
 .cfi_startproc
+	endbranch
 	mov	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	push	%rbx
@@ -1343,6 +1345,7 @@ $code.=<<___;
 .align	16
 AES_set_encrypt_key:
 .cfi_startproc
+	endbranch
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1623,6 +1626,7 @@ $code.=<<___;
 .align	16
 AES_set_decrypt_key:
 .cfi_startproc
+	endbranch
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1737,6 +1741,7 @@ $code.=<<___;
 asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 .cfi_startproc
+	endbranch
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_epilogue
 	pushfq
