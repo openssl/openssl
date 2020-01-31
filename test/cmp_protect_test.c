@@ -294,6 +294,8 @@ static int test_MSG_add_extraCerts(void)
     return result;
 }
 
+#ifndef OPENSSL_NO_EC
+/* The cert chain tests use EC certs so we skip them in no-ec builds */
 static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     STACK_OF(X509) *result = NULL;
@@ -372,6 +374,7 @@ static int test_cmp_build_cert_chain_no_certs(void)
     EXECUTE_TEST(execute_cmp_build_cert_chain_test, tear_down);
     return result;
 }
+#endif /* OPENSSL_NO_EC */
 
 static int execute_X509_STORE_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
@@ -505,10 +508,12 @@ int setup_tests(void)
 
     ADD_TEST(test_MSG_add_extraCerts);
 
+#ifndef OPENSSL_NO_EC
     ADD_TEST(test_cmp_build_cert_chain);
     ADD_TEST(test_cmp_build_cert_chain_missing_root);
     ADD_TEST(test_cmp_build_cert_chain_missing_intermediate);
     ADD_TEST(test_cmp_build_cert_chain_no_certs);
+#endif
 
     ADD_TEST(test_X509_STORE);
     ADD_TEST(test_X509_STORE_only_self_signed);
