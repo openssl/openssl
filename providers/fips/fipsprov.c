@@ -157,6 +157,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DH
 static int hextobin(const char *hex_data[], unsigned char **out, size_t *len)
 {
     int ret = 0, sz;
@@ -181,6 +182,7 @@ err:
     BN_free(bn);
     return ret;
 }
+#endif
 
 #ifndef OPENSSL_NO_DSA
 static int dsa_key_signature_test(OPENSSL_CTX *libctx)

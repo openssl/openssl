@@ -527,6 +527,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           const BIGNUM *priv, const unsigned char *message,
                           size_t message_len, BN_CTX *ctx);
 
+# ifndef OPENSSL_NO_DH
 /* Primes from RFC 2409 */
 BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
@@ -539,15 +540,16 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
-#  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
-#  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
-#  define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
-#  define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
-#  define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
-#  define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
-#  define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#   define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
+#   define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
+#   define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
+#   define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
+#   define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
+#   define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
+#   define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
+#   define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+#  endif
 # endif
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
