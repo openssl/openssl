@@ -607,7 +607,7 @@ sub loadmissing($)
 
     for (@missing) {
         err("$missingfile:", "$_ is documented in $name_map{$_}")
-            if exists $name_map{$_} && defined $name_map{$_};
+            if !$opt_o && exists $name_map{$_} && defined $name_map{$_};
     }
 
     return @missing;
