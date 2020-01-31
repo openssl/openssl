@@ -130,6 +130,7 @@ static OSSL_PARAM core_params[] =
  * The array of hex_data is used to get around compilers that dont like
  * strings longer than 509 bytes,
  */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
 static int hextobn(const char *hex_data[], BIGNUM **bn)
 {
     int ret = 0;
@@ -156,7 +157,9 @@ err:
     OPENSSL_free(str);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) */
 
+#ifndef OPENSSL_NO_DH
 static int hextobin(const char *hex_data[], unsigned char **out, size_t *len)
 {
     int ret = 0, sz;
@@ -181,6 +184,7 @@ err:
     BN_free(bn);
     return ret;
 }
+#endif
 
 #ifndef OPENSSL_NO_DSA
 static int dsa_key_signature_test(OPENSSL_CTX *libctx)

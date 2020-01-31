@@ -214,7 +214,7 @@ s2i_ASN1_OCTET_STRING                   217	3_0_0	EXIST::FUNCTION:
 POLICYINFO_it                           218	3_0_0	EXIST::FUNCTION:
 OBJ_create                              219	3_0_0	EXIST::FUNCTION:
 d2i_NOTICEREF                           220	3_0_0	EXIST::FUNCTION:
-BN_get_rfc2409_prime_768                221	3_0_0	EXIST::FUNCTION:
+BN_get_rfc2409_prime_768                221	3_0_0	EXIST::FUNCTION:DH
 PEM_read_bio_PKCS8                      222	3_0_0	EXIST::FUNCTION:
 X509_ATTRIBUTE_new                      223	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_TABLE_cleanup               224	3_0_0	EXIST::FUNCTION:
@@ -483,7 +483,7 @@ BN_GF2m_mod_sqr_arr                     492	3_0_0	EXIST::FUNCTION:EC2M
 ASN1_PRINTABLESTRING_it                 493	3_0_0	EXIST::FUNCTION:
 BIO_f_cipher                            494	3_0_0	EXIST::FUNCTION:
 UI_destroy_method                       495	3_0_0	EXIST::FUNCTION:
-BN_get_rfc3526_prime_3072               496	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_3072               496	3_0_0	EXIST::FUNCTION:DH
 X509_INFO_new                           497	3_0_0	EXIST::FUNCTION:
 OCSP_RESPDATA_it                        498	3_0_0	EXIST::FUNCTION:OCSP
 X509_CRL_print                          499	3_0_0	EXIST::FUNCTION:
@@ -618,7 +618,7 @@ d2i_DSA_PUBKEY_fp                       633	3_0_0	EXIST::FUNCTION:DSA,STDIO
 OCSP_REQ_CTX_nbio_d2i                   634	3_0_0	EXIST::FUNCTION:OCSP
 d2i_X509_REQ_fp                         635	3_0_0	EXIST::FUNCTION:STDIO
 DH_OpenSSL                              636	3_0_0	EXIST::FUNCTION:DH
-BN_get_rfc3526_prime_8192               637	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_8192               637	3_0_0	EXIST::FUNCTION:DH
 X509_REVOKED_it                         638	3_0_0	EXIST::FUNCTION:
 CRYPTO_THREAD_write_lock                639	3_0_0	EXIST::FUNCTION:
 X509V3_NAME_from_section                640	3_0_0	EXIST::FUNCTION:
@@ -888,7 +888,7 @@ EVP_read_pw_string                      909	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_NULL                           910	3_0_0	EXIST::FUNCTION:
 DES_encrypt1                            911	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DES
 BN_mod_lshift1_quick                    912	3_0_0	EXIST::FUNCTION:
-BN_get_rfc3526_prime_6144               913	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_6144               913	3_0_0	EXIST::FUNCTION:DH
 OBJ_obj2txt                             914	3_0_0	EXIST::FUNCTION:
 UI_set_result                           915	3_0_0	EXIST::FUNCTION:
 EVP_EncodeUpdate                        916	3_0_0	EXIST::FUNCTION:
@@ -2129,7 +2129,7 @@ TS_RESP_CTX_set_accuracy                2174	3_0_0	EXIST::FUNCTION:TS
 NETSCAPE_SPKI_get_pubkey                2175	3_0_0	EXIST::FUNCTION:
 ECDSA_do_sign_ex                        2176	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 OCSP_ONEREQ_get_ext                     2177	3_0_0	EXIST::FUNCTION:OCSP
-BN_get_rfc3526_prime_4096               2179	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_4096               2179	3_0_0	EXIST::FUNCTION:DH
 d2i_PKCS7_fp                            2180	3_0_0	EXIST::FUNCTION:STDIO
 PEM_write_bio_NETSCAPE_CERT_SEQUENCE    2181	3_0_0	EXIST::FUNCTION:
 PKCS12_AUTHSAFES_it                     2182	3_0_0	EXIST::FUNCTION:
@@ -2471,7 +2471,7 @@ BN_GF2m_mod_div                         2522	3_0_0	EXIST::FUNCTION:EC2M
 i2d_USERNOTICE                          2523	3_0_0	EXIST::FUNCTION:
 d2i_NETSCAPE_SPKI                       2524	3_0_0	EXIST::FUNCTION:
 CRYPTO_mem_leaks                        2525	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3_0
-BN_get_rfc3526_prime_1536               2526	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_1536               2526	3_0_0	EXIST::FUNCTION:DH
 DSA_sign                                2527	3_0_0	EXIST::FUNCTION:DSA
 RAND_egd                                2528	3_0_0	EXIST::FUNCTION:EGD
 ASN1_d2i_bio                            2529	3_0_0	EXIST::FUNCTION:
@@ -2579,7 +2579,7 @@ ASIdentifierChoice_it                   2633	3_0_0	EXIST::FUNCTION:RFC3779
 CMS_RecipientEncryptedKey_cert_cmp      2634	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_get_app_data               2635	3_0_0	EXIST::FUNCTION:
 EC_GROUP_clear_free                     2636	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-BN_get_rfc2409_prime_1024               2637	3_0_0	EXIST::FUNCTION:
+BN_get_rfc2409_prime_1024               2637	3_0_0	EXIST::FUNCTION:DH
 CRYPTO_set_mem_functions                2638	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_VISIBLESTRING                  2639	3_0_0	EXIST::FUNCTION:
 d2i_PBKDF2PARAM                         2640	3_0_0	EXIST::FUNCTION:
@@ -3374,7 +3374,7 @@ EVP_EncodeFinal                         3444	3_0_0	EXIST::FUNCTION:
 X509_set_ex_data                        3445	3_0_0	EXIST::FUNCTION:
 ERR_get_next_error_library              3446	3_0_0	EXIST::FUNCTION:
 OCSP_RESPONSE_print                     3447	3_0_0	EXIST::FUNCTION:OCSP
-BN_get_rfc3526_prime_2048               3448	3_0_0	EXIST::FUNCTION:
+BN_get_rfc3526_prime_2048               3448	3_0_0	EXIST::FUNCTION:DH
 BIO_new_bio_pair                        3449	3_0_0	EXIST::FUNCTION:
 EC_GFp_nistp256_method                  3450	3_0_0	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
 BIO_method_type                         3451	3_0_0	EXIST::FUNCTION:
