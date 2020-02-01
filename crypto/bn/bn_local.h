@@ -22,6 +22,7 @@
 # endif
 
 # include "crypto/bn.h"
+# include "internal/cryptlib.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
