@@ -482,51 +482,52 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.dh->dirty_cnt;
 }
 
-static void *dh_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                               int want_domainparams)
+static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                             EVP_KEYMGMT *to_keymgmt, int selection)
 {
-    DH *dh = pk->pkey.dh;
+    DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD tmpl;
     const BIGNUM *p = DH_get0_p(dh), *g = DH_get0_g(dh), *q = DH_get0_q(dh);
     const BIGNUM *pub_key = DH_get0_pub_key(dh);
     const BIGNUM *priv_key = DH_get0_priv_key(dh);
     OSSL_PARAM *params;
-    void *provdata = NULL;
+    int rv;
 
     if (p == NULL || g == NULL)
-        return NULL;
+        return 0;
 
     ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
-        return NULL;
-    if (q != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
-            return NULL;
+    if (selection != OSSL_KEYMGMT_WANT_KEY) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+            || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+            return 0;
+        if (q != NULL) {
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
+                return 0;
+        }
     }
 
-    if (!want_domainparams) {
+    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS) {
         /* A key must at least have a public part. */
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY,
                                     pub_key))
-            return NULL;
+            return 0;
 
         if (priv_key != NULL) {
             if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
                                         priv_key))
-                return NULL;
+                return 0;
         }
     }
 
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    provdata = want_domainparams
-        ? evp_keymgmt_importdomparams(keymgmt, params)
-        : evp_keymgmt_importkey(keymgmt, params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
     ossl_param_bld_free(params);
-    return provdata;
+
+    return rv;
 }
 
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {

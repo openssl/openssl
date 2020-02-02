@@ -551,14 +551,13 @@ struct evp_pkey_st {
      * To support transparent export/import between providers that
      * support the methods for it, and still not having to do the
      * export/import every time a key or domain params are used, we
-     * maintain a cache of imported key / domain params, indexed by
-     * provider address.  pkeys[0] is *always* the "original" data.
+     * maintain a cache of imported key objects, indexed by keymgmt
+     * address.  pkeys[0] is *always* the "original" data unless we
+     * have a legacy key attached.
      */
     struct {
         EVP_KEYMGMT *keymgmt;
-        void *provdata;
-        /* 0 = provdata is a key, 1 = provdata is domain params */
-        int domainparams;
+        void *keydata;
     } pkeys[10];
     /*
      * If there is a legacy key assigned to this structure, we keep
@@ -597,55 +596,41 @@ void evp_app_cleanup_int(void);
  * KEYMGMT utility functions
  */
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                          int domainparams);
+                                          int want);
 void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
 void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
-                                 EVP_KEYMGMT *keymgmt, void *provdata,
-                                 int domainparams);
+                                 EVP_KEYMGMT *keymgmt, void *keydata);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                                const OSSL_PARAM params[], int domainparams);
+                                int want, const OSSL_PARAM params[]);
 
 
 /*
  * KEYMGMT provider interface functions
  */
-void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[]);
-void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
-                               void *provdomparams);
-int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                                void *provdomparams,
-                                OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *
-evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *
-evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
-int evp_keymgmt_get_domparam_params(const EVP_KEYMGMT *keymgmt,
-                                    void *provdomparam, OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[]);
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen);
-void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                          OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
-int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
-                               void *provkey, OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_has_domparams(const EVP_KEYMGMT *keymgmt, void *keyddata);
+int evp_keymgmt_has_public_key(const EVP_KEYMGMT *keymgmt, void *keyddata);
+int evp_keymgmt_has_private_key(const EVP_KEYMGMT *keymgmt, void *keyddata);
 
-int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *provkey);
+int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
+                           void *keydata, OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
+
+int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, const OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection);
+int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, OSSL_CALLBACK *param_cb, void *cbarg);
+const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection);
+
+int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *keydata);
+int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *keydata);
+int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *keydata);
+int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *keydata);
 
 
 /* Pulling defines out of C source files */

@@ -760,9 +760,9 @@ int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
                                              mdmandatory,
                                              sizeof(mdmandatory));
         params[2] = OSSL_PARAM_construct_end();
-        if (!evp_keymgmt_get_key_params(pkey->pkeys[0].keymgmt,
-                                        pkey->pkeys[0].provdata,
-                                        params))
+        if (!evp_keymgmt_get_params(pkey->pkeys[0].keymgmt,
+                                    pkey->pkeys[0].keydata,
+                                    params))
             return 0;
         if (mdmandatory[0] != '\0') {
             OPENSSL_strlcpy(mdname, mdmandatory, mdname_sz);
@@ -915,7 +915,7 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 {
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
-    void *provdata = NULL;
+    void *keydata = NULL;
 
     if (pk == NULL)
         return NULL;
@@ -935,7 +935,7 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     }
 
     if (tmp_keymgmt != NULL)
-        provdata =
+        keydata =
             evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt, domainparams);
 
     /*
@@ -943,12 +943,12 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
      * EVP_KEYMGMT, so we clear it to be safe.  It shouldn't be useful for
      * the caller either way in that case.
      */
-    if (provdata == NULL)
+    if (keydata == NULL)
         tmp_keymgmt = NULL;
 
     if (keymgmt != NULL)
         *keymgmt = tmp_keymgmt;
 
     EVP_KEYMGMT_free(allocated_keymgmt);
-    return provdata;
+    return keydata;
 }

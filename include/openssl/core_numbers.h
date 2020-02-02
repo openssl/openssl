@@ -333,109 +333,87 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 /*-
  * Key management
  *
- * Key domain parameter references can be created in several manners:
- * - by importing the domain parameter material via an OSSL_PARAM array.
- * - by generating key domain parameters, given input via an OSSL_PARAM
- *   array.
+ * The Key Management takes care of provider side key objects, and includes
+ * all current functionality to create them, destroy them, setting parameters
+ * and key material, etc, essentially everything that manipulates the keys
+ * themselves and their parameters.
  *
- * Key references can be created in several manners:
- * - by importing the key material via an OSSL_PARAM array.
- * - by generating a key, given optional domain parameters and
- *   additional keygen parameters.
- *   If domain parameters are given, they must have been generated using
- *   the domain parameter generator functions.
- *   If the domain parameters comes from a different provider, results
- *   are undefined.
- *   THE CALLER MUST ENSURE THAT CORRECT DOMAIN PARAMETERS ARE USED.
- * - by loading an internal key, given a binary blob that forms an identity.
- *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
+ * The key objects are commonly refered to as |keydata|, and it MUST be able
+ * to contain domain parameters if the key has any, the public key and the
+ * private key.  All parts are optional, but their presence determines what
+ * is possible to do with the key object.  The assumption from libcrypto is
+ * that the key object contains any of the following data combinations:
+ *
+ * - domain parameters only
+ * - public key only
+ * - public key + private key
+ * - domain parameters + public key
+ * - domain parameters + public key + private key
+ *
+ * Key objects are created with OP_keymgmt_new() and destroyed with
+ * Op_keymgmt_free().  Key objects can have data filled in with
+ * OP_keymgmt_import().
+ *
+ * Three functions are made available to check what selection of data is
+ * present in a key object: OP_keymgmt_has_domparams(),
+ * OP_keymgmt_has_public_key(), and OP_keymgmt_has_private_key(),
  */
 
-/* Key domain parameter creation and destruction */
-# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS           1
-# define OSSL_FUNC_KEYMGMT_GENDOMPARAMS              2
-# define OSSL_FUNC_KEYMGMT_FREEDOMPARAMS             3
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importdomparams,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gendomparams,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomparams, (void *domparams))
+/* Import and export selections */
+# define OSSL_KEYMGMT_WANT_DOMPARAMS                   1
+# define OSSL_KEYMGMT_WANT_KEY                         2
+# define OSSL_KEYMGMT_WANT_BOTH                        3
 
-/* Key domain parameter export */
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS           4
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
-                    (void *domparams, OSSL_CALLBACK *param_cb, void *cbarg))
+/* Basic key object creation, destruction */
+# define OSSL_FUNC_KEYMGMT_NEW                         1
+# define OSSL_FUNC_KEYMGMT_FREE                        9
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_free, (void *keydata))
 
-/* Key domain parameter discovery */
-/*
- * TODO(v3.0) investigate if we need OP_keymgmt_exportdomparam_types.
- * 'openssl provider' may be a caller...
- */
-# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES      5
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES      6
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
-                    (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
-                    (void))
+/* Key object information, plus discovery */
+#define OSSL_FUNC_KEYMGMT_GET_PARAMS                  10
+#define OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS             11
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_params,
+                    (void *keydata, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_params, (void))
 
-/* Key domain parameter information */
-#define OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS        7
-#define OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS   8
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_domparam_params,
-                    (void *domparam, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_domparam_params,
-                    (void))
-
-/* Key creation and destruction */
-# define OSSL_FUNC_KEYMGMT_IMPORTKEY                20
-# define OSSL_FUNC_KEYMGMT_GENKEY                   21
-# define OSSL_FUNC_KEYMGMT_LOADKEY                  22
-# define OSSL_FUNC_KEYMGMT_FREEKEY                  23
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
-                    (void *provctx,
-                     void *domparams, const OSSL_PARAM genkeyparams[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loadkey,
-                    (void *provctx, void *id, size_t idlen))
-OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
-
-/* Key export */
-# define OSSL_FUNC_KEYMGMT_EXPORTKEY                24
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
-                    (void *key, OSSL_CALLBACK *param_cb, void *cbarg))
-
-/* Key discovery */
-/*
- * TODO(v3.0) investigate if we need OP_keymgmt_exportkey_types.
- * 'openssl provider' may be a caller...
- */
-# define OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES          25
-# define OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES          26
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
-
-/* Key information */
-# define OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS           27
-# define OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS      28
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_key_params,
-                    (void *key, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_key_params, (void))
+/* Key object content checks */
+# define OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS              20
+# define OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY             21
+# define OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY            22
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_domparams, (void *keydata))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_public_key, (void *keydata))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_private_key, (void *keydata))
 
 /* Discovery of supported operations */
-# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME     40
-OSSL_CORE_MAKE_FUNC(const char *,OP_keymgmt_query_operation_name,
+# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME       39
+OSSL_CORE_MAKE_FUNC(const char *, OP_keymgmt_query_operation_name,
                     (int operation_id))
 
+/* Import, export and copy functions */
+# define OSSL_FUNC_KEYMGMT_IMPORT                     40
+# define OSSL_FUNC_KEYMGMT_IMPORT_TYPES               41
+# define OSSL_FUNC_KEYMGMT_EXPORT                     42
+# define OSSL_FUNC_KEYMGMT_EXPORT_TYPES               43
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_import,
+                    (void *keydata, int selection, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_import_types,
+                    (int selection))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_export,
+                    (void *keydata, int selection,
+                     OSSL_CALLBACK *param_cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_export_types,
+                    (int selection))
+
 /* Key validation */
-# define OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS       29
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC          30
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE         31
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE        32
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_domparams, (void *key))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_public, (void *key))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_private, (void *key))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_pairwise, (void *key))
+# define OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS         80
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC            81
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE           82
+# define OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE          83
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_domparams, (void *keydata))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_public, (void *keydata))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_private, (void *keydata))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_pairwise, (void *keydata))
 
 /* Key Exchange */
 

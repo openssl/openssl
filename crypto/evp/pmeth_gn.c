@@ -208,7 +208,8 @@ int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
 {
-    void *provdata = NULL;
+    void *keydata = NULL;
+    int selection;
 
     if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_TYPE_FROMDATA) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -226,13 +227,16 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
         return -1;
     }
 
-    provdata =
-        evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, params,
-                                  ctx->operation == EVP_PKEY_OP_PARAMFROMDATA);
+    if (ctx->operation == EVP_PKEY_OP_PARAMFROMDATA)
+        selection = OSSL_KEYMGMT_WANT_DOMPARAMS;
+    else
+        selection = OSSL_KEYMGMT_WANT_KEY;
+    keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
+                                        params);
 
-    if (provdata == NULL)
+    if (keydata == NULL)
         return 0;
-    /* provdata is cached in *ppkey, so we need not bother with it further */
+    /* keydata is cached in *ppkey, so we need not bother with it further */
     return 1;
 }
 
@@ -247,7 +251,8 @@ const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_importdomparam_types(ctx->keymgmt);
+        return evp_keymgmt_import_types(ctx->keymgmt,
+                                        OSSL_KEYMGMT_WANT_DOMPARAMS);
     return NULL;
 }
 
@@ -255,6 +260,6 @@ const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_importdomparam_types(ctx->keymgmt);
+        return evp_keymgmt_import_types(ctx->keymgmt, OSSL_KEYMGMT_WANT_KEY);
     return NULL;
 }

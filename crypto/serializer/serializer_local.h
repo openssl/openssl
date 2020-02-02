@@ -32,6 +32,9 @@ struct ossl_serializer_ctx_st {
     OSSL_SERIALIZER *ser;
     void *serctx;
 
+    /* One of OSSL_KEYMGMT_WANT_DOMPARAMS and OSSL_KEYMGMT_WANT_KEY */
+    int selection;
+
     /*
      * |object| is the libcrypto object to handle.
      * |do_output| must have intimate knowledge of this object.

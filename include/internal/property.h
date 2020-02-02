@@ -26,6 +26,9 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
 /* Property checker of query vs definition */
 int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
                               const OSSL_PROPERTY_LIST *defn);
+/* Free a parsed property list */
+void ossl_property_free(OSSL_PROPERTY_LIST *p);
+
 
 /* Implementation store functions */
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);

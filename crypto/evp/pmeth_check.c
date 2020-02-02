@@ -29,7 +29,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     }
 
     keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].provdata;
+    key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate_public(keymgmt, key);
@@ -61,7 +61,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     }
 
     keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].provdata;
+    key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate_domparams(keymgmt, key);
@@ -93,7 +93,7 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     }
 
     keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].provdata;
+    key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate_private(keymgmt, key);
@@ -113,7 +113,7 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
     }
 
     keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].provdata;
+    key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate_pairwise(keymgmt, key);
@@ -133,7 +133,7 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     }
 
     keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].provdata;
+    key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL) {
         return evp_keymgmt_validate_domparams(keymgmt, key)
