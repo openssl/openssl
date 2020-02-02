@@ -16,10 +16,12 @@
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
+#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
 
@@ -54,7 +56,15 @@ static OSSL_OP_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
 typedef struct {
     OPENSSL_CTX *libctx;
     DSA *dsa;
-    size_t mdsize;
+
+    /*
+     * Flag to determine if the hash function can be changed (1) or not (0)
+     * Because it's dangerous to change during a DigestSign or DigestVerify
+     * operation, this flag is cleared by their Init function, and set again
+     * by their Final function.
+     */
+    unsigned int flag_allow_md : 1;
+
     char mdname[OSSL_MAX_NAME_SIZE];
 
     /* The Algorithm Identifier of the combined signature agorithm */
@@ -64,70 +74,17 @@ typedef struct {
     /* main digest */
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
+    size_t mdsize;
 } PROV_DSA_CTX;
 
-static void *dsa_newctx(void *provctx)
+static size_t dsa_get_md_size(const PROV_DSA_CTX *pdsactx)
 {
-    PROV_DSA_CTX *pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
-
-    if (pdsactx == NULL)
-        return NULL;
-
-    pdsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
-    return pdsactx;
+    if (pdsactx->md != NULL)
+        return EVP_MD_size(pdsactx->md);
+    return 0;
 }
 
-static int dsa_signature_init(void *vpdsactx, void *vdsa)
-{
-    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-
-    if (pdsactx == NULL || vdsa == NULL || !DSA_up_ref(vdsa))
-        return 0;
-    DSA_free(pdsactx->dsa);
-    pdsactx->dsa = vdsa;
-    return 1;
-}
-
-static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
-                    size_t sigsize, const unsigned char *tbs, size_t tbslen)
-{
-    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    int ret;
-    unsigned int sltmp;
-    size_t dsasize = DSA_size(pdsactx->dsa);
-
-    if (sig == NULL) {
-        *siglen = dsasize;
-        return 1;
-    }
-
-    if (sigsize < (size_t)dsasize)
-        return 0;
-
-    if (pdsactx->mdsize != 0 && tbslen != pdsactx->mdsize)
-        return 0;
-
-    ret = dsa_sign_int(pdsactx->libctx, 0, tbs, tbslen, sig, &sltmp,
-                       pdsactx->dsa);
-    if (ret <= 0)
-        return 0;
-
-    *siglen = sltmp;
-    return 1;
-}
-
-static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
-                      const unsigned char *tbs, size_t tbslen)
-{
-    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-
-    if (pdsactx->mdsize != 0 && tbslen != pdsactx->mdsize)
-        return 0;
-
-    return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
-}
-
-static int get_md_nid(const EVP_MD *md)
+static int dsa_get_md_nid(const EVP_MD *md)
 {
     /*
      * Because the DSA library deals with NIDs, we need to translate.
@@ -165,37 +122,112 @@ static int get_md_nid(const EVP_MD *md)
     return mdnid;
 }
 
+static void *dsa_newctx(void *provctx)
+{
+    PROV_DSA_CTX *pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
+
+    if (pdsactx == NULL)
+        return NULL;
+
+    pdsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    pdsactx->flag_allow_md = 1;
+    return pdsactx;
+}
+
+static int dsa_setup_md(PROV_DSA_CTX *ctx,
+                        const char *mdname, const char *mdprops)
+{
+    if (mdname != NULL) {
+        EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
+        int md_nid = dsa_get_md_nid(md);
+        size_t algorithmidentifier_len = 0;
+        const unsigned char *algorithmidentifier;
+
+        EVP_MD_free(ctx->md);
+        ctx->md = NULL;
+        ctx->mdname[0] = '\0';
+
+        algorithmidentifier =
+            dsa_algorithmidentifier_encoding(md_nid, &algorithmidentifier_len);
+
+        if (algorithmidentifier == NULL) {
+            EVP_MD_free(md);
+            return 0;
+        }
+
+        ctx->md = md;
+        OPENSSL_strlcpy(ctx->mdname, mdname, sizeof(ctx->mdname));
+    }
+    return 1;
+}
+
+static int dsa_signature_init(void *vpdsactx, void *vdsa)
+{
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+
+    if (pdsactx == NULL || vdsa == NULL || !DSA_up_ref(vdsa))
+        return 0;
+    DSA_free(pdsactx->dsa);
+    pdsactx->dsa = vdsa;
+    return 1;
+}
+
+static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
+                    size_t sigsize, const unsigned char *tbs, size_t tbslen)
+{
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+    int ret;
+    unsigned int sltmp;
+    size_t dsasize = DSA_size(pdsactx->dsa);
+    size_t mdsize = dsa_get_md_size(pdsactx);
+
+    if (sig == NULL) {
+        *siglen = dsasize;
+        return 1;
+    }
+
+    if (sigsize < (size_t)dsasize)
+        return 0;
+
+    if (mdsize != 0 && tbslen != mdsize)
+        return 0;
+
+    ret = dsa_sign_int(pdsactx->libctx, 0, tbs, tbslen, sig, &sltmp,
+                       pdsactx->dsa);
+    if (ret <= 0)
+        return 0;
+
+    *siglen = sltmp;
+    return 1;
+}
+
+static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
+                      const unsigned char *tbs, size_t tbslen)
+{
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+    size_t mdsize = dsa_get_md_size(pdsactx);
+
+    if (mdsize != 0 && tbslen != mdsize)
+        return 0;
+
+    return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
+}
+
 static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
                                       const char *props, void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
-    size_t algorithmidentifier_len = 0;
-    const unsigned char *algorithmidentifier;
 
-    EVP_MD_CTX_free(pdsactx->mdctx);
-    EVP_MD_free(pdsactx->md);
-    pdsactx->mdctx = NULL;
-    pdsactx->mdsize = 0;
-    pdsactx->md = NULL;
-
+    pdsactx->flag_allow_md = 0;
     if (!dsa_signature_init(vpdsactx, vdsa))
         return 0;
 
-    pdsactx->md = EVP_MD_fetch(pdsactx->libctx, mdname, props);
-    algorithmidentifier =
-        dsa_algorithmidentifier_encoding(get_md_nid(pdsactx->md),
-                                         &algorithmidentifier_len);
+    if (!dsa_setup_md(pdsactx, mdname, props))
+        return 0;
 
-    if (algorithmidentifier == NULL)
-        goto error;
-
-    pdsactx->mdsize = EVP_MD_size(pdsactx->md);
     pdsactx->mdctx = EVP_MD_CTX_new();
     if (pdsactx->mdctx == NULL)
         goto error;
-
-    memcpy(pdsactx->aid, algorithmidentifier, algorithmidentifier_len);
-    pdsactx->aid_len = algorithmidentifier_len;
 
     if (!EVP_DigestInit_ex(pdsactx->mdctx, pdsactx->md, NULL))
         goto error;
@@ -245,6 +277,8 @@ int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
             return 0;
     }
 
+    pdsactx->flag_allow_md = 1;
+
     return dsa_sign(vpdsactx, sig, siglen, sigsize, digest, (size_t)dlen);
 }
 
@@ -266,6 +300,8 @@ int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
      */
     if (!EVP_DigestFinal_ex(pdsactx->mdctx, digest, &dlen))
         return 0;
+
+    pdsactx->flag_allow_md = 1;
 
     return dsa_verify(vpdsactx, sig, siglen, digest, (size_t)dlen);
 }
@@ -330,9 +366,7 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, pdsactx->md == NULL
-                                                    ? pdsactx->mdname
-                                                    : EVP_MD_name(pdsactx->md)))
+    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, pdsactx->mdname))
         return 0;
 
     return 1;
@@ -353,29 +387,29 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     const OSSL_PARAM *p;
-    char *mdname;
 
     if (pdsactx == NULL || params == NULL)
         return 0;
 
-    if (pdsactx->md != NULL) {
-        /*
-         * You cannot set the digest name/size when doing a DigestSign or
-         * DigestVerify.
-         */
-        return 1;
-    }
-
-    /*
-     * We never actually use the mdname, but we do support getting it later.
-     * This can be useful for applications that want to know the MD that they
-     * previously set.
-     */
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    mdname = pdsactx->mdname;
-    if (p != NULL
-            && !OSSL_PARAM_get_utf8_string(p, &mdname, sizeof(pdsactx->mdname)))
+    /* Not allowed during certain operations */
+    if (p != NULL && !pdsactx->flag_allow_md)
         return 0;
+    if (p != NULL) {
+        char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = mdname;
+        char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = mdprops;
+        const OSSL_PARAM *propsp =
+            OSSL_PARAM_locate_const(params,
+                                    OSSL_SIGNATURE_PARAM_PROPERTIES);
+
+        if (!OSSL_PARAM_get_utf8_string(p, &pmdname, sizeof(mdname)))
+            return 0;
+        if (propsp != NULL
+            && !OSSL_PARAM_get_utf8_string(propsp, &pmdprops, sizeof(mdprops)))
+            return 0;
+        if (!dsa_setup_md(pdsactx, mdname, mdprops))
+            return 0;
+    }
 
     return 1;
 }
