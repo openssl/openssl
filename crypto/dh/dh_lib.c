@@ -8,13 +8,13 @@
  */
 
 #include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/engine.h>
+#include <openssl/obj_mac.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
+#include "crypto/dh.h"
 #include "dh_local.h"
-#include "crypto/dh.h"
-#include <openssl/engine.h>
-#include "crypto/dh.h"
 
 #ifndef FIPS_MODE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
