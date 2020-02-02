@@ -7,14 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include "dh_local.h"
+#include "crypto/dh.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include <openssl/bn.h>
-#include "dh_local.h"
-#include "crypto/dh.h"
 #include <openssl/engine.h>
-#include "crypto/dh.h"
+#include <openssl/obj_mac.h>
+#include <stdio.h>
+
 
 #ifndef FIPS_MODE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
