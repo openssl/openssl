@@ -669,9 +669,9 @@
      bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
      alerts across multiple records (some of which could be empty). In practice
      it make no sense to send an empty alert record, or to fragment one. TLSv1.3
-     prohibts this altogether and other libraries (BoringSSL, NSS) do not
+     prohibits this altogether and other libraries (BoringSSL, NSS) do not
      support this at all. Supporting it adds significant complexity to the
-     record layer, and its removal is unlikely to cause inter-operability
+     record layer, and its removal is unlikely to cause interoperability
      issues.
      [Matt Caswell]
 
@@ -3688,7 +3688,7 @@
      implementations).
      [Emilia Käsper, Adam Langley, Bodo Moeller (Google)]
 
-  *) Use type ossl_ssize_t instad of ssize_t which isn't available on
+  *) Use type ossl_ssize_t instead of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
      header file e_os2.h as it now appears in public header file cms.h
      [Steve Henson]
@@ -8409,7 +8409,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
-     parsed, outputed or printed in text form. Not complete yet:
+     parsed, outputted or printed in text form. Not complete yet:
      still needs to check the OCSP response validity.
      [Steve Henson]
 
