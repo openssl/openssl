@@ -679,8 +679,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
-    size_t mdsize;
+    OSSL_PARAM sig_md_params[2], *p = sig_md_params;
     const char *name;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)) {
@@ -696,9 +695,7 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 
     if (md == NULL) {
         name = "";
-        mdsize = 0;
     } else {
-        mdsize = EVP_MD_size(md);
         name = EVP_MD_name(md);
     }
 
@@ -709,8 +706,6 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
                                              */
                                             (char *)name,
                                             strlen(name) + 1);
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                       &mdsize);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, sig_md_params);
