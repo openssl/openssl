@@ -1,4 +1,4 @@
-# Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -2766,6 +2766,7 @@ PROV_R_TAG_NOTSET:119:tag notset
 PROV_R_TAG_NOT_NEEDED:120:tag not needed
 PROV_R_UNABLE_TO_LOAD_SHA1:143:unable to load sha1
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
+PROV_R_UNKNOWN_PADDING_TYPE:163:unknown padding type
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
 PROV_R_UNSUPPORTED_MAC_TYPE:137:unsupported mac type

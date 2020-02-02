@@ -37,6 +37,16 @@ static OSSL_OP_asym_cipher_gettable_ctx_params_fn rsa_gettable_ctx_params;
 static OSSL_OP_asym_cipher_set_ctx_params_fn rsa_set_ctx_params;
 static OSSL_OP_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
+static OSSL_ITEM padding_item[] = {
+    { RSA_PKCS1_PADDING,        "pkcs1"  },
+    { RSA_SSLV23_PADDING,       "sslv23" },
+    { RSA_NO_PADDING,           "none"   },
+    { RSA_PKCS1_OAEP_PADDING,   "oaep"   }, /* Correct spelling first */
+    { RSA_PKCS1_OAEP_PADDING,   "oeap"   },
+    { RSA_X931_PADDING,         "x931"   },
+    { RSA_PKCS1_PSS_PADDING,    "pss"    },
+    { 0,                        NULL     }
+};
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -263,8 +273,35 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_PAD_MODE);
-    if (p != NULL && !OSSL_PARAM_set_int(p, prsactx->pad_mode))
-        return 0;
+    if (p != NULL)
+        switch (p->data_type) {
+        case OSSL_PARAM_INTEGER: /* Support for legacy pad mode number */
+            if (!OSSL_PARAM_set_int(p, prsactx->pad_mode))
+                return 0;
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            {
+                int i;
+                const char *word = NULL;
+
+                for (i = 0; padding_item[i].id != 0; i++) {
+                    if (prsactx->pad_mode == (int)padding_item[i].id) {
+                        word = padding_item[i].ptr;
+                        break;
+                    }
+                }
+
+                if (word != NULL) {
+                    if (!OSSL_PARAM_set_utf8_string(p, word))
+                        return 0;
+                } else {
+                    ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+                }
+            }
+            break;
+        default:
+            return 0;
+        }
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST);
     if (p != NULL && !OSSL_PARAM_set_utf8_string(p, prsactx->oaep_md == NULL
@@ -304,7 +341,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, NULL, 0),
-    OSSL_PARAM_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_PTR,
                     NULL, 0),
@@ -326,7 +363,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     char mdname[OSSL_MAX_NAME_SIZE];
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
     char *str = mdname;
-    int pad_mode;
 
     if (prsactx == NULL || params == NULL)
         return 0;
@@ -353,8 +389,32 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_PAD_MODE);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_int(p, &pad_mode))
+        int pad_mode = 0;
+
+        switch (p->data_type) {
+        case OSSL_PARAM_INTEGER: /* Support for legacy pad mode number */
+            if (!OSSL_PARAM_get_int(p, &pad_mode))
+                return 0;
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            {
+                int i;
+
+                if (p->data == NULL)
+                    return 0;
+
+                for (i = 0; padding_item[i].id != 0; i++) {
+                    if (strcmp(p->data, padding_item[i].ptr) == 0) {
+                        pad_mode = padding_item[i].id;
+                        break;
+                    }
+                }
+            }
+            break;
+        default:
             return 0;
+        }
+
         /*
          * PSS padding is for signatures only so is not compatible with
          * asymmetric cipher use.
@@ -426,7 +486,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, NULL, 0),
-    OSSL_PARAM_int(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_PAD_MODE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, NULL, 0),
