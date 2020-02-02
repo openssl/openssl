@@ -206,7 +206,6 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
     EVP_MD_CTX_free(pdsactx->mdctx);
     EVP_MD_free(pdsactx->md);
     pdsactx->mdctx = NULL;
-    pdsactx->mdsize = 0;
     pdsactx->md = NULL;
     return 0;
 }
@@ -330,10 +329,6 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
         && !OSSL_PARAM_set_octet_string(p, pdsactx->aid, pdsactx->aid_len))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdsactx->mdsize))
-        return 0;
-
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST);
     if (p != NULL && !OSSL_PARAM_set_utf8_string(p, pdsactx->md == NULL
                                                     ? pdsactx->mdname
@@ -345,7 +340,6 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 
 static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
-    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_END
 };
@@ -372,10 +366,6 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         return 1;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &pdsactx->mdsize))
-        return 0;
-
     /*
      * We never actually use the mdname, but we do support getting it later.
      * This can be useful for applications that want to know the MD that they
@@ -391,7 +381,6 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_END
 };

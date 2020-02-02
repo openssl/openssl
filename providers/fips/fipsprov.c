@@ -276,9 +276,7 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
     /* set signature parameters */
     ossl_param_bld_init(&bld);
     if (!ossl_param_bld_push_utf8_string(&bld, OSSL_SIGNATURE_PARAM_DIGEST,
-                                         SN_sha256,strlen(SN_sha256) + 1)
-        || !ossl_param_bld_push_size_t(&bld, OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                       SHA256_DIGEST_LENGTH))
+                                         SN_sha256,strlen(SN_sha256) + 1))
         goto err;
     params_sig = ossl_param_bld_to_param(&bld);
     if (EVP_PKEY_CTX_set_params(sctx, params_sig) <= 0)

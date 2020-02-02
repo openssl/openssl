@@ -25,6 +25,7 @@
 #include <openssl/dh.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "internal/sizes.h"
 #include "crypto/evp.h"
 
 /*
@@ -1239,13 +1240,13 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     EVP_PKEY_CTX *ctx = NULL;
     EVP_SIGNATURE *dsaimpl = NULL;
     const OSSL_PARAM *params;
-    OSSL_PARAM ourparams[2], *param = ourparams;
+    OSSL_PARAM ourparams[2], *param = ourparams, *param_md;
     DSA *dsa = NULL;
     BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
     EVP_PKEY *pkey = NULL;
     int ret = 0;
     const EVP_MD *md;
-    size_t mdsize = SHA512_DIGEST_LENGTH;
+    char mdname[OSSL_MAX_NAME_SIZE];
     char ssl3ms[48];
 
     /*
@@ -1289,8 +1290,6 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
     params = EVP_PKEY_CTX_settable_params(ctx);
     if (!TEST_ptr(params)
         || !TEST_ptr(OSSL_PARAM_locate_const(params,
-                                             OSSL_SIGNATURE_PARAM_DIGEST_SIZE))
-        || !TEST_ptr(OSSL_PARAM_locate_const(params,
                                              OSSL_SIGNATURE_PARAM_DIGEST)))
         goto err;
 
@@ -1299,8 +1298,6 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
         || !TEST_ptr(OSSL_PARAM_locate_const(params,
                                              OSSL_SIGNATURE_PARAM_ALGORITHM_ID))
         || !TEST_ptr(OSSL_PARAM_locate_const(params,
-                                             OSSL_SIGNATURE_PARAM_DIGEST_SIZE))
-        || !TEST_ptr(OSSL_PARAM_locate_const(params,
                                              OSSL_SIGNATURE_PARAM_DIGEST)))
         goto err;
 
@@ -1308,16 +1305,20 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
      * Test getting and setting params via EVP_PKEY_CTX_set_params() and
      * EVP_PKEY_CTX_get_params()
      */
-    *param++ = OSSL_PARAM_construct_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE,
-                                           &mdsize);
+    strcpy(mdname, "SHA512");
+    param_md = param;
+    *param++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+                                                mdname, 0);
     *param++ = OSSL_PARAM_construct_end();
 
     if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, ourparams)))
         goto err;
 
-    mdsize = 0;
+    mdname[0] = '\0';
+    *param_md = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+                                                 mdname, sizeof(mdname));
     if (!TEST_true(EVP_PKEY_CTX_get_params(ctx, ourparams))
-            || !TEST_size_t_eq(mdsize, SHA512_DIGEST_LENGTH))
+            || !TEST_str_eq(mdname, "SHA512"))
         goto err;
 
     /*
