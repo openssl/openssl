@@ -554,6 +554,8 @@ X509_LOOKUP_load_file                   define
 X509_LOOKUP_load_store                  define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
+X509_LOOKUP_get_method_data             define
+X509_LOOKUP_set_method_data             define
 EVP_PKEY_CTX_set1_id                    define
 EVP_PKEY_CTX_get1_id                    define
 EVP_PKEY_CTX_get1_id_len                define

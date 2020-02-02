@@ -68,7 +68,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
                     char **retp)
 {
     int ret = 0;
-    BY_DIR *ld = (BY_DIR *)ctx->method_data;
+    BY_DIR *ld = (BY_DIR *)X509_LOOKUP_get_method_data(ctx);
 
     switch (cmd) {
     case X509_L_ADD_DIR:
@@ -110,7 +110,7 @@ static int new_dir(X509_LOOKUP *lu)
         X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    lu->method_data = a;
+    X509_LOOKUP_set_method_data(lu, a);
     return 1;
 
  err:
@@ -142,7 +142,7 @@ static void by_dir_entry_free(BY_DIR_ENTRY *ent)
 
 static void free_dir(X509_LOOKUP *lu)
 {
-    BY_DIR *a = (BY_DIR *)lu->method_data;
+    BY_DIR *a = (BY_DIR *)X509_LOOKUP_get_method_data(lu);
 
     sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
     BUF_MEM_free(a->buffer);
@@ -245,7 +245,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         goto finish;
     }
 
-    ctx = (BY_DIR *)xl->method_data;
+    ctx = (BY_DIR *)X509_LOOKUP_get_method_data(xl);
 
     h = X509_NAME_hash(name);
     for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {

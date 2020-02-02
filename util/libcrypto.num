@@ -4401,8 +4401,8 @@ X509_LOOKUP_meth_get_free               4506	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_meth_set_get_by_subject     4507	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_meth_set_free               4508	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_meth_get_shutdown           4509	3_0_0	EXIST::FUNCTION:
-X509_LOOKUP_set_method_data             4510	3_0_0	EXIST::FUNCTION:
-X509_LOOKUP_get_method_data             4511	3_0_0	EXIST::FUNCTION:
+X509_LOOKUP_set_method_data             4510	3_0_0	NOEXIST::FUNCTION:
+X509_LOOKUP_get_method_data             4511	3_0_0	NOEXIST::FUNCTION:
 X509_LOOKUP_meth_set_get_by_fingerprint 4512	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_meth_free                   4513	3_0_0	EXIST::FUNCTION:
 X509_OBJECT_set1_X509                   4514	3_0_0	EXIST::FUNCTION:
@@ -4955,3 +4955,5 @@ OSSL_SELF_TEST_free                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onbegin                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_oncorrupt_byte           ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onend                    ?	3_0_0	EXIST::FUNCTION:
+X509_LOOKUP_get_ex_data                 ?	3_0_0	EXIST::FUNCTION:
+X509_LOOKUP_set_ex_data                 ?	3_0_0	EXIST::FUNCTION:

@@ -19,7 +19,8 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
+    if (ret == NULL
+            || !CRYPTO_new_ex_data(CRYPTO_EX_X509_LOOKUP, ret, &ret->ex_data)) {
         X509err(X509_F_X509_LOOKUP_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -38,6 +39,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
         return;
     if ((ctx->method != NULL) && (ctx->method->free != NULL))
         (*ctx->method->free) (ctx);
+    CRYPTO_free_ex_data(CRYPTO_EX_X509_LOOKUP, ctx, &ctx->ex_data);
     OPENSSL_free(ctx);
 }
 
@@ -118,22 +120,20 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
-int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data)
+void *X509_LOOKUP_get_ex_data(const X509_LOOKUP *ctx, int idx)
 {
-    ctx->method_data = data;
-    return 1;
+    return CRYPTO_get_ex_data(&ctx->ex_data, idx);
 }
 
-void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx)
+int X509_LOOKUP_set_ex_data(X509_LOOKUP *ctx, int idx, void *arg)
 {
-    return ctx->method_data;
+    return CRYPTO_set_ex_data(&ctx->ex_data, idx, arg);
 }
 
 X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx)
 {
     return ctx->store_ctx;
 }
-
 
 static int x509_object_cmp(const X509_OBJECT *const *a,
                            const X509_OBJECT *const *b)

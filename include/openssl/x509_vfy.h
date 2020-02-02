@@ -494,10 +494,17 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                X509_OBJECT *ret);
 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                          const char *str, int len, X509_OBJECT *ret);
-int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data);
-void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx);
 X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
+void *X509_LOOKUP_get_ex_data(const X509_LOOKUP *ctx, int idx);
+int X509_LOOKUP_set_ex_data(X509_LOOKUP *ctx, int idx, void *arg);
+
+#define X509_LOOKUP_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_LOOKUP_CTX, l, p, newf, dupf, freef)
+#define X509_LOOKUP_set_method_data(ctx, arg) \
+    X509_LOOKUP_set_ex_data(ctx, 0, (arg))
+#define X509_LOOKUP_get_method_data(ctx) \
+    X509_LOOKUP_get_ex_data(ctx,0)
 
 int X509_STORE_load_file(X509_STORE *ctx, const char *file);
 int X509_STORE_load_path(X509_STORE *ctx, const char *path);

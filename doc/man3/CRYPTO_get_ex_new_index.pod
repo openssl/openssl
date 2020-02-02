@@ -57,6 +57,7 @@ The specific structures are:
     UI
     UI_METHOD
     X509
+    X509_LOOKUP
     X509_STORE
     X509_STORE_CTX
 
