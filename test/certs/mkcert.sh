@@ -296,7 +296,7 @@ genct() {
     do
         case $o in
         p) purpose="$OPTARG";;
-        *) echo "Usage: $0 genee [-p EKU] cn keyname certname cakeyname cacertname" >&2
+        *) echo "Usage: $0 genct [-p EKU] cn keyname certname cakeyname cacertname ctlogkey" >&2
            return 1;;
         esac
     done
