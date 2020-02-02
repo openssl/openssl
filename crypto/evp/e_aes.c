@@ -1414,7 +1414,7 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     (OPENSSL_s390xcap_P.kma[0] &	\
                                      S390X_CAPBIT(S390X_AES_256)))
 
-/* iv + padding length for iv lenghts != 12 */
+/* iv + padding length for iv lengths != 12 */
 # define S390X_gcm_ivpadlen(i)	((((i) + 15) >> 4 << 4) + 16)
 
 /*-

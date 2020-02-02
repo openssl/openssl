@@ -681,9 +681,9 @@
      bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
      alerts across multiple records (some of which could be empty). In practice
      it make no sense to send an empty alert record, or to fragment one. TLSv1.3
-     prohibts this altogether and other libraries (BoringSSL, NSS) do not
+     prohibits this altogether and other libraries (BoringSSL, NSS) do not
      support this at all. Supporting it adds significant complexity to the
-     record layer, and its removal is unlikely to cause inter-operability
+     record layer, and its removal is unlikely to cause interoperability
      issues.
      [Matt Caswell]
 
@@ -3700,7 +3700,7 @@
      implementations).
      [Emilia Käsper, Adam Langley, Bodo Moeller (Google)]
 
-  *) Use type ossl_ssize_t instad of ssize_t which isn't available on
+  *) Use type ossl_ssize_t instead of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
      header file e_os2.h as it now appears in public header file cms.h
      [Steve Henson]
@@ -8421,7 +8421,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) New OCSP utility. Allows OCSP requests to be generated or
      read. The request can be sent to a responder and the output
-     parsed, outputed or printed in text form. Not complete yet:
+     parsed, outputted or printed in text form. Not complete yet:
      still needs to check the OCSP response validity.
      [Steve Henson]
 
@@ -9416,7 +9416,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Andy Polyakov]
 
   *) Modified SSL library such that the verify_callback that has been set
-     specificly for an SSL object with SSL_set_verify() is actually being
+     specifically for an SSL object with SSL_set_verify() is actually being
      used. Before the change, a verify_callback set with this function was
      ignored and the verify_callback() set in the SSL_CTX at the time of
      the call was used. New function X509_STORE_CTX_set_verify_cb() introduced
@@ -10533,10 +10533,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      as other interfaces in OpenSSL, like the BIO interface.
      NCONF_dump_* dump the internal storage of the configuration file,
      which is useful for debugging.  All other functions take the same
-     arguments as the old CONF_* functions wth the exception of the
+     arguments as the old CONF_* functions with the exception of the
      first that must be a `CONF *' instead of a `LHASH *'.
 
-     To make it easer to use the new classes with the old CONF_* functions,
+     To make it easier to use the new classes with the old CONF_* functions,
      the function CONF_set_default_method is provided.
      [Richard Levitte]
 
@@ -12379,7 +12379,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      than the old method: it now uses a modified version of Ulf's parser to
      read the ANSI prototypes in all header files (thus the old K&R definitions
      aren't needed for error creation any more) and do a better job of
-     translating function codes into names. The old 'ASN1 error code imbedded
+     translating function codes into names. The old 'ASN1 error code embedded
      in a comment' is no longer necessary and it doesn't use .err files which
      have now been deleted. Also the error code call doesn't have to appear all
      on one line (which resulted in some large lines...).
@@ -12680,7 +12680,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Add a useful kludge to allow package maintainers to specify compiler and
      other platforms details on the command line without having to patch the
-     Configure script everytime: One now can use ``perl Configure
+     Configure script every time: One now can use ``perl Configure
      <id>:<details>'', i.e. platform ids are allowed to have details appended
      to them (separated by colons). This is treated as there would be a static
      pre-configured entry in Configure's %table under key <id> with value

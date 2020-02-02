@@ -160,7 +160,7 @@ about what is being done.
 For example, identifying the field names when parsing a complicated
 data structure.
 OPENSSL_mem_debug_push() (which calls CRYPTO_mem_debug_push())
-attachs an identifying string to the allocation stack.
+attaches an identifying string to the allocation stack.
 This must be a global or other static string; it is not copied.
 OPENSSL_mem_debug_pop() removes identifying state from the stack.
 

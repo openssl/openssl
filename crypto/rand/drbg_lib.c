@@ -1044,7 +1044,7 @@ static int drbg_add(const void *buf, int num, double randomness)
         return ret;
 #else
         /*
-         * If an os entropy source is avaible then we declare the buffer content
+         * If an os entropy source is available then we declare the buffer content
          * as additional data by setting randomness to zero and trigger a regular
          * reseeding.
          */

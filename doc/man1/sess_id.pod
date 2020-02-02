@@ -93,7 +93,7 @@ Typical output:
      Timeout   : 300 (sec)
      Verify return code 0 (ok)
 
-Theses are described below in more detail.
+These are described below in more detail.
 
 =over 4
 
