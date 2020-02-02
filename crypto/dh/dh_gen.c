@@ -54,7 +54,7 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
  * for 3, p mod 12 == 11
  * for 5, p mod 60 == 59
  *
- * However for compatibilty with previous versions we use:
+ * However for compatibility with previous versions we use:
  * for 2, p mod 24 == 11
  * for 5, p mod 60 == 23
  */

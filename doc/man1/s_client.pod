@@ -335,7 +335,7 @@ at a positive depth or else "matched EE certificate" at depth 0.
 
 Use one or more times to specify the RRDATA fields of the DANE TLSA
 RRset associated with the target service.  The B<rrdata> value is
-specied in "presentation form", that is four whitespace separated
+specified in "presentation form", that is four whitespace separated
 fields that specify the usage, selector, matching type and associated
 data, with the last of these encoded in hexadecimal.  Optional
 whitespace is ignored in the associated data field.  For example:
