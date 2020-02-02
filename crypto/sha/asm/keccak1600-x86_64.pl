@@ -44,7 +44,7 @@
 # Ryzen			8.8
 #
 # (*)	Corresponds to SHA3-256. Improvement over compiler-generate
-#	varies a lot, most commont coefficient is 15% in comparison to
+#	varies a lot, most common coefficient is 15% in comparison to
 #	gcc-5.x, 50% for gcc-4.x, 90% for gcc-3.x.
 # (**)	Sandy Bridge has broken rotate instruction. Performance can be
 #	improved by 14% by replacing rotates with double-precision

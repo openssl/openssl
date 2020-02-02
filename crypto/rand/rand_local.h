@@ -99,7 +99,7 @@
  * Typically, the DRBGs will set a minimum larger than this so optimal
  * allocation ought to take place (for full quality seed material).
  *
- * The normal value has been chosed by noticing that the rand_drbg_get_nonce
+ * The normal value has been chosen by noticing that the rand_drbg_get_nonce
  * function is usually the largest of the built in allocation (twenty four
  * bytes and then appending another sixteen bytes).  This means the buffer ends
  * with 40 bytes.  The value of forty eight is comfortably above this which

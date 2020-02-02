@@ -38,17 +38,17 @@ sub mul_add_c
 
 	&mul("edx");
 	&add($c0,"eax");
-	 &mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 0;	# laod next a
+	 &mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 0;	# load next a
 	 &mov("eax",&wparam(0)) if $pos > 0;			# load r[]
 	 ###
 	&adc($c1,"edx");
-	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 0;	# laod next b
-	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 1;	# laod next b
+	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 0;	# load next b
+	 &mov("edx",&DWP(($nb)*4,$b,"",0)) if $pos == 1;	# load next b
 	 ###
 	&adc($c2,0);
 	 # is pos > 1, it means it is the last loop
 	 &mov(&DWP($i*4,"eax","",0),$c0) if $pos > 0;		# save r[];
-	&mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 1;		# laod next a
+	&mov("eax",&DWP(($na)*4,$a,"",0)) if $pos == 1;		# load next a
 	}
 
 sub sqr_add_c

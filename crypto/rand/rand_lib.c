@@ -697,7 +697,7 @@ int rand_pool_add(RAND_POOL *pool,
  * is returned without producing an error message.
  *
  * After updating the buffer, rand_pool_add_end() needs to be called
- * to finish the udpate operation (see next comment).
+ * to finish the update operation (see next comment).
  */
 unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
 {
