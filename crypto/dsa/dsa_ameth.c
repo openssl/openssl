@@ -511,48 +511,44 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.dsa->dirty_cnt;
 }
 
-static void *dsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                int want_domainparams)
+static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                              EVP_KEYMGMT *to_keymgmt)
 {
-    DSA *dsa = pk->pkey.dsa;
+    DSA *dsa = from->pkey.dsa;
     OSSL_PARAM_BLD tmpl;
     const BIGNUM *p = DSA_get0_p(dsa), *g = DSA_get0_g(dsa);
     const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
     const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
     OSSL_PARAM *params;
-    void *provdata = NULL;
+    int rv;
 
     if (p == NULL || q == NULL || g == NULL)
-        return NULL;
+        return 0;
 
     ossl_param_bld_init(&tmpl);
     if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
-        return NULL;
-
-    if (!want_domainparams) {
-        /* A key must at least have a public part. */
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
-                                    pub_key))
-            return NULL;
-
-        if (priv_key != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY,
-                                        priv_key))
-                return NULL;
-        }
+        return 0;
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PUB_KEY,
+                                pub_key))
+        return 0;
+    if (priv_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DSA_PRIV_KEY,
+                                    priv_key))
+            return 0;
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
 
     /* We export, the provider imports */
-    provdata = want_domainparams
-        ? evp_keymgmt_importdomparams(keymgmt, params)
-        : evp_keymgmt_importkey(keymgmt, params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
+                            params);
 
     ossl_param_bld_free(params);
-    return provdata;
+
+    return rv;
 }
 
 /* NB these are sorted in pkey_id order, lowest first */

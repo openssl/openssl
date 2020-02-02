@@ -10,8 +10,7 @@ evp_pkey_make_provided - internal EVP_PKEY support functions for providers
  #include "evp_local.h"
 
  void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                              EVP_KEYMGMT **keymgmt, const char *propquery,
-                              int domainparams);
+                              EVP_KEYMGMT **keymgmt, const char *propquery);
 
 =head1 DESCRIPTION
 
@@ -24,8 +23,6 @@ used for exporting.  If not (I<*keymgmt> is NULL), then this function will
 fetch an B<EVP_KEYMGMT> implicitly, using I<propquery> as property query string.
 As output from this function, I<*keymgmt> will be assigned the B<EVP_KEYMGMT>
 that was used, if the export was successful, otherwise it will be assigned NULL.
-I<domainparams> decides if I<pk> should be considered domain parameters or the
-actual key.
 
 =head1 RETURN VALUES
 

@@ -97,13 +97,6 @@ struct selected_serializer_st {
     const char *propquery;
 
     /*
-     * When selecting serializers, we need to check the intended use.
-     * This is governed by the |domainparams| flag in the EVP_PKEY,
-     * we must just make sure to filter on 'type=domainparams' accordingly.
-     */
-    int want_domainparams;
-
-    /*
      * Serializers offer two functions, one that handles object data in
      * the form of a OSSL_PARAM array, and one that directly handles a
      * provider side object.  The latter requires that the serializer
@@ -122,36 +115,12 @@ static void select_serializer(const char *name, void *data)
 {
     struct selected_serializer_st *d = data;
     OSSL_SERIALIZER *s = NULL;
-    OSSL_PROPERTY_LIST *check =
-        d->want_domainparams
-        ? ossl_parse_query(d->libctx, "type=domainparams")
-        : NULL;
 
     /* No need to look further if we already have the more desirable option */
     if (d->desired != NULL)
         return;
 
     if ((s = OSSL_SERIALIZER_fetch(d->libctx, name, d->propquery)) != NULL) {
-        /*
-         * Extra check if domain parameters are explicitly specified:
-         * only accept serializers that have the "type=domainparams"
-         * property.
-         *
-         * For data that isn't marked as domain parameters, a domain
-         * parameters serializer is still acceptable, because a key
-         * may hold domain parameters too.
-         */
-        if (d->want_domainparams) {
-            OSSL_PROPERTY_LIST *current_props =
-                ossl_parse_property(d->libctx, OSSL_SERIALIZER_properties(s));
-            int check_cnt = ossl_property_match_count(check, current_props);
-
-            if (check_cnt == 0) {
-                OSSL_SERIALIZER_free(s);
-                return;
-            }
-        }
-
         if (d->first == NULL && s->serialize_data != NULL) {
             d->first = s;
         } else if (OSSL_SERIALIZER_provider(s) == d->desired_provider
@@ -298,8 +267,7 @@ static int serializer_write_cb(const OSSL_PARAM params[], void *arg)
 static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
 {
     const EVP_PKEY *pkey = ctx->object;
-    void *provdata = pkey->pkeys[0].provdata;
-    int domainparams = pkey->pkeys[0].domainparams;
+    void *keydata = pkey->pkeys[0].keydata;
     EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
 
     /*
@@ -319,15 +287,11 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
         write_data.ctx = ctx;
         write_data.out = out;
 
-        if (domainparams)
-            return evp_keymgmt_exportdomparams(keymgmt, provdata,
-                                               serializer_write_cb,
-                                               &write_data);
-        return evp_keymgmt_exportkey(keymgmt, provdata,
-                                     serializer_write_cb, &write_data);
+        return evp_keymgmt_export(keymgmt, keydata, ctx->selection,
+                                  &serializer_write_cb, &write_data);
     }
 
-    return ctx->ser->serialize_object(ctx->serctx, provdata, out,
+    return ctx->ser->serialize_object(ctx->serctx, keydata, out,
                                       serializer_passphrase_out_cb, ctx);
 }
 
@@ -343,6 +307,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
     OSSL_SERIALIZER_CTX *ctx = NULL;
     OSSL_SERIALIZER *ser = NULL;
     EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
 
     if (!ossl_assert(pkey != NULL && propquery != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
@@ -353,12 +318,14 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(keymgmt);
         OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
+        OSSL_PROPERTY_LIST *check =
+            ossl_parse_query(libctx, "type=parameters");
+        OSSL_PROPERTY_LIST *current_props = NULL;
 
         memset(&sel_data, 0, sizeof(sel_data));
         sel_data.libctx = libctx;
         sel_data.desired_provider = desired_prov;
         sel_data.propquery = propquery;
-        sel_data.want_domainparams = pkey->pkeys[0].domainparams;
         EVP_KEYMGMT_names_do_all(keymgmt, select_serializer, &sel_data);
 
         if (sel_data.desired != NULL) {
@@ -370,6 +337,14 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         }
         OSSL_SERIALIZER_free(sel_data.first);
         OSSL_SERIALIZER_free(sel_data.desired);
+
+        current_props =
+            ossl_parse_property(libctx, OSSL_SERIALIZER_properties(ser));
+        if (ossl_property_match_count(check, current_props) > 0)
+            selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+
+        ossl_property_free(current_props);
+        ossl_property_free(check);
     }
 
     ctx = OSSL_SERIALIZER_CTX_new(ser); /* refcnt(ser)++ */
@@ -377,6 +352,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
 
     if (ctx != NULL) {
         /* Setup for OSSL_SERIALIZE_to_bio() */
+        ctx->selection = selection;
         ctx->object = pkey;
         ctx->do_output = serializer_EVP_PKEY_to_bio;
     }

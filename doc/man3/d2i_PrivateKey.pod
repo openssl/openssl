@@ -36,7 +36,7 @@ use any key specific format or PKCS#8 unencrypted PrivateKeyInfo format. The
 B<type> parameter should be a public key algorithm constant such as
 B<EVP_PKEY_RSA>. An error occurs if the decoded key does not match B<type>.
 d2i_PublicKey() does the same for public keys.
-d2i_KeyParams() does the same for domain parameter keys.
+d2i_KeyParams() does the same for key parameters.
 
 d2i_AutoPrivateKey() is similar to d2i_PrivateKey() except it attempts to
 automatically detect the private key format.
@@ -44,7 +44,7 @@ automatically detect the private key format.
 i2d_PrivateKey() encodes B<key>. It uses a key specific format or, if none is
 defined for that key type, PKCS#8 unencrypted PrivateKeyInfo format.
 i2d_PublicKey() does the same for public keys.
-i2d_KeyParams() does the same for domain parameter keys.
+i2d_KeyParams() does the same for key parameters.
 These functions are similar to the d2i_X509() functions; see L<d2i_X509(3)>.
 
 =head1 NOTES

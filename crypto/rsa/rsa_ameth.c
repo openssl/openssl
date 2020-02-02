@@ -1074,40 +1074,42 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                int want_domainparams)
+static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                              EVP_KEYMGMT *to_keymgmt)
 {
-    RSA *rsa = pk->pkey.rsa;
+    RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD tmpl;
     const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
     const BIGNUM *d = RSA_get0_d(rsa);
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
     int numprimes = 0, numexps = 0, numcoeffs = 0;
     OSSL_PARAM *params = NULL;
-    void *provkey = NULL;
-
-    /*
-     * There are no domain parameters for RSA keys, or rather, they are
-     * included in the key data itself.
-     */
-    if (want_domainparams)
-        goto err;
-
-    /* Get all the primes and CRT params */
-    if ((primes = sk_BIGNUM_const_new_null()) == NULL
-        || (exps = sk_BIGNUM_const_new_null()) == NULL
-        || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
-        goto err;
-
-    if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
-        goto err;
+    int rv = 0;
 
     /* Public parameters must always be present */
     if (n == NULL || e == NULL)
         goto err;
 
+    ossl_param_bld_init(&tmpl);
+
+    /* |e| and |n| are always present */
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+        goto err;
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n))
+        goto err;
+
     if (d != NULL) {
-        /* It's a private key, so we should have everything else too */
+        int i;
+
+        /* Get all the primes and CRT params */
+        if ((primes = sk_BIGNUM_const_new_null()) == NULL
+            || (exps = sk_BIGNUM_const_new_null()) == NULL
+            || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
+            goto err;
+
+        if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
+            goto err;
+
         numprimes = sk_BIGNUM_const_num(primes);
         numexps = sk_BIGNUM_const_num(exps);
         numcoeffs = sk_BIGNUM_const_num(coeffs);
@@ -1120,15 +1122,6 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                          + numprimes + numexps + numcoeffs
                          <= OSSL_PARAM_BLD_MAX))
             goto err;
-    }
-
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
-        goto err;
-
-    if (d != NULL) {
-        int i;
 
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
@@ -1162,14 +1155,15 @@ static void *rsa_pkey_export_to(const EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
         goto err;
 
     /* We export, the provider imports */
-    provkey = evp_keymgmt_importkey(keymgmt, params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
+                            params);
 
  err:
     sk_BIGNUM_const_free(primes);
     sk_BIGNUM_const_free(exps);
     sk_BIGNUM_const_free(coeffs);
     ossl_param_bld_free(params);
-    return provkey;
+    return rv;
 }
 
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {

@@ -67,7 +67,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     /* Ensure that the key is provided.  If not, go legacy */
     tmp_keymgmt = locpctx->keymgmt;
     provkey = evp_pkey_make_provided(locpctx->pkey, locpctx->libctx,
-                                     &tmp_keymgmt, locpctx->propquery, 0);
+                                     &tmp_keymgmt, locpctx->propquery);
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {

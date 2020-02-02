@@ -345,7 +345,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     /* Ensure that the key is provided.  If not, go legacy */
     tmp_keymgmt = ctx->keymgmt;
     provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
-                                     &tmp_keymgmt, ctx->propquery, 0);
+                                     &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {

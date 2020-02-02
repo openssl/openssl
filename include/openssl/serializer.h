@@ -87,12 +87,12 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
  */
 # define OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ "format=pem,type=public"
 # define OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ "format=pem,type=private"
-# define OSSL_SERIALIZER_Parameters_TO_PEM_PQ "format=pem,type=domainparams"
+# define OSSL_SERIALIZER_Parameters_TO_PEM_PQ "format=pem,type=parameters"
 
 /* Corresponding macros for text output */
 # define OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ "format=text,type=public"
 # define OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ "format=text,type=private"
-# define OSSL_SERIALIZER_Parameters_TO_TEXT_PQ "format=text,type=domainparams"
+# define OSSL_SERIALIZER_Parameters_TO_TEXT_PQ "format=text,type=parameters"
 
 # ifdef __cplusplus
 }

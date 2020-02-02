@@ -18,7 +18,7 @@ EVP_PKEY_private_check, EVP_PKEY_pairwise_check
 
 =head1 DESCRIPTION
 
-EVP_PKEY_param_check() validates the domain parameters component of the key
+EVP_PKEY_param_check() validates the parameters component of the key
 given by B<ctx>.
 
 EVP_PKEY_public_check() validates the public component of the key given by B<ctx>.
