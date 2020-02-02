@@ -662,10 +662,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 0;
     }
 
-    if (ctx->digest->prov == NULL
-        && (ctx->pctx == NULL
-            || (ctx->pctx->operation != EVP_PKEY_OP_VERIFYCTX
-                && ctx->pctx->operation != EVP_PKEY_OP_SIGNCTX)))
+    if (ctx->digest->prov == NULL)
         goto legacy;
 
     switch (cmd) {
