@@ -178,10 +178,8 @@ DEPRECATEDIN_3_0(int DSA_print_fp(FILE *bp, const DSA *x, int off))
 /*
  * Convert DSA structure (key or just parameters) into DH structure (be
  * careful to avoid small subgroup attacks when using this!)
- *
- * TODO(3.0): figure out how to remove this monstrosity
  */
-DH *DSA_dup_DH(const DSA *r);
+DEPRECATEDIN_3_0(DH *DSA_dup_DH(const DSA *r))
 #  endif
 
 #  define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \

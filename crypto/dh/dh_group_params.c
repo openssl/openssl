@@ -9,6 +9,12 @@
 
 /* DH parameters from RFC7919 and RFC3526 */
 
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "dh_local.h"

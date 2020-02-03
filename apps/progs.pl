@@ -92,7 +92,6 @@ EOF
 
     my %cmd_disabler = (
         ciphers  => "sock",
-        gendh    => "dh",
         pkcs12   => "des",
     );
     my %cmd_deprecated = (

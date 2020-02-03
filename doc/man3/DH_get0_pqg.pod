@@ -26,6 +26,11 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
  void DH_clear_flags(DH *dh, int flags);
  int DH_test_flags(const DH *dh, int flags);
  void DH_set_flags(DH *dh, int flags);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  ENGINE *DH_get0_engine(DH *d);
  long DH_get_length(const DH *dh);
  int DH_set_length(DH *dh, long length);
@@ -78,12 +83,13 @@ zero if none of the flags are set. DH_clear_flags() clears the specified flags
 within the DH object.
 
 DH_get0_engine() returns a handle to the ENGINE that has been set for this DH
-object, or NULL if no such ENGINE has been set.
+object, or NULL if no such ENGINE has been set. This function is deprecated.
 
 The DH_get_length() and DH_set_length() functions get and set the optional
 length parameter associated with this DH object. If the length is nonzero then
 it is used, otherwise it is ignored. The B<length> parameter indicates the
-length of the secret exponent (private key) in bits.
+length of the secret exponent (private key) in bits. These functions are
+deprecated.
 
 =head1 NOTES
 
@@ -113,6 +119,9 @@ L<DH_new(3)>, L<DH_new(3)>, L<DH_generate_parameters(3)>, L<DH_generate_key(3)>,
 L<DH_set_method(3)>, L<DH_size(3)>, L<DH_meth_new(3)>
 
 =head1 HISTORY
+
+The DH_get0_engine(), DH_get_length() and DH_set_length() functions were
+deprecated in OpenSSL 3.0.
 
 The functions described here were added in OpenSSL 1.1.0.
 

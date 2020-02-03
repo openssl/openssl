@@ -329,8 +329,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST_NO_PRINT(ESS_CERT_ID_V2, d2i_ESS_CERT_ID_V2, i2d_ESS_CERT_ID_V2);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT_V2, d2i_ESS_SIGNING_CERT_V2, i2d_ESS_SIGNING_CERT_V2);
 #ifndef OPENSSL_NO_DH
-    DO_TEST(DH, d2i_DHparams, i2d_DHparams, DHparams_print);
-    DO_TEST(DH, d2i_DHxparams, i2d_DHxparams, DHparams_print);
+    DO_TEST_NO_PRINT(DH, d2i_DHparams, i2d_DHparams);
+    DO_TEST_NO_PRINT(DH, d2i_DHxparams, i2d_DHxparams);
 #endif
 #ifndef OPENSSL_NO_DSA
     DO_TEST_NO_PRINT(DSA_SIG, d2i_DSA_SIG, i2d_DSA_SIG);

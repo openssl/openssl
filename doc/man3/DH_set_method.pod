@@ -9,6 +9,10 @@ DH_set_method, DH_new_method, DH_OpenSSL - select DH method
 
  #include <openssl/dh.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void DH_set_default_method(const DH_METHOD *meth);
 
  const DH_METHOD *DH_get_default_method(void);
@@ -20,6 +24,9 @@ DH_set_method, DH_new_method, DH_OpenSSL - select DH method
  const DH_METHOD *DH_OpenSSL(void);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the provider APIs.
 
 A B<DH_METHOD> specifies the functions that OpenSSL uses for Diffie-Hellman
 operations. By modifying the method, alternative implementations
@@ -75,6 +82,10 @@ returns a pointer to the newly allocated structure.
 =head1 SEE ALSO
 
 L<DH_new(3)>, L<DH_new(3)>, L<DH_meth_new(3)>
+
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

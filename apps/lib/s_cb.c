@@ -1434,7 +1434,20 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", DH_bits(dh));
+            EVP_PKEY *pkey = EVP_PKEY_new();
+            int fail = 1;
+
+            if (pkey != NULL) {
+                if (EVP_PKEY_set1_DH(pkey, dh)) {
+                    BIO_printf(sdb->out, "%d", EVP_PKEY_bits(pkey));
+                    fail = 0;
+                }
+
+                EVP_PKEY_free(pkey);
+            }
+            if (fail)
+                BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x",
+                           op);
             break;
         }
 #endif

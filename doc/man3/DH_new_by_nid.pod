@@ -8,6 +8,11 @@ DH_new_by_nid, DH_get_nid - get or find DH named parameters
 
  #include <openssl/dh.h>
  DH *DH_new_by_nid(int nid);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int *DH_get_nid(DH *dh);
 
 =head1 DESCRIPTION
@@ -18,10 +23,9 @@ B<NID_ffdhe4096>, B<NID_ffdhe6144>, B<NID_ffdhe8192>,
 B<NID_modp_1536>, B<NID_modp_2048>, B<NID_modp_3072>,
 B<NID_modp_4096>, B<NID_modp_6144> or B<NID_modp_8192>.
 
-
 DH_get_nid() determines if the parameters contained in B<dh> match
 any named set. It returns the NID corresponding to the matching parameters or
-B<NID_undef> if there is no match.
+B<NID_undef> if there is no match. This function is deprecated.
 
 =head1 RETURN VALUES
 
@@ -29,6 +33,10 @@ DH_new_by_nid() returns a set of DH parameters or B<NULL> if an error occurred.
 
 DH_get_nid() returns the NID of the matching set of parameters or
 B<NID_undef> if there is no match.
+
+=head1 HISTORY
+
+The DH_get_nid() function was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
