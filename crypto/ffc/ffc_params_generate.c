@@ -127,13 +127,13 @@ static int generate_canonical_g(BN_CTX *ctx, BN_MONT_CTX *mont,
         md[0] = (unsigned char)(gindex & 0xff);
         md[1] = (unsigned char)((counter >> 8) & 0xff);
         md[2] = (unsigned char)(counter & 0xff);
-        if (!(EVP_DigestInit_ex(mctx, evpmd, NULL)
-                && EVP_DigestUpdate(mctx, seed, seedlen)
-                && EVP_DigestUpdate(mctx, ggen, sizeof(ggen))
-                && EVP_DigestUpdate(mctx, md, 3)
-                && EVP_DigestFinal_ex(mctx, md, NULL)
-                && (BN_bin2bn(md, mdsize, tmp) != NULL)
-                && BN_mod_exp_mont(g, tmp, e, p, ctx, mont)))
+        if (!EVP_DigestInit_ex(mctx, evpmd, NULL)
+                || !EVP_DigestUpdate(mctx, seed, seedlen)
+                || !EVP_DigestUpdate(mctx, ggen, sizeof(ggen))
+                || !EVP_DigestUpdate(mctx, md, 3)
+                || !EVP_DigestFinal_ex(mctx, md, NULL)
+                || (BN_bin2bn(md, mdsize, tmp) == NULL)
+                || !BN_mod_exp_mont(g, tmp, e, p, ctx, mont))
                     return 0;
         /*
          * A.2.3 Step (10)
@@ -204,15 +204,15 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
              * A.1.1.3 Step (13.1)
              * tmp = V(j) = Hash((seed + offset + j) % 2^seedlen)
              */
-            if (!(EVP_Digest(buf, buf_len, md, NULL, evpmd, NULL)
-                    && (BN_bin2bn(md, mdsize, tmp) != NULL)
+            if (!EVP_Digest(buf, buf_len, md, NULL, evpmd, NULL)
+                    || (BN_bin2bn(md, mdsize, tmp) == NULL)
                     /*
                      * A.1.1.2 Step (11.2)
                      * A.1.1.3 Step (13.2)
                      * W += V(j) * 2^(outlen * j)
                      */
-                    && BN_lshift(tmp, tmp, (mdsize << 3) * j)
-                    && BN_add(W, W, tmp)))
+                    || !BN_lshift(tmp, tmp, (mdsize << 3) * j)
+                    || !BN_add(W, W, tmp))
                 goto err;
         }
 
@@ -221,23 +221,23 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
          * A.1.1.3 Step (13.3)
          * X = W + 2^(L-1) where W < 2^(L-1)
          */
-        if (!(BN_mask_bits(W, L - 1)
-                && BN_copy(X, W)
-                && BN_add(X, X, test)
+        if (!BN_mask_bits(W, L - 1)
+                || !BN_copy(X, W)
+                || !BN_add(X, X, test)
                 /*
                  * A.1.1.2 Step (11.4) AND
                  * A.1.1.3 Step (13.4)
                  * c = X mod 2q
                  */
-                && BN_lshift1(tmp, q)
-                && BN_mod(c, X, tmp, ctx)
+                || !BN_lshift1(tmp, q)
+                || !BN_mod(c, X, tmp, ctx)
                 /*
                  * A.1.1.2 Step (11.5) AND
                  * A.1.1.3 Step (13.5)
                  * p = X - (c - 1)
                  */
-                && BN_sub(tmp, c, BN_value_one())
-                && BN_sub(p, X, tmp)))
+                || !BN_sub(tmp, c, BN_value_one())
+                || !BN_sub(p, X, tmp))
             goto err;
 
         /*
@@ -255,8 +255,11 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
              */
             r = BN_check_prime(p, ctx, cb);
             /* A.1.1.2 Step (11.8) : Return if p is prime */
-            if (r > 0)
-                goto found;
+            if (r > 0) {
+                *counter = i;
+                ret = 1;   /* return success */
+                goto err;
+            }
             if (r != 0)
                 goto err;
         }
@@ -265,11 +268,6 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
     /* No prime P found */
     ret = 0;
     *res |= FFC_CHECK_P_NOT_PRIME;
-    goto err;
-found:
-    *counter = i;
-    ret = 1;
-    goto err;
 err:
     BN_CTX_end(ctx);
     return ret;
@@ -294,7 +292,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
         if (generate_seed
-            && RAND_bytes_ex(libctx, seed, (int)seedlen) < 0)
+                && RAND_bytes_ex(libctx, seed, (int)seedlen) < 0)
             goto err;
         /*
          * A.1.1.2 Step (6) AND
@@ -414,7 +412,7 @@ err:
  * The same code is used for validation (when validate_flags != 0)
  *
  * The primes p & q are generated/validated using:
- *   A.1.1.2 Generation or probable primes p & q using approved hash.
+ *   A.1.1.2 Generation of probable primes p & q using approved hash.
  *   A.1.1.3 Validation of generated probable primes
  *
  * Generator 'g' has 2 types in FIPS 186-4:
@@ -985,11 +983,10 @@ int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                           0, res, cb);
 }
 
-/* TODO - Add this in another PR -  just add a stub for now */
+/* TODO(3.0) - Add this in another PR -  just add a stub for now */
 int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
                                        const BIGNUM *p, const BIGNUM *q,
                                        const BIGNUM *g, BIGNUM *tmp, int *ret)
 {
     return 1;
 }
-

@@ -134,13 +134,6 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                const unsigned char *seed, int seed_len,
                                int *counter_ret, unsigned long *h_ret,
                                BN_GENCB *cb);
-int DSA_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
-                                int pbits, int qbits, int gindex,
-                                BN_GENCB *cb);
-int DSA_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
-                               const unsigned char *seed_in, int seed_len,
-                               int *counter_ret, unsigned long *h_ret,
-                               BN_GENCB *cb);
 
 int DSA_generate_key(DSA *a);
 

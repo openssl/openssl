@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dh.h>
+#include "crypto/dh.h"
 #include "dh_local.h"
 
 #ifndef FIPS_MODE
@@ -23,7 +23,11 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
 #endif /* FIPS_MODE */
 
-int DH_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
+/*
+ * TODO(3.0): keygen should be able to use this method to do a FIPS186-4 style
+ * paramgen.
+ */
+int dh_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
                                int qbits, int gindex, BN_GENCB *cb)
 {
     int ret, res;
@@ -46,9 +50,9 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
 {
 #ifdef FIPS_MODE
     /*
-     * Just chose an approved safe prime group.
+     * Just choose an approved safe prime group.
      * The alternative to this is to generate FIPS186-4 domain parameters i.e.
-     * return DH_generate_ffc_parameters(ret, prime_len, -1, -1, cb);
+     * return dh_generate_ffc_parameters(ret, prime_len, -1, -1, cb);
      * As the FIPS186-4 generated params are for backwards compatability,
      * the safe prime group should be used as the default.
      */

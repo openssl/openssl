@@ -9,6 +9,16 @@
 
 #include <openssl/dsa.h>
 
+
+int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
+                               const unsigned char *seed_in, int seed_len,
+                               int *counter_ret, unsigned long *h_ret,
+                               BN_GENCB *cb);
+
+int dsa_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
+                                int pbits, int qbits, int gindex,
+                                BN_GENCB *cb);
+
 int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int dsa_generate_key_ctx(OPENSSL_CTX *libctx, DSA *dsa);

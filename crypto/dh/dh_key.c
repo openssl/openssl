@@ -245,8 +245,8 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
             if (dh->params.q == NULL) {
                 /* secret exponent length */
                 l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
-                if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE,
-                                  BN_RAND_BOTTOM_ANY))
+                if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
+                                     BN_RAND_BOTTOM_ANY, ctx))
                     goto err;
                 /*
                  * We handle just one known case where g is a quadratic non-residue:

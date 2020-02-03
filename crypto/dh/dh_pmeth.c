@@ -24,7 +24,7 @@ typedef struct {
     /* Parameter gen parameters */
     int prime_len;
     int generator;
-    int use_dsa;
+    int paramgen_type;
     int subprime_len;
     int pad;
     /* message digest used for parameter generation */
@@ -89,7 +89,7 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->prime_len = sctx->prime_len;
     dctx->subprime_len = sctx->subprime_len;
     dctx->generator = sctx->generator;
-    dctx->use_dsa = sctx->use_dsa;
+    dctx->paramgen_type = sctx->paramgen_type;
     dctx->pad = sctx->pad;
     dctx->md = sctx->md;
     dctx->rfc5114_param = sctx->rfc5114_param;
@@ -121,7 +121,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN:
-        if (dctx->use_dsa == 0)
+        if (dctx->paramgen_type == DH_PARAMGEN_TYPE_GENERATOR)
             return -2;
         dctx->subprime_len = p1;
         return 1;
@@ -131,20 +131,20 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR:
-        if (dctx->use_dsa)
+        if (dctx->paramgen_type != DH_PARAMGEN_TYPE_GENERATOR)
             return -2;
         dctx->generator = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_TYPE:
 #ifdef OPENSSL_NO_DSA
-        if (p1 != 0)
+        if (p1 != DH_PARAMGEN_TYPE_GENERATOR)
             return -2;
 #else
         if (p1 < 0 || p1 > 2)
             return -2;
 #endif
-        dctx->use_dsa = p1;
+        dctx->paramgen_type = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_RFC5114:
@@ -282,7 +282,7 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
     int subprime_len = dctx->subprime_len;
     const EVP_MD *md = dctx->md;
 
-    if (dctx->use_dsa > 2)
+    if (dctx->paramgen_type > DH_PARAMGEN_TYPE_FIPS_186_4)
         return NULL;
     ret = DH_new();
     if (ret == NULL)
@@ -301,14 +301,17 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
             md = EVP_sha1();
     }
 # ifndef FIPS_MODE
-    if (dctx->use_dsa == 1)
-        rv = ffc_params_FIPS186_2_generate(libctx, &ret->params, FFC_PARAM_TYPE_DH,
+    if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
+        rv = ffc_params_FIPS186_2_generate(libctx, &ret->params,
+                                           FFC_PARAM_TYPE_DH,
                                            prime_len, subprime_len, md, &res,
                                            pcb);
     else
 # endif
-    if (dctx->use_dsa)
-        rv = ffc_params_FIPS186_4_generate(libctx, &ret->params, FFC_PARAM_TYPE_DH,
+    /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
+    if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
+        rv = ffc_params_FIPS186_4_generate(libctx, &ret->params,
+                                           FFC_PARAM_TYPE_DH,
                                            prime_len, subprime_len, md, &res,
                                            pcb);
     if (rv <= 0) {
@@ -367,9 +370,9 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
         evp_pkey_set_cb_translate(pcb, ctx);
     }
 # ifdef FIPS_MODE
-    dctx->use_dsa = 2;
+    dctx->paramgen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
 # endif /* FIPS_MODE */
-    if (dctx->use_dsa) {
+    if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2) {
         dh = ffc_params_generate(NULL, dctx, pcb);
         BN_GENCB_free(pcb);
         if (dh == NULL)

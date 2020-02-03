@@ -14,10 +14,10 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-#include <openssl/dsa.h>
+#include "crypto/dsa.h"
 #include "dsa_local.h"
 
-int DSA_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
+int dsa_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
                                 int pbits, int qbits, int gindex,
                                 BN_GENCB *cb)
 {
@@ -44,10 +44,10 @@ int DSA_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
     return ret;
 }
 
-int DSA_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
-                               const unsigned char *seed_in, int seed_len,
-                               int *counter_ret, unsigned long *h_ret,
-                               BN_GENCB *cb)
+int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
+                                const unsigned char *seed_in, int seed_len,
+                                int *counter_ret, unsigned long *h_ret,
+                                BN_GENCB *cb)
 {
 #ifndef FIPS_MODE
     if (dsa->meth->dsa_paramgen)
@@ -61,13 +61,12 @@ int DSA_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
 #ifndef FIPS_MODE
     /* The old code used FIPS 186-2 DSA Parameter generation */
     if (bits <= 1024 && seed_len == 20) {
-        if (!DSA_generate_ffc_parameters(libctx, dsa, 1, bits, 160, -1,
-                                         cb))
+        if (!dsa_generate_ffc_parameters(libctx, dsa, 1, bits, 160, -1, cb))
             return 0;
     } else
 #endif
     {
-        if (!DSA_generate_ffc_parameters(libctx, dsa, 2, bits, -1, -1, cb))
+        if (!dsa_generate_ffc_parameters(libctx, dsa, 2, bits, -1, -1, cb))
             return 0;
     }
 
@@ -83,7 +82,7 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                int *counter_ret, unsigned long *h_ret,
                                BN_GENCB *cb)
 {
-    return DSA_generate_parameters_ctx(NULL, dsa, bits,
+    return dsa_generate_parameters_ctx(NULL, dsa, bits,
                                        seed_in, seed_len,
                                        counter_ret, h_ret, cb);
 }
