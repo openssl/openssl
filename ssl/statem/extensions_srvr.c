@@ -705,7 +705,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
-        if ((s->s3.peer_tmp = ssl_generate_param_group(group_id)) == NULL) {
+        if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;

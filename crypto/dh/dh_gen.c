@@ -12,6 +12,12 @@
  * dh_depr.c as wrappers to these ones.  - Geoff
  */
 
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>

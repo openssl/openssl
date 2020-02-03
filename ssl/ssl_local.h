@@ -2605,7 +2605,7 @@ __owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
 __owur int tls_valid_group(SSL *s, uint16_t group_id, int version);
-__owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
+__owur EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id);
 #  ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);

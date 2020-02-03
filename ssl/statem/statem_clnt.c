@@ -2147,15 +2147,16 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     }
     bnpub_key = NULL;
 
-    if (!ssl_security(s, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh)) {
-        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_SKE_DHE,
-                 SSL_R_DH_KEY_TOO_SMALL);
-        goto err;
-    }
-
     if (EVP_PKEY_assign_DH(peer_tmp, dh) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
                  ERR_R_EVP_LIB);
+        goto err;
+    }
+
+    if (!ssl_security(s, SSL_SECOP_TMP_DH, EVP_PKEY_security_bits(peer_tmp),
+                      0, dh)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_SKE_DHE,
+                 SSL_R_DH_KEY_TOO_SMALL);
         goto err;
     }
 
@@ -2213,7 +2214,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    if ((s->s3.peer_tmp = ssl_generate_param_group(curve_id)) == NULL) {
+    if ((s->s3.peer_tmp = ssl_generate_param_group(s, curve_id)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
         return 0;
