@@ -227,8 +227,8 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
     }
 
     provdata =
-        evp_keymgmt_fromdata(*ppkey, ctx->keymgmt, params,
-                             ctx->operation == EVP_PKEY_OP_PARAMFROMDATA);
+        evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, params,
+                                  ctx->operation == EVP_PKEY_OP_PARAMFROMDATA);
 
     if (provdata == NULL)
         return 0;

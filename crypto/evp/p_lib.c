@@ -864,7 +864,7 @@ static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
-    evp_keymgmt_clear_pkey_cache(x);
+    evp_keymgmt_util_clear_pkey_cache(x);
 
     if (x->ameth && x->ameth->pkey_free) {
         x->ameth->pkey_free(x);
@@ -936,7 +936,7 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 
     if (tmp_keymgmt != NULL)
         provdata =
-            evp_keymgmt_export_to_provider(pk, tmp_keymgmt, domainparams);
+            evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt, domainparams);
 
     /*
      * If nothing was exported, |tmp_keymgmt| might point at a freed

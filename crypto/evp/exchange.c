@@ -293,7 +293,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey = evp_keymgmt_export_to_provider(peer, ctx->keymgmt, 0);
+    provkey = evp_keymgmt_util_export_to_provider(peer, ctx->keymgmt, 0);
     /* If export failed, legacy may be able to pick it up */
     if (provkey == NULL)
         goto legacy;
