@@ -20,9 +20,15 @@
 #include "prov/providercommon.h"
 #include "crypto/rsa.h"
 
-static OSSL_OP_keymgmt_importkey_fn rsa_importkey;
-static OSSL_OP_keymgmt_exportkey_fn rsa_exportkey;
-static OSSL_OP_keymgmt_get_key_params_fn rsa_get_key_params;
+static OSSL_OP_keymgmt_new_fn rsa_newdata;
+static OSSL_OP_keymgmt_free_fn rsa_freedata;
+static OSSL_OP_keymgmt_has_public_key_fn rsa_has_public;
+static OSSL_OP_keymgmt_has_public_key_fn rsa_has_private;
+static OSSL_OP_keymgmt_import_fn rsa_import;
+static OSSL_OP_keymgmt_import_types_fn rsa_import_types;
+static OSSL_OP_keymgmt_export_fn rsa_export;
+static OSSL_OP_keymgmt_export_types_fn rsa_export_types;
+static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
 static OSSL_OP_keymgmt_validate_public_fn rsa_validatekey_public;
 static OSSL_OP_keymgmt_validate_private_fn rsa_validatekey_private;
 static OSSL_OP_keymgmt_validate_pairwise_fn rsa_validatekey_pairwise;
@@ -162,30 +168,85 @@ static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *tmpl)
     return ret;
 }
 
-static void *rsa_importkey(void *provctx, const OSSL_PARAM params[])
+static void *rsa_newdata(void *provctx)
 {
-    RSA *rsa;
-
-    if ((rsa = RSA_new()) == NULL
-        || !params_to_key(rsa, params)) {
-        RSA_free(rsa);
-        rsa = NULL;
-    }
-    return rsa;
+    return RSA_new();
 }
 
-static int rsa_exportkey(void *key, OSSL_CALLBACK *param_callback, void *cbarg)
+static void rsa_freedata(void *keydata)
 {
-    RSA *rsa = key;
+    RSA_free(keydata);
+}
+
+static int rsa_has_public(void *keydata)
+{
+    RSA *rsa = keydata;
+
+    return (RSA_get0_n(rsa) != NULL && RSA_get0_e(rsa) != NULL);
+}
+
+static int rsa_has_private(void *keydata)
+{
+    RSA *rsa = keydata;
+
+    return (RSA_get0_d(rsa) != NULL && RSA_get0_e(rsa) != NULL);
+}
+
+static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
+{
+    RSA *rsa = keydata;
+
+    if (rsa == NULL)
+        return 0;
+
+    /* TODO(3.0) PSS and OAEP should bring on parameters */
+    /* If the caller wants domain parameters, we do nothing for the moment */
+    if (selection == OSSL_KEYMGMT_WANT_DOMPARAMS)
+        return 1;
+
+    /*
+     * TODO(3.0) The |selection| check is *currently* not necessary, but when
+     * domain parameters come in, it will be.
+     */
+    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
+        && !params_to_key(rsa, params))
+        return 0;
+
+    return 1;
+}
+
+static int rsa_export(void *keydata, int selection,
+                      OSSL_CALLBACK *param_callback, void *cbarg)
+{
+    RSA *rsa = keydata;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
     int ret;
 
-    ossl_param_bld_init(&tmpl);
-    if (rsa == NULL
-        || !key_to_params(rsa, &tmpl)
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+    if (rsa == NULL)
         return 0;
+
+    /* TODO(3.0) PSS and OAEP should bring on parameters */
+    /*
+     * If the caller wants domain parameters, we do nothing for the moment,
+     * not even call the callback.
+     */
+    if (selection == OSSL_KEYMGMT_WANT_DOMPARAMS)
+        return 1;
+
+    ossl_param_bld_init(&tmpl);
+
+    /*
+     * TODO(3.0) The |selection| check is *currently* not necessary, but when
+     * domain parameters come in, it will be.
+     */
+    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
+        && !key_to_params(rsa, &tmpl))
+        return 0;
+
+    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
+
     ret = param_callback(params, cbarg);
     ossl_param_bld_free(params);
     return ret;
@@ -242,17 +303,29 @@ static const OSSL_PARAM rsa_key_types[] = {
  * so we at least pretend to have some limits.
  */
 
-static const OSSL_PARAM *rsa_exportkey_types(void)
+static const OSSL_PARAM *rsa_export_types(int selection)
 {
-    return rsa_key_types;
+    switch (selection) {
+    case OSSL_KEYMGMT_WANT_BOTH:
+    case OSSL_KEYMGMT_WANT_KEY:
+        return rsa_key_types;
+    default:
+        return NULL;
+    }
 }
 
-static const OSSL_PARAM *rsa_importkey_types(void)
+static const OSSL_PARAM *rsa_import_types(int selection)
 {
-    return rsa_key_types;
+    switch (selection) {
+    case OSSL_KEYMGMT_WANT_BOTH:
+    case OSSL_KEYMGMT_WANT_KEY:
+        return rsa_key_types;
+    default:
+        return NULL;
+    }
 }
 
-static int rsa_get_key_params(void *key, OSSL_PARAM params[])
+static int rsa_get_params(void *key, OSSL_PARAM params[])
 {
     RSA *rsa = key;
     OSSL_PARAM *p;
@@ -291,34 +364,37 @@ static int rsa_get_key_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
-static int rsa_validatekey_public(void *key)
+static int rsa_validatekey_public(void *keydata)
 {
-    RSA *rsa = key;
+    RSA *rsa = keydata;
 
     return rsa_validate_public(rsa);
 }
 
-static int rsa_validatekey_private(void *key)
+static int rsa_validatekey_private(void *keydata)
 {
-    RSA *rsa = key;
+    RSA *rsa = keydata;
 
     return rsa_validate_private(rsa);
 }
 
-static int rsa_validatekey_pairwise(void *key)
+static int rsa_validatekey_pairwise(void *keydata)
 {
-    RSA *rsa = key;
+    RSA *rsa = keydata;
 
     return rsa_validate_pairwise(rsa);
 }
 
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
-    { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))rsa_importkey },
-    { OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES, (void (*)(void))rsa_importkey_types },
-    { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))rsa_exportkey },
-    { OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES, (void (*)(void))rsa_exportkey_types },
-    { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))RSA_free },
-    { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))rsa_get_key_params },
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
+    { OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY, (void (*)(void))rsa_has_public },
+    { OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY, (void (*)(void))rsa_has_private },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))rsa_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS,  (void (*) (void))rsa_get_params },
     { OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC,
           (void (*)(void))rsa_validatekey_public },
     { OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE,
