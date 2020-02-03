@@ -280,3 +280,153 @@ void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
     if (keymgmt->prov != NULL)
         evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
 }
+
+/*
+ * Internal API that interfaces with the method function pointers
+ */
+void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
+                                  const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->importdomparams(provctx, params);
+}
+
+void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
+                               const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->gendomparams(provctx, params);
+}
+
+void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
+                               void *provdomparams)
+{
+    keymgmt->freedomparams(provdomparams);
+}
+
+int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
+                                void *provdomparams,
+                                OSSL_CALLBACK *param_cb, void *cbarg)
+{
+    return keymgmt->exportdomparams(provdomparams, param_cb, cbarg);
+}
+
+const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->importdomparam_types();
+}
+
+/*
+ * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * be a caller...
+ */
+const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->exportdomparam_types();
+}
+
+int evp_keymgmt_get_domparam_params(const EVP_KEYMGMT *keymgmt,
+                                     void *provdomparams, OSSL_PARAM params[])
+{
+    if (keymgmt->get_domparam_params == NULL)
+        return 1;
+    return keymgmt->get_domparam_params(provdomparams, params);
+}
+
+const OSSL_PARAM *
+evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt)
+{
+    if (keymgmt->gettable_domparam_params == NULL)
+        return NULL;
+    return keymgmt->gettable_domparam_params();
+}
+
+
+void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
+                            const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->importkey(provctx, params);
+}
+
+void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
+                         const OSSL_PARAM params[])
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->genkey(provctx, domparams, params);
+}
+
+void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
+                          void *id, size_t idlen)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    return keymgmt->loadkey(provctx, id, idlen);
+}
+
+void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    keymgmt->freekey(provkey);
+}
+
+int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
+                          OSSL_CALLBACK *param_cb, void *cbarg)
+{
+    return keymgmt->exportkey(provkey, param_cb, cbarg);
+}
+
+const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->importkey_types();
+}
+
+/*
+ * TODO(v3.0) investigate if we need this function.  'openssl provider' may
+ * be a caller...
+ */
+const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->exportkey_types();
+}
+
+int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
+                               void *provkey, OSSL_PARAM params[])
+{
+    if (keymgmt->get_key_params == NULL)
+        return 1;
+    return keymgmt->get_key_params(provkey, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt)
+{
+    if (keymgmt->gettable_key_params == NULL)
+        return NULL;
+    return keymgmt->gettable_key_params();
+}
+
+int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    /* if domainparams are not supported - then pass */
+    if (keymgmt->validatedomparams == NULL)
+        return 1;
+    return keymgmt->validatedomparams(provkey);
+}
+
+int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validatepublic(provkey);
+}
+
+int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validateprivate(provkey);
+}
+
+int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *provkey)
+{
+    return keymgmt->validatepairwise(provkey);
+}

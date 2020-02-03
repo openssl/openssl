@@ -593,17 +593,22 @@ void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
-/* KEYMGMT helper functions */
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                     int domainparams);
-void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
-void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
-                            void *provdata, int domainparams);
-void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           const OSSL_PARAM params[], int domainparams);
+/*
+ * KEYMGMT utility functions
+ */
+void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
+                                          int domainparams);
+void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
+void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
+                                 EVP_KEYMGMT *keymgmt, void *provdata,
+                                 int domainparams);
+void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                const OSSL_PARAM params[], int domainparams);
 
 
-/* KEYMGMT provider interface functions */
+/*
+ * KEYMGMT provider interface functions
+ */
 void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
                                   const OSSL_PARAM params[]);
 void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
