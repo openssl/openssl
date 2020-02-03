@@ -145,7 +145,7 @@ static int test_pass_rsa(FIXTURE *fixture)
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
     EVP_PKEY *pk = NULL;
     EVP_KEYMGMT *km1 = NULL, *km2 = NULL;
-    void *provdata = NULL;
+    void *provkey = NULL;
     /*
      * 32-bit RSA key, extracted from this command,
      * executed with OpenSSL 1.0.2:
@@ -167,6 +167,7 @@ static int test_pass_rsa(FIXTURE *fixture)
         0                        /* Extra, should remain zero */
     };
     static unsigned long keydata[OSSL_NELEM(expected)] = { 0, };
+    int selection;
 
     if (!TEST_ptr(rsa = RSA_new()))
         goto err;
@@ -207,12 +208,14 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr_ne(km1, km2))
         goto err;
 
-    if (!TEST_ptr(evp_keymgmt_util_export_to_provider(pk, km1, 0))
-        || !TEST_ptr(provdata =
-                     evp_keymgmt_util_export_to_provider(pk, km2, 0)))
+    selection = OSSL_KEYMGMT_WANT_KEY;
+    if (!TEST_ptr(evp_keymgmt_util_export_to_provider(pk, km1, selection))
+        || !TEST_ptr(provkey =
+                     evp_keymgmt_util_export_to_provider(pk, km2, selection)))
         goto err;
 
-    if (!TEST_true(evp_keymgmt_exportkey(km2, provdata, &export_cb, keydata)))
+    if (!TEST_true(evp_keymgmt_export(km2, provkey, selection,
+                                      &export_cb, keydata)))
         goto err;
 
     /*
