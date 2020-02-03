@@ -45,12 +45,14 @@
      [Paul Dale]
 
   *) Over two thousand fixes were made to the documentation, including:
-     common options (such as -rand/-writerand, TLS version control, etc)
-     were refactored and point to newly-enhanced descriptions in openssl.pod,
-     documented all missing options, added a CI build target to make
-     sure all options are documented, have style conformance (with help
-     from Richard Levitte), documented many internals, and addressed all
-     internal broken L<> references.
+     - Common options (such as -rand/-writerand, TLS version control, etc)
+       were refactored and point to newly-enhanced descriptions in openssl.pod.
+     - Added style conformance for all options (with help from Richard Levitte),
+       documented all reported missing options, added a CI build to check
+       that all options are documented and that no unimplemented options
+       are documented.
+     - Documented some internals, such as all use of environment variables.
+     - Addressed all internal broken L<> references.
      [Rich Salz]
 
   *) All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
