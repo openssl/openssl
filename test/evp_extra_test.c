@@ -1263,11 +1263,14 @@ static int test_EVP_PKEY_CTX_get_set_params(void)
             || !TEST_ptr(p)
             || !TEST_ptr(q)
             || !TEST_ptr(g)
-            || !TEST_ptr(pub)
-            || !DSA_set0_pqg(dsa, p, q, g)
-        || !DSA_set0_key(dsa, pub, priv))
+            || !DSA_set0_pqg(dsa, p, q, g))
         goto err;
-    p = q = g = pub = priv = NULL;
+    p = q = g = NULL;
+    if (!TEST_ptr(pub)
+            || !TEST_ptr(priv)
+            || !DSA_set0_key(dsa, pub, priv))
+        goto err;
+    pub = priv = NULL;
 
     pkey = EVP_PKEY_new();
     if (!TEST_ptr(pkey)
