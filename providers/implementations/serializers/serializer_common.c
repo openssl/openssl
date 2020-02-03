@@ -112,12 +112,32 @@ static X509_PUBKEY *ossl_prov_pubkey_from_obj(const void *obj, int obj_nid,
     return xpk;
 }
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_importkey(const OSSL_DISPATCH *fns)
+OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns)
 {
     /* Pilfer the keymgmt dispatch table */
     for (; fns->function_id != 0; fns++)
-        if (fns->function_id == OSSL_FUNC_KEYMGMT_IMPORTKEY)
-            return OSSL_get_OP_keymgmt_importkey(fns);
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_NEW)
+            return OSSL_get_OP_keymgmt_new(fns);
+
+    return NULL;
+}
+
+OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns)
+{
+    /* Pilfer the keymgmt dispatch table */
+    for (; fns->function_id != 0; fns++)
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_FREE)
+            return OSSL_get_OP_keymgmt_free(fns);
+
+    return NULL;
+}
+
+OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns)
+{
+    /* Pilfer the keymgmt dispatch table */
+    for (; fns->function_id != 0; fns++)
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_IMPORT)
+            return OSSL_get_OP_keymgmt_import(fns);
 
     return NULL;
 }

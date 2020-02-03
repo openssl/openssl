@@ -45,15 +45,20 @@ static void dsa_pub_freectx(void *ctx)
 static int dsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_der(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_der(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
@@ -82,15 +87,20 @@ static int dsa_pub_der(void *ctx, void *dsa, BIO *out,
 static int dsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_pem(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_pem(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
@@ -106,15 +116,20 @@ static int dsa_pub_pem(void *ctx, void *dsa, BIO *out,
 static int dsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_print(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_print(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }

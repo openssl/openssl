@@ -115,15 +115,19 @@ static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx->provctx, params);
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_priv_der(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        if ((dsa = dsa_new(ctx->provctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_priv_der(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
@@ -147,15 +151,19 @@ static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params);
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pem_priv(ctx->provctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        if ((dsa = dsa_new(ctx->provctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pem_priv(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
@@ -186,19 +194,24 @@ static void dsa_print_freectx(void *ctx)
 {
 }
 
-static int dsa_priv_print_data(void *provctx, const OSSL_PARAM params[],
+static int dsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
                                BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    struct dsa_priv_ctx_st *ctx = vctx;
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(provctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_priv_print(provctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        if ((dsa = dsa_new(ctx->provctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_priv_print(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }

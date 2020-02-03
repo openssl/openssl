@@ -143,15 +143,19 @@ static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
-    if (rsa_importkey != NULL) {
-        RSA *rsa = rsa_importkey(ctx->provctx, params);
+    if (rsa_import != NULL) {
+        RSA *rsa;
 
-        ok = rsa_priv_der(vctx, rsa, out, cb, cbarg);
-        RSA_free(rsa);
+        if ((rsa = rsa_new(ctx->provctx)) != NULL
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_priv_der(ctx, rsa, out, cb, cbarg))
+            ok = 1;
+        rsa_free(rsa);
     }
     return ok;
 }
@@ -178,15 +182,19 @@ static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
-    if (rsa_importkey != NULL) {
-        RSA *rsa = rsa_importkey(ctx, params);
+    if (rsa_import != NULL) {
+        RSA *rsa;
 
-        ok = rsa_pem_priv(vctx, rsa, out, cb, cbarg);
-        RSA_free(rsa);
+        if ((rsa = rsa_new(ctx->provctx)) != NULL
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_pem_priv(ctx, rsa, out, cb, cbarg))
+            ok = 1;
+        rsa_free(rsa);
     }
     return ok;
 }
@@ -220,19 +228,24 @@ static void rsa_print_freectx(void *ctx)
 {
 }
 
-static int rsa_priv_print_data(void *provctx, const OSSL_PARAM params[],
+static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
                                BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *rsa_importkey =
-        ossl_prov_get_rsa_importkey();
+    struct rsa_priv_ctx_st *ctx = vctx;
+    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
-    if (rsa_importkey != NULL) {
-        RSA *rsa = rsa_importkey(provctx, params); /* ctx == provctx */
+    if (rsa_import != NULL) {
+        RSA *rsa;
 
-        ok = rsa_priv_print(provctx, rsa, out, cb, cbarg);
-        RSA_free(rsa);
+        if ((rsa = rsa_new(ctx->provctx)) != NULL
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_priv_print(ctx, rsa, out, cb, cbarg))
+            ok = 1;
+        rsa_free(rsa);
     }
     return ok;
 }
