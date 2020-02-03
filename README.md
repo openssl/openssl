@@ -38,6 +38,7 @@ This fork is currently in sync with the [OpenSSL\_1\_1\_1d tag](https://github.c
 - hybrid (quantum-safe + elliptic curve) key exchange in TLS 1.3
 - quantum-safe authentication in TLS 1.3
 - hybrid (quantum-safe + elliptic curve) authentication in TLS 1.3
+- CMS support (sign & verify using any of the [supported quantum-safe signature algorithms](#authentication))
 
 For more information, see the [release notes](RELEASE.md).
 
@@ -212,6 +213,21 @@ In another terminal window, you can run a TLS client requesting one of the suppo
 
 	apps/openssl s_client -curves <KEX> -CAfile <SIG>_CA.crt -connect localhost:4433
 
+#### CMS demo
+
+OpenSSL has facilities to perform signing operations pursuant [RFC 5652](https://datatracker.ietf.org/doc/rfc5652). This can now be used to demonstrate data or code signing utilizing quantum-safe algorithms. 
+
+Building on the artifacts created in the TLS setup above (CA and server certificate creation using a specific (QS) SIG algorithm), the following command can be used to generate a (QS-)signed file from some inputfile:
+
+	apps/openssl cms -in inputfile -sign -signer <SIG>_srv.crt -inkey <SIG>_srv.key -nodetach -outform pem -binary -out signedfile.cms 
+
+This command can be used to verify (and extract the contents) of the CMS file resultant from the command above:
+
+	apps/openssl cms -verify -CAfile <SIG>_CA.crt -inform pem -in signedfile.cms -crlfeol -out signeddatafile
+
+It would be expected that the contents of `inputfile` and the resultant `signeddatafile` are the same.
+
+
 ## Third Party Integrations
 
 Various third-party software applications, such as [nginx](https://www.nginx.com/) and [curl](https://curl.haxx.se/) use OpenSSL to establish TLS connections; they can be built against our fork to make use of quantum-safe cryptography. The [oqs-software](https://github.com/open-quantum-safe/oqs-software) repository provides instructions for building various software like so.
@@ -234,6 +250,7 @@ Contributors to OQS-OpenSSL\_1\_1\_1 include:
 - Dimitris Sikeridis (University of New Mexico / Cisco Systems)
 - Douglas Stebila (University of Waterloo)
 - Goutam Tamvada (University of Waterloo)
+- Michael Baentsch (IBM Research Zurich)
 
 ## Acknowledgments
 

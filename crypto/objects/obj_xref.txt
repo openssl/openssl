@@ -24,26 +24,26 @@ rsassaPss		undef	rsaEncryption
 ED25519		    undef	ED25519
 ED448		    undef	ED448
 ##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_START
-oqs_sig_default	undef	oqs_sig_default
-p256_oqs_sig_default	undef	p256_oqs_sig_default
-rsa3072_oqs_sig_default	undef	rsa3072_oqs_sig_default
-dilithium2	undef	dilithium2
-p256_dilithium2	undef	p256_dilithium2
-rsa3072_dilithium2	undef	rsa3072_dilithium2
-dilithium3	undef	dilithium3
-dilithium4	undef	dilithium4
-p384_dilithium4	undef	p384_dilithium4
-picnicl1fs	undef	picnicl1fs
-p256_picnicl1fs	undef	p256_picnicl1fs
-rsa3072_picnicl1fs	undef	rsa3072_picnicl1fs
-picnic2l1fs	undef	picnic2l1fs
-p256_picnic2l1fs	undef	p256_picnic2l1fs
-rsa3072_picnic2l1fs	undef	rsa3072_picnic2l1fs
-qteslapi	undef	qteslapi
-p256_qteslapi	undef	p256_qteslapi
-rsa3072_qteslapi	undef	rsa3072_qteslapi
-qteslapiii	undef	qteslapiii
-p384_qteslapiii	undef	p384_qteslapiii
+oqs_sig_default	sha512	oqs_sig_default
+p256_oqs_sig_default	sha512	p256_oqs_sig_default
+rsa3072_oqs_sig_default	sha512	rsa3072_oqs_sig_default
+dilithium2	sha512	dilithium2
+p256_dilithium2	sha512	p256_dilithium2
+rsa3072_dilithium2	sha512	rsa3072_dilithium2
+dilithium3	sha512	dilithium3
+dilithium4	sha512	dilithium4
+p384_dilithium4	sha512	p384_dilithium4
+picnicl1fs	sha512	picnicl1fs
+p256_picnicl1fs	sha512	p256_picnicl1fs
+rsa3072_picnicl1fs	sha512	rsa3072_picnicl1fs
+picnic2l1fs	sha512	picnic2l1fs
+p256_picnic2l1fs	sha512	p256_picnic2l1fs
+rsa3072_picnic2l1fs	sha512	rsa3072_picnic2l1fs
+qteslapi	sha512	qteslapi
+p256_qteslapi	sha512	p256_qteslapi
+rsa3072_qteslapi	sha512	rsa3072_qteslapi
+qteslapiii	sha512	qteslapiii
+p384_qteslapiii	sha512	p384_qteslapiii
 ##### OQS_TEMPLATE_FRAGMENT_LIST_OQS_SIGS_END
 
 

@@ -29,6 +29,9 @@
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+
+#include <openssl/cms.h>
+
 #include <oqs/oqs.h>
 
 #define SIZE_OF_UINT32 4
@@ -58,6 +61,8 @@ typedef struct
   EVP_PKEY *classical_pkey;
   /* Security bits for the scheme */
   int security_bits;
+  /* digest engine for CMS: */
+  EVP_MD_CTX * digest;
 } OQS_KEY;
 
 /*
@@ -876,9 +881,38 @@ static int oqs_item_sign_##ALG(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,\
 static int oqs_sig_info_set_##ALG(X509_SIG_INFO *siginf, const X509_ALGOR *alg,  \
                             const ASN1_STRING *sig)                              \
 {                                                                                \
-    X509_SIG_INFO_set(siginf, NID_undef, NID_ALG, get_oqs_security_bits(NID_ALG),\
+    X509_SIG_INFO_set(siginf, NID_sha512, NID_ALG, get_oqs_security_bits(NID_ALG),\
                       X509_SIG_INFO_TLS);                                        \
     return 1;                                                                    \
+}
+
+int oqs_ameth_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2) {
+   switch (op) {
+   case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+	*(int *)arg2 = NID_sha512;
+	return 1;
+   case ASN1_PKEY_CTRL_CMS_SIGN:
+      if (arg1 == 0) {
+            int snid, hnid;
+            X509_ALGOR *alg1, *alg2;
+            CMS_SignerInfo_get0_algs(arg2, NULL, NULL, &alg1, &alg2);
+            if (alg1 == NULL || alg1->algorithm == NULL) {
+                return -1;
+	    }
+            hnid = OBJ_obj2nid(alg1->algorithm);
+            if (hnid == NID_undef) {
+                return -1;
+            }
+            if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey))) {
+                return -1;
+            }
+            X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
+      }
+
+      return 1;
+   }
+   ECerr(EC_F_PKEY_OQS_CTRL, ERR_R_FATAL);
+   return 0;
 }
 
 #define DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME) \
@@ -902,7 +936,8 @@ const EVP_PKEY_ASN1_METHOD ALG##_asn1_meth = { \
     oqs_cmp_parameters,                        \
     0, 0,                                      \
     oqs_free,                                  \
-    0, 0, 0,                                   \
+    oqs_ameth_pkey_ctrl,                       \
+    0, 0,                                      \
     oqs_item_verify,                           \
     oqs_item_sign_##ALG,                       \
     oqs_sig_info_set_##ALG,                    \
@@ -1172,16 +1207,126 @@ static int pkey_oqs_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     switch (type) {
     case EVP_PKEY_CTRL_MD:
-        /* Only NULL allowed as digest */
+        /* NULL allowed as digest */
         if (p2 == NULL)
             return 1;
+        /* accept SHA512 as digest for CMS */
+        if (*(int*)p2 == NID_sha512) {
+               return 1;
+        }
         ECerr(EC_F_PKEY_OQS_CTRL, EC_R_WRONG_DIGEST);
         return 0;
 
     case EVP_PKEY_CTRL_DIGESTINIT:
         return 1;
+
+    case EVP_PKEY_CTRL_CMS_SIGN:
+        return 1;
     }
+    ECerr(EC_F_PKEY_OQS_CTRL, ERR_R_FATAL);
     return -2;
+}
+
+static int pkey_oqs_sign_init(EVP_PKEY_CTX *ctx) {
+   return 1;
+}
+
+static int pkey_oqs_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
+                               size_t *siglen, const unsigned char *tbs,
+                               size_t tbslen)
+{
+   return 1;
+}
+
+static int oqs_int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+
+    if (oqs_key->digest == NULL) {
+        if ((oqs_key->digest = EVP_MD_CTX_create()) == NULL) {
+           return 0;
+        }
+
+        if (EVP_DigestInit_ex(oqs_key->digest, EVP_sha512(), NULL) <= 0) {
+           return 0;
+        }
+    }
+
+    if(EVP_DigestUpdate(oqs_key->digest, data, count)<=0) {
+	return 0;
+    }
+    return 1;
+}
+
+static int pkey_oqs_signctx_init (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx) {
+
+    EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
+    EVP_MD_CTX_set_update_fn(mctx, oqs_int_update);
+
+    return 1;
+}
+
+static int pkey_oqs_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen, EVP_MD_CTX *mctx) {
+    OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(mctx)->pkey->pkey.ptr;
+    unsigned char* tbs = NULL;
+    unsigned int tbslen = 0;
+
+
+    if (sig != NULL) {
+       tbslen = 512/8; // as per https://tools.ietf.org/id/draft-ietf-lamps-cms-shakes-08.html
+       // Finalize SHAKE:
+       if (oqs_key->digest == NULL) {
+         return 0;
+       }
+
+       if((tbs = (unsigned char *)OPENSSL_malloc(tbslen)) == NULL) {
+         return 0;
+       }
+
+       if(EVP_DigestFinal(oqs_key->digest, tbs, &tbslen) <= 0) {
+         return 0;
+       }
+
+    }
+    int ret = pkey_oqs_digestsign(mctx, sig, siglen, tbs, tbslen);
+    if (sig != NULL) { // cleanup only if it's not the empty setup call
+       OPENSSL_free(tbs);
+       EVP_MD_CTX_destroy(oqs_key->digest);
+       oqs_key->digest = NULL;
+    }
+    if (ret <= 0) {
+    }
+    else {
+       EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_FINALISE); // don't go around again...
+    }
+
+   return ret;
+}
+
+static int pkey_oqs_digestcustom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx) {
+   return 1;
+}
+
+static int pkey_oqs_verify_init(EVP_PKEY_CTX *ctx) {
+   return 1;
+}
+
+static int pkey_oqs_verify(EVP_PKEY_CTX *ctx,
+                   const unsigned char *sig, size_t siglen,
+                   const unsigned char *tbs, size_t tbslen) {
+   return 1;
+}
+static int pkey_oqs_verifyctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx) {
+
+   EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
+   EVP_MD_CTX_set_update_fn(mctx, oqs_int_update);
+   EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_FINALISE); // don't go around again...
+   return 1;
+}
+
+static int pkey_oqs_verifyctx(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
+                      EVP_MD_CTX *mctx) {
+   return 1;
 }
 
 #define DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)    \
@@ -1189,11 +1334,18 @@ const EVP_PKEY_METHOD ALG##_pkey_meth = {           \
     NID_ALG, EVP_PKEY_FLAG_SIGCTX_CUSTOM,           \
     0, 0, 0, 0, 0, 0,                               \
     pkey_oqs_keygen,                                \
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+    pkey_oqs_sign_init, pkey_oqs_sign,              \
+    pkey_oqs_verify_init, pkey_oqs_verify,          \
+    0, 0,                                           \
+    pkey_oqs_signctx_init, pkey_oqs_signctx,        \
+    pkey_oqs_verifyctx_init, pkey_oqs_verifyctx,    \
+    0, 0, 0, 0, 0, 0,                               \
     pkey_oqs_ctrl,                                  \
     0,                                              \
     pkey_oqs_digestsign,                            \
-    pkey_oqs_digestverify                           \
+    pkey_oqs_digestverify,                          \
+    0, 0, 0,                                        \
+    pkey_oqs_digestcustom                           \
 };
 
 #define DEFINE_OQS_EVP_METHODS(ALG, NID_ALG, SHORT_NAME, LONG_NAME)   \
@@ -1223,3 +1375,4 @@ DEFINE_OQS_EVP_METHODS(rsa3072_qteslapi, NID_rsa3072_qteslapi, "rsa3072_qteslapi
 DEFINE_OQS_EVP_METHODS(qteslapiii, NID_qteslapiii, "qteslapiii", "OpenSSL qTESLA-p-III algorithm")
 DEFINE_OQS_EVP_METHODS(p384_qteslapiii, NID_p384_qteslapiii, "p384_qteslapiii", "OpenSSL ECDSA p384 qTESLA-p-III algorithm")
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END
+

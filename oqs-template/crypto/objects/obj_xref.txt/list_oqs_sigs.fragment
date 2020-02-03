@@ -1,8 +1,8 @@
 {%- for sig in config['sigs'] %}
     {%- for variant in sig['variants'] %}
-{{ variant['name'] }}	undef	{{ variant['name'] }}
+{{ variant['name'] }}	sha512	{{ variant['name'] }}
         {%- for classical_alg in variant['mix_with'] %}
-{{ classical_alg['name'] }}_{{ variant['name'] }}	undef	{{ classical_alg['name'] }}_{{ variant['name'] }}
+{{ classical_alg['name'] }}_{{ variant['name'] }}	sha512	{{ classical_alg['name'] }}_{{ variant['name'] }}
         {%- endfor %}
     {%- endfor %}
 {%- endfor %}
