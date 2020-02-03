@@ -317,7 +317,7 @@ void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
 void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
                            const char *file, int line);
 
-int CRYPTO_secure_malloc_init(size_t sz, int minsize);
+int CRYPTO_secure_malloc_init(size_t sz, size_t minsize);
 int CRYPTO_secure_malloc_done(void);
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
