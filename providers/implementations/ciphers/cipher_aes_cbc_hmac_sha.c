@@ -69,9 +69,11 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
     PROV_CIPHER_HW_AES_HMAC_SHA *hw =
        (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
-    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
-    const OSSL_PARAM *p, *p1, *pin;
+    const OSSL_PARAM *p;
     int ret = 1;
+# if !defined(OPENSSL_NO_MULTIBLOCK)
+    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
+# endif
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_MAC_KEY);
     if (p != NULL) {
@@ -101,8 +103,8 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD);
     if (p != NULL) {
-        p1 = OSSL_PARAM_locate_const(params,
-                OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
+        const OSSL_PARAM *p1 = OSSL_PARAM_locate_const(params,
+                                   OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
         if (p->data_type != OSSL_PARAM_OCTET_STRING
             || p1 == NULL
             || !OSSL_PARAM_get_uint(p1, &mb_param.interleave)) {
@@ -126,10 +128,11 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      */
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC);
     if (p != NULL) {
-        p1 = OSSL_PARAM_locate_const(params,
-                OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
-        pin = OSSL_PARAM_locate_const(params,
-                   OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN);
+        const OSSL_PARAM *p1 = OSSL_PARAM_locate_const(params,
+                                   OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
+        const OSSL_PARAM *pin = OSSL_PARAM_locate_const(params,
+                                    OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN);
+
         if (p->data_type != OSSL_PARAM_OCTET_STRING
             || pin == NULL
             || pin->data_type != OSSL_PARAM_OCTET_STRING
@@ -175,13 +178,13 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
-    PROV_CIPHER_HW_AES_HMAC_SHA *hw =
-       (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
     OSSL_PARAM *p;
 
 # if !defined(OPENSSL_NO_MULTIBLOCK)
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE);
     if (p != NULL) {
+        PROV_CIPHER_HW_AES_HMAC_SHA *hw =
+           (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
         size_t len = hw->tls1_multiblock_max_bufsize(ctx);
 
         if (!OSSL_PARAM_set_size_t(p, len)) {
