@@ -614,7 +614,7 @@ const OPTIONS s_client_options[] = {
     {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
      "Specify engine to be used for client certificate operations"},
 #endif
-    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified section for SSL_CTX configuration"},
 #ifndef OPENSSL_NO_CT
     {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},

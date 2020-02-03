@@ -9,7 +9,7 @@ openssl-s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-help>]
-[B<-ssl_config> I<file>]
+[B<-ssl_config> I<section>]
 [B<-connect> I<host:port>]
 [B<-host> I<hostname>]
 [B<-port> I<port>]
@@ -154,9 +154,9 @@ manual page.
 
 Print out a usage message.
 
-=item B<-ssl_config> I<filename>
+=item B<-ssl_config> I<section>
 
-Use the specified configuration file.
+Use the specified section of the configuration file to configure the B<SSL_CTX> object.
 
 =item B<-connect> I<host>:I<port>
 
