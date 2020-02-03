@@ -92,7 +92,7 @@ static int test_sec_mem(void)
      * elements was 1<<31, as |int i| was set to that, which is a
      * negative number. However, it requires minimum input values:
      *
-     * CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4);
+     * CRYPTO_secure_malloc_init((size_t)1<<34, 1<<4);
      *
      * Which really only works on 64-bit systems, since it took 16 GB
      * secure memory arena to trigger the problem. It naturally takes
@@ -113,7 +113,7 @@ static int test_sec_mem(void)
      */
     if (sizeof(size_t) > 4) {
         TEST_info("Possible infinite loop: 1<<31 limit");
-        if (TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
+        if (TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, 1<<4) != 0))
             TEST_true(CRYPTO_secure_malloc_done());
     }
 # endif
