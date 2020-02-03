@@ -13,15 +13,19 @@
 #include <openssl/dh.h>
 #include <openssl/params.h>
 #include "internal/param_build.h"
+#include "crypto/dh.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-static OSSL_OP_keymgmt_importdomparams_fn dh_importdomparams;
-static OSSL_OP_keymgmt_exportdomparams_fn dh_exportdomparams;
-static OSSL_OP_keymgmt_get_key_params_fn dh_get_domparam_params;
-static OSSL_OP_keymgmt_importkey_fn dh_importkey;
-static OSSL_OP_keymgmt_exportkey_fn dh_exportkey;
-static OSSL_OP_keymgmt_get_key_params_fn dh_get_key_params;
+static OSSL_OP_keymgmt_new_fn dh_newdata;
+static OSSL_OP_keymgmt_free_fn dh_freedata;
+static OSSL_OP_keymgmt_has_fn dh_has;
+static OSSL_OP_keymgmt_import_fn dh_import;
+static OSSL_OP_keymgmt_export_fn dh_export;
+static OSSL_OP_keymgmt_get_params_fn dh_get_params;
+
+#define DH_POSSIBLE_SELECTIONS                 \
+    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
 {
@@ -128,70 +132,80 @@ static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
     return 1;
 }
 
-static void *dh_importdomparams(void *provctx, const OSSL_PARAM params[])
+static void *dh_newdata(void *provctx)
 {
-    DH *dh;
-
-    if ((dh = DH_new()) == NULL
-        || !params_to_domparams(dh, params)) {
-        DH_free(dh);
-        dh = NULL;
-    }
-    return dh;
+    return DH_new();
 }
 
-static int dh_exportdomparams(void *domparams, OSSL_CALLBACK *param_cb,
-                              void *cbarg)
+static void dh_freedata(void *keydata)
 {
-    DH *dh = domparams;
+    DH_free(keydata);
+}
+
+static int dh_has(void *keydata, int selection)
+{
+    DH *dh = keydata;
+    int ok = 0;
+
+    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && (DH_get0_pub_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && (DH_get0_priv_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
+    return ok;
+}
+
+static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
+{
+    DH *dh = keydata;
+    int ok = 0;
+
+    if (dh == NULL)
+        return 0;
+
+    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
+        ok = ok && params_to_domparams(dh, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ok = ok && params_to_key(dh, params);
+
+    return ok;
+}
+
+static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
+                     void *cbarg)
+{
+    DH *dh = keydata;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
-    int ret;
+    int ok = 1;
+
+    if (dh == NULL)
+        return 0;
 
     ossl_param_bld_init(&tmpl);
-    if (dh == NULL
-        || !domparams_to_params(dh, &tmpl)
+
+    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
+        ok = ok && domparams_to_params(dh, &tmpl);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ok = ok && key_to_params(dh, &tmpl);
+
+    if (!ok
         || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
         return 0;
-    ret = param_cb(params, cbarg);
+
+    ok = param_cb(params, cbarg);
     ossl_param_bld_free(params);
-    return ret;
+    return ok;
 }
 
-static void *dh_importkey(void *provctx, const OSSL_PARAM params[])
-{
-    DH *dh;
-
-    if ((dh = DH_new()) == NULL
-        || !params_to_key(dh, params)) {
-        DH_free(dh);
-        dh = NULL;
-    }
-    return dh;
-}
-
-static int dh_exportkey(void *key, OSSL_CALLBACK *param_cb, void *cbarg)
-{
-    DH *dh = key;
-    OSSL_PARAM_BLD tmpl;
-    OSSL_PARAM *params = NULL;
-    int ret;
-
-    ossl_param_bld_init(&tmpl);
-    if (dh == NULL
-        || !key_to_params(dh, &tmpl)
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
-        return 0;
-    ret = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
-    return ret;
-}
-
-/*
- * Same function for domain parameters and for keys.
- * "dpk" = "domain parameters & keys"
- */
-static ossl_inline int dh_get_dpk_params(void *key, OSSL_PARAM params[])
+static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
 {
     DH *dh = key;
     OSSL_PARAM *p;
@@ -208,33 +222,12 @@ static ossl_inline int dh_get_dpk_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
-/*
- * We have wrapper functions to make sure we get signatures right, see
- * the forward declarations at the beginning of this file.
- */
-static int dh_get_domparam_params(void *domparams, OSSL_PARAM params[])
-{
-    return dh_get_dpk_params(domparams, params);
-}
-
-static int dh_get_key_params(void *key, OSSL_PARAM params[])
-{
-    return dh_get_dpk_params(key, params);
-}
-
 const OSSL_DISPATCH dh_keymgmt_functions[] = {
-    /*
-     * TODO(3.0) When implementing OSSL_FUNC_KEYMGMT_GENKEY, remember to also
-     * implement OSSL_FUNC_KEYMGMT_EXPORTKEY.
-     */
-    { OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS, (void (*)(void))dh_importdomparams },
-    { OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS, (void (*)(void))dh_exportdomparams },
-    { OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS,
-      (void (*) (void))dh_get_domparam_params },
-    { OSSL_FUNC_KEYMGMT_FREEDOMPARAMS, (void (*)(void))DH_free },
-    { OSSL_FUNC_KEYMGMT_IMPORTKEY, (void (*)(void))dh_importkey },
-    { OSSL_FUNC_KEYMGMT_EXPORTKEY, (void (*)(void))dh_exportkey },
-    { OSSL_FUNC_KEYMGMT_FREEKEY, (void (*)(void))DH_free },
-    { OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS,  (void (*) (void))dh_get_key_params },
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dh_newdata },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dh_freedata },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dh_has },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dh_import },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dh_get_params },
     { 0, NULL }
 };
