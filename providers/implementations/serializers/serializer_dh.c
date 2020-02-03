@@ -14,9 +14,19 @@
 #include "prov/providercommonerr.h" /* PROV_R_BN_ERROR */
 #include "serializer_local.h"
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dh_importkey(void)
+OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void)
 {
-    return ossl_prov_get_importkey(dh_keymgmt_functions);
+    return ossl_prov_get_keymgmt_new(dh_keymgmt_functions);
+}
+
+OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void)
+{
+    return ossl_prov_get_keymgmt_free(dh_keymgmt_functions);
+}
+
+OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void)
+{
+    return ossl_prov_get_keymgmt_import(dh_keymgmt_functions);
 }
 
 int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
@@ -51,7 +61,7 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
     }
 
     p = DH_get0_p(dh);
-    g = DH_get0_p(dh);
+    g = DH_get0_g(dh);
     if (p == NULL || g == NULL)
         goto null_err;
 
