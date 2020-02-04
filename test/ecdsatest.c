@@ -384,11 +384,13 @@ static int test_builtin_as_ec(int n)
     return test_builtin(n, EVP_PKEY_EC);
 }
 
+# ifndef OPENSSL_NO_SM2
 static int test_builtin_as_sm2(int n)
 {
     return test_builtin(n, EVP_PKEY_SM2);
 }
-#endif
+# endif
+#endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
 {
@@ -401,7 +403,9 @@ int setup_tests(void)
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
     ADD_ALL_TESTS(test_builtin_as_ec, crv_len);
+# ifndef OPENSSL_NO_SM2
     ADD_ALL_TESTS(test_builtin_as_sm2, crv_len);
+# endif
     ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;
