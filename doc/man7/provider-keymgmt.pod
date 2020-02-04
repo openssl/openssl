@@ -241,11 +241,6 @@ OP_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OP_keymgmt_export() callback can expect to receive.
 
-If OP_keymgmt_import_types() is present, OP_keymgmt_import() must also
-be present.
-Likewise, if OP_keymgmt_export_types() is present, OP_keymgmt_export()
-must also be present.
-
 =head2 Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
