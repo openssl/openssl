@@ -38,6 +38,7 @@ static void *keymgmt_from_dispatch(int name_id,
                                    OSSL_PROVIDER *prov)
 {
     EVP_KEYMGMT *keymgmt = NULL;
+    int paramfncnt = 0, importfncnt = 0, exportfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
@@ -56,13 +57,17 @@ static void *keymgmt_from_dispatch(int name_id,
                 keymgmt->free = OSSL_get_OP_keymgmt_free(fns);
             break;
         case OSSL_FUNC_KEYMGMT_GET_PARAMS:
-            if (keymgmt->get_params == NULL)
+            if (keymgmt->get_params == NULL) {
+                paramfncnt++;
                 keymgmt->get_params = OSSL_get_OP_keymgmt_get_params(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS:
-            if (keymgmt->gettable_params == NULL)
+            if (keymgmt->gettable_params == NULL) {
+                paramfncnt++;
                 keymgmt->gettable_params =
                     OSSL_get_OP_keymgmt_gettable_params(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
             if (keymgmt->query_operation_name == NULL)
@@ -78,20 +83,28 @@ static void *keymgmt_from_dispatch(int name_id,
                 keymgmt->validate = OSSL_get_OP_keymgmt_validate(fns);
             break;
         case OSSL_FUNC_KEYMGMT_IMPORT:
-            if (keymgmt->import == NULL)
+            if (keymgmt->import == NULL) {
+                importfncnt++;
                 keymgmt->import = OSSL_get_OP_keymgmt_import(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_IMPORT_TYPES:
-            if (keymgmt->import_types == NULL)
+            if (keymgmt->import_types == NULL) {
+                importfncnt++;
                 keymgmt->import_types = OSSL_get_OP_keymgmt_import_types(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_EXPORT:
-            if (keymgmt->export == NULL)
+            if (keymgmt->export == NULL) {
+                exportfncnt++;
                 keymgmt->export = OSSL_get_OP_keymgmt_export(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_EXPORT_TYPES:
-            if (keymgmt->export_types == NULL)
+            if (keymgmt->export_types == NULL) {
+                exportfncnt++;
                 keymgmt->export_types = OSSL_get_OP_keymgmt_export_types(fns);
+            }
             break;
         }
     }
@@ -106,12 +119,9 @@ static void *keymgmt_from_dispatch(int name_id,
     if (keymgmt->free == NULL
         || keymgmt->new == NULL
         || keymgmt->has == NULL
-        || (keymgmt->gettable_params != NULL
-            && keymgmt->get_params == NULL)
-        || (keymgmt->import_types != NULL
-            && keymgmt->import == NULL)
-        || (keymgmt->export_types != NULL
-            && keymgmt->export == NULL)) {
+        || (paramfncnt != 0 && paramfncnt != 2)
+        || (importfncnt != 0 && importfncnt != 2)
+        || (exportfncnt != 0 && exportfncnt != 2)) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
