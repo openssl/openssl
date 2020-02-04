@@ -152,7 +152,7 @@ static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         RSA *rsa;
 
         if ((rsa = rsa_new(ctx->provctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && rsa_priv_der(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -191,7 +191,7 @@ static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         RSA *rsa;
 
         if ((rsa = rsa_new(ctx->provctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && rsa_pem_priv(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -242,7 +242,7 @@ static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
         RSA *rsa;
 
         if ((rsa = rsa_new(ctx->provctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && rsa_priv_print(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);

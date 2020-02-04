@@ -124,7 +124,7 @@ static int dh_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         DH *dh;
 
         if ((dh = dh_new(ctx->provctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_WANT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
             && dh_priv_der(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -163,7 +163,7 @@ static int dh_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         DH *dh;
 
         if ((dh = dh_new(ctx->provctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_WANT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
             && dh_pem_priv(ctx->provctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -213,7 +213,7 @@ static int dh_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         DH *dh;
 
         if ((dh = dh_new(ctx->provctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_WANT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
             && dh_priv_print(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);

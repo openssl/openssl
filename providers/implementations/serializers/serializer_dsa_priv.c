@@ -124,7 +124,7 @@ static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && dsa_priv_der(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -160,7 +160,7 @@ static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && dsa_pem_priv(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -208,7 +208,7 @@ static int dsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_WANT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
             && dsa_priv_print(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
