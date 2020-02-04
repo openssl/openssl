@@ -14,7 +14,7 @@ CRYPTO_secure_used - secure heap storage
 
  #include <openssl/crypto.h>
 
- int CRYPTO_secure_malloc_init(size_t size, int minsize);
+ int CRYPTO_secure_malloc_init(size_t size, size_t minsize);
 
  int CRYPTO_secure_malloc_initialized();
 
@@ -125,6 +125,9 @@ L<BN_new(3)>
 =head1 HISTORY
 
 The OPENSSL_secure_clear_free() function was added in OpenSSL 1.1.0g.
+
+The second argument to CRYPTO_secure_malloc_init() was changed from an B<int> to
+a B<size_t> in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

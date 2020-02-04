@@ -57,7 +57,7 @@ static CRYPTO_RWLOCK *sec_malloc_lock = NULL;
 /*
  * These are the functions that must be implemented by a secure heap (sh).
  */
-static int sh_init(size_t size, int minsize);
+static int sh_init(size_t size, size_t minsize);
 static void *sh_malloc(size_t size);
 static void sh_free(void *ptr);
 static void sh_done(void);
@@ -65,7 +65,7 @@ static size_t sh_actual_size(char *ptr);
 static int sh_allocated(const char *ptr);
 #endif
 
-int CRYPTO_secure_malloc_init(size_t size, int minsize)
+int CRYPTO_secure_malloc_init(size_t size, size_t minsize)
 {
 #ifdef OPENSSL_SECURE_MEMORY
     int ret = 0;
@@ -373,7 +373,7 @@ static void sh_remove_from_list(char *ptr)
 }
 
 
-static int sh_init(size_t size, int minsize)
+static int sh_init(size_t size, size_t minsize)
 {
     int ret;
     size_t i;
@@ -385,11 +385,10 @@ static int sh_init(size_t size, int minsize)
     /* make sure size and minsize are powers of 2 */
     OPENSSL_assert(size > 0);
     OPENSSL_assert((size & (size - 1)) == 0);
-    OPENSSL_assert(minsize > 0);
     OPENSSL_assert((minsize & (minsize - 1)) == 0);
     if (size <= 0 || (size & (size - 1)) != 0)
         goto err;
-    if (minsize <= 0 || (minsize & (minsize - 1)) != 0)
+    if (minsize == 0 || (minsize & (minsize - 1)) != 0)
         goto err;
 
     while (minsize < (int)sizeof(SH_LIST))
