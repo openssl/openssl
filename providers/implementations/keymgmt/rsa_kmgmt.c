@@ -187,9 +187,9 @@ static int rsa_has(void *keydata, int selection)
         ok = 1;
 
     ok = ok && (RSA_get0_e(rsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
         ok = ok && (RSA_get0_n(rsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
         ok = ok && (RSA_get0_d(rsa) != NULL);
     return ok;
 }
@@ -370,9 +370,9 @@ static int rsa_validate(void *keydata, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_KEY) == OSSL_KEYMGMT_SELECT_KEY) {
         ok = ok && rsa_validate_pairwise(rsa);
     } else {
-        if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+        if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
             ok = ok && rsa_validate_private(rsa);
-        if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+        if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
             ok = ok && rsa_validate_public(rsa);
     }
     return ok;

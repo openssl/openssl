@@ -28,7 +28,7 @@ static OSSL_OP_keymgmt_export_fn dh_export;
 static OSSL_OP_keymgmt_export_types_fn dh_export_types;
 
 #define DH_POSSIBLE_SELECTIONS                 \
-    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_B_DOMAIN_PARAMETERS)
+    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
 {
@@ -153,11 +153,11 @@ static int dh_has(void *keydata, int selection)
     if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
         ok = ok && (DH_get0_pub_key(dh) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
         ok = ok && (DH_get0_priv_key(dh) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_DOMAIN_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS) != 0)
         ok = ok && (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
     return ok;
 }

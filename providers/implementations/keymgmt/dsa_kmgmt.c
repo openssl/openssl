@@ -30,7 +30,7 @@ static OSSL_OP_keymgmt_export_types_fn dsa_export_types;
 
 #define DSA_DEFAULT_MD "SHA256"
 #define DSA_POSSIBLE_SELECTIONS                 \
-    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_B_DOMAIN_PARAMETERS)
+    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 {
@@ -160,11 +160,11 @@ static int dsa_has(void *keydata, int selection)
     if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
         ok = ok && (DSA_get0_pub_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
         ok = ok && (DSA_get0_priv_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_B_DOMAIN_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS) != 0)
         ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
     return ok;
 }
