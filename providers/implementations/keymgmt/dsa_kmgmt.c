@@ -20,10 +20,13 @@
 
 static OSSL_OP_keymgmt_new_fn dsa_newdata;
 static OSSL_OP_keymgmt_free_fn dsa_freedata;
+static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
+static OSSL_OP_keymgmt_gettable_params_fn dsa_gettable_params;
 static OSSL_OP_keymgmt_has_fn dsa_has;
 static OSSL_OP_keymgmt_import_fn dsa_import;
+static OSSL_OP_keymgmt_import_types_fn dsa_import_types;
 static OSSL_OP_keymgmt_export_fn dsa_export;
-static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
+static OSSL_OP_keymgmt_export_types_fn dsa_export_types;
 
 #define DSA_DEFAULT_MD "SHA256"
 #define DSA_POSSIBLE_SELECTIONS                 \
@@ -212,6 +215,61 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     return ok;
 }
 
+# define DSA_IMEXPORTABLE_PARAMETERS                    \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),      \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_Q, NULL, 0),      \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_G, NULL, 0)
+# define DSA_IMEXPORTABLE_PUBLIC_KEY                    \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_DSA_PUB_KEY, NULL, 0)
+# define DSA_IMEXPORTABLE_PRIVATE_KEY                   \
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_DSA_PRIV_KEY, NULL, 0)
+static const OSSL_PARAM dsa_all_types[] = {
+    DSA_IMEXPORTABLE_PARAMETERS,
+    DSA_IMEXPORTABLE_PUBLIC_KEY,
+    DSA_IMEXPORTABLE_PRIVATE_KEY,
+    OSSL_PARAM_END
+};
+static const OSSL_PARAM dsa_parameter_types[] = {
+    DSA_IMEXPORTABLE_PARAMETERS,
+    DSA_IMEXPORTABLE_PUBLIC_KEY,
+    DSA_IMEXPORTABLE_PRIVATE_KEY,
+    OSSL_PARAM_END
+};
+static const OSSL_PARAM dsa_key_types[] = {
+    DSA_IMEXPORTABLE_PARAMETERS,
+    DSA_IMEXPORTABLE_PUBLIC_KEY,
+    DSA_IMEXPORTABLE_PRIVATE_KEY,
+    OSSL_PARAM_END
+};
+static const OSSL_PARAM *dsa_types[] = {
+    NULL,                        /* Index 0 = none of them */
+    dsa_parameter_types,          /* Index 1 = parameter types */
+    dsa_key_types,                /* Index 2 = key types */
+    dsa_all_types                 /* Index 3 = 1 + 2 */
+};
+
+static const OSSL_PARAM *dsa_imexport_types(int selection)
+{
+    int type_select = 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+        type_select += 1;
+    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+        type_select += 2;
+    return dsa_types[type_select];
+}
+
+static const OSSL_PARAM *dsa_import_types(int selection)
+{
+    return dsa_imexport_types(selection);
+}
+
+
+static const OSSL_PARAM *dsa_export_types(int selection)
+{
+    return dsa_imexport_types(selection);
+}
+
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
 {
     DSA *dsa = key;
@@ -232,12 +290,28 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
+static const OSSL_PARAM dsa_params[] = {
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dsa_gettable_params(void)
+{
+    return dsa_params;
+}
+
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dsa_freedata },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dsa_has },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dsa_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dsa_export_types },
     { 0, NULL }
 };

@@ -22,13 +22,14 @@
 
 static OSSL_OP_keymgmt_new_fn rsa_newdata;
 static OSSL_OP_keymgmt_free_fn rsa_freedata;
+static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
+static OSSL_OP_keymgmt_gettable_params_fn rsa_gettable_params;
 static OSSL_OP_keymgmt_has_fn rsa_has;
+static OSSL_OP_keymgmt_validate_fn rsa_validate;
 static OSSL_OP_keymgmt_import_fn rsa_import;
 static OSSL_OP_keymgmt_import_types_fn rsa_import_types;
 static OSSL_OP_keymgmt_export_fn rsa_export;
 static OSSL_OP_keymgmt_export_types_fn rsa_export_types;
-static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
-static OSSL_OP_keymgmt_validate_fn rsa_validate;
 
 #define RSA_DEFAULT_MD "SHA256"
 #define RSA_POSSIBLE_SELECTIONS                 \
@@ -287,7 +288,7 @@ static const OSSL_PARAM rsa_key_types[] = {
  * so we at least pretend to have some limits.
  */
 
-static const OSSL_PARAM *rsa_export_types(int selection)
+static const OSSL_PARAM *rsa_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
         return rsa_key_types;
@@ -296,9 +297,13 @@ static const OSSL_PARAM *rsa_export_types(int selection)
 
 static const OSSL_PARAM *rsa_import_types(int selection)
 {
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
-        return rsa_key_types;
-    return NULL;
+    return rsa_imexport_types(selection);
+}
+
+
+static const OSSL_PARAM *rsa_export_types(int selection)
+{
+    return rsa_imexport_types(selection);
 }
 
 static int rsa_get_params(void *key, OSSL_PARAM params[])
@@ -340,6 +345,19 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
     return 1;
 }
 
+static const OSSL_PARAM rsa_params[] = {
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *rsa_gettable_params(void)
+{
+    return rsa_params;
+}
+
 static int rsa_validate(void *keydata, int selection)
 {
     RSA *rsa = keydata;
@@ -363,12 +381,13 @@ static int rsa_validate(void *keydata, int selection)
 const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))rsa_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS,  (void (*) (void))rsa_get_params },
-    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
     { 0, NULL }
 };
