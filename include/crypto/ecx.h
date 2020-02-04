@@ -63,5 +63,12 @@ int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
 void X448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
+int s390x_x25519_mul(unsigned char u_dst[32],
+                     const unsigned char u_src[32],
+                     const unsigned char d_src[32]);
+int s390x_x448_mul(unsigned char u_dst[56],
+                   const unsigned char u_src[56],
+                   const unsigned char d_src[56]);
+
 # endif /* OPENSSL_NO_EC */
 #endif
