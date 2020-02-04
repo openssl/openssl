@@ -125,7 +125,7 @@ static void *keymgmt_from_dispatch(int name_id,
     /*
      * Try to check that the method is sensible.
      * At least one constructor and the destructor are MANDATORY
-     * The functions has_public_key an has_private_key are MANDATORY
+     * The functions has_public_key and has_private_key are MANDATORY
      * It makes no sense being able to free stuff if you can't create it.
      * It makes no sense providing OSSL_PARAM descriptors for import and
      * export if you can't import or export.

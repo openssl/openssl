@@ -334,7 +334,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
  * Key management
  *
  * The Key Management takes care of provider side key objects, and includes
- * all current functionality to create them, destroy them, setting parameters
+ * all current functionality to create them, destroy them, set parameters
  * and key material, etc, essentially everything that manipulates the keys
  * themselves and their parameters.
  *

@@ -165,10 +165,10 @@ OP_keymgmt_validate_domparams() should check if I<keydata> contains
 valid domain parameters.
 
 OP_keymgmt_validate_public() should check if I<keydata> contains a
-valud public key.
+valid public key.
 
 OP_keymgmt_validate_public() should check if I<keydata> contains a
-valud private key.
+valid private key.
 
 OP_keymgmt_validate_pairwise() should check that the pairwise
 consistency of I<keydata> is valid.
@@ -186,7 +186,7 @@ keymgmt and try to use that.
 =head2 Import and Export Selections
 
 The I<selection> given to OP_keymgmt_import() and OP_keymgmt_export()
-indicates what values of the I<keydata> is of interest.  It can be
+indicates what values of the I<keydata> are of interest.  It can be
 one of:
 
 =over 4
@@ -200,7 +200,7 @@ to indicate that only the domain parameters are interesting.
 to indicate that only the key data (the data that constitutes the
 private and the public keys) are interesting.
 
-=item B<OSSL_KEYMGMT_WANT_DOMPARAMS>
+=item B<OSSL_KEYMGMT_WANT_BOTH>
 
 to indicate that both the domain parameters and the key data are
 intesting.
