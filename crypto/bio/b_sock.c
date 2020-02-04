@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include "bio_local.h"
 #ifndef OPENSSL_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
@@ -22,6 +21,13 @@
 # endif
 # if defined(OPENSSL_SYS_WINDOWS)
 static int wsa_init_done = 0;
+# endif
+
+# ifndef _WIN32
+#  include <unistd.h>
+#  include <sys/select.h>
+# else
+#  include <winsock.h> /* for type fd_set */
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -369,4 +375,115 @@ int BIO_sock_info(int sock,
     return 1;
 }
 
-#endif
+/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
+/*
+ * Wait on fd at most until max_time; succeed immediately if max_time == 0.
+ * If for_read == 0 then assume to wait for writing, else wait for reading.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_socket_wait(int fd, int for_read, time_t max_time)
+{
+    fd_set confds;
+    struct timeval tv;
+    time_t now;
+
+    if (max_time == 0)
+        return 1;
+
+    now = time(NULL);
+    if (max_time <= now)
+        return 0;
+
+    FD_ZERO(&confds);
+    openssl_fdset(fd, &confds);
+    tv.tv_usec = 0;
+    tv.tv_sec = (long)(max_time - now); /* this might overflow */
+    return select(fd + 1, for_read ? &confds : NULL,
+                  for_read ? NULL : &confds, NULL, &tv);
+}
+
+/*
+ * Wait on BIO at most until max_time; succeed immediately if max_time == 0.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+static int bio_wait(BIO *bio, time_t max_time)
+{
+    int fd;
+
+    if (BIO_get_fd(bio, &fd) <= 0)
+        return -1;
+    return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+}
+
+/*
+ * Wait on BIO at most until max_time; succeed immediately if max_time == 0.
+ * Call BIOerr(...) unless success.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_wait(BIO *bio, time_t max_time)
+{
+    int rv = bio_wait(bio, max_time);
+
+    if (rv <= 0)
+        BIOerr(0, rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
+    return rv;
+}
+
+/*
+ * Connect via the given BIO using BIO_do_connect() until success/timeout/error.
+ * Parameter timeout == 0 means infinite, < 0 leads to immediate timeout error.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_connect_retry(BIO *bio, int timeout)
+{
+    int blocking = timeout == 0;
+    time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    int rv;
+
+    if (bio == NULL) {
+        BIOerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (timeout < 0) {
+        BIOerr(0, BIO_R_CONNECT_TIMEOUT);
+        return 0;
+    }
+
+    if (!blocking)
+        BIO_set_nbio(bio, 1);
+
+ retry: /* it does not help here to set SSL_MODE_AUTO_RETRY */
+    rv = BIO_do_connect(bio); /* This indirectly calls ERR_clear_error(); */
+
+    if (rv <= 0) {
+        if (get_last_sys_error() == ETIMEDOUT) {
+            /*
+             * if blocking, despite blocking BIO, BIO_do_connect() timed out
+             * when non-blocking, BIO_do_connect() timed out early
+             * with rv == -1 and get_last_sys_error() == 0
+             */
+            ERR_clear_error();
+            (void)BIO_reset(bio);
+            /*
+             * unless using BIO_reset(), blocking next connect() may crash and
+             * non-blocking next BIO_do_connect() will fail
+             */
+            goto retry;
+        } else if (BIO_should_retry(bio)) {
+            /* will not actually wait if timeout == 0 (i.e., blocking BIO) */
+            rv = bio_wait(bio, max_time);
+            if (rv > 0)
+                goto retry;
+            BIOerr(0, rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
+        } else {
+            rv = -1;
+            if (ERR_peek_error() == 0) /* missing error queue entry */
+                BIOerr(0, BIO_R_CONNECT_ERROR); /* workaround: general error */
+        }
+    }
+
+    return rv;
+}
+
+#endif /* !defined(OPENSSL_NO_SOCK) */

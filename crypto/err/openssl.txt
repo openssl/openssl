@@ -2013,6 +2013,7 @@ BIO_R_AMBIGUOUS_HOST_OR_SERVICE:129:ambiguous host or service
 BIO_R_BAD_FOPEN_MODE:101:bad fopen mode
 BIO_R_BROKEN_PIPE:124:broken pipe
 BIO_R_CONNECT_ERROR:103:connect error
+BIO_R_CONNECT_TIMEOUT:147:connect timeout
 BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET:107:gethostbyname addr is not af inet
 BIO_R_GETSOCKNAME_ERROR:132:getsockname error
 BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS:133:getsockname truncated address
@@ -2031,6 +2032,8 @@ BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:144:no hostname or service specified
 BIO_R_NO_PORT_DEFINED:113:no port defined
 BIO_R_NO_SUCH_FILE:128:no such file
 BIO_R_NULL_PARAMETER:115:null parameter
+BIO_R_TRANSFER_ERROR:104:transfer error
+BIO_R_TRANSFER_TIMEOUT:105:transfer timeout
 BIO_R_UNABLE_TO_BIND_SOCKET:117:unable to bind socket
 BIO_R_UNABLE_TO_CREATE_SOCKET:118:unable to create socket
 BIO_R_UNABLE_TO_KEEPALIVE:137:unable to keepalive
