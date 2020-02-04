@@ -114,22 +114,22 @@ indicator.  The bits are:
 
 =over 4
 
-=item B<OSSL_KEYMGMT_B_PRIVATE_KEY>
+=item B<OSSL_KEYMGMT_FLAG_PRIVATE_KEY>
 
 Indicating that the private key data in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_B_PUBLIC_KEY>
+=item B<OSSL_KEYMGMT_FLAG_PUBLIC_KEY>
 
 Indicating that the public key data in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_B_DOMAIN_PARAMETERS>
+=item B<OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS>
 
 Indicating that the domain parameters in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_B_OTHER_PARAMETERS>
+=item B<OSSL_KEYMGMT_FLAG_OTHER_PARAMETERS>
 
 Indicating that other parameters in a key object should be
 considered.
@@ -219,10 +219,10 @@ to still be a valid subset.
 OP_keymgmt_validate() should check if the I<keydata> contains valid
 data subsets indicated by I<selection>.  Some combined selections of
 data subsets may cause validation of the combined data.
-For example, the combination of B<OSSL_KEYMGMT_B_PRIVATE_KEY> and
-B<OSSL_KEYMGMT_B_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEY> for short)
-is expected to check that the pairwise consistency of I<keydata> is
-valid.
+For example, the combination of B<OSSL_KEYMGMT_FLAG_PRIVATE_KEY> and
+B<OSSL_KEYMGMT_FLAG_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEY> for
+short) is expected to check that the pairwise consistency of
+I<keydata> is valid.
 
 =head2 Key Object Import and Export Functions
 

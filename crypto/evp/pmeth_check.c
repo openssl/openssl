@@ -32,7 +32,8 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_B_PUBLIC_KEY);
+        return
+            evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_FLAG_PUBLIC_KEY);
 
     /* legacy */
     /* call customized public key check function first */
@@ -97,7 +98,8 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_B_PRIVATE_KEY);
+        return
+            evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_FLAG_PRIVATE_KEY);
     /* not supported for legacy keys */
     return -2;
 }
