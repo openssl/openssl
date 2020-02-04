@@ -98,6 +98,17 @@ static unsigned char serverinfov2[] = {
     0xff        /* Dummy extension data */
 };
 
+static int hostname_cb(SSL *s, int *al, void *arg)
+{
+    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
+                             || strcmp(hostname, "altgoodhost") == 0))
+        return  SSL_TLSEXT_ERR_OK;
+
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
 static void client_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
@@ -2735,17 +2746,6 @@ static int test_early_data_not_sent(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
-}
-
-static int hostname_cb(SSL *s, int *al, void *arg)
-{
-    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-
-    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
-                             || strcmp(hostname, "altgoodhost") == 0))
-        return  SSL_TLSEXT_ERR_OK;
-
-    return SSL_TLSEXT_ERR_NOACK;
 }
 
 static const char *servalpn;
