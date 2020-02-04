@@ -69,17 +69,17 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (pk->pkey.ptr != NULL) {
         /* There is a legacy key, try to export that one to the provider */
 
-        /* If the legacy key doesn't have an export function, give up */
-        if (pk->ameth->export_to == NULL)
-            return NULL;
-
-        /* Otherwise, simply use it. */
-        if (!pk->ameth->export_to(pk, keydata, keymgmt)) {
+        /*
+         * If the legacy key doesn't have an export function or the export
+         * function fails, give up
+         */
+        if (pk->ameth->export_to == NULL
+            || !pk->ameth->export_to(pk, keydata, keymgmt)) {
             evp_keymgmt_freedata(keymgmt, keydata);
             return NULL;
         }
 
-        /* Synchronize the dirty count, but only if we exported successfully */
+        /* Synchronize the dirty count */
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
     } else {
         /*
