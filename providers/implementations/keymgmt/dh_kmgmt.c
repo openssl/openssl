@@ -19,12 +19,13 @@
 
 static OSSL_OP_keymgmt_new_fn dh_newdata;
 static OSSL_OP_keymgmt_free_fn dh_freedata;
-static OSSL_OP_keymgmt_has_domparams_fn dh_has_domparams;
-static OSSL_OP_keymgmt_has_public_key_fn dh_has_public;
-static OSSL_OP_keymgmt_has_public_key_fn dh_has_private;
+static OSSL_OP_keymgmt_has_fn dh_has;
 static OSSL_OP_keymgmt_import_fn dh_import;
 static OSSL_OP_keymgmt_export_fn dh_export;
 static OSSL_OP_keymgmt_get_params_fn dh_get_params;
+
+#define DH_POSSIBLE_SELECTIONS                 \
+    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_B_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
 {
@@ -141,42 +142,40 @@ static void dh_freedata(void *keydata)
     DH_free(keydata);
 }
 
-static int dh_has_domparams(void *keydata)
+static int dh_has(void *keydata, int selection)
 {
     DH *dh = keydata;
+    int ok = 0;
 
-    return (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
-}
+    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
 
-static int dh_has_public(void *keydata)
-{
-    DH *dh = keydata;
-
-    return (DH_get0_pub_key(dh) != NULL);
-}
-
-static int dh_has_private(void *keydata)
-{
-    DH *dh = keydata;
-
-    return (DH_get0_priv_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+        ok = ok && (DH_get0_pub_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+        ok = ok && (DH_get0_priv_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_DOMAIN_PARAMETERS) != 0)
+        ok = ok && (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
+    return ok;
 }
 
 static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     DH *dh = keydata;
+    int ok = 0;
 
     if (dh == NULL)
         return 0;
 
-    if (selection != OSSL_KEYMGMT_WANT_KEY
-        && !params_to_domparams(dh, params))
-        return 0;
-    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
-        && !params_to_key(dh, params))
-        return 0;
+    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
 
-    return 1;
+    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+        ok = ok && params_to_domparams(dh, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+        ok = ok && params_to_key(dh, params);
+
+    return ok;
 }
 
 static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
@@ -185,26 +184,25 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     DH *dh = keydata;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
-    int ret;
+    int ok = 1;
 
     if (dh == NULL)
         return 0;
 
     ossl_param_bld_init(&tmpl);
 
-    if (selection != OSSL_KEYMGMT_WANT_KEY
-        && !domparams_to_params(dh, &tmpl))
-        return 0;
-    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
-        && !key_to_params(dh, &tmpl))
+    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+        ok = ok && domparams_to_params(dh, &tmpl);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+        ok = ok && key_to_params(dh, &tmpl);
+
+    if (!ok
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
         return 0;
 
-    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
-        return 0;
-
-    ret = param_cb(params, cbarg);
+    ok = param_cb(params, cbarg);
     ossl_param_bld_free(params);
-    return ret;
+    return ok;
 }
 
 static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
@@ -227,9 +225,7 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
 const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dh_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dh_freedata },
-    { OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS, (void (*)(void))dh_has_domparams },
-    { OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY, (void (*)(void))dh_has_public },
-    { OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY, (void (*)(void))dh_has_private },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dh_has },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dh_import },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dh_get_params },

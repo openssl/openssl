@@ -20,14 +20,14 @@
 
 static OSSL_OP_keymgmt_new_fn dsa_newdata;
 static OSSL_OP_keymgmt_free_fn dsa_freedata;
-static OSSL_OP_keymgmt_has_domparams_fn dsa_has_domparams;
-static OSSL_OP_keymgmt_has_public_key_fn dsa_has_public;
-static OSSL_OP_keymgmt_has_public_key_fn dsa_has_private;
+static OSSL_OP_keymgmt_has_fn dsa_has;
 static OSSL_OP_keymgmt_import_fn dsa_import;
 static OSSL_OP_keymgmt_export_fn dsa_export;
 static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
 
 #define DSA_DEFAULT_MD "SHA256"
+#define DSA_POSSIBLE_SELECTIONS                 \
+    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_B_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 {
@@ -149,42 +149,40 @@ static void dsa_freedata(void *keydata)
     DSA_free(keydata);
 }
 
-static int dsa_has_domparams(void *keydata)
+static int dsa_has(void *keydata, int selection)
 {
     DSA *dsa = keydata;
+    int ok = 0;
 
-    return (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
-}
+    if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
 
-static int dsa_has_public(void *keydata)
- {
-    DSA *dsa = keydata;
-
-    return (DSA_get0_pub_key(dsa) != NULL);
-}
-
-static int dsa_has_private(void *keydata)
-{
-    DSA *dsa = keydata;
-
-    return (DSA_get0_priv_key(dsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_PUBLIC_KEY) != 0)
+        ok = ok && (DSA_get0_pub_key(dsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_PRIVATE_KEY) != 0)
+        ok = ok && (DSA_get0_priv_key(dsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_B_DOMAIN_PARAMETERS) != 0)
+        ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
+    return ok;
 }
 
 static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     DSA *dsa = keydata;
+    int ok = 0;
 
     if (dsa == NULL)
         return 0;
 
-    if (selection != OSSL_KEYMGMT_WANT_KEY
-        && !params_to_domparams(dsa, params))
-        return 0;
-    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
-        && !params_to_key(dsa, params))
-        return 0;
+    if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
 
-    return 1;
+    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+        ok = ok && params_to_domparams(dsa, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+        ok = ok && params_to_key(dsa, params);
+
+    return ok;
 }
 
 static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
@@ -193,26 +191,25 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     DSA *dsa = keydata;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
-    int ret;
+    int ok = 1;
 
     if (dsa == NULL)
         return 0;
 
     ossl_param_bld_init(&tmpl);
 
-    if (selection != OSSL_KEYMGMT_WANT_KEY
-        && !domparams_to_params(dsa, &tmpl))
-        return 0;
-    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS
-        && !key_to_params(dsa, &tmpl))
+    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+        ok = ok && domparams_to_params(dsa, &tmpl);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+        ok = ok && key_to_params(dsa, &tmpl);
+
+    if (!ok
+        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
         return 0;
 
-    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
-        return 0;
-
-    ret = param_cb(params, cbarg);
+    ok = param_cb(params, cbarg);
     ossl_param_bld_free(params);
-    return ret;
+    return ok;
 }
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
@@ -238,9 +235,7 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dsa_freedata },
-    { OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS, (void (*)(void))dsa_has_domparams },
-    { OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY, (void (*)(void))dsa_has_public },
-    { OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY, (void (*)(void))dsa_has_private },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dsa_has },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dsa_import },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
