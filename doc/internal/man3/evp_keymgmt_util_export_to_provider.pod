@@ -21,9 +21,9 @@ evp_keymgmt_util_fromdata
 
 =head1 DESCRIPTION
 
-evp_keymgmt_export_to_provider() exports the key material from the
-given key I<pk> to a provider via a B<EVP_KEYMGMT> interface, if this
-hasn't already been done.
+evp_keymgmt_util_export_to_provider() exports the key material from
+the given key I<pk> to a provider via a B<EVP_KEYMGMT> interface, if
+this hasn't already been done.
 It maintains a cache of provider key references in I<pk> to keep track
 of all such exports.
 
@@ -33,8 +33,8 @@ is_dirty() method returns 1.
 If it has, the cache of already exported keys is cleared, and a new
 export is made with the new key material.
 
-evp_keymgmt_clear_pkey_cache() can be used to explicitly clear the
-cache of provider key references.
+evp_keymgmt_util_clear_pkey_cache() can be used to explicitly clear
+the cache of provider key references.
 
 evp_keymgmt_util_cache_pkey() can be used to assign a provider key
 object to a specific cache slot in the given I<target>.
