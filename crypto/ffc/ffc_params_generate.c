@@ -406,6 +406,19 @@ err:
     return ret;
 }
 
+static EVP_MD *fetch_default_md(OPENSSL_CTX *libctx, size_t N)
+{
+    char *name = NULL;
+
+    if (N == 160)
+        name = "SHA1";
+    else if (N == 224)
+        name = "SHA-224";
+    else if (N == 256)
+        name = "SHA-256";
+
+    return name !=  NULL ?  EVP_MD_fetch(libctx, name, "") : NULL;
+}
 
 /*
  * FIPS 186-4 FFC parameter generation (as defined in Appendix A).
@@ -480,6 +493,7 @@ int ffc_param_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     BN_CTX *ctx = NULL;
     EVP_MD_CTX *mctx = NULL;
     int generate = (validate_flags == 0);
+    EVP_MD *evpmd_fetch = NULL;
 
     *res = 0;
 
@@ -498,12 +512,8 @@ int ffc_param_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
         goto err;
 
     if (evpmd == NULL) {
-        if (N == 160)
-            evpmd = EVP_sha1();
-        else if (N == 224)
-            evpmd = EVP_sha224();
-        else if (N == 256)
-            evpmd = EVP_sha256();
+        evpmd_fetch = fetch_default_md(libctx, N);
+        evpmd = evpmd_fetch;
     }
 
     mdsize = EVP_MD_size(evpmd);
@@ -737,6 +747,7 @@ err:
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_MONT_CTX_free(mont);
+    EVP_MD_free(evpmd_fetch);
     EVP_MD_CTX_free(mctx);
     return ok;
 }
@@ -760,6 +771,7 @@ int ffc_param_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     int generate = (validate_flags == 0);
     unsigned char *seed_in = params->seed;
     size_t seed_len = params->seedlen;
+    EVP_MD *evpmd_fetch = NULL;
 
     *res = 0;
 #ifdef FIPS_MODE
@@ -781,12 +793,8 @@ int ffc_param_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     }
 
     if (evpmd == NULL) {
-        if (qsize == SHA_DIGEST_LENGTH)
-            evpmd = EVP_sha1();
-        else if (qsize == SHA224_DIGEST_LENGTH)
-            evpmd = EVP_sha224();
-        else
-            evpmd = EVP_sha256();
+        evpmd_fetch = fetch_default_md(libctx, qsize * 8);
+        evpmd = evpmd_fetch;
     } else {
         rv = EVP_MD_size(evpmd);
         if (rv <= 0)
@@ -962,6 +970,7 @@ err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
+    EVP_MD_free(evpmd_fetch);
     BN_MONT_CTX_free(mont);
     return ok;
 }

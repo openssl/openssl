@@ -53,7 +53,7 @@ err:
     return ret;
 #else
     do {
-        if (!BN_priv_rand_range(priv, params->q))
+        if (!BN_priv_rand_range_ex(priv, params->q, ctx))
             return 0;
     } while (BN_is_zero(priv) || BN_is_one(priv));
     return 1;

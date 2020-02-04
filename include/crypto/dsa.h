@@ -9,6 +9,8 @@
 
 #include <openssl/dsa.h>
 
+#define DSA_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
+#define DSA_PARAMGEN_TYPE_FIPS_186_4   2   /* Use FIPS186-4 standard */
 
 int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
                                const unsigned char *seed_in, int seed_len,
