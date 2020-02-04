@@ -951,9 +951,9 @@ static void s390x_x448_mod_p(unsigned char u[56])
                                  u, u_red, sizeof(u_red));
 }
 
-static int s390x_x25519_mul(unsigned char u_dst[32],
-                            const unsigned char u_src[32],
-                            const unsigned char d_src[32])
+int s390x_x25519_mul(unsigned char u_dst[32],
+                     const unsigned char u_src[32],
+                     const unsigned char d_src[32])
 {
     union {
         struct {
@@ -984,9 +984,9 @@ static int s390x_x25519_mul(unsigned char u_dst[32],
     return rc;
 }
 
-static int s390x_x448_mul(unsigned char u_dst[56],
-                          const unsigned char u_src[56],
-                          const unsigned char d_src[56])
+int s390x_x448_mul(unsigned char u_dst[56],
+                   const unsigned char u_src[56],
+                   const unsigned char d_src[56])
 {
     union {
         struct {

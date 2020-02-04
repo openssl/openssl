@@ -16,6 +16,9 @@
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#ifdef S390X_EC_ASM
+# include "s390x_arch.h"
+#endif
 
 static OSSL_OP_keyexch_newctx_fn x25519_newctx;
 static OSSL_OP_keyexch_newctx_fn x448_newctx;
@@ -126,11 +129,31 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
     }
 
     if (ecxctx->keylen == X25519_KEYLEN) {
+#ifdef S390X_EC_ASM
+        if (OPENSSL_s390xcap_P.pcc[1]
+                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)) {
+            if (s390x_x25519_mul(secret, ecxctx->peerkey->pubkey,
+                                 ecxctx->key->privkey) == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+                return 0;
+            }
+        } else
+#endif
         if (X25519(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
     } else {
+#ifdef S390X_EC_ASM
+        if (OPENSSL_s390xcap_P.pcc[1]
+                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)) {
+            if (s390x_x448_mul(secret, ecxctx->peerkey->pubkey,
+                               ecxctx->key->privkey) == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+                return 0;
+            }
+        } else
+#endif
         if (X448(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;

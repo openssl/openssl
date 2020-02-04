@@ -8,4 +8,16 @@ IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_exch.c
 ENDIF
 
+IF[{- !$disabled{asm} -}]
+  $ECDEF_s390x=S390X_EC_ASM
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$ECASM_{- $target{asm_arch} -}]
+    $ECDEF=$ECDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+
 SOURCE[$ECX_GOAL]=ecx_exch.c
+DEFINE[$ECX_GOAL]=$ECDEF
