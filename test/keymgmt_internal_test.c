@@ -167,7 +167,6 @@ static int test_pass_rsa(FIXTURE *fixture)
         0                        /* Extra, should remain zero */
     };
     static unsigned long keydata[OSSL_NELEM(expected)] = { 0, };
-    int selection;
 
     if (!TEST_ptr(rsa = RSA_new()))
         goto err;
@@ -208,13 +207,11 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr_ne(km1, km2))
         goto err;
 
-    selection = OSSL_KEYMGMT_WANT_KEY;
-    if (!TEST_ptr(evp_keymgmt_util_export_to_provider(pk, km1, selection))
-        || !TEST_ptr(provkey =
-                     evp_keymgmt_util_export_to_provider(pk, km2, selection)))
+    if (!TEST_ptr(evp_keymgmt_util_export_to_provider(pk, km1))
+        || !TEST_ptr(provkey = evp_keymgmt_util_export_to_provider(pk, km2)))
         goto err;
 
-    if (!TEST_true(evp_keymgmt_export(km2, provkey, selection,
+    if (!TEST_true(evp_keymgmt_export(km2, provkey, OSSL_KEYMGMT_SELECT_KEY,
                                       &export_cb, keydata)))
         goto err;
 
