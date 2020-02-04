@@ -307,7 +307,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
     OSSL_SERIALIZER_CTX *ctx = NULL;
     OSSL_SERIALIZER *ser = NULL;
     EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
-    int selection = OSSL_KEYMGMT_WANT_BOTH;
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
 
     if (!ossl_assert(pkey != NULL && propquery != NULL)) {
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
@@ -319,7 +319,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
         OSSL_PROPERTY_LIST *check =
-            ossl_parse_query(libctx, "type=domainparams");
+            ossl_parse_query(libctx, "type=parameters");
         OSSL_PROPERTY_LIST *current_props = NULL;
 
         memset(&sel_data, 0, sizeof(sel_data));
@@ -341,7 +341,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         current_props =
             ossl_parse_property(libctx, OSSL_SERIALIZER_properties(ser));
         if (ossl_property_match_count(check, current_props) > 0)
-            selection = OSSL_KEYMGMT_WANT_DOMPARAMS;
+            selection = OSSL_KEYMGMT_SELECT_PARAMETERS;
 
         ossl_property_free(current_props);
         ossl_property_free(check);

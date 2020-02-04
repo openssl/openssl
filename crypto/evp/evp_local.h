@@ -73,29 +73,22 @@ struct evp_keymgmt_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    /* Base routines */
+    /* Constructor(s), destructor, information */
     OSSL_OP_keymgmt_new_fn *new;
     OSSL_OP_keymgmt_free_fn *free;
-    OSSL_OP_keymgmt_has_domparams_fn *has_domparams;
-    OSSL_OP_keymgmt_has_public_key_fn *has_public_key;
-    OSSL_OP_keymgmt_has_private_key_fn *has_private_key;
     OSSL_OP_keymgmt_get_params_fn *get_params;
     OSSL_OP_keymgmt_gettable_params_fn *gettable_params;
 
-    /* Supported operation query */
+    /* Key object checking */
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
+    OSSL_OP_keymgmt_has_fn *has;
+    OSSL_OP_keymgmt_validate_fn *validate;
 
     /* Import and export routines */
     OSSL_OP_keymgmt_import_fn *import;
     OSSL_OP_keymgmt_import_types_fn *import_types;
     OSSL_OP_keymgmt_export_fn *export;
     OSSL_OP_keymgmt_export_types_fn *export_types;
-
-    /* Key validation routines */
-    OSSL_OP_keymgmt_validate_domparams_fn *validatedomparams;
-    OSSL_OP_keymgmt_validate_public_fn *validatepublic;
-    OSSL_OP_keymgmt_validate_private_fn *validateprivate;
-    OSSL_OP_keymgmt_validate_pairwise_fn *validatepairwise;
 } /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {
@@ -278,5 +271,4 @@ void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
 void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery,
-                             int domainparams);
+                             EVP_KEYMGMT **keymgmt, const char *propquery);

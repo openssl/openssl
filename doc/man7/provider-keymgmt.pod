@@ -23,9 +23,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OP_keymgmt_gettable_params(void);
 
  /* Key object content checks */
- int OP_keymgmt_has_domparams(void *keydata);
- int OP_keymgmt_has_public_key(void *keydata);
- int OP_keymgmt_has_private_key(void *keydata);
+ int OP_keymgmt_has(void *keydata, int selection);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -38,10 +36,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OP_keymgmt_export_types(int selection);
 
  /* Key object validation */
- int OP_keymgmt_validate_domparams(void *keydata);
- int OP_keymgmt_validate_public(void *keydata);
- int OP_keymgmt_validate_private(void *keydata);
- int OP_keymgmt_validate_pairwise(void *keydata);
+ int OP_keymgmt_validate(void *keydata, int selection);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -69,7 +64,7 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
-For example, the "function" OP_keymgmt_importdomparams() has these:
+For example, the "function" OP_keymgmt_new() has these:
 
  typedef void *(OSSL_OP_keymgmt_new_fn)(void *provctx);
  static ossl_inline OSSL_OP_keymgmt_new_fn
@@ -84,7 +79,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OP_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
 
- OP_keymgmt_has_domparams        OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS
+ OP_keymgmt_has_parameters       OSSL_FUNC_KEYMGMT_HAS_PARAMETERS
  OP_keymgmt_has_public_key       OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY
  OP_keymgmt_has_private_key      OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY
 
@@ -95,10 +90,88 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OP_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
- OP_keymgmt_validate_domparams   OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS
+ OP_keymgmt_validate_parameters  OSSL_FUNC_KEYMGMT_VALIDATE_PARAMETERS
  OP_keymgmt_validate_public      OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC
  OP_keymgmt_validate_private     OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE
  OP_keymgmt_validate_pairwise    OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE
+
+=head2 Key Objects
+
+A key object is a collection of data for an asymmetric key, and is
+represented as I<keydata> in this manual.
+
+The exact contents of a key object are defined by the provider, and it
+is assumed that different operations in one and the same provider use
+the exact same structure to represent this collection of data, so that
+for example, a key object that has been created using the KEYMGMT
+interface that we document here can be passed as is to other provider
+operations, such as OP_signature_sign_init() (see
+L<provider-signature(7)>).
+
+With some of the KEYMGMT functions, it's possible to select a specific
+subset of data to handle, governed by the bits in a I<selection>
+indicator.  The bits are:
+
+=over 4
+
+=item B<OSSL_KEYMGMT_B_PRIVATE_KEY>
+
+Indicating that the private key data in a key object should be
+considered.
+
+=item B<OSSL_KEYMGMT_B_PUBLIC_KEY>
+
+Indicating that the public key data in a key object should be
+considered.
+
+=item B<OSSL_KEYMGMT_B_DOMAIN_PARAMETERS>
+
+Indicating that the domain parameters in a key object should be
+considered.
+
+=item B<OSSL_KEYMGMT_B_OTHER_PARAMETERS>
+
+Indicating that other parameters in a key object should be
+considered.
+
+Other parameters are key parameters that don't fit any other
+classification.  In other words, this particular selector bit works as
+a last resort bit bucket selector.
+
+=back
+
+Some selector bits have also been combined for easier use:
+
+=over 4
+
+=item B<OSSL_KEYMGMT_SELECT_PARAMETERS>
+
+Indicating that all key object parameters should be considered,
+regardless of their more granular classification.
+
+=for comment This should used by EVP functions such as
+EVP_PKEY_copy_parameters() and EVP_PKEY_cmp_parameters()
+
+=item B<OSSL_KEYMGMT_SELECT_KEY>
+
+Indicating that both the whole key pair in a key object should be
+considered, i.e. the combination of public and private key.
+
+=item B<OSSL_KEYMGMT_SELECT_ALL>
+
+Indicating that everything in a key object should be considered.
+
+=back
+
+The exact interpretation of those bits or how they combine is left to
+each function where you can specify a selector.
+
+=for comment One might think that a combination of bits means that all
+the selected data subsets must be considered, but then you have to
+consider that when comparing key objects (future function), an
+implementation might opt to not compare the private key if it has
+compared the public key, since a match of one half implies a match of
+the other half.
 
 =head2 Constructing and Destructing Functions
 
@@ -127,12 +200,29 @@ can handle.
 If OP_keymgmt_gettable_params() is present, OP_keymgmt_get_params()
 must also be present.
 
-=head2 Key Object Content Checking Functions
+=head2 Key Object Checking Functions
 
-OP_keymgmt_has_domparams(), OP_keymgmt_has_public_key(), and
-OP_keymgmt_has_private_key() should check whether the given I<keydata>
-contains domain parameters, a public key, and a private key,
-respectively.
+OP_keymgmt_query_operation_name() should return the name of the
+supported algorithm for the operation I<operation_id>.  This is
+similar to provider_query_operation() (see L<provider-base(7)>),
+but only works as an advisory.  If this function is not present, or
+returns NULL, the caller is free to assume that there's an algorithm
+from the same provider, of the same name as the one used to fetch the
+keymgmt and try to use that.
+
+OP_keymgmt_has() should check whether the given I<keydata> the subsets
+of data indicated by the I<selector>.  A combination of several
+selector bits must consider all those subsets, not just one.  An
+implementation is, however, free to consider an empty subset of data
+to still be a valid subset.
+
+OP_keymgmt_validate() should check if the I<keydata> contains valid
+data subsets indicated by I<selection>.  Some combined selections of
+data subsets may cause validation of the combined data.
+For example, the combination of B<OSSL_KEYMGMT_B_PRIVATE_KEY> and
+B<OSSL_KEYMGMT_B_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEY> for short)
+is expected to check that the pairwise consistency of I<keydata> is
+valid.
 
 =head2 Key Object Import and Export Functions
 
@@ -151,69 +241,17 @@ OP_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OP_keymgmt_export() callback can expect to receive.
 
-The indicator I<selection> is further explained in
-L</Import and Export Selections>.
-
 If OP_keymgmt_import_types() is present, OP_keymgmt_import() must also
 be present.
 Likewise, if OP_keymgmt_export_types() is present, OP_keymgmt_export()
 must also be present.
-
-=head2 Key Object Validation Functions
-
-OP_keymgmt_validate_domparams() should check if I<keydata> contains
-valid domain parameters.
-
-OP_keymgmt_validate_public() should check if I<keydata> contains a
-valid public key.
-
-OP_keymgmt_validate_public() should check if I<keydata> contains a
-valid private key.
-
-OP_keymgmt_validate_pairwise() should check that the pairwise
-consistency of I<keydata> is valid.
-
-=head2 Supported Operations
-
-OP_keymgmt_query_operation_name() should return the name of the
-supported algorithm for the operation I<operation_id>.  This is
-similar to provider_query_operation() (see L<provider-base(7)>),
-but only works as an advisory.  If this function is not present, or
-returns NULL, the caller is free to assume that there's an algorithm
-from the same provider, of the same name as the one used to fetch the
-keymgmt and try to use that.
-
-=head2 Import and Export Selections
-
-The I<selection> given to OP_keymgmt_import() and OP_keymgmt_export()
-indicates what values of the I<keydata> are of interest.  It can be
-one of:
-
-=over 4
-
-=item B<OSSL_KEYMGMT_WANT_DOMPARAMS>
-
-to indicate that only the domain parameters are interesting.
-
-=item B<OSSL_KEYMGMT_WANT_KEY>
-
-to indicate that only the key data (the data that constitutes the
-private and the public keys) are interesting.
-
-=item B<OSSL_KEYMGMT_WANT_BOTH>
-
-to indicate that both the domain parameters and the key data are
-intesting.
-
-=back
 
 =head2 Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
 Parameters currently recognised by built-in keymgmt algorithms'
-OP_keymgmt_get_domparams_params() and OP_keymgmt_get_key_params()
-are:
+OP_keymgmt_get_params:
 
 =over 4
 

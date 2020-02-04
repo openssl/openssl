@@ -127,7 +127,7 @@ formatted data.
 
 With objects that have multiple purposes, this can be used to specify
 the purpose type.  The currently known use cases are asymmetric keys
-and domain parameters, where the type can be one of:
+and key parameters, where the type can be one of:
 
 =over 4
 
@@ -141,9 +141,9 @@ key.
 An implementation with that format property value outputs a public
 key.
 
-=item domainparams
+=item parameters
 
-An implementation with that format property value outputs domain
+An implementation with that format property value outputs key
 parameters.
 
 =back

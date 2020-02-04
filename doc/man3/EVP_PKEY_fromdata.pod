@@ -4,7 +4,7 @@
 
 EVP_PKEY_param_fromdata_init, EVP_PKEY_key_fromdata_init, EVP_PKEY_fromdata,
 EVP_PKEY_param_fromdata_settable, EVP_PKEY_key_fromdata_settable
-- functions to create domain parameters and keys from user data
+- functions to create key parameters and keys from user data
 
 =head1 SYNOPSIS
 
@@ -19,12 +19,12 @@ EVP_PKEY_param_fromdata_settable, EVP_PKEY_key_fromdata_settable
 =head1 DESCRIPTION
 
 EVP_PKEY_param_fromdata_init() initializes a public key algorithm context
-for creating domain parameters from user data.
+for creating key parameters from user data.
 
 EVP_PKEY_key_fromdata_init() initializes a public key algorithm context for
 creating a key from user data.
 
-EVP_PKEY_fromdata() creates domain parameters or a key, given data from
+EVP_PKEY_fromdata() creates key parameters or a key, given data from
 I<params> and a context that's been initialized with
 EVP_PKEY_param_fromdata_init() or EVP_PKEY_key_fromdata_init().  The result is
 written to I<*ppkey>.

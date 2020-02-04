@@ -32,7 +32,7 @@ struct ossl_serializer_ctx_st {
     OSSL_SERIALIZER *ser;
     void *serctx;
 
-    /* One of OSSL_KEYMGMT_WANT_DOMPARAMS and OSSL_KEYMGMT_WANT_KEY */
+    /* One of OSSL_KEYMGMT_WANT_PARAMETERS and OSSL_KEYMGMT_WANT_KEY */
     int selection;
 
     /*

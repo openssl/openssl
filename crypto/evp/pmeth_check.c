@@ -32,7 +32,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate_public(keymgmt, key);
+        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_B_PUBLIC_KEY);
 
     /* legacy */
     /* call customized public key check function first */
@@ -64,7 +64,8 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate_domparams(keymgmt, key);
+        return evp_keymgmt_validate(keymgmt, key,
+                                    OSSL_KEYMGMT_SELECT_PARAMETERS);
 
     /* call customized param check function first */
     if (ctx->pmeth->param_check != NULL)
@@ -96,7 +97,7 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate_private(keymgmt, key);
+        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_B_PRIVATE_KEY);
     /* not supported for legacy keys */
     return -2;
 }
@@ -116,7 +117,7 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate_pairwise(keymgmt, key);
+        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_KEY);
     /* not supported for legacy keys */
     return -2;
 }
@@ -135,12 +136,9 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     keymgmt = pkey->pkeys[0].keymgmt;
     key = pkey->pkeys[0].keydata;
 
-    if (key != NULL && keymgmt != NULL) {
-        return evp_keymgmt_validate_domparams(keymgmt, key)
-               && evp_keymgmt_validate_public(keymgmt, key)
-               && evp_keymgmt_validate_private(keymgmt, key)
-               && evp_keymgmt_validate_pairwise(keymgmt, key);
-    }
+    if (key != NULL && keymgmt != NULL)
+        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_ALL);
+
     /* legacy */
     /* call customized check function first */
     if (ctx->pmeth->check != NULL)

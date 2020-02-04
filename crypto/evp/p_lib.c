@@ -910,8 +910,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
 }
 
 void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery,
-                             int domainparams)
+                             EVP_KEYMGMT **keymgmt, const char *propquery)
 {
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
@@ -936,7 +935,7 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 
     if (tmp_keymgmt != NULL)
         keydata =
-            evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt, domainparams);
+            evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
 
     /*
      * If nothing was exported, |tmp_keymgmt| might point at a freed

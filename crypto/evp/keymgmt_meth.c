@@ -55,21 +55,6 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->free == NULL)
                 keymgmt->free = OSSL_get_OP_keymgmt_free(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS:
-            if (keymgmt->has_domparams == NULL)
-                keymgmt->has_domparams =
-                    OSSL_get_OP_keymgmt_has_domparams(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY:
-            if (keymgmt->has_public_key == NULL)
-                keymgmt->has_public_key =
-                    OSSL_get_OP_keymgmt_has_public_key(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY:
-            if (keymgmt->has_private_key == NULL)
-                keymgmt->has_private_key =
-                    OSSL_get_OP_keymgmt_has_private_key(fns);
-            break;
         case OSSL_FUNC_KEYMGMT_GET_PARAMS:
             if (keymgmt->get_params == NULL)
                 keymgmt->get_params = OSSL_get_OP_keymgmt_get_params(fns);
@@ -78,6 +63,19 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->gettable_params == NULL)
                 keymgmt->gettable_params =
                     OSSL_get_OP_keymgmt_gettable_params(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
+            if (keymgmt->query_operation_name == NULL)
+                keymgmt->query_operation_name =
+                    OSSL_get_OP_keymgmt_query_operation_name(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_HAS:
+            if (keymgmt->has == NULL)
+                keymgmt->has = OSSL_get_OP_keymgmt_has(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE:
+            if (keymgmt->validate == NULL)
+                keymgmt->validate = OSSL_get_OP_keymgmt_validate(fns);
             break;
         case OSSL_FUNC_KEYMGMT_IMPORT:
             if (keymgmt->import == NULL)
@@ -95,45 +93,19 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->export_types == NULL)
                 keymgmt->export_types = OSSL_get_OP_keymgmt_export_types(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
-            if (keymgmt->query_operation_name == NULL)
-                keymgmt->query_operation_name =
-                    OSSL_get_OP_keymgmt_query_operation_name(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS:
-            if (keymgmt->validatedomparams == NULL)
-                keymgmt->validatedomparams =
-                    OSSL_get_OP_keymgmt_validate_domparams(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC:
-            if (keymgmt->validatepublic == NULL)
-                keymgmt->validatepublic =
-                    OSSL_get_OP_keymgmt_validate_public(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE:
-            if (keymgmt->validateprivate == NULL)
-                keymgmt->validateprivate =
-                    OSSL_get_OP_keymgmt_validate_private(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE:
-            if (keymgmt->validatepairwise == NULL)
-                keymgmt->validatepairwise =
-                    OSSL_get_OP_keymgmt_validate_pairwise(fns);
-            break;
         }
     }
     /*
      * Try to check that the method is sensible.
      * At least one constructor and the destructor are MANDATORY
-     * The functions has_public_key and has_private_key are MANDATORY
+     * The functions 'has' is MANDATORY
      * It makes no sense being able to free stuff if you can't create it.
      * It makes no sense providing OSSL_PARAM descriptors for import and
      * export if you can't import or export.
      */
     if (keymgmt->free == NULL
         || keymgmt->new == NULL
-        || keymgmt->has_public_key == NULL
-        || keymgmt->has_private_key == NULL
+        || keymgmt->has == NULL
         || (keymgmt->gettable_params != NULL
             && keymgmt->get_params == NULL)
         || (keymgmt->import_types != NULL
@@ -249,25 +221,6 @@ void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)
     keymgmt->free(keydata);
 }
 
-int evp_keymgmt_has_domparams(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    if (keymgmt->has_domparams == NULL)
-        return 0;
-    return keymgmt->has_domparams(keydata);
-}
-
-int evp_keymgmt_has_public_key(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    /* This is mandatory, no need to check for its presence */
-    return keymgmt->has_public_key(keydata);
-}
-
-int evp_keymgmt_has_private_key(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    /* This is mandatory, no need to check for its presence */
-    return keymgmt->has_private_key(keydata);
-}
-
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,
                            OSSL_PARAM params[])
 {
@@ -281,6 +234,18 @@ const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt)
     if (keymgmt->gettable_params == NULL)
         return NULL;
     return keymgmt->gettable_params();
+}
+
+int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keydata, int selection)
+{
+    /* This is mandatory, no need to check for its presence */
+    return keymgmt->has(keydata, selection);
+}
+
+int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
+                         int selection)
+{
+    return keymgmt->validate(keydata, selection);
 }
 
 int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
@@ -309,27 +274,4 @@ const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
     if (keymgmt->export_types == NULL)
         return NULL;
     return keymgmt->export_types(selection);
-}
-
-int evp_keymgmt_validate_domparams(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    /* if domainparams are not supported - then pass */
-    if (keymgmt->validatedomparams == NULL)
-        return 1;
-    return keymgmt->validatedomparams(keydata);
-}
-
-int evp_keymgmt_validate_public(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    return keymgmt->validatepublic(keydata);
-}
-
-int evp_keymgmt_validate_private(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    return keymgmt->validateprivate(keydata);
-}
-
-int evp_keymgmt_validate_pairwise(const EVP_KEYMGMT *keymgmt, void *keydata)
-{
-    return keymgmt->validatepairwise(keydata);
 }

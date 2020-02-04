@@ -339,30 +339,45 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
  * themselves and their parameters.
  *
  * The key objects are commonly refered to as |keydata|, and it MUST be able
- * to contain domain parameters if the key has any, the public key and the
- * private key.  All parts are optional, but their presence determines what
- * is possible to do with the key object.  The assumption from libcrypto is
- * that the key object contains any of the following data combinations:
+ * to contain parameters if the key has any, the public key and the private
+ * key.  All parts are optional, but their presence determines what can be
+ * done with the key object in terms of encryption, signature, and so on.
+ * The assumption from libcrypto is that the key object contains any of the
+ * following data combinations:
  *
- * - domain parameters only
+ * - parameters only
  * - public key only
  * - public key + private key
- * - domain parameters + public key
- * - domain parameters + public key + private key
+ * - parameters + public key
+ * - parameters + public key + private key
+ *
+ * What "parameters", "public key" and "private key" means in detail is left
+ * to the implementation.  In the case of DH and DSA, they would typically
+ * include domain parameters, while for certain variants of RSA, they would
+ * typically include PSS or OAEP parameters.
  *
  * Key objects are created with OP_keymgmt_new() and destroyed with
  * Op_keymgmt_free().  Key objects can have data filled in with
  * OP_keymgmt_import().
  *
  * Three functions are made available to check what selection of data is
- * present in a key object: OP_keymgmt_has_domparams(),
+ * present in a key object: OP_keymgmt_has_parameters(),
  * OP_keymgmt_has_public_key(), and OP_keymgmt_has_private_key(),
  */
 
-/* Import and export selections */
-# define OSSL_KEYMGMT_WANT_DOMPARAMS                   1
-# define OSSL_KEYMGMT_WANT_KEY                         2
-# define OSSL_KEYMGMT_WANT_BOTH                        3
+/* Key data subset selection - individual bits */
+# define OSSL_KEYMGMT_B_PRIVATE_KEY                 0x01
+# define OSSL_KEYMGMT_B_PUBLIC_KEY                  0x02
+# define OSSL_KEYMGMT_B_DOMAIN_PARAMETERS           0x04
+# define OSSL_KEYMGMT_B_OTHER_PARAMETERS            0x80
+
+/* Key data subset selection - combinations */
+# define OSSL_KEYMGMT_SELECT_PARAMETERS         \
+    ( OSSL_KEYMGMT_B_DOMAIN_PARAMETERS | OSSL_KEYMGMT_B_OTHER_PARAMETERS)
+# define OSSL_KEYMGMT_SELECT_KEY                \
+    ( OSSL_KEYMGMT_B_PRIVATE_KEY | OSSL_KEYMGMT_B_PUBLIC_KEY )
+# define OSSL_KEYMGMT_SELECT_ALL                \
+    ( OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_SELECT_PARAMETERS )
 
 /* Basic key object creation, destruction */
 # define OSSL_FUNC_KEYMGMT_NEW                         1
@@ -370,27 +385,27 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_free, (void *keydata))
 
-/* Key object information, plus discovery */
+/* Key object information, with discovery */
 #define OSSL_FUNC_KEYMGMT_GET_PARAMS                  10
 #define OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS             11
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_params,
                     (void *keydata, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_params, (void))
 
-/* Key object content checks */
-# define OSSL_FUNC_KEYMGMT_HAS_DOMPARAMS              20
-# define OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY             21
-# define OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY            22
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_domparams, (void *keydata))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_public_key, (void *keydata))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has_private_key, (void *keydata))
-
-/* Discovery of supported operations */
-# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME       39
+/* Key checks - discovery of supported operations */
+# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME       20
 OSSL_CORE_MAKE_FUNC(const char *, OP_keymgmt_query_operation_name,
                     (int operation_id))
 
-/* Import, export and copy functions */
+/* Key checks - key data content checks */
+# define OSSL_FUNC_KEYMGMT_HAS                        21
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has, (void *keydata, int selection))
+
+/* Key checks - validation */
+# define OSSL_FUNC_KEYMGMT_VALIDATE                   22
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate, (void *keydata, int selection))
+
+/* Import and export functions, with ddiscovery */
 # define OSSL_FUNC_KEYMGMT_IMPORT                     40
 # define OSSL_FUNC_KEYMGMT_IMPORT_TYPES               41
 # define OSSL_FUNC_KEYMGMT_EXPORT                     42
@@ -404,16 +419,6 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_export,
                      OSSL_CALLBACK *param_cb, void *cbarg))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_export_types,
                     (int selection))
-
-/* Key validation */
-# define OSSL_FUNC_KEYMGMT_VALIDATE_DOMPARAMS         80
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC            81
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE           82
-# define OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE          83
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_domparams, (void *keydata))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_public, (void *keydata))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_private, (void *keydata))
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate_pairwise, (void *keydata))
 
 /* Key Exchange */
 

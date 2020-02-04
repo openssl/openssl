@@ -31,8 +31,7 @@ static int try_import(const OSSL_PARAM params[], void *arg)
                               params);
 }
 
-void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                          int selection)
+void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
     void *keydata = NULL;
     size_t i, j;
@@ -75,7 +74,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
             return NULL;
 
         /* Otherwise, simply use it. */
-        if (!pk->ameth->export_to(pk, keydata, keymgmt, selection)) {
+        if (!pk->ameth->export_to(pk, keydata, keymgmt)) {
             evp_keymgmt_freedata(keymgmt, keydata);
             return NULL;
         }
@@ -95,7 +94,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
 
         import_data.keydata = keydata;
         import_data.keymgmt = keymgmt;
-        import_data.selection = selection;
+        import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
 
         for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
             EVP_KEYMGMT *exp_keymgmt = pk->pkeys[i].keymgmt;
@@ -112,7 +111,8 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
              * The export function calls the callback (try_import), which
              * does the import for us.  If successful, we're done.
              */
-            if (evp_keymgmt_export(exp_keymgmt, exp_keydata, selection,
+            if (evp_keymgmt_export(exp_keymgmt, exp_keydata,
+                                   OSSL_KEYMGMT_SELECT_ALL,
                                    &try_import, &import_data))
                 break;
 

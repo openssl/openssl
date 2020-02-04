@@ -2,16 +2,22 @@
 
 =head1 NAME
 
-evp_keymgmt_export_to_provider,
-evp_keymgmt_clear_pkey_cache
-- key material provider export for EVP
+evp_keymgmt_util_export_to_provider,
+evp_keymgmt_util_clear_pkey_cache,
+evp_keymgmt_util_cache_pkey,
+evp_keymgmt_util_fromdata
+- internal KEYMGMT utility functions
 
 =head1 SYNOPSIS
 
  #include "crypto/evp.h"
 
- void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
- void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
+ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+ void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
+ void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
+                                  EVP_KEYMGMT *keymgmt, void *keydata);
+ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                 int selection, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -30,10 +36,19 @@ export is made with the new key material.
 evp_keymgmt_clear_pkey_cache() can be used to explicitly clear the
 cache of provider key references.
 
+evp_keymgmt_util_cache_pkey() can be used to assign a provider key
+object to a specific cache slot in the given I<target>.
+I<Use with extreme care>.
+
+evp_keymgmt_util_fromdata() can be used to add key object data to a
+given key I<target> via a B<EVP_KEYMGMT> interface.  This is used as a
+helper for L<EVP_PKEY_fromdata(3)>.
+
 =head1 RETURN VALUES
 
-evp_keymgmt_export_to_provider() returns a pointer to the appropriate
-provider side key (created or found again), or NULL on error.
+evp_keymgmt_export_to_provider() and evp_keymgmt_util_fromdata()
+return a pointer to the appropriate provider side key (created or
+found again), or NULL on error.
 
 =head1 NOTES
 

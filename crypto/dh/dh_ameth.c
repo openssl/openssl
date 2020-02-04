@@ -483,7 +483,7 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                             EVP_KEYMGMT *to_keymgmt, int selection)
+                             EVP_KEYMGMT *to_keymgmt)
 {
     DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD tmpl;
@@ -497,33 +497,27 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         return 0;
 
     ossl_param_bld_init(&tmpl);
-    if (selection != OSSL_KEYMGMT_WANT_KEY) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-            || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+        return 0;
+    if (q != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
             return 0;
-        if (q != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q))
-                return 0;
-        }
     }
-
-    if (selection != OSSL_KEYMGMT_WANT_DOMPARAMS) {
-        /* A key must at least have a public part. */
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY,
-                                    pub_key))
+    /* A key must at least have a public part. */
+    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PUB_KEY, pub_key))
+        return 0;
+    if (priv_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
+                                    priv_key))
             return 0;
-
-        if (priv_key != NULL) {
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_DH_PRIV_KEY,
-                                        priv_key))
-                return 0;
-        }
     }
 
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
+                            params);
 
     ossl_param_bld_free(params);
 
