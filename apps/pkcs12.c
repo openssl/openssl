@@ -893,12 +893,13 @@ static int alg_print(const X509_ALGOR *alg)
 
 int cert_load(BIO *in, STACK_OF(X509) *sk)
 {
-    int ret;
+    int ret = 0;
     X509 *cert;
-    ret = 0;
+
     while ((cert = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
         ret = 1;
-        sk_X509_push(sk, cert);
+        if (!sk_X509_push(sk, cert))
+            return 0;
     }
     if (ret)
         ERR_clear_error();

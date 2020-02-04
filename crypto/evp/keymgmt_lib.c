@@ -135,7 +135,8 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
      * have to think about a cache aging scheme, though, if |i| indexes
      * outside the array.
      */
-    j = ossl_assert(i < OSSL_NELEM(pk->pkeys));
+    if (!ossl_assert(i < OSSL_NELEM(pk->pkeys)))
+        return NULL;
 
     evp_keymgmt_cache_pkey(pk, i, keymgmt, provdata, want_domainparams);
 

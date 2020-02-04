@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "self_test.h"
 #include "self_test_data.inc"
@@ -140,14 +141,19 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
                          OPENSSL_CTX *libctx)
 {
     int ret = 0;
-    int i;
+    int i, numparams;
     unsigned char out[64];
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *ctx = NULL;
     OSSL_PARAM params[16];
     const OSSL_PARAM *settables = NULL;
 
+    numparams = OSSL_NELEM(params);
     SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_KAT_KDF, t->desc);
+
+    /* Zeroize the params array to avoid mem leaks on error */
+    for (i = 0; i < numparams; ++i)
+        params[i] = OSSL_PARAM_construct_end();
 
     kdf = EVP_KDF_fetch(libctx, t->algorithm, "");
     ctx = EVP_KDF_CTX_new(kdf);
@@ -156,13 +162,14 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
 
     settables = EVP_KDF_settable_ctx_params(kdf);
     for (i = 0; t->ctrls[i].name != NULL; ++i) {
+        if (!ossl_assert(i < (numparams - 1)))
+            goto end;
         if (!OSSL_PARAM_allocate_from_text(&params[i], settables,
                                            t->ctrls[i].name,
                                            t->ctrls[i].value,
                                            strlen(t->ctrls[i].value)))
             goto end;
     }
-    params[i] = OSSL_PARAM_construct_end();
     if (!EVP_KDF_CTX_set_params(ctx, params))
         goto end;
 

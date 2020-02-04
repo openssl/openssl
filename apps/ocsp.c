@@ -451,7 +451,8 @@ int ocsp_main(int argc, char **argv)
                 if ((issuers = sk_X509_new_null()) == NULL)
                     goto end;
             }
-            sk_X509_push(issuers, issuer);
+            if (!sk_X509_push(issuers, issuer))
+                goto end;
             break;
         case OPT_CERT:
             X509_free(cert);
