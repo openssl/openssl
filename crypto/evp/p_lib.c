@@ -131,28 +131,60 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    /*
+     * If one of the keys is purely provided, use the evp_keymgmt_util
+     * routine.
+     */
+    if (evp_pkey_is_pure_provided(a) || evp_pkey_is_pure_provided(b)) {
+        /* Make sure they're both provided */
+        if (a->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided((EVP_PKEY *)a, NULL, NULL, NULL);
+        if (b->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided((EVP_PKEY *)b, NULL, NULL, NULL);
+
+        return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b,
+                                      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    }
+
+    /* All legacy keys */
     if (a->type != b->type)
         return -1;
-    if (a->ameth && a->ameth->param_cmp)
+    if (a->ameth != NULL && a->ameth->param_cmp != NULL)
         return a->ameth->param_cmp(a, b);
     return -2;
 }
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    /*
+     * If one of the keys is purely provided, use the evp_keymgmt_util
+     * routine.
+     */
+    if (evp_pkey_is_pure_provided(a) || evp_pkey_is_pure_provided(b)) {
+        /* Make sure they're both provided */
+        if (a->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided((EVP_PKEY *)a, NULL, NULL, NULL);
+        if (b->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided((EVP_PKEY *)b, NULL, NULL, NULL);
+
+        return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b,
+                                      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+                                      | OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
+    }
+
     if (a->type != b->type)
         return -1;
 
-    if (a->ameth) {
+    if (a->ameth != NULL) {
         int ret;
         /* Compare parameters if the algorithm has them */
-        if (a->ameth->param_cmp) {
+        if (a->ameth->param_cmp != NULL) {
             ret = a->ameth->param_cmp(a, b);
             if (ret <= 0)
                 return ret;
         }
 
-        if (a->ameth->pub_cmp)
+        if (a->ameth->pub_cmp != NULL)
             return a->ameth->pub_cmp(a, b);
     }
 

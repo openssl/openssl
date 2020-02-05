@@ -237,3 +237,172 @@ int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
      */
     return 1;
 }
+
+/*
+ * Specialized function to find matching keymgmt in two EVP_PKEYs, given
+ * the return value from a |finder| function.  This function assumes that
+ * if there isn't a perfect match, the caller will have to export one of
+ * the keys to the other key's importing keymgmt, so it looks for that
+ * too.
+ *
+ * No return value.  The success is determined by the values assigned to
+ * the pointer references.
+ */
+static void find_keymgmt(EVP_KEYMGMT **keymgmt1, EVP_KEYMGMT **keymgmt2,
+                         void **keydata1, void **keydata2,
+                         EVP_PKEY *pk1, EVP_PKEY *pk2,
+                         int (*finder)(EVP_KEYMGMT *keymgmt))
+{
+    EVP_KEYMGMT *tmp_keymgmt1 = NULL, *tmp_keymgmt2 = NULL;
+    void *tmp_keydata1 = NULL, *tmp_keydata2 = NULL;
+    size_t i1, i2, end = OSSL_NELEM(pk1->pkeys);
+
+    /*
+     * Find cache elements that share the same keymgmt, which must also have
+     * function determined by |finder|.  This search is obviously O(n^2), but
+     * since the cache is fairly small, we assume that it's still cheaper
+     * than a export + import.
+     */
+    for (i1 = 0; i1 < end && pk1->pkeys[i1].keymgmt != NULL; i1++) {
+        if (finder(pk1->pkeys[i1].keymgmt)) {
+            tmp_keymgmt1 = pk1->pkeys[i1].keymgmt;
+            tmp_keydata1 = pk1->pkeys[i1].keydata;
+        }
+
+        for (i2 = 0; i2 < end && pk2->pkeys[i2].keymgmt != NULL; i2++) {
+            if (finder(pk2->pkeys[i2].keymgmt)) {
+                tmp_keymgmt2 = pk2->pkeys[i2].keymgmt;
+                tmp_keydata2 = pk2->pkeys[i2].keydata;
+            }
+
+            if (tmp_keymgmt1 != NULL && tmp_keymgmt1 == tmp_keymgmt2)
+                /* We found the perfect match.  Get out! */
+                goto bigbreak;
+
+            /*
+             * This isn't the perfect match, so the keymgmt we found for pk2
+             * must also be able to import.
+             */
+            if (pk2->pkeys[i2].keymgmt->import == NULL) {
+                tmp_keymgmt2 = NULL;
+                tmp_keydata2 = NULL;
+            }
+        }
+
+        /*
+         * We haven't found the perfect match yet, so the keymgmt we found
+         * for pk1 must also be able to import.
+         */
+        if (pk1->pkeys[i1].keymgmt->import == NULL) {
+            tmp_keymgmt1 = NULL;
+            tmp_keydata1 = NULL;
+        }
+    }
+ bigbreak:
+
+    *keymgmt1 = tmp_keymgmt1;
+    *keymgmt2 = tmp_keymgmt2;
+    *keydata1 = tmp_keydata1;
+    *keydata2 = tmp_keydata2;
+}
+
+/*
+ * Specialized function that, given two EVP_PKEYs and two keymgmts, tries
+ * to export them to each other's keymgmt, so they end up having keydata
+ * in the same provider.
+ *
+ * No return value.  The success is determined by the values assigned to
+ * the pointer references.
+ */
+static void prepare_binary_op(EVP_KEYMGMT **keymgmt1, EVP_KEYMGMT **keymgmt2,
+                              void **keydata1, void **keydata2,
+                              EVP_PKEY *pk1, EVP_PKEY *pk2)
+{
+    EVP_KEYMGMT *tmp_keymgmt1 = *keymgmt1, *tmp_keymgmt2 = *keymgmt2;
+    void *tmp_keydata1 = *keydata1, *tmp_keydata2 = *keydata2;
+    void *tmp_keydata;
+
+    tmp_keydata = evp_keymgmt_util_export_to_provider(pk1, tmp_keymgmt2);
+
+    if (tmp_keydata != NULL) {
+        tmp_keymgmt1 = tmp_keymgmt2;
+        tmp_keydata1 = tmp_keydata;
+    } else {
+        tmp_keydata = evp_keymgmt_util_export_to_provider(pk2, tmp_keymgmt1);
+
+        if (tmp_keydata != NULL) {
+            tmp_keymgmt2 = tmp_keymgmt1;
+            tmp_keydata2 = tmp_keydata;
+        }
+    }
+
+    *keymgmt1 = tmp_keymgmt1;
+    *keymgmt2 = tmp_keymgmt2;
+    *keydata1 = tmp_keydata1;
+    *keydata2 = tmp_keydata2;
+}
+
+
+static int match_type(EVP_KEYMGMT *keymgmt1, EVP_KEYMGMT *keymgmt2)
+{
+    /* Unconstify the provider, because evp_first_name() demands it */
+    OSSL_PROVIDER *prov2 = (OSSL_PROVIDER *)EVP_KEYMGMT_provider(keymgmt2);
+    const char *name2 = evp_first_name(prov2, EVP_KEYMGMT_number(keymgmt2));
+
+    return EVP_KEYMGMT_is_a(keymgmt1, name2);
+}
+
+/*
+ * evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_cmp()
+ * and EVP_PKEY_cmp_parameters() return, i.e.:
+ *
+ *  1   same key
+ *  0   not same key
+ * -1   not same key type
+ * -2   unsupported operation
+ */
+static int implements_match(EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->match != NULL;
+}
+
+int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
+{
+    EVP_KEYMGMT *impmatch_keymgmt1 = NULL, *impmatch_keymgmt2 = NULL;
+    void *keydata1 = NULL, *keydata2 = NULL;
+
+    find_keymgmt(&impmatch_keymgmt1, &impmatch_keymgmt2, &keydata1, &keydata2,
+                 pk1, pk2, &implements_match);
+
+    /* If we found no suitable keymgmt for either key, support is missing */
+    if (impmatch_keymgmt1 == NULL && impmatch_keymgmt2 == NULL)
+        return -2;
+
+    /*
+     * If we don't have matching keymgmt implementations, we check that they
+     * handle the same key type.
+     * We trust that aliases are properly registered.
+     */
+    if (impmatch_keymgmt1 != impmatch_keymgmt2) {
+        if (impmatch_keymgmt1 == NULL
+            || impmatch_keymgmt2 == NULL
+            || !match_type(impmatch_keymgmt1, impmatch_keymgmt2)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+            return -1;           /* Not the same type */
+        }
+    }
+
+    /*
+     * If the two keymgmt aren't the same, try to prepare any of the two
+     * EVP_PKEYs so they end up matching.
+     */
+    if (impmatch_keymgmt1 != impmatch_keymgmt2)
+        prepare_binary_op(&impmatch_keymgmt1, &impmatch_keymgmt2,
+                          &keydata1, &keydata2, pk1, pk2);
+
+    /* If we still don't have matching keymgmt implementations, we give up */
+    if (impmatch_keymgmt1 != impmatch_keymgmt2)
+        return -2;
+
+    return evp_keymgmt_match(impmatch_keymgmt1, keydata1, keydata2, selection);
+}
