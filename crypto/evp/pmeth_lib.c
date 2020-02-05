@@ -704,8 +704,7 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
                                              * Cast away the const. This is read
                                              * only so should be safe
                                              */
-                                            (char *)name,
-                                            strlen(name) + 1);
+                                            (char *)name, 0);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, sig_md_params);

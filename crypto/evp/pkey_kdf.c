@@ -186,8 +186,7 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case T_DIGEST:
         mdname = EVP_MD_name((const EVP_MD *)p2);
-        params[0] = OSSL_PARAM_construct_utf8_string(name, (char *)mdname,
-                                                     strlen(mdname) + 1);
+        params[0] = OSSL_PARAM_construct_utf8_string(name, (char *)mdname, 0);
         break;
 
         /*

@@ -43,14 +43,14 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     if ((kctx = EVP_KDF_CTX_new(kdf)) == NULL)
         goto err;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                              (unsigned char *)Z, Zlen);
     if (ukm != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_UKM,
                                                  (unsigned char *)ukm, ukmlen);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-                                            (char *)oid_sn, strlen(oid_sn) + 1);
+                                            (char *)oid_sn, 0);
     *p = OSSL_PARAM_construct_end();
     ret = EVP_KDF_CTX_set_params(kctx, params) > 0
         && EVP_KDF_derive(kctx, out, outlen) > 0;

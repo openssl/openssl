@@ -167,7 +167,9 @@ size B<rsize> is created.
 OSSL_PARAM_construct_utf8_string() is a function that constructs a UTF8
 string OSSL_PARAM structure.
 A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
-If B<bsize> is zero, the string length is determined using strlen(3).
+If B<bsize> is zero, the string length is determined using strlen(3) + 1 for the
+null termination byte.
+Generally pass zero for B<bsize> instead of calling strlen(3) yourself.
 
 OSSL_PARAM_construct_octet_string() is a function that constructs an OCTET
 string OSSL_PARAM structure.

@@ -55,7 +55,7 @@ static int tls1_PRF(SSL *s,
         goto err;
     mdname = EVP_MD_name(md);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
                                              (unsigned char *)sec,
                                              (size_t)slen);
