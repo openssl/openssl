@@ -32,8 +32,8 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return
-            evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_FLAG_PUBLIC_KEY);
+        return evp_keymgmt_validate(keymgmt, key,
+                                    OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
 
     /* legacy */
     /* call customized public key check function first */
@@ -66,7 +66,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key,
-                                    OSSL_KEYMGMT_SELECT_PARAMETERS);
+                                    OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
 
     /* call customized param check function first */
     if (ctx->pmeth->param_check != NULL)
@@ -98,8 +98,8 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return
-            evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_FLAG_PRIVATE_KEY);
+        return evp_keymgmt_validate(keymgmt, key,
+                                    OSSL_KEYMGMT_SELECT_PRIVATE_KEY);
     /* not supported for legacy keys */
     return -2;
 }
@@ -119,7 +119,7 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
     key = pkey->pkeys[0].keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_KEY);
+        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_KEYPAIR);
     /* not supported for legacy keys */
     return -2;
 }

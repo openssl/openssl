@@ -114,22 +114,22 @@ indicator.  The bits are:
 
 =over 4
 
-=item B<OSSL_KEYMGMT_FLAG_PRIVATE_KEY>
+=item B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY>
 
 Indicating that the private key data in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_FLAG_PUBLIC_KEY>
+=item B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY>
 
 Indicating that the public key data in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS>
+=item B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS>
 
 Indicating that the domain parameters in a key object should be
 considered.
 
-=item B<OSSL_KEYMGMT_FLAG_OTHER_PARAMETERS>
+=item B<OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS>
 
 Indicating that other parameters in a key object should be
 considered.
@@ -144,7 +144,7 @@ Some selector bits have also been combined for easier use:
 
 =over 4
 
-=item B<OSSL_KEYMGMT_SELECT_PARAMETERS>
+=item B<OSSL_KEYMGMT_SELECT_ALL_PARAMETERS>
 
 Indicating that all key object parameters should be considered,
 regardless of their more granular classification.
@@ -152,10 +152,19 @@ regardless of their more granular classification.
 =for comment This should used by EVP functions such as
 EVP_PKEY_copy_parameters() and EVP_PKEY_cmp_parameters()
 
-=item B<OSSL_KEYMGMT_SELECT_KEY>
+This is a combination of B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> and
+B<OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS>.
+
+=for comment If more parameter categories are added, they should be
+mentioned here too.
+
+=item B<OSSL_KEYMGMT_SELECT_KEYPAIR>
 
 Indicating that both the whole key pair in a key object should be
 considered, i.e. the combination of public and private key.
+
+This is a combination of B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY> and
+B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY>.
 
 =item B<OSSL_KEYMGMT_SELECT_ALL>
 
@@ -219,9 +228,9 @@ to still be a valid subset.
 OP_keymgmt_validate() should check if the I<keydata> contains valid
 data subsets indicated by I<selection>.  Some combined selections of
 data subsets may cause validation of the combined data.
-For example, the combination of B<OSSL_KEYMGMT_FLAG_PRIVATE_KEY> and
-B<OSSL_KEYMGMT_FLAG_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEY> for
-short) is expected to check that the pairwise consistency of
+For example, the combination of B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY> and
+B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEYPAIR>
+for short) is expected to check that the pairwise consistency of
 I<keydata> is valid.
 
 =head2 Key Object Import and Export Functions
