@@ -215,6 +215,8 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     return ok;
 }
 
+/* IMEXPORT = IM- + EXPORT */
+
 # define DSA_IMEXPORTABLE_PARAMETERS                    \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),      \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_Q, NULL, 0),      \
@@ -231,12 +233,9 @@ static const OSSL_PARAM dsa_all_types[] = {
 };
 static const OSSL_PARAM dsa_parameter_types[] = {
     DSA_IMEXPORTABLE_PARAMETERS,
-    DSA_IMEXPORTABLE_PUBLIC_KEY,
-    DSA_IMEXPORTABLE_PRIVATE_KEY,
     OSSL_PARAM_END
 };
 static const OSSL_PARAM dsa_key_types[] = {
-    DSA_IMEXPORTABLE_PARAMETERS,
     DSA_IMEXPORTABLE_PUBLIC_KEY,
     DSA_IMEXPORTABLE_PRIVATE_KEY,
     OSSL_PARAM_END
@@ -263,7 +262,6 @@ static const OSSL_PARAM *dsa_import_types(int selection)
 {
     return dsa_imexport_types(selection);
 }
-
 
 static const OSSL_PARAM *dsa_export_types(int selection)
 {

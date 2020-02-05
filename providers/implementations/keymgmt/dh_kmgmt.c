@@ -208,6 +208,8 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     return ok;
 }
 
+/* IMEXPORT = IM- + EXPORT */
+
 # define DH_IMEXPORTABLE_PARAMETERS                     \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),      \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_G, NULL, 0)
@@ -223,12 +225,9 @@ static const OSSL_PARAM dh_all_types[] = {
 };
 static const OSSL_PARAM dh_parameter_types[] = {
     DH_IMEXPORTABLE_PARAMETERS,
-    DH_IMEXPORTABLE_PUBLIC_KEY,
-    DH_IMEXPORTABLE_PRIVATE_KEY,
     OSSL_PARAM_END
 };
 static const OSSL_PARAM dh_key_types[] = {
-    DH_IMEXPORTABLE_PARAMETERS,
     DH_IMEXPORTABLE_PUBLIC_KEY,
     DH_IMEXPORTABLE_PRIVATE_KEY,
     OSSL_PARAM_END
@@ -255,7 +254,6 @@ static const OSSL_PARAM *dh_import_types(int selection)
 {
     return dh_imexport_types(selection);
 }
-
 
 static const OSSL_PARAM *dh_export_types(int selection)
 {
