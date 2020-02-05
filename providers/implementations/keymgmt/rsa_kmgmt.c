@@ -187,9 +187,9 @@ static int rsa_has(void *keydata, int selection)
         ok = 1;
 
     ok = ok && (RSA_get0_e(rsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && (RSA_get0_n(rsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && (RSA_get0_d(rsa) != NULL);
     return ok;
 }
@@ -204,7 +204,7 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     /* TODO(3.0) PSS and OAEP should bring on parameters */
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && params_to_key(rsa, params);
 
     return ok;
@@ -225,7 +225,7 @@ static int rsa_export(void *keydata, int selection,
 
     ossl_param_bld_init(&tmpl);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && key_to_params(rsa, &tmpl);
 
     if (!ok
@@ -367,12 +367,13 @@ static int rsa_validate(void *keydata, int selection)
         ok = 1;
 
     /* If the whole key is selected, we do a pairwise validation */
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) == OSSL_KEYMGMT_SELECT_KEY) {
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
+        == OSSL_KEYMGMT_SELECT_KEYPAIR) {
         ok = ok && rsa_validate_pairwise(rsa);
     } else {
-        if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
             ok = ok && rsa_validate_private(rsa);
-        if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
             ok = ok && rsa_validate_public(rsa);
     }
     return ok;

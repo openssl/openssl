@@ -160,11 +160,11 @@ static int dsa_has(void *keydata, int selection)
     if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_FLAG_PUBLIC_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && (DSA_get0_pub_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_FLAG_PRIVATE_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && (DSA_get0_priv_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
     return ok;
 }
@@ -180,9 +180,9 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && params_to_domparams(dsa, params);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && params_to_key(dsa, params);
 
     return ok;
@@ -201,9 +201,9 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     ossl_param_bld_init(&tmpl);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && domparams_to_params(dsa, &tmpl);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && key_to_params(dsa, &tmpl);
 
     if (!ok
