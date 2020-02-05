@@ -412,6 +412,7 @@ my @disablables = (
     "rmd160",
     "scrypt",
     "sctp",
+    "secure-memory",
     "seed",
     "shared",
     "siphash",
