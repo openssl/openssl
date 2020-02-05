@@ -524,27 +524,27 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                 || s->ssl_version < TLS1_VERSION)
             return 1;
 
-        if (c->algorithm_enc == SSL_RC4 &&
-                c->algorithm_mac == SSL_MD5)
+        if (c->algorithm_enc == SSL_RC4
+                && c->algorithm_mac == SSL_MD5)
             evp = ssl_evp_cipher_fetch(ctx->libctx, NID_rc4_hmac_md5,
                                        ctx->propq);
-        else if (c->algorithm_enc == SSL_AES128 &&
-                    c->algorithm_mac == SSL_SHA1)
+        else if (c->algorithm_enc == SSL_AES128
+                    && c->algorithm_mac == SSL_SHA1)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
                                        NID_aes_128_cbc_hmac_sha1,
                                        ctx->propq);
-        else if (c->algorithm_enc == SSL_AES256 &&
-                    c->algorithm_mac == SSL_SHA1)
+        else if (c->algorithm_enc == SSL_AES256
+                    && c->algorithm_mac == SSL_SHA1)
              evp = ssl_evp_cipher_fetch(ctx->libctx,
                                         NID_aes_256_cbc_hmac_sha1,
                                         ctx->propq);
-        else if (c->algorithm_enc == SSL_AES128 &&
-                    c->algorithm_mac == SSL_SHA256)
+        else if (c->algorithm_enc == SSL_AES128
+                    && c->algorithm_mac == SSL_SHA256)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
                                        NID_aes_128_cbc_hmac_sha256,
                                        ctx->propq);
-        else if (c->algorithm_enc == SSL_AES256 &&
-                    c->algorithm_mac == SSL_SHA256)
+        else if (c->algorithm_enc == SSL_AES256
+                    && c->algorithm_mac == SSL_SHA256)
             evp = ssl_evp_cipher_fetch(ctx->libctx,
                                        NID_aes_256_cbc_hmac_sha256,
                                        ctx->propq);

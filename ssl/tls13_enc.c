@@ -328,11 +328,11 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
 
     /* Safe to cast away const here since we're not "getting" any data */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname));
+                                            (char *)mdname, 0);
     if (s->ctx->propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
                                                 (char *)s->ctx->propq,
-                                                strlen(s->ctx->propq));
+                                                0);
 
     if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen)) {
         /* SSLfatal() already called */
