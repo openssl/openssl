@@ -142,7 +142,7 @@ void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
 
 void CRYPTO_secure_free(void *ptr, const char *file, int line)
 {
-#ifdef OPENSSL_NO_SECURE_MEMORY
+#ifndef OPENSSL_NO_SECURE_MEMORY
     size_t actual_size;
 
     if (ptr == NULL)
