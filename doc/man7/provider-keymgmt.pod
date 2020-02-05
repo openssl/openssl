@@ -79,21 +79,16 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OP_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
 
- OP_keymgmt_has_parameters       OSSL_FUNC_KEYMGMT_HAS_PARAMETERS
- OP_keymgmt_has_public_key       OSSL_FUNC_KEYMGMT_HAS_PUBLIC_KEY
- OP_keymgmt_has_private_key      OSSL_FUNC_KEYMGMT_HAS_PRIVATE_KEY
-
  OP_keymgmt_query_operation_name OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME
+
+ OP_keymgmt_has                  OSSL_FUNC_KEYMGMT_HAS
+ OP_keymgmt_validate             OSSL_FUNC_KEYMGMT_VALIDATE
 
  OP_keymgmt_import               OSSL_FUNC_KEYMGMT_IMPORT
  OP_keymgmt_import_types         OSSL_FUNC_KEYMGMT_IMPORT_TYPES
  OP_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OP_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
- OP_keymgmt_validate_parameters  OSSL_FUNC_KEYMGMT_VALIDATE_PARAMETERS
- OP_keymgmt_validate_public      OSSL_FUNC_KEYMGMT_VALIDATE_PUBLIC
- OP_keymgmt_validate_private     OSSL_FUNC_KEYMGMT_VALIDATE_PRIVATE
- OP_keymgmt_validate_pairwise    OSSL_FUNC_KEYMGMT_VALIDATE_PAIRWISE
 
 =head2 Key Objects
 
