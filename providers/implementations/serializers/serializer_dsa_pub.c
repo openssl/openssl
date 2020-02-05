@@ -55,7 +55,7 @@ static int dsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dsa = dsa_new(ctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dsa_pub_der(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -97,7 +97,7 @@ static int dsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dsa = dsa_new(ctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dsa_pub_pem(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -126,7 +126,7 @@ static int dsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dsa = dsa_new(ctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dsa_pub_print(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);

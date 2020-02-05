@@ -55,7 +55,7 @@ static int dh_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dh_pub_der(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -85,7 +85,7 @@ static int dh_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dh_pub_pem(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -115,7 +115,7 @@ static int dh_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEY, params)
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && dh_pub_print(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);

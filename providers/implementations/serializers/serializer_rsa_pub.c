@@ -55,7 +55,7 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && rsa_pub_der(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -83,7 +83,7 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && rsa_pub_pem(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -110,7 +110,7 @@ static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEY, params)
+            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
             && rsa_pub_print(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
