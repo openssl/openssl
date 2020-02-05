@@ -36,6 +36,7 @@
 #include "evp_local.h"
 
 static void evp_pkey_free_it(EVP_PKEY *key);
+static void evp_pkey_free_legacy(EVP_PKEY *key);
 
 #ifndef FIPS_MODE
 
@@ -91,12 +92,20 @@ static int evp_pkey_is_pure_provided(const EVP_PKEY *pk)
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
-    if (to->type == EVP_PKEY_NONE) {
-        if (EVP_PKEY_set_type(to, from->type) == 0)
-            return 0;
-    } else if (to->type != from->type) {
-        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
-        goto err;
+    /*
+     * Only check that type match this early when both keys are legacy.
+     * If either of them is purely provided, we let evp_keymgmt_util_copy()
+     * do this check, after having exported either of them that isn't
+     * provided.
+     */
+    if (!(evp_pkey_is_pure_provided(to) && evp_pkey_is_pure_provided(from))) {
+        if (to->type == EVP_PKEY_NONE) {
+            if (EVP_PKEY_set_type(to, from->type) == 0)
+                return 0;
+        } else if (to->type != from->type) {
+            EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
+            goto err;
+        }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
@@ -111,7 +120,28 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         return 0;
     }
 
-    if (from->ameth && from->ameth->param_copy)
+    /*
+     * Only use the routine for provided keys if either key is purely provided.
+     */
+    if (evp_pkey_is_pure_provided(to) && evp_pkey_is_pure_provided(from)) {
+        /* Make sure they're both provided */
+        if (to->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided(to, NULL, NULL, NULL);
+        if (from->pkeys[0].keymgmt == NULL)
+            evp_pkey_make_provided((EVP_PKEY *)from, NULL, NULL, NULL);
+
+        if (evp_keymgmt_util_copy(to, (EVP_PKEY *)from,
+                                  OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)) {
+            /*
+             * Because the provided keydata was updated beyond what legacy
+             * key there may be, we must sever the link to the latter.
+             */
+            evp_pkey_free_legacy(to);
+            return 1;
+        }
+        return 0;
+    }
+    if (from->ameth != NULL && from->ameth->param_copy != NULL)
         return from->ameth->param_copy(to, from);
  err:
     return 0;
@@ -910,15 +940,14 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     return ((i > 1) ? 1 : 0);
 }
 
-static void evp_pkey_free_it(EVP_PKEY *x)
+static void evp_pkey_free_legacy(EVP_PKEY *x)
 {
-    /* internal function; x is never NULL */
 
-    evp_keymgmt_util_clear_pkey_cache(x);
-
-    if (x->ameth && x->ameth->pkey_free) {
-        x->ameth->pkey_free(x);
+    if (x->ameth != NULL) {
+        if (x->ameth->pkey_free != NULL)
+            x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
+        x->ameth = NULL;
     }
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(x->engine);
@@ -926,6 +955,14 @@ static void evp_pkey_free_it(EVP_PKEY *x)
     ENGINE_finish(x->pmeth_engine);
     x->pmeth_engine = NULL;
 #endif
+}
+
+static void evp_pkey_free_it(EVP_PKEY *x)
+{
+    /* internal function; x is never NULL */
+
+    evp_keymgmt_util_clear_pkey_cache(x);
+    evp_pkey_free_legacy(x);
 }
 
 void EVP_PKEY_free(EVP_PKEY *x)

@@ -135,7 +135,11 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     return keydata;
 }
 
-void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
+static void int_clear_pkey_cache(EVP_PKEY *pk,
+                                 void (*freefn)(EVP_KEYMGMT *keymgmt,
+                                                void *keydata,
+                                                void *freefnarg),
+                                 void *freefnarg)
 {
     size_t i;
 
@@ -148,14 +152,24 @@ void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
 
             pk->pkeys[i].keymgmt = NULL;
             pk->pkeys[i].keydata = NULL;
-            evp_keymgmt_freedata(keymgmt, keydata);
-            EVP_KEYMGMT_free(keymgmt);
+            freefn(keymgmt, keydata, freefnarg);
         }
 
         pk->cache.size = 0;
         pk->cache.bits = 0;
         pk->cache.security_bits = 0;
     }
+}
+
+static void free_keydata(EVP_KEYMGMT *keymgmt, void *keydata, void *unused)
+{
+    evp_keymgmt_freedata(keymgmt, keydata);
+    EVP_KEYMGMT_free(keymgmt);
+}
+
+void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
+{
+    int_clear_pkey_cache(pk, free_keydata, NULL);
 }
 
 void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
@@ -405,4 +419,66 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
         return -2;
 
     return evp_keymgmt_match(impmatch_keymgmt1, keydata1, keydata2, selection);
+}
+
+static int implements_copy_and_export(EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt->copy != NULL
+        && (keymgmt->import == NULL || keymgmt->export != NULL);
+}
+
+static void free_keydata_for_copy(EVP_KEYMGMT *keymgmt, void *keydata,
+                                  void *orig_keydata)
+{
+    if (keydata != orig_keydata) {
+        evp_keymgmt_freedata(keymgmt, keydata);
+        EVP_KEYMGMT_free(keymgmt);
+    }
+}
+
+int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
+{
+    EVP_KEYMGMT *impcopy_keymgmt_to = NULL, *impcopy_keymgmt_from = NULL;
+    void *keydata_to = NULL, *keydata_from = NULL;
+
+    /*
+     * Find suitable keymgmt.  We insist that the one we find must not
+     * only implement |copy|, but must also implement |export| if it
+     * implements |import|.  This should ensure that anything we happen to
+     * import into can be exported as well, since we're going to replace
+     * the |to| pkey cache entirely.
+     */
+    find_keymgmt(&impcopy_keymgmt_to, &impcopy_keymgmt_from,
+                 &keydata_to, &keydata_from,
+                 to, from, &implements_copy_and_export);
+
+    /*
+     * If we didn't find any fitting keymgmt for pk2 (even for importing), or
+     * the types don't match, we give up.
+     */
+    if (impcopy_keymgmt_to == NULL
+        || !match_type(impcopy_keymgmt_to, impcopy_keymgmt_from)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+        return 0;
+    }
+
+    /*
+     * If the two keymgmt aren't the same, try to prepare any of the two
+     * EVP_PKEYs so they end up matching.
+     */
+    if (impcopy_keymgmt_to != impcopy_keymgmt_from)
+        prepare_binary_op(&impcopy_keymgmt_to, &impcopy_keymgmt_from,
+                          &keydata_to, &keydata_from, to, from);
+
+    /* If we still don't have matching keymgmt implementations, we give up */
+    if (impcopy_keymgmt_to != impcopy_keymgmt_from)
+        return 0;
+
+    if (!evp_keymgmt_copy(impcopy_keymgmt_to, keydata_to, keydata_from,
+                          selection))
+        return 0;
+
+    int_clear_pkey_cache(to, free_keydata_for_copy, keydata_to);
+    evp_keymgmt_util_cache_pkey(to, 0, impcopy_keymgmt_to, keydata_to);
+    return 1;
 }
