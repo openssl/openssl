@@ -550,8 +550,8 @@ struct evp_pkey_st {
     /*
      * To support transparent export/import between providers that support
      * the methods for it, and still not having to do the export/import
-     * every time a key object is, we maintain a cache of imported key
-     * objects, indexed by keymgmt address.  pkeys[0] is *always* the
+     * every time a key object is changed, we maintain a cache of imported
+     * key objects, indexed by keymgmt address.  pkeys[0] is *always* the
      * "original" data unless we have a legacy key attached.
      */
     struct {
