@@ -114,8 +114,13 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey != NULL && pkey->ameth && pkey->ameth->param_missing)
-        return pkey->ameth->param_missing(pkey);
+    if (pkey != NULL) {
+        if (pkey->keymgmt != NULL)
+            return !evp_keymgmt_util_has((EVP_PKEY *)pkey,
+                                         OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        else if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
+            return pkey->ameth->param_missing(pkey);
+    }
     return 0;
 }
 

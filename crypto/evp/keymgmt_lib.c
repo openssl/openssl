@@ -214,3 +214,12 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 
     return keydata;
 }
+
+int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
+{
+    /* Check if key is even assigned */
+    if (pk->keymgmt == NULL)
+        return 0;
+
+    return evp_keymgmt_has(pk->keymgmt, pk->keydata, selection);
+}
