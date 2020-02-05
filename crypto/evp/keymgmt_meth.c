@@ -255,12 +255,17 @@ int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keydata, int selection)
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
                          int selection)
 {
+    /* We assume valid if the implementation doesn't have a function */
+    if (keymgmt->validate == NULL)
+        return 1;
     return keymgmt->validate(keydata, selection);
 }
 
 int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
                        int selection, const OSSL_PARAM params[])
 {
+    if (keymgmt->import == NULL)
+        return 0;
     return keymgmt->import(keydata, selection, params);
 }
 
@@ -275,6 +280,8 @@ const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
 int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
                        int selection, OSSL_CALLBACK *param_cb, void *cbarg)
 {
+    if (keymgmt->export == NULL)
+        return 0;
     return keymgmt->export(keydata, selection, param_cb, cbarg);
 }
 
