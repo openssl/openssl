@@ -84,6 +84,11 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
     return 0;
 }
 
+static int evp_pkey_is_pure_provided(const EVP_PKEY *pk)
+{
+    return pk->ameth == NULL && pk->pkeys[0].keymgmt != NULL;
+}
+
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     if (to->type == EVP_PKEY_NONE) {
@@ -114,8 +119,13 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (pkey != NULL && pkey->ameth && pkey->ameth->param_missing)
-        return pkey->ameth->param_missing(pkey);
+    if (pkey != NULL) {
+        if (evp_pkey_is_pure_provided(pkey))
+            return !evp_keymgmt_util_has((EVP_PKEY *)pkey,
+                                         OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        else if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
+            return pkey->ameth->param_missing(pkey);
+    }
     return 0;
 }
 

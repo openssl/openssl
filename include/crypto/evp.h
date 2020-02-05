@@ -584,6 +584,7 @@ void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
                                  EVP_KEYMGMT *keymgmt, void *keydata);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                 int selection, const OSSL_PARAM params[]);
+int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
 
 
 /*

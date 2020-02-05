@@ -211,3 +211,29 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 
     return keydata;
 }
+
+int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
+{
+    size_t i, end = OSSL_NELEM(pk->pkeys);
+
+    for (i = 0; i < end && pk->pkeys[i].keymgmt != NULL; i++) {
+        const EVP_KEYMGMT *keymgmt = pk->pkeys[i].keymgmt;
+        void *keydata = pk->pkeys[i].keydata;
+
+        if (keymgmt->has != NULL)
+            return evp_keymgmt_has(keymgmt, keydata, selection);
+    }
+    /*
+     * TODO(3.0) investigate whether the lack of any |has| function should
+     * mean that the key has the components indicated by |selection| (i.e.
+     * they are assumed to be the empty set) or not.
+     * TODO(3.0) Investigate if we should return a value that indicates that
+     * this function is unsupported, leaving it to the caller to decide what
+     * to do.
+     *
+     * We currently assume that if there is no |has| function, the components
+     * indicated by |selection| are present, because that's how
+     * EVP_PKEY_missing_parameters() behaves for legacy EVP_PKEYs.
+     */
+    return 1;
+}
