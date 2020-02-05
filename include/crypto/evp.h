@@ -651,6 +651,9 @@ int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
                        int selection, OSSL_CALLBACK *param_cb, void *cbarg);
 const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
                                            int selection);
+int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
+                     void *keydata_to, const void *keydata_from,
+                     int selection);
 
 /* Pulling defines out of C source files */
 

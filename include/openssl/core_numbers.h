@@ -418,7 +418,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_match,
                     (const void *keydata1, const void *keydata2,
                      int selection))
 
-/* Import and export functions, with ddiscovery */
+/* Import and export functions, with discovery */
 # define OSSL_FUNC_KEYMGMT_IMPORT                     40
 # define OSSL_FUNC_KEYMGMT_IMPORT_TYPES               41
 # define OSSL_FUNC_KEYMGMT_EXPORT                     42
@@ -432,6 +432,12 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_export,
                      OSSL_CALLBACK *param_cb, void *cbarg))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_export_types,
                     (int selection))
+
+/* Copy function, only works for matching keymgmt */
+# define OSSL_FUNC_KEYMGMT_COPY                       44
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_copy,
+                    ( void *keydata_to, const void *keydata_from,
+                     int selection))
 
 /* Key Exchange */
 

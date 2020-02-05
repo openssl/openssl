@@ -39,6 +39,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
                        OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OP_keymgmt_export_types(int selection);
 
+ /* Key object copy */
+ int OP_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
+
  /* Key object validation */
  int OP_keymgmt_validate(void *keydata, int selection);
 
@@ -93,6 +96,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OP_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
+ OP_keymgmt_copy                 OSSL_FUNC_KEYMGMT_COPY
 
 =head2 Key Objects
 
@@ -247,7 +251,7 @@ I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
 the caller has ensured that I<keydata1> and I<keydata2> are both owned
 by the implementation of this function.
 
-=head2 Key Object Import and Export Functions
+=head2 Key Object Import, Export and Copy Functions
 
 OP_keymgmt_import() should import data indicated by I<selection> into
 I<keydata> with values taken from the B<OSSL_PARAM> array I<params>.
@@ -263,6 +267,11 @@ OP_keymgmt_import() can handle.
 OP_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OP_keymgmt_export() callback can expect to receive.
+
+OP_keymgmt_copy() should copy data subsets indicated by I<selection>
+from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
+has ensured that I<keydata_to> and I<keydata_from> are both owned by
+the implementation of this function.
 
 =head2 Built-in RSA Import/Export Types
 

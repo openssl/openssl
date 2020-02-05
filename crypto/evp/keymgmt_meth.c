@@ -335,3 +335,13 @@ const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
         return NULL;
     return keymgmt->export_types(selection);
 }
+
+int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
+                     void *keydata_to, const void *keydata_from,
+                     int selection)
+{
+    /* We assume no copy if the implementation doesn't have a function */
+    if (keymgmt->copy == NULL)
+        return 0;
+    return keymgmt->copy(keydata_to, keydata_from, selection);
+}
