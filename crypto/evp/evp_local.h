@@ -85,6 +85,7 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
     OSSL_OP_keymgmt_has_fn *has;
     OSSL_OP_keymgmt_validate_fn *validate;
+    OSSL_OP_keymgmt_match_fn *match;
 
     /* Import and export routines */
     OSSL_OP_keymgmt_import_fn *import;

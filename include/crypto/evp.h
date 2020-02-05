@@ -638,6 +638,9 @@ const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt);
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
                          int selection);
+int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
+                      const void *keydata1, const void *keydata2,
+                      int selection);
 
 int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
                        int selection, const OSSL_PARAM params[]);

@@ -95,6 +95,10 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->validate == NULL)
                 keymgmt->validate = OSSL_get_OP_keymgmt_validate(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_MATCH:
+            if (keymgmt->match == NULL)
+                keymgmt->match = OSSL_get_OP_keymgmt_match(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_IMPORT:
             if (keymgmt->import == NULL) {
                 importfncnt++;
@@ -288,6 +292,16 @@ int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
     if (keymgmt->validate == NULL)
         return 1;
     return keymgmt->validate(keydata, selection);
+}
+
+int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
+                      const void *keydata1, const void *keydata2,
+                      int selection)
+{
+    /* We assume no match if the implementation doesn't have a function */
+    if (keymgmt->match == NULL)
+        return 0;
+    return keymgmt->match(keydata1, keydata2, selection);
 }
 
 int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,

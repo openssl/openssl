@@ -412,6 +412,12 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has, (void *keydata, int selection))
 # define OSSL_FUNC_KEYMGMT_VALIDATE                   22
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate, (void *keydata, int selection))
 
+/* Key checks - matching */
+# define OSSL_FUNC_KEYMGMT_MATCH                      23
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_match,
+                    (const void *keydata1, const void *keydata2,
+                     int selection))
+
 /* Import and export functions, with ddiscovery */
 # define OSSL_FUNC_KEYMGMT_IMPORT                     40
 # define OSSL_FUNC_KEYMGMT_IMPORT_TYPES               41
