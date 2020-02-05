@@ -52,7 +52,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                                              (unsigned char *)salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, out, keylen) != 1)
