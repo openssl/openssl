@@ -378,7 +378,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 # define OSSL_KEYMGMT_SELECT_KEYPAIR            \
     ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
 # define OSSL_KEYMGMT_SELECT_ALL                \
-    ( OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_SELECT_PARAMETERS )
+    ( OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
 
 /* Basic key object creation, destruction */
 # define OSSL_FUNC_KEYMGMT_NEW                         1
