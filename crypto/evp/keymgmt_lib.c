@@ -293,3 +293,60 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
 
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
+
+int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
+{
+    /* Save copies of pointers we want to play with without affecting |to| */
+    EVP_KEYMGMT *to_keymgmt = to->keymgmt;
+    void *to_keydata = to->keydata, *alloc_keydata = NULL;
+
+    /* An unassigned key can't be copied */
+    if (from == NULL || from->keymgmt == NULL)
+        return 0;
+
+    /* If |from| doesn't support copying, we fail */
+    if (from->keymgmt->copy == NULL)
+        return 0;
+
+    /* If |to| doesn't have a provider side "origin" yet, create one */
+    if (to_keymgmt == NULL) {
+        to_keydata = alloc_keydata = evp_keymgmt_newdata(from->keymgmt);
+        if (to_keydata == NULL)
+            return 0;
+        to_keymgmt = from->keymgmt;
+    }
+
+    if (to_keymgmt == from->keymgmt) {
+        /* |to| and |from| have the same keymgmt, just copy and be done */
+        if (!evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
+                              selection))
+            return 0;
+    } else if (match_type(to_keymgmt, from->keymgmt)) {
+        struct import_data_st import_data;
+
+        import_data.keymgmt = to_keymgmt;
+        import_data.keydata = to_keydata;
+        import_data.selection = selection;
+
+        if (!evp_keymgmt_export(from->keymgmt, from->keydata, selection,
+                                &try_import, &import_data)) {
+            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+            return 0;
+        }
+    } else {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+        return 0;
+    }
+
+    if (to->keymgmt == NULL
+        && !EVP_KEYMGMT_up_ref(to_keymgmt)) {
+        evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+        return 0;
+    }
+    evp_keymgmt_util_clear_operation_cache(to);
+    to->keymgmt = to_keymgmt;
+    to->keydata = to_keydata;
+    evp_keymgmt_util_cache_keyinfo(to);
+
+    return 1;
+}

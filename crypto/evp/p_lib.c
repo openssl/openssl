@@ -86,12 +86,25 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
-    if (to->type == EVP_PKEY_NONE) {
-        if (EVP_PKEY_set_type(to, from->type) == 0)
-            return 0;
-    } else if (to->type != from->type) {
-        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
-        goto err;
+    /*
+     * TODO: clean up legacy stuff from this function when legacy support
+     * is gone.
+     */
+
+    /*
+     * Only check that type match this early when both keys are legacy.
+     * If either of them is provided, we let evp_keymgmt_util_copy()
+     * do this check, after having exported either of them that isn't
+     * provided.
+     */
+    if (to->keymgmt == NULL && from->keymgmt == NULL) {
+        if (to->type == EVP_PKEY_NONE) {
+            if (EVP_PKEY_set_type(to, from->type) == 0)
+                return 0;
+        } else if (to->type != from->type) {
+            EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
+            goto err;
+        }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
@@ -106,7 +119,56 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         return 0;
     }
 
-    if (from->ameth && from->ameth->param_copy)
+    /*
+     * If |from| is provided, we upgrade |to| to be provided as well.
+     * This drops the legacy key from |to|.
+     * evp_pkey_upgrade_to_provider() checks if |to| is already provided,
+     * we don't need to do that here.
+     *
+     * TODO(3.0) We should investigate if that's too aggressive and make
+     * this scenario unsupported instead.
+     */
+    if (from->keymgmt != NULL) {
+        EVP_KEYMGMT *tmp_keymgmt = from->keymgmt;
+
+        /*
+         * The returned pointer is known to be cached, so we don't have to
+         * save it.  However, if it's NULL, something went wrong and we can't
+         * copy.
+         */
+        if (evp_pkey_upgrade_to_provider(to, NULL,
+                                         &tmp_keymgmt, NULL) == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    /* For purely provided keys, we just call the keymgmt utility */
+    if (to->keymgmt != NULL && from->keymgmt != NULL)
+        return evp_keymgmt_util_copy(to, (EVP_PKEY *)from,
+                                     OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+
+    /*
+     * If |to| is provided, we know that |from| is legacy at this point.
+     * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_copy()
+     * to copy the appropriate data to |to|'s keydata.
+     */
+    if (to->keymgmt != NULL) {
+        EVP_KEYMGMT *to_keymgmt = to->keymgmt;
+        void *from_keydata =
+            evp_pkey_export_to_provider((EVP_PKEY *)from, NULL, &to_keymgmt,
+                                        NULL);
+
+        if (from_keydata == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
+                                OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    }
+
+    /* Both keys are legacy */
+    if (from->ameth != NULL && from->ameth->param_copy != NULL)
         return from->ameth->param_copy(to, from);
  err:
     return 0;
@@ -953,7 +1015,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 static void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     if (x->ameth != NULL) {
-        if (x->ameth->pkey_free)
+        if (x->ameth->pkey_free != NULL)
             x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
         x->ameth = NULL;
