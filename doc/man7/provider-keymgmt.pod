@@ -24,6 +24,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 
  /* Key object content checks */
  int OP_keymgmt_has(void *keydata, int selection);
+ int OP_keymgmt_match(const void *keydata1, const void *keydata2,
+                      int selection);
 
  /* Discovery of supported operations */
  const char *OP_keymgmt_query_operation_name(int operation_id);
@@ -83,6 +85,7 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
 
  OP_keymgmt_has                  OSSL_FUNC_KEYMGMT_HAS
  OP_keymgmt_validate             OSSL_FUNC_KEYMGMT_VALIDATE
+ OP_keymgmt_match                OSSL_FUNC_KEYMGMT_MATCH
 
  OP_keymgmt_import               OSSL_FUNC_KEYMGMT_IMPORT
  OP_keymgmt_import_types         OSSL_FUNC_KEYMGMT_IMPORT_TYPES
@@ -227,6 +230,11 @@ For example, the combination of B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY> and
 B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEYPAIR>
 for short) is expected to check that the pairwise consistency of
 I<keydata> is valid.
+
+OP_keymgmt_match() should check if the data subset indicated by
+I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
+the caller has ensured that I<keydata1> and I<keydata2> are both owned
+by the implementation of this function.
 
 =head2 Key Object Import and Export Functions
 
