@@ -30,7 +30,7 @@ static OSSL_OP_keymgmt_export_types_fn dsa_export_types;
 
 #define DSA_DEFAULT_MD "SHA256"
 #define DSA_POSSIBLE_SELECTIONS                 \
-    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_FLAG_DOMAIN_PARAMETERS)
+    (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
 static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
 {
@@ -252,9 +252,9 @@ static const OSSL_PARAM *dsa_imexport_types(int selection)
 {
     int type_select = 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PARAMETERS) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         type_select += 1;
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         type_select += 2;
     return dsa_types[type_select];
 }

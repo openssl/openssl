@@ -33,7 +33,7 @@ static OSSL_OP_keymgmt_export_types_fn rsa_export_types;
 
 #define RSA_DEFAULT_MD "SHA256"
 #define RSA_POSSIBLE_SELECTIONS                 \
-    (OSSL_KEYMGMT_SELECT_KEY | OSSL_KEYMGMT_SELECT_PARAMETERS)
+    (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
 
 DEFINE_STACK_OF(BIGNUM)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -290,7 +290,7 @@ static const OSSL_PARAM rsa_key_types[] = {
 
 static const OSSL_PARAM *rsa_imexport_types(int selection)
 {
-    if ((selection & OSSL_KEYMGMT_SELECT_KEY) != 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         return rsa_key_types;
     return NULL;
 }
