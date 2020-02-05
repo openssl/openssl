@@ -47,6 +47,15 @@ BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
+static void warn_deprecated(const char *pname,
+                            const char *deprecated_alternative)
+{
+    BIO_printf(bio_err, "The command %s is deprecated.", pname);
+    if (strcmp(deprecated_alternative, DEPRECATED_NO_ALTERNATIVE) != 0)
+        BIO_printf(bio_err, " Use '%s' instead.", deprecated_alternative);
+    BIO_printf(bio_err, "\n");
+}
+
 static int apps_startup(void)
 {
 #ifdef SIGPIPE
@@ -277,6 +286,8 @@ int main(int argc, char *argv[])
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp != NULL) {
         argv[0] = pname;
+        if (fp->deprecated_alternative != NULL)
+            warn_deprecated(pname, fp->deprecated_alternative);
         ret = fp->func(argc, argv);
         goto end;
     }
@@ -470,6 +481,8 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         }
     }
     if (fp != NULL) {
+        if (fp->deprecated_alternative != NULL)
+            warn_deprecated(fp->name, fp->deprecated_alternative);
         return fp->func(argc, argv);
     }
     if ((strncmp(argv[0], "no-", 3)) == 0) {
