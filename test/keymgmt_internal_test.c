@@ -211,7 +211,8 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr(provkey = evp_keymgmt_util_export_to_provider(pk, km2)))
         goto err;
 
-    if (!TEST_true(evp_keymgmt_export(km2, provkey, OSSL_KEYMGMT_SELECT_KEY,
+    if (!TEST_true(evp_keymgmt_export(km2, provkey,
+                                      OSSL_KEYMGMT_SELECT_KEYPAIR,
                                       &export_cb, keydata)))
         goto err;
 
