@@ -223,3 +223,73 @@ int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
 
     return evp_keymgmt_has(pk->keymgmt, pk->keydata, selection);
 }
+
+/*
+ * evp_keymgmt_util_match() doesn't just look at the provider side "origin",
+ * but also in the operation cache to see if there's any common keymgmt that
+ * supplies OP_keymgmt_match.
+ *
+ * evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_cmp()
+ * and EVP_PKEY_cmp_parameters() return, i.e.:
+ *
+ *  1   same key
+ *  0   not same key
+ * -1   not same key type
+ * -2   unsupported operation
+ */
+int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
+{
+    EVP_KEYMGMT *keymgmt1 = NULL, *keymgmt2 = NULL;
+    void *keydata1 = NULL, *keydata2 = NULL;
+
+    if (pk1 == NULL || pk2 == NULL) {
+        if (pk1 == NULL && pk2 == NULL)
+            return 1;
+        return 0;
+    }
+
+    keymgmt1 = pk1->keymgmt;
+    keydata1 = pk1->keydata;
+    keymgmt2 = pk2->keymgmt;
+    keydata2 = pk2->keydata;
+
+    if (keymgmt1 != keymgmt2) {
+        void *tmp_keydata = NULL;
+
+        /* Complex case, where the keymgmt differ */
+        if (keymgmt1 != NULL
+            && keymgmt2 != NULL
+            && !match_type(keymgmt1, keymgmt2)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+            return -1;           /* Not the same type */
+        }
+
+        /*
+         * The key types are determined to match, so we try cross export,
+         * but only to keymgmt's that supply a matching function.
+         */
+        if (keymgmt2 != NULL
+            && keymgmt2->match != NULL) {
+            tmp_keydata = evp_keymgmt_util_export_to_provider(pk1, keymgmt2);
+            if (tmp_keydata != NULL) {
+                keymgmt1 = keymgmt2;
+                keydata1 = tmp_keydata;
+            }
+        }
+        if (tmp_keydata == NULL
+            && keymgmt1 != NULL
+            && keymgmt1->match != NULL) {
+            tmp_keydata = evp_keymgmt_util_export_to_provider(pk2, keymgmt1);
+            if (tmp_keydata != NULL) {
+                keymgmt2 = keymgmt1;
+                keydata2 = tmp_keydata;
+            }
+        }
+    }
+
+    /* If we still don't have matching keymgmt implementations, we give up */
+    if (keymgmt1 != keymgmt2)
+        return -2;
+
+    return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
+}

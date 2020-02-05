@@ -124,30 +124,108 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
     return 0;
 }
 
+/*
+ * This function is called for any mixture of keys except pure legacy pair.
+ * TODO When legacy keys are gone, we replace a call to this functions with
+ * a call to evp_keymgmt_util_match().
+ */
+static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
+                            int selection)
+{
+    EVP_KEYMGMT *keymgmt1 = NULL, *keymgmt2 = NULL;
+    void *keydata1 = NULL, *keydata2 = NULL, *tmp_keydata = NULL;
+
+    /* If none of them are provided, this function shouldn't have been called */
+    if (!ossl_assert(a->keymgmt != NULL || b->keymgmt != NULL))
+        return -2;
+
+    /* For purely provided keys, we just call the keymgmt utility */
+    if (a->keymgmt != NULL && b->keymgmt != NULL)
+        return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b, selection);
+
+    /*
+     * Here, we know that we have a mixture of legacy and provided keys.
+     * Try cross export and compare the resulting key data.
+     */
+    keymgmt1 = a->keymgmt;
+    keydata1 = a->keydata;
+    keymgmt2 = b->keymgmt;
+    keydata2 = b->keydata;
+
+    if ((keymgmt1 == NULL
+         && !EVP_KEYMGMT_is_a(keymgmt2, OBJ_nid2sn(a->type)))
+        || (keymgmt2 == NULL
+            && !EVP_KEYMGMT_is_a(keymgmt1, OBJ_nid2sn(b->type))))
+        return -1;               /* not the same key type */
+
+    if (keymgmt2 != NULL && keymgmt2->match != NULL) {
+        tmp_keydata =
+            evp_pkey_export_to_provider((EVP_PKEY *)a, NULL, &keymgmt2, NULL);
+        if (tmp_keydata != NULL) {
+            keymgmt1 = keymgmt2;
+            keydata1 = tmp_keydata;
+        }
+    }
+    if (tmp_keydata == NULL && keymgmt1 != NULL && keymgmt1->match != NULL) {
+        tmp_keydata =
+            evp_pkey_export_to_provider((EVP_PKEY *)b, NULL, &keymgmt1, NULL);
+        if (tmp_keydata != NULL) {
+            keymgmt2 = keymgmt1;
+            keydata2 = tmp_keydata;
+        }
+    }
+
+    /* If we still don't have matching keymgmt implementations, we give up */
+    if (keymgmt1 != keymgmt2)
+        return -2;
+
+    return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
+}
+
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    /*
+     * TODO: clean up legacy stuff from this function when legacy support
+     * is gone.
+     */
+
+    if (a->keymgmt != NULL || b->keymgmt != NULL)
+        return evp_pkey_cmp_any(a, b, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+
+    /* All legacy keys */
     if (a->type != b->type)
         return -1;
-    if (a->ameth && a->ameth->param_cmp)
+    if (a->ameth != NULL && a->ameth->param_cmp != NULL)
         return a->ameth->param_cmp(a, b);
     return -2;
 }
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    /*
+     * TODO: clean up legacy stuff from this function when legacy support
+     * is gone.
+     */
+
+    if (a->keymgmt != NULL || b->keymgmt != NULL)
+        return evp_pkey_cmp_any(a, b,
+                                OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+                                | OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
+
+    /* All legacy keys */
     if (a->type != b->type)
         return -1;
 
-    if (a->ameth) {
+    if (a->ameth != NULL) {
         int ret;
         /* Compare parameters if the algorithm has them */
-        if (a->ameth->param_cmp) {
+        if (a->ameth->param_cmp != NULL) {
             ret = a->ameth->param_cmp(a, b);
             if (ret <= 0)
                 return ret;
         }
 
-        if (a->ameth->pub_cmp)
+        if (a->ameth->pub_cmp != NULL)
             return a->ameth->pub_cmp(a, b);
     }
 
