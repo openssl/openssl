@@ -208,7 +208,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     return ok;
 }
 
-/* IMEXPORT = IM- + EXPORT */
+/* IMEXPORT = IMPORT + EXPORT */
 
 # define DH_IMEXPORTABLE_PARAMETERS                     \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_FFC_P, NULL, 0),      \
