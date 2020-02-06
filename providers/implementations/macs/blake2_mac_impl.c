@@ -78,13 +78,10 @@ static int blake2_mac_init(void *vmacctx)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
-    /* Check key has been set */
-    if (macctx->params.key_length == 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
-        return 0;
-    }
-
-    return BLAKE2_INIT_KEY(&macctx->ctx, &macctx->params, macctx->key);
+    if (macctx->params.key_length == 0)
+        return BLAKE2_INIT(&macctx->ctx, &macctx->params);
+    else
+        return BLAKE2_INIT_KEY(&macctx->ctx, &macctx->params, macctx->key);
 }
 
 static int blake2_mac_update(void *vmacctx,
@@ -147,7 +144,6 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         size_t size;
 
         if (!OSSL_PARAM_get_size_t(p, &size)
-            || size < 1
             || size > BLAKE2_OUTBYTES) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_XOF_OR_INVALID_LENGTH);
             return 0;

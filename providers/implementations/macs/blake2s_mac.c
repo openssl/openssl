@@ -17,6 +17,7 @@
 
 /* Function names */
 #define BLAKE2_PARAM_INIT blake2s_param_init
+#define BLAKE2_INIT blake2s_init
 #define BLAKE2_INIT_KEY blake2s_init_key
 #define BLAKE2_UPDATE blake2s_update
 #define BLAKE2_FINAL blake2s_final
