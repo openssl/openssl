@@ -96,6 +96,11 @@ DECLARE_ASN1_ITEM(DHparams)
  */
 # define DH_CHECK_P_NOT_STRONG_PRIME     DH_CHECK_P_NOT_SAFE_PRIME
 
+/* DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type() */
+# define DH_PARAMGEN_TYPE_GENERATOR    0   /* Use a generator g */
+# define DH_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
+# define DH_PARAMGEN_TYPE_FIPS_186_4   2   /* Use FIPS186-4 standard */
+
 # define d2i_DHparams_fp(fp,x) \
     (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
                       (char *(*)())d2i_DHparams, \

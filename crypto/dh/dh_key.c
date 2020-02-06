@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,10 +13,7 @@
 #include "crypto/bn.h"
 #include "crypto/dh.h"
 
-#ifndef FIPS_MODE
 static int generate_key(DH *dh);
-#endif /* FIPS_MODE */
-
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
                          const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
@@ -123,11 +120,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
 static DH_METHOD dh_ossl = {
     "OpenSSL DH Method",
-#ifndef FIPS_MODE
     generate_key,
-#else
-    NULL, /* TODO(3.0) : solve this in a keygen related PR */
-#endif
     compute_key,
     dh_bn_mod_exp,
     dh_init,
@@ -160,6 +153,7 @@ static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
     ffc_params_init(&dh->params);
+    dh->dirty_cnt++;
     return 1;
 }
 
@@ -170,7 +164,6 @@ static int dh_finish(DH *dh)
 }
 
 #ifndef FIPS_MODE
-
 void DH_set_default_method(const DH_METHOD *meth)
 {
     default_DH_method = meth;
@@ -180,27 +173,30 @@ int DH_generate_key(DH *dh)
 {
     return dh->meth->generate_key(dh);
 }
+#endif /* FIPS_MODE */
 
-static int generate_key(DH *dh)
+static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
 {
     int ok = 0;
     int generate_new_key = 0;
+#ifndef FIPS_MODE
     unsigned l;
+#endif
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_LARGE);
+        DHerr(0, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
     if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
-        DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_SMALL);
+        DHerr(0, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(libctx);
     if (ctx == NULL)
         goto err;
 
@@ -227,25 +223,52 @@ static int generate_key(DH *dh)
     }
 
     if (generate_new_key) {
-        if (dh->params.q != NULL) {
-            do {
-                if (!BN_priv_rand_range(priv_key, dh->params.q))
-                    goto err;
-            }
-            while (BN_is_zero(priv_key) || BN_is_one(priv_key));
-        } else {
-            /* secret exponent length */
-            l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
-            if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
-                goto err;
+        /* Is it an approved safe prime ?*/
+        if (DH_get_nid(dh) != NID_undef) {
             /*
-             * We handle just one known case where g is a quadratic non-residue:
-             * for g = 2: p % 8 == 3
+             * The safe prime group code sets N = 2*s
+             * (where s = max security strength supported).
+             * N = dh->length (N = maximum bit length of private key)
              */
-            if (BN_is_word(dh->params.g, DH_GENERATOR_2)
-                && !BN_is_bit_set(dh->params.p, 2)) {
-                /* clear bit 0, since it won't be a secret anyway */
-                if (!BN_clear_bit(priv_key, 0))
+            if (dh->length == 0
+                || dh->params.q == NULL
+                || dh->length > BN_num_bits(dh->params.q))
+                goto err;
+            if (!ffc_generate_private_key(ctx, &dh->params, dh->length,
+                                          dh->length / 2, priv_key))
+                goto err;
+        } else {
+#ifdef FIPS_MODE
+            if (dh->params.q == NULL)
+                goto err;
+#else
+            if (dh->params.q == NULL) {
+                /* secret exponent length */
+                l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
+                if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
+                                     BN_RAND_BOTTOM_ANY, ctx))
+                    goto err;
+                /*
+                 * We handle just one known case where g is a quadratic non-residue:
+                 * for g = 2: p % 8 == 3
+                 */
+                if (BN_is_word(dh->params.g, DH_GENERATOR_2)
+                    && !BN_is_bit_set(dh->params.p, 2)) {
+                    /* clear bit 0, since it won't be a secret anyway */
+                    if (!BN_clear_bit(priv_key, 0))
+                        goto err;
+                }
+            } else
+#endif
+            {
+                /*
+                 * For FFC FIPS 186-4 keygen
+                 * security strength s = 112,
+                 * Max Private key size N = len(q)
+                 */
+                if (!ffc_generate_private_key(ctx, &dh->params,
+                                              BN_num_bits(dh->params.q), 112,
+                                              priv_key))
                     goto err;
             }
         }
@@ -258,6 +281,7 @@ static int generate_key(DH *dh)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
+        /* pub_key = g^priv_key mod p */
         if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
                                   ctx, mont)) {
             BN_clear_free(prk);
@@ -273,7 +297,7 @@ static int generate_key(DH *dh)
     ok = 1;
  err:
     if (ok != 1)
-        DHerr(DH_F_GENERATE_KEY, ERR_R_BN_LIB);
+        DHerr(0, ERR_R_BN_LIB);
 
     if (pub_key != dh->pub_key)
         BN_free(pub_key);
@@ -283,6 +307,10 @@ static int generate_key(DH *dh)
     return ok;
 }
 
+static int generate_key(DH *dh)
+{
+    return dh_generate_key(NULL, dh);
+}
 
 int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
 {
@@ -346,4 +374,3 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
     *pbuf_out = pbuf;
     return p_size;
 }
-#endif /* FIPS_MODE */

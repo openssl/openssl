@@ -390,19 +390,37 @@ SHA-256 is selected to match the bit length of B<q> above.
 
 The EVP_PKEY_CTX_set_dh_paramgen_prime_len() macro sets the length of the DH
 prime parameter B<p> for DH parameter generation. If this macro is not called
-then 1024 is used. Only accepts lengths greater than or equal to 256.
+then 2048 is used. Only accepts lengths greater than or equal to 256.
 
 The EVP_PKEY_CTX_set_dh_paramgen_subprime_len() macro sets the length of the DH
 optional subprime parameter B<q> for DH parameter generation. The default is
 256 if the prime is at least 2048 bits long or 160 otherwise. The DH
-paramgen type must have been set to x9.42.
+paramgen type must have been set to B<DH_PARAMGEN_TYPE_FIPS_186_2> or
+B<DH_PARAMGEN_TYPE_FIPS_186_4>.
 
 The EVP_PKEY_CTX_set_dh_paramgen_generator() macro sets DH generator to B<gen>
 for DH parameter generation. If not specified 2 is used.
 
 The EVP_PKEY_CTX_set_dh_paramgen_type() macro sets the key type for DH
-parameter generation. Use 0 for PKCS#3 DH and 1 for X9.42 DH.
-The default is 0.
+parameter generation. The supported parameters are:
+
+=over 4
+
+=item B<DH_PARAMGEN_TYPE_GENERATOR>
+
+Uses a generator g (PKCS#3 format).
+
+=item B<DH_PARAMGEN_TYPE_FIPS_186_2>
+
+FIPS186-2 FFC parameter generator (X9.42 DH).
+
+=item B<DH_PARAMGEN_TYPE_FIPS_186_4>
+
+FIPS186-4 FFC parameter generator.
+
+=back
+
+The default is B<DH_PARAMGEN_TYPE_GENERATOR>.
 
 The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
 If B<pad> is 1 the shared secret is padded with zeros up to the size of the DH

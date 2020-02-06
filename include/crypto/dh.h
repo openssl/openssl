@@ -10,6 +10,9 @@
 #include <openssl/dh.h>
 #include "internal/ffc.h"
 
+int dh_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
+                               int qbits, int gindex, BN_GENCB *cb);
+
 int dh_compute_key(OPENSSL_CTX *ctx, unsigned char *key, const BIGNUM *pub_key,
                    DH *dh);
 int dh_compute_key_padded(OPENSSL_CTX *ctx, unsigned char *key,
