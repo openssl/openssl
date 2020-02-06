@@ -561,8 +561,7 @@ my @disable_cascades = (
     "cmp"               => [ "crmf" ],
 
     # Padlock engine uses low-level AES APIs which are deprecated
-    sub { $disabled{"deprecated"}
-          && (!defined $config{"api"} || $config{"api"} >= 30000) }
+    sub { $disabled{"deprecated-3.0"} }
           => [ "padlockeng" ]
     );
 
@@ -1477,6 +1476,12 @@ die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set
 
 $config{api} = $config{major} * 10000 + $config{minor} * 100
     unless $config{api};
+foreach (keys %$apitable) {
+    $disabled{"deprecated-$_"} = "deprecation"
+        if $disabled{deprecated} && $config{api} >= $apitable->{$_};
+}
+
+disable();                      # Run a cascade now
 
 # Hack cflags for better warnings (dev option) #######################
 
@@ -1488,7 +1493,7 @@ $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
 $config{openssl_api_defines} = [
-    "OPENSSL_CONFIGURED_API=".$config{api}
+    "OPENSSL_CONFIGURED_API=".$config{api},
 ];
 
 my @strict_warnings_collection=();
@@ -1647,6 +1652,9 @@ foreach my $what (sort keys %disabled) {
     # There are deprecated disablables that translate to themselves.
     # They cause disabling cascades, but should otherwise not regiter.
     next if $deprecated_disablables{$what};
+    # The generated $disabled{"deprecated-x.y"} entries are special
+    # and treated properly elsewhere
+    next if $what =~ m|^deprecated-|;
 
     $config{options} .= " no-$what";
 
