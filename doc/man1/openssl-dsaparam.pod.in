@@ -24,6 +24,9 @@ B<openssl dsaparam>
 
 =head1 DESCRIPTION
 
+This command has been deprecated.
+The L<openssl-pkeyparam(1)> command should be used instead.
+
 This command is used to manipulate or generate DSA parameter files.
 
 DSA parameter generation can be a slow process and as a result the same set of
@@ -95,10 +98,15 @@ the input file (if any) is ignored.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkeyparam(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-rsa(1)>
+
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

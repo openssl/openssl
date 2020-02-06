@@ -31,6 +31,10 @@ IF[{- !$disabled{apps} -}]
     SOURCE[openssl]=openssl.rc
   ENDIF
 
+  IF[{- !$disabled{'deprecated-3.0'} -}]
+    SOURCE[openssl]=dhparam.c dsa.c dsaparam.c gendsa.c
+  ENDIF
+
   SCRIPTS{misc}=CA.pl
   SOURCE[CA.pl]=CA.pl.in
   # linkname tells build files that a symbolic link or copy of this script
