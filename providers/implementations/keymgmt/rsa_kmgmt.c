@@ -324,7 +324,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         && !OSSL_PARAM_set_int(p, RSA_size(rsa)))
         return 0;
 
-# if 0                           /* PSS support pending */
+# if 0  /* TODO(3.0): PSS support pending */
     if ((p = OSSL_PARAM_locate(params,
                                OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
         && RSA_get0_pss_params(rsa) != NULL) {
@@ -341,9 +341,14 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
     }
 #endif
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && RSA_get0_pss_params(rsa) == NULL)
+/* TODO(3.0): PSS support pending */
+#if 0
+            && RSA_get0_pss_params(rsa) == NULL
+#endif
+            ) {
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
+    }
 
     return 1;
 }

@@ -269,7 +269,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
         return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     gcd = BN_new();
     if (ctx == NULL || gcd == NULL)
         goto err;
@@ -358,7 +358,7 @@ int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         return 0;
 

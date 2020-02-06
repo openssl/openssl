@@ -297,7 +297,7 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     if (!rsa_sp800_56b_validate_strength(nbits, -1))
         return 0;
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         return 0;
 
