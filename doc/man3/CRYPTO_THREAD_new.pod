@@ -1,0 +1,303 @@
+=pod
+
+=head1 NAME
+
+CRYPTO_THREAD_new, CRYPTO_THREAD_join, CRYPTO_THREAD_exit,
+CRYPTO_THREAD_provide,
+CRYPTO_THREAD_INTERN_enable, CRYPTO_THREAD_INTERN_disable,
+CRYPTO_THREAD_EXTERN_enable, CRYPTO_THREAD_EXTERN_disable,
+CRYPTO_THREAD_clean, CRYPTO_THREAD_state
+- thread management functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ CRYPTO_THREAD CRYPTO_THREAD_new(CRYPTO_THREAD_ROUTINE start,
+                                 CRYPTO_THREAD_DATA data);
+ CRYPTO_THREAD CRYPTO_THREAD_provide(CRYPTO_THREAD_CALLBACK cb);
+ int CRYPTO_THREAD_join(CRYPTO_THREAD thread, CRYPTO_THREAD_RETVAL* retval);
+ int CRYPTO_THREAD_exit(CRYPTO_THREAD_RETVAL retval);
+ int CRYPTO_THREAD_INTERN_enable(CRYPTO_SIGNALS** props);
+ int CRYPTO_THREAD_INTERN_disable(void);
+ int CRYPTO_THREAD_EXTERN_enable(CRYPTO_SIGNALS** props);
+ int CRYPTO_THREAD_EXTERN_disable(void);
+ CRYPTO_THREAD_STATE CRYPTO_THREAD_state(CRYPTO_THREAD thread);
+ int CRYPTO_THREAD_clean(CRYPTO_THREAD* thread);
+
+=head1 DESCRIPTION
+
+OpenSSL implements preemptive multitasking through a B<CRYPTO_THREAD>.
+
+B<WARNING:> This feature is disabled by default and needs to be explicitly
+enabled by applications. OpenSSL will not implicitly enable multi-threading.
+OpenSSL implementations are forbidded of proactively setting up threads, even
+if multi-threaded mode is requested via ctrl call or OSSL_PARAM.
+
+It is highly recommended to setup signal masking while threading is enabled.
+See B<CRYPTO_SIGNAL_block> for more information.
+
+As a user of OpenSSL, you get to decide whether OpenSSL is
+
+ a) free to create threads itself (internal threads), or
+ b) required to use a limited number of threads that you explictly start, one
+    at the time (external threads)
+
+To clean up allocated thread-related structures, use B<CRYPTO_THREAD_clean>.
+To find out a state of a running thread, pass the CRYPTO_THREAD object to
+B<CRYPTO_THREAD_state>.
+
+=over 4
+
+=item * Internal threads
+
+To enable internal threads, call B<CRYPTO_THREAD_INTERN_enable()>. To disable,
+call CRYPTO_THREAD_INTERN_disable(). Nothing is required of your application
+beyond that.
+
+=item * External threads
+
+To enable external threads, call B<CRYPTO_THREAD_EXTERN_enable()>. This alone is
+not sufficient as you need to provide worker threads to OpenSSL. Use
+CRYPTO_THREAD_provide() to spawn a single new worker. This worker will
+remain idle until it's tasked by OpenSSL. Repeat the function call to provide
+as many workers as you want. You may provide a callback function. Every time
+a worker finishes with a job, callback function will be asked whether the worker
+is free to idle/pick up another job (job count is passed as argument to
+callback).
+
+=back
+
+=head1 RETURN VALUES
+
+CRYPTO_THREAD_new and CRYPTO_THREAD_provide return an abstract CRYPTO_THREAD
+platform-agnostic object that contains thread/worker-specific data, or NULL
+if an error was encountered.
+
+CRYPTO_THREAD_join and CRYPTO_THREAD_exit return 1 on success, 0 on failure.
+
+Note that if threading is disabled, these functions will indicate that in their
+return code (NULL or 0).
+
+CRYPTO_THREAD_INTERN_enable and CRYPTO_THREAD_EXTERN_enable return 1 on
+successful threading activation, 0 otherwise.
+
+CRYPTO_THREAD_INTERN_disable and CRYPTO_THREAD_EXTERN_disable return 1 on
+sucessful threading deactivation, 0 otherwise. Note that they do not check
+whether there are running threads, nor do they terminate them.
+
+=head1 EXAMPLES
+
+A couple of examples to just show how internal threads an external threads
+may be used.
+
+=head2 Example 1
+
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <openssl/crypto.h>
+
+    unsigned long rt1(void *data) {
+        printf("Thread created with data: %d.\n", *(int*)data);
+        sleep(5);
+        printf("Thread exitting.\n");
+        return 1;
+    }
+
+    unsigned long rt2(void *data) {
+        printf("Thread created with data: %d.\n", *(int*)data);
+        printf("Thread exitting.\n");
+        return 1;
+    }
+
+    int main(void)
+    {
+        int data = 5;
+
+        /* Attempting to create thread without explicit agreement. This
+         * should fail. */
+        CRYPTO_THREAD t0;
+        if ((t0 = CRYPTO_THREAD_new(rt1, &data)) != NULL) {
+            /* ERROR: Created thread without explicit agreement. Shouldn't
+             * happen. */
+            return 1;
+        }
+
+        /* Allow internal threads. */
+        CRYPTO_SIGNAL* s[] = {NULL};
+        if (CRYPTO_THREAD_INTERN_enable((CRYPTO_SIGNAL**)&s) == 0) {
+            /* ERROR: Couldn't enable internal threads. Possible reasons:
+             *  - error occured during signal masking (none in this case)
+             *  - error occured during threading initialization
+             */
+            return 1;
+        }
+
+        CRYPTO_THREAD t1_1;
+        if ((t1_1 = CRYPTO_THREAD_new(rt1, &data)) == NULL) {
+            /* ERROR: Couldn't create a thread. This will happen if you're on
+             * an unsupported architecture. */
+            return 1;
+        }
+
+        CRYPTO_THREAD t1_2;
+        if ((t1_2 = CRYPTO_THREAD_new(rt2, &data)) == NULL) {
+            /* ERROR: Couldn't create a thread. This will happen if you're on
+             * an unsupported architecture. */
+            return 1;
+        }
+
+        unsigned long retval1;
+        CRYPTO_THREAD_join(t1_1, &retval1);
+
+        unsigned long retval2;
+        CRYPTO_THREAD_join(t1_2, &retval2);
+
+        printf("retval t1_1: %ld, retval t1_2: %ld\n", retval1, retval2);
+
+        /* necessary cleanup */
+        CRYPTO_THREAD_clean(&t1_1);
+        CRYPTO_THREAD_clean(&t1_2);
+
+        /* Disallow internal threads again. */
+        if (CRYPTO_THREAD_INTERN_disable() == 0) {
+            /* ERROR: Couldn't disable internal threads. This would happen only
+             * if signal unmasking couldn't be performed. */
+            return 1;
+        }
+
+        CRYPTO_SIGNAL_unblock_all();
+
+        /* The following should fail. */
+        CRYPTO_THREAD t2;
+        if ((t2 = CRYPTO_THREAD_new(rt1, &data)) != NULL) {
+            /* Shouldn't happen. */
+            return 1;
+        }
+
+        return 0;
+    }
+
+=head2 Example 2
+
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <openssl/crypto.h>
+
+    unsigned long rt(void *data) {
+        printf("Thread created with data: %d.\n", *(int*)data);
+        sleep(5);
+        printf("Thread exitting.\n");
+        return 1;
+    }
+
+    int worker_cb(size_t queue_size)
+    {
+        printf("Some job finished, queue size: %ld.\n", queue_size);
+        /* allow running until there is something in the queue */
+        return ( queue_size > 0 );
+    }
+
+    int worker_kill_after_single_job(size_t queue_size)
+    {
+        printf("Some job finished, queue size: %ld\n", queue_size);
+        /* force worker termination */
+        return 0;
+    }
+
+    int main(void)
+    {
+        /* Attempting to create thread without explicit agreement. This should
+         * fail as we haven't explicitly given threading permission. */
+        CRYPTO_THREAD t0;
+        if ((t0 = CRYPTO_THREAD_provide(NULL)) != NULL) {
+            /* ERROR: Created thread without explicit agreement. This shouldn't
+             * happen. It is here just to demonstrate error codes. */
+            return 1;
+        }
+
+        /* Allow external threads. */
+        CRYPTO_SIGNAL* s[] = {NULL};
+        if (CRYPTO_THREAD_EXTERN_enable((CRYPTO_SIGNAL**)&s) == 0) {
+            /* ERROR: Couldn't enable internal threads. Possible reasons:
+             *  - error occured during signal masking (none in this case)
+             *  - error occured during threading initialization
+             */
+            return 1;
+        }
+
+        CRYPTO_THREAD w1, w2;
+        if ((w1 = CRYPTO_THREAD_provide(worker_cb)) == NULL) {
+            /* ERROR: Couldn't provide a worker thread. This will happen if
+             * you're on an unsupported architecture. */
+            return 1;
+        }
+        if ((w2 = CRYPTO_THREAD_provide(worker_kill_after_single_job)) == NULL)
+            return 1;
+
+        int data1 = 1, data2 = 2, data3 = 3;
+        CRYPTO_THREAD t1_1, t1_2, t1_3;
+        if ((t1_1 = CRYPTO_THREAD_new(rt, &data1)) == NULL) {
+            /* ERROR: Couldn't create a thread. This will happen if you're on
+             * an unsupported architecture. */
+            return 1;
+        }
+        if ((t1_2 = CRYPTO_THREAD_new(rt, &data2)) == NULL)
+            return 1;
+        if ((t1_3 = CRYPTO_THREAD_new(rt, &data3)) == NULL)
+            return 1;
+
+        unsigned long retval;
+
+        /* we can join a task that we've spawned */
+        CRYPTO_THREAD_join(t1_1, &retval);
+        printf("Thread T1.1 exitted with return value: %ld.\n", retval);
+
+        /* let's wait til all workers finish */
+        CRYPTO_THREAD_join(w2, &retval);
+        printf("Single-job worker finished\n");
+
+        CRYPTO_THREAD_join(w1, &retval);
+        printf("Work until there's jobs worker finished\n");
+
+        /* necessary cleanup */
+        CRYPTO_THREAD_clean(&t1_1);
+        CRYPTO_THREAD_clean(&t1_2);
+        CRYPTO_THREAD_clean(&t1_3);
+        CRYPTO_THREAD_clean(&w1);
+        CRYPTO_THREAD_clean(&w2);
+
+        /* as you setup signal blocking, you're responsible for clean up */
+        CRYPTO_SIGNAL_unblock_all();
+
+        /* The following should fail. */
+        if (CRYPTO_THREAD_EXTERN_disable() == 0) {
+            /* ERROR: Couldn't disable external threads. This would happen only
+             * if signal unmasking couldn't be performed. */
+            return 1;
+        }
+
+        /* The following should fail. */
+        CRYPTO_THREAD t2;
+        if ((t2 = CRYPTO_THREAD_provide(worker_cb)) != NULL) {
+            /* Shouldn't happen. */
+            return 1;
+        }
+
+        return 0;
+    }
+
+=head1 SEE ALSO
+
+L<CRYPTO_SIGNAL_block(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

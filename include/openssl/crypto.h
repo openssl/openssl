@@ -80,6 +80,65 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 
+#if defined(OPENSSL_SYS_WINDOWS) || defined(_WIN32) || defined(__CYGWIN__)
+typedef void (*CRYPTO_SIGNAL_CALLBACK)(long);
+#else
+typedef void (*CRYPTO_SIGNAL_CALLBACK)(int);
+#endif
+
+typedef struct {
+    long signal;
+    CRYPTO_SIGNAL_CALLBACK callback;
+} CRYPTO_SIGNAL;
+
+int CRYPTO_SIGNAL_block(CRYPTO_SIGNAL *p);
+int CRYPTO_SIGNAL_block_set(CRYPTO_SIGNAL** props);
+int CRYPTO_SIGNAL_unblock_all(void);
+
+# if defined(OPENSSL_THREADS)
+
+typedef unsigned long CRYPTO_THREAD_RETVAL;
+
+typedef enum {
+        CRYPTO_THREAD_NO_STATE = 0,
+        CRYPTO_THREAD_RUNNING  = 1 << 0,
+        CRYPTO_THREAD_STOPPED  = 1 << 1,
+        CRYPTO_THREAD_AWAITING = 1 << 2,
+        CRYPTO_THREAD_FAILED   = 1 << 3
+} CRYPTO_THREAD_STATE;
+
+#  if defined(_WIN32) || defined(_STDCALL_SUPPORTED)
+typedef CRYPTO_THREAD_RETVAL (__stdcall *CRYPTO_THREAD_ROUTINE)(void *);
+#  else
+typedef CRYPTO_THREAD_RETVAL(*CRYPTO_THREAD_ROUTINE)(void*);
+#  endif
+
+typedef int (*CRYPTO_THREAD_CALLBACK)(size_t);
+typedef void* CRYPTO_THREAD_DATA;
+typedef struct {
+    CRYPTO_THREAD_STATE state;
+    void* handle;
+} * CRYPTO_THREAD;
+typedef void* CRYPTO_MUTEX;
+typedef void* CRYPTO_CONDVAR;
+
+extern volatile int CRYPTO_THREAD_INTERN_enabled;
+extern volatile int CRYPTO_THREAD_EXTERN_enabled;
+
+CRYPTO_THREAD CRYPTO_THREAD_new(CRYPTO_THREAD_ROUTINE start,
+                                CRYPTO_THREAD_DATA data);
+CRYPTO_THREAD CRYPTO_THREAD_provide(CRYPTO_THREAD_CALLBACK cb);
+int CRYPTO_THREAD_join(CRYPTO_THREAD thread, CRYPTO_THREAD_RETVAL* retval);
+int CRYPTO_THREAD_exit(CRYPTO_THREAD_RETVAL retval);
+int CRYPTO_THREAD_INTERN_enable(CRYPTO_SIGNAL** props);
+int CRYPTO_THREAD_INTERN_disable(void);
+int CRYPTO_THREAD_EXTERN_enable(CRYPTO_SIGNAL** props);
+int CRYPTO_THREAD_EXTERN_disable(void);
+CRYPTO_THREAD_STATE CRYPTO_THREAD_state(CRYPTO_THREAD thread);
+int CRYPTO_THREAD_clean(CRYPTO_THREAD* thread);
+
+# endif /* OPENSSL_THREADS */
+
 /*
  * The following can be used to detect memory leaks in the library. If
  * used, it turns on malloc checking

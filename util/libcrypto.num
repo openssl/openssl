@@ -4918,3 +4918,16 @@ PKCS8_pkey_add1_attr_by_OBJ             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_private_check                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_pairwise_check                 ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_verify_ctx                    ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_SIGNAL_block                     ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_SIGNAL_block_set                 ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_SIGNAL_unblock_all               ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_new                       ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_provide                   ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_join                      ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_exit                      ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_INTERN_enable             ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_INTERN_disable            ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_EXTERN_enable             ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_EXTERN_disable            ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_state                     ?	3_0_0	EXIST::FUNCTION:
+CRYPTO_THREAD_clean                     ?	3_0_0	EXIST::FUNCTION:
