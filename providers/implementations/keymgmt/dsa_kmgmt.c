@@ -29,6 +29,7 @@ static OSSL_OP_keymgmt_free_fn dsa_freedata;
 static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn dsa_gettable_params;
 static OSSL_OP_keymgmt_has_fn dsa_has;
+static OSSL_OP_keymgmt_match_fn dsa_match;
 static OSSL_OP_keymgmt_import_fn dsa_import;
 static OSSL_OP_keymgmt_import_types_fn dsa_import_types;
 static OSSL_OP_keymgmt_export_fn dsa_export;
@@ -175,6 +176,27 @@ static int dsa_has(void *keydata, int selection)
     return ok;
 }
 
+static int dsa_match(const void *keydata1, const void *keydata2, int selection)
+{
+    const DSA *dsa1 = keydata1;
+    const DSA *dsa2 = keydata2;
+    int ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok
+            && BN_cmp(DSA_get0_pub_key(dsa1), DSA_get0_pub_key(dsa2)) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok
+            && BN_cmp(DSA_get0_priv_key(dsa1), DSA_get0_priv_key(dsa2)) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
+        FFC_PARAMS *dsaparams1 = dsa_get0_params((DSA *)dsa1);
+        FFC_PARAMS *dsaparams2 = dsa_get0_params((DSA *)dsa2);
+
+        ok = ok && ffc_params_cmp(dsaparams1, dsaparams2, 1);
+    }
+    return ok;
+}
+
 static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     DSA *dsa = keydata;
@@ -313,6 +335,7 @@ const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dsa_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))dsa_match },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dsa_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },

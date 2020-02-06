@@ -31,6 +31,7 @@ static OSSL_OP_keymgmt_gettable_params_fn ec_gettable_params;
 static OSSL_OP_keymgmt_set_params_fn ec_set_params;
 static OSSL_OP_keymgmt_settable_params_fn ec_settable_params;
 static OSSL_OP_keymgmt_has_fn ec_has;
+static OSSL_OP_keymgmt_match_fn ec_match;
 static OSSL_OP_keymgmt_import_fn ec_import;
 static OSSL_OP_keymgmt_import_types_fn ec_import_types;
 static OSSL_OP_keymgmt_export_fn ec_export;
@@ -442,6 +443,32 @@ int ec_has(void *keydata, int selection)
     return ok;
 }
 
+static int ec_match(const void *keydata1, const void *keydata2, int selection)
+{
+    const EC_KEY *ec1 = keydata1;
+    const EC_KEY *ec2 = keydata2;
+    const EC_GROUP *group_a = EC_KEY_get0_group(ec1);
+    const EC_GROUP *group_b = EC_KEY_get0_group(ec2);
+    int ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && group_a != NULL && group_b != NULL
+            && EC_GROUP_cmp(group_a, group_b, NULL) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        const BIGNUM *pa = EC_KEY_get0_private_key(ec1);
+        const BIGNUM *pb = EC_KEY_get0_private_key(ec2);
+
+        ok = ok && BN_cmp(pa, pb) == 0;
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        const EC_POINT *pa = EC_KEY_get0_public_key(ec1);
+        const EC_POINT *pb = EC_KEY_get0_public_key(ec2);
+
+        ok = ok && EC_POINT_cmp(group_b, pa, pb, NULL);
+    }
+    return ok;
+}
+
 static
 int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
@@ -711,6 +738,7 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))ec_set_params },
     { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))ec_settable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ec_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },

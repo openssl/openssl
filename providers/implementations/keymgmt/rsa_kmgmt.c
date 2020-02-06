@@ -32,6 +32,7 @@ static OSSL_OP_keymgmt_free_fn rsa_freedata;
 static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn rsa_gettable_params;
 static OSSL_OP_keymgmt_has_fn rsa_has;
+static OSSL_OP_keymgmt_match_fn rsa_match;
 static OSSL_OP_keymgmt_validate_fn rsa_validate;
 static OSSL_OP_keymgmt_import_fn rsa_import;
 static OSSL_OP_keymgmt_import_types_fn rsa_import_types;
@@ -200,6 +201,21 @@ static int rsa_has(void *keydata, int selection)
         ok = ok && (RSA_get0_n(rsa) != NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && (RSA_get0_d(rsa) != NULL);
+    return ok;
+}
+
+static int rsa_match(const void *keydata1, const void *keydata2, int selection)
+{
+    const RSA *rsa1 = keydata1;
+    const RSA *rsa2 = keydata2;
+    int ok = 1;
+
+    /* There is always an |e| */
+    ok = ok && BN_cmp(RSA_get0_e(rsa1), RSA_get0_e(rsa2)) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && BN_cmp(RSA_get0_n(rsa1), RSA_get0_n(rsa2)) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && BN_cmp(RSA_get0_d(rsa1), RSA_get0_d(rsa2)) == 0;
     return ok;
 }
 
@@ -399,6 +415,7 @@ const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))rsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))rsa_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
