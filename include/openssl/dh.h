@@ -75,6 +75,10 @@ DECLARE_ASN1_ITEM(DHparams)
 # define DH_GENERATOR_5          5
 
 /* DH_check error codes */
+/*
+ * NB: These values must align with the equivalently named macros in
+ * internal/ffc.h.
+ */
 # define DH_CHECK_P_NOT_PRIME            0x01
 # define DH_CHECK_P_NOT_SAFE_PRIME       0x02
 # define DH_UNABLE_TO_CHECK_GENERATOR    0x04

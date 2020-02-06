@@ -33,13 +33,18 @@
 # define FFC_PARAMS_VALIDATE_G   0x02
 # define FFC_PARAMS_VALIDATE_ALL (FFC_PARAMS_VALIDATE_PQ | FFC_PARAMS_VALIDATE_G)
 
-# define FFC_CHECK_P_NOT_PRIME                DH_CHECK_P_NOT_PRIME
-# define FFC_CHECK_P_NOT_SAFE_PRIME           DH_CHECK_P_NOT_SAFE_PRIME
-# define FFC_CHECK_UNKNOWN_GENERATOR          DH_UNABLE_TO_CHECK_GENERATOR
-# define FFC_CHECK_NOT_SUITABLE_GENERATOR     DH_NOT_SUITABLE_GENERATOR
-# define FFC_CHECK_Q_NOT_PRIME                DH_CHECK_Q_NOT_PRIME
-# define FFC_CHECK_INVALID_Q_VALUE            DH_CHECK_INVALID_Q_VALUE
-# define FFC_CHECK_INVALID_J_VALUE            DH_CHECK_INVALID_J_VALUE
+/*
+ * NB: These values must align with the equivalently named macros in
+ * openssl/dh.h. We cannot use those macros here in case DH has been disabled.
+ */
+# define FFC_CHECK_P_NOT_PRIME                0x00001
+# define FFC_CHECK_P_NOT_SAFE_PRIME           0x00002
+# define FFC_CHECK_UNKNOWN_GENERATOR          0x00004
+# define FFC_CHECK_NOT_SUITABLE_GENERATOR     0x00008
+# define FFC_CHECK_Q_NOT_PRIME                0x00010
+# define FFC_CHECK_INVALID_Q_VALUE            0x00020
+# define FFC_CHECK_INVALID_J_VALUE            0x00040
+
 # define FFC_CHECK_BAD_LN_PAIR                0x00080
 # define FFC_CHECK_INVALID_SEED_SIZE          0x00100
 # define FFC_CHECK_MISSING_SEED_OR_COUNTER    0x00200
