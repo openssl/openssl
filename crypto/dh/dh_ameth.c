@@ -513,7 +513,8 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             return 0;
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        return 0;
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
