@@ -141,6 +141,7 @@ static const unsigned char aes_256_gcm_tag[] = {
 };
 
 static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
+#ifndef OPENSSL_NO_DES
     {
         {
             OSSL_SELF_TEST_DESC_CIPHER_TDES,
@@ -151,6 +152,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
         ITM(des_ede3_cbc_key),
         ITM(des_ede3_cbc_iv),
     },
+#endif
     {
         {
             OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
