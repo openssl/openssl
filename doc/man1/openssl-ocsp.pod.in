@@ -7,6 +7,8 @@ openssl-ocsp - Online Certificate Status Protocol utility
 
 =head1 SYNOPSIS
 
+=head2 OCSP Client
+
 B<openssl> B<ocsp>
 [B<-help>]
 [B<-out> I<file>]
@@ -16,19 +18,18 @@ B<openssl> B<ocsp>
 [B<-signer> I<file>]
 [B<-signkey> I<file>]
 [B<-sign_other> I<file>]
-[B<-no_certs>]
+[B<-nonce>]
+[B<-no_nonce>]
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
+[B<-no_certs>]
 [B<-reqout> I<file>]
 [B<-respout> I<file>]
 [B<-reqin> I<file>]
 [B<-respin> I<file>]
-[B<-nonce>]
-[B<-no_nonce>]
 [B<-url> I<URL>]
 [B<-host> I<host>:I<port>]
-[B<-multi> I<process-count>]
 [B<-header>]
 [B<-timeout> I<seconds>]
 [B<-path>]
@@ -46,6 +47,10 @@ B<openssl> B<ocsp>
 [B<-no_explicit>]
 [B<-port> I<num>]
 [B<-ignore_err>]
+
+=head2 OCSP Server
+
+B<openssl> B<ocsp>
 [B<-index> I<file>]
 [B<-CA> I<file>]
 [B<-rsigner> I<file>]
@@ -60,6 +65,7 @@ B<openssl> B<ocsp>
 [B<-ndays> I<n>]
 [B<-resp_key_id>]
 [B<-nrequest> I<n>]
+[B<-multi> I<process-count>]
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
@@ -170,17 +176,6 @@ On POSIX systems, when running as an OCSP responder, this option also limits
 the time that the responder is willing to wait for the client request.
 This time is measured from the time the responder accepts the connection until
 the complete request is received.
-
-=item B<-multi> I<process-count>
-
-Run the specified number of OCSP responder child processes, with the parent
-process respawning child processes as needed.
-Child processes will detect changes in the CA index file and automatically
-reload it.
-When running as a responder B<-timeout> option is recommended to limit the time
-each child is willing to wait for the client's OCSP response.
-This option is available on POSIX systems (that support the fork() and other
-required unix system-calls).
 
 =item B<-verify_other> I<file>
 
@@ -303,19 +298,6 @@ file given with B<-index>.
 
 The certificate to sign OCSP responses with.
 
-=item B<-rother> I<file>
-
-Additional certificates to include in the OCSP response.
-
-=item B<-resp_no_certs>
-
-Don't include any certificates in the OCSP response.
-
-=item B<-resp_key_id>
-
-Identify the signer certificate using the key ID, default is to use the
-subject name.
-
 =item B<-rkey> I<file>
 
 The private key to sign OCSP responses with: if not present the file
@@ -325,6 +307,10 @@ specified in the B<-rsigner> option is used.
 
 The private key password source. For more information about the format of I<arg>
 see L<openssl(1)/Pass Phrase Options>.
+
+=item B<-rother> I<file>
+
+Additional certificates to include in the OCSP response.
 
 =item B<-rsigopt> I<nm>:I<v>
 
@@ -340,6 +326,15 @@ The digest to use when signing the response.
 Corrupt the response signature before writing it; this can be useful
 for testing.
 
+=item B<-resp_no_certs>
+
+Don't include any certificates in the OCSP response.
+
+=item B<-resp_key_id>
+
+Identify the signer certificate using the key ID, default is to use the
+subject name.
+
 =item B<-port> I<portnum>
 
 Port to listen for OCSP requests on. The port may also be specified
@@ -354,6 +349,18 @@ running instead of terminating upon receiving a malformed request.
 =item B<-nrequest> I<number>
 
 The OCSP server will exit after receiving I<number> requests, default unlimited.
+
+=item B<-multi> I<process-count>
+
+Run the specified number of OCSP responder child processes, with the parent
+process respawning child processes as needed.
+Child processes will detect changes in the CA index file and automatically
+reload it.
+When running as a responder B<-timeout> option is recommended to limit the time
+each child is willing to wait for the client's OCSP response.
+This option is available on POSIX systems (that support the fork() and other
+required unix system-calls).
+
 
 =item B<-nmin> I<minutes>, B<-ndays> I<days>
 
