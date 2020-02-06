@@ -19,7 +19,7 @@ SOURCE[../../libcrypto]=$COMMON\
         pkey_mac.c \
         legacy_sha.c
 
-IF[{- !$disabled{deprecated} || $config{api} < 30000 -}]
+IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=p_enc.c p_dec.c
 ENDIF
 

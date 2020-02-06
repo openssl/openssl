@@ -17,7 +17,6 @@ use OpenSSL::Test::Utils;
 setup("test_ige");
 
 plan skip_all => "AES_ige support is disabled in this build"
-    if disabled("deprecated")
-       && (!defined config("api") || config("api") >= 30000);
+    if disabled('deprecated-3.0');
 
 simple_test("test_ige", "igetest");
