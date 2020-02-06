@@ -5012,6 +5012,18 @@
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
 
+#define SN_argon2i              "ARGON2I"
+#define LN_argon2i              "argon2i"
+#define NID_argon2i             1219
+
+#define SN_argon2d              "ARGON2D"
+#define LN_argon2d              "argon2d"
+#define NID_argon2d             1218
+
+#define SN_argon2id             "ARGON2ID"
+#define LN_argon2id             "argon2id"
+#define NID_argon2id            1220
+
 #define SN_tls1_prf             "TLS1-PRF"
 #define LN_tls1_prf             "tls1-prf"
 #define NID_tls1_prf            1021

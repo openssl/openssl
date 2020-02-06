@@ -136,6 +136,12 @@ extern "C" {
 #define OSSL_KDF_PARAM_MODE         "mode"      /* utf8 string or int */
 #define OSSL_KDF_PARAM_PKCS5        "pkcs5"     /* int */
 #define OSSL_KDF_PARAM_UKM          "ukm"       /* octet string */
+#define OSSL_KDF_PARAM_THREADS      "threads"   /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_SZ    "sz"        /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_AD    "ad"        /* octet string */
+#define OSSL_KDF_PARAM_ARGON2_LANES "lanes"     /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_MEMCOST "memcost" /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_FLAGS "flags"     /* uint32_t */
 #define OSSL_KDF_PARAM_CEK_ALG      "cekalg"    /* utf8 string */
 #define OSSL_KDF_PARAM_SCRYPT_N     "n"         /* uint64_t */
 #define OSSL_KDF_PARAM_SCRYPT_R     "r"         /* uint32_t */

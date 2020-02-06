@@ -1215,3 +1215,6 @@ modp_3072		1214
 modp_4096		1215
 modp_6144		1216
 modp_8192		1217
+argon2d		1218
+argon2i		1219
+argon2id		1220

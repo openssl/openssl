@@ -160,6 +160,41 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_ARGON2
+static int test_kdf_argon2(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[3], *p = params;
+    unsigned char out[64];
+    static const unsigned char expected[sizeof(out)] = {
+        0xd1, 0x6a, 0xd7, 0x73, 0xb1, 0xc6, 0x40, 0x0d,
+        0x31, 0x93, 0xbc, 0x3e, 0x66, 0x27, 0x16, 0x03,
+        0xe9, 0xde, 0x72, 0xba, 0xce, 0x20, 0xaf, 0x3f,
+        0x89, 0xc2, 0x36, 0xf5, 0x43, 0x4c, 0xde, 0xc9,
+        0x90, 0x72, 0xdd, 0xfc, 0x6b, 0x9c, 0x77, 0xea,
+        0x9f, 0x38, 0x6c, 0x0e, 0x8d, 0x7c, 0xb0, 0xc3,
+        0x7c, 0xec, 0x6e, 0xc3, 0x27, 0x7a, 0x22, 0xc9,
+        0x2d, 0x5b, 0xe5, 0x8e, 0xf6, 0x7c, 0x7e, 0xaa,
+    };
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                             (char *)"1234567890", 10);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (char *)"saltsalt", 8);
+    *p = OSSL_PARAM_construct_end();
+
+    ret =
+        TEST_ptr(kctx = get_kdfbyname(SN_argon2d))
+        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        && TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out)), 1)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_ARGON2 */
+
 #ifndef OPENSSL_NO_SCRYPT
 static int test_kdf_scrypt(void)
 {
@@ -785,6 +820,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_pbkdf2);
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
+#endif
+#ifndef OPENSSL_NO_ARGON2
+    ADD_TEST(test_kdf_argon2);
 #endif
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);

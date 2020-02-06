@@ -241,6 +241,11 @@ extern const OSSL_DISPATCH kdf_pbkdf2_functions[];
 #ifndef OPENSSL_NO_SCRYPT
 extern const OSSL_DISPATCH kdf_scrypt_functions[];
 #endif
+#ifndef OPENSSL_NO_ARGON2
+extern const OSSL_DISPATCH kdf_argon2i_functions[];
+extern const OSSL_DISPATCH kdf_argon2d_functions[];
+extern const OSSL_DISPATCH kdf_argon2id_functions[];
+#endif
 extern const OSSL_DISPATCH kdf_tls1_prf_functions[];
 extern const OSSL_DISPATCH kdf_hkdf_functions[];
 extern const OSSL_DISPATCH kdf_sshkdf_functions[];

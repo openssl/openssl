@@ -159,6 +159,7 @@ int ERR_load_EVP_strings(void);
 #  define EVP_F_S390X_AES_GCM_CTRL                         0
 #  define EVP_F_S390X_AES_GCM_TLS_CIPHER                   0
 #  define EVP_F_SCRYPT_ALG                                 0
+#  define EVP_F_ARGON2_ALG                                 0
 #  define EVP_F_UPDATE                                     0
 # endif
 

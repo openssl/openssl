@@ -185,6 +185,9 @@ struct evp_kdf_st {
     OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
 };
 
+extern const EVP_KDF argon2i_kdf_meth;
+extern const EVP_KDF argon2d_kdf_meth;
+extern const EVP_KDF argon2id_kdf_meth;
 struct evp_md_st {
     /* nid */
     int type;

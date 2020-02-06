@@ -137,6 +137,9 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_BLAKE2
     {FT_md, "blake2s256", dgst_main},
 #endif
+    {FT_md, "argon2i", dgst_main},
+    {FT_md, "argon2d", dgst_main},
+    {FT_md, "argon2id", dgst_main},
 #ifndef OPENSSL_NO_SM3
     {FT_md, "sm3", dgst_main},
 #endif

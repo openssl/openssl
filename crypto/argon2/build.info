@@ -1,0 +1,2 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=blake2b.c argon2_api.c core.c ref.c

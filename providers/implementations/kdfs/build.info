@@ -10,6 +10,7 @@ $SSKDF_GOAL=../../libimplementations.a
 $SCRYPT_GOAL=../../libimplementations.a
 $SSHKDF_GOAL=../../libimplementations.a
 $X942KDF_GOAL=../../libimplementations.a
+$ARGON2_GOAL=../../libimplementations.a
 
 SOURCE[$TLS1_PRF_GOAL]=tls1_prf.c
 
@@ -18,6 +19,8 @@ SOURCE[$HKDF_GOAL]=hkdf.c
 SOURCE[$KBKDF_GOAL]=kbkdf.c
 
 SOURCE[$KRB5KDF_GOAL]=krb5kdf.c
+
+SOURCE[$ARGON2_GOAL]=argon2.c
 
 SOURCE[$PBKDF2_GOAL]=pbkdf2.c
 # Extra code to satisfy the FIPS and non-FIPS separation.

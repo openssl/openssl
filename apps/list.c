@@ -567,6 +567,11 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
+#ifdef OPENSSL_NO_ARGON2
+    BIO_puts(bio_out, "ARGON2I\n");
+    BIO_puts(bio_out, "ARGON2D\n");
+    BIO_puts(bio_out, "ARGON2ID\n");
+#endif
 #ifdef OPENSSL_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
