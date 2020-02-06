@@ -337,3 +337,8 @@ int DSA_bits(const DSA *dsa)
 {
     return BN_num_bits(dsa->params.p);
 }
+
+FFC_PARAMS *dsa_get0_params(DSA *dsa)
+{
+    return &dsa->params;
+}
