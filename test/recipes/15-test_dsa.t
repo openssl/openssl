@@ -20,8 +20,7 @@ plan skip_all => 'DSA is not supported in this build' if disabled('dsa');
 plan tests => 7;
 
 my $deprecated_dsa =
-    disabled('deprecated')
-    && (!defined config('api') || config('api') >= 30000);
+    disabled('deprecated') || !defined config('api') || config('api') >= 30000;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
