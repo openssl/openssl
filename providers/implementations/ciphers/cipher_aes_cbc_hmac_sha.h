@@ -13,10 +13,6 @@
 int cipher_capable_aes_cbc_hmac_sha1(void);
 int cipher_capable_aes_cbc_hmac_sha256(void);
 
-#ifdef AES_CBC_HMAC_SHA_CAPABLE
-# include <openssl/aes.h>
-# include <openssl/sha.h>
-
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_st {
     PROV_CIPHER_HW base; /* must be first */
     void (*init_mac_key)(void *ctx, const unsigned char *inkey, size_t inlen);
@@ -29,6 +25,13 @@ typedef struct prov_cipher_hw_aes_hmac_sha_ctx_st {
         void *ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *param);
 # endif /* OPENSSL_NO_MULTIBLOCK) */
 } PROV_CIPHER_HW_AES_HMAC_SHA;
+
+const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha1(void);
+const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void);
+
+#ifdef AES_CBC_HMAC_SHA_CAPABLE
+# include <openssl/aes.h>
+# include <openssl/sha.h>
 
 typedef struct prov_aes_hmac_sha_ctx_st {
     PROV_CIPHER_CTX base;
@@ -58,8 +61,5 @@ typedef struct prov_aes_hmac_sha256_ctx_st {
 } PROV_AES_HMAC_SHA256_CTX;
 
 # define NO_PAYLOAD_LENGTH ((size_t)-1)
-
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha1(void);
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void);
 
 #endif /* AES_CBC_HMAC_SHA_CAPABLE */
