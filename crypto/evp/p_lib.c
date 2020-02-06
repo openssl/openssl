@@ -403,12 +403,14 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
     int alias = type;
 
+#ifndef OPENSSL_NO_EC
     if (EVP_PKEY_type(type) == EVP_PKEY_EC) {
         const EC_GROUP *group = EC_KEY_get0_group(key);
 
         if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
             alias = EVP_PKEY_SM2;
     }
+#endif
 
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
         return 0;
