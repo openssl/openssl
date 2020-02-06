@@ -44,12 +44,14 @@ static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
         goto error;
     }
 
+#ifndef OPENSSL_NO_EC
     if (id != NULL) {
         if (EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
             X509err(0, ERR_R_MALLOC_FAILURE);
             goto error;
         }
     }
+#endif
 
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
 
