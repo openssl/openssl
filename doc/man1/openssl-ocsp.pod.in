@@ -30,7 +30,6 @@ B<openssl> B<ocsp>
 [B<-respin> I<file>]
 [B<-url> I<URL>]
 [B<-host> I<host>:I<port>]
-[B<-multi> I<process-count>]
 [B<-header>]
 [B<-timeout> I<seconds>]
 [B<-path>]
@@ -66,6 +65,7 @@ B<openssl> B<ocsp>
 [B<-ndays> I<n>]
 [B<-resp_key_id>]
 [B<-nrequest> I<n>]
+[B<-multi> I<process-count>]
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
