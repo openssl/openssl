@@ -83,7 +83,7 @@ to print out requests and responses, create requests and send queries
 to an OCSP responder and behave like a mini OCSP server itself.
 
 This command operates as either a client or a server.
-This first entry in the L</SYNOPSIS> section lists the client options,
+The first entry in the L</SYNOPSIS> section lists the client options,
 the second entry the server options. The options are described in detail
 below, divided into client and server options.
 
