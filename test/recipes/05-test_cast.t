@@ -17,7 +17,6 @@ use OpenSSL::Test::Utils;
 setup("test_cast");
 
 plan skip_all => "Low-level CAST APIs are disabled in this build"
-    if disabled("deprecated")
-       && (!defined config("api") || config("api") >= 30000);
+    if disabled('deprecated-3.0');
 
 simple_test("test_cast", "casttest", "cast");

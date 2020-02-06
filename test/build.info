@@ -171,8 +171,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
   DEPEND[evp_pkey_provided_test]=../libcrypto libtestutil.a
 
-  IF[{- !$disabled{"deprecated"}
-        || (defined $config{"api"} && $config{"api"} < 30000) -}]
+  IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
 
     SOURCE[igetest]=igetest.c
