@@ -36,7 +36,7 @@ my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
-my @gendsacmd = ("openssl", "gendsa");
+my @genpkeycmd = ("openssl", "genpkey");
 my $dummycnf = srctop_file("apps", "openssl.cnf");
 
 my $CAkey = "keyCA.ss";
@@ -178,8 +178,8 @@ sub testss {
             SKIP: {
                 $ENV{CN2} = "DSA Certificate";
                 skip 'failure', 4 unless
-                    ok(run(app([@gendsacmd, "-out", $Dkey,
-                                $dsaparams],
+                    ok(run(app([@genpkeycmd, "-out", $Dkey,
+                                "-paramfile", $dsaparams],
                                stdout => "err.ss")),
                        "make a DSA key");
                 skip 'failure', 3 unless
