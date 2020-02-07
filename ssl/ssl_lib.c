@@ -5848,7 +5848,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
                                        int nid,
                                        const char *properties)
 {
-#if !defined(OPENSSL_NO_ENGINE)
+#ifndef OPENSSL_NO_ENGINE
     /*
      * If there is an Engine available for this cipher we use the "implicit"
      * form to ensure we use that engine later.
@@ -5892,7 +5892,7 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
                                int nid,
                                const char *properties)
 {
-#if !defined(OPENSSL_NO_ENGINE)
+#ifndef OPENSSL_NO_ENGINE
     /*
      * If there is an Engine available for this digest we use the "implicit"
      * form to ensure we use that engine later.
