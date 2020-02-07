@@ -421,7 +421,8 @@ static int ffc_params_fips186_2_gen_validate_test(void)
                                                   FFC_PARAMS_VALIDATE_ALL, &res,
                                                   NULL)))
         goto err;
-    if (!TEST_int_eq(res, FFC_CHECK_Q_NOT_PRIME))
+    /* As the params are randomly generated the error is one of the following */
+    if (!TEST_true(res == FFC_CHECK_Q_MISMATCH || res == FFC_CHECK_Q_NOT_PRIME))
         goto err;
 
     /* Partially valid g test will still pass */
