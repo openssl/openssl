@@ -20,8 +20,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
 
-int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
-                   const BIGNUM *pub_key, DH *dh)
+static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL;
@@ -41,7 +40,7 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
         return 0;
     }
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -81,18 +80,21 @@ int dh_compute_key(OPENSSL_CTX *libctx, unsigned char *key,
     return ret;
 }
 
-static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
-    return dh_compute_key(NULL, key, pub_key, dh);
+#ifdef FIPS_MODE
+    return compute_key(key, pub_key, dh);
+#else
+    return dh->meth->compute_key(key, pub_key, dh);
+#endif
 }
 
-int dh_compute_key_padded(OPENSSL_CTX *libctx, unsigned char *key,
-                          const BIGNUM *pub_key, DH *dh)
+int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     int rv, pad;
 
 #ifdef FIPS_MODE
-    rv = dh_compute_key(libctx, key, pub_key, dh);
+    rv = compute_key(key, pub_key, dh);
 #else
     rv = dh->meth->compute_key(key, pub_key, dh);
 #endif
@@ -105,18 +107,6 @@ int dh_compute_key_padded(OPENSSL_CTX *libctx, unsigned char *key,
     }
     return rv + pad;
 }
-
-#ifndef FIPS_MODE
-int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
-{
-    return dh->meth->compute_key(key, pub_key, dh);
-}
-
-int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
-{
-    return dh_compute_key_padded(NULL, key, pub_key, dh);
-}
-#endif
 
 static DH_METHOD dh_ossl = {
     "OpenSSL DH Method",
@@ -168,12 +158,16 @@ void DH_set_default_method(const DH_METHOD *meth)
 {
     default_DH_method = meth;
 }
+#endif /* FIPS_MODE */
 
 int DH_generate_key(DH *dh)
 {
+#ifdef FIPS_MODE
+    return generate_key(dh);
+#else
     return dh->meth->generate_key(dh);
+#endif
 }
-#endif /* FIPS_MODE */
 
 int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
                            BIGNUM *pub_key)
@@ -203,7 +197,7 @@ err:
     return ret;
 }
 
-static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
+static int generate_key(DH *dh)
 {
     int ok = 0;
     int generate_new_key = 0;
@@ -223,7 +217,7 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
         return 0;
     }
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
         goto err;
 
@@ -312,11 +306,6 @@ static int dh_generate_key(OPENSSL_CTX *libctx, DH *dh)
         BN_free(priv_key);
     BN_CTX_free(ctx);
     return ok;
-}
-
-static int generate_key(DH *dh)
-{
-    return dh_generate_key(NULL, dh);
 }
 
 int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)

@@ -287,7 +287,7 @@ int dh_check_pairwise(DH *dh)
         || dh->pub_key == NULL)
         return 0;
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(dh->libctx);
     if (ctx == NULL)
         goto err;
     pub_key = BN_new();

@@ -20,22 +20,15 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-static int dsa_builtin_keygen(OPENSSL_CTX *libctx, DSA *dsa);
+static int dsa_builtin_keygen(DSA *dsa);
 
 int DSA_generate_key(DSA *dsa)
-{
-    if (dsa->meth->dsa_keygen != NULL)
-        return dsa->meth->dsa_keygen(dsa);
-    return dsa_builtin_keygen(NULL, dsa);
-}
-
-int dsa_generate_key_ctx(OPENSSL_CTX *libctx, DSA *dsa)
 {
 #ifndef FIPS_MODE
     if (dsa->meth->dsa_keygen != NULL)
         return dsa->meth->dsa_keygen(dsa);
 #endif
-    return dsa_builtin_keygen(libctx, dsa);
+    return dsa_builtin_keygen(dsa);
 }
 
 int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
@@ -57,13 +50,13 @@ err:
     return ret;
 }
 
-static int dsa_builtin_keygen(OPENSSL_CTX *libctx, DSA *dsa)
+static int dsa_builtin_keygen(DSA *dsa)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if ((ctx = BN_CTX_new_ex(libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(dsa->libctx)) == NULL)
         goto err;
 
     if (dsa->priv_key == NULL) {

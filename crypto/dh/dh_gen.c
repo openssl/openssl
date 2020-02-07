@@ -27,7 +27,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
  * TODO(3.0): keygen should be able to use this method to do a FIPS186-4 style
  * paramgen.
  */
-int dh_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
+int dh_generate_ffc_parameters(DH *dh, int bits,
                                int qbits, int gindex, BN_GENCB *cb)
 {
     int ret, res;
@@ -38,7 +38,8 @@ int dh_generate_ffc_parameters(OPENSSL_CTX *libctx, DH *dh, int bits,
         qbits = EVP_MD_size(evpmd) * 8;
     }
     dh->params.gindex = gindex;
-    ret = ffc_params_FIPS186_4_generate(libctx, &dh->params, FFC_PARAM_TYPE_DH,
+    ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
+                                        FFC_PARAM_TYPE_DH,
                                         bits, qbits, NULL, &res, cb);
     if (ret > 0)
         dh->dirty_cnt++;

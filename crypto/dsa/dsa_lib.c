@@ -23,6 +23,8 @@
 #include "crypto/dsa.h"
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
 
+static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+
 #ifndef FIPS_MODE
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
@@ -128,29 +130,30 @@ const DSA_METHOD *DSA_get_method(DSA *d)
     return d->meth;
 }
 
-static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
+static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        DSAerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        DSAerr(0, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
 
+    ret->libctx = libctx;
     ret->meth = DSA_get_default_method();
 #if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
-            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            DSAerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -159,7 +162,7 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
     if (ret->engine) {
         ret->meth = ENGINE_get_DSA(ret->engine);
         if (ret->meth == NULL) {
-            DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
+            DSAerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -173,7 +176,7 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
 #endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
+        DSAerr(0, ERR_R_INIT_FAIL);
         goto err;
     }
 
@@ -186,13 +189,20 @@ static DSA *dsa_new_method(OPENSSL_CTX *libctx, ENGINE *engine)
 
 DSA *DSA_new_method(ENGINE *engine)
 {
-    return dsa_new_method(NULL, engine);
+    return dsa_new_intern(engine, NULL);
 }
 
+DSA *dsa_new_with_ctx(OPENSSL_CTX *libctx)
+{
+    return dsa_new_intern(NULL, libctx);
+}
+
+#ifndef FIPS_MODE
 DSA *DSA_new(void)
 {
-    return DSA_new_method(NULL);
+    return dsa_new_intern(NULL, NULL);
 }
+#endif
 
 void DSA_free(DSA *r)
 {

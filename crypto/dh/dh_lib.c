@@ -16,6 +16,8 @@
 #include "crypto/dh.h"
 #include "dh_local.h"
 
+static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+
 #ifndef FIPS_MODE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
@@ -36,36 +38,47 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
         meth->init(dh);
     return 1;
 }
-#endif /* !FIPS_MODE */
 
 DH *DH_new(void)
 {
-    return DH_new_method(NULL);
+    return dh_new_intern(NULL, NULL);
 }
 
 DH *DH_new_method(ENGINE *engine)
 {
+    return dh_new_intern(engine, NULL);
+}
+#endif /* !FIPS_MODE */
+
+DH *dh_new_with_ctx(OPENSSL_CTX *libctx)
+{
+    return dh_new_intern(NULL, libctx);
+}
+
+static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
+{
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        DHerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        DHerr(0, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
 
+    ret->libctx = libctx;
     ret->meth = DH_get_default_method();
 #if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
-            DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+            DHerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -74,7 +87,7 @@ DH *DH_new_method(ENGINE *engine)
     if (ret->engine) {
         ret->meth = ENGINE_get_DH(ret->engine);
         if (ret->meth == NULL) {
-            DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
+            DHerr(0, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -88,7 +101,7 @@ DH *DH_new_method(ENGINE *engine)
 #endif /* FIPS_MODE */
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
+        DHerr(0, ERR_R_INIT_FAIL);
         goto err;
     }
 

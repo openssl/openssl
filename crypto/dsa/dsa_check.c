@@ -80,7 +80,7 @@ int dsa_check_pairwise(const DSA *dsa)
         || dsa->pub_key == NULL)
         return 0;
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(dsa->libctx);
     if (ctx == NULL)
         goto err;
     pub_key = BN_new();

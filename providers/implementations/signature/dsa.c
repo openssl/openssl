@@ -200,8 +200,7 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     if (mdsize != 0 && tbslen != mdsize)
         return 0;
 
-    ret = dsa_sign_int(pdsactx->libctx, 0, tbs, tbslen, sig, &sltmp,
-                       pdsactx->dsa);
+    ret = dsa_sign_int(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa);
     if (ret <= 0)
         return 0;
 

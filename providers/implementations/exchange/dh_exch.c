@@ -92,9 +92,9 @@ static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
     if (pdhctx->pad)
-        ret = dh_compute_key_padded(pdhctx->libctx, secret, pub_key, pdhctx->dh);
+        ret = DH_compute_key_padded(secret, pub_key, pdhctx->dh);
     else
-        ret = dh_compute_key(pdhctx->libctx, secret, pub_key, pdhctx->dh);
+        ret = DH_compute_key(secret, pub_key, pdhctx->dh);
     if (ret <= 0)
         return 0;
 

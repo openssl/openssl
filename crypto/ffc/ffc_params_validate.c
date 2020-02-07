@@ -10,16 +10,10 @@
 /*
  * Finite Field cryptography (FFC) is used for DSA and DH.
  * This file contains methods for validation of FFC parameters.
- * It calls the same function as the generation as the code is very simliar.
- *
- * generation and validation of
- * FFC Domain Parameters, and some helper functions for generation and
- * validation of FFC keys.
- *
+ * It calls the same functions as the generation as the code is very similar.
  */
 
 #include "internal/ffc.h"
-
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
 int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,

@@ -148,16 +148,16 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
+int dsa_sign_int(int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
 
     /* legacy case uses the method table */
-    if (libctx == NULL || dsa->meth != DSA_get_default_method())
+    if (dsa->libctx == NULL || dsa->meth != DSA_get_default_method())
         s = DSA_do_sign(dgst, dlen, dsa);
     else
-        s = dsa_do_sign_int(libctx, dgst, dlen, dsa);
+        s = dsa_do_sign_int(dgst, dlen, dsa);
     if (s == NULL) {
         *siglen = 0;
         return 0;
@@ -170,7 +170,7 @@ int dsa_sign_int(OPENSSL_CTX *libctx, int type, const unsigned char *dgst,
 int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
-    return dsa_sign_int(NULL, type, dgst, dlen, sig, siglen, dsa);
+    return dsa_sign_int(type, dgst, dlen, sig, siglen, dsa);
 }
 
 /* data has already been hashed (probably with SHA or SHA-1). */
