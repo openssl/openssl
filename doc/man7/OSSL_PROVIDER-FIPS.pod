@@ -245,11 +245,13 @@ Signature tests used with the "KAT_Signature" type.
 
 =item "ECDH" (B<OSSL_SELF_TEST_DESC_KA_ECDH>)
 
-=item "ECDSA" (B<OSSL_SELF_TEST_DESC_KA_ECDSA>)
+=item "DH" (B<OSSL_SELF_TEST_DESC_KA_DH>)
 
 Key agreement tests used with the "KAT_KA" type.
 
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
+
+=item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
 
 Key Derivation Function tests used with the "KAT_KDF" type.
 
