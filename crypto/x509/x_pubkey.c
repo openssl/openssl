@@ -111,6 +111,22 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         goto error;
     }
     *x = pk;
+
+    /*
+     * pk->pkey is NULL when using the legacy routine, but is non-NULL when
+     * going through the serializer, and for all intents and purposes, it's
+     * a perfect copy of |pkey|, just not the same instance.  In that case,
+     * we could simply return early, right here.
+     * However, in the interest of being cautious leaning on paranoia, some
+     * application might very well depend on the passed |pkey| being used
+     * and none other, so we spend a few more cycles throwing away the newly
+     * created |pk->pkey| and replace it with |pkey|.
+     * TODO(3.0) Investigate if it's safe to change to simply return here
+     * if |pk->pkey != NULL|.
+     */
+    if (pk->pkey != NULL)
+        EVP_PKEY_free(pk->pkey);
+
     pk->pkey = pkey;
     return 1;
 
