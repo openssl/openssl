@@ -11,20 +11,25 @@ require 5.10.0;
 use warnings;
 use strict;
 
+use Carp qw(:DEFAULT cluck);
 use Pod::Checker;
 use File::Find;
 use File::Basename;
 use File::Spec::Functions;
 use Getopt::Std;
-use lib catdir(dirname($0), "perl");
+use FindBin;
+use lib "$FindBin::Bin/perl";
+
 use OpenSSL::Util::Pod;
+
+use lib '.';
+use configdata;
 
 # Set to 1 for debug output
 my $debug = 0;
 
 # Where to find openssl command
-my $BLDTOP  = $ENV{BLDTOP} || ".";
-my $openssl = "$BLDTOP/util/opensslwrap.sh";
+my $openssl = "./util/opensslwrap.sh";
 
 # Options.
 our($opt_d);
@@ -77,6 +82,7 @@ my $OUT;
 my %public;
 my $status = 0;
 
+my @sections = ( 'man1', 'man3', 'man5', 'man7' );
 my %mandatory_sections = (
     '*' => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
     1   => [ 'SYNOPSIS', 'OPTIONS' ],
@@ -85,6 +91,164 @@ my %mandatory_sections = (
     7   => [ ]
 );
 
+# Collect all POD files, both internal and public, and regardless of location
+# We collect them in a hash table with each file being a key, so we can attach
+# tags to them.  For example, internal docs will have the word "internal"
+# attached to them.
+my %files = ();
+# We collect files names on the fly, on known tag basis
+my %collected_tags = ();
+# We cache results based on tags
+my %collected_results = ();
+
+# files OPTIONS
+#
+# Example:
+#
+#       files(TAGS => 'manual');
+#       files(TAGS => [ 'manual', 'man1' ]);
+#
+# This function returns an array of files corresponding to a set of tags
+# given with the options "TAGS".  The value of this option can be a single
+# word, or an array of several words, which work as inclusive or exclusive
+# selectors.  Inclusive selectors are used to add one more set of files to
+# the returned array, while exclusive selectors limit the set of files added
+# to the array.  The recognised tag values are:
+#
+# 'public_manual'       - inclusive selector, adds public manuals to the
+#                         returned array of files.
+# 'internal_manual'     - inclusive selector, adds internal manuals to the
+#                         returned array of files.
+# 'manual'              - inclusive selector, adds any manual to the returned
+#                         array of files.  This is really a shorthand for
+#                         'public_manual' and 'internal_manual' combined.
+# 'public_header'       - inclusive selector, adds public headers to the
+#                         returned array of files.
+# 'header'              - inclusive selector, adds any header file to the
+#                         returned array of files.  Since we currently only
+#                         care about public headers, this is exactly
+#                         equivalent to 'public_header', but is present for
+#                         consistency.
+#
+# 'man1', 'man3', 'man5', 'man7'
+#                       - exclusive selectors, only applicable together with
+#                         any of the manual selectors.  If any of these are
+#                         present, only the manuals from the given sections
+#                         will be include.  If none of these are present,
+#                         the manuals from all sections will be returned.
+#
+# All returned manual files come from configdata.pm.
+# All returned header files come from looking inside
+# "$config{sourcedir}/include/openssl"
+#
+sub files {
+    my %opts = ( @_ );          # Make a copy of the arguments
+
+    $opts{TAGS} = [ $opts{TAGS} ] if ref($opts{TAGS}) eq '';
+
+    croak "No tags given, or not an array"
+        unless exists $opts{TAGS} && ref($opts{TAGS}) eq 'ARRAY';
+
+    my %tags = map { $_ => 1 } @{$opts{TAGS}};
+    $tags{public_manual} = 1
+        if $tags{manual} && ($tags{public} // !$tags{internal});
+    $tags{internal_manual} = 1
+        if $tags{manual} && ($tags{internal} // !$tags{public});
+    $tags{public_header} = 1
+        if $tags{header} && ($tags{public} // !$tags{internal});
+    delete $tags{manual};
+    delete $tags{header};
+    delete $tags{public};
+    delete $tags{internal};
+
+    my $tags_as_key = join(':', sort keys %tags);
+
+    cluck  "DEBUG[files]: This is how we got here!" if $debug;
+    print STDERR "DEBUG[files]: tags: $tags_as_key\n" if $debug;
+
+    my %tags_to_collect = ( map { $_ => 1 }
+                            grep { !exists $collected_tags{$_} }
+                            keys %tags );
+
+    if ($tags_to_collect{public_manual}) {
+        print STDERR "DEBUG[files]: collecting public manuals\n"
+            if $debug;
+
+        # The structure in configdata.pm is that $unified_info{mandocs}
+        # contains lists of man files, and in turn, $unified_info{depends}
+        # contains hash tables showing which POD file each of those man
+        # files depend on.  We use that information to find the POD files,
+        # and to attach the man section they belong to as tags
+        foreach my $mansect ( @sections ) {
+            foreach ( map { @{$unified_info{depends}->{$_}} }
+                      @{$unified_info{mandocs}->{$mansect}} ) {
+                $files{$_} = { $mansect => 1, public_manual => 1 };
+            }
+        }
+        $collected_tags{public_manual} = 1;
+    }
+
+    if ($tags_to_collect{internal_manual}) {
+        print STDERR "DEBUG[files]: collecting internal manuals\n"
+            if $debug;
+
+        # We don't have the internal docs in configdata.pm.  However, they
+        # are all in the source tree, so they're easy to find.
+        foreach my $mansect ( @sections ) {
+            foreach ( glob(catfile($config{sourcedir},
+                                   'doc', 'internal', $mansect, '*.pod')) ) {
+                $files{$_} = { $mansect => 1, internal_manual => 1 };
+            }
+        }
+        $collected_tags{internal_manual} = 1;
+    }
+
+    if ($tags_to_collect{public_header}) {
+        print STDERR "DEBUG[files]: collecting public headers\n"
+            if $debug;
+
+        foreach ( glob(catfile($config{sourcedir},
+                               'include', 'openssl', '*.h')) ) {
+            $files{$_} = { public_header => 1 };
+        }
+    }
+
+    my @result = @{$collected_results{$tags_as_key} // []};
+
+    if (!@result) {
+        # Produce a result based on caller tags
+        foreach my $type ( ( 'public_manual', 'internal_manual' ) ) {
+            next unless $tags{$type};
+
+            # If caller asked for specific sections, we care about sections.
+            # Otherwise, we give back all of them.
+            my @selected_sections =
+                grep { $tags{$_} } @sections;
+            @selected_sections = @sections unless @selected_sections;
+
+            foreach my $section ( ( @selected_sections ) ) {
+                push @result,
+                    ( sort { basename($a) cmp basename($b) }
+                      grep { $files{$_}->{$type} && $files{$_}->{$section} }
+                      keys %files );
+            }
+        }
+        if ($tags{public_header}) {
+            push @result,
+                ( sort { basename($a) cmp basename($b) }
+                  grep { $files{$_}->{public_header} }
+                  keys %files );
+        }
+
+        if ($debug) {
+            print STDERR "DEBUG[files]: result:\n";
+            print STDERR "DEBUG[files]:     $_\n" foreach @result;
+        }
+        $collected_results{$tags_as_key} = [ @result ];
+    }
+
+    return @result;
+}
 
 # Print error message, set $status.
 sub err {
@@ -112,7 +276,8 @@ sub name_synopsis {
         if $tmp =~ /[^,] /;
 
     my $dirname = dirname($filename);
-    my $simplename = basename(basename($filename, ".in"), ".pod");
+    my $section = basename($dirname);
+    my $simplename = basename($filename, ".pod");
     my $foundfilename = 0;
     my %foundfilenames = ();
     my %names;
@@ -124,7 +289,9 @@ sub name_synopsis {
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
         $foundfilenames{$n} = 1
-            if -f "$dirname/$n.pod" && $n ne $simplename;
+            if ( ( grep { basename($_) eq "$n.pod" }
+                   files(TAGS => [ 'manual', $section ]) )
+                 && $n ne $simplename );
     }
     err($id, "the following exist as other .pod files:",
          sort keys %foundfilenames)
@@ -476,7 +643,8 @@ sub check {
     while ( $contents =~ /L<([^>]*)\(1\)(?:\/.*)?>/g ) {
         my $target = $1;
         next if $target =~ /openssl-?/;
-        next if -f "doc/man1/$target.pod";
+        next if ( grep { basename($_) eq "$target.pod" }
+                  files(TAGS => [ 'manual', 'man1' ]) );
         # TODO: Filter out "foreign manual" links.
         next if $target =~ /ps|apropos|sha1sum|procmail|perl/;
         err($id, "Bad command link L<$target(1)>");
@@ -570,7 +738,7 @@ sub parsenum {
     my $file = shift;
     my @apis;
 
-    open my $IN, '<', $file
+    open my $IN, '<', catfile($config{sourcedir}, $file)
         or die "Can't open $file, $!, stopped";
 
     while ( <$IN> ) {
@@ -600,7 +768,7 @@ sub loadmissing($)
     my $missingfile = shift;
     my @missing;
 
-    open FH, $missingfile
+    open FH, catfile($config{sourcedir}, $missingfile)
         or die "Can't open $missingfile";
     while ( <FH> ) {
         chomp;
@@ -630,11 +798,12 @@ sub checkmacros {
         @missing = loadmissing('util/missingmacro.txt');
     }
 
-    foreach my $f ( glob('include/openssl/*.h') ) {
+    foreach my $f ( files(TAGS => 'public_header') ) {
         # Skip some internals we don't want to document yet.
-        next if $f eq 'include/openssl/asn1.h';
-        next if $f eq 'include/openssl/asn1t.h';
-        next if $f eq 'include/openssl/err.h';
+        my $b = basename($f);
+        next if $b eq 'asn1.h';
+        next if $b eq 'asn1t.h';
+        next if $b eq 'err.h';
         open(IN, $f)
             or die "Can't open $f, $!";
         while ( <IN> ) {
@@ -859,13 +1028,17 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach my $cmd ( @commands ) {
         next if $cmd eq 'help' || $cmd eq 'exit';
-        my $doc = "doc/man1/openssl-$cmd.pod";
-        # Handle "tsget" and "CA.pl" pod pages
-        $doc = "doc/man1/$cmd.pod" if -f "doc/man1/$cmd.pod";
-        if ( ! -f "$doc" ) {
-            err("$doc does not exist");
+        my @doc = ( grep { basename($_) eq "openssl-$cmd.pod"
+                           # For "tsget" and "CA.pl" pod pages
+                           || basename($_) eq "$cmd.pod" }
+                    files(TAGS => [ 'manual', 'man1' ]) );
+        my $num = scalar @doc;
+        if ($num > 1) {
+            err("$num manuals for 'openssl $cmd': ".join(", ", @doc));
+        } elsif ($num < 1) {
+            err("no manual for 'openssl $cmd'");
         } else {
-            checkflags($cmd, $doc);
+            checkflags($cmd, @doc);
         }
     }
 
@@ -884,7 +1057,7 @@ if ( $opt_c ) {
 
 # Preparation for some options, populate %name_map and %link_map
 if ( $opt_l || $opt_u || $opt_v ) {
-    foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
+    foreach ( files(TAGS => 'manual') ) {
         collectnames($_);
     }
 }
@@ -898,13 +1071,13 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     publicize();
-    foreach ( @ARGV ? @ARGV : glob('doc/*/*.pod doc/internal/*/*.pod') ) {
+    foreach ( @ARGV ? @ARGV : files(TAGS => 'manual') ) {
         check($_);
     }
 
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
-        foreach ( glob('doc/man1/*.pod') ) {
+        foreach ( files(TAGS => [ 'public_manual', 'man1' ]) ) {
             next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
