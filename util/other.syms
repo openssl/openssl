@@ -18,6 +18,9 @@ BIO_callback_fn                         datatype
 BIO_callback_fn_ex                      datatype
 BIO_hostserv_priorities                 datatype
 BIO_lookup_type                         datatype
+CRYPTO_malloc_fn                        datatype
+CRYPTO_realloc_fn                       datatype
+CRYPTO_free_fn                          datatype
 CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype

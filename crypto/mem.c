@@ -19,9 +19,9 @@
  * the following pointers may be changed as long as 'allow_customize' is set
  */
 static int allow_customize = 1;
-static CRYPTO_malloc_func *malloc_impl = CRYPTO_malloc;
-static CRYPTO_realloc_func *realloc_impl = CRYPTO_realloc;
-static CRYPTO_free_func *free_impl = CRYPTO_free;
+static CRYPTO_malloc_fn malloc_impl = CRYPTO_malloc;
+static CRYPTO_realloc_fn realloc_impl = CRYPTO_realloc;
+static CRYPTO_free_fn free_impl = CRYPTO_free;
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 # include "internal/tsan_assist.h"
@@ -48,31 +48,31 @@ static int shouldfail(void);
 # define FAILTEST() /* empty */
 #endif
 
-int CRYPTO_set_mem_functions(CRYPTO_malloc_func *malloc_func,
-                             CRYPTO_realloc_func *realloc_func,
-                             CRYPTO_free_func *free_func)
+int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                             CRYPTO_realloc_fn realloc_fn,
+                             CRYPTO_free_fn free_fn)
 {
     if (!allow_customize)
         return 0;
-    if (malloc_func != NULL)
-        malloc_impl = malloc_func;
-    if (realloc_func != NULL)
-        realloc_impl = realloc_func;
-    if (free_func != NULL)
-        free_impl = free_func;
+    if (malloc_fn != NULL)
+        malloc_impl = malloc_fn;
+    if (realloc_fn != NULL)
+        realloc_impl = realloc_fn;
+    if (free_fn != NULL)
+        free_impl = free_fn;
     return 1;
 }
 
-void CRYPTO_get_mem_functions(CRYPTO_malloc_func **malloc_func,
-                              CRYPTO_realloc_func **realloc_func,
-                              CRYPTO_free_func **free_func)
+void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                              CRYPTO_realloc_fn *realloc_fn,
+                              CRYPTO_free_fn *free_fn)
 {
-    if (malloc_func != NULL)
-        *malloc_func = malloc_impl;
-    if (realloc_func != NULL)
-        *realloc_func = realloc_impl;
-    if (free_func != NULL)
-        *free_func = free_impl;
+    if (malloc_fn != NULL)
+        *malloc_fn = malloc_impl;
+    if (realloc_fn != NULL)
+        *realloc_fn = realloc_impl;
+    if (free_fn != NULL)
+        *free_fn = free_impl;
 }
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)

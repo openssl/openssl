@@ -290,16 +290,16 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
 # endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
-typedef void *CRYPTO_malloc_func(size_t num, const char *file, int line);
-typedef void *CRYPTO_realloc_func(void *addr, size_t num, const char *file,
-                                  int line);
-typedef void CRYPTO_free_func(void *addr, const char *file, int line);
-int CRYPTO_set_mem_functions(CRYPTO_malloc_func *malloc_func,
-                             CRYPTO_realloc_func *realloc_func,
-                             CRYPTO_free_func *free_func);
-void CRYPTO_get_mem_functions(CRYPTO_malloc_func **malloc_func,
-                              CRYPTO_realloc_func **realloc_func,
-                              CRYPTO_free_func **free_func);
+typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
+typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
+                                   int line);
+typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                             CRYPTO_realloc_fn realloc_fn,
+                             CRYPTO_free_fn free_fn);
+void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                              CRYPTO_realloc_fn *realloc_fn,
+                              CRYPTO_free_fn *free_fn);
 
 void *CRYPTO_malloc(size_t num, const char *file, int line);
 void *CRYPTO_zalloc(size_t num, const char *file, int line);

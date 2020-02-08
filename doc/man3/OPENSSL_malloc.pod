@@ -12,7 +12,7 @@ CRYPTO_strdup, CRYPTO_strndup,
 OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_free,
-CRYPTO_malloc_func, CRYPTO_realloc_func, CRYPTO_free_func,
+CRYPTO_malloc_fn, CRYPTO_realloc_fn, CRYPTO_free_fn,
 CRYPTO_get_mem_functions, CRYPTO_set_mem_functions,
 CRYPTO_get_alloc_counts,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
@@ -50,16 +50,16 @@ OPENSSL_MALLOC_FD
                             const char *file, int line);
  void CRYPTO_clear_free(void *str, size_t num, const char *, int)
 
- typedef void *CRYPTO_malloc_func(size_t num, const char *file, int line);
- typedef void *CRYPTO_realloc_func(void *addr, size_t num, const char *file,
-                                   int line);
- typedef void CRYPTO_free_func(void *addr, const char *file, int line);
- void CRYPTO_get_mem_functions(CRYPTO_malloc_func **malloc_func,
-                               CRYPTO_realloc_func **realloc_func,
-                               CRYPTO_free_func **free_func);
- int CRYPTO_set_mem_functions(CRYPTO_malloc_func *malloc_func,
-                              CRYPTO_realloc_func *realloc_func,
-                              CRYPTO_free_func *free_func);
+ typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
+ typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
+                                    int line);
+ typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+ void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                               CRYPTO_realloc_fn *realloc_fn,
+                               CRYPTO_free_fn *free_fn);
+ int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                              CRYPTO_realloc_fn realloc_fn,
+                              CRYPTO_free_fn free_fn);
 
  void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
@@ -121,7 +121,7 @@ and replace them with alternate versions.
 CRYPTO_get_mem_functions() function fills in the given arguments with the
 function pointers for the current implementations.
 With CRYPTO_set_mem_functions(), you can specify a different set of functions.
-If any of B<malloc_func>, B<realloc_func>, or B<free_func> are NULL, then
+If any of B<malloc_fn>, B<realloc_fn>, or B<free_fn> are NULL, then
 the function is not changed.
 While it's permitted to swap out only a few and not all the functions
 with CRYPTO_set_mem_functions(), it's recommended to swap them all out
