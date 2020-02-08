@@ -202,8 +202,9 @@ typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void *from_d, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
-                            CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func);
+                                   CRYPTO_EX_new *new_func,
+                                   CRYPTO_EX_dup *dup_func,
+                                   CRYPTO_EX_free *free_func);
 /* No longer use an index. */
 int CRYPTO_free_ex_index(int class_index, int idx);
 
@@ -289,14 +290,16 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
 # endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
-int CRYPTO_set_mem_functions(
-        void *(*m) (size_t, const char *, int),
-        void *(*r) (void *, size_t, const char *, int),
-        void (*f) (void *, const char *, int));
-void CRYPTO_get_mem_functions(
-        void *(**m) (size_t, const char *, int),
-        void *(**r) (void *, size_t, const char *, int),
-        void (**f) (void *, const char *, int));
+typedef void *CRYPTO_malloc_func(size_t num, const char *file, int line);
+typedef void *CRYPTO_realloc_func(void *addr, size_t num, const char *file,
+                                  int line);
+typedef void CRYPTO_free_func(void *addr, const char *file, int line);
+int CRYPTO_set_mem_functions(CRYPTO_malloc_func *malloc_func,
+                             CRYPTO_realloc_func *realloc_func,
+                             CRYPTO_free_func *free_func);
+void CRYPTO_get_mem_functions(CRYPTO_malloc_func **malloc_func,
+                              CRYPTO_realloc_func **realloc_func,
+                              CRYPTO_free_func **free_func);
 
 void *CRYPTO_malloc(size_t num, const char *file, int line);
 void *CRYPTO_zalloc(size_t num, const char *file, int line);
@@ -361,7 +364,7 @@ DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_cb(
 DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_fp(FILE *))
 #  endif
 DEPRECATEDIN_3_0(int CRYPTO_mem_leaks(BIO *bio))
-# endif
+# endif /* OPENSSL_NO_CRYPTO_MDEBUG */
 
 /* die if we have to */
 ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);

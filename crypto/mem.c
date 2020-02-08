@@ -19,13 +19,9 @@
  * the following pointers may be changed as long as 'allow_customize' is set
  */
 static int allow_customize = 1;
-
-static void *(*malloc_impl)(size_t, const char *, int)
-    = CRYPTO_malloc;
-static void *(*realloc_impl)(void *, size_t, const char *, int)
-    = CRYPTO_realloc;
-static void (*free_impl)(void *, const char *, int)
-    = CRYPTO_free;
+static CRYPTO_malloc_func *malloc_impl = CRYPTO_malloc;
+static CRYPTO_realloc_func *realloc_impl = CRYPTO_realloc;
+static CRYPTO_free_func *free_impl = CRYPTO_free;
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
 # include "internal/tsan_assist.h"
@@ -52,33 +48,31 @@ static int shouldfail(void);
 # define FAILTEST() /* empty */
 #endif
 
-int CRYPTO_set_mem_functions(
-        void *(*m)(size_t, const char *, int),
-        void *(*r)(void *, size_t, const char *, int),
-        void (*f)(void *, const char *, int))
+int CRYPTO_set_mem_functions(CRYPTO_malloc_func *malloc_func,
+                             CRYPTO_realloc_func *realloc_func,
+                             CRYPTO_free_func *free_func)
 {
     if (!allow_customize)
         return 0;
-    if (m)
-        malloc_impl = m;
-    if (r)
-        realloc_impl = r;
-    if (f)
-        free_impl = f;
+    if (malloc_func != NULL)
+        malloc_impl = malloc_func;
+    if (realloc_func != NULL)
+        realloc_impl = realloc_func;
+    if (free_func != NULL)
+        free_impl = free_func;
     return 1;
 }
 
-void CRYPTO_get_mem_functions(
-        void *(**m)(size_t, const char *, int),
-        void *(**r)(void *, size_t, const char *, int),
-        void (**f)(void *, const char *, int))
+void CRYPTO_get_mem_functions(CRYPTO_malloc_func **malloc_func,
+                              CRYPTO_realloc_func **realloc_func,
+                              CRYPTO_free_func **free_func)
 {
-    if (m != NULL)
-        *m = malloc_impl;
-    if (r != NULL)
-        *r = realloc_impl;
-    if (f != NULL)
-        *f = free_impl;
+    if (malloc_func != NULL)
+        *malloc_func = malloc_impl;
+    if (realloc_func != NULL)
+        *realloc_func = realloc_impl;
+    if (free_func != NULL)
+        *free_func = free_impl;
 }
 
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
@@ -170,10 +164,8 @@ void ossl_malloc_setup_failures(void)
 
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
-    void *ret = NULL;
-
     INCREMENT(malloc_count);
-    if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
+    if (malloc_impl != CRYPTO_malloc)
         return malloc_impl(num, file, line);
 
     if (num == 0)
@@ -188,26 +180,26 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
          */
         allow_customize = 0;
     }
-    (void)(file); (void)(line);
-    ret = malloc(num);
 
-    return ret;
+    return malloc(num);
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
-    void *ret = CRYPTO_malloc(num, file, line);
+    void *ret;
 
+    ret = CRYPTO_malloc(num, file, line);
     FAILTEST();
     if (ret != NULL)
         memset(ret, 0, num);
+
     return ret;
 }
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
     INCREMENT(realloc_count);
-    if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
+    if (realloc_impl != CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
     FAILTEST();
@@ -219,9 +211,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    (void)(file); (void)(line);
     return realloc(str, num);
-
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
@@ -254,7 +244,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 void CRYPTO_free(void *str, const char *file, int line)
 {
     INCREMENT(free_count);
-    if (free_impl != NULL && free_impl != &CRYPTO_free) {
+    if (free_impl != CRYPTO_free) {
         free_impl(str, file, line);
         return;
     }
