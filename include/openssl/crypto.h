@@ -80,36 +80,6 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 
-
-struct crypto_ex_data_st {
-    OPENSSL_CTX *ctx;
-    STACK_OF(void) *sk;
-};
-DEFINE_STACK_OF(void)
-
-/*
- * Per class, we have a STACK of function pointers.
- */
-# define CRYPTO_EX_INDEX_SSL              0
-# define CRYPTO_EX_INDEX_SSL_CTX          1
-# define CRYPTO_EX_INDEX_SSL_SESSION      2
-# define CRYPTO_EX_INDEX_X509             3
-# define CRYPTO_EX_INDEX_X509_STORE       4
-# define CRYPTO_EX_INDEX_X509_STORE_CTX   5
-# define CRYPTO_EX_INDEX_DH               6
-# define CRYPTO_EX_INDEX_DSA              7
-# define CRYPTO_EX_INDEX_EC_KEY           8
-# define CRYPTO_EX_INDEX_RSA              9
-# define CRYPTO_EX_INDEX_ENGINE          10
-# define CRYPTO_EX_INDEX_UI              11
-# define CRYPTO_EX_INDEX_BIO             12
-# define CRYPTO_EX_INDEX_APP             13
-# define CRYPTO_EX_INDEX_UI_METHOD       14
-# define CRYPTO_EX_INDEX_RAND_DRBG       15
-# define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
-# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
-# define CRYPTO_EX_INDEX__COUNT          17
-
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
 
@@ -194,6 +164,36 @@ const char *OPENSSL_info(int type);
 # define OPENSSL_INFO_CPU_SETTINGS              1008
 
 int OPENSSL_issetugid(void);
+
+struct crypto_ex_data_st {
+    OPENSSL_CTX *ctx;
+    STACK_OF(void) *sk;
+};
+DEFINE_STACK_OF(void)
+
+/*
+ * Per class, we have a STACK of function pointers.
+ */
+# define CRYPTO_EX_INDEX_SSL              0
+# define CRYPTO_EX_INDEX_SSL_CTX          1
+# define CRYPTO_EX_INDEX_SSL_SESSION      2
+# define CRYPTO_EX_INDEX_X509             3
+# define CRYPTO_EX_INDEX_X509_STORE       4
+# define CRYPTO_EX_INDEX_X509_STORE_CTX   5
+# define CRYPTO_EX_INDEX_DH               6
+# define CRYPTO_EX_INDEX_DSA              7
+# define CRYPTO_EX_INDEX_EC_KEY           8
+# define CRYPTO_EX_INDEX_RSA              9
+# define CRYPTO_EX_INDEX_ENGINE          10
+# define CRYPTO_EX_INDEX_UI              11
+# define CRYPTO_EX_INDEX_BIO             12
+# define CRYPTO_EX_INDEX_APP             13
+# define CRYPTO_EX_INDEX_UI_METHOD       14
+# define CRYPTO_EX_INDEX_RAND_DRBG       15
+# define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
+# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX_COUNT           17
+# define CRYPTO_EX_INDEX__COUNT          CRYPTO_EX_INDEX_COUNT
 
 typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
