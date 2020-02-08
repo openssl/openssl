@@ -80,14 +80,6 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 
-/*
- * The following can be used to detect memory leaks in the library. If
- * used, it turns on malloc checking
- */
-# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
-# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
-# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
-# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 struct crypto_ex_data_st {
     OPENSSL_CTX *ctx;
@@ -332,6 +324,15 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
+/*
+ * The following can be used to detect memory leaks in the library. If
+ * used, it turns on malloc checking
+ */
+# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
+# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
+
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #    define OPENSSL_mem_debug_push(info) \
