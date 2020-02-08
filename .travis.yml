@@ -38,7 +38,7 @@ matrix:
           env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings no-ec" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings no-ec enable-trace enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           dist: trusty
           compiler: clang
