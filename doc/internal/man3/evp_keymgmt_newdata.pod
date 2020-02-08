@@ -18,12 +18,11 @@ evp_keymgmt_export, evp_keymgmt_export_types
  int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                             void *keydata, OSSL_PARAM params[]);
  const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
- 
- 
+
  int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
  int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
                           int selection);
- 
+
  int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
                         int selection, const OSSL_PARAM params[]);
  const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
