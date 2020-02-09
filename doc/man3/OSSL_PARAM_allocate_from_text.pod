@@ -2,17 +2,20 @@
 
 =head1 NAME
 
-OSSL_PARAM_allocate_from_text
+OSSL_PARAM_parse_locate_const, OSSL_PARAM_allocate_from_text
 - OSSL_PARAM construction utilities
 
 =head1 SYNOPSIS
 
  #include <openssl/params.h>
 
+ const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
+                                                 const char *key,
+                                                 int *flags);
  int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
-                                   const OSSL_PARAM *paramdefs,
-                                   const char *key, const char *value,
-                                   size_t value_n);
+                                   const OSSL_PARAM *template,
+                                   const char *value, size_t value_n,
+                                   int flags);
 
 =head1 DESCRIPTION
 
@@ -25,27 +28,43 @@ OpenSSL 3.0 introduces a new mechanism to do the same thing with an
 array of parameters that contain name, value, value type and value
 size (see L<OSSL_PARAM(3)> for more information).
 
-OSSL_PARAM_allocate_from_text() takes a control I<key>, I<value> and
-value size I<value_n>, and given a parameter descriptor array
-I<paramdefs>, it converts the value to something suitable for
-L<OSSL_PARAM(3)> and stores that in the buffer I<buf>, and modifies
-the parameter I<to> to match.
-I<buf_n>, if not NULL, will be assigned the number of bytes used in
-I<buf>.
-If I<buf> is NULL, only I<buf_n> will be modified, everything else is
-left untouched, allowing a caller to find out how large the buffer
-should be.
-I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
-I<key>.
-The caller must remember to free the data of I<to> when it's not
-useful any more.
+OSSL_PARAM_parse_locate_const() works like L<OSSL_PARAM_locate_const(3)>,
+but will additionally parse the I<key> string and set flags in I<*flags>
+according to what it found.  The flags must be initialized with zero by
+the caller.  The returned B<OSSL_PARAM> pointer can be used as a template
+for OSSL_PARAM_construct_from_text() and OSSL_PARAM_allocate_from_text().
 
-For parameters having the type B<OSSL_PARAM_INTEGER>,
-B<OSSL_PARAM_UNSIGNED_INTEGER>, or B<OSSL_PARAM_OCTET_STRING>, both
-functions will interpret the I<value> differently if the key starts
-with "hex".
-In that case, the value is decoded first, and the result will be used
-as parameter value.
+OSSL_PARAM_allocate_from_text() builds the B<OSSL_PARAM> item passed as
+I<to> by parsing I<value_n> bytes of I<value> according to the data type
+from I<template> and the given I<flags>.
+The I<flags> should be the value given back by OSSL_PARAM_parse_locate_const(),
+or zero.
+The data for I<to> gets allocated with L<OPENSSL_zalloc(3)> and must be
+freed by the caller when it's not useful any more, using L<OPENSSL_free(3)>.
+
+=head2 Details on key parsing
+
+OSSL_PARAM_parse_locate_const() parses the I<key> for indicators that the
+value may come in a non-default form.  This affects the I<*flags> as well
+as what key is looked up in the descriptor B<OSSL_PARAM> array I<params>.
+
+The following is recognised:
+
+=over 4
+
+=item The key starts with "hex"
+
+This indicates that the I<value> is hex-encoded.  The rest of the I<key>
+string will be used to locate the corresponding B<OSSL_PARAM>, so for
+example, if the I<key> is "hexsalt", the key that will be looked up in the
+B<OSSL_PARAM> array is "salt".
+
+This affects how OSSL_PARAM_construct_from_text() and
+OSSL_PARAM_allocate_from_text() parse the I<value> for I<template> types
+B<OSSL_PARAM_INTEGER>, B<OSSL_PARAM_UNSIGNED_INTEGER>, and
+B<OSSL_PARAM_OCTET_STRING>.
+
+=back
 
 =head1 RETURN VALUES
 
@@ -53,8 +72,8 @@ OSSL_PARAM_allocate_from_text() returns 1 on success, and 0 on error.
 
 =head1 NOTES
 
-The parameter descriptor array comes from functions dedicated to
-return them.
+The parameter descriptor array given to OSSL_PARAM_parse_locate_const()
+comes from functions dedicated to return them.
 The following B<OSSL_PARAM> attributes are used:
 
 =over 4
@@ -117,7 +136,9 @@ Can be written like this instead:
 
   for (params_n = 0; params_n < (size_t)sk_OPENSSL_STRING_num(opts);
        params_n++) {
+      const OSSL_PARAM *tmpl;
       char *stmp, *vtmp = NULL;
+      int tflags = 0;
 
       opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
       if ((stmp = OPENSSL_strdup(opt)) == NULL
@@ -125,9 +146,11 @@ Can be written like this instead:
           goto err;
 
       *vtmp++ = '\0';
-      if (!OSSL_PARAM_allocate_from_text(&params[params_n],
-                                         paramdefs, stmp,
-                                         vtmp, strlen(vtmp)))
+
+      tmpl = OSSL_PARAM_parse_locate_const(paramdefs, stmp, &tflags);
+      if (tmpl == NULL
+          || !OSSL_PARAM_allocate_from_text(&params[params_n],
+                                            vtmp, strlen(vtmp), tflags))
           goto err;
   }
   params[params_n] = OSSL_PARAM_construct_end();
