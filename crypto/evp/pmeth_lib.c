@@ -929,13 +929,23 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
          * string to the corresponding core name (see core_names.h), but
          * otherwise leave it to this code block to do the actual work.
          */
-        const OSSL_PARAM *settable = EVP_PKEY_CTX_settable_params(ctx);
+        const OSSL_PARAM *tmpl, *settable = EVP_PKEY_CTX_settable_params(ctx);
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-        int rv = 0;
+        int rv = 0, tflags = 0;
 
-        if (!OSSL_PARAM_allocate_from_text(&params[0], settable, name, value,
-                                           strlen(value)))
+        if ((tmpl = OSSL_PARAM_parse_locate_const(settable, name, &tflags))
+            == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+            return -2;
+        }
+        if (!OSSL_PARAM_allocate_from_text(&params[0], tmpl,
+                                           value, strlen(value), tflags)) {
+            if (params[0].key == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
             return 0;
+        }
         if (EVP_PKEY_CTX_set_params(ctx, params))
             rv = 1;
         OPENSSL_free(params[0].data);
@@ -958,6 +968,14 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
                 && ctx->op.ciph.ciphprovctx != NULL))
         return legacy_ctrl_str_to_param(ctx, name, value);
 
+    /*
+     * Legacy code follows.
+     * TODO when legacy support goes away: Replace everything to the end of
+     * this function (if it remains) with:
+     *
+     *     ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+     *     return -1;
+     */
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
