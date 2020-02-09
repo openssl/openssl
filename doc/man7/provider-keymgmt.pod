@@ -21,6 +21,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key object information */
  int OP_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gettable_params(void);
+ int OP_keymgmt_set_params(void *keydata, const OSSL_PARAM params[]);
+ const OSSL_PARAM *OP_keymgmt_settable_params(void);
 
  /* Key object content checks */
  int OP_keymgmt_has(void *keydata, int selection);
@@ -30,16 +32,13 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 
  /* Key object import and export functions */
  int OP_keymgmt_import(int selection, void *keydata, const OSSL_PARAM params[]);
- const OSSL_PARAM *OP_keymgmt_import_types, (int selection);
+ const OSSL_PARAM *OP_keymgmt_import_types(int selection);
  int OP_keymgmt_export(int selection, void *keydata,
                        OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OP_keymgmt_export_types(int selection);
 
  /* Key object validation */
  int OP_keymgmt_validate(void *keydata, int selection);
-
- /* Discovery of supported operations */
- const char *OP_keymgmt_query_operation_name(int operation_id);
 
 =head1 DESCRIPTION
 
@@ -78,6 +77,8 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
 
  OP_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OP_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
+ OP_keymgmt_set_params           OSSL_FUNC_KEYMGMT_SET_PARAMS
+ OP_keymgmt_settable_params      OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS
 
  OP_keymgmt_query_operation_name OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME
 
@@ -202,7 +203,17 @@ descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_get_params()
 can handle.
 
 If OP_keymgmt_gettable_params() is present, OP_keymgmt_get_params()
-must also be present.
+must also be present, and vice versa.
+
+OP_keymgmt_set_params() should update information data associated
+with the given I<keydata>, see L</Information Parameters>.
+
+OP_keymgmt_settable_params() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_set_params()
+can handle.
+
+If OP_keymgmt_settable_params() is present, OP_keymgmt_set_params()
+must also be present, and vice versa.
 
 =head2 Key Object Checking Functions
 
@@ -214,7 +225,7 @@ returns NULL, the caller is free to assume that there's an algorithm
 from the same provider, of the same name as the one used to fetch the
 keymgmt and try to use that.
 
-OP_keymgmt_has() should check whether the given I<keydata> the subsets
+OP_keymgmt_has() should check whether the given I<keydata> contains the subsets
 of data indicated by the I<selector>.  A combination of several
 selector bits must consider all those subsets, not just one.  An
 implementation is, however, free to consider an empty subset of data
@@ -249,8 +260,10 @@ OP_keymgmt_export() callback can expect to receive.
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Parameters currently recognised by built-in keymgmt algorithms'
-OP_keymgmt_get_params:
+Parameters currently recognised by built-in keymgmt algorithms
+are as follows.
+Not all parameters are relevant to, or are understood by all keymgmt
+algorithms:
 
 =over 4
 
@@ -278,7 +291,45 @@ dimensions handled in the rest of the same provider.
 The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
 
+=item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_FLAG>,
+B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
+
+The value should be either 1 or 0, to respectively enable or disable
+use of the cofactor in operations using this key.
+
+In the context of a key that can be used to perform an Elliptic Curve
+Diffie-Hellman key exchange, this parameter can be used to mark a requirement
+for using the Cofactor Diffie-Hellman (CDH) variant of the key exchange
+algorithm.
+
+See also L<provider-keyexch(7)> for the related
+B<OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE> parameter that can be set on a
+per-operation basis.
+
 =back
+
+=head1 RETURN VALUES
+
+OP_keymgmt_new() should return a valid reference to the newly created provider
+side key object, or NULL on failure.
+
+OP_keymgmt_import(), OP_keymgmt_export(), OP_keymgmt_get_params() and
+OP_keymgmt_set_params() should return 1 for success or 0 on error.
+
+OP_keymgmt_validate() should return 1 on successful validation, or 0 on
+failure.
+
+OP_keymgmt_has() should return 1 if all the selected data subsets are contained
+in the given I<keydata> or 0 otherwise.
+
+OP_keymgmt_query_operation_name() should return a pointer to a string matching
+the requested operation, or NULL if the same name used to fetch the keymgmt
+applies.
+
+OP_keymgmt_gettable_params() and OP_keymgmt_settable_params()
+OP_keymgmt_import_types(), OP_keymgmt_export_types()
+should
+always return a constant B<OSSL_PARAM> array.
 
 =head1 SEE ALSO
 
