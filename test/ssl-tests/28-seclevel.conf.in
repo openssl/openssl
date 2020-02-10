@@ -42,7 +42,7 @@ our @tests_ec = (
                     "PrivateKey" => test_pem("server-ed448-key.pem") },
         client => { "CipherString" => "DEFAULT:\@SECLEVEL=4",
                     "VerifyCAFile" => test_pem("root-ed448-cert.pem") },
-        test   => { "ExpectedResult" => "ClientFail" },
+        test   => { "ExpectedResult" => "ServerFail" },
     },
     {
         # The client will not sent the Ed488 signature algorithm, so the server
