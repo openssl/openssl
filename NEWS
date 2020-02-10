@@ -7,6 +7,9 @@
 
   Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [under development]
 
+      o The algorithm specific public key command line applications have
+        been deprecated.  These include dhparam, gendsa and others.  The pkey
+        alternatives should be used intead: pkey, pkeyparam and genpkey.
       o X509 certificates signed using SHA1 are no longer allowed at security
         level 1 or higher. The default security level for TLS is 1, so
         certificates signed using SHA1 are by default no longer trusted to
