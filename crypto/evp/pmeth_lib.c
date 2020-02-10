@@ -938,10 +938,16 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         const OSSL_PARAM *settable = EVP_PKEY_CTX_settable_params(ctx);
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         int rv = 0;
+        int exists = 0;
 
         if (!OSSL_PARAM_allocate_from_text(&params[0], settable, name, value,
-                                           strlen(value), NULL))
+                                           strlen(value), &exists)) {
+            if (!exists) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
             return 0;
+        }
         if (EVP_PKEY_CTX_set_params(ctx, params))
             rv = 1;
         OPENSSL_free(params[0].data);
