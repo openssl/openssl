@@ -2708,7 +2708,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
         /* Skip over the separator so that vmtp points to the value */
         vtmp++;
         if (!OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
-                                           stmp, vtmp, strlen(vtmp)))
+                                           stmp, vtmp, strlen(vtmp), NULL))
             goto err;
         OPENSSL_free(stmp);
     }
