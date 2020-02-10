@@ -254,7 +254,7 @@ sigs:
         pretty_name: "Dilithium-2"
         oqs_meth: "OQS_SIG_alg_dilithium_2"
         security: 128
-        oid: "1.3.9999.2.1"
+        oid: "1.3.6.1.4.1.2.267.6.4.3"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
                     "oid": "1.3.9999.2.2"},
@@ -266,13 +266,13 @@ sigs:
         pretty_name: "Dilithium-3"
         oqs_meth: "OQS_SIG_alg_dilithium_3"
         security: 128
-        oid: "1.3.9999.2.4"
+        oid: "1.3.6.1.4.1.2.267.6.5.4"
       -
         name: "dilithium4"
         pretty_name: "Dilithium-4"
         oqs_meth: "OQS_SIG_alg_dilithium_4"
         security: 192
-        oid: "1.3.9999.2.5"
+        oid: "1.3.6.1.4.1.2.267.6.6.5"
         mix_with: [{"name": "p384",
                     "pretty_name": "ECDSA p384",
                     "oid": "1.3.9999.2.6"}]
