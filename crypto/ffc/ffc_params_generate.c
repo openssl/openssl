@@ -46,8 +46,6 @@ static int ffc_validate_LN(size_t L, size_t N, int type)
             return 80;
         if (L == 2048 && (N == 224 || N == 256))
             return 112;
-        if (L == 2048 && N == 256)
-            return 112;
         if (L == 3072 && N == 256)
             return 128;
     }
@@ -103,13 +101,14 @@ static int generate_canonical_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     EVP_MD_CTX *mctx = NULL;
     int mdsize;
 
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL)
-        goto err;
-
     mdsize = EVP_MD_size(evpmd);
     if (mdsize <= 0)
-        goto err;
+        return 0;
+
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL)
+        return 0;
+
    /*
     * A.2.3 Step (4) & (5)
     * A.2.4 Step (6) & (7)
@@ -134,7 +133,7 @@ static int generate_canonical_g(BN_CTX *ctx, BN_MONT_CTX *mont,
                 || !EVP_DigestFinal_ex(mctx, md, NULL)
                 || (BN_bin2bn(md, mdsize, tmp) == NULL)
                 || !BN_mod_exp_mont(g, tmp, e, p, ctx, mont))
-                    return 0;
+                    break; /* exit on failure */
         /*
          * A.2.3 Step (10)
          * A.2.4 Step (12)
@@ -145,7 +144,6 @@ static int generate_canonical_g(BN_CTX *ctx, BN_MONT_CTX *mont,
             break; /* found g */
         }
     }
-err:
     EVP_MD_CTX_free(mctx);
     return ret;
 }
@@ -743,7 +741,7 @@ err:
     if (seed != params->seed)
         OPENSSL_free(seed);
     OPENSSL_free(seed_tmp);
-    if (ctx)
+    if (ctx != NULL)
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_MONT_CTX_free(mont);

@@ -3148,7 +3148,7 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
 
     /* initialize cipher/digest methods table */
     if (!ssl_load_ciphers(ret))
-        return 0;
+        goto err2;
 
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
