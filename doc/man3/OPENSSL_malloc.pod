@@ -12,6 +12,7 @@ CRYPTO_strdup, CRYPTO_strndup,
 OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_free,
+CRYPTO_malloc_fn, CRYPTO_realloc_fn, CRYPTO_free_fn,
 CRYPTO_get_mem_functions, CRYPTO_set_mem_functions,
 CRYPTO_get_alloc_counts,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
@@ -24,41 +25,43 @@ OPENSSL_MALLOC_FD
 
  #include <openssl/crypto.h>
 
- int OPENSSL_malloc_init(void)
+ int OPENSSL_malloc_init(void);
 
- void *OPENSSL_malloc(size_t num)
- void *OPENSSL_zalloc(size_t num)
- void *OPENSSL_realloc(void *addr, size_t num)
- void OPENSSL_free(void *addr)
- char *OPENSSL_strdup(const char *str)
- char *OPENSSL_strndup(const char *str, size_t s)
+ void *OPENSSL_malloc(size_t num);
+ void *OPENSSL_zalloc(size_t num);
+ void *OPENSSL_realloc(void *addr, size_t num);
+ void OPENSSL_free(void *addr);
+ char *OPENSSL_strdup(const char *str);
+ char *OPENSSL_strndup(const char *str, size_t s);
  size_t OPENSSL_strlcat(char *dst, const char *src, size_t size);
  size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size);
- void *OPENSSL_memdup(void *data, size_t s)
- void *OPENSSL_clear_realloc(void *p, size_t old_len, size_t num)
- void OPENSSL_clear_free(void *str, size_t num)
+ void *OPENSSL_memdup(void *data, size_t s);
+ void *OPENSSL_clear_realloc(void *p, size_t old_len, size_t num);
+ void OPENSSL_clear_free(void *str, size_t num);
  void OPENSSL_cleanse(void *ptr, size_t len);
 
- void *CRYPTO_malloc(size_t num, const char *file, int line)
- void *CRYPTO_zalloc(size_t num, const char *file, int line)
- void *CRYPTO_realloc(void *p, size_t num, const char *file, int line)
- void CRYPTO_free(void *str, const char *, int)
- char *CRYPTO_strdup(const char *p, const char *file, int line)
- char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line)
+ void *CRYPTO_malloc(size_t num, const char *file, int line);
+ void *CRYPTO_zalloc(size_t num, const char *file, int line);
+ void *CRYPTO_realloc(void *p, size_t num, const char *file, int line);
+ void CRYPTO_free(void *str, const char *, int);
+ char *CRYPTO_strdup(const char *p, const char *file, int line);
+ char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line);
  void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num,
-                            const char *file, int line)
+                            const char *file, int line);
  void CRYPTO_clear_free(void *str, size_t num, const char *, int)
 
- void CRYPTO_get_mem_functions(
-         void *(**m)(size_t, const char *, int),
-         void *(**r)(void *, size_t, const char *, int),
-         void (**f)(void *, const char *, int))
- int CRYPTO_set_mem_functions(
-         void *(*m)(size_t, const char *, int),
-         void *(*r)(void *, size_t, const char *, int),
-         void (*f)(void *, const char *, int))
+ typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
+ typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
+                                    int line);
+ typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+ void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                               CRYPTO_realloc_fn *realloc_fn,
+                               CRYPTO_free_fn *free_fn);
+ int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                              CRYPTO_realloc_fn realloc_fn,
+                              CRYPTO_free_fn free_fn);
 
- void CRYPTO_get_alloc_counts(int *m, int *r, int *f)
+ void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
  env OPENSSL_MALLOC_FAILURES=... <application>
  env OPENSSL_MALLOC_FD=... <application>
@@ -118,7 +121,8 @@ and replace them with alternate versions.
 CRYPTO_get_mem_functions() function fills in the given arguments with the
 function pointers for the current implementations.
 With CRYPTO_set_mem_functions(), you can specify a different set of functions.
-If any of B<m>, B<r>, or B<f> are NULL, then the function is not changed.
+If any of B<malloc_fn>, B<realloc_fn>, or B<free_fn> are NULL, then
+the function is not changed.
 While it's permitted to swap out only a few and not all the functions
 with CRYPTO_set_mem_functions(), it's recommended to swap them all out
 at once.
