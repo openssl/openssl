@@ -2,18 +2,13 @@
 
 =head1 NAME
 
-OSSL_PARAM_construct_from_text, OSSL_PARAM_allocate_from_text
+OSSL_PARAM_allocate_from_text
 - OSSL_PARAM construction utilities
 
 =head1 SYNOPSIS
 
  #include <openssl/params.h>
 
- int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
-                                    const OSSL_PARAM *paramdefs,
-                                    const char *key, const char *value,
-                                    size_t value_n,
-                                    void *buf, size_t *buf_n)
  int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                    const OSSL_PARAM *paramdefs,
                                    const char *key, const char *value,
@@ -30,7 +25,7 @@ OpenSSL 3.0 introduces a new mechanism to do the same thing with an
 array of parameters that contain name, value, value type and value
 size (see L<OSSL_PARAM(3)> for more information).
 
-OSSL_PARAM_construct_from_text() takes a control I<key>, I<value> and
+OSSL_PARAM_allocate_from_text() takes a control I<key>, I<value> and
 value size I<value_n>, and given a parameter descriptor array
 I<paramdefs>, it converts the value to something suitable for
 L<OSSL_PARAM(3)> and stores that in the buffer I<buf>, and modifies
@@ -42,9 +37,6 @@ left untouched, allowing a caller to find out how large the buffer
 should be.
 I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
 I<key>.
-
-OSSL_PARAM_allocate_from_text() works like OSSL_PARAM_construct_from_text(),
-except it allocates the buffer internally.
 The caller must remember to free the data of I<to> when it's not
 useful any more.
 
@@ -57,8 +49,7 @@ as parameter value.
 
 =head1 RETURN VALUES
 
-OSSL_PARAM_construct_from_text() and OSSL_PARAM_allocate_from_text()
-returns 1 on success, and 0 on error.
+OSSL_PARAM_allocate_from_text() returns 1 on success, and 0 on error.
 
 =head1 NOTES
 
