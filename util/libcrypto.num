@@ -4688,7 +4688,6 @@ EC_KEY_new_ex                           ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_ex             ?	3_0_0	EXIST::FUNCTION:EC
 OPENSSL_hexstr2buf_ex                   ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_buf2hexstr_ex                   ?	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_construct_from_text          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_allocate_from_text           ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_gettable_params                  ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_settable_params              ?	3_0_0	EXIST::FUNCTION:

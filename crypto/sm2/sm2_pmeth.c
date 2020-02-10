@@ -253,8 +253,7 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
     } else if (strcmp(type, "sm2_hex_id") == 0) {
         /*
          * TODO(3.0): reconsider the name "sm2_hex_id", OR change
-         * OSSL_PARAM_construct_from_text() / OSSL_PARAM_allocate_from_text()
-         * to handle infix "_hex_"
+         * OSSL_PARAM_allocate_from_text() to handle infix "_hex_"
          */
         hex_id = OPENSSL_hexstr2buf((const char *)value, &hex_len);
         if (hex_id == NULL) {
