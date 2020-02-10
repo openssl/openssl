@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ossl_param_bld_init, ossl_param_bld_to_param, ossl_param_bld_to_param_ex,
+ossl_param_bld_init, ossl_param_bld_to_param,
 ossl_param_bld_free, ossl_param_bld_push_int, ossl_param_bld_push_uint,
 ossl_param_bld_push_long, ossl_param_bld_push_ulong,
 ossl_param_bld_push_int32, ossl_param_bld_push_uint32,
@@ -24,10 +24,6 @@ ossl_param_bld_push_octet_string, ossl_param_bld_push_octet_ptr
 
  void ossl_param_bld_init(OSSL_PARAM_BLD *bld);
  OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld);
- OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld,
-                                        OSSL_PARAM *params, size_t param_n,
-                                        void *data, size_t data_n,
-                                        void *secure, size_t secure_n);
  void ossl_param_bld_free(OSSL_PARAM *params);
 
  int ossl_param_bld_push_TYPE(OSSL_PARAM_BLD *bld, const char *key, TYPE val);
@@ -63,14 +59,6 @@ ossl_param_bld_free() with the functions return value.
 
 ossl_param_bld_free() deallocates the memory allocated by
 ossl_param_bld_to_param().
-
-ossl_param_bld_to_param_ex() behaves like ossl_param_bld_to_param(), except that
-no additional memory is allocated.
-An OSSL_PARAM array of at least I<param_n> elements is passed in as I<params>.
-The auxiliary storage for the parameters is a block of memory pointed to
-by I<data> of at least I<data_n> bytes in size.
-If required, secure memory for private BIGNUMs should be pointed to by
-I<secure> of at least I<secure_n> bytes in size.
 
 =begin comment
 
@@ -125,8 +113,8 @@ scope until the OSSL_PARAM array is freed.
 
 =head1 RETURN VALUES
 
-ossl_param_bld_to_param() and ossl_param_bld_to_param_ex() return the
-allocated OSSL_PARAM array, or NULL on error.
+ossl_param_bld_to_param() returns the allocated OSSL_PARAM array, or NULL
+on error.
 
 All of the ossl_param_bld_push_TYPE functions return 1 on success and 0
 on error.
