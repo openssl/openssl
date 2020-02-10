@@ -940,7 +940,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         int rv = 0;
 
         if (!OSSL_PARAM_allocate_from_text(&params[0], settable, name, value,
-                                           strlen(value)))
+                                           strlen(value), NULL))
             return 0;
         if (EVP_PKEY_CTX_set_params(ctx, params))
             rv = 1;

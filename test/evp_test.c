@@ -1310,7 +1310,7 @@ static int mac_test_run_mac(EVP_TEST *t)
             || !OSSL_PARAM_allocate_from_text(&params[params_n],
                                               defined_params,
                                               tmpkey, tmpval,
-                                              strlen(tmpval))) {
+                                              strlen(tmpval), NULL)) {
             OPENSSL_free(tmpkey);
             t->err = "MAC_PARAM_ERROR";
             goto err;
@@ -2129,7 +2129,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         *p++ = '\0';
 
     rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
-                                       p != NULL ? strlen(p) : 0);
+                                       p != NULL ? strlen(p) : 0, NULL);
     *++kdata->p = OSSL_PARAM_construct_end();
     if (!rv) {
         t->err = "KDF_PARAM_ERROR";

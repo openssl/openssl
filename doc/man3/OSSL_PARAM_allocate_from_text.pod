@@ -12,7 +12,8 @@ OSSL_PARAM_allocate_from_text
  int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                    const OSSL_PARAM *paramdefs,
                                    const char *key, const char *value,
-                                   size_t value_n);
+                                   size_t value_n,
+                                   int *found);
 
 =head1 DESCRIPTION
 
@@ -37,6 +38,9 @@ left untouched, allowing a caller to find out how large the buffer
 should be.
 I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
 I<key>.
+If <found> is not NULL, it is set to 1 if the parameter can be located and
+to 0 otherwise.
+
 The caller must remember to free the data of I<to> when it's not
 useful any more.
 
@@ -127,7 +131,7 @@ Can be written like this instead:
       *vtmp++ = '\0';
       if (!OSSL_PARAM_allocate_from_text(&params[params_n],
                                          paramdefs, stmp,
-                                         vtmp, strlen(vtmp)))
+                                         vtmp, strlen(vtmp), NULL))
           goto err;
   }
   params[params_n] = OSSL_PARAM_construct_end();

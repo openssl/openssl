@@ -167,7 +167,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
         if (!OSSL_PARAM_allocate_from_text(&params[i], settables,
                                            t->ctrls[i].name,
                                            t->ctrls[i].value,
-                                           strlen(t->ctrls[i].value)))
+                                           strlen(t->ctrls[i].value), NULL))
             goto end;
     }
     if (!EVP_KDF_CTX_set_params(ctx, params))
