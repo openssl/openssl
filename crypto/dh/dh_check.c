@@ -262,7 +262,7 @@ int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
         if (BN_cmp(two_powN, dh->params.q) < 0)
             upper = two_powN;
     }
-    if (ffc_validate_private_key(upper, priv_key, ret))
+    if (!ffc_validate_private_key(upper, priv_key, ret))
         goto err;
 
     ok = 1;

@@ -243,7 +243,6 @@ static int ffc_params_validate_pq_test(void)
     FFC_PARAMS params;
     BIGNUM *p = NULL, *q = NULL;
 
-
     ffc_params_init(&params);
     if (!TEST_ptr(p = BN_bin2bn(dsa_2048_224_sha224_p,
                                    sizeof(dsa_2048_224_sha224_p),
@@ -600,7 +599,7 @@ static int ffc_private_gen_test(int index)
     if (!TEST_false(ffc_generate_private_key_fips(ctx, params, 220, 112, priv)))
         goto err;
     /* fail since N > len(q) */
-    if (!TEST_false(ffc_generate_private_key_fips(ctx, params, N+1, 112, priv)))
+    if (!TEST_false(ffc_generate_private_key_fips(ctx, params, N + 1, 112, priv)))
         goto err;
     /* pass since 2s <= N <= len(q) */
     if (!TEST_true(ffc_generate_private_key_fips(ctx, params, N, 112, priv)))
@@ -609,7 +608,7 @@ static int ffc_private_gen_test(int index)
     if (!TEST_true(ffc_validate_private_key(params->q, priv, &res)))
         goto err;
     /* pass since 2s <= N < len(q) */
-    if (!TEST_true(ffc_generate_private_key_fips(ctx, params, N/2, 112, priv)))
+    if (!TEST_true(ffc_generate_private_key_fips(ctx, params, N / 2, 112, priv)))
         goto err;
     if (!TEST_true(ffc_validate_private_key(params->q, priv, &res)))
         goto err;

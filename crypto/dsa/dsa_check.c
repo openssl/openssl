@@ -44,24 +44,10 @@ int dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 
 int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
 {
-    int ok = 0;
-    BIGNUM *two_powN = NULL, *upper;
-
     *ret = 0;
-    two_powN = BN_new();
-    if (two_powN == NULL)
-        return 0;
-    if (dsa->params.q == NULL)
-        goto err;
-    upper = dsa->params.q;
 
-    if (ffc_validate_private_key(upper, priv_key, ret))
-        goto err;
-
-    ok = 1;
-err:
-    BN_free(two_powN);
-    return ok;
+    return (dsa->params.q != NULL
+            && ffc_validate_private_key(dsa->params.q, priv_key, ret));
 }
 
 /*

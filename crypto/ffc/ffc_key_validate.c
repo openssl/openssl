@@ -24,7 +24,7 @@ int ffc_validate_public_key_partial(const FFC_PARAMS *params,
     BN_CTX *ctx = NULL;
 
     *ret = 0;
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(NULL);
     if (ctx == NULL)
         goto err;
 
@@ -69,7 +69,7 @@ int ffc_validate_public_key(const FFC_PARAMS *params, const BIGNUM *pub_key,
         return 0;
 
     if (params->q != NULL) {
-        ctx = BN_CTX_new();
+        ctx = BN_CTX_new_ex(NULL);
         if (ctx == NULL)
             goto err;
         BN_CTX_start(ctx);
