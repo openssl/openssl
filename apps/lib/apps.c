@@ -2690,6 +2690,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
     size_t sz = (size_t)sk_OPENSSL_STRING_num(opts);
     size_t params_n;
     char *opt = "", *stmp, *vtmp = NULL;
+    int found = 1;
 
     if (opts == NULL)
         return NULL;
@@ -2708,7 +2709,7 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
         /* Skip over the separator so that vmtp points to the value */
         vtmp++;
         if (!OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
-                                           stmp, vtmp, strlen(vtmp), NULL))
+                                           stmp, vtmp, strlen(vtmp), &found))
             goto err;
         OPENSSL_free(stmp);
     }
@@ -2716,7 +2717,8 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
     return params;
 err:
     OPENSSL_free(stmp);
-    BIO_printf(bio_err, "Parameter error '%s'\n", opt);
+    BIO_printf(bio_err, "Parameter %s '%s'\n", found ? "error" : "unknown",
+               opt);
     ERR_print_errors(bio_err);
     app_params_free(params);
     return NULL;
