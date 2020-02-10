@@ -556,8 +556,9 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                     || (group = EC_KEY_get0_group(eckey)) == NULL
                     || (nid = EC_GROUP_get_curve_name(group)) == 0)
                 goto end;
-            if (nid == NID_sm2)
-                EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+            if (nid == NID_sm2
+                    && !EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2))
+                goto end;
         }
 #endif
         *pkeysize = EVP_PKEY_size(pkey);
