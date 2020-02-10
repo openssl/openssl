@@ -61,7 +61,7 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     ECX_KEY *key = keydata;
     size_t privkeylen = 0, pubkeylen;
-    const OSSL_PARAM *param_priv_key, *param_pub_key;
+    const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     unsigned char *pubkey;
     const int ecx_selections = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                                | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
