@@ -162,12 +162,17 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
 
     settables = EVP_KDF_settable_ctx_params(kdf);
     for (i = 0; t->ctrls[i].name != NULL; ++i) {
+        const OSSL_PARAM *tmpl;
+        int tflags = 0;
+
         if (!ossl_assert(i < (numparams - 1)))
             goto end;
-        if (!OSSL_PARAM_allocate_from_text(&params[i], settables,
-                                           t->ctrls[i].name,
-                                           t->ctrls[i].value,
-                                           strlen(t->ctrls[i].value)))
+        if ((tmpl = OSSL_PARAM_parse_locate_const(settables, t->ctrls[i].name,
+                                                  &tflags)) == NULL
+            || !OSSL_PARAM_allocate_from_text(&params[i], tmpl,
+                                              t->ctrls[i].value,
+                                              strlen(t->ctrls[i].value),
+                                              tflags))
             goto end;
     }
     if (!EVP_KDF_CTX_set_params(ctx, params))

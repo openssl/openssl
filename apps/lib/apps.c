@@ -2699,6 +2699,9 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
         return NULL;
 
     for (params_n = 0; params_n < sz; params_n++) {
+        int text_flags = 0;
+        const OSSL_PARAM *tmpl;
+
         opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
         if ((stmp = OPENSSL_strdup(opt)) == NULL
             || (vtmp = strchr(stmp, ':')) == NULL)
@@ -2707,8 +2710,10 @@ OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
         *vtmp = 0;
         /* Skip over the separator so that vmtp points to the value */
         vtmp++;
-        if (!OSSL_PARAM_allocate_from_text(&params[params_n], paramdefs,
-                                           stmp, vtmp, strlen(vtmp)))
+        if ((tmpl = OSSL_PARAM_parse_locate_const(paramdefs, stmp,
+                                                  &text_flags)) == NULL
+            || !OSSL_PARAM_allocate_from_text(&params[params_n], tmpl,
+                                              vtmp, strlen(vtmp), text_flags))
             goto err;
         OPENSSL_free(stmp);
     }

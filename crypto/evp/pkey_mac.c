@@ -434,8 +434,9 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 {
     MAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
     const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
+    const OSSL_PARAM *tmpl = NULL;
     OSSL_PARAM params[2];
-    int ok = 0;
+    int ok = 0, tflags = 0;
 
     /*
      * Translation of some control names that are equivalent to a single
@@ -451,9 +452,10 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     else if (strcmp(type, "digestsize") == 0)
         type = OSSL_MAC_PARAM_SIZE;
 
-    if (!OSSL_PARAM_allocate_from_text(&params[0],
-                                       EVP_MAC_settable_ctx_params(mac),
-                                       type, value, strlen(value) + 1))
+    if ((tmpl = OSSL_PARAM_parse_locate_const(EVP_MAC_settable_ctx_params(mac),
+                                              type, &tflags)) == NULL
+        || !OSSL_PARAM_allocate_from_text(&params[0], tmpl,
+                                          value, strlen(value) + 1, tflags))
         return 0;
     params[1] = OSSL_PARAM_construct_end();
     ok = EVP_MAC_CTX_set_params(hctx->ctx, params);

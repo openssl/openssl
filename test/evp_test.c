@@ -1297,6 +1297,8 @@ static int mac_test_run_mac(EVP_TEST *t)
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++) {
         char *tmpkey, *tmpval;
         char *value = sk_OPENSSL_STRING_value(expected->controls, i);
+        const OSSL_PARAM *tmpl = NULL;
+        int tflags = 0;
 
         if (!TEST_ptr(tmpkey = OPENSSL_strdup(value))) {
             t->err = "MAC_PARAM_ERROR";
@@ -1306,11 +1308,13 @@ static int mac_test_run_mac(EVP_TEST *t)
         if (tmpval != NULL)
             *tmpval++ = '\0';
 
-        if (tmpval == NULL
-            || !OSSL_PARAM_allocate_from_text(&params[params_n],
-                                              defined_params,
-                                              tmpkey, tmpval,
-                                              strlen(tmpval))) {
+        if (tmpval != NULL)
+            tmpl = OSSL_PARAM_parse_locate_const(defined_params, tmpkey,
+                                                 &tflags);
+        if (tmpl == NULL
+            || !OSSL_PARAM_allocate_from_text(&params[params_n], tmpl,
+                                              tmpval, strlen(tmpval),
+                                              tflags)) {
             OPENSSL_free(tmpkey);
             t->err = "MAC_PARAM_ERROR";
             goto err;
@@ -2118,9 +2122,10 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
                          const char *value)
 {
     KDF_DATA *kdata = t->data;
-    int rv;
+    int tflags = 0;
     char *p, *name;
     const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *tmpl;
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
@@ -2128,14 +2133,15 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     if (p != NULL)
         *p++ = '\0';
 
-    rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
-                                       p != NULL ? strlen(p) : 0);
-    *++kdata->p = OSSL_PARAM_construct_end();
-    if (!rv) {
+    if ((tmpl = OSSL_PARAM_parse_locate_const(defs, name, &tflags)) == NULL
+        || !OSSL_PARAM_allocate_from_text(kdata->p, tmpl,
+                                          p, p != NULL ? strlen(p) : 0,
+                                          tflags)) {
         t->err = "KDF_PARAM_ERROR";
         OPENSSL_free(name);
         return 0;
     }
+    *++kdata->p = OSSL_PARAM_construct_end();
     if (p != NULL && strcmp(name, "digest") == 0) {
         /* If p has an OID and lookup fails assume disabled algorithm */
         int nid = OBJ_sn2nid(p);
