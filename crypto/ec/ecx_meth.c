@@ -418,7 +418,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     const ECX_KEY *key = from->pkey.ecx;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
-    int rv;
+    int rv = 0;
 
     ossl_param_bld_init(&tmpl);
 
