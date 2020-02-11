@@ -16,7 +16,7 @@
 #  define HEADER_OCSP_H
 # endif
 
-#include <openssl/opensslconf.h>
+# include <openssl/opensslconf.h>
 
 /*
  * These definitions are outside the OPENSSL_NO_OCSP guard because although for
@@ -37,30 +37,55 @@
  *        privilegeWithdrawn      (9),
  *        aACompromise           (10) }
  */
-#  define OCSP_REVOKED_STATUS_NOSTATUS               -1
-#  define OCSP_REVOKED_STATUS_UNSPECIFIED             0
-#  define OCSP_REVOKED_STATUS_KEYCOMPROMISE           1
-#  define OCSP_REVOKED_STATUS_CACOMPROMISE            2
-#  define OCSP_REVOKED_STATUS_AFFILIATIONCHANGED      3
-#  define OCSP_REVOKED_STATUS_SUPERSEDED              4
-#  define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
-#  define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
-#  define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
-#  define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
-#  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
+# define OCSP_REVOKED_STATUS_NOSTATUS                -1
+# define OCSP_REVOKED_STATUS_UNSPECIFIED             0
+# define OCSP_REVOKED_STATUS_KEYCOMPROMISE           1
+# define OCSP_REVOKED_STATUS_CACOMPROMISE            2
+# define OCSP_REVOKED_STATUS_AFFILIATIONCHANGED      3
+# define OCSP_REVOKED_STATUS_SUPERSEDED              4
+# define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
+# define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
+# define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
+# define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
+# define OCSP_REVOKED_STATUS_AACOMPROMISE            10
+
+/*
+ * These definitions are outside the OPENSSL_NO_OCSP guard because although for
+ * historical reasons they have OCSP_* names, they are used for the HTTP client.
+ */
+# include <openssl/asn1.h>
+/* The following functions are used only internally */
+OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
+                               int method_GET, int maxline,
+                               unsigned long max_resp_len, int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1);
+void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
+int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx,
+                      const char *server, const char *port, const char *path);
+int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
+                             const char *name, const char *value);
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
+                     const ASN1_ITEM *it, ASN1_VALUE *req);
+int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
+# ifndef OPENSSL_NO_SOCK
+ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it);
+# endif
+BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
+void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
+/* End of functions used only internally */
 
 
 # ifndef OPENSSL_NO_OCSP
 
-#  include <openssl/types.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>
 #  include <openssl/ocsperr.h>
 
-#ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 /* Various flags and values */
 
@@ -165,26 +190,6 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
 #  ifndef OPENSSL_NO_SOCK
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
 #  endif
-/* The following functions are used only internally */
-int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
-OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                               int method_GET, int maxline,
-                               unsigned long max_resp_len, int timeout,
-                               const char *expected_content_type,
-                               int expect_asn1);
-void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
-void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
-int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
-                     const ASN1_ITEM *it, ASN1_VALUE *req);
-#  ifndef OPENSSL_NO_SOCK
-ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it);
-#  endif
-BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
-int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx,
-                      const char *server, const char *port, const char *path);
-int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
-                             const char *name, const char *value);
-/* End of functions used only internally */
 
 /* TODO: remove this (documented but) meanwhile obsolete function? */
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);
