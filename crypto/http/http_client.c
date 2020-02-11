@@ -883,8 +883,11 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
             if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
                     || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_TIMEOUT)
                     || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_ERROR)
+# ifndef OPENSSL_NO_CMP
                     || (lib == ERR_LIB_CMP
-                        && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)) {
+                        && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
+# endif
+                ) {
                 BIO_snprintf(buf, 200, "server=%s:%s", server, port);
                 ERR_add_error_data(1, buf);
                 if (err == 0) {

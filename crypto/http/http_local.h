@@ -16,18 +16,18 @@
 /* name aliases for legacy names with name prefix "OCSP_" */
 typedef OCSP_REQ_CTX OSSL_HTTP_REQ_CTX;
 /* functions meanwhile only used internally */
-# define OSSL_HTTP_REQ_CTX_new          OCSP_REQ_CTX_new
-# define OSSL_HTTP_REQ_CTX_free         OCSP_REQ_CTX_free
-# define OSSL_HTTP_REQ_CTX_header       OCSP_REQ_CTX_http
-# define OSSL_HTTP_REQ_CTX_add1_header  OCSP_REQ_CTX_add1_header
-# define OSSL_HTTP_REQ_CTX_i2d          OCSP_REQ_CTX_i2d
-# define OSSL_HTTP_REQ_CTX_nbio         OCSP_REQ_CTX_nbio
-# ifndef OPENSSL_NO_SOCK
-#  define OSSL_HTTP_REQ_CTX_sendreq_d2i OCSP_REQ_CTX_nbio_d2i
-# endif
+#  define OSSL_HTTP_REQ_CTX_new         OCSP_REQ_CTX_new
+#  define OSSL_HTTP_REQ_CTX_free        OCSP_REQ_CTX_free
+#  define OSSL_HTTP_REQ_CTX_header      OCSP_REQ_CTX_http
+#  define OSSL_HTTP_REQ_CTX_add1_header OCSP_REQ_CTX_add1_header
+#  define OSSL_HTTP_REQ_CTX_i2d         OCSP_REQ_CTX_i2d
+#  define OSSL_HTTP_REQ_CTX_nbio        OCSP_REQ_CTX_nbio
+#  ifndef OPENSSL_NO_SOCK
+#   define OSSL_HTTP_REQ_CTX_sendreq_d2i OCSP_REQ_CTX_nbio_d2i
+#  endif
 /* functions that are meanwhile unused */
-# define OSSL_HTTP_REQ_CTX_get0_mem_bio OCSP_REQ_CTX_get0_mem_bio /* undoc'd */
-# define OSSL_HTTP_REQ_CTX_set_max_response_length OCSP_set_max_response_length
+#  define OSSL_HTTP_REQ_CTX_get0_mem_bio OCSP_REQ_CTX_get0_mem_bio /* undoc'd */
+#  define OSSL_HTTP_REQ_CTX_set_max_response_length OCSP_set_max_response_length
 
 BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, ASN1_VALUE *val);
 OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
