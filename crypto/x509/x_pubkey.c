@@ -93,7 +93,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
     } else if (pkey->pkeys[0].keymgmt != NULL) {
         BIO *bmem = BIO_new(BIO_s_mem());
-        const char *serprop = "format=der,type=public";
+        const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
         OSSL_SERIALIZER_CTX *sctx =
             OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, serprop);
 
