@@ -11,7 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
-#if defined(OPENSSL_NO_DH) || defined(OPENSSL_NO_DEPRECATED_3_0)
+#ifdef OPENSSL_NO_DH
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
