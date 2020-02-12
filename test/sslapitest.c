@@ -1879,6 +1879,17 @@ static int test_set_sigalgs(int idx)
 }
 #endif
 
+static int hostname_cb(SSL *s, int *al, void *arg)
+{
+    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
+                             || strcmp(hostname, "altgoodhost") == 0))
+        return  SSL_TLSEXT_ERR_OK;
+
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
 #ifndef OPENSSL_NO_TLS1_3
 static int psk_client_cb_cnt = 0;
 static int psk_server_cb_cnt = 0;
@@ -1914,7 +1925,7 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
     return 1;
 }
 
-#ifndef OPENSSL_NO_PSK
+# ifndef OPENSSL_NO_PSK
 static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
                                   unsigned int max_id_len,
                                   unsigned char *psk,
@@ -1942,7 +1953,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
 
     return psklen;
 }
-#endif /* OPENSSL_NO_PSK */
+# endif /* OPENSSL_NO_PSK */
 
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
@@ -1970,7 +1981,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
     return 1;
 }
 
-#ifndef OPENSSL_NO_PSK
+# ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk, unsigned int max_psk_len)
 {
@@ -1997,18 +2008,18 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 
     return psklen;
 }
-#endif /* OPENSSL_NO_PSK */
+# endif /* OPENSSL_NO_PSK */
 
-#define MSG1    "Hello"
-#define MSG2    "World."
-#define MSG3    "This"
-#define MSG4    "is"
-#define MSG5    "a"
-#define MSG6    "test"
-#define MSG7    "message."
+# define MSG1    "Hello"
+# define MSG2    "World."
+# define MSG3    "This"
+# define MSG4    "is"
+# define MSG5    "a"
+# define MSG6    "test"
+# define MSG7    "message."
 
-#define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
-#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
+# define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
+# define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
 
 
 static SSL_SESSION *create_a_psk(SSL *ssl)
@@ -2737,17 +2748,6 @@ static int test_early_data_not_sent(int idx)
     return testresult;
 }
 
-static int hostname_cb(SSL *s, int *al, void *arg)
-{
-    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-
-    if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
-                             || strcmp(hostname, "altgoodhost") == 0))
-        return  SSL_TLSEXT_ERR_OK;
-
-    return SSL_TLSEXT_ERR_NOACK;
-}
-
 static const char *servalpn;
 
 static int alpn_select_cb(SSL *ssl, const unsigned char **out,
@@ -2784,10 +2784,10 @@ static int test_early_data_psk(int idx)
         0x08, 'g', 'o', 'o', 'd', 'a', 'l', 'p', 'n', 0x07, 'b', 'a', 'd', 'a',
         'l', 'p', 'n'
     };
-#define GOODALPNLEN     9
-#define BADALPNLEN      8
-#define GOODALPN        (alpnlist)
-#define BADALPN         (alpnlist + GOODALPNLEN)
+# define GOODALPNLEN     9
+# define BADALPNLEN      8
+# define GOODALPN        (alpnlist)
+# define BADALPN         (alpnlist + GOODALPNLEN)
     int err = 0;
     unsigned char buf[20];
     size_t readbytes, written;
@@ -3473,12 +3473,12 @@ static int test_tls13_psk(int idx)
         SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
         SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
     }
-#ifndef OPENSSL_NO_PSK
+# ifndef OPENSSL_NO_PSK
     if (idx >= 1) {
         SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
         SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
     }
-#endif
+# endif
     srvid = pskid;
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
