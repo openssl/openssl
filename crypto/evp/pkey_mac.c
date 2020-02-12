@@ -436,7 +436,8 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
     const OSSL_PARAM *tmpl = NULL;
     OSSL_PARAM params[2];
-    int ok = 0, tflags = 0;
+    int ok = 0;
+    unsigned int tflags = 0;
 
     /*
      * Translation of some control names that are equivalent to a single

@@ -163,7 +163,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
     settables = EVP_KDF_settable_ctx_params(kdf);
     for (i = 0; t->ctrls[i].name != NULL; ++i) {
         const OSSL_PARAM *tmpl;
-        int tflags = 0;
+        unsigned int tflags = 0;
 
         if (!ossl_assert(i < (numparams - 1)))
             goto end;

@@ -214,7 +214,8 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     BUF_MEM **collector = NULL;
     const OSSL_PARAM *tmpl = NULL, *defs = EVP_KDF_settable_ctx_params(kdf);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    int ok = 0, text_flags = 0;
+    int ok = 0;
+    unsigned int tflags = 0;
 
     /* Deal with ctrl name aliasing */
     if (strcmp(type, "md") == 0)
@@ -223,9 +224,9 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     if (strcmp(type, "N") == 0)
         type = OSSL_KDF_PARAM_SCRYPT_N;
 
-    if ((tmpl = OSSL_PARAM_parse_locate_const(defs, type, &text_flags)) == NULL
+    if ((tmpl = OSSL_PARAM_parse_locate_const(defs, type, &tflags)) == NULL
         || !OSSL_PARAM_allocate_from_text(&params[0], tmpl,
-                                          value, strlen(value), text_flags))
+                                          value, strlen(value), tflags))
         return 0;
 
     /*

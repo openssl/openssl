@@ -1298,7 +1298,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         char *tmpkey, *tmpval;
         char *value = sk_OPENSSL_STRING_value(expected->controls, i);
         const OSSL_PARAM *tmpl = NULL;
-        int tflags = 0;
+        unsigned int tflags = 0;
 
         if (!TEST_ptr(tmpkey = OPENSSL_strdup(value))) {
             t->err = "MAC_PARAM_ERROR";
@@ -2122,7 +2122,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
                          const char *value)
 {
     KDF_DATA *kdata = t->data;
-    int tflags = 0;
+    unsigned int tflags = 0;
     char *p, *name;
     const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
     const OSSL_PARAM *tmpl;
