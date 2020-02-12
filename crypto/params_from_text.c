@@ -23,7 +23,8 @@
  */
 
 static int prepare_from_text(const OSSL_PARAM *template,
-                             const char *value, size_t value_n, int flags,
+                             const char *value, size_t value_n,
+                             unsigned int flags,
                              /* Output parameters */
                              size_t *buf_n, BIGNUM **tmpbn)
 {
@@ -87,7 +88,8 @@ static int prepare_from_text(const OSSL_PARAM *template,
 }
 
 static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
-                               const char *value, size_t value_n, int flags,
+                               const char *value, size_t value_n,
+                               unsigned int flags,
                                void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
     if (buf == NULL)
@@ -151,7 +153,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
 
 const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
                                                 const char *key,
-                                                int *flags)
+                                                unsigned int *flags)
 {
     if (params == NULL || key == NULL || flags == NULL)
         return NULL;
@@ -166,7 +168,8 @@ const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
 }
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
-                                  const char *value, size_t value_n, int flags)
+                                  const char *value, size_t value_n,
+                                  unsigned int flags)
 {
     void *buf = NULL;
     size_t buf_n = 0;

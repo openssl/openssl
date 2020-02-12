@@ -11,11 +11,11 @@ OSSL_PARAM_parse_locate_const, OSSL_PARAM_allocate_from_text
 
  const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
                                                  const char *key,
-                                                 int *flags);
+                                                 unsigned int *flags);
  int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                    const OSSL_PARAM *template,
                                    const char *value, size_t value_n,
-                                   int flags);
+                                   unsigned int flags);
 
 =head1 DESCRIPTION
 
@@ -138,7 +138,7 @@ Can be written like this instead:
        params_n++) {
       const OSSL_PARAM *tmpl;
       char *stmp, *vtmp = NULL;
-      int tflags = 0;
+      unsigned int tflags = 0;
 
       opt = sk_OPENSSL_STRING_value(opts, (int)params_n);
       if ((stmp = OPENSSL_strdup(opt)) == NULL

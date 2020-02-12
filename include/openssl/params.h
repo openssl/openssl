@@ -90,9 +90,11 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 
 const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
-                                                const char *key, int *flags);
+                                                const char *key,
+                                                unsigned int *flags);
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
-                                  const char *value, size_t value_n, int flags);
+                                  const char *value, size_t value_n,
+                                  unsigned int flags);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val);
