@@ -955,7 +955,7 @@ doc-nits: build_generated
 	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -l -e )
 
 cmd-nits: build_generated apps/openssl
-	(cd $(SRCDIR); $(PERL) util/find-doc-nits -c )
+	(SRCDIR=$(SRCDIR) BLDDIR=$(BLDDIR) $(PERL) util/find-doc-nits -c )
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)

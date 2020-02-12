@@ -23,8 +23,9 @@ use OpenSSL::Util::Pod;
 my $debug = 0;
 
 # Where to find openssl command
-my $BLDTOP  = $ENV{BLDTOP} || ".";
-my $openssl = "$BLDTOP/util/opensslwrap.sh";
+my $SRCDIR  = $ENV{SRCDIR} || '.';
+my $BLDDIR  = $ENV{BLDDIR} || '.';
+my $openssl = "$BLDDIR/util/opensslwrap.sh";
 
 # Options.
 our($opt_d);
@@ -859,14 +860,23 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach my $cmd ( @commands ) {
         next if $cmd eq 'help' || $cmd eq 'exit';
-        my $doc = "doc/man1/openssl-$cmd.pod";
-        # Handle "tsget" and "CA.pl" pod pages
+        my $doc = "$SRCDIR/doc/man1/openssl-$cmd.pod";
+        # Handle "tsget" and "CA.pl" pod pages which don't have .in files
         $doc = "doc/man1/$cmd.pod" if -f "doc/man1/$cmd.pod";
         if ( ! -f "$doc" ) {
-            err("$doc does not exist");
-        } else {
-            checkflags($cmd, $doc);
+            # Fallback, see if pod.in exists and then try the build tree.
+            if ( ! -f "$doc.in") {
+                err("$doc does not exist");
+                next;
+            }
+            my $blt = "$BLDDIR/doc/man1/openssl-$cmd.pod";
+            if ( ! -f $blt ) {
+                err "$doc.in exists, but $blt does not exists";
+                next;
+            }
+            $doc = $blt;
         }
+        checkflags($cmd, $doc);
     }
 
     # See what help is missing.
@@ -884,7 +894,20 @@ if ( $opt_c ) {
 
 # Preparation for some options, populate %name_map and %link_map
 if ( $opt_l || $opt_u || $opt_v ) {
-    foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
+    if ( $SRCDIR ne $BLDDIR ) {
+        # If building out-of-tree, foo.pod.in in $SRCDIR should be found as
+        # foo.pod in $BLDDIR;
+        foreach my $in ( glob("$SRCDIR/doc/*/*.pod.in $SRCDIR/doc/internal/*/*.pod.in") ) {
+            my $pod = "$BLDDIR/$in";
+            $pod =~ s/\.in$//;
+            if ( -f $pod ) {
+                collectnames($pod);
+            } else {
+                err("$in exists but $pod does not exist")
+            }
+        }
+    }
+    foreach ( glob("$SRCDIR/doc/*/*.pod $SRCDIR/doc/internal/*/*.pod") ) {
         collectnames($_);
     }
 }
@@ -898,13 +921,31 @@ if ( $opt_l ) {
 
 if ( $opt_n ) {
     publicize();
-    foreach ( @ARGV ? @ARGV : glob('doc/*/*.pod doc/internal/*/*.pod') ) {
-        check($_);
-    }
+    if ( scalar @ARGV != 0 ) {
+        foreach ( @ARGV ) {
+            check($_);
+        }
+    } else {
+        foreach ( glob('doc/*/*.pod doc/internal/*/*.pod') ) {
+            check($_);
+        }
 
-    # If not given args, check that all man1 commands are named properly.
-    if ( scalar @ARGV == 0 ) {
-        foreach ( glob('doc/man1/*.pod') ) {
+        if ( $SRCDIR ne $BLDDIR ) {
+            # If building out-of-tree, foo.pod.in in $SRCDIR should be found as
+            # foo.pod in $BLDDIR;
+            foreach my $in ( glob('doc/*/*.pod.in doc/internal/*/*.pod.in') ) {
+                my $pod = "$BLDDIR/$in";
+                $pod =~ s/\.in$//;
+                if ( -f $pod ) {
+                    check($pod);
+                } else {
+                    err("$in exists but $pod does not exist")
+                }
+            }
+        }
+
+        # If not given args, check that all man1 commands are named properly.
+        foreach ( glob('doc/man1/*.pod doc/man1/*.pod.in') ) {
             next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
