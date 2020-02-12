@@ -38,6 +38,9 @@ B<openssl> B<rsautl>
 
 =head1 DESCRIPTION
 
+This command has been deprecated.
+The L<openssl-pkeyutl(1)> command should be used instead.
+
 This command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 
@@ -219,9 +222,14 @@ which it can be seen agrees with the recovered value above.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkeyutl(1)>,
 L<openssl-dgst(1)>,
 L<openssl-rsa(1)>,
 L<openssl-genrsa(1)>
+
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
