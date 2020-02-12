@@ -55,42 +55,47 @@ sub run_mp_tests {
         my $name = ($evp ? "evp" : "") . "${bits}p${primes}";
 
         if ($evp) {
-            ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
-                         '-algorithm', 'RSA', '-pkeyopt', "rsa_keygen_primes:$primes",
-                         '-pkeyopt', "rsa_keygen_bits:$bits"])), "genrsa $name");
+            ok(run(app([ 'openssl', 'genpkey', '-out', "rsamptest-$name.pem",
+                         '-algorithm', 'RSA',
+                         '-pkeyopt', "rsa_keygen_primes:$primes",
+                         '-pkeyopt', "rsa_keygen_bits:$bits"])),
+               "genrsa $name");
         } else {
-            ok(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
-                         '-primes', $primes, $bits])), "genrsa $name");
+            ok(run(app([ 'openssl', 'genrsa', '-out', "rsamptest-$name.pem",
+                         '-primes', $primes, $bits])),
+               "genrsa $name");
         }
 
-        ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
-                     '-noout'])), "rsa -check $name");
+        ok(run(app([ 'openssl', 'rsa', '-check', '-in', "rsamptest-$name.pem",
+                     '-noout'])),
+           "rsa -check $name");
+
         if ($evp) {
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
                          '-encrypt', '-in', $cleartext,
-                         '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
-                         '-decrypt', '-in', 'rsamptest.enc',
-                         '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
+                         '-out', "rsamptest-$name.enc" ])),
+               "rsa $name encrypt");
+            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
+                         '-decrypt', '-in', "rsamptest-$name.enc",
+                         '-out', "rsamptest-$name.dec" ])),
+               "rsa $name decrypt");
         } else {
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
+            ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
                          '-encrypt', '-in', $cleartext,
-                         '-out', 'rsamptest.enc' ])), "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'rsautl', '-inkey', 'rsamptest.pem',
-                         '-decrypt', '-in', 'rsamptest.enc',
-                         '-out', 'rsamptest.dec' ])), "rsa $name decrypt");
+                         '-out', "rsamptest-$name.enc" ])),
+               "rsa $name encrypt");
+            ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
+                         '-decrypt', '-in', "rsamptest-$name.enc",
+                         '-out', "rsamptest-$name.dec" ])),
+               "rsa $name decrypt");
         }
 
-        ok(check_msg(), "rsa $name check result");
-
-        # clean up temp files
-        unlink 'rsamptest.pem';
-        unlink 'rsamptest.enc';
-        unlink 'rsamptest.dec';
+        ok(check_msg("rsamptest-$name.dec"), "rsa $name check result");
     }
 }
 
 sub check_msg {
+    my $decrypted = shift;
     my $msg;
     my $dec;
 
@@ -98,7 +103,7 @@ sub check_msg {
     binmode $fh;
     read($fh, $msg, 10240);
     close $fh;
-    open($fh, "<", "rsamptest.dec") or return 0;
+    open($fh, "<", $decrypted ) or return 0;
     binmode $fh;
     read($fh, $dec, 10240);
     close $fh;
