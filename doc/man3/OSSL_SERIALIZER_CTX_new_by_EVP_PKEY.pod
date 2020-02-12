@@ -10,6 +10,9 @@ OSSL_SERIALIZER_CTX_set_passphrase_ui,
 OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
 OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
 OSSL_SERIALIZER_Parameters_TO_PEM_PQ,
+OSSL_SERIALIZER_PUBKEY_TO_DER_PQ,
+OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
+OSSL_SERIALIZER_Parameters_TO_DER_PQ,
 OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ,
 OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ,
 OSSL_SERIALIZER_Parameters_TO_TEXT_PQ
@@ -37,6 +40,10 @@ OSSL_SERIALIZER_Parameters_TO_TEXT_PQ
  #define OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ "format=pem,type=public"
  #define OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ "format=pem,type=private"
  #define OSSL_SERIALIZER_Parameters_TO_PEM_PQ "format=pem,type=parameters"
+
+ #define OSSL_SERIALIZER_PUBKEY_TO_DER_PQ "format=der,type=public"
+ #define OSSL_SERIALIZER_PrivateKey_TO_DER_PQ "format=der,type=private"
+ #define OSSL_SERIALIZER_Parameters_TO_DER_PQ "format=der,type=parameters"
 
  #define OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ "format=text,type=public"
  #define OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ "format=text,type=private"
@@ -84,11 +91,14 @@ through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
 The macros B<OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ>,
 B<OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ>,
 B<OSSL_SERIALIZER_Parameters_TO_PEM_PQ>,
+B<OSSL_SERIALIZER_PUBKEY_TO_DER_PQ>,
+B<OSSL_SERIALIZER_PrivateKey_TO_DER_PQ>,
+B<OSSL_SERIALIZER_Parameters_TO_DER_PQ>,
 B<OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ>,
 B<OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ>,
 B<OSSL_SERIALIZER_Parameters_TO_TEXT_PQ> are convenience macros with
 property queries to serialize the B<EVP_PKEY> as a public key, private
-key or parameters to B<PEM>, or to text.
+key or parameters to B<PEM>, to B<DER>, or to text.
 
 =head1 RETURN VALUES
 
