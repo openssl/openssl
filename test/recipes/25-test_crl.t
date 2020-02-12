@@ -40,7 +40,6 @@ ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
             "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
-unlink $out;
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;
