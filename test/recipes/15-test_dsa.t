@@ -19,14 +19,11 @@ setup("test_dsa");
 plan skip_all => 'DSA is not supported in this build' if disabled('dsa');
 plan tests => 7;
 
-my $deprecated_dsa =
-    disabled('deprecated') || !defined config('api') || config('api') >= 30000;
-
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
  SKIP: {
      skip "Skipping initial dsa tests", 2
-         if $deprecated_dsa;
+         if disabled('deprecated-3.0');
 
      ok(run(test(["dsatest"])), "running dsatest");
      ok(run(test(["dsa_no_digest_size_test"])),
@@ -35,9 +32,9 @@ require_ok(srctop_file('test','recipes','tconversion.pl'));
 
  SKIP: {
      skip "Skipping dsa conversion test using 'openssl dsa'", 2
-         if $deprecated_dsa;
+         if disabled('deprecated-3.0');
 
-     subtest "dsa conversions using 'openssl dsa' -- private key"> sub {
+     subtest "dsa conversions using 'openssl dsa' -- private key" => sub {
          tconversion("dsa", srctop_file("test","testdsa.pem"));
      };
      subtest "dsa conversions using 'openssl dsa' -- public key" => sub {
