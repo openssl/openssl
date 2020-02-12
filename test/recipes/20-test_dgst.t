@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use File::Spec;
+use File::Basename;
 use OpenSSL::Test qw/:DEFAULT with srctop_file/;
 use OpenSSL::Test::Utils;
 
@@ -26,29 +27,28 @@ sub tsignverify {
     my $data_to_sign = srctop_file('test', 'README');
     my $other_data = srctop_file('test', 'README.external');
 
+    my $sigfile = basename($privkey, '.pem') . '.sig';
     plan tests => 4;
 
     ok(run(app(['openssl', 'dgst', '-sign', $privkey,
-                '-out', 'testdgst.sig',
+                '-out', $sigfile,
                 $data_to_sign])),
        $testtext.": Generating signature");
 
     ok(run(app(['openssl', 'dgst', '-prverify', $privkey,
-                '-signature', 'testdgst.sig',
+                '-signature', $sigfile,
                 $data_to_sign])),
        $testtext.": Verify signature with private key");
 
     ok(run(app(['openssl', 'dgst', '-verify', $pubkey,
-                '-signature', 'testdgst.sig',
+                '-signature', $sigfile,
                 $data_to_sign])),
        $testtext.": Verify signature with public key");
 
     ok(!run(app(['openssl', 'dgst', '-verify', $pubkey,
-                 '-signature', 'testdgst.sig',
+                 '-signature', $sigfile,
                  $other_data])),
        $testtext.": Expect failure verifying mismatching data");
-
-    unlink 'testdgst.sig';
 }
 
 SKIP: {
