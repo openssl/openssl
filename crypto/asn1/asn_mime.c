@@ -199,6 +199,14 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
             BIO_puts(out, "gostr3411-94");
             goto err;
 
+        case NID_id_GostR3411_2012_256:
+            BIO_puts(out, "gostr3411-2012-256");
+            goto err;
+
+        case NID_id_GostR3411_2012_512:
+            BIO_puts(out, "gostr3411-2012-512");
+            goto err;
+
         default:
             if (have_unknown)
                 write_comma = 0;
