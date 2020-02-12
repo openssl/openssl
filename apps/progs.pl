@@ -95,7 +95,6 @@ EOF
         genrsa   => "rsa",
         rsautl   => "rsa",
         gendh    => "dh",
-        ecparam  => "ec",
         pkcs12   => "des",
     );
     my %cmd_deprecated = (
@@ -103,6 +102,8 @@ EOF
         dsaparam => [ "3_0", "pkeyparam", "dsa" ],
         dsa      => [ "3_0", "pkey",      "dsa" ],
         gendsa   => [ "3_0", "genpkey",   "dsa" ],
+        ec       => [ "3_0", "pkey",      "ec" ],
+        ecparam  => [ "3_0", "pkeyparam", "ec" ],
     );
 
     print "FUNCTION functions[] = {\n";

@@ -16,15 +16,18 @@ use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
-plan tests => 11;
+plan tests => 14;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["ectest"])), "running ectest");
 
+# TODO: remove these when the 'ec' app is removed.
+# Also consider moving this to the 20-25 test section because it is testing
+# the command line tool in addition to the algorithm.
 SKIP: {
     skip "Skipping EC conversion test", 3
-        if disabled("ec");
+        if disabled("ec") || disabled('deprecated-3.0');
 
     subtest 'EC conversions -- private key' => sub {
         tconversion("ec", srctop_file("test","testec-p256.pem"));
@@ -39,28 +42,44 @@ SKIP: {
 }
 
 SKIP: {
+    skip "Skipping PKEY conversion test", 3
+        if disabled("ec");
+
+    subtest 'PKEY conversions -- private key' => sub {
+        tconversion("pkey", srctop_file("test","testec-p256.pem"));
+    };
+    subtest 'PKEY conversions -- private key PKCS#8' => sub {
+        tconversion("pkey", srctop_file("test","testec-p256.pem"), "pkey");
+    };
+    subtest 'PKEY conversions -- public key' => sub {
+        tconversion("pkey", srctop_file("test","testecpub-p256.pem"),
+                    "pkey", "-pubin", "-pubout");
+    };
+}
+
+SKIP: {
     skip "Skipping EdDSA conversion test", 6
         if disabled("ec");
 
     subtest 'Ed25519 conversions -- private key' => sub {
-        tconversion("pkey", srctop_file("test","tested25519.pem"));
+        tconversion("pkey", srctop_file("test", "tested25519.pem"));
     };
     subtest 'Ed25519 conversions -- private key PKCS#8' => sub {
-        tconversion("pkey", srctop_file("test","tested25519.pem"), "pkey");
+        tconversion("pkey", srctop_file("test", "tested25519.pem"), "pkey");
     };
     subtest 'Ed25519 conversions -- public key' => sub {
-        tconversion("pkey", srctop_file("test","tested25519pub.pem"),
+        tconversion("pkey", srctop_file("test", "tested25519pub.pem"),
                     "pkey", "-pubin", "-pubout");
     };
 
     subtest 'Ed448 conversions -- private key' => sub {
-        tconversion("pkey", srctop_file("test","tested448.pem"));
+        tconversion("pkey", srctop_file("test", "tested448.pem"));
     };
     subtest 'Ed448 conversions -- private key PKCS#8' => sub {
-        tconversion("pkey", srctop_file("test","tested448.pem"), "pkey");
+        tconversion("pkey", srctop_file("test", "tested448.pem"), "pkey");
     };
     subtest 'Ed448 conversions -- public key' => sub {
-        tconversion("pkey", srctop_file("test","tested448pub.pem"),
+        tconversion("pkey", srctop_file("test", "tested448pub.pem"),
                     "pkey", "-pubin", "-pubout");
     };
 }

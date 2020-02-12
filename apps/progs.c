@@ -33,11 +33,11 @@ FUNCTION functions[] = {
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {FT_general, "dsaparam", dsaparam_main, dsaparam_options, "pkeyparam"},
 #endif
-#ifndef OPENSSL_NO_EC
-    {FT_general, "ec", ec_main, ec_options, NULL},
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {FT_general, "ec", ec_main, ec_options, "pkey"},
 #endif
-#ifndef OPENSSL_NO_EC
-    {FT_general, "ecparam", ecparam_main, ecparam_options, NULL},
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {FT_general, "ecparam", ecparam_main, ecparam_options, "pkeyparam"},
 #endif
     {FT_general, "enc", enc_main, enc_options, NULL},
 #ifndef OPENSSL_NO_ENGINE

@@ -14,6 +14,10 @@
      test recipes are created in the build tree for this purpose.
      [Richard Levitte]
 
+  *) The command line utilities ecparam and ec have been deprecated.  Instead
+     use the pkeyparam, pkey and genpkey programs.
+     [Paul Dale]
+
   *) X509 certificates signed using SHA1 are no longer allowed at security
      level 1 and above.
      In TLS/SSL the default security level is 1. It can be set either
