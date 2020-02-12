@@ -46,4 +46,3 @@ ok(run(app(['openssl', 'dgst', '-prverify', srctop_file('test', 'testrsa.pem'), 
             '-sigopt', 'rsa_mgf1_md:sha512', '-signature', 'testrsapss.sig',
             srctop_file('test', 'testrsa.pem')])),
    "openssl dgst -prverify");
-unlink 'testrsapss.sig';
