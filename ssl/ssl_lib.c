@@ -5849,12 +5849,17 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
                                        const char *properties)
 {
 #ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
     /*
      * If there is an Engine available for this cipher we use the "implicit"
      * form to ensure we use that engine later.
      */
-    if (ENGINE_get_cipher_engine(nid) != NULL)
+    eng = ENGINE_get_cipher_engine(nid);
+    if (eng != NULL) {
+        ENGINE_finish(eng);
         return EVP_get_cipherbynid(nid);
+    }
 #endif
 
     /* Otherwise we do an explicit fetch */
@@ -5894,12 +5899,17 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
                                const char *properties)
 {
 #ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
     /*
      * If there is an Engine available for this digest we use the "implicit"
      * form to ensure we use that engine later.
      */
-    if (ENGINE_get_digest_engine(nid) != NULL)
+    eng = ENGINE_get_digest_engine(nid);
+    if (eng != NULL) {
+        ENGINE_finish(eng);
         return EVP_get_digestbynid(nid);
+    }
 #endif
 
     /* Otherwise we do an explicit fetch */
