@@ -20,6 +20,10 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  RSA_METHOD *RSA_meth_new(const char *name, int flags);
  void RSA_meth_free(RSA_METHOD *meth);
 
@@ -122,6 +126,9 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
                                                     BN_GENCB *cb));
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
 
 The B<RSA_METHOD> type is a structure used for the provision of custom
 RSA implementations. It provides a set of functions used by OpenSSL
@@ -243,6 +250,8 @@ L<RSA_set_method(3)>, L<RSA_size(3)>, L<RSA_get0_key(3)>,
 L<RSA_generate_multi_prime_key(3)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 RSA_meth_get_multi_prime_keygen() and RSA_meth_set_multi_prime_keygen() were
 added in OpenSSL 1.1.1.
