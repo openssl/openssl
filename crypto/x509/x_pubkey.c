@@ -253,21 +253,52 @@ EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
 
 int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 {
-    X509_PUBKEY *xpk = NULL;
     int ret = -1;
 
     if (a == NULL)
         return 0;
-    if ((xpk = X509_PUBKEY_new()) == NULL)
-        return -1;
-    if (a->ameth != NULL && a->ameth->pub_encode != NULL
-        && !a->ameth->pub_encode(xpk, a))
-        goto error;
-    xpk->pkey = (EVP_PKEY *)a;
-    ret = i2d_X509_PUBKEY(xpk, pp);
-    xpk->pkey = NULL;
- error:
-    X509_PUBKEY_free(xpk);
+    if (a->ameth != NULL) {
+        X509_PUBKEY *xpk = NULL;
+
+        if ((xpk = X509_PUBKEY_new()) == NULL)
+            return -1;
+
+        /* pub_encode() only encode parameters, not the key itself */
+        if (a->ameth->pub_encode != NULL && a->ameth->pub_encode(xpk, a)) {
+            xpk->pkey = (EVP_PKEY *)a;
+            ret = i2d_X509_PUBKEY(xpk, pp);
+            xpk->pkey = NULL;
+        }
+        X509_PUBKEY_free(xpk);
+    } else if (a->pkeys[0].keymgmt != NULL) {
+        const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
+        OSSL_SERIALIZER_CTX *ctx =
+            OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(a, serprop);
+        BIO *out = BIO_new(BIO_s_mem());
+        BUF_MEM *buf = NULL;
+
+        if (ctx != NULL
+            && out != NULL
+            && OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL
+            && OSSL_SERIALIZER_to_bio(ctx, out)
+            && BIO_get_mem_ptr(out, &buf) > 0) {
+            ret = buf->length;
+
+            if (pp != NULL) {
+                if (*pp == NULL) {
+                    *pp = (unsigned char *)buf->data;
+                    buf->length = 0;
+                    buf->data = NULL;
+                } else {
+                    memcpy(*pp, buf->data, ret);
+                    *pp += ret;
+                }
+            }
+        }
+        BIO_free(out);
+        OSSL_SERIALIZER_CTX_free(ctx);
+    }
+
     return ret;
 }
 
