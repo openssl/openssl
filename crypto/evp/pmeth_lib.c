@@ -931,7 +931,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
          */
         const OSSL_PARAM *tmpl, *settable = EVP_PKEY_CTX_settable_params(ctx);
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-        int rv = 0, tflags = 0;
+        int rv = 0;
+        unsigned int tflags = 0;
 
         if ((tmpl = OSSL_PARAM_parse_locate_const(settable, name, &tflags))
             == NULL) {
