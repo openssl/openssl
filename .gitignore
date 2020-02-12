@@ -101,7 +101,7 @@ doc/man1/openssl-x509.pod
 /providers/fipsinstall.conf
 
 # Certain files that get created by tests on the fly
-/test/test-runs
+/test-runs
 /test/buildtest_*
 
 # Fuzz stuff.

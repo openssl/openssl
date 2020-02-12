@@ -28,14 +28,6 @@
       (my $x = shift) =~ s|\]$|...]|;
       $x
   }
-  sub move {
-      my $f = catdir(@_);
-      my $b = abs2rel(rel2abs("."),rel2abs($f));
-      $sourcedir = catdir($b,$sourcedir)
-          if !file_name_is_absolute($sourcedir);
-      $builddir = catdir($b,$builddir)
-          if !file_name_is_absolute($builddir);
-      "";
   }
 
   # Because we need to make two computations of these data,
@@ -439,11 +431,8 @@ all : build_sw build_docs
 test : tests
 {- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
         @ ! {- output_off() if $disabled{tests}; "" -}
-        SET DEFAULT [.test]{- move("test") -}
-        CREATE/DIR [.test-runs]
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
-        DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
         DEFINE OPENSSL_MODULES {- builddir("providers") -}
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
@@ -452,7 +441,6 @@ test : tests
         DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
-        SET DEFAULT [-]{- move("..") -}
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}

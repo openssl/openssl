@@ -387,10 +387,8 @@ all: build_sw build_docs
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep
 	@{- output_off() if $disabled{tests}; "" -}
-	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
-	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
 	set OPENSSL_ENGINES=$(MAKEDIR)\engines
 	set OPENSSL_MODULES=$(MAKEDIR)\providers

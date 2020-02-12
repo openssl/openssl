@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) The test suite is changed to preserve results of each test recipe.
+     A new directory test-runs/ with subdirectories named like the
+     test recipes are created in the build tree for this purpose.
+     [Richard Levitte]
+
   *) X509 certificates signed using SHA1 are no longer allowed at security
      level 1 and above.
      In TLS/SSL the default security level is 1. It can be set either
