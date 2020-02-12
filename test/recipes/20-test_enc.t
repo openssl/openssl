@@ -62,9 +62,6 @@ plan tests => 2 + (scalar @ciphers)*2;
 	     ok(run(app([$cmd, @e, "-in", $test, "-out", $cipherfile]))
 		&& run(app([$cmd, @d, "-in", $cipherfile, "-out", $clearfile]))
 		&& compare_text($test,$clearfile) == 0, $t);
-	     unlink $cipherfile, $clearfile;
 	 }
      }
 }
-
-unlink $test;
