@@ -10,6 +10,10 @@ RSA_new_method - select RSA method
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void RSA_set_default_method(const RSA_METHOD *meth);
 
  RSA_METHOD *RSA_get_default_method(void);
@@ -25,6 +29,9 @@ RSA_new_method - select RSA method
  RSA *RSA_new_method(ENGINE *engine);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
 
 An B<RSA_METHOD> specifies the functions that OpenSSL uses for RSA
 operations. By modifying the method, alternative implementations such as
@@ -170,6 +177,8 @@ not currently exist).
 L<RSA_new(3)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 The RSA_null_method(), which was a partial attempt to avoid patent issues,
 was replaced to always return NULL in OpenSSL 1.1.1.

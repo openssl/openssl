@@ -9,6 +9,10 @@ RSA_generate_multi_prime_key - generate RSA key pair
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
  int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes, BIGNUM *e, BN_GENCB *cb);
 
@@ -20,6 +24,10 @@ L<openssl_user_macros(7)>:
                        void (*callback)(int, int, void *), void *cb_arg);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_keygen_init(3)> and
+L<EVP_PKEY_keygen(3)>.
 
 RSA_generate_key_ex() generates a 2-prime RSA key pair and stores it in the
 B<RSA> structure provided in B<rsa>. The pseudo-random number generator must
@@ -94,6 +102,8 @@ L<ERR_get_error(3)>, L<RAND_bytes(3)>, L<BN_generate_prime(3)>,
 L<RAND(7)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 RSA_generate_key() was deprecated in OpenSSL 0.9.8; use
 RSA_generate_key_ex() instead.
