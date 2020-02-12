@@ -21,19 +21,19 @@ plan tests => 10;
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 my $pem = srctop_file("test/certs", "cyrillic.pem");
-my $out = "cyrillic.out";
+my $out_msb = "out-cyrillic.msb";
+my $out_utf8 = "out-cyrillic.utf8";
 my $msb = srctop_file("test/certs", "cyrillic.msb");
 my $utf = srctop_file("test/certs", "cyrillic.utf8");
 
-ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out,
+ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_msb,
             "-nameopt", "esc_msb"])));
-is(cmp_text($out, srctop_file("test/certs", "cyrillic.msb")),
+is(cmp_text($out_msb, srctop_file("test/certs", "cyrillic.msb")),
    0, 'Comparing esc_msb output');
-ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out,
+ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
-is(cmp_text($out, srctop_file("test/certs", "cyrillic.utf8")),
+is(cmp_text($out_utf8, srctop_file("test/certs", "cyrillic.utf8")),
    0, 'Comparing utf8 output');
-unlink $out;
 
 SKIP: {
     skip "EC disabled", 1 if disabled("ec");
@@ -54,8 +54,6 @@ SKIP: {
        &&
        run(app(["openssl", "verify", "-no_check_time",
                 "-trusted", $selfout, $testcert])));
-    unlink $pubkey;
-    unlink $selfout;
 }
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
