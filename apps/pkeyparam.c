@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "apps.h"
 #include "progs.h"
 #include <openssl/pem.h>
@@ -44,9 +45,11 @@ int pkeyparam_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     EVP_PKEY *pkey = NULL;
-    int text = 0, noout = 0, ret = 1, check = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    int text = 0, noout = 0, ret = EXIT_FAILURE, check = 0, r;
     OPTION_CHOICE o;
     char *infile = NULL, *outfile = NULL, *prog;
+    unsigned long err;
 
     prog = opt_init(argc, argv, pkeyparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -98,9 +101,6 @@ int pkeyparam_main(int argc, char **argv)
     }
 
     if (check) {
-        int r;
-        EVP_PKEY_CTX *ctx;
-
         ctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
@@ -116,8 +116,6 @@ int pkeyparam_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            unsigned long err;
-
             BIO_printf(out, "Parameters are invalid\n");
 
             while ((err = ERR_peek_error()) != 0) {
@@ -125,8 +123,8 @@ int pkeyparam_main(int argc, char **argv)
                            ERR_reason_error_string(err));
                 ERR_get_error(); /* remove err from error stack */
             }
+            goto end;
         }
-        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout)
@@ -135,9 +133,10 @@ int pkeyparam_main(int argc, char **argv)
     if (text)
         EVP_PKEY_print_params(out, pkey, 0, NULL);
 
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  end:
+    EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     release_engine(e);
     BIO_free_all(out);

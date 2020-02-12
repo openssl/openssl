@@ -37,6 +37,9 @@ B<openssl> B<ec>
 
 =head1 DESCRIPTION
 
+This command has been deprecated.
+The L<openssl-pkey(1)> command should be used instead.
+
 The L<openssl-ec(1)> command processes EC keys. They can be converted between
 various forms and their components printed out. B<Note> OpenSSL uses the
 private key format specified in 'SEC 1: Elliptic Curve Cryptography'
@@ -169,13 +172,18 @@ To change the point conversion form to B<compressed>:
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkey(1)>,
 L<openssl-ecparam(1)>,
 L<openssl-dsa(1)>,
 L<openssl-rsa(1)>
 
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2003-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
