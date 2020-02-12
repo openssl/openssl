@@ -95,7 +95,6 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     "mp exponent not congruent to d"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_MP_R_NOT_PRIME), "mp r not prime"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_NO_PUBLIC_EXPONENT), "no public exponent"},
-    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_NULL_ARGUMENT), "null argument"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_NULL_BEFORE_BLOCK_MISSING),
     "null before block missing"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES),

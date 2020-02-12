@@ -62,7 +62,7 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         md = EVP_sha1();
 #else
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1,
-               RSA_R_NULL_ARGUMENT);
+               ERR_R_PASSED_NULL_PARAMETER);
         return 0;
 #endif
     if (mgf1md == NULL)
@@ -157,7 +157,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 #ifndef FIPS_MODE
         md = EVP_sha1();
 #else
-        RSAerr(0, RSA_R_NULL_ARGUMENT);
+        RSAerr(0, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
 #endif
     }

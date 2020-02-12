@@ -155,7 +155,6 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D             169
 # define RSA_R_MP_R_NOT_PRIME                             170
 # define RSA_R_NO_PUBLIC_EXPONENT                         140
-# define RSA_R_NULL_ARGUMENT                              180
 # define RSA_R_NULL_BEFORE_BLOCK_MISSING                  113
 # define RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES         172
 # define RSA_R_N_DOES_NOT_EQUAL_P_Q                       127
