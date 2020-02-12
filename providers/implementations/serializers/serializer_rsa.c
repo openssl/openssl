@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "crypto/rsa.h"           /* rsa_get0_all_params() */
 #include "prov/bio.h"             /* ossl_prov_bio_printf() */
 #include "prov/implementations.h" /* rsa_keymgmt_functions */

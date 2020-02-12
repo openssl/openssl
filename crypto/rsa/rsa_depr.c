@@ -12,6 +12,12 @@
  * "new" versions).
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_DEPRECATED_0_9_8
 NON_EMPTY_TRANSLATION_UNIT

@@ -15,6 +15,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/opensslconf.h>
 #if defined(_WIN32)
 # include <windows.h>
 #endif
@@ -101,22 +102,29 @@ static int dasync_digest_nids(const int **nids)
 }
 
 /* RSA */
+static int dasync_pkey(ENGINE *e, EVP_PKEY_METHOD **pmeth,
+                       const int **pnids, int nid);
 
-static int dasync_pub_enc(int flen, const unsigned char *from,
-                    unsigned char *to, RSA *rsa, int padding);
-static int dasync_pub_dec(int flen, const unsigned char *from,
-                    unsigned char *to, RSA *rsa, int padding);
-static int dasync_rsa_priv_enc(int flen, const unsigned char *from,
-                      unsigned char *to, RSA *rsa, int padding);
-static int dasync_rsa_priv_dec(int flen, const unsigned char *from,
-                      unsigned char *to, RSA *rsa, int padding);
-static int dasync_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
-                              BN_CTX *ctx);
+static int dasync_rsa_init(EVP_PKEY_CTX *ctx);
+static void dasync_rsa_cleanup(EVP_PKEY_CTX *ctx);
+static int dasync_rsa_paramgen_init(EVP_PKEY_CTX *ctx);
+static int dasync_rsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+static int dasync_rsa_keygen_init(EVP_PKEY_CTX *ctx);
+static int dasync_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+static int dasync_rsa_encrypt_init(EVP_PKEY_CTX *ctx);
+static int dasync_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
+                              size_t *outlen, const unsigned char *in,
+                              size_t inlen);
+static int dasync_rsa_decrypt_init(EVP_PKEY_CTX *ctx);
+static int dasync_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
+                              size_t *outlen, const unsigned char *in,
+                              size_t inlen);
+static int dasync_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
+static int dasync_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
+                               const char *value);
 
-static int dasync_rsa_init(RSA *rsa);
-static int dasync_rsa_finish(RSA *rsa);
-
-static RSA_METHOD *dasync_rsa_method = NULL;
+static EVP_PKEY_METHOD *dasync_rsa;
+static const EVP_PKEY_METHOD *dasync_rsa_orig;
 
 /* AES */
 
@@ -197,26 +205,30 @@ static int dasync_cipher_nids[] = {
 
 static int bind_dasync(ENGINE *e)
 {
-    /* Setup RSA_METHOD */
-    if ((dasync_rsa_method = RSA_meth_new("Dummy Async RSA method", 0)) == NULL
-        || RSA_meth_set_pub_enc(dasync_rsa_method, dasync_pub_enc) == 0
-        || RSA_meth_set_pub_dec(dasync_rsa_method, dasync_pub_dec) == 0
-        || RSA_meth_set_priv_enc(dasync_rsa_method, dasync_rsa_priv_enc) == 0
-        || RSA_meth_set_priv_dec(dasync_rsa_method, dasync_rsa_priv_dec) == 0
-        || RSA_meth_set_mod_exp(dasync_rsa_method, dasync_rsa_mod_exp) == 0
-        || RSA_meth_set_bn_mod_exp(dasync_rsa_method, BN_mod_exp_mont) == 0
-        || RSA_meth_set_init(dasync_rsa_method, dasync_rsa_init) == 0
-        || RSA_meth_set_finish(dasync_rsa_method, dasync_rsa_finish) == 0) {
-        DASYNCerr(DASYNC_F_BIND_DASYNC, DASYNC_R_INIT_FAILED);
+    /* Setup RSA */
+    ;
+    if ((dasync_rsa_orig = EVP_PKEY_meth_find(EVP_PKEY_RSA)) == NULL
+        || (dasync_rsa = EVP_PKEY_meth_new(EVP_PKEY_RSA, 0)) == NULL)
         return 0;
-    }
+    EVP_PKEY_meth_set_init(dasync_rsa, dasync_rsa_init);
+    EVP_PKEY_meth_set_cleanup(dasync_rsa, dasync_rsa_cleanup);
+    EVP_PKEY_meth_set_paramgen(dasync_rsa, dasync_rsa_paramgen_init,
+                               dasync_rsa_paramgen);
+    EVP_PKEY_meth_set_keygen(dasync_rsa, dasync_rsa_keygen_init,
+                             dasync_rsa_keygen);
+    EVP_PKEY_meth_set_encrypt(dasync_rsa, dasync_rsa_encrypt_init,
+                              dasync_rsa_encrypt);
+    EVP_PKEY_meth_set_decrypt(dasync_rsa, dasync_rsa_decrypt_init,
+                              dasync_rsa_decrypt);
+    EVP_PKEY_meth_set_ctrl(dasync_rsa, dasync_rsa_ctrl,
+                           dasync_rsa_ctrl_str);
 
     /* Ensure the dasync error handling is set up */
     ERR_load_DASYNC_strings();
 
     if (!ENGINE_set_id(e, engine_dasync_id)
         || !ENGINE_set_name(e, engine_dasync_name)
-        || !ENGINE_set_RSA(e, dasync_rsa_method)
+        || !ENGINE_set_pkey_meths(e, dasync_pkey)
         || !ENGINE_set_digests(e, dasync_digests)
         || !ENGINE_set_ciphers(e, dasync_ciphers)
         || !ENGINE_set_destroy_function(e, dasync_destroy)
@@ -295,6 +307,13 @@ static int bind_dasync(ENGINE *e)
     return 1;
 }
 
+static void destroy_pkey(void)
+{
+    EVP_PKEY_meth_free(dasync_rsa);
+    dasync_rsa_orig = NULL;
+    dasync_rsa = NULL;
+}
+
 # ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 {
@@ -347,9 +366,28 @@ static int dasync_destroy(ENGINE *e)
 {
     destroy_digests();
     destroy_ciphers();
-    RSA_meth_free(dasync_rsa_method);
+    destroy_pkey();
     ERR_unload_DASYNC_strings();
     return 1;
+}
+
+static int dasync_pkey(ENGINE *e, EVP_PKEY_METHOD **pmeth,
+                       const int **pnids, int nid)
+{
+    static const int rnid = EVP_PKEY_RSA;
+
+    if (pmeth == NULL) {
+        *pnids = &rnid;
+        return 1;
+    }
+
+    if (nid == EVP_PKEY_RSA) {
+        *pmeth = dasync_rsa;
+        return 1;
+    }
+
+    *pmeth = NULL;
+    return 0;
 }
 
 static int dasync_digests(ENGINE *e, const EVP_MD **digest,
@@ -520,60 +558,6 @@ static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
     dummy_pause_job();
 
     return EVP_MD_meth_get_final(EVP_sha1())(ctx, md);
-}
-
-/*
- * RSA implementation
- */
-
-static int dasync_pub_enc(int flen, const unsigned char *from,
-                    unsigned char *to, RSA *rsa, int padding) {
-    /* Ignore errors - we carry on anyway */
-    dummy_pause_job();
-    return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
-        (flen, from, to, rsa, padding);
-}
-
-static int dasync_pub_dec(int flen, const unsigned char *from,
-                    unsigned char *to, RSA *rsa, int padding) {
-    /* Ignore errors - we carry on anyway */
-    dummy_pause_job();
-    return RSA_meth_get_pub_dec(RSA_PKCS1_OpenSSL())
-        (flen, from, to, rsa, padding);
-}
-
-static int dasync_rsa_priv_enc(int flen, const unsigned char *from,
-                      unsigned char *to, RSA *rsa, int padding)
-{
-    /* Ignore errors - we carry on anyway */
-    dummy_pause_job();
-    return RSA_meth_get_priv_enc(RSA_PKCS1_OpenSSL())
-        (flen, from, to, rsa, padding);
-}
-
-static int dasync_rsa_priv_dec(int flen, const unsigned char *from,
-                      unsigned char *to, RSA *rsa, int padding)
-{
-    /* Ignore errors - we carry on anyway */
-    dummy_pause_job();
-    return RSA_meth_get_priv_dec(RSA_PKCS1_OpenSSL())
-        (flen, from, to, rsa, padding);
-}
-
-static int dasync_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
-{
-    /* Ignore errors - we carry on anyway */
-    dummy_pause_job();
-    return RSA_meth_get_mod_exp(RSA_PKCS1_OpenSSL())(r0, I, rsa, ctx);
-}
-
-static int dasync_rsa_init(RSA *rsa)
-{
-    return RSA_meth_get_init(RSA_PKCS1_OpenSSL())(rsa);
-}
-static int dasync_rsa_finish(RSA *rsa)
-{
-    return RSA_meth_get_finish(RSA_PKCS1_OpenSSL())(rsa);
 }
 
 /* Cipher helper functions */
@@ -802,4 +786,126 @@ static int dasync_aes128_cbc_hmac_sha1_cleanup(EVP_CIPHER_CTX *ctx)
      * see comment before the definition of dasync_aes_128_cbc_hmac_sha1().
      */
     return dasync_cipher_cleanup_helper(ctx, EVP_aes_128_cbc_hmac_sha1());
+}
+
+
+/*
+ * RSA implementation
+ */
+static int dasync_rsa_init(EVP_PKEY_CTX *ctx)
+{
+    static int (*pinit)(EVP_PKEY_CTX *ctx);
+
+    if (pinit == NULL)
+        EVP_PKEY_meth_get_init(dasync_rsa_orig, &pinit);
+    return pinit(ctx);
+}
+
+static void dasync_rsa_cleanup(EVP_PKEY_CTX *ctx)
+{
+    static void (*pcleanup)(EVP_PKEY_CTX *ctx);
+
+    if (pcleanup == NULL)
+        EVP_PKEY_meth_get_cleanup(dasync_rsa_orig, &pcleanup);
+    pcleanup(ctx);
+}
+
+static int dasync_rsa_paramgen_init(EVP_PKEY_CTX *ctx)
+{
+    static int (*pparamgen_init)(EVP_PKEY_CTX *ctx);
+
+    if (pparamgen_init == NULL)
+        EVP_PKEY_meth_get_paramgen(dasync_rsa_orig, &pparamgen_init, NULL);
+    return pparamgen_init(ctx);
+}
+
+static int dasync_rsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
+    static int (*pparamgen)(EVP_PKEY_CTX *c, EVP_PKEY *pkey);
+
+    if (pparamgen == NULL)
+        EVP_PKEY_meth_get_paramgen(dasync_rsa_orig, NULL, &pparamgen);
+    return pparamgen(ctx, pkey);
+}
+
+static int dasync_rsa_keygen_init(EVP_PKEY_CTX *ctx)
+{
+    static int (*pkeygen_init)(EVP_PKEY_CTX *ctx);
+
+    if (pkeygen_init == NULL)
+        EVP_PKEY_meth_get_keygen(dasync_rsa_orig, &pkeygen_init, NULL);
+    return pkeygen_init(ctx);
+}
+
+static int dasync_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+{
+    static int (*pkeygen)(EVP_PKEY_CTX *c, EVP_PKEY *pkey);
+
+    if (pkeygen == NULL)
+        EVP_PKEY_meth_get_keygen(dasync_rsa_orig, NULL, &pkeygen);
+    return pkeygen(ctx, pkey);
+}
+
+static int dasync_rsa_encrypt_init(EVP_PKEY_CTX *ctx)
+{
+    static int (*pencrypt_init)(EVP_PKEY_CTX *ctx);
+
+    if (pencrypt_init == NULL)
+        EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, &pencrypt_init, NULL);
+    return pencrypt_init(ctx);
+}
+
+static int dasync_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
+                              size_t *outlen, const unsigned char *in,
+                              size_t inlen)
+{
+    static int (*pencryptfn)(EVP_PKEY_CTX *ctx, unsigned char *out,
+                             size_t *outlen, const unsigned char *in,
+                             size_t inlen);
+
+    if (pencryptfn == NULL)
+        EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, NULL, &pencryptfn);
+    return pencryptfn(ctx, out, outlen, in, inlen);
+}
+
+static int dasync_rsa_decrypt_init(EVP_PKEY_CTX *ctx)
+{
+    static int (*pdecrypt_init)(EVP_PKEY_CTX *ctx);
+
+    if (pdecrypt_init == NULL)
+        EVP_PKEY_meth_get_decrypt(dasync_rsa_orig, &pdecrypt_init, NULL);
+    return pdecrypt_init(ctx);
+}
+
+static int dasync_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
+                              size_t *outlen, const unsigned char *in,
+                              size_t inlen)
+{
+    static int (*pdecrypt)(EVP_PKEY_CTX *ctx, unsigned char *out,
+                             size_t *outlen, const unsigned char *in,
+                             size_t inlen);
+
+    if (pdecrypt == NULL)
+        EVP_PKEY_meth_get_encrypt(dasync_rsa_orig, NULL, &pdecrypt);
+    return pdecrypt(ctx, out, outlen, in, inlen);
+}
+
+static int dasync_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+{
+    static int (*pctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
+
+    if (pctrl == NULL)
+        EVP_PKEY_meth_get_ctrl(dasync_rsa_orig, &pctrl, NULL);
+    return pctrl(ctx, type, p1, p2);
+}
+
+static int dasync_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
+                               const char *value)
+{
+    static int (*pctrl_str)(EVP_PKEY_CTX *ctx, const char *type,
+                            const char *value);
+
+    if (pctrl_str == NULL)
+        EVP_PKEY_meth_get_ctrl(dasync_rsa_orig, NULL, &pctrl_str);
+    return pctrl_str(ctx, type, value);
 }

@@ -10,6 +10,12 @@
 
 /* This aims to test the setting functions, including internal ones */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 

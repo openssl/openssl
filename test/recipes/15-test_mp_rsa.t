@@ -17,12 +17,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_mp_rsa");
 
-plan tests => 31;
-
-ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
-
-my $cleartext = data_file("plain_text");
-
 my @test_param = (
     # 3 primes, 2048-bit
     {
@@ -41,8 +35,14 @@ my @test_param = (
     },
 );
 
+plan tests => 1 + scalar(@test_param) * 5 * (disabled('deprecated-3.0') ? 1 : 2);
+
+ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
+
+my $cleartext = data_file("plain_text");
+
 # genrsa
-run_mp_tests(0);
+run_mp_tests(0) if !disabled('deprecated-3.0');
 # evp
 run_mp_tests(1);
 
@@ -60,26 +60,23 @@ sub run_mp_tests {
                          '-pkeyopt', "rsa_keygen_primes:$primes",
                          '-pkeyopt', "rsa_keygen_bits:$bits"])),
                "genrsa $name");
+            ok(run(app([ 'openssl', 'pkey', '-check',
+                         '-in', "rsamptest-$name.pem", '-noout'])),
+               "rsa -check $name");
+            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
+                         '-encrypt', '-in', $cleartext,
+                         '-out', "rsamptest-$name.enc" ])),
+               "rsa $name encrypt");
+            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
+                         '-decrypt', '-in', "rsamptest-$name.enc",
+                         '-out', "rsamptest-$name.dec" ])),
+               "rsa $name decrypt");
         } else {
             ok(run(app([ 'openssl', 'genrsa', '-out', "rsamptest-$name.pem",
-                         '-primes', $primes, $bits])),
-               "genrsa $name");
-        }
-
-        ok(run(app([ 'openssl', 'rsa', '-check', '-in', "rsamptest-$name.pem",
-                     '-noout'])),
-           "rsa -check $name");
-
-        if ($evp) {
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
-                         '-encrypt', '-in', $cleartext,
-                         '-out', "rsamptest-$name.enc" ])),
-               "rsa $name encrypt");
-            ok(run(app([ 'openssl', 'pkeyutl', '-inkey', "rsamptest-$name.pem",
-                         '-decrypt', '-in', "rsamptest-$name.enc",
-                         '-out', "rsamptest-$name.dec" ])),
-               "rsa $name decrypt");
-        } else {
+                         '-primes', $primes, $bits])), "genrsa $name");
+            ok(run(app([ 'openssl', 'rsa', '-check',
+                         '-in', "rsamptest-$name.pem", '-noout'])),
+               "rsa -check $name");
             ok(run(app([ 'openssl', 'rsautl', '-inkey', "rsamptest-$name.pem",
                          '-encrypt', '-in', $cleartext,
                          '-out', "rsamptest-$name.enc" ])),
@@ -89,7 +86,6 @@ sub run_mp_tests {
                          '-out', "rsamptest-$name.dec" ])),
                "rsa $name decrypt");
         }
-
         ok(check_msg("rsamptest-$name.dec"), "rsa $name check result");
     }
 }

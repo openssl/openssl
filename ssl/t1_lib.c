@@ -919,16 +919,16 @@ int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  * with a 128 byte (1024 bit) key.
  */
 #define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
-static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const RSA *rsa,
+static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
                                       const SIGALG_LOOKUP *lu)
 {
     const EVP_MD *md;
 
-    if (rsa == NULL)
+    if (pkey == NULL)
         return 0;
     if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
-    if (RSA_size(rsa) < RSA_PSS_MINIMUM_KEY_SIZE(md))
+    if (EVP_PKEY_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
     return 1;
 }
@@ -2823,7 +2823,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 #endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
-            if (!rsa_pss_check_min_key_size(s->ctx, EVP_PKEY_get0(tmppkey), lu))
+            if (!rsa_pss_check_min_key_size(s->ctx, tmppkey, lu))
                 continue;
         }
         break;
@@ -2909,9 +2909,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         /* validate that key is large enough for the signature algorithm */
                         EVP_PKEY *pkey = s->cert->pkeys[sig_idx].privatekey;
 
-                        if (!rsa_pss_check_min_key_size(s->ctx,
-                                                        EVP_PKEY_get0(pkey),
-                                                        lu))
+                        if (!rsa_pss_check_min_key_size(s->ctx, pkey, lu))
                             continue;
                     }
 #ifndef OPENSSL_NO_EC

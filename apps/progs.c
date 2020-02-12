@@ -49,8 +49,8 @@ FUNCTION functions[] = {
     {FT_general, "gendsa", gendsa_main, gendsa_options, "genpkey"},
 #endif
     {FT_general, "genpkey", genpkey_main, genpkey_options, NULL},
-#ifndef OPENSSL_NO_RSA
-    {FT_general, "genrsa", genrsa_main, genrsa_options, NULL},
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {FT_general, "genrsa", genrsa_main, genrsa_options, "genpkey"},
 #endif
     {FT_general, "help", help_main, help_options, NULL},
     {FT_general, "info", info_main, info_options, NULL},
@@ -75,9 +75,11 @@ FUNCTION functions[] = {
     {FT_general, "rand", rand_main, rand_options, NULL},
     {FT_general, "rehash", rehash_main, rehash_options, NULL},
     {FT_general, "req", req_main, req_options, NULL},
-    {FT_general, "rsa", rsa_main, rsa_options, NULL},
-#ifndef OPENSSL_NO_RSA
-    {FT_general, "rsautl", rsautl_main, rsautl_options, NULL},
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {FT_general, "rsa", rsa_main, rsa_options, "pkey"},
+#endif
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {FT_general, "rsautl", rsautl_main, rsautl_options, "pkeyutl"},
 #endif
 #ifndef OPENSSL_NO_SOCK
     {FT_general, "s_client", s_client_main, s_client_options, NULL},
