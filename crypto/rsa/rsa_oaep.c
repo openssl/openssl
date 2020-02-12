@@ -20,6 +20,12 @@
  * one-wayness.  For the RSA function, this is an equivalent notion.
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/constant_time.h"
 
 #include <stdio.h>

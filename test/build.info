@@ -35,7 +35,7 @@ IF[{- !$disabled{tests} -}]
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
           dhtest enginetest \
-          ssltest_old exptest rsa_test \
+          ssltest_old exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
           v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -53,7 +53,7 @@ IF[{- !$disabled{tests} -}]
           recordlentest drbgtest sslbuffertest \
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
+          servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test
@@ -124,14 +124,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
   DEPEND[exptest]=../libcrypto libtestutil.a
-
-  SOURCE[rsa_test]=rsa_test.c
-  INCLUDE[rsa_test]=../include ../apps/include
-  DEPEND[rsa_test]=../libcrypto libtestutil.a
-
-  SOURCE[rsa_mp_test]=rsa_mp_test.c
-  INCLUDE[rsa_mp_test]=../include ../apps/include
-  DEPEND[rsa_mp_test]=../libcrypto.a libtestutil.a
 
   SOURCE[fatalerrtest]=fatalerrtest.c ssltestlib.c
   INCLUDE[fatalerrtest]=../include ../apps/include
@@ -495,11 +487,10 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
-                     rdrand_sanitytest property_test ideatest \
-                     rsa_sp800_56b_test bn_internal_test ecdsatest \
+                     rdrand_sanitytest property_test ideatest rsa_mp_test \
+                     rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
                      asn1_dsa_internal_test dsatest dsa_no_digest_size_test
-
 
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
@@ -540,6 +531,13 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[x509_internal_test]=.. ../include ../apps/include
     DEPEND[x509_internal_test]=../libcrypto.a libtestutil.a
 
+    SOURCE[rsa_test]=rsa_test.c
+    INCLUDE[rsa_test]=../include ../apps/include
+    DEPEND[rsa_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[rsa_mp_test]=rsa_mp_test.c
+    INCLUDE[rsa_mp_test]=../include ../apps/include
+    DEPEND[rsa_mp_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ecdsatest]=ecdsatest.c
     INCLUDE[ecdsatest]=../include ../apps/include
