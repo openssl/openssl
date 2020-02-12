@@ -51,13 +51,13 @@ subtest "generating certificate requests with RSA" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-new", "-out", "testreq-rsa.pem", "-utf8",
                     "-key", srctop_file("test", "testrsa.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout"])),
+                    "-verify", "-in", "testreq-rsa.pem", "-noout"])),
            "Verifying signature on request");
     }
 };
@@ -71,13 +71,13 @@ subtest "generating certificate requests with DSA" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-new", "-out", "testreq-dsa.pem", "-utf8",
                     "-key", srctop_file("test", "testdsa.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout"])),
+                    "-verify", "-in", "testreq-dsa.pem", "-noout"])),
            "Verifying signature on request");
     }
 };
@@ -91,13 +91,13 @@ subtest "generating certificate requests with ECDSA" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-new", "-out", "testreq-ec.pem", "-utf8",
                     "-key", srctop_file("test", "testec-p256.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout"])),
+                    "-verify", "-in", "testreq-ec.pem", "-noout"])),
            "Verifying signature on request");
     }
 };
@@ -111,13 +111,13 @@ subtest "generating certificate requests with Ed25519" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-new", "-out", "testreq-ed25519.pem", "-utf8",
                     "-key", srctop_file("test", "tested25519.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout"])),
+                    "-verify", "-in", "testreq-ed25519.pem", "-noout"])),
            "Verifying signature on request");
     }
 };
@@ -131,13 +131,13 @@ subtest "generating certificate requests with Ed448" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-out", "testreq.pem", "-utf8",
+                    "-new", "-out", "testreq-ed448.pem", "-utf8",
                     "-key", srctop_file("test", "tested448.pem")])),
            "Generating request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout"])),
+                    "-verify", "-in", "testreq-ed448.pem", "-noout"])),
            "Verifying signature on request");
     }
 };
@@ -164,12 +164,12 @@ subtest "generating SM2 certificate requests" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file("test", "certs", "sm2.key"),
                     "-sigopt", "sm2_id:1234567812345678",
-                    "-out", "testreq.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem", "-sm3"])),
            "Generating SM2 certificate request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout",
+                    "-verify", "-in", "testreq-sm2.pem", "-noout",
                     "-sm2-id", "1234567812345678", "-sm3"])),
            "Verifying signature on SM2 certificate request");
 
@@ -177,12 +177,12 @@ subtest "generating SM2 certificate requests" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file("test", "certs", "sm2.key"),
                     "-sigopt", "sm2_hex_id:DEADBEEF",
-                    "-out", "testreq.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem", "-sm3"])),
            "Generating SM2 certificate request with hex id");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq.pem", "-noout",
+                    "-verify", "-in", "testreq-sm2.pem", "-noout",
                     "-sm2-hex-id", "DEADBEEF", "-sm3"])),
            "Verifying signature on SM2 certificate request");
     }
@@ -194,8 +194,6 @@ run_conversion('req conversions',
                "testreq.pem");
 run_conversion('req conversions -- testreq2',
                srctop_file("test", "testreq2.pem"));
-
-unlink "testkey.pem", "testreq.pem";
 
 sub run_conversion {
     my $title = shift;
