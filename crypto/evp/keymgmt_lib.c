@@ -16,6 +16,18 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
+/*
+ * match_type() checks if two EVP_KEYMGMT are matching key types.  This
+ * function assumes that the caller has made all the necessary NULL checks.
+ */
+static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
+{
+    const OSSL_PROVIDER *prov2 = EVP_KEYMGMT_provider(keymgmt2);
+    const char *name2 = evp_first_name(prov2, EVP_KEYMGMT_number(keymgmt2));
+
+    return EVP_KEYMGMT_is_a(keymgmt1, name2);
+}
+
 struct import_data_st {
     EVP_KEYMGMT *keymgmt;
     void *keydata;
@@ -34,92 +46,72 @@ static int try_import(const OSSL_PARAM params[], void *arg)
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
     void *keydata = NULL;
+    struct import_data_st import_data;
     size_t i, j;
 
-    /*
-     * If there is an underlying legacy key and it has changed, invalidate
-     * the cache of provider keys.
-     */
-    if (pk->pkey.ptr != NULL) {
-        /*
-         * If there is no dirty counter, this key can't be used with
-         * providers.
-         */
-        if (pk->ameth->dirty_cnt == NULL)
-            return NULL;
+    /* Export to where? */
+    if (keymgmt == NULL)
+        return NULL;
 
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
-            evp_keymgmt_util_clear_pkey_cache(pk);
-    }
+    /* If we have an unassigned key, give up */
+    if (pk->pkeys[0].keymgmt == NULL)
+        return NULL;
 
     /*
      * See if we have exported to this provider already.
      * If we have, return immediately.
      */
-    for (i = 0;
-         i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
-         i++) {
-        if (keymgmt == pk->pkeys[i].keymgmt)
-            return pk->pkeys[i].keydata;
-    }
+    i = evp_keymgmt_util_find_pkey_cache_index(pk, keymgmt);
 
+    /* If we're already exported to the given keymgmt, no more to do */
+    if (keymgmt == pk->pkeys[i].keymgmt)
+        return pk->pkeys[i].keydata;
+
+    /*
+     * Make sure that the type of the keymgmt to export to matches the type
+     * of already cached keymgmt
+     */
+    if (!ossl_assert(match_type(pk->pkeys[0].keymgmt, keymgmt)))
+        return NULL;
+
+    /* Create space to import data into */
     if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL)
         return NULL;
 
-    if (pk->pkey.ptr != NULL) {
-        /* There is a legacy key, try to export that one to the provider */
+    /*
+     * We look at the already cached provider keys, and import from the
+     * first that supports it (i.e. use its export function), and export
+     * the imported data to the new provider.
+     */
+
+    /* Setup for the export callback */
+    import_data.keydata = keydata;
+    import_data.keymgmt = keymgmt;
+    import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
+
+    for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
+        EVP_KEYMGMT *exp_keymgmt = pk->pkeys[j].keymgmt;
+        void *exp_keydata = pk->pkeys[j].keydata;
 
         /*
-         * If the legacy key doesn't have an export function or the export
-         * function fails, give up
+         * TODO(3.0) consider an evp_keymgmt_export() return value that
+         * indicates that the method is unsupported.
          */
-        if (pk->ameth->export_to == NULL
-            || !pk->ameth->export_to(pk, keydata, keymgmt)) {
-            evp_keymgmt_freedata(keymgmt, keydata);
-            return NULL;
-        }
+        if (exp_keymgmt->export == NULL)
+            continue;
 
-        /* Synchronize the dirty count */
-        pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
-    } else {
         /*
-         * Here, there is no legacy key, so we look at the already cached
-         * provider keys, and import from the first that supports it
-         * (i.e. use its export function), and export the imported data to
-         * the new provider.
+         * The export function calls the callback (try_import), which does
+         * the import for us.  If successful, we're done.
          */
+        if (evp_keymgmt_export(exp_keymgmt, exp_keydata,
+                               OSSL_KEYMGMT_SELECT_ALL,
+                               &try_import, &import_data))
+            break;
 
-        /* Setup for the export callback */
-        struct import_data_st import_data;
-
-        import_data.keydata = keydata;
-        import_data.keymgmt = keymgmt;
-        import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
-
-        for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            EVP_KEYMGMT *exp_keymgmt = pk->pkeys[i].keymgmt;
-            void *exp_keydata = pk->pkeys[i].keydata;
-
-            /*
-             * TODO(3.0) consider an evp_keymgmt_export() return value that
-             * indicates that the method is unsupported.
-             */
-            if (exp_keymgmt->export == NULL)
-                continue;
-
-            /*
-             * The export function calls the callback (try_import), which
-             * does the import for us.  If successful, we're done.
-             */
-            if (evp_keymgmt_export(exp_keymgmt, exp_keydata,
-                                   OSSL_KEYMGMT_SELECT_ALL,
-                                   &try_import, &import_data))
-                break;
-
-            /* If there was an error, bail out */
-            evp_keymgmt_freedata(keymgmt, keydata);
-            return NULL;
-        }
+        /* If there was an error, bail out */
+        evp_keymgmt_freedata(keymgmt, keydata);
+        return NULL;
     }
 
     /*
@@ -137,12 +129,10 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
 void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
 {
-    size_t i;
+    size_t i, end = OSSL_NELEM(pk->pkeys);
 
     if (pk != NULL) {
-        for (i = 0;
-             i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
-             i++) {
+        for (i = 0; i < end && pk->pkeys[i].keymgmt != NULL; i++) {
             EVP_KEYMGMT *keymgmt = pk->pkeys[i].keymgmt;
             void *keydata = pk->pkeys[i].keydata;
 
@@ -156,6 +146,19 @@ void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
         pk->cache.bits = 0;
         pk->cache.security_bits = 0;
     }
+}
+
+size_t evp_keymgmt_util_find_pkey_cache_index(EVP_PKEY *pk,
+                                              EVP_KEYMGMT *keymgmt)
+{
+    size_t i, end = OSSL_NELEM(pk->pkeys);
+
+    for (i = 0; i < end && pk->pkeys[i].keymgmt != NULL; i++) {
+        if (keymgmt == pk->pkeys[i].keymgmt)
+            break;
+    }
+
+    return i;
 }
 
 void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,

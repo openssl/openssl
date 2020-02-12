@@ -267,12 +267,10 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 
 /* OSSL_PROVIDER * is only used to get the library context */
-const char *evp_first_name(OSSL_PROVIDER *prov, int name_id);
+const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name);
 void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
-void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery);

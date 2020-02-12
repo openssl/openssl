@@ -932,6 +932,55 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         *keymgmt = NULL;
     }
 
+#ifndef FIPS_MODE
+    /*
+     * If there is an underlying legacy key and it has changed, invalidate
+     * the cache of provider keys.
+     */
+    if (pk->pkey.ptr != NULL) {
+        EVP_KEYMGMT *legacy_keymgmt = NULL;
+
+        /*
+         * If there is no dirty counter, this key can't be used with
+         * providers.
+         */
+        if (pk->ameth->dirty_cnt == NULL)
+            goto end;
+
+        /*
+         * If no keymgmt was given by the caller, we set it to the first
+         * that's cached, to become the keymgmt to re-export to if needed,
+         * or to have a token keymgmt to return on success.  Further checks
+         * are done further down.
+         *
+         * We need to carefully save the pointer somewhere other than in
+         * tmp_keymgmt, so the EVP_KEYMGMT_up_ref() below doesn't mistakenly
+         * increment the reference counter of a keymgmt given by the caller.
+         */
+        if (tmp_keymgmt == NULL)
+            legacy_keymgmt = pk->pkeys[0].keymgmt;
+
+        /*
+         * If the dirty counter changed since last time, we make sure to
+         * hold on to the keymgmt we just got (if we got one), then clear
+         * the cache.
+         */
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy) {
+            if (legacy_keymgmt != NULL && !EVP_KEYMGMT_up_ref(legacy_keymgmt))
+                goto end;
+            evp_keymgmt_util_clear_pkey_cache(pk);
+        }
+
+        /*
+         * |legacy_keymgmt| was only given a value if |tmp_keymgmt| is
+         * NULL.
+         */
+        if (legacy_keymgmt != NULL)
+            tmp_keymgmt = legacy_keymgmt;
+    }
+#endif
+
+    /* If no keymgmt was given or found, get a default keymgmt */
     if (tmp_keymgmt == NULL) {
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
 
@@ -941,10 +990,61 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         EVP_PKEY_CTX_free(ctx);
     }
 
-    if (tmp_keymgmt != NULL)
-        keydata =
-            evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
+    if (tmp_keymgmt == NULL)
+        goto end;
 
+#ifndef FIPS_MODE
+    if (pk->pkey.ptr != NULL) {
+        size_t i;
+
+        /*
+         * Find our keymgmt in the cache.  If it's present, it means that
+         * export has already been done.  We take token copies of the
+         * cached pointers, to have token success values to return.
+         *
+         * TODO(3.0) Right now, we assume we have ample space.  We will
+         * have to think about a cache aging scheme, though, if |i| indexes
+         * outside the array.
+         */
+        i = evp_keymgmt_util_find_pkey_cache_index(pk, tmp_keymgmt);
+        if (!ossl_assert(i < OSSL_NELEM(pk->pkeys)))
+            goto end;
+        if (pk->pkeys[i].keymgmt != NULL) {
+            keydata = pk->pkeys[i].keydata;
+            goto end;
+        }
+
+        /*
+         * If we still don't have a keymgmt at this point, or the legacy
+         * key doesn't have an export function, just bail out.
+         */
+        if (pk->ameth->export_to == NULL)
+            goto end;
+
+        /* Make sure that the keymgmt key type matches the legacy NID */
+        if (!ossl_assert(EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type))))
+            goto end;
+
+        if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
+            goto end;
+
+        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt)) {
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = NULL;
+            goto end;
+        }
+
+        evp_keymgmt_util_cache_pkey(pk, i, tmp_keymgmt, keydata);
+
+        /* Synchronize the dirty count */
+        pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+        goto end;
+    }
+#endif  /* FIPS_MODE */
+
+    keydata = evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
+
+ end:
     /*
      * If nothing was exported, |tmp_keymgmt| might point at a freed
      * EVP_KEYMGMT, so we clear it to be safe.  It shouldn't be useful for

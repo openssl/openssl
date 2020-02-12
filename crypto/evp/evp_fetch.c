@@ -373,7 +373,7 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
     ossl_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
 }
 
-const char *evp_first_name(OSSL_PROVIDER *prov, int name_id)
+const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id)
 {
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);

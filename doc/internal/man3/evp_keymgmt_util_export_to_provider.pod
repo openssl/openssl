@@ -21,17 +21,15 @@ evp_keymgmt_util_fromdata
 
 =head1 DESCRIPTION
 
-evp_keymgmt_util_export_to_provider() exports the key material from
-the given key I<pk> to a provider via a B<EVP_KEYMGMT> interface, if
-this hasn't already been done.
+evp_keymgmt_util_export_to_provider() exports cached key material
+(provider side key material) from the given key I<pk> to a provider
+via a B<EVP_KEYMGMT> interface, if this hasn't already been done.
 It maintains a cache of provider key references in I<pk> to keep track
-of all such exports.
+of all provider side keys.
 
-If I<pk> has an assigned legacy key, a check is done to see if any of
-its key material has changed since last export, i.e. the legacy key's
-is_dirty() method returns 1.
-If it has, the cache of already exported keys is cleared, and a new
-export is made with the new key material.
+To export a legacy key, use L<evp_pkey_make_provided(3)> instead, as
+this function deals purely with provider side keys and will not care
+to look at any legacy key.
 
 evp_keymgmt_util_clear_pkey_cache() can be used to explicitly clear
 the cache of provider key references.

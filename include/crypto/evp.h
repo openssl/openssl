@@ -574,11 +574,15 @@ void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
+void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                             EVP_KEYMGMT **keymgmt, const char *propquery);
 
 /*
  * KEYMGMT utility functions
  */
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+size_t evp_keymgmt_util_find_pkey_cache_index(EVP_PKEY *pk,
+                                              EVP_KEYMGMT *keymgmt);
 void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
 void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
                                  EVP_KEYMGMT *keymgmt, void *keydata);

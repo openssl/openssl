@@ -309,8 +309,12 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey = evp_keymgmt_util_export_to_provider(peer, ctx->keymgmt);
-    /* If export failed, legacy may be able to pick it up */
+    provkey = evp_pkey_make_provided(peer, ctx->libctx, &ctx->keymgmt,
+                                     ctx->propquery);
+    /*
+     * If making the key provided wasn't possible, legacy may be able to pick
+     * it up
+     */
     if (provkey == NULL)
         goto legacy;
     return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
@@ -319,6 +323,10 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 #ifdef FIPS_MODE
     return ret;
 #else
+    /*
+     * TODO(3.0) investigate the case where the operation is deemed legacy,
+     * but the given peer key is provider only.
+     */
     if (ctx->pmeth == NULL
         || !(ctx->pmeth->derive != NULL
              || ctx->pmeth->encrypt != NULL

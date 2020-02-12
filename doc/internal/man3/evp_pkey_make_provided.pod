@@ -24,6 +24,14 @@ fetch an B<EVP_KEYMGMT> implicitly, using I<propquery> as property query string.
 As output from this function, I<*keymgmt> will be assigned the B<EVP_KEYMGMT>
 that was used, if the export was successful, otherwise it will be assigned NULL.
 
+If I<pk> has an assigned legacy key, a check is done to see if any of
+its key material has changed since last export, by comparing the
+result of the legacy key's dirty_cnt() method with a copy of that
+result from last time evp_pkey_make_provided() was run with this
+B<EVP_PKEY>.
+If it has, the cache of already exported keys is cleared, and a new
+export is made with the new legacy key material.
+
 =head1 RETURN VALUES
 
 evp_pkey_make_provided() returns the provider key data that was exported if
