@@ -53,10 +53,8 @@ DEPRECATEDIN_3_0(int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c))
 DEPRECATEDIN_3_0(unsigned char *WHIRLPOOL(const void *inp, size_t bytes,
                                           unsigned char *md))
 
-#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
-#   ifdef __cplusplus
+#  ifdef __cplusplus
 }
-#   endif
 #  endif
 # endif
 
