@@ -22,8 +22,7 @@
 
 #include "internal/ffc.h"
 
-extern FFC_PARAMS *dh_get0_params(DH *dh);
-
+#ifndef OPENSSL_NO_DSA
 static const unsigned char dsa_2048_224_sha224_p[] = {
     0x93, 0x57, 0x93, 0x62, 0x1b, 0x9a, 0x10, 0x9b, 0xc1, 0x56, 0x0f, 0x24,
     0x71, 0x76, 0x4e, 0xd3, 0xed, 0x78, 0x78, 0x7a, 0xbf, 0x89, 0x71, 0x67,
@@ -312,6 +311,7 @@ static int ffc_params_validate_pq_test(void)
                                 NULL)))
         goto err;
 
+
     ffc_params_set0_pqg(&params, p, q, NULL);
     p = q  = NULL;
     ffc_params_set_validate_params(&params, dsa_3072_256_sha512_seed,
@@ -338,7 +338,9 @@ err:
     BN_free(q);
     return ret;
 }
+#endif /* OPENSSL_NO_DSA */
 
+#ifndef OPENSSL_NO_DH
 static int ffc_params_gen_test(void)
 {
     int ret = 0, res = -1;
@@ -440,6 +442,8 @@ err:
     ffc_params_cleanup(&params);
     return ret;
 }
+
+extern FFC_PARAMS *dh_get0_params(DH *dh);
 
 static int ffc_public_validate_test(void)
 {
@@ -626,16 +630,21 @@ err:
     BN_CTX_free(ctx);
     return ret;
 }
+#endif /* OPENSSL_NO_DH */
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_DSA
     ADD_TEST(ffc_params_validate_pq_test);
     ADD_TEST(ffc_params_validate_g_unverified_test);
+#endif /* OPENSSL_NO_DSA */
+#ifndef OPENSSL_NO_DH
     ADD_TEST(ffc_params_gen_test);
     ADD_TEST(ffc_params_gen_canonicalg_test);
     ADD_TEST(ffc_params_fips186_2_gen_validate_test);
     ADD_TEST(ffc_public_validate_test);
     ADD_TEST(ffc_private_validate_test);
     ADD_ALL_TESTS(ffc_private_gen_test, 10);
+#endif /* OPENSSL_NO_DH */
     return 1;
 }
