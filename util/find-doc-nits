@@ -577,7 +577,7 @@ sub parsenum {
         next if /^#/;
         next if /\bNOEXIST\b/;
         my @fields = split();
-        die "Malformed line $_"
+        die "Malformed line $. in $file: $_"
             if scalar @fields != 2 && scalar @fields != 4;
         push @apis, $fields[0];
     }
