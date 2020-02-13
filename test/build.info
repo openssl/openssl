@@ -27,14 +27,18 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
-  PROGRAMS{noinst}=\
+  IF[{- !$disabled{'deprecated-3.0'} -}]
+    $DEPRECATED_TESTS=enginetest
+  ENDIF
+
+  PROGRAMS{noinst}=$DEPRECATED_TESTS\
           confdump \
           versions \
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
-          enginetest exptest \
+          exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test acvp_test evp_libctx_test \
           v3nametest v3ext \

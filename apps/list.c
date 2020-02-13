@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
+/* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>
@@ -509,6 +509,7 @@ static void list_pkey(void)
     }
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_pkey_meth(void)
 {
     size_t i;
@@ -524,6 +525,7 @@ static void list_pkey_meth(void)
                    pkey_flags & ASN1_PKEY_DYNAMIC ?  "External" : "Builtin");
     }
 }
+#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_engines(void)
@@ -727,9 +729,9 @@ const OPTIONS list_options[] = {
      "List of cipher algorithms"},
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"engines", OPT_ENGINES, '-',
      "List of loaded engines"},
 #endif
@@ -867,9 +869,9 @@ opthelp:
         list_ciphers();
     if (todo.pk_algorithms)
         list_pkey();
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.pk_method)
         list_pkey_meth();
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.engines)
         list_engines();
 #endif

@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Low level key APIs (DH etc) are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
@@ -429,6 +435,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
         return 0;
     keylen = EVP_CIPHER_key_length(cipher);
     if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
+        /* TODO: make this not get a method we can call directly */
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
                                                0, &kekcipher);
         if (ret <= 0)

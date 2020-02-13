@@ -11,8 +11,12 @@ use strict;
 use warnings;
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 
 setup("test_engine");
+
+plan skip_all => "engines are deprecated"
+    if disabled('deprecated-3.0');
 
 plan tests => 1;
 ok(run(test(["enginetest"])), "running enginetest");
