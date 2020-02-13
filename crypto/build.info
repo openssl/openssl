@@ -84,7 +84,7 @@ SOURCE[../providers/libfips.a]=$UTIL_COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 DEFINE[../providers/libfips.a]=$UTIL_DEFINE
-DEFINE[../providers/fips]=$UTIL_DEFINE
+DEFINE[../providers/fips]=$UTIL_DEFINE FIPS_MODE
 DEFINE[../providers/libimplementations.a]=$UTIL_DEFINE
 DEFINE[../providers/libcommon.a]=$UTIL_DEFINE
 
