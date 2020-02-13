@@ -29,6 +29,10 @@ EVP_PKEY_meth_remove
 
  #include <openssl/evp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  typedef struct evp_pkey_method_st EVP_PKEY_METHOD;
 
  EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);
@@ -240,6 +244,9 @@ EVP_PKEY_meth_remove
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
+
 B<EVP_PKEY_METHOD> is a structure which holds a set of methods for a
 specific public key cryptographic algorithm. Those methods are usually
 used to perform different jobs, such as generating a key, signing or
@@ -439,6 +446,10 @@ EVP_PKEY_meth_remove() returns 1 if method is removed successfully or
 All EVP_PKEY_meth_set and EVP_PKEY_meth_get functions have no return
 values. For the 'get' functions, function pointers are returned by
 arguments.
+
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

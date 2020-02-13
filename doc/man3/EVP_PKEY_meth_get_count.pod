@@ -8,12 +8,19 @@ EVP_PKEY_meth_get_count, EVP_PKEY_meth_get0, EVP_PKEY_meth_get0_info - enumerate
 
  #include <openssl/evp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  size_t EVP_PKEY_meth_get_count(void);
  const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx);
  void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
                               const EVP_PKEY_METHOD *meth);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
 
 EVP_PKEY_meth_count() returns a count of the number of public key methods
 available: it includes standard methods and any methods added by the
@@ -37,6 +44,10 @@ EVP_PKEY_meth_get0_info() does not return a value.
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>
+
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

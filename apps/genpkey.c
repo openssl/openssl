@@ -280,7 +280,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
 
     ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
 
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (!ameth && e)
         ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
 #endif
@@ -293,7 +293,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     ERR_clear_error();
 
     EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     ENGINE_finish(tmpeng);
 #endif
     ctx = EVP_PKEY_CTX_new_id(pkey_id, e);

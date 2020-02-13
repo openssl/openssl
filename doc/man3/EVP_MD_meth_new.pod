@@ -18,6 +18,10 @@ EVP_MD_meth_get_ctrl
 
  #include <openssl/evp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
  void EVP_MD_meth_free(EVP_MD *md);
  EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
@@ -55,6 +59,9 @@ EVP_MD_meth_get_ctrl
                                                int p1, void *p2);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
 
 The B<EVP_MD> type is a structure for digest method implementation.
 It can also have associated public/private key signing and verifying
@@ -176,6 +183,8 @@ respective B<md> function.
 L<EVP_DigestInit(3)>, L<EVP_SignInit(3)>, L<EVP_VerifyInit(3)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 The B<EVP_MD> structure was openly available in OpenSSL before version
 1.1.

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1140,6 +1143,7 @@ static int test_set_get_raw_keys(int tst)
            && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int pkey_custom_check(EVP_PKEY *pkey)
 {
     return 0xbeef;
@@ -1156,6 +1160,7 @@ static int pkey_custom_param_check(EVP_PKEY *pkey)
 }
 
 static EVP_PKEY_METHOD *custom_pmeth;
+#endif
 
 static int test_EVP_PKEY_check(int i)
 {
@@ -1166,7 +1171,9 @@ static int test_EVP_PKEY_check(int i)
     EC_KEY *eckey = NULL;
 #endif
     EVP_PKEY_CTX *ctx = NULL;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     EVP_PKEY_CTX *ctx2 = NULL;
+#endif
     const APK_DATA *ak = &keycheckdata[i];
     const unsigned char *input = ak->kder;
     size_t input_len = ak->size;
@@ -1218,6 +1225,7 @@ static int test_EVP_PKEY_check(int i)
     if (!TEST_int_eq(EVP_PKEY_param_check(ctx), expected_param_check))
         goto done;
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
     /* assign the pkey directly, as an internal test */
     EVP_PKEY_up_ref(pkey);
@@ -1231,12 +1239,15 @@ static int test_EVP_PKEY_check(int i)
 
     if (!TEST_int_eq(EVP_PKEY_param_check(ctx2), 0xbeef))
         goto done;
+#endif
 
     ret = 1;
 
  done:
     EVP_PKEY_CTX_free(ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     EVP_PKEY_CTX_free(ctx2);
+#endif
     EVP_PKEY_free(pkey);
     BIO_free(pubkey);
     return ret;
@@ -1822,6 +1833,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_SM2_verify);
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
     if (!TEST_ptr(custom_pmeth))
         return 0;
@@ -1830,6 +1842,7 @@ int setup_tests(void)
     EVP_PKEY_meth_set_param_check(custom_pmeth, pkey_custom_param_check);
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
+#endif
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);

@@ -17,6 +17,10 @@ EVP_CIPHER_meth_get_ctrl
 
  #include <openssl/evp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
  EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
  void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
@@ -64,6 +68,9 @@ EVP_CIPHER_meth_get_ctrl
                                                            void *ptr);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the OSSL_PROVIDER APIs.
 
 The B<EVP_CIPHER> type is a structure for symmetric cipher method
 implementation.
@@ -233,6 +240,8 @@ respective B<cipher> function.
 L<EVP_EncryptInit(3)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 The functions described here were added in OpenSSL 1.1.0.
 The B<EVP_CIPHER> structure created with these functions became reference

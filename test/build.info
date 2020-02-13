@@ -27,14 +27,14 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
-  PROGRAMS{noinst}=\
+  PROGRAMS{noinst}= \
           confdump \
           versions \
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
-          enginetest exptest \
+          exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test acvp_test evp_libctx_test \
           v3nametest v3ext \
@@ -58,6 +58,10 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test
+
+  IF[{- !$disabled{'deprecated-3.0'} -}]
+    PROGRAMS{noinst}=enginetest
+  ENDIF
 
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
