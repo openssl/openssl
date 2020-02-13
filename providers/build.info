@@ -101,6 +101,7 @@ SUBDIRS=fips
 $FIPSGOAL=fips
 DEPEND[$FIPSGOAL]=$LIBIMPLEMENTATIONS $LIBFIPS
 INCLUDE[$FIPSGOAL]=../include
+DEFINE[$FIPSGOAL]=FIPS_MODE
 IF[{- defined $target{shared_defflag} -}]
   SOURCE[$FIPSGOAL]=fips.ld
   GENERATE[fips.ld]=../util/providers.num
