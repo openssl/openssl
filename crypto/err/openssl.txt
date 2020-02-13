@@ -1,4 +1,4 @@
-# Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1002,6 +1002,7 @@ PKCS7_F_PKCS7_SIGNER_INFO_SIGN:139:PKCS7_SIGNER_INFO_sign
 PKCS7_F_PKCS7_SIGN_ADD_SIGNER:137:PKCS7_sign_add_signer
 PKCS7_F_PKCS7_SIMPLE_SMIMECAP:119:PKCS7_simple_smimecap
 PKCS7_F_PKCS7_VERIFY:117:PKCS7_verify
+RAND_F_DATA_COLLECT_METHOD:127:data_collect_method
 RAND_F_DRBG_BYTES:101:drbg_bytes
 RAND_F_DRBG_GET_ENTROPY:105:drbg_get_entropy
 RAND_F_DRBG_SETUP:117:drbg_setup
