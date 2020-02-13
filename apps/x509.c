@@ -107,7 +107,7 @@ const OPTIONS x509_options[] = {
     {"checkend", OPT_CHECKEND, 'M',
      "Check whether the cert expires in the next arg seconds"},
     {OPT_MORE_STR, 1, 1, "Exit 1 if so, 0 if not"},
-    {"signkey", OPT_SIGNKEY, '<', "Self sign cert with arg"},
+    {"signkey", OPT_SIGNKEY, 's', "Self sign cert with arg"},
     {"x509toreq", OPT_X509TOREQ, '-',
      "Output a certification request object"},
     {"req", OPT_REQ, '-', "Input is a certificate request, sign and output"},
