@@ -383,12 +383,12 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The key format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
-=item B<-CAform> B<DER>|B<PEM>, B<-CAkeyform> B<DER>|B<PEM>
+=item B<-CAform> B<DER>|B<PEM>, B<-CAkeyform> B<DER>|B<PEM>|B<ENGINE>
 
 The format for the CA certificate and key; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.

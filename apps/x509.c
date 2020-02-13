@@ -145,7 +145,7 @@ const OPTIONS x509_options[] = {
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
     OPT_R_OPTIONS,
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
-    {"CAkeyform", OPT_CAKEYFORM, 'f', "CA key format - default PEM"},
+    {"CAkeyform", OPT_CAKEYFORM, 'E', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"CAcreateserial", OPT_CACREATESERIAL, '-',
      "Create serial number file if it does not exist"},
@@ -239,7 +239,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_CAKEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_ANY, &CAkeyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &CAkeyformat))
                 goto opthelp;
             break;
         case OPT_OUT:
