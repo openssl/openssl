@@ -785,7 +785,9 @@ while (<>) { # loop over all lines of all input files
             $hanging_offset -= INDENT_LEVEL; # cancel newly hanging_offset
         }
 
-        if (m/^[\s@]*(case|default)(\W|$)/) { # leading 'case' or 'default'
+        if (m/^[\s@]*(case|default)(\W.*$|$)/) { # leading 'case' or 'default'
+            my $keyword = $1;
+            report("code after $keyword: ") if $2 =~ /:.*[^\s@].*$/;
             $local_offset = -INDENT_LEVEL;
         } else {
             if (m/^([\s@]*)(\w+):/) { # (leading) label, cannot be "default"

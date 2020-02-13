@@ -125,7 +125,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     switch (b ) {   /*@ space before ')', reported unless sloppy-spc */
    case 1:          /*@ 'case' special statement indent off by -1 */
     case(2):        /*@ no space after 'case', reported unless sloppy-spc */
-     default: ;     /*@ 'default' special statement indent off by 1 */
+    default: ;      /*@ code after 'default:' */
 }                   /*@ statement indent off by -4 */
   label:            /*@ label special statement indent off by 1 */
     return(         /*@ no space after 'return', reported unless sloppy-spc */
