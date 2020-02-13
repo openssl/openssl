@@ -45,7 +45,7 @@ B<openssl> B<x509>
 [B<-setalias> I<arg>]
 [B<-days> I<arg>]
 [B<-set_serial> I<n>]
-[B<-signkey> I<filename>]
+[B<-signkey> I<arg>]
 [B<-badsig>]
 [B<-passin> I<arg>]
 [B<-x509toreq>]
@@ -348,10 +348,11 @@ can thus behave like a "mini CA".
 
 =over 4
 
-=item B<-signkey> I<filename>
+=item B<-signkey> I<arg>
 
 This option causes the input file to be self signed using the supplied
-private key.
+private key or engine. The private key's format is specified with the
+B<-keyform> option.
 
 It sets the issuer name to the subject name (i.e., makes it self-issued)
 and changes the public key to the supplied value (unless overridden by
