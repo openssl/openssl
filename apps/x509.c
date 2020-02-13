@@ -128,7 +128,7 @@ const OPTIONS x509_options[] = {
     {"setalias", OPT_SETALIAS, 's', "Set certificate alias"},
     {"days", OPT_DAYS, 'n',
      "How long till expiry of a signed certificate - def 30 days"},
-    {"signkey", OPT_SIGNKEY, '<', "Self sign cert with arg"},
+    {"signkey", OPT_SIGNKEY, 's', "Self sign cert with arg"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's', "Section from config file to use"},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text options"},
