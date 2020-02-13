@@ -311,6 +311,9 @@ struct rand_drbg_st {
 #ifndef FIPS_MODE
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
+#else
+    /* Unused in the FIPS provider, but retained here to preserve the structure size */
+    CRYPTO_EX_DATA unused;
 #endif
 
     /* Implementation specific data */
