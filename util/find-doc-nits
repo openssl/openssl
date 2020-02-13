@@ -266,13 +266,13 @@ sub name_synopsis {
     return unless $contents =~ /=head1 NAME(.*)=head1 SYNOPSIS/ms;
     my $tmp = $1;
     $tmp =~ tr/\n/ /;
-    err($id, "trailing comma before - in NAME")
+    err($id, "Trailing comma before - in NAME")
         if $tmp =~ /, *-/;
     $tmp =~ s/ -.*//g;
     err($id, "POD markup among the names in NAME")
         if $tmp =~ /[<>]/;
     $tmp =~ s/  */ /g;
-    err($id, "missing comma in NAME")
+    err($id, "Missing comma in NAME")
         if $tmp =~ /[^,] /;
 
     my $dirname = dirname($filename);
@@ -284,7 +284,7 @@ sub name_synopsis {
     foreach my $n ( split ',', $tmp ) {
         $n =~ s/^\s+//;
         $n =~ s/\s+$//;
-        err($id, "the name '$n' contains white-space")
+        err($id, "The name '$n' contains white-space")
             if $n =~ /\s/;
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
@@ -293,7 +293,7 @@ sub name_synopsis {
                    files(TAGS => [ 'manual', $section ]) )
                  && $n ne $simplename );
     }
-    err($id, "the following exist as other .pod files:",
+    err($id, "The following exist as other .pod files:",
          sort keys %foundfilenames)
         if %foundfilenames;
     err($id, "$simplename (filename) missing from NAME section")
@@ -318,7 +318,7 @@ sub name_synopsis {
         if ( $line =~ /typedef.*\(\*\S+\)\s+\(/ ) {
             # a callback function with whitespace before the argument list:
             # typedef ... (*NAME) (...
-            err($id, "function typedef has space before arg list: $line");
+            err($id, "Function typedef has space before arg list: $line");
         }
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
@@ -350,7 +350,7 @@ sub name_synopsis {
         $names{$sym} = 2;
 
         # Do some sanity checks on the prototype.
-        err($id, "prototype missing spaces around commas: $line")
+        err($id, "Prototype missing spaces around commas: $line")
             if $is_prototype && $line =~ /[a-z0-9],[^ ]/;
     }
 
@@ -386,20 +386,20 @@ sub check_head_style {
     foreach my $line ( split /\n+/, $contents ) {
         next unless $line =~ /^=head/;
         if ( $line =~ /head1/ ) {
-            err($id, "duplicate section $line")
+            err($id, "Duplicate section $line")
                 if defined $head1{$line};
             $head1{$line} = 1;
             %subheads = ();
         } else {
-            err($id, "duplicate subsection $line")
+            err($id, "Duplicate subsection $line")
                 if defined $subheads{$line};
             $subheads{$line} = 1;
         }
-        err($id, "period in =head")
+        err($id, "Period in =head")
             if $line =~ /\.[^\w]/ or $line =~ /\.$/;
         err($id, "not all uppercase in =head1")
             if $line =~ /head1.*[a-z]/;
-        err($id, "all uppercase in subhead")
+        err($id, "All uppercase in subhead")
             if $line =~ /head[234][ A-Z0-9]+$/;
     }
 }
@@ -596,10 +596,10 @@ sub wording {
         # Sigh, trademark
         next if $k eq 'file system'
             and $contents =~ /Microsoft Encrypted File System/;
-        err($id, "found '$k' should use '$preferred_words{$k}'")
+        err($id, "Found '$k' should use '$preferred_words{$k}'")
             if $contents =~ /\b\Q$k\E\b/i;
     }
-    err($id, "found 'epoch' should use 'Epoch'")
+    err($id, "Found 'epoch' should use 'Epoch'")
         if $contents =~ /\bepoch\b/;
     if ( $id =~ m@man1/@ ) {
         err($id, "found 'tool' in NAME, should use 'command'")
@@ -674,25 +674,25 @@ sub check {
 
     wording($id, $contents);
 
-    err($id, "doesn't start with =pod")
+    err($id, "Doesn't start with =pod")
         if $contents !~ /^=pod/;
-    err($id, "doesn't end with =cut")
+    err($id, "Doesn't end with =cut")
         if $contents !~ /=cut\n$/;
-    err($id, "more than one cut line.")
+    err($id, "More than one cut line.")
         if $contents =~ /=cut.*=cut/ms;
     err($id, "EXAMPLE not EXAMPLES section.")
         if $contents =~ /=head1 EXAMPLE[^S]/;
     err($id, "WARNING not WARNINGS section.")
         if $contents =~ /=head1 WARNING[^S]/;
-    err($id, "missing copyright")
+    err($id, "Missing copyright")
         if $contents !~ /Copyright .* The OpenSSL Project Authors/;
-    err($id, "copyright not last")
+    err($id, "Copyright not last")
         if $contents =~ /head1 COPYRIGHT.*=head/ms;
     err($id, "head2 in All uppercase")
         if $contents =~ /head2\s+[A-Z ]+\n/;
-    err($id, "extra space after head")
+    err($id, "Extra space after head")
         if $contents =~ /=head\d\s\s+/;
-    err($id, "period in NAME section")
+    err($id, "Period in NAME section")
         if $contents =~ /=head1 NAME.*\.\n.*=head1 SYNOPSIS/ms;
     err($id, "Duplicate $1 in L<>")
         if $contents =~ /L<([^>]*)\|([^>]*)>/ && $1 eq $2;
@@ -708,7 +708,7 @@ sub check {
             my $count = 0;
             foreach my $line ( split /\n+/, $1 ) {
                 if ( $line =~ m@include <openssl/@ ) {
-                    err($id, "has multiple includes")
+                    err($id, "Has multiple includes")
                         if ++$count == 2;
                 } else {
                     $count = 0;
@@ -735,7 +735,7 @@ sub check {
     $section = $1 if $dirname =~ /man([1-9])/;
 
     foreach ( (@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}}) ) {
-        err($id, "missing $_ head1 section")
+        err($id, "Missing $_ head1 section")
             if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 }
