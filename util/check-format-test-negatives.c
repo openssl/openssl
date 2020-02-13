@@ -204,6 +204,14 @@ static varref cmp_vars[] = { /* comment */
     {&opt_server}, {&opt_proxy}, {&opt_path},
 };
 
+#define SWITCH(x)                               \
+    switch (x) {                                \
+    case 0:                                     \
+        break;                                  \
+    default:                                    \
+        break;                                  \
+    }
+
 #define DEFINE_SET_GET_BASE_TEST(PREFIX, SETN, GETN, DUP, FIELD, TYPE, ERR, \
                                  DEFAULT, NEW, FREE) \
     static int execute_CTX_##SETN##_##GETN##_##FIELD( \
