@@ -22,13 +22,13 @@
  * (if the size can be arbitrary, then we give whatever we have)
  */
 
-static int prepare_from_text(const OSSL_PARAM *template,
+static int prepare_from_text(const OSSL_PARAM *tmpl,
                              const char *value, size_t value_n,
                              unsigned int flags,
                              /* Output parameters */
                              size_t *buf_n, BIGNUM **tmpbn)
 {
-    switch (template->data_type) {
+    switch (tmpl->data_type) {
     case OSSL_PARAM_INTEGER:
     case OSSL_PARAM_UNSIGNED_INTEGER:
         if ((flags & FLAG_HEX) != 0)
@@ -47,7 +47,7 @@ static int prepare_from_text(const OSSL_PARAM *template,
          * it by subtracting 1 here and inverting the bytes in
          * construct_from_text() below.
          */
-        if (template->data_type == OSSL_PARAM_INTEGER && BN_is_negative(*tmpbn)
+        if (tmpl->data_type == OSSL_PARAM_INTEGER && BN_is_negative(*tmpbn)
             && !BN_sub_word(*tmpbn, 1)) {
             return 0;
         }
@@ -58,14 +58,14 @@ static int prepare_from_text(const OSSL_PARAM *template,
          * TODO(v3.0) is this the right way to do this?  This code expects
          * a zero data size to simply mean "arbitrary size".
          */
-        if (template->data_size > 0) {
-            if (*buf_n >= template->data_size) {
+        if (tmpl->data_size > 0) {
+            if (*buf_n >= tmpl->data_size) {
                 CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
                 /* Since this is a different error, we don't break */
                 return 0;
             }
             /* Change actual size to become the desired size. */
-            *buf_n = template->data_size;
+            *buf_n = tmpl->data_size;
         }
         break;
     case OSSL_PARAM_UTF8_STRING:
@@ -87,7 +87,7 @@ static int prepare_from_text(const OSSL_PARAM *template,
     return 1;
 }
 
-static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
+static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *tmpl,
                                const char *value, size_t value_n,
                                unsigned int flags,
                                void *buf, size_t buf_n, BIGNUM *tmpbn)
@@ -96,7 +96,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
         return 0;
 
     if (buf_n > 0) {
-        switch (template->data_type) {
+        switch (tmpl->data_type) {
         case OSSL_PARAM_INTEGER:
         case OSSL_PARAM_UNSIGNED_INTEGER:
             /*
@@ -115,7 +115,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
              * Because we did the first part on the BIGNUM itself, we can just
              * invert all the bytes here and be done with it.
              */
-            if (template->data_type == OSSL_PARAM_INTEGER
+            if (tmpl->data_type == OSSL_PARAM_INTEGER
                 && BN_is_negative(tmpbn)) {
                 unsigned char *cp;
                 size_t i = buf_n;
@@ -140,8 +140,8 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
         }
     }
 
-    to->key = template->key;
-    to->data_type = template->data_type;
+    to->key = tmpl->key;
+    to->data_type = tmpl->data_type;
     to->data = buf;
     to->data_size = buf_n;
     to->return_size = 0;
@@ -167,7 +167,7 @@ const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
     return OSSL_PARAM_locate_const(params, key);
 }
 
-int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
+int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *tmpl,
                                   const char *value, size_t value_n,
                                   unsigned int flags)
 {
@@ -176,10 +176,10 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
     BIGNUM *tmpbn = NULL;
     int ok = 0;
 
-    if (to == NULL || template == NULL)
+    if (to == NULL || tmpl == NULL)
         return 0;
 
-    if (!prepare_from_text(template, value, value_n, flags,
+    if (!prepare_from_text(tmpl, value, value_n, flags,
                            &buf_n, &tmpbn))
         return 0;
 
@@ -188,7 +188,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
         return 0;
     }
 
-    ok = construct_from_text(to, template, value, value_n, flags,
+    ok = construct_from_text(to, tmpl, value, value_n, flags,
                              buf, buf_n, tmpbn);
     BN_free(tmpbn);
     if (!ok)

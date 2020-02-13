@@ -13,7 +13,7 @@ OSSL_PARAM_parse_locate_const, OSSL_PARAM_allocate_from_text
                                                  const char *key,
                                                  unsigned int *flags);
  int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
-                                   const OSSL_PARAM *template,
+                                   const OSSL_PARAM *tmpl,
                                    const char *value, size_t value_n,
                                    unsigned int flags);
 
@@ -36,7 +36,7 @@ for OSSL_PARAM_construct_from_text() and OSSL_PARAM_allocate_from_text().
 
 OSSL_PARAM_allocate_from_text() builds the B<OSSL_PARAM> item passed as
 I<to> by parsing I<value_n> bytes of I<value> according to the data type
-from I<template> and the given I<flags>.
+from I<tmpl> and the given I<flags>.
 The I<flags> should be the value given back by OSSL_PARAM_parse_locate_const(),
 or zero.
 The data for I<to> gets allocated with L<OPENSSL_zalloc(3)> and must be
@@ -60,7 +60,7 @@ example, if the I<key> is "hexsalt", the key that will be looked up in the
 B<OSSL_PARAM> array is "salt".
 
 This affects how OSSL_PARAM_construct_from_text() and
-OSSL_PARAM_allocate_from_text() parse the I<value> for I<template> types
+OSSL_PARAM_allocate_from_text() parse the I<value> for I<tmpl> types
 B<OSSL_PARAM_INTEGER>, B<OSSL_PARAM_UNSIGNED_INTEGER>, and
 B<OSSL_PARAM_OCTET_STRING>.
 

@@ -92,7 +92,7 @@ OSSL_PARAM OSSL_PARAM_construct_end(void);
 const OSSL_PARAM *OSSL_PARAM_parse_locate_const(const OSSL_PARAM *params,
                                                 const char *key,
                                                 unsigned int *flags);
-int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *template,
+int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to, const OSSL_PARAM *tmpl,
                                   const char *value, size_t value_n,
                                   unsigned int flags);
 
