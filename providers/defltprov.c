@@ -470,6 +470,34 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
       dsa_param_pem_serializer_functions },
 #endif
 
+#ifndef OPENSSL_NO_EC
+    { "X25519", "default=yes,format=text,type=private",
+      x25519_priv_print_serializer_functions },
+    { "X25519", "default=yes,format=text,type=public",
+      x25519_pub_print_serializer_functions },
+    { "X25519", "default=yes,format=der,type=private",
+      x25519_priv_der_serializer_functions },
+    { "X25519", "default=yes,format=der,type=public",
+      x25519_pub_der_serializer_functions },
+    { "X25519", "default=yes,format=pem,type=private",
+      x25519_priv_pem_serializer_functions },
+    { "X25519", "default=yes,format=pem,type=public",
+      x25519_pub_pem_serializer_functions },
+
+    { "X448", "default=yes,format=text,type=private",
+      x448_priv_print_serializer_functions },
+    { "X448", "default=yes,format=text,type=public",
+      x448_pub_print_serializer_functions },
+    { "X448", "default=yes,format=der,type=private",
+      x448_priv_der_serializer_functions },
+    { "X448", "default=yes,format=der,type=public",
+      x448_pub_der_serializer_functions },
+    { "X448", "default=yes,format=pem,type=private",
+      x448_priv_pem_serializer_functions },
+    { "X448", "default=yes,format=pem,type=public",
+      x448_pub_pem_serializer_functions },
+#endif
+
     { NULL, NULL, NULL }
 };
 
