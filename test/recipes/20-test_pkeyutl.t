@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use File::Spec;
+use File::Basename;
 use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips/;
 use OpenSSL::Test::Utils;
 
@@ -27,13 +28,13 @@ SKIP: {
     ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.key'),
-                      '-out', 'signature.dat', '-rawin',
+                      '-out', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
                       "Sign a piece of data using SM2");
     ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
-                      '-sigfile', 'signature.dat', '-rawin',
+                      '-sigfile', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
                       "Verify an SM2 signature against a piece of data");
 }
@@ -46,28 +47,26 @@ SKIP: {
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
                   srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-key.pem'),
-                  '-out', 'signature.dat', '-rawin']))),
+                  '-out', 'Ed25519.sig', '-rawin']))),
                   "Sign a piece of data using Ed25519");
     ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
                   srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed25519-cert.pem'),
-                  '-sigfile', 'signature.dat', '-rawin']))),
+                  '-sigfile', 'Ed25519.sig', '-rawin']))),
                   "Verify an Ed25519 signature against a piece of data");
 
     # Ed448
     ok(run(app(([ 'openssl', 'pkeyutl', '-sign', '-in',
                   srctop_file('test', 'certs', 'server-ed448-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed448-key.pem'),
-                  '-out', 'signature.dat', '-rawin']))),
+                  '-out', 'Ed448.sig', '-rawin']))),
                   "Sign a piece of data using Ed448");
     ok(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin', '-in',
                   srctop_file('test', 'certs', 'server-ed448-cert.pem'),
                   '-inkey', srctop_file('test', 'certs', 'server-ed448-cert.pem'),
-                  '-sigfile', 'signature.dat', '-rawin']))),
+                  '-sigfile', 'Ed448.sig', '-rawin']))),
                   "Verify an Ed448 signature against a piece of data");
 }
-
-unlink 'signature.dat';
 
 sub tsignverify {
     my $testtext = shift;
@@ -77,7 +76,7 @@ sub tsignverify {
 
     my $data_to_sign = srctop_file('test', 'README');
     my $other_data = srctop_file('test', 'README.external');
-    my $sigfile = 'testpkeyutl.sig';
+    my $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();
     plan tests => 4;
@@ -113,8 +112,6 @@ sub tsignverify {
     push(@args, @extraopts);
     ok(!run(app([@args])),
        $testtext.": Expect failure verifying mismatching data");
-
-    unlink $sigfile;
 }
 
 SKIP: {
