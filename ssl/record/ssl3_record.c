@@ -1630,6 +1630,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     int imac_size;
     size_t mac_size;
     unsigned char md[EVP_MAX_MD_SIZE];
+    size_t max_plain_length = SSL3_RT_MAX_PLAIN_LENGTH;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
@@ -1797,7 +1798,12 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
     }
 
-    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+    /* use current Max Fragment Length setting if applicable */
+    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        max_plain_length = GET_MAX_FRAGMENT_LENGTH(s->session);
+
+    /* send overflow if the plaintext is too long now it has passed MAC */
+    if (rr->length > max_plain_length) {
         SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
                  SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
@@ -1941,7 +1947,7 @@ int dtls1_get_record(SSL *s)
 
         /* If received packet overflows own-client Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session) + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;
