@@ -13,6 +13,7 @@
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include "crypto/ecx.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"          /* For the internal API */
 #include "testutil.h"
@@ -206,11 +207,127 @@ static int test_fromdata_dh(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_EC
+/* Array indexes used in test_fromdata_ecx */
+# define PRIV_KEY        0
+# define PUB_KEY         1
+
+# define X25519_IDX      0
+# define X448_IDX        1
+
+static int test_fromdata_ecx(int tst)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pk = NULL;
+
+    /* X448_KEYLEN > X25519_KEYLEN */
+    static unsigned char key_numbers[2][2][X448_KEYLEN] = {
+        /* X25519: Keys from RFC 7748 6.1 */
+        {
+            /* Private Key */
+            {
+                0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d, 0x3c, 0x16,
+                0xc1, 0x72, 0x51, 0xb2, 0x66, 0x45, 0xdf, 0x4c, 0x2f, 0x87,
+                0xeb, 0xc0, 0x99, 0x2a, 0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9,
+                0x2c, 0x2a
+            },
+            /* Public Key */
+            {
+                0x85, 0x20, 0xf0, 0x09, 0x89, 0x30, 0xa7, 0x54, 0x74, 0x8b,
+                0x7d, 0xdc, 0xb4, 0x3e, 0xf7, 0x5a, 0x0d, 0xbf, 0x3a, 0x0d,
+                0x26, 0x38, 0x1a, 0xf4, 0xeb, 0xa4, 0xa9, 0x8e, 0xaa, 0x9b,
+                0x4e, 0x6a
+            }
+        },
+        /* X448: Keys from RFC 7748 6.2 */
+        {
+            /* Private Key */
+            {
+                0x9a, 0x8f, 0x49, 0x25, 0xd1, 0x51, 0x9f, 0x57, 0x75, 0xcf,
+                0x46, 0xb0, 0x4b, 0x58, 0x00, 0xd4, 0xee, 0x9e, 0xe8, 0xba,
+                0xe8, 0xbc, 0x55, 0x65, 0xd4, 0x98, 0xc2, 0x8d, 0xd9, 0xc9,
+                0xba, 0xf5, 0x74, 0xa9, 0x41, 0x97, 0x44, 0x89, 0x73, 0x91,
+                0x00, 0x63, 0x82, 0xa6, 0xf1, 0x27, 0xab, 0x1d, 0x9a, 0xc2,
+                0xd8, 0xc0, 0xa5, 0x98, 0x72, 0x6b
+            },
+            /* Public Key */
+            {
+                0x9b, 0x08, 0xf7, 0xcc, 0x31, 0xb7, 0xe3, 0xe6, 0x7d, 0x22,
+                0xd5, 0xae, 0xa1, 0x21, 0x07, 0x4a, 0x27, 0x3b, 0xd2, 0xb8,
+                0x3d, 0xe0, 0x9c, 0x63, 0xfa, 0xa7, 0x3d, 0x2c, 0x22, 0xc5,
+                0xd9, 0xbb, 0xc8, 0x36, 0x64, 0x72, 0x41, 0xd9, 0x53, 0xd4,
+                0x0c, 0x5b, 0x12, 0xda, 0x88, 0x12, 0x0d, 0x53, 0x17, 0x7f,
+                0x80, 0xe5, 0x32, 0xc4, 0x1f, 0xa0
+            }
+        }
+    };
+    OSSL_PARAM x25519_fromdata_params[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                key_numbers[X25519_IDX][PRIV_KEY],
+                                X25519_KEYLEN),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                key_numbers[X25519_IDX][PUB_KEY],
+                                X25519_KEYLEN),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM x448_fromdata_params[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                key_numbers[X448_IDX][PRIV_KEY],
+                                X448_KEYLEN),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                key_numbers[X448_IDX][PUB_KEY],
+                                X448_KEYLEN),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM *fromdata_params;
+    int bits, security_bits, size;
+
+    if (tst == X25519_IDX) {
+        fromdata_params = x25519_fromdata_params;
+        bits = X25519_BITS;
+        security_bits = X25519_SECURITY_BITS;
+        size = X25519_KEYLEN;
+    } else {
+        fromdata_params = x448_fromdata_params;
+        bits = X448_BITS;
+        security_bits = X448_SECURITY_BITS;
+        size = X448_KEYLEN;
+    }
+
+    ctx = EVP_PKEY_CTX_new_from_name(NULL,
+                                     tst == X25519_IDX ? "X25519" : "X448",
+                                     NULL);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+        || !TEST_int_eq(EVP_PKEY_bits(pk), bits)
+        || !TEST_int_eq(EVP_PKEY_security_bits(pk), security_bits)
+        || !TEST_int_eq(EVP_PKEY_size(pk), size))
+        goto err;
+
+    ret = test_print_key_using_pem(pk)
+        | test_print_key_using_serializer(pk);
+
+ err:
+    EVP_PKEY_free(pk);
+    EVP_PKEY_CTX_free(ctx);
+
+    return ret;
+}
+#endif
+
+
 int setup_tests(void)
 {
     ADD_TEST(test_fromdata_rsa);
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_fromdata_dh);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_fromdata_ecx, 2);
 #endif
     return 1;
 }
