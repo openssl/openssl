@@ -34,7 +34,7 @@
 #include "prov/provider_util.h"
 #include "self_test.h"
 
-#define ALGC(NAMES, FUNC, CHECK) { { NAMES, "fips=yes", FUNC }, CHECK }
+#define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=fips,fips=yes", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_core_thread_start_fn *c_thread_start;
@@ -702,27 +702,27 @@ const char *ossl_prov_util_nid_to_name(int nid)
  */
 static const OSSL_ALGORITHM fips_digests[] = {
     /* Our primary name:NiST name[:our older names] */
-    { "SHA1:SHA-1", "fips=yes", sha1_functions },
-    { "SHA2-224:SHA-224:SHA224", "fips=yes", sha224_functions },
-    { "SHA2-256:SHA-256:SHA256", "fips=yes", sha256_functions },
-    { "SHA2-384:SHA-384:SHA384", "fips=yes", sha384_functions },
-    { "SHA2-512:SHA-512:SHA512", "fips=yes", sha512_functions },
-    { "SHA2-512/224:SHA-512/224:SHA512-224", "fips=yes",
+    { "SHA1:SHA-1", "provider=fips,fips=yes", sha1_functions },
+    { "SHA2-224:SHA-224:SHA224", "provider=fips,fips=yes", sha224_functions },
+    { "SHA2-256:SHA-256:SHA256", "provider=fips,fips=yes", sha256_functions },
+    { "SHA2-384:SHA-384:SHA384", "provider=fips,fips=yes", sha384_functions },
+    { "SHA2-512:SHA-512:SHA512", "provider=fips,fips=yes", sha512_functions },
+    { "SHA2-512/224:SHA-512/224:SHA512-224", "provider=fips,fips=yes",
       sha512_224_functions },
-    { "SHA2-512/256:SHA-512/256:SHA512-256", "fips=yes",
+    { "SHA2-512/256:SHA-512/256:SHA512-256", "provider=fips,fips=yes",
       sha512_256_functions },
 
     /* We agree with NIST here, so one name only */
-    { "SHA3-224", "fips=yes", sha3_224_functions },
-    { "SHA3-256", "fips=yes", sha3_256_functions },
-    { "SHA3-384", "fips=yes", sha3_384_functions },
-    { "SHA3-512", "fips=yes", sha3_512_functions },
+    { "SHA3-224", "provider=fips,fips=yes", sha3_224_functions },
+    { "SHA3-256", "provider=fips,fips=yes", sha3_256_functions },
+    { "SHA3-384", "provider=fips,fips=yes", sha3_384_functions },
+    { "SHA3-512", "provider=fips,fips=yes", sha3_512_functions },
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
      */
-    { "KECCAK-KMAC-128:KECCAK-KMAC128", "fips=yes", keccak_kmac_128_functions },
-    { "KECCAK-KMAC-256:KECCAK-KMAC256", "fips=yes", keccak_kmac_256_functions },
+    { "KECCAK-KMAC-128:KECCAK-KMAC128", "provider=fips,fips=yes", keccak_kmac_128_functions },
+    { "KECCAK-KMAC-256:KECCAK-KMAC256", "provider=fips,fips=yes", keccak_kmac_256_functions },
 
     { NULL, NULL, NULL }
 };
@@ -773,51 +773,51 @@ static OSSL_ALGORITHM exported_fips_ciphers[OSSL_NELEM(fips_ciphers)];
 
 static const OSSL_ALGORITHM fips_macs[] = {
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", "fips=yes", cmac_functions },
+    { "CMAC", "provider=fips,fips=yes", cmac_functions },
 #endif
-    { "GMAC", "fips=yes", gmac_functions },
-    { "HMAC", "fips=yes", hmac_functions },
-    { "KMAC-128:KMAC128", "fips=yes", kmac128_functions },
-    { "KMAC-256:KMAC256", "fips=yes", kmac256_functions },
+    { "GMAC", "provider=fips,fips=yes", gmac_functions },
+    { "HMAC", "provider=fips,fips=yes", hmac_functions },
+    { "KMAC-128:KMAC128", "provider=fips,fips=yes", kmac128_functions },
+    { "KMAC-256:KMAC256", "provider=fips,fips=yes", kmac256_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_kdfs[] = {
-    { "HKDF", "fips=yes", kdf_hkdf_functions },
-    { "SSKDF", "fips=yes", kdf_sskdf_functions },
-    { "PBKDF2", "fips=yes", kdf_pbkdf2_functions },
-    { "TLS1-PRF", "fips=yes", kdf_tls1_prf_functions },
-    { "KBKDF", "fips=yes", kdf_kbkdf_functions },
+    { "HKDF", "provider=fips,fips=yes", kdf_hkdf_functions },
+    { "SSKDF", "provider=fips,fips=yes", kdf_sskdf_functions },
+    { "PBKDF2", "provider=fips,fips=yes", kdf_pbkdf2_functions },
+    { "TLS1-PRF", "provider=fips,fips=yes", kdf_tls1_prf_functions },
+    { "KBKDF", "provider=fips,fips=yes", kdf_kbkdf_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_keyexch[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", "fips=yes", dh_keyexch_functions },
+    { "DH:dhKeyAgreement", "provider=fips,fips=yes", dh_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", "fips=yes", dsa_signature_functions },
+    { "DSA:dsaEncryption", "provider=fips,fips=yes", dsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_asym_cipher[] = {
-    { "RSA:rsaEncryption", "fips=yes", rsa_asym_cipher_functions },
+    { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_asym_cipher_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", "fips=yes", dh_keymgmt_functions },
+    { "DH:dhKeyAgreement", "provider=fips,fips=yes", dh_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
-    { "DSA", "fips=yes", dsa_keymgmt_functions },
+    { "DSA", "provider=fips,fips=yes", dsa_keymgmt_functions },
 #endif
-    { "RSA:rsaEncryption", "default=yes", rsa_keymgmt_functions },
+    { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 

@@ -40,7 +40,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
         { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
-        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. fips=yes" },
+        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. provider=fips" },
         { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
         { "defaultctx", OPT_USE_DEFAULTCTX, '-',
           "Use the default context if this is set" },

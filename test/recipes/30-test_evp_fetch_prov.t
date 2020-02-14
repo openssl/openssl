@@ -33,16 +33,16 @@ my @testdata = (
       providers => [ 'default' ],
       tests  => [ { providers => [] },
                   { },
-                  { args      => [ '-property', 'default=yes' ],
-                    message   => 'using property "default=yes"' },
-                  { args      => [ '-property', 'fips=no' ],
-                    message   => 'using property "fips=no"' },
-                  { args      => [ '-property', 'default=no', '-fetchfail' ],
+                  { args      => [ '-property', 'provider=default' ],
+                    message   => 'using property "provider=default"' },
+                  { args      => [ '-property', 'provider!=fips' ],
+                    message   => 'using property "provider!=fips"' },
+                  { args      => [ '-property', 'provider!=default', '-fetchfail' ],
                     message   =>
-                        'using property "default=no" is expected to fail' },
-                  { args      => [ '-property', 'fips=yes', '-fetchfail' ],
+                        'using property "provider!=default" is expected to fail' },
+                  { args      => [ '-property', 'provider=fips', '-fetchfail' ],
                     message   =>
-                        'using property "fips=yes" is expected to fail' } ] }
+                        'using property "provider=fips" is expected to fail' } ] }
 );
 
 unless ($no_fips) {
@@ -60,28 +60,48 @@ unless ($no_fips) {
           providers => [ 'fips' ],
           tests     => [
               { args    => [ '-property', '' ] },
+              { args    => [ '-property', 'provider=fips' ],
+                message => 'using property "provider=fips"' },
+              { args    => [ '-property', 'provider!=default' ],
+                message => 'using property "provider!=default"' },
+              { args      => [ '-property', 'provider=default', '-fetchfail' ],
+                message   =>
+                    'using property "provider=default" is expected to fail' },
+              { args      => [ '-property', 'provider!=fips', '-fetchfail' ],
+                message   =>
+                    'using property "provider!=fips" is expected to fail' },
               { args    => [ '-property', 'fips=yes' ],
                 message => 'using property "fips=yes"' },
-              { args    => [ '-property', 'default=no' ],
-                message => 'using property "default = no"' },
-              { args      => [ '-property', 'default=yes', '-fetchfail' ],
-                message   =>
-                    'using property "default=yes" is expected to fail' },
-              { args      => [ '-property', 'fips=no', '-fetchfail' ],
-                message   =>
-                    'using property "fips=no" is expected to fail' } ] },
+              { args    => [ '-property', 'fips!=no' ],
+                message => 'using property "fips!=no"' },
+              { args    => [ '-property', '-fips' ],
+                message => 'using property "-fips"' },
+              { args    => [ '-property', 'fips=no', '-fetchfail' ],
+                message => 'using property "fips=no is expected to fail"' },
+              { args    => [ '-property', 'fips!=yes', '-fetchfail' ],
+                message => 'using property "fips!=yes is expected to fail"' } ] },
         { config    => srctop_file("test", "default-and-fips.cnf"),
           providers => [ 'default', 'fips' ],
           tests     => [
               { args    => [ '-property', '' ] },
-              { args      => [ '-property', 'default=no' ],
-                message   => 'using property "default=no"' },
-              { args      => [ '-property', 'default=yes' ],
-                message   => 'using property "default=yes"' },
-              { args      => [ '-property', 'fips=no' ],
-                message   => 'using property "fips=no"' },
-              { args      => [ '-property', 'fips=yes' ],
-                message   => 'using property "fips=yes"' } ] }
+              { args      => [ '-property', 'provider!=default' ],
+                message   => 'using property "provider!=default"' },
+              { args      => [ '-property', 'provider=default' ],
+                message   => 'using property "provider=default"' },
+              { args      => [ '-property', 'provider!=fips' ],
+                message   => 'using property "provider!=fips"' },
+              { args      => [ '-property', 'provider=fips' ],
+                message   => 'using property "provider=fips"' },
+              { args    => [ '-property', 'fips=yes' ],
+                message => 'using property "fips=yes"' },
+              { args    => [ '-property', 'fips!=no' ],
+                message => 'using property "fips!=no"' },
+              { args    => [ '-property', '-fips' ],
+                message => 'using property "-fips"' },
+              { args    => [ '-property', 'fips=no' ],
+                message => 'using property "fips=no"' },
+              { args    => [ '-property', 'fips!=yes' ],
+                message => 'using property "fips!=yes"' } ] },
     );
 }
 

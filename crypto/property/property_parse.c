@@ -562,12 +562,9 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
 int ossl_property_parse_init(OPENSSL_CTX *ctx)
 {
     static const char *const predefined_names[] = {
-        "default",      /* Being provided by the default built-in provider */
-        "legacy",       /* Provided by the legacy provider */
-        "provider",     /* Name of provider (default, fips) */
+        "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
-        "fips",         /* FIPS supporting provider */
-        "engine",       /* An old style engine masquerading as a provider */
+        "fips",         /* FIPS validated or FIPS supporting algorithm */
         "format",       /* output format for serializers */
         "type",         /* output type for serializers */
     };

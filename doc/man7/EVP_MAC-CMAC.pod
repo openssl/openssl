@@ -15,7 +15,7 @@ used with EVP_MAC_fetch():
 
 =over 4
 
-=item "CMAC", "default=yes"
+=item "CMAC", "provider=default" or "provider=fips"
 
 =back
 

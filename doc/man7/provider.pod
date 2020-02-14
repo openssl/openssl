@@ -260,8 +260,12 @@ algorithm identifier to the appropriate fetching function.
 
 The default provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "default=yes"
-can be used as a search criterion for these implementations.
+implementations of the same algorithms), the property "provider=default"
+can be used as a search criterion for these implementations. Some
+non-cryptographic algorithms (such as serializers for loading keys and
+parameters from files) are not FIPS algorithm implementations in themselves but
+support algorithms from the FIPS provider and are allowed for use in "FIPS
+mode". The property "fips=yes" can be used to select such algorithms.
 
 =head2 FIPS provider
 
@@ -269,8 +273,10 @@ The FIPS provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "fips=yes" can
-be used as a search criterion for these implementations.
+implementations of the same algorithms), the property "provider=fips" can
+be used as a search criterion for these implementations. All algorithm
+implementations in the FIPS provider can also be selected with the property
+"fips=yes".
 
 =head2 Legacy provider
 
@@ -278,7 +284,7 @@ The legacy provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "legacy=yes" can be
+implementations of the same algorithms), the property "provider=legacy" can be
 used as a search criterion for these implementations.
 
 =head1 EXAMPLES
@@ -300,21 +306,21 @@ Fetch any available implementation of AES-128-CBC in the default context:
 Fetch an implementation of SHA2-256 from the default provider in the default
 context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "default=yes");
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider=default");
  ...
  EVP_MD_meth_free(md);
 
 Fetch an implementation of SHA2-256 that is not from the default provider in the
 default context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "default=no");
+ EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider!=default");
  ...
  EVP_MD_meth_free(md);
 
 Fetch an implementation of SHA2-256 from the default provider in the specified
 context:
 
- EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "default=yes");
+ EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "provider=default");
  ...
  EVP_MD_meth_free(md);
 
@@ -324,11 +330,11 @@ implementation of WHIRLPOOL from it:
  /* This only needs to be done once - usually at application start up */
  OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
 
- EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "legacy=yes");
+ EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "provider=legacy");
  ...
  EVP_MD_meth_free(md);
 
-Note that in the above example the property string "legacy=yes" is optional
+Note that in the above example the property string "provider=legacy" is optional
 since, assuming no other providers have been loaded, the only implementation of
 the "whirlpool" algorithm is in the "legacy" provider. Also note that the
 default provider should be explicitly loaded if it is required in addition to

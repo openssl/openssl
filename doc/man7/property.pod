@@ -52,15 +52,15 @@ The full syntax for property definitions appears below.
 
 Each implementation of an algorithm can define any number of
 properties.
-For example, the default provider defines the property I<default=yes>
+For example, the default provider defines the property I<provider=default>
 for all of its algorithms.
-Likewise, the FIPS provider defines I<fips=yes> and the legacy provider
-defines I<legacy=yes> for all of their algorithms.
+Likewise, OpenSSL's FIPS provider defines I<provider=fips> and the legacy
+provider defines I<provider=legacy> for all of their algorithms.
 
 =head2 Queries
 
 A I<property query clause> is a single conditional test.
-For example, "fips=yes", "default!=yes" or "?iteration.count!=3".
+For example, "fips=yes", "provider!=default" or "?iteration.count!=3".
 The first two represent mandatory clauses, such clauses B<must> match
 for any algorithm to even be under consideration.
 The third clause represents an optional clause.
@@ -117,8 +117,8 @@ Ordering of optional clauses is not significant.
 =head2 Shortcut
 
 In order to permit a more concise expression of boolean properties, there
-is one short cut: a property name alone (e.g. "default") is
-exactly equivalent to "default=yes" in both definitions and queries.
+is one short cut: a property name alone (e.g. "my.property") is
+exactly equivalent to "my.property=yes" in both definitions and queries.
 
 =head2 Global and Local
 
