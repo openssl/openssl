@@ -12,6 +12,7 @@ use warnings;
 
 use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
+use File::Basename;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir data_file/;
 use OpenSSL::Test::Utils;
@@ -34,18 +35,18 @@ sub test_ocsp {
         $untrusted = $CAfile;
     }
     my $expected_exit = shift;
+    my $outputfile = basename($inputfile, '.ors') . '.dat';
 
     run(app(["openssl", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
-             "-out", "ocsp-resp-fff.dat"]));
+             "-out", $outputfile]));
     with({ exit_checker => sub { return shift == $expected_exit; } },
-         sub { ok(run(app(["openssl", "ocsp", "-respin", "ocsp-resp-fff.dat",
+         sub { ok(run(app(["openssl", "ocsp", "-respin", $outputfile,
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
                            "-verify_other", catfile($ocspdir, $untrusted),
                            "-no-CApath"])),
                   $title); });
-    unlink "ocsp-resp-fff.dat";
 }
 
 plan tests => 11;
