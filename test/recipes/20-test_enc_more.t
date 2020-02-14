@@ -54,8 +54,5 @@ SKIP: {
            && run(app([@common, "-d", "-in", $cipherfile, "-out", $clearfile]))
            && compare_text($plaintext, $clearfile) == 0
            , $ciphername);
-        unlink $cipherfile, $clearfile;
     }
 }
-
-unlink $plaintext;
