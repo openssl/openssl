@@ -68,10 +68,6 @@ SKIP: {
        "Signing SM2 certificate request");
 }
 
-rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem", "newkey.pem", "sm2-test.crt";
-
-
 sub yes {
     my $cntr = 10;
     open(PIPE, "|-", join(" ",@_));
