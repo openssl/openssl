@@ -20,7 +20,7 @@
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
 
-#define ALGC(NAMES, FUNC, CHECK) { { NAMES, "default=yes", FUNC }, CHECK }
+#define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=default", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 /* Functions provided by the core */
@@ -86,32 +86,32 @@ static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
  */
 static const OSSL_ALGORITHM deflt_digests[] = {
     /* Our primary name:NIST name[:our older names] */
-    { "SHA1:SHA-1", "default=yes", sha1_functions },
-    { "SHA2-224:SHA-224:SHA224", "default=yes", sha224_functions },
-    { "SHA2-256:SHA-256:SHA256", "default=yes", sha256_functions },
-    { "SHA2-384:SHA-384:SHA384", "default=yes", sha384_functions },
-    { "SHA2-512:SHA-512:SHA512", "default=yes", sha512_functions },
-    { "SHA2-512/224:SHA-512/224:SHA512-224", "default=yes",
+    { "SHA1:SHA-1", "provider=default", sha1_functions },
+    { "SHA2-224:SHA-224:SHA224", "provider=default", sha224_functions },
+    { "SHA2-256:SHA-256:SHA256", "provider=default", sha256_functions },
+    { "SHA2-384:SHA-384:SHA384", "provider=default", sha384_functions },
+    { "SHA2-512:SHA-512:SHA512", "provider=default", sha512_functions },
+    { "SHA2-512/224:SHA-512/224:SHA512-224", "provider=default",
       sha512_224_functions },
-    { "SHA2-512/256:SHA-512/256:SHA512-256", "default=yes",
+    { "SHA2-512/256:SHA-512/256:SHA512-256", "provider=default",
       sha512_256_functions },
 
     /* We agree with NIST here, so one name only */
-    { "SHA3-224", "default=yes", sha3_224_functions },
-    { "SHA3-256", "default=yes", sha3_256_functions },
-    { "SHA3-384", "default=yes", sha3_384_functions },
-    { "SHA3-512", "default=yes", sha3_512_functions },
+    { "SHA3-224", "provider=default", sha3_224_functions },
+    { "SHA3-256", "provider=default", sha3_256_functions },
+    { "SHA3-384", "provider=default", sha3_384_functions },
+    { "SHA3-512", "provider=default", sha3_512_functions },
 
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * the KMAC-128 and KMAC-256.
      */
-    { "KECCAK-KMAC-128:KECCAK-KMAC128", "default=yes", keccak_kmac_128_functions },
-    { "KECCAK-KMAC-256:KECCAK-KMAC256", "default=yes", keccak_kmac_256_functions },
+    { "KECCAK-KMAC-128:KECCAK-KMAC128", "provider=default", keccak_kmac_128_functions },
+    { "KECCAK-KMAC-256:KECCAK-KMAC256", "provider=default", keccak_kmac_256_functions },
 
     /* Our primary name:NIST name */
-    { "SHAKE-128:SHAKE128", "default=yes", shake_128_functions },
-    { "SHAKE-256:SHAKE256", "default=yes", shake_256_functions },
+    { "SHAKE-128:SHAKE128", "provider=default", shake_128_functions },
+    { "SHAKE-256:SHAKE256", "provider=default", shake_256_functions },
 
 #ifndef OPENSSL_NO_BLAKE2
     /*
@@ -121,17 +121,17 @@ static const OSSL_ALGORITHM deflt_digests[] = {
      * If we assume that "2b" and "2s" are versions, that pattern
      * fits with ours.  We also add our historical names.
      */
-    { "BLAKE2S-256:BLAKE2s256", "default=yes", blake2s256_functions },
-    { "BLAKE2B-512:BLAKE2b512", "default=yes", blake2b512_functions },
+    { "BLAKE2S-256:BLAKE2s256", "provider=default", blake2s256_functions },
+    { "BLAKE2B-512:BLAKE2b512", "provider=default", blake2b512_functions },
 #endif /* OPENSSL_NO_BLAKE2 */
 
 #ifndef OPENSSL_NO_SM3
-    { "SM3", "default=yes", sm3_functions },
+    { "SM3", "provider=default", sm3_functions },
 #endif /* OPENSSL_NO_SM3 */
 
 #ifndef OPENSSL_NO_MD5
-    { "MD5", "default=yes", md5_functions },
-    { "MD5-SHA1", "default=yes", md5_sha1_functions },
+    { "MD5", "provider=default", md5_functions },
+    { "MD5-SHA1", "provider=default", md5_sha1_functions },
 #endif /* OPENSSL_NO_MD5 */
 
     { NULL, NULL, NULL }
@@ -331,136 +331,140 @@ static OSSL_ALGORITHM exported_ciphers[OSSL_NELEM(deflt_ciphers)];
 
 static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_BLAKE2
-    { "BLAKE2BMAC", "default=yes", blake2bmac_functions },
-    { "BLAKE2SMAC", "default=yes", blake2smac_functions },
+    { "BLAKE2BMAC", "provider=default", blake2bmac_functions },
+    { "BLAKE2SMAC", "provider=default", blake2smac_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", "default=yes", cmac_functions },
+    { "CMAC", "provider=default", cmac_functions },
 #endif
-    { "GMAC", "default=yes", gmac_functions },
-    { "HMAC", "default=yes", hmac_functions },
-    { "KMAC-128:KMAC128", "default=yes", kmac128_functions },
-    { "KMAC-256:KMAC256", "default=yes", kmac256_functions },
+    { "GMAC", "provider=default", gmac_functions },
+    { "HMAC", "provider=default", hmac_functions },
+    { "KMAC-128:KMAC128", "provider=default", kmac128_functions },
+    { "KMAC-256:KMAC256", "provider=default", kmac256_functions },
 #ifndef OPENSSL_NO_SIPHASH
-    { "SIPHASH", "default=yes", siphash_functions },
+    { "SIPHASH", "provider=default", siphash_functions },
 #endif
 #ifndef OPENSSL_NO_POLY1305
-    { "POLY1305", "default=yes", poly1305_functions },
+    { "POLY1305", "provider=default", poly1305_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_kdfs[] = {
-    { "HKDF", "default=yes", kdf_hkdf_functions },
-    { "SSKDF", "default=yes", kdf_sskdf_functions },
-    { "PBKDF2", "default=yes", kdf_pbkdf2_functions },
-    { "SSHKDF", "default=yes", kdf_sshkdf_functions },
-    { "X963KDF", "default=yes", kdf_x963_kdf_functions },
-    { "TLS1-PRF", "default=yes", kdf_tls1_prf_functions },
-    { "KBKDF", "default=yes", kdf_kbkdf_functions },
+    { "HKDF", "provider=default", kdf_hkdf_functions },
+    { "SSKDF", "provider=default", kdf_sskdf_functions },
+    { "PBKDF2", "provider=default", kdf_pbkdf2_functions },
+    { "SSHKDF", "provider=default", kdf_sshkdf_functions },
+    { "X963KDF", "provider=default", kdf_x963_kdf_functions },
+    { "TLS1-PRF", "provider=default", kdf_tls1_prf_functions },
+    { "KBKDF", "provider=default", kdf_kbkdf_functions },
 #ifndef OPENSSL_NO_CMS
-    { "X942KDF", "default=yes", kdf_x942_kdf_functions },
+    { "X942KDF", "provider=default", kdf_x942_kdf_functions },
 #endif
 #ifndef OPENSSL_NO_SCRYPT
-    { "SCRYPT:id-scrypt", "default=yes", kdf_scrypt_functions },
+    { "SCRYPT:id-scrypt", "provider=default", kdf_scrypt_functions },
 #endif
-    { "KRB5KDF", "default=yes", kdf_krb5kdf_functions },
+    { "KRB5KDF", "provider=default", kdf_krb5kdf_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_keyexch[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", "default=yes", dh_keyexch_functions },
+    { "DH:dhKeyAgreement", "provider=default", dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH:id-ecPublicKey", "default=yes", ecdh_keyexch_functions },
-    { "X25519", "default=yes", x25519_keyexch_functions },
-    { "X448", "default=yes", x448_keyexch_functions },
+    { "ECDH:id-ecPublicKey", "provider=default", ecdh_keyexch_functions },
+    { "X25519", "provider=default", x25519_keyexch_functions },
+    { "X448", "provider=default", x448_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", "default=yes", dsa_signature_functions },
+    { "DSA:dsaEncryption", "provider=default", dsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_asym_cipher[] = {
-    { "RSA:rsaEncryption", "default=yes", rsa_asym_cipher_functions },
+    { "RSA:rsaEncryption", "provider=default", rsa_asym_cipher_functions },
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", "default=yes", dh_keymgmt_functions },
+    { "DH:dhKeyAgreement", "provider=default", dh_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", "default=yes", dsa_keymgmt_functions },
+    { "DSA:dsaEncryption", "provider=default", dsa_keymgmt_functions },
 #endif
-    { "RSA:rsaEncryption", "default=yes", rsa_keymgmt_functions },
+    { "RSA:rsaEncryption", "provider=default", rsa_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
-    { "EC:id-ecPublicKey", "default=yes", ec_keymgmt_functions },
-    { "X25519", "default=yes", x25519_keymgmt_functions },
-    { "X448", "default=yes", x448_keymgmt_functions },
+    { "EC:id-ecPublicKey", "provider=default", ec_keymgmt_functions },
+    { "X25519", "provider=default", x25519_keymgmt_functions },
+    { "X448", "provider=default", x448_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
 
+/*
+ * Unlike most algorithms in the default provider, the serializers are compatible
+ * for use in FIPS mode, and therefore have the "fips=yes" property.
+ */
 static const OSSL_ALGORITHM deflt_serializer[] = {
-    { "RSA", "default=yes,format=text,type=private",
+    { "RSA", "provider=default,fips=yes,format=text,type=private",
       rsa_priv_text_serializer_functions },
-    { "RSA", "default=yes,format=text,type=public",
+    { "RSA", "provider=default,fips=yes,format=text,type=public",
       rsa_pub_text_serializer_functions },
-    { "RSA", "default=yes,format=der,type=private",
+    { "RSA", "provider=default,fips=yes,format=der,type=private",
       rsa_priv_der_serializer_functions },
-    { "RSA", "default=yes,format=der,type=public",
+    { "RSA", "provider=default,fips=yes,format=der,type=public",
       rsa_pub_der_serializer_functions },
-    { "RSA", "default=yes,format=pem,type=private",
+    { "RSA", "provider=default,fips=yes,format=pem,type=private",
       rsa_priv_pem_serializer_functions },
-    { "RSA", "default=yes,format=pem,type=public",
+    { "RSA", "provider=default,fips=yes,format=pem,type=public",
       rsa_pub_pem_serializer_functions },
 
 #ifndef OPENSSL_NO_DH
-    { "DH", "default=yes,format=text,type=private",
+    { "DH", "provider=default,fips=yes,format=text,type=private",
       dh_priv_text_serializer_functions },
-    { "DH", "default=yes,format=text,type=public",
+    { "DH", "provider=default,fips=yes,format=text,type=public",
       dh_pub_text_serializer_functions },
-    { "DH", "default=yes,format=text,type=parameters",
+    { "DH", "provider=default,fips=yes,format=text,type=parameters",
       dh_param_text_serializer_functions },
-    { "DH", "default=yes,format=der,type=private",
+    { "DH", "provider=default,fips=yes,format=der,type=private",
       dh_priv_der_serializer_functions },
-    { "DH", "default=yes,format=der,type=public",
+    { "DH", "provider=default,fips=yes,format=der,type=public",
       dh_pub_der_serializer_functions },
-    { "DH", "default=yes,format=der,type=parameters",
+    { "DH", "provider=default,fips=yes,format=der,type=parameters",
       dh_param_der_serializer_functions },
-    { "DH", "default=yes,format=pem,type=private",
+    { "DH", "provider=default,fips=yes,format=pem,type=private",
       dh_priv_pem_serializer_functions },
-    { "DH", "default=yes,format=pem,type=public",
+    { "DH", "provider=default,fips=yes,format=pem,type=public",
       dh_pub_pem_serializer_functions },
-    { "DH", "default=yes,format=pem,type=parameters",
+    { "DH", "provider=default,fips=yes,format=pem,type=parameters",
       dh_param_pem_serializer_functions },
 #endif
 
 #ifndef OPENSSL_NO_DSA
-    { "DSA", "default=yes,format=text,type=private",
+    { "DSA", "provider=default,fips=yes,format=text,type=private",
       dsa_priv_text_serializer_functions },
-    { "DSA", "default=yes,format=text,type=public",
+    { "DSA", "provider=default,fips=yes,format=text,type=public",
       dsa_pub_text_serializer_functions },
-    { "DSA", "default=yes,format=text,type=parameters",
+    { "DSA", "provider=default,fips=yes,format=text,type=parameters",
       dsa_param_text_serializer_functions },
-    { "DSA", "default=yes,format=der,type=private",
+    { "DSA", "provider=default,fips=yes,format=der,type=private",
       dsa_priv_der_serializer_functions },
-    { "DSA", "default=yes,format=der,type=public",
+    { "DSA", "provider=default,fips=yes,format=der,type=public",
       dsa_pub_der_serializer_functions },
-    { "DSA", "default=yes,format=der,type=parameters",
+    { "DSA", "provider=default,fips=yes,format=der,type=parameters",
       dsa_param_der_serializer_functions },
-    { "DSA", "default=yes,format=pem,type=private",
+    { "DSA", "provider=default,fips=yes,format=pem,type=private",
       dsa_priv_pem_serializer_functions },
-    { "DSA", "default=yes,format=pem,type=public",
+    { "DSA", "provider=default,fips=yes,format=pem,type=public",
       dsa_pub_pem_serializer_functions },
-    { "DSA", "default=yes,format=pem,type=parameters",
+    { "DSA", "provider=default,fips=yes,format=pem,type=parameters",
       dsa_param_pem_serializer_functions },
 #endif
 

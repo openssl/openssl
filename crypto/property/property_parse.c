@@ -562,12 +562,9 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
 int ossl_property_parse_init(OPENSSL_CTX *ctx)
 {
     static const char *const predefined_names[] = {
-        "default",      /* Being provided by the default built-in provider */
-        "legacy",       /* Provided by the legacy provider */
-        "provider",     /* Name of provider (default, fips) */
+        "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
-        "fips",         /* FIPS supporting provider */
-        "engine",       /* An old style engine masquerading as a provider */
+        "fips",         /* FIPS compatible algorithm */
         "format",       /* output format for serializers */
         "type",         /* output type for serializers */
     };
@@ -579,7 +576,11 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
 
     /* Pre-populate the two Boolean values */
     if ((ossl_property_true = ossl_property_value(ctx, "yes", 1)) == 0
-        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0)
+        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0
+        /* Create values for the built-in providers */
+        || ossl_property_value(ctx, "default", 1) == 0
+        || ossl_property_value(ctx, "legacy", 1) == 0
+        || ossl_property_value(ctx, "fips", 1) == 0)
         goto err;
 
     return 1;
