@@ -142,100 +142,12 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
                       level_string, msg) >= 0;
 }
 
-/*
- * auxiliary function for incrementally reporting texts via the error queue
- */
-static void put_error(int lib, const char *func, int reason,
-                      const char *file, int line)
-{
-    ERR_new();
-    ERR_set_debug(file, line, func);
-    ERR_set_error(lib, reason, NULL /* no data here, so fmt is NULL */);
-}
-
-#define ERR_print_errors_cb_LIMIT 4096 /* size of char buf[] variable there */
-#define TYPICAL_MAX_OUTPUT_BEFORE_DATA 100
-#define MAX_DATA_LEN (ERR_print_errors_cb_LIMIT-TYPICAL_MAX_OUTPUT_BEFORE_DATA)
-void ossl_cmp_add_error_txt(const char *separator, const char *txt)
-{
-    const char *file = NULL;
-    int line;
-    const char *func = NULL;
-    const char *data = NULL;
-    int flags;
-    unsigned long err = ERR_peek_last_error();
-
-    if (separator == NULL)
-        separator = "";
-    if (err == 0)
-        put_error(ERR_LIB_CMP, NULL, 0, "", 0);
-
-    do {
-        size_t available_len, data_len;
-        const char *curr = txt, *next = txt;
-        char *tmp;
-
-        ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
-        if ((flags & ERR_TXT_STRING) == 0) {
-            data = "";
-            separator = "";
-        }
-        data_len = strlen(data);
-
-        /* workaround for limit of ERR_print_errors_cb() */
-        if (data_len >= MAX_DATA_LEN
-                || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
-            available_len = 0;
-        else
-            available_len = MAX_DATA_LEN - data_len - strlen(separator) - 1;
-        /* MAX_DATA_LEN > available_len >= 0 */
-
-        if (separator[0] == '\0') {
-            const size_t len_next = strlen(next);
-
-            if (len_next <= available_len) {
-                next += len_next;
-                curr = NULL; /* no need to split */
-            }
-            else {
-                next += available_len;
-                curr = next; /* will split at this point */
-            }
-        } else {
-            while (*next != '\0' && (size_t)(next - txt) <= available_len) {
-                curr = next;
-                next = strstr(curr, separator);
-                if (next != NULL)
-                    next += strlen(separator);
-                else
-                    next = curr + strlen(curr);
-            }
-            if ((size_t)(next - txt) <= available_len)
-                curr = NULL; /* the above loop implies *next == '\0' */
-        }
-        if (curr != NULL) {
-            /* split error msg at curr since error data would get too long */
-            if (curr != txt) {
-                tmp = OPENSSL_strndup(txt, curr - txt);
-                if (tmp == NULL)
-                    return;
-                ERR_add_error_data(2, separator, tmp);
-                OPENSSL_free(tmp);
-            }
-            put_error(ERR_LIB_CMP, func, err, file, line);
-            txt = curr;
-        } else {
-            ERR_add_error_data(2, separator, txt);
-            txt = next; /* finished */
-        }
-    } while (*txt != '\0');
-}
-
+#define ERR_PRINT_BUF_SIZE 4096
 /* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
 void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
 {
     unsigned long err;
-    char msg[ERR_print_errors_cb_LIMIT];
+    char msg[ERR_PRINT_BUF_SIZE];
     const char *file = NULL, *func = NULL, *data = NULL;
     int line, flags;
 
@@ -340,38 +252,6 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                 return 0;
     }
     return 1;
-}
-
-STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store)
-{
-    int i;
-    STACK_OF(X509) *sk;
-    STACK_OF(X509_OBJECT) *objs;
-
-    if (store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if ((sk = sk_X509_new_null()) == NULL)
-        return NULL;
-    objs = X509_STORE_get0_objects(store);
-    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
-        X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
-
-        if (cert != NULL) {
-            if (!sk_X509_push(sk, cert))
-                goto err;
-            if (!X509_up_ref(cert)) {
-                (void)sk_X509_pop(sk);
-                goto err;
-            }
-        }
-    }
-    return sk;
-
- err:
-    sk_X509_pop_free(sk, X509_free);
-    return NULL;
 }
 
 /*-

@@ -4928,3 +4928,10 @@ OSSL_HTTP_get_asn1                      ?	3_0_0	EXIST::FUNCTION:SOCK
 OSSL_HTTP_post_asn1                     ?	3_0_0	EXIST::FUNCTION:SOCK
 OSSL_HTTP_transfer                      ?	3_0_0	EXIST::FUNCTION:SOCK
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:SOCK
+ERR_add_error_txt                       ?	3_0_0	EXIST::FUNCTION:
+ERR_add_error_mem_bio                   ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_CTX_print_verify_cb          ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_get1_all_certs               ?	3_0_0	EXIST::FUNCTION:
+OSSL_CMP_validate_msg                   ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_validate_cert_path             ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP

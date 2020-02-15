@@ -2067,6 +2067,7 @@ BN_R_PRIVATE_KEY_TOO_LARGE:117:private key too large
 BN_R_P_IS_NOT_PRIME:112:p is not prime
 BN_R_TOO_MANY_ITERATIONS:113:too many iterations
 BN_R_TOO_MANY_TEMPORARY_VARIABLES:109:too many temporary variables
+CMP_R_ALGORITHM_NOT_SUPPORTED:139:algorithm not supported
 CMP_R_BAD_REQUEST_ID:108:bad request id
 CMP_R_CERTID_NOT_FOUND:109:certid not found
 CMP_R_CERTIFICATE_NOT_FOUND:112:certificate not found
@@ -2087,24 +2088,41 @@ CMP_R_ERROR_CREATING_RR:126:error creating rr
 CMP_R_ERROR_PARSING_PKISTATUS:107:error parsing pkistatus
 CMP_R_ERROR_PROTECTING_MESSAGE:127:error protecting message
 CMP_R_ERROR_SETTING_CERTHASH:128:error setting certhash
+CMP_R_ERROR_VALIDATING_PROTECTION:140:error validating protection
+CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
+CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:142:missing key usage digitalsignature
 CMP_R_MISSING_PRIVATE_KEY:131:missing private key
+CMP_R_MISSING_PROTECTION:143:missing protection
 CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
+CMP_R_MISSING_TRUST_STORE:144:missing trust store
 CMP_R_MULTIPLE_SAN_SOURCES:102:multiple san sources
 CMP_R_NO_STDIO:194:no stdio
+CMP_R_NO_SUITABLE_SENDER_CERT:145:no suitable sender cert
 CMP_R_NULL_ARGUMENT:103:null argument
+CMP_R_PKIBODY_ERROR:146:pkibody error
 CMP_R_PKISTATUSINFO_NOT_FOUND:132:pkistatusinfo not found
-CMP_R_POTENTIALLY_INVALID_CERTIFICATE:139:potentially invalid certificate
+CMP_R_POTENTIALLY_INVALID_CERTIFICATE:147:potentially invalid certificate
+CMP_R_RECIPNONCE_UNMATCHED:148:recipnonce unmatched
+CMP_R_REQUEST_NOT_ACCEPTED:149:request not accepted
+CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED:150:\
+	sender generalname type not supported
+CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG:151:srvcert does not validate msg
+CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
+CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
 CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
 CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
 CMP_R_UNSUPPORTED_ALGORITHM:136:unsupported algorithm
 CMP_R_UNSUPPORTED_KEY_TYPE:137:unsupported key type
+CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:154:\
+	unsupported protection alg dhbasedmac
 CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
+CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
 CMS_R_ADD_SIGNER_ERROR:99:add signer error
 CMS_R_ATTRIBUTE_ERROR:161:attribute error
 CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
@@ -3360,6 +3378,7 @@ X509_R_BAD_X509_FILETYPE:100:bad x509 filetype
 X509_R_BASE64_DECODE_ERROR:118:base64 decode error
 X509_R_CANT_CHECK_DH_KEY:114:cant check dh key
 X509_R_CERT_ALREADY_IN_HASH_TABLE:101:cert already in hash table
+X509_R_CERTIFICATE_VERIFICATION_FAILED:139:certificate verification failed
 X509_R_CRL_ALREADY_DELTA:127:crl already delta
 X509_R_CRL_VERIFY_FAILURE:131:crl verify failure
 X509_R_IDP_MISMATCH:128:idp mismatch

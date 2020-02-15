@@ -107,6 +107,7 @@ int ERR_load_X509_strings(void);
 # define X509_R_BASE64_DECODE_ERROR                       118
 # define X509_R_CANT_CHECK_DH_KEY                         114
 # define X509_R_CERT_ALREADY_IN_HASH_TABLE                101
+# define X509_R_CERTIFICATE_VERIFICATION_FAILED           139
 # define X509_R_CRL_ALREADY_DELTA                         127
 # define X509_R_CRL_VERIFY_FAILURE                        131
 # define X509_R_IDP_MISMATCH                              128

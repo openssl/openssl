@@ -746,10 +746,8 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
 const char *ossl_cmp_log_parse_metadata(const char *buf,
                                         OSSL_CMP_severity *level, char **func,
                                         char **file, int *line);
-/* workaround for 4096 bytes limitation of ERR_print_errors_cb() */
-void ossl_cmp_add_error_txt(const char *separator, const char *txt);
-# define ossl_cmp_add_error_data(txt) ossl_cmp_add_error_txt(" : ", txt)
-# define ossl_cmp_add_error_line(txt) ossl_cmp_add_error_txt("\n", txt)
+# define ossl_cmp_add_error_data(txt) ERR_add_error_txt(" : ", txt)
+# define ossl_cmp_add_error_line(txt) ERR_add_error_txt("\n", txt)
 /* functions manipulating lists of certificates etc could be generally useful */
 int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
                                int no_dup, int prepend);
@@ -918,5 +916,13 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
                                           EVP_PKEY *pkey);
 int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
+
+/* from cmp_vfy.c */
+typedef int (*ossl_cmp_allow_unprotected_cb_t)(const OSSL_CMP_CTX *ctx,
+                                               const OSSL_CMP_MSG *msg,
+                                               int invalid_protection, int arg);
+int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
+                                ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
 #endif /* !defined OSSL_CRYPTO_CMP_LOCAL_H */

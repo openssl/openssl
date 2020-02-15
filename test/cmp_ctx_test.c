@@ -169,7 +169,7 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         base_err_msg_size = strlen("INVALID_ARGS") + strlen(" : ");
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
-            ossl_cmp_add_error_txt(STR_SEP, max_str_literal);
+            ERR_add_error_txt(STR_SEP, max_str_literal);
             expected_size += strlen(STR_SEP) + strlen(max_str_literal);
         }
         expected_size += base_err_msg_size - 2 * strlen(STR_SEP);
@@ -794,8 +794,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
     /*
      * also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
-     * ossl_cmp_add_error_txt(), and the macros
-     * ossl_cmp_add_error_data and ossl_cmp_add_error_line:
+     * and the macros ossl_cmp_add_error_data and ossl_cmp_add_error_line:
      */
     ADD_TEST(test_CTX_print_errors);
 #endif

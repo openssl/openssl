@@ -333,6 +333,8 @@ void ERR_print_errors(BIO *bp);
 
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
+void ERR_add_error_txt(const char *sepr, const char *txt);
+void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_strings_const(const ERR_STRING_DATA *str);
