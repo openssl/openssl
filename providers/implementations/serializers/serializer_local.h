@@ -63,7 +63,7 @@ int ossl_prov_ecx_pub_to_der(const void *ecxkey, unsigned char **pder);
 int ossl_prov_ecx_priv_to_der(const void *ecxkey, unsigned char **pder);
 
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
-                                ASN1_STRING **pstr, int *pstrtype);
+                                 ASN1_STRING **pstr, int *pstrtype);
 /*
  * Special variant of ossl_prov_prepare_dsa_params() that requires all
  * three parameters (P, Q and G) to be set.  This is used when serializing
@@ -101,7 +101,9 @@ enum ecx_print_type {
     ecx_print_pub
 };
 
+#ifndef OPENSSL_NO_EC
 int ossl_prov_print_ecx(BIO *out, ECX_KEY *ecxkey, enum ecx_print_type type);
+#endif
 
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
