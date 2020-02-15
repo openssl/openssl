@@ -37,8 +37,8 @@ if [ -z "$OPENSSL_MODULES" ] && [ -d "${THERE}/providers" ] ; then
 	OPENSSL_MODULES="${THERE}/providers"; export OPENSSL_MODULES
 fi
 
-LIBCRYPTOSO="${THERE}/libcrypto.so.3"
-LIBSSLSO="${THERE}/libssl.so.3"
+LIBCRYPTOSO="${THERE}/{- platform->sharedlib('libcrypto') -}"
+LIBSSLSO="${THERE}/{- platform->sharedlib('libssl') -}"
 
 SYSNAME=`(uname -s) 2>/dev/null`;
 case "$SYSNAME" in
