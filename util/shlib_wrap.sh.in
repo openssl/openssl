@@ -30,8 +30,15 @@ fi
 THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
 [ -d "${THERE}" ] || exec "$@"	# should never happen...
 
-LIBCRYPTOSO="${THERE}/{- platform->sharedlib('libcrypto') -}"
-LIBSSLSO="${THERE}/{- platform->sharedlib('libssl') -}"
+if [ -z "$OPENSSL_ENGINES" ] && [ -d "${THERE}/engines" ] ; then
+	OPENSSL_ENGINES="${THERE}/engines"; export OPENSSL_ENGINES
+fi
+if [ -z "$OPENSSL_MODULES" ] && [ -d "${THERE}/providers" ] ; then
+	OPENSSL_MODULES="${THERE}/providers"; export OPENSSL_MODULES
+fi
+
+LIBCRYPTOSO="${THERE}/libcrypto.so.3"
+LIBSSLSO="${THERE}/libssl.so.3"
 
 SYSNAME=`(uname -s) 2>/dev/null`;
 case "$SYSNAME" in
