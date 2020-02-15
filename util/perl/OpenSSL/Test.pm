@@ -132,6 +132,7 @@ is defined).
 sub setup {
     my $old_test_name = $test_name;
     $test_name = shift;
+    my %opts = @_;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
     warn "setup() detected test name change.  Innocuous, so we continue...\n"
@@ -149,7 +150,8 @@ sub setup {
     BAIL_OUT("setup() expects the file Configure in the source top directory")
         unless -f srctop_file("Configure");
 
-    note "The results of this test will end up in $directories{RESULTS}";
+    note "The results of this test will end up in $directories{RESULTS}"
+        unless $opts{quiet};
 
     __cwd($directories{RESULTS});
 }

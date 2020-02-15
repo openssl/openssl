@@ -19,7 +19,7 @@ use OpenSSL::Test::Utils;
 
 # This block needs to run before 'use lib srctop_dir' directives.
 BEGIN {
-    OpenSSL::Test::setup("no_test_here");
+    OpenSSL::Test::setup("no_test_here", quiet => 1);
 }
 
 use FindBin;
