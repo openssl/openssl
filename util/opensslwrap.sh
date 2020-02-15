@@ -1,13 +1,13 @@
 #!/bin/sh
 
-HERE="`echo $0 | sed -e 's|[^/]*$||'`"
-OPENSSL="${HERE}../apps/openssl"
+HERE="`echo $0 | sed -e 's|[^/]*$||'`.."
+OPENSSL="${HERE}/apps/openssl"
 
-if [ -d "${HERE}../engines" -a "x$OPENSSL_ENGINES" = "x" ]; then
-	OPENSSL_ENGINES="${HERE}../engines"; export OPENSSL_ENGINES
+if [ -z "$OPENSSL_ENGINES" ] && [ -d "${HERE}/engines" ] ; then
+	OPENSSL_ENGINES="${HERE}/engines"; export OPENSSL_ENGINES
 fi
-if [ -d "${HERE}../providers" -a "x$OPENSSL_MODULES" = "x" ]; then
-	OPENSSL_MODULES="${HERE}../providers"; export OPENSSL_MODULES
+if [ -z "$OPENSSL_MODULES" ] && [ -d "${HERE}/providers" ] ; then
+	OPENSSL_MODULES="${HERE}/providers"; export OPENSSL_MODULES
 fi
 
 if [ -x "${OPENSSL}.exe" ]; then
@@ -19,11 +19,11 @@ if [ -x "${OPENSSL}.exe" ]; then
 	# and test/, which is now done elsewhere... The $PATH is adjusted
 	# for backward compatibility (and nostagical reasons:-).
 	if [ "$OSTYPE" != msdosdjgpp ]; then
-		PATH="${HERE}..:$PATH"; export PATH
+		PATH="${HERE}:$PATH"; export PATH
 	fi
 	exec "${OPENSSL}.exe" "$@"
-elif [ -x "${OPENSSL}" -a -x "${HERE}shlib_wrap.sh" ]; then
-	exec "${HERE}shlib_wrap.sh" "${OPENSSL}" "$@"
+elif [ -x "${OPENSSL}" ] && [ -x "${HERE}/util/shlib_wrap.sh" ]; then
+	exec "${HERE}/util/shlib_wrap.sh" "${OPENSSL}" "$@"
 else
 	exec "${OPENSSL}" "$@"	# hope for the best...
 fi
