@@ -75,7 +75,7 @@ I<val> is stored by value and an expression or auto variable can be used.
 
 ossl_param_bld_push_BN() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
-If I<bn> is marked as being securely allocated, it's OSSL_PARAM representation
+If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
 must exist until after ossl_param_bld_to_param() has been called.
@@ -84,7 +84,7 @@ ossl_param_bld_push_BN_pad() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
 The object will be padded to occupy exactly I<sz> bytes, if insufficient space
 is specified an error results.
-If I<bn> is marked as being securely allocated, it's OSSL_PARAM representation
+If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
 must exist until after ossl_param_bld_to_param() has been called.
