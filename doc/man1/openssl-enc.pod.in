@@ -261,7 +261,7 @@ This command does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
 This is due to having to begin streaming output (e.g., to standard output
 when B<-out> is not used) before the authentication tag could be validated.
-When this command is used in a pipeline, the receiveing end will not be
+When this command is used in a pipeline, the receiving end will not be
 able to roll back upon authentication failure.  The AEAD modes currently in
 common use also suffer from catastrophic failure of confidentiality and/or
 integrity upon reuse of key/iv/nonce, and since B<openssl enc> places the
