@@ -17,16 +17,16 @@ localCheckout: &localCheckout
     - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
     - run:
         name: Clone liboqs
-        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
+        command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
     - run:
         name: Build liboqs
-        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
+        command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
     - run:
         name: Build OpenSSL
-        command: scripts/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
+        command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
     - run:
         name: Run unit tests
-        command: cd oqs_test && mkdir -p test-results && scripts/git_no_checkin_in_last_day.sh || (LD_LIBRARY_PATH=$(dirname $PWD) python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
+        command: cd oqs_test && mkdir -p test-results && .circleci/git_no_checkin_in_last_day.sh || (LD_LIBRARY_PATH="$(dirname $PWD);$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
@@ -34,7 +34,7 @@ jobs:
   debian-buster-amd64:
     <<: *openssljob
     environment:
-      IMAGE: dstebila/liboqs:debian-buster-amd64-0.1.0
+      IMAGE: openquantumsafe/ci-debian-buster-amd64:latest
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111

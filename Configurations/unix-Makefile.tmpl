@@ -525,7 +525,7 @@ clean: libclean
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc liboqs.pc
-	-$(RM) `find . -type l \! -name '.*' -print`
+	-$(RM) `find . -type l \! -name '.*' \! -name 'liboqs.*' -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
@@ -678,7 +678,9 @@ install_dev: install_runtime_libs
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
 	@$(ECHO) "install liboqs.pc -> $(DESTDIR)$(libdir)/pkgconfig/liboqs.pc"
 	@cp liboqs.pc $(DESTDIR)$(libdir)/pkgconfig
+ifneq (,$(wildcard oqs/lib/liboqs.a))
 	@install oqs/lib/liboqs.a $(DESTDIR)$(libdir)
+endif
 ifneq (,$(wildcard oqs/lib/liboqs.so.0.0.0))
 	@install oqs/lib/liboqs.so.0.0.0 $(DESTDIR)$(libdir)
 	@cd $(DESTDIR)$(libdir) && ln -sf liboqs.so.0.0.0 liboqs.so && ln -sf liboqs.so.0.0.0 liboqs.so.0 && cd -
