@@ -795,7 +795,7 @@ B<-xcert>, and B<-xchain> options.
 
 =item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
 
-The input format for the extra certifcate and key, respectively.
+The input format for the extra certificate and key, respectively.
 See L<openssl(1)/Format Options> for details.
 
 =back
@@ -1047,7 +1047,7 @@ OpenSSL provides fine-grain control over how the subject and issuer DN's are
 displayed.
 This is specified by using the B<-nameopt> option, which takes a
 comma-separated list of options from the following set.
-An option may be preceeded by a minus sign, C<->, to turn it off.
+An option may be preceded by a minus sign, C<->, to turn it off.
 The default value is C<oneline>.
 The first four are the most commonly used.
 
