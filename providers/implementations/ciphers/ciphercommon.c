@@ -176,7 +176,12 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
     size_t outlint = 0;
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
-    size_t nextblocks = fillblock(ctx->buf, &ctx->bufsz, blksz, &in, &inl);
+    size_t nextblocks;
+
+    if (ctx->bufsz != 0)
+        nextblocks = fillblock(ctx->buf, &ctx->bufsz, blksz, &in, &inl);
+    else
+        nextblocks = inl & ~(blksz-1);
 
     /*
      * If we're decrypting and we end an update on a block boundary we hold
@@ -218,7 +223,7 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (!trailingdata(ctx->buf, &ctx->bufsz, blksz, &in, &inl)) {
+    if (inl != 0 && !trailingdata(ctx->buf, &ctx->bufsz, blksz, &in, &inl)) {
         /* ERR_raise already called */
         return 0;
     }

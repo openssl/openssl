@@ -150,8 +150,13 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
                                          size_t outsize, const unsigned char *in,
                                          size_t inl, OSSL_ocb_cipher_fn ciph)
 {
-    size_t nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+    size_t nextblocks;
     size_t outlint = 0;
+
+    if (bufsz != 0)
+        nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+    else
+        nextblocks = inl & ~(AES_BLOCK_SIZE-1);
 
     if (*bufsz == AES_BLOCK_SIZE) {
         if (outsize < AES_BLOCK_SIZE) {
@@ -179,7 +184,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (!trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+    if (inl != 0 && !trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
         /* PROVerr already called */
         return 0;
     }
