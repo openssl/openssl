@@ -576,11 +576,7 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
 
     /* Pre-populate the two Boolean values */
     if ((ossl_property_true = ossl_property_value(ctx, "yes", 1)) == 0
-        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0
-        /* Create values for the built-in providers */
-        || ossl_property_value(ctx, "default", 1) == 0
-        || ossl_property_value(ctx, "legacy", 1) == 0
-        || ossl_property_value(ctx, "fips", 1) == 0)
+        || (ossl_property_false = ossl_property_value(ctx, "no", 1)) == 0)
         goto err;
 
     return 1;
