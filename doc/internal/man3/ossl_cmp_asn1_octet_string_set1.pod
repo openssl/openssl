@@ -39,7 +39,7 @@ the variable pointed to by I<level> with the severity level or -1,
 the variable pointed to by I<func> with the function name string or NULL,
 the variable pointed to by I<file> with the filename string or NULL, and
 the variable pointed to by I<line> with the line number or -1.
-Any string returned via I<*func> and I<*file> must be freeed by the caller.
+Any string returned via I<*func> and I<*file> must be freed by the caller.
 
 ossl_cmp_add_error_txt() appends text to the extra data field of the last
 error message in the OpenSSL error queue, after adding the optional separator
