@@ -119,6 +119,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             return 0;
         }
         if (prsactx->oaep_md == NULL) {
+            OPENSSL_free(tbuf);
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
             PROVerr(0, ERR_R_INTERNAL_ERROR);
             return 0;
