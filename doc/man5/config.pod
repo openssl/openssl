@@ -51,7 +51,7 @@ if the B<=> character is not present but with it they just ignore
 the include.
 
 Pragmas can be specified with the B<.pragma> directive.
-See L</PRAGMAS> for mor information.
+See L</PRAGMAS> for more information.
 
 Each section in a configuration file consists of a number of name and
 value pairs of the form B<name=value>
