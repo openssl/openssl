@@ -144,7 +144,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
-  DEPEND[evp_pkey_provided_test]=../libcrypto libtestutil.a
+  DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest

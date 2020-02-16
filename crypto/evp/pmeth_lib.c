@@ -938,7 +938,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     else if (strcmp(name, "ecdh_cofactor_mode") == 0)
         name = OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE;
     else if (strcmp(name, "ecdh_kdf_md") == 0)
-        name = OSSL_EXCHANGE_PARAM_KDF_TYPE;
+        name = OSSL_EXCHANGE_PARAM_KDF_DIGEST;
 # endif
 
     {

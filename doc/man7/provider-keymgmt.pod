@@ -354,6 +354,32 @@ The private key value.
 
 =back
 
+=head2 Built-in EC Import/Export Types
+
+The following Import/Export types are available for the built-in EC algorithm:
+
+=over 4
+
+=item "curve-name" (B<OSSL_PKEY_PARAM_EC_NAME>) <utf8 string>
+
+The EC curve name.
+
+=item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
+
+Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
+if the value is zero. The cofactor variant multiplies the shared secret by the
+EC curve's cofactor (note for some curves the cofactor is 1).
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
+
+The public key value in EC point format.
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <integer>
+
+The private key value.
+
+=back
+
 =head2 Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.

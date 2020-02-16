@@ -473,7 +473,7 @@ static
 int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     EC_KEY *ec = keydata;
-    int ok = 0;
+    int ok = 1;
 
     if (ec == NULL)
         return 0;

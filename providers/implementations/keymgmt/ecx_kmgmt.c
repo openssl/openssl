@@ -27,6 +27,8 @@ static OSSL_OP_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_OP_keymgmt_export_fn ecx_export;
 static OSSL_OP_keymgmt_export_types_fn ecx_imexport_types;
 
+#define ECX_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
+
 static void *x25519_new_key(void *provctx)
 {
     return ecx_key_new(X25519_KEYLEN, 0);
@@ -40,12 +42,9 @@ static void *x448_new_key(void *provctx)
 static int ecx_has(void *keydata, int selection)
 {
     ECX_KEY *key = keydata;
-    const int ecx_selections = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-                               | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     int ok = 1;
 
-    if ((selection & ~ecx_selections) != 0
-            || (selection & ecx_selections) == 0)
+    if ((selection & ECX_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
@@ -63,29 +62,24 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     size_t privkeylen = 0, pubkeylen;
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     unsigned char *pubkey;
-    const int ecx_selections = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-                               | OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
     if (key == NULL)
         return 0;
 
-    if ((selection & ~ecx_selections) != 0
-            || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
+
+    param_pub_key =
+        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         param_priv_key =
             OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-
     /*
      * If a private key is present then a public key must also be present.
      * Alternatively we've just got a public key.
      */
-    if (param_pub_key == NULL
-            || (param_priv_key == NULL
-                && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0))
+    if (param_pub_key == NULL)
         return 0;
 
     if (param_priv_key != NULL
