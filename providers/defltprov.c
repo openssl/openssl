@@ -471,17 +471,17 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
 #endif
 
 #ifndef OPENSSL_NO_EC
-    { "X25519", "provider=default,format=text,type=private",
+    { "X25519", "provider=default,fips=yes,format=text,type=private",
       x25519_priv_print_serializer_functions },
-    { "X25519", "provider=default,format=text,type=public",
+    { "X25519", "provider=default,fips=yes,format=text,type=public",
       x25519_pub_print_serializer_functions },
-    { "X25519", "provider=default,format=der,type=private",
+    { "X25519", "provider=default,fips=yes,format=der,type=private",
       x25519_priv_der_serializer_functions },
-    { "X25519", "provider=default,format=der,type=public",
+    { "X25519", "provider=default,fips=yes,format=der,type=public",
       x25519_pub_der_serializer_functions },
-    { "X25519", "provider=default,format=pem,type=private",
+    { "X25519", "provider=default,fips=yes,format=pem,type=private",
       x25519_priv_pem_serializer_functions },
-    { "X25519", "provider=default,format=pem,type=public",
+    { "X25519", "provider=default,fips=yes,format=pem,type=public",
       x25519_pub_pem_serializer_functions },
 
     { "X448", "provider=default,format=text,type=private",
@@ -496,8 +496,26 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
       x448_priv_pem_serializer_functions },
     { "X448", "provider=default,format=pem,type=public",
       x448_pub_pem_serializer_functions },
-#endif
 
+    { "EC", "provider=default,fips=yes,format=text,type=private",
+      ec_priv_text_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=text,type=public",
+      ec_pub_text_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=text,type=parameters",
+      ec_param_text_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=der,type=private",
+      ec_priv_der_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=der,type=public",
+      ec_pub_der_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=der,type=parameters",
+      ec_param_der_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=pem,type=private",
+      ec_priv_pem_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=pem,type=public",
+      ec_pub_pem_serializer_functions },
+    { "EC", "provider=default,fips=yes,format=pem,type=parameters",
+      ec_param_pem_serializer_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

@@ -230,7 +230,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
     if (ctx->operation == EVP_PKEY_OP_PARAMFROMDATA)
         selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
     else
-        selection = OSSL_KEYMGMT_SELECT_KEYPAIR;
+        selection = OSSL_KEYMGMT_SELECT_ALL;
     keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
                                         params);
 
@@ -261,6 +261,6 @@ const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
         return evp_keymgmt_import_types(ctx->keymgmt,
-                                        OSSL_KEYMGMT_SELECT_KEYPAIR);
+                                        OSSL_KEYMGMT_SELECT_ALL);
     return NULL;
 }

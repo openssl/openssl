@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@
 
 static PKCS8_PRIV_KEY_INFO *
 ossl_prov_p8info_from_obj(const void *obj, int obj_nid,
-                          ASN1_STRING *params,
+                          void *params,
                           int params_type,
                           int (*k2d)(const void *obj,
                                      unsigned char **pder))
@@ -72,7 +72,7 @@ static X509_SIG *ossl_prov_encp8_from_p8info(PKCS8_PRIV_KEY_INFO *p8info,
 }
 
 static X509_SIG *ossl_prov_encp8_from_obj(const void *obj, int obj_nid,
-                                          ASN1_STRING *params,
+                                          void *params,
                                           int params_type,
                                           int (*k2d)(const void *obj,
                                                      unsigned char **pder),
@@ -87,7 +87,7 @@ static X509_SIG *ossl_prov_encp8_from_obj(const void *obj, int obj_nid,
 }
 
 static X509_PUBKEY *ossl_prov_pubkey_from_obj(const void *obj, int obj_nid,
-                                              ASN1_STRING *params,
+                                              void *params,
                                               int params_type,
                                               int (*k2d)(const void *obj,
                                                          unsigned char **pder))
@@ -272,18 +272,17 @@ int ossl_prov_print_labeled_buf(BIO *out, const char *label,
     return 1;
 }
 
-
-/* p2s = param to asn1_string, k2d = key to der */
+/* p2s = param to asn1, k2d = key to der */
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
-                                                 ASN1_STRING **str,
+                                                 void **str,
                                                  int *strtype),
                                       int (*k2d)(const void *obj,
                                                  unsigned char **pder),
                                       struct pkcs8_encrypt_ctx_st *ctx)
 {
     int ret = 0;
-    ASN1_STRING *str = NULL;
+    void *str = NULL;
     int strtype = V_ASN1_UNDEF;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
@@ -312,14 +311,14 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
 
 int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
-                                                 ASN1_STRING **str,
+                                                 void **str,
                                                  int *strtype),
                                       int (*k2d)(const void *obj,
                                                  unsigned char **pder),
                                       struct pkcs8_encrypt_ctx_st *ctx)
 {
     int ret = 0;
-    ASN1_STRING *str = NULL;
+    void *str = NULL;
     int strtype = V_ASN1_UNDEF;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
@@ -348,13 +347,13 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
 
 int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
-                                                ASN1_STRING **str,
+                                                void **str,
                                                 int *strtype),
                                      int (*k2d)(const void *obj,
                                                 unsigned char **pder))
 {
     int ret = 0;
-    ASN1_STRING *str = NULL;
+    void *str = NULL;
     int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
@@ -373,13 +372,13 @@ int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
 
 int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
-                                                ASN1_STRING **str,
+                                                void **str,
                                                 int *strtype),
                                      int (*k2d)(const void *obj,
                                                 unsigned char **pder))
 {
     int ret = 0;
-    ASN1_STRING *str = NULL;
+    void *str = NULL;
     int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
@@ -395,4 +394,3 @@ int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
     X509_PUBKEY_free(xpk);
     return ret;
 }
-
