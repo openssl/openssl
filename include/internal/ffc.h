@@ -56,6 +56,14 @@
 # define FFC_CHECK_G_MISMATCH                 0x08000
 # define FFC_CHECK_COUNTER_MISMATCH           0x10000
 
+/* Validation Return codes */
+# define FFC_ERROR_PUBKEY_TOO_SMALL       0x01
+# define FFC_ERROR_PUBKEY_TOO_LARGE       0x02
+# define FFC_ERROR_PUBKEY_INVALID         0x04
+# define FFC_ERROR_NOT_SUITABLE_GENERATOR 0x08
+# define FFC_ERROR_PRIVKEY_TOO_SMALL      0x10
+# define FFC_ERROR_PRIVKEY_TOO_LARGE      0x20
+
 /*
  * Finite field cryptography (FFC) domain parameters are used by DH and DSA.
  * Refer to FIPS186_4 Appendix A & B.
@@ -113,20 +121,37 @@ int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
                                   const EVP_MD *evpmd, int *res, BN_GENCB *cb);
 
-int ffc_param_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                   int type, size_t L, size_t N,
-                                   const EVP_MD *evpmd, int validate_flags,
-                                   int *res, BN_GENCB *cb);
-int ffc_param_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                   int type, size_t L, size_t N,
-                                   const EVP_MD *evpmd, int validate_flags,
-                                   int *res, BN_GENCB *cb);
+int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type, size_t L, size_t N,
+                                    const EVP_MD *evpmd, int validate_flags,
+                                    int *res, BN_GENCB *cb);
+int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type, size_t L, size_t N,
+                                    const EVP_MD *evpmd, int validate_flags,
+                                    int *res, BN_GENCB *cb);
+
+int ffc_params_FIPS186_4_validate(const FFC_PARAMS *params, int type,
+                                  const EVP_MD *evpmd, int validate_flags,
+                                  int *res, BN_GENCB *cb);
+int ffc_params_FIPS186_2_validate(const FFC_PARAMS *params, int type,
+                                  const EVP_MD *evpmd, int validate_flags,
+                                  int *res, BN_GENCB *cb);
+
 
 int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                              int N, int s, BIGNUM *priv);
+int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
+                                  int N, int s, BIGNUM *priv);
 
 int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
                                        const BIGNUM *p, const BIGNUM *q,
                                        const BIGNUM *g, BIGNUM *tmp, int *ret);
+
+int ffc_validate_public_key(const FFC_PARAMS *params, const BIGNUM *pub_key,
+                            int *ret);
+int ffc_validate_public_key_partial(const FFC_PARAMS *params,
+                                    const BIGNUM *pub_key, int *ret);
+int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
+                             int *ret);
 
 #endif /* OSSL_INTERNAL_FFC_H */

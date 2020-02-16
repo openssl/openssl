@@ -32,6 +32,7 @@ struct dsa_st {
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
+    OPENSSL_CTX *libctx;
 
     /* Provider data */
     size_t dirty_cnt; /* If any key material changes, increment this */
@@ -68,5 +69,4 @@ struct dsa_method {
     int (*dsa_keygen) (DSA *dsa);
 };
 
-DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
-                         int dlen, DSA *dsa);
+DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);

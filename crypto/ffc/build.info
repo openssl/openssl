@@ -1,6 +1,7 @@
 LIBS=../../libcrypto
 
-$COMMON=ffc_params.c ffc_params_generate.c ffc_key_generate.c
+$COMMON=ffc_params.c ffc_params_generate.c ffc_key_generate.c\
+        ffc_params_validate.c ffc_key_validate.c
 
 SOURCE[../../libcrypto]=$COMMON
 SOURCE[../../providers/libfips.a]=$COMMON

@@ -23,7 +23,7 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-int dsa_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
+int dsa_generate_ffc_parameters(DSA *dsa, int type,
                                 int pbits, int qbits, int gindex,
                                 BN_GENCB *cb)
 {
@@ -37,12 +37,12 @@ int dsa_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
     dsa->params.gindex = gindex;
 #ifndef FIPS_MODE
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
-        ret = ffc_params_FIPS186_2_generate(libctx, &dsa->params,
+        ret = ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,
                                             FFC_PARAM_TYPE_DSA,
                                             pbits, qbits, NULL, &res, cb);
     else
 #endif
-        ret = ffc_params_FIPS186_4_generate(libctx, &dsa->params,
+        ret = ffc_params_FIPS186_4_generate(dsa->libctx, &dsa->params,
                                             FFC_PARAM_TYPE_DSA,
                                             pbits, qbits, NULL, &res, cb);
     if (ret > 0)
@@ -50,10 +50,10 @@ int dsa_generate_ffc_parameters(OPENSSL_CTX *libctx, DSA *dsa, int type,
     return ret;
 }
 
-int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
-                                const unsigned char *seed_in, int seed_len,
-                                int *counter_ret, unsigned long *h_ret,
-                                BN_GENCB *cb)
+int DSA_generate_parameters_ex(DSA *dsa, int bits,
+                               const unsigned char *seed_in, int seed_len,
+                               int *counter_ret, unsigned long *h_ret,
+                               BN_GENCB *cb)
 {
 #ifndef FIPS_MODE
     if (dsa->meth->dsa_paramgen)
@@ -67,15 +67,13 @@ int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
 #ifndef FIPS_MODE
     /* The old code used FIPS 186-2 DSA Parameter generation */
     if (bits <= 1024 && seed_len == 20) {
-        if (!dsa_generate_ffc_parameters(libctx, dsa,
-                                         DSA_PARAMGEN_TYPE_FIPS_186_2,
+        if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,
                                          bits, 160, -1, cb))
             return 0;
     } else
 #endif
     {
-        if (!dsa_generate_ffc_parameters(libctx, dsa,
-                                         DSA_PARAMGEN_TYPE_FIPS_186_4,
+        if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_4,
                                          bits, -1, -1, cb))
             return 0;
     }
@@ -85,14 +83,4 @@ int dsa_generate_parameters_ctx(OPENSSL_CTX *libctx, DSA *dsa, int bits,
     if (h_ret != NULL)
         *h_ret = dsa->params.h;
     return 1;
-}
-
-int DSA_generate_parameters_ex(DSA *dsa, int bits,
-                               const unsigned char *seed_in, int seed_len,
-                               int *counter_ret, unsigned long *h_ret,
-                               BN_GENCB *cb)
-{
-    return dsa_generate_parameters_ctx(NULL, dsa, bits,
-                                       seed_in, seed_len,
-                                       counter_ret, h_ret, cb);
 }

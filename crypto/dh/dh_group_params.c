@@ -15,11 +15,16 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include "crypto/bn_dh.h"
+#include "crypto/dh.h"
 
-static DH *dh_param_init(int nid, const BIGNUM *p, int32_t nbits)
+#ifndef FIPS_MODE
+static DH *dh_new_by_nid_with_ctx(OPENSSL_CTX *libctx, int nid);
+
+static DH *dh_param_init(OPENSSL_CTX *libctx, int nid, const BIGNUM *p,
+                         int32_t nbits)
 {
     BIGNUM *q = NULL;
-    DH *dh = DH_new();
+    DH *dh = dh_new_with_ctx(libctx);
 
     if (dh == NULL)
         return NULL;
@@ -41,7 +46,7 @@ static DH *dh_param_init(int nid, const BIGNUM *p, int32_t nbits)
     return dh;
 }
 
-DH *DH_new_by_nid(int nid)
+static DH *dh_new_by_nid_with_ctx(OPENSSL_CTX *libctx, int nid)
 {
     /*
      * The last parameter specified in these fields is
@@ -50,34 +55,40 @@ DH *DH_new_by_nid(int nid)
      */
     switch (nid) {
     case NID_ffdhe2048:
-        return dh_param_init(nid, &_bignum_ffdhe2048_p, 225);
+        return dh_param_init(libctx, nid, &_bignum_ffdhe2048_p, 225);
     case NID_ffdhe3072:
-        return dh_param_init(nid, &_bignum_ffdhe3072_p, 275);
+        return dh_param_init(libctx, nid, &_bignum_ffdhe3072_p, 275);
     case NID_ffdhe4096:
-        return dh_param_init(nid, &_bignum_ffdhe4096_p, 325);
+        return dh_param_init(libctx, nid, &_bignum_ffdhe4096_p, 325);
     case NID_ffdhe6144:
-        return dh_param_init(nid, &_bignum_ffdhe6144_p, 375);
+        return dh_param_init(libctx, nid, &_bignum_ffdhe6144_p, 375);
     case NID_ffdhe8192:
-        return dh_param_init(nid, &_bignum_ffdhe8192_p, 400);
+        return dh_param_init(libctx, nid, &_bignum_ffdhe8192_p, 400);
 #ifndef FIPS_MODE
     case NID_modp_1536:
-        return dh_param_init(nid, &_bignum_modp_1536_p, 190);
+        return dh_param_init(libctx, nid, &_bignum_modp_1536_p, 190);
 #endif
     case NID_modp_2048:
-        return dh_param_init(nid, &_bignum_modp_2048_p, 225);
+        return dh_param_init(libctx, nid, &_bignum_modp_2048_p, 225);
     case NID_modp_3072:
-        return dh_param_init(nid, &_bignum_modp_3072_p, 275);
+        return dh_param_init(libctx, nid, &_bignum_modp_3072_p, 275);
     case NID_modp_4096:
-        return dh_param_init(nid, &_bignum_modp_4096_p, 325);
+        return dh_param_init(libctx, nid, &_bignum_modp_4096_p, 325);
     case NID_modp_6144:
-        return dh_param_init(nid, &_bignum_modp_6144_p, 375);
+        return dh_param_init(libctx, nid, &_bignum_modp_6144_p, 375);
     case NID_modp_8192:
-        return dh_param_init(nid, &_bignum_modp_8192_p, 400);
+        return dh_param_init(libctx, nid, &_bignum_modp_8192_p, 400);
     default:
-        DHerr(DH_F_DH_NEW_BY_NID, DH_R_INVALID_PARAMETER_NID);
+        DHerr(0, DH_R_INVALID_PARAMETER_NID);
         return NULL;
     }
 }
+
+DH *DH_new_by_nid(int nid)
+{
+    return dh_new_by_nid_with_ctx(NULL, nid);
+}
+#endif
 
 int DH_get_nid(DH *dh)
 {

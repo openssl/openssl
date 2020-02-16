@@ -150,7 +150,7 @@ static int key_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 
 static void *dsa_newdata(void *provctx)
 {
-    return DSA_new();
+    return dsa_new_with_ctx(PROV_LIBRARY_CONTEXT_OF(provctx));
 }
 
 static void dsa_freedata(void *keydata)

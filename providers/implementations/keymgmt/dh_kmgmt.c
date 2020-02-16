@@ -10,12 +10,13 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
-#include <openssl/dh.h>
 #include <openssl/params.h>
 #include "internal/param_build.h"
 #include "crypto/dh.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
+#include "crypto/dh.h"
 
 static OSSL_OP_keymgmt_new_fn dh_newdata;
 static OSSL_OP_keymgmt_free_fn dh_freedata;
@@ -137,7 +138,7 @@ static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 
 static void *dh_newdata(void *provctx)
 {
-    return DH_new();
+    return dh_new_with_ctx(PROV_LIBRARY_CONTEXT_OF(provctx));
 }
 
 static void dh_freedata(void *keydata)

@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include "dh_local.h"
+#include "crypto/dh.h"
 
 /*-
  * Check that p and g are suitable enough
@@ -37,6 +38,28 @@ int DH_check_params_ex(const DH *dh)
     return errflags == 0;
 }
 
+#ifdef FIPS_MODE
+int DH_check_params(const DH *dh, int *ret)
+{
+    int nid;
+
+    *ret = 0;
+    /*
+     * SP800-56A R3 Section 5.5.2 Assurances of Domain Parameter Validity
+     * (1a) The domain parameters correspond to any approved safe prime group.
+     */
+    nid = DH_get_nid((DH *)dh);
+    if (nid != NID_undef)
+        return 1;
+    /*
+     * OR
+     * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
+     * validity tests.
+     */
+    return ffc_params_FIPS186_4_validate(&dh->params, FFC_PARAM_TYPE_DH, NULL,
+                                         FFC_PARAMS_VALIDATE_ALL, ret, NULL);
+}
+#else
 int DH_check_params(const DH *dh, int *ret)
 {
     int ok = 0;
@@ -73,6 +96,7 @@ int DH_check_params(const DH *dh, int *ret)
     BN_CTX_free(ctx);
     return ok;
 }
+#endif /* FIPS_MODE */
 
 /*-
  * Check that p is a safe prime and
@@ -107,11 +131,20 @@ int DH_check_ex(const DH *dh)
     return errflags == 0;
 }
 
+/* Note: according to documentation - this only checks the params */
 int DH_check(const DH *dh, int *ret)
 {
+#ifdef FIPS_MODE
+    return DH_check_params(dh, ret);
+#else
     int ok = 0, r;
     BN_CTX *ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
+    int nid = DH_get_nid((DH *)dh);
+
+    *ret = 0;
+    if (nid != NID_undef)
+        return 1;
 
     if (!DH_check_params(dh, ret))
         return 0;
@@ -171,6 +204,7 @@ int DH_check(const DH *dh, int *ret)
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
+#endif /* FIPS_MODE */
 }
 
 int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
@@ -190,38 +224,83 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
     return errflags == 0;
 }
 
+/*
+ * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
+ */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
+    return ffc_validate_public_key(&dh->params, pub_key, ret);
+}
+
+/*
+ * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Partial public key validation.
+ * To only be used with ephemeral FFC public keys generated using the approved
+ * safe-prime groups.
+ */
+int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
+{
+    return ffc_validate_public_key_partial(&dh->params, pub_key, ret);
+}
+
+int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
+{
     int ok = 0;
-    BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+    BIGNUM *two_powN = NULL, *upper;
 
     *ret = 0;
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
+    two_powN = BN_new();
+    if (two_powN == NULL)
+        return 0;
+    if (dh->params.q == NULL)
         goto err;
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL || !BN_set_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) <= 0)
-        *ret |= DH_CHECK_PUBKEY_TOO_SMALL;
-    if (BN_copy(tmp, dh->params.p) == NULL || !BN_sub_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) >= 0)
-        *ret |= DH_CHECK_PUBKEY_TOO_LARGE;
+    upper = dh->params.q;
 
-    if (dh->params.q != NULL) {
-        /* Check pub_key^q == 1 mod p */
-        if (!BN_mod_exp(tmp, pub_key, dh->params.q, dh->params.p, ctx))
+    /* Is it from an approved Safe prime group ?*/
+    if (DH_get_nid((DH *)dh) != NID_undef) {
+        if (!BN_lshift(two_powN, BN_value_one(), dh->length))
             goto err;
-        if (!BN_is_one(tmp))
-            *ret |= DH_CHECK_PUBKEY_INVALID;
+        if (BN_cmp(two_powN, dh->params.q) < 0)
+            upper = two_powN;
     }
+    if (!ffc_validate_private_key(upper, priv_key, ret))
+        goto err;
 
     ok = 1;
- err:
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
+err:
+    BN_free(two_powN);
     return ok;
+}
+
+/*
+ * FFC pairwise check from SP800-56A R3.
+ *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
+ */
+int dh_check_pairwise(DH *dh)
+{
+    int ret = 0;
+    BN_CTX *ctx = NULL;
+    BIGNUM *pub_key = NULL;
+
+    if (dh->params.p == NULL
+        || dh->params.g == NULL
+        || dh->priv_key == NULL
+        || dh->pub_key == NULL)
+        return 0;
+
+    ctx = BN_CTX_new_ex(dh->libctx);
+    if (ctx == NULL)
+        goto err;
+    pub_key = BN_new();
+    if (pub_key == NULL)
+        goto err;
+
+    /* recalculate the public key = (g ^ priv) mod p */
+    if (!dh_generate_public_key(ctx, dh, dh->priv_key, pub_key))
+        goto err;
+    /* check it matches the existing pubic_key */
+    ret = BN_cmp(pub_key, dh->pub_key) == 0;
+err:
+    BN_free(pub_key);
+    BN_CTX_free(ctx);
+    return ret;
 }

@@ -23,6 +23,19 @@ int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                              int N, int s, BIGNUM *priv)
 {
 #ifdef FIPS_MODE
+    return ffc_generate_private_key_fips(ctx, params, N, s, priv);
+#else
+    do {
+        if (!BN_priv_rand_range_ex(priv, params->q, ctx))
+            return 0;
+    } while (BN_is_zero(priv) || BN_is_one(priv));
+    return 1;
+#endif /* FIPS_MODE */
+}
+
+int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
+                                  int N, int s, BIGNUM *priv)
+{
     int ret = 0;
     BIGNUM *m, *two_powN = NULL;
 
@@ -51,11 +64,4 @@ int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
 err:
     BN_free(two_powN);
     return ret;
-#else
-    do {
-        if (!BN_priv_rand_range_ex(priv, params->q, ctx))
-            return 0;
-    } while (BN_is_zero(priv) || BN_is_one(priv));
-    return 1;
-#endif /* FIPS_MODE */
 }

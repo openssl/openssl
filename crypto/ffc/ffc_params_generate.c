@@ -474,10 +474,10 @@ static EVP_MD *fetch_default_md(OPENSSL_CTX *libctx, size_t N)
  *   - FFC_PARAMS_RET_STATUS_UNVERIFIABLE_G if the validation of G succeeded,
  *     but G is unverifiable.
  */
-int ffc_param_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                   int type, size_t L, size_t N,
-                                   const EVP_MD *evpmd, int validate_flags,
-                                   int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type, size_t L, size_t N,
+                                    const EVP_MD *evpmd, int validate_flags,
+                                    int *res, BN_GENCB *cb)
 {
     int ok = FFC_PARAMS_RET_STATUS_FAILED;
     unsigned char *seed = NULL, *seed_tmp = NULL;
@@ -750,10 +750,10 @@ err:
     return ok;
 }
 
-int ffc_param_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                   int type, size_t L, size_t N,
-                                   const EVP_MD *evpmd, int validate_flags,
-                                   int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type, size_t L, size_t N,
+                                    const EVP_MD *evpmd, int validate_flags,
+                                    int *res, BN_GENCB *cb)
 {
     int ok = FFC_PARAMS_RET_STATUS_FAILED;
     unsigned char seed[SHA256_DIGEST_LENGTH];
@@ -977,8 +977,8 @@ int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
                                   const EVP_MD *evpmd, int *res, BN_GENCB *cb)
 {
-    return ffc_param_FIPS186_4_gen_verify(libctx, params, type, L, N, evpmd, 0,
-                                          res, cb);
+    return ffc_params_FIPS186_4_gen_verify(libctx, params, type, L, N, evpmd, 0,
+                                           res, cb);
 }
 
 /* This should no longer be used in FIPS mode */
@@ -986,14 +986,6 @@ int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
                                   const EVP_MD *evpmd, int *res, BN_GENCB *cb)
 {
-    return ffc_param_FIPS186_2_gen_verify(libctx, params, type, L, N, evpmd,
-                                          0, res, cb);
-}
-
-/* TODO(3.0) - Add this in another PR -  just add a stub for now */
-int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
-                                       const BIGNUM *p, const BIGNUM *q,
-                                       const BIGNUM *g, BIGNUM *tmp, int *ret)
-{
-    return 1;
+    return ffc_params_FIPS186_2_gen_verify(libctx, params, type, L, N, evpmd,
+                                           0, res, cb);
 }
