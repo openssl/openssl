@@ -227,9 +227,6 @@ size_t CRYPTO_secure_actual_size(void *ptr)
     return 0;
 #endif
 }
-/* END OF PAGE ...
-
-   ... START OF PAGE */
 
 /*
  * SECURE HEAP IMPLEMENTATION
@@ -385,12 +382,12 @@ static int sh_init(size_t size, size_t minsize)
     OPENSSL_assert(size > 0);
     OPENSSL_assert((size & (size - 1)) == 0);
     OPENSSL_assert((minsize & (minsize - 1)) == 0);
-    if (size <= 0 || (size & (size - 1)) != 0)
+    if (size == 0 || (size & (size - 1)) != 0)
         goto err;
     if (minsize == 0 || (minsize & (minsize - 1)) != 0)
         goto err;
 
-    while (minsize < (int)sizeof(SH_LIST))
+    while (minsize < sizeof(SH_LIST))
         minsize *= 2;
 
     sh.arena_size = size;
@@ -437,21 +434,19 @@ static int sh_init(size_t size, size_t minsize)
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
-    if (1) {
-#ifdef MAP_ANON
-        sh.map_result = mmap(NULL, sh.map_size,
-                             PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
-    } else {
-#endif
-        int fd;
 
-        sh.map_result = MAP_FAILED;
-        if ((fd = open("/dev/zero", O_RDWR)) >= 0) {
-            sh.map_result = mmap(NULL, sh.map_size,
-                                 PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-            close(fd);
-        }
+#ifdef MAP_ANON
+    sh.map_result = mmap(NULL, sh.map_size,
+                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+#else
+    sh.map_result = MAP_FAILED;
+    /* Temporary use |ret| for file descriptor (assumes goto err returns 0) */
+    if ((ret = open("/dev/zero", O_RDWR)) >= 0) {
+        sh.map_result = mmap(NULL, sh.map_size,
+                             PROT_READ|PROT_WRITE, MAP_PRIVATE, ret, 0);
+        close(ret);
     }
+#endif
     if (sh.map_result == MAP_FAILED)
         goto err;
     sh.arena = (char *)(sh.map_result + pgsize);
