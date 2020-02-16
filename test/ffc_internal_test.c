@@ -393,9 +393,9 @@ static int ffc_params_fips186_2_gen_validate_test(void)
     FFC_PARAMS params;
     BIGNUM *bn = NULL;
 
+    ffc_params_init(&params);
     if (!TEST_ptr(bn = BN_new()))
         goto err;
-    ffc_params_init(&params);
     if (!TEST_true(ffc_params_FIPS186_2_generate(NULL, &params, FFC_PARAM_TYPE_DH,
                                                  1024, 160, NULL, &res, NULL)))
         goto err;
