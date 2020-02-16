@@ -192,8 +192,7 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_RAND_DRBG       15
 # define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
 # define CRYPTO_EX_INDEX_OPENSSL_CTX     16
-# define CRYPTO_EX_INDEX_COUNT           17
-# define CRYPTO_EX_INDEX__COUNT          CRYPTO_EX_INDEX_COUNT
+# define CRYPTO_EX_INDEX__COUNT          17
 
 typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
