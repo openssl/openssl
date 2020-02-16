@@ -264,8 +264,8 @@ implementations of the same algorithms), the property "provider=default"
 can be used as a search criterion for these implementations. Some
 non-cryptographic algorithms (such as serializers for loading keys and
 parameters from files) are not FIPS algorithm implementations in themselves but
-are safe to use in "FIPS mode". The property "fips=yes" can be used to select
-such algorithms.
+support algorithms from the FIPS provider and are allowed for use in "FIPS
+mode". The property "fips=yes" can be used to select such algorithms.
 
 =head2 FIPS provider
 

@@ -409,7 +409,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 };
 
 /*
- * Unlike most algorithms in the default provider, the serializers are compatible
+ * Unlike most algorithms in the default provider, the serializers are allowed
  * for use in FIPS mode, and therefore have the "fips=yes" property.
  */
 static const OSSL_ALGORITHM deflt_serializer[] = {

@@ -564,7 +564,7 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
     static const char *const predefined_names[] = {
         "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
-        "fips",         /* FIPS compatible algorithm */
+        "fips",         /* FIPS validated or FIPS supporting algorithm */
         "format",       /* output format for serializers */
         "type",         /* output type for serializers */
     };
