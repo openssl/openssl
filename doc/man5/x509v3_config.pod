@@ -60,7 +60,7 @@ The following sections describe each supported extension in detail.
 
 This is a multi valued extension which indicates whether a certificate is
 a CA certificate. The first (mandatory) name is B<CA> followed by B<TRUE> or
-B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by an
+B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by a
 non-negative value can be included.
 
 For example:
