@@ -351,6 +351,9 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
+        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
+        $(NODEBUG) !
         $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
         $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -401,7 +404,7 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep
+{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep copy-utils
 {- dependmagic('build_libs'); -} : build_libs_nodep
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
@@ -429,16 +432,12 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
-        DEFINE OPENSSL_ENGINES {- builddir("engines") -}
-        DEFINE OPENSSL_MODULES {- builddir("providers") -}
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
-        DEASSIGN OPENSSL_MODULES
-        DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
@@ -683,6 +682,14 @@ check_INSTALLTOP :
                 EXIT %x10000002
 
 # Helper targets #####################################################
+
+copy-utils : [.util]wrap.pl
+
+[.util]wrap.pl : configdata.pm
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		CREATE/DIR/LOG [.util]
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		COPY/LOG ossl_sourceroot:[util]wrap.pl [.util]
 
 # Developer targets ##################################################
 

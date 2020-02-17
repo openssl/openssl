@@ -357,7 +357,7 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep
+{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep copy-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
@@ -385,13 +385,11 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all: build_sw build_docs
 
 test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep
+{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
 	@{- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
 	set PERL=$(PERL)
-	set OPENSSL_ENGINES=$(MAKEDIR)\engines
-	set OPENSSL_MODULES=$(MAKEDIR)\providers
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
@@ -543,6 +541,14 @@ install_html_docs: build_html_docs
                                         "$(INSTALLTOP)\html\man7"
 
 uninstall_html_docs:
+
+# Helper targets #####################################################
+
+copy-utils: $(BLDDIR)\util\wrap.pl
+
+$(BLDDIR)\util\wrap.pl: configdata.pm
+	@if NOT EXIST "$(BLDDIR)\util" mkdir "$(BLDDIR)\util"
+	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\util\$(@F)" "$(BLDDIR)\util"
 
 # Building targets ###################################################
 
