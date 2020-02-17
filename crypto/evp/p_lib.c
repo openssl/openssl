@@ -942,7 +942,6 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 
 static void evp_pkey_free_legacy(EVP_PKEY *x)
 {
-
     if (x->ameth != NULL) {
         if (x->ameth->pkey_free != NULL)
             x->ameth->pkey_free(x);
@@ -955,6 +954,7 @@ static void evp_pkey_free_legacy(EVP_PKEY *x)
     ENGINE_finish(x->pmeth_engine);
     x->pmeth_engine = NULL;
 #endif
+    x->type = x->save_type = NID_undef;
 }
 
 static void evp_pkey_free_it(EVP_PKEY *x)
