@@ -1178,13 +1178,31 @@ sub __wrap_cmd {
     my $cmd = shift;
     my $exe_shell = shift;
 
-    my @prefix = ( __bldtop_file("util", "shlib_wrap.sh") );
+    my @prefix = ();
 
-    if(defined($exe_shell)) {
-	@prefix = ( $exe_shell );
-    } elsif ($^O eq "VMS" || $^O eq "MSWin32") {
-	# VMS and Windows don't use any wrapper script for the moment
-	@prefix = ();
+    if (defined($exe_shell)) {
+        # If $exe_shell is defined, trust it
+        @prefix = ( $exe_shell );
+    } else {
+        # Otherwise, use the standard wrapper
+        my $std_wrapper = __bldtop_file("util", "wrap.pl");
+
+        if ($^O eq "VMS") {
+            # On VMS, running random executables without having a command
+            # symbol means running them with the MCR command.  This is an
+            # old PDP-11 command that stuck around.  So we get a command
+            # running perl running the script.
+            @prefix = ( "MCR", $^X, $std_wrapper );
+        } elsif ($^O eq "MSWin32") {
+            # In the Windows case, we run perl explicitly.  We might not
+            # need it, but that depends on if the user has associated the
+            # '.pl' extension with a perl interpreter, so better be safe.
+            @prefix = ( $^X, $std_wrapper );
+        } else {
+            # Otherwise, we assume Unix semantics, and trust that the #!
+            # line activates perl for us.
+            @prefix = ( $std_wrapper );
+        }
     }
 
     return (@prefix, $cmd);
