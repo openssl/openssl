@@ -18,8 +18,12 @@
 
 static OSSL_OP_keymgmt_new_fn x25519_new_key;
 static OSSL_OP_keymgmt_new_fn x448_new_key;
+static OSSL_OP_keymgmt_new_fn ed25519_new_key;
+static OSSL_OP_keymgmt_new_fn ed448_new_key;
 static OSSL_OP_keymgmt_get_params_fn x25519_get_params;
 static OSSL_OP_keymgmt_get_params_fn x448_get_params;
+static OSSL_OP_keymgmt_get_params_fn ed25519_get_params;
+static OSSL_OP_keymgmt_get_params_fn ed448_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn ecx_gettable_params;
 static OSSL_OP_keymgmt_has_fn ecx_has;
 static OSSL_OP_keymgmt_import_fn ecx_import;
@@ -37,6 +41,16 @@ static void *x25519_new_key(void *provctx)
 static void *x448_new_key(void *provctx)
 {
     return ecx_key_new(X448_KEYLEN, 0);
+}
+
+static void *ed25519_new_key(void *provctx)
+{
+    return ecx_key_new(ED25519_KEYLEN, 0);
+}
+
+static void *ed448_new_key(void *provctx)
+{
+    return ecx_key_new(ED448_KEYLEN, 0);
 }
 
 static int ecx_has(void *keydata, int selection)
@@ -186,6 +200,16 @@ static int x448_get_params(void *key, OSSL_PARAM params[])
     return ecx_get_params(params, X448_BITS, X448_SECURITY_BITS, X448_KEYLEN);
 }
 
+static int ed25519_get_params(void *key, OSSL_PARAM params[])
+{
+    return ecx_get_params(params, ED25519_BITS, ED25519_SECURITY_BITS, ED25519_KEYLEN);
+}
+
+static int ed448_get_params(void *key, OSSL_PARAM params[])
+{
+    return ecx_get_params(params, ED448_BITS, ED448_SECURITY_BITS, ED448_KEYLEN);
+}
+
 static const OSSL_PARAM ecx_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
@@ -198,28 +222,21 @@ static const OSSL_PARAM *ecx_gettable_params(void)
     return ecx_params;
 }
 
-const OSSL_DISPATCH x25519_keymgmt_functions[] = {
-    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))x25519_new_key },
-    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))x25519_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ecx_gettable_params },
-    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has },
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import },
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types },
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ecx_imexport_types },
-    { 0, NULL }
-};
+#define MAKE_KEYMGMT_FUNCTIONS(alg) \
+    const OSSL_DISPATCH alg##_keymgmt_functions[] = { \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))alg##_new_key }, \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free }, \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))alg##_get_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ecx_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import }, \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export }, \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
+        { 0, NULL } \
+    };
 
-const OSSL_DISPATCH x448_keymgmt_functions[] = {
-    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))x448_new_key },
-    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))x448_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ecx_gettable_params },
-    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has },
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import },
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types },
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ecx_imexport_types },
-    { 0, NULL }
-};
+MAKE_KEYMGMT_FUNCTIONS(x25519)
+MAKE_KEYMGMT_FUNCTIONS(x448)
+MAKE_KEYMGMT_FUNCTIONS(ed25519)
+MAKE_KEYMGMT_FUNCTIONS(ed448)

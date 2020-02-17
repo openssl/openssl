@@ -259,6 +259,8 @@ extern const OSSL_DISPATCH dsa_keymgmt_functions[];
 extern const OSSL_DISPATCH rsa_keymgmt_functions[];
 extern const OSSL_DISPATCH x25519_keymgmt_functions[];
 extern const OSSL_DISPATCH x448_keymgmt_functions[];
+extern const OSSL_DISPATCH ed25519_keymgmt_functions[];
+extern const OSSL_DISPATCH ed448_keymgmt_functions[];
 extern const OSSL_DISPATCH ec_keymgmt_functions[];
 
 /* Key Exchange */

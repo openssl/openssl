@@ -19,23 +19,28 @@
 #  include <openssl/crypto.h>
 #  include "internal/refcount.h"
 
-#  define X25519_KEYLEN        32
-#  define X448_KEYLEN          56
-#  define ED25519_KEYLEN       32
-#  define ED448_KEYLEN         57
+#  define X25519_KEYLEN         32
+#  define X448_KEYLEN           56
+#  define ED25519_KEYLEN        32
+#  define ED448_KEYLEN          57
 
 #  define MAX_KEYLEN  ED448_KEYLEN
 
-#  define X25519_BITS          253
-#  define X25519_SECURITY_BITS 128
+#  define X25519_BITS           253
+#  define X25519_SECURITY_BITS  128
 
-#  define ED25519_SIGSIZE      64
+#  define X448_BITS             448
+#  define X448_SECURITY_BITS    224
 
-#  define X448_BITS            448
-#  define ED448_BITS           456
-#  define X448_SECURITY_BITS   224
+#  define ED25519_BITS          256
+/* RFC8032 Section 8.5 */
+#  define ED25519_SECURITY_BITS 128
+#  define ED25519_SIGSIZE       64
 
-#  define ED448_SIGSIZE        114
+#  define ED448_BITS            456
+/* RFC8032 Section 8.5 */
+#  define ED448_SECURITY_BITS   224
+#  define ED448_SIGSIZE         114
 
 struct ecx_key_st {
     unsigned int haspubkey:1;

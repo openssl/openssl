@@ -405,6 +405,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "EC:id-ecPublicKey", "provider=default", ec_keymgmt_functions },
     { "X25519", "provider=default", x25519_keymgmt_functions },
     { "X448", "provider=default", x448_keymgmt_functions },
+    { "ED25519", "provider=default", ed25519_keymgmt_functions },
+    { "ED448", "provider=default", ed448_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
