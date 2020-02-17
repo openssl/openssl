@@ -384,7 +384,7 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
 Specifies the format (DER or PEM) of the private key file used in the
 B<-signkey> option.
