@@ -120,7 +120,7 @@ of a key pair.
 
 =head1 EXAMPLES
 
-To remove the pass phrase on an RSA private key:
+To remove the pass phrase on a private key:
 
  openssl pkey -in key.pem -out keyout.pem
 

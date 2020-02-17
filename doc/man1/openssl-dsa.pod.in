@@ -127,6 +127,9 @@ a public key.
 
 =head1 EXAMPLES
 
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkey(1)> command.
+
 To remove the pass phrase on a DSA private key:
 
  openssl dsa -in key.pem -out keyout.pem
