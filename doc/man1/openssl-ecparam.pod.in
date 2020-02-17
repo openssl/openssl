@@ -134,6 +134,9 @@ This option will generate an EC private key using the specified parameters.
 
 =head1 EXAMPLES
 
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands.
+
 To create EC parameters with the group 'prime192v1':
 
   openssl ecparam -out ec_param.pem -name prime192v1

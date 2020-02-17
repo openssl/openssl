@@ -145,6 +145,9 @@ This option checks the consistency of an EC private or public key.
 
 =head1 EXAMPLES
 
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkey(1)> command.
+
 To encrypt a private key using triple DES:
 
  openssl ec -in key.pem -des3 -out keyout.pem

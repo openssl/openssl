@@ -135,6 +135,9 @@ used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
 
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkeyutl(1)> command.
+
 Sign some data using a private key:
 
  openssl rsautl -sign -in file -inkey key.pem -out sig
