@@ -439,12 +439,15 @@ static int sh_init(size_t size, size_t minsize)
     sh.map_result = mmap(NULL, sh.map_size,
                          PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
 #else
-    sh.map_result = MAP_FAILED;
-    /* Temporary use |ret| for file descriptor (assumes goto err returns 0) */
-    if ((ret = open("/dev/zero", O_RDWR)) >= 0) {
-        sh.map_result = mmap(NULL, sh.map_size,
-                             PROT_READ|PROT_WRITE, MAP_PRIVATE, ret, 0);
-        close(ret);
+    {
+        int fd;
+
+        sh.map_result = MAP_FAILED;
+        if ((fd = open("/dev/zero", O_RDWR)) >= 0) {
+            sh.map_result = mmap(NULL, sh.map_size,
+                                 PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+            close(fd);
+        }
     }
 #endif
     if (sh.map_result == MAP_FAILED)
