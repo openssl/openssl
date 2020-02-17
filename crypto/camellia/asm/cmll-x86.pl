@@ -1146,4 +1146,4 @@ my ($s0,$s1,$s2,$s3) = @T;
 
 &asm_finish();
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

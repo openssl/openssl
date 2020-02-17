@@ -1244,7 +1244,7 @@ print "$cet_property"			if ($cet_property);
 print "\n$current_segment\tENDS\n"	if ($current_segment && $masm);
 print "END\n"				if ($masm);
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!;"
 
 #################################################
 # Cross-reference x86_64 ABI "card"

@@ -343,4 +343,4 @@ while($line=<>) {
     print "\n";
 }
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

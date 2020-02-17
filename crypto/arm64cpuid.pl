@@ -147,4 +147,4 @@ CRYPTO_memcmp:
 ___
 
 print $code;
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

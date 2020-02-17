@@ -434,4 +434,4 @@ K512:
 ___
 
 print $code;
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

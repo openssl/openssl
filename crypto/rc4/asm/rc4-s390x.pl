@@ -240,4 +240,4 @@ RC4_options:
 ___
 
 print $code;
-close STDOUT or die "error closing STDOUT";	# force flush
+close STDOUT or die "error closing STDOUT: $!";	# force flush

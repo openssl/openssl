@@ -45,7 +45,7 @@ $X="esi";
 &md5_block("md5_block_asm_data_order");
 &asm_finish();
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";
 
 sub Np
 	{

@@ -858,4 +858,4 @@ ___
 
 open STDOUT,">$output" if $output;
 print $code;
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

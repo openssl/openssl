@@ -519,4 +519,4 @@ ___
 gen_random("rdrand");
 gen_random("rdseed");
 
-close STDOUT or die "error closing STDOUT";	# flush
+close STDOUT or die "error closing STDOUT: $!";	# flush

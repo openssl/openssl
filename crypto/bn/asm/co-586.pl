@@ -21,7 +21,7 @@ $output = pop and open STDOUT,">$output";
 
 &asm_finish();
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";
 
 sub mul_add_c
 	{
