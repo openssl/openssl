@@ -4935,3 +4935,13 @@ X509_STORE_get1_all_certs               ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_validate_msg                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_validate_cert_path             ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP
+EVP_PKEY_CTX_set_ecdh_cofactor_mode     ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_get_ecdh_cofactor_mode     ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set_ecdh_kdf_type          ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_get_ecdh_kdf_type          ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set_ecdh_kdf_md            ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_get_ecdh_kdf_md            ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set_ecdh_kdf_outlen        ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_get_ecdh_kdf_outlen        ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_get0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
