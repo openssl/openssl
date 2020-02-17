@@ -22,10 +22,14 @@ void ecx_get_new_free_import(ECX_KEY_TYPE type,
         *ecx_new = ossl_prov_get_keymgmt_new(x25519_keymgmt_functions);
         *ecx_free = ossl_prov_get_keymgmt_free(x25519_keymgmt_functions);
         *ecx_import = ossl_prov_get_keymgmt_import(x25519_keymgmt_functions);
-    } else {
+    } else if (type == ECX_KEY_TYPE_X448) {
         *ecx_new = ossl_prov_get_keymgmt_new(x448_keymgmt_functions);
         *ecx_free = ossl_prov_get_keymgmt_free(x448_keymgmt_functions);
         *ecx_import = ossl_prov_get_keymgmt_import(x448_keymgmt_functions);
+    } else {
+        *ecx_new = NULL;
+        *ecx_free = NULL;
+        *ecx_import = NULL;
     }
 }
 

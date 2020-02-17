@@ -90,8 +90,8 @@ static int ecx_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct ecx_priv_ctx_st *ctx = vctx;
     const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_CIPHER))
-        != NULL) {
+    p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_CIPHER);
+    if (p != NULL) {
         const OSSL_PARAM *propsp =
             OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PROPERTIES);
         const char *props = NULL;
@@ -109,8 +109,8 @@ static int ecx_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 == NULL))
             return 0;
     }
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PASS))
-        != NULL) {
+    p = OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PASS);
+    if (p != NULL) {
         OPENSSL_free(ctx->sc.cipher_pass);
         ctx->sc.cipher_pass = NULL;
         if (!OSSL_PARAM_get_octet_string(p, &ctx->sc.cipher_pass, 0,
