@@ -54,8 +54,8 @@ Each implementation of an algorithm can define any number of
 properties.
 For example, the default provider defines the property I<provider=default>
 for all of its algorithms.
-Likewise, the FIPS provider defines I<provider=fips> and the legacy provider
-defines I<provider=legacy> for all of their algorithms.
+Likewise, OpenSSL's FIPS provider defines I<provider=fips> and the legacy
+provider defines I<provider=legacy> for all of their algorithms.
 
 =head2 Queries
 
