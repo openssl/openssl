@@ -234,6 +234,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     OSSL_PARAM drbg_params[3] = {
         OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
+    static const unsigned char zero[sizeof(drbg->data)] = { 0 };
 
     SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
@@ -287,20 +288,11 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     if (!RAND_DRBG_uninstantiate(drbg))
         goto err;
     /*
-     * TODO(3.0) : Check that the DRBG data has been zeroed after
-     * RAND_DRBG_uninstantiate. Its a bit hard currently to do this when
-     * the drbg->data is reinitialized by this call..
+     * Check that the DRBG data has been zeroized after RAND_DRBG_uninstantiate.
      */
-#if 0
-    {
-        size_t i, sz = sizeof(drbg->data);
-        unsigned char *p = (unsigned char *)&drbg->data;
+    if (memcmp((unsigned char *)&drbg->data, zero, sizeof(drbg->data)) != 0)
+        goto err;
 
-        for (i = 0; i < sz; ++i)
-            if (*p++ != 0)
-                goto err;
-    }
-#endif
     ret = 1;
 err:
     RAND_DRBG_free(drbg);
