@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-sess_id - SSL/TLS session handling utility
+openssl-sess_id - SSL/TLS session handling command
 
 =head1 SYNOPSIS
 

@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-x509 - Certificate display and signing utility
+openssl-x509 - Certificate display and signing command
 
 =head1 SYNOPSIS
 
@@ -81,7 +81,7 @@ B<openssl> B<x509>
 
 =head1 DESCRIPTION
 
-This command is a multi purpose certificate utility. It can
+This command is a multi-purposes certificate command. It can
 be used to display certificate information, convert certificates to
 various forms, sign certificate requests like a "mini CA" or edit
 certificate trust settings.

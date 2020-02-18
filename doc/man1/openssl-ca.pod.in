@@ -155,8 +155,9 @@ Names and values of these options are algorithm-specific.
 =for openssl foreign manual ps(1)
 
 The password used to encrypt the private key. Since on some
-systems the command line arguments are visible (e.g. Unix with
-the L<ps(1)> utility) this option should be used with caution.
+systems the command line arguments are visible (e.g., when using
+L<ps(1)> on Unix),
+this option should be used with caution.
 
 =item B<-selfsign>
 
@@ -712,8 +713,8 @@ numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
 This command really needs rewriting or the required functionality
-exposed at either a command or interface level so a more friendly utility
-(perl script or GUI) can handle things properly. The script
+exposed at either a command or interface level so that a more user-friendly
+replacement could handle things properly. The script
 B<CA.pl> helps a little but not very much.
 
 Any fields in a request that are not present in a policy are silently

@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-pkey - public or private key processing tool
+openssl-pkey - public or private key processing command
 
 =head1 SYNOPSIS
 

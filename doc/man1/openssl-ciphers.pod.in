@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-ciphers - SSL cipher display and cipher list tool
+openssl-ciphers - SSL cipher display and cipher list command
 
 =head1 SYNOPSIS
 
@@ -31,7 +31,7 @@ B<openssl> B<ciphers>
 =head1 DESCRIPTION
 
 This command converts textual OpenSSL cipher lists into
-ordered SSL cipher preference lists. It can be used as a test tool to
+ordered SSL cipher preference lists. It can be used to
 determine the appropriate cipherlist.
 
 =head1 OPTIONS

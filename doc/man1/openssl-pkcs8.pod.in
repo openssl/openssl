@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkcs8 - PKCS#8 format private key conversion tool
+openssl-pkcs8 - PKCS#8 format private key conversion command
 
 =head1 SYNOPSIS
 

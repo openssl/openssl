@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-verify - Utility to verify certificates
+openssl-verify - certificate verification command
 
 =head1 SYNOPSIS
 
