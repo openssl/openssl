@@ -35,7 +35,6 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
     return res;
 }
 
-# ifndef OPENSSL_NO_SOCK
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 {
     *presp = (OCSP_RESPONSE *)
@@ -60,6 +59,4 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 
     return rv == 1 ? resp : NULL;
 }
-# endif /* !defined(OPENSSL_NO_SOCK) */
-
 #endif /* !defined(OPENSSL_NO_OCSP) */

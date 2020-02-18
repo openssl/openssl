@@ -68,9 +68,7 @@ int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
 int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
                      const ASN1_ITEM *it, ASN1_VALUE *req);
 int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
-# ifndef OPENSSL_NO_SOCK
 ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it);
-# endif
 BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
 void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
 /* End of functions used only internally */
@@ -187,9 +185,7 @@ DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
                                int maxline);
-#  ifndef OPENSSL_NO_SOCK
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
-#  endif
 
 /* TODO: remove this (documented but) meanwhile obsolete function? */
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);

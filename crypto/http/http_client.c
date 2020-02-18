@@ -715,6 +715,7 @@ static BIO *HTTP_new_bio(const char *server, const char *server_port,
  end:
     return cbio;
 }
+#endif /* OPENSSL_NO_SOCK */
 
 static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
 {
@@ -731,6 +732,9 @@ static BIO *OSSL_HTTP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
 {
     int sending = 1;
     int rv;
+#ifndef OPENSSL_NO_SOCK
+    int issock = BIO_get_fd(rctx->rbio, NULL) > 0;
+#endif
 
     if (rctx == NULL) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
@@ -743,9 +747,11 @@ static BIO *OSSL_HTTP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
             break;
         /* BIO_should_retry was true */
         sending = 0;
+#ifndef OPENSSL_NO_SOCK
         /* will not actually wait if rctx->max_time == 0 */
-        if (BIO_wait(rctx->rbio, rctx->max_time) <= 0)
+        if (issock && BIO_wait(rctx->rbio, rctx->max_time) <= 0)
             return NULL;
+#endif
     }
 
     if (rv == 0) {
@@ -840,12 +846,19 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
 
     if (bio != NULL)
         cbio = bio;
+#ifndef OPENSSL_NO_SOCK
     else if ((cbio = HTTP_new_bio(server, port, proxy, proxy_port)) == NULL)
         return NULL;
+#else
+    else
+        return NULL;
+#endif
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_connect_retry(cbio, timeout) <= 0)
+#ifndef OPENSSL_NO_SOCK
+    if (bio == NULL && rbio == NULL && BIO_connect_retry(cbio, timeout) <= 0)
         goto end;
+#endif
     /* now timeout is guaranteed to be >= 0 */
 
     /* callback can be used to wrap or prepend TLS session */
@@ -1106,16 +1119,23 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     char *mbuf = OPENSSL_malloc(BUF_SIZE);
     char *mbufp;
     int read_len = 0;
-    int rv;
     int ret = 0;
     BIO *fbio = BIO_new(BIO_f_buffer());
+#ifndef OPENSSL_NO_SOCK
+    int rv;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    int issocket;
+#endif
 
     if (bio == NULL || server == NULL || port == NULL
             || (bio_err != NULL && prog == NULL)) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
     }
+
+#ifndef OPENSSL_NO_SOCK
+    issocket = BIO_get_fd(bio, NULL) > 0;
+#endif
 
     if (mbuf == NULL || fbio == NULL) {
         BIO_printf(bio_err /* may be NULL */, "%s: out of memory", prog);
@@ -1168,12 +1188,16 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
     for (;;) {
         /* will not actually wait if timeout == 0 */
-        rv = BIO_wait(fbio, max_time);
-        if (rv <= 0) {
-            BIO_printf(bio_err, "%s: HTTP CONNECT %s\n", prog,
-                       rv == 0 ? "timed out" : "failed waiting for data");
-            goto end;
+#ifndef OPENSSL_NO_SOCK
+        if (issocket) {
+            rv = BIO_wait(fbio, max_time);
+            if (rv <= 0) {
+                BIO_printf(bio_err, "%s: HTTP CONNECT %s\n", prog,
+                           rv == 0 ? "timed out" : "failed waiting for data");
+                goto end;
+            }
         }
+#endif
 
         /*-
          * The first line is the HTTP response.
@@ -1238,4 +1262,3 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 # undef BUF_SIZE
 }
 
-#endif /* !defined(OPENSSL_NO_SOCK) */

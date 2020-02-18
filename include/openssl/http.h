@@ -24,7 +24,7 @@ extern "C" {
 # endif
 
 typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail);
-# ifndef OPENSSL_NO_SOCK
+
 BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
@@ -62,7 +62,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
 int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog);
-# endif
+
 int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
                         char **ppath, int *pssl);
 
