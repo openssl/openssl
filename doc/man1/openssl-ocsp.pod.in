@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-ocsp - Online Certificate Status Protocol utility
+openssl-ocsp - Online Certificate Status Protocol command
 
 =head1 SYNOPSIS
 
