@@ -220,6 +220,7 @@ Makefile.save
 *.bak
 cscope.*
 *.d
+*.d.tmp
 pod2htmd.tmp
 
 # Windows manifest files
