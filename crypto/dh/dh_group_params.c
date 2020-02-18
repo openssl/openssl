@@ -98,49 +98,74 @@ DH *DH_new_by_nid(int nid)
 
 int DH_get_nid(DH *dh)
 {
+    BIGNUM *q = NULL;
     int nid = dh->params.nid;
+    int nbits;
 
+    /* Just return if it is already cached */
     if (nid != NID_undef)
         return nid;
 
     if (BN_get_word(dh->params.g) != 2)
         return NID_undef;
-    if (!BN_cmp(dh->params.p, &_bignum_ffdhe2048_p))
+    if (!BN_cmp(dh->params.p, &_bignum_ffdhe2048_p)) {
         nid = NID_ffdhe2048;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe3072_p))
+        nbits = 225;
+    } else if (!BN_cmp(dh->params.p, &_bignum_ffdhe3072_p)) {
         nid = NID_ffdhe3072;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe4096_p))
+        nbits = 275;
+    } else if (!BN_cmp(dh->params.p, &_bignum_ffdhe4096_p)) {
         nid = NID_ffdhe4096;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe6144_p))
+        nbits = 325;
+    } else if (!BN_cmp(dh->params.p, &_bignum_ffdhe6144_p)) {
         nid = NID_ffdhe6144;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe8192_p))
+        nbits = 375;
+    } else if (!BN_cmp(dh->params.p, &_bignum_ffdhe8192_p)) {
         nid = NID_ffdhe8192;
+        nbits = 400;
 #ifndef FIPS_MODE
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_1536_p))
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_1536_p)) {
         nid = NID_modp_1536;
+        nbits = 190;
 #endif
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_2048_p))
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_2048_p)) {
         nid = NID_modp_2048;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_3072_p))
+        nbits = 225;
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_3072_p)) {
         nid = NID_modp_3072;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_4096_p))
+        nbits = 275;
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_4096_p)) {
         nid = NID_modp_4096;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_6144_p))
+        nbits = 325;
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_6144_p)) {
         nid = NID_modp_6144;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_8192_p))
+        nbits = 375;
+    } else if (!BN_cmp(dh->params.p, &_bignum_modp_8192_p)) {
         nid = NID_modp_8192;
-    else
+        nbits = 400;
+    } else {
         return NID_undef;
-
-    /* Verify q is correct if it exists - reset the nid if it is not correct */
-    if (dh->params.q != NULL) {
-        BIGNUM *q = BN_dup(dh->params.p);
-
-        /* Check q = p * 2 + 1 we already know q is odd, so just shift right */
-        if (q == NULL || !BN_rshift1(q, q) || (BN_cmp(dh->params.q, q) != 0))
-            nid = NID_undef;
-        BN_free(q);
     }
+    /* Set q = (p - 1) / 2 (p is known to be odd so just shift right ) */
+    q = BN_dup(dh->params.p);
+
+    if (q == NULL || !BN_rshift1(q, q)) {
+        nid = NID_undef; /* reset the nid if there was a failure */
+        goto err;
+    }
+    /* Verify q is correct if it exists */
+    if (dh->params.q != NULL) {
+        if (BN_cmp(dh->params.q, q) != 0)
+            nid = NID_undef;  /* reset the nid if q does not match */
+    } else {
+        /* assign the calculated q */
+        dh->params.q = q;
+        dh->length = nbits;
+        dh->dirty_cnt++;
+        q = NULL; /* set to NULL so it is not freed */
+    }
+err:
+    BN_free(q);
     dh->params.nid = nid; /* cache the nid */
     return nid;
 }
