@@ -498,10 +498,7 @@ case "$GUESSOS" in
 	OUT="ios64-cross" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
-	case ${ISA:-generic} in
-	*[678])	OUT="linux-alpha+bwx-$CC" ;;
-	*)	OUT="linux-alpha-$CC" ;;
-	esac
+	OUT="linux-alpha-$CC"
 	if [ "$CC" = "gcc" ]; then
 	    case ${ISA:-generic} in
 	    EV5|EV45)		__CNF_CFLAGS="$__CNF_CFLAGS -mcpu=ev5"
