@@ -281,7 +281,7 @@ or for shared builds
 
 ```
 $ CTLOG_FILE=test/ct/log_list.conf  TEST_CERTS_DIR=test/certs \
-  util/shlib_wrap.sh test/ssl_test test/ssl-tests/01-simple.conf
+  util/wrap.pl test/ssl_test test/ssl-tests/01-simple.conf
 ```
 
 Note that the test expectations sometimes depend on the Configure settings. For

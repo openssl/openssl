@@ -1545,7 +1545,7 @@ Run all tests in test groups 80 to 99 except for tests in group 90:
 To stochastically verify that the algorithm that produces uniformly distributed
 random numbers is operating correctly (with a false positive rate of 0.01%):
 
-    $ ./util/shlib_wrap.sh test/bntest -stochastic
+    $ ./util/wrap.sh test/bntest -stochastic
 
 Troubleshooting
 ===============
