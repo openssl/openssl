@@ -26,7 +26,7 @@ localCheckout: &localCheckout
         command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
     - run:
         name: Run unit tests
-        command: cd oqs_test && mkdir -p test-results && .circleci/git_no_checkin_in_last_day.sh || (LD_LIBRARY_PATH="$(dirname $PWD);$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
+        command: mkdir -p oqs_test/test-results && .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && LD_LIBRARY_PATH="$(dirname $PWD);$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
