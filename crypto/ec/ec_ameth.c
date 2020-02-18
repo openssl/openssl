@@ -43,7 +43,17 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
         pstr = ASN1_STRING_new();
         if (pstr == NULL)
             return 0;
-        pstr->length = i2d_ECParameters(ec_key, &pstr->data);
+
+        /*
+         * The cast in the following line is intentional as the
+         * `i2d_ECParameters` signature can't be constified (see discussion at
+         * https://github.com/openssl/openssl/pull/9347 where related and
+         * required consitfication backports were rejected).
+         *
+         * This cast should be safe anyway, because we can expect
+         * `i2d_ECParameters()` to treat the first argument as if it was const.
+         */
+        pstr->length = i2d_ECParameters((EC_KEY *)ec_key, &pstr->data);
         if (pstr->length <= 0) {
             ASN1_STRING_free(pstr);
             ECerr(EC_F_ECKEY_PARAM2TYPE, ERR_R_EC_LIB);
