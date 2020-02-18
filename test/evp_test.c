@@ -2504,8 +2504,8 @@ static int keygen_test_run(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
     EVP_PKEY *pkey = NULL;
+    int rv = 1;
 
-    t->err = NULL;
     if (EVP_PKEY_keygen(keygen->genctx, &pkey) <= 0) {
         t->err = "KEYGEN_GENERATE_ERROR";
         goto err;
@@ -2514,6 +2514,7 @@ static int keygen_test_run(EVP_TEST *t)
     if (keygen->keyname != NULL) {
         KEY_LIST *key;
 
+        rv = 0;
         if (find_key(NULL, keygen->keyname, private_keys)) {
             TEST_info("Duplicate key %s", keygen->keyname);
             goto err;
@@ -2526,15 +2527,15 @@ static int keygen_test_run(EVP_TEST *t)
         key->key = pkey;
         key->next = private_keys;
         private_keys = key;
+        rv = 1;
     } else {
         EVP_PKEY_free(pkey);
     }
 
-    return 1;
+    t->err = NULL;
 
 err:
-    EVP_PKEY_free(pkey);
-    return 0;
+    return rv;
 }
 
 static const EVP_TEST_METHOD keygen_test_method = {
