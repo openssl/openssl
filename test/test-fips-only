@@ -1,0 +1,51 @@
+#! /bin/bash
+ 
+# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Exit on errors.
+set -e
+exec 2>&1
+
+HERE=$(/bin/pwd)
+WORKDIR=$HERE/test/fips-test
+MODULE=$WORKDIR/fips.so
+FIPSCONF=$WORKDIR/fips.conf
+export LD_LIBRARY_PATH=.:..
+
+# Make a working directory
+mkdir -p $WORKDIR
+trap "rm -rf $WORKDIR" 1 2 3 15
+
+cp providers/fips.so $MODULE
+
+# Create a config file with HMAC and verify it.
+./apps/openssl fipsinstall -quiet -out $FIPSCONF -module $MODULE \
+    -provider_name fips -mac_name HMAC -section_name fips_install \
+    -macopt digest:SHA256 -macopt hexkey:00
+./apps/openssl fipsinstall -quiet -in $FIPSCONF -module $MODULE -verify \
+    -provider_name fips -mac_name HMAC -section_name fips_install \
+    -macopt digest:SHA256 -macopt hexkey:00
+
+# Build up full OpenSSL config file
+cat <<EOF >$WORKDIR/openssl.cnf
+openssl_conf = openssl_init
+.include $FIPSCONF
+[openssl_init]
+    providers = provider_sect
+[provider_sect]
+    fips = fips_sect
+EOF
+# cat $WORKDIR/openssl.cnf
+
+# Set up environment
+eval $(make test-environ)
+export OPENSSL_MODULES=$WORKDIR
+export OPENSSL_CONF=$WORKDIR/openssl.cnf
+
+
+$PERL $SRCTOP/test/run_tests.pl test_enc

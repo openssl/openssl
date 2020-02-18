@@ -475,6 +475,11 @@ test: tests
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
+test-environ:
+	@echo export SRCTOP="$(SRCDIR)" ';'
+	@echo export BLDTOP="$(BLDDIR)" ';'
+	@echo export PERL="$(PERL)"
+
 list-tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
 	@SRCTOP="$(SRCDIR)" \

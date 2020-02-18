@@ -31,12 +31,13 @@ static OSSL_CALLBACK self_test_events;
 static char *self_test_corrupt_desc = NULL;
 static char *self_test_corrupt_type = NULL;
 static int self_test_log = 1;
+static int quiet = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN, OPT_OUT, OPT_MODULE,
     OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY,
-    OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE
+    OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -60,6 +61,7 @@ const OPTIONS fipsinstall_options[] = {
     {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
     {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
     {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
+    {"quiet", OPT_QUIET, '-', "No messages, just exit status"},
     {NULL}
 };
 
@@ -298,6 +300,9 @@ opthelp:
         case OPT_OUT:
             out_fname = opt_arg();
             break;
+        case OPT_QUIET:
+            quiet = 1;
+            /* FALLTHROUGH */
         case OPT_NO_LOG:
             self_test_log = 0;
             break;
@@ -405,7 +410,8 @@ opthelp:
         if (!verify_config(in_fname, section_name, module_mac, module_mac_len,
                            install_mac, install_mac_len))
             goto end;
-        BIO_printf(bio_out, "VERIFY PASSED\n");
+        if (!quiet)
+            BIO_printf(bio_out, "VERIFY PASSED\n");
     } else {
 
         conf = generate_config_and_load(prov_name, section_name, module_mac,
@@ -424,12 +430,13 @@ opthelp:
                                        module_mac_len, install_mac,
                                        install_mac_len))
             goto end;
-        BIO_printf(bio_out, "INSTALL PASSED\n");
+        if (!quiet)
+            BIO_printf(bio_out, "INSTALL PASSED\n");
     }
 
     ret = 0;
 end:
-    if (ret == 1) {
+    if (ret == 1 && !quiet) {
         BIO_printf(bio_err, "%s FAILED\n", verify ? "VERIFY" : "INSTALL");
         ERR_print_errors(bio_err);
     }
