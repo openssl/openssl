@@ -94,7 +94,7 @@ static int ecx_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p != NULL) {
         const OSSL_PARAM *propsp =
             OSSL_PARAM_locate_const(params, OSSL_SERIALIZER_PARAM_PROPERTIES);
-        const char *props = NULL;
+        const char *props;
 
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;

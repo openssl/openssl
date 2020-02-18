@@ -35,7 +35,6 @@ struct ecx_pub_ctx_st {
     ECX_KEY_TYPE type;
 };
 
-
 /* Public key : context */
 static void *ecx_pub_newctx(void *provctx, ECX_KEY_TYPE type)
 {
