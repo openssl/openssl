@@ -18563,7 +18563,7 @@ KeyGen = rsaEncryption
 Availablein = default
 Ctrl = rsa_keygen_bits:128
 KeyName = tmprsa
-Result = PKEY_CTRL_INVALID
+Result = KEYGEN_GENERATE_ERROR
 Reason = key size too small
 
 # RSA-PSS with restrictions, should succeed.
