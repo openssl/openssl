@@ -12,6 +12,8 @@
 #include <openssl/err.h>
 #include <string.h>
 
+#include "http_local.h"
+
 /*
  * Parse a URL and split it up into host, port and path components and
  * whether it indicates SSL/TLS. Return 1 on success, 0 on error.
@@ -113,4 +115,40 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     }
     OPENSSL_free(buf);
     return 0;
+}
+
+int http_use_proxy(const char *no_proxy, const char *server)
+{
+    size_t sl = strlen(server);
+    const char *found = NULL;
+
+    if (no_proxy == NULL)
+        no_proxy = getenv("no_proxy");
+    if (no_proxy == NULL)
+        no_proxy = getenv("NO_PROXY");
+    if (no_proxy != NULL)
+        found = strstr(no_proxy, server);
+    while (found != NULL
+           && ((found != no_proxy && found[-1] != ' ' && found[-1] != ',')
+               || (found[sl] != '\0' && found[sl] != ' ' && found[sl] != ',')))
+        found = strstr(found + 1, server);
+    return found == NULL;
+}
+
+const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
+                             const char *server, int use_ssl)
+{
+    int prefix_len = strlen(HTTP_URL_PREFIX);
+
+    if (proxy == NULL)
+        proxy = getenv(use_ssl ? "https_proxy" : "http_proxy");
+    if (proxy == NULL)
+        proxy = getenv(use_ssl ? "HTTPS_PROXY" : "HTTP_PROXY");
+    if (proxy != NULL && strncmp(proxy, HTTP_URL_PREFIX, prefix_len) == 0)
+        proxy += prefix_len; /* skip any leading "http://" */
+    if (proxy != NULL && *proxy == '\0')
+        proxy = NULL;
+    if (proxy != NULL && !http_use_proxy(no_proxy, server))
+        proxy = NULL;
+    return proxy;
 }

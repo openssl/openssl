@@ -27,6 +27,8 @@ typedef OCSP_REQ_CTX OSSL_HTTP_REQ_CTX;
 # define OSSL_HTTP_REQ_CTX_get0_mem_bio OCSP_REQ_CTX_get0_mem_bio /* undoc'd */
 # define OSSL_HTTP_REQ_CTX_set_max_response_length OCSP_set_max_response_length
 
+# define HTTP_URL_PREFIX "http://"
+
 BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, ASN1_VALUE *val);
 OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                                     const char *server, const char *port,
@@ -45,5 +47,8 @@ ASN1_VALUE *HTTP_sendreq_bio(BIO *bio, OSSL_HTTP_bio_cb_t bio_update_fn,
                              ASN1_VALUE *req, const ASN1_ITEM *req_it,
                              int maxline, unsigned long max_resp_len,
                              int timeout, const ASN1_ITEM *rsp_it);
+int http_use_proxy(const char *no_proxy, const char *server);
+const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
+                             const char *server, int use_ssl);
 
 #endif /* !defined(OSSL_CRYPTO_HTTP_LOCAL_H) */

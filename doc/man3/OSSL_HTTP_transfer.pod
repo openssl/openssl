@@ -17,14 +17,14 @@ OSSL_HTTP_parse_url
 
  typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg,
                                     int connect, int detail);
- BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
+ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                     BIO *bio, BIO *rbio,
                     OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                     const STACK_OF(CONF_VALUE) *headers,
                     int maxline, unsigned long max_resp_len, int timeout,
                     const char *expected_content_type, int expect_asn1);
  ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
-                                const char *proxy, const char *proxy_port,
+                                const char *proxy, const char *no_proxy,
                                 BIO *bio, BIO *rbio,
                                 OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                 const STACK_OF(CONF_VALUE) *headers,
@@ -33,7 +33,7 @@ OSSL_HTTP_parse_url
                                 const ASN1_ITEM *it);
  ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                  const char *path, int use_ssl,
-                                 const char *proxy, const char *proxy_port,
+                                 const char *proxy, const char *no_proxy,
                                  BIO *bio, BIO *rbio,
                                  OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                  const STACK_OF(CONF_VALUE) *headers,
@@ -43,7 +43,7 @@ OSSL_HTTP_parse_url
                                  int timeout, const char *expected_ct,
                                  const ASN1_ITEM *rsp_it);
  BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
-                         int use_ssl, const char *proxy, const char *proxy_port,
+                         int use_ssl, const char *proxy, const char *no_proxy,
                          BIO *bio, BIO *rbio,
                          OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                          const STACK_OF(CONF_VALUE) *headers,
@@ -91,8 +91,16 @@ L<OPENSSL_free(3)>.
 
 The above functions have the following parameters in common.
 
-If the B<proxy> parameter is not NULL the HTTP client functions connect
-via the given proxy and the optionally given B<proxy_port>.
+If the optional B<proxy> parameter contains a non-empty string or
+it is NULL and one of the environment variables B<http_proxy> and B<HTTP_PROXY>
+(or B<https_proxy> and B<HTTPS_PROXY>, respectively, in case B<use_ssl> != 0)
+is set and contains a non-empty string this is used as the candidate address
+of HTTP(S) proxy to use.
+The address may include a port specification separated by ':'.
+Any prefix "http://" and any trailing string starting with '/' is ignored.
+The HTTP client functions connect via the given proxy unless the B<server>
+is found in the optional list B<no_proxy> of proxy hostnames (if it is not NULL,
+else in the environment variable B<no_proxy> if set or else in B<HTTP_PROXY>).
 Proxying plain HTTP is supported directly,
 while using a proxy for HTTPS connections requires a suitable callback function
 such as OSSL_HTTP_proxy_connect(), described below.

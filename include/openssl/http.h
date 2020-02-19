@@ -25,14 +25,14 @@ extern "C" {
 
 typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail);
 
-BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
+BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                    const STACK_OF(CONF_VALUE) *headers,
                    int maxline, unsigned long max_resp_len, int timeout,
                    const char *expected_content_type, int expect_asn1);
 ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
-                               const char *proxy, const char *proxy_port,
+                               const char *proxy, const char *no_proxy,
                                BIO *bio, BIO *rbio,
                                OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                const STACK_OF(CONF_VALUE) *headers,
@@ -41,7 +41,7 @@ ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
                                const ASN1_ITEM *it);
 ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                 const char *path, int use_ssl,
-                                const char *proxy, const char *proxy_port,
+                                const char *proxy, const char *no_proxy,
                                 BIO *bio, BIO *rbio,
                                 OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                 const STACK_OF(CONF_VALUE) *headers,
@@ -51,7 +51,7 @@ ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                 int timeout, const char *expected_ct,
                                 const ASN1_ITEM *rsp_it);
 BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
-                        int use_ssl, const char *proxy, const char *proxy_port,
+                        int use_ssl, const char *proxy, const char *no_proxy,
                         BIO *bio, BIO *rbio,
                         OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                         const STACK_OF(CONF_VALUE) *headers,

@@ -17,7 +17,6 @@
 
 #  include <openssl/macros.h>
 #  include <openssl/trace.h>
-#  include <openssl/x509.h>
 
 #  ifdef __cplusplus
 extern "C" {

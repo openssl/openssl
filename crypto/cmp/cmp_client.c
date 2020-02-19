@@ -140,7 +140,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     OSSL_CMP_transfer_cb_t transfer_cb = ctx->transfer_cb;
 
     if (transfer_cb == NULL)
-        transfer_cb = NULL; /* TODO: will be OSSL_CMP_MSG_http_perform of chunk 10 */
+        transfer_cb = OSSL_CMP_MSG_http_perform;
 
     *rep = NULL;
     msg_timeout = ctx->msg_timeout; /* backup original value */
