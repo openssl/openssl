@@ -367,65 +367,30 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                     OSSL_CRMF_CERTREQUEST *cr,
                                     EVP_PKEY *pkey, int dgst)
 {
-    int len;
-    size_t crlen;
-    size_t siglen;
-    unsigned char *crder = NULL, *sig = NULL;
-    int alg_nid = 0;
-    int md_nid = 0;
-    const EVP_MD *alg = NULL;
-    EVP_MD_CTX *ctx = NULL;
     int ret = 0;
+    EVP_MD *fetched_md = NULL;
+    const EVP_MD *md = EVP_get_digestbynid(dgst);
 
     if (ps == NULL || cr == NULL || pkey == NULL) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
-    /* OpenSSL defaults all bit strings to be encoded as ASN.1 NamedBitList */
-    ps->signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-    ps->signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+    /* If we didn't find legacy MD, we try an implicit fetch */
+    if (md == NULL)
+        md = fetched_md = EVP_MD_fetch(NULL, OBJ_nid2sn(dgst), NULL);
 
-    len = i2d_OSSL_CRMF_CERTREQUEST(cr, &crder);
-    if (len < 0 || crder == NULL) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
-        goto err;
-    }
-    crlen = (size_t)len;
-
-    if (!OBJ_find_sigid_by_algs(&alg_nid, dgst, EVP_PKEY_id(pkey))) {
+    if (md == NULL) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
-        goto err;
+        return 0;
     }
-    if (!OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
-            || (alg = EVP_get_digestbynid(md_nid)) == NULL) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
-                CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
-        goto err;
-    }
-    if (!X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
-                         V_ASN1_NULL, NULL)
-            || (ctx = EVP_MD_CTX_new()) == NULL
-            || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
-            || EVP_DigestSignUpdate(ctx, crder, crlen) <= 0
-            || EVP_DigestSignFinal(ctx, NULL, &siglen) <= 0) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
-        goto err;
-    }
-    if ((sig = OPENSSL_malloc(siglen)) == NULL)
-        goto err;
-    if (EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
-            || !ASN1_BIT_STRING_set(ps->signature, sig, siglen)) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
-        goto err;
-    }
-    ret = 1;
 
- err:
-    OPENSSL_free(crder);
-    EVP_MD_CTX_free(ctx);
-    OPENSSL_free(sig);
+    ret = ASN1_item_sign(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                         ps->algorithmIdentifier, NULL, ps->signature,
+                         cr, pkey, md);
+
+    EVP_MD_free(fetched_md);
     return ret;
 }
 
