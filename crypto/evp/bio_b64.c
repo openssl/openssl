@@ -534,17 +534,12 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static long b64_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
-    long ret = 1;
     BIO *next = BIO_next(b);
 
     if (next == NULL)
         return 0;
-    switch (cmd) {
-    default:
-        ret = BIO_callback_ctrl(next, cmd, fp);
-        break;
-    }
-    return ret;
+
+    return BIO_callback_ctrl(next, cmd, fp);
 }
 
 static int b64_puts(BIO *b, const char *str)
