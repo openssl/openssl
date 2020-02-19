@@ -30,6 +30,35 @@ localCheckout: &localCheckout
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
+.macopenssl_job: &macopenssljob
+    macos:
+       xcode: "11.3.0"
+    steps:
+        - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
+        - run:
+            name: Install dependencies
+            command: |
+              .circleci/git_no_checkin_in_last_day.sh || (
+              brew update &&
+              brew unlink python@2 &&
+              brew install cmake ninja doxygen astyle &&
+              pip3 install --user pytest pytest-xdist nose rednose
+              )
+        - run:
+            name: Clone liboqs
+            command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
+        - run:
+            name: Build liboqs
+            command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
+        - run:
+            name: Build OpenSSL
+            command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
+        - run:
+            name: Run unit tests
+            command: cd oqs_test && mkdir -p test-results && ../.circleci/git_no_checkin_in_last_day.sh || (OQS_LIBPATH="$(dirname $PWD):$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
+        - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
+            path: oqs_test/test-results
+
 jobs:
   debian-buster-amd64:
     <<: *openssljob
@@ -45,6 +74,7 @@ jobs:
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
+      SKIP_TESTS: connection
   ubuntu-bionic-x86_64-shared:
     <<: *openssljob
     environment:
@@ -53,12 +83,26 @@ jobs:
       LIBOQS: master
       OPENSSL: 111
       LIBTYPE: shared
+  macOS-shared:
+    <<: *macopenssljob
+    environment:
+      LIBTYPE: shared
+      SKIP_TESTS: connection
+  macOS-static:
+    <<: *macopenssljob
+    environment:
+      LIBTYPE: no-shared
+      SKIP_TESTS: connection
 
 workflows:
   version: 2
   build:
     jobs:
+      - macOS-shared    
+      - debian-buster-amd64
+      - macOS-static    
       - ubuntu-bionic-x86_64
+      - ubuntu-bionic-x86_64-shared
   nightly:
     triggers:
       - schedule:
@@ -68,6 +112,6 @@ workflows:
               only:
                 - OQS-OpenSSL_1_1_1-stable
     jobs:
-      - debian-buster-amd64
       - ubuntu-bionic-x86_64
       - ubuntu-bionic-x86_64-shared
+

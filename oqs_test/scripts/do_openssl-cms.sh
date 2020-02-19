@@ -9,6 +9,12 @@
 
 set -x
 
+# Circumvent OSX SIP LIBPATH 'protection'
+if [ "x$OQS_LIBPATH" != "x" ]; then
+        export DYLD_LIBRARY_PATH=$OQS_LIBPATH
+fi
+echo "DLD = $DYLD_LIBRARY_PATH"
+
 # Abusing README.md as data to sign/verify
 rm -f result
 apps/openssl cms -in README.md -sign -signer ${SIGALG}_srv.crt -inkey ${SIGALG}_srv.key  -nodetach -outform pem -binary -out output-${SIGALG}.p7s
