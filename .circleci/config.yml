@@ -74,6 +74,13 @@ jobs:
       ARCH: x64
       LIBOQS: master
       OPENSSL: 111
+  ubuntu-bionic-x86_64-noconn:
+    <<: *openssljob
+    environment:
+      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+      ARCH: x64
+      LIBOQS: master
+      OPENSSL: 111
       SKIP_TESTS: connection
   ubuntu-bionic-x86_64-shared:
     <<: *openssljob
@@ -83,11 +90,15 @@ jobs:
       LIBOQS: master
       OPENSSL: 111
       LIBTYPE: shared
-  macOS-shared:
+  macOS-shared-noconn:
     <<: *macopenssljob
     environment:
       LIBTYPE: shared
       SKIP_TESTS: connection
+  macOS-shared:
+    <<: *macopenssljob
+    environment:
+      LIBTYPE: shared
   macOS-static:
     <<: *macopenssljob
     environment:
@@ -98,11 +109,8 @@ workflows:
   version: 2
   build:
     jobs:
-      - macOS-shared    
-      - debian-buster-amd64
-      - macOS-static    
-      - ubuntu-bionic-x86_64
-      - ubuntu-bionic-x86_64-shared
+      - macOS-shared-noconn    
+      - ubuntu-bionic-x86_64-noconn
   nightly:
     triggers:
       - schedule:
@@ -112,6 +120,9 @@ workflows:
               only:
                 - OQS-OpenSSL_1_1_1-stable
     jobs:
+      - macOS-shared    
+      - debian-buster-amd64
+      - macOS-static    
       - ubuntu-bionic-x86_64
       - ubuntu-bionic-x86_64-shared
 
