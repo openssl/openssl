@@ -121,7 +121,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
                                    int timeout, const ASN1_ITEM *it)
 {
-    return OSSL_HTTP_get_asn1(url, NULL, NULL /* no proxy and port */, bio,
+    return OSSL_HTTP_get_asn1(url, NULL, NULL /* no proxy used */, bio,
                               rbio, NULL /* no callback for SSL/TLS */, NULL,
                               NULL /* headers */, 1024 /* maxline */,
                               0 /* max_resp_len */, timeout,

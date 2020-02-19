@@ -125,14 +125,14 @@ static int test_http_x509(int do_get)
     rcert = (X509 *)
         (do_get ?
          OSSL_HTTP_get_asn1("http://"SERVER":"PORT"/"RPATH,
-                            NULL /* proxy */, NULL /* proxy_port */,
+                            NULL /* proxy */, NULL /* no_proxy */,
                             wbio, rbio, NULL /* bio_update_fn */, NULL,
                             headers, 0 /* maxline */,
                             0 /* max_resp_len */, 0 /* timeout */,
                             "application/x-x509-ca-cert", x509_it)
          :
          OSSL_HTTP_post_asn1(SERVER, PORT, RPATH, 0 /* use_ssl */,
-                             NULL /* proxy */, NULL /* proxy_port */,
+                             NULL /* proxy */, NULL /* no_proxy */,
                              wbio, rbio, NULL /* bio_update_fn */, NULL,
                              headers, "application/x-x509-ca-cert",
                              (ASN1_VALUE *)x509, x509_it, 0 /* maxline */,

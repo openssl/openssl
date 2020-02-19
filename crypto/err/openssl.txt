@@ -2600,12 +2600,12 @@ HTTP_R_MAX_RESP_LEN_EXCEEDED:117:max resp len exceeded
 HTTP_R_MISSING_ASN1_ENCODING:110:missing asn1 encoding
 HTTP_R_MISSING_CONTENT_TYPE:121:missing content type
 HTTP_R_MISSING_REDIRECT_LOCATION:111:missing redirect location
+HTTP_R_RECEIVED_ERROR:105:received error
+HTTP_R_RECEIVED_WRONG_HTTP_VERSION:106:received wrong http version
 HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
-HTTP_R_SERVER_RESPONSE_PARSE_ERROR:104:server response parse error
-HTTP_R_SERVER_SENT_ERROR:105:server sent error
-HTTP_R_SERVER_SENT_WRONG_HTTP_VERSION:106:server sent wrong http version
+HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
 HTTP_R_TLS_NOT_ENABLED:107:tls not enabled
 HTTP_R_TOO_MANY_REDIRECTIONS:115:too many redirections

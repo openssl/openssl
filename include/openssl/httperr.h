@@ -41,12 +41,12 @@ int ERR_load_HTTP_strings(void);
 # define HTTP_R_MISSING_ASN1_ENCODING                     110
 # define HTTP_R_MISSING_CONTENT_TYPE                      121
 # define HTTP_R_MISSING_REDIRECT_LOCATION                 111
+# define HTTP_R_RECEIVED_ERROR                            105
+# define HTTP_R_RECEIVED_WRONG_HTTP_VERSION               106
 # define HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP            112
 # define HTTP_R_REDIRECTION_NOT_ENABLED                   116
 # define HTTP_R_RESPONSE_LINE_TOO_LONG                    113
-# define HTTP_R_SERVER_RESPONSE_PARSE_ERROR               104
-# define HTTP_R_SERVER_SENT_ERROR                         105
-# define HTTP_R_SERVER_SENT_WRONG_HTTP_VERSION            106
+# define HTTP_R_RESPONSE_PARSE_ERROR                      104
 # define HTTP_R_STATUS_CODE_UNSUPPORTED                   114
 # define HTTP_R_TLS_NOT_ENABLED                           107
 # define HTTP_R_TOO_MANY_REDIRECTIONS                     115

@@ -330,7 +330,7 @@ static int parse_http_line1(char *line)
     for (code = line; *code != '\0' && !ossl_isspace(*code); code++)
         continue;
     if (*code == '\0') {
-        HTTPerr(0, HTTP_R_SERVER_RESPONSE_PARSE_ERROR);
+        HTTPerr(0, HTTP_R_RESPONSE_PARSE_ERROR);
         return 0;
     }
 
@@ -339,7 +339,7 @@ static int parse_http_line1(char *line)
         code++;
 
     if (*code == '\0') {
-        HTTPerr(0, HTTP_R_SERVER_RESPONSE_PARSE_ERROR);
+        HTTPerr(0, HTTP_R_RESPONSE_PARSE_ERROR);
         return 0;
     }
 
@@ -348,7 +348,7 @@ static int parse_http_line1(char *line)
         continue;
 
     if (*reason == '\0') {
-        HTTPerr(0, HTTP_R_SERVER_RESPONSE_PARSE_ERROR);
+        HTTPerr(0, HTTP_R_RESPONSE_PARSE_ERROR);
         return 0;
     }
 
@@ -385,7 +385,7 @@ static int parse_http_line1(char *line)
         if (retcode < 400)
             HTTPerr(0, HTTP_R_STATUS_CODE_UNSUPPORTED);
         else
-            HTTPerr(0, HTTP_R_SERVER_SENT_ERROR);
+            HTTPerr(0, HTTP_R_RECEIVED_ERROR);
         if (*reason == '\0')
             ERR_add_error_data(2, "Code=", code);
         else
@@ -577,12 +577,14 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 *line_end = '\0';
         }
         if (value != NULL && line_end != NULL) {
-            if (rctx->state == OHS_REDIRECT && strcmp(key, "Location") == 0) {
+            if (rctx->state == OHS_REDIRECT
+                    && strcasecmp(key, "Location") == 0) {
                 rctx->redirection_url = value;
                 return 0;
             }
-            if (rctx->expected_ct != NULL && strcmp(key, "Content-Type") == 0) {
-                if (strcmp(rctx->expected_ct, value) != 0) {
+            if (rctx->expected_ct != NULL
+                    && strcasecmp(key, "Content-Type") == 0) {
+                if (strcasecmp(rctx->expected_ct, value) != 0) {
                     HTTPerr(0, HTTP_R_UNEXPECTED_CONTENT_TYPE);
                     ERR_add_error_data(4, "expected=", rctx->expected_ct,
                                        ",actual=", value);
@@ -590,7 +592,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 }
                 rctx->expected_ct = NULL; /* content-type has been found */
             }
-            if (strcmp(key, "Content-Length") == 0) {
+            if (strcasecmp(key, "Content-Length") == 0) {
                 resp_len = strtoul(value, &line_end, 10);
                 if (line_end == value || *line_end != '\0') {
                     HTTPerr(0, HTTP_R_ERROR_PARSING_CONTENT_LENGTH);
@@ -603,7 +605,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         /* Look for blank line: end of headers */
-        for (p = rctx->iobuf; *p != '\0' ; p++) {
+        for (p = rctx->iobuf; *p != '\0'; p++) {
             if (*p != '\r' && *p != '\n')
                 break;
         }
@@ -690,10 +692,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 #ifndef OPENSSL_NO_SOCK
 
 /* set up a new connection BIO, to HTTP server or to HTTP(S) proxy if given */
-static BIO *HTTP_new_bio(const char *server, const char *server_port,
-                         const char *proxy, const char *proxy_port)
+static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
+                         const char *server_port /* explicit server port */,
+                         const char *proxy /* optionally includes ":port" */)
 {
-    const char *host = server;
+    const char *host = server, *host_end;
+    char host_name[100];
     const char *port = server_port;
     BIO *cbio;
 
@@ -704,9 +708,17 @@ static BIO *HTTP_new_bio(const char *server, const char *server_port,
 
     if (proxy != NULL) {
         host = proxy;
-        port = proxy_port;
+        port = NULL;
     }
-    cbio = BIO_new_connect(host);
+
+    host_end = strchr(host, '/');
+    if (host_end != NULL && (size_t)(host_end - host) < sizeof(host_name)) {
+        /* chop trailing string starting with '/' */
+        strncpy(host_name, host, host_end - host);
+        host = host_name;
+    }
+
+    cbio = BIO_new_connect(host /* optionally includes ":port" */);
     if (cbio == NULL)
         goto end;
     if (port != NULL)
@@ -724,7 +736,7 @@ static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
     ASN1_VALUE *resp = ASN1_item_d2i(NULL, &p, len, it);
 
     if (resp == NULL)
-        HTTPerr(0, HTTP_R_SERVER_RESPONSE_PARSE_ERROR);
+        HTTPerr(0, HTTP_R_RESPONSE_PARSE_ERROR);
     return resp;
 }
 
@@ -812,7 +824,7 @@ static int update_timeout(int timeout, time_t start_time)
  * After disconnect the modified BIO will be deallocated using BIO_free_all().
  */
 BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
-                        int use_ssl, const char *proxy, const char *proxy_port,
+                        int use_ssl, const char *proxy, const char *no_proxy,
                         BIO *bio, BIO *rbio,
                         OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                         const STACK_OF(CONF_VALUE) *headers,
@@ -839,11 +851,12 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
     }
     /* remaining parameters are checked indirectly by the functions called */
 
+    proxy = http_adapt_proxy(proxy, no_proxy, server, use_ssl);
     if (bio != NULL)
         cbio = bio;
     else
 #ifndef OPENSSL_NO_SOCK
-        if ((cbio = HTTP_new_bio(server, port, proxy, proxy_port)) == NULL)
+        if ((cbio = HTTP_new_bio(server, port, proxy)) == NULL)
             return NULL;
 #else
         return NULL;
@@ -896,8 +909,10 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
                 ) {
                 BIO_snprintf(buf, 200, "server=%s:%s", server, port);
                 ERR_add_error_data(1, buf);
+                if (proxy != NULL)
+                    ERR_add_error_data(2, " proxy=", proxy);
                 if (err == 0) {
-                    BIO_snprintf(buf, 200, "server has disconnected%s",
+                    BIO_snprintf(buf, 200, " peer has disconnected%s",
                                  use_ssl ? " violating the protocol" :
                                  ", likely because it requires the use of TLS");
                     ERR_add_error_data(1, buf);
@@ -952,7 +967,7 @@ static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
 }
 
 /* Get data via HTTP from server at given URL, potentially with redirection */
-BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
+BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                    const STACK_OF(CONF_VALUE) *headers,
@@ -980,7 +995,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
             break;
 
      new_rpath:
-        resp = OSSL_HTTP_transfer(host, port, path, use_ssl, proxy, proxy_port,
+        resp = OSSL_HTTP_transfer(host, port, path, use_ssl, proxy, no_proxy,
                                   bio, rbio,
                                   bio_update_fn, arg, headers, NULL, NULL,
                                   maxline, max_resp_len,
@@ -1013,7 +1028,7 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *proxy_port,
 
 /* Get ASN.1-encoded data via HTTP from server at given URL */
 ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
-                               const char *proxy, const char *proxy_port,
+                               const char *proxy, const char *no_proxy,
                                BIO *bio, BIO *rbio,
                                OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                const STACK_OF(CONF_VALUE) *headers,
@@ -1028,7 +1043,7 @@ ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((mem = OSSL_HTTP_get(url, proxy, proxy_port, bio, rbio, bio_update_fn,
+    if ((mem = OSSL_HTTP_get(url, proxy, no_proxy, bio, rbio, bio_update_fn,
                              arg, headers, maxline, max_resp_len, timeout,
                              expected_content_type, 1 /* expect_asn1 */))
         != NULL)
@@ -1040,7 +1055,7 @@ ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
 /* Post ASN.1-encoded request via HTTP to server return ASN.1 response */
 ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                 const char *path, int use_ssl,
-                                const char *proxy, const char *proxy_port,
+                                const char *proxy, const char *no_proxy,
                                 BIO *bio, BIO *rbio,
                                 OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                 const STACK_OF(CONF_VALUE) *headers,
@@ -1061,7 +1076,7 @@ ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
     /* remaining parameters are checked indirectly */
 
     req_mem = HTTP_asn1_item2bio(req_it, req);
-    res_mem = OSSL_HTTP_transfer(server, port, path, use_ssl, proxy, proxy_port,
+    res_mem = OSSL_HTTP_transfer(server, port, path, use_ssl, proxy, no_proxy,
                                  bio, rbio,
                                  bio_update_fn, arg, headers, content_type,
                                  req_mem /* may be NULL */, maxline,
@@ -1193,7 +1208,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
 
         /* RFC 7231 4.3.6: any 2xx status code is valid */
         if (strncmp(mbuf, HTTP_PREFIX, strlen(HTTP_PREFIX)) != 0) {
-            HTTPerr(0, HTTP_R_SERVER_RESPONSE_PARSE_ERROR);
+            HTTPerr(0, HTTP_R_RESPONSE_PARSE_ERROR);
             BIO_printf(bio_err, "%s: HTTP CONNECT failed, non-HTTP response\n",
                        prog);
             /* Wrong protocol, not even HTTP, so stop reading headers */
@@ -1201,7 +1216,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         }
         mbufp = mbuf + strlen(HTTP_PREFIX);
         if (strncmp(mbufp, HTTP_VERSION_PATT, strlen(HTTP_VERSION_PATT)) != 0) {
-            HTTPerr(0, HTTP_R_SERVER_SENT_WRONG_HTTP_VERSION);
+            HTTPerr(0, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
             BIO_printf(bio_err,
                        "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",
                        prog, HTTP_VERSION_STR_LEN, mbufp);

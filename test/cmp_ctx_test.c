@@ -718,8 +718,8 @@ DEFINE_SET_CB_TEST(log_cb)
 DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
 DEFINE_SET_PORT_TEST(serverPort)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxyName, char)
-DEFINE_SET_PORT_TEST(proxyPort)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxy, char)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, no_proxy, char)
 DEFINE_SET_CB_TEST(http_cb)
 DEFINE_SET_GET_P_VOID_TEST(http_cb_arg)
 DEFINE_SET_CB_TEST(transfer_cb)
@@ -803,8 +803,8 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_serverPath);
     ADD_TEST(test_CTX_set1_get0_serverName);
     ADD_TEST(test_CTX_set_get_serverPort);
-    ADD_TEST(test_CTX_set1_get0_proxyName);
-    ADD_TEST(test_CTX_set_get_proxyPort);
+    ADD_TEST(test_CTX_set1_get0_proxy);
+    ADD_TEST(test_CTX_set1_get0_no_proxy);
     ADD_TEST(test_CTX_set_get_http_cb);
     ADD_TEST(test_CTX_set_get_http_cb_arg);
     ADD_TEST(test_CTX_set_get_transfer_cb);
