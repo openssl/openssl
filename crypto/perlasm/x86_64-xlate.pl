@@ -115,7 +115,12 @@ if ($flavour =~ /elf/) {
 	.long 4f - 1f
 	.long 5
 0:
-	.asciz "GNU"
+	# "GNU" encoded with .byte, since .asciz isn't supported
+	# on Solaris.
+	.byte 0x47
+	.byte 0x4e
+	.byte 0x55
+	.byte 0
 1:
 	.p2align $p2align
 	.long 0xc0000002
