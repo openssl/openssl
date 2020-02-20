@@ -269,7 +269,8 @@ static void find_keymgmt(EVP_KEYMGMT **keymgmt1, EVP_KEYMGMT **keymgmt2,
 {
     EVP_KEYMGMT *tmp_keymgmt1 = NULL, *tmp_keymgmt2 = NULL;
     void *tmp_keydata1 = NULL, *tmp_keydata2 = NULL;
-    size_t i1, i2, end = OSSL_NELEM(pk1->pkeys);
+    size_t i1, i2;
+    size_t end1 = OSSL_NELEM(pk1->pkeys), end1 = OSSL_NELEM(pk2->pkeys);
 
     /*
      * Find cache elements that share the same keymgmt, which must also have
@@ -277,13 +278,13 @@ static void find_keymgmt(EVP_KEYMGMT **keymgmt1, EVP_KEYMGMT **keymgmt2,
      * since the cache is fairly small, we assume that it's still cheaper
      * than a export + import.
      */
-    for (i1 = 0; i1 < end && pk1->pkeys[i1].keymgmt != NULL; i1++) {
+    for (i1 = 0; i1 < end1 && pk1->pkeys[i1].keymgmt != NULL; i1++) {
         if (finder(pk1->pkeys[i1].keymgmt)) {
             tmp_keymgmt1 = pk1->pkeys[i1].keymgmt;
             tmp_keydata1 = pk1->pkeys[i1].keydata;
         }
 
-        for (i2 = 0; i2 < end && pk2->pkeys[i2].keymgmt != NULL; i2++) {
+        for (i2 = 0; i2 < end2 && pk2->pkeys[i2].keymgmt != NULL; i2++) {
             if (finder(pk2->pkeys[i2].keymgmt)) {
                 tmp_keymgmt2 = pk2->pkeys[i2].keymgmt;
                 tmp_keydata2 = pk2->pkeys[i2].keydata;
@@ -404,15 +405,15 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
             return -1;           /* Not the same type */
         }
-    }
 
-    /*
-     * If the two keymgmt aren't the same, try to prepare any of the two
-     * EVP_PKEYs so they end up matching.
-     */
-    if (impmatch_keymgmt1 != impmatch_keymgmt2)
+        /*
+         * We found that they do have matching key types, so let's try to
+         * prepare any of the two EVP_PKEYs so they end up with matching
+         * keymgmt implementations.
+         */
         prepare_binary_op(&impmatch_keymgmt1, &impmatch_keymgmt2,
                           &keydata1, &keydata2, pk1, pk2);
+    }
 
     /* If we still don't have matching keymgmt implementations, we give up */
     if (impmatch_keymgmt1 != impmatch_keymgmt2)
