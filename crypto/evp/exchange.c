@@ -200,10 +200,13 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     if (ctx->engine != NULL || ctx->keytype == NULL)
         goto legacy;
 
-    /* Ensure that the key is provided.  If not, go legacy */
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     *  If not, go legacy
+     */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
-                                     &tmp_keymgmt, ctx->propquery);
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
@@ -309,8 +312,8 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey = evp_pkey_make_provided(peer, ctx->libctx, &ctx->keymgmt,
-                                     ctx->propquery);
+    provkey = evp_pkey_export_to_provider(peer, ctx->libctx, &ctx->keymgmt,
+                                          ctx->propquery);
     /*
      * If making the key provided wasn't possible, legacy may be able to pick
      * it up

@@ -30,7 +30,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         }
         return ret;
     }
-    if (a->pkeys[0].keymgmt != NULL) {
+    if (a->keymgmt != NULL) {
         const char *serprop = OSSL_SERIALIZER_PrivateKey_TO_DER_PQ;
         OSSL_SERIALIZER_CTX *ctx =
             OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(a, serprop);

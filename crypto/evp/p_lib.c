@@ -713,7 +713,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
 static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                                      int arg1, void *arg2)
 {
-    if (pkey->pkeys[0].keymgmt == NULL)
+    if (pkey->keymgmt == NULL)
         return 0;
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
@@ -768,9 +768,7 @@ int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
                                              mdmandatory,
                                              sizeof(mdmandatory));
         params[2] = OSSL_PARAM_construct_end();
-        if (!evp_keymgmt_get_params(pkey->pkeys[0].keymgmt,
-                                    pkey->pkeys[0].keydata,
-                                    params))
+        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
             return 0;
         if (mdmandatory[0] != '\0') {
             OPENSSL_strlcpy(mdname, mdmandatory, mdname_sz);
@@ -872,11 +870,17 @@ static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
-    evp_keymgmt_util_clear_pkey_cache(x);
+    evp_keymgmt_util_clear_operation_cache(x);
 
     if (x->ameth && x->ameth->pkey_free) {
         x->ameth->pkey_free(x);
         x->pkey.ptr = NULL;
+    }
+    if (x->keymgmt != NULL) {
+        evp_keymgmt_freedata(x->keymgmt, x->keydata);
+        EVP_KEYMGMT_free(x->keymgmt);
+        x->keymgmt = NULL;
+        x->keydata = NULL;
     }
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
     ENGINE_finish(x->engine);
@@ -917,8 +921,9 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
     return 0;
 }
 
-void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery)
+void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                  EVP_KEYMGMT **keymgmt,
+                                  const char *propquery)
 {
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
@@ -927,58 +932,21 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     if (pk == NULL)
         return NULL;
 
+#ifndef FIPS_MODE
+    if (pk->pkey.ptr != NULL) {
+        /*
+         * If the legacy key doesn't have an dirty counter or export function,
+         * give up
+         */
+        if (pk->ameth->dirty_cnt == NULL || pk->ameth->export_to == NULL)
+            return NULL;
+    }
+#endif
+
     if (keymgmt != NULL) {
         tmp_keymgmt = *keymgmt;
         *keymgmt = NULL;
     }
-
-#ifndef FIPS_MODE
-    /*
-     * If there is an underlying legacy key and it has changed, invalidate
-     * the cache of provider keys.
-     */
-    if (pk->pkey.ptr != NULL) {
-        EVP_KEYMGMT *legacy_keymgmt = NULL;
-
-        /*
-         * If there is no dirty counter, this key can't be used with
-         * providers.
-         */
-        if (pk->ameth->dirty_cnt == NULL)
-            goto end;
-
-        /*
-         * If no keymgmt was given by the caller, we set it to the first
-         * that's cached, to become the keymgmt to re-export to if needed,
-         * or to have a token keymgmt to return on success.  Further checks
-         * are done further down.
-         *
-         * We need to carefully save the pointer somewhere other than in
-         * tmp_keymgmt, so the EVP_KEYMGMT_up_ref() below doesn't mistakenly
-         * increment the reference counter of a keymgmt given by the caller.
-         */
-        if (tmp_keymgmt == NULL)
-            legacy_keymgmt = pk->pkeys[0].keymgmt;
-
-        /*
-         * If the dirty counter changed since last time, we make sure to
-         * hold on to the keymgmt we just got (if we got one), then clear
-         * the cache.
-         */
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy) {
-            if (legacy_keymgmt != NULL && !EVP_KEYMGMT_up_ref(legacy_keymgmt))
-                goto end;
-            evp_keymgmt_util_clear_pkey_cache(pk);
-        }
-
-        /*
-         * |legacy_keymgmt| was only given a value if |tmp_keymgmt| is
-         * NULL.
-         */
-        if (legacy_keymgmt != NULL)
-            tmp_keymgmt = legacy_keymgmt;
-    }
-#endif
 
     /* If no keymgmt was given or found, get a default keymgmt */
     if (tmp_keymgmt == NULL) {
@@ -990,35 +958,41 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         EVP_PKEY_CTX_free(ctx);
     }
 
+    /* If there's still no keymgmt to be had, give up */
     if (tmp_keymgmt == NULL)
         goto end;
 
 #ifndef FIPS_MODE
     if (pk->pkey.ptr != NULL) {
-        size_t i;
+        size_t i = 0;
 
         /*
-         * Find our keymgmt in the cache.  If it's present, it means that
-         * export has already been done.  We take token copies of the
-         * cached pointers, to have token success values to return.
-         *
-         * TODO(3.0) Right now, we assume we have ample space.  We will
-         * have to think about a cache aging scheme, though, if |i| indexes
-         * outside the array.
+         * If the legacy "origin" hasn't changed since last time, we try
+         * to find our keymgmt in the operation cache.  If it has changed,
+         * |i| remains zero, and we will clear the cache further down.
          */
-        i = evp_keymgmt_util_find_pkey_cache_index(pk, tmp_keymgmt);
-        if (!ossl_assert(i < OSSL_NELEM(pk->pkeys)))
-            goto end;
-        if (pk->pkeys[i].keymgmt != NULL) {
-            keydata = pk->pkeys[i].keydata;
-            goto end;
+        if (pk->ameth->dirty_cnt(pk) == pk->dirty_cnt_copy) {
+            i = evp_keymgmt_util_find_operation_cache_index(pk, tmp_keymgmt);
+
+            /*
+             * If |tmp_keymgmt| is present in the operation cache, it means
+             * that export doesn't need to be redone.  In that case, we take
+             * token copies of the cached pointers, to have token success
+             * values to return.
+             */
+            if (i < OSSL_NELEM(pk->operation_cache)
+                && pk->operation_cache[i].keymgmt != NULL) {
+                keydata = pk->operation_cache[i].keydata;
+                goto end;
+            }
         }
 
         /*
-         * If we still don't have a keymgmt at this point, or the legacy
-         * key doesn't have an export function, just bail out.
+         * TODO(3.0) Right now, we assume we have ample space.  We will have
+         * to think about a cache aging scheme, though, if |i| indexes outside
+         * the array.
          */
-        if (pk->ameth->export_to == NULL)
+        if (!ossl_assert(i < OSSL_NELEM(pk->operation_cache)))
             goto end;
 
         /* Make sure that the keymgmt key type matches the legacy NID */
@@ -1034,7 +1008,27 @@ void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
             goto end;
         }
 
-        evp_keymgmt_util_cache_pkey(pk, i, tmp_keymgmt, keydata);
+        /*
+         * If the dirty counter changed since last time, then clear the
+         * operation cache.  In that case, we know that |i| is zero.  Just
+         * in case this is a re-export, we increment then decrement the
+         * keymgmt reference counter.
+         */
+        if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) { /* refcnt++ */
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = NULL;
+            goto end;
+        }
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
+            evp_keymgmt_util_clear_operation_cache(pk);
+        EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
+
+        /* Add the new export to the operation cache */
+        if (!evp_keymgmt_util_cache_keydata(pk, i, tmp_keymgmt, keydata)) {
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = NULL;
+            goto end;
+        }
 
         /* Synchronize the dirty count */
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);

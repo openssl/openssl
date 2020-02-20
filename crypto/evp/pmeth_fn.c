@@ -41,10 +41,13 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx->keytype == NULL || ctx->engine != NULL)
         goto legacy;
 
-    /* Ensure that the key is provided.  If not, go legacy */
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     *  If not, go legacy
+     */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
-                                     &tmp_keymgmt, ctx->propquery);
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {

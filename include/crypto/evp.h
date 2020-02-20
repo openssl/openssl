@@ -504,6 +504,11 @@ struct evp_pkey_st {
     /* == Legacy attributes == */
     int type;
     int save_type;
+
+    /*
+     * Legacy key "origin" is composed of a pointer to an EVP_PKEY_ASN1_METHOD,
+     * a pointer to a low level key and possibly a pointer to an engine.
+     */
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
@@ -531,20 +536,41 @@ struct evp_pkey_st {
     int save_parameters;
 
     /* == Provider attributes == */
+
     /*
-     * To support transparent export/import between providers that support
-     * the methods for it, and still not having to do the export/import
-     * every time a key object is changed, we maintain a cache of imported
-     * key objects, indexed by keymgmt address.  pkeys[0] is *always* the
-     * "original" data unless we have a legacy key attached.
+     * Provider keydata "origin" is composed of a pointer to an EVP_KEYMGMT
+     * and a pointer to the provider side key data.  This is never used at
+     * the same time as the legacy key data above.
+     */
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+    /*
+     * If any libcrypto code does anything that may modify the keydata
+     * contents, this dirty counter must be incremented.
+     */
+    size_t dirty_cnt;
+
+    /*
+     * To support transparent execution of operation in backends other
+     * than the "origin" key, we support transparent export/import to
+     * those providers, and maintain a cache of the imported keydata,
+     * so we don't need to redo the export/import every time we perform
+     * the same operation in that same provider.
+     * This requires that the "origin" backend (whether it's a legacy or a
+     * provider "origin") implements exports, and that the target provider
+     * has an EVP_KEYMGMT that implements import.
+     *
+     * The cache limit is set at 10 different providers using the same
+     * "origin".  It's probably over the top, but is preferable to too
+     * few.
      */
     struct {
         EVP_KEYMGMT *keymgmt;
         void *keydata;
-    } pkeys[10];
+    } operation_cache[10];
     /*
-     * If there is a legacy key assigned to this structure, we keep
-     * a copy of that key's dirty count.
+     * We keep a copy of that "origin"'s dirty count, so we know if the
+     * operation cache needs flushing.
      */
     size_t dirty_cnt_copy;
 
@@ -574,18 +600,20 @@ void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
-void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery);
+void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                  EVP_KEYMGMT **keymgmt,
+                                  const char *propquery);
 
 /*
  * KEYMGMT utility functions
  */
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-size_t evp_keymgmt_util_find_pkey_cache_index(EVP_PKEY *pk,
-                                              EVP_KEYMGMT *keymgmt);
-void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
-void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
-                                 EVP_KEYMGMT *keymgmt, void *keydata);
+size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
+                                                   EVP_KEYMGMT *keymgmt);
+void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
+int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                   EVP_KEYMGMT *keymgmt, void *keydata);
+void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                 int selection, const OSSL_PARAM params[]);
 

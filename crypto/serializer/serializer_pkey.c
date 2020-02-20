@@ -267,8 +267,8 @@ static int serializer_write_cb(const OSSL_PARAM params[], void *arg)
 static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
 {
     const EVP_PKEY *pkey = ctx->object;
-    void *keydata = pkey->pkeys[0].keydata;
-    EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
+    void *keydata = pkey->keydata;
+    EVP_KEYMGMT *keymgmt = pkey->keymgmt;
 
     /*
      * OSSL_SERIALIZER_CTX_new() creates a context, even when the
@@ -306,7 +306,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
 {
     OSSL_SERIALIZER_CTX *ctx = NULL;
     OSSL_SERIALIZER *ser = NULL;
-    EVP_KEYMGMT *keymgmt = pkey->pkeys[0].keymgmt;
+    EVP_KEYMGMT *keymgmt = pkey->keymgmt;
     int selection = OSSL_KEYMGMT_SELECT_ALL;
 
     if (!ossl_assert(pkey != NULL && propquery != NULL)) {

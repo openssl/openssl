@@ -28,8 +28,8 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
         return 0;
     }
 
-    keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].keydata;
+    keymgmt = pkey->keymgmt;
+    key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key,
@@ -61,8 +61,8 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
         return 0;
     }
 
-    keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].keydata;
+    keymgmt = pkey->keymgmt;
+    key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key,
@@ -94,8 +94,8 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
         return 0;
     }
 
-    keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].keydata;
+    keymgmt = pkey->keymgmt;
+    key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key,
@@ -115,8 +115,8 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
         return 0;
     }
 
-    keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].keydata;
+    keymgmt = pkey->keymgmt;
+    key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_KEYPAIR);
@@ -135,8 +135,8 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
         return 0;
     }
 
-    keymgmt = pkey->pkeys[0].keymgmt;
-    key = pkey->pkeys[0].keydata;
+    keymgmt = pkey->keymgmt;
+    key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
         return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_ALL);

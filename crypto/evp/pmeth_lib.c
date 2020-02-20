@@ -160,8 +160,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;
-        name = evp_first_name(pkey->pkeys[0].keymgmt->prov,
-                              pkey->pkeys[0].keymgmt->name_id);
+        name = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
         /*
          * TODO: I wonder if the EVP_PKEY should have the name and propquery
          * that were used when building it....  /RL

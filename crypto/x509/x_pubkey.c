@@ -91,7 +91,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
             X509err(X509_F_X509_PUBKEY_SET, X509_R_METHOD_NOT_SUPPORTED);
             goto error;
         }
-    } else if (pkey->pkeys[0].keymgmt != NULL) {
+    } else if (pkey->keymgmt != NULL) {
         BIO *bmem = BIO_new(BIO_s_mem());
         const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
         OSSL_SERIALIZER_CTX *sctx =
@@ -270,7 +270,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
             xpk->pkey = NULL;
         }
         X509_PUBKEY_free(xpk);
-    } else if (a->pkeys[0].keymgmt != NULL) {
+    } else if (a->keymgmt != NULL) {
         const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
         OSSL_SERIALIZER_CTX *ctx =
             OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(a, serprop);
