@@ -16,9 +16,9 @@ properties, to be used with EVP_MAC_fetch():
 
 =over 4
 
-=item "KMAC-128", "provider=default"
+=item "KMAC-128", "provider=default" or "provider=fips"
 
-=item "KMAC-256", "provider=default"
+=item "KMAC-256", "provider=default" or "provider=fips"
 
 =back
 

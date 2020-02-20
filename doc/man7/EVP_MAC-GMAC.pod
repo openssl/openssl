@@ -15,7 +15,7 @@ used with EVP_MAC_fetch():
 
 =over 4
 
-=item "GMAC", "provider=default"
+=item "GMAC", "provider=default" or "provider=fips"
 
 =back
 
