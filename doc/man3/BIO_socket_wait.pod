@@ -14,7 +14,7 @@ BIO_connect_retry
  #ifndef OPENSSL_NO_SOCK
  int BIO_socket_wait(int fd, int for_read, time_t max_time);
  #endif
- int BIO_wait(BIO *bio, time_t max_time, unsigned long milliseconds);
+ int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds);
  int BIO_connect_retry(BIO *bio, long timeout);
 
 =head1 DESCRIPTION

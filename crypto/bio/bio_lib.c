@@ -786,18 +786,17 @@ void bio_cleanup(void)
 }
 
 /* Internal variant of the below BIO_wait() not calling BIOerr() */
-static int bio_wait(BIO *bio, time_t max_time, unsigned long milliseconds)
+static int bio_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
 {
     int fd;
 
     if (max_time == 0)
         return 1;
 
-    if (BIO_get_fd(bio, &fd) <= 0)
-        return -1;
 #ifndef OPENSSL_NO_SOCK
-    return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
-#else
+    if (BIO_get_fd(bio, &fd) > 0)
+        return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+#endif
     if (milliseconds > 1000) {
         long sec_diff = (long)(max_time - time(NULL)); /* might overflow */
 
@@ -808,7 +807,6 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned long milliseconds)
     }
     ossl_sleep(milliseconds);
     return 1;
-#endif
 }
 
 /*
@@ -818,7 +816,7 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned long milliseconds)
  * Call BIOerr(...) unless success.
  * Returns -1 on error, 0 on timeout, and 1 on success.
  */
-int BIO_wait(BIO *bio, time_t max_time, unsigned long milliseconds)
+int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
 {
     int rv = bio_wait(bio, max_time, milliseconds);
 
