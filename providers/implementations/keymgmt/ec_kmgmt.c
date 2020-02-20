@@ -23,6 +23,7 @@
 #include "internal/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
 
 static OSSL_OP_keymgmt_new_fn ec_newdata;
 static OSSL_OP_keymgmt_free_fn ec_freedata;
@@ -81,10 +82,11 @@ int params_to_domparams(EC_KEY *ec, const OSSL_PARAM params[])
 
         if (!OSSL_PARAM_get_utf8_string(param_ec_name, &curve_name, 0)
                 || curve_name == NULL
-                || (curve_nid = OBJ_sn2nid(curve_name)) == NID_undef)
+                || (curve_nid = ec_curve_name2nid(curve_name)) == NID_undef)
             goto err;
 
-        if ((ecg = EC_GROUP_new_by_curve_name(curve_nid)) == NULL)
+        if ((ecg = EC_GROUP_new_by_curve_name_ex(ec_key_get_libctx(ec),
+                                                 curve_nid)) == NULL)
             goto err;
     }
 
@@ -130,7 +132,7 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
         /* named curve */
         const char *curve_name = NULL;
 
-        if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
+        if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
             return 0;
 
         if (!ossl_param_bld_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
@@ -152,6 +154,7 @@ static ossl_inline
 int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
 {
     const OSSL_PARAM *param_priv_key, *param_pub_key;
+    BN_CTX *ctx = NULL;
     BIGNUM *priv_key = NULL;
     unsigned char *pub_key = NULL;
     size_t pub_key_len;
@@ -168,6 +171,9 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     param_pub_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
 
+    ctx = BN_CTX_new_ex(ec_key_get_libctx(ec));
+    if (ctx == NULL)
+        goto err;
     /*
      * We want to have at least a public key either way, so we end up
      * requiring it unconditionally.
@@ -177,7 +183,7 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
                                             (void **)&pub_key, 0, &pub_key_len)
             || (pub_point = EC_POINT_new(ecg)) == NULL
             || !EC_POINT_oct2point(ecg, pub_point,
-                                   pub_key, pub_key_len, NULL))
+                                   pub_key, pub_key_len, ctx))
         goto err;
 
     if (param_priv_key != NULL && include_private) {
@@ -223,7 +229,7 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
 
         fixed_top = bn_get_top(order) + 2;
 
-        if ((priv_key = BN_new()) == NULL)
+        if ((priv_key = BN_secure_new()) == NULL)
             goto err;
         if (bn_wexpand(priv_key, fixed_top) == NULL)
             goto err;
@@ -243,6 +249,7 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     ok = 1;
 
  err:
+    BN_CTX_free(ctx);
     BN_clear_free(priv_key);
     OPENSSL_free(pub_key);
     EC_POINT_free(pub_point);
@@ -411,7 +418,7 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
 static
 void *ec_newdata(void *provctx)
 {
-    return EC_KEY_new();
+    return EC_KEY_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
 }
 
 static

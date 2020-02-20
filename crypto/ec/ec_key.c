@@ -627,6 +627,11 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 
 }
 
+OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
+{
+    return key->libctx;
+}
+
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 {
     return key->group;

@@ -1261,8 +1261,3 @@ int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 
     return group->meth->blind_coordinates(group, p, ctx);
 }
-
-OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *eckey)
-{
-    return eckey->libctx;
-}
