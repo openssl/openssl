@@ -603,6 +603,9 @@ void evp_app_cleanup_int(void);
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
+void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                   EVP_KEYMGMT **keymgmt,
+                                   const char *propquery);
 
 /*
  * KEYMGMT utility functions

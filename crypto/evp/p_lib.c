@@ -866,28 +866,40 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     return ((i > 1) ? 1 : 0);
 }
 
+#ifndef FIPS_MODE
+static void evp_pkey_free_legacy(EVP_PKEY *x)
+{
+    if (x->ameth != NULL) {
+        if (x->ameth->pkey_free)
+            x->ameth->pkey_free(x);
+        x->pkey.ptr = NULL;
+        x->ameth = NULL;
+    }
+# ifndef OPENSSL_NO_ENGINE
+    ENGINE_finish(x->engine);
+    x->engine = NULL;
+    ENGINE_finish(x->pmeth_engine);
+    x->pmeth_engine = NULL;
+# endif
+    x->type = x->save_type = EVP_PKEY_NONE;
+}
+#endif  /* FIPS_MODE */
+
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
     evp_keymgmt_util_clear_operation_cache(x);
+#ifndef FIPS_MODE
+    evp_pkey_free_legacy(x);
+#endif
 
-    if (x->ameth && x->ameth->pkey_free) {
-        x->ameth->pkey_free(x);
-        x->pkey.ptr = NULL;
-    }
     if (x->keymgmt != NULL) {
         evp_keymgmt_freedata(x->keymgmt, x->keydata);
         EVP_KEYMGMT_free(x->keymgmt);
         x->keymgmt = NULL;
         x->keydata = NULL;
     }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
-    ENGINE_finish(x->engine);
-    x->engine = NULL;
-    ENGINE_finish(x->pmeth_engine);
-    x->pmeth_engine = NULL;
-#endif
 }
 
 void EVP_PKEY_free(EVP_PKEY *x)
@@ -1053,3 +1065,100 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     EVP_KEYMGMT_free(allocated_keymgmt);
     return keydata;
 }
+
+#ifndef FIPS_MODE
+/*
+ * This differs from exporting in that it releases the legacy key and assigns
+ * the export keymgmt and keydata to the "origin" provider side key instead
+ * of the operation cache.
+ */
+void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                   EVP_KEYMGMT **keymgmt,
+                                   const char *propquery)
+{
+    EVP_KEYMGMT *allocated_keymgmt = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL;
+    void *keydata = NULL;
+
+    if (pk == NULL)
+        return NULL;
+
+    /*
+     * If this key is already "upgraded", this function shouldn't have been
+     * called.
+     */
+    if (!ossl_assert(pk->keymgmt == NULL))
+        return NULL;
+
+    if (keymgmt != NULL) {
+        tmp_keymgmt = *keymgmt;
+        *keymgmt = NULL;
+    }
+
+    /* If the key isn't a legacy one, bail out, but with proper values */
+    if (pk->pkey.ptr == NULL) {
+        tmp_keymgmt = pk->keymgmt;
+        keydata = pk->keydata;
+    } else {
+        /* If the legacy key doesn't have an export function, give up */
+        if (pk->ameth->export_to == NULL)
+            return NULL;
+
+        /* If no keymgmt was given, get a default keymgmt */
+        if (tmp_keymgmt == NULL) {
+            EVP_PKEY_CTX *ctx =
+                EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
+
+            if (ctx != NULL && ctx->keytype != NULL)
+                tmp_keymgmt = allocated_keymgmt =
+                    EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, propquery);
+            EVP_PKEY_CTX_free(ctx);
+        }
+
+        /* If we still don't have a keymgmt, give up */
+        if (tmp_keymgmt == NULL)
+            goto end;
+
+        /* Make sure that the keymgmt key type matches the legacy NID */
+        if (!ossl_assert(EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type))))
+            goto end;
+
+        if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
+            goto end;
+
+        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt)
+            || !EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = NULL;
+            goto end;
+        }
+
+        /*
+         * Clear the operation cache, all the legacy data, as well as the
+         * dirty counters
+         */
+        evp_pkey_free_legacy(pk);
+        pk->dirty_cnt_copy = 0;
+
+        evp_keymgmt_util_clear_operation_cache(pk);
+        pk->keymgmt = tmp_keymgmt;
+        pk->keydata = keydata;
+        evp_keymgmt_util_cache_keyinfo(pk);
+    }
+
+ end:
+    /*
+     * If nothing was upgraded, |tmp_keymgmt| might point at a freed
+     * EVP_KEYMGMT, so we clear it to be safe.  It shouldn't be useful for
+     * the caller either way in that case.
+     */
+    if (keydata == NULL)
+        tmp_keymgmt = NULL;
+
+    if (keymgmt != NULL)
+        *keymgmt = tmp_keymgmt;
+
+    EVP_KEYMGMT_free(allocated_keymgmt);
+    return keydata;
+}
+#endif  /* FIPS_MODE */
