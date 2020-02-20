@@ -22,5 +22,6 @@ ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$ECX_GOAL]=ecx_exch.c
   DEFINE[$ECX_GOAL]=$ECDEF
-  SOURCE[$ECDH_GOAL]=ecdh_exch.c
+  SOURCE[../../libfips.a]=ecdh_exch.c
+  SOURCE[../../libnonfips.a]=ecdh_exch.c
 ENDIF
