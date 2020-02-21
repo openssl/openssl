@@ -9,5 +9,12 @@
 
 
 use OpenSSL::Test::Simple;
+use OpenSSL::Test qw/:DEFAULT srctop_dir/;
 
-simple_test("test_evp_pkey_provided", "evp_pkey_provided_test");
+setup("test_evp_pkey_provided");
+
+plan tests => 1;
+
+ok(run(test(["evp_pkey_provided_test",
+            srctop_dir("test", "recipes", "30-test_evp_pkey_provided")])),
+   "running evp_pkey_provided_test");
