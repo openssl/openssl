@@ -154,8 +154,8 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 }
 
 static const OSSL_PARAM ecx_key_types[] = {
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *ecx_imexport_types(int selection)
