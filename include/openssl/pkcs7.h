@@ -319,6 +319,9 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 
 BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
 
+int PKCS7_type_is_other(PKCS7 *p7);
+ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
+
 # ifdef  __cplusplus
 }
 # endif
