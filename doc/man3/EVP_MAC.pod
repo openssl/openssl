@@ -331,7 +331,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
       if (!EVP_MAC_init(ctx))
           goto err;
 
-      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
+      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
           if (!EVP_MAC_update(ctx, buf, read_l))
               goto err;
       }
@@ -361,7 +361,7 @@ look like this:
 
   $ MY_MAC=cmac MY_KEY=secret0123456789 MY_MAC_CIPHER=aes-128-cbc \
     LD_LIBRARY_PATH=. ./foo < foo.c
-  Result: ECCAAFF041B22A2299EB90A1B53B6D45
+  Result: C5C06683CD9DDEF904D754505C560A4E
 
 (in this example, that program was stored in F<foo.c> and compiled to
 F<./foo>)
