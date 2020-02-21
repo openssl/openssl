@@ -284,7 +284,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
@@ -355,7 +355,7 @@ int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
