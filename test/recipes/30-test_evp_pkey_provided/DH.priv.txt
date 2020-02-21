@@ -1,0 +1,5 @@
+DH Private-Key: (32 bit)
+    private-key: 1718364934 (0x666c2b06)
+    public-key: 1873206864 (0x6fa6de50)
+    prime: 2343853907 (0x8bb45f53)
+    generator: 2 (0x2)

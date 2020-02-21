@@ -18,65 +18,230 @@
 #include "crypto/evp.h"          /* For the internal API */
 #include "testutil.h"
 
-static int test_print_key_using_pem(const EVP_PKEY *pk)
+static char *datadir = NULL;
+
+#define PRIV_TEXT    0
+#define PRIV_PEM     1
+#define PRIV_DER     2
+#define PUB_TEXT     3
+#define PUB_PEM      4
+#define PUB_DER      5
+
+static void stripcr(char **buf, int *len)
 {
-    if (!TEST_true(EVP_PKEY_print_private(bio_out, pk, 0, NULL))
+    int i;
+    char *curr, *writ;
+
+    for (i = *len, curr = *buf, writ = *buf; i > 0; i--, curr++) {
+        if (*curr == '\r') {
+            (*len)--;
+            continue;
+        }
+        if (curr != writ)
+            *writ = *curr;
+        writ++;
+    }
+}
+
+static int compare_with_file(const char *alg, int type, BIO *membio)
+{
+    char filename[80];
+    BIO *file;
+    char buf[1024];
+    char *memdata, *fullfile;
+    const char *suffix;
+    size_t readbytes;
+    int ret = 0;
+    int len;
+
+    switch (type) {
+    case PRIV_TEXT:
+        suffix = "priv.txt";
+        break;
+
+    case PRIV_PEM:
+        suffix = "priv.pem";
+        break;
+
+    case PRIV_DER:
+        suffix = "priv.der";
+        break;
+
+    case PUB_TEXT:
+        suffix = "pub.txt";
+        break;
+
+    case PUB_PEM:
+        suffix = "pub.pem";
+        break;
+
+    case PUB_DER:
+        suffix = "pub.der";
+        break;
+
+    default:
+        TEST_error("Invalid file type");
+        goto err;
+    }
+
+    BIO_snprintf(filename, sizeof(filename), "%s.%s", alg, suffix);
+    fullfile = test_mk_file_path(datadir, filename);
+    if (!TEST_ptr(fullfile))
+        goto err;
+
+    file = BIO_new_file(fullfile, "r");
+    if (!TEST_ptr(file))
+        goto err;
+
+    if (!TEST_true(BIO_read_ex(file, buf, sizeof(buf), &readbytes))
+            || !TEST_true(BIO_eof(file))
+            || !TEST_size_t_lt(readbytes, sizeof(buf)))
+        goto err;
+
+    len = BIO_get_mem_data(membio, &memdata);
+    if (!TEST_int_gt(len, 0))
+        goto err;
+
+    if (type != PRIV_DER && type != PUB_DER)
+        stripcr(&memdata, &len);
+
+    if (!TEST_mem_eq(memdata, len, buf, readbytes))
+        goto err;
+
+    ret = 1;
+ err:
+    OPENSSL_free(fullfile);
+    (void)BIO_reset(membio);
+    BIO_free(file);
+    return ret;
+}
+
+static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
+{
+    BIO *membio = BIO_new(BIO_s_mem());
+    int ret = 0;
+
+    if (!TEST_ptr(membio))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_print_private(membio, pk, 0, NULL))
+        || !TEST_true(compare_with_file(alg, PRIV_TEXT, membio))
         /* Public key in PEM form */
-        || !TEST_true(PEM_write_bio_PUBKEY(bio_out, pk))
+        || !TEST_true(PEM_write_bio_PUBKEY(membio, pk))
+        || !TEST_true(compare_with_file(alg, PUB_PEM, membio))
         /* Unencrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk,
+        || !TEST_true(PEM_write_bio_PrivateKey(membio, pk,
                                                NULL, NULL, 0, NULL, NULL))
+        || !TEST_true(compare_with_file(alg, PRIV_PEM, membio))
         /* Encrypted private key in PEM form */
         || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
                                                (unsigned char *)"pass", 4,
                                                NULL, NULL)))
-        return 0;
+        goto err;
 
-    return 1;
+    ret = 1;
+ err:
+    BIO_free(membio);
+    return ret;
 }
 
-static int test_print_key_using_serializer(const EVP_PKEY *pk)
+static int test_print_key_type_using_serializer(const char *alg, int type,
+                                                const EVP_PKEY *pk)
 {
-    const char *pq = OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
+    const char *pq;
     OSSL_SERIALIZER_CTX *ctx = NULL;
+    BIO *membio = BIO_new(BIO_s_mem());
     int ret = 1;
+
+    switch (type) {
+    case PRIV_TEXT:
+        pq = OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ;
+        break;
+
+    case PRIV_PEM:
+        pq = OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
+        break;
+
+    case PRIV_DER:
+        pq = OSSL_SERIALIZER_PrivateKey_TO_DER_PQ;
+        break;
+
+    case PUB_TEXT:
+        pq = OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ;
+        break;
+
+    case PUB_PEM:
+        pq = OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ;
+        break;
+
+    case PUB_DER:
+        pq = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
+        break;
+
+    default:
+        TEST_error("Invalid serialization type");
+        goto err;
+    }
+
+    if (!TEST_ptr(membio)) {
+        ret = 0;
+        goto err;
+    }
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_SERIALIZER context with passphrase");
     if (!TEST_ptr(ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pk, pq))
         /* Check that this operation is supported */
-        || !TEST_ptr(OSSL_SERIALIZER_CTX_get_serializer(ctx))
-        /* Set a passphrase to be used later */
-        || !TEST_true(OSSL_SERIALIZER_CTX_set_passphrase(ctx,
-                                                         (unsigned char *)"pass",
-                                                         4)))
+        || !TEST_ptr(OSSL_SERIALIZER_CTX_get_serializer(ctx)))
         goto err;
 
     /* Use no cipher.  This should give us an unencrypted PEM */
-    TEST_note("Displaying PEM with no encryption");
-    if (!TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+    TEST_note("Testing with no encryption");
+    if (!TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
+        || !TEST_true(compare_with_file(alg, type, membio)))
         ret = 0;
 
-    /* Use a valid cipher name */
-    TEST_note("Displaying PEM encrypted with AES-256-CBC");
-    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
-        || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
-        ret = 0;
+    if (type == PRIV_PEM) {
+        /* Set a passphrase to be used later */
+        if (!TEST_true(OSSL_SERIALIZER_CTX_set_passphrase(ctx,
+                                                          (unsigned char *)"pass",
+                                                          4)))
+            goto err;
 
-    /* Use an invalid cipher name, which should generate no output */
-    TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
-    if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher(ctx, "FOO", NULL))
-        || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
-        ret = 0;
+        /* Use a valid cipher name */
+        TEST_note("Displaying PEM encrypted with AES-256-CBC");
+        if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
+            || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+            ret = 0;
 
-    /* Clear the cipher.  This should give us an unencrypted PEM again */
-    TEST_note("Displaying PEM with encryption cleared (no encryption)");
-    if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, NULL, NULL))
-        || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
-        ret = 0;
+        /* Use an invalid cipher name, which should generate no output */
+        TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
+        if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher(ctx, "FOO", NULL))
+            || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+            ret = 0;
+
+        /* Clear the cipher.  This should give us an unencrypted PEM again */
+        TEST_note("Testing with encryption cleared (no encryption)");
+        if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, NULL, NULL))
+            || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
+            || !TEST_true(compare_with_file(alg, type, membio)))
+            ret = 0;
+    }
 
 err:
+    BIO_free(membio);
     OSSL_SERIALIZER_CTX_free(ctx);
+    return ret;
+}
+
+static int test_print_key_using_serializer(const char *alg, const EVP_PKEY *pk)
+{
+    int i;
+    int ret = 1;
+
+    for (i = 0; i < 6; i++)
+        ret = ret && test_print_key_type_using_serializer(alg, i, pk);
+
     return ret;
 }
 
@@ -142,8 +307,8 @@ static int test_fromdata_rsa(void)
         || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
         goto err;
 
-    ret = test_print_key_using_pem(pk)
-        | test_print_key_using_serializer(pk);
+    ret = test_print_key_using_pem("RSA", pk)
+          && test_print_key_using_serializer("RSA", pk);
 
  err:
     EVP_PKEY_free(pk);
@@ -196,8 +361,8 @@ static int test_fromdata_dh(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 4))
         goto err;
 
-    ret = test_print_key_using_pem(pk)
-        | test_print_key_using_serializer(pk);
+    ret = test_print_key_using_pem("DH", pk)
+          && test_print_key_using_serializer("DH", pk);
 
  err:
     EVP_PKEY_free(pk);
@@ -220,6 +385,7 @@ static int test_fromdata_ecx(int tst)
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pk = NULL;
+    const char *alg = (tst == X25519_IDX) ? "X25519" : "X448";
 
     /* X448_KEYLEN > X25519_KEYLEN */
     static unsigned char key_numbers[2][2][X448_KEYLEN] = {
@@ -295,9 +461,7 @@ static int test_fromdata_ecx(int tst)
         size = X448_KEYLEN;
     }
 
-    ctx = EVP_PKEY_CTX_new_from_name(NULL,
-                                     tst == X25519_IDX ? "X25519" : "X448",
-                                     NULL);
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
     if (!TEST_ptr(ctx))
         goto err;
 
@@ -308,8 +472,8 @@ static int test_fromdata_ecx(int tst)
         || !TEST_int_eq(EVP_PKEY_size(pk), size))
         goto err;
 
-    ret = test_print_key_using_pem(pk)
-        | test_print_key_using_serializer(pk);
+    ret = test_print_key_using_pem(alg, pk)
+          && test_print_key_using_serializer(alg, pk);
 
  err:
     EVP_PKEY_free(pk);
@@ -322,6 +486,14 @@ static int test_fromdata_ecx(int tst)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(datadir = test_get_argument(0)))
+        return 0;
+
     ADD_TEST(test_fromdata_rsa);
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_fromdata_dh);
