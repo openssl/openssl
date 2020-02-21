@@ -784,3 +784,100 @@ void bio_cleanup(void)
     CRYPTO_THREAD_lock_free(bio_type_lock);
     bio_type_lock = NULL;
 }
+
+/* Internal variant of the below BIO_wait() not calling BIOerr() */
+static int bio_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
+{
+    int fd;
+
+    if (max_time == 0)
+        return 1;
+
+#ifndef OPENSSL_NO_SOCK
+    if (BIO_get_fd(bio, &fd) > 0)
+        return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+#endif
+    if (milliseconds > 1000) {
+        long sec_diff = (long)(max_time - time(NULL)); /* might overflow */
+
+        if (sec_diff <= 0)
+            return 0; /* timeout */
+        if ((unsigned long)sec_diff < milliseconds / 1000)
+            milliseconds = (unsigned long)sec_diff * 1000;
+    }
+    ossl_sleep(milliseconds);
+    return 1;
+}
+
+/*
+ * Wait on (typically socket-based) BIO at most until max_time.
+ * Succeed immediately if max_time == 0. If sockets are not available succeed
+ * after waiting at most given milliseconds in order to avoid a tight busy loop.
+ * Call BIOerr(...) unless success.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
+{
+    int rv = bio_wait(bio, max_time, milliseconds);
+
+    if (rv <= 0)
+        BIOerr(0, rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
+    return rv;
+}
+
+/*
+ * Connect via given BIO using BIO_do_handshake() until success/timeout/error.
+ * Parameter timeout == 0 means infinite, < 0 leads to immediate timeout error.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_connect_retry(BIO *bio, int timeout)
+{
+    int blocking = timeout == 0;
+    time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    int rv;
+
+    if (bio == NULL) {
+        BIOerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (timeout < 0) {
+        BIOerr(0, BIO_R_CONNECT_TIMEOUT);
+        return 0;
+    }
+
+    if (!blocking)
+        BIO_set_nbio(bio, 1);
+
+ retry: /* it does not help here to set SSL_MODE_AUTO_RETRY */
+    rv = BIO_do_handshake(bio); /* This indirectly calls ERR_clear_error(); */
+
+    if (rv <= 0) {
+        if (get_last_sys_error() == ETIMEDOUT) {
+            /*
+             * if blocking, despite blocking BIO, BIO_do_handshake() timed out
+             * when non-blocking, BIO_do_handshake() timed out early
+             * with rv == -1 and get_last_sys_error() == 0
+             */
+            ERR_clear_error();
+            (void)BIO_reset(bio);
+            /*
+             * unless using BIO_reset(), blocking next connect() may crash and
+             * non-blocking next BIO_do_handshake() will fail
+             */
+            goto retry;
+        } else if (BIO_should_retry(bio)) {
+            /* will not actually wait if timeout == 0 (i.e., blocking BIO) */
+            rv = bio_wait(bio, max_time, 100 /* milliseconds */);
+            if (rv > 0)
+                goto retry;
+            BIOerr(0, rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
+        } else {
+            rv = -1;
+            if (ERR_peek_error() == 0) /* missing error queue entry */
+                BIOerr(0, BIO_R_CONNECT_ERROR); /* workaround: general error */
+        }
+    }
+
+    return rv;
+}

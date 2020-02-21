@@ -11,8 +11,10 @@ BIO_connect_retry
 
  #include <openssl/bio.h>
 
+ #ifndef OPENSSL_NO_SOCK
  int BIO_socket_wait(int fd, int for_read, time_t max_time);
- int BIO_wait(BIO *bio, time_t max_time);
+ #endif
+ int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds);
  int BIO_connect_retry(BIO *bio, long timeout);
 
 =head1 DESCRIPTION
@@ -21,9 +23,12 @@ BIO_socket_wait() waits on the socket B<fd> for reading if B<for_read> is not 0,
 else for writing, at most until B<max_time>.
 It succeeds immediately if B<max_time> == 0 (which means no timeout given).
 
-BIO_wait() waits on the socket underlying the given B<bio>, for reading if
-B<bio> is supposed to read, else for writing, at most until B<max_time>.
+BIO_wait() waits at most until B<max_time> on the given B<bio>,
+which is typically socket-based,
+for reading if B<bio> is supposed to read, else for writing.
 It succeeds immediately if B<max_time> == 0 (which means no timeout given).
+If sockets are not available it succeeds after waiting at most given
+B<milliseconds> in order to help avoiding a tight busy loop at the caller.
 
 BIO_connect_retry() connects via the given B<bio>, retrying BIO_do_connect()
 until success or a timeout or error condition is reached.
