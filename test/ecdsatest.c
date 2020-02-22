@@ -236,7 +236,7 @@ static int test_builtin(int n, int as)
     unsigned char *sig = NULL;
     EVP_PKEY *pkey_neg = NULL, *pkey = NULL;
     EVP_MD_CTX *mctx = NULL;
-    size_t sig_len;
+    int sig_len;
     int nid, ret = 0;
     int temp;
 
@@ -267,6 +267,10 @@ static int test_builtin(int n, int as)
         goto err;
 
     temp = ECDSA_size(eckey);
+
+    // check if temp is negative
+    if (!TEST_int_gt(temp,0))
+        goto err;
 
     /*
      * |as| indicates how we want to treat the key, i.e. what sort of
