@@ -378,17 +378,33 @@ static int sh_init(size_t size, size_t minsize)
 
     memset(&sh, 0, sizeof(sh));
 
-    /* make sure size and minsize are powers of 2 */
+    /* make sure size is a powers of 2 */
     OPENSSL_assert(size > 0);
     OPENSSL_assert((size & (size - 1)) == 0);
-    OPENSSL_assert((minsize & (minsize - 1)) == 0);
     if (size == 0 || (size & (size - 1)) != 0)
         goto err;
-    if (minsize == 0 || (minsize & (minsize - 1)) != 0)
-        goto err;
 
-    while (minsize < sizeof(SH_LIST))
-        minsize *= 2;
+    if (minsize <= sizeof(SH_LIST)) {
+        OPENSSL_assert(sizeof(SH_LIST) <= 65536);
+        /*
+         * Compute the minimum possible allocation size.
+         * This must be a power of 2 and at least as large as the SH_LIST
+         * structure.
+         */
+        minsize = sizeof(SH_LIST) - 1;
+        minsize |= minsize >> 1;
+        minsize |= minsize >> 2;
+        if (sizeof(SH_LIST) > 16)
+            minsize |= minsize >> 4;
+        if (sizeof(SH_LIST) > 256)
+            minsize |= minsize >> 8;
+        minsize++;
+    } else {
+        /* make sure minsize is a powers of 2 */
+          OPENSSL_assert((minsize & (minsize - 1)) == 0);
+          if ((minsize & (minsize - 1)) != 0)
+              goto err;
+    }
 
     sh.arena_size = size;
     sh.minsize = minsize;
