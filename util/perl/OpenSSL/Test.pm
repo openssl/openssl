@@ -66,7 +66,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
-use Cwd qw/abs_path/;
+use Cwd qw/getcwd abs_path/;
 
 my $level = 0;
 
@@ -132,6 +132,7 @@ is defined).
 sub setup {
     my $old_test_name = $test_name;
     $test_name = shift;
+    my %opts = @_;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
     warn "setup() detected test name change.  Innocuous, so we continue...\n"
@@ -148,6 +149,9 @@ sub setup {
 
     BAIL_OUT("setup() expects the file Configure in the source top directory")
         unless -f srctop_file("Configure");
+
+    note "The results of this test will end up in $directories{RESULTS}"
+        unless $opts{quiet};
 
     __cwd($directories{RESULTS});
 }
@@ -170,12 +174,6 @@ When set to 1 (or any value that perl perceives as true), the subdirectory
 will be created if it doesn't already exist.  This happens before BLOCK
 is executed.
 
-=item B<cleanup =E<gt> 0|1>
-
-When set to 1 (or any value that perl perceives as true), the subdirectory
-will be cleaned out and removed.  This happens both before and after BLOCK
-is executed.
-
 =back
 
 An example:
@@ -188,7 +186,7 @@ An example:
           is($line, qr/^OpenSSL 1\./,
              "check that we're using OpenSSL 1.x.x");
       }
-  }, create => 1, cleanup => 1;
+  }, create => 1;
 
 =back
 
@@ -206,10 +204,6 @@ sub indir {
     $codeblock->();
 
     __cwd($reverse);
-
-    if ($opts{cleanup}) {
-	rmtree($subdir, { safe => 0 });
-    }
 }
 
 =over 4
@@ -943,17 +937,22 @@ i.e. Some tests may only work in non FIPS mode.
 sub __env {
     (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
 
-    $directories{SRCTOP}  = abs_path($ENV{SRCTOP} || $ENV{TOP});
-    $directories{BLDTOP}  = abs_path($ENV{BLDTOP} || $ENV{TOP});
-    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
-    $directories{SRCAPPS} =                 __srctop_dir("apps");
-    $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
-    $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
-    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
-    $directories{SRCTEST} =                 __srctop_dir("test");
-    $directories{SRCDATA} =                 __srctop_dir("test", "recipes",
-                                                         $recipe_datadir);
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
+    $directories{SRCTOP}    = abs_path($ENV{SRCTOP} || $ENV{TOP});
+    $directories{BLDTOP}    = abs_path($ENV{BLDTOP} || $ENV{TOP});
+    $directories{BLDAPPS}   = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS}   =                 __srctop_dir("apps");
+    $directories{BLDFUZZ}   =                 __bldtop_dir("fuzz");
+    $directories{SRCFUZZ}   =                 __srctop_dir("fuzz");
+    $directories{BLDTEST}   = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST}   =                 __srctop_dir("test");
+    $directories{SRCDATA}   =                 __srctop_dir("test", "recipes",
+                                                           $recipe_datadir);
+    $directories{RESULTTOP} = $ENV{RESULT_D} || __bldtop_dir("test-runs");
+    $directories{RESULTS}   = catdir($directories{RESULTTOP}, $test_name);
+
+    # Create result directory dynamically
+    rmtree($directories{RESULTS}, { safe => 0, keep_root => 1 });
+    mkpath($directories{RESULTS});
 
     push @direnv, "TOP"       if $ENV{TOP};
     push @direnv, "SRCTOP"    if $ENV{SRCTOP};
@@ -962,7 +961,7 @@ sub __env {
     push @direnv, "TEST_D"    if $ENV{TEST_D};
     push @direnv, "RESULT_D"  if $ENV{RESULT_D};
 
-    $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
+    $end_with_bailout = $ENV{STOPTEST} ? 1 : 0;
 };
 
 # __srctop_file and __srctop_dir are helpers to build file and directory
@@ -977,26 +976,26 @@ sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{SRCTOP},@_,$f);
+    return abs2rel(catfile($directories{SRCTOP},@_,$f),getcwd);
 }
 
 sub __srctop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{SRCTOP},@_);
+    return abs2rel(catdir($directories{SRCTOP},@_), getcwd);
 }
 
 sub __bldtop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{BLDTOP},@_,$f);
+    return abs2rel(catfile($directories{BLDTOP},@_,$f), getcwd);
 }
 
 sub __bldtop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{BLDTOP},@_);
+    return abs2rel(catdir($directories{BLDTOP},@_), getcwd);
 }
 
 # __exeext is a function that returns the platform dependent file extension
@@ -1079,7 +1078,6 @@ sub __results_file {
 # hash style arguments to alter __cwd's behavior:
 #
 #    create = 0|1       The directory we move to is created if 1, not if 0.
-#    cleanup = 0|1      The directory we move from is removed if 1, not if 0.
 
 sub __cwd {
     my $dir = catdir(shift);
@@ -1136,10 +1134,6 @@ sub __cwd {
 
     # Should we just bail out here as well?  I'm unsure.
     return undef unless chdir($dir);
-
-    if ($opts{cleanup}) {
-	rmtree(".", { safe => 0, keep_root => 1 });
-    }
 
     # We put back new values carefully.  Doing the obvious
     # %directories = ( %tmp_directories )

@@ -122,7 +122,7 @@ static int test_dtls_unprocessed(int testidx)
 #define CLI_TO_SRV_EPOCH_0_RECS 3
 #define CLI_TO_SRV_EPOCH_1_RECS 1
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-# define SRV_TO_CLI_EPOCH_0_RECS 12
+# define SRV_TO_CLI_EPOCH_0_RECS 10
 #else
 /*
  * In this case we have no ServerKeyExchange message, because we don't have
@@ -332,6 +332,11 @@ OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;

@@ -120,17 +120,16 @@ sub test_conf {
     my ($conf, $check_source, $skip) = @_;
 
     my $conf_file = srctop_file("test", "ssl-tests", $conf);
-    my $tmp_file = "${conf}.$$.tmp";
+    my $input_file = $conf_file . ".in";
+    my $output_file = $conf;
     my $run_test = 1;
 
   SKIP: {
       # "Test" 1. Generate the source.
-      my $input_file = $conf_file . ".in";
-
       skip 'failure', 2 unless
         ok(run(perltest(["generate_ssl_tests.pl", $input_file],
                         interpreter_args => [ "-I", srctop_dir("util", "perl")],
-                        stdout => $tmp_file)),
+                        stdout => $output_file)),
            "Getting output from generate_ssl_tests.pl.");
 
     SKIP: {
@@ -138,7 +137,7 @@ sub test_conf {
         skip "Skipping generated source test for $conf", 1
           if !$check_source;
 
-        $run_test = is(cmp_text($tmp_file, $conf_file), 0,
+        $run_test = is(cmp_text($output_file, $conf_file), 0,
                        "Comparing generated sources.");
       }
 
@@ -146,10 +145,8 @@ sub test_conf {
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
-      ok(run(test(["ssl_test", $tmp_file])), "running ssl_test $conf");
+      ok(run(test(["ssl_test", $output_file])), "running ssl_test $conf");
     }
-
-    unlink glob $tmp_file;
 }
 
 sub cmp_text {

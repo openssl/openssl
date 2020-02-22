@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * CMAC low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -199,7 +205,8 @@ int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
         return 0;
     if ((bl = EVP_CIPHER_CTX_block_size(ctx->cctx)) < 0)
         return 0;
-    *poutlen = (size_t)bl;
+    if (poutlen != NULL)
+        *poutlen = (size_t)bl;
     if (!out)
         return 1;
     lb = ctx->nlast_block;

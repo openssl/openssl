@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_DSA
 NON_EMPTY_TRANSLATION_UNIT
@@ -32,17 +35,23 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS gendsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] dsaparam-file\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to the specified file"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     OPT_R_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PARAMETERS(),
+    {"dsaparam-file", 0, 0, "File containing DSA parameters"},
     {NULL}
 };
 

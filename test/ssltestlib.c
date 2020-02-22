@@ -10,53 +10,21 @@
 #include <string.h>
 
 #include "internal/nelem.h"
+#include "internal/cryptlib.h" /* for ossl_sleep() */
 #include "ssltestlib.h"
 #include "testutil.h"
 #include "e_os.h"
 
 #ifdef OPENSSL_SYS_UNIX
 # include <unistd.h>
-#ifndef OPENSSL_NO_KTLS
-# include <netinet/in.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-# include <sys/socket.h>
-# include <unistd.h>
-# include <fcntl.h>
-#endif
-
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-# ifdef OPENSSL_SYS_VXWORKS
-    struct timespec ts;
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
-    nanosleep(&ts, NULL);
-# else
-    usleep(millis * 1000);
+# ifndef OPENSSL_NO_KTLS
+#  include <netinet/in.h>
+#  include <netinet/in.h>
+#  include <arpa/inet.h>
+#  include <sys/socket.h>
+#  include <unistd.h>
+#  include <fcntl.h>
 # endif
-}
-#elif defined(_WIN32)
-# include <windows.h>
-
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-    Sleep(millis);
-}
-#else
-/* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-    struct timeval start, now;
-    unsigned int elapsedms;
-
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&now, NULL);
-        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
-                     + now.tv_usec - start.tv_usec) / 1000;
-    } while (elapsedms < millis);
-}
 #endif
 
 static int tls_dump_new(BIO *bi);
@@ -724,9 +692,17 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     SSL_CTX *serverctx = NULL;
     SSL_CTX *clientctx = NULL;
 
-    if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
-            || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
+    if (*sctx != NULL)
+        serverctx = *sctx;
+    else if (!TEST_ptr(serverctx = SSL_CTX_new(sm)))
         goto err;
+
+    if (cctx != NULL) {
+        if (*cctx != NULL)
+            clientctx = *cctx;
+        else if (!TEST_ptr(clientctx = SSL_CTX_new(cm)))
+            goto err;
+    }
 
     if ((min_proto_version > 0
          && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,

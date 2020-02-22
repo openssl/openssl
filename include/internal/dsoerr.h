@@ -23,7 +23,7 @@ int ERR_load_DSO_strings(void);
 /*
  * DSO function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DSO_F_DLFCN_BIND_FUNC                            0
 #  define DSO_F_DLFCN_LOAD                                 0
 #  define DSO_F_DLFCN_MERGER                               0

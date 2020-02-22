@@ -11,7 +11,7 @@
 #include <openssl/params.h>
 #include <openssl/types.h>
 
-#define OSSL_PARAM_BLD_MAX 10
+#define OSSL_PARAM_BLD_MAX 25
 
 typedef struct {
     const char *key;
@@ -42,10 +42,6 @@ typedef struct {
 void ossl_param_bld_init(OSSL_PARAM_BLD *bld);
 OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld);
 void ossl_param_bld_free(OSSL_PARAM *params);
-OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld,
-                                       OSSL_PARAM *params, size_t param_n,
-                                       void *data, size_t data_n,
-                                       void *secure, size_t secure_n);
 
 int ossl_param_bld_push_int(OSSL_PARAM_BLD *bld, const char *key, int val);
 int ossl_param_bld_push_uint(OSSL_PARAM_BLD *bld, const char *key,
@@ -68,6 +64,8 @@ int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
                                double val);
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn);
+int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                               const BIGNUM *bn, size_t sz);
 int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                     const char *buf, size_t bsize);
 int ossl_param_bld_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,

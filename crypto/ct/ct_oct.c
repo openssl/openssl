@@ -101,7 +101,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         }
         len -= 43;
         p++;
-        sct->log_id = BUF_memdup(p, CT_V1_HASHLEN);
+        sct->log_id = OPENSSL_memdup(p, CT_V1_HASHLEN);
         if (sct->log_id == NULL)
             goto err;
         sct->log_id_len = CT_V1_HASHLEN;
@@ -115,7 +115,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
             goto err;
         }
         if (len2 > 0) {
-            sct->ext = BUF_memdup(p, len2);
+            sct->ext = OPENSSL_memdup(p, len2);
             if (sct->ext == NULL)
                 goto err;
         }
@@ -132,7 +132,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         *in = p + len;
     } else {
         /* If not V1 just cache encoding */
-        sct->sct = BUF_memdup(p, len);
+        sct->sct = OPENSSL_memdup(p, len);
         if (sct->sct == NULL)
             goto err;
         sct->sct_len = len;

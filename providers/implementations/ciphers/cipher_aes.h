@@ -9,6 +9,7 @@
 
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
+#include "crypto/aes_platform.h"
 
 typedef struct prov_aes_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */
@@ -59,4 +60,3 @@ const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb128(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb1(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb8(size_t keybits);
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ctr(size_t keybits);
-

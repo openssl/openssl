@@ -315,7 +315,7 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
         s/[\n\s]*$//g;
 
         # Skip over recognized non-function declarations
-        next if /typedef\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/;
+        next if /typedef\W/;
 
         # Remove STACK_OF(foo)
         s/STACK_OF\(\w+\)/void/;
@@ -417,6 +417,7 @@ foreach my $lib ( keys %errorfile ) {
     next if ! $fnew{$lib} && ! $rnew{$lib} && ! $rebuild;
     next if scalar keys %modules > 0 && !$modules{$lib};
     next if $nowrite;
+    next if $hinc{$lib} eq 'NONE';
     print STDERR "$lib: $fnew{$lib} new functions\n" if $fnew{$lib};
     print STDERR "$lib: $rnew{$lib} new reasons\n" if $rnew{$lib};
     $newstate = 1;
@@ -496,7 +497,7 @@ EOF
     }
 
     print OUT "\n/*\n * $lib function codes.\n */\n";
-    print OUT "# if !OPENSSL_API_3\n";
+    print OUT "# ifndef OPENSSL_NO_DEPRECATED_3_0\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
         $z = 0 if $z < 0;

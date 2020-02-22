@@ -7,163 +7,111 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "crypto/asn1.h"
+#include "internal/core.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
-static OSSL_PARAM *paramdefs_to_params(const OSSL_PARAM *paramdefs)
+/*
+ * match_type() checks if two EVP_KEYMGMT are matching key types.  This
+ * function assumes that the caller has made all the necessary NULL checks.
+ */
+static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
 {
-    size_t cnt;
-    const OSSL_PARAM *p;
-    OSSL_PARAM *params, *q;
+    const OSSL_PROVIDER *prov2 = EVP_KEYMGMT_provider(keymgmt2);
+    const char *name2 = evp_first_name(prov2, EVP_KEYMGMT_number(keymgmt2));
 
-    for (cnt = 1, p = paramdefs; p->key != NULL; p++, cnt++)
-        continue;
-
-    params = OPENSSL_zalloc(cnt * sizeof(*params));
-
-    for (p = paramdefs, q = params; ; p++, q++) {
-        *q = *p;
-        if (p->key == NULL)
-            break;
-
-        q->data = NULL;          /* In case the provider used it */
-        q->return_size = 0;
-    }
-
-    return params;
+    return EVP_KEYMGMT_is_a(keymgmt1, name2);
 }
 
-typedef union align_block_un {
-    OSSL_UNION_ALIGN;
-} ALIGN_BLOCK;
+struct import_data_st {
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
 
-#define ALIGN_SIZE  sizeof(ALIGN_BLOCK)
+    int selection;
+};
 
-static void *allocate_params_space(OSSL_PARAM *params)
+static int try_import(const OSSL_PARAM params[], void *arg)
 {
-    unsigned char *data = NULL;
-    size_t space;
-    OSSL_PARAM *p;
+    struct import_data_st *data = arg;
 
-    for (space = 0, p = params; p->key != NULL; p++)
-        space += ((p->return_size + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
-
-    data = OPENSSL_zalloc(space);
-
-    for (space = 0, p = params; p->key != NULL; p++) {
-        p->data = data + space;
-        space += ((p->return_size + ALIGN_SIZE - 1) / ALIGN_SIZE) * ALIGN_SIZE;
-    }
-
-    return data;
+    return evp_keymgmt_import(data->keymgmt, data->keydata, data->selection,
+                              params);
 }
 
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
-    void *provkey = NULL;
+    void *keydata = NULL;
+    struct import_data_st import_data;
     size_t i, j;
 
-    /*
-     * If there is an underlying legacy key and it has changed, invalidate
-     * the cache of provider keys.
-     */
-    if (pk->pkey.ptr != NULL) {
-        /*
-         * If there is no dirty counter, this key can't be used with
-         * providers.
-         */
-        if (pk->ameth->dirty_cnt == NULL)
-            return NULL;
+    /* Export to where? */
+    if (keymgmt == NULL)
+        return NULL;
 
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
-            evp_keymgmt_clear_pkey_cache(pk);
-    }
+    /* If we have an unassigned key, give up */
+    if (pk->pkeys[0].keymgmt == NULL)
+        return NULL;
 
     /*
      * See if we have exported to this provider already.
      * If we have, return immediately.
      */
-    for (i = 0;
-         i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
-         i++) {
-        if (keymgmt == pk->pkeys[i].keymgmt)
-            return pk->pkeys[i].provkey;
-    }
+    i = evp_keymgmt_util_find_pkey_cache_index(pk, keymgmt);
 
-    if (pk->pkey.ptr != NULL) {
-        /* There is a legacy key, try to export that one to the provider */
+    /* If we're already exported to the given keymgmt, no more to do */
+    if (keymgmt == pk->pkeys[i].keymgmt)
+        return pk->pkeys[i].keydata;
 
-        /* If the legacy key doesn't have an export function, give up */
-        if (pk->ameth->export_to == NULL)
-            return NULL;
+    /*
+     * Make sure that the type of the keymgmt to export to matches the type
+     * of already cached keymgmt
+     */
+    if (!ossl_assert(match_type(pk->pkeys[0].keymgmt, keymgmt)))
+        return NULL;
 
-        /* Otherwise, simply use it */
-        provkey = pk->ameth->export_to(pk, keymgmt);
+    /* Create space to import data into */
+    if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL)
+        return NULL;
 
-        /* Synchronize the dirty count, but only if we exported successfully */
-        if (provkey != NULL)
-            pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+    /*
+     * We look at the already cached provider keys, and import from the
+     * first that supports it (i.e. use its export function), and export
+     * the imported data to the new provider.
+     */
 
-    } else {
+    /* Setup for the export callback */
+    import_data.keydata = keydata;
+    import_data.keymgmt = keymgmt;
+    import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
+
+    for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
+        EVP_KEYMGMT *exp_keymgmt = pk->pkeys[j].keymgmt;
+        void *exp_keydata = pk->pkeys[j].keydata;
+
         /*
-         * Here, there is no legacy key, so we look at the already cached
-         * provider keys, and import from the first that supports it
-         * (i.e. use its export function), and export the imported data to
-         * the new provider.
+         * TODO(3.0) consider an evp_keymgmt_export() return value that
+         * indicates that the method is unsupported.
          */
+        if (exp_keymgmt->export == NULL)
+            continue;
 
         /*
-         * If the given keymgmt doesn't have an import function, give up
+         * The export function calls the callback (try_import), which does
+         * the import for us.  If successful, we're done.
          */
-        if (keymgmt->importkey == NULL)
-            return NULL;
+        if (evp_keymgmt_export(exp_keymgmt, exp_keydata,
+                               OSSL_KEYMGMT_SELECT_ALL,
+                               &try_import, &import_data))
+            break;
 
-        for (j = 0; j < i && pk->pkeys[j].keymgmt != NULL; j++) {
-            if (pk->pkeys[j].keymgmt->exportkey != NULL) {
-                const OSSL_PARAM *paramdefs = NULL;
-                OSSL_PARAM *params = NULL;
-                void *data = NULL;
-                void *provctx =
-                    ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-                paramdefs = pk->pkeys[j].keymgmt->exportkey_types();
-                /*
-                 * All params have 'data' set to NULL.  In that case,
-                 * the exportkey call should just fill in 'return_size'
-                 * in all applicable params.
-                 */
-                params = paramdefs_to_params(paramdefs);
-                /* Get 'return_size' filled */
-                pk->pkeys[j].keymgmt->exportkey(pk->pkeys[j].provkey, params);
-
-                /*
-                 * Allocate space and assign 'data' to point into the
-                 * data block
-                 */
-                data = allocate_params_space(params);
-
-                /*
-                 * Call the exportkey function a second time, to get
-                 * the data filled
-                 */
-                pk->pkeys[j].keymgmt->exportkey(pk->pkeys[j].provkey, params);
-
-                /*
-                 * We should have all the data at this point, so import
-                 * into the new provider and hope to get a key back.
-                 */
-                provkey = keymgmt->importkey(provctx, params);
-                OPENSSL_free(params);
-                OPENSSL_free(data);
-
-                if (provkey != NULL)
-                    break;
-            }
-        }
+        /* If there was an error, bail out */
+        evp_keymgmt_freedata(keymgmt, keydata);
+        return NULL;
     }
 
     /*
@@ -171,118 +119,98 @@ void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      * have to think about a cache aging scheme, though, if |i| indexes
      * outside the array.
      */
-    j = ossl_assert(i < OSSL_NELEM(pk->pkeys));
+    if (!ossl_assert(i < OSSL_NELEM(pk->pkeys)))
+        return NULL;
 
-    if (provkey != NULL) {
-        EVP_KEYMGMT_up_ref(keymgmt);
-        pk->pkeys[i].keymgmt = keymgmt;
-        pk->pkeys[i].provkey = provkey;
-    }
-    return provkey;
+    evp_keymgmt_util_cache_pkey(pk, i, keymgmt, keydata);
+
+    return keydata;
 }
 
-void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk)
+void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk)
 {
-    size_t i;
+    size_t i, end = OSSL_NELEM(pk->pkeys);
 
     if (pk != NULL) {
-        for (i = 0;
-             i < OSSL_NELEM(pk->pkeys) && pk->pkeys[i].keymgmt != NULL;
-             i++) {
+        for (i = 0; i < end && pk->pkeys[i].keymgmt != NULL; i++) {
             EVP_KEYMGMT *keymgmt = pk->pkeys[i].keymgmt;
-            void *provkey = pk->pkeys[i].provkey;
+            void *keydata = pk->pkeys[i].keydata;
 
             pk->pkeys[i].keymgmt = NULL;
-            pk->pkeys[i].provkey = NULL;
-            keymgmt->freekey(provkey);
+            pk->pkeys[i].keydata = NULL;
+            evp_keymgmt_freedata(keymgmt, keydata);
             EVP_KEYMGMT_free(keymgmt);
+        }
+
+        pk->cache.size = 0;
+        pk->cache.bits = 0;
+        pk->cache.security_bits = 0;
+    }
+}
+
+size_t evp_keymgmt_util_find_pkey_cache_index(EVP_PKEY *pk,
+                                              EVP_KEYMGMT *keymgmt)
+{
+    size_t i, end = OSSL_NELEM(pk->pkeys);
+
+    for (i = 0; i < end && pk->pkeys[i].keymgmt != NULL; i++) {
+        if (keymgmt == pk->pkeys[i].keymgmt)
+            break;
+    }
+
+    return i;
+}
+
+void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
+                                 EVP_KEYMGMT *keymgmt, void *keydata)
+{
+    if (keydata != NULL) {
+        EVP_KEYMGMT_up_ref(keymgmt);
+        pk->pkeys[index].keydata = keydata;
+        pk->pkeys[index].keymgmt = keymgmt;
+
+        /*
+         * Cache information about the key object.  Only needed for the
+         * "original" provider side key.
+         *
+         * This services functions like EVP_PKEY_size, EVP_PKEY_bits, etc
+         */
+        if (index == 0) {
+            int bits = 0;
+            int security_bits = 0;
+            int size = 0;
+            OSSL_PARAM params[4];
+
+            params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_BITS, &bits);
+            params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_SECURITY_BITS,
+                                                 &security_bits);
+            params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_MAX_SIZE,
+                                                 &size);
+            params[3] = OSSL_PARAM_construct_end();
+            if (evp_keymgmt_get_params(keymgmt, keydata, params)) {
+                pk->cache.size = size;
+                pk->cache.bits = bits;
+                pk->cache.security_bits = security_bits;
+            }
         }
     }
 }
 
-
-/* internal functions */
-/* TODO(3.0) decide if these should be public or internal */
-void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[])
+void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                int selection, const OSSL_PARAM params[])
 {
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+    void *keydata = evp_keymgmt_newdata(keymgmt);
 
-    return keymgmt->importdomparams(provctx, params);
-}
-
-void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                               const OSSL_PARAM params[])
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    return keymgmt->gendomparams(provctx, params);
-}
-
-void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
-                               void *provdomparams)
-{
-    keymgmt->freedomparams(provdomparams);
-}
-
-int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                                void *provdomparams, OSSL_PARAM params[])
-{
-    return keymgmt->exportdomparams(provdomparams, params);
-}
-
-const OSSL_PARAM *evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->importdomparam_types();
-}
-
-const OSSL_PARAM *evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->exportdomparam_types();
-}
+    if (keydata != NULL) {
+        if (!evp_keymgmt_import(keymgmt, keydata, selection, params)) {
+            evp_keymgmt_freedata(keymgmt, keydata);
+            return NULL;
+        }
 
 
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[])
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+        evp_keymgmt_util_clear_pkey_cache(target);
+        evp_keymgmt_util_cache_pkey(target, 0, keymgmt, keydata);
+    }
 
-    return keymgmt->importkey(provctx, params);
-}
-
-void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[])
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    return keymgmt->genkey(provctx, domparams, params);
-}
-
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen)
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    return keymgmt->loadkey(provctx, id, idlen);
-}
-
-void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey)
-{
-    keymgmt->freekey(provkey);
-}
-
-int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                          OSSL_PARAM params[])
-{
-    return keymgmt->exportkey(provkey, params);
-}
-
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->importkey_types();
-}
-
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt)
-{
-    return keymgmt->exportkey_types();
+    return keydata;
 }

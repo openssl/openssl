@@ -92,22 +92,36 @@ EOF
 
     my %cmd_disabler = (
         ciphers  => "sock",
-        genrsa   => "rsa",
-        rsautl   => "rsa",
-        gendsa   => "dsa",
-        dsaparam => "dsa",
-        gendh    => "dh",
-        dhparam  => "dh",
-        ecparam  => "ec",
         pkcs12   => "des",
+    );
+    my %cmd_deprecated = (
+        rsa      => [ "3_0", "pkey",      "rsa" ],
+        genrsa   => [ "3_0", "genpkey",   "rsa" ],
+        rsautl   => [ "3_0", "pkeyutl",   "rsa" ],
+        dhparam  => [ "3_0", "pkeyparam", "dh" ],
+        dsaparam => [ "3_0", "pkeyparam", "dsa" ],
+        dsa      => [ "3_0", "pkey",      "dsa" ],
+        gendsa   => [ "3_0", "genpkey",   "dsa" ],
+        ec       => [ "3_0", "pkey",      "ec" ],
+        ecparam  => [ "3_0", "pkeyparam", "ec" ],
     );
 
     print "FUNCTION functions[] = {\n";
     foreach my $cmd ( @ARGV ) {
         my $str =
-            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options},\n";
+            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options, NULL},\n";
         if ($cmd =~ /^s_/) {
             print "#ifndef OPENSSL_NO_SOCK\n${str}#endif\n";
+        } elsif (my $deprecated = $cmd_deprecated{$cmd}) {
+            my @dep = @{$deprecated};
+            print "#if ";
+            if ($dep[2]) {
+                print "!defined(OPENSSL_NO_" . uc($dep[2]) . ") && ";
+            }
+            print "!defined(OPENSSL_NO_DEPRECATED_" . $dep[0] . ")";
+            my $dalt = "\"" . $dep[1] . "\"";
+            $str =~ s/NULL/$dalt/;
+            print "\n${str}#endif\n";
         } elsif (grep { $cmd eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($cmd) . "\n${str}#endif\n";
         } elsif (my $disabler = $cmd_disabler{$cmd}) {
@@ -131,7 +145,7 @@ EOF
         "mdc2", "rmd160", "blake2b512", "blake2s256",
         "sm3"
     ) {
-        my $str = "    {FT_md, \"$cmd\", dgst_main},\n";
+        my $str = "    {FT_md, \"$cmd\", dgst_main, NULL, NULL},\n";
         if (grep { $cmd eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($cmd) . "\n${str}#endif\n";
         } elsif (my $disabler = $md_disabler{$cmd}) {
@@ -177,7 +191,7 @@ EOF
         "cast-cbc", "rc5-cbc", "rc5-ecb", "rc5-cfb", "rc5-ofb",
         "sm4-cbc", "sm4-ecb", "sm4-cfb", "sm4-ofb", "sm4-ctr"
     ) {
-        my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options},\n";
+        my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options, NULL},\n";
         (my $algo = $cmd) =~ s/-.*//g;
         if ($cmd eq "zlib") {
             print "#ifdef ZLIB\n${str}#endif\n";
@@ -190,5 +204,5 @@ EOF
         }
     }
 
-    print "    {0, NULL, NULL}\n};\n";
+    print "    {0, NULL, NULL, NULL, NULL}\n};\n";
 }

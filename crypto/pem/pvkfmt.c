@@ -12,6 +12,12 @@
  * and PRIVATEKEYBLOB).
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/rand.h>
@@ -424,7 +430,7 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *magic);
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub);
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub);
 
-static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
+static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *p;
     unsigned int bitlen, magic = 0, keyalg;
@@ -473,7 +479,7 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     return outlen;
 }
 
-static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
+static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *tmp = NULL;
     int outlen, wrlen;
@@ -599,12 +605,12 @@ static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
     return;
 }
 
-int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk)
+int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk)
 {
     return do_i2b_bio(out, pk, 0);
 }
 
-int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk)
+int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk)
 {
     return do_i2b_bio(out, pk, 1);
 }
@@ -780,7 +786,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     return ret;
 }
 
-static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
+static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
@@ -865,7 +871,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     return -1;
 }
 
-int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
+int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
                 pem_password_cb *cb, void *u)
 {
     unsigned char *tmp = NULL;

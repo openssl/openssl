@@ -73,7 +73,8 @@ ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ERRORMSGCONTENT)
 
 ASN1_ADB_TEMPLATE(infotypeandvalue_default) = ASN1_OPT(OSSL_CMP_ITAV,
-        infoValue.other, ASN1_ANY);
+                                                       infoValue.other,
+                                                       ASN1_ANY);
 /* ITAV means InfoTypeAndValue */
 ASN1_ADB(OSSL_CMP_ITAV) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
@@ -164,7 +165,7 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
 {
     int created = 0;
 
-    if (itav_sk_p == NULL) {
+    if (itav_sk_p == NULL || itav == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         goto err;
     }
@@ -174,11 +175,10 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
             goto err;
         created = 1;
     }
-    if (itav != NULL) {
-        if (!sk_OSSL_CMP_ITAV_push(*itav_sk_p, itav))
-            goto err;
-    }
+    if (!sk_OSSL_CMP_ITAV_push(*itav_sk_p, itav))
+        goto err;
     return 1;
+
  err:
     if (created != 0) {
         sk_OSSL_CMP_ITAV_free(*itav_sk_p);

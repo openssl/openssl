@@ -1110,6 +1110,10 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
             return 0;
         break;
+    case SSL_kGOST:
+        ssl_print_hex(bio, indent + 2, "GostKeyTransportBlob", msg, msglen);
+        msglen = 0;
+        break;
 
     }
 

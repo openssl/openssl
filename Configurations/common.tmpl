@@ -151,10 +151,18 @@
                              generator_incs => $unified_info{includes}->{$script},
                              generator_deps => $unified_info{depends}->{$script},
                              deps => $unified_info{depends}->{$src},
-                             incs => [ @{$unified_info{includes}->{$obj}},
-                                       @{$unified_info{includes}->{$bin}} ],
-                             defs => [ @{$unified_info{defines}->{$obj}},
-                                       @{$unified_info{defines}->{$bin}} ],
+                             incs => [ defined $obj
+                                           ? @{$unified_info{includes}->{$obj}}
+                                           : (),
+                                       defined $bin
+                                           ? @{$unified_info{includes}->{$bin}}
+                                           : () ],
+                             defs => [ defined $obj
+                                           ? @{$unified_info{defines}->{$obj}}
+                                           : (),
+                                       defined $bin
+                                           ? @{$unified_info{defines}->{$bin}}
+                                           : () ],
                              %opts);
          foreach (@{$unified_info{depends}->{$src}}) {
              dogenerate($_, $obj, $bin, %opts);
@@ -436,6 +444,22 @@
      $cache{$dir} = 1;
  }
 
+ # dodocs is responsible for building documentation from .pods.
+ # It will call generatesrc.
+ sub dodocs {
+     my $type = shift;
+     my $section = shift;
+     foreach my $doc (@{$unified_info{"${type}docs"}->{$section}}) {
+         next if $cache{$doc};
+         $OUT .= generatesrc(src => $doc,
+                             generator => $unified_info{generate}->{$doc});
+         foreach ((@{$unified_info{depends}->{$doc}})) {
+             dogenerate($_, undef, undef, %opts);
+         }
+         $cache{$doc} = 1;
+     }
+ }
+
  # Start with populating the cache with all the overrides
  %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
@@ -448,6 +472,7 @@
  foreach (@{$unified_info{modules}})   { domodule($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
  foreach (@{$unified_info{scripts}})   { doscript($_); }
-
+ foreach (sort keys %{$unified_info{htmldocs}}) { dodocs('html', $_); }
+ foreach (sort keys %{$unified_info{mandocs}})  { dodocs('man', $_); }
  foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }
 -}

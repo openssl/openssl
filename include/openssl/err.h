@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_ERR_H
 # endif
 
@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  ifndef OPENSSL_NO_FILENAMES
 #   define ERR_PUT_error(l,f,r,fn,ln)      ERR_put_error(l,f,r,fn,ln)
 #  else
@@ -44,7 +44,7 @@ extern "C" {
 # define ERR_TXT_MALLOCED        0x01
 # define ERR_TXT_STRING          0x02
 
-# if !OPENSSL_API_3 || defined(OSSL_FORCE_ERR_STATE)
+# if !defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OSSL_FORCE_ERR_STATE)
 #  define ERR_FLAG_MARK           0x01
 #  define ERR_FLAG_CLEAR          0x02
 
@@ -105,16 +105,19 @@ struct err_state_st {
 /* # define ERR_LIB_JPAKE       49 */
 # define ERR_LIB_CT              50
 # define ERR_LIB_ASYNC           51
-# define ERR_LIB_SM2             52
-# define ERR_LIB_ESS             53
-# define ERR_LIB_PROP            54
-# define ERR_LIB_CRMF            55
-# define ERR_LIB_PROV            56
-# define ERR_LIB_CMP             57
+# define ERR_LIB_KDF             52
+# define ERR_LIB_SM2             53
+# define ERR_LIB_ESS             54
+# define ERR_LIB_PROP            55
+# define ERR_LIB_CRMF            56
+# define ERR_LIB_PROV            57
+# define ERR_LIB_CMP             58
+# define ERR_LIB_OSSL_SERIALIZER 59
+# define ERR_LIB_HTTP            60
 
 # define ERR_LIB_USER            128
 
-# if 1 || !OPENSSL_API_3
+# if 1 || !defined(OPENSSL_NO_DEPRECATED_3_0)
 #  define ASN1err(f, r) ERR_raise_data(ERR_LIB_ASN1, (r), NULL)
 #  define ASYNCerr(f, r) ERR_raise_data(ERR_LIB_ASYNC, (r), NULL)
 #  define BIOerr(f, r) ERR_raise_data(ERR_LIB_BIO, (r), NULL)
@@ -138,6 +141,7 @@ struct err_state_st {
 #  define EVPerr(f, r) ERR_raise_data(ERR_LIB_EVP, (r), NULL)
 #  define FIPSerr(f, r) ERR_raise_data(ERR_LIB_FIPS, (r), NULL)
 #  define HMACerr(f, r) ERR_raise_data(ERR_LIB_HMAC, (r), NULL)
+#  define HTTPerr(f, r) ERR_raise_data(ERR_LIB_HTTP, (r), NULL)
 #  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define OBJerr(f, r) ERR_raise_data(ERR_LIB_OBJ, (r), NULL)
 #  define OCSPerr(f, r) ERR_raise_data(ERR_LIB_OCSP, (r), NULL)
@@ -149,6 +153,7 @@ struct err_state_st {
 #  define PROVerr(f, r) ERR_raise_data(ERR_LIB_PROV, (r), NULL)
 #  define RANDerr(f, r) ERR_raise_data(ERR_LIB_RAND, (r), NULL)
 #  define RSAerr(f, r) ERR_raise_data(ERR_LIB_RSA, (r), NULL)
+#  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define SM2err(f, r) ERR_raise_data(ERR_LIB_SM2, (r), NULL)
 #  define SSLerr(f, r) ERR_raise_data(ERR_LIB_SSL, (r), NULL)
 #  define SYSerr(f, r) ERR_raise_data(ERR_LIB_SYS, (r), NULL)
@@ -167,7 +172,7 @@ struct err_state_st {
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SYS_F_FOPEN             0
 #  define SYS_F_CONNECT           0
 #  define SYS_F_GETSERVBYNAME     0
@@ -229,6 +234,8 @@ struct err_state_st {
 # define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
 # define ERR_R_PASSED_INVALID_ARGUMENT           (7)
 # define ERR_R_OPERATION_FAIL                    (8|ERR_R_FATAL)
+# define ERR_R_INVALID_PROVIDER_FUNCTIONS        (9|ERR_R_FATAL)
+# define ERR_R_INTERRUPTED_OR_CANCELLED          (10)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
@@ -258,7 +265,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
      ERR_set_debug(OPENSSL_FILE,OPENSSL_LINE,OPENSSL_FUNC),     \
      ERR_set_error)
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Backward compatibility */
 #  define ERR_put_error(lib, func, reason, file, line)          \
     (ERR_new(),                                                 \
@@ -282,7 +289,7 @@ unsigned long ERR_get_error_data(const char **data, int *flags);
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
                                 const char **data, int *flags);
-DEPRECATEDIN_3(unsigned long ERR_get_error_line_data(const char **file,
+DEPRECATEDIN_3_0(unsigned long ERR_get_error_line_data(const char **file,
                                                      int *line,
                                                      const char **data,
                                                      int *flags))
@@ -293,7 +300,7 @@ unsigned long ERR_peek_error_data(const char **data, int *flags);
 unsigned long ERR_peek_error_all(const char **file, int *line,
                                  const char **func,
                                  const char **data, int *flags);
-DEPRECATEDIN_3(unsigned long ERR_peek_error_line_data(const char **file,
+DEPRECATEDIN_3_0(unsigned long ERR_peek_error_line_data(const char **file,
                                                       int *line,
                                                       const char **data,
                                                       int *flags))
@@ -304,7 +311,7 @@ unsigned long ERR_peek_last_error_data(const char **data, int *flags);
 unsigned long ERR_peek_last_error_all(const char **file, int *line,
                                       const char **func,
                                       const char **data, int *flags);
-DEPRECATEDIN_3(unsigned long ERR_peek_last_error_line_data(const char **file,
+DEPRECATEDIN_3_0(unsigned long ERR_peek_last_error_line_data(const char **file,
                                                            int *line,
                                                            const char **data,
                                                            int *flags))
@@ -314,7 +321,7 @@ void ERR_clear_error(void);
 char *ERR_error_string(unsigned long e, char *buf);
 void ERR_error_string_n(unsigned long e, char *buf, size_t len);
 const char *ERR_lib_error_string(unsigned long e);
-DEPRECATEDIN_3(const char *ERR_func_error_string(unsigned long e))
+DEPRECATEDIN_3_0(const char *ERR_func_error_string(unsigned long e))
 const char *ERR_reason_error_string(unsigned long e);
 
 void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
@@ -326,13 +333,15 @@ void ERR_print_errors(BIO *bp);
 
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
+void ERR_add_error_txt(const char *sepr, const char *txt);
+void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_strings_const(const ERR_STRING_DATA *str);
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_ERR_strings(void);
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define ERR_load_crypto_strings() \
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
 # define ERR_free_strings() while(0) continue
@@ -340,7 +349,7 @@ int ERR_load_ERR_strings(void);
 
 DEPRECATEDIN_1_1_0(void ERR_remove_thread_state(void *))
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid))
-DEPRECATEDIN_3(ERR_STATE *ERR_get_state(void))
+DEPRECATEDIN_3_0(ERR_STATE *ERR_get_state(void))
 
 int ERR_get_next_error_library(void);
 

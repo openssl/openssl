@@ -3,6 +3,8 @@
 =head1 NAME
 
 RAND_DRBG_set_callbacks,
+RAND_DRBG_set_callback_data,
+RAND_DRBG_get_callback_data,
 RAND_DRBG_get_entropy_fn,
 RAND_DRBG_cleanup_entropy_fn,
 RAND_DRBG_get_nonce_fn,
@@ -20,6 +22,9 @@ RAND_DRBG_cleanup_nonce_fn
                              RAND_DRBG_get_nonce_fn get_nonce,
                              RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
+ int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *ctx);
+
+ void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
 
 =head2 Callback Functions
 
@@ -53,7 +58,16 @@ the nonce when reseeding the given B<drbg>.
 The callback functions are implemented and provided by the caller.
 Their parameter lists need to match the function prototypes above.
 
-Setting the callbacks is allowed only if the DRBG has not been initialized yet.
+RAND_DRBG_set_callback_data() can be used to store a pointer to some context
+specific data, which can subsequently be retrieved by the entropy and nonce
+callbacks using RAND_DRBG_get_callback_data().
+The ownership of the context data remains with the caller, i.e., it is the
+caller's responsibility to keep it available as long as it is needed by the
+callbacks and free it after use.
+For more information about the the callback data see the NOTES section.
+
+Setting the callbacks or the callback data is allowed only if the DRBG has
+not been initialized yet.
 Otherwise, the operation will fail.
 To change the settings for one of the three shared DRBGs it is necessary to call
 RAND_DRBG_uninstantiate() first.
@@ -95,7 +109,12 @@ setting them to NULL.
 
 =head1 RETURN VALUES
 
-RAND_DRBG_set_callbacks() return 1 on success, and 0 on failure
+RAND_DRBG_set_callbacks() returns 1 on success, and 0 on failure.
+
+RAND_DRBG_set_callback_data() returns 1 on success, and 0 on failure.
+
+RAND_DRBG_get_callback_data() returns the pointer to the callback data,
+which is NULL if none has been set previously.
 
 =head1 NOTES
 
@@ -120,6 +139,14 @@ In this case the DRBG will automatically request an extra amount of entropy
 (using the B<get_entropy>() and B<cleanup_entropy>() callbacks) which it will
 utilize for the nonce, following the recommendations of [NIST SP 800-90A Rev. 1],
 section 8.6.7.
+
+The callback data is a rather specialized feature, because in general the
+random sources don't (and in fact, they must not) depend on any state provided
+by the DRBG.
+There are however exceptional cases where this feature is useful, most notably
+for implementing known answer tests (KATs) or deterministic signatures like
+those specified in RFC6979, which require passing a specified entropy and nonce
+for instantiating the DRBG.
 
 =head1 SEE ALSO
 

@@ -8,12 +8,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_local.h"
 #include "internal/refcount.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
+#include "crypto/bn.h"
 
 #ifndef FIPS_MODE
 EC_KEY *EC_KEY_new(void)
@@ -163,6 +170,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->meth->copy != NULL && src->meth->copy(dest, src) == 0)
         return NULL;
 
+    dest->dirty_cnt++;
+
     return dest;
 }
 
@@ -203,15 +212,28 @@ int EC_KEY_generate_key(EC_KEY *eckey)
         ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (eckey->meth->keygen != NULL)
-        return eckey->meth->keygen(eckey);
+    if (eckey->meth->keygen != NULL) {
+        int ret;
+
+        ret = eckey->meth->keygen(eckey);
+        if (ret == 1)
+            eckey->dirty_cnt++;
+
+        return ret;
+    }
     ECerr(EC_F_EC_KEY_GENERATE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
     return 0;
 }
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
-    return eckey->group->meth->keygen(eckey);
+    int ret;
+
+    ret = eckey->group->meth->keygen(eckey);
+
+    if (ret == 1)
+        eckey->dirty_cnt++;
+    return ret;
 }
 
 /*
@@ -281,6 +303,8 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     priv_key = NULL;
     pub_key = NULL;
 
+    eckey->dirty_cnt++;
+
     ok = 1;
 
 err:
@@ -299,12 +323,19 @@ err:
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
+    int ret;
+
     /*
      * See SP800-56AR3 5.6.1.2.2: Step (8)
      * pub_key = priv_key * G (where G is a point on the curve)
      */
-    return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
-                        NULL, NULL);
+    ret = EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
+                       NULL, NULL);
+
+    if (ret == 1)
+        eckey->dirty_cnt++;
+
+    return ret;
 }
 
 int EC_KEY_check_key(const EC_KEY *eckey)
@@ -499,6 +530,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
         goto err;
     }
 
+    /* EC_KEY_set_public_key updates dirty_cnt */
     if (!EC_KEY_set_public_key(key, point))
         goto err;
 
@@ -526,6 +558,7 @@ int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
         return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
+    key->dirty_cnt++;
     return (key->group == NULL) ? 0 : 1;
 }
 
@@ -536,17 +569,87 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
+    int fixed_top;
+    const BIGNUM *order = NULL;
+    BIGNUM *tmp_key = NULL;
+
     if (key->group == NULL || key->group->meth == NULL)
         return 0;
+
+    /*
+     * Not only should key->group be set, but it should also be in a valid
+     * fully initialized state.
+     *
+     * Specifically, to operate in constant time, we need that the group order
+     * is set, as we use its length as the fixed public size of any scalar used
+     * as an EC private key.
+     */
+    order = EC_GROUP_get0_order(key->group);
+    if (order == NULL || BN_is_zero(order))
+        return 0; /* This should never happen */
+
     if (key->group->meth->set_private != NULL
         && key->group->meth->set_private(key, priv_key) == 0)
         return 0;
     if (key->meth->set_private != NULL
         && key->meth->set_private(key, priv_key) == 0)
         return 0;
+
+    /*
+     * We should never leak the bit length of the secret scalar in the key,
+     * so we always set the `BN_FLG_CONSTTIME` flag on the internal `BIGNUM`
+     * holding the secret scalar.
+     *
+     * This is important also because `BN_dup()` (and `BN_copy()`) do not
+     * propagate the `BN_FLG_CONSTTIME` flag from the source `BIGNUM`, and
+     * this brings an extra risk of inadvertently losing the flag, even when
+     * the called specifically set it.
+     *
+     * The propagation has been turned on and off a few times in the past
+     * years because in some conditions has shown unintended consequences in
+     * some code paths, so at the moment we can't fix this in the BN layer.
+     *
+     * In `EC_KEY_set_private_key()` we can work around the propagation by
+     * manually setting the flag after `BN_dup()` as we know for sure that
+     * inside the EC module the `BN_FLG_CONSTTIME` is always treated
+     * correctly and should not generate unintended consequences.
+     *
+     * Setting the BN_FLG_CONSTTIME flag alone is never enough, we also have
+     * to preallocate the BIGNUM internal buffer to a fixed public size big
+     * enough that operations performed during the processing never trigger
+     * a realloc which would leak the size of the scalar through memory
+     * accesses.
+     *
+     * Fixed Length
+     * ------------
+     *
+     * The order of the large prime subgroup of the curve is our choice for
+     * a fixed public size, as that is generally the upper bound for
+     * generating a private key in EC cryptosystems and should fit all valid
+     * secret scalars.
+     *
+     * For preallocating the BIGNUM storage we look at the number of "words"
+     * required for the internal representation of the order, and we
+     * preallocate 2 extra "words" in case any of the subsequent processing
+     * might temporarily overflow the order length.
+     */
+    tmp_key = BN_dup(priv_key);
+    if (tmp_key == NULL)
+        return 0;
+
+    BN_set_flags(tmp_key, BN_FLG_CONSTTIME);
+
+    fixed_top = bn_get_top(order) + 2;
+    if (bn_wexpand(tmp_key, fixed_top) == NULL) {
+        BN_clear_free(tmp_key);
+        return 0;
+    }
+
     BN_clear_free(key->priv_key);
-    key->priv_key = BN_dup(priv_key);
-    return (key->priv_key == NULL) ? 0 : 1;
+    key->priv_key = tmp_key;
+    key->dirty_cnt++;
+
+    return 1;
 }
 
 const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key)
@@ -561,6 +664,7 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
         return 0;
     EC_POINT_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);
+    key->dirty_cnt++;
     return (key->pub_key == NULL) ? 0 : 1;
 }
 
@@ -607,11 +711,13 @@ int EC_KEY_get_flags(const EC_KEY *key)
 void EC_KEY_set_flags(EC_KEY *key, int flags)
 {
     key->flags |= flags;
+    key->dirty_cnt++;
 }
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
     key->flags &= ~flags;
+    key->dirty_cnt++;
 }
 
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
@@ -633,6 +739,7 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         return 0;
     if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
         return 0;
+    key->dirty_cnt++;
     /*
      * Save the point conversion form.
      * For non-custom curves the first octet of the buffer (excluding
@@ -683,13 +790,18 @@ size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
 
 int EC_KEY_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
+    int ret;
+
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
     if (eckey->group->meth->oct2priv == NULL) {
         ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    return eckey->group->meth->oct2priv(eckey, buf, len);
+    ret = eckey->group->meth->oct2priv(eckey, buf, len);
+    if (ret == 1)
+        eckey->dirty_cnt++;
+    return ret;
 }
 
 int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
@@ -705,6 +817,7 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
+    eckey->dirty_cnt++;
     return 1;
 }
 

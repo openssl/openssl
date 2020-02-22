@@ -328,8 +328,14 @@ OPT_TEST_DECLARE_USAGE("file...\n")
 
 int setup_tests(void)
 {
-    size_t n = test_get_argument_count();
+    size_t n;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    n = test_get_argument_count();
     if (n == 0)
         return 0;
 

@@ -14,6 +14,10 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_BAD_ALGORITHM_NAME),
+    "bad algorithm name"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_CONFLICTING_NAMES),
+    "conflicting names"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED),
     "fips mode not supported"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ILLEGAL_HEX_DIGIT),

@@ -165,7 +165,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
     if (type->prov == NULL) {
 #ifdef FIPS_MODE
-        /* We only do explict fetches inside the FIPS module */
+        /* We only do explicit fetches inside the FIPS module */
         EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else
@@ -303,7 +303,9 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         return 0;
     }
 
-    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+    if (ctx->digest == NULL
+            || ctx->digest->prov == NULL
+            || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0)
         goto legacy;
 
     if (ctx->digest->dupdate == NULL) {
@@ -422,7 +424,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
-    if (in->digest->prov == NULL)
+    if (in->digest->prov == NULL
+            || (in->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0)
         goto legacy;
 
     if (in->digest->dupctx == NULL) {
@@ -659,10 +662,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 0;
     }
 
-    if (ctx->digest->prov == NULL
-        && (ctx->pctx == NULL
-            || (ctx->pctx->operation != EVP_PKEY_OP_VERIFYCTX
-                && ctx->pctx->operation != EVP_PKEY_OP_SIGNCTX)))
+    if (ctx->digest->prov == NULL)
         goto legacy;
 
     switch (cmd) {
@@ -675,8 +675,12 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
                                                      p2, p1 ? p1 : 9999);
         break;
+    case EVP_CTRL_SSL3_MASTER_SECRET:
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
+                                                      p2, p1);
+        break;
     default:
-        return EVP_CTRL_RET_UNSUPPORTED;
+        goto conclude;
     }
 
     if (set_params)
@@ -726,12 +730,19 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
     int *legacy_nid = vlegacy_nid;
+    /*
+     * We use lowest level function to get the associated method, because
+     * higher level functions such as EVP_get_digestbyname() have changed
+     * to look at providers too.
+     */
+    const void *legacy_method = OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 
     if (*legacy_nid == -1)       /* We found a clash already */
         return;
-    if ((nid = OBJ_sn2nid(name)) == NID_undef
-        && (nid = OBJ_ln2nid(name)) == NID_undef)
+
+    if (legacy_method == NULL)
         return;
+    nid = EVP_MD_nid(legacy_method);
     if (*legacy_nid != NID_undef && *legacy_nid != nid) {
         *legacy_nid = -1;
         return;
@@ -742,7 +753,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 
 static void *evp_md_from_dispatch(int name_id,
                                   const OSSL_DISPATCH *fns,
-                                  OSSL_PROVIDER *prov, void *unused)
+                                  OSSL_PROVIDER *prov)
 {
     EVP_MD *md = NULL;
     int fncnt = 0;
@@ -756,7 +767,7 @@ static void *evp_md_from_dispatch(int name_id,
 #ifndef FIPS_MODE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
-    evp_doall_names(prov, name_id, set_legacy_nid, &md->type);
+    evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
     if (md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_MD_free(md);
@@ -869,8 +880,7 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
 {
     EVP_MD *md =
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_dispatch, NULL, evp_md_up_ref,
-                          evp_md_free);
+                          evp_md_from_dispatch, evp_md_up_ref, evp_md_free);
 
     return md;
 }
@@ -898,11 +908,11 @@ void EVP_MD_free(EVP_MD *md)
     OPENSSL_free(md);
 }
 
-void EVP_MD_do_all_ex(OPENSSL_CTX *libctx,
-                          void (*fn)(EVP_MD *mac, void *arg),
-                          void *arg)
+void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+                            void (*fn)(EVP_MD *mac, void *arg),
+                            void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
                        (void (*)(void *, void *))fn, arg,
-                       evp_md_from_dispatch, NULL, evp_md_free);
+                       evp_md_from_dispatch, evp_md_free);
 }

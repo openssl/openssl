@@ -247,7 +247,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
     pkey = s->s3.tmp.cert->privatekey;
 
-    if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
+    if (pkey == NULL || !tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -271,13 +271,6 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    siglen = EVP_PKEY_size(pkey);
-    sig = OPENSSL_malloc(siglen);
-    if (sig == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
-                 ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -295,6 +288,10 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+        /*
+         * Here we use EVP_DigestSignUpdate followed by EVP_DigestSignFinal
+         * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
+         */
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
             /*
              * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
@@ -303,16 +300,36 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
             || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                (int)s->session->master_key_length,
                                s->session->master_key) <= 0
-            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            || EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                      ERR_R_EVP_LIB);
             goto err;
         }
-    } else if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
-                 ERR_R_EVP_LIB);
-        goto err;
+        sig = OPENSSL_malloc(siglen);
+        if (sig == NULL
+                || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else {
+        /*
+         * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
+         * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
+         */
+        if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
+        sig = OPENSSL_malloc(siglen);
+        if (sig == NULL
+                || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
     }
 
 #ifndef OPENSSL_NO_GOST
@@ -403,7 +420,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto err;
     }
 
-    if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
+    if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -434,13 +451,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    j = EVP_PKEY_size(pkey);
-    if (((int)len > j) || ((int)PACKET_remaining(pkt) > j)
-        || (PACKET_remaining(pkt) == 0)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
-                 SSL_R_WRONG_SIGNATURE_SIZE);
-        goto err;
-    }
     if (!PACKET_get_bytes(pkt, &data, len)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  SSL_R_LENGTH_MISMATCH);

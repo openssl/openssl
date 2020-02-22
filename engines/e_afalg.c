@@ -473,7 +473,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 
     /*
      * vmsplice and splice are used to pin the user space input buffer for
-     * kernel space processing avoiding copys from user to kernel space
+     * kernel space processing avoiding copies from user to kernel space
      */
     ret = vmsplice(actx->zc_pipe[1], &iov, 1, SPLICE_F_GIFT);
     if (ret < 0) {

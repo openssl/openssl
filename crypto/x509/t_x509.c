@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
+#include "crypto/x509.h"
 
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
@@ -379,4 +380,108 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
         BIO_write(out, "\n", 1);
     }
     return 1;
+}
+
+/*
+ * Helper functions for improving certificate verification error diagnostics
+ */
+
+int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+{
+    unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE |
+        XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
+
+    if (cert == NULL)
+        return BIO_printf(bio, "    (no certificate)\n") > 0;
+    if (BIO_printf(bio, "    certificate\n") <= 0
+            || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
+        return 0;
+    if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
+        if (BIO_printf(bio, "        self-issued\n") <= 0)
+            return 0;
+    } else {
+        if (BIO_printf(bio, " ") <= 0
+            || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_ISSUER))
+            return 0;
+    }
+    if (!X509_print_ex(bio, cert, flags,
+                       ~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
+        return 0;
+    if (X509_cmp_current_time(X509_get0_notBefore(cert)) > 0)
+        if (BIO_printf(bio, "        not yet valid\n") <= 0)
+            return 0;
+    if (X509_cmp_current_time(X509_get0_notAfter(cert)) < 0)
+        if (BIO_printf(bio, "        no more valid\n") <= 0)
+            return 0;
+    return X509_print_ex(bio, cert, flags, ~(neg_cflags));
+}
+
+static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
+{
+    int i;
+
+    if (certs == NULL || sk_X509_num(certs) <= 0)
+        return BIO_printf(bio, "    (no certificates)\n") >= 0;
+
+    for (i = 0; i < sk_X509_num(certs); i++) {
+        X509 *cert = sk_X509_value(certs, i);
+        if (cert != NULL && !x509_print_ex_brief(bio, cert, 0))
+            return 0;
+    }
+    return 1;
+}
+
+static int print_store_certs(BIO *bio, X509_STORE *store)
+{
+    if (store != NULL) {
+        STACK_OF(X509) *certs = X509_STORE_get1_all_certs(store);
+        int ret = print_certs(bio, certs);
+
+        sk_X509_pop_free(certs, X509_free);
+        return ret;
+    } else {
+        return BIO_printf(bio, "    (no trusted store)\n") >= 0;
+    }
+}
+
+/* Extend the error queue with details on a failed cert verification */
+int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
+{
+    if (ok == 0 && ctx != NULL) {
+        int cert_error = X509_STORE_CTX_get_error(ctx);
+        int depth = X509_STORE_CTX_get_error_depth(ctx);
+        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+        BIO *bio = BIO_new(BIO_s_mem()); /* may be NULL */
+
+        BIO_printf(bio, "%s at depth=%d error=%d (%s)\n",
+                   X509_STORE_CTX_get0_parent_ctx(ctx) != NULL
+                   ? "CRL path validation" : "certificate verification",
+                   depth, cert_error,
+                   X509_verify_cert_error_string(cert_error));
+        BIO_printf(bio, "failure for:\n");
+        x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+        if (cert_error == X509_V_ERR_CERT_UNTRUSTED
+                || cert_error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
+                || cert_error == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
+                || cert_error == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
+                || cert_error == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+                || cert_error == X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER
+                || cert_error == X509_V_ERR_STORE_LOOKUP) {
+            BIO_printf(bio, "non-trusted certs:\n");
+            print_certs(bio, X509_STORE_CTX_get0_untrusted(ctx));
+            BIO_printf(bio, "certs in trust store:\n");
+            print_store_certs(bio, X509_STORE_CTX_get0_store(ctx));
+        }
+        CMPerr(0, X509_R_CERTIFICATE_VERIFICATION_FAILED);
+        ERR_add_error_mem_bio("\n", bio);
+        BIO_free(bio);
+    }
+
+    /*
+     * TODO we could check policies here too, e.g.:
+     * if (cert_error == X509_V_OK && ok == 2)
+     *     policies_print(NULL, ctx);
+     */
+
+    return ok;
 }

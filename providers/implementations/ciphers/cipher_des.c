@@ -7,9 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
-#include "crypto/rand.h"
+#include <openssl/rand.h>
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 
@@ -81,7 +87,7 @@ static int des_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
     DES_cblock *deskey = ptr;
     size_t kl = ctx->keylen;
 
-    if (kl == 0 || rand_priv_bytes_ex(ctx->libctx, ptr, kl) <= 0)
+    if (kl == 0 || RAND_priv_bytes_ex(ctx->libctx, ptr, kl) <= 0)
         return 0;
     DES_set_odd_parity(deskey);
     return 1;

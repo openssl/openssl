@@ -9,7 +9,7 @@
 
 /*-
  * Fujitsu SPARC64 X support for AES GCM.
- * This file is included by cipher_gcm_hw.c
+ * This file is included by cipher_aes_gcm_hw.c
  */
 
 static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
@@ -42,7 +42,7 @@ static const PROV_GCM_HW t4_aes_gcm = {
     t4_aes_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
-    gcm_cipher_update,
+    generic_aes_gcm_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };

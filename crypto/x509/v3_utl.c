@@ -397,7 +397,7 @@ static char *strip_spaces(char *name)
  * V2I name comparison function: returns zero if 'name' matches cmp or cmp.*
  */
 
-int name_cmp(const char *name, const char *cmp)
+int v3_name_cmp(const char *name, const char *cmp)
 {
     int len, ret;
     char c;

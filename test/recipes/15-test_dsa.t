@@ -16,25 +16,37 @@ use OpenSSL::Test::Utils;
 
 setup("test_dsa");
 
-plan tests => 6;
+plan skip_all => 'DSA is not supported in this build' if disabled('dsa');
+plan tests => 7;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
-ok(run(test(["dsatest"])), "running dsatest");
-ok(run(test(["dsa_no_digest_size_test"])), "running dsa_no_digest_size_test");
+ SKIP: {
+     skip "Skipping initial dsa tests", 2
+         if disabled('deprecated-3.0');
+
+     ok(run(test(["dsatest"])), "running dsatest");
+     ok(run(test(["dsa_no_digest_size_test"])),
+        "running dsa_no_digest_size_test");
+}
 
  SKIP: {
-     skip "Skipping dsa conversion test", 3
-	 if disabled("dsa");
+     skip "Skipping dsa conversion test using 'openssl dsa'", 2
+         if disabled('deprecated-3.0');
 
-     subtest 'dsa conversions -- private key' => sub {
-	 tconversion("dsa", srctop_file("test","testdsa.pem"));
+     subtest "dsa conversions using 'openssl dsa' -- private key" => sub {
+         tconversion("dsa", srctop_file("test","testdsa.pem"));
      };
-     subtest 'dsa conversions -- private key PKCS#8' => sub {
-	 tconversion("dsa", srctop_file("test","testdsa.pem"), "pkey");
-     };
-     subtest 'dsa conversions -- public key' => sub {
-	 tconversion("msb", srctop_file("test","testdsapub.pem"), "dsa",
-		         "-pubin", "-pubout");
+     subtest "dsa conversions using 'openssl dsa' -- public key" => sub {
+         tconversion("msb", srctop_file("test","testdsapub.pem"), "dsa",
+                     "-pubin", "-pubout");
      };
 }
+
+subtest "dsa conversions using 'openssl pkey' -- private key PKCS#8" => sub {
+    tconversion("dsa", srctop_file("test","testdsa.pem"), "pkey");
+};
+subtest "dsa conversions using 'openssl pkey' -- public key" => sub {
+    tconversion("dsa", srctop_file("test","testdsapub.pem"), "pkey",
+                "-pubin", "-pubout");
+};

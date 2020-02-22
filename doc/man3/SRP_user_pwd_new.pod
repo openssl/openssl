@@ -49,7 +49,7 @@ SRP_user_pwd_set0_sv() returns 1 if both B<s> and B<v> are not NULL, 0 otherwise
 
 =head1 SEE ALSO
 
-L<srp(1)>,
+L<openssl-srp(1)>,
 L<SRP_create_verifier(3)>,
 L<SRP_VBASE_new(3)>,
 L<SSL_CTX_set_srp_password(3)>

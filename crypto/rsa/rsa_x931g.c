@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -131,6 +137,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     if (rsa->iqmp == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
  err:
     BN_CTX_end(ctx);
@@ -184,6 +191,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
                             NULL, NULL, NULL, NULL, NULL, NULL, e, cb))
         goto error;
 
+    rsa->dirty_cnt++;
     ok = 1;
 
  error:

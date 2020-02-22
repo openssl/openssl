@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_PEMERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_PEM_strings(void);
 /*
  * PEM function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PEM_F_B2I_DSS                                    0
 #  define PEM_F_B2I_PVK_BIO                                0
 #  define PEM_F_B2I_RSA                                    0

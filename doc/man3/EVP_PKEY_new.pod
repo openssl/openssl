@@ -95,8 +95,8 @@ general private key without reference to any particular algorithm.
 
 The structure returned by EVP_PKEY_new() is empty. To add a private or public
 key to this empty structure use the appropriate functions described in
-L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA>, L<EVP_PKEY_set1_DH> or
-L<EVP_PKEY_set1_EC_KEY>.
+L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA(3)>, L<EVP_PKEY_set1_DH(3)> or
+L<EVP_PKEY_set1_EC_KEY(3)>.
 
 =head1 RETURN VALUES
 
@@ -109,8 +109,8 @@ EVP_PKEY_get_raw_public_key() return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA>, L<EVP_PKEY_set1_DH> or
-L<EVP_PKEY_set1_EC_KEY>
+L<EVP_PKEY_set1_RSA(3)>, L<EVP_PKEY_set1_DSA(3)>, L<EVP_PKEY_set1_DH(3)> or
+L<EVP_PKEY_set1_EC_KEY(3)>
 
 =head1 HISTORY
 

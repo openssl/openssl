@@ -2013,4 +2013,4 @@ Lppcasm_maw_adios:
 EOF
 $data =~ s/\`([^\`]*)\`/eval $1/gem;
 print $data;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

@@ -9,7 +9,7 @@
 
 #include "crypto/aria.h"
 #include "prov/ciphercommon.h"
-#include "prov/cipher_ccm.h"
+#include "prov/ciphercommon_ccm.h"
 
 typedef struct prov_aria_ccm_ctx_st {
     PROV_CCM_CTX base; /* Must be first */

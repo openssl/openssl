@@ -118,6 +118,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
             continue;
         break; /* successfully finished */
     }
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     /* Zeroize any internally generated values that are not returned */
@@ -239,6 +240,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
             || BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     if (ret != 1) {
@@ -295,7 +297,7 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     if (!rsa_sp800_56b_validate_strength(nbits, -1))
         return 0;
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         return 0;
 

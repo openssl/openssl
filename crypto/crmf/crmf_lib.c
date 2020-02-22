@@ -47,7 +47,7 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
 {                                                                         \
     OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                         \
                                                                           \
-    if (msg == NULL || in  == NULL)                                       \
+    if (msg == NULL || in == NULL)                                       \
         goto err;                                                         \
     if ((atav = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new()) == NULL)           \
         goto err;                                                         \
@@ -97,10 +97,10 @@ static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
     return 0;
 }
 
- /* id-regCtrl-regToken Control (section 6.1) */
+/* id-regCtrl-regToken Control (section 6.1) */
 IMPLEMENT_CRMF_CTRL_FUNC(regToken, ASN1_STRING, regCtrl)
 
- /* id-regCtrl-authenticator Control (section 6.2) */
+/* id-regCtrl-authenticator Control (section 6.2) */
 #define ASN1_UTF8STRING_dup ASN1_STRING_dup
 IMPLEMENT_CRMF_CTRL_FUNC(authenticator, ASN1_UTF8STRING, regCtrl)
 
@@ -122,9 +122,9 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
     return 1;
 }
 
-int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
-                                 OSSL_CRMF_PKIPUBLICATIONINFO *pi,
-                                 OSSL_CRMF_SINGLEPUBINFO *spi)
+int
+OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(OSSL_CRMF_PKIPUBLICATIONINFO *pi,
+                                                     OSSL_CRMF_SINGLEPUBINFO *spi)
 {
     if (pi == NULL || spi == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO,
@@ -139,8 +139,8 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
     return sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubInfos, spi);
 }
 
-int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
-                                 OSSL_CRMF_PKIPUBLICATIONINFO *pi, int action)
+int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(OSSL_CRMF_PKIPUBLICATIONINFO *pi,
+                                                int action)
 {
     if (pi == NULL
             || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
@@ -153,11 +153,11 @@ int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
     return ASN1_INTEGER_set(pi->action, action);
 }
 
- /* id-regCtrl-pkiPublicationInfo Control (section 6.3) */
+/* id-regCtrl-pkiPublicationInfo Control (section 6.3) */
 IMPLEMENT_CRMF_CTRL_FUNC(pkiPublicationInfo, OSSL_CRMF_PKIPUBLICATIONINFO,
                          regCtrl)
 
- /* id-regCtrl-oldCertID Control (section 6.5) from the given */
+/* id-regCtrl-oldCertID Control (section 6.5) from the given */
 IMPLEMENT_CRMF_CTRL_FUNC(oldCertID, OSSL_CRMF_CERTID, regCtrl)
 
 OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
@@ -188,10 +188,9 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
     return NULL;
 }
 
- /*
-  * id-regCtrl-protocolEncrKey Control (section 6.6)
-  *
-  */
+/*
+ * id-regCtrl-protocolEncrKey Control (section 6.6)
+ */
 IMPLEMENT_CRMF_CTRL_FUNC(protocolEncrKey, X509_PUBKEY, regCtrl)
 
 /*-
@@ -458,7 +457,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
         {
             OSSL_CRMF_POPOSIGNINGKEY *ps = OSSL_CRMF_POPOSIGNINGKEY_new();
             if (ps == NULL
-                    || !CRMF_poposigningkey_init(ps, crm->certReq, pkey, dgst)){
+                    || !CRMF_poposigningkey_init(ps, crm->certReq, pkey, dgst)) {
                 OSSL_CRMF_POPOSIGNINGKEY_free(ps);
                 goto err;
             }
@@ -543,21 +542,23 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
              * the public key from the certificate template. This MUST be
              * exactly the same value as contained in the certificate template.
              */
+            const ASN1_ITEM *rptr = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
+
             if (pubkey == NULL
                     || sig->poposkInput->publicKey == NULL
                     || X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey)
-                    || ASN1_item_verify(
-                           ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
-                           sig->algorithmIdentifier, sig->signature,
-                           sig->poposkInput, X509_PUBKEY_get0(pubkey)) < 1)
+                    || ASN1_item_verify(rptr, sig->algorithmIdentifier,
+                                        sig->signature, sig->poposkInput,
+                                        X509_PUBKEY_get0(pubkey)) < 1)
                 break;
         } else {
             if (pubkey == NULL
                     || req->certReq->certTemplate->subject == NULL
                     || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                                    sig->algorithmIdentifier, sig->signature,
-                                    req->certReq,
-                                    X509_PUBKEY_get0(pubkey)) < 1)
+                                        sig->algorithmIdentifier,
+                                        sig->signature,
+                                        req->certReq,
+                                        X509_PUBKEY_get0(pubkey)) < 1)
                 break;
         }
         return 1;
@@ -567,7 +568,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
          * return 1 if the type of req->popo->value.keyEncipherment
          * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
          * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
-        */
+         */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
@@ -702,7 +703,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
         goto end;
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                                   EVP_CIPHER_iv_length(cipher))
+                                  EVP_CIPHER_iv_length(cipher))
         != EVP_CIPHER_iv_length(cipher)) {
         CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                 CRMF_R_MALFORMED_IV);

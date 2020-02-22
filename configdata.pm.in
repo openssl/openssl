@@ -124,8 +124,6 @@ unless (caller) {
         my $prepend = <<"_____";
 use File::Spec::Functions;
 use lib '{- sourcedir('util', 'perl') -}';
-_____
-        $prepend .= <<"_____" if defined $target{perl_platform};
 use lib '{- sourcedir('Configurations') -}';
 use lib '{- $config{builddir} -}';
 use platform;
@@ -247,7 +245,13 @@ _____
         foreach (sort keys %target) {
             next if $_ =~ m|^_| || $_ eq 'template';
             my $quotify = sub {
-                map { (my $x = $_) =~ s|([\\\$\@"])|\\$1|g; "\"$x\""} @_;
+                map {
+                    if (defined $_) {
+                        (my $x = $_) =~ s|([\\\$\@"])|\\$1|g; "\"$x\""
+                    } else {
+                        "undef";
+                    }
+                } @_;
             };
             print '    ', $_, ' => ';
             if (ref($target{$_}) eq "ARRAY") {

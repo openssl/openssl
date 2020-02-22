@@ -14,12 +14,6 @@
 #include <openssl/err.h>
 
 #include "crypto/poly1305.h"
-/*
- * TODO(3.0) when poly1305 has moved entirely to our providers, this
- * header should be moved to the provider include directory.  For the
- * moment, crypto/poly1305/poly1305_ameth.c has us stuck.
- */
-#include "../../../crypto/poly1305/poly1305_local.h"
 
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
@@ -51,7 +45,8 @@ static void *poly1305_new(void *provctx)
 {
     struct poly1305_data_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    ctx->provctx = provctx;
+    if (ctx != NULL)
+        ctx->provctx = provctx;
     return ctx;
 }
 

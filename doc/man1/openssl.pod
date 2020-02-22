@@ -8,8 +8,8 @@ openssl - OpenSSL command line tool
 
 B<openssl>
 I<command>
-[ I<command_opts> ... ]
-[ I<command_args> ... ]
+[ I<options> ... ]
+[ I<parameters> ... ]
 
 B<openssl>
 B<list>
@@ -21,7 +21,7 @@ B<-digest-algorithms> |
 B<-mac-algorithms> |
 B<-public-key-algorithms>
 
-B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
+B<openssl> B<no->I<XXX> [ I<options> ]
 
 =head1 DESCRIPTION
 
@@ -44,21 +44,22 @@ It can be used for
 
 =head1 COMMAND SUMMARY
 
-The B<openssl> program provides a rich variety of sub-commands (I<command> in
-the SYNOPSIS above), each of which often has a wealth of options and arguments
-(I<command_opts> and I<command_args> in the SYNOPSIS).
+The B<openssl> program provides a rich variety of commands (I<command> in
+the L</SYNOPSIS> above).
+Each command can have many options and argument parameters, shown above as
+I<options> and I<parameters>.
 
 Detailed documentation and use cases for most standard subcommands are available
-(e.g., L<x509(1)> or L<openssl-x509(1)>).
+(e.g., L<openssl-x509(1)>).
 
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
+The default name of the file is F<openssl.cnf> in the default certificate
+storage area, which can be determined from the L<openssl-version(1)>
+command.
 The environment variable B<OPENSSL_CONF> can be used to specify
-the location of the file.
-If the environment variable is not specified, then the file is named
-F<openssl.cnf> in the default certificate storage area, whose value
-depends on the configuration flags specified when the OpenSSL
-was built.
+a different location of the file.
+See L<openssl-env(7)>.
 
 The list options B<-standard-commands>, B<-digest-commands>,
 and B<-cipher-commands> output a list (one entry per line) of the names
@@ -85,7 +86,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 Standard Sub-commands
+=head2 Standard Commands
 
 =over 4
 
@@ -118,11 +119,6 @@ CRL to PKCS#7 Conversion.
 Message Digest calculation. MAC calculations are superseded by
 L<openssl-mac(1)>.
 
-=item B<dh>
-
-Diffie-Hellman Parameter Management.
-Obsoleted by L<openssl-dhparam(1)>.
-
 =item B<dhparam>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
@@ -147,7 +143,7 @@ EC parameter manipulation and generation.
 
 =item B<enc>
 
-Encoding with Ciphers.
+Encryption, decryption, and encoding.
 
 =item B<engine>
 
@@ -157,10 +153,9 @@ Engine (loadable module) information and manipulation.
 
 Error Number to Error String Conversion.
 
-=item B<gendh>
+=item B<fipsinstall>
 
-Generation of Diffie-Hellman Parameters.
-Obsoleted by L<openssl-dhparam(1)>.
+FIPS configuration installation.
 
 =item B<gendsa>
 
@@ -175,6 +170,10 @@ Generation of Private Key or Parameters.
 
 Generation of RSA Private Key. Superseded by L<openssl-genpkey(1)>.
 
+=item B<help>
+
+Display information about a command's options.
+
 =item B<info>
 
 Display diverse information built into the OpenSSL libraries.
@@ -182,6 +181,10 @@ Display diverse information built into the OpenSSL libraries.
 =item B<kdf>
 
 Key Derivation Functions.
+
+=item B<list>
+
+List algorithms and features.
 
 =item B<mac>
 
@@ -226,6 +229,10 @@ Public key algorithm cryptographic operation utility.
 =item B<prime>
 
 Compute prime numbers.
+
+=item B<provider>
+
+Load and query providers.
 
 =item B<rand>
 
@@ -392,14 +399,13 @@ SM3 Digest
 
 =back
 
-=head2 Encoding and Cipher Commands
+=head2 Encryption, Decryption, and Encoding Commands
 
 The following aliases provide convenient access to the most used encodings
 and ciphers.
 
 Depending on how OpenSSL was configured and built, not all ciphers listed
-here may be present. See L<openssl-enc(1)> for more information and command
-usage.
+here may be present. See L<openssl-enc(1)> for more information.
 
 =over 4
 
@@ -505,6 +511,117 @@ This section describes some common options with common behavior.
 =item B<-help>
 
 Provides a terse summary of all options.
+If an option takes an argument, the "type" of argument is also given.
+
+=item B<-->
+
+This terminates the list of options. It is mostly useful if any filename
+parameters start with a minus sign:
+
+ openssl verify [flags...] -- -cert1.pem...
+
+=back
+
+=head2 Format Options
+
+Several OpenSSL commands can take input or generate output in a variety
+of formats. The list of acceptable formats, and the default, is
+described in each command documentation.  The list of formats is
+described below. Both uppercase and lowercase are accepted.
+
+=over 4
+
+=item B<DER>
+
+A binary format, encoded or parsed according to Distinguished Encoding Rules
+(DER) of the ASN.1 data language.
+
+=item B<ENGINE>
+
+Used to specify that the cryptographic material is in an OpenSSL B<engine>.
+An engine must be configured or specified using the B<-engine> option.
+In addition, the B<-input> flag can be used to name a specific object in
+the engine.
+A password, such as the B<-passin> flag often must be specified as well.
+
+=item B<P12>
+
+A DER-encoded file containing a PKCS#12 object.
+It might be necessary to provide a decryption password to retrieve
+the private key.
+
+=item B<PEM>
+
+A text format defined in IETF RFC 1421 and IETF RFC 7468. Briefly, this is
+a block of base-64 encoding (defined in IETF RFC 4648), with specific
+lines used to mark the start and end:
+
+ Text before the BEGIN line is ignored.
+ ----- BEGIN object-type -----
+ OT43gQKBgQC/2OHZoko6iRlNOAQ/tMVFNq7fL81GivoQ9F1U0Qr+DH3ZfaH8eIkX
+ xT0ToMPJUzWAn8pZv0snA0um6SIgvkCuxO84OkANCVbttzXImIsL7pFzfcwV/ERK
+ UM6j0ZuSMFOCr/lGPAoOQU0fskidGEHi1/kW+suSr28TqsyYZpwBDQ==
+ ----- END object-type -----
+ Text after the END line is also ignored
+
+The I<object-type> must match the type of object that is expected.
+For example a C<BEGIN X509 CERTIFICATE> will not match if the command
+is trying to read a private key. The types supported include:
+
+ ANY PRIVATE KEY
+ CERTIFICATE
+ CERTIFICATE REQUEST
+ CMS
+ DH PARAMETERS
+ DSA PARAMETERS
+ DSA PUBLIC KEY
+ EC PARAMETERS
+ EC PRIVATE KEY
+ ECDSA PUBLIC KEY
+ ENCRYPTED PRIVATE KEY
+ PARAMETERS
+ PKCS #7 SIGNED DATA
+ PKCS7
+ PRIVATE KEY
+ PUBLIC KEY
+ RSA PRIVATE KEY
+ SSL SESSION PARAMETERS
+ TRUSTED CERTIFICATE
+ X509 CRL
+ X9.42 DH PARAMETERS
+
+The following legacy I<object-type>'s are also supported for compatibility
+with earlier releases:
+
+ DSA PRIVATE KEY
+ NEW CERTIFICATE REQUEST
+ RSA PUBLIC KEY
+ X509 CERTIFICATE
+
+=item B<SMIME>
+
+An S/MIME object as described in IETF RFC 8551.
+Earlier versions were known as CMS and are compatible.
+Note that the parsing is simple and might fail to parse some legal data.
+
+=back
+
+The options to specify the format are as follows. Refer to the individual
+manpage to see which options are accepted.
+
+=over 4
+
+=item B<-inform> I<format>, B<-outform> I<format>
+
+The format of the input or output streams.
+
+=item B<-keyform> I<format>
+
+Format of a private key input source.
+
+=item B<-CRLform> I<format>
+
+Format of a CRL input source.
 
 =back
 
@@ -554,7 +671,585 @@ Read the password from standard input.
 
 =back
 
+=head2 Trusted Certificate Options
+
+Part of validating a certificate includes verifying that the chain of CA's
+can be traced up to an existing trusted root.  The following options specify
+how to list the trusted roots, also known as trust anchors.  A collection
+of trusted roots is called a I<trust store>.
+
+Note that OpenSSL does not provide a default set of trust anchors.  Many
+Linux distributions include a system default and configure OpenSSL to point
+to that.  Mozilla maintains an influential trust store that can be found at
+L<https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/>.
+
+=over 4
+
+=item B<-CAfile> I<file>
+
+Load the specified file which contains one or more PEM-format certificates
+of CA's that are trusted.
+
+=item B<-no-CAfile>
+
+Do not load the default file of trusted certificates.
+
+=item B<-CApath> I<dir>
+
+Use the specified directory as a list of trust certificates. That is,
+files should be named with the hash of the X.509 SubjectName of each
+certificate. This is so that the library can extract the IssuerName,
+hash it, and directly lookup the file to get the issuer certificate.
+See L<openssl-rehash(1)> for information on creating this type of directory.
+
+=item B<-no-CApath>
+
+Do not use the default directory of trusted certificates.
+
+=item B<-CAstore> I<uri>
+
+Use I<uri> as a store of trusted CA certificates.  The URI may
+indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-CAfile> or
+B<-CApath>, depending on if the URI indicates a single file or
+directory.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+
+These certificates are also used when building the server certificate
+chain (for example with L<openssl-s_server(1)>) or client certificate
+chain (for example with L<openssl-s_time(1)>).
+
+=item B<-no-CAstore>
+
+Do not use the default store.
+
+=back
+
+=head2 Random State Options
+
+Prior to OpenSSL 3.0, it was common for applications to store information
+about the state of the random-number generator in a file that was loaded
+at startup and rewritten upon exit. On modern operating systems, this is
+generally no longer necessary as OpenSSL will seed itself from the
+appropriate CPU flags, device files, and so on. These flags are still
+supported for special platforms or circumstances that might require them.
+
+It is generally an error to use the same seed file more than once and
+every use of B<-rand> should be paired with B<-writerand>.
+
+=over 4
+
+=item B<-rand> I<files>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is C<;> for MS-Windows, C<,> for OpenVMS, and C<:> for
+all others. Another way to specify multiple files is to repeat this flag
+with different filenames.
+
+=item B<-writerand> I<file>
+
+Writes the seed data to the specified I<file> upon exit.
+This file can be used in a subsequent command invocation.
+
+=back
+
+=head2 Extended Verification Options
+
+Sometimes there may be more than one certificate chain leading to an
+end-entity certificate.
+This usually happens when a root or intermediate CA signs a certificate
+for another a CA in other organization.
+Another reason is when a CA might have intermediates that use two different
+signature formats, such as a SHA-1 and a SHA-256 digest.
+
+The following options can be used to provide data that will allow the
+OpenSSL command to generate an alternative chain.
+
+=over 4
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates via the B<-xkey>,
+B<-xcert>, and B<-xchain> options.
+
+=item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by the
+client.
+
+=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
+
+The input format for the extra certificate and key, respectively.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates via the B<-xkey>,
+B<-xcert>, and B<-xchain> options.
+
+=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
+
+The input format for the extra certificate and key, respectively.
+See L<openssl(1)/Format Options> for details.
+
+=back
+
+=head2 Verification Options
+
+Many OpenSSL commands verify certificates. The details of how each
+command handles errors are documented on the specific command page.
+
+Verification is a complicated process, consisting of a number of separate
+steps that are detailed in the following paragraphs.
+
+First, a certificate chain is built up starting from the supplied certificate
+and ending in a root CA.  It is an error if the whole chain cannot be
+built up.  The chain is built up by looking up the certificate that
+signed (or issued) the certificate. It then repeats the process, until
+it gets to a certificate that is self-issued.
+
+The process of looking up the issuer's certificate itself involves a number
+of steps.  After all certificates whose subject name matches the issuer
+name of the current certificate are subject to further tests.  The relevant
+authority key identifier components of the current certificate (if present)
+must match the subject key identifier (if present) and issuer and serial
+number of the candidate issuer, in addition the keyUsage extension of the
+candidate issuer (if present) must permit certificate signing.
+
+The lookup first looks in the list of untrusted certificates and if no match
+is found the remaining lookups are from the trusted certificates. The root CA
+is always looked up in the trusted certificate list: if the certificate to
+verify is a root certificate then an exact match must be found in the trusted
+list.
+
+The second step is to check every untrusted certificate's extensions
+for consistency with the supplied purpose. If the B<-purpose> option is
+not included then no checks are done. The supplied or "leaf" certificate
+must have extensions compatible with the supplied purpose and all other
+certificates must also be valid CA certificates. The precise extensions
+required are described in more detail in
+L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
+
+The third step is to check the trust settings on the root CA. The root
+CA should be trusted for the supplied purpose.  For compatibility with
+previous versions of OpenSSL, a certificate with no trust settings is
+considered to be valid for all purposes.
+
+The fourth, and final, step is to check the validity of the certificate
+chain. The validity period is checked against the system time
+and the C<notBefore> and C<notAfter> dates in the certificate. The certificate
+signatures are also checked at this point. The B<-attime> flag may be
+used to specify a time other than "now."
+
+If all operations complete successfully then certificate is considered
+valid. If any operation fails then the certificate is not valid.
+
+The details of the processing steps can be fine-tuned with the
+following flags.
+
+=over 4
+
+=item B<-verbose>
+
+Print extra information about the operations being performed.
+
+=item B<-attime> I<timestamp>
+
+Perform validation checks using time specified by I<timestamp> and not
+current system time. I<timestamp> is the number of seconds since
+January 1, 1970 (i.e., the Unix Epoch).
+
+=item B<-no_check_time>
+
+This option suppresses checking the validity period of certificates and CRLs
+against the current time. If option B<-attime> is used to specify
+a verification time, the check is not suppressed.
+
+=item B<-x509_strict>
+
+This disables non-compliant workarounds for broken certificates.
+
+=item B<-ignore_critical>
+
+Normally if an unhandled critical extension is present which is not
+supported by OpenSSL the certificate is rejected (as required by RFC5280).
+If this option is set critical extensions are ignored.
+
+=item B<-issuer_checks>
+
+Ignored.
+
+=item B<-crl_check>
+
+Checks end entity certificate validity by attempting to look up a valid CRL.
+If a valid CRL cannot be found an error occurs.
+
+=item B<-crl_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid CRLs.
+
+=item B<-use_deltas>
+
+Enable support for delta CRLs.
+
+=item B<-extended_crl>
+
+Enable extended CRL features such as indirect CRLs and alternate CRL
+signing keys.
+
+=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
+
+Enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
+192 bit, or only 192 bit Level of Security respectively.
+See RFC6460 for details. In particular the supported signature algorithms are
+reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
+P-256 and P-384.
+
+=item B<-auth_level> I<level>
+
+Set the certificate chain authentication security level to I<level>.
+The authentication security level determines the acceptable signature and
+public key strength when verifying certificate chains.  For a certificate
+chain to validate, the public keys of all the certificates must meet the
+specified security I<level>.  The signature algorithm security level is
+enforced for all the certificates in the chain except for the chain's
+I<trust anchor>, which is either directly trusted or validated by means
+other than its signature.  See L<SSL_CTX_set_security_level(3)> for the
+definitions of the available levels.  The default security level is -1,
+or "not set".  At security level 0 or lower all algorithms are acceptable.
+Security level 1 requires at least 80-bit-equivalent security and is broadly
+interoperable, though it will, for example, reject MD5 signatures or RSA
+keys shorter than 1024 bits.
+
+=item B<-partial_chain>
+
+Allow verification to succeed even if a I<complete> chain cannot be built to a
+self-signed trust-anchor, provided it is possible to construct a chain to a
+trusted certificate that might not be self-signed.
+
+=item B<-check_ss_sig>
+
+Verify the signature on the self-signed root CA. This is disabled by default
+because it doesn't add any security.
+
+=item B<-allow_proxy_certs>
+
+Allow the verification of proxy certificates.
+
+=item B<-trusted_first>
+
+As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+
+=item B<-no_alt_chains>
+
+As of OpenSSL 1.1.0, since B<-trusted_first> always on, this option has no
+effect.
+
+=item B<-trusted> I<file>
+
+Parse I<file> as a set of one or more certificates in PEM format.
+All certificates must be self-signed, unless the
+B<-partial_chain> option is specified.
+This option implies the B<-no-CAfile> and B<-no-CApath> options and it
+cannot be used with either the B<-CAfile> or B<-CApath> options, so
+only certificates in the file are trust anchors.
+This option may be used multiple times.
+
+=item B<-untrusted> I<file>
+
+Parse I<file> as a set of one or more certificates in PEM format.
+All certificates are untrusted certificates that may be used to
+construct a certificate chain from the subject certificate to a trust anchor.
+This option may be used multiple times.
+
+=item B<-policy> I<arg>
+
+Enable policy processing and add I<arg> to the user-initial-policy-set (see
+RFC5280). The policy I<arg> can be an object name an OID in numeric form.
+This argument can appear more than once.
+
+=item B<-explicit_policy>
+
+Set policy variable require-explicit-policy (see RFC5280).
+
+=item B<-policy_check>
+
+Enables certificate policy processing.
+
+=item B<-policy_print>
+
+Print out diagnostics related to policy processing.
+
+=item B<-inhibit_any>
+
+Set policy variable inhibit-any-policy (see RFC5280).
+
+=item B<-inhibit_map>
+
+Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-purpose> I<purpose>
+
+The intended use for the certificate. If this option is not specified, this
+command will not consider certificate purpose during chain verification.
+Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
+B<smimesign>, B<smimeencrypt>.
+
+=item B<-verify_depth> I<num>
+
+Limit the certificate chain to I<num> intermediate CA certificates.
+A maximal depth chain can have up to I<num>+2 certificates, since neither the
+end-entity certificate nor the trust-anchor certificate count against the
+B<-verify_depth> limit.
+
+=item B<-verify_email> I<email>
+
+Verify if I<email> matches the email address in Subject Alternative Name or
+the email in the subject Distinguished Name.
+
+=item B<-verify_hostname> I<hostname>
+
+Verify if I<hostname> matches DNS name in Subject Alternative Name or
+Common Name in the subject certificate.
+
+=item B<-verify_ip> I<ip>
+
+Verify if I<ip> matches the IP address in Subject Alternative Name of
+the subject certificate.
+
+=item B<-verify_name> I<name>
+
+Use default verification policies like trust model and required certificate
+policies identified by I<name>.
+The trust model determines which auxiliary trust or reject OIDs are applicable
+to verifying the given certificate chain.
+See the B<-addtrust> and B<-addreject> options for L<openssl-x509(1)>.
+Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
+B<ssl_client>, B<ssl_server>.
+These mimics the combinations of purpose and trust settings used in SSL, CMS
+and S/MIME.
+As of OpenSSL 1.1.0, the trust model is inferred from the purpose when not
+specified, so the B<-verify_name> options are functionally equivalent to the
+corresponding B<-purpose> settings.
+
+=back
+
+=head2 Name Format Options
+
+OpenSSL provides fine-grain control over how the subject and issuer DN's are
+displayed.
+This is specified by using the B<-nameopt> option, which takes a
+comma-separated list of options from the following set.
+An option may be preceded by a minus sign, C<->, to turn it off.
+The default value is C<oneline>.
+The first four are the most commonly used.
+
+=over 4
+
+=item B<compat>
+
+Display the name using an old format from previous OpenSSL versions.
+
+=item B<RFC2253>
+
+Display the name using the format defined in RFC 2253.
+It is equivalent to B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>,
+B<dump_nostr>, B<dump_unknown>, B<dump_der>, B<sep_comma_plus>, B<dn_rev>
+and B<sname>.
+
+=item B<oneline>
+
+Display the name in one line, using a format that is more readable
+RFC 2253.
+It is equivalent to B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>,
+B<dump_nostr>, B<dump_der>, B<use_quote>, B<sep_comma_plus_space>,
+B<space_eq> and B<sname> options.
+
+=item B<multiline>
+
+Display the name using multiple lines.
+It is equivalent to B<esc_ctrl>, B<esc_msb>, B<sep_multiline>, B<space_eq>,
+B<lname> and B<align>.
+
+=item B<esc_2253>
+
+Escape the "special" characters in a field, as required by RFC 2253.
+That is, any of the characters C<,+"E<lt>E<gt>;>, C<#> at the beginning of
+a string and leading or trailing spaces.
+
+=item B<esc_2254>
+
+Escape the "special" characters in a field as required by RFC 2254 in a field.
+That is, the B<NUL> character and and of C<()*>.
+
+=item B<esc_ctrl>
+
+Escape non-printable ASCII characters, codes less than 0x20 (space)
+or greater than 0x7F (DELETE). They are displayed using RFC 2253 C<\XX>
+notation where B<XX> are the two hex digits representing the character value.
+
+=item B<esc_msb>
+
+Escape any characters with the most significant bit set, that is with
+values larger than 127, as described in B<esc_ctrl>.
+
+=item B<use_quote>
+
+Escapes some characters by surrounding the entire string with quotation
+marks, C<">.
+Without this option, individual special characters are preceeded with
+a backslash character, C<\>.
+
+=item B<utf8>
+
+Convert all strings to UTF-8 format first as required by RFC 2253.
+If the output device is UTF-8 compatible, then using this option (and
+not setting B<esc_msb>) may give the correct display of multibyte
+characters.
+If this option is not set, then multibyte characters larger than 0xFF
+will be output as C<\UXXXX> for 16 bits or C<\WXXXXXXXX> for 32 bits.
+In addition, any UTF8Strings will be converted to their character form first.
+
+=item B<ignore_type>
+
+This option does not attempt to interpret multibyte characters in any
+way. That is, the content octets are merely dumped as though one octet
+represents each character. This is useful for diagnostic purposes but
+will result in rather odd looking output.
+
+=item B<show_type>
+
+Display the type of the ASN1 character string before the value,
+such as C<BMPSTRING: Hello World>.
+
+=item B<dump_der>
+
+Any fields that would be output in hex format are displayed using
+the DER encoding of the field.
+If not set, just the content octets are displayed.
+Either way, the B<#XXXX...> format of RFC 2253 is used.
+
+=item B<dump_nostr>
+
+Dump non-character strings, such as ASN.1 B<OCTET STRING>.
+If this option is not set, then non character string types will be displayed
+as though each content octet represents a single character.
+
+=item B<dump_all>
+
+Dump all fields. When this used with B<dump_der>, this allows the
+DER encoding of the structure to be unambiguously determined.
+
+=item B<dump_unknown>
+
+Dump any field whose OID is not recognised by OpenSSL.
+
+=item B<sep_comma_plus>, B<sep_comma_plus_space>, B<sep_semi_plus_space>,
+B<sep_multiline>
+
+Specify the field separators. The first word is used between the
+Relative Distinguished Names (RDNs) and the second is between
+multiple Attribute Value Assertions (AVAs). Multiple AVAs are
+very rare and their use is discouraged.
+The options ending in "space" additionally place a space after the separator to make it more readable.
+The B<sep_multiline> starts each field on its own line, and uses "plus space"
+for the AVA separator.
+It also indents the fields by four characters.
+The default value is B<sep_comma_plus_space>.
+
+=item B<dn_rev>
+
+Reverse the fields of the DN as required by RFC 2253.
+This also reverses the order of multiple AVAs in a field, but this is
+permissible as there is no ordering on values.
+
+=item B<nofname>, B<sname>, B<lname>, B<oid>
+
+Specify how the field name is displayed.
+B<nofname> does not display the field at all.
+B<sname> uses the "short name" form (CN for commonName for example).
+B<lname> uses the long form.
+B<oid> represents the OID in numerical form and is useful for
+diagnostic purpose.
+
+=item B<align>
+
+Align field values for a more readable output. Only usable with
+B<sep_multiline>.
+
+=item B<space_eq>
+
+Places spaces round the equal sign, C<=>, character which follows the field
+name.
+
+=back
+
+=head2 TLS Version Options
+
+Several commands use SSL, TLS, or DTLS. By default, the commands use TLS and
+clients will offer the lowest and highest protocol version they support,
+and servers will pick the highest version that the client offers that is also
+supported by the server.
+
+The options below can be used to limit which protocol versions are used,
+and whether TCP (SSL and TLS) or UDP (DTLS) is used.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
+
+=over 4
+
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
+
+These options require or disable the use of the specified SSL or TLS protocols.
+When a specific TLS version is required, only that version will be offered or
+accepted.
+Only one specific protocol can be given and it cannot be combined with any of
+the B<no_> options.
+
+=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
+
+These options specify to use DTLS instead of DLTS.
+With B<-dtls>, clients will negotiate any supported DTLS protocol version.
+Use the B<-dtls1> or B<-dtls1_2> options to support only DTLS1.0 or DTLS1.2,
+respectively.
+
+=back
+
+=head2 Engine Options
+
+=over 4
+
+=item B<-engine> I<id>
+
+Use the engine identified by I<id> and use all the methods it
+implements (algorithms, key storage, etc.), unless specified otherwise in
+the command-specific documentation or it is configured to do so, as described
+in L<config(5)/Engine Configuration Module>.
+
+=back
+
 =head1 ENVIRONMENT
+
+The OpenSSL library can be take some configuration parameters from the
+environment.  Some of these variables are listed below.  For information
+about specific commands, see L<openssl-engine(1)>, L<openssl-provider(1)>,
+L<openssl-rehash(1)>, and L<tsget(1)>.
+
+For information about the use of environment variables in configuration,
+see L<config(5)/ENVIRONMENT>.
+
+For information about querying or specifying CPU architecture flags, see
+L<OPENSSL_ia32cap(3)>, and L<OPENSSL_s390xcap(3)>.
+
+For information about all environment variables used by the OpenSSL libraries,
+see L<openssl-env(7)>.
 
 =over 4
 
@@ -674,6 +1369,7 @@ L<openssl-version(1)>,
 L<openssl-x509(1)>,
 L<config(5)>,
 L<crypto(7)>,
+L<openssl-env(7)>.
 L<ssl(7)>,
 L<x509v3_config(5)>
 
@@ -683,6 +1379,9 @@ L<x509v3_config(5)>
 The B<list> -I<XXX>B<-algorithms> options were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
+
+The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
+is silently ignored.
 
 =head1 COPYRIGHT
 

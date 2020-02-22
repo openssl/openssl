@@ -20,6 +20,12 @@
  * one-wayness.  For the RSA function, this is an equivalent notion.
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/constant_time.h"
 
 #include <stdio.h>
@@ -57,8 +63,14 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     unsigned char seedmask[EVP_MAX_MD_SIZE];
     int mdlen, dbmask_len = 0;
 
+#ifndef FIPS_MODE
     if (md == NULL)
         md = EVP_sha1();
+#else
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1,
+               ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+#endif
     if (mgf1md == NULL)
         mgf1md = md;
 
@@ -147,8 +159,15 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         phash[EVP_MAX_MD_SIZE];
     int mdlen;
 
-    if (md == NULL)
+    if (md == NULL) {
+#ifndef FIPS_MODE
         md = EVP_sha1();
+#else
+        RSAerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+#endif
+    }
+
     if (mgf1md == NULL)
         mgf1md = md;
 
@@ -272,13 +291,19 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         to[i] = constant_time_select_8(mask, db[i + mdlen + 1], to[i]);
     }
 
+#ifndef FIPS_MODE
     /*
      * To avoid chosen ciphertext attacks, the error message should not
      * reveal which kind of decoding error happened.
+     *
+     * This trick doesn't work in the FIPS provider because libcrypto manages
+     * the error stack. Instead we opt not to put an error on the stack at all
+     * in case of padding failure in the FIPS provider.
      */
     RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
            RSA_R_OAEP_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
+#endif
  cleanup:
     OPENSSL_cleanse(seed, sizeof(seed));
     OPENSSL_clear_free(db, dblen);

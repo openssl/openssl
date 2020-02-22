@@ -8,6 +8,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Low level APIs are deprecated for public use, but still ok for internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 #include "testutil.h"
 
@@ -201,7 +206,30 @@ static int x9_62_tests(int n)
  * - reject that signature after modifying the signature
  * - accept that signature after un-modifying the signature
  */
-static int test_builtin(int n)
+static int set_sm2_id(EVP_MD_CTX *mctx, EVP_PKEY *pkey)
+{
+    /* With the SM2 key type, the SM2 ID is mandatory */
+    static const char sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
+    EVP_PKEY_CTX *pctx;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, sm2_id, sizeof(sm2_id)), 0))
+        return 0;
+    EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
+    return 1;
+}
+
+static int clean_sm2_id(EVP_MD_CTX *mctx)
+{
+    EVP_PKEY_CTX *pctx;
+
+    if (!TEST_ptr(pctx = EVP_MD_CTX_pkey_ctx(mctx)))
+        return 0;
+    EVP_PKEY_CTX_free(pctx);
+    return 1;
+}
+
+static int test_builtin(int n, int as)
 {
     EC_KEY *eckey_neg = NULL, *eckey = NULL;
     unsigned char dirt, offset, tbs[128];
@@ -220,7 +248,8 @@ static int test_builtin(int n)
         return 1;
     }
 
-    TEST_info("testing ECDSA for curve %s", OBJ_nid2sn(nid));
+    TEST_info("testing ECDSA for curve %s as %s key type", OBJ_nid2sn(nid),
+              as == EVP_PKEY_EC ? "EC" : "SM2");
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get some random message data */
@@ -239,37 +268,62 @@ static int test_builtin(int n)
 
     temp = ECDSA_size(eckey);
 
+    /*
+     * |as| indicates how we want to treat the key, i.e. what sort of
+     * computation we want to do with it.  The two choices are the key
+     * types EVP_PKEY_EC and EVP_PKEY_SM2.  It's perfectly possible to
+     * switch back and forth between those two key types, regardless of
+     * curve, even though the default is to have EVP_PKEY_SM2 for the
+     * SM2 curve and EVP_PKEY_EC for all other curves.
+     */
+    if (!TEST_true(EVP_PKEY_set_alias_type(pkey, as))
+        || !TEST_true(EVP_PKEY_set_alias_type(pkey_neg, as)))
+            goto err;
+
     if (!TEST_int_ge(temp, 0)
         || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
         /* create a signature */
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))
         || !TEST_int_le(sig_len, ECDSA_size(eckey))
-        /* negative test, verify with wrong key, 0 return */
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
+        /* negative test, verify with wrong key, 0 return */
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey_neg))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey_neg))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 0)
-        /* negative test, verify with wrong signature length, -1 return */
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
+        /* negative test, verify with wrong signature length, -1 return */
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len - 1, tbs, sizeof(tbs)), -1)
-        /* positive test, verify with correct key, 1 return */
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
+        /* positive test, verify with correct key, 1 return */
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
-        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
+        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
+        || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
     /* muck with the message, test it fails with 0 return */
     tbs[0] ^= 1;
-    if (!TEST_true(EVP_MD_CTX_reset(mctx))
+    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
-        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 0))
+        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 0)
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
+        || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
     /* un-muck and test it verifies */
     tbs[0] ^= 1;
-    if (!TEST_true(EVP_MD_CTX_reset(mctx))
+    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
-        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
+        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
+        || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
     /*-
@@ -301,15 +355,19 @@ static int test_builtin(int n)
     offset = tbs[0] % sig_len;
     dirt = tbs[1] ? tbs[1] : 1;
     sig[offset] ^= dirt;
-    if (!TEST_true(EVP_MD_CTX_reset(mctx))
+    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
-        || !TEST_int_ne(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
+        || !TEST_int_ne(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
+        || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
     /* un-muck and test it verifies */
     sig[offset] ^= dirt;
-    if (!TEST_true(EVP_MD_CTX_reset(mctx))
+    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
-        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
+        || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
+        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
+        || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
     ret = 1;
@@ -320,7 +378,19 @@ static int test_builtin(int n)
     OPENSSL_free(sig);
     return ret;
 }
-#endif
+
+static int test_builtin_as_ec(int n)
+{
+    return test_builtin(n, EVP_PKEY_EC);
+}
+
+# ifndef OPENSSL_NO_SM2
+static int test_builtin_as_sm2(int n)
+{
+    return test_builtin(n, EVP_PKEY_SM2);
+}
+# endif
+#endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
 {
@@ -332,7 +402,10 @@ int setup_tests(void)
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
-    ADD_ALL_TESTS(test_builtin, crv_len);
+    ADD_ALL_TESTS(test_builtin_as_ec, crv_len);
+# ifndef OPENSSL_NO_SM2
+    ADD_ALL_TESTS(test_builtin_as_sm2, crv_len);
+# endif
     ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;

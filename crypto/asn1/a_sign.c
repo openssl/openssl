@@ -18,6 +18,7 @@
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
+#include <openssl/core_names.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -156,11 +157,51 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     }
 
     if (pkey->ameth == NULL) {
-        ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-        goto err;
-    }
+        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+        OSSL_PARAM params[2];
+        unsigned char aid[128];
+        size_t aid_len = 0;
 
-    if (pkey->ameth->item_sign) {
+        if (pctx == NULL
+            || !EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
+            ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
+            goto err;
+        }
+
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID,
+                                              aid, sizeof(aid));
+        params[1] = OSSL_PARAM_construct_end();
+
+        if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
+            goto err;
+
+        if ((aid_len = params[0].return_size) == 0) {
+            ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
+                    ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+            goto err;
+        }
+
+        if (algor1 != NULL) {
+            const unsigned char *pp = aid;
+
+            if (d2i_X509_ALGOR(&algor1, &pp, aid_len) == NULL) {
+                ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+
+        if (algor2 != NULL) {
+            const unsigned char *pp = aid;
+
+            if (d2i_X509_ALGOR(&algor2, &pp, aid_len) == NULL) {
+                ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+
+        rv = 3;
+    } else if (pkey->ameth->item_sign) {
         rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2, signature);
         if (rv == 1)
             outl = signature->length;
@@ -189,7 +230,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 #ifndef OPENSSL_NO_SM2
             EVP_PKEY_id(pkey) == NID_sm2 ? NID_sm2 :
 #endif
-        pkey->ameth->pkey_id;
+            pkey->ameth->pkey_id;
 
         if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type), pkey_id)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
@@ -216,7 +257,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         goto err;
     }
     inl = buf_len;
-    outll = outl = EVP_PKEY_size(pkey);
+    if (!EVP_DigestSign(ctx, NULL, &outll, buf_in, inl)) {
+        outl = 0;
+        ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
+        goto err;
+    }
+    outl = outll;
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;

@@ -12,6 +12,7 @@
 
 # include <stdarg.h>
 # include <openssl/core.h>
+# include <openssl/self_test.h>
 
 # ifdef __cplusplus
 extern "C" {
@@ -29,7 +30,7 @@ extern "C" {
  * Names:
  * for any function base name 'foo' (uppercase form 'FOO'), we will have
  * the following:
- * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivates
+ * - a macro for the identity with the name OSSL_FUNC_'FOO' or derivatives
  *   thereof (to be specified further down)
  * - a function signature typedef with the name OSSL_'foo'_fn
  * - a function pointer extractor function with the name OSSL_'foo'
@@ -79,58 +80,72 @@ OSSL_CORE_MAKE_FUNC(void,core_set_error_debug,
 OSSL_CORE_MAKE_FUNC(void,core_vset_error,
                     (const OSSL_PROVIDER *prov,
                      uint32_t reason, const char *fmt, va_list args))
+# define OSSL_FUNC_CORE_SET_ERROR_MARK         8
+OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_PROVIDER *prov))
+# define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
+OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
+                    (const OSSL_PROVIDER *prov))
+# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
+OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_PROVIDER *prov))
 
 /* Memory allocation, freeing, clearing. */
-#define OSSL_FUNC_CRYPTO_MALLOC               10
+#define OSSL_FUNC_CRYPTO_MALLOC               20
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_ZALLOC               11
+#define OSSL_FUNC_CRYPTO_ZALLOC               21
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_FREE                 12
+#define OSSL_FUNC_CRYPTO_FREE                 22
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_FREE           13
+#define OSSL_FUNC_CRYPTO_CLEAR_FREE           23
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_clear_free, (void *ptr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_REALLOC              14
+#define OSSL_FUNC_CRYPTO_REALLOC              24
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_realloc, (void *addr, size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        15
+#define OSSL_FUNC_CRYPTO_CLEAR_REALLOC        25
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_clear_realloc, (void *addr, size_t old_num, size_t num,
                                const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_MALLOC        16
+#define OSSL_FUNC_CRYPTO_SECURE_MALLOC        26
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_malloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ZALLOC        17
+#define OSSL_FUNC_CRYPTO_SECURE_ZALLOC        27
 OSSL_CORE_MAKE_FUNC(void *,
         CRYPTO_secure_zalloc, (size_t num, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_FREE          18
+#define OSSL_FUNC_CRYPTO_SECURE_FREE          28
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_free, (void *ptr, const char *file, int line))
-#define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    19
+#define OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE    29
 OSSL_CORE_MAKE_FUNC(void,
         CRYPTO_secure_clear_free, (void *ptr, size_t num, const char *file,
                                    int line))
-#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     20
+#define OSSL_FUNC_CRYPTO_SECURE_ALLOCATED     30
 OSSL_CORE_MAKE_FUNC(int,
         CRYPTO_secure_allocated, (const void *ptr))
-#define OSSL_FUNC_OPENSSL_CLEANSE             21
+#define OSSL_FUNC_OPENSSL_CLEANSE             31
 OSSL_CORE_MAKE_FUNC(void,
         OPENSSL_cleanse, (void *ptr, size_t len))
 
 /* Bio functions provided by the core */
-#define OSSL_FUNC_BIO_NEW_FILE                22
-#define OSSL_FUNC_BIO_NEW_MEMBUF              23
-#define OSSL_FUNC_BIO_READ_EX                 24
-#define OSSL_FUNC_BIO_FREE                    25
+#define OSSL_FUNC_BIO_NEW_FILE                40
+#define OSSL_FUNC_BIO_NEW_MEMBUF              41
+#define OSSL_FUNC_BIO_READ_EX                 42
+#define OSSL_FUNC_BIO_FREE                    43
+#define OSSL_FUNC_BIO_VPRINTF                 44
 
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_membuf, (const void *buf, int len))
 OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
                                        size_t *bytes_read))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
+OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
+                                       va_list args))
+
+#define OSSL_FUNC_SELF_TEST_CB               100
+OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CTX *ctx, OSSL_CALLBACK **cb,
+                                         void **cbarg))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
@@ -157,8 +172,11 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
 # define OSSL_OP_SIGNATURE                          12
+# define OSSL_OP_ASYM_CIPHER                        13
+/* New section for non-EVP operations */
+# define OSSL_OP_SERIALIZER                         20
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                           12
+# define OSSL_OP__HIGHEST                           20
 
 /* Digests */
 
@@ -315,71 +333,99 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 /*-
  * Key management
  *
- * Key domain parameter references can be created in several manners:
- * - by importing the domain parameter material via an OSSL_PARAM array.
- * - by generating key domain parameters, given input via an OSSL_PARAM
- *   array.
+ * The Key Management takes care of provider side key objects, and includes
+ * all current functionality to create them, destroy them, set parameters
+ * and key material, etc, essentially everything that manipulates the keys
+ * themselves and their parameters.
  *
- * Key references can be created in several manners:
- * - by importing the key material via an OSSL_PARAM array.
- * - by generating a key, given optional domain parameters and
- *   additional keygen parameters.
- *   If domain parameters are given, they must have been generated using
- *   the domain parameter generator functions.
- *   If the domain parameters comes from a different provider, results
- *   are undefined.
- *   THE CALLER MUST ENSURE THAT CORRECT DOMAIN PARAMETERS ARE USED.
- * - by loading an internal key, given a binary blob that forms an identity.
- *   THE CALLER MUST ENSURE THAT A CORRECT IDENTITY IS USED.
+ * The key objects are commonly refered to as |keydata|, and it MUST be able
+ * to contain parameters if the key has any, the public key and the private
+ * key.  All parts are optional, but their presence determines what can be
+ * done with the key object in terms of encryption, signature, and so on.
+ * The assumption from libcrypto is that the key object contains any of the
+ * following data combinations:
+ *
+ * - parameters only
+ * - public key only
+ * - public key + private key
+ * - parameters + public key
+ * - parameters + public key + private key
+ *
+ * What "parameters", "public key" and "private key" means in detail is left
+ * to the implementation.  In the case of DH and DSA, they would typically
+ * include domain parameters, while for certain variants of RSA, they would
+ * typically include PSS or OAEP parameters.
+ *
+ * Key objects are created with OP_keymgmt_new() and destroyed with
+ * Op_keymgmt_free().  Key objects can have data filled in with
+ * OP_keymgmt_import().
+ *
+ * Three functions are made available to check what selection of data is
+ * present in a key object: OP_keymgmt_has_parameters(),
+ * OP_keymgmt_has_public_key(), and OP_keymgmt_has_private_key(),
  */
 
-/* Key domain parameter creation and destruction */
-# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS          1
-# define OSSL_FUNC_KEYMGMT_GENDOMPARAMS             2
-# define OSSL_FUNC_KEYMGMT_FREEDOMPARAMS            3
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importdomparams,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gendomparams,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freedomparams, (void *domparams))
+/* Key data subset selection - individual bits */
+# define OSSL_KEYMGMT_SELECT_PRIVATE_KEY            0x01
+# define OSSL_KEYMGMT_SELECT_PUBLIC_KEY             0x02
+# define OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS      0x04
+# define OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS       0x80
 
-/* Key domain parameter export */
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS          4
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportdomparams,
-                    (void *domparams, OSSL_PARAM params[]))
+/* Key data subset selection - combinations */
+# define OSSL_KEYMGMT_SELECT_ALL_PARAMETERS     \
+    ( OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS     \
+      | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)
+# define OSSL_KEYMGMT_SELECT_KEYPAIR            \
+    ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
+# define OSSL_KEYMGMT_SELECT_ALL                \
+    ( OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
 
-/* Key domain parameter discovery */
-# define OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES     5
-# define OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES     6
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importdomparam_types,
-                    (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportdomparam_types,
-                    (void))
+/* Basic key object creation, destruction */
+# define OSSL_FUNC_KEYMGMT_NEW                         1
+# define OSSL_FUNC_KEYMGMT_FREE                        9
+OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_free, (void *keydata))
 
-/* Key creation and destruction */
-# define OSSL_FUNC_KEYMGMT_IMPORTKEY               10
-# define OSSL_FUNC_KEYMGMT_GENKEY                  11
-# define OSSL_FUNC_KEYMGMT_LOADKEY                 12
-# define OSSL_FUNC_KEYMGMT_FREEKEY                 13
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_importkey,
-                    (void *provctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_genkey,
-                    (void *provctx,
-                     void *domparams, const OSSL_PARAM genkeyparams[]))
-OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_loadkey,
-                    (void *provctx, void *id, size_t idlen))
-OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_freekey, (void *key))
+/* Key object information, with discovery */
+#define OSSL_FUNC_KEYMGMT_GET_PARAMS                  10
+#define OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS             11
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_params,
+                    (void *keydata, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_params, (void))
 
-/* Key export */
-# define OSSL_FUNC_KEYMGMT_EXPORTKEY               14
-OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_exportkey,
-                    (void *key, OSSL_PARAM params[]))
+#define OSSL_FUNC_KEYMGMT_SET_PARAMS                  12
+#define OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS             13
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_set_params,
+                    (void *keydata, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_settable_params, (void))
 
-/* Key discovery */
-# define OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES         15
-# define OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES         16
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_importkey_types, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
+/* Key checks - discovery of supported operations */
+# define OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME       20
+OSSL_CORE_MAKE_FUNC(const char *, OP_keymgmt_query_operation_name,
+                    (int operation_id))
+
+/* Key checks - key data content checks */
+# define OSSL_FUNC_KEYMGMT_HAS                        21
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_has, (void *keydata, int selection))
+
+/* Key checks - validation */
+# define OSSL_FUNC_KEYMGMT_VALIDATE                   22
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_validate, (void *keydata, int selection))
+
+/* Import and export functions, with ddiscovery */
+# define OSSL_FUNC_KEYMGMT_IMPORT                     40
+# define OSSL_FUNC_KEYMGMT_IMPORT_TYPES               41
+# define OSSL_FUNC_KEYMGMT_EXPORT                     42
+# define OSSL_FUNC_KEYMGMT_EXPORT_TYPES               43
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_import,
+                    (void *keydata, int selection, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_import_types,
+                    (int selection))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_export,
+                    (void *keydata, int selection,
+                     OSSL_CALLBACK *param_cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_export_types,
+                    (int selection))
 
 /* Key Exchange */
 
@@ -391,6 +437,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_exportkey_types, (void))
 # define OSSL_FUNC_KEYEXCH_DUPCTX                      6
 # define OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS              7
 # define OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS         8
+# define OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS              9
+# define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
 
 OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_init, (void *ctx, void *provkey))
@@ -402,6 +450,10 @@ OSSL_CORE_MAKE_FUNC(void *, OP_keyexch_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_keyexch_set_ctx_params, (void *ctx,
                                                      const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keyexch_settable_ctx_params,
+                    (void))
+OSSL_CORE_MAKE_FUNC(int, OP_keyexch_get_ctx_params, (void *ctx,
+                                                     OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keyexch_gettable_ctx_params,
                     (void))
 
 /* Signature */
@@ -483,6 +535,66 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_set_ctx_md_params,
                     (void *ctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_signature_settable_ctx_md_params,
                     (void *ctx))
+
+
+/* Asymmetric Ciphers */
+
+# define OSSL_FUNC_ASYM_CIPHER_NEWCTX                  1
+# define OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT            2
+# define OSSL_FUNC_ASYM_CIPHER_ENCRYPT                 3
+# define OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT            4
+# define OSSL_FUNC_ASYM_CIPHER_DECRYPT                 5
+# define OSSL_FUNC_ASYM_CIPHER_FREECTX                 6
+# define OSSL_FUNC_ASYM_CIPHER_DUPCTX                  7
+# define OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS          8
+# define OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS     9
+# define OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS         10
+# define OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS    11
+
+OSSL_CORE_MAKE_FUNC(void *, OP_asym_cipher_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_encrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_encrypt, (void *ctx, unsigned char *out,
+                                                  size_t *outlen,
+                                                  size_t outsize,
+                                                  const unsigned char *in,
+                                                  size_t inlen))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_decrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_decrypt, (void *ctx, unsigned char *out,
+                                                  size_t *outlen,
+                                                  size_t outsize,
+                                                  const unsigned char *in,
+                                                  size_t inlen))
+OSSL_CORE_MAKE_FUNC(void, OP_asym_cipher_freectx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_asym_cipher_dupctx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_get_ctx_params,
+                    (void *ctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_asym_cipher_gettable_ctx_params,
+                    (void))
+OSSL_CORE_MAKE_FUNC(int, OP_asym_cipher_set_ctx_params,
+                    (void *ctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_asym_cipher_settable_ctx_params,
+                    (void))
+
+/* Serializers */
+# define OSSL_FUNC_SERIALIZER_NEWCTX                1
+# define OSSL_FUNC_SERIALIZER_FREECTX               2
+# define OSSL_FUNC_SERIALIZER_SET_CTX_PARAMS        3
+# define OSSL_FUNC_SERIALIZER_SETTABLE_CTX_PARAMS   4
+# define OSSL_FUNC_SERIALIZER_SERIALIZE_DATA       10
+# define OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT     11
+OSSL_CORE_MAKE_FUNC(void *, OP_serializer_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void, OP_serializer_freectx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, OP_serializer_set_ctx_params,
+                    (void *ctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_serializer_settable_ctx_params,
+                    (void))
+
+OSSL_CORE_MAKE_FUNC(int, OP_serializer_serialize_data,
+                    (void *ctx, const OSSL_PARAM[], BIO *out,
+                     OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
+OSSL_CORE_MAKE_FUNC(int, OP_serializer_serialize_object,
+                    (void *ctx, void *obj, BIO *out,
+                     OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
 
 # ifdef __cplusplus
 }

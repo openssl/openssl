@@ -906,14 +906,14 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         const char *addr_chars = NULL;
         int prefixlen, i1, i2, delim, length;
 
-        if (!name_cmp(val->name, "IPv4")) {
+        if (!v3_name_cmp(val->name, "IPv4")) {
             afi = IANA_AFI_IPV4;
-        } else if (!name_cmp(val->name, "IPv6")) {
+        } else if (!v3_name_cmp(val->name, "IPv6")) {
             afi = IANA_AFI_IPV6;
-        } else if (!name_cmp(val->name, "IPv4-SAFI")) {
+        } else if (!v3_name_cmp(val->name, "IPv4-SAFI")) {
             afi = IANA_AFI_IPV4;
             safi = &safi_;
-        } else if (!name_cmp(val->name, "IPv6-SAFI")) {
+        } else if (!v3_name_cmp(val->name, "IPv6-SAFI")) {
             afi = IANA_AFI_IPV6;
             safi = &safi_;
         } else {

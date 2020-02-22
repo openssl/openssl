@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_tdes_default.h"
 
 #define cipher_hw_tdes_wrap_initkey cipher_hw_tdes_ede3_initkey

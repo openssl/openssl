@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-int name_cmp(const char *name, const char *cmp);
+int v3_name_cmp(const char *name, const char *cmp);
 
 extern const X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;

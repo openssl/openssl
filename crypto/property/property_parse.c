@@ -203,7 +203,7 @@ static int parse_string(OPENSSL_CTX *ctx, const char *t[], char delim,
         s++;
     }
     if (*s == '\0') {
-        ERR_raise_data(ERR_LIB_PROP, PROP_R_NO_MATCHING_STRING_DELIMETER,
+        ERR_raise_data(ERR_LIB_PROP, PROP_R_NO_MATCHING_STRING_DELIMITER,
                        "HERE-->%c%s", delim, *t);
         return 0;
     }
@@ -492,7 +492,7 @@ int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
 
         /*
          * Handle the cases of a missing value and a query with no corresponding
-         * definition.  The former fails for any comparision except inequality,
+         * definition.  The former fails for any comparison except inequality,
          * the latter is treated as a comparison against the Boolean false.
          */
         if (q[i].type == PROPERTY_TYPE_VALUE_UNDEFINED) {
@@ -562,12 +562,11 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
 int ossl_property_parse_init(OPENSSL_CTX *ctx)
 {
     static const char *const predefined_names[] = {
-        "default",      /* Being provided by the default built-in provider */
-        "legacy",       /* Provided by the legacy provider */
-        "provider",     /* Name of provider (default, fips) */
+        "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
-        "fips",         /* FIPS supporting provider */
-        "engine",       /* An old style engine masquerading as a provider */
+        "fips",         /* FIPS validated or FIPS supporting algorithm */
+        "format",       /* output format for serializers */
+        "type",         /* output type for serializers */
     };
     size_t i;
 

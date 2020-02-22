@@ -7,6 +7,7 @@ openssl-engine - load and query engines
 =head1 SYNOPSIS
 
 B<openssl engine>
+[B<-help>]
 [B<-v>]
 [B<-vv>]
 [B<-vvv>]
@@ -28,6 +29,10 @@ Only those specified are queried.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Display an option summary.
 
 =item B<-v> B<-vv> B<-vvv> B<-vvvv>
 

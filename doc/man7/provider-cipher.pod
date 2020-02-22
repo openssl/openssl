@@ -112,7 +112,7 @@ structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_cipher_freectx() is passed a pointer to the provider side cipher context in
 the I<cctx> parameter.
@@ -159,7 +159,7 @@ L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
 OP_cipher_cipher() performs encryption/decryption using the provider side cipher
 context in the I<cctx> parameter that should have been previously initialised via
-a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init.
+a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init().
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.
@@ -288,7 +288,7 @@ that varies with every record.
 Setting a TLS fixed IV changes a cipher to encrypt/decrypt TLS records.
 TLS records are encrypted/decrypted using a single OP_cipher_cipher call per
 record.
-For a record decryption the first bytes of the input buffer will be the explict
+For a record decryption the first bytes of the input buffer will be the explicit
 part of the IV and the final bytes of the input buffer will be the AEAD tag.
 The length of the explicit part of the IV and the tag length will depend on the
 cipher in use and will be defined in the RFC for the relevant ciphersuite.
@@ -315,6 +315,10 @@ IV length and the tag length.
 Sets the IV length to be used for an AEAD cipher for the associated cipher ctx.
 The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
+=item "mackey" (B<OSSL_CIPHER_PARAM_AEAD_MAC_KEY>) <octet string>
+
+Sets the MAC key used by composite AEAD ciphers such as AES-CBC-HMAC-SHA256.
+
 =item "randkey" (B<OSSL_CIPHER_PARAM_RANDOM_KEY>) <octet string>
 
 Gets a implementation specific randomly generated key for the associated
@@ -337,6 +341,74 @@ This is used by the RC5 cipher.
 
 Gets or sets the effective keybits used for a RC2 cipher.
 The length of the "keybits" parameter should not exceed that of a B<size_t>.
+
+=item "speed" (B<OSSL_CIPHER_PARAM_SPEED>) <unsigned integer>
+
+Sets the speed option for the associated cipher ctx. This is only supported
+by AES SIV ciphers which disallow multiple operations by default.
+Setting "speed" to 1 allows another encrypt or decrypt operation to be
+performed. This is used for performance testing.
+
+=item "tlsivgen" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN>) <octet string>
+
+Gets the invocation field generated for encryption.
+Can only be called after "tlsivfixed" is set.
+This is only used for GCM mode.
+
+=item "tlsivinv" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV>) <octet string>
+
+Sets the invocation field used for decryption.
+Can only be called after "tlsivfixed" is set.
+This is only used for GCM mode.
+
+=item "tls1multi_enc" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC>) <octet string>
+
+Triggers a multiblock tls1 encrypt operation for a tls1 aware cipher that supports
+sending 4 or 8 records in one go.
+The cipher performs both the MAC and encrypt stages and constructs the record
+headers itself.
+"tls1multi_enc" supplies the output buffer for the encrypt operation,
+"tls1multi_encin" & "tls1multi_interleave" must also be set in order to supply
+values to the encrypt operation.
+
+=item "tls1multi_enclen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN>) <unsigned integer>
+
+Get the total length of the record returned from the "tls1multi_enc" operation.
+
+=item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
+
+Sets or gets the number of records being sent in one go for a tls1 multiblock
+cipher operation (either 4 or 8 records).
+
+=item "tls1multi_encin" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN>) <octet string>
+
+Supplies the data to encrypt for a tls1 multiblock cipher operation.
+
+=item "tls1multi_maxsndfrag" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT>) <unsigned integer>
+
+Sets the maximum send fragment size for a tls1 multiblock cipher operation.
+It must be set before using "tls1multi_maxbufsz".
+The length of the "tls1multi_maxsndfrag" parameter should not exceed that of a B<size_t>.
+
+=item "tls1multi_maxbufsz" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_BUFSIZE>) <unsigned integer>
+
+Gets the maximum record length for a tls1 multiblock cipher operation.
+The length of the "tls1multi_maxbufsz" parameter should not exceed that of a B<size_t>.
+
+=item "tls1multi_aad" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD>) <octet string>
+
+Sets the authenticated additional data used by a tls1 multiblock cipher operation.
+The supplied data consists of 13 bytes of record data containing:
+Bytes 0-7: The sequence number of the first record
+Byte 8: The record type
+Byte 9-10: The protocol version
+Byte 11-12: Input length (Always 0)
+
+"tls1multi_interleave" must also be set for this operation.
+
+=item "tls1multi_aadpacklen" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD_PACKLEN>) <unsigned integer>
+
+Gets the result of running the "tls1multi_aad" operation.
 
 =back
 

@@ -75,9 +75,13 @@ ENDIF
 
 $COMMON=sha1dgst.c sha256.c sha512.c sha3.c $SHA1ASM $KECCAK1600ASM
 SOURCE[../../libcrypto]=$COMMON sha1_one.c
-DEFINE[../../libcrypto]=$SHA1DEF $KECCAK1600DEF
 SOURCE[../../providers/libfips.a]= $COMMON
-DEFINE[../../providers/libfips.a]= $SHA1DEF $KECCAK1600DEF
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$SHA1DEF $KECCAK1600DEF
+DEFINE[../../providers/libfips.a]=$SHA1DEF $KECCAK1600DEF
+DEFINE[../../providers/libimplementations.a]=$SHA1DEF $KECCAK1600DEF
 
 GENERATE[sha1-586.s]=asm/sha1-586.pl
 DEPEND[sha1-586.s]=../perlasm/x86asm.pl

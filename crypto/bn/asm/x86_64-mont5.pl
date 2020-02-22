@@ -62,7 +62,7 @@ if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$addx = ($1>=12);
 }
 
-if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9])\.([0-9]+)/) {
+if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)/) {
 	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
 	$addx = ($ver>=3.03);
 }
@@ -582,6 +582,7 @@ $code.=<<___;
 .type	mul4x_internal,\@abi-omnipotent
 .align	32
 mul4x_internal:
+.cfi_startproc
 	shl	\$5,$num		# $num was in bytes
 	movd	`($win64?56:8)`(%rax),%xmm5	# load 7th argument, index
 	lea	.Linc(%rip),%rax
@@ -1076,6 +1077,7 @@ $code.=<<___
 ___
 }
 $code.=<<___;
+.cfi_endproc
 .size	mul4x_internal,.-mul4x_internal
 ___
 }}}
@@ -1241,6 +1243,7 @@ $code.=<<___;
 .align	32
 bn_sqr8x_internal:
 __bn_sqr8x_internal:
+.cfi_startproc
 	##############################################################
 	# Squaring part:
 	#
@@ -2032,6 +2035,7 @@ __bn_sqr8x_reduction:
 	cmp	%rdx,$tptr		# end of t[]?
 	jb	.L8x_reduction_loop
 	ret
+.cfi_endproc
 .size	bn_sqr8x_internal,.-bn_sqr8x_internal
 ___
 }
@@ -2044,6 +2048,7 @@ $code.=<<___;
 .type	__bn_post4x_internal,\@abi-omnipotent
 .align	32
 __bn_post4x_internal:
+.cfi_startproc
 	mov	8*0($nptr),%r12
 	lea	(%rdi,$num),$tptr	# %rdi was $tptr above
 	mov	$num,%rcx
@@ -2094,6 +2099,7 @@ __bn_post4x_internal:
 	mov	$num,%r10		# prepare for back-to-back call
 	neg	$num			# restore $num
 	ret
+.cfi_endproc
 .size	__bn_post4x_internal,.-__bn_post4x_internal
 ___
 }
@@ -2103,10 +2109,12 @@ $code.=<<___;
 .type	bn_from_montgomery,\@abi-omnipotent
 .align	32
 bn_from_montgomery:
+.cfi_startproc
 	testl	\$7,`($win64?"48(%rsp)":"%r9d")`
 	jz	bn_from_mont8x
 	xor	%eax,%eax
 	ret
+.cfi_endproc
 .size	bn_from_montgomery,.-bn_from_montgomery
 
 .type	bn_from_mont8x,\@function,6
@@ -2402,6 +2410,7 @@ bn_mulx4x_mont_gather5:
 .type	mulx4x_internal,\@abi-omnipotent
 .align	32
 mulx4x_internal:
+.cfi_startproc
 	mov	$num,8(%rsp)		# save -$num (it was in bytes)
 	mov	$num,%r10
 	neg	$num			# restore $num
@@ -2752,6 +2761,7 @@ $code.=<<___;
 	mov	8*2(%rbp),%r14
 	mov	8*3(%rbp),%r15
 	jmp	.Lsqrx4x_sub_entry	# common post-condition
+.cfi_endproc
 .size	mulx4x_internal,.-mulx4x_internal
 ___
 }{
@@ -3557,6 +3567,7 @@ my ($rptr,$nptr)=("%rdx","%rbp");
 $code.=<<___;
 .align	32
 __bn_postx4x_internal:
+.cfi_startproc
 	mov	8*0($nptr),%r12
 	mov	%rcx,%r10		# -$num
 	mov	%rcx,%r9		# -$num
@@ -3604,6 +3615,7 @@ __bn_postx4x_internal:
 	neg	%r9			# restore $num
 
 	ret
+.cfi_endproc
 .size	__bn_postx4x_internal,.-__bn_postx4x_internal
 ___
 }
@@ -3620,6 +3632,7 @@ $code.=<<___;
 .type	bn_get_bits5,\@abi-omnipotent
 .align	16
 bn_get_bits5:
+.cfi_startproc
 	lea	0($inp),%r10
 	lea	1($inp),%r11
 	mov	$num,%ecx
@@ -3633,12 +3646,14 @@ bn_get_bits5:
 	shrl	%cl,%eax
 	and	\$31,%eax
 	ret
+.cfi_endproc
 .size	bn_get_bits5,.-bn_get_bits5
 
 .globl	bn_scatter5
 .type	bn_scatter5,\@abi-omnipotent
 .align	16
 bn_scatter5:
+.cfi_startproc
 	cmp	\$0, $num
 	jz	.Lscatter_epilogue
 	lea	($tbl,$idx,8),$tbl
@@ -3651,6 +3666,7 @@ bn_scatter5:
 	jnz	.Lscatter
 .Lscatter_epilogue:
 	ret
+.cfi_endproc
 .size	bn_scatter5,.-bn_scatter5
 
 .globl	bn_gather5
@@ -3658,6 +3674,7 @@ bn_scatter5:
 .align	32
 bn_gather5:
 .LSEH_begin_bn_gather5:			# Win64 thing, but harmless in other cases
+.cfi_startproc
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x4c,0x8d,0x14,0x24			#lea    (%rsp),%r10
 	.byte	0x48,0x81,0xec,0x08,0x01,0x00,0x00	#sub	$0x108,%rsp
@@ -3742,6 +3759,7 @@ $code.=<<___;
 	lea	(%r10),%rsp
 	ret
 .LSEH_end_bn_gather5:
+.cfi_endproc
 .size	bn_gather5,.-bn_gather5
 ___
 }
@@ -3944,4 +3962,4 @@ ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

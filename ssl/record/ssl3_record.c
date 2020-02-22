@@ -870,7 +870,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
  * SSLfatal() for internal errors, but not otherwise.
  *
  * Returns:
- *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *   0: (in non-constant time) if the record is publicly invalid (i.e. too
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding is invalid or, if sending, an internal error
@@ -961,7 +961,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
  * internal errors, but not otherwise.
  *
  * Returns:
- *   0: (in non-constant time) if the record is publically invalid (i.e. too
+ *   0: (in non-constant time) if the record is publicly invalid (i.e. too
  *       short etc).
  *   1: if the record's padding is valid / the encryption was successful.
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
@@ -1015,7 +1015,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
-                    } else if (RAND_bytes(recs[ctr].input, ivlen) <= 0) {
+                    } else if (RAND_bytes_ex(s->ctx->libctx, recs[ctr].input,
+                                             ivlen) <= 0) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
@@ -1108,7 +1109,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             } else if ((bs != 1) && sending) {
                 padnum = bs - (reclen[ctr] % bs);
 
-                /* Add weird padding of upto 256 bytes */
+                /* Add weird padding of up to 256 bytes */
 
                 if (padnum > MAX_PADDING) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
@@ -1629,6 +1630,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     int imac_size;
     size_t mac_size;
     unsigned char md[EVP_MAX_MD_SIZE];
+    size_t max_plain_length = SSL3_RT_MAX_PLAIN_LENGTH;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
@@ -1688,7 +1690,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0);
     /*-
      * enc_err is:
-     *    0: (in non-constant time) if the record is publically invalid.
+     *    0: (in non-constant time) if the record is publicly invalid.
      *    1: if the padding is valid
      *   -1: if the padding is invalid
      */
@@ -1796,7 +1798,12 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
     }
 
-    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+    /* use current Max Fragment Length setting if applicable */
+    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        max_plain_length = GET_MAX_FRAGMENT_LENGTH(s->session);
+
+    /* send overflow if the plaintext is too long now it has passed MAC */
+    if (rr->length > max_plain_length) {
         SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
                  SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
@@ -1940,7 +1947,7 @@ int dtls1_get_record(SSL *s)
 
         /* If received packet overflows own-client Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session) + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;

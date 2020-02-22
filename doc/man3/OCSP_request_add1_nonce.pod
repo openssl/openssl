@@ -24,7 +24,7 @@ it adds a nonce to OCSP basic response B<resp>.
 
 OCSP_check_nonce() compares the nonce value in B<req> and B<resp>.
 
-OCSP_copy_nonce() copys any nonce value present in B<req> to B<resp>.
+OCSP_copy_nonce() copies any nonce value present in B<req> to B<resp>.
 
 =head1 RETURN VALUES
 

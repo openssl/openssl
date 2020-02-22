@@ -9,6 +9,12 @@
 
 /* Dispatch functions for RC5 cipher modes ecb, cbc, ofb, cfb */
 
+/*
+ * RC5 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
@@ -44,7 +50,7 @@ static int rc5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (!cipher_generic_set_ctx_params(vctx, params))
+    if (!cipher_var_keylen_set_ctx_params(vctx, params))
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_ROUNDS);
@@ -71,6 +77,7 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(rc5)
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(rc5)
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(rc5)
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_ROUNDS, NULL),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc5)
 

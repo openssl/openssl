@@ -29,6 +29,8 @@ DECLARE_ASN1_ITEM(RSA_PRIME_INFO)
 DEFINE_STACK_OF(RSA_PRIME_INFO)
 
 struct rsa_st {
+    OPENSSL_CTX *libctx;
+
     /*
      * The first parameter is used to pickup errors where this is passed
      * instead of an EVP_PKEY, it is set to 0
@@ -46,12 +48,15 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
+    /* TODO(3.0): Support PSS in FIPS_MODE */
+#ifndef FIPS_MODE
     /* for multi-prime RSA, defined in RFC 8017 */
     STACK_OF(RSA_PRIME_INFO) *prime_infos;
     /* If a PSS only key this contains the parameter restrictions */
     RSA_PSS_PARAMS *pss;
     /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
+#endif
     CRYPTO_REF_COUNT references;
     int flags;
     /* Used to cache montgomery values */
@@ -66,6 +71,8 @@ struct rsa_st {
     BN_BLINDING *blinding;
     BN_BLINDING *mt_blinding;
     CRYPTO_RWLOCK *lock;
+
+    int dirty_cnt;
 };
 
 struct rsa_meth_st {
@@ -115,10 +122,6 @@ struct rsa_meth_st {
                                    BIGNUM *e, BN_GENCB *cb);
 };
 
-extern int int_rsa_verify(int dtype, const unsigned char *m,
-                          unsigned int m_len, unsigned char *rm,
-                          size_t *prm_len, const unsigned char *sigbuf,
-                          size_t siglen, RSA *rsa);
 /* Macros to test if a pkey or ctx is for a PSS key */
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)

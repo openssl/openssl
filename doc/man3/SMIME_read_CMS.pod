@@ -58,7 +58,7 @@ if an error occurred. The error can be obtained from ERR_get_error(3).
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<CMS_type(3)>,
+L<ERR_get_error(3)>,
 L<SMIME_read_CMS(3)>, L<CMS_sign(3)>,
 L<CMS_verify(3)>, L<CMS_encrypt(3)>,
 L<CMS_decrypt(3)>

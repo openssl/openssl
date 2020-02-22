@@ -43,8 +43,6 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-LIBS=../../libcrypto
-
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ec_curve.c ec_check.c ec_print.c ec_key.c ec_asn1.c \
         ec2_smpl.c \
@@ -54,11 +52,15 @@ $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
         $ECASM
-SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ec_err.c \
-                        ecdh_kdf.c eck_prn.c
-DEFINE[../../libcrypto]=$ECDEF
+SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
+                        ec_err.c ecdh_kdf.c eck_prn.c ec_evp_lib.c
 SOURCE[../../providers/libfips.a]=$COMMON
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$ECDEF
 DEFINE[../../providers/libfips.a]=$ECDEF
+DEFINE[../../providers/libimplementations.a]=$ECDEF
 
 GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl
 
@@ -68,6 +70,9 @@ GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl
 
 GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl
 INCLUDE[ecp_nistz256-sparcv9.o]=..
+
+INCLUDE[ecp_s390x_nistp.o]=..
+INCLUDE[ecx_meth.o]=..
 
 GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl
 INCLUDE[ecp_nistz256-armv4.o]=..

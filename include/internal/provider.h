@@ -11,6 +11,7 @@
 # define OSSL_INTERNAL_PROVIDER_H
 
 # include <openssl/core.h>
+# include <openssl/core_numbers.h>
 # include "internal/dso.h"
 # include "internal/symhacks.h"
 

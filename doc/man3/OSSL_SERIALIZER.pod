@@ -1,0 +1,129 @@
+=pod
+
+=head1 NAME
+
+OSSL_SERIALIZER,
+OSSL_SERIALIZER_fetch,
+OSSL_SERIALIZER_up_ref,
+OSSL_SERIALIZER_free,
+OSSL_SERIALIZER_provider,
+OSSL_SERIALIZER_properties,
+OSSL_SERIALIZER_is_a,
+OSSL_SERIALIZER_number,
+OSSL_SERIALIZER_do_all_provided,
+OSSL_SERIALIZER_names_do_all
+- Serializer method routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/serializer.h>
+
+ typedef struct ossl_serializer_st OSSL_SERIALIZER;
+
+ OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OPENSSL_CTX *ctx, const char *name,
+                                        const char *properties);
+ int OSSL_SERIALIZER_up_ref(OSSL_SERIALIZER *serializer);
+ void OSSL_SERIALIZER_free(OSSL_SERIALIZER *serializer);
+ const OSSL_PROVIDER *OSSL_SERIALIZER_provider(const OSSL_SERIALIZER
+                                               *serializer);
+ const char *OSSL_SERIALIZER_properties(const OSSL_SERIALIZER *ser);
+ int OSSL_SERIALIZER_is_a(const OSSL_SERIALIZER *serializer,
+                          const char *name);
+ int OSSL_SERIALIZER_number(const OSSL_SERIALIZER *serializer);
+ void OSSL_SERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+                                      void (*fn)(OSSL_SERIALIZER *serializer,
+                                                 void *arg),
+                                      void *arg);
+ void OSSL_SERIALIZER_names_do_all(const OSSL_SERIALIZER *serializer,
+                                   void (*fn)(const char *name, void *data),
+                                   void *data);
+
+=head1 DESCRIPTION
+
+=for comment Future development should also talk about deserialization
+
+B<OSSL_SERIALIZER> is a method for serializers, which know how to
+serialize an object of some kind to a serialized form, such as PEM,
+DER, or even human readable text.
+
+OSSL_SERIALIZER_fetch() looks for an algorithm within the provider that
+has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+name given by I<name> and the properties given by I<properties>.
+The I<name> determines what type of object the fetched serializer
+method is expected to be able to serialize, and the properties are
+used to determine the expected output type.
+For known properties and the values they may have, please have a look
+in L<provider-serializer(7)/Names and properties>.
+
+OSSL_SERIALIZER_up_ref() increments the reference count for the given
+I<serializer>.
+
+OSSL_SERIALIZER_free() decrements the reference count for the given
+I<serializer>, and when the count reaches zero, frees it.
+
+OSSL_SERIALIZER_provider() returns the provider of the given
+I<serializer>.
+
+OSSL_SERIALIZER_provider() returns the property definition associated
+with the given I<serializer>.
+
+OSSL_SERIALIZER_is_a() checks if I<serializer> is an implementation of an
+algorithm that's identifiable with I<name>.
+
+OSSL_SERIALIZER_number() returns the internal dynamic number assigned to
+the given I<serializer>.
+
+OSSL_SERIALIZER_names_do_all() traverses all names for the given
+I<serializer>, and calls I<fn> with each name and I<data>.
+
+OSSL_SERIALIZER_do_all_provided() traverses all serializer
+implementations by all activated providers in the library context
+I<libctx>, and for each of the implementations, calls I<fn> with the
+implementation method and I<data> as arguments.
+
+=head1 NOTES
+
+OSSL_SERIALIZER_fetch() may be called implicitly by other fetching
+functions, using the same library context and properties.
+Any other API that uses keys will typically do this.
+
+=head1 RETURN VALUES
+
+OSSL_SERIALIZER_fetch() returns a pointer to the key management
+implementation represented by an OSSL_SERIALIZER object, or NULL on
+error.
+
+OSSL_SERIALIZER_up_ref() returns 1 on success, or 0 on error.
+
+OSSL_SERIALIZER_free() doesn't return any value.
+
+OSSL_SERIALIZER_provider() returns a pointer to a provider object, or
+NULL on error.
+
+OSSL_SERIALIZER_properties() returns a pointer to a property
+definition string, or NULL on error.
+
+OSSL_SERIALIZER_is_a() returns 1 of I<serializer> was identifiable,
+otherwise 0.
+
+OSSL_SERIALIZER_number() returns an integer.
+
+=head1 SEE ALSO
+
+L<provider(7)>, L<OSSL_SERIALIZER_CTX(3)>, L<OSSL_SERIALIZER_to_bio(3)>,
+L<OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

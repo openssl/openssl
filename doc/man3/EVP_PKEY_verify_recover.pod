@@ -2,15 +2,13 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_recover_init_ex, EVP_PKEY_verify_recover_init,
-EVP_PKEY_verify_recover - recover signature using a public key algorithm
+EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover
+- recover signature using a public key algorithm
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx,
-                                     EVP_SIGNATURE *signature);
  int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
                              unsigned char *rout, size_t *routlen,
@@ -18,28 +16,19 @@ EVP_PKEY_verify_recover - recover signature using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_recover_init_ex() function initializes a public key
-algorithm context for performing signature signed data recovery using the
-signature algorithm B<signature>.
-The signature algorithm B<signature> should be fetched using a call to
-L<EVP_SIGNATURE_fetch(3)>.
-The EVP_PKEY object associated with B<ctx> must be compatible with that
-algorithm.
-B<signature> may be NULL in which case the EVP_SIGNATURE algorithm is fetched
-implicitly based on the type of EVP_PKEY associated with B<ctx>.
-See L<provider(7)/Implicit fetch> for more information about implict fetches.
-
-The EVP_PKEY_verify_recover_init() function is the same as
-EVP_PKEY_verify_recover_init_ex() except that the EVP_SIGNATURE algorithm is
-always implicitly fetched.
+EVP_PKEY_verify_recover_init() initializes a public key algorithm context
+I<ctx> for signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_verify_recover() function recovers signed data
-using B<ctx>. The signature is specified using the B<sig> and
-B<siglen> parameters. If B<rout> is B<NULL> then the maximum size of the output
-buffer is written to the B<routlen> parameter. If B<rout> is not B<NULL> then
-before the call the B<routlen> parameter should contain the length of the
-B<rout> buffer, if the call is successful recovered data is written to
-B<rout> and the amount of data written to B<routlen>.
+using I<ctx>. The signature is specified using the I<sig> and
+I<siglen> parameters. If I<rout> is NULL then the maximum size of the output
+buffer is written to the I<routlen> parameter. If I<rout> is not NULL then
+before the call the I<routlen> parameter should contain the length of the
+I<rout> buffer, if the call is successful recovered data is written to
+I<rout> and the amount of data written to I<routlen>.
 
 =head1 NOTES
 

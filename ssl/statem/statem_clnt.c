@@ -1201,7 +1201,8 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             s->tmp_session_id_len = sess_id_len;
             session_id = s->tmp_session_id;
             if (s->hello_retry_request == SSL_HRR_NONE
-                    && RAND_bytes(s->tmp_session_id, sess_id_len) <= 0) {
+                    && RAND_bytes_ex(s->ctx->libctx, s->tmp_session_id,
+                                     sess_id_len) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
                          ERR_R_INTERNAL_ERROR);
@@ -1375,8 +1376,8 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
              * In TLSv1.3 it is valid for the server to select a different
              * ciphersuite as long as the hash is the same.
              */
-            if (ssl_md(c->algorithm2)
-                    != ssl_md(s->session->cipher->algorithm2)) {
+            if (ssl_md(s->ctx, c->algorithm2)
+                    != ssl_md(s->ctx, s->session->cipher->algorithm2)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_F_SET_CLIENT_CIPHERSUITE,
                          SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED);
@@ -2146,15 +2147,16 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     }
     bnpub_key = NULL;
 
-    if (!ssl_security(s, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh)) {
-        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_SKE_DHE,
-                 SSL_R_DH_KEY_TOO_SMALL);
-        goto err;
-    }
-
     if (EVP_PKEY_assign_DH(peer_tmp, dh) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
                  ERR_R_EVP_LIB);
+        goto err;
+    }
+
+    if (!ssl_security(s, SSL_SECOP_TMP_DH, EVP_PKEY_security_bits(peer_tmp),
+                      0, dh)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_SKE_DHE,
+                 SSL_R_DH_KEY_TOO_SMALL);
         goto err;
     }
 
@@ -2212,7 +2214,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    if ((s->s3.peer_tmp = ssl_generate_param_group(curve_id)) == NULL) {
+    if ((s->s3.peer_tmp = ssl_generate_param_group(s, curve_id)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
         return 0;
@@ -2301,7 +2303,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     /* if it was signed, check the signature */
     if (pkey != NULL) {
         PACKET params;
-        int maxsig;
         const EVP_MD *md = NULL;
         unsigned char *tbs;
         size_t tbslen;
@@ -2337,7 +2338,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
+        if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -2350,22 +2351,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || PACKET_remaining(pkt) != 0) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-        maxsig = EVP_PKEY_size(pkey);
-        if (maxsig < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                     ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        /*
-         * Check signature length
-         */
-        if (PACKET_remaining(&signature) > (size_t)maxsig) {
-            /* wrong packet length */
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                   SSL_R_WRONG_SIGNATURE_LENGTH);
             goto err;
         }
 
@@ -2993,7 +2978,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
     pms[0] = s->client_version >> 8;
     pms[1] = s->client_version & 0xff;
     /* TODO(size_t): Convert this function */
-    if (RAND_bytes(pms + 2, (int)(pmslen - 2)) <= 0) {
+    if (RAND_bytes_ex(s->ctx->libctx, pms + 2, (int)(pmslen - 2)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
         goto err;
@@ -3065,7 +3050,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    ckey = ssl_generate_pkey(skey);
+    ckey = ssl_generate_pkey(s, skey);
     if (ckey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
@@ -3123,7 +3108,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    ckey = ssl_generate_pkey(skey);
+    ckey = ssl_generate_pkey(s, skey);
     if (ckey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,
                  ERR_R_MALLOC_FAILURE);
@@ -3189,7 +3174,9 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
+    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx,
+                                          X509_get0_pubkey(peer_cert),
+                                          s->ctx->propq);
     if (pkey_ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_MALLOC_FAILURE);
@@ -3214,7 +3201,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
         /* Generate session key
          * TODO(size_t): Convert this function
          */
-        || RAND_bytes(pms, (int)pmslen) <= 0) {
+        || RAND_bytes_ex(s->ctx->libctx, pms, (int)pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_INTERNAL_ERROR);
         goto err;

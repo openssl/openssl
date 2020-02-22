@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_EVPERR_H
 # endif
 
@@ -29,7 +29,7 @@ int ERR_load_EVP_strings(void);
 /*
  * EVP function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define EVP_F_AESNI_INIT_KEY                             0
 #  define EVP_F_AESNI_XTS_INIT_KEY                         0
 #  define EVP_F_AES_GCM_CTRL                               0

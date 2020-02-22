@@ -1,0 +1,260 @@
+=pod
+
+=head1 NAME
+
+OSSL_PROVIDER-FIPS - OPENSSL FIPS provider
+
+=head1 DESCRIPTION
+
+The OPENSSL FIPS provider is a special provider that conforms to the Federal 
+Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
+contains an approved set of cryptographic algorithms that is validated by an
+accredited testing laboratory.
+
+=head1 SELF TESTING
+
+One of the requirements for the FIPS module is self testing. An optional callback
+mechanism is available to return information to the user using
+L<OSSL_SELF_TEST_set_callback(3)>.
+
+The OPENSSL FIPS module uses the following mechanism to provide information
+about the self tests as they run.
+This is useful for debugging if a self test is failing.
+The callback also allows forcing any self test to fail, in order to check that
+it operates correctly on failure.
+
+The 'args' parameter of B<OSSL_CALLBACK> contains the B<OPENSSL_CTX> associated
+with the provider that is triggering the self test. This may be useful if
+multiple fips providers are present.
+
+The OSSL_PARAM names used are:
+
+=over 4
+
+=item "st-phase" (B<OSSL_PROV_PARAM_SELF_TEST_PHASE>) <UTF8 string>
+
+Each self test calls the callback 3 times with the following string values
+for the phase.
+
+=over 4
+
+=item "Start" (B<OSSL_SELF_TEST_PHASE_START>)
+
+This is the initial phase before the self test has run.
+This is used for informational purposes only.
+The value returned by the callback is ignored.
+
+=item "Corrupt" (B<OSSL_SELF_TEST_PHASE_CORRUPT>)
+
+The corrupt phase is run after the self test has calculated its known value.
+The callback may be used to force the self test to fail by returning a value
+of 0 from the callback during this phase.
+Returning any other value from the callback causes the self test to run normally.
+
+=item "Pass" (B<OSSL_SELF_TEST_PHASE_PASS>)
+
+=item "Fail" (B<OSSL_SELF_TEST_PHASE_FAIL>)
+
+The final phase runs after the self test is complete and indicates if a self
+test passed or failed. This is used for informational purposes only.
+The value returned by the callback is ignored.
+"Fail" should normally only be returned if any self test was forced to fail
+during the "Corrupt" phase (or if there was an error such as the integrity
+check of the module failed).
+
+Note that all self tests run even if a self test failure occurs.
+
+=back
+
+=item "st-type" (B<OSSL_PROV_PARAM_SELF_TEST_TYPE>) <UTF8 string>
+
+Used as a category to identify the type of self test being run.
+It includes the following string values:
+
+=over 4
+
+=item "Module_Integrity" (B<OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY>)
+
+Uses HMAC SHA256 on the module file to validate that the module has not been
+modified. The integrity value is compared to a value written to a configuration
+file during installation.
+
+=item "Install_Integrity" (B<OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY>)
+
+Uses HMAC SHA256 on a fixed string to validate that the installation process
+has already been performed and the self test KATS have already been tested,
+The integrity value is compared to a value written to a configuration
+file after successfully running the self tests during installation.
+
+=item "KAT_Cipher" (B<OSSL_SELF_TEST_TYPE_KAT_CIPHER>)
+
+Known answer test for a symmetric cipher.
+
+=item "KAT_Digest" (B<OSSL_SELF_TEST_TYPE_KAT_DIGEST>)
+
+Known answer test for a digest.
+
+=item "KAT_Signature" (B<OSSL_SELF_TEST_TYPE_KAT_SIGNATURE>)
+
+Known answer test for a signature.
+
+=item "KAT_KDF" (B<OSSL_SELF_TEST_TYPE_KAT_KDF>)
+
+Known answer test for a key derivation function.
+
+=item "KAT_KA" (B<OSSL_SELF_TEST_TYPE_KAT_KA>)
+
+Known answer test for key agreement.
+
+=item "DRBG" (B<OSSL_SELF_TEST_TYPE_DRBG>)
+
+Known answer test for a Deterministic Random Bit Generator.
+
+=item "Pairwise_Consistency_Test" (B<OSSL_SELF_TEST_TYPE_PCT>)
+
+Conditional test that is run during the generation of key pairs.
+
+=back
+
+The "Module_Integrity" self test is always run at startup.
+The "Install_Integrity" self test is used to check if the self tests have
+already been run at installation time. If they have already run then the
+self tests are not run on subsequent startups.
+All other self test categories are run once at installation time, except for the
+"Pairwise_Consistency_Test".
+
+There is only one instance of the "Module_Integrity" and "Install_Integrity"
+self tests. All other self tests may have multiple instances.
+
+=item "st-desc" (B<OSSL_PROV_PARAM_SELF_TEST_DESC>) <UTF8 string>
+
+Used as a sub category to identify an individual self test.
+The following description strings are used.
+
+=over 4
+
+=item "HMAC" (B<OSSL_SELF_TEST_DESC_INTEGRITY_HMAC>)
+
+"Module_Integrity" and "Install_Integrity" use this.
+
+=item "RSA" (B<OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1>)
+
+=item "ECDSA" (B<OSSL_SELF_TEST_DESC_PCT_ECDSA>)
+
+=item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
+
+Key generation tests used with the "Pairwise_Consistency_Test" type.
+
+=item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
+
+=item "TDES" (B<OSSL_SELF_TEST_DESC_CIPHER_TDES>)
+
+Symmetric cipher tests used with the "KAT_Cipher" type.
+
+=item "SHA1" (B<OSSL_SELF_TEST_DESC_MD_SHA1>)
+
+=item "SHA2" (B<OSSL_SELF_TEST_DESC_MD_SHA2>)
+
+=item "SHA3" (B<OSSL_SELF_TEST_DESC_MD_SHA3>)
+
+Digest tests used with the "KAT_Digest" type.
+
+=item "DSA" (B<OSSL_SELF_TEST_DESC_SIGN_DSA>)
+
+=item "RSA" (B<OSSL_SELF_TEST_DESC_SIGN_RSA>)
+
+=item "ECDSA" (B<OSSL_SELF_TEST_DESC_SIGN_ECDSA>)
+
+Signature tests used with the "KAT_Signature" type.
+
+=item "ECDH" (B<OSSL_SELF_TEST_DESC_KA_ECDH>)
+
+=item "ECDSA" (B<OSSL_SELF_TEST_DESC_KA_ECDSA>)
+
+Key agreement tests used with the "KAT_KA" type.
+
+=item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
+
+Key Derivation Function tests used with the "KAT_KDF" type.
+
+=item "CTR" (B<OSSL_SELF_TEST_DESC_DRBG_CTR>)
+
+=item "HASH" (B<OSSL_SELF_TEST_DESC_DRBG_HASH>)
+
+=item "HMAC" (B<OSSL_SELF_TEST_DESC_DRBG_HMAC>)
+
+DRBG tests used with the "DRBG" type.
+
+=back
+
+=back
+
+=head1 EXAMPLES
+
+A simple self test callback is shown below for illustrative purposes.
+
+  #include <openssl/self_test.h>
+
+  static OSSL_CALLBACK self_test_cb;
+
+  static int self_test_cb(const OSSL_PARAM params[], void *arg)
+  {
+    int ret = 0;
+    const OSSL_PARAM *p = NULL;
+    const char *phase = NULL, *type = NULL, *desc = NULL;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    phase = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_DESC);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    desc = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    type = (const char *)p->data;
+
+    /* Do some logging */
+    if (strcmp(phase, OSSL_SELF_TEST_PHASE_START) == 0)
+        BIO_printf(bio_out, "%s : (%s) : ", desc, type);
+    if (strcmp(phase, OSSL_SELF_TEST_PHASE_PASS) == 0
+            || strcmp(phase, OSSL_SELF_TEST_PHASE_FAIL) == 0)
+        BIO_printf(bio_out, "%s\n", phase);
+
+    /* Corrupt the SHA1 self test during the 'corrupt' phase by returning 0 */
+    if (strcmp(phase, OSSL_SELF_TEST_PHASE_CORRUPT) == 0
+            && strcmp(desc, OSSL_SELF_TEST_DESC_MD_SHA1) == 0) {
+        BIO_printf(bio_out, "%s %s", phase, desc);
+        return 0;
+    }
+    ret = 1;
+  err:
+    return ret;
+  }
+
+=head1 SEE ALSO
+
+L<openssl-fipsinstall(1)>,
+L<fips_config(5)>,
+L<OSSL_SELF_TEST_set_callback(3)>,
+L<OSSL_PARAM(3)>,
+L<openssl-core.h(7)>
+
+=head1 HISTORY
+
+The type and functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

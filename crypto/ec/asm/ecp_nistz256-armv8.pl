@@ -725,7 +725,7 @@ $code.=<<___;
 .align	5
 ecp_nistz256_point_double:
 	.inst	0xd503233f		// paciasp
-	stp	x29,x30,[sp,#-80]!
+	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
@@ -858,7 +858,7 @@ ecp_nistz256_point_double:
 	add	sp,x29,#0		// destroy frame
 	ldp	x19,x20,[x29,#16]
 	ldp	x21,x22,[x29,#32]
-	ldp	x29,x30,[sp],#80
+	ldp	x29,x30,[sp],#96
 	.inst	0xd50323bf		// autiasp
 	ret
 .size	ecp_nistz256_point_double,.-ecp_nistz256_point_double
@@ -875,7 +875,7 @@ my ($res_x,$res_y,$res_z,
 my ($Z1sqr, $Z2sqr) = ($Hsqr, $Rsqr);
 # above map() describes stack layout with 12 temporary
 # 256-bit vectors on top.
-my ($rp_real,$ap_real,$bp_real,$in1infty,$in2infty,$temp)=map("x$_",(21..26));
+my ($rp_real,$ap_real,$bp_real,$in1infty,$in2infty,$temp0,$temp1,$temp2)=map("x$_",(21..28));
 
 $code.=<<___;
 .globl	ecp_nistz256_point_add
@@ -883,12 +883,13 @@ $code.=<<___;
 .align	5
 ecp_nistz256_point_add:
 	.inst	0xd503233f		// paciasp
-	stp	x29,x30,[sp,#-80]!
+	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
 	stp	x21,x22,[sp,#32]
 	stp	x23,x24,[sp,#48]
 	stp	x25,x26,[sp,#64]
+	stp	x27,x28,[sp,#80]
 	sub	sp,sp,#32*12
 
 	ldp	$a0,$a1,[$bp,#64]	// in2_z
@@ -902,7 +903,7 @@ ecp_nistz256_point_add:
 	orr	$t2,$a2,$a3
 	orr	$in2infty,$t0,$t2
 	cmp	$in2infty,#0
-	csetm	$in2infty,ne		// !in2infty
+	csetm	$in2infty,ne		// ~in2infty
 	add	$rp,sp,#$Z2sqr
 	bl	__ecp_nistz256_sqr_mont	// p256_sqr_mont(Z2sqr, in2_z);
 
@@ -912,7 +913,7 @@ ecp_nistz256_point_add:
 	orr	$t2,$a2,$a3
 	orr	$in1infty,$t0,$t2
 	cmp	$in1infty,#0
-	csetm	$in1infty,ne		// !in1infty
+	csetm	$in1infty,ne		// ~in1infty
 	add	$rp,sp,#$Z1sqr
 	bl	__ecp_nistz256_sqr_mont	// p256_sqr_mont(Z1sqr, in1_z);
 
@@ -953,7 +954,7 @@ ecp_nistz256_point_add:
 
 	orr	$acc0,$acc0,$acc1	// see if result is zero
 	orr	$acc2,$acc2,$acc3
-	orr	$temp,$acc0,$acc2
+	orr	$temp0,$acc0,$acc2	// ~is_equal(S1,S2)
 
 	add	$bp,sp,#$Z2sqr
 	add	$rp,sp,#$U1
@@ -974,32 +975,21 @@ ecp_nistz256_point_add:
 
 	orr	$acc0,$acc0,$acc1	// see if result is zero
 	orr	$acc2,$acc2,$acc3
-	orr	$acc0,$acc0,$acc2
-	tst	$acc0,$acc0
-	b.ne	.Ladd_proceed		// is_equal(U1,U2)?
+	orr	$acc0,$acc0,$acc2	// ~is_equal(U1,U2)
 
-	tst	$in1infty,$in2infty
-	b.eq	.Ladd_proceed		// (in1infty || in2infty)?
+	mvn	$temp1,$in1infty	// -1/0 -> 0/-1
+	mvn	$temp2,$in2infty	// -1/0 -> 0/-1
+	orr	$acc0,$acc0,$temp1
+	orr	$acc0,$acc0,$temp2
+	orr	$acc0,$acc0,$temp0
+	cbnz	$acc0,.Ladd_proceed	// if(~is_equal(U1,U2) | in1infty | in2infty | ~is_equal(S1,S2))
 
-	tst	$temp,$temp
-	b.eq	.Ladd_double		// is_equal(S1,S2)?
-
-	eor	$a0,$a0,$a0
-	eor	$a1,$a1,$a1
-	stp	$a0,$a1,[$rp_real]
-	stp	$a0,$a1,[$rp_real,#16]
-	stp	$a0,$a1,[$rp_real,#32]
-	stp	$a0,$a1,[$rp_real,#48]
-	stp	$a0,$a1,[$rp_real,#64]
-	stp	$a0,$a1,[$rp_real,#80]
-	b	.Ladd_done
-
-.align	4
 .Ladd_double:
 	mov	$ap,$ap_real
 	mov	$rp,$rp_real
 	ldp	x23,x24,[x29,#48]
 	ldp	x25,x26,[x29,#64]
+	ldp	x27,x28,[x29,#80]
 	add	sp,sp,#32*(12-4)	// difference in stack frames
 	b	.Ldouble_shortcut
 
@@ -1084,14 +1074,14 @@ ___
 for($i=0;$i<64;$i+=32) {		# conditional moves
 $code.=<<___;
 	ldp	$acc0,$acc1,[$ap_real,#$i]	// in1
-	cmp	$in1infty,#0			// !$in1intfy, remember?
+	cmp	$in1infty,#0			// ~$in1intfy, remember?
 	ldp	$acc2,$acc3,[$ap_real,#$i+16]
 	csel	$t0,$a0,$t0,ne
 	csel	$t1,$a1,$t1,ne
 	ldp	$a0,$a1,[sp,#$res_x+$i+32]	// res
 	csel	$t2,$a2,$t2,ne
 	csel	$t3,$a3,$t3,ne
-	cmp	$in2infty,#0			// !$in2intfy, remember?
+	cmp	$in2infty,#0			// ~$in2intfy, remember?
 	ldp	$a2,$a3,[sp,#$res_x+$i+48]
 	csel	$acc0,$t0,$acc0,ne
 	csel	$acc1,$t1,$acc1,ne
@@ -1105,13 +1095,13 @@ ___
 }
 $code.=<<___;
 	ldp	$acc0,$acc1,[$ap_real,#$i]	// in1
-	cmp	$in1infty,#0			// !$in1intfy, remember?
+	cmp	$in1infty,#0			// ~$in1intfy, remember?
 	ldp	$acc2,$acc3,[$ap_real,#$i+16]
 	csel	$t0,$a0,$t0,ne
 	csel	$t1,$a1,$t1,ne
 	csel	$t2,$a2,$t2,ne
 	csel	$t3,$a3,$t3,ne
-	cmp	$in2infty,#0			// !$in2intfy, remember?
+	cmp	$in2infty,#0			// ~$in2intfy, remember?
 	csel	$acc0,$t0,$acc0,ne
 	csel	$acc1,$t1,$acc1,ne
 	csel	$acc2,$t2,$acc2,ne
@@ -1125,7 +1115,8 @@ $code.=<<___;
 	ldp	x21,x22,[x29,#32]
 	ldp	x23,x24,[x29,#48]
 	ldp	x25,x26,[x29,#64]
-	ldp	x29,x30,[sp],#80
+	ldp	x27,x28,[x29,#80]
+	ldp	x29,x30,[sp],#96
 	.inst	0xd50323bf		// autiasp
 	ret
 .size	ecp_nistz256_point_add,.-ecp_nistz256_point_add
@@ -1169,7 +1160,7 @@ ecp_nistz256_point_add_affine:
 	orr	$t2,$a2,$a3
 	orr	$in1infty,$t0,$t2
 	cmp	$in1infty,#0
-	csetm	$in1infty,ne		// !in1infty
+	csetm	$in1infty,ne		// ~in1infty
 
 	ldp	$acc0,$acc1,[$bp]	// in2_x
 	ldp	$acc2,$acc3,[$bp,#16]
@@ -1183,7 +1174,7 @@ ecp_nistz256_point_add_affine:
 	orr	$t0,$t0,$t2
 	orr	$in2infty,$acc0,$t0
 	cmp	$in2infty,#0
-	csetm	$in2infty,ne		// !in2infty
+	csetm	$in2infty,ne		// ~in2infty
 
 	add	$rp,sp,#$Z1sqr
 	bl	__ecp_nistz256_sqr_mont	// p256_sqr_mont(Z1sqr, in1_z);
@@ -1293,14 +1284,14 @@ ___
 for($i=0;$i<64;$i+=32) {		# conditional moves
 $code.=<<___;
 	ldp	$acc0,$acc1,[$ap_real,#$i]	// in1
-	cmp	$in1infty,#0			// !$in1intfy, remember?
+	cmp	$in1infty,#0			// ~$in1intfy, remember?
 	ldp	$acc2,$acc3,[$ap_real,#$i+16]
 	csel	$t0,$a0,$t0,ne
 	csel	$t1,$a1,$t1,ne
 	ldp	$a0,$a1,[sp,#$res_x+$i+32]	// res
 	csel	$t2,$a2,$t2,ne
 	csel	$t3,$a3,$t3,ne
-	cmp	$in2infty,#0			// !$in2intfy, remember?
+	cmp	$in2infty,#0			// ~$in2intfy, remember?
 	ldp	$a2,$a3,[sp,#$res_x+$i+48]
 	csel	$acc0,$t0,$acc0,ne
 	csel	$acc1,$t1,$acc1,ne
@@ -1317,13 +1308,13 @@ ___
 }
 $code.=<<___;
 	ldp	$acc0,$acc1,[$ap_real,#$i]	// in1
-	cmp	$in1infty,#0			// !$in1intfy, remember?
+	cmp	$in1infty,#0			// ~$in1intfy, remember?
 	ldp	$acc2,$acc3,[$ap_real,#$i+16]
 	csel	$t0,$a0,$t0,ne
 	csel	$t1,$a1,$t1,ne
 	csel	$t2,$a2,$t2,ne
 	csel	$t3,$a3,$t3,ne
-	cmp	$in2infty,#0			// !$in2intfy, remember?
+	cmp	$in2infty,#0			// ~$in2intfy, remember?
 	csel	$acc0,$t0,$acc0,ne
 	csel	$acc1,$t1,$acc1,ne
 	csel	$acc2,$t2,$acc2,ne
@@ -1883,4 +1874,4 @@ foreach (split("\n",$code)) {
 
 	print $_,"\n";
 }
-close STDOUT;	# enforce flush
+close STDOUT or die "error closing STDOUT: $!";	# enforce flush

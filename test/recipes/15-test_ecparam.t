@@ -23,20 +23,34 @@ plan skip_all => "EC isn't supported in this build"
 my @valid = glob(data_file("valid", "*.pem"));
 my @invalid = glob(data_file("invalid", "*.pem"));
 
-plan tests => scalar @valid + scalar @invalid + scalar @valid + scalar @invalid;
+my $num_tests = scalar @valid + scalar @invalid;
+plan tests => 3 * $num_tests;
 
-foreach (@valid) {
-    ok(run(app([qw{openssl ecparam -noout -check -in}, $_])));
+ SKIP: {
+    skip "Skipping EC tests", 2 * $num_tests
+        if disabled('deprecated-3.0');
+
+    foreach (@valid) {
+        ok(run(app([qw{openssl ecparam -noout -check -in}, $_])));
+    }
+
+    foreach (@valid) {
+        ok(run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
+    }
+
+    foreach (@invalid) {
+        ok(!run(app([qw{openssl ecparam -noout -check -in}, $_])));
+    }
+
+    foreach (@invalid) {
+        ok(!run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
+    }
 }
 
 foreach (@valid) {
-    ok(run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
+    ok(run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
 }
 
 foreach (@invalid) {
-    ok(!run(app([qw{openssl ecparam -noout -check -in}, $_])));
-}
-
-foreach (@invalid) {
-    ok(!run(app([qw{openssl ecparam -noout -check_named -in}, $_])));
+    ok(!run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
 }

@@ -89,9 +89,6 @@ sub tconversion {
 	  }
       }
     }
-    unlink glob "$testtype-f.*";
-    unlink glob "$testtype-ff.*";
-    unlink glob "$testtype-fff.*";
 }
 
 sub cmp_text {

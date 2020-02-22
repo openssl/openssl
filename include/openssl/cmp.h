@@ -18,6 +18,7 @@
 #  include <openssl/crmf.h>
 #  include <openssl/cmperr.h>
 #  include <openssl/cmp_util.h>
+#  include <openssl/http.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #  include <openssl/types.h>
@@ -25,7 +26,7 @@
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 
-#  ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C" {
 #  endif
 
@@ -127,9 +128,9 @@ extern "C" {
 #  define OSSL_CMP_PKIFAILUREINFO_duplicateCertReq 26
 #  define OSSL_CMP_PKIFAILUREINFO_MAX 26
 #  define OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN \
-    ( (1<<(OSSL_CMP_PKIFAILUREINFO_MAX+1)) - 1)
+    ((1 << (OSSL_CMP_PKIFAILUREINFO_MAX + 1)) - 1)
 #  if OSSL_CMP_PKIFAILUREINFO_MAX_BIT_PATTERN > INT_MAX
-#   error  CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
+#   error CMP_PKIFAILUREINFO_MAX bit pattern does not fit in type int
 #  endif
 
 typedef ASN1_BIT_STRING OSSL_CMP_PKIFAILUREINFO;
@@ -264,7 +265,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
 int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 /* CMP-specific callback for logging and outputting the error queue: */
 int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb);
-#define OSSL_CMP_CTX_set_log_verbosity(ctx, level) \
+#  define OSSL_CMP_CTX_set_log_verbosity(ctx, level) \
     OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_LOG_VERBOSITY, level)
 void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx);
 /* message transfer: */
@@ -274,14 +275,11 @@ int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port);
 int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name);
 int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port);
 #  define OSSL_CMP_DEFAULT_PORT 80
-typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio,
-                                    unsigned long detail);
-int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb);
+int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_HTTP_bio_cb_t cb);
 int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx);
-typedef int (*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
-                                       const OSSL_CMP_MSG *req,
-                                       OSSL_CMP_MSG **res);
+typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
+                                                 const OSSL_CMP_MSG *req);
 int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_transfer_cb_t cb);
 int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_transfer_cb_arg(const OSSL_CMP_CTX *ctx);
@@ -337,8 +335,26 @@ int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
 int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
                                   const ASN1_OCTET_STRING *nonce);
 
-#   ifdef  __cplusplus
+/* from cmp_status.c */
+char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
+                                     size_t bufsize);
+
+/* from cmp_hdr.c */
+/* support application-level CMP debugging in cmp.c: */
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_PKIHEADER *hdr);
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr);
+
+/* from cmp_msg.c */
+/* support application-level CMP debugging in cmp.c: */
+OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
+
+/* from cmp_vfy.c */
+int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg);
+int OSSL_CMP_validate_cert_path(OSSL_CMP_CTX *ctx,
+                                X509_STORE *trusted_store, X509 *cert);
+
+#  ifdef  __cplusplus
 }
-#   endif
+#  endif
 # endif /* !defined OPENSSL_NO_CMP */
 #endif /* !defined OPENSSL_CMP_H */

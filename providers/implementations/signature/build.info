@@ -2,9 +2,12 @@
 # switch each to the Legacy provider when needed.
 
 $DSA_GOAL=../../libimplementations.a
+$RSA_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa.c
 ENDIF
+
+SOURCE[$RSA_GOAL]=rsa.c
 
 

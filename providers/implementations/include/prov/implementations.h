@@ -35,6 +35,7 @@ extern const OSSL_DISPATCH wp_functions[];
 extern const OSSL_DISPATCH ripemd160_functions[];
 
 /* Ciphers */
+extern const OSSL_DISPATCH null_functions[];
 extern const OSSL_DISPATCH aes256ecb_functions[];
 extern const OSSL_DISPATCH aes192ecb_functions[];
 extern const OSSL_DISPATCH aes128ecb_functions[];
@@ -75,6 +76,10 @@ extern const OSSL_DISPATCH aes128wrap_functions[];
 extern const OSSL_DISPATCH aes256wrappad_functions[];
 extern const OSSL_DISPATCH aes192wrappad_functions[];
 extern const OSSL_DISPATCH aes128wrappad_functions[];
+extern const OSSL_DISPATCH aes256cbc_hmac_sha1_functions[];
+extern const OSSL_DISPATCH aes128cbc_hmac_sha1_functions[];
+extern const OSSL_DISPATCH aes256cbc_hmac_sha256_functions[];
+extern const OSSL_DISPATCH aes128cbc_hmac_sha256_functions[];
 
 #ifndef OPENSSL_NO_ARIA
 extern const OSSL_DISPATCH aria256gcm_functions[];
@@ -202,7 +207,23 @@ extern const OSSL_DISPATCH des_cfb8_functions[];
 #ifndef OPENSSL_NO_RC4
 extern const OSSL_DISPATCH rc440_functions[];
 extern const OSSL_DISPATCH rc4128_functions[];
+# ifndef OPENSSL_NO_MD5
+extern const OSSL_DISPATCH rc4_hmac_md5_functions[];
+# endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
+#ifndef OPENSSL_NO_CHACHA
+extern const OSSL_DISPATCH chacha20_functions[];
+# ifndef OPENSSL_NO_POLY1305
+extern const OSSL_DISPATCH chacha20_poly1305_functions[];
+# endif /* OPENSSL_NO_POLY1305 */
+#endif /* OPENSSL_NO_CHACHA */
+
+
+#ifndef OPENSSL_NO_SIV
+extern const OSSL_DISPATCH aes128siv_functions[];
+extern const OSSL_DISPATCH aes192siv_functions[];
+extern const OSSL_DISPATCH aes256siv_functions[];
+#endif /* OPENSSL_NO_SIV */
 
 /* MACs */
 extern const OSSL_DISPATCH blake2bmac_functions[];
@@ -229,14 +250,52 @@ extern const OSSL_DISPATCH kdf_kbkdf_functions[];
 #ifndef OPENSSL_NO_CMS
 extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
 #endif
+extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 extern const OSSL_DISPATCH dsa_keymgmt_functions[];
+extern const OSSL_DISPATCH rsa_keymgmt_functions[];
+extern const OSSL_DISPATCH x25519_keymgmt_functions[];
+extern const OSSL_DISPATCH x448_keymgmt_functions[];
+extern const OSSL_DISPATCH ec_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];
+extern const OSSL_DISPATCH x25519_keyexch_functions[];
+extern const OSSL_DISPATCH x448_keyexch_functions[];
+extern const OSSL_DISPATCH ecdh_keyexch_functions[];
 
 /* Signature */
 extern const OSSL_DISPATCH dsa_signature_functions[];
+extern const OSSL_DISPATCH rsa_signature_functions[];
+
+/* Asym Cipher */
+extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
+
+/* Serializers */
+extern const OSSL_DISPATCH rsa_priv_text_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_text_serializer_functions[];
+extern const OSSL_DISPATCH rsa_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH rsa_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH rsa_pub_pem_serializer_functions[];
+extern const OSSL_DISPATCH dh_priv_text_serializer_functions[];
+extern const OSSL_DISPATCH dh_pub_text_serializer_functions[];
+extern const OSSL_DISPATCH dh_param_text_serializer_functions[];
+extern const OSSL_DISPATCH dh_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH dh_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH dh_param_der_serializer_functions[];
+extern const OSSL_DISPATCH dh_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH dh_pub_pem_serializer_functions[];
+extern const OSSL_DISPATCH dh_param_pem_serializer_functions[];
+extern const OSSL_DISPATCH dsa_priv_text_serializer_functions[];
+extern const OSSL_DISPATCH dsa_pub_text_serializer_functions[];
+extern const OSSL_DISPATCH dsa_param_text_serializer_functions[];
+extern const OSSL_DISPATCH dsa_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH dsa_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH dsa_param_der_serializer_functions[];
+extern const OSSL_DISPATCH dsa_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH dsa_pub_pem_serializer_functions[];
+extern const OSSL_DISPATCH dsa_param_pem_serializer_functions[];

@@ -26,9 +26,10 @@
 #include <openssl/x509v3.h>
 
 #define MAX_OPT_HELP_WIDTH 30
-const char OPT_HELP_STR[] = "--";
-const char OPT_MORE_STR[] = "---";
-const char OPT_SECTION_STR[] = "----";
+const char OPT_HELP_STR[] = "-H";
+const char OPT_MORE_STR[] = "-M";
+const char OPT_SECTION_STR[] = "-S";
+const char OPT_PARAM_STR[] = "-P";
 
 /* Our state */
 static char **argv;
@@ -128,14 +129,16 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     opt_progname(av[0]);
     unknown = NULL;
 
-    for (; o->name; ++o) {
+    /* Check all options up until the PARAM marker (if present) */
+    for (; o->name != NULL && o->name != OPT_PARAM_STR; ++o) {
 #ifndef NDEBUG
         const OPTIONS *next;
         int duplicated, i;
 #endif
 
-        if (o->name == OPT_HELP_STR || o->name == OPT_MORE_STR ||
-            o->name == OPT_SECTION_STR)
+        if (o->name == OPT_HELP_STR
+                || o->name == OPT_MORE_STR
+                || o->name == OPT_SECTION_STR)
             continue;
 #ifndef NDEBUG
         i = o->valtype;
@@ -146,7 +149,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c':
+        case 'u': case 'c': case ':':
             break;
         default:
             OPENSSL_assert(0);
@@ -285,7 +288,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
     return 0;
 }
 
@@ -297,7 +300,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    opt_printf_stderr("%s: Unrecognized flag %s\n", prog, name);
+    opt_printf_stderr("%s: Unknown message digest: %s\n", prog, name);
     return 0;
 }
 
@@ -686,6 +689,7 @@ int opt_next(void)
         switch (o->valtype) {
         default:
         case 's':
+        case ':':
             /* Just a string. */
             break;
         case '/':
@@ -758,7 +762,7 @@ int opt_next(void)
         dunno = p;
         return unknown->retval;
     }
-    opt_printf_stderr("%s: Option unknown option -%s\n", prog, p);
+    opt_printf_stderr("%s: Unknown option: -%s\n", prog, p);
     return -1;
 }
 
@@ -804,6 +808,8 @@ static const char *valtype2param(const OPTIONS *o)
     case 0:
     case '-':
         return "";
+    case ':':
+        return "uri";
     case 's':
         return "val";
     case '/':
@@ -834,15 +840,24 @@ static const char *valtype2param(const OPTIONS *o)
     return "parm";
 }
 
-void opt_print(const OPTIONS *o, int width)
+void opt_print(const OPTIONS *o, int doingparams, int width)
 {
     const char* help;
     char start[80 + 1];
     char *p;
 
         help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR || o->name == OPT_SECTION_STR) {
+        if (o->name == OPT_HELP_STR) {
             opt_printf_stderr(help, prog);
+            return;
+        }
+        if (o->name == OPT_SECTION_STR) {
+            opt_printf_stderr("\n");
+            opt_printf_stderr(help, prog);
+            return;
+        }
+        if (o->name == OPT_PARAM_STR) {
+            opt_printf_stderr("\nParameters:\n");
             return;
         }
 
@@ -860,7 +875,8 @@ void opt_print(const OPTIONS *o, int width)
         /* Build up the "-flag [param]" part. */
         p = start;
         *p++ = ' ';
-        *p++ = '-';
+        if (!doingparams)
+            *p++ = '-';
         if (o->name[0])
             p += strlen(strcpy(p, o->name));
         else
@@ -882,9 +898,8 @@ void opt_print(const OPTIONS *o, int width)
 void opt_help(const OPTIONS *list)
 {
     const OPTIONS *o;
-    int i;
+    int i, sawparams = 0, width = 5;
     int standard_prolog;
-    int width = 5;
     char start[80 + 1];
 
     /* Starts with its own help message? */
@@ -910,7 +925,9 @@ void opt_help(const OPTIONS *list)
 
     /* Now let's print. */
     for (o = list; o->name; o++) {
-        opt_print(o, width);
+        if (o->name == OPT_PARAM_STR)
+            sawparams = 1;
+        opt_print(o, sawparams, width);
     }
 }
 

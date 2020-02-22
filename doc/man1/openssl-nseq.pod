@@ -19,6 +19,11 @@ sequence and prints out the certificates contained in it or takes a
 file of certificates and converts it into a Netscape certificate
 sequence.
 
+A Netscape certificate sequence is an old Netscape-specific format that
+can be sometimes be sent to browsers as an alternative to the standard PKCS#7
+format when several certificates are sent to the browser, for example during
+certificate enrollment.  It was also used by Netscape certificate server.
+
 =head1 OPTIONS
 
 =over 4
@@ -54,23 +59,6 @@ Output the certificates in a Netscape certificate sequence
 Create a Netscape certificate sequence
 
  openssl nseq -in certs.pem -toseq -out nseq.pem
-
-=head1 NOTES
-
-The B<PEM> encoded form uses the same headers and footers as a certificate:
-
- -----BEGIN CERTIFICATE-----
- -----END CERTIFICATE-----
-
-A Netscape certificate sequence is a Netscape specific format that can be sent
-to browsers as an alternative to the standard PKCS#7 format when several
-certificates are sent to the browser: for example during certificate enrollment.
-It is used by Netscape certificate server for example.
-
-=head1 BUGS
-
-This program needs a few more options: like allowing DER or PEM input and
-output files and allowing multiple certificate files to be used.
 
 =head1 COPYRIGHT
 

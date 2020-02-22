@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_ECERR_H
 # endif
 
@@ -33,7 +33,7 @@ int ERR_load_EC_strings(void);
 /*
  * EC function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define EC_F_BN_TO_FELEM                                 0
 #   define EC_F_D2I_ECPARAMETERS                            0
 #   define EC_F_D2I_ECPKPARAMETERS                          0

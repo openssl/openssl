@@ -1,0 +1,113 @@
+
+# Keep this in sync with .gitignore!
+DEPEND[]= \
+         openssl-ca.pod \
+         openssl-cms.pod \
+         openssl-crl.pod \
+         openssl-dgst.pod \
+         openssl-dhparam.pod \
+         openssl-dsa.pod \
+         openssl-dsaparam.pod \
+         openssl-ec.pod \
+         openssl-ecparam.pod \
+         openssl-enc.pod \
+         openssl-gendsa.pod \
+         openssl-genpkey.pod \
+         openssl-genrsa.pod \
+         openssl-ocsp.pod \
+         openssl-passwd.pod \
+         openssl-pkcs12.pod \
+         openssl-pkcs7.pod \
+         openssl-pkcs8.pod \
+         openssl-pkey.pod \
+         openssl-pkeyparam.pod \
+         openssl-pkeyutl.pod \
+         openssl-rand.pod \
+         openssl-req.pod \
+         openssl-rsa.pod \
+         openssl-rsautl.pod \
+         openssl-s_client.pod \
+         openssl-s_server.pod \
+         openssl-s_time.pod \
+         openssl-smime.pod \
+         openssl-speed.pod \
+         openssl-spkac.pod \
+         openssl-srp.pod \
+         openssl-storeutl.pod \
+         openssl-ts.pod \
+         openssl-verify.pod \
+         openssl-x509.pod
+
+DEPEND[openssl-ca.pod]=../perlvars.pm
+DEPEND[openssl-cms.pod]=../perlvars.pm
+DEPEND[openssl-crl.pod]=../perlvars.pm
+DEPEND[openssl-dgst.pod]=../perlvars.pm
+DEPEND[openssl-dhparam.pod]=../perlvars.pm
+DEPEND[openssl-dsa.pod]=../perlvars.pm
+DEPEND[openssl-dsaparam.pod]=../perlvars.pm
+DEPEND[openssl-ec.pod]=../perlvars.pm
+DEPEND[openssl-ecparam.pod]=../perlvars.pm
+DEPEND[openssl-enc.pod]=../perlvars.pm
+DEPEND[openssl-gendsa.pod]=../perlvars.pm
+DEPEND[openssl-genpkey.pod]=../perlvars.pm
+DEPEND[openssl-genrsa.pod]=../perlvars.pm
+DEPEND[openssl-ocsp.pod]=../perlvars.pm
+DEPEND[openssl-passwd.pod]=../perlvars.pm
+DEPEND[openssl-pkcs12.pod]=../perlvars.pm
+DEPEND[openssl-pkcs7.pod]=../perlvars.pm
+DEPEND[openssl-pkcs8.pod]=../perlvars.pm
+DEPEND[openssl-pkey.pod]=../perlvars.pm
+DEPEND[openssl-pkeyparam.pod]=../perlvars.pm
+DEPEND[openssl-pkeyutl.pod]=../perlvars.pm
+DEPEND[openssl-rand.pod]=../perlvars.pm
+DEPEND[openssl-req.pod]=../perlvars.pm
+DEPEND[openssl-rsa.pod]=../perlvars.pm
+DEPEND[openssl-rsautl.pod]=../perlvars.pm
+DEPEND[openssl-s_client.pod]=../perlvars.pm
+DEPEND[openssl-s_server.pod]=../perlvars.pm
+DEPEND[openssl-s_time.pod]=../perlvars.pm
+DEPEND[openssl-smime.pod]=../perlvars.pm
+DEPEND[openssl-speed.pod]=../perlvars.pm
+DEPEND[openssl-spkac.pod]=../perlvars.pm
+DEPEND[openssl-srp.pod]=../perlvars.pm
+DEPEND[openssl-storeutl.pod]=../perlvars.pm
+DEPEND[openssl-ts.pod]=../perlvars.pm
+DEPEND[openssl-verify.pod]=../perlvars.pm
+DEPEND[openssl-x509.pod]=../perlvars.pm
+
+GENERATE[openssl-ca.pod]=openssl-ca.pod.in
+GENERATE[openssl-cms.pod]=openssl-cms.pod.in
+GENERATE[openssl-crl.pod]=openssl-crl.pod.in
+GENERATE[openssl-dgst.pod]=openssl-dgst.pod.in
+GENERATE[openssl-dhparam.pod]=openssl-dhparam.pod.in
+GENERATE[openssl-dsa.pod]=openssl-dsa.pod.in
+GENERATE[openssl-dsaparam.pod]=openssl-dsaparam.pod.in
+GENERATE[openssl-ec.pod]=openssl-ec.pod.in
+GENERATE[openssl-ecparam.pod]=openssl-ecparam.pod.in
+GENERATE[openssl-enc.pod]=openssl-enc.pod.in
+GENERATE[openssl-gendsa.pod]=openssl-gendsa.pod.in
+GENERATE[openssl-genpkey.pod]=openssl-genpkey.pod.in
+GENERATE[openssl-genrsa.pod]=openssl-genrsa.pod.in
+GENERATE[openssl-ocsp.pod]=openssl-ocsp.pod.in
+GENERATE[openssl-passwd.pod]=openssl-passwd.pod.in
+GENERATE[openssl-pkcs12.pod]=openssl-pkcs12.pod.in
+GENERATE[openssl-pkcs7.pod]=openssl-pkcs7.pod.in
+GENERATE[openssl-pkcs8.pod]=openssl-pkcs8.pod.in
+GENERATE[openssl-pkey.pod]=openssl-pkey.pod.in
+GENERATE[openssl-pkeyparam.pod]=openssl-pkeyparam.pod.in
+GENERATE[openssl-pkeyutl.pod]=openssl-pkeyutl.pod.in
+GENERATE[openssl-rand.pod]=openssl-rand.pod.in
+GENERATE[openssl-req.pod]=openssl-req.pod.in
+GENERATE[openssl-rsa.pod]=openssl-rsa.pod.in
+GENERATE[openssl-rsautl.pod]=openssl-rsautl.pod.in
+GENERATE[openssl-s_client.pod]=openssl-s_client.pod.in
+GENERATE[openssl-s_server.pod]=openssl-s_server.pod.in
+GENERATE[openssl-s_time.pod]=openssl-s_time.pod.in
+GENERATE[openssl-smime.pod]=openssl-smime.pod.in
+GENERATE[openssl-speed.pod]=openssl-speed.pod.in
+GENERATE[openssl-spkac.pod]=openssl-spkac.pod.in
+GENERATE[openssl-srp.pod]=openssl-srp.pod.in
+GENERATE[openssl-storeutl.pod]=openssl-storeutl.pod.in
+GENERATE[openssl-ts.pod]=openssl-ts.pod.in
+GENERATE[openssl-verify.pod]=openssl-verify.pod.in
+GENERATE[openssl-x509.pod]=openssl-x509.pod.in

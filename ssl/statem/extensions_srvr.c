@@ -127,6 +127,10 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
+    /*
+     * In TLSv1.2 and below the SNI is associated with the session. In TLSv1.3
+     * we always use the SNI value from the handshake.
+     */
     if (!s->hit || SSL_IS_TLS13(s)) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME,
@@ -155,8 +159,12 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         }
 
         s->servername_done = 1;
-    }
-    if (s->hit) {
+    } else {
+        /*
+         * In TLSv1.2 and below we should check if the SNI is consistent between
+         * the initial handshake and the resumption. In TLSv1.3 SNI is not
+         * associated with the session.
+         */
         /*
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.
@@ -164,9 +172,6 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
-
-        if (!s->servername_done && s->session->ext.hostname != NULL)
-            s->ext.early_data_ok = 0;
     }
 
     return 1;
@@ -700,7 +705,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
-        if ((s->s3.peer_tmp = ssl_generate_param_group(group_id)) == NULL) {
+        if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;
@@ -1233,8 +1238,9 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             }
         }
 
-        md = ssl_md(sess->cipher->algorithm2);
-        if (md != ssl_md(s->s3.tmp.new_cipher->algorithm2)) {
+        md = ssl_md(s->ctx, sess->cipher->algorithm2);
+        if (!EVP_MD_is_a(md,
+                EVP_MD_name(ssl_md(s->ctx, s->s3.tmp.new_cipher->algorithm2)))) {
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
@@ -1333,8 +1339,14 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx)
 {
-    if (s->hit || s->servername_done != 1
-            || s->ext.hostname == NULL)
+    if (s->servername_done != 1)
+        return EXT_RETURN_NOT_SENT;
+
+    /*
+     * Prior to TLSv1.3 we ignore any SNI in the current handshake if resuming.
+     * We just use the servername from the initial handshake.
+     */
+    if (s->hit && !SSL_IS_TLS13(s))
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
@@ -1716,7 +1728,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    skey = ssl_generate_pkey(ckey);
+    skey = ssl_generate_pkey(s, ckey);
     if (skey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
                  ERR_R_MALLOC_FAILURE);

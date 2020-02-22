@@ -11,7 +11,6 @@
 #include <openssl/crypto.h>
 #include "internal/property.h"
 
-typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 typedef int OSSL_PROPERTY_IDX;
 
 /* Property string functions */
@@ -23,16 +22,8 @@ OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
 /* Property list functions */
 void ossl_property_free(OSSL_PROPERTY_LIST *p);
 int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query);
-int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
-                              const OSSL_PROPERTY_LIST *defn);
 OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
                                         const OSSL_PROPERTY_LIST *b);
-
-/* Property definition functions */
-OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *s);
-
-/* Property query functions */
-OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
 
 /* Property definition cache functions */
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop);

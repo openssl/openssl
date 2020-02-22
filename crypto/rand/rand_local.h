@@ -99,7 +99,7 @@
  * Typically, the DRBGs will set a minimum larger than this so optimal
  * allocation ought to take place (for full quality seed material).
  *
- * The normal value has been chosed by noticing that the rand_drbg_get_nonce
+ * The normal value has been chosen by noticing that the rand_drbg_get_nonce
  * function is usually the largest of the built in allocation (twenty four
  * bytes and then appending another sixteen bytes).  This means the buffer ends
  * with 40 bytes.  The value of forty eight is comfortably above this which
@@ -308,8 +308,10 @@ struct rand_drbg_st {
     size_t seedlen;
     DRBG_STATUS state;
 
+#ifndef FIPS_MODE
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
+#endif
 
     /* Implementation specific data */
     union {
@@ -326,6 +328,8 @@ struct rand_drbg_st {
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     RAND_DRBG_get_nonce_fn get_nonce;
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+
+    void *callback_data;
 };
 
 /* The global RAND method, and the global buffer and DRBG instance. */

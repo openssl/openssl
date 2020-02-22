@@ -5,6 +5,9 @@
 # The latter may become legacy sooner, so it's comfortable to have two
 # variables already now, to switch the non-FIPSable TDES to legacy if needed.
 
+$COMMON_GOAL=../../libcommon.a
+
+$NULL_GOAL=../../libimplementations.a
 $AES_GOAL=../../libimplementations.a
 $TDES_1_GOAL=../../libimplementations.a
 $TDES_2_GOAL=../../libimplementations.a
@@ -19,21 +22,41 @@ $SM4_GOAL=../../libimplementations.a
 $RC4_GOAL=../../libimplementations.a
 $RC5_GOAL=../../libimplementations.a
 $RC2_GOAL=../../libimplementations.a
+$CHACHA_GOAL=../../libimplementations.a
+$CHACHAPOLY_GOAL=../../libimplementations.a
+$SIV_GOAL=../../libimplementations.a
+
+# This source is common building blocks for all ciphers in all our providers.
+SOURCE[$COMMON_GOAL]=\
+        ciphercommon.c ciphercommon_hw.c ciphercommon_block.c \
+        ciphercommon_gcm.c ciphercommon_gcm_hw.c \
+        ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_hw.c
 ENDIF
+
+SOURCE[$NULL_GOAL]=\
+        cipher_null.c
 
 SOURCE[$AES_GOAL]=\
         cipher_aes.c cipher_aes_hw.c \
         cipher_aes_xts.c cipher_aes_xts_hw.c \
         cipher_aes_gcm.c cipher_aes_gcm_hw.c \
         cipher_aes_ccm.c cipher_aes_ccm_hw.c \
-        cipher_aes_wrp.c
+        cipher_aes_wrp.c \
+        cipher_aes_cbc_hmac_sha.c \
+        cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c
+
 # Extra code to satisfy the FIPS and non-FIPS separation.
 # When the AES-xxx-XTS moves to legacy, this can be removed.
 SOURCE[../../libfips.a]=cipher_aes_xts_fips.c
 SOURCE[../../libnonfips.a]=cipher_aes_xts_fips.c
+
+IF[{- !$disabled{siv} -}]
+  SOURCE[$SIV_GOAL]=\
+      cipher_aes_siv.c cipher_aes_siv_hw.c
+ENDIF
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_2_GOAL]=\
@@ -89,6 +112,10 @@ ENDIF
 IF[{- !$disabled{rc4} -}]
   SOURCE[$RC4_GOAL]=\
       cipher_rc4.c cipher_rc4_hw.c
+ IF[{- !$disabled{md5} -}]
+   SOURCE[$RC4_GOAL]=\
+       cipher_rc4_hmac_md5.c cipher_rc4_hmac_md5_hw.c
+ ENDIF
 ENDIF
 
 IF[{- !$disabled{rc5} -}]
@@ -99,4 +126,13 @@ ENDIF
 IF[{- !$disabled{rc2} -}]
   SOURCE[$RC2_GOAL]=\
       cipher_rc2.c cipher_rc2_hw.c
+ENDIF
+
+IF[{- !$disabled{chacha} -}]
+  SOURCE[$CHACHA_GOAL]=\
+      cipher_chacha20.c cipher_chacha20_hw.c
+ IF[{- !$disabled{poly1305} -}]
+  SOURCE[$CHACHAPOLY_GOAL]=\
+      cipher_chacha20_poly1305.c cipher_chacha20_poly1305_hw.c
+ ENDIF
 ENDIF

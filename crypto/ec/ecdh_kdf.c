@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/ec.h>
@@ -28,8 +34,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
 
     if ((kctx = EVP_KDF_CTX_new(kdf)) != NULL) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                                (char *)mdname,
-                                                strlen(mdname) + 1);
+                                                (char *)mdname, 0);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                                  (void *)Z, Zlen);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
@@ -48,7 +53,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
  * The old name for ecdh_KDF_X9_63
  * Retained for ABI compatibility
  */
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,

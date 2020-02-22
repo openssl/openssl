@@ -65,6 +65,11 @@ int setup_tests(void)
     char *certin = NULL, *privkeyin = NULL;
     BIO *certbio = NULL, *privkeybio = NULL;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(certin = test_get_argument(0))
             || !TEST_ptr(privkeyin = test_get_argument(1)))
         return 0;

@@ -24,7 +24,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
                              const char *value, size_t value_n,
                              /* Output parameters */
                              const OSSL_PARAM **paramdef, int *ishex,
-                             size_t *buf_n, BIGNUM **tmpbn)
+                             size_t *buf_n, BIGNUM **tmpbn, int *found)
 {
     const OSSL_PARAM *p;
 
@@ -38,6 +38,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         key += 3;
 
     p = *paramdef = OSSL_PARAM_locate_const(paramdefs, key);
+    if (found != NULL)
+        *found = p != NULL;
     if (p == NULL)
         return 0;
 
@@ -160,41 +162,10 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     return 1;
 }
 
-int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
-                                   const OSSL_PARAM *paramdefs,
-                                   const char *key, const char *value,
-                                   size_t value_n,
-                                   void *buf, size_t *buf_n)
-{
-    const OSSL_PARAM *paramdef = NULL;
-    int ishex = 0;
-    BIGNUM *tmpbn = NULL;
-    int ok = 0;
-
-    if (to == NULL || paramdefs == NULL)
-        return 0;
-
-    if (!prepare_from_text(paramdefs, key, value, value_n,
-                           &paramdef, &ishex, buf_n, &tmpbn))
-        return 0;
-
-    /*
-     * The user gets the expected buffer size back even if the buffer isn't
-     * allocated.
-     */
-    if (buf == NULL)
-        return 1;
-
-    ok = construct_from_text(to, paramdef, value, value_n, ishex,
-                             buf, *buf_n, tmpbn);
-    BN_free(tmpbn);
-    return ok;
-}
-
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                   const OSSL_PARAM *paramdefs,
                                   const char *key, const char *value,
-                                  size_t value_n)
+                                  size_t value_n, int *found)
 {
     const OSSL_PARAM *paramdef = NULL;
     int ishex = 0;
@@ -207,7 +178,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
         return 0;
 
     if (!prepare_from_text(paramdefs, key, value, value_n,
-                           &paramdef, &ishex, &buf_n, &tmpbn))
+                           &paramdef, &ishex, &buf_n, &tmpbn, found))
         return 0;
 
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {

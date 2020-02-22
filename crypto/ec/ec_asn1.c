@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include "ec_local.h"
 #include <openssl/err.h>
@@ -855,6 +861,20 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
          * serialized using explicit parameters by default.
          */
         EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
+
+        /*
+         * If the input params do not contain the optional seed field we make
+         * sure it is not added to the returned group.
+         *
+         * The seed field is not really used inside libcrypto anyway, and
+         * adding it to parsed explicit parameter keys would alter their DER
+         * encoding output (because of the extra field) which could impact
+         * applications fingerprinting keys by their DER encoding.
+         */
+        if (params->curve->seed == NULL) {
+            if (EC_GROUP_set_seed(ret, NULL, 0) != 1)
+                goto err;
+        }
     }
 
     ok = 1;
@@ -1031,6 +1051,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         *a = ret;
     EC_PRIVATEKEY_free(priv_key);
     *in = p;
+    ret->dirty_cnt++;
     return ret;
 
  err:
@@ -1142,8 +1163,11 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
         ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
         if (a == NULL || *a != ret)
              EC_KEY_free(ret);
+        else
+            ret->dirty_cnt++;
         return NULL;
     }
+    ret->dirty_cnt++;
 
     if (a)
         *a = ret;
@@ -1163,6 +1187,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
         return 0;
     }
     ret = *a;
+    /* EC_KEY_opt2key updates dirty_cnt */
     if (!EC_KEY_oct2key(ret, *in, len, NULL)) {
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_EC_LIB);
         return 0;
@@ -1328,32 +1353,27 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-#ifndef FIPS_MODE
-int ECDSA_size(const EC_KEY *r)
+int ECDSA_size(const EC_KEY *ec)
 {
-    int ret, i;
-    ASN1_INTEGER bs;
-    unsigned char buf[4];
+    int ret;
+    ECDSA_SIG sig;
     const EC_GROUP *group;
+    const BIGNUM *bn;
 
-    if (r == NULL)
+    if (ec == NULL)
         return 0;
-    group = EC_KEY_get0_group(r);
+    group = EC_KEY_get0_group(ec);
     if (group == NULL)
         return 0;
 
-    i = EC_GROUP_order_bits(group);
-    if (i == 0)
+    bn = EC_GROUP_get0_order(group);
+    if (bn == NULL)
         return 0;
-    bs.length = (i + 7) / 8;
-    bs.data = buf;
-    bs.type = V_ASN1_INTEGER;
-    /* If the top bit is set the asn1 encoding is 1 larger. */
-    buf[0] = 0xff;
 
-    i = i2d_ASN1_INTEGER(&bs, NULL);
-    i += i;                     /* r and s */
-    ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+    sig.r = sig.s = (BIGNUM *)bn;
+    ret = i2d_ECDSA_SIG(&sig, NULL);
+
+    if (ret < 0)
+        ret = 0;
     return ret;
 }
-#endif

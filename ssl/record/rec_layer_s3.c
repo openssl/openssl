@@ -300,6 +300,12 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
             ret = BIO_read(s->rbio, pkt + len + left, max - left);
             if (ret >= 0)
                 bioread = ret;
+            if (ret <= 0
+                    && !BIO_should_retry(s->rbio)
+                    && BIO_eof(s->rbio)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_READ_N,
+                         SSL_R_UNEXPECTED_EOF_WHILE_READING);
+            }
         } else {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_READ_N,
                      SSL_R_READ_BIO_NOT_SET);
@@ -426,6 +432,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
+        (BIO_get_ktls_send(s->wbio) == 0) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
@@ -985,7 +992,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * in the wb->buf
          */
 
-        if (!SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (!BIO_get_ktls_send(s->wbio) && !SSL_WRITE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)

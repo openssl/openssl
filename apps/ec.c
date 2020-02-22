@@ -44,27 +44,32 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS ec_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
     {"inform", OPT_INFORM, 'f', "Input format - DER or PEM"},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"check", OPT_CHECK, '-', "check key consistency"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    {"param_enc", OPT_PARAM_ENC, 's',
+     "Specifies the way the ec parameters are encoded"},
+    {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
+
+    OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key"},
     {"param_out", OPT_PARAM_OUT, '-', "Print the elliptic curve parameters"},
-    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"no_public", OPT_NO_PUBLIC, '-', "exclude public key from private key"},
-    {"check", OPT_CHECK, '-', "check key consistency"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"param_enc", OPT_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
     {NULL}
 };
 

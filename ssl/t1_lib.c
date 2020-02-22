@@ -7,11 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need access to the deprecated low level HMAC APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/core_names.h>
 #include <openssl/ocsp.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -22,6 +26,7 @@
 #include <openssl/ct.h>
 
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -888,7 +893,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
     return NULL;
 }
 /* Lookup hash: return 0 if invalid or not enabled */
-int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
+int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 {
     const EVP_MD *md;
     if (lu == NULL)
@@ -897,7 +902,7 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
     if (lu->hash == NID_undef) {
         md = NULL;
     } else {
-        md = ssl_md(lu->hash_idx);
+        md = ssl_md(ctx, lu->hash_idx);
         if (md == NULL)
             return 0;
     }
@@ -914,22 +919,26 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  * with a 128 byte (1024 bit) key.
  */
 #define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
-static int rsa_pss_check_min_key_size(const RSA *rsa, const SIGALG_LOOKUP *lu)
+static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
+                                      const SIGALG_LOOKUP *lu)
 {
     const EVP_MD *md;
 
-    if (rsa == NULL)
+    if (pkey == NULL)
         return 0;
-    if (!tls1_lookup_md(lu, &md) || md == NULL)
+    if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
-    if (RSA_size(rsa) < RSA_PSS_MINIMUM_KEY_SIZE(md))
+    if (EVP_PKEY_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
     return 1;
 }
 
 /*
- * Return a signature algorithm for TLS < 1.2 where the signature type
- * is fixed by the certificate type.
+ * Returns a signature algorithm when the peer did not send a list of supported
+ * signature algorithms. The signature algorithm is fixed for the certificate
+ * type. |idx| is a certificate type index (SSL_PKEY_*). When |idx| is -1 the
+ * certificate type from |s| will be used.
+ * Returns the signature algorithm to use, or NULL on error.
  */
 static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 {
@@ -970,10 +979,14 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
 
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
+            return NULL;
+        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             return NULL;
         return lu;
     }
+    if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, &legacy_rsa_sigalg))
+        return NULL;
     return &legacy_rsa_sigalg;
 }
 /* Set peer sigalg based key type */
@@ -1063,6 +1076,31 @@ int tls_check_sigalg_curve(const SSL *s, int curve)
 #endif
 
 /*
+ * Return the number of security bits for the signature algorithm, or 0 on
+ * error.
+ */
+static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
+{
+    const EVP_MD *md = NULL;
+    int secbits = 0;
+
+    if (!tls1_lookup_md(ctx, lu, &md))
+        return 0;
+    if (md != NULL)
+    {
+        /* Security bits: half digest bits */
+        secbits = EVP_MD_size(md) * 4;
+    } else {
+        /* Values from https://tools.ietf.org/html/rfc8032#section-8.5 */
+        if (lu->sigalg == TLSEXT_SIGALG_ed25519)
+            secbits = 128;
+        else if (lu->sigalg == TLSEXT_SIGALG_ed448)
+            secbits = 224;
+    }
+    return secbits;
+}
+
+/*
  * Check signature algorithm is consistent with sent supported signature
  * algorithms and if so set relevant digest and signature scheme in
  * s.
@@ -1075,6 +1113,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     size_t sent_sigslen, i, cidx;
     int pkeyid = EVP_PKEY_id(pkey);
     const SIGALG_LOOKUP *lu;
+    int secbits = 0;
 
     /* Should never happen */
     if (pkeyid == -1)
@@ -1171,25 +1210,25 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    if (!tls1_lookup_md(lu, &md)) {
+    if (!tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
                  SSL_R_UNKNOWN_DIGEST);
         return 0;
     }
-    if (md != NULL) {
-        /*
-         * Make sure security callback allows algorithm. For historical
-         * reasons we have to pass the sigalg as a two byte char array.
-         */
-        sigalgstr[0] = (sig >> 8) & 0xff;
-        sigalgstr[1] = sig & 0xff;
-        if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
-                    EVP_MD_size(md) * 4, EVP_MD_type(md),
-                    (void *)sigalgstr)) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
-                     SSL_R_WRONG_SIGNATURE_TYPE);
-            return 0;
-        }
+    /*
+     * Make sure security callback allows algorithm. For historical
+     * reasons we have to pass the sigalg as a two byte char array.
+     */
+    sigalgstr[0] = (sig >> 8) & 0xff;
+    sigalgstr[1] = sig & 0xff;
+    secbits = sigalg_security_bits(s->ctx, lu);
+    if (secbits == 0 ||
+        !ssl_security(s, SSL_SECOP_SIGALG_CHECK, secbits,
+                      md != NULL ? EVP_MD_type(md) : NID_undef,
+                      (void *)sigalgstr)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
     }
     /* Store the sigalg the peer uses */
     s->s3.tmp.peer_sigalg = lu;
@@ -1255,7 +1294,7 @@ int ssl_set_client_disabled(SSL *s)
  *
  * Returns 1 when it's disabled, 0 when enabled.
  */
-int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
+int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
 {
     if (c->algorithm_mkey & s->s3.tmp.mask_k
         || c->algorithm_auth & s->s3.tmp.mask_a)
@@ -1409,7 +1448,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_TICKET_STATUS ret = SSL_TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    HMAC_CTX *hctx = NULL;
+    SSL_HMAC *hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
 
@@ -1439,7 +1478,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
 
     /* Initialize session ticket encryption and HMAC contexts */
-    hctx = HMAC_CTX_new();
+    hctx = ssl_hmac_new(tctx);
     if (hctx == NULL) {
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
@@ -1449,11 +1488,28 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
     }
-    if (tctx->ext.ticket_key_cb) {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (tctx->ext.ticket_key_evp_cb != NULL || tctx->ext.ticket_key_cb != NULL)
+#else
+    if (tctx->ext.ticket_key_evp_cb != NULL)
+#endif
+    {
         unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->ext.ticket_key_cb(s, nctick,
+        int rv = 0;
+
+        if (tctx->ext.ticket_key_evp_cb != NULL)
+            rv = tctx->ext.ticket_key_evp_cb(s, nctick,
+                                             nctick + TLSEXT_KEYNAME_LENGTH,
+                                             ctx,
+                                             ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                                             0);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        else if (tctx->ext.ticket_key_cb != NULL)
+            /* if 0 is returned, write an empty ticket */
+            rv = tctx->ext.ticket_key_cb(s, nctick,
                                          nctick + TLSEXT_KEYNAME_LENGTH,
-                                         ctx, hctx, 0);
+                                         ctx, ssl_hmac_get0_HMAC_CTX(hctx), 0);
+#endif
         if (rv < 0) {
             ret = SSL_TICKET_FATAL_ERR_OTHER;
             goto end;
@@ -1471,9 +1527,9 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             ret = SSL_TICKET_NO_DECRYPT;
             goto end;
         }
-        if (HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
-                         sizeof(tctx->ext.secure->tick_hmac_key),
-                         EVP_sha256(), NULL) <= 0
+        if (ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
+                          sizeof(tctx->ext.secure->tick_hmac_key),
+                          "SHA256") <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
                                   tctx->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
@@ -1487,7 +1543,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    mlen = HMAC_size(hctx);
+    mlen = ssl_hmac_size(hctx);
     if (mlen == 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
@@ -1501,8 +1557,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    if (HMAC_Update(hctx, etick, eticklen) <= 0
-        || HMAC_Final(hctx, tick_hmac, NULL) <= 0) {
+    if (ssl_hmac_update(hctx, etick, eticklen) <= 0
+        || ssl_hmac_final(hctx, tick_hmac, NULL, sizeof(tick_hmac)) <= 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
     }
@@ -1565,7 +1621,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 
  end:
     EVP_CIPHER_CTX_free(ctx);
-    HMAC_CTX_free(hctx);
+    ssl_hmac_free(hctx);
 
     /*
      * If set, the decrypt_ticket_cb() is called unless a fatal error was
@@ -1635,13 +1691,13 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 }
 
 /* Check to see if a signature algorithm is allowed */
-static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
 {
     unsigned char sigalgstr[2];
     int secbits;
 
     /* See if sigalgs is recognised and if hash is enabled */
-    if (!tls1_lookup_md(lu, NULL))
+    if (!tls1_lookup_md(s->ctx, lu, NULL))
         return 0;
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
@@ -1696,11 +1752,8 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
         }
     }
 
-    if (lu->hash == NID_undef)
-        return 1;
-    /* Security bits: half digest bits */
-    secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
+    secbits = sigalg_security_bits(s->ctx, lu);
     sigalgstr[0] = (lu->sigalg >> 8) & 0xff;
     sigalgstr[1] = lu->sigalg & 0xff;
     return ssl_security(s, op, secbits, lu->hash, (void *)sigalgstr);
@@ -2748,7 +2801,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
             || lu->sig == EVP_PKEY_RSA)
             continue;
         /* Check that we have a cert, and signature_algorithms_cert */
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
             continue;
         if ((pkey == NULL && !has_usable_cert(s, lu, -1))
                 || (pkey != NULL && !is_cert_usable(s, lu, x, pkey)))
@@ -2770,7 +2823,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 #endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
-            if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(tmppkey), lu))
+            if (!rsa_pss_check_min_key_size(s->ctx, tmppkey, lu))
                 continue;
         }
         break;
@@ -2856,7 +2909,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         /* validate that key is large enough for the signature algorithm */
                         EVP_PKEY *pkey = s->cert->pkeys[sig_idx].privatekey;
 
-                        if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(pkey), lu))
+                        if (!rsa_pss_check_min_key_size(s->ctx, pkey, lu))
                             continue;
                     }
 #ifndef OPENSSL_NO_EC
@@ -2864,6 +2917,26 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #endif
                         break;
                 }
+#ifndef OPENSSL_NO_GOST
+                /*
+                 * Some Windows-based implementations do not send GOST algorithms indication
+                 * in supported_algorithms extension, so when we have GOST-based ciphersuite,
+                 * we have to assume GOST support.
+                 */
+                if (i == s->shared_sigalgslen && s->s3.tmp.new_cipher->algorithm_auth & (SSL_aGOST01 | SSL_aGOST12)) {
+                  if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
+                    if (!fatalerrs)
+                      return 1;
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                             SSL_F_TLS_CHOOSE_SIGALG,
+                             SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+                    return 0;
+                  } else {
+                    i = 0;
+                    sig_idx = lu->sig_idx;
+                  }
+                }
+#endif
                 if (i == s->shared_sigalgslen) {
                     if (!fatalerrs)
                         return 1;
@@ -2951,3 +3024,118 @@ uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 {
     return session->ext.max_fragment_len_mode;
 }
+
+/*
+ * Helper functions for HMAC access with legacy support included.
+ */
+SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
+{
+    SSL_HMAC *ret = OPENSSL_zalloc(sizeof(*ret));
+    EVP_MAC *mac = NULL;
+
+    if (ret == NULL)
+        return NULL;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->ext.ticket_key_evp_cb == NULL
+            && ctx->ext.ticket_key_cb != NULL) {
+        ret->old_ctx = HMAC_CTX_new();
+        if (ret->old_ctx == NULL)
+            goto err;
+        return ret;
+    }
+#endif
+    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", NULL);
+    if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
+        goto err;
+    EVP_MAC_free(mac);
+    return ret;
+ err:
+    EVP_MAC_CTX_free(ret->ctx);
+    EVP_MAC_free(mac);
+    OPENSSL_free(ret);
+    return NULL;
+}
+
+void ssl_hmac_free(SSL_HMAC *ctx)
+{
+    if (ctx != NULL) {
+        EVP_MAC_CTX_free(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        HMAC_CTX_free(ctx->old_ctx);
+#endif
+        OPENSSL_free(ctx);
+    }
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->old_ctx;
+}
+#endif
+
+EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->ctx;
+}
+
+int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+{
+    OSSL_PARAM params[3], *p = params;
+
+    if (ctx->ctx != NULL) {
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md, 0);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, len);
+        *p = OSSL_PARAM_construct_end();
+        if (EVP_MAC_CTX_set_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
+            return 1;
+    }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Init_ex(ctx->old_ctx, key, len,
+                            EVP_get_digestbyname(md), NULL);
+#endif
+    return 0;
+}
+
+int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_update(ctx->ctx, data, len);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Update(ctx->old_ctx, data, len);
+#endif
+    return 0;
+}
+
+int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
+                   size_t max_size)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_final(ctx->ctx, md, len, max_size);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL) {
+        unsigned int l;
+
+        if (HMAC_Final(ctx->old_ctx, md, &l) > 0) {
+            if (len != NULL)
+                *len = l;
+            return 1;
+        }
+    }
+#endif
+    return 0;
+}
+
+size_t ssl_hmac_size(const SSL_HMAC *ctx)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_size(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_size(ctx->old_ctx);
+#endif
+    return 0;
+}
+

@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider
+EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider,
+EVP_KEYEXCH_is_a, EVP_KEYEXCH_do_all_provided,
+EVP_KEYEXCH_number, EVP_KEYEXCH_names_do_all
 - Functions to manage EVP_KEYEXCH algorithm objects
 
 =head1 SYNOPSIS
@@ -14,12 +16,20 @@ EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider
  void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
  int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
  OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange);
+ int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *exchange, const char *name);
+ int EVP_KEYEXCH_number(const EVP_KEYEXCH *exchange);
+ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
+                                  void (*fn)(EVP_KEYEXCH *exchange, void *arg),
+                                  void *arg);
+ void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *exchange,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 
 =head1 DESCRIPTION
 
 EVP_KEYEXCH_fetch() fetches the key exchange implementation for the given
-B<algorithm> from any provider offering it, within the criteria given
-by the B<properties>.
+I<algorithm> from any provider offering it, within the criteria given
+by the I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
 The returned value must eventually be freed with EVP_KEYEXCH_free().
@@ -34,12 +44,31 @@ structure.
 
 EVP_KEYEXCH_provider() returns the provider that I<exchange> was fetched from.
 
+EVP_KEYEXCH_is_a() checks if I<exchange> is an implementation of an
+algorithm that's identifiable with I<name>.
+
+EVP_KEYEXCH_number() returns the internal dynamic number assigned to
+the I<exchange>.
+
+EVP_KEYEXCH_names_do_all() traverses all names for the I<exchange>, and
+calls I<fn> with each name and I<data>.
+
+EVP_KEYEXCH_do_all_provided() traverses all key exchange implementations by
+all activated providers in the library context I<libctx>, and for each
+of the implementations, calls I<fn> with the implementation method and
+I<data> as arguments.
+
 =head1 RETURN VALUES
 
 EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
-or B<NULL> for failure.
+or NULL for failure.
 
 EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_KEYEXCH_is_a() returns 1 of I<exchange> was identifiable,
+otherwise 0.
+
+EVP_KEYEXCH_number() returns an integer.
 
 =head1 SEE ALSO
 

@@ -19,6 +19,7 @@
 #include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"
+
 #ifdef __linux
 # include <sys/syscall.h>
 # ifdef DEVRANDOM_WAIT
@@ -81,7 +82,8 @@ static uint64_t get_timer_bits(void);
 #   define OSSL_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */
 
 #if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none. this simplifies the following logic */
@@ -851,4 +853,5 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */

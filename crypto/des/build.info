@@ -9,6 +9,7 @@ IF[{- !$disabled{asm} -}]
   # appropriate one
   IF[$DESASM_{- $target{asm_arch} -}]
     $DESASM=$DESASM_{- $target{asm_arch} -}
+    $DESDEF=DES_ASM
   ENDIF
 ENDIF
 
@@ -21,6 +22,15 @@ SOURCE[../../libcrypto]=$COMMON\
         str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
         fcrypt.c xcbc_enc.c cbc_cksm.c
 SOURCE[../../providers/libfips.a]=$COMMON
+DEFINE[../../libcrypto]=$DESDEF
+DEFINE[../../providers/libfips.a]=$DESDEF
+
+# When all deprecated symbols are removed, libcrypto doesn't export the
+# DES functions, so we must include them directly in liblegacy.a
+IF[{- $disabled{'deprecated-3.0'} && !$disabled{"mdc2"} -}]
+  SOURCE[../../providers/liblegacy.a]=set_key.c $DESASM
+  DEFINE[../../providers/liblegacy.a]=$DESDEF
+ENDIF
 
 GENERATE[des_enc-sparc.S]=asm/des_enc.m4
 GENERATE[dest4-sparcv9.S]=asm/dest4-sparcv9.pl

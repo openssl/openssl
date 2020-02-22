@@ -15,7 +15,9 @@
 #include "crypto/bn.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "evp_local.h"
 
+#ifndef FIPS_MODE
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
     int ret;
@@ -169,71 +171,96 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
     return mac_key;
 }
 
-int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
+#endif /* FIPS_MODE */
+
+/*- All methods below can also be used in FIPS_MODE */
+
+static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    if (ctx == NULL || ctx->keytype == NULL)
+        goto not_supported;
 
-    if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CHECK, EVP_R_NO_KEY_SET);
-        return 0;
-    }
+    evp_pkey_ctx_free_old_ops(ctx);
+    ctx->operation = operation;
+    if (ctx->keymgmt == NULL)
+        ctx->keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype,
+                                         ctx->propquery);
+    if (ctx->keymgmt == NULL)
+        goto not_supported;
 
-    /* call customized check function first */
-    if (ctx->pmeth->check != NULL)
-        return ctx->pmeth->check(pkey);
+    return 1;
 
-    /* use default check function in ameth */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_check == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CHECK,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    return pkey->ameth->pkey_check(pkey);
+ not_supported:
+    ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    return -2;
 }
 
-int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
-
-    if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PUBLIC_CHECK, EVP_R_NO_KEY_SET);
-        return 0;
-    }
-
-    /* call customized public key check function first */
-    if (ctx->pmeth->public_check != NULL)
-        return ctx->pmeth->public_check(pkey);
-
-    /* use default public key check function in ameth */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_public_check == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PUBLIC_CHECK,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-
-    return pkey->ameth->pkey_public_check(pkey);
+    return fromdata_init(ctx, EVP_PKEY_OP_PARAMFROMDATA);
 }
 
-int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
+    return fromdata_init(ctx, EVP_PKEY_OP_KEYFROMDATA);
+}
 
-    if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PARAM_CHECK, EVP_R_NO_KEY_SET);
-        return 0;
-    }
+int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
+{
+    void *keydata = NULL;
+    int selection;
 
-    /* call customized param check function first */
-    if (ctx->pmeth->param_check != NULL)
-        return ctx->pmeth->param_check(pkey);
-
-    /* use default param check function in ameth */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_param_check == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PARAM_CHECK,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_TYPE_FROMDATA) == 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
-    return pkey->ameth->pkey_param_check(pkey);
+    if (ppkey == NULL)
+        return -1;
+
+    if (*ppkey == NULL)
+        *ppkey = EVP_PKEY_new();
+
+    if (*ppkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    if (ctx->operation == EVP_PKEY_OP_PARAMFROMDATA)
+        selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+    else
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR;
+    keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
+                                        params);
+
+    if (keydata == NULL)
+        return 0;
+    /* keydata is cached in *ppkey, so we need not bother with it further */
+    return 1;
+}
+
+/*
+ * TODO(3.0) Re-evaluate the names, it's possible that we find these to be
+ * better:
+ *
+ * EVP_PKEY_param_settable()
+ * EVP_PKEY_param_gettable()
+ */
+const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
+{
+    /* We call fromdata_init to get ctx->keymgmt populated */
+    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
+        return evp_keymgmt_import_types(ctx->keymgmt,
+                                        OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
+{
+    /* We call fromdata_init to get ctx->keymgmt populated */
+    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
+        return evp_keymgmt_import_types(ctx->keymgmt,
+                                        OSSL_KEYMGMT_SELECT_KEYPAIR);
+    return NULL;
 }

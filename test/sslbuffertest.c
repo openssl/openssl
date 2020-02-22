@@ -150,18 +150,16 @@ static int test_func(int test)
     return result;
 }
 
-int global_init(void)
-{
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    return 1;
-}
-
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
 {
     char *cert, *pkey;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(pkey = test_get_argument(1)))

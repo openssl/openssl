@@ -7,6 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
+
 /* Dispatch functions for AES cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_aes.h"
@@ -31,7 +38,7 @@ static void *aes_dupctx(void *ctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    *ret = *in;
+    in->base.hw->copyctx(&ret->base, &in->base);
 
     return ret;
 }

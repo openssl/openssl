@@ -75,7 +75,8 @@ typedef enum OPTION_choice {
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
     OPT_NOINDEF, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
-    OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
+    OPT_CAPATH, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
+    OPT_CONTENT, OPT_PRINT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
     OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
@@ -87,16 +88,36 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS cms_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  cert.pem... recipient certs for encryption\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
     {"outform", OPT_OUTFORM, 'c',
      "Output format SMIME (default), PEM or DER"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
+    {"debug_decrypt", OPT_DEBUG_DECRYPT, '-',
+        "Disable MMA protection and return an error if no recipient found"
+        " (see documentation)"},
+    {"stream", OPT_INDEF, '-', "Enable CMS streaming"},
+    {"indef", OPT_INDEF, '-', "Same as -stream"},
+    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
+    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only" },
+    {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
+    {"CApath", OPT_CAPATH, '/', "trusted certificates directory"},
+    {"CAstore", OPT_CASTORE, ':', "trusted certificates store URI"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+# endif
+
+    OPT_SECTION("Action"),
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
     {"sign", OPT_SIGN, '-', "Sign message"},
@@ -108,45 +129,42 @@ const OPTIONS cms_options[] = {
         "Exit non-zero on verification failure"},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<',
         "Verify receipts; exit if receipt signatures do not verify"},
-    {"cmsout", OPT_CMSOUT, '-', "Output CMS structure"},
-    {"data_out", OPT_DATA_OUT, '-', "Copy CMS \"Data\" object to output"},
-    {"data_create", OPT_DATA_CREATE, '-', "Create a CMS \"Data\" object"},
     {"digest_verify", OPT_DIGEST_VERIFY, '-',
         "Verify a CMS \"DigestedData\" object and output it"},
     {"digest_create", OPT_DIGEST_CREATE, '-',
         "Create a CMS \"DigestedData\" object"},
     {"compress", OPT_COMPRESS, '-', "Create a CMS \"CompressedData\" object"},
-    {"uncompress", OPT_UNCOMPRESS, '-', "Uncompress a CMS \"CompressedData\" object"},
+    {"uncompress", OPT_UNCOMPRESS, '-',
+        "Uncompress a CMS \"CompressedData\" object"},
     {"EncryptedData_decrypt", OPT_ED_DECRYPT, '-',
         "Decrypt CMS \"EncryptedData\" object using symmetric key"},
     {"EncryptedData_encrypt", OPT_ED_ENCRYPT, '-',
         "Create CMS \"EncryptedData\" object using symmetric key"},
-    {"debug_decrypt", OPT_DEBUG_DECRYPT, '-',
-        "Disable MMA protection and return an error if no recipient found"
-        " (see documentation)"},
-    {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
-    {"asciicrlf", OPT_ASCIICRLF, '-',
-        "Perform CRLF canonicalisation when signing"},
-    {"nointern", OPT_NOINTERN, '-',
-     "Don't search certificates in message for signer"},
-    {"noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate"},
-    {"nocerts", OPT_NOCERTS, '-',
-     "Don't include signers certificate when signing"},
-    {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
-    {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
-    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
-    {"binary", OPT_BINARY, '-', "Don't translate message to text"},
-    {"keyid", OPT_KEYID, '-', "Use subject key identifier"},
-    {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
+    {"data_out", OPT_DATA_OUT, '-', "Copy CMS \"Data\" object to output"},
+    {"data_create", OPT_DATA_CREATE, '-', "Create a CMS \"Data\" object"},
+    {"cmsout", OPT_CMSOUT, '-', "Output CMS structure"},
     {"no_content_verify", OPT_NO_CONTENT_VERIFY, '-',
         "Do not verify signed content signatures"},
     {"no_attr_verify", OPT_NO_ATTR_VERIFY, '-',
         "Do not verify signed attribute signatures"},
-    {"stream", OPT_INDEF, '-', "Enable CMS streaming"},
-    {"indef", OPT_INDEF, '-', "Same as -stream"},
-    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
-    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only" },
-    {"noout", OPT_NOOUT, '-', "For the -cmsout operation do not output the parsed CMS structure"},
+    {"nointern", OPT_NOINTERN, '-',
+        "Don't search certificates in message for signer"},
+    {"noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate"},
+
+    OPT_SECTION("Formatting"),
+    {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
+    {"asciicrlf", OPT_ASCIICRLF, '-',
+        "Perform CRLF canonicalisation when signing"},
+    {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
+    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
+    {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
+    {"binary", OPT_BINARY, '-', "Don't translate message to text"},
+    {"keyid", OPT_KEYID, '-', "Use subject key identifier"},
+    {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
+    {"nocerts", OPT_NOCERTS, '-',
+     "Don't include signers certificate when signing"},
+    {"noout", OPT_NOOUT, '-',
+        "For the -cmsout operation do not output the parsed CMS structure"},
     {"receipt_request_print", OPT_RR_PRINT, '-', "Print CMS Receipt Request" },
     {"receipt_request_all", OPT_RR_ALL, '-',
         "When signing, create a receipt request for all recipients"},
@@ -154,51 +172,54 @@ const OPTIONS cms_options[] = {
         "When signing, create a receipt request for first recipient"},
     {"rctform", OPT_RCTFORM, 'F', "Receipt file format"},
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
-    {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
-    {"CApath", OPT_CAPATH, '/', "trusted certificates directory"},
-    {"no-CAfile", OPT_NOCAFILE, '-',
-     "Do not load the default certificates file"},
-    {"no-CApath", OPT_NOCAPATH, '-',
-     "Do not load certificates from the default certificates directory"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
     {"print", OPT_PRINT, '-',
      "For the -cmsout operation print out all fields of the CMS structure"},
+    {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
+
+    OPT_SECTION("Keying"),
     {"secretkey", OPT_SECRETKEY, 's',
         "Use specified hex-encoded key to decrypt/encrypt recipients or content"},
     {"secretkeyid", OPT_SECRETKEYID, 's',
         "Identity of the -secretkey for CMS \"KEKRecipientInfo\" object"},
     {"pwri_password", OPT_PWRI_PASSWORD, 's',
         "Specific password for recipient"},
-    {"econtent_type", OPT_ECONTENT_TYPE, 's', "OID for external content"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"inkey", OPT_INKEY, 's',
+     "Input private key (if not signer or recipient)"},
+    {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
+    {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
+
+    OPT_SECTION("Mail header"),
+    {"econtent_type", OPT_ECONTENT_TYPE, 's', "OID for external content"},
     {"to", OPT_TO, 's', "To address"},
     {"from", OPT_FROM, 's', "From address"},
     {"subject", OPT_SUBJECT, 's', "Subject"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"recip", OPT_RECIP, '<', "Recipient cert file for decryption"},
-    {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
-    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
-    {"inkey", OPT_INKEY, 's',
-     "Input private key (if not signer or recipient)"},
-    {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
-    {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
     {"receipt_request_from", OPT_RR_FROM, 's',
         "Create signed receipt request with specified email address"},
     {"receipt_request_to", OPT_RR_TO, 's',
         "Create signed receipt targeted to specified address"},
+
+    OPT_SECTION("Encryption"),
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-    OPT_R_OPTIONS,
-    OPT_V_OPTIONS,
+
+    OPT_SECTION("Key-wrapping"),
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
 # ifndef OPENSSL_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
 # endif
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
+
+    OPT_R_OPTIONS,
+    OPT_V_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"cert", 0, 0, "Recipient certs (optional; used only when encrypting)"},
     {NULL}
 };
 
@@ -219,9 +240,9 @@ int cms_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
-    const char *CAfile = NULL, *CApath = NULL;
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *certsoutfile = NULL;
-    int noCAfile = 0, noCApath = 0;
+    int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
@@ -401,11 +422,17 @@ int cms_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_IN:
             infile = opt_arg();
@@ -825,7 +852,8 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT)) {
-        if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
+        if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, cms_cb);
         if (vpmtouched)

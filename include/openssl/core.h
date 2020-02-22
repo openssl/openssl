@@ -187,6 +187,31 @@ extern OSSL_provider_init_fn OSSL_provider_init;
 #  pragma names restore
 # endif
 
+/*
+ * Generic callback function signature.
+ *
+ * The expectation is that any provider function that wants to offer
+ * a callback / hook can do so by taking an argument with this type,
+ * as well as a pointer to caller-specific data.  When calling the
+ * callback, the provider function can populate an OSSL_PARAM array
+ * with data of its choice and pass that in the callback call, along
+ * with the caller data argument.
+ *
+ * libcrypto may use the OSSL_PARAM array to create arguments for an
+ * application callback it knows about.
+ */
+typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+
+/*
+ * Passphrase callback function signature
+ *
+ * This is similar to the generic callback function above, but adds a
+ * result parameter.
+ */
+typedef int (OSSL_PASSPHRASE_CALLBACK)(char *pass, size_t pass_size,
+                                       size_t *pass_len,
+                                       const OSSL_PARAM params[], void *arg);
+
 # ifdef __cplusplus
 }
 # endif

@@ -152,4 +152,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define writesocket(s,b,n)      write((s),(b),(n))
 # endif
 
+/* also in apps/include/apps.h */
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
+# else
+#  define openssl_fdset(a,b) FD_SET(a, b)
+# endif
+
 #endif

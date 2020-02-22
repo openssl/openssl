@@ -65,11 +65,14 @@ my @opensslcpphandlers = (
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
-    { regexp   => qr/#if (!?)OPENSSL_API_([0-9_]+)$/,
+    # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of
+    # OPENSSL_NO_DEPRECATEDIN_x_y[_z].  That's due to <openssl/macros.h>
+    # creating OPENSSL_NO_DEPRECATED_x_y[_z], but the ordinals files using
+    # DEPRECATEDIN_x_y[_z].
+    { regexp   => qr/#if(def|ndef) OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?)$/,
       massager => sub {
-          my $cnd = $1 eq '!' ? 'ndef' : 'def';
           return (<<"EOF");
-#if$cnd DEPRECATEDIN_$2
+#if$1 OPENSSL_NO_DEPRECATEDIN_$2
 EOF
       }
    }
@@ -261,7 +264,7 @@ my @opensslchandlers = (
     # We trick the parser by pretending that the declaration is wrapped in a
     # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
     # will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+(?:_\d+_\d+)?)<<<\((.*)\)>>>/,
+    { regexp   => qr/(DEPRECATEDIN_\d+_\d+(?:_\d+)?)<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef $1
 $2;
@@ -369,34 +372,9 @@ EOF
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $1,$1)"); },
     },
-    { regexp   => qr/PREDECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_SPECIAL_STACK_OF<<<\((.*?),\s*(.*?)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-     },
 
     #####
     # ASN1 stuff
-
-    { regexp   => qr/TYPEDEF_D2I_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *d2i_of_$1($1 **,const unsigned char **,long)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *i2d_of_$1($1 *,unsigned char **)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_D2I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("TYPEDEF_D2I_OF($1); TYPEDEF_I2D_OF($1)");
-      },
-    },
     { regexp   => qr/DECLARE_ASN1_ITEM<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
@@ -558,7 +536,7 @@ my @chandlers = (
     # Note that the main parse function has a special hack for 'extern "C" {'
     # which can't be done in handlers
     # We simply ignore it.
-    { regexp   => qr/extern "C" (.*;)/,
+    { regexp   => qr/^extern "C" (.*(?:;|>>>))/,
       massager => sub { return ($1); },
     },
     # any other extern is just ignored

@@ -101,3 +101,15 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       const char *ciphername,
                                       const char *mdname,
                                       OPENSSL_CTX *ctx);
+
+typedef struct ag_capable_st {
+    OSSL_ALGORITHM alg;
+    int (*capable)(void);
+} OSSL_ALGORITHM_CAPABLE;
+
+/*
+ * Dynamically select algorithms by calling a capable() method.
+ * If this method is NULL or the method returns 1 then the algorithm is added.
+ */
+void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
+                                         OSSL_ALGORITHM *out);

@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
 #include "rsa_local.h"
@@ -91,7 +97,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
         }
     }
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -110,9 +116,11 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     case RSA_PKCS1_OAEP_PADDING:
         i = RSA_padding_add_PKCS1_OAEP(buf, num, from, flen, NULL, 0);
         break;
+#ifndef FIPS_MODE
     case RSA_SSLV23_PADDING:
         i = RSA_padding_add_SSLv23(buf, num, from, flen);
         break;
+#endif
     case RSA_NO_PADDING:
         i = RSA_padding_add_none(buf, num, from, flen);
         break;
@@ -246,7 +254,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -380,7 +388,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -480,9 +488,11 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     case RSA_PKCS1_OAEP_PADDING:
         r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);
         break;
+#ifndef FIPS_MODE
     case RSA_SSLV23_PADDING:
         r = RSA_padding_check_SSLv23(to, num, buf, j, num);
         break;
+#endif
     case RSA_NO_PADDING:
         memcpy(to, buf, (r = j));
         break;
@@ -490,8 +500,15 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
+#ifndef FIPS_MODE
+    /*
+     * This trick doesn't work in the FIPS provider because libcrypto manages
+     * the error stack. Instead we opt not to put an error on the stack at all
+     * in case of padding failure in the FIPS provider.
+     */
     RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
     err_clear_last_constant_time(1 & ~constant_time_msb(r));
+#endif
 
  err:
     BN_CTX_end(ctx);
@@ -527,7 +544,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         }
     }
 
-    if ((ctx = BN_CTX_new()) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -600,23 +617,31 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
 
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
-    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
-    int ret = 0, i, ex_primes = 0, smooth = 0;
+    BIGNUM *r1, *m1, *vrfy;
+    int ret = 0, smooth = 0;
+#ifndef FIPS_MODE
+    BIGNUM *r2, *m[RSA_MAX_PRIME_NUM - 2];
+    int i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
+#endif
 
     BN_CTX_start(ctx);
 
     r1 = BN_CTX_get(ctx);
+#ifndef FIPS_MODE
     r2 = BN_CTX_get(ctx);
+#endif
     m1 = BN_CTX_get(ctx);
     vrfy = BN_CTX_get(ctx);
     if (vrfy == NULL)
         goto err;
 
+#ifndef FIPS_MODE
     if (rsa->version == RSA_ASN1_VERSION_MULTI
         && ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0
              || ex_primes > RSA_MAX_PRIME_NUM - 2))
         goto err;
+#endif
 
     if (rsa->flags & RSA_FLAG_CACHE_PRIVATE) {
         BIGNUM *factor = BN_new();
@@ -637,6 +662,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
             BN_free(factor);
             goto err;
         }
+#ifndef FIPS_MODE
         for (i = 0; i < ex_primes; i++) {
             pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
             BN_with_flags(factor, pinfo->r, BN_FLG_CONSTTIME);
@@ -645,13 +671,16 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 goto err;
             }
         }
+#endif
         /*
          * We MUST free |factor| before any further use of the prime factors
          */
         BN_free(factor);
 
-        smooth = (ex_primes == 0)
-                 && (rsa->meth->bn_mod_exp == BN_mod_exp_mont)
+        smooth = (rsa->meth->bn_mod_exp == BN_mod_exp_mont)
+#ifndef FIPS_MODE
+                 && (ex_primes == 0)
+#endif
                  && (BN_num_bits(rsa->q) == BN_num_bits(rsa->p));
     }
 
@@ -757,6 +786,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         BN_free(dmp1);
     }
 
+#ifndef FIPS_MODE
     /*
      * calculate m_i in multi-prime case
      *
@@ -806,6 +836,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         BN_free(cc);
         BN_free(di);
     }
+#endif
 
     if (!BN_sub(r0, r0, m1))
         goto err;
@@ -849,6 +880,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     if (!BN_add(r0, r1, m1))
         goto err;
 
+#ifndef FIPS_MODE
     /* add m_i to m in multi-prime case */
     if (ex_primes > 0) {
         BIGNUM *pr2 = BN_new();
@@ -891,6 +923,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         }
         BN_free(pr2);
     }
+#endif
 
  tail:
     if (rsa->e && rsa->n) {
@@ -966,15 +999,18 @@ static int rsa_ossl_init(RSA *rsa)
 
 static int rsa_ossl_finish(RSA *rsa)
 {
+#ifndef FIPS_MODE
     int i;
     RSA_PRIME_INFO *pinfo;
 
-    BN_MONT_CTX_free(rsa->_method_mod_n);
-    BN_MONT_CTX_free(rsa->_method_mod_p);
-    BN_MONT_CTX_free(rsa->_method_mod_q);
     for (i = 0; i < sk_RSA_PRIME_INFO_num(rsa->prime_infos); i++) {
         pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
         BN_MONT_CTX_free(pinfo->m);
     }
+#endif
+
+    BN_MONT_CTX_free(rsa->_method_mod_n);
+    BN_MONT_CTX_free(rsa->_method_mod_p);
+    BN_MONT_CTX_free(rsa->_method_mod_q);
     return 1;
 }

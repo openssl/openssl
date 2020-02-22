@@ -16,32 +16,48 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 6;
+#plan skip_all => "RSA command line tool not built"
+#    if disabled("deprecated-3.0");
 
-require_ok(srctop_file('test','recipes','tconversion.pl'));
+plan tests => 10;
+
+require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
 ok(run(test(["rsa_test"])), "running rsatest");
 
-ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])), "rsa -check");
+run_rsa_tests("pkey");
 
  SKIP: {
-     skip "Skipping rsa conversion test", 3
-	 if disabled("rsa");
+    skip "Skipping rsa command line tests", 4 if disabled('deprecated-3.0');
 
-     subtest 'rsa conversions -- private key' => sub {
-	 tconversion("rsa", srctop_file("test","testrsa.pem"));
-     };
-     subtest 'rsa conversions -- private key PKCS#8' => sub {
-	 tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
-     };
+    run_rsa_tests("rsa");
 }
 
- SKIP: {
-     skip "Skipping msblob conversion test", 1
-	 if disabled("rsa") || disabled("dsa");
+sub run_rsa_tests {
+    my $cmd = shift;
 
-     subtest 'rsa conversions -- public key' => sub {
-	 tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
-		     "-pubin", "-pubout");
-     };
+    ok(run(app([ 'openssl', $cmd, '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])),
+           "$cmd -check" );
+
+     SKIP: {
+         skip "Skipping $cmd conversion test", 3
+	     if disabled("rsa");
+
+         subtest "$cmd conversions -- private key" => sub {
+	     tconversion($cmd, srctop_file("test", "testrsa.pem"));
+         };
+         subtest "$cmd conversions -- private key PKCS#8" => sub {
+	     tconversion($cmd, srctop_file("test", "testrsa.pem"), "pkey");
+         };
+    }
+
+     SKIP: {
+         skip "Skipping msblob conversion test", 1
+	     if disabled($cmd) || disabled("dsa") || $cmd == 'pkey';
+
+         subtest "$cmd conversions -- public key" => sub {
+	     tconversion("msb", srctop_file("test", "testrsapub.pem"), "rsa",
+		         "-pubin", "-pubout");
+         };
+    }
 }

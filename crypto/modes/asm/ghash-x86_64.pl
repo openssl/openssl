@@ -117,7 +117,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -241,6 +241,7 @@ $code=<<___;
 .align	16
 gcm_gmult_4bit:
 .cfi_startproc
+	endbranch
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp		# %rbp and others are pushed exclusively in
@@ -288,6 +289,7 @@ $code.=<<___;
 .align	16
 gcm_ghash_4bit:
 .cfi_startproc
+	endbranch
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -614,6 +616,7 @@ $code.=<<___;
 .align	16
 gcm_gmult_clmul:
 .cfi_startproc
+	endbranch
 .L_gmult_clmul:
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
@@ -665,6 +668,7 @@ $code.=<<___;
 .align	32
 gcm_ghash_clmul:
 .cfi_startproc
+	endbranch
 .L_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
@@ -1168,6 +1172,7 @@ $code.=<<___;
 .align	32
 gcm_gmult_avx:
 .cfi_startproc
+	endbranch
 	jmp	.L_gmult_clmul
 .cfi_endproc
 .size	gcm_gmult_avx,.-gcm_gmult_avx
@@ -1179,6 +1184,7 @@ $code.=<<___;
 .align	32
 gcm_ghash_avx:
 .cfi_startproc
+	endbranch
 ___
 if ($avx) {
 my ($Xip,$Htbl,$inp,$len)=@_4args;
@@ -1817,4 +1823,4 @@ $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_MODES_H
 # endif
 
@@ -28,6 +28,10 @@ typedef void (*block128_f) (const unsigned char in[16],
 typedef void (*cbc128_f) (const unsigned char *in, unsigned char *out,
                           size_t len, const void *key,
                           unsigned char ivec[16], int enc);
+
+typedef void (*ecb128_f) (const unsigned char *in, unsigned char *out,
+                          size_t len, const void *key,
+                          int enc);
 
 typedef void (*ctr128_f) (const unsigned char *in, unsigned char *out,
                           size_t blocks, const void *key,

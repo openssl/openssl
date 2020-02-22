@@ -1,6 +1,8 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
+$COMMON_GOAL=../../libcommon.a
+
 $SHA1_GOAL=../../libimplementations.a
 $SHA2_GOAL=../../libimplementations.a
 $SHA3_GOAL=../../libimplementations.a
@@ -14,10 +16,11 @@ $MDC2_GOAL=../../liblegacy.a
 $WHIRLPOOL_GOAL=../../liblegacy.a
 $RIPEMD_GOAL=../../liblegacy.a
 
+# This source is common for all digests in all our providers.
+SOURCE[$COMMON_GOAL]=digestcommon.c
+
 SOURCE[$SHA2_GOAL]=sha2_prov.c
 SOURCE[$SHA3_GOAL]=sha3_prov.c
-
-$GOAL=../../libimplementations.a
 
 IF[{- !$disabled{blake2} -}]
   SOURCE[$BLAKE2_GOAL]=blake2_prov.c blake2b_prov.c blake2s_prov.c

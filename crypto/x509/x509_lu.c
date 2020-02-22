@@ -532,6 +532,41 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *v)
     return v->objs;
 }
 
+STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
+{
+    STACK_OF(X509) *sk;
+    STACK_OF(X509_OBJECT) *objs;
+    int i;
+
+    if (store == NULL) {
+        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if ((sk = sk_X509_new_null()) == NULL)
+        return NULL;
+    X509_STORE_lock(store);
+    objs = X509_STORE_get0_objects(store);
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
+
+        if (cert != NULL) {
+            if (!X509_up_ref(cert))
+                goto err;
+            if (!sk_X509_push(sk, cert)) {
+                X509_free(cert);
+                goto err;
+            }
+        }
+    }
+    X509_STORE_unlock(store);
+    return sk;
+
+ err:
+    X509_STORE_unlock(store);
+    sk_X509_pop_free(sk, X509_free);
+    return NULL;
+}
+
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 {
     int i, idx, cnt;

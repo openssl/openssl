@@ -13,3 +13,5 @@ const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx);
 
 const char *ossl_prov_util_nid_to_name(int nid);
 
+int cipher_capable_aes_cbc_hmac_sha1(void);
+int cipher_capable_aes_cbc_hmac_sha256(void);

@@ -6,7 +6,11 @@ EVP_KEYMGMT,
 EVP_KEYMGMT_fetch,
 EVP_KEYMGMT_up_ref,
 EVP_KEYMGMT_free,
-EVP_KEYMGMT_provider
+EVP_KEYMGMT_provider,
+EVP_KEYMGMT_is_a,
+EVP_KEYMGMT_number,
+EVP_KEYMGMT_do_all_provided,
+EVP_KEYMGMT_names_do_all
 - EVP key management routines
 
 =head1 SYNOPSIS
@@ -20,6 +24,14 @@ EVP_KEYMGMT_provider
  int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
  void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
  const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
+ int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
+ int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
+ void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
+                                  void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
+                                  void *arg);
+ void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 
 =head1 DESCRIPTION
 
@@ -45,6 +57,20 @@ B<EVP_KEYMGMT> I<keymgmt>, and when the count reaches zero, frees it.
 EVP_KEYMGMT_provider() returns the provider that has this particular
 implementation.
 
+EVP_KEYMGMT_is_a() checks if I<keymgmt> is an implementation of an
+algorithm that's identifiable with I<name>.
+
+EVP_KEYMGMT_number() returns the internal dynamic number assigned to
+the I<keymgmt>.
+
+EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
+calls I<fn> with each name and I<data>.
+
+EVP_KEYMGMT_do_all_provided() traverses all key keymgmt implementations by
+all activated providers in the library context I<libctx>, and for each
+of the implementations, calls I<fn> with the implementation method and
+I<data> as arguments.
+
 =head1 NOTES
 
 EVP_KEYMGMT_fetch() may be called implicitly by other fetching
@@ -63,6 +89,11 @@ EVP_KEYMGMT_free() doesn't return any value.
 
 EVP_KEYMGMT_provider() returns a pointer to a provider object, or NULL
 on error.
+
+EVP_KEYMGMT_is_a() returns 1 of I<keymgmt> was identifiable,
+otherwise 0.
+
+EVP_KEYMGMT_number() returns an integer.
 
 =head1 SEE ALSO
 

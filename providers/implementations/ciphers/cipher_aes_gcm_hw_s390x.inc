@@ -9,7 +9,7 @@
 
 /*-
  * IBM S390X support for AES GCM.
- * This file is included by cipher_gcm_hw.c
+ * This file is included by cipher_aes_gcm_hw.c
  */
 
 /* iv + padding length for iv lengths != 12 */

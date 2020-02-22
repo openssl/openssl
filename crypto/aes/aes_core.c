@@ -36,6 +36,13 @@
 /* Note: rewritten a little bit to provide error control and an OpenSSL-
    compatible API */
 
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
+
 #include <assert.h>
 
 #include <stdlib.h>

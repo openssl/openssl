@@ -7,6 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA512 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+#include <stdio.h>
 #include <openssl/opensslconf.h>
 /*-
  * IMPLEMENTATION NOTES.
@@ -58,6 +65,14 @@
     defined(__aarch64__) || \
     defined(SHA512_ASM)
 # define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+#endif
+
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+# define U64(C)     C##UI64
+#elif defined(__arch64__)
+# define U64(C)     C##UL
+#else
+# define U64(C)     C##ULL
 #endif
 
 int sha512_224_init(SHA512_CTX *c)

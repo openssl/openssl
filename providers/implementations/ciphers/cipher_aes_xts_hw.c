@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement provider AES ciphers.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_aes_xts.h"
 
 #define XTS_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,                         \
@@ -76,6 +82,17 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
+static void cipher_hw_aes_xts_copyctx(PROV_CIPHER_CTX *dst,
+                                      const PROV_CIPHER_CTX *src)
+{
+    PROV_AES_XTS_CTX *sctx = (PROV_AES_XTS_CTX *)src;
+    PROV_AES_XTS_CTX *dctx = (PROV_AES_XTS_CTX *)dst;
+
+    *dctx = *sctx;
+    dctx->xts.key1 = &dctx->ks1.ks;
+    dctx->xts.key2 = &dctx->ks2.ks;
+}
+
 #if defined(AESNI_CAPABLE)
 
 static int cipher_hw_aesni_xts_initkey(PROV_CIPHER_CTX *ctx,
@@ -92,7 +109,8 @@ static int cipher_hw_aesni_xts_initkey(PROV_CIPHER_CTX *ctx,
 # define PROV_CIPHER_HW_declare_xts()                                          \
 static const PROV_CIPHER_HW aesni_xts = {                                      \
     cipher_hw_aesni_xts_initkey,                                               \
-    NULL                                                                       \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
 };
 # define PROV_CIPHER_HW_select_xts()                                           \
 if (AESNI_CAPABLE)                                                             \
@@ -130,7 +148,8 @@ static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
 # define PROV_CIPHER_HW_declare_xts()                                          \
 static const PROV_CIPHER_HW aes_xts_t4 = {                                     \
     cipher_hw_aes_xts_t4_initkey,                                              \
-    NULL                                                                       \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
 };
 # define PROV_CIPHER_HW_select_xts()                                           \
 if (SPARC_AES_CAPABLE)                                                         \
@@ -143,7 +162,8 @@ if (SPARC_AES_CAPABLE)                                                         \
 
 static const PROV_CIPHER_HW aes_generic_xts = {
     cipher_hw_aes_xts_generic_initkey,
-    NULL
+    NULL,
+    cipher_hw_aes_xts_copyctx
 };
 PROV_CIPHER_HW_declare_xts()
 const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits)

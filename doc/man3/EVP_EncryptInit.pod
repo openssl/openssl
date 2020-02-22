@@ -31,6 +31,8 @@ EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
 EVP_CIPHER_is_a,
 EVP_CIPHER_name,
+EVP_CIPHER_number,
+EVP_CIPHER_names_do_all,
 EVP_CIPHER_provider,
 EVP_CIPHER_nid,
 EVP_CIPHER_get_params,
@@ -61,7 +63,7 @@ EVP_CIPHER_param_to_asn1,
 EVP_CIPHER_asn1_to_param,
 EVP_CIPHER_CTX_set_padding,
 EVP_enc_null,
-EVP_CIPHER_do_all_ex
+EVP_CIPHER_do_all_provided
 - EVP cipher routines
 
 =head1 SYNOPSIS
@@ -121,7 +123,11 @@ EVP_CIPHER_do_all_ex
  const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
+ int EVP_CIPHER_number(const EVP_CIPHER *e);
  int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
+ void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
  const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
@@ -153,9 +159,9 @@ EVP_CIPHER_do_all_ex
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
- void EVP_CIPHER_do_all_ex(OPENSSL_CTX *libctx,
-                           void (*fn)(EVP_CIPHER *cipher, void *arg),
-                           void *arg);
+ void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+                                 void (*fn)(EVP_CIPHER *cipher, void *arg),
+                                 void *arg);
 
 =head1 DESCRIPTION
 
@@ -293,7 +299,7 @@ B<params> from CIPHER context B<ctx>.
 
 EVP_CIPHER_gettable_params(), EVP_CIPHER_gettable_ctx_params(), and
 EVP_CIPHER_settable_ctx_params() get a constant B<OSSL_PARAM> array
-that decribes the retrievable and settable parameters, i.e. parameters
+that describes the retrievable and settable parameters, i.e. parameters
 that can be used with EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
@@ -330,11 +336,24 @@ IDENTIFIER as such it ignores the cipher parameters and 40 bit RC2 and
 identifier or does not have ASN1 support this function will return
 B<NID_undef>.
 
-EVP_CIPHER_is_a() returns 1 if the given I<cipher> is an implementation of an
+EVP_CIPHER_is_a() returns 1 if I<cipher> is an implementation of an
 algorithm that's identifiable with I<name>, otherwise 0.
+If I<cipher> is a legacy cipher (it's the return value from the likes
+of EVP_aes128() rather than the result of an EVP_CIPHER_fetch()), only
+cipher names registered with the default library context (see
+L<OPENSSL_CTX(3)>) will be considered.
+
+EVP_CIPHER_number() returns the internal dynamic number assigned to
+the I<cipher>.  This is only useful with fetched B<EVP_CIPHER>s.
 
 EVP_CIPHER_name() and EVP_CIPHER_CTX_name() return the name of the passed
-cipher or context.
+cipher or context.  For fetched ciphers with multiple names, only one
+of them is returned; it's recommended to use EVP_CIPHER_names_do_all()
+instead.
+
+EVP_CIPHER_names_do_all() traverses all names for the I<cipher>, and
+calls I<fn> with each name and I<data>.  This is only useful with
+fetched B<EVP_CIPHER>s.
 
 EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.
@@ -377,7 +396,7 @@ based on the cipher context. The EVP_CIPHER can provide its own random key
 generation routine to support keys of a specific form. B<Key> must point to a
 buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
 
-EVP_CIPHER_do_all_ex() traverses all ciphers implemented by all activated
+EVP_CIPHER_do_all_provided() traverses all ciphers implemented by all activated
 providers in the given library context I<libctx>, and for each of the
 implementations, calls the given function I<fn> with the implementation method
 and the given I<arg> as argument.
@@ -441,7 +460,7 @@ EVP_CIPHER_CTX_rand_key() returns 1 for success.
 
 All algorithms have a fixed key length unless otherwise stated.
 
-Refer to L<SEE ALSO> for the full list of ciphers available through the EVP
+Refer to L</SEE ALSO> for the full list of ciphers available through the EVP
 interface.
 
 =over 4
@@ -652,6 +671,15 @@ EVP_EncryptFinal_ex(), EVP_DecryptInit_ex(), EVP_DecryptFinal_ex(),
 EVP_CipherInit_ex() and EVP_CipherFinal_ex() because they can reuse an
 existing context without allocating and freeing it up on each call.
 
+There are some differences between functions EVP_CipherInit() and
+EVP_CipherInit_ex(), significant in some circumstances. EVP_CipherInit() fills
+the passed context object with zeros.  As a consequence, EVP_CipherInit() does
+not allow step-by-step initialization of the ctx when the I<key> and I<iv> are
+passed in separate calls. It also means that the flags set for the CTX are
+removed, and it is especially important for the
+B<EVP_CIPHER_CTX_FLAG_WRAP_ALLOW> flag treated specially in
+EVP_CipherInit_ex().
+
 EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
@@ -779,20 +807,20 @@ L<evp(7)>
 
 Supported ciphers are listed in:
 
-L<EVP_aes(3)>,
-L<EVP_aria(3)>,
-L<EVP_bf(3)>,
-L<EVP_camellia(3)>,
-L<EVP_cast5(3)>,
+L<EVP_aes_128_gcm(3)>,
+L<EVP_aria_128_gcm(3)>,
+L<EVP_bf_cbc(3)>,
+L<EVP_camellia_128_ecb(3)>,
+L<EVP_cast5_cbc(3)>,
 L<EVP_chacha20(3)>,
-L<EVP_des(3)>,
-L<EVP_desx(3)>,
-L<EVP_idea(3)>,
-L<EVP_rc2(3)>,
+L<EVP_des_cbc(3)>,
+L<EVP_desx_cbc(3)>,
+L<EVP_idea_cbc(3)>,
+L<EVP_rc2_cbc(3)>,
 L<EVP_rc4(3)>,
-L<EVP_rc5(3)>,
-L<EVP_seed(3)>,
-L<EVP_sm4(3)>
+L<EVP_rc5_32_12_16_cbc(3)>,
+L<EVP_seed_cbc(3)>,
+L<EVP_sm4_cbc(3)>
 
 =head1 HISTORY
 

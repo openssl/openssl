@@ -15,6 +15,7 @@ B<rehash>
 [B<-h>]
 [B<-help>]
 [B<-old>]
+[B<-compat>]
 [B<-n>]
 [B<-v>]
 [I<directory>] ...
@@ -29,9 +30,9 @@ B<c_rehash>
 
 =head1 DESCRIPTION
 
-On some platforms, this command isn't available, and the external
-script B<c_rehash> has to be used instead.  They are functionally
-equivalent, except for minor differences noted below.
+This command is generally equivalent to the external
+script B<c_rehash>,
+except for minor differences noted below.
 
 B<openssl rehash> scans directories and calculates a hash value of
 each F<.pem>, F<.crt>, F<.cer>, or F<.crl>

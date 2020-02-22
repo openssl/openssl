@@ -263,6 +263,11 @@ static int test_req_sm2_id(void)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(roots_f = test_get_argument(0))
             || !TEST_ptr(untrusted_f = test_get_argument(1))
             || !TEST_ptr(bad_f = test_get_argument(2))

@@ -393,7 +393,7 @@ static int run_tlsatest(void)
     if (!TEST_ptr(f = BIO_new_file(tlsafile, "r"))
             || !TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
             || !TEST_int_gt(SSL_CTX_dane_enable(ctx), 0)
-            || !TEST_true(SSL_CTX_load_verify_locations(ctx, CAfile, NULL))
+            || !TEST_true(SSL_CTX_load_verify_file(ctx, CAfile))
             || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1),
                             0)
             || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2),
@@ -413,6 +413,11 @@ OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(basedomain = test_get_argument(0))
             || !TEST_ptr(CAfile = test_get_argument(1))
             || !TEST_ptr(tlsafile = test_get_argument(2)))

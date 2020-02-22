@@ -23,7 +23,7 @@ int ERR_load_PROP_strings(void);
 /*
  * PROP function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define PROP_F_OSSL_PARSE_PROPERTY                       0
 #  define PROP_F_OSSL_PARSE_QUERY                          0
 #  define PROP_F_PARSE_HEX                                 0
@@ -43,7 +43,7 @@ int ERR_load_PROP_strings(void);
 # define PROP_R_NOT_AN_IDENTIFIER                         103
 # define PROP_R_NOT_AN_OCTAL_DIGIT                        104
 # define PROP_R_NOT_A_DECIMAL_DIGIT                       105
-# define PROP_R_NO_MATCHING_STRING_DELIMETER              106
+# define PROP_R_NO_MATCHING_STRING_DELIMITER              106
 # define PROP_R_NO_VALUE                                  107
 # define PROP_R_PARSE_FAILED                              108
 # define PROP_R_STRING_TOO_LONG                           109

@@ -16,9 +16,9 @@ properties, to be used with EVP_MAC_fetch():
 
 =over 4
 
-=item "BLAKE2BMAC", "default=yes"
+=item "BLAKE2BMAC", "provider=default"
 
-=item "BLAKE2SMAC", "default=yes"
+=item "BLAKE2SMAC", "provider=default"
 
 =back
 

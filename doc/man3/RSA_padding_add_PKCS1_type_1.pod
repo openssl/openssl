@@ -14,6 +14,10 @@ padding
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                   const unsigned char *f, int fl);
 
@@ -57,6 +61,9 @@ padding
                             const unsigned char *f, int fl, int rsa_len);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the EVP PKEY APIs.
 
 The RSA_padding_xxx_xxx() functions are called from the RSA encrypt,
 decrypt, sign and verify functions. Normally they should not be called
@@ -147,6 +154,10 @@ L<RSA_public_encrypt(3)>,
 L<RSA_private_decrypt(3)>,
 L<RSA_sign(3)>, L<RSA_verify(3)>,
 L<RAND(7)>
+
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

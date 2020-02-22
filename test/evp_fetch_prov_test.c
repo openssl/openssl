@@ -7,6 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SHA256 low level APIs are deprecated for public use, but still ok for
+ * internal use.  Note, that due to symbols not being exported, only the
+ * #defines can be accessed.  In this case SHA256_CBLOCK.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -33,7 +40,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
         { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
-        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. fips=yes" },
+        { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. provider=fips" },
         { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
         { "defaultctx", OPT_USE_DEFAULTCTX, '-',
           "Use the default context if this is set" },

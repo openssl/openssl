@@ -611,6 +611,7 @@ id-on 1			: id-on-personalData
 id-on 3			: id-on-permanentIdentifier : Permanent Identifier
 id-on 5			: id-on-xmppAddr : XmppAddr
 id-on 7			: id-on-dnsSRV : SRVName
+id-on 8			: id-on-NAIRealm : NAIRealm
 id-on 9			: id-on-SmtpUTF8Mailbox : Smtp UTF8 Mailbox
 
 # personal data attributes
@@ -1669,6 +1670,13 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : ffdhe4096
                             : ffdhe6144
                             : ffdhe8192
+# NIDs for RFC3526 DH parameters
+                            : modp_1536
+                            : modp_2048
+                            : modp_3072
+                            : modp_4096
+                            : modp_6144
+                            : modp_8192
 
 # OIDs for DSTU-4145/DSTU-7564 (http://zakon2.rada.gov.ua/laws/show/z0423-17)
 

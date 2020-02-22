@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_NO_DH
 NON_EMPTY_TRANSLATION_UNIT
@@ -42,21 +45,11 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dhparam_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits]\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format, DER or PEM"},
-    {"outform", OPT_OUTFORM, 'F', "Output format, DER or PEM"},
-    {"out", OPT_OUT, '>', "Output file"},
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
-    {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
-    {"noout", OPT_NOOUT, '-', "Don't output any DH parameters"},
-    OPT_R_OPTIONS,
-    {"C", OPT_C, '-', "Print C code"},
-    {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
-    {"3", OPT_3, '-', "Generate parameters using 3 as the generator value"},
-    {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
 # ifndef OPENSSL_NO_DSA
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
@@ -64,6 +57,25 @@ const OPTIONS dhparam_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"inform", OPT_INFORM, 'F', "Input format, DER or PEM"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format, DER or PEM"},
+    {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
+    {"noout", OPT_NOOUT, '-', "Don't output any DH parameters"},
+    {"C", OPT_C, '-', "Print C code"},
+    {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
+    {"3", OPT_3, '-', "Generate parameters using 3 as the generator value"},
+    {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
+
+    OPT_R_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
     {NULL}
 };
 

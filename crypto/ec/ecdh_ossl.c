@@ -8,6 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <limits.h>
 
@@ -31,9 +37,14 @@ int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
 }
 
 /*-
- * This implementation is based on the following primitives in the IEEE 1363 standard:
+ * This implementation is based on the following primitives in the
+ * IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
+ *
+ * It also conforms to SP800-56A r3
+ * See Section 5.7.1.2 "Elliptic Curve Cryptography Cofactor Diffie-Hellman
+ * (ECC CDH) Primitive:". The steps listed below refer to SP800-56A.
  */
 int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh)
@@ -64,6 +75,10 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 
     group = EC_KEY_get0_group(ecdh);
 
+    /*
+     * Step(1) - Compute the point tmp = cofactor * owners_private_key
+     *                                   * peer_public_key.
+     */
     if (EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) {
         if (!EC_GROUP_get_cofactor(group, x, NULL) ||
             !BN_mul(x, x, priv_key, ctx)) {
@@ -83,11 +98,20 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
         goto err;
     }
 
+    /*
+     * Step(2) : If point tmp is at infinity then clear intermediate values and
+     * exit. Note: getting affine coordinates returns 0 if point is at infinity.
+     * Step(3a) : Get x-coordinate of point x = tmp.x
+     */
     if (!EC_POINT_get_affine_coordinates(group, tmp, x, NULL, ctx)) {
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
         goto err;
     }
 
+    /*
+     * Step(3b) : convert x to a byte string, using the field-element-to-byte
+     * string conversion routine defined in Appendix C.2
+     */
     buflen = (EC_GROUP_get_degree(group) + 7) / 8;
     len = BN_num_bytes(x);
     if (len > buflen) {
@@ -112,6 +136,8 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     ret = 1;
 
  err:
+    /* Step(4) : Destroy all intermediate calculations */
+    BN_clear(x);
     EC_POINT_clear_free(tmp);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);

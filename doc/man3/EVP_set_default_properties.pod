@@ -34,7 +34,7 @@ The latter adds an error on the error stack.
 
 =head1 SEE ALSO
 
-L<EVP_MD_fetch>
+L<EVP_MD_fetch(3)>
 
 =head1 HISTORY
 

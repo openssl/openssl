@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * HMAC low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -80,8 +86,10 @@ static void kdf_pbkdf2_free(void *vctx)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
 
-    kdf_pbkdf2_cleanup(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        kdf_pbkdf2_cleanup(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void kdf_pbkdf2_reset(void *vctx)

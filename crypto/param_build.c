@@ -138,21 +138,30 @@ int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn)
 {
-    int sz = -1, secure = 0;
+    return ossl_param_bld_push_BN_pad(bld, key, bn,
+                                      bn == NULL ? 0 : BN_num_bytes(bn));
+}
+
+int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+                               const BIGNUM *bn, size_t sz)
+{
+    int n, secure = 0;
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bn != NULL) {
-        sz = BN_num_bytes(bn);
-        if (sz < 0) {
-            CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_BN,
-                      CRYPTO_R_ZERO_LENGTH_NUMBER);
+        n = BN_num_bytes(bn);
+        if (n < 0) {
+            CRYPTOerr(0, CRYPTO_R_ZERO_LENGTH_NUMBER);
+            return 0;
+        }
+        if (sz < (size_t)n) {
+            CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
             return 0;
         }
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
             secure = 1;
     }
-    pd = param_push(bld, key, sz, sz >= 0 ? sz : 0,
-                    OSSL_PARAM_UNSIGNED_INTEGER, secure);
+    pd = param_push(bld, key, sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
     if (pd == NULL)
         return 0;
     pd->bn = bn;
@@ -320,34 +329,4 @@ void ossl_param_bld_free(OSSL_PARAM *params)
             OPENSSL_secure_clear_free(p->data, p->data_size);
         OPENSSL_free(params);
     }
-}
-
-OSSL_PARAM *ossl_param_bld_to_param_ex(OSSL_PARAM_BLD *bld, OSSL_PARAM *params,
-                                       size_t param_n, void *data,
-                                       size_t data_n, void *secure,
-                                       size_t secure_n)
-{
-    if (params == NULL || data == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX,
-                  CRYPTO_R_INVALID_NULL_ARGUMENT);
-        return NULL;
-    }
-    if (param_n < bld->curr + 1) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX,
-                  CRYPTO_R_INSUFFICIENT_PARAM_SIZE);
-        return NULL;
-    }
-    if (data_n < ALIGN_SIZE * bld->total_blocks) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX,
-                  CRYPTO_R_INSUFFICIENT_DATA_SPACE);
-        return NULL;
-    }
-    if (bld->secure_blocks > 0 && secure_n < ALIGN_SIZE * bld->secure_blocks) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX,
-                  CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE);
-        return NULL;
-    }
-    param_bld_convert(bld, params, (OSSL_PARAM_BLD_BLOCK *)data,
-                      (OSSL_PARAM_BLD_BLOCK *)secure);
-    return params;
 }

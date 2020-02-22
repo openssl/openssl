@@ -8,9 +8,17 @@ DSA_dup_DH - create a DH structure out of DSA structure
 
  #include <openssl/dsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  DH *DSA_dup_DH(const DSA *r);
 
 =head1 DESCRIPTION
+
+The function described on this page is deprecated. There is no direct
+replacement, applications should use the EVP_PKEY APIs for Diffie-Hellman
+operations.
 
 DSA_dup_DH() duplicates DSA parameters/keys as DH parameters/keys. q
 is lost during that conversion, but the resulting DH parameters
@@ -28,6 +36,10 @@ Be careful to avoid small subgroup attacks when using this.
 =head1 SEE ALSO
 
 L<DH_new(3)>, L<DSA_new(3)>, L<ERR_get_error(3)>
+
+=head1 HISTORY
+
+This function was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
