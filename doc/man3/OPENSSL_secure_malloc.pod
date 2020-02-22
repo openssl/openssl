@@ -53,8 +53,10 @@ put all intermediate values and computations there.
 
 CRYPTO_secure_malloc_init() creates the secure heap, with the specified
 C<size> in bytes. The C<minsize> parameter is the minimum size to
-allocate from the heap. Both C<size> and C<minsize> must be a power
-of two.
+allocate from the heap or zero to use a reasonable default value.
+Both C<size> and, if specified, C<minsize> must be a power of two and
+C<minsize> should generally be small, for example 16 or 32.
+C<minsize> must be less than a quarter of C<size> in any case.
 
 CRYPTO_secure_malloc_initialized() indicates whether or not the secure
 heap as been initialized and is available.
