@@ -15,3 +15,5 @@ setup("test_rand");
 
 ok(run(test(["drbgtest"])));
 ok(run(test(["drbg_cavs_test"])));
+# commented out due to long running time
+#ok(run(test(["drbg_extra_test"])));
