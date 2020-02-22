@@ -21,19 +21,15 @@
  */
 static void inc_128(RAND_DRBG_CTR *ctr)
 {
-    int i;
-    unsigned char c;
-    unsigned char *p = &ctr->V[15];
+    unsigned char *p = &ctr->V[0];
+    u32 n = 16, c = 1;
 
-    for (i = 0; i < 16; i++, p--) {
-        c = *p;
-        c++;
-        *p = c;
-        if (c != 0) {
-            /* If we didn't wrap around, we're done. */
-            break;
-        }
-    }
+    do {
+        --n;
+        c += p[n];
+        p[n] = (u8)c;
+        c >>= 8;
+    } while (n);
 }
 
 static void ctr_XOR(RAND_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
