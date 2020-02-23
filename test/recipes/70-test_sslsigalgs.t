@@ -142,8 +142,8 @@ SKIP: {
     #         security level 1
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT\@SECLEVEL=1");
-    $proxy->ciphers("ECDHE-RSA-AES128-SHA\@SECLEVEL=1");
+    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT:\@SECLEVEL=1");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:\@SECLEVEL=1");
     $proxy->start();
     ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs seclevel 1");
 
@@ -152,8 +152,8 @@ SKIP: {
     #         server level 2.
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=1");
-    $proxy->ciphers("DEFAULT\@SECLEVEL=2");
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT:\@SECLEVEL=1");
+    $proxy->ciphers("DEFAULT:\@SECLEVEL=2");
     $proxy->start();
     ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs server seclevel 2");
 
@@ -162,8 +162,8 @@ SKIP: {
     #         server level 1.
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=2");
-    $proxy->ciphers("DEFAULT\@SECLEVEL=1");
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT:\@SECLEVEL=2");
+    $proxy->ciphers("DEFAULT:\@SECLEVEL=1");
     $proxy->start();
     ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs client seclevel 2");
 
