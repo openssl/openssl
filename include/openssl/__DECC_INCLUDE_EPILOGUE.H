@@ -8,9 +8,15 @@
  */
 
 /*
- * This file is only used by HP C on VMS, and is included automatically
+ * This file is only used by HP C/C++ on VMS, and is included automatically
  * after each header file from this directory
  */
 
+/*
+ * The C++ compiler doesn't understand these pragmas, even though it
+ * understands the corresponding command line qualifier.
+ */
+#ifndef __cplusplus
 /* restore state.  Must correspond to the save in __decc_include_prologue.h */
-#pragma names restore
+# pragma names restore
+#endif
