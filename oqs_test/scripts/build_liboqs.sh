@@ -16,7 +16,7 @@ cd tmp/liboqs
 # temporary cludge to avoid CPU features to be build in that executors may not have:
 # TBD XXX replace with dynamic CPU feature detection at runtime!!! XXX TBD
 if [ "x${CIRCLECI}" == "xtrue" ]; then
-sed -i -e "s/x86/t86/g" .CMake/add-cpu-extension-flags.cmake
+sed -i -e "s/x86/t86/g" .CMake/cpu-extensions.cmake
 fi
 
 rm -rf build

@@ -17,7 +17,7 @@ localCheckout: &localCheckout
     - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
     - run:
         name: Clone liboqs
-        command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
+        command: (cd oqs_test && scripts/clone_liboqs.sh) # unconditional checkout to test for changes there
     - run:
         name: Build liboqs
         command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
@@ -46,7 +46,7 @@ localCheckout: &localCheckout
               )
         - run:
             name: Clone liboqs
-            command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/clone_liboqs.sh)
+            command: (cd oqs_test && scripts/clone_liboqs.sh) # unconditional checkout
         - run:
             name: Build liboqs
             command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_liboqs.sh)
