@@ -3,8 +3,10 @@
 =head1 NAME
 
 evp_keymgmt_util_export_to_provider,
-evp_keymgmt_util_clear_pkey_cache,
-evp_keymgmt_util_cache_pkey,
+evp_keymgmt_util_find_operation_cache_index,
+evp_keymgmt_util_clear_operation_cache,
+evp_keymgmt_util_cache_keydata,
+evp_keymgmt_util_cache_keyinfo,
 evp_keymgmt_util_fromdata
 - internal KEYMGMT utility functions
 
@@ -13,9 +15,12 @@ evp_keymgmt_util_fromdata
  #include "crypto/evp.h"
 
  void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
- void evp_keymgmt_util_clear_pkey_cache(EVP_PKEY *pk);
- void evp_keymgmt_util_cache_pkey(EVP_PKEY *pk, size_t index,
-                                  EVP_KEYMGMT *keymgmt, void *keydata);
+ size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
+                                                    EVP_KEYMGMT *keymgmt);
+ void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
+ void evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                     EVP_KEYMGMT *keymgmt, void *keydata);
+ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
  void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                  int selection, const OSSL_PARAM params[]);
 
@@ -27,16 +32,24 @@ via a B<EVP_KEYMGMT> interface, if this hasn't already been done.
 It maintains a cache of provider key references in I<pk> to keep track
 of all provider side keys.
 
-To export a legacy key, use L<evp_pkey_make_provided(3)> instead, as
-this function deals purely with provider side keys and will not care
-to look at any legacy key.
+To export a legacy key, use L<evp_pkey_export_to_provider(3)> instead,
+as this function ignores any legacy key data.
 
-evp_keymgmt_util_clear_pkey_cache() can be used to explicitly clear
-the cache of provider key references.
+evp_keymgmt_util_find_operation_cache_index() finds the location if
+I<keymgmt> in I<pk>'s cache of provided keys for operations.  If
+I<keymgmt> is NULL or couldn't be found in the cache, it finds the
+first empty slot instead if there is any.
 
-evp_keymgmt_util_cache_pkey() can be used to assign a provider key
+evp_keymgmt_util_clear_operation_cache() can be used to explicitly
+clear the cache of operation key references.
+
+evp_keymgmt_util_cache_keydata() can be used to assign a provider key
 object to a specific cache slot in the given I<target>.
-I<Use with extreme care>.
+I<Use extreme care>.
+
+evp_keymgmt_util_cache_keyinfo() can be used to get all kinds of
+information from the provvider "origin" and save it in I<pk>'s
+information cache.
 
 evp_keymgmt_util_fromdata() can be used to add key object data to a
 given key I<target> via a B<EVP_KEYMGMT> interface.  This is used as a
@@ -47,6 +60,11 @@ helper for L<EVP_PKEY_fromdata(3)>.
 evp_keymgmt_export_to_provider() and evp_keymgmt_util_fromdata()
 return a pointer to the appropriate provider side key (created or
 found again), or NULL on error.
+
+evp_keymgmt_util_find_operation_cache_index() returns the index of the
+operation cache slot.  If I<keymgmt> is NULL, or if there is no slot
+with a match for I<keymgmt>, the index of the first empty slot is
+returned, or the maximum number of slots if there isn't an empty one.
 
 =head1 NOTES
 
