@@ -18,7 +18,7 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 
-#ifndef NO_ASN1_OLD
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 
 int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
                 unsigned char *md, unsigned int *len)

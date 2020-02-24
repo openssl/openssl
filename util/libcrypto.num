@@ -555,7 +555,7 @@ CT_POLICY_EVAL_CTX_get0_issuer          566	3_0_0	EXIST::FUNCTION:CT
 TLS_FEATURE_new                         567	3_0_0	EXIST::FUNCTION:
 RSA_get_default_method                  568	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 CRYPTO_cts128_encrypt_block             569	3_0_0	EXIST::FUNCTION:
-ASN1_digest                             570	3_0_0	EXIST::FUNCTION:
+ASN1_digest                             570	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_load_X509V3_strings                 571	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_cleanup               572	3_0_0	EXIST::FUNCTION:
 d2i_X509                                574	3_0_0	EXIST::FUNCTION:
@@ -2723,7 +2723,7 @@ OPENSSL_sk_value                        2781	3_0_0	EXIST::FUNCTION:
 NCONF_get_section                       2782	3_0_0	EXIST::FUNCTION:
 PKCS12_MAC_DATA_it                      2783	3_0_0	EXIST::FUNCTION:
 X509_REQ_add1_attr_by_NID               2784	3_0_0	EXIST::FUNCTION:
-ASN1_sign                               2785	3_0_0	EXIST::FUNCTION:
+ASN1_sign                               2785	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CMS_RecipientInfo_encrypt               2786	3_0_0	EXIST::FUNCTION:CMS
 X509_get_pubkey_parameters              2787	3_0_0	EXIST::FUNCTION:
 PKCS12_setup_mac                        2788	3_0_0	EXIST::FUNCTION:
@@ -3596,7 +3596,7 @@ X509v3_asid_canonize                    3675	3_0_0	EXIST::FUNCTION:RFC3779
 i2d_ASIdOrRange                         3676	3_0_0	EXIST::FUNCTION:RFC3779
 OCSP_url_svcloc_new                     3677	3_0_0	EXIST::FUNCTION:OCSP
 CRYPTO_mem_ctrl                         3678	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3_0
-ASN1_verify                             3679	3_0_0	EXIST::FUNCTION:
+ASN1_verify                             3679	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DSA_generate_parameters_ex              3680	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 X509_sign                               3681	3_0_0	EXIST::FUNCTION:
 SHA256_Transform                        3682	3_0_0	EXIST::FUNCTION:

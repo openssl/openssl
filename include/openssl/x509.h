@@ -623,15 +623,17 @@ X509_INFO *X509_INFO_new(void);
 void X509_INFO_free(X509_INFO *a);
 char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
 
-int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *algor1,
-                ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey);
+DEPRECATEDIN_3_0(int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *algor1,
+                                 ASN1_BIT_STRING *signature, char *data,
+                                 EVP_PKEY *pkey))
 
-int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
-                unsigned char *md, unsigned int *len);
+DEPRECATEDIN_3_0(int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type,
+                                 char *data,
+                                 unsigned char *md, unsigned int *len))
 
-int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1,
-              X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
-              char *data, EVP_PKEY *pkey, const EVP_MD *type);
+DEPRECATEDIN_3_0(int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1,
+                               X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                               char *data, EVP_PKEY *pkey, const EVP_MD *type))
 
 int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *data,
                      unsigned char *md, unsigned int *len);
