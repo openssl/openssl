@@ -24,6 +24,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+ * `ASN1_verify()`, `ASN1_digest()` and `ASN1_sign()` have been deprecated.
+   They are old functions that we don't use, and that you could disable with
+   the macro `NO_ASN1_OLD`.  This goes all the way back to OpenSSL 0.9.7.
+
+   *Richard Levitte*
 
  * The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
    have been converted to Markdown with the goal to produce documents

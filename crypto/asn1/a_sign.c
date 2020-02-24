@@ -22,7 +22,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
-#ifndef NO_ASN1_OLD
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 
 int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
               ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
