@@ -935,6 +935,19 @@ OpenSSL 1.1.1
 
 ### Changes between 1.1.1d and 1.1.1e [xx XXX xxxx] ###
 
+ * *[VMS only]* The header files that the VMS compilers include automatically,
+   `__DECC_INCLUDE_PROLOGUE.H` and `__DECC_INCLUDE_EPILOGUE.H`, use pragmas
+   that the C++ compiler doesn't understand.  This is a shortcoming in the
+   compiler, but can be worked around with `__cplusplus` guards.
+
+   C++ applications that use OpenSSL libraries must be compiled using the
+   qualifier `/NAMES=(AS_IS,SHORTENED)` to be able to use all the OpenSSL
+   functions.  Otherwise, only functions with symbols of less than 31
+   characters can be used, as the linker will not be able to successfully
+   resolve symbols with longer names.
+
+   *Richard Levitte*
+
  * Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
    The presence of this system service is determined at run-time.
 
