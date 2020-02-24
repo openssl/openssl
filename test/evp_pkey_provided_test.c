@@ -46,9 +46,9 @@ static void stripcr(char **buf, int *len)
 static int compare_with_file(const char *alg, int type, BIO *membio)
 {
     char filename[80];
-    BIO *file;
+    BIO *file = NULL;
     char buf[1024];
-    char *memdata, *fullfile;
+    char *memdata, *fullfile = NULL;
     const char *suffix;
     size_t readbytes;
     int ret = 0;
