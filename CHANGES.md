@@ -37,7 +37,7 @@ OpenSSL 3.0
    * avoids [ATX headings][] and uses [setext headings][] instead
      (which works for `<h1>` and `<h2>` headings only).
    * avoids [inline links][] and uses [reference links][] instead.
-   * avoids [fenced code blocks][], uses [indented code blocks][] instead.
+   * avoids [fenced code blocks][] and uses [indented code blocks][] instead.
 
      [markdown]:             https://daringfireball.net/projects/markdown/
      [ATX headings]:         https://github.github.com/gfm/#atx-headings
