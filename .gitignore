@@ -67,14 +67,13 @@ providers/common/include/prov/der_rsa.h
 /test/rsa_complex
 /test/confdump
 /test/bio_prefix_text
-# Other generated files in test/
-/test/provider_internal_test.cnf
-/test/fipsinstall.cnf
-/providers/fipsinstall.cnf
 
 # Certain files that get created by tests on the fly
 /test-runs
 /test/buildtest_*
+/test/provider_internal_test.cnf
+/test/fipsmodule.cnf
+/providers/fipsmodule.cnf
 
 # Fuzz stuff.
 # Anything without an extension is an executable on Unix, so we keep files

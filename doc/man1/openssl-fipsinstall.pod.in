@@ -18,6 +18,7 @@ B<openssl fipsinstall>
 [B<-mac_name> I<macname>]
 [B<-macopt> I<nm>:I<v>]
 [B<-noout>]
+[B<-quiet>]
 [B<-corrupt_desc> I<selftest_description>]
 [B<-corrupt_type> I<selftest_type>]
 
@@ -114,9 +115,12 @@ C<openssl list -digest-commands>.
 
 Disable logging of the self tests.
 
-=item B<-corrupt_desc> I<selftest_description>
+=item B<-quiet>
 
-=item B<-corrupt_type> I<selftest_type>
+Do not output pass/fail messages. Implies B<-noout>.
+
+=item B<-corrupt_desc> I<selftest_description>,
+B<-corrupt_type> I<selftest_type>
 
 The corrupt options can be used to test failure of one or more self test(s) by
 name.
