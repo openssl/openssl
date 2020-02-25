@@ -2263,6 +2263,7 @@ CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
 CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_NULL_ARGUMENT:109:null argument
 CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY:117:popo inconsistent public key
+CRMF_R_POPO_MISSING:121:popo missing
 CRMF_R_POPO_MISSING_PUBLIC_KEY:118:popo missing public key
 CRMF_R_POPO_MISSING_SUBJECT:119:popo missing subject
 CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED:120:popo raverified not accepted

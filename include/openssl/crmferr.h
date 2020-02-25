@@ -63,6 +63,7 @@ int ERR_load_CRMF_strings(void);
 #  define CRMF_R_MALFORMED_IV                              101
 #  define CRMF_R_NULL_ARGUMENT                             109
 #  define CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY              117
+#  define CRMF_R_POPO_MISSING                              121
 #  define CRMF_R_POPO_MISSING_PUBLIC_KEY                   118
 #  define CRMF_R_POPO_MISSING_SUBJECT                      119
 #  define CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED              120
