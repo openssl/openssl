@@ -49,7 +49,7 @@ my $proxy = TLSProxy::Proxy->new(
 );
 
 #We're just testing various negative and unusual scenarios here. ssltest with
-#02-protocol-version.conf should check all the various combinations of normal
+#02-protocol-version.cnf should check all the various combinations of normal
 #version neg
 
 #Test 1: An empty supported_versions extension should not succeed

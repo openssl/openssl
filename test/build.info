@@ -716,8 +716,8 @@ IF[{- !$disabled{tests} -}]
     DEFINE[provider_test]=NO_PROVIDER_MODULE
     DEFINE[provider_internal_test]=NO_PROVIDER_MODULE
   ENDIF
-  DEPEND[]=provider_internal_test.conf
-  GENERATE[provider_internal_test.conf]=provider_internal_test.conf.in
+  DEPEND[]=provider_internal_test.cnf
+  GENERATE[provider_internal_test.cnf]=provider_internal_test.cnf.in
 
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c

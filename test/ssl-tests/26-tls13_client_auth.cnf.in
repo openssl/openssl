@@ -8,7 +8,7 @@
 
 
 ## Test TLSv1.3 certificate authentication
-## Similar to 04-client_auth.conf.in output, but specific for
+## Similar to 04-client_auth.cnf.in output, but specific for
 ## TLSv1.3 and post-handshake authentication
 
 use strict;
