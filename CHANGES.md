@@ -31,7 +31,7 @@ OpenSSL 3.0
    remain well readable inside a plain text editor.
 
    To achieve this goal, a 'minimalistic' Markdown style has been applied
-   which avoids formatting elements that interfere too mcuh with the
+   which avoids formatting elements that interfere too much with the
    reading flow in the text file. For example, it
 
    * avoids [ATX headings][] and uses [setext headings][] instead
