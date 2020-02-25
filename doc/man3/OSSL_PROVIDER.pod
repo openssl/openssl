@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OSSL_PROVIDER_set_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
@@ -12,6 +13,9 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
  #include <openssl/provider.h>
 
  typedef struct ossl_provider_st OSSL_PROVIDER;
+
+ void OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *libctx,
+                                            const char *path);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
@@ -38,6 +42,11 @@ Some of these functions operate within a library context, please see
 L<OPENSSL_CTX(3)> for further details.
 
 =head2 Functions
+
+OSSL_PROVIDER_set_default_search_path() specifies the default search B<path>
+that is to be used for looking for providers in the specified B<libctx>.
+If left unspecified, an environment variable and a fall back default value will
+be used instead.
 
 OSSL_PROVIDER_add_builtin() is used to add a built in provider to
 B<OSSL_PROVIDER> store in the given library context, by associating a

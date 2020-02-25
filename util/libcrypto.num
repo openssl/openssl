@@ -4955,3 +4955,4 @@ OSSL_SELF_TEST_free                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onbegin                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_oncorrupt_byte           ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onend                    ?	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_set_default_search_path   ?	3_0_0	EXIST::FUNCTION:

@@ -19,7 +19,8 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
-    OPT_ENGINE, OPT_CHECK
+    OPT_ENGINE, OPT_CHECK,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
@@ -37,6 +38,8 @@ const OPTIONS pkeyparam_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"text", OPT_TEXT, '-', "Print parameters as text"},
     {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -80,6 +83,10 @@ int pkeyparam_main(int argc, char **argv)
             break;
         case OPT_CHECK:
             check = 1;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

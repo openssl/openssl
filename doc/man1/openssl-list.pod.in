@@ -24,6 +24,7 @@ B<openssl list>
 [B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -102,6 +103,8 @@ The first is the option name, and the second is a one-character indication
 of what type of parameter it takes, if any.
 This is an internal option, used for checking that the documentation
 is complete.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

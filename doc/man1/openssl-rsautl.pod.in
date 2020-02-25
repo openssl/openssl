@@ -33,6 +33,7 @@ B<openssl> B<rsautl>
 [B<-asn1parse>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -125,6 +126,8 @@ B<-verify> option.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

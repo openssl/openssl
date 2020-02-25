@@ -23,6 +23,7 @@ B<openssl> B<ciphers>
 [B<-stdname>]
 [B<-convert> I<name>]
 [B<-ciphersuites> I<val>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cipherlist>]
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
@@ -40,6 +41,8 @@ determine the appropriate cipherlist.
 =item B<-help>
 
 Print a usage message.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-s>
 

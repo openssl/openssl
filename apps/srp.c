@@ -193,7 +193,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
     OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
-    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM
+    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
@@ -222,6 +222,7 @@ const OPTIONS srp_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"user", 0, 0, "Username(s) to process (optional)"},
@@ -295,6 +296,10 @@ int srp_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         }

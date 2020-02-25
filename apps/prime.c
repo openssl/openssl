@@ -15,7 +15,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS
+    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS prime_options[] = {
@@ -31,6 +32,8 @@ const OPTIONS prime_options[] = {
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"number", 0, 0, "Number(s) to check for primality if not generating"},
@@ -71,6 +74,10 @@ opthelp:
         case OPT_CHECKS:
             /* ignore parameter and argument */
             opt_arg();
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

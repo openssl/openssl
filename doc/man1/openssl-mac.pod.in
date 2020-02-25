@@ -13,6 +13,7 @@ B<openssl mac>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-binary>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 I<mac_name>
 
 =head1 DESCRIPTION
@@ -99,6 +100,8 @@ Used by KMAC128 or KMAC256 to specify a customization string.
 The default is the empty string "".
 
 =back
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<mac_name>
 

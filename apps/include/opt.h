@@ -266,6 +266,24 @@
         case OPT_R_RAND: case OPT_R_WRITERAND
 
 /*
+ * Provider options.
+ */
+# define OPT_PROV_ENUM \
+        OPT_PROV__FIRST=1600, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
+        OPT_PROV__LAST
+
+# define OPT_PROV_OPTIONS \
+        OPT_SECTION("Provider"), \
+        { "provider", OPT_PROV_PROVIDER, 's', "Provder to load (can be specified multiple times)" }, \
+        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path" }
+
+# define OPT_PROV_CASES \
+        OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
+        case OPT_PROV_PROVIDER: \
+        case OPT_PROV_PROVIDER_PATH
+
+/*
  * Option parsing.
  */
 extern const char OPT_HELP_STR[];
@@ -348,6 +366,7 @@ char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
+int opt_provider(int i);
 void opt_help(const OPTIONS * list);
 void opt_print(const OPTIONS * opt, int doingparams, int width);
 int opt_format_error(const char *s, unsigned long flags);

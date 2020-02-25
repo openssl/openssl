@@ -23,6 +23,7 @@ B<openssl> B<genpkey>
 [B<-genparam>]
 [B<-text>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -103,6 +104,8 @@ Print an (unencrypted) text representation of private and public keys and
 parameters along with the PEM or DER structure.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

@@ -83,6 +83,7 @@ typedef enum OPTION_choice {
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_WRAP, OPT_ENGINE,
     OPT_R_ENUM,
+    OPT_PROV_ENUM,
     OPT_V_ENUM,
     OPT_CIPHER,
     OPT_ORIGINATOR
@@ -220,6 +221,7 @@ const OPTIONS cms_options[] = {
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"cert", 0, 0, "Recipient certs (optional; used only when encrypting)"},
@@ -619,6 +621,10 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_3DES_WRAP:

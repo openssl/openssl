@@ -19,6 +19,7 @@ B<rehash>
 [B<-compat>]
 [B<-n>]
 [B<-v>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<directory>] ...
 
 B<c_rehash>
@@ -27,6 +28,7 @@ B<c_rehash>
 [B<-old>]
 [B<-n>]
 [B<-v>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<directory>] ...
 
 =head1 DESCRIPTION
@@ -116,6 +118,8 @@ releases.
 
 Print messages about old links removed and new links created.
 By default, this command only lists each directory as it is processed.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

@@ -19,7 +19,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT
+    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS kdf_options[] = {
@@ -35,6 +36,8 @@ const OPTIONS kdf_options[] = {
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"kdf_name", 0, 0, "Name of the KDF algorithm"},
@@ -79,6 +82,10 @@ opthelp:
                 opts = sk_OPENSSL_STRING_new_null();
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
             break;
         }
     }

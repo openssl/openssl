@@ -37,7 +37,8 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
     OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
-    OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM
+    OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkey_options[] = {
@@ -72,6 +73,7 @@ const OPTIONS pkey_options[] = {
     {"text", OPT_TEXT, '-', "Output in plaintext as well"},
     {"noout", OPT_NOOUT, '-', "Don't output the key"},
 
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -177,6 +179,10 @@ int pkey_main(int argc, char **argv)
             ec_asn1_flag = i;
             break;
 #endif
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();

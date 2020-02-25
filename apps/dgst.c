@@ -42,7 +42,7 @@ typedef enum OPTION_choice {
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
     OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
     OPT_DIGEST,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dgst_options[] = {
@@ -82,6 +82,7 @@ const OPTIONS dgst_options[] = {
      "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"file", 0, 0, "Files to digest (optional; default is stdin)"},
@@ -207,6 +208,10 @@ int dgst_main(int argc, char **argv)
             if (!opt_md(opt_unknown(), &m))
                 goto opthelp;
             md = m;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

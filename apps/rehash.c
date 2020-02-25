@@ -447,7 +447,8 @@ static int do_dir(const char *dirname, enum Hash h)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE
+    OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS rehash_options[] = {
@@ -462,6 +463,8 @@ const OPTIONS rehash_options[] = {
 
     OPT_SECTION("Output"),
     {"v", OPT_VERBOSE, '-', "Verbose output"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"directory", 0, 0, "One or more directories to process (optional)"},
@@ -498,6 +501,10 @@ int rehash_main(int argc, char **argv)
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

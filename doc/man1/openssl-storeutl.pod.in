@@ -28,6 +28,7 @@ B<openssl> B<storeutl>
 [B<-fingerprint> I<arg>]
 [B<-I<digest>>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 I<uri> ...
 
 =head1 DESCRIPTION
@@ -109,6 +110,8 @@ Search for an object having the given fingerprint.
 The digest that was used to compute the fingerprint given with B<-fingerprint>.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

@@ -31,7 +31,8 @@ typedef enum OPTION_choice {
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM, OPT_NAMEOPT,
-    OPT_VERBOSE, OPT_SM2ID, OPT_SM2HEXID
+    OPT_VERBOSE, OPT_SM2ID, OPT_SM2HEXID,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS verify_options[] = {
@@ -72,6 +73,8 @@ const OPTIONS verify_options[] = {
     {"sm2-hex-id", OPT_SM2HEXID, 's',
      "Specify a hex ID string to verify an SM2 certificate"},
 #endif
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
@@ -208,6 +211,10 @@ int verify_main(int argc, char **argv)
                 BIO_printf(bio_err, "Invalid hex string input\n");
                 goto end;
             }
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }
