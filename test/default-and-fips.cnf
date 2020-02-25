@@ -1,6 +1,6 @@
 openssl_conf = openssl_init
 
-.include fipsinstall.cnf
+.include fipsmodule.cnf
 
 [openssl_init]
 providers = provider_sect
