@@ -86,7 +86,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
     OPT_CHAIN, OPT_VERIFY, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE, OPT_UNTRUSTED,
-    OPT_MD, OPT_V_ENUM, OPT_R_ENUM
+    OPT_MD, OPT_V_ENUM, OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ts_options[] = {
@@ -127,6 +127,7 @@ const OPTIONS ts_options[] = {
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -217,6 +218,10 @@ int ts_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_TSPOLICY:

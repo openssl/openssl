@@ -51,6 +51,7 @@ B<openssl> B<req>
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine keygen_engine sm2-id sm2-hex-id
 
@@ -322,6 +323,8 @@ argument for this option is string of hexadecimal digits.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

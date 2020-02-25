@@ -58,7 +58,7 @@ typedef enum OPTION_choice {
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
@@ -130,6 +130,7 @@ const OPTIONS pkcs12_options[] = {
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -306,6 +307,10 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

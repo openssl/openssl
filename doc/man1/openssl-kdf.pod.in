@@ -13,6 +13,7 @@ B<openssl kdf>
 [B<-keylen> I<num>]
 [B<-out> I<filename>]
 [B<-binary>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 I<kdf_name>
 
 =head1 DESCRIPTION
@@ -79,6 +80,8 @@ Specifies the name of a digest as an alphanumeric string.
 To see the list of supported digests, use the command I<list -digest-commands>.
 
 =back
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<kdf_name>
 

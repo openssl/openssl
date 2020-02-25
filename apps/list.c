@@ -617,7 +617,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS
+    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS,
+    OPT_PROV_ENUM
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -655,6 +656,8 @@ const OPTIONS list_options[] = {
      "List options for specified command"},
     {"objects", OPT_OBJECTS, '-',
      "List built in objects (OID<->name mappings)"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -740,6 +743,10 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                return 1;
             break;
         }
         done = 1;

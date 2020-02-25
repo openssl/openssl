@@ -21,6 +21,7 @@ B<openssl> B<verify>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-->]
 [I<certificate> ...]
 
@@ -90,6 +91,8 @@ B<-trusted>, B<-untrusted> or B<-CRLfile> options.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-->
 

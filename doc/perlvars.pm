@@ -88,6 +88,17 @@ $OpenSSL::safe::opt_r_item = ""
 . "\n"
 . "See L<openssl(1)/Random State Options> for details.";
 
+# Provider options
+$OpenSSL::safe::opt_provider_synopsis = ""
+. "[B<-provider> I<name>]\n"
+. "[B<-provider_path> I<path>]";
+$OpenSSL::safe::opt_provider_item = ""
+. "=item B<-provider> I<name>\n"
+. "\n"
+. "=item B<-provider_path> I<path>\n"
+. "\n"
+. "See L<openssl(1)/Provider Options>.";
+
 # Engine option
 $OpenSSL::safe::opt_engine_synopsis = ""
 . "[B<-engine> I<id>]";

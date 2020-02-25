@@ -16,6 +16,9 @@
 extern "C" {
 # endif
 
+/* Set the default provider search path */
+int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *, const char *path);
+
 /* Load and unload a provider */
 OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
 int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);

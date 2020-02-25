@@ -36,7 +36,8 @@ typedef enum OPTION_choice {
     OPT_RSAPUBKEY_IN, OPT_RSAPUBKEY_OUT,
     /* Do not change the order here; see case statements below */
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
-    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
+    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS rsa_options[] = {
@@ -71,6 +72,8 @@ const OPTIONS rsa_options[] = {
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
 # endif
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -159,6 +162,10 @@ int rsa_main(int argc, char **argv)
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
                 goto opthelp;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

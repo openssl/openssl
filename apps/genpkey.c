@@ -24,7 +24,8 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
-    OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER
+    OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS genpkey_options[] = {
@@ -45,6 +46,8 @@ const OPTIONS genpkey_options[] = {
     {"genparam", OPT_GENPARAM, '-', "Generate parameters, not key"},
     {"text", OPT_TEXT, '-', "Print the in text"},
     {"", OPT_CIPHER, '-', "Cipher to use to encrypt the key"},
+
+    OPT_PROV_OPTIONS,
 
     /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
@@ -131,6 +134,11 @@ int genpkey_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
                 goto end;
             }
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();

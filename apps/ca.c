@@ -148,7 +148,7 @@ typedef enum OPTION_choice {
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
     OPT_RAND_SERIAL,
-    OPT_R_ENUM, OPT_SM2ID, OPT_SM2HEXID,
+    OPT_R_ENUM, OPT_SM2ID, OPT_SM2HEXID, OPT_PROV_ENUM,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
 } OPTION_CHOICE;
@@ -237,6 +237,7 @@ const OPTIONS ca_options[] = {
     {"revoke", OPT_REVOKE, '<', "Revoke a cert (given in file)"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
@@ -359,6 +360,10 @@ opthelp:
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_KEY:

@@ -41,7 +41,7 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
     OPT_DSAPARAM, OPT_C, OPT_2, OPT_3, OPT_5,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dhparam_options[] = {
@@ -73,6 +73,7 @@ const OPTIONS dhparam_options[] = {
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
@@ -149,6 +150,10 @@ int dhparam_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         }

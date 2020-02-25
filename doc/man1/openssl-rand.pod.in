@@ -14,6 +14,7 @@ B<openssl rand>
 [B<-hex>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>
 
 =for openssl ifdef engine
@@ -52,6 +53,8 @@ Show the output as a hex string.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

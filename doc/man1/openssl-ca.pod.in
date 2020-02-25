@@ -59,6 +59,7 @@ B<openssl> B<ca>
 [B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
 
 =for openssl ifdef engine sm2-id sm2-hex-id
@@ -307,6 +308,8 @@ certificate. The argument for this option is string of hexadecimal digits.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
