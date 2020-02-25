@@ -53,6 +53,8 @@ const OPTIONS asn1parse_options[] = {
     {"dump", OPT_DUMP, 0, "unknown data in hex form"},
     {"dlimit", OPT_DLIMIT, 'p',
      "dump the first arg bytes of unknown data in hex form"},
+
+    OPT_NO_GLOBAL_OPTS(),
     {NULL}
 };
 

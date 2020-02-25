@@ -370,6 +370,7 @@ static void list_options_for_command(const char *command)
         if (o->name == OPT_HELP_STR
                 || o->name == OPT_MORE_STR
                 || o->name == OPT_SECTION_STR
+                || o->name == OPT_NO_GLOBALS_STR
                 || o->name[0] == '\0')
             continue;
         BIO_printf(bio_out, "%s %c\n", o->name, c == '\0' ? '-' : c);

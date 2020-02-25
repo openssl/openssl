@@ -60,6 +60,8 @@ const OPTIONS fipsinstall_options[] = {
     {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
     {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
     {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
+
+    OPT_NO_GLOBAL_OPTS(),
     {NULL}
 };
 

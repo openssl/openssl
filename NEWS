@@ -23,6 +23,8 @@
       o Added 'openssl mac' that uses the EVP_MAC API.
       o Added 'openssl kdf' that uses the EVP_KDF API.
       o Add OPENSSL_info() and 'openssl info' to get built-in data.
+      o Add -provider and -provider_path options to the command line
+        applications.
       o Add support for enabling instrumentation through trace and debug
         output.
       o Changed our version number scheme and set the next major release to

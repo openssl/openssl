@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Add -provider and -provider_path options to the command line application.
+     The -provider option can be specified multiple times.
+     [Paul Dale]
+
   *) The test suite is changed to preserve results of each test recipe.
      A new directory test-runs/ with subdirectories named like the
      test recipes are created in the build tree for this purpose.

@@ -272,6 +272,8 @@ extern const char OPT_HELP_STR[];
 extern const char OPT_MORE_STR[];
 extern const char OPT_SECTION_STR[];
 extern const char OPT_PARAM_STR[];
+extern const char OPT_NO_GLOBALS_STR[];
+#define OPT_NO_GLOBAL_OPTS() { OPT_NO_GLOBALS_STR, 1, '-', "" }
 
 typedef struct options_st {
     const char *name;

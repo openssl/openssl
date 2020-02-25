@@ -24,12 +24,15 @@
 #include <limits.h>
 #include <openssl/bio.h>
 #include <openssl/x509v3.h>
+#include <openssl/provider.h>
 
+#define MAX_WIDTH   80
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "-H";
 const char OPT_MORE_STR[] = "-M";
 const char OPT_SECTION_STR[] = "-S";
 const char OPT_PARAM_STR[] = "-P";
+const char OPT_NO_GLOBALS_STR[] = "-G";
 
 /* Our state */
 static char **argv;
@@ -41,6 +44,47 @@ static char *dunno;
 static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
+static int allow_global_options;
+
+typedef enum OPTION_global_choice {
+    OPT_GLOBAL_PROVIDER, OPT_GLOBAL_PROVIDER_PATH
+} OPTION_GLOBAL_CHOICE;
+
+static const OPTIONS global_options[] = {
+    OPT_SECTION("Provider"),
+    { "provider", OPT_GLOBAL_PROVIDER, 's', "Provider name" },
+    { "provider-path", OPT_GLOBAL_PROVIDER_PATH, 's', "Provider path" },
+    { NULL }
+};
+
+static int opt_provider_load(const char *provider)
+{
+    OSSL_PROVIDER *prov;
+
+    prov = OSSL_PROVIDER_load(NULL, provider);
+    if (prov == NULL) {
+        opt_printf_stderr("%s: unable to load provider %s\n",
+                          opt_getprog(), provider);
+        return 0;
+    }
+    return 1;
+}
+
+static int opt_process_global(int o, const OPTIONS *opt)
+{
+    switch (o) {
+    default:
+        opt_printf_stderr("%s: Global option %s unknown\n",
+                           opt_getprog(), opt->name);
+        return 0;
+    case OPT_GLOBAL_PROVIDER:
+        return opt_provider_load(opt_arg());
+    case OPT_GLOBAL_PROVIDER_PATH:
+        if (*opt_arg() == '\0')
+            return unsetenv("OPENSSL_MODULES");
+        return setenv("OPENSSL_MODULES", opt_arg(), 1) >= 0;
+    }
+}
 
 /*
  * Return the simple name of the program; removing various platform gunk.
@@ -128,6 +172,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     opts = o;
     opt_progname(av[0]);
     unknown = NULL;
+    allow_global_options = 1;
 
     /* Check all options up until the PARAM marker (if present) */
     for (; o->name != NULL && o->name != OPT_PARAM_STR; ++o) {
@@ -140,6 +185,10 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
                 || o->name == OPT_MORE_STR
                 || o->name == OPT_SECTION_STR)
             continue;
+        if (o->name == OPT_NO_GLOBALS_STR) {
+            allow_global_options = 0;
+            continue;
+        }
 #ifndef NDEBUG
         i = o->valtype;
 
@@ -624,6 +673,20 @@ void opt_begin(void)
 }
 
 /*
+ * Find the specified option in the options array.
+ * Return NULL if not found.
+ */
+static const OPTIONS *opt_find(const OPTIONS *options, const char *name)
+{
+    const OPTIONS *o;
+
+    for (o = options; o->name != NULL; o++)
+        if (strcmp(name, o->name) == 0)
+            return o;
+    return NULL;
+}
+
+/*
  * Parse the next flag (and value if specified), return 0 if done, -1 on
  * error, otherwise the flag's retval.
  */
@@ -631,6 +694,7 @@ int opt_next(void)
 {
     char *p;
     const OPTIONS *o;
+    int global = 0;
     int ival;
     long lval;
     unsigned long ulval;
@@ -660,110 +724,117 @@ int opt_next(void)
     /* If we have --flag=foo, snip it off */
     if ((arg = strchr(p, '=')) != NULL)
         *arg++ = '\0';
-    for (o = opts; o->name; ++o) {
-        /* If not this option, move on to the next one. */
-        if (strcmp(p, o->name) != 0)
-            continue;
-
-        /* If it doesn't take a value, make sure none was given. */
-        if (o->valtype == 0 || o->valtype == '-') {
-            if (arg) {
-                opt_printf_stderr("%s: Option -%s does not take a value\n",
-                                  prog, p);
-                return -1;
+    o = opt_find(opts, p);
+    if (o == NULL) {
+        if (allow_global_options)
+            o = opt_find(global_options, p);
+        if (o == NULL) {
+            if (unknown != NULL) {
+                dunno = p;
+                return unknown->retval;
             }
-            return o->retval;
-        }
-
-        /* Want a value; get the next param if =foo not used. */
-        if (arg == NULL) {
-            if (argv[opt_index] == NULL) {
-                opt_printf_stderr("%s: Option -%s needs a value\n",
-                                  prog, o->name);
-                return -1;
-            }
-            arg = argv[opt_index++];
-        }
-
-        /* Syntax-check value. */
-        switch (o->valtype) {
-        default:
-        case 's':
-        case ':':
-            /* Just a string. */
-            break;
-        case '/':
-            if (opt_isdir(arg) > 0)
-                break;
-            opt_printf_stderr("%s: Not a directory: %s\n", prog, arg);
+            opt_printf_stderr("%s: Unknown option: -%s\n", prog, p);
             return -1;
-        case '<':
-            /* Input file. */
+        }
+        global = 1;
+    }
+
+    /* If it doesn't take a value, make sure none was given. */
+    if (o->valtype == 0 || o->valtype == '-') {
+        if (arg) {
+            opt_printf_stderr("%s: Option -%s does not take a value\n",
+                              prog, p);
+            return -1;
+        }
+        return o->retval;
+    }
+
+    /* Want a value; get the next param if =foo not used. */
+    if (arg == NULL) {
+        if (argv[opt_index] == NULL) {
+            opt_printf_stderr("%s: Option -%s needs a value\n",
+                              prog, o->name);
+            return -1;
+        }
+        arg = argv[opt_index++];
+    }
+
+    /* Syntax-check value. */
+    switch (o->valtype) {
+    default:
+    case 's':
+    case ':':
+        /* Just a string. */
+        break;
+    case '/':
+        if (opt_isdir(arg) > 0)
             break;
-        case '>':
-            /* Output file. */
-            break;
-        case 'p':
-        case 'n':
-            if (!opt_int(arg, &ival)
-                    || (o->valtype == 'p' && ival <= 0)) {
-                opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
-                return -1;
-            }
-            break;
-        case 'M':
-            if (!opt_imax(arg, &imval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
-                return -1;
-            }
-            break;
-        case 'U':
-            if (!opt_umax(arg, &umval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
-                return -1;
-            }
-            break;
-        case 'l':
-            if (!opt_long(arg, &lval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
-                return -1;
-            }
-            break;
-        case 'u':
-            if (!opt_ulong(arg, &ulval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
-                return -1;
-            }
-            break;
-        case 'c':
-        case 'E':
-        case 'F':
-        case 'f':
-            if (opt_format(arg,
-                           o->valtype == 'c' ? OPT_FMT_PDS :
-                           o->valtype == 'E' ? OPT_FMT_PDE :
-                           o->valtype == 'F' ? OPT_FMT_PEMDER
-                           : OPT_FMT_ANY, &ival))
-                break;
-            opt_printf_stderr("%s: Invalid format \"%s\" for -%s\n",
+        opt_printf_stderr("%s: Not a directory: %s\n", prog, arg);
+        return -1;
+    case '<':
+        /* Input file. */
+        break;
+    case '>':
+        /* Output file. */
+        break;
+    case 'p':
+    case 'n':
+        if (!opt_int(arg, &ival)
+                || (o->valtype == 'p' && ival <= 0)) {
+            opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
                               prog, arg, o->name);
             return -1;
         }
+        break;
+    case 'M':
+        if (!opt_imax(arg, &imval)) {
+            opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                              prog, arg, o->name);
+            return -1;
+        }
+        break;
+    case 'U':
+        if (!opt_umax(arg, &umval)) {
+            opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                              prog, arg, o->name);
+            return -1;
+        }
+        break;
+    case 'l':
+        if (!opt_long(arg, &lval)) {
+            opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                              prog, arg, o->name);
+            return -1;
+        }
+        break;
+    case 'u':
+        if (!opt_ulong(arg, &ulval)) {
+            opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
+                              prog, arg, o->name);
+            return -1;
+        }
+        break;
+    case 'c':
+    case 'E':
+    case 'F':
+    case 'f':
+        if (opt_format(arg,
+                       o->valtype == 'c' ? OPT_FMT_PDS :
+                       o->valtype == 'E' ? OPT_FMT_PDE :
+                       o->valtype == 'F' ? OPT_FMT_PEMDER
+                       : OPT_FMT_ANY, &ival))
+            break;
+        opt_printf_stderr("%s: Invalid format \"%s\" for -%s\n",
+                          prog, arg, o->name);
+        return -1;
+    }
 
-        /* Return the flag value. */
+    /* Return the flag value. */
+    if (!global)
         return o->retval;
-    }
-    if (unknown != NULL) {
-        dunno = p;
-        return unknown->retval;
-    }
-    opt_printf_stderr("%s: Unknown option: -%s\n", prog, p);
-    return -1;
+    if (!opt_process_global(o->retval, o))
+        return -1;
+    return opt_next();
 }
 
 /* Return the most recent flag parameter. */
@@ -843,7 +914,7 @@ static const char *valtype2param(const OPTIONS *o)
 void opt_print(const OPTIONS *o, int doingparams, int width)
 {
     const char* help;
-    char start[80 + 1];
+    char start[MAX_WIDTH + 1];
     char *p;
 
         help = o->helpstr ? o->helpstr : "(No additional info)";
@@ -860,6 +931,8 @@ void opt_print(const OPTIONS *o, int doingparams, int width)
             opt_printf_stderr("\nParameters:\n");
             return;
         }
+        if (o->name == OPT_NO_GLOBALS_STR)
+            return;
 
         /* Pad out prefix */
         memset(start, ' ', sizeof(start) - 1);
@@ -895,15 +968,10 @@ void opt_print(const OPTIONS *o, int doingparams, int width)
         opt_printf_stderr("%s  %s\n", start, help);
 }
 
-void opt_help(const OPTIONS *list)
+static int opt_help_width(const OPTIONS *list, int width)
 {
     const OPTIONS *o;
-    int i, sawparams = 0, width = 5;
-    int standard_prolog;
-    char start[80 + 1];
-
-    /* Starts with its own help message? */
-    standard_prolog = list[0].name != OPT_HELP_STR;
+    int i;
 
     /* Find the widest help. */
     for (o = list; o->name; o++) {
@@ -914,8 +982,30 @@ void opt_help(const OPTIONS *list)
             i += 1 + strlen(valtype2param(o));
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
-        OPENSSL_assert(i < (int)sizeof(start));
     }
+    return width;
+}
+
+void opt_help(const OPTIONS *list)
+{
+    const OPTIONS *o;
+    int sawparams = 0, width = 5;
+    int standard_prolog;
+
+    /* Should the global optins be included? */
+    allow_global_options = 1;
+    for (o = list; o->name != NULL; o++)
+        if (o->name == OPT_NO_GLOBALS_STR)
+            allow_global_options = 0;
+
+    /* Starts with its own help message? */
+    standard_prolog = list[0].name != OPT_HELP_STR;
+
+    /* Find the widest help. */
+    width = opt_help_width(list, width);
+    if (allow_global_options)
+        width = opt_help_width(global_options, width);
+    OPENSSL_assert(width < MAX_WIDTH + 1);
 
     if (standard_prolog) {
         opt_printf_stderr("Usage: %s [options]\n", prog);
@@ -924,11 +1014,17 @@ void opt_help(const OPTIONS *list)
     }
 
     /* Now let's print. */
-    for (o = list; o->name; o++) {
+    for (o = list; o->name != NULL; o++) {
         if (o->name == OPT_PARAM_STR)
             sawparams = 1;
         opt_print(o, sawparams, width);
     }
+    if (allow_global_options)
+        for (o = global_options; o->name != NULL; o++) {
+            if (o->name == OPT_PARAM_STR)
+                sawparams = 1;
+            opt_print(o, sawparams, width);
+        }
 }
 
 /* opt_isdir section */

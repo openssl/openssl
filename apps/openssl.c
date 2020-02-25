@@ -392,6 +392,8 @@ const OPTIONS help_options[] = {
 
     OPT_PARAMETERS(),
     {"command", 0, 0, "Name of command to display help (optional)"},
+
+    OPT_NO_GLOBAL_OPTS(),
     {NULL}
 };
 

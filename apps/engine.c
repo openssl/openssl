@@ -49,6 +49,8 @@ const OPTIONS engine_options[] = {
 
     OPT_PARAMETERS(),
     {"engine", 0, 0, "ID of engine(s) to load"},
+
+    OPT_NO_GLOBAL_OPTS(),
     {NULL}
 };
 

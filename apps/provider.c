@@ -40,6 +40,8 @@ const OPTIONS provider_options[] = {
 
     OPT_PARAMETERS(),
     {"provider", 0, 0, "Provider(s) to load"},
+
+    OPT_NO_GLOBAL_OPTS(),
     {NULL}
 };
 
