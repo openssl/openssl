@@ -47,19 +47,22 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 LIBS={- join(" ", map { ( platform->sharedlib_import($_), platform->staticlib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{libraries}}) -}
-MODULES={- join(" ", map { platform->dso($_) } @{$unified_info{modules}}) -}
+MODULES={- our @MODULES = map { platform->dso($_) } @{$unified_info{modules}};
+           join(" ", @MODULES) -}
 MODULEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{modules}}) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
-SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+SCRIPTS={- our @SCRIPTS = @{$unified_info{scripts}}; join(" ", @SCRIPTS) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
+GENERATED_MANDATORY={- our @GENERATED_MANDATORY = @{$unified_info{depends}->{""}};
+                       join(" ", @GENERATED_MANDATORY) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", map { platform->convertext($_) } @generated) -}
+             our @GENERATED = map { platform->convertext($_) } @generated;
+             join(" ", @GENERATED) -}
 
 INSTALL_LIBS={-
         join(" ", map { quotify1(platform->sharedlib_import($_)
@@ -417,10 +420,10 @@ clean: libclean
 	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
 	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
-	-del /Q /F $(MODULES)
-	-del /Q /F $(SCRIPTS)
-	-del /Q /F $(GENERATED_MANDATORY)
-	-del /Q /F $(GENERATED)
+	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
