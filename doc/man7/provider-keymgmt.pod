@@ -331,7 +331,7 @@ ED25519 and X448 algorithms:
 
 The public key value.
 
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <integer> or <octet string>
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
 The private key value.
 
