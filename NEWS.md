@@ -21,6 +21,13 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development] ###
 
+  * The algorithm specific public key command line applications have
+    been deprecated.  These include dhparam, gendsa and others.  The pkey
+    alternatives should be used intead: pkey, pkeyparam and genpkey.
+  * X509 certificates signed using SHA1 are no longer allowed at security
+    level 1 or higher. The default security level for TLS is 1, so
+    certificates signed using SHA1 are by default no longer trusted to
+    authenticate servers or clients.
   * enable-crypto-mdebug and enable-crypto-mdebug-backtrace were mostly
     disabled; the project uses address sanitize/leak-detect instead.
   * Added OSSL_SERIALIZER, a generic serializer API.
@@ -44,6 +51,8 @@ OpenSSL 3.0
     deprecated.
   * All of the low level AES, Blowfish, Camellia, CAST, DES, IDEA, RC2,
     RC4, RC5 and SEED cipher functions have been deprecated.
+  * All of the low level DH, DSA, ECDH, ECDSA and RSA public key functions
+    have been deprecated.
 
 OpenSSL 1.1.1
 -------------
@@ -1423,4 +1432,3 @@ OpenSSL 0.9.x
 [CVE-2006-2940]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2940
 [CVE-2006-2937]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2937
 [CVE-2005-2969]: https://www.openssl.org/news/vulnerabilities.html#CVE-2005-2969
-
