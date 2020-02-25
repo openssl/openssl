@@ -14,6 +14,6 @@ use OpenSSL::Test::Utils;
 setup("test_internal_provider");
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("test");
-$ENV{OPENSSL_CONF} = bldtop_file("test", "provider_internal_test.conf");
+$ENV{OPENSSL_CONF} = bldtop_file("test", "provider_internal_test.cnf");
 
 simple_test("test_internal_provider", "provider_internal_test");

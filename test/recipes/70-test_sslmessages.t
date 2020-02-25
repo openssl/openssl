@@ -30,7 +30,7 @@ plan skip_all => "$test_name needs TLS enabled"
        || (!disabled("tls1_3") && disabled("tls1_2"));
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 
 my $proxy = TLSProxy::Proxy->new(
     undef,

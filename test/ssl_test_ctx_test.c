@@ -251,7 +251,7 @@ int setup_tests(void)
 
     if (!TEST_ptr(conf = NCONF_new(NULL)))
         return 0;
-    /* argument should point to test/ssl_test_ctx_test.conf */
+    /* argument should point to test/ssl_test_ctx_test.cnf */
     if (!TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0))
         return 0;
 

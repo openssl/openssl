@@ -128,21 +128,21 @@ values that can be used.
 =head1 EXAMPLES
 
 Calculate the mac of a FIPS module F<fips.so> and run a FIPS self test
-for the module, and save the F<fips.conf> configuration file:
+for the module, and save the F<fips.cnf> configuration file:
 
- openssl fipsinstall -module ./fips.so -out fips.conf -provider_name fips \
+ openssl fipsinstall -module ./fips.so -out fips.cnf -provider_name fips \
          -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213
 
-Verify that the configuration file F<fips.conf> contains the correct info:
+Verify that the configuration file F<fips.cnf> contains the correct info:
 
- openssl fipsinstall -module ./fips.so -in fips.conf  -provider_name fips \
+ openssl fipsinstall -module ./fips.so -in fips.cnf  -provider_name fips \
           -section_name fips_install -mac_name HMAC -macopt digest:SHA256 \
           -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 -verify
 
 Corrupt any self tests which have the description 'SHA1':
 
- openssl fipsinstall -module ./fips.so -out fips.conf -provider_name fips \
+ openssl fipsinstall -module ./fips.so -out fips.cnf -provider_name fips \
          -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 \
          -corrupt_desc', 'SHA1'

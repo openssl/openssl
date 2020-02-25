@@ -31,7 +31,7 @@ plan skip_all => "No test GOST engine found"
 plan tests => 1;
 
 $ENV{OPENSSL_CONF} = srctop_file("test", "recipes", "90-test_gost_data",
-                                 "gost.conf");
+                                 "gost.cnf");
 
 ok(run(test(["gosttest",
              srctop_file("test", "recipes", "90-test_gost_data",
