@@ -179,7 +179,7 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
+ * Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
    and EVP_PKEY_decrypt() instead.
    Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()
    and EVP_PKEY_encrypt() instead.
