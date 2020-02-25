@@ -1,4 +1,3 @@
-
 OpenSSL CHANGES
 ===============
 
@@ -25,6 +24,121 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+ * The test suite is changed to preserve results of each test recipe.
+   A new directory test-runs/ with subdirectories named like the
+   test recipes are created in the build tree for this purpose.
+
+   *Richard Levitte*
+
+ * The command line utilities ecparam and ec have been deprecated.  Instead
+   use the pkeyparam, pkey and genpkey programs.
+
+   *Paul Dale*
+
+ * All of the low level RSA functions have been deprecated including:
+
+   RSA_new_method, RSA_bits, RSA_size, RSA_security_bits,
+   RSA_get0_pss_params, RSA_get_version, RSA_get0_engine,
+   RSA_generate_key_ex, RSA_generate_multi_prime_key,
+   RSA_X931_derive_ex, RSA_X931_generate_key_ex, RSA_check_key,
+   RSA_check_key_ex, RSA_public_encrypt, RSA_private_encrypt,
+   RSA_public_decrypt, RSA_private_decrypt, RSA_set_default_method,
+   RSA_get_default_method, RSA_null_method, RSA_get_method, RSA_set_method,
+   RSA_PKCS1_OpenSSL, RSA_print_fp, RSA_print, RSA_sign, RSA_verify,
+   RSA_sign_ASN1_OCTET_STRING, RSA_verify_ASN1_OCTET_STRING,
+   RSA_blinding_on, RSA_blinding_off, RSA_setup_blinding,
+   RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1,
+   RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2,
+   PKCS1_MGF1, RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP,
+   RSA_padding_add_PKCS1_OAEP_mgf1, RSA_padding_check_PKCS1_OAEP_mgf1,
+   RSA_padding_add_SSLv23, RSA_padding_check_SSLv23,
+   RSA_padding_add_none, RSA_padding_check_none, RSA_padding_add_X931,
+   RSA_padding_check_X931, RSA_X931_hash_id, RSA_verify_PKCS1_PSS,
+   RSA_padding_add_PKCS1_PSS, RSA_verify_PKCS1_PSS_mgf1,
+   RSA_padding_add_PKCS1_PSS_mgf1, RSA_set_ex_data, RSA_get_ex_data,
+   RSA_meth_new, RSA_meth_free, RSA_meth_dup, RSA_meth_get0_name,
+   RSA_meth_set1_name, RSA_meth_get_flags, RSA_meth_set_flags,
+   RSA_meth_get0_app_data, RSA_meth_set0_app_data, RSA_meth_get_pub_enc,
+   RSA_meth_set_pub_enc, RSA_meth_get_pub_dec, RSA_meth_set_pub_dec,
+   RSA_meth_get_priv_enc, RSA_meth_set_priv_enc, RSA_meth_get_priv_dec,
+   RSA_meth_set_priv_dec, RSA_meth_get_mod_exp, RSA_meth_set_mod_exp,
+   RSA_meth_get_bn_mod_exp, RSA_meth_set_bn_mod_exp, RSA_meth_get_init,
+   RSA_meth_set_init, RSA_meth_get_finish, RSA_meth_set_finish,
+   RSA_meth_get_sign, RSA_meth_set_sign, RSA_meth_get_verify,
+   RSA_meth_set_verify, RSA_meth_get_keygen, RSA_meth_set_keygen,
+   RSA_meth_get_multi_prime_keygen and RSA_meth_set_multi_prime_keygen.
+
+   Use of these low level functions has been informally discouraged for a long
+   time.  Instead applications should use L<EVP_PKEY_encrypt_init(3)>,
+   L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and
+   L<EVP_PKEY_decrypt(3)>.
+
+   *Paul Dale*
+
+ * X509 certificates signed using SHA1 are no longer allowed at security
+   level 1 and above.
+   In TLS/SSL the default security level is 1. It can be set either
+   using the cipher string with @SECLEVEL, or calling
+   SSL_CTX_set_security_level(). If the leaf certificate is signed with SHA-1,
+   a call to SSL_CTX_use_certificate() will fail if the security level is not
+   lowered first.
+   Outside TLS/SSL, the default security level is -1 (effectively 0). It can
+   be set using X509_VERIFY_PARAM_set_auth_level() or using the -auth_level
+   options of the apps.
+
+   *Kurt Roeckx*
+
+ * The command line utilities dhparam, dsa, gendsa and dsaparam have been
+   deprecated.  Instead use the pkeyparam, pkey, genpkey and pkeyparam
+   programs respectively.
+
+   *Paul Dale*
+
+ * All of the low level DH functions have been deprecated including:
+
+   DH_OpenSSL, DH_set_default_method, DH_get_default_method, DH_set_method,
+   DH_new_method, DH_bits, DH_size, DH_security_bits, DH_get_ex_new_index,
+   DH_set_ex_data, DH_get_ex_data, DH_generate_parameters_ex,
+   DH_check_params_ex, DH_check_ex, DH_check_pub_key_ex,
+   DH_check, DH_check_pub_key, DH_generate_key, DH_compute_key,
+   DH_compute_key_padded, DHparams_print_fp, DHparams_print, DH_get_nid,
+   DH_KDF_X9_42, DH_get0_engine, DH_get_length, DH_set_length, DH_meth_new,
+   DH_meth_free, DH_meth_dup, DH_meth_get0_name, DH_meth_set1_name,
+   DH_meth_get_flags, DH_meth_set_flags, DH_meth_get0_app_data,
+   DH_meth_set0_app_data, DH_meth_get_generate_key,
+   DH_meth_set_generate_key, DH_meth_get_compute_key,
+   DH_meth_set_compute_key, DH_meth_get_bn_mod_exp,
+   DH_meth_set_bn_mod_exp, DH_meth_get_init, DH_meth_set_init,
+   DH_meth_get_finish, DH_meth_set_finish, DH_meth_get_generate_params
+   and DH_meth_set_generate_params.
+
+   Use of these low level functions has been informally discouraged for a long
+   time.  Instead applications should use L<EVP_PKEY_derive_init(3)>
+   and L<EVP_PKEY_derive(3)>.
+
+   *Paul Dale*
+
+ * All of the low level DSA functions have been deprecated including:
+
+   DSA_do_sign, DSA_do_verify, DSA_OpenSSL, DSA_set_default_method,
+   DSA_get_default_method, DSA_set_method, DSA_get_method, DSA_new_method,
+   DSA_sign_setup, DSA_sign, DSA_verify, DSA_get_ex_new_index,
+   DSA_set_ex_data, DSA_get_ex_data, DSA_generate_parameters_ex,
+   DSA_generate_key, DSA_meth_new, DSA_get0_engine, DSA_meth_free,
+   DSA_meth_dup, DSA_meth_get0_name, DSA_meth_set1_name, DSA_meth_get_flags,
+   DSA_meth_set_flags, DSA_meth_get0_app_data, DSA_meth_set0_app_data,
+   DSA_meth_get_sign, DSA_meth_set_sign, DSA_meth_get_sign_setup,
+   DSA_meth_set_sign_setup, DSA_meth_get_verify, DSA_meth_set_verify,
+   DSA_meth_get_mod_exp, DSA_meth_set_mod_exp, DSA_meth_get_bn_mod_exp,
+   DSA_meth_set_bn_mod_exp, DSA_meth_get_init, DSA_meth_set_init,
+   DSA_meth_get_finish, DSA_meth_set_finish, DSA_meth_get_paramgen,
+   DSA_meth_set_paramgen, DSA_meth_get_keygen and DSA_meth_set_keygen.
+
+   Use of these low level functions has been informally discouraged for a long
+   time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,
+   L<EVP_DigestSignUpdate(3)> and L<EVP_DigestSignFinal(3)>.
+
+   *Paul Dale*
 
  * Reworked the treatment of EC EVP_PKEYs with the SM2 curve to
    automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC.
@@ -40,7 +154,32 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
+ * Deprecated low level ECDH and ECDSA functions.  These include:
+
+   ECDH_compute_key, ECDSA_do_sign, ECDSA_do_sign_ex, ECDSA_do_verify,
+   ECDSA_sign_setup, ECDSA_sign, ECDSA_sign_ex, ECDSA_verify and
+   ECDSA_size.
+
+   Use of these low level functions has been informally discouraged for a long
+   time.  Instead applications should use the EVP_PKEY_derive(3),
+   EVP_DigestSign(3) and EVP_DigestVerify(3) functions.
+
+   *Paul Dale*
+
+ * Deprecated the EC_KEY_METHOD functions.  These include:
+
+   EC_KEY_METHOD_new, EC_KEY_METHOD_free, EC_KEY_METHOD_set_init,
+   EC_KEY_METHOD_set_keygen, EC_KEY_METHOD_set_compute_key,
+   EC_KEY_METHOD_set_sign, EC_KEY_METHOD_set_verify,
+   EC_KEY_METHOD_get_init, EC_KEY_METHOD_get_keygen,
+   EC_KEY_METHOD_get_compute_key, EC_KEY_METHOD_get_sign and
+   EC_KEY_METHOD_get_verify.
+
+   Instead applications and extension writers should use the OSSL_PROVIDER APIs.
+
+   *Paul Dale*
+
+ Deprecated EVP_PKEY_decrypt_old(), please use EVP_PKEY_decrypt_init()
    and EVP_PKEY_decrypt() instead.
    Deprecated EVP_PKEY_encrypt_old(), please use EVP_PKEY_encrypt_init()
    and EVP_PKEY_encrypt() instead.
@@ -72,6 +211,18 @@ OpenSSL 3.0
 
    *Paul Dale*
 
+ * Over two thousand fixes were made to the documentation, including:
+   - Common options (such as -rand/-writerand, TLS version control, etc)
+     were refactored and point to newly-enhanced descriptions in openssl.pod.
+   - Added style conformance for all options (with help from Richard Levitte),
+     documented all reported missing options, added a CI build to check
+     that all options are documented and that no unimplemented options
+     are documented.
+   - Documented some internals, such as all use of environment variables.
+   - Addressed all internal broken L<> references.
+
+   *Rich Salz*
+
  * All of the low level CMAC functions have been deprecated including:
 
    CMAC_CTX_new, CMAC_CTX_cleanup, CMAC_CTX_free, CMAC_CTX_get0_cipher_ctx,
@@ -92,17 +243,16 @@ OpenSSL 3.0
    MD4_Update, MD4_Final, MD4_Transform, MD5, MD5_Init, MD5_Update,
    MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
    RIPEMD160, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
-   RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final,
-   SHA1_Transform, SHA224_Init, SHA224_Update, SHA224_Final,
-   SHA224_Transform, SHA256_Init, SHA256_Update, SHA256_Final,
-   SHA256_Transform, SHA384, SHA384_Init, SHA384_Update, SHA384_Final,
-   SHA512, SHA512_Init, SHA512_Update, SHA512_Final, SHA512_Transform,
-   WHIRLPOOL, WHIRLPOOL_Init, WHIRLPOOL_Update, WHIRLPOOL_BitUpdate
-   and WHIRLPOOL_Final.
+   RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_Transform,
+   SHA224_Init, SHA224_Update, SHA224_Final, SHA224_Transform, SHA256_Init,
+   SHA256_Update, SHA256_Final, SHA256_Transform, SHA384, SHA384_Init,
+   SHA384_Update, SHA384_Final, SHA512, SHA512_Init, SHA512_Update,
+   SHA512_Final, SHA512_Transform, WHIRLPOOL, WHIRLPOOL_Init,
+   WHIRLPOOL_Update, WHIRLPOOL_BitUpdate and WHIRLPOOL_Final.
 
-   Use of these low level functions has been informally discouraged for a long
-   time.  Instead applications should instead use the EVP_DigestInit_ex,
-   EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions.
+   Use of these low level functions has been informally discouraged
+   for a long time.  Applications should use the EVP_DigestInit_ex(3),
+   EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions instead.
 
    *Paul Dale*
 
@@ -148,14 +298,12 @@ OpenSSL 3.0
    SEED_set_key, SEED_encrypt, SEED_decrypt, SEED_ecb_encrypt,
    SEED_cbc_encrypt, SEED_cfb128_encrypt and SEED_ofb128_encrypt.
 
-   Use of these low level functions has been informally discouraged for a long
-   time. Instead applications should use the high level EVP APIs, e.g.
+   Use of these low level functions has been informally discouraged for
+   a long time. Applications should use the high level EVP APIs, e.g.
    EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
-   equivalently named decrypt functions.
+   equivalently named decrypt functions instead.
 
    *Matt Caswell and Paul Dale*
-
-
 
  * Removed include/openssl/opensslconf.h.in and replaced it with
    include/openssl/configuration.h.in, which differs in not including
@@ -178,7 +326,7 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
+ * Fixed an overflow bug in the x64_64 Montgomery squaring procedure
    used in exponentiation with 512-bit moduli. No EC algorithms are
    affected. Analysis suggests that attacks against 2-prime RSA1024,
    3-prime RSA1536, and DSA1024 as a result of this defect would be very
@@ -193,11 +341,6 @@ OpenSSL 3.0
 
  * Most memory-debug features have been deprecated, and the functionality
    replaced with no-ops.
-
-   *Rich Salz*
-
- * Most common options (such as -rand/-writerand, TLS version control, etc)
-   were refactored and point to newly-enhanced descriptions in openssl.pod
 
    *Rich Salz*
 
