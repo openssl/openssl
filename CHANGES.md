@@ -24,6 +24,32 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+
+ * The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
+   have been converted to Markdown with the goal to produce documents
+   which not only look pretty when viewed online in the browser, but
+   remain well readable inside a plain text editor.
+
+   To achieve this goal, a 'minimalistic' Markdown style has been applied
+   which avoids formatting elements that interfere too mcuh with the
+   reading flow in the text file. For example, it
+
+   * avoids [ATX headings][] and uses [setext headings][] instead
+     (which works for `<h1>` and `<h2>` headings only).
+   * avoids [inline links][] and uses [reference links][] instead.
+   * avoids [fenced code blocks][], uses [indented code blocks][] instead.
+
+     [markdown]:             https://daringfireball.net/projects/markdown/
+     [ATX headings]:         https://github.github.com/gfm/#atx-headings
+     [setext headings]:      https://github.github.com/gfm/#setext-headings
+     [inline links]:         https://github.github.com/gfm/#inline-link
+     [reference links]:      https://github.github.com/gfm/#reference-link
+     [fenced code blocks]:   https://github.github.com/gfm/#fenced-code-blocks
+     [indented code blocks]: https://github.github.com/gfm/#indented-code-blocks
+
+   *Matthias St. Pierre*
+
+
  * The test suite is changed to preserve results of each test recipe.
    A new directory test-runs/ with subdirectories named like the
    test recipes are created in the build tree for this purpose.
