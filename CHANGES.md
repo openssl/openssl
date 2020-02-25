@@ -39,7 +39,6 @@ OpenSSL 3.0
    * avoids [inline links][] and uses [reference links][] instead.
    * avoids [fenced code blocks][] and uses [indented code blocks][] instead.
 
-     [markdown]:             https://daringfireball.net/projects/markdown/
      [ATX headings]:         https://github.github.com/gfm/#atx-headings
      [setext headings]:      https://github.github.com/gfm/#setext-headings
      [inline links]:         https://github.github.com/gfm/#inline-link
