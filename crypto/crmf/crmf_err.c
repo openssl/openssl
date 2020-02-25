@@ -32,6 +32,7 @@ static const ERR_STRING_DATA CRMF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_NULL_ARGUMENT), "null argument"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY),
     "popo inconsistent public key"},
+    {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_POPO_MISSING), "popo missing"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_POPO_MISSING_PUBLIC_KEY),
     "popo missing public key"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_POPO_MISSING_SUBJECT),

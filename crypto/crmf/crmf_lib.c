@@ -485,11 +485,13 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     X509_PUBKEY *pubkey = NULL;
     OSSL_CRMF_POPOSIGNINGKEY *sig = NULL;
 
-    if (reqs == NULL
-            || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL
-            || req->popo == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
-                CRMF_R_NULL_ARGUMENT);
+    if (reqs == NULL || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL) {
+        CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO, CRMF_R_NULL_ARGUMENT);
+        return 0;
+    }
+
+    if (req->popo == NULL) {
+        CRMFerr(0, CRMF_R_POPO_MISSING);
         return 0;
     }
 
