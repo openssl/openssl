@@ -29,14 +29,19 @@ my %shared_info;
         shared_sonameflag     => '-Wl,-soname=',
     },
     'linux-shared' => sub {
+        my $zdefs =
+            (grep /(?:^|\s)-fsanitize/,
+             @{$config{CFLAGS}}, @{$config{cflags}})
+            ? ''
+            : '-z defs';
         return {
             %{$shared_info{'gnu-shared'}},
             shared_defflag    => '-Wl,--version-script=',
-            dso_ldflags       =>
-                (grep /(?:^|\s)-fsanitize/,
-                 @{$config{CFLAGS}}, @{$config{cflags}})
-                ? ''
-                : '-z defs',
+            dso_ldflags       => $zdefs,
+            dso_post_cmd      =>
+                $zdefs
+                ? 'test `nm -u $@ | grep -v @@GLIBC | grep -v " _" | wc -l` = 0'
+                : undef,
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },

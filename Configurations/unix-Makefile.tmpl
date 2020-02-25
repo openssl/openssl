@@ -1455,13 +1455,17 @@ EOF
                       fill_lines(' ', $COLUMNS - length($dso) - 2,
                                  @objs, @defs, @deps));
 
-      return <<"EOF";
+      my $out = <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $dso$shared_def \\
 		$objs \\
 		$linklibs\$(DSO_EX_LIBS)
 EOF
+      if (defined $target{dso_post_cmd}) {
+          $out .= "\t" . $target{dso_post_cmd} . "\n";
+      }
+      return $out;
   }
   sub obj2lib {
       my %args = @_;
