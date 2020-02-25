@@ -87,7 +87,7 @@ OpenSSL 3.0
  * All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
    SHA384, SHA512 and Whirlpool digest functions have been deprecated.
    These include:
-   
+
    MD2, MD2_options, MD2_Init, MD2_Update, MD2_Final, MD4, MD4_Init,
    MD4_Update, MD4_Final, MD4_Transform, MD5, MD5_Init, MD5_Update,
    MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
