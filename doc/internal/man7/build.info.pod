@@ -270,6 +270,22 @@ part of is tokenized>.
 
 I<Variable assignment values are not tokenized.>
 
+Variable references can be one of:
+
+=over 4
+
+=item B<$>I<NAME> or B<${>I<NAME>B<}>
+
+Simple reference; the variable reference is replaced with its value,
+verbatim.
+
+=item B<${>I<NAME>B</>I<str>B</>I<subst>B<}>
+
+Substitution reference; the variable reference is replaced with its
+value, modified by replacing all occurences of I<str> with I<subst>.
+
+=back
+
 =head2 Scope
 
 Most of the statement values are accumulated globally from all the
