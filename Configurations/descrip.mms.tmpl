@@ -140,8 +140,8 @@ HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -
 HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
 HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].

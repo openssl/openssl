@@ -195,8 +195,8 @@ MANDOCS7={-
              fill_lines(" ", $COLUMNS - 9, map { platform->bin($_) }
                         @{$unified_info{mandocs}->{man7}})) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
 
 # DESTDIR is for package builders so that they can configure for, say,
 # /usr/ and yet have everything installed to /tmp/somedir/usr/.
@@ -962,12 +962,6 @@ lint:
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
-	@ : {- output_off() if $disabled{apps}; "" -}
-	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
-	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
-	@ : {- output_on() if $disabled{apps}; "" -}
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )

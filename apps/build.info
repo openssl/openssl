@@ -19,6 +19,10 @@ $OPENSSLSRC=\
         s_client.c s_server.c s_time.c sess_id.c smime.c speed.c \
         spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c \
         list.c info.c provider.c fipsinstall.c
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  $OPENSSLSRC=$OPENSSLSRC \
+        dhparam.c dsa.c dsaparam.c gendsa.c rsa.c rsautl.c genrsa.c
+ENDIF
 
 IF[{- !$disabled{apps} -}]
   PROGRAMS=openssl
@@ -26,13 +30,16 @@ IF[{- !$disabled{apps} -}]
   INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
 
+  DEPEND[${OPENSSLSRC/.c/.o}]=progs.h
+  GENERATE[progs.c]=progs.pl -C $(APPS_OPENSSL)
+  GENERATE[progs.h]=progs.pl -H $(APPS_OPENSSL)
+  # progs.pl tries to read all 'openssl' sources, including progs.c, so we make
+  # sure things are generated in the correct order.
+  DEPEND[progs.h]=progs.c
+
   IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
     SOURCE[openssl]=openssl.rc
-  ENDIF
-
-  IF[{- !$disabled{'deprecated-3.0'} -}]
-    SOURCE[openssl]=dhparam.c dsa.c dsaparam.c gendsa.c rsa.c rsautl.c genrsa.c
   ENDIF
 
   SCRIPTS{misc}=CA.pl
