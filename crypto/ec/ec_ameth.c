@@ -48,7 +48,7 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
          * The cast in the following line is intentional as the
          * `i2d_ECParameters` signature can't be constified (see discussion at
          * https://github.com/openssl/openssl/pull/9347 where related and
-         * required consitfication backports were rejected).
+         * required constification backports were rejected).
          *
          * This cast should be safe anyway, because we can expect
          * `i2d_ECParameters()` to treat the first argument as if it was const.
