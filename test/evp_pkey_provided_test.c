@@ -27,12 +27,12 @@ static char *datadir = NULL;
 #define PUB_PEM      4
 #define PUB_DER      5
 
-static void stripcr(char **buf, int *len)
+static void stripcr(char *buf, size_t *len)
 {
-    int i;
+    size_t i;
     char *curr, *writ;
 
-    for (i = *len, curr = *buf, writ = *buf; i > 0; i--, curr++) {
+    for (i = *len, curr = buf, writ = buf; i > 0; i--, curr++) {
         if (*curr == '\r') {
             (*len)--;
             continue;
@@ -53,6 +53,7 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
     size_t readbytes;
     int ret = 0;
     int len;
+    size_t slen;
 
     switch (type) {
     case PRIV_TEXT:
@@ -89,7 +90,7 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
     if (!TEST_ptr(fullfile))
         goto err;
 
-    file = BIO_new_file(fullfile, "r");
+    file = BIO_new_file(fullfile, "rb");
     if (!TEST_ptr(file))
         goto err;
 
@@ -102,10 +103,13 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
     if (!TEST_int_gt(len, 0))
         goto err;
 
-    if (type != PRIV_DER && type != PUB_DER)
-        stripcr(&memdata, &len);
+    slen = len;
+    if (type != PRIV_DER && type != PUB_DER) {
+        stripcr(memdata, &slen);
+        stripcr(buf, &readbytes);
+    }
 
-    if (!TEST_mem_eq(memdata, len, buf, readbytes))
+    if (!TEST_mem_eq(memdata, slen, buf, readbytes))
         goto err;
 
     ret = 1;
