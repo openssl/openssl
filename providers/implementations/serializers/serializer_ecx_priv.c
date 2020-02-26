@@ -150,13 +150,14 @@ static int ecx_priv_der(void *vctx, void *vecxkey, BIO *out,
     struct ecx_priv_ctx_st *ctx = vctx;
     ECX_KEY *ecxkey = vecxkey;
     int ret;
+    int type = (ctx->type == ECX_KEY_TYPE_X25519) ? EVP_PKEY_X25519
+                                                  : EVP_PKEY_X448;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
     ret = ossl_prov_write_priv_der_from_obj(out, ecxkey,
-                                            ctx->type == ECX_KEY_TYPE_X25519
-                                            ? EVP_PKEY_X25519 : EVP_PKEY_X448,
+                                            type,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
@@ -193,13 +194,14 @@ static int ecx_priv_pem(void *vctx, void *ecxkey, BIO *out,
 {
     struct ecx_priv_ctx_st *ctx = vctx;
     int ret;
+    int type = (ctx->type == ECX_KEY_TYPE_X25519) ? EVP_PKEY_X25519
+                                                  : EVP_PKEY_X448;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
     ret = ossl_prov_write_priv_pem_from_obj(out, ecxkey,
-                                            ctx->type == ECX_KEY_TYPE_X25519
-                                            ? EVP_PKEY_X25519 : EVP_PKEY_X448,
+                                            type,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
