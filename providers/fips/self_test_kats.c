@@ -223,7 +223,7 @@ static size_t drbg_kat_nonce_cb(RAND_DRBG *drbg, unsigned char **pout,
     return p->data_size;
 }
 
-static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
+static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
                           OPENSSL_CTX *libctx)
 {
     int ret = 0;
@@ -236,7 +236,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     };
     static const unsigned char zero[sizeof(drbg->data)] = { 0 };
 
-    SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
     if (strcmp(t->desc, OSSL_SELF_TEST_DESC_DRBG_HMAC) == 0)
         flags |= RAND_DRBG_FLAG_HMAC;
@@ -280,7 +280,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
                             t->entropyaddin2, t->entropyaddin2len))
         goto err;
 
-    SELF_TEST_EVENT_oncorrupt_byte(event, out);
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
     if (memcmp(out, t->expected, t->expectedlen) != 0)
         goto err;
@@ -296,7 +296,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     ret = 1;
 err:
     RAND_DRBG_free(drbg);
-    SELF_TEST_EVENT_onend(event, ret);
+    OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
 
@@ -338,12 +338,12 @@ static int self_test_kdfs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_drbgs(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_drbgs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-        if (!self_test_drbg(&st_kat_drbg_tests[i], event, libctx))
+        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
             ret = 0;
     }
     return ret;
@@ -366,7 +366,7 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
         ret = 0;
     if (!self_test_kdfs(st, libctx))
         ret = 0;
-    if (!self_test_drbgs(event, libctx))
+    if (!self_test_drbgs(st, libctx))
         ret = 0;
 
     return ret;
