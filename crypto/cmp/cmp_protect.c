@@ -286,6 +286,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
              * to section 5.1.1
              */
             subjKeyIDStr = X509_get0_subject_key_id(ctx->clCert);
+            if (subjKeyIDStr == NULL)
+                subjKeyIDStr = ctx->referenceValue; /* fallback */
             if (subjKeyIDStr != NULL
                     && !ossl_cmp_hdr_set1_senderKID(msg->header, subjKeyIDStr))
                 goto err;
@@ -306,7 +308,18 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         }
     }
 
-    return 1;
+    /*
+     * As required by RFC 4210 section 5.1.1., if the sender name is not known
+     * to the client it set to NULL-DN. In this case for identification at least
+     * the senderKID must be set, where we took the referenceValue as fallback.
+     */
+
+    if (ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
+            && msg->header->senderKID == NULL)
+        CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    else
+        return 1;
+
  err:
     CMPerr(0, CMP_R_ERROR_PROTECTING_MESSAGE);
     return 0;

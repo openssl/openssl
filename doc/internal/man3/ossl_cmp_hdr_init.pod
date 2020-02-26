@@ -5,6 +5,7 @@
 ossl_cmp_hdr_set_pvno,
 ossl_cmp_hdr_get_pvno,
 ossl_cmp_hdr_get0_sendernonce,
+ossl_cmp_general_name_is_NULL_DN,
 ossl_cmp_hdr_set1_sender,
 ossl_cmp_hdr_set1_recipient,
 ossl_cmp_hdr_update_messagetime,
@@ -26,6 +27,7 @@ ossl_cmp_hdr_init
   int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
   ASN1_OCTET_STRING
      *ossl_cmp_hdr_get0_sendernonce(const OSSL_CMP_PKIHEADER *hdr);
+  int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 
   int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
   int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
@@ -51,6 +53,9 @@ ossl_cmp_hdr_set_pvno() sets hdr->pvno to the given B<pvno>.
 ossl_cmp_hdr_get_pvno() returns the pvno of the given B<hdr> or -1 on error.
 
 ossl_cmp_hdr_get0_sendernonce() returns the sender nonce of the given PKIHeader.
+
+ossl_cmp_general_name_is_NULL_DN() determines if the given GENERAL_NAME
+is the NULL-DN.
 
 ossl_cmp_hdr_set1_sender() sets the sender field in the given PKIHeader
 to the given X509 Name value, without consuming the pointer.
@@ -106,6 +111,8 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 ossl_cmp_hdr_get_pvno() returns the pvno of the given B<hdr> or -1 on error.
 
 ossl_cmp_hdr_get0_sendernonce() returns the respective nonce.
+
+ossl_cmp_general_name_is_NULL_DN() returns 1 given a NULL-DN, else 0.
 
 All other functions return 1 on success, 0 on error.
 

@@ -63,31 +63,42 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
     return hdr->recipNonce;
 }
 
+int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
+{
+    X509_NAME *null = X509_NAME_new();
+    int res = name == NULL || null == NULL
+        || (name->type == GEN_DIRNAME
+                && X509_NAME_cmp(name->d.directoryName, null) == 0);
+
+    X509_NAME_free(null);
+    return res;
+}
+
 /* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
 static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
 {
-    GENERAL_NAME *gen;
+    GENERAL_NAME *name;
 
     if (!ossl_assert(tgt != NULL))
         return 0;
-    if ((gen = GENERAL_NAME_new()) == NULL)
+    if ((name = GENERAL_NAME_new()) == NULL)
         goto err;
-    gen->type = GEN_DIRNAME;
+    name->type = GEN_DIRNAME;
 
     if (src == NULL) { /* NULL-DN */
-        if ((gen->d.directoryName = X509_NAME_new()) == NULL)
+        if ((name->d.directoryName = X509_NAME_new()) == NULL)
             goto err;
-    } else if (!X509_NAME_set(&gen->d.directoryName, src)) {
+    } else if (!X509_NAME_set(&name->d.directoryName, src)) {
         goto err;
     }
 
     GENERAL_NAME_free(*tgt);
-    *tgt = gen;
+    *tgt = name;
 
     return 1;
 
  err:
-    GENERAL_NAME_free(gen);
+    GENERAL_NAME_free(name);
     return 0;
 }
 
@@ -265,19 +276,12 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
     if (!ossl_cmp_hdr_set_pvno(hdr, OSSL_CMP_PVNO))
         return 0;
 
-    sender = ctx->clCert != NULL ?
-        X509_get_subject_name(ctx->clCert) : ctx->subjectName;
     /*
      * The sender name is copied from the subject of the client cert, if any,
      * or else from the subject name provided for certification requests.
-     * As required by RFC 4210 section 5.1.1., if the sender name is not known
-     * to the client it set to NULL-DN. In this case for identification at least
-     * the senderKID must be set, which we take from any referenceValue given.
      */
-    if (sender == NULL && ctx->referenceValue == NULL) {
-        CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);
-        return 0;
-    }
+    sender = ctx->clCert != NULL ?
+        X509_get_subject_name(ctx->clCert) : ctx->subjectName;
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))
         return 0;
 
