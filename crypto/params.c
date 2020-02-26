@@ -13,6 +13,14 @@
 #include "internal/thread_once.h"
 #include "internal/numbers.h"
 
+/*
+ * Helper macros that know the number of mantassia bits in floats and doubles.
+ * Doubles have 53 bit mantissas (52 stored, 1 implicit).
+ * Floats have 24 bit mantissas (23 stored, 1 implicit).
+ */
+#define UINT_FITS_DOUBLE(u)  ((u >> 53) == 0)
+#define UINT_FITS_FLOAT(u)  ((u >> 24) == 0)
+
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
@@ -156,6 +164,7 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
     uint32_t u32;
     uint64_t u64;
     double d;
+    float f;
 
     if (val == NULL || p == NULL )
         return 0;
@@ -199,6 +208,13 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
                 return 1;
             }
             break;
+        case sizeof(float):
+            f = *(const float *)p->data;
+            if (f >= INT32_MIN && f <= INT32_MAX && f == (int32_t)f) {
+                *val = (int32_t)f;
+                return 1;
+            }
+            break;
         }
     }
     return 0;
@@ -206,6 +222,8 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
 
 int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
 {
+    uint32_t u32;
+
     if (p == NULL)
         return 0;
     p->return_size = 0;
@@ -237,13 +255,22 @@ int OSSL_PARAM_set_int32(OSSL_PARAM *p, int32_t val)
         }
     } else if (p->data_type == OSSL_PARAM_REAL) {
         p->return_size = sizeof(double);
-        if (p->data == NULL)
-            return 1;
         switch (p->data_size) {
         case sizeof(double):
-            *(double *)p->data = (double)val;
+            if (p->data != NULL)
+                *(double *)p->data = (double)val;
             return 1;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            u32 = val < 0 ? -val : val;
+            if (p->data != NULL && UINT_FITS_FLOAT(u32)) {
+                *(float *)p->data = (float)val;
+                return 1;
+            }
+            break;
         }
+        if (p->data == NULL)
+            return 1;
     }
     return 0;
 }
@@ -260,6 +287,7 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
     int64_t i64;
     uint64_t u64;
     double d;
+    float f;
 
     if (val == NULL || p == NULL)
         return 0;
@@ -300,6 +328,13 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
             d = *(const double *)p->data;
             if (d >= 0 && d <= UINT32_MAX && d == (uint32_t)d) {
                 *val = (uint32_t)d;
+                return 1;
+            }
+            break;
+        case sizeof(float):
+            f = *(const float *)p->data;
+            if (f >= 0 && f <= UINT32_MAX && f == (uint32_t)f) {
+                *val = (uint32_t)f;
                 return 1;
             }
             break;
@@ -345,13 +380,21 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val)
         }
     } else if (p->data_type == OSSL_PARAM_REAL) {
         p->return_size = sizeof(double);
-        if (p->data == NULL)
-            return 1;
         switch (p->data_size) {
         case sizeof(double):
-            *(double *)p->data = (double)val;
+            if (p->data != NULL)
+                *(double *)p->data = (double)val;
             return 1;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            if (p->data != NULL && UINT_FITS_FLOAT(val)) {
+                *(float *)p->data = (float)val;
+                return 1;
+            }
+            break;
         }
+        if (p->data == NULL)
+            return 1;
     }
     return 0;
 }
@@ -366,6 +409,7 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
 {
     uint64_t u64;
     double d;
+    float f;
 
     if (val == NULL || p == NULL )
         return 0;
@@ -398,6 +442,13 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
             d = *(const double *)p->data;
             if (d >= INT64_MIN && d <= INT64_MAX && d == (int64_t)d) {
                 *val = (int64_t)d;
+                return 1;
+            }
+            break;
+        case sizeof(float):
+            f = *(const float *)p->data;
+            if (f >= INT64_MIN && f <= INT64_MAX && f == (int64_t)f) {
+                *val = (int64_t)f;
                 return 1;
             }
             break;
@@ -447,17 +498,25 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
         }
     } else if (p->data_type == OSSL_PARAM_REAL) {
         p->return_size = sizeof(double);
-        if (p->data == NULL)
-            return 1;
         switch (p->data_size) {
         case sizeof(double):
             u64 = val < 0 ? -val : val;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if (p->data != NULL && UINT_FITS_DOUBLE(u64)) {
                 *(double *)p->data = (double)val;
                 return 1;
             }
             break;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            u64 = val < 0 ? -val : val;
+            if (p->data != NULL && UINT_FITS_FLOAT(u64)) {
+                *(float *)p->data = (float)val;
+                return 1;
+            }
+            break;
         }
+        if (p->data == NULL)
+            return 1;
     }
     return 0;
 }
@@ -472,6 +531,7 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
     int32_t i32;
     int64_t i64;
     double d;
+    float f;
 
     if (val == NULL || p == NULL)
         return 0;
@@ -508,6 +568,13 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
             d = *(const double *)p->data;
             if (d >= 0 && d <= INT64_MAX && d == (uint64_t)d) {
                 *val = (uint64_t)d;
+                return 1;
+            }
+            break;
+        case sizeof(float):
+            f = *(const float *)p->data;
+            if (f >= 0 && f <= INT64_MAX && f == (uint64_t)f) {
+                *val = (uint64_t)f;
                 return 1;
             }
             break;
@@ -558,15 +625,24 @@ int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val)
             break;
         }
     } else if (p->data_type == OSSL_PARAM_REAL) {
-        p->return_size = sizeof(double);
         switch (p->data_size) {
+        p->return_size = sizeof(double);
         case sizeof(double):
-            if ((val >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if (p->data != NULL && UINT_FITS_DOUBLE(val)) {
                 *(double *)p->data = (double)val;
                 return 1;
             }
             break;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            if (p->data != NULL && UINT_FITS_FLOAT(val)) {
+                *(float *)p->data = (float)val;
+                return 1;
+            }
+            break;
         }
+        if (p->data == NULL)
+            return 1;
     }
     return 0;
 }
@@ -667,15 +743,18 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
         case sizeof(double):
             *val = *(const double *)p->data;
             return 1;
+        case sizeof(float):
+            *val = (double)*(const float *)p->data;
+            return 1;
         }
     } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
         switch (p->data_size) {
         case sizeof(uint32_t):
-            *val = *(const uint32_t *)p->data;
+            *val = (double)*(const uint32_t *)p->data;
             return 1;
         case sizeof(uint64_t):
             u64 = *(const uint64_t *)p->data;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if (UINT_FITS_DOUBLE(u64)) {
                 *val = (double)u64;
                 return 1;
             }
@@ -684,13 +763,13 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
     } else if (p->data_type == OSSL_PARAM_INTEGER) {
         switch (p->data_size) {
         case sizeof(int32_t):
-            *val = *(const int32_t *)p->data;
+            *val = (double)*(const int32_t *)p->data;
             return 1;
         case sizeof(int64_t):
             i64 = *(const int64_t *)p->data;
             u64 = i64 < 0 ? -i64 : i64;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
-                *val = 0.0 + i64;
+            if (UINT_FITS_DOUBLE(u64)) {
+                *val = (double)i64;
                 return 1;
             }
             break;
@@ -706,12 +785,16 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
     p->return_size = 0;
 
     if (p->data_type == OSSL_PARAM_REAL) {
-        p->return_size = sizeof(double);
-        if (p->data == NULL)
-            return 1;
         switch (p->data_size) {
         case sizeof(double):
-            *(double *)p->data = val;
+            p->return_size = sizeof(double);
+            if (p->data != NULL)
+                *(double *)p->data = val;
+            return 1;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            if (p->data != NULL && val == (float)val)
+                *(float *)p->data = (float)val;
             return 1;
         }
     } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
@@ -761,6 +844,138 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
 OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
 {
     return ossl_param_construct(key, OSSL_PARAM_REAL, buf, sizeof(double));
+}
+
+int OSSL_PARAM_get_float(const OSSL_PARAM *p, float *val)
+{
+    int64_t i64;
+    uint64_t u64;
+    int32_t i32;
+    uint32_t u32;
+    double d;
+
+    if (val == NULL || p == NULL)
+        return 0;
+
+    if (p->data_type == OSSL_PARAM_REAL) {
+        switch (p->data_size) {
+        case sizeof(double):
+            d = *(const double *)p->data;
+            if (d == (float)d) {
+                *val = (float)d;
+                return 1;
+            }
+            break;
+        case sizeof(float):
+            *val = *(const float *)p->data;
+            return 1;
+        }
+    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
+        switch (p->data_size) {
+        case sizeof(uint32_t):
+            u32 = *(const uint32_t *)p->data;
+            if (UINT_FITS_FLOAT(u32)) {
+                *val = (float)u32;
+                return 1;
+            }
+            break;
+        case sizeof(uint64_t):
+            u64 = *(const uint64_t *)p->data;
+            if (UINT_FITS_FLOAT(u64)) {
+                *val = (float)u64;
+                return 1;
+            }
+            break;
+        }
+    } else if (p->data_type == OSSL_PARAM_INTEGER) {
+        switch (p->data_size) {
+        case sizeof(int32_t):
+            i32 = *(const int32_t *)p->data;
+            u32 = i32 < 0 ? -i32 : i32;
+            if (UINT_FITS_FLOAT(u32)) {
+                *val = (float)i32;
+                return 1;
+            }
+            break;
+        case sizeof(int64_t):
+            i64 = *(const int64_t *)p->data;
+            u64 = i64 < 0 ? -i64 : i64;
+            if (UINT_FITS_FLOAT(u64)) {
+                *val = (float)i64;
+                return 1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
+int OSSL_PARAM_set_float(OSSL_PARAM *p, float val)
+{
+    if (p == NULL)
+        return 0;
+    p->return_size = 0;
+
+    if (p->data_type == OSSL_PARAM_REAL) {
+        switch (p->data_size) {
+        case sizeof(double):
+            p->return_size = sizeof(double);
+            if (p->data != NULL)
+                *(double *)p->data = (double)val;
+            return 1;
+        case sizeof(float):
+            p->return_size = sizeof(float);
+            if (p->data != NULL)
+                *(float *)p->data = val;
+            return 1;
+        }
+    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
+               && val == (uint32_t)val) {
+        p->return_size = sizeof(float);
+        if (p->data == NULL)
+            return 1;
+        switch (p->data_size) {
+        case sizeof(uint32_t):
+            if (val >= 0 && val <= UINT32_MAX) {
+                p->return_size = sizeof(uint32_t);
+                *(uint32_t *)p->data = (uint32_t)val;
+                return 1;
+            }
+            break;
+        case sizeof(uint64_t):
+            if (val >= 0 && val <= UINT64_MAX) {
+                p->return_size = sizeof(uint64_t);
+                *(uint64_t *)p->data = (uint64_t)val;
+                return 1;
+            }
+            break;            }
+    } else if (p->data_type == OSSL_PARAM_INTEGER && val == (int32_t)val) {
+        p->return_size = sizeof(float);
+        if (p->data == NULL)
+            return 1;
+        switch (p->data_size) {
+        case sizeof(int32_t):
+            if (val >= INT32_MIN && val <= INT32_MAX) {
+                p->return_size = sizeof(int32_t);
+                *(int32_t *)p->data = (int32_t)val;
+                return 1;
+            }
+            break;
+        case sizeof(int64_t):
+            if (val >= INT64_MIN && val <= INT64_MAX) {
+                p->return_size = sizeof(int64_t);
+                *(int64_t *)p->data = (int64_t)val;
+                return 1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
+OSSL_PARAM OSSL_PARAM_construct_float(const char *key, float *buf)
+{
+    return ossl_param_construct(key, OSSL_PARAM_REAL, buf, sizeof(float));
 }
 
 static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,

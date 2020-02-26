@@ -26,7 +26,8 @@ typedef struct {
     uint32_t u32;
     uint64_t u64;
     double d;
-    int valid_i32, valid_i64, valid_u32, valid_u64, valid_d;
+    float f;
+    int valid_i32, valid_i64, valid_u32, valid_u64, valid_d, valid_f;
     void *ref, *datum;
     size_t size;
 } PARAM_CONVERSION;
@@ -39,15 +40,18 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
     static uint32_t datum_u32, ref_u32;
     static uint64_t datum_u64, ref_u64;
     static double datum_d, ref_d;
+    static float datum_f, ref_f;
     static OSSL_PARAM params[] = {
         OSSL_PARAM_int32("int32",   &datum_i32),
         OSSL_PARAM_int64("int64",   &datum_i64),
         OSSL_PARAM_uint32("uint32", &datum_u32),
         OSSL_PARAM_uint64("uint64", &datum_u64),
         OSSL_PARAM_double("double", &datum_d),
+        OSSL_PARAM_float("float",   &datum_f),
         OSSL_PARAM_END
     };
-    int def_i32 = 0, def_i64 = 0, def_u32 = 0, def_u64 = 0, def_d = 0;
+    int def_i32 = 0, def_i64 = 0, def_u32 = 0, def_u64 = 0;
+    int def_d = 0, def_f = 0;
     const PAIR *pp = s->pairs;
     const char *type = NULL;
     char *p;
@@ -112,6 +116,15 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
                 pc->valid_d = 1;
                 pc->d = strtod(pp->value, &p);
             }
+        } else if (strcasecmp(pp->key, "float") == 0) {
+            if (def_f++) {
+                TEST_info("Line %d: multiple float lines", s->curr);
+                return 0;
+            }
+            if (strcasecmp(pp->value, "invalid") != 0) {
+                pc->valid_f = 1;
+                pc->f = strtof(pp->value, &p);
+            }
         } else {
             TEST_info("Line %d: unknown keyword %s", s->curr, pp->key);
             return 0;
@@ -173,6 +186,15 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_d;
         pc->ref = &ref_d;
         pc->size = sizeof(ref_d);
+    } else if (strcasecmp(type, "float") == 0) {
+        if (!TEST_true(def_f) || !TEST_true(pc->valid_f)) {
+            TEST_note("errant float on line %d", s->curr);
+            return 0;
+        }
+        datum_f = ref_f = pc->f;
+        pc->datum = &datum_f;
+        pc->ref = &ref_f;
+        pc->size = sizeof(ref_f);
     } else {
         TEST_error("type unknown at line %d", s->curr);
         return 0;
@@ -187,6 +209,7 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     uint32_t u32;
     uint64_t u64;
     double d;
+    float f;
 
     if (!pc->valid_i32) {
         if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))) {
@@ -283,6 +306,25 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
         if (!TEST_true(OSSL_PARAM_set_double(pc->param, d))
             || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
             TEST_note("unexpected valid conversion from double on line %d",
+                      line);
+            return 0;
+        }
+    }
+    if (!pc->valid_f) {
+        if (!TEST_false(OSSL_PARAM_get_float(pc->param, &f))) {
+            TEST_note("unexpected valid conversion to float on line %d", line);
+            return 0;
+        }
+    } else {
+        if (!TEST_true(OSSL_PARAM_get_float(pc->param, &f))
+            || !TEST_true(f == pc->f)) {
+            TEST_note("unexpected conversion to float on line %d", line);
+            return 0;
+        }
+        memset(pc->datum, 44, pc->size);
+        if (!TEST_true(OSSL_PARAM_set_float(pc->param, f))
+            || !TEST_mem_eq(pc->datum, pc->size, pc->ref, pc->size)) {
+            TEST_note("unexpected valid conversion from float on line %d",
                       line);
             return 0;
         }

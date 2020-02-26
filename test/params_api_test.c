@@ -403,12 +403,17 @@ err:
 
 static int test_param_real(void)
 {
-    double p;
-    OSSL_PARAM param = OSSL_PARAM_double("r", NULL);
+    double d;
+    float f;
+    OSSL_PARAM param_d = OSSL_PARAM_double("d", NULL);
+    OSSL_PARAM param_f = OSSL_PARAM_float("f", NULL);
 
-    param.data = &p;
-    return TEST_true(OSSL_PARAM_set_double(&param, 3.14159))
-           && TEST_double_eq(p, 3.14159);
+    param_d.data = &d;
+    param_f.data = &f;
+    return TEST_true(OSSL_PARAM_set_double(&param_d, 3.14159))
+           && TEST_double_eq(d, 3.14159)
+           && TEST_true(OSSL_PARAM_set_float(&param_f, 16.125))
+           && TEST_double_eq(f, 16.125);
 }
 
 static int test_param_construct(void)

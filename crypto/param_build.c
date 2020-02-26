@@ -135,6 +135,12 @@ int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
     return param_push_num(bld, key, &num, sizeof(num), OSSL_PARAM_REAL);
 }
 
+int ossl_param_bld_push_float(OSSL_PARAM_BLD *bld, const char *key,
+                              float num)
+{
+    return param_push_num(bld, key, &num, sizeof(num), OSSL_PARAM_REAL);
+}
+
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn)
 {

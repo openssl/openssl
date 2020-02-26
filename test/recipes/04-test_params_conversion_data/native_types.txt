@@ -4,6 +4,7 @@ int64=0
 uint32=0
 uint64=0
 double=0
+float=0
 
 type=int32
 int32=6
@@ -11,6 +12,7 @@ int64=6
 uint32=6
 uint64=6
 double=6
+float=6
 
 type=int32
 int32=-6
@@ -18,6 +20,43 @@ int64=-6
 uint32=invalid
 uint64=invalid
 double=-6
+float=-6
+
+# 2^24-1
+type=int32
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# 1-2^24
+type=int32
+int32=-16777215
+int64=-16777215
+uint32=invalid
+uint64=invalid
+double=-16777215
+float=-16777215
+
+# 2^24
+type=int32
+int32=16777216
+int64=16777216
+uint32=16777216
+uint64=16777216
+double=16777216
+float=invalid
+
+# -2^24
+type=int32
+int32=-16777216
+int64=-16777216
+uint32=invalid
+uint64=invalid
+double=-16777216
+float=invalid
 
 
 type=uint32
@@ -26,6 +65,7 @@ int64=0
 uint32=0
 uint64=0
 double=0
+float=0
 
 type=uint32
 int32=6
@@ -33,6 +73,25 @@ int64=6
 uint32=6
 uint64=6
 double=6
+float=6
+
+# 2^24-1
+type=uint32
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# 2^24
+type=uint32
+int32=16777216
+int64=16777216
+uint32=16777216
+uint64=16777216
+double=16777216
+float=invalid
 
 # 2^31-1
 type=uint32
@@ -41,6 +100,7 @@ int64=2147483647
 uint32=2147483647
 uint64=2147483647
 double=2147483647
+float=invalid
 
 # 2^31
 type=uint32
@@ -49,6 +109,7 @@ int64=2147483648
 uint32=2147483648
 uint64=2147483648
 double=2147483648
+float=invalid
 
 
 type=int64
@@ -57,6 +118,7 @@ int64=6
 uint32=6
 uint64=6
 double=6
+float=6
 
 type=int64
 int32=-6
@@ -64,6 +126,43 @@ int64=-6
 uint32=invalid
 uint64=invalid
 double=-6
+float=-6
+
+# 2^24
+type=int64
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# -2^24
+type=int64
+int32=-16777215
+int64=-16777215
+uint32=invalid
+uint64=invalid
+double=-16777215
+float=-16777215
+
+# 2^24-1
+type=int64
+int32=16777216
+int64=16777216
+uint32=16777216
+uint64=16777216
+double=16777216
+float=invalid
+
+# -2^24-1
+type=int64
+int32=-16777216
+int64=-16777216
+uint32=invalid
+uint64=invalid
+double=-16777216
+float=invalid
 
 # 2^31-1
 type=int64
@@ -72,6 +171,7 @@ int64=2147483647
 uint32=2147483647
 uint64=2147483647
 double=2147483647
+float=invalid
 
 # 2^31
 type=int64
@@ -80,6 +180,7 @@ int64=2147483648
 uint32=2147483648
 uint64=2147483648
 double=2147483648
+float=invalid
 
 # -2^31+1
 type=int64
@@ -88,6 +189,7 @@ int64=-2147483647
 uint32=invalid
 uint64=invalid
 double=-2147483647
+float=invalid
 
 # -2^31
 type=int64
@@ -96,6 +198,7 @@ int64=-2147483648
 uint32=invalid
 uint64=invalid
 double=-2147483648
+float=invalid
 
 # -2^31-1
 type=int64
@@ -104,6 +207,7 @@ int64=-2147483649
 uint32=invalid
 uint64=invalid
 double=-2147483649
+float=invalid
 
 # 2^32-1
 type=int64
@@ -112,6 +216,7 @@ int64=4294967295
 uint32=4294967295
 uint64=4294967295
 double=4294967295
+float=invalid
 
 # 2^32
 type=int64
@@ -120,6 +225,7 @@ int64=4294967296
 uint32=invalid
 uint64=4294967296
 double=4294967296
+float=invalid
 
 # -2^32
 type=int64
@@ -128,6 +234,7 @@ int64=-4294967296
 uint32=invalid
 uint64=invalid
 double=-4294967296
+float=invalid
 
 # 2^53-1
 type=int64
@@ -136,6 +243,7 @@ int64=9007199254740991
 uint32=invalid
 uint64=9007199254740991
 double=9007199254740991
+float=invalid
 
 # 2^53
 type=int64
@@ -144,6 +252,7 @@ int64=9007199254740992
 uint32=invalid
 uint64=9007199254740992
 double=invalid
+float=invalid
 
 # -2^53-1
 type=int64
@@ -152,6 +261,7 @@ int64=-9007199254740991
 uint32=invalid
 uint64=invalid
 double=-9007199254740991
+float=invalid
 
 # -2^53
 type=int64
@@ -160,6 +270,7 @@ int64=-9007199254740992
 uint32=invalid
 uint64=invalid
 double=invalid
+float=invalid
 
 
 type=uint64
@@ -168,6 +279,25 @@ int64=6
 uint32=6
 uint64=6
 double=6
+float=6
+
+# 2^24-1
+type=uint64
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# 2^24
+type=uint64
+int32=16777216
+int64=16777216
+uint32=16777216
+uint64=16777216
+double=16777216
+float=invalid
 
 # 2^31-1
 type=uint64
@@ -176,6 +306,7 @@ int64=2147483647
 uint32=2147483647
 uint64=2147483647
 double=2147483647
+float=invalid
 
 # 2^31
 type=uint64
@@ -184,6 +315,7 @@ int64=2147483648
 uint32=2147483648
 uint64=2147483648
 double=2147483648
+float=invalid
 
 # 2^32-1
 type=uint64
@@ -192,6 +324,7 @@ int64=4294967295
 uint32=4294967295
 uint64=4294967295
 double=4294967295
+float=invalid
 
 # 2^32
 type=uint64
@@ -200,6 +333,7 @@ int64=4294967296
 uint32=invalid
 uint64=4294967296
 double=4294967296
+float=invalid
 
 # 2^53-1
 type=uint64
@@ -208,6 +342,7 @@ int64=9007199254740991
 uint32=invalid
 uint64=9007199254740991
 double=9007199254740991
+float=invalid
 
 # 2^53
 type=uint64
@@ -216,6 +351,7 @@ int64=9007199254740992
 uint32=invalid
 uint64=9007199254740992
 double=invalid
+float=invalid
 
 # 2^63-1
 type=uint64
@@ -224,6 +360,7 @@ int64=9223372036854775807
 uint32=invalid
 uint64=9223372036854775807
 double=invalid
+float=invalid
 
 # 2^63-1
 type=uint64
@@ -232,6 +369,8 @@ int64=invalid
 uint32=invalid
 uint64=9223372036854775808
 double=invalid
+float=invalid
+
 
 type=double
 int32=0
@@ -239,6 +378,7 @@ int64=0
 uint32=0
 uint64=0
 double=0
+float=0
 
 type=double
 int32=6
@@ -246,6 +386,7 @@ int64=6
 uint32=6
 uint64=6
 double=6
+float=6
 
 type=double
 int32=-6
@@ -253,6 +394,43 @@ int64=-6
 uint32=invalid
 uint64=invalid
 double=-6
+float=-6
+
+# 2^24
+type=double
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# -2^24
+type=double
+int32=-16777215
+int64=-16777215
+uint32=invalid
+uint64=invalid
+double=-16777215
+float=-16777215
+
+# 2^24-1
+type=double
+int32=16777216
+int64=16777216
+uint32=16777216
+uint64=16777216
+double=16777216
+float=16777216
+
+# -2^24-1
+type=double
+int32=-16777216
+int64=-16777216
+uint32=invalid
+uint64=invalid
+double=-16777216
+float=-16777216
 
 # -2^31
 type=double
@@ -261,6 +439,7 @@ int64=-2147483648
 uint32=invalid
 uint64=invalid
 double=-2147483648
+float=-2147483648
 
 # -2^31-1
 type=double
@@ -269,6 +448,7 @@ int64=-2147483649
 uint32=invalid
 uint64=invalid
 double=-2147483649
+float=invalid
 
 # 2^32-1
 type=double
@@ -277,6 +457,7 @@ int64=4294967295
 uint32=4294967295
 uint64=4294967295
 double=4294967295
+float=invalid
 
 # 2^32
 type=double
@@ -285,6 +466,7 @@ int64=4294967296
 uint32=invalid
 uint64=4294967296
 double=4294967296
+float=4294967296
 
 # -2^32
 type=double
@@ -293,6 +475,7 @@ int64=-4294967296
 uint32=invalid
 uint64=invalid
 double=-4294967296
+float=-4294967296
 
 # 2^53-1
 type=double
@@ -301,6 +484,7 @@ int64=9007199254740991
 uint32=invalid
 uint64=9007199254740991
 double=9007199254740991
+float=invalid
 
 # -2^53+1
 type=double
@@ -309,6 +493,7 @@ int64=-9007199254740991
 uint32=invalid
 uint64=invalid
 double=-9007199254740991
+float=invalid
 
 # big
 type=double
@@ -317,6 +502,7 @@ int64=invalid
 uint32=invalid
 uint64=invalid
 double=1e100
+float=invalid
 
 # big
 type=double
@@ -325,6 +511,7 @@ int64=invalid
 uint32=invalid
 uint64=invalid
 double=-1e100
+float=invalid
 
 # infinite
 type=double
@@ -333,6 +520,7 @@ int64=invalid
 uint32=invalid
 uint64=invalid
 double=inf
+float=inf
 
 # fractional
 type=double
@@ -341,3 +529,83 @@ int64=invalid
 uint32=invalid
 uint64=invalid
 double=0.5
+float=0.5
+
+
+type=float
+int32=0
+int64=0
+uint32=0
+uint64=0
+double=0
+float=0
+
+type=float
+int32=6
+int64=6
+uint32=6
+uint64=6
+double=6
+float=6
+
+type=float
+int32=-6
+int64=-6
+uint32=invalid
+uint64=invalid
+double=-6
+float=-6
+
+# 2^24-1
+type=double
+int32=16777215
+int64=16777215
+uint32=16777215
+uint64=16777215
+double=16777215
+float=16777215
+
+# 1-2^24
+type=double
+int32=-16777215
+int64=-16777215
+uint32=invalid
+uint64=invalid
+double=-16777215
+float=-16777215
+
+# big
+type=double
+int32=invalid
+int64=invalid
+uint32=invalid
+uint64=invalid
+double=1e30
+float=invalid
+
+# big
+type=double
+int32=invalid
+int64=invalid
+uint32=invalid
+uint64=invalid
+double=-1e30
+float=invalid
+
+# infinite
+type=double
+int32=invalid
+int64=invalid
+uint32=invalid
+uint64=invalid
+double=inf
+float=inf
+
+# fractional
+type=double
+int32=invalid
+int64=invalid
+uint32=invalid
+uint64=invalid
+double=0.5
+float=0.5

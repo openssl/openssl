@@ -49,6 +49,8 @@ extern "C" {
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(size_t))
 # define OSSL_PARAM_double(key, addr) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(double))
+# define OSSL_PARAM_float(key, addr) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(float))
 
 # define OSSL_PARAM_BN(key, bn, sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (bn), (sz))
@@ -79,6 +81,7 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf);
 OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
                                    size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf);
+OSSL_PARAM OSSL_PARAM_construct_float(const char *key, float *buf);
 OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
                                             size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
@@ -116,6 +119,8 @@ int OSSL_PARAM_set_size_t(OSSL_PARAM *p, size_t val);
 
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val);
 int OSSL_PARAM_set_double(OSSL_PARAM *p, double val);
+int OSSL_PARAM_get_float(const OSSL_PARAM *p, float *val);
+int OSSL_PARAM_set_float(OSSL_PARAM *p, float val);
 
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val);
 int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val);

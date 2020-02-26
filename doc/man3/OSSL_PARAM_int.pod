@@ -2,32 +2,34 @@
 
 =head1 NAME
 
-OSSL_PARAM_double, OSSL_PARAM_int, OSSL_PARAM_int32, OSSL_PARAM_int64,
-OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_uint, OSSL_PARAM_uint32,
-OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN, OSSL_PARAM_utf8_string,
-OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr, OSSL_PARAM_octet_ptr,
+OSSL_PARAM_double, OSSL_PARAM_float, OSSL_PARAM_int, OSSL_PARAM_int32,
+OSSL_PARAM_int64, OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_uint,
+OSSL_PARAM_uint32, OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN,
+OSSL_PARAM_utf8_string, OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr,
+OSSL_PARAM_octet_ptr,
 OSSL_PARAM_END,
-OSSL_PARAM_construct_double, OSSL_PARAM_construct_int,
-OSSL_PARAM_construct_int32, OSSL_PARAM_construct_int64,
-OSSL_PARAM_construct_long, OSSL_PARAM_construct_size_t,
-OSSL_PARAM_construct_uint, OSSL_PARAM_construct_uint32,
-OSSL_PARAM_construct_uint64, OSSL_PARAM_construct_ulong,
-OSSL_PARAM_construct_BN, OSSL_PARAM_construct_utf8_string,
-OSSL_PARAM_construct_utf8_ptr, OSSL_PARAM_construct_octet_string,
-OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_construct_end,
+OSSL_PARAM_construct_double, OSSL_PARAM_construct_float,
+OSSL_PARAM_construct_int, OSSL_PARAM_construct_int32,
+OSSL_PARAM_construct_int64, OSSL_PARAM_construct_long,
+OSSL_PARAM_construct_size_t, OSSL_PARAM_construct_uint,
+OSSL_PARAM_construct_uint32, OSSL_PARAM_construct_uint64,
+OSSL_PARAM_construct_ulong, OSSL_PARAM_construct_BN,
+OSSL_PARAM_construct_utf8_string, OSSL_PARAM_construct_utf8_ptr,
+OSSL_PARAM_construct_octet_string, OSSL_PARAM_construct_octet_ptr,
+OSSL_PARAM_construct_end,
 OSSL_PARAM_locate, OSSL_PARAM_locate_const,
-OSSL_PARAM_get_double, OSSL_PARAM_get_int, OSSL_PARAM_get_int32,
-OSSL_PARAM_get_int64, OSSL_PARAM_get_long, OSSL_PARAM_get_size_t,
-OSSL_PARAM_get_uint, OSSL_PARAM_get_uint32, OSSL_PARAM_get_uint64,
-OSSL_PARAM_get_ulong, OSSL_PARAM_get_BN, OSSL_PARAM_get_utf8_string,
-OSSL_PARAM_get_octet_string, OSSL_PARAM_get_utf8_ptr,
-OSSL_PARAM_get_octet_ptr,
-OSSL_PARAM_set_double, OSSL_PARAM_set_int, OSSL_PARAM_set_int32,
-OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
-OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
-OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
-OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
-OSSL_PARAM_set_octet_ptr
+OSSL_PARAM_get_double, OSSL_PARAM_get_float, OSSL_PARAM_get_int,
+OSSL_PARAM_get_int32, OSSL_PARAM_get_int64, OSSL_PARAM_get_long,
+OSSL_PARAM_get_size_t, OSSL_PARAM_get_uint, OSSL_PARAM_get_uint32,
+OSSL_PARAM_get_uint64, OSSL_PARAM_get_ulong, OSSL_PARAM_get_BN,
+OSSL_PARAM_get_utf8_string, OSSL_PARAM_get_octet_string,
+OSSL_PARAM_get_utf8_ptr, OSSL_PARAM_get_octet_ptr,
+OSSL_PARAM_set_double, OSSL_PARAM_set_float, OSSL_PARAM_set_int,
+OSSL_PARAM_set_int32, OSSL_PARAM_set_int64, OSSL_PARAM_set_long,
+OSSL_PARAM_set_size_t, OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32,
+OSSL_PARAM_set_uint64, OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN,
+OSSL_PARAM_set_utf8_string, OSSL_PARAM_set_octet_string,
+OSSL_PARAM_set_utf8_ptr, OSSL_PARAM_set_octet_ptr
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -38,9 +40,9 @@ OSSL_PARAM_set_octet_ptr
 
  /*
   * TYPE in function names is one of:
-  * double, int, int32, int64, long, size_t, uint, uint32, uint64, ulong
+  * double, float, int, int32, int64, long, size_t, uint, uint32, uint64, ulong
   * Corresponding TYPE in function arguments is one of:
-  * double, int, int32_t, int64_t, long, size_t, unsigned int, uint32_t,
+  * double, float, int, int32_t, int64_t, long, size_t, unsigned int, uint32_t,
   * uint64_t, unsigned long
   */
 
@@ -101,6 +103,10 @@ OSSL_PARAM arrays.  The following B<TYPE> names are supported:
 =item *
 
 double
+
+=item *
+
+float
 
 =item *
 

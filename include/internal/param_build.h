@@ -29,6 +29,7 @@ typedef struct {
         ossl_intmax_t i;
         ossl_uintmax_t u;
         double d;
+        float f;
     } num;
 } OSSL_PARAM_BLD_DEF;
 
@@ -62,6 +63,8 @@ int ossl_param_bld_push_size_t(OSSL_PARAM_BLD *bld, const char *key,
                                size_t val);
 int ossl_param_bld_push_double(OSSL_PARAM_BLD *bld, const char *key,
                                double val);
+int ossl_param_bld_push_float(OSSL_PARAM_BLD *bld, const char *key,
+                              float val);
 int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                            const BIGNUM *bn);
 int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,

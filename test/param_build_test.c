@@ -24,6 +24,7 @@ static int template_public_test(void)
     int32_t i32;
     int64_t i64;
     double d;
+    float f;
     char *utf = NULL;
     const char *cutf;
     int res = 0;
@@ -34,6 +35,7 @@ static int template_public_test(void)
         || !TEST_true(ossl_param_bld_push_int32(&bld, "i32", 1532))
         || !TEST_true(ossl_param_bld_push_int64(&bld, "i64", -9999999))
         || !TEST_true(ossl_param_bld_push_double(&bld, "d", 1.61803398875))
+        || !TEST_true(ossl_param_bld_push_float(&bld, "f", 1.25))
         || !TEST_ptr(bn = BN_new())
         || !TEST_true(BN_set_word(bn, 1729))
         || !TEST_true(ossl_param_bld_push_BN(&bld, "bignumber", bn))
@@ -77,6 +79,13 @@ static int template_public_test(void)
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_REAL)
         || !TEST_size_t_eq(p->data_size, sizeof(double))
         || !TEST_double_eq(d, 1.61803398875)
+        /* Check float */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "f"))
+        || !TEST_true(OSSL_PARAM_get_float(p, &f))
+        || !TEST_str_eq(p->key, "f")
+        || !TEST_uint_eq(p->data_type, OSSL_PARAM_REAL)
+        || !TEST_size_t_eq(p->data_size, sizeof(float))
+        || !TEST_double_eq(f, 1.25)
         /* Check UTF8 string */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_s"))
         || !TEST_str_eq(p->data, "foo")
