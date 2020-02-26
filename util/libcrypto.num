@@ -4947,3 +4947,8 @@ EVP_PKEY_CTX_set0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_get0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_set_rsa_pss_saltlen        ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_get_rsa_pss_saltlen        ?	3_0_0	EXIST::FUNCTION:RSA
+OSSL_SELF_TEST_new                      ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_free                     ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_onbegin                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_oncorrupt_byte           ?	3_0_0	EXIST::FUNCTION:
+OSSL_SELF_TEST_onend                    ?	3_0_0	EXIST::FUNCTION:
