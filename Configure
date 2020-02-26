@@ -1857,6 +1857,34 @@ if ($builder eq "unified") {
             }
         };
 
+        # Support for pushing values on multiple indexes of a given hash
+        # array.
+        my $push_to = sub {
+            my $valueref = shift;
+            my $index_str = shift; # May be undef or empty
+            my $attrref = shift;   # May be undef
+            my $attr_str = shift;
+            my @values = @_;
+
+            if (defined $index_str) {
+                my @indexes = ( '' );
+                if ($index_str !~ m|^\s*$|) {
+                    @indexes = tokenize($index_str);
+                }
+                foreach (@indexes) {
+                    push @{$valueref->{$_}}, @values;
+                    if (defined $attrref) {
+                        $handle_attributes->($attr_str, \$$attrref->{$_},
+                                             @values);
+                    }
+                }
+            } else {
+                push @$valueref, @values;
+                $handle_attributes->($attr_str, $attrref, @values)
+                    if defined $attrref;
+            }
+        };
+
         # We want to detect configdata.pm in the source tree, so we
         # don't use it if the build tree is different.
         my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
@@ -1937,88 +1965,64 @@ if ($builder eq "unified") {
                 }
             },
             qr/^\s* PROGRAMS ${attribs_re} \s* =  ${value_re} $/x
-            => sub {
-                if (!@skip || $skip[$#skip] > 0) {
-                    my @p = tokenize($expand_variables->($+{VALUE}));
-                    push @programs, @p;
-                    $handle_attributes->($+{ATTRIBS},
-                                         \$attributes{programs},
-                                         @p);
-                }
-            },
+            => sub { $push_to->(\@programs, undef,
+                                \$attributes{programs}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* LIBS ${attribs_re} \s* =  ${value_re} $/x
-            => sub {
-                if (!@skip || $skip[$#skip] > 0) {
-                    my @l = tokenize($expand_variables->($+{VALUE}));
-                    push @libraries, @l;
-                    $handle_attributes->($+{ATTRIBS},
-                                         \$attributes{libraries},
-                                         @l);
-                }
-            },
+            => sub { $push_to->(\@libraries, undef,
+                                \$attributes{libraries}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* MODULES ${attribs_re} \s* =  ${value_re} $/x
-            => sub {
-                if (!@skip || $skip[$#skip] > 0) {
-                    my @m = tokenize($expand_variables->($+{VALUE}));
-                    push @modules, @m;
-                    $handle_attributes->($+{ATTRIBS},
-                                         \$attributes{modules},
-                                         @m);
-                }
-            },
+            => sub { $push_to->(\@modules, undef,
+                                \$attributes{modules}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* SCRIPTS ${attribs_re} \s* =  ${value_re} $/x
-            => sub {
-                if (!@skip || $skip[$#skip] > 0) {
-                    my @s = tokenize($expand_variables->($+{VALUE}));
-                    push @scripts, @s;
-                    $handle_attributes->($+{ATTRIBS},
-                                         \$attributes{scripts},
-                                         @s);
-                }
-            },
+            => sub { $push_to->(\@scripts, undef,
+                                \$attributes{scripts}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
-            => sub { push @{$htmldocs{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%htmldocs, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* MANDOCS ${index_re} = ${value_re} $/x
-            => sub { push @{$mandocs{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
-            qr/^\s* ORDINALS ${index_re} = ${value_re} $/x
-            => sub { push @{$ordinals{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%mandocs, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* SOURCE ${index_re} = ${value_re} $/x
-            => sub { push @{$sources{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%sources, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* SHARED_SOURCE ${index_re} = ${value_re} $/x
-            => sub { push @{$shared_sources{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%shared_sources, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* INCLUDE ${index_re} = ${value_re} $/x
-            => sub { push @{$includes{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%includes, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* DEFINE ${index_re} = ${value_re} $/x
-            => sub { push @{$defines{$expand_variables->($+{INDEX})}},
-                         tokenize($expand_variables->($+{VALUE}))
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%defines, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* DEPEND ${index_re} ${attribs_re} = ${value_re} $/x
-            => sub {
-                if (!@skip || $skip[$#skip] > 0) {
-                    my $i = $expand_variables->($+{INDEX});
-                    my @d = tokenize($expand_variables->($+{VALUE}));
-                    push @{$depends{$i}}, @d;
-                    $handle_attributes->($+{ATTRIBS},
-                                         \$attributes{depends}->{$i},
-                                         @d);
-                }
-            },
+            => sub { $push_to->(\%depends, $expand_variables->($+{INDEX}),
+                                \$attributes{depends}, $+{ATTRIBS},
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* GENERATE ${index_re} = ${value_re} $/x
-            => sub { push @{$generate{$expand_variables->($+{INDEX})}},
-                         $+{VALUE}
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
+                                undef, undef, $+{VALUE})
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
