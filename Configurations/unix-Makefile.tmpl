@@ -965,10 +965,10 @@ generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
 	@ : {- output_off() if $disabled{apps}; "" -}
-	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -H $(APPS_OPENSSL) > apps/progs.h )
-	( b=`pwd`; cd $(SRCDIR); \
-	  $(PERL) -I$$b apps/progs.pl -C $(APPS_OPENSSL) > apps/progs.c )
+	( b=`pwd`; \
+	  $(PERL) -I$$b $(SRCDIR)/apps/progs.pl -H $(APPS_OPENSSL) > $(SRCDIR)/apps/progs.h )
+	( b=`pwd`; \
+	  $(PERL) -I$$b $(SRCDIR)/apps/progs.pl -C $(APPS_OPENSSL) > $(SRCDIR)/apps/progs.c )
 	@ : {- output_on() if $disabled{apps}; "" -}
 
 generate_crypto_bn:
