@@ -20,14 +20,21 @@ See L<CTLOG_STORE_new(3)>.
 
 =item B<OPENSSL>
 
-Specifies the path to the B<openssl> executable. Only used by
-the B<rehash> script.
-See L<openssl-rehash(1)/Script Configuration>.
+Specifies the path to the B<openssl> executable. Used by
+the B<rehash> script (see L<openssl-rehash(1)/Script Configuration>)
+and by the B<CA.pl> script (see L<CA.pl(1)/NOTES>
 
-=item B<OPENSSL_CONF>
+=item B<OPENSSL_CONF>, B<OPENSSL_CONF_INCLUDE>
 
-Specifies the path to a configuration file.
+Specifies the path to a configuration file and the directory for
+included files.
 See L<openssl(1)> and L<config(5)>.
+
+=item B<OPENSSL_CONFIG>
+
+Specifies a configuration option and filename for the B<req> and B<ca>
+commands invoked by the B<CA.pl> script.
+See L<CA.pl(1)>.
 
 =item B<OPENSSL_ENGINES>
 
