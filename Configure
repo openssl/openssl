@@ -2121,9 +2121,9 @@ EOF
             foreach (@{$sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
-                # If it isn't in the source tree, we assume it's generated
-                # in the build tree
-                if ($s eq $src_configdata || ! -f $s || $generate{$_}) {
+                # If it's generated or we simply don't find it in the source
+                # tree, we assume it's in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C++, C and asm files
@@ -2153,9 +2153,9 @@ EOF
             foreach (@{$shared_sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
-                # If it isn't in the source tree, we assume it's generated
-                # in the build tree
-                if ($s eq $src_configdata || ! -f $s || $generate{$_}) {
+                # If it's generated or we simply don't find it in the source
+                # tree, we assume it's in the build tree.
+                if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
@@ -2195,8 +2195,7 @@ EOF
             my $gen = $generator[0];
             $generator[0] = cleanfile($sourced, $gen, $blddir);
 
-            # If the generator isn't in the source tree, we assume it's
-            # generated in the build tree
+            # If the generator is itself generated, it's in the build tree
             if ($generate{$gen}) {
                 $generator[0] = cleanfile($buildd, $gen, $blddir);
             }
@@ -2218,23 +2217,14 @@ EOF
 
                 # If we know it's generated, or assume it is because we can't
                 # find it in the source tree, we set file we depend on to be
-                # in the build tree rather than the source tree, and assume
-                # and that there are lines to build it in a BEGINRAW..ENDRAW
-                # section or in the Makefile template.
+                # in the build tree rather than the source tree.
                 if ($d eq $src_configdata
-                    || ! -f $d
                     || (grep { $d eq $_ }
                         map { cleanfile($srcdir, $_, $blddir) }
-                        grep { /\.h$/ } keys %{$unified_info{generate}})) {
+                        grep { /\.h$/ } keys %{$unified_info{generate}})
+                    || ! -f $d) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
-                # Take note if the file to depend on is being renamed
-                # Take extra care with files ending with .a, they should
-                # be treated without that extension, and the extension
-                # should be added back after treatment.
-                $d =~ /(\.a)?$/;
-                my $e = $1 // "";
-                $d = $`.$e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
 
                 # Fix up associated attributes
@@ -2273,9 +2263,6 @@ EOF
                 # be a generated file in the build tree.
                 if (! -f $ddest) {
                     $ddest = cleanfile($buildd, $dest, $blddir);
-                    if ($unified_info{rename}->{$ddest}) {
-                        $ddest = $unified_info{rename}->{$ddest};
-                    }
                 }
             }
             foreach my $v (@{$defines{$dest}}) {
