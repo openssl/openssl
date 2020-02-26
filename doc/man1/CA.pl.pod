@@ -174,11 +174,18 @@ Sign the request:
 
  CA.pl -signreq
 
+=head1 ENVIRONMENT
+
+The environment variable B<OPENSSL_CONFIG> may be used to specify a
+configuration option and value to the B<req> and B<ca> commands invoked by
+this script. It's value should be the option and pathname, as in
+C<-config /path/to/conf-file>.
+
 =head1 NOTES
 
 Most of the filenames mentioned can be modified by editing the B<CA.pl> script.
 
-If the demoCA directory already exists then the B<-newca> command will not
+If the F<demoCA> directory already exists then the B<-newca> command will not
 overwrite it and will do nothing. This can happen if a previous call using
 the B<-newca> option terminated abnormally. To get the correct behaviour
 delete the demoCA directory if it already exists.
