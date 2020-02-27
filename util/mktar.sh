@@ -8,7 +8,11 @@
 
 HERE=`dirname $0`
 
-version=`grep 'OPENSSL_VERSION_TEXT  *"OpenSSL' $HERE/../include/openssl/opensslv.h | sed -e 's|.*"OpenSSL ||' -e 's| .*||'`
+# Get all version data as shell variables
+. $HERE/../VERSION
+
+if [ -n "$PRE_RELEASE_TAG" ]; then PRE_RELEASE_TAG=-$PRE_RELEASE_TAG; fi
+version=$MAJOR.$MINOR.$PATCH$PRE_RELEASE_TAG$BUILD_METADATA
 basename=openssl
 
 NAME="$basename-$version"
