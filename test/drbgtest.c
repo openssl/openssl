@@ -427,7 +427,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test detection of too large personalisation string */
     if (!init(drbg, td, &t)
-            || RAND_DRBG_instantiate(drbg, td->pers, max_perslen(drbg) + 1) > 0)
+            || !TEST_false(RAND_DRBG_instantiate(drbg, td->pers, max_perslen(drbg) + 1)))
         goto err;
 
     /*
@@ -436,7 +436,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test entropy source failure detection: i.e. returns no data */
     t.entropylen = 0;
-    if (TEST_int_le(RAND_DRBG_instantiate(drbg, td->pers, td->perslen), 0))
+    if (!TEST_false(RAND_DRBG_instantiate(drbg, td->pers, td->perslen)))
         goto err;
 
     /* Try to generate output from uninstantiated DRBG */
@@ -446,16 +446,18 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test insufficient entropy */
+    if (!init(drbg, td, &t))
+        goto err;
     t.entropylen = min_entropylen(drbg) - 1;
-    if (!init(drbg, td, &t)
-            || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
+    if (!TEST_false(RAND_DRBG_instantiate(drbg, td->pers, td->perslen))
             || !uninstantiate(drbg))
         goto err;
 
     /* Test too much entropy */
+    if (!init(drbg, td, &t))
+        goto err;
     t.entropylen = max_entropylen(drbg) + 1;
-    if (!init(drbg, td, &t)
-            || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
+    if (!TEST_false(RAND_DRBG_instantiate(drbg, td->pers, td->perslen))
             || !uninstantiate(drbg))
         goto err;
 
@@ -465,18 +467,20 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test too small nonce */
     if (min_noncelen(drbg) != 0) {
+        if (!init(drbg, td, &t))
+            goto err;
         t.noncelen = min_noncelen(drbg) - 1;
-        if (!init(drbg, td, &t)
-                || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
+        if (!TEST_false(RAND_DRBG_instantiate(drbg, td->pers, td->perslen))
                 || !uninstantiate(drbg))
             goto err;
     }
 
     /* Test too large nonce */
     if (max_noncelen(drbg) != 0) {
+        if (!init(drbg, td, &t))
+            goto err;
         t.noncelen = max_noncelen(drbg) + 1;
-        if (!init(drbg, td, &t)
-                || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
+        if (!TEST_false(RAND_DRBG_instantiate(drbg, td->pers, td->perslen))
                 || !uninstantiate(drbg))
             goto err;
     }
@@ -502,7 +506,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      * failure.
      */
     t.entropylen = 0;
-    if (TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 1,
+    if (!TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 1,
                                       td->adin, td->adinlen))
             || !uninstantiate(drbg))
         goto err;
@@ -511,7 +515,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t))
         goto err;
     reseed_counter_tmp = reseed_counter(drbg);
-    set_reseed_counter(drbg, reseed_requests(drbg));
+    set_reseed_counter(drbg, reseed_requests(drbg) + 1);
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
@@ -536,7 +540,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t))
         goto err;
     reseed_counter_tmp = reseed_counter(drbg);
-    set_reseed_counter(drbg, reseed_requests(drbg));
+    set_reseed_counter(drbg, reseed_requests(drbg) + 1);
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
@@ -553,12 +557,12 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test explicit reseed with too large additional input */
     if (!instantiate(drbg, td, &t)
-            || RAND_DRBG_reseed(drbg, td->adin, max_adinlen(drbg) + 1, 0) > 0)
+            || !TEST_false(RAND_DRBG_reseed(drbg, td->adin, max_adinlen(drbg) + 1, 0)))
         goto err;
 
     /* Test explicit reseed with entropy source failure */
     t.entropylen = 0;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
+    if (!TEST_false(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0))
             || !uninstantiate(drbg))
         goto err;
 
@@ -566,7 +570,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = max_entropylen(drbg) + 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
+    if (!TEST_false(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0))
             || !uninstantiate(drbg))
         goto err;
 
@@ -574,7 +578,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = min_entropylen(drbg) - 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
+    if (!TEST_false(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0))
             || !uninstantiate(drbg))
         goto err;
 
@@ -611,7 +615,7 @@ static int test_error_checks(int i)
     if (crngt_skip())
         return TEST_skip("CRNGT cannot be disabled");
 
-    if (error_check(td))
+    if (!error_check(td))
         goto err;
     rv = 1;
 
