@@ -281,6 +281,7 @@ extern const OSSL_DISPATCH rsa_priv_der_serializer_functions[];
 extern const OSSL_DISPATCH rsa_pub_der_serializer_functions[];
 extern const OSSL_DISPATCH rsa_priv_pem_serializer_functions[];
 extern const OSSL_DISPATCH rsa_pub_pem_serializer_functions[];
+
 extern const OSSL_DISPATCH dh_priv_text_serializer_functions[];
 extern const OSSL_DISPATCH dh_pub_text_serializer_functions[];
 extern const OSSL_DISPATCH dh_param_text_serializer_functions[];
@@ -290,6 +291,7 @@ extern const OSSL_DISPATCH dh_param_der_serializer_functions[];
 extern const OSSL_DISPATCH dh_priv_pem_serializer_functions[];
 extern const OSSL_DISPATCH dh_pub_pem_serializer_functions[];
 extern const OSSL_DISPATCH dh_param_pem_serializer_functions[];
+
 extern const OSSL_DISPATCH dsa_priv_text_serializer_functions[];
 extern const OSSL_DISPATCH dsa_pub_text_serializer_functions[];
 extern const OSSL_DISPATCH dsa_param_text_serializer_functions[];
@@ -299,3 +301,17 @@ extern const OSSL_DISPATCH dsa_param_der_serializer_functions[];
 extern const OSSL_DISPATCH dsa_priv_pem_serializer_functions[];
 extern const OSSL_DISPATCH dsa_pub_pem_serializer_functions[];
 extern const OSSL_DISPATCH dsa_param_pem_serializer_functions[];
+
+extern const OSSL_DISPATCH x25519_priv_print_serializer_functions[];
+extern const OSSL_DISPATCH x25519_pub_print_serializer_functions[];
+extern const OSSL_DISPATCH x25519_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH x25519_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH x25519_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH x25519_pub_pem_serializer_functions[];
+
+extern const OSSL_DISPATCH x448_priv_print_serializer_functions[];
+extern const OSSL_DISPATCH x448_pub_print_serializer_functions[];
+extern const OSSL_DISPATCH x448_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH x448_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH x448_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH x448_pub_pem_serializer_functions[];

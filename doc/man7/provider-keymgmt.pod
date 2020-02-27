@@ -256,6 +256,87 @@ OP_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OP_keymgmt_export() callback can expect to receive.
 
+=head2 Built-in RSA Import/Export Types
+
+The following Import/Export types are available for the built-in RSA algorithm:
+
+=over 4
+
+=item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <integer>
+
+The RSA "n" value.
+
+=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <integer>
+
+The RSA "e" value.
+
+=item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <integer>
+
+The RSA "d" value.
+
+=item "rsa-factor" (B<OSSL_PKEY_PARAM_RSA_FACTOR>) <integer>
+
+An RSA factor. In 2 prime RSA these are often known as "p" or "q". This value
+may be repeated up to 10 times in a single key.
+
+=item "rsa-exponent" (B<OSSL_PKEY_PARAM_RSA_EXPONENT>) <integer>
+
+An RSA CRT (Chinese Remainder Theorem) exponent. This value may be repeated up
+to 10 times in a single key.
+
+=item "rsa-coefficient" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT>) <integer>
+
+An RSA CRT (Chinese Remainder Theorem) coefficient. This value may be repeated
+up to 9 times in a single key.
+
+=back
+
+=head2 Built-in DSA and Diffie-Hellman Import/Export Types
+
+The following Import/Export types are available for the built-in DSA and
+Diffie-Hellman algorithms:
+
+=over 4
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <integer> or <octet string>
+
+The public key value.
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <integer> or <octet string>
+
+The private key value.
+
+=item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <integer>
+
+A DSA or Diffie-Hellman "p" value.
+
+=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <integer>
+
+A DSA or Diffie-Hellman "q" value.
+
+=item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <integer>
+
+A DSA or Diffie-Hellman "g" value.
+
+=back
+
+=head2 Built-in X25519, X448, ED25519 and ED448 Import/Export Types
+
+The following Import/Export types are available for the built-in X25519, X448,
+ED25519 and X448 algorithms:
+
+=over 4
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
+
+The public key value.
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
+
+The private key value.
+
+=back
+
 =head2 Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.

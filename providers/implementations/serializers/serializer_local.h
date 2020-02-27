@@ -13,6 +13,7 @@
 #include <openssl/asn1.h>        /* i2d_of_void */
 #include <openssl/x509.h>        /* X509_SIG */
 #include <openssl/types.h>
+#include <crypto/ecx.h>
 
 struct pkcs8_encrypt_ctx_st {
     /* Set to 1 if intending to encrypt/decrypt, otherwise 0 */
@@ -29,6 +30,11 @@ struct pkcs8_encrypt_ctx_st {
     OSSL_PASSPHRASE_CALLBACK *cb;
     void *cbarg;
 };
+
+typedef enum {
+    ECX_KEY_TYPE_X25519,
+    ECX_KEY_TYPE_X448
+} ECX_KEY_TYPE;
 
 OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns);
 OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns);
@@ -49,8 +55,15 @@ int ossl_prov_prepare_dh_params(const void *dh, int nid,
 int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);
 int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
 
+void ecx_get_new_free_import(ECX_KEY_TYPE type,
+                             OSSL_OP_keymgmt_new_fn **ecx_new,
+                             OSSL_OP_keymgmt_free_fn **ecx_free,
+                             OSSL_OP_keymgmt_import_fn **ecx_import);
+int ossl_prov_ecx_pub_to_der(const void *ecxkey, unsigned char **pder);
+int ossl_prov_ecx_priv_to_der(const void *ecxkey, unsigned char **pder);
+
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
-                                ASN1_STRING **pstr, int *pstrtype);
+                                 ASN1_STRING **pstr, int *pstrtype);
 /*
  * Special variant of ossl_prov_prepare_dsa_params() that requires all
  * three parameters (P, Q and G) to be set.  This is used when serializing
@@ -63,6 +76,8 @@ int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder);
 
 int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
                                    const BIGNUM *bn);
+int ossl_prov_print_labeled_buf(BIO *out, const char *label,
+                                const unsigned char *buf, size_t buflen);
 int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv);
 
 enum dh_print_type {
@@ -80,6 +95,15 @@ enum dsa_print_type {
 };
 
 int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type);
+
+enum ecx_print_type {
+    ecx_print_priv,
+    ecx_print_pub
+};
+
+#ifndef OPENSSL_NO_EC
+int ossl_prov_print_ecx(BIO *out, ECX_KEY *ecxkey, enum ecx_print_type type);
+#endif
 
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,

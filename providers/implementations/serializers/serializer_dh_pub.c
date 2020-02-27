@@ -132,7 +132,7 @@ static int dh_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 static int dh_pub_print(void *ctx, void *dh, BIO *out,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dh(out, dh, 0);
+    return ossl_prov_print_dh(out, dh, dh_print_pub);
 }
 
 const OSSL_DISPATCH dh_pub_der_serializer_functions[] = {

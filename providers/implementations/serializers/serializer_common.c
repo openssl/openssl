@@ -243,6 +243,36 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     return 1;
 }
 
+/* Number of octets per line */
+#define LABELED_BUF_PRINT_WIDTH    15
+
+int ossl_prov_print_labeled_buf(BIO *out, const char *label,
+                                const unsigned char *buf, size_t buflen)
+{
+    size_t i;
+
+    if (ossl_prov_bio_printf(out, "%s\n", label) <= 0)
+        return 0;
+
+    for (i = 0; i < buflen; i++) {
+        if ((i % LABELED_BUF_PRINT_WIDTH) == 0) {
+            if (i > 0 && ossl_prov_bio_printf(out, "\n") <= 0)
+                return 0;
+            if (ossl_prov_bio_printf(out, "    ") <= 0)
+                return 0;
+        }
+
+        if (ossl_prov_bio_printf(out, "%02x%s", buf[i],
+                                 (i == buflen - 1) ? "" : ":") <= 0)
+            return 0;
+    }
+    if (ossl_prov_bio_printf(out, "\n") <= 0)
+        return 0;
+
+    return 1;
+}
+
+
 /* p2s = param to asn1_string, k2d = key to der */
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
@@ -254,7 +284,7 @@ int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
@@ -290,7 +320,7 @@ int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
         return 0;
@@ -325,7 +355,7 @@ int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))
@@ -350,7 +380,7 @@ int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
 {
     int ret = 0;
     ASN1_STRING *str = NULL;
-    int strtype = 0;
+    int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
     if (p2s != NULL && !p2s(obj, obj_nid, &str, &strtype))

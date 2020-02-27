@@ -1,0 +1,4 @@
+DH Public-Key: (32 bit)
+    public-key: 1873206864 (0x6fa6de50)
+    prime: 2343853907 (0x8bb45f53)
+    generator: 2 (0x2)
