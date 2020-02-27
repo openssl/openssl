@@ -83,6 +83,10 @@ my $PTR=" PTR";
 my $nasmref=2.03;
 my $nasm=0;
 
+# GNU as indicator, as opposed to $gas, which indicates acceptable
+# syntax
+my $gnuas=0;
+
 if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
 				  $prefix=`echo __USER_LABEL_PREFIX__ | $ENV{CC} -E -P -`;
 				  $prefix =~ s|\R$||; # Better chomp
@@ -100,6 +104,12 @@ elsif (!$gas)
     $elf=0;
     $decor="\$L\$";
 }
+# Find out if we're using GNU as
+elsif (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/)
+{
+    $gnuas=1;
+}
 
 my $cet_property;
 if ($flavour =~ /elf/) {
@@ -108,8 +118,10 @@ if ($flavour =~ /elf/) {
 	# with Intel CET support in order for linker to mark output with
 	# Intel CET support.
 	my $p2align=3; $p2align=2 if ($flavour eq "elf32");
+	my $section='.note.gnu.property, #alloc';
+	$section='".note.gnu.property", "a"' if $gnuas;
 	$cet_property = <<_____;
-	.section ".note.gnu.property", "a"
+	.section $section
 	.p2align $p2align
 	.long 1f - 0f
 	.long 4f - 1f
