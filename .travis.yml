@@ -65,7 +65,7 @@ matrix:
         - os: linux
           arch: arm64
           compiler: gcc
-          env: CONFIG_OPTS="no-asm no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" NOUPDATE="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
+          env: CONFIG_OPTS="no-asm no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
         - os: linux
           arch: s390x
           compiler: gcc
@@ -212,7 +212,7 @@ script:
     - if [ -n "$DESTDIR" ]; then
           cd _build;
       fi
-    - if [ -z "$NOUPDATE" ] && ! $make update; then
+    - if ! $make update; then
           echo -e '\052\052 FAILED -- MAKE UPDATE';
           travis_terminate 1;
       fi
