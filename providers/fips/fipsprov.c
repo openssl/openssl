@@ -58,6 +58,7 @@ static OSSL_core_vset_error_fn *c_vset_error;
 static OSSL_core_set_error_mark_fn *c_set_error_mark;
 static OSSL_core_clear_last_error_mark_fn *c_clear_last_error_mark;
 static OSSL_core_pop_error_to_mark_fn *c_pop_error_to_mark;
+static OSSL_core_vsnprintf_fn *c_core_vsnprintf;
 static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
 static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
 static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
@@ -802,6 +803,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "provider=fips,fips=yes", dsa_signature_functions },
 #endif
+    { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_signature_functions },
     { NULL, NULL, NULL }
 };
 
@@ -909,6 +911,9 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
             c_pop_error_to_mark = OSSL_get_core_pop_error_to_mark(in);
+            break;
+        case OSSL_FUNC_CORE_VSNPRINTF:
+            c_core_vsnprintf = OSSL_get_core_vsnprintf(in);
             break;
         case OSSL_FUNC_CRYPTO_MALLOC:
             c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
@@ -1154,4 +1159,15 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *file, int line)
 int CRYPTO_secure_allocated(const void *ptr)
 {
     return c_CRYPTO_secure_allocated(ptr);
+}
+
+int BIO_snprintf(char *buf, size_t n, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    va_start(args, format);
+    ret = c_core_vsnprintf(buf, n, format, args);
+    va_end(args);
+    return ret;
 }

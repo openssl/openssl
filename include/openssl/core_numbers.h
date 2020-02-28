@@ -85,8 +85,12 @@ OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
 OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
                     (const OSSL_PROVIDER *prov))
-# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
+# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_PROVIDER *prov))
+
+#define OSSL_FUNC_CORE_VSNPRINTF              11
+OSSL_CORE_MAKE_FUNC(int, core_vsnprintf,
+                   (char *buf, size_t n, const char *fmt, va_list args))
 
 /* Memory allocation, freeing, clearing. */
 #define OSSL_FUNC_CRYPTO_MALLOC               20

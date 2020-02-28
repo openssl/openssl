@@ -186,6 +186,47 @@ const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
     }
 }
 
+#define MD_NID_CASE(name, sz)                                                  \
+    case NID_##name:                                                           \
+        return sz;
+
+static int digest_sz_from_nid(int nid)
+{
+    switch (nid) {
+#ifndef FIPS_MODE
+# ifndef OPENSSL_NO_MDC2
+    MD_NID_CASE(mdc2, MDC2_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD2
+    MD_NID_CASE(md2, MD2_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD4
+    MD_NID_CASE(md4, MD4_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD5
+    MD_NID_CASE(md5, MD5_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_RMD160
+    MD_NID_CASE(ripemd160, RIPEMD160_DIGEST_LENGTH)
+# endif
+#endif /* FIPS_MODE */
+    MD_NID_CASE(sha1, SHA_DIGEST_LENGTH)
+    MD_NID_CASE(sha224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha384, SHA384_DIGEST_LENGTH)
+    MD_NID_CASE(sha512, SHA512_DIGEST_LENGTH)
+    MD_NID_CASE(sha512_224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha512_256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_384, SHA384_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_512, SHA512_DIGEST_LENGTH)
+    default:
+        return 0;
+    }
+}
+
+
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH  36
 
@@ -237,8 +278,10 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *tmps = NULL;
     const unsigned char *encoded = NULL;
 
+#ifndef FIPS_MODE
     if (rsa->meth->rsa_sign != NULL)
         return rsa->meth->rsa_sign(type, m, m_len, sigret, siglen, rsa);
+#endif /* FIPS_MODE */
 
     /* Compute the encoded digest. */
     if (type == NID_md5_sha1) {
@@ -311,6 +354,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
         goto err;
     decrypt_len = len;
 
+#ifndef FIPS_MODE
     if (type == NID_md5_sha1) {
         /*
          * NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
@@ -356,20 +400,17 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
                 goto err;
             }
         }
-    } else {
+    } else
+#endif /* FIPS_MODE */
+    {
         /*
          * If recovering the digest, extract a digest-sized output from the end
          * of |decrypt_buf| for |encode_pkcs1|, then compare the decryption
          * output as in a standard verification.
          */
         if (rm != NULL) {
-            const EVP_MD *md = EVP_get_digestbynid(type);
-            if (md == NULL) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_UNKNOWN_ALGORITHM_TYPE);
-                goto err;
-            }
+            len = digest_sz_from_nid(type);
 
-            len = EVP_MD_size(md);
             if (len <= 0)
                 goto err;
             m_len = (unsigned int)len;
