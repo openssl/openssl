@@ -22,6 +22,13 @@ I<num>
 
 This command outputs I<num> pseudo-random bytes after seeding
 the random number generator once.
+There bytes are generated using the L<RAND_bytes(3)> function.
+
+The random bytes that are output will have the same level of security as the
+seed material used.
+For most targets, the seed material can be considered cryptographically
+secure.
+However, it is possible to configure OpenSSL where this is not the case.
 
 =head1 OPTIONS
 
@@ -52,7 +59,9 @@ Show the output as a hex string.
 =head1 SEE ALSO
 
 L<openssl(1)>,
-L<RAND_bytes(3)>
+L<RAND_bytes(3)>,
+L<RAND_DRBG(7)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 
