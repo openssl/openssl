@@ -45,6 +45,11 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     return 1;
 }
 
+const DH_METHOD *dh_get_method(const DH *dh)
+{
+    return dh->meth;
+}
+
 DH *DH_new(void)
 {
     return dh_new_intern(NULL, NULL);
