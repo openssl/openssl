@@ -45,7 +45,7 @@ ignored.
 =head1 NOTES
 
 By default, the OpenSSL CSPRNG supports a security level of 256 bits, provided it
-was able to seed itself with 256 bits of entropy from a trusted entropy source.
+was able to seed itself from a trusted entropy source.
 On all major platforms supported by OpenSSL (including the Unix-like platforms
 and Windows), OpenSSL is configured to automatically seed the CSPRNG on first use
 using the operating systems's random generator.
