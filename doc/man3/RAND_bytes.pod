@@ -55,7 +55,7 @@ error state and refuse to generate random bytes. For that reason, it is importan
 to always check the error return value of RAND_bytes() and RAND_priv_bytes() and
 not take randomness for granted.
 
-On other more exotic platforms, there might not be a trusted entropy source available
+On other platforms, there might not be a trusted entropy source available
 or OpenSSL might have been explicitly configured to use different entropy sources.
 If you are in doubt about the quality of the entropy source, don't hesitate to ask
 your os vendor or post a question on GitHub or the openssl-users mailing list.
