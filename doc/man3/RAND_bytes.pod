@@ -58,7 +58,8 @@ not take randomness for granted.
 On other platforms, there might not be a trusted entropy source available
 or OpenSSL might have been explicitly configured to use different entropy sources.
 If you are in doubt about the quality of the entropy source, don't hesitate to ask
-your os vendor or post a question on GitHub or the openssl-users mailing list.
+your operating system vendor or post a question on GitHub or the openssl-users
+mailing list.
 
 =head1 RETURN VALUES
 
