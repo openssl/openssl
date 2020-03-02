@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -145,6 +145,7 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
 #endif
     ASN1_ITEM_ref(SXNETID),
     ASN1_ITEM_ref(SXNET),
+    ASN1_ITEM_ref(ISSUER_SIGN_TOOL),
     ASN1_ITEM_ref(USERNOTICE),
     ASN1_ITEM_ref(X509_ALGORS),
     ASN1_ITEM_ref(X509_ALGOR),

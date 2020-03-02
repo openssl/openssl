@@ -4950,6 +4950,11 @@ EVP_PKEY_CTX_set0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_get0_ecdh_kdf_ukm          ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_set_rsa_pss_saltlen        ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_get_rsa_pss_saltlen        ?	3_0_0	EXIST::FUNCTION:RSA
+d2i_ISSUER_SIGN_TOOL                    ?	3_0_0	EXIST::FUNCTION:
+i2d_ISSUER_SIGN_TOOL                    ?	3_0_0	EXIST::FUNCTION:
+ISSUER_SIGN_TOOL_free                   ?	3_0_0	EXIST::FUNCTION:
+ISSUER_SIGN_TOOL_new                    ?	3_0_0	EXIST::FUNCTION:
+ISSUER_SIGN_TOOL_it                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_new                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_free                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onbegin                  ?	3_0_0	EXIST::FUNCTION:
