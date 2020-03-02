@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use the deprecated RSA low level calls */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -79,6 +76,8 @@ int rsa_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *out = NULL;
     RSA *rsa = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
@@ -181,29 +180,25 @@ int rsa_main(int argc, char **argv)
         goto end;
     }
 
-    {
-        EVP_PKEY *pkey;
+    if (pubin) {
+        int tmpformat = -1;
 
-        if (pubin) {
-            int tmpformat = -1;
-            if (pubin == 2) {
-                if (informat == FORMAT_PEM)
-                    tmpformat = FORMAT_PEMRSA;
-                else if (informat == FORMAT_ASN1)
-                    tmpformat = FORMAT_ASN1RSA;
-            } else {
-                tmpformat = informat;
-            }
-
-            pkey = load_pubkey(infile, tmpformat, 1, passin, e, "Public Key");
+        if (pubin == 2) {
+            if (informat == FORMAT_PEM)
+                tmpformat = FORMAT_PEMRSA;
+            else if (informat == FORMAT_ASN1)
+                tmpformat = FORMAT_ASN1RSA;
         } else {
-            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+            tmpformat = informat;
         }
 
-        if (pkey != NULL)
-            rsa = EVP_PKEY_get1_RSA(pkey);
-        EVP_PKEY_free(pkey);
+        pkey = load_pubkey(infile, tmpformat, 1, passin, e, "Public Key");
+    } else {
+        pkey = load_key(infile, informat, 1, passin, e, "Private Key");
     }
+
+    if (pkey != NULL)
+        rsa = EVP_PKEY_get1_RSA(pkey);
 
     if (rsa == NULL) {
         ERR_print_errors(bio_err);
@@ -216,7 +211,8 @@ int rsa_main(int argc, char **argv)
 
     if (text) {
         assert(pubin || private);
-        if (!RSA_print(out, rsa, 0)) {
+        if ((pubin && EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
+            || (!pubin && EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
@@ -232,7 +228,16 @@ int rsa_main(int argc, char **argv)
     }
 
     if (check) {
-        int r = RSA_check_key_ex(rsa, NULL);
+        int r;
+
+        pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+        if (pctx == NULL) {
+            BIO_printf(out, "RSA unable to create PKEY context\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        r = EVP_PKEY_check(pctx);
+        EVP_PKEY_CTX_free(pctx);
 
         if (r == 1) {
             BIO_printf(out, "RSA key ok\n");
@@ -321,6 +326,7 @@ int rsa_main(int argc, char **argv)
  end:
     release_engine(e);
     BIO_free_all(out);
+    EVP_PKEY_free(pkey);
     RSA_free(rsa);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
