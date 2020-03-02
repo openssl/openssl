@@ -15,6 +15,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Basename;
+use POSIX;
 
 # These control our behavior.
 my $DRYRUN;
@@ -95,6 +96,19 @@ my $simple_guess_patterns = [
     [ 'Darwin:.*Power',       'ppc-apple-darwin' ],
     [ 'Darwin:.*x86_64',      'x86_64-apple-darwin' ],
     [ 'Darwin:',              'i686-apple-darwin' ],
+
+    # Windows values found by looking at Perl 5's win32/win32.c
+    [ 'Windows NT:.*:amd64',  'VC-WIN64A' ],
+    [ 'Windows NT:.*:ia64',   'VC-WIN64I' ],
+    [ 'Windows NT:.*:x86',    'VC-WIN32' ],
+
+    # VMS values found by observation on existing machinery.  Unfortunately,
+    # the machine part is a bit...  overdone.  It seems, though, that 'Alpha'
+    # exists in that part, making it distinguishable from Itanium.  It will
+    # be interesting to see what we'll get in the upcoming x86_64 port...
+    [ 'OpenVMS:.*:.*:.*:.*Alpha*', 'vms-alpha' ],
+    [ 'OpenVMS:',             'vms-ia64' ],
+
 ];
 
 # More complex cases that require run-time code.
@@ -215,25 +229,6 @@ EOF
     $WAIT = 0 if $opt_w;
 }
 
-# call uname with specified arg, return result.
-sub uname {
-    my $arg = shift;
-    open UNAME, "uname $arg 2>/dev/null|" or return "unknown";
-    my $line = <UNAME>;
-    close UNAME;
-    $line =~ s/[\r\n]+$//;
-    return "unknown" if $line eq '';
-    return $line;
-}
-
-# Set machine type, release, etc., variables.
-sub get_machine_etc {
-    $MACHINE = $ENV{MACHINE} // uname('-m');
-    $RELEASE = $ENV{RELEASE} // uname('-r');
-    $SYSTEM = $ENV{SYSTEM} // uname("-s");
-    $VERSION = uname('-v');
-}
-
 # Expand variable references in a string.
 sub expand {
     my $var = shift;
@@ -282,6 +277,9 @@ sub get_sco_type {
 
 # Return the cputype-vendor-osversion
 sub guess_system {
+    ($SYSTEM, undef, $RELEASE, $VERSION, $MACHINE) = POSIX::uname();
+    my $sys = "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}";
+
     # Special-cases for ISC, SCO, Unixware
     my $REL = is_sco_uname();
     if ( $REL ne "" ) {
@@ -290,7 +288,6 @@ sub guess_system {
     }
 
     # Now pattern-match
-    my $sys = "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}";
 
     # Simple cases
     foreach my $tuple ( @$simple_guess_patterns ) {
