@@ -15,7 +15,9 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Basename;
+use IPC::Cmd;
 use POSIX;
+use Carp;
 
 # These control our behavior.
 my $DRYRUN;
@@ -28,17 +30,39 @@ my $MACHINE;
 my $RELEASE;
 my $SYSTEM;
 my $VERSION;
+my $CCVENDOR;
 my $CCVER;
-my $GCCVER;
 my $GCC_BITS;
 my $GCC_ARCH;
 
 # Some environment variables; they will affect Configure
 my $PERL = $ENV{PERL} // $^X // 'perl';
 my $CONFIG_OPTIONS = $ENV{CONFIG_OPTIONS} // '';
-my $CC = $ENV{CC} // 'cc';
+my $CC = $ENV{CC} // '';
 my $CROSS_COMPILE = $ENV{CROSS_COMPILE} // "";
 my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
+
+# For determine_compiler_settings, the list of known compilers
+my @c_compilers = qw(clang gcc cc);
+# Methods to determine compiler version.  The expected output is one of
+# MAJOR or MAJOR.MINOR or MAJOR.MINOR.PATCH...  or false if the compiler
+# isn't of the given brand.
+# This is a list to ensure that gnu comes last, as we've made it a fallback
+my @cc_version =
+    (
+     clang => sub {
+         my $v = `$CROSS_COMPILE$CC -v 2>&1`;
+         $v =~ m/(?:(?:^clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
+         return $1;
+     },
+     gnu => sub {
+         my $v = `$CROSS_COMPILE$CC -dumpversion 2>/dev/null`;
+         # Strip off whatever prefix egcs prepends the number with.
+         # Hopefully, this will work for any future prefixes as well.
+         $v =~ s/^[a-zA-Z]*\-//;
+         return $v;
+     },
+    );
 
 # This is what we will set as the target for calling Configure.
 my $options = '';
@@ -263,79 +287,166 @@ sub guess_system {
     return "${MACHINE}-whatever-${SYSTEM}";
 }
 
+# We would use List::Util::pair() for this...  unfortunately, that function
+# only appeared in perl v5.19.3, and we claim to support perl v5.10 and on.
+# Therefore, we implement a quick cheap variant of our own.
+sub _pairs (@) {
+    croak "Odd number of arguments" if @_ & 1;
+
+    my @pairlist = ();
+
+    while (@_) {
+        my $x = [ shift, shift ];
+        push @pairlist, $x;
+    }
+    return @pairlist;
+}
+
 # Figure out CC, GCCVAR, etc.
 sub determine_compiler_settings {
-    if ( "$CROSS_COMPILE$CC" eq '' ) {
-        $GCCVER = `gcc -dumpversion 2>/dev/null`;
-        if ( $GCCVER ne "" ) {
-            # Strip off whatever prefix egcs prepends the number with.
-            # Hopefully, this will work for any future prefixes as well.
-            $GCCVER =~ s/^[a-zA-Z]*\-//;
-	    # Since gcc 3.1 gcc --version behaviour has changed, but
-            # -dumpversion gives us what we want though, so use that.
-            # We only want the major and minor version numbers.  The
-            # pattern is deliberate; single digit before and after first
-            # dot, e.g. 2.95.1 gives 29
-            $GCCVER =~ s/([0-9])\.([0-9]).*/$1$2/;
-            $GCCVER = int($GCCVER);
-            $CC = 'gcc';
+    # Make a copy and don't touch it.  That helps determine if we're
+    # finding the compiler here
+    my $cc = $CC;
+
+    # Set certain default
+    $CCVER = 0;                 # Unknown
+    $CCVENDOR = '';             # Dunno, don't care (unless found later)
+
+    # Find a compiler if we don't already have one
+    if ( ! $cc ) {
+        foreach (@c_compilers) {
+            next unless IPC::Cmd::can_run("$CROSS_COMPILE$_");
+            $CC = $_;
+            last;
         }
     }
 
-    $GCCVER //= 0;
+    # Find the compiler vendor and version number for certain compilers
+    foreach my $pair (_pairs @cc_version) {
+        # Try to get the version number.
+        # Failure gets us undef or an empty string
+        my ( $k, $v ) = @$pair;
+        $v = $v->();
 
-    if ( $SYSTEM eq "HP-UX" ) {
+        # If we got a version number, process it
+        if ($v) {
+            $CCVENDOR = $k;
+
+            # The returned version is expected to be one of
+            #
+            # MAJOR
+            # MAJOR.MINOR
+            # MAJOR.MINOR.{whatever}
+            #
+            # We don't care what comes after MAJOR.MINOR.  All we need is to
+            # have them calculated into a single number, using this formula:
+            #
+            # MAJOR * 100 + MINOR
+            # Here are a few examples of what we should get:
+            #
+            # 2.95.1    => 295
+            # 3.1       => 301
+            # 9         => 900
+            my @numbers = split /\./, $v;
+            my @factors = (100, 1);
+            while (@numbers && @factors) {
+                $CCVER += shift(@numbers) * shift(@factors)
+            }
+            last;
+        }
+    }
+
+    # If no C compiler has been determined at this point, we die.  Hard.
+    die <<_____
+ERROR!
+No C compiler found, please specify one with the environment variable CC,
+or configure with an explicit configuration target.
+_____
+        unless $CC;
+
+    # Vendor specific overrides, only if we determined the compiler here
+    if ( ! $cc ) {
+        if ( ${SYSTEM} eq 'AIX' ) {
+            # favor vendor cc over gcc
+            if (IPC::Cmd::can_run('cc')) {
+                $CC = 'cc';
+                $CCVENDOR = ''; # Determine later
+                $CCVER = 0;
+            }
+        }
+
+        if ( $SYSTEM eq "SunOS" ) {
+            # check for WorkShop C, expected output is "cc: blah-blah C x.x"
+            my $v = `(cc -V 2>&1) 2>/dev/null | egrep -e '^cc: .* C [0-9]\.[0-9]'`;
+            chomp $v;
+            $v =~ s/.* C \([0-9]\)\.\([0-9]\).*/$1.$2/;
+            my @numbers = split /\./, $v;
+            my @factors = (100, 1);
+            $v = 0;
+            while (@numbers && @factors) {
+                $v += shift(@numbers) * shift(@factors)
+            }
+
+            if ( $v > 40000 &&  $MACHINE ne 'i86pc' ) {
+                $CC = 'cc';
+                $CCVENDOR = ''; # Determine later
+                $CCVER = $v;
+
+                if ( $CCVER == 50000 ) {
+                    print <<'EOF';
+WARNING! Found WorkShop C 5.0.
+         Make sure you have patch #107357-01 or later applied.
+EOF
+                    maybe_abort();
+                }
+            }
+        }
+    }
+
+    # On some systems, we assume a cc vendor if it's not already determined
+
+    if ( ! $CCVENDOR ) {
+        $CCVENDOR = 'aix' if $SYSTEM eq 'AIX';
+        $CCVENDOR = 'sun' if $SYSTEM eq 'SunOS';
+    }
+
+    # Some systems need to know extra details
+
+    if ( $SYSTEM eq "HP-UX" && $CCVENDOR eq 'gnu' ) {
         # By default gcc is a ILP32 compiler (with long long == 64).
         $GCC_BITS = "32";
-        if ( $GCCVER >= 30 ) {
+        if ( $CCVER >= 300 ) {
             # PA64 support only came in with gcc 3.0.x.
             # We check if the preprocessor symbol __LP64__ is defined.
             if ( okrun('echo __LP64__',
-                    'gcc -v -E -x c - 2>/dev/null',
-                    'grep "^__LP64__" 2>&1 >/dev/null') ) {
+                       "$CC -v -E -x c - 2>/dev/null",
+                       'grep "^__LP64__" 2>&1 >/dev/null') ) {
                 # __LP64__ has slipped through, it therefore is not defined
             } else {
                 $GCC_BITS = '64';
             }
         }
-        return;
     }
 
-    if ( ${SYSTEM} eq 'AIX' ) {
-        # favor vendor cc over gcc
-        if ( okrun('(cc) 2>&1',
-                'grep -iv "not found" >/dev/null') ) {
-            $CC = 'cc';
-        }
-        return;
-    }
-
-    if ( $SYSTEM eq "SunOS" ) {
-        if ( $GCCVER >= 30 ) {
+    if ( $SYSTEM eq "SunOS" && $CCVENDOR eq 'gnu' ) {
+        if ( $CCVER >= 300 ) {
             # 64-bit ABI isn't officially supported in gcc 3.0, but seems
             # to be working; at the very least 'make test' passes.
-            if ( okrun('gcc -v -E -x c /dev/null 2>&1',
-                    'grep __arch64__ >/dev/null') ) {
+            if ( okrun("$CC -v -E -x c /dev/null 2>&1",
+                       'grep __arch64__ >/dev/null') ) {
                 $GCC_ARCH = "-m64"
             } else {
                 $GCC_ARCH = "-m32"
             }
         }
-        # check for WorkShop C, expected output is "cc: blah-blah C x.x"
-        $CCVER = `(cc -V 2>&1) 2>/dev/null | egrep -e '^cc: .* C [0-9]\.[0-9]'`;
-        $CCVER =~ s/.* C \([0-9]\)\.\([0-9]\).*/$1$2/;
-        $CCVER //= 0;
-        if ( $MACHINE ne 'i86pc' && $CCVER > 40 ) {
-            # overrides gcc!!!
-            $CC = 'cc';
-            if ( $CCVER == 50 ) {
-                print <<'EOF';
-WARNING! Found WorkShop C 5.0.
-         Make sure you have patch #107357-01 or later applied.
-EOF
-                maybe_abort();
-            }
-        }
+    }
+
+    if ($VERBOSE) {
+        my $vendor = $CCVENDOR ? $CCVENDOR : "(undetermined)";
+        my $version = $CCVER ? $CCVER : "(undetermined)";
+        print "C compiler: $CC\n";
+        print "C compiler vendor: $vendor\n";
+        print "C compiler version: $version\n";
     }
 }
 
@@ -406,7 +517,7 @@ EOF
     if ( $GUESSOS =~ 'alpha-.*-linux2' ) {
         my $ISA = `awk '/cpu model/{print \$4;exit(0);}' /proc/cpuinfo`;
         $ISA //= 'generic';
-        if ( $CC eq "gcc" ) {
+        if ( $CCVENDOR eq "gnu" ) {
             if ( $ISA =~ 'EV5|EV45' ) {
                 $__CNF_CFLAGS .= " -mcpu=ev5";
                 $__CNF_CFLAGS .= " -mcpu=ev5";
@@ -550,13 +661,13 @@ EOF
     if ( $GUESSOS =~ 'sun4[uv].*-.*-solaris2' ) {
         my $ISA64 = `isainfo 2>/dev/null | grep sparcv9`;
         if ( $ISA64 ne "" && $KERNEL_BITS eq '' ) {
-            if ( $CC eq "cc" && $CCVER >= 50 ) {
+            if ( $CCVENDOR eq "sun" && $CCVER >= 500 ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
          $WHERE/Configure solaris64-sparcv9-cc
 EOF
                 maybe_abort();
-            } elsif ( $CC eq "gcc" && $GCC_ARCH eq "-m64" ) {
+            } elsif ( $CCVENDOR eq "gnu" && $GCC_ARCH eq "-m64" ) {
                 # $GCC_ARCH denotes default ABI chosen by compiler driver
                 # (first one found on the $PATH). I assume that user
                 # expects certain consistency with the rest of his builds
@@ -631,7 +742,7 @@ EOF
     return "tru64-alpha-cc" if $GUESSOS =~ '.*-.*-tru64';
     if ( $GUESSOS =~ '.*-.*-[Uu]nix[Ww]are7' ) {
         $options .= "no-sse2";
-        return "unixware-7-gcc" if $CC eq "gcc";
+        return "unixware-7-gcc" if $CCVENDOR eq "gnu";
         $__CNF_CPPFLAGS .= " -D__i386__";
         return "unixware-7";
     }
@@ -658,14 +769,14 @@ EOF
     }
     return "android-armeabi" if $GUESSOS =~ 'arm.*-.*-android';
     if ( $GUESSOS =~ '.*-hpux1.*' ) {
-        $OUT = "hpux64-parisc2-gcc" if $CC = "gcc" && $GCC_BITS eq '64';
+        $OUT = "hpux64-parisc2-gcc" if $CCVENDOR eq "gnu" && $GCC_BITS eq '64';
         $KERNEL_BITS //= `getconf KERNEL_BITS 2>/dev/null` // '32';
         # See <sys/unistd.h> for further info on CPU_VERSION.
         my $CPU_VERSION = `getconf CPU_VERSION 2>/dev/null` // 0;
         $__CNF_CPPFLAGS .= " -D_REENTRANT";
         if ( $CPU_VERSION >= 768 ) {
             # IA-64 CPU
-            return "hpux64-ia64-cc" if $KERNEL_BITS eq '64' && $CC eq "cc";
+            return "hpux64-ia64-cc" if $KERNEL_BITS eq '64' && ! $CCVENDOR;
             return "hpux-ia64-cc"
         }
         if ( $CPU_VERSION >= 532 ) {
@@ -675,7 +786,7 @@ EOF
             # in most critical assembly modules and taking advantage
             # of 2.0 architecture in PA-RISC 1.1 build.
             $OUT //= "hpux-parisc1_1-${CC}";
-            if ( $KERNEL_BITS eq '64' && $CC eq "cc" ) {
+            if ( $KERNEL_BITS eq '64' && ! $CCVENDOR ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
          $WHERE/Configure hpux64-parisc2-cc
@@ -697,7 +808,7 @@ EOF
         $KERNEL_BITS //= `getconf KERNEL_BITMODE 2>/dev/null`;
         $KERNEL_BITS //= '32';
         my $OBJECT_MODE //= 32;
-        if ( $CC eq "gcc" ) {
+        if ( $CCVENDOR eq "gcc" ) {
             $OUT = "aix-gcc";
             if ( $OBJECT_MODE == 64 ) {
                 print 'Your $OBJECT_MODE was found to be set to 64';
@@ -722,34 +833,36 @@ EOF
             # this applies even to Power3 and later, as they return
             # PowerPC_POWER[345]
         } else {
-            $options .= " no-asm";
+            $config{disable} = [ 'asm' ];
         }
-        return $OUT;
+        return %config;
     }
 
     # Last case, return "z" from x-y-z
     my @fields = split(/-/, $GUESSOS);
-    return $fields[2];
+    return ( target => $fields[2] );
 }
 
 # gcc < 2.8 does not support -march=ultrasparc
 sub check_solaris_sparc8 {
     my $OUT = shift;
-    if ( $OUT eq 'solaris-sparcv9-gcc' && $GCCVER < 28 ) {
-        print <<EOF;
+    if ( $CCVENDOR eq 'gnu' && $CCVER < 208 ) {
+        if ( $OUT eq 'solaris-sparcv9-gcc' ) {
+            print <<EOF;
 WARNING! Downgrading to solaris-sparcv8-gcc
          Upgrade to gcc-2.8 or later.
 EOF
-      maybe_abort();
-      return 'solaris-sparcv8-gcc';
-    }
-    if ( $OUT eq "linux-sparcv9" && $GCCVER < 28 ) {
-      print <<EOF;
+            maybe_abort();
+            return 'solaris-sparcv8-gcc';
+        }
+        if ( $OUT eq "linux-sparcv9" ) {
+            print <<EOF;
 WARNING! Downgrading to linux-sparcv8
          Upgrade to gcc-2.8 or later.
 EOF
-      maybe_abort();
-      return 'linux-sparcv8';
+            maybe_abort();
+            return 'linux-sparcv8';
+        }
     }
     return $OUT;
 }
