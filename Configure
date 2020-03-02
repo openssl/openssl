@@ -1166,7 +1166,24 @@ if ($d) {
     }
 }
 
-&usage if !$table{$target} || $table{$target}->{template};
+if ($target) {
+    # It's possible that we have different config targets for specific
+    # toolchains, so we try to detect them, and go for the plain config
+    # target if not.
+    my $found;
+    foreach ( ( "$target-$user{CC}", "$target", undef ) ) {
+        $found=$_ if $table{$_} && !$table{$_}->{template};
+        last if $found;
+    }
+    $target = $found;
+} else {
+    # If we don't have a config target now, we try the C compiler as we
+    # fallback
+    my $cc = $user{CC} // 'cc';
+    $target = $cc if $table{$cc} && !$table{$cc}->{template};
+}
+
+&usage unless $target;
 
 $config{target} = $target;
 my %target = resolve_config($target);
