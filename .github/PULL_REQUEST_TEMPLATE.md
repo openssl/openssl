@@ -1,7 +1,7 @@
 <!--
 Thank you for your pull request. Please review these requirements:
 
-Contributors guide: https://github.com/openssl/openssl/blob/master/CONTRIBUTING
+Contributors guide: https://github.com/openssl/openssl/blob/master/CONTRIBUTING.md
 
 Other than that, provide a description above this comment if there isn't one already
 
