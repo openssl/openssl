@@ -26,7 +26,7 @@ localCheckout: &localCheckout
         command: .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && scripts/build_openssl.sh)
     - run:
         name: Run unit tests
-        command: mkdir -p oqs_test/test-results && .circleci/git_no_checkin_in_last_day.sh || (cd oqs_test && LD_LIBRARY_PATH="$(dirname $PWD);$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
+        command: mkdir -p oqs_test/test-results && .circleci/git_no_checkin_in_last_day.sh || (LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test && cd oqs_test && LD_LIBRARY_PATH="$(dirname $PWD);$(dirname $PWD)/oqs/lib" python3 -m nose --rednose --verbose --with-xunit --xunit-file=test-results/nosetests.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs_test/test-results
 
@@ -90,6 +90,15 @@ jobs:
       LIBOQS: master
       OPENSSL: 111
       LIBTYPE: shared
+  ubuntu-bionic-x86_64-shared-noconn:
+    <<: *openssljob
+    environment:
+      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+      ARCH: x64
+      LIBOQS: master
+      OPENSSL: 111
+      LIBTYPE: shared
+      SKIP_TESTS: connection
   macOS-shared-noconn:
     <<: *macopenssljob
     environment:
@@ -110,6 +119,7 @@ workflows:
   build:
     jobs:
       - macOS-shared-noconn    
+      - ubuntu-bionic-x86_64-shared-noconn
       - ubuntu-bionic-x86_64-noconn
   nightly:
     triggers:

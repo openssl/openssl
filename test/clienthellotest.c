@@ -27,7 +27,7 @@
 
 #define CLIENT_VERSION_LEN      2
 
-#define TOTAL_NUM_TESTS                        2// 4 see OQS note above
+#define TOTAL_NUM_TESTS                        1// 4 see OQS note above
 
 /*
  * Test that explicitly setting ticket data results in it appearing in the
@@ -35,7 +35,7 @@
  */
 #define TEST_SET_SESSION_TICK_DATA_VER_NEG      0
 /* Enable padding and make sure ClientHello is long enough to require it */
-#define TEST_ADD_PADDING                        1
+#define TEST_ADD_PADDING                       -3  // OQS creates ClientHello longer than this test ever envisaged
 /* Enable padding and make sure ClientHello is short enough to not need it */
 #define TEST_PADDING_NOT_NEEDED                 -1 // see OQS note above
 /*
