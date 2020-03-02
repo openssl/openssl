@@ -20,6 +20,7 @@ use File::Path qw/mkpath/;
 use OpenSSL::fallback "$FindBin::Bin/external/perl/MODULES.txt";
 use OpenSSL::Glob;
 use OpenSSL::Template;
+use OpenSSL::config;
 
 # see INSTALL.md for instructions.
 
@@ -608,8 +609,6 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
 # To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
 
-&usage if ($#ARGV < 0);
-
 # For the "make variables" CPPINCLUDES and CPPDEFINES, we support lists with
 # platform specific list separators.  Users from those platforms should
 # recognise those separators from how you set up the PATH to find executables.
@@ -1066,6 +1065,23 @@ if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
     && !($disabled{asan} && $disabled{msan} && $disabled{ubsan})) {
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
         "***** any of asan, msan or ubsan\n";
+}
+
+# If no target was given, try guessing.
+unless ($target) {
+    my %system_config = OpenSSL::config::get_platform(%config, %user);
+
+    # The $system_config{disable} is used to populate %disabled with
+    # entries that aren't already there.
+    foreach ( @{$system_config{disable} // []} ) {
+        $disabled{$_} = 'system' unless defined $disabled{$_};
+    }
+    delete $system_config{disable};
+
+    # Override config entries with stuff from the guesser.
+    # It's assumed that this really is nothing new.
+    %config = ( %config, %system_config );
+    $target = $system_config{target};
 }
 
 sub disable {
