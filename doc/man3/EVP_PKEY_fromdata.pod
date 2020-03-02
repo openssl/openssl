@@ -18,6 +18,17 @@ EVP_PKEY_param_fromdata_settable, EVP_PKEY_key_fromdata_settable
 
 =head1 DESCRIPTION
 
+The function described here are used to create new keys from user
+provided key data, such as I<n>, I<e> and I<d> for a minimal RSA
+keypair.
+
+These functions use an B<EVP_PKEY_CTX> context, which should primarly
+be created with L<EVP_PKEY_CTX_new_from_name(3)> or
+L<EVP_PKEY_CTX_new_id(3)>.
+
+The exact key data that the user can pass depends on the key type.
+These are passed as an L<OSSL_PARAM(3)> array.
+
 EVP_PKEY_param_fromdata_init() initializes a public key algorithm context
 for creating key parameters from user data.
 
@@ -50,9 +61,94 @@ EVP_PKEY_fromdata() return 1 for success and 0 or a negative value for
 failure.  In particular a return value of -2 indicates the operation is
 not supported by the public key algorithm.
 
+=head1 EXAMPLES
+
+=head2 Creating an RSA keypair
+
+ #include <openssl/evp.h>
+
+ /*
+  * These are extremely small to make this example simple.  A real
+  * and secure application will not use such small numbers.  A real
+  * and secure application is expected to use BIGNUMs, and to build
+  * this array dynamically.
+  */
+ const unsigned long rsa_n = 0xbc747fc5;
+ const unsigned long rsa_e = 0x10001;
+ const unsigned long rsa_d = 0x7b133399;
+ const OSSL_PARAM[] = {
+     OSSL_PARAM_ulong("n", &rsa_n),
+     OSSL_PARAM_ulong("e", &rsa_e),
+     OSSL_PARAM_ulong("d", &rsa_d),
+     OSSL_PARAM_END
+ };
+     
+ int main()
+ {
+     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+     EVP_PKEY *pkey = NULL;
+
+     if (ctx == NULL
+         || !EVP_PKEY_key_fromdata_init(ctx)
+         || !EVP_PKEY_fromdata(ctx, &pkey, params))
+         exit(1);
+
+     /* Do what you want with |pkey| */
+ }
+
+=head2 Finding out params for an unknown key type
+
+ #include <openssl/evp.h>
+
+ /* Program expects a key type as first argument */
+ int main(int argc, char *argv[])
+ {
+     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, argv[0], NULL);
+     const *OSSL_PARAM *settable_params = NULL;
+
+     if (ctx == NULL
+         || (settable_params = EVP_PKEY_key_fromdata_settable(ctx)) == NULL)
+         exit(1);
+
+     for (; settable_params->key != NULL; settable_params++) {
+         const char *datatype = NULL;
+
+         switch (settable_params->data_type) {
+         case OSSL_PARAM_INTEGER:
+             datatype = "integer";
+             break;
+         case OSSL_PARAM_UNSIGNED_INTEGER:
+             datatype = "unsigned integer";
+             break;
+         case OSSL_PARAM_UTF8_STRING:
+             datatype = "printable string (utf-8 encoding expected)";
+             break;
+         case OSSL_PARAM_UTF8_PTR:
+             datatype = "printable string pointer (utf-8 encoding expected)";
+             break;
+         case OSSL_PARAM_OCTET_STRING:
+             datatype = "octet string";
+             break;
+         case OSSL_PARAM_OCTET_PTR:
+             datatype = "octet string pointer";
+             break;
+         }
+         printf("%s : %s ", settable_params->key, datatype);
+         if (settable_params->data_size == 0)
+             printf("(unlimited size)");
+         else
+             printf("(maximum size %zu)", settable_params->data_size);
+     }
+ }
+
+The descriptor L<OSSL_PARAM(3)> returned by
+EVP_PKEY_key_fromdata_settable() may also be used programatically, for
+example with L<OSSL_PARAM_allocate_from_text()>.
+
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_new(3)>, L<provider(7)>, L<EVP_PKEY_gettable_params(3)>
+L<EVP_PKEY_CTX_new(3)>, L<provider(7)>, L<EVP_PKEY_gettable_params(3)>,
+L<OSSL_PARAM(3)>
 
 =head1 HISTORY
 
