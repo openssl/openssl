@@ -180,55 +180,6 @@ sub maybe_abort {
     }
 }
 
-# Parse options.
-sub call_getopt {
-    our($opt_d);
-    our($opt_h);
-    our($opt_t);
-    our($opt_v);
-    our($opt_w);
-    getopts("dhtvw");
-
-    # Building on windows needs a VisualC target.
-    my $iswin = $^O eq 'MSWin32';
-    my $foundvc = 0;
-
-    if ( $opt_h ) {
-        print <<'EOF';
-Usage: config [options] [args...]
-  -d    Build with debugging when possible.
-  -t    Test mode, do not run the Configure perl script.
-  -v    Verbose mode, show the exact Configure call that is being made.
-  -w    Do not wait after displaying any warnings.
-  -h    This help.
-All other arguments are passed to the Configure script.
-See INSTALL for instructions.
-EOF
-        exit;
-    }
-    # All other parameters are passed to Configure
-    foreach my $opt ( @ARGV ) {
-        # Could make the VC- part optional, but that might cause
-        # confusion.
-        if ( $iswin && $opt =~ /^VC-(WIN32|WIN64A|WIN64I|CE)$/i ) {
-            $opt = tr/a-z/A-Z/;
-            $opt = "VC-$opt" unless $opt =~ /^VC-/;
-            $foundvc = 1;
-        }
-        $options .= " $opt";
-    }
-    if ( $iswin && !$foundvc ) {
-        print <<EOF;
-WARNING: Did not find VisualC target.  See INSTALL for details.
-EOF
-        maybe_abort();
-    }
-    $options = " --debug" if $opt_d;
-    $DRYRUN = $opt_t;
-    $VERBOSE = $opt_v || $opt_t;
-    $WAIT = 0 if $opt_w;
-}
-
 # Expand variable references in a string.
 sub expand {
     my $var = shift;
@@ -869,38 +820,6 @@ sub get_platform {
     return %ret;
 }
 
-
-# If running tandlone (via the "config" shell script)
-sub main {
-    call_getopt();
-
-    my $TARGET = common(1);
-
-    if ( $VERBOSE ) {
-        print <<EOF;
-
-export __CNF_CPPDEFINES="$__CNF_CPPDEFINES"
-export __CNF_CPPINCLUDES="$__CNF_CPPINCLUDES"
-export __CNF_CPPFLAGS="$__CNF_CPPFLAGS"
-export __CNF_CFLAGS="$__CNF_CFLAGS"
-export __CNF_CXXFLAGS="$__CNF_CXXFLAGS"
-export __CNF_LDFLAGS="$__CNF_LDFLAGS"
-export __CNF_LDLIBS="$__CNF_LDLIBS"
-$PERL $WHERE/Configure $TARGET $options
-EOF
-    }
-
-    return if $DRYRUN;
-
-    print "\n";
-    $ENV{__CNF_CPPDEFINES} = $__CNF_CPPDEFINES;
-    $ENV{__CNF_CPPINCLUDES} = $__CNF_CPPINCLUDES;
-    $ENV{__CNF_CPPFLAGS} = $__CNF_CPPFLAGS;
-    $ENV{__CNF_CFLAGS} = $__CNF_CFLAGS;
-    $ENV{__CNF_CXXFLAGS} = $__CNF_CXXFLAGS;
-    $ENV{__CNF_LDFLAGS} = $__CNF_LDFLAGS;
-    $ENV{__CNF_LDLIBS} = $__CNF_LDLIBS;
-    exit 1 if ! okrun("$PERL $WHERE/Configure $TARGET $options");
 }
 
 1;
