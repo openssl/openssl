@@ -241,19 +241,6 @@ sub expand {
     return $var;
 }
 
-# Add no-xxx if someone removed a crypto algorithm directory.
-# TODO: This should be moved to Configure.
-my @cryptodir = (
-    'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh', 'dsa', 'ec', 'hmac',
-    'idea', 'md2', 'md5', 'mdc2', 'rc2', 'rc4', 'rc5', 'ripemd', 'rsa',
-    'seed', 'sha', 'sm2', 'sm3', 'sm4'
-);
-sub remove_removed_crypto_directories {
-    foreach my $d ( @cryptodir ) {
-        $options .= " no-$d" if ! -d "$WHERE/crypto/$d";
-    }
-}
-
 # Look for ISC/SCO with its unique uname program
 sub is_sco_uname {
     open UNAME, "uname -X 2>/dev/null|" or return '';
