@@ -21,7 +21,7 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-static int dsa_builtin_keygen(DSA *dsa);
+static int dsa_keygen(DSA *dsa, int pairwise_test);
 static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg);
 
 int DSA_generate_key(DSA *dsa)
@@ -30,7 +30,7 @@ int DSA_generate_key(DSA *dsa)
     if (dsa->meth->dsa_keygen != NULL)
         return dsa->meth->dsa_keygen(dsa);
 #endif
-    return dsa_builtin_keygen(dsa);
+    return dsa_keygen(dsa, 0);
 }
 
 int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
@@ -113,11 +113,6 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     BN_CTX_free(ctx);
 
     return ok;
-}
-
-static int dsa_builtin_keygen(DSA *dsa)
-{
-    return dsa_keygen(dsa, 0);
 }
 
 /*
