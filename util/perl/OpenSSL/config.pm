@@ -867,24 +867,6 @@ EOF
     return $OUT;
 }
 
-# Append $CC to the target if that's in the Config list.
-sub check_target_exists {
-    my $OUT = shift;
-    my %table;
-
-    open T, "$PERL $WHERE/Configure LIST|" or die "Can't get LIST, $!";
-    while ( <T> ) {
-        chop;
-        $table{$_} = 1;
-    }
-    close T;
-    return "$OUT-$CC" if defined $table{"$OUT-$CC"};
-    return "$OUT" if defined $table{$OUT};
-    print "This system ($OUT) is not supported. See INSTALL for details.\n";
-    exit 1;
-}
-
-
 ###
 ###   MAIN PROCESSING
 ###
