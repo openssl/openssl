@@ -123,6 +123,8 @@ doc/man1/openssl-x509.pod
 /TAGS
 *.map
 *.ld
+/apps/progs.c
+/apps/progs.h
 
 # Windows (legacy)
 /tmp32
