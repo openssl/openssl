@@ -26,7 +26,7 @@ secure pseudo random number generator (CSPRNG).
 The random bytes are generated using the L<RAND_bytes(3)> function,
 which provides a security level of 256 bits, provided it managed to
 seed itself successfully from a trusted operating system entropy source.
-Otherwise, the command will fail with a non-zero error code.
+Otherwise, the command will fail with a nonzero error code.
 For more details, see L<RAND_bytes(3)>, L<RAND(7)>, and L<RAND_DRBG(7)>.
 
 =head1 OPTIONS
