@@ -18,7 +18,7 @@ EVP_PKEY_param_fromdata_settable, EVP_PKEY_key_fromdata_settable
 
 =head1 DESCRIPTION
 
-The function described here are used to create new keys from user
+The functions described here are used to create new keys from user
 provided key data, such as I<n>, I<e> and I<d> for a minimal RSA
 keypair.
 
@@ -63,7 +63,18 @@ not supported by the public key algorithm.
 
 =head1 EXAMPLES
 
-=head2 Creating an RSA keypair
+These examples are very terse for the sake of staying on topic, which
+are the EVP_PKEY_fromdata() set of functions.  In real applications,
+BIGNUMs would be handled, and converted to byte arrays with
+BN_bn2nativepad(), but that's off topic here.
+
+=begin comment
+
+TODO Write a set of cookbook documents and link to them.
+
+=end comment
+
+=head2 Creating an RSA keypair using raw key data
 
  #include <openssl/evp.h>
 
@@ -83,6 +94,57 @@ not supported by the public key algorithm.
      OSSL_PARAM_END
  };
      
+ int main()
+ {
+     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+     EVP_PKEY *pkey = NULL;
+
+     if (ctx == NULL
+         || !EVP_PKEY_key_fromdata_init(ctx)
+         || !EVP_PKEY_fromdata(ctx, &pkey, params))
+         exit(1);
+
+     /* Do what you want with |pkey| */
+ }
+
+=head2 Creating an ECC keypair using raw key data
+
+ #include <openssl/evp.h>
+
+ /*
+  * These arrays represent large numbers, big endian organization.
+  * In a real application, these would probably be bignums that get
+  * converted to the native integer organization with BN_bn2nativepad().
+  * We're not doing that here, since this is not an of BIGNUM
+  * functionality, but an example of EVP_PKEY_fromdata().
+  */
+ #ifndef B_ENDIAN
+ # error "We haven't prepared little endian arrays"
+ #endif
+ const unsigned char priv[] = {
+     0xb9, 0x2f, 0x3c, 0xe6, 0x2f, 0xfb, 0x45, 0x68,
+     0x39, 0x96, 0xf0, 0x2a, 0xaf, 0x6c, 0xda, 0xf2,
+     0x89, 0x8a, 0x27, 0xbf, 0x39, 0x9b, 0x7e, 0x54,
+     0x21, 0xc2, 0xa1, 0xe5, 0x36, 0x12, 0x48, 0x5d
+ };
+ const unsigned char pub[] = {
+     0x04, 0xcf, 0x20, 0xfb, 0x9a, 0x1d, 0x11, 0x6c,
+     0x5e, 0x9f, 0xec, 0x38, 0x87, 0x6c, 0x1d, 0x2f,
+     0x58, 0x47, 0xab, 0xa3, 0x9b, 0x79, 0x23, 0xe6,
+     0xeb, 0x94, 0x6f, 0x97, 0xdb, 0xa3, 0x7d, 0xbd,
+     0xe5, 0x26, 0xca, 0x07, 0x17, 0x8d, 0x26, 0x75,
+     0xff, 0xcb, 0x8e, 0xb6, 0x84, 0xd0, 0x24, 0x02,
+     0x25, 0x8f, 0xb9, 0x33, 0x6e, 0xcf, 0x12, 0x16,
+     0x2f, 0x5c, 0xcd, 0x86, 0x71, 0xa8, 0xbf, 0x1a,
+     0x47
+ };
+ const OSSL_PARAM params[] = {
+     OSSL_PARAM_ulong("curve-name", "prime256v1"),
+     OSSL_PARAM_BN("priv", priv, sizeof(priv));
+     OSSL_PARAM_BN("pub", pub, sizeof(pub));
+     OSSL_PARAM_END
+ };
+
  int main()
  {
      EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
