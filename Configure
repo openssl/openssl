@@ -205,6 +205,11 @@ my $apitable = {
     "0.9.8" =>   908,
 };
 
+# For OpenSSL::config::get_platform
+my %guess_opts = ();
+
+my $dryrun = 0;
+
 our %table = ();
 our %config = ();
 our %withargs = ();
@@ -834,6 +839,22 @@ while (@argvcopy)
                 # No longer an automatic choice
                 $auto_threads = 0 if ($1 eq "threads");
                 }
+        elsif (/^-d$/)          # From older 'config'
+                {
+                $config{build_type} = "debug";
+                }
+        elsif (/^-v$/)          # From older 'config'
+                {
+                $guess_opts{verbose} = 1;
+                }
+        elsif (/^-w$/)          # From older 'config'
+                {
+                $guess_opts{nowait} = 1;
+                }
+        elsif (/^-t$/)          # From older 'config'
+                {
+                $dryrun = 1;
+                }
         elsif (/^--strict-warnings$/)
                 {
                 # Pretend that our strict flags is a C flag, and replace it
@@ -1069,7 +1090,7 @@ if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
 
 # If no target was given, try guessing.
 unless ($target) {
-    my %system_config = OpenSSL::config::get_platform(%config, %user);
+    my %system_config = OpenSSL::config::get_platform(%guess_opts, %user);
 
     # The $system_config{disable} is used to populate %disabled with
     # entries that aren't already there.
@@ -1200,6 +1221,8 @@ if ($target) {
 }
 
 &usage unless $target;
+
+exit 0 if $dryrun;              # From older 'config'
 
 $config{target} = $target;
 my %target = resolve_config($target);
