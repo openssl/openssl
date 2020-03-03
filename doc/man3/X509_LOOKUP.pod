@@ -57,7 +57,7 @@ to enable lookup in that store.
 X509_LOOKUP_new() creates a new B<X509_LOOKUP> using the given lookup
 I<method>.
 It can also be created by calling L<X509_STORE_add_lookup(3)>, which
-will associate a B<X509_STORE> with the lookup mechanism.
+will associate an B<X509_STORE> with the lookup mechanism.
 
 X509_LOOKUP_init() initializes the internal state and resources as
 needed by the given B<X509_LOOKUP> to do its work.
@@ -67,11 +67,13 @@ the given B<X509_LOOKUP>.
 
 X509_LOOKUP_free() destructs the given B<X509_LOOKUP>.
 
-X509_LOOKUP_set_method_data() and X509_LOOKUP_get_method_data()
-associates and retrieves a pointer to application data to and from the
-given B<X509_LOOKUP>, respectively.
+X509_LOOKUP_set_method_data() associates a pointer to application data
+to the given B<X509_LOOKUP>.
 
-X509_LOOKUP_ctrl() is used to set or get additional data to or from a
+X509_LOOKUP_get_method_data() retrieves a pointer to application data
+from the given B<X509_LOOKUP>.
+
+X509_LOOKUP_ctrl() is used to set or get additional data to or from an
 B<X509_LOOKUP> structure or its associated L<X509_LOOKUP_METHOD(3)>.
 The arguments of the control command are passed via I<argc> and I<argl>,
 its return value via I<*ret>.
@@ -107,6 +109,37 @@ Some of the underlying B<X509_LOOKUP_METHOD>s will also cache objects
 matching the criteria in the associated B<X509_STORE>, which makes it
 possible to handle cases where the criteria have more than one hit.
 
+=head2 File Types
+
+X509_LOOKUP_load_file() and X509_LOOKUP_add_dir() take a I<type>,
+which can be one of the following:
+
+=over 4
+
+=item B<X509_FILETYPE_PEM>
+
+The file or files that are loaded are expected to be in PEM format.
+
+=item B<X509_FILETYPE_ASN1>
+
+The file or files that are loaded are expected to be in raw DER format.
+
+=item B<X509_FILETYPE_DEFAULT>
+
+The default certificate file or directory is used.  In this case,
+I<name> is ignored.
+
+=begin comment
+
+TODO
+Document X509_get_default_cert_file_env(3),
+X509_get_default_cert_file(3), X509_get_default_cert_dir_env(3) and
+X509_get_default_cert_dir(3) and link to them here.
+
+=end comment
+
+=back
+
 =head2 Control Commands
 
 The B<X509_LOOKUP_METHOD>s built into OpenSSL recognise the following
@@ -139,7 +172,7 @@ The URI is passed in I<argc>.
 
 =head1 RETURN VALUES
 
-X509_LOOKUP_new() returns a B<X509_LOOKUP> pointer when successful,
+X509_LOOKUP_new() returns an B<X509_LOOKUP> pointer when successful,
 or NULL on error.
 
 X509_LOOKUP_init() and X509_LOOKUP_shutdown() return 1 on success, or
@@ -152,7 +185,7 @@ Otherwise, it returns what the control function in the
 B<X509_LOOKUP_METHOD> returns, which is usually 1 on success and 0 in
 error.
 
-X509_LOOKUP_get_store() returns a B<X509_STORE> pointer if there is
+X509_LOOKUP_get_store() returns an B<X509_STORE> pointer if there is
 one, otherwise NULL.
 
 X509_LOOKUP_by_subject(), X509_LOOKUP_by_issuer_serial(),
