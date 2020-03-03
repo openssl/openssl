@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -27,7 +24,7 @@
 
 static int verbose = 0;
 
-static int dsa_cb(int p, int n, BN_GENCB *cb);
+static int gendsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -71,7 +68,8 @@ int dsaparam_main(int argc, char **argv)
     ENGINE *e = NULL;
     DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
-    BN_GENCB *cb = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, i, text = 0, private = 0;
@@ -150,6 +148,13 @@ int dsaparam_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL);
+    if (ctx == NULL) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err,
+                   "Error, DSA parameter generation context allocation failed\n");
+        goto end;
+    }
     if (numbits > 0) {
         if (numbits > OPENSSL_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
@@ -157,25 +162,34 @@ int dsaparam_main(int argc, char **argv)
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
 
-        cb = BN_GENCB_new();
-        if (cb == NULL) {
-            BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
-            goto end;
-        }
-        BN_GENCB_set(cb, dsa_cb, bio_err);
-        dsa = DSA_new();
-        if (dsa == NULL) {
-            BIO_printf(bio_err, "Error allocating DSA object\n");
-            goto end;
-        }
+        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
+        EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (verbose) {
             BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                        num);
             BIO_printf(bio_err, "This could take some time\n");
         }
-        if (!DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, cb)) {
+        if (EVP_PKEY_paramgen_init(ctx) <= 0) {
+            ERR_print_errors(bio_err);
+            BIO_printf(bio_err,
+                       "Error, DSA key generation paramgen init failed\n");
+            goto end;
+        }
+        if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
+            ERR_print_errors(bio_err);
+            BIO_printf(bio_err,
+                       "Error, DSA key generation setting bit length failed\n");
+            goto end;
+        }
+        if (EVP_PKEY_paramgen(ctx, &pkey) <= 0) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
+            goto end;
+        }
+        dsa = EVP_PKEY_get1_DSA(pkey);
+        if (dsa == NULL) {
+            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error, DSA key extraction failed\n");
             goto end;
         }
     } else if (informat == FORMAT_ASN1) {
@@ -189,8 +203,21 @@ int dsaparam_main(int argc, char **argv)
         goto end;
     }
 
+    if (pkey == NULL) {
+        pkey = EVP_PKEY_new();
+        if (pkey == NULL) {
+            BIO_printf(bio_err, "Error, unable to allocate PKEY object\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (!EVP_PKEY_set1_DSA(pkey, dsa)) {
+            BIO_printf(bio_err, "Error, unable to set DSA parameters\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
     if (text) {
-        DSAparams_print(out, dsa);
+        EVP_PKEY_print_params(out, pkey, 0, NULL);
     }
 
     if (C) {
@@ -246,11 +273,28 @@ int dsaparam_main(int argc, char **argv)
     if (genkey) {
         DSA *dsakey;
 
-        if ((dsakey = DSAparams_dup(dsa)) == NULL)
-            goto end;
-        if (!DSA_generate_key(dsakey)) {
+        EVP_PKEY_CTX_free(ctx);
+        ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL);
+        if (ctx == NULL) {
             ERR_print_errors(bio_err);
-            DSA_free(dsakey);
+            BIO_printf(bio_err,
+                       "Error, DSA key generation context allocation failed\n");
+            goto end;
+        }
+        if (!EVP_PKEY_keygen_init(ctx)) {
+            BIO_printf(bio_err, "unable to initialise for key generation\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (!EVP_PKEY_keygen(ctx, &pkey)) {
+            BIO_printf(bio_err, "unable to generate key\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        dsakey = EVP_PKEY_get0_DSA(pkey);
+        if (dsakey == NULL) {
+            BIO_printf(bio_err, "unable to extract generated key\n");
+            ERR_print_errors(bio_err);
             goto end;
         }
         assert(private);
@@ -259,27 +303,33 @@ int dsaparam_main(int argc, char **argv)
         else
             i = PEM_write_bio_DSAPrivateKey(out, dsakey, NULL, NULL, 0, NULL,
                                             NULL);
-        DSA_free(dsakey);
     }
     ret = 0;
  end:
-    BN_GENCB_free(cb);
     BIO_free(in);
     BIO_free_all(out);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
     DSA_free(dsa);
     release_engine(e);
     return ret;
 }
 
-static int dsa_cb(int p, int n, BN_GENCB *cb)
+static int gendsa_cb(EVP_PKEY_CTX *ctx)
 {
     static const char symbols[] = ".+*\n";
-    char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
+    int p;
+    char c;
+    BIO *b;
 
     if (!verbose)
         return 1;
 
-    BIO_write(BN_GENCB_get_arg(cb), &c, 1);
-    (void)BIO_flush(BN_GENCB_get_arg(cb));
+    b = EVP_PKEY_CTX_get_app_data(ctx);
+    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+    c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
+
+    BIO_write(b, &c, 1);
+    (void)BIO_flush(b);
     return 1;
 }
