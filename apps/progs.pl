@@ -107,12 +107,12 @@ EOF
 #   [2] = deprecented in this version
 #   [3] = preprocessor conditional for exclusing irrespective of deprecation
         rsa      => [ 0, "pkey",      "3_0", "rsa" ],
-        genrsa   => [ 1, "genpkey",   "3_0", "rsa" ],
+        genrsa   => [ 0, "genpkey",   "3_0", "rsa" ],
         rsautl   => [ 0, "pkeyutl",   "3_0", "rsa" ],
-        dhparam  => [ 1, "pkeyparam", "3_0", "dh"  ],
-        dsaparam => [ 1, "pkeyparam", "3_0", "dsa" ],
+        dhparam  => [ 0, "pkeyparam", "3_0", "dh"  ],
+        dsaparam => [ 0, "pkeyparam", "3_0", "dsa" ],
         dsa      => [ 0, "pkey",      "3_0", "dsa" ],
-        gendsa   => [ 1, "genpkey",   "3_0", "dsa" ],
+        gendsa   => [ 0, "genpkey",   "3_0", "dsa" ],
         ec       => [ 0, "pkey",      "3_0", "ec"  ],
         ecparam  => [ 0, "pkeyparam", "3_0", "ec"  ],
     );
