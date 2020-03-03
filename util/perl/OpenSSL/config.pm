@@ -193,13 +193,6 @@ sub maybe_abort {
     }
 }
 
-# Expand variable references in a string.
-sub expand {
-    my $var = shift;
-    $var =~ s/\$\{MACHINE\}/${MACHINE}/;
-    return $var;
-}
-
 # Look for ISC/SCO with its unique uname program
 sub is_sco_uname {
     open UNAME, "uname -X 2>/dev/null|" or return '';
@@ -248,7 +241,7 @@ sub guess_system {
     my $REL = is_sco_uname();
     if ( $REL ne "" ) {
         my $result = get_sco_type($REL);
-        return expand($result) if $result ne '';
+        return eval "\"$result\"" if $result ne '';
     }
 
     # Now pattern-match
@@ -259,7 +252,7 @@ sub guess_system {
         # Trailing $ omitted on purpose.
         next if $sys !~ /^$pat/;
         my $result = @$tuple[1];
-        return expand($result);
+        return eval "\"$result\"";
     }
 
     # Complex cases.
@@ -269,7 +262,7 @@ sub guess_system {
         next if $sys !~ /^$pat/;
         my $ref = @$tuple[1];
         my $result = &$ref;
-        return expand($result);
+        return eval "\"$result\"";
     }
 
     # Oh well.
