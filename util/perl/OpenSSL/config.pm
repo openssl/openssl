@@ -247,21 +247,13 @@ sub guess_system {
     # Now pattern-match
 
     # Simple cases
-    foreach my $tuple ( @$simple_guess_patterns ) {
+    foreach my $tuple ( @$simple_guess_patterns,
+                        @$complex_sys_list ) {
         my $pat = @$tuple[0];
         # Trailing $ omitted on purpose.
         next if $sys !~ /^$pat/;
         my $result = @$tuple[1];
-        return eval "\"$result\"";
-    }
-
-    # Complex cases.
-    foreach my $tuple ( @$complex_sys_list ) {
-        my $pat = @$tuple[0];
-        # Trailing $ omitted on purpose.
-        next if $sys !~ /^$pat/;
-        my $ref = @$tuple[1];
-        my $result = &$ref;
+        $result = $result->() if ref $result eq 'CODE';
         return eval "\"$result\"";
     }
 
