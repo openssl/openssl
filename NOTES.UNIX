@@ -59,7 +59,7 @@
  used with the runtime shared library search path options, as shown in
  this example:
 
-    $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
+    $ ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,-rpath,$(LIBRPATH)'
 
  On modern ELF based systems, there are two runtime search paths tags to
@@ -88,7 +88,7 @@
  Debian GNU/Linux systems rather than DT_RPATH is to tell the linker to
  set new dtags, like this:
 
-    $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
+    $ ./Configure --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
 
  It might be worth noting that some/most ELF systems implement support

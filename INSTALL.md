@@ -151,7 +151,7 @@ OpenSSL for production use.
 
 ### Unix / Linux / macOS
 
-    $ ./config
+    $ ./Configure
     $ make
     $ make test
 
@@ -159,7 +159,7 @@ OpenSSL for production use.
 
 Use the following commands to build OpenSSL:
 
-    $ @config
+    $ perl Configure
     $ mms
     $ mms test
 
@@ -168,7 +168,7 @@ Use the following commands to build OpenSSL:
 If you are using Visual Studio, open a Developer Command Prompt and
 and issue the following commands to build OpenSSL.
 
-    $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
+    $ perl Configure
     $ nmake
     $ nmake test
 
@@ -262,16 +262,16 @@ for 32bit binaries on 64bit Windows (WOW64).
 #### Installing to a different location
 
 To install OpenSSL to a different location (for example into your home
-directory for testing purposes) run config as shown in the following
+directory for testing purposes) run Configure as shown in the following
 examples.
 
 On Unix:
 
-    $ ./config --prefix=/opt/openssl --openssldir=/usr/local/ssl
+    $ ./Configure --prefix=/opt/openssl --openssldir=/usr/local/ssl
 
 On OpenVMS:
 
-    $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
+    $ perl Configure --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 Note: if you do add options to the configuration command, please make sure
 you've read more than just this Quick Start, such as relevant `NOTES.*` files,
@@ -281,10 +281,10 @@ in otherwise unexpected ways.
 Configuration Options
 =====================
 
-There are several options to ./config (or ./Configure) to customize
-the build (note that for Windows, the defaults for `--prefix` and
-`--openssldir` depend in what configuration is used and what Windows
-implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
+There are several options to ./Configure to customize the build (note that
+for Windows, the defaults for `--prefix` and `--openssldir` depend in what
+configuration is used and what Windows implementation OpenSSL is built on.
+More notes on this in NOTES.WIN):
 
 API Level
 ---------
@@ -311,20 +311,22 @@ Cross Compile Prefix
 
 The PREFIX to include in front of commands for your toolchain.
 
-It is likely to have to end with dash, e.g.  a-b-c- would invoke GNU compiler as
-a-b-c-gcc, etc.  Unfortunately cross-compiling is too case-specific to put
+It is likely to have to end with dash, e.g.  a-b-c- would invoke GNU compiler
+as a-b-c-gcc, etc.  Unfortunately cross-compiling is too case-specific to put
 together one-size-fits-all instructions.  You might have to pass more flags or
-set up environment variables to actually make it work.  Android and iOS cases are
-discussed in corresponding `Configurations/15-*.conf` files.  But there are cases
-when this option alone is sufficient.  For example to build the mingw64 target on
-Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works.  Naturally provided
-that mingw packages are installed.  Today Debian and Ubuntu users have option to
-install a number of prepackaged cross-compilers along with corresponding
-run-time and development packages for "alien" hardware.  To give another example
-`--cross-compile-prefix=mipsel-linux-gnu-` suffices in such case.  Needless to
-mention that you have to invoke `./Configure`, not `./config`, and pass your target
-name explicitly.  Also, note that `--openssldir` refers to target's file system,
-not one you are building on.
+set up environment variables to actually make it work.  Android and iOS cases
+are discussed in corresponding `Configurations/15-*.conf` files.  But there are
+cases when this option alone is sufficient.  For example to build the mingw64
+target on Linux `--cross-compile-prefix=x86_64-w64-mingw32-` works.  Naturally
+provided that mingw packages are installed.  Today Debian and Ubuntu users
+have option to install a number of prepackaged cross-compilers along with
+corresponding run-time and development packages for "alien" hardware.  To give
+another example `--cross-compile-prefix=mipsel-linux-gnu-` suffices in such
+case.
+
+For cross compilation, you must [configure manually](#manual-configuration).
+Also, note that `--openssldir` refers to target's file system, not one you are
+building on.
 
 Build Type
 ----------
@@ -1026,7 +1028,7 @@ configuration.  The following variables are supported:
 These cannot be mixed with compiling/linking flags given on the command line.
 In other words, something like this isn't permitted.
 
-    $ ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
+    $ ./Configure -DFOO CPPFLAGS=-DBAR -DCOOKIE
 
 Backward compatibility note:
 
@@ -1038,11 +1040,11 @@ for the following:
 
 For example, the following command will not see -DBAR:
 
-    $ CPPFLAGS=-DBAR ./config -DCOOKIE
+    $ CPPFLAGS=-DBAR ./Configure -DCOOKIE
 
 However, the following will see both set variables:
 
-    $ CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./config -DCOOKIE
+    $ CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./Configure -DCOOKIE
 
 If CC is set, it is advisable to also set CXX to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
@@ -1055,15 +1057,14 @@ compiler are in the same "family".  This becomes relevant with
 
 Reconfigure from earlier data.
 
-This fetches the previous command line options and environment from data saved
-in "configdata.pm" and runs the configuration process again, using these
-options and environment.  Note: NO other option is permitted together with
-"reconf".  This means that you also MUST use "./Configure" (or what corresponds
-to that on non-Unix platforms) directly to invoke this option.  Note: The
-original configuration saves away values for ALL environment variables that were
-used, and if they weren't defined, they are still saved away with information
-that they weren't originally defined.  This information takes precedence over
-environment variables that are defined when reconfiguring.
+This fetches the previous command line options and environment from data
+saved in "configdata.pm" and runs the configuration process again, using
+these options and environment.  Note: NO other option is permitted together
+with "reconf".  Note: The original configuration saves away values for ALL
+environment variables that were used, and if they weren't defined, they are
+still saved away with information that they weren't originally defined.
+This information takes precedence over environment variables that are
+defined when reconfiguring.
 
 Displaying configuration data
 -----------------------------
@@ -1097,42 +1098,26 @@ script.
 
 #### Unix / Linux / macOS
 
-    $ ./config [[ options ]]
+    $ ./Configure [[ options ]]
 
 #### OpenVMS
 
-    $ @config [[ options ]]
+    $ perl Configure [[ options ]]
 
 #### Windows
 
-Automatic configuration is not available on Windows.
-
-For the remainder of this text, the Unix form will be used in all examples,
-please use the appropriate form for your platform.
-
-You can run
-
-    $ ./config -t
-
-to see whether your target is guessed correctly.  If you want to use a different
-compiler, you  are cross-compiling for another platform, or the ./config guess
-was wrong for other reasons, see the [Manual Configuration](#manual-configuration)
-section.  Oherwise continue with the [Build OpenSSL](#build-openssl) section below.
-
-On some systems, you can include debugging information as follows:
-
-      $ ./config -d [[ options ]]
+    $ perl Configure [[ options ]]
 
 ### Manual Configuration
 
 OpenSSL knows about a range of different operating system, hardware and
 compiler combinations.  To see the ones it knows about, run
 
-    $ ./Configure                                    # Unix
+    $ ./Configure LIST                               # Unix
 
 or
 
-    $ perl Configure                                 # All other platforms
+    $ perl Configure LIST                            # All other platforms
 
 For the remainder of this text, the Unix form will be used in all examples.
 Please use the appropriate form for your platform.
@@ -1171,29 +1156,21 @@ directory and invoking the configuration commands from there.
 
     $ mkdir /var/tmp/openssl-build
     $ cd /var/tmp/openssl-build
-    $ /PATH/TO/OPENSSL/SOURCE/config [[ options ]]
-
-or
-
-    $ /PATH/TO/OPENSSL/SOURCE/Configure {{ target }} [[ options ]]
+    $ /PATH/TO/OPENSSL/SOURCE/Configure [[ options ]]
 
 #### OpenVMS example
 
     $ set default sys$login:
     $ create/dir [.tmp.openssl-build]
     $ set default [.tmp.openssl-build]
-    $ @[PATH.TO.OPENSSL.SOURCE]config [[ options ]]
-
-or
-
-    $ @[PATH.TO.OPENSSL.SOURCE]Configure {{ target }} [[ options ]]
+    $ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [[ options ]]
 
 #### Windows example
 
     $ C:
     $ mkdir \temp-openssl
     $ cd \temp-openssl
-    $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {{ target }} [[ options ]]
+    $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure [[ options ]]
 
 Paths can be relative just as well as absolute.  Configure will do its best
 to translate them to relative paths whenever possible.
@@ -1356,8 +1333,7 @@ Environment Variables
 
 A number of environment variables can be used to provide additional control
 over the build process.  Typically these should be defined prior to running
-config or Configure.  Not all environment variables are relevant to all
-platforms.
+Configure.  Not all environment variables are relevant to all platforms.
 
     AR
                    The name of the ar executable to use.
@@ -1401,9 +1377,8 @@ platforms.
 
     PERL
                    The name of the Perl executable to use when building OpenSSL.
-                   This variable is used in config script only. Configure on the
-                   other hand imposes the interpreter by which it itself was
-                   executed on the whole build procedure.
+                   Only needed if builing should use a different Perl executable
+                   than what is used to run the Configure script.
 
     HASHBANGPERL
                    The command string for the Perl executable to insert in the
@@ -1557,14 +1532,14 @@ Configuration Problems
 
 ### Selecting the correct target
 
-The `./config` script tries hard to guess your operating system, but in some
+The `./Configure` script tries hard to guess your operating system, but in some
 cases it does not succeed. You will see a message like the following:
 
-    $ ./config
+    $ ./Configure
     Operating system: x86-whatever-minix
     This system (minix) is not supported. See file INSTALL for details.
 
-Even if the automatic target selection by the `./config` script fails, chances
+Even if the automatic target selection by the `./Configure` script fails, chances
 are that you still might find a suitable target in the Configurations directory,
 which you can supply to the `./Configure` command, possibly after some adjustment.
 
@@ -1586,7 +1561,7 @@ a Perl list `my %targets = ( ... )`.
     ...
     )
 
-If you call `.\Configure` without arguments, it will give you a list of all
+If you call `./Configure` without arguments, it will give you a list of all
 known targets. Using `grep`, you can lookup the target definition in the
 Configurations directory. For example the "android-x86_64" can be found in
 Configurations/15-android.conf.
@@ -1605,7 +1580,7 @@ More about our support resources can be found in the [SUPPORT][] file.
 
 ### Configuration Errors
 
-If the `./config` or `./Configure`  command fails with an error message,
+If the `./Configure` or `./Configure` command fails with an error message,
 read the error message carefully and try to figure out whether you made
 a mistake (e.g., by providing a wrong option), or whether the script is
 working incorrectly. If you think you encountered a bug, please

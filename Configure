@@ -3050,7 +3050,6 @@ sub usage
                         }
                 print STDERR $i . " ";
                 }
-        print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
         exit(1);
         }
 

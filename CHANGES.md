@@ -23,6 +23,13 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * 'Configure' has been changed to figure out the configuration target if
+   none is given on the command line.  Consequently, the 'config' script is
+   now only a mere wrapper.  All documentation is changed to only mention
+   'Configure'.
+
+   *Rich Salz and Richard Levitte*
+
  * Added a library context that applications as well as other
    libraries can use to form a separate context within which libcrypto
    operations are performed.
