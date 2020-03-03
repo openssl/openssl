@@ -111,6 +111,13 @@ OpenSSL 3.0
 
    *Billy Bob Brumley*
 
+ * 'Configure' has been changed to figure out the configuration target if
+   none is given on the command line.  Consequently, the 'config' script is
+   now only a mere wrapper.  All documentation is changed to only mention
+   'Configure'.
+   
+   *Richard Levitte*
+
  * Added OSSL_PARAM_BLD to the public interface.  This allows OSSL_PARAM
    arrays to be more easily constructed via a series of utility functions.
    Create a parameter builder using OSSL_PARAM_BLD_new(), add parameters using

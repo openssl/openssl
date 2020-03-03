@@ -8,7 +8,7 @@
 
  After that perform the following steps:
 
-    ./config -Werror --strict-warnings [your-options]
+    ./Configure -Werror --strict-warnings [your-options]
     make update
     make
     make test
