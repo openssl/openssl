@@ -147,7 +147,7 @@ TODO Write a set of cookbook documents and link to them.
 
  int main()
  {
-     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
      EVP_PKEY *pkey = NULL;
 
      if (ctx == NULL
