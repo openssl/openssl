@@ -95,15 +95,20 @@ EOF
         pkcs12   => "des",
     );
     my %cmd_deprecated = (
-        rsa      => [ "3_0", "pkey",      "rsa" ],
-        genrsa   => [ "3_0", "genpkey",   "rsa" ],
-        rsautl   => [ "3_0", "pkeyutl",   "rsa" ],
-        dhparam  => [ "3_0", "pkeyparam", "dh" ],
-        dsaparam => [ "3_0", "pkeyparam", "dsa" ],
-        dsa      => [ "3_0", "pkey",      "dsa" ],
-        gendsa   => [ "3_0", "genpkey",   "dsa" ],
-        ec       => [ "3_0", "pkey",      "ec" ],
-        ecparam  => [ "3_0", "pkeyparam", "ec" ],
+# The format of this table is:
+#   [0] = 0/1, 1 means deprecated and gone, 0 is deprecated but still present
+#   [1] = alternative command to use instead
+#   [2] = deprecented in this version
+#   [3] = preprocessor conditional for exclusing irrespective of deprecation
+        rsa      => [ 0, "pkey",      "3_0", "rsa" ],
+        genrsa   => [ 1, "genpkey",   "3_0", "rsa" ],
+        rsautl   => [ 0, "pkeyutl",   "3_0", "rsa" ],
+        dhparam  => [ 1, "pkeyparam", "3_0", "dh"  ],
+        dsaparam => [ 1, "pkeyparam", "3_0", "dsa" ],
+        dsa      => [ 0, "pkey",      "3_0", "dsa" ],
+        gendsa   => [ 1, "genpkey",   "3_0", "dsa" ],
+        ec       => [ 0, "pkey",      "3_0", "ec"  ],
+        ecparam  => [ 0, "pkeyparam", "3_0", "ec"  ],
     );
 
     print "FUNCTION functions[] = {\n";
@@ -115,10 +120,15 @@ EOF
         } elsif (my $deprecated = $cmd_deprecated{$cmd}) {
             my @dep = @{$deprecated};
             print "#if ";
-            if ($dep[2]) {
-                print "!defined(OPENSSL_NO_" . uc($dep[2]) . ") && ";
+            if ($dep[0]) {
+                print "!defined(OPENSSL_NO_DEPRECATED_" . $dep[2] . ")";
             }
-            print "!defined(OPENSSL_NO_DEPRECATED_" . $dep[0] . ")";
+            if ($dep[3]) {
+                if ($dep[0]) {
+                    print " && ";
+                }
+                print "!defined(OPENSSL_NO_" . uc($dep[3]) . ")";
+            }
             my $dalt = "\"" . $dep[1] . "\"";
             $str =~ s/NULL/$dalt/;
             print "\n${str}#endif\n";
