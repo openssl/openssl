@@ -50,7 +50,12 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
                                        const uint8_t *context,
                                        size_t context_len)
 {
-    const char *dom_s = "SigEd448";
+#ifdef CHARSET_EBCDIC
+    const char dom_s[] = {0x53, 0x69, 0x67, 0x45,
+                          0x64, 0x34, 0x34, 0x38, 0x00};
+#else
+    const char dom_s[] = "SigEd448";
+#endif
     uint8_t dom[2];
 
     if (context_len > UINT8_MAX)
