@@ -145,8 +145,15 @@ int spkac_main(int argc, char **argv)
         if (challenge != NULL)
             ASN1_STRING_set(spki->spkac->challenge,
                             challenge, (int)strlen(challenge));
-        NETSCAPE_SPKI_set_pubkey(spki, pkey);
-        NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
+            BIO_printf(bio_err, "Error setting public key\n");
+            goto end;
+        }
+        i = NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (i <= 0) {
+            BIO_printf(bio_err, "Error signing SPKAC\n");
+            goto end;
+        }
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
         if (spkstr == NULL)
             goto end;
