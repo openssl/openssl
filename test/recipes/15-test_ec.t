@@ -27,7 +27,7 @@ ok(run(test(["ectest"])), "running ectest");
 # the command line tool in addition to the algorithm.
 SKIP: {
     skip "Skipping EC conversion test", 3
-        if disabled("ec") || disabled('deprecated-3.0');
+        if disabled("ec");
 
     subtest 'EC conversions -- private key' => sub {
         tconversion("ec", srctop_file("test","testec-p256.pem"));
