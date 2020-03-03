@@ -1989,7 +1989,7 @@ $code.=<<___;
 
 .Lxts_enc_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_encrypt,.-AES_xts_encrypt
@@ -2269,7 +2269,7 @@ $code.=<<___;
 	stg	$sp,$tweak-16+8($sp)
 .Lxts_dec_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_decrypt,.-AES_xts_decrypt
