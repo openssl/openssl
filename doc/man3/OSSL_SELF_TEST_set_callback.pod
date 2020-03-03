@@ -32,6 +32,7 @@ not been called.
 
 L<openssl-core.h(7)>,
 L<OSSL_PROVIDER-FIPS(7)>
+L<OSSL_SELF_TEST_new(3)>
 L<OPENSSL_CTX(3)>
 
 =head1 HISTORY

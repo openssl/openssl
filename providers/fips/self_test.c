@@ -132,7 +132,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
  */
 static int verify_integrity(BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
-                            OPENSSL_CTX *libctx, OSSL_ST_EVENT *ev,
+                            OPENSSL_CTX *libctx, OSSL_SELF_TEST *ev,
                             const char *event_type)
 {
     int ret = 0, status;
@@ -143,7 +143,7 @@ static int verify_integrity(BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[3], *p = params;
 
-    SELF_TEST_EVENT_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
+    OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
     mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
     ctx = EVP_MAC_CTX_new(mac);
@@ -170,13 +170,13 @@ static int verify_integrity(BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     if (!EVP_MAC_final(ctx, out, &out_len, sizeof(out)))
         goto err;
 
-    SELF_TEST_EVENT_oncorrupt_byte(ev, out);
+    OSSL_SELF_TEST_oncorrupt_byte(ev, out);
     if (expected_len != out_len
             || memcmp(expected, out, out_len) != 0)
         goto err;
     ret = 1;
 err:
-    SELF_TEST_EVENT_onend(ev, ret);
+    OSSL_SELF_TEST_onend(ev, ret);
     EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
     return ret;
@@ -192,7 +192,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     unsigned char *module_checksum = NULL;
     unsigned char *indicator_checksum = NULL;
     int loclstate;
-    OSSL_ST_EVENT ev;
+    OSSL_SELF_TEST *ev = NULL;
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -223,7 +223,9 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
             || st->module_checksum_data == NULL)
         goto end;
 
-    SELF_TEST_EVENT_init(&ev, st->event_cb, st->event_cb_arg);
+    ev = OSSL_SELF_TEST_new(st->cb, st->cb_arg);
+    if (ev == NULL)
+        goto end;
 
     module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
                                          &checksum_len);
@@ -235,7 +237,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if (bio_module == NULL
             || !verify_integrity(bio_module, st->bio_read_ex_cb,
                                  module_checksum, checksum_len, st->libctx,
-                                 &ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY))
+                                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY))
         goto end;
 
     /* This will be NULL during installation - so the self test KATS will run */
@@ -257,7 +259,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         if (bio_indicator == NULL
                 || !verify_integrity(bio_indicator, st->bio_read_ex_cb,
                                      indicator_checksum, checksum_len,
-                                     st->libctx, &ev,
+                                     st->libctx, ev,
                                      OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY))
             goto end;
         else
@@ -266,11 +268,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     /* Only runs the KAT's during installation OR on_demand() */
     if (on_demand_test || kats_already_passed == 0) {
-        if (!SELF_TEST_kats(&ev, st->libctx))
+        if (!SELF_TEST_kats(ev, st->libctx))
             goto end;
     }
     ok = 1;
 end:
+    OSSL_SELF_TEST_free(ev);
     OPENSSL_free(module_checksum);
     OPENSSL_free(indicator_checksum);
 

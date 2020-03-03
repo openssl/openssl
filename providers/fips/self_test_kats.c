@@ -20,7 +20,7 @@
 #define DRBG_PARAM_ENTROPY "DRBG-ENTROPY"
 #define DRBG_PARAM_NONCE   "DRBG-NONCE"
 
-static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_ST_EVENT *event,
+static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
                             OPENSSL_CTX *libctx)
 {
     int ok = 0;
@@ -29,7 +29,7 @@ static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_ST_EVENT *event,
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *md = EVP_MD_fetch(libctx, t->algorithm, NULL);
 
-    SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_KAT_DIGEST, t->desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_DIGEST, t->desc);
 
     if (ctx == NULL
             || md == NULL
@@ -39,14 +39,14 @@ static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_ST_EVENT *event,
         goto err;
 
     /* Optional corruption */
-    SELF_TEST_EVENT_oncorrupt_byte(event, out);
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
     if (out_len != t->expected_len
             || memcmp(out, t->expected, out_len) != 0)
         goto err;
     ok = 1;
 err:
-    SELF_TEST_EVENT_onend(event, ok);
+    OSSL_SELF_TEST_onend(st, ok);
     EVP_MD_free(md);
     EVP_MD_CTX_free(ctx);
 
@@ -86,7 +86,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 }
 
 /* Test a single KAT for encrypt/decrypt */
-static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
+static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
                             OPENSSL_CTX *libctx)
 {
     int ret = 0, encrypt = 1, len, ct_len = 0, pt_len = 0;
@@ -95,7 +95,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
     unsigned char ct_buf[256] = { 0 };
     unsigned char pt_buf[256] = { 0 };
 
-    SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_KAT_CIPHER, t->base.desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_CIPHER, t->base.desc);
 
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
@@ -110,7 +110,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
             || !EVP_CipherFinal_ex(ctx, ct_buf + len, &ct_len))
         goto err;
 
-    SELF_TEST_EVENT_oncorrupt_byte(event, ct_buf);
+    OSSL_SELF_TEST_oncorrupt_byte(st, ct_buf);
     ct_len += len;
     if (ct_len != (int)t->base.expected_len
         || memcmp(t->base.expected, ct_buf, ct_len) != 0)
@@ -138,11 +138,11 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_ST_EVENT *event,
 err:
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_CTX_free(ctx);
-    SELF_TEST_EVENT_onend(event, ret);
+    OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
 
-static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
+static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
                          OPENSSL_CTX *libctx)
 {
     int ret = 0;
@@ -154,7 +154,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
     const OSSL_PARAM *settables = NULL;
 
     numparams = OSSL_NELEM(params);
-    SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_KAT_KDF, t->desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KDF, t->desc);
 
     /* Zeroize the params array to avoid mem leaks on error */
     for (i = 0; i < numparams; ++i)
@@ -183,7 +183,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_ST_EVENT *event,
     if (EVP_KDF_derive(ctx, out, t->expected_len) <= 0)
         goto err;
 
-    SELF_TEST_EVENT_oncorrupt_byte(event, out);
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
     if (memcmp(out, t->expected,  t->expected_len) != 0)
         goto err;
@@ -194,7 +194,7 @@ err:
         OPENSSL_free(params[i].data);
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
-    SELF_TEST_EVENT_onend(event, ret);
+    OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
 
@@ -223,7 +223,7 @@ static size_t drbg_kat_nonce_cb(RAND_DRBG *drbg, unsigned char **pout,
     return p->data_size;
 }
 
-static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
+static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
                           OPENSSL_CTX *libctx)
 {
     int ret = 0;
@@ -236,7 +236,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     };
     static const unsigned char zero[sizeof(drbg->data)] = { 0 };
 
-    SELF_TEST_EVENT_onbegin(event, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
     if (strcmp(t->desc, OSSL_SELF_TEST_DESC_DRBG_HMAC) == 0)
         flags |= RAND_DRBG_FLAG_HMAC;
@@ -280,7 +280,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
                             t->entropyaddin2, t->entropyaddin2len))
         goto err;
 
-    SELF_TEST_EVENT_oncorrupt_byte(event, out);
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
     if (memcmp(out, t->expected, t->expectedlen) != 0)
         goto err;
@@ -296,7 +296,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_ST_EVENT *event,
     ret = 1;
 err:
     RAND_DRBG_free(drbg);
-    SELF_TEST_EVENT_onend(event, ret);
+    OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
 
@@ -305,45 +305,45 @@ err:
  * All tests are run regardless of if they fail or not.
  * Return 0 if any test fails.
  */
-static int self_test_digests(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_digests(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
-        if (!self_test_digest(&st_kat_digest_tests[i], event, libctx))
+        if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_ciphers(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_ciphers(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
-        if (!self_test_cipher(&st_kat_cipher_tests[i], event, libctx))
+        if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_kdfs(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_kdfs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
-        if (!self_test_kdf(&st_kat_kdf_tests[i], event, libctx))
+        if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_drbgs(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+static int self_test_drbgs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-        if (!self_test_drbg(&st_kat_drbg_tests[i], event, libctx))
+        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
             ret = 0;
     }
     return ret;
@@ -356,17 +356,17 @@ static int self_test_drbgs(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
  *
  * TODO(3.0) Add self tests for KA, Sign/Verify when they become available
  */
-int SELF_TEST_kats(OSSL_ST_EVENT *event, OPENSSL_CTX *libctx)
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {
     int ret = 1;
 
-    if (!self_test_digests(event, libctx))
+    if (!self_test_digests(st, libctx))
         ret = 0;
-    if (!self_test_ciphers(event, libctx))
+    if (!self_test_ciphers(st, libctx))
         ret = 0;
-    if (!self_test_kdfs(event, libctx))
+    if (!self_test_kdfs(st, libctx))
         ret = 0;
-    if (!self_test_drbgs(event, libctx))
+    if (!self_test_drbgs(st, libctx))
         ret = 0;
 
     return ret;
