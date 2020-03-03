@@ -49,7 +49,6 @@ struct rsa_st {
     BIGNUM *dmq1;
     BIGNUM *iqmp;
     RSA_PSS_PARAMS *pss;
-    /* TODO(3.0): Support PSS in FIPS_MODE */
 #ifndef FIPS_MODE
     /* for multi-prime RSA, defined in RFC 8017 */
     STACK_OF(RSA_PRIME_INFO) *prime_infos;
