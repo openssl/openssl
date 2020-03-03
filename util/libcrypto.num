@@ -3953,9 +3953,9 @@ DH_clear_flags                          4041	3_0_0	EXIST::FUNCTION:DH
 DH_get0_key                             4042	3_0_0	EXIST::FUNCTION:DH
 DH_get0_engine                          4043	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_set0_key                             4044	3_0_0	EXIST::FUNCTION:DH
-DH_set_length                           4045	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
+DH_set_length                           4045	3_0_0	EXIST::FUNCTION:DH
 DH_test_flags                           4046	3_0_0	EXIST::FUNCTION:DH
-DH_get_length                           4047	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
+DH_get_length                           4047	3_0_0	EXIST::FUNCTION:DH
 DH_get0_pqg                             4048	3_0_0	EXIST::FUNCTION:DH
 DH_meth_get_compute_key                 4049	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_meth_set1_name                       4050	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH

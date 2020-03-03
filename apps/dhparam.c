@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* We need to use some deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -25,13 +26,16 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 # include <openssl/dsa.h>
 #endif
 
 #define DEFBITS 2048
 
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int dh_cb(int p, int n, BN_GENCB *cb);
+#endif
+static int gendh_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -81,9 +85,11 @@ int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     int dsaparam = 0;
 #endif
     int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
@@ -127,7 +133,11 @@ int dhparam_main(int argc, char **argv)
             break;
         case OPT_DSAPARAM:
 #ifndef OPENSSL_NO_DSA
+# ifdef OPENSSL_NO_DEPRECATED_3_0
+            BIO_printf(bio_err, "The dsaparam option is deprecated.\n");
+# else
             dsaparam = 1;
+# endif
 #endif
             break;
         case OPT_C:
@@ -164,7 +174,7 @@ int dhparam_main(int argc, char **argv)
     if (g && !num)
         num = DEFBITS;
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (dsaparam && g) {
         BIO_printf(bio_err,
                    "generator may not be chosen for DSA parameters\n");
@@ -182,18 +192,18 @@ int dhparam_main(int argc, char **argv)
 
     if (num) {
 
-        BN_GENCB *cb;
-        cb = BN_GENCB_new();
-        if (cb == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
 
-        BN_GENCB_set(cb, dh_cb, bio_err);
-
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {
             DSA *dsa = DSA_new();
+            BN_GENCB *cb  = BN_GENCB_new();
+
+            if (cb == NULL) {
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+
+            BN_GENCB_set(cb, dh_cb, bio_err);
 
             BIO_printf(bio_err,
                        "Generating DSA parameters, %d bit long prime\n", num);
@@ -208,34 +218,52 @@ int dhparam_main(int argc, char **argv)
 
             dh = DSA_dup_DH(dsa);
             DSA_free(dsa);
+            BN_GENCB_free(cb);
             if (dh == NULL) {
-                BN_GENCB_free(cb);
                 ERR_print_errors(bio_err);
                 goto end;
             }
         } else
 #endif
         {
-            dh = DH_new();
+            ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL);
+            if (ctx == NULL) {
+                ERR_print_errors(bio_err);
+                BIO_printf(bio_err,
+                           "Error, DH key generation context allocation failed\n");
+                goto end;
+            }
+            EVP_PKEY_CTX_set_cb(ctx, gendh_cb);
+            EVP_PKEY_CTX_set_app_data(ctx, bio_err);
             BIO_printf(bio_err,
                        "Generating DH parameters, %d bit long safe prime, generator %d\n",
                        num, g);
             BIO_printf(bio_err, "This is going to take a long time\n");
-            if (dh == NULL || !DH_generate_parameters_ex(dh, num, g, cb)) {
-                BN_GENCB_free(cb);
+            if (!EVP_PKEY_paramgen_init(ctx)) {
+                BIO_printf(bio_err,
+                           "Error, unable to initialise DH param generation\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+            
+            if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
+                BIO_printf(bio_err, "Error, unable to set DH prime length\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+            if (!EVP_PKEY_paramgen(ctx, &pkey)) {
+                BIO_printf(bio_err, "Error, DH generation failed\n");
                 ERR_print_errors(bio_err);
                 goto end;
             }
         }
-
-        BN_GENCB_free(cb);
     } else {
 
         in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {
             DSA *dsa;
 
@@ -264,10 +292,10 @@ int dhparam_main(int argc, char **argv)
                  * We have no PEM header to determine what type of DH params it
                  * is. We'll just try both.
                  */
-                dh = d2i_DHparams_bio(in, NULL);
+                dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, in, NULL);
                 /* BIO_reset() returns 0 for success for file BIOs only!!! */
                 if (dh == NULL && BIO_reset(in) == 0)
-                    dh = d2i_DHxparams_bio(in, NULL);
+                    dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, in, NULL);
             } else {
                 /* informat == FORMAT_PEM */
                 dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
@@ -283,33 +311,17 @@ int dhparam_main(int argc, char **argv)
         /* dh != NULL */
     }
 
-    if (text) {
-        DHparams_print(out, dh);
-    }
+    if (text)
+        EVP_PKEY_print_params(out, pkey, 4, NULL);
 
     if (check) {
-        if (!DH_check(dh, &i)) {
+        if (!EVP_PKEY_param_check(ctx) /* DH_check(dh, &i) */) {
             ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "ERROR: Invalid parameters generated\n");
             goto end;
         }
-        if (i & DH_CHECK_P_NOT_PRIME)
-            BIO_printf(bio_err, "WARNING: p value is not prime\n");
-        if (i & DH_CHECK_P_NOT_SAFE_PRIME)
-            BIO_printf(bio_err, "WARNING: p value is not a safe prime\n");
-        if (i & DH_CHECK_Q_NOT_PRIME)
-            BIO_printf(bio_err, "WARNING: q value is not a prime\n");
-        if (i & DH_CHECK_INVALID_Q_VALUE)
-            BIO_printf(bio_err, "WARNING: q value is invalid\n");
-        if (i & DH_CHECK_INVALID_J_VALUE)
-            BIO_printf(bio_err, "WARNING: j value is invalid\n");
-        if (i & DH_UNABLE_TO_CHECK_GENERATOR)
-            BIO_printf(bio_err,
-                       "WARNING: unable to check the generator value\n");
-        if (i & DH_NOT_SUITABLE_GENERATOR)
-            BIO_printf(bio_err, "WARNING: the g value is not a generator\n");
-        if (i == 0)
-            BIO_printf(bio_err, "DH parameters appear to be ok.\n");
-        if (num != 0 && i != 0) {
+        BIO_printf(bio_err, "DH parameters appear to be ok.\n");
+        if (num != 0) {
             /*
              * We have generated parameters but DH_check() indicates they are
              * invalid! This should never happen!
@@ -323,8 +335,9 @@ int dhparam_main(int argc, char **argv)
         int len, bits;
         const BIGNUM *pbn, *gbn;
 
-        len = DH_size(dh);
-        bits = DH_bits(dh);
+        dh = EVP_PKEY_get0_DH(pkey);
+        len = EVP_PKEY_size(pkey);
+        bits = EVP_PKEY_size(pkey);
         DH_get0_pqg(dh, &pbn, NULL, &gbn);
         data = app_malloc(len, "print a BN");
 
@@ -362,9 +375,9 @@ int dhparam_main(int argc, char **argv)
         DH_get0_pqg(dh, NULL, &q, NULL);
         if (outformat == FORMAT_ASN1) {
             if (q != NULL)
-                i = i2d_DHxparams_bio(out, dh);
+                i = ASN1_i2d_bio_of(DH, i2d_DHxparams, out, dh);
             else
-                i = i2d_DHparams_bio(out, dh);
+                i = ASN1_i2d_bio_of(DH, i2d_DHparams, out, dh);
         } else if (q != NULL) {
             i = PEM_write_bio_DHxparams(out, dh);
         } else {
@@ -380,17 +393,31 @@ int dhparam_main(int argc, char **argv)
  end:
     BIO_free(in);
     BIO_free_all(out);
-    DH_free(dh);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
     release_engine(e);
     return ret;
 }
 
-static int dh_cb(int p, int n, BN_GENCB *cb)
+static int common_dh_cb(int p, BIO *b)
 {
     static const char symbols[] = ".+*\n";
     char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
 
-    BIO_write(BN_GENCB_get_arg(cb), &c, 1);
-    (void)BIO_flush(BN_GENCB_get_arg(cb));
+    BIO_write(b, &c, 1);
+    (void)BIO_flush(b);
     return 1;
+}
+
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+static int dh_cb(int p, int n, BN_GENCB *cb)
+{
+    return common_dh_cb(p, BN_GENCB_get_arg(cb));
+}
+#endif
+
+static int gendh_cb(EVP_PKEY_CTX *ctx)
+{
+    return common_dh_cb(EVP_PKEY_CTX_get_keygen_info(ctx, 0),
+                        EVP_PKEY_CTX_get_app_data(ctx));
 }

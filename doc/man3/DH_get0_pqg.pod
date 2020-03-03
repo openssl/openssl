@@ -27,13 +27,14 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
  int DH_test_flags(const DH *dh, int flags);
  void DH_set_flags(DH *dh, int flags);
 
+ long DH_get_length(const DH *dh);
+ int DH_set_length(DH *dh, long length);
+
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
  ENGINE *DH_get0_engine(DH *d);
- long DH_get_length(const DH *dh);
- int DH_set_length(DH *dh, long length);
 
 =head1 DESCRIPTION
 
@@ -127,8 +128,7 @@ L<DH_set_method(3)>, L<DH_size(3)>, L<DH_meth_new(3)>
 
 =head1 HISTORY
 
-The DH_get0_engine(), DH_get_length() and DH_set_length() functions were
-deprecated in OpenSSL 3.0.
+The DH_get0_engine() function was deprecated in OpenSSL 3.0.
 
 The functions described here were added in OpenSSL 1.1.0.
 
