@@ -171,26 +171,8 @@ unstructuredName		= An optional company name
 
 basicConstraints=CA:FALSE
 
-# Here are some examples of the usage of nsCertType. If it is omitted
-# the certificate can be used for anything *except* object signing.
-
-# This is OK for an SSL server.
-# nsCertType			= server
-
-# For an object signing certificate this would be used.
-# nsCertType = objsign
-
-# For normal client use this is typical
-# nsCertType = client, email
-
-# and for everything including object signing:
-# nsCertType = client, email, objsign
-
 # This is typical in keyUsage for a client certificate.
 # keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-
-# This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
@@ -205,13 +187,6 @@ authorityKeyIdentifier=keyid,issuer
 
 # Copy subject details
 # issuerAltName=issuer:copy
-
-#nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
-#nsBaseUrl
-#nsRevocationUrl
-#nsRenewalUrl
-#nsCaPolicyUrl
-#nsSslServerName
 
 # This is required for TSA certificates.
 # extendedKeyUsage = critical,timeStamping
@@ -242,9 +217,6 @@ basicConstraints = critical,CA:true
 # left out by default.
 # keyUsage = cRLSign, keyCertSign
 
-# Some might want this also
-# nsCertType = sslCA, emailCA
-
 # Include email address in subject alt name: another PKIX recommendation
 # subjectAltName=email:copy
 # Copy issuer details
@@ -272,26 +244,8 @@ authorityKeyIdentifier=keyid:always
 
 basicConstraints=CA:FALSE
 
-# Here are some examples of the usage of nsCertType. If it is omitted
-# the certificate can be used for anything *except* object signing.
-
-# This is OK for an SSL server.
-# nsCertType			= server
-
-# For an object signing certificate this would be used.
-# nsCertType = objsign
-
-# For normal client use this is typical
-# nsCertType = client, email
-
-# and for everything including object signing:
-# nsCertType = client, email, objsign
-
 # This is typical in keyUsage for a client certificate.
 # keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-
-# This will be displayed in Netscape's comment listbox.
-nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
@@ -306,13 +260,6 @@ authorityKeyIdentifier=keyid,issuer
 
 # Copy subject details
 # issuerAltName=issuer:copy
-
-#nsCaRevocationUrl		= http://www.domain.dom/ca-crl.pem
-#nsBaseUrl
-#nsRevocationUrl
-#nsRenewalUrl
-#nsCaPolicyUrl
-#nsSslServerName
 
 # This really needs to be in place for it to be a proxy certificate.
 proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:3,policy:foo

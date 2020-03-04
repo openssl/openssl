@@ -16,6 +16,7 @@ my $test_name = "test_store";
 setup($test_name);
 
 my $mingw = config('target') =~ m|^mingw|;
+my $cnf=srctop_file("test","ca-and-certs.cnf");
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -295,7 +296,7 @@ sub init {
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
             # *-cert.pem (intermediary for the .p12 inits)
             && run(app(["openssl", "req", "-x509",
-                        "-config", data_file("ca.cnf"), "-nodes",
+                        "-config", $cnf, "-nodes",
                         "-out", "cacert.pem", "-keyout", "cakey.pem"]))
             && runall(sub {
                           my $srckey = shift;
@@ -303,7 +304,7 @@ sub init {
                           (my $csr = $dstfile) =~ s|\.pem|.csr|;
 
                           (run(app(["openssl", "req", "-new",
-                                    "-config", data_file("user.cnf"),
+                                    "-config", $cnf,
                                     "-key", $srckey, "-out", $csr]))
                            &&
                            run(app(["openssl", "x509", "-days", "3650",
