@@ -284,7 +284,7 @@ sub determine_compiler_settings {
     foreach my $pair (List::Util::pairs @cc_version) {
         # Try to get the version number.
         # Failure gets us undef or an empty string
-        my $v = $pair->value->();
+        my $v = $pair->value()->();
 
         # If we got a version number, process it
         if ($v) {
