@@ -901,13 +901,6 @@ int x509_main(int argc, char **argv)
                     if (Upkey == NULL)
                         goto end;
                 }
-#ifndef OPENSSL_NO_SM2
-                if (EVP_PKEY_id(Upkey) == EVP_PKEY_SM2) {
-                    if (!EVP_PKEY_set_alias_type(Upkey, EVP_PKEY_SM2)) {
-                        goto end;
-                    }
-                }                
-#endif
                 if (!sign(x, Upkey, fkey, days, clrext, digest, extconf,
                           extsect, preserve_dates, sigopts))
                     goto end;

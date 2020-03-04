@@ -72,6 +72,8 @@ B<openssl> B<x509>
 [B<-extensions> I<section>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-preserve_dates>]
+[B<-sm2_id> I<arg>]
+[B<-sm2_hex_id> I<arg>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
@@ -370,6 +372,16 @@ for testing.
 
 Pass options to the signature algorithm during sign or verify operations.
 Names and values of these options are algorithm-specific.
+
+=item B<-sm2_id> I<arg>
+
+Specify the ID string to use when verifying an SM2 certificate. The ID string is
+required by the SM2 signature algorithm for signing and verification.
+
+=item B<-sm2-hex-id>
+
+Specify a binary ID string to use when signing or verifying using an SM2
+certificate. The argument for this option is string of hexadecimal digits.
 
 =item B<-passin> I<arg>
 
