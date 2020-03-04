@@ -39,7 +39,7 @@ None of the functions return a value.
 =head1 SEE ALSO
 
 L<config(5)>, L<OPENSSL_config(3)>,
-L<CONF_modules_load_file(3)>
+L<CONF_modules_load_file_with_libctx(3)>
 
 =head1 HISTORY
 

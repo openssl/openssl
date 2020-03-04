@@ -164,7 +164,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
-        if (!provider_conf_load(NULL, cval->name, cval->value, cnf))
+        if (!provider_conf_load(cnf->libctx, cval->name, cval->value, cnf))
             return 0;
     }
 

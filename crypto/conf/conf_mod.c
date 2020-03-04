@@ -113,22 +113,25 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 }
 
-int CONF_modules_load_file(const char *filename, const char *appname,
-                           unsigned long flags)
+int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
+                                       const char *filename,
+                                       const char *appname, unsigned long flags)
 {
     char *file = NULL;
     CONF *conf = NULL;
     int ret = 0;
-    conf = NCONF_new(NULL);
+
+    conf = NCONF_new_with_libctx(libctx, NULL);
     if (conf == NULL)
         goto err;
 
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
-        if (!file)
+        if (file == NULL)
             goto err;
-    } else
+    } else {
         file = (char *)filename;
+    }
 
     if (NCONF_load(conf, file, NULL) <= 0) {
         if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
@@ -149,6 +152,25 @@ int CONF_modules_load_file(const char *filename, const char *appname,
     if (flags & CONF_MFLAGS_IGNORE_RETURN_CODES)
         return 1;
 
+    return ret;
+}
+
+int CONF_modules_load_file(const char *filename,
+                           const char *appname, unsigned long flags)
+{
+    char *file = (char *)filename;
+    int ret = 0;
+
+    if (file == NULL) {
+        /* If we specify a default configuration to load try to load it */
+        file = CONF_get1_default_config_file();
+        /* dont fail if there is no default though */
+        if (file == NULL)
+            return 1;
+    }
+    ret = CONF_modules_load_file_with_libctx(NULL, file, appname, flags);
+    if (file != filename)
+        OPENSSL_free(file);
     return ret;
 }
 

@@ -8,6 +8,7 @@
  */
 
 #include "crypto/cryptlib.h"
+#include <openssl/conf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 
@@ -144,6 +145,16 @@ OPENSSL_CTX *OPENSSL_CTX_new(void)
     }
     return ctx;
 }
+
+#ifndef FIPS_MODE
+int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file)
+{
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
+        return 0;
+
+    return CONF_modules_load_file_with_libctx(ctx, config_file, NULL, 0) > 0;
+}
+#endif
 
 void OPENSSL_CTX_free(OPENSSL_CTX *ctx)
 {
