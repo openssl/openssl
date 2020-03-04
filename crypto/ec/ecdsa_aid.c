@@ -21,21 +21,50 @@
 #define SHA2_SZ 8
 #define SHA3_SZ 9
 
-/* ecdsaWithSHA1 OID is of the form : (1 2 840 10045 4 1) */
+/*
+ * -- RFC 3279
+ * ansi-X9-62 OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) 10045 }
+ * id-ecSigType OBJECT IDENTIFIER ::= { ansi-X9-62 signatures(4) }
+ *
+ * ecdsa-with-SHA1 OBJECT IDENTIFIER ::= { id-ecSigType 1 }
+ */
 #define ENCODE_ALGORITHMIDENTIFIER_SHA1(name)                                  \
 static const unsigned char algorithmidentifier_##name##_der[] = {              \
     ASN1_SEQUENCE, 2 + SHA1_SZ,                                                \
     ASN1_OID, SHA1_SZ, OID_FIRST(1, 2), DER_840(), DER_10045(), 4, 1           \
 }
 
-/* ecdsaWithSHA2 OID's are of the form  : (1 2 840 10045 4 3 n) */
+/*
+ * -- RFC 5758
+ *
+ * ecdsa-with-SHA224 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ *      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 1 }
+ *
+ * ecdsa-with-SHA256 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ *      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 2 }
+ *
+ * ecdsa-with-SHA384 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ *      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 3 }
+ *
+ * ecdsa-with-SHA512 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ *      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 4 }
+ */
 #define ENCODE_ALGORITHMIDENTIFIER_SHA2(name, n)                               \
 static const unsigned char algorithmidentifier_##name##_der[] = {              \
     ASN1_SEQUENCE, 2 + SHA2_SZ,                                                \
     ASN1_OID, SHA2_SZ, OID_FIRST(1, 2), DER_840(), DER_10045(), 4, 3, n        \
 }
 
-/* ecdsaWithSHA3 OIDs are of the form: (2 16 840 1 101 3 4 3 n) */
+/*
+ * https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration
+ *
+ * sigAlgs OBJECT IDENTIFIER ::= { 2 16 840 1 101 3 4 3 }
+ *
+ * id-ecdsa-with-sha3-224 ::= { sigAlgs 9 }
+ * id-ecdsa-with-sha3-256 ::= { sigAlgs 10 }
+ * id-ecdsa-with-sha3-384 ::= { sigAlgs 11 }
+ * id-ecdsa-with-sha3-512 ::= { sigAlgs 12 }
+ */
 #define ENCODE_ALGORITHMIDENTIFIER_SHA3(name, n)                               \
 static const unsigned char algorithmidentifier_##name##_der[] = {              \
     ASN1_SEQUENCE, 2 + SHA3_SZ,                                                \
