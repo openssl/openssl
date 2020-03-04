@@ -84,9 +84,9 @@ IMPLEMENT_PEM_write_cb_const(RSAPrivateKey, RSA, PEM_STRING_RSA,
 
 
 IMPLEMENT_PEM_rw_const(RSAPublicKey, RSA, PEM_STRING_RSA_PUBLIC,
-                       RSAPublicKey) IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA,
-                                                      PEM_STRING_PUBLIC,
-                                                      RSA_PUBKEY)
+                       RSAPublicKey)
+    IMPLEMENT_PEM_rw(RSA_PUBKEY, RSA, PEM_STRING_PUBLIC,
+                     RSA_PUBKEY)
 #endif
 #ifndef OPENSSL_NO_DSA
 static DSA *pkey_get_dsa(EVP_PKEY *key, DSA **dsa)
