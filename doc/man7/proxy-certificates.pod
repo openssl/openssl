@@ -116,7 +116,7 @@ two commands:
 
     openssl x509 -req -CAcreateserial -in proxy.req -out proxy.crt \
         -CA user.crt -CAkey user.key -days 7 \
-        -extfile proxy.cnf -extensions v3_proxy1
+        -extfile proxy.cnf -extensions proxy
 
 You can also create a proxy certificate using another proxy
 certificate as issuer (note: using a different configuration
@@ -128,7 +128,7 @@ section for the proxy extensions):
 
     openssl x509 -req -CAcreateserial -in proxy2.req -out proxy2.crt \
         -CA proxy.crt -CAkey proxy.key -days 7 \
-        -extfile proxy.cnf -extensions v3_proxy2
+        -extfile proxy.cnf -extensions proxy_2
 
 =head2 Using proxy certs in applications
 
