@@ -727,11 +727,11 @@ Do not use the default store.
 
 =head2 Random State Options
 
-Prior to OpenSSL 3.0, it was common for applications to store information
+Prior to OpenSSL 1.1.1, it was common for applications to store information
 about the state of the random-number generator in a file that was loaded
 at startup and rewritten upon exit. On modern operating systems, this is
-generally no longer necessary as OpenSSL will seed itself from the
-appropriate CPU flags, device files, and so on. These flags are still
+generally no longer necessary as OpenSSL will seed itself from a trusted
+entropy source provided by the operating system. These flags are still
 supported for special platforms or circumstances that might require them.
 
 It is generally an error to use the same seed file more than once and
