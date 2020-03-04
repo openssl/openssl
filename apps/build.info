@@ -13,15 +13,40 @@ ENDIF
 $OPENSSLSRC=\
         openssl.c progs.c \
         asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c \
-        ec.c ecparam.c enc.c engine.c errstr.c \
-        genpkey.c kdf.c mac.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c \
+        enc.c errstr.c \
+        genpkey.c kdf.c mac.c nseq.c passwd.c pkcs7.c \
         pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c \
         s_client.c s_server.c s_time.c sess_id.c smime.c speed.c \
-        spkac.c srp.c ts.c verify.c version.c x509.c rehash.c storeutl.c \
+        spkac.c verify.c version.c x509.c rehash.c storeutl.c \
         list.c info.c provider.c fipsinstall.c
+IF[{- !$disabled{'des'} -}]
+  $OPENSSLSRC=$OPENSSLSRC pkcs12.c
+ENDIF
+IF[{- !$disabled{'ec'} -}]
+  $OPENSSLSRC=$OPENSSLSRC ec.c ecparam.c
+ENDIF
+IF[{- !$disabled{'ocsp'} -}]
+  $OPENSSLSRC=$OPENSSLSRC ocsp.c
+ENDIF
+IF[{- !$disabled{'srp'} -}]
+  $OPENSSLSRC=$OPENSSLSRC srp.c
+ENDIF
+IF[{- !$disabled{'ts'} -}]
+  $OPENSSLSRC=$OPENSSLSRC ts.c
+ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  $OPENSSLSRC=$OPENSSLSRC \
-        dhparam.c dsa.c dsaparam.c gendsa.c rsa.c rsautl.c genrsa.c
+  IF[{- !$disabled{'dh'} -}]
+    $OPENSSLSRC=$OPENSSLSRC dhparam.c
+  ENDIF
+  IF[{- !$disabled{'dsa'} -}]
+    $OPENSSLSRC=$OPENSSLSRC dsa.c dsaparam.c gendsa.c
+  ENDIF
+  IF[{- !$disabled{'engine'} -}]
+    $OPENSSLSRC=$OPENSSLSRC engine.c
+  ENDIF
+  IF[{- !$disabled{'rsa'} -}]
+    $OPENSSLSRC=$OPENSSLSRC rsa.c rsautl.c genrsa.c
+  ENDIF
 ENDIF
 IF[{- !$disabled{'cmp'} -}]
   $OPENSSLSRC=$OPENSSLSRC cmp_mock_srv.c
