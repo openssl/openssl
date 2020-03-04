@@ -177,6 +177,7 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("Configuration"),
     {"config", OPT_CONFIG, 's', "A config file"},
     {"name", OPT_NAME, 's', "The particular CA definition to use"},
+    {"section", OPT_NAME, 's', "An alias for -name"},
     {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
 
     OPT_SECTION("Certificate"),

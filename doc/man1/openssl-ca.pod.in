@@ -12,6 +12,7 @@ B<openssl> B<ca>
 [B<-verbose>]
 [B<-config> I<filename>]
 [B<-name> I<section>]
+[B<-section> I<section>]
 [B<-gencrl>]
 [B<-revoke> I<file>]
 [B<-valid> I<file>]
@@ -93,7 +94,7 @@ Specifies the configuration file to use.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
-=item B<-name> I<section>
+=item B<-name> I<section>, B<-section> I<section>
 
 Specifies the configuration file section to use (overrides
 B<default_ca> in the B<ca> section).
@@ -768,6 +769,8 @@ OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
 seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
+
+The B<-section> option was added in OpenSSL 3.0.0.
 
 =head1 SEE ALSO
 
