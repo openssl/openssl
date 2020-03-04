@@ -334,7 +334,7 @@ argument for this option is string of hexadecimal digits.
 
 The configuration options are specified in the B<req> section of
 the configuration file. An alternate name be specified by using the
-B<-setion> option.
+B<-section> option.
 As with all configuration files, if no
 value is specified in the specific section then
 the initial unnamed or B<default> section is searched too.

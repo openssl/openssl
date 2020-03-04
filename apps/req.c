@@ -111,7 +111,7 @@ const OPTIONS req_options[] = {
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
-    {"section", OPT_SECTION, 's', "Config section to use (default req)"},
+    {"section", OPT_SECTION, 's', "Config section to use (default \"req\")"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
