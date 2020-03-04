@@ -645,6 +645,12 @@ extensions for a CA:
  openssl x509 -req -in careq.pem -extfile openssl.cnf -extensions v3_ca \
         -signkey key.pem -out cacert.pem
 
+Convert a SM2 certificate request into a self signed SM2 certificate:
+ 
+ openssl x509 -req -in careq.pem -extfile openssl.cnf -signkey key.pem \
+        -out cacert.pem -sm3 -sm2-id 1234567812345678 \
+        -sigopt "sm2_id:1234567812345678"
+
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
 

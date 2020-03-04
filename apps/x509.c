@@ -35,7 +35,7 @@
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
-                int preserve_dates);
+                int preserve_dates, STACK_OF(OPENSSL_STRING) *sigopts);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
                         STACK_OF(OPENSSL_STRING) *sigopts, const char *serialfile,
@@ -60,6 +60,9 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
+#ifndef OPENSSL_NO_SM2
+    OPT_SM2ID, OPT_SM2HEXID,
+#endif
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_R_ENUM, OPT_EXT
 } OPTION_CHOICE;
@@ -156,6 +159,12 @@ const OPTIONS x509_options[] = {
      "Clears all the prohibited or rejected uses of the certificate"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of certificate signature (for test)"},
     {"", OPT_MD, '-', "Any supported digest"},
+#ifndef OPENSSL_NO_SM2
+    {"sm2-id", OPT_SM2ID, 's',
+     "Specify an ID string to verify an SM2 certificate request"},
+    {"sm2-hex-id", OPT_SM2HEXID, 's',
+     "Specify a hex ID string to verify an SM2 certificate request"},
+#endif
     {"preserve_dates", OPT_PRESERVE_DATES, '-', "preserve existing dates when signing"},
     {NULL}
 };
@@ -200,6 +209,11 @@ int x509_main(int argc, char **argv)
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
     int subject_hash_old = 0, issuer_hash_old = 0;
+#endif
+#ifndef OPENSSL_NO_SM2
+    unsigned char *sm2_id = NULL;
+    size_t sm2_idlen = 0;
+    int sm2_free = 0;
 #endif
 
     ctx = X509_STORE_new();
@@ -431,6 +445,32 @@ int x509_main(int argc, char **argv)
         case OPT_BADSIG:
             badsig = 1;
             break;
+#ifndef OPENSSL_NO_SM2
+        case OPT_SM2ID:
+            /* we assume the input is not a hex string */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_id = (unsigned char *)opt_arg();
+            sm2_idlen = strlen((const char *)sm2_id);
+            break;
+        case OPT_SM2HEXID:
+            /* try to parse the input as hex string first */
+            if (sm2_id != NULL) {
+                BIO_printf(bio_err,
+                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
+                goto end;
+            }
+            sm2_free = 1;
+            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
+            if (sm2_id == NULL) {
+                BIO_printf(bio_err, "Invalid hex string input\n");
+                goto end;
+            }
+            break;
+#endif
 #ifndef OPENSSL_NO_MD5
         case OPT_SUBJECT_HASH_OLD:
             subject_hash_old = ++num;
@@ -571,6 +611,25 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err, "error unpacking public key\n");
             goto end;
         }
+#ifndef OPENSSL_NO_SM2
+        if (sm2_id != NULL) {
+            ASN1_OCTET_STRING *v;
+
+            v = ASN1_OCTET_STRING_new();
+            if (v == NULL) {
+                BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
+                goto end;
+            }
+
+            if (!ASN1_OCTET_STRING_set(v, sm2_id, sm2_idlen)) {
+                BIO_printf(bio_err, "error: setting SM2 ID failed\n");
+                ASN1_OCTET_STRING_free(v);
+                goto end;
+            }
+
+            X509_REQ_set0_sm2_id(req, v);
+        }
+#endif
         i = X509_REQ_verify(req, pkey);
         if (i < 0) {
             BIO_printf(bio_err, "Request self-signature verification error\n");
@@ -842,9 +901,15 @@ int x509_main(int argc, char **argv)
                     if (Upkey == NULL)
                         goto end;
                 }
-
+#ifndef OPENSSL_NO_SM2
+                if (EVP_PKEY_id(Upkey) == EVP_PKEY_SM2) {
+                    if (!EVP_PKEY_set_alias_type(Upkey, EVP_PKEY_SM2)) {
+                        goto end;
+                    }
+                }                
+#endif
                 if (!sign(x, Upkey, fkey, days, clrext, digest, extconf,
-                          extsect, preserve_dates))
+                          extsect, preserve_dates, sigopts))
                     goto end;
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -933,6 +998,10 @@ int x509_main(int argc, char **argv)
     }
     ret = 0;
  end:
+#ifndef OPENSSL_NO_SM2
+    if (sm2_free)
+        OPENSSL_free(sm2_id);
+#endif
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
@@ -1103,8 +1172,17 @@ static int callb(int ok, X509_STORE_CTX *ctx)
 /* self-issue; self-sign unless a forced public key (fkey) is given */
 static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
-                int preserve_dates)
+                int preserve_dates, STACK_OF(OPENSSL_STRING) *sigopts)
 {
+#ifndef OPENSSL_NO_SM2
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
+        /*
+         * sm2 need to set sm2_id before sign, sm2_id should be set to
+         * EVP_PKEY_CTX, so use func do_X509_sign to do sm2 sign
+         */
+        return do_X509_sign(x, pkey, digest, sigopts);
+    }
+#endif
 
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
         goto err;
