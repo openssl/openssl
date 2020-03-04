@@ -289,7 +289,7 @@ sub determine_compiler_settings {
 
         # If we got a version number, process it
         if ($v) {
-            $CCVENDOR = $pair->key;
+            $CCVENDOR = $k;
 
             # The returned version is expected to be one of
             #
