@@ -49,6 +49,12 @@ OpenSSL 3.0
    *Matthias St. Pierre*
 
 
+ * The FIPS_mode & FIPS_mode_set functions have been deprecated.  Instead
+   applications should use EVP_default_properties_is_fips_enabled and 
+   EVP_default_properties_enable_fips.
+
+   *Shane Lontis*
+
  * The test suite is changed to preserve results of each test recipe.
    A new directory test-runs/ with subdirectories named like the
    test recipes are created in the build tree for this purpose.

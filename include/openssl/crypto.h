@@ -375,8 +375,8 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 
 int OPENSSL_isservice(void);
 
-int FIPS_mode(void);
-int FIPS_mode_set(int r);
+DEPRECATEDIN_3_0(int FIPS_mode(void))
+DEPRECATEDIN_3_0(int FIPS_mode_set(int on))
 
 void OPENSSL_init(void);
 # ifdef OPENSSL_SYS_UNIX

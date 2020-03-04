@@ -1,0 +1,41 @@
+=pod
+
+=head1 NAME
+
+FIPS_mode, FIPS_mode_set - deprecated functions for fips mode
+
+=head1 SYNOPSIS
+
+ int FIPS_mode_set(int on);
+ int FIPS_mode(void);
+
+=head1 DESCRIPTION
+
+FIPS_mode_set() and FIPS_mode() are legacy functions used by the old fips
+provider from OPENSSL 1.0.2, and are no longer applicable to the new fips
+provider model introduced in OPENSSL 3.0. The functions do nothing except
+return an error that they are no longer supported.
+
+=head1 RETURN VALUES
+
+FIPS_mode() and FIPS_mode_set() return 0.
+
+=head1 SEE ALSO
+
+L<EVP_set_default_properties(3)>
+
+=head1 HISTORY
+
+FIPS_mode_set() and FIPS_mode() were non functional in OpenSSL 1.1.1
+FIPS_mode_set() and FIPS_mode() were deprecated in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
