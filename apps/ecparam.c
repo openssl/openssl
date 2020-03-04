@@ -9,22 +9,19 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <time.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -39,9 +36,9 @@ const OPTIONS ecparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     {"genkey", OPT_GENKEY, '-', "Generate ec key"},
     {"in", OPT_IN, '<', "Input file  - default stdin"},
@@ -473,5 +470,3 @@ int ecparam_main(int argc, char **argv)
     BIO_free_all(out);
     return ret;
 }
-
-#endif
