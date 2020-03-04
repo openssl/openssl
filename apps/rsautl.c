@@ -11,25 +11,22 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include "apps.h"
-# include "progs.h"
-# include <string.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rsa.h>
+#include "apps.h"
+#include "progs.h"
+#include <string.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
 
-# define RSA_SIGN        1
-# define RSA_VERIFY      2
-# define RSA_ENCRYPT     3
-# define RSA_DECRYPT     4
+#define RSA_SIGN        1
+#define RSA_VERIFY      2
+#define RSA_ENCRYPT     3
+#define RSA_DECRYPT     4
 
-# define KEY_PRIVKEY     1
-# define KEY_PUBKEY      2
-# define KEY_CERT        3
+#define KEY_PRIVKEY     1
+#define KEY_PUBKEY      2
+#define KEY_CERT        3
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -47,9 +44,9 @@ const OPTIONS rsautl_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
@@ -293,4 +290,3 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-#endif

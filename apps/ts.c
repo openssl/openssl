@@ -8,29 +8,26 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_TS
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rand.h>
-# include <openssl/ts.h>
-# include <openssl/bn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/ts.h>
+#include <openssl/bn.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
-# define NONCE_LENGTH            64
+#define NONCE_LENGTH            64
 
 /* Name of config entry that defines the OID file. */
-# define ENV_OID_FILE            "oid_file"
+#define ENV_OID_FILE            "oid_file"
 
 /* Is |EXACTLY_ONE| of three pointers set? */
-# define EXACTLY_ONE(a, b, c) \
+#define EXACTLY_ONE(a, b, c) \
         (( a && !b && !c) || \
          ( b && !a && !c) || \
          ( c && !a && !b))
@@ -94,9 +91,9 @@ const OPTIONS ts_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"config", OPT_CONFIG, '<', "Configuration file"},
     {"section", OPT_SECTION, 's', "Section to use within config file"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
     {"inkey", OPT_INKEY, 's', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},
@@ -146,11 +143,11 @@ static char* opt_helplist[] = {
     "    [-signer tsa_cert.pem] [-inkey private_key.pem]",
     "    [-chain certs_file.pem] [-tspolicy oid]",
     "    [-in file] [-token_in] [-out file] [-token_out]",
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     "    [-text] [-engine id]",
-# else
+#else
     "    [-text]",
-# endif
+#endif
     "",
     " openssl ts -verify -CApath dir -CAfile file.pem -CAstore uri",
     "   -untrusted file.pem [-data file] [-digest hexstring]",
@@ -699,10 +696,10 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
         goto end;
     if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
         goto end;
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     if (!TS_CONF_set_crypto_device(conf, section, engine))
         goto end;
-# endif
+#endif
     if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx))
         goto end;
     if (!TS_CONF_set_certs(conf, section, chain, resp_ctx))
@@ -1013,4 +1010,3 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     return ok;
 }
-#endif  /* ndef OPENSSL_NO_TS */

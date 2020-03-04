@@ -8,19 +8,16 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/evp.h>
-# include <openssl/pem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 
 static OPT_PAIR conv_forms[] = {
     {"compressed", POINT_CONVERSION_COMPRESSED},
@@ -46,9 +43,9 @@ typedef enum OPTION_choice {
 const OPTIONS ec_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
@@ -291,4 +288,3 @@ int ec_main(int argc, char **argv)
     OPENSSL_free(passout);
     return ret;
 }
-#endif
