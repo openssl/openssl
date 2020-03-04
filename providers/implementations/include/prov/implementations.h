@@ -303,6 +303,7 @@ extern const OSSL_DISPATCH mac_legacy_hmac_signature_functions[];
 extern const OSSL_DISPATCH mac_legacy_siphash_signature_functions[];
 extern const OSSL_DISPATCH mac_legacy_poly1305_signature_functions[];
 extern const OSSL_DISPATCH mac_legacy_cmac_signature_functions[];
+extern const OSSL_DISPATCH sm2_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];

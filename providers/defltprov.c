@@ -364,6 +364,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { "ED25519:Ed25519", "provider=default", ed25519_signature_functions },
     { "ED448:Ed448", "provider=default", ed448_signature_functions },
     { "ECDSA", "provider=default", ecdsa_signature_functions },
+# ifndef OPENSSL_NO_SM2
+    { "SM2", "provider=default", sm2_signature_functions },
+# endif
 #endif
     { "HMAC", "provider=default", mac_legacy_hmac_signature_functions },
     { "SIPHASH", "provider=default", mac_legacy_siphash_signature_functions },
@@ -413,6 +416,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #endif
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "provider=default", cmac_legacy_keymgmt_functions },
+#endif
 #ifndef OPENSSL_NO_SM2
     { "SM2", "provider=default", sm2_keymgmt_functions },
 #endif

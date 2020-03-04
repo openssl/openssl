@@ -175,28 +175,6 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
 }
 #endif /* FIPS_MODULE */
 
-static int is_legacy_alg(int id, const char *keytype)
-{
-#ifndef FIPS_MODULE
-    /* Certain EVP_PKEY keytypes are only available in legacy form */
-    if (id == -1)
-        id = evp_pkey_name2type(keytype);
-
-    switch (id) {
-    /*
-     * TODO(3.0): Remove SM2 when they are converted to have provider
-     * support
-     */
-    case EVP_PKEY_SM2:
-        return 1;
-    default:
-        return 0;
-    }
-#else
-    return 0;
-#endif
-}
-
 static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *keytype, const char *propquery,
@@ -284,16 +262,8 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * implementation.
      */
     if (e == NULL && keytype != NULL) {
-        int legacy = is_legacy_alg(id, keytype);
-
-        /* This could fail so ignore errors */
-        if (legacy)
-            ERR_set_mark();
-
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
-        if (legacy)
-            ERR_pop_to_mark();
-        else if (keymgmt == NULL)
+        if (keymgmt == NULL)
             return NULL;   /* EVP_KEYMGMT_fetch() recorded an error */
 
 #ifndef FIPS_MODULE

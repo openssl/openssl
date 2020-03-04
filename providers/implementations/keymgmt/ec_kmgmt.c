@@ -337,7 +337,8 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
 }
 
 static
-int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
+int common_import(void *keydata, int selection, const OSSL_PARAM params[],
+                  int sm2_curve)
 {
     EC_KEY *ec = keydata;
     const EC_GROUP *ecg = NULL;
@@ -368,6 +369,14 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && ec_group_fromdata(ec, params);
 
+    /*
+     * sm2_curve: import the keys or domparams only on SM2 Curve
+     * !sm2_curve: import the keys or domparams only not on SM2 Curve
+     */
+    if ((ecg = EC_KEY_get0_group(ec)) == NULL
+            || (sm2_curve ^ (EC_GROUP_get_curve_name(ecg) == NID_sm2)))
+        return 0;
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
@@ -380,58 +389,17 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
     return ok;
 }
 
+static
+int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
+{
+    return common_import(keydata, selection, params, 0);
+}
+
 #ifndef OPENSSL_NO_SM2
 static
 int sm2_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    EC_KEY *ec = keydata;
-    const EC_GROUP *ecg = NULL;
-    int ok = 1;
-
-    if (ec == NULL)
-        return 0;
-
-    /*
-     * In this implementation, we can export/import only keydata in the
-     * following combinations:
-     *   - domain parameters only
-     *   - public key with associated domain parameters (+optional other params)
-     *   - private key with associated public key and domain parameters
-     *         (+optional other params)
-     *
-     * This means:
-     *   - domain parameters must always be requested
-     *   - private key must be requested alongside public key
-     *   - other parameters must be requested only alongside a key
-     */
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0)
-        return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
-            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
-        return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0
-            && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
-        return 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && ec_key_domparams_fromdata(ec, params);
-
-    /* import the keys or domparams only on SM2 Curve */
-    if ((ecg = EC_KEY_get0_group(ec)) == NULL
-            || EC_GROUP_get_curve_name(ecg) != NID_sm2) {
-        return 0;
-    }
-
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        int include_private =
-            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
-
-        ok = ok && ec_key_fromdata(ec, params, include_private);
-    }
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && ec_key_otherparams_fromdata(ec, params);
-
-    return ok;
+    return common_import(keydata, selection, params, 1);
 }
 #endif
 
@@ -857,7 +825,7 @@ static const OSSL_PARAM sm2_known_gettable_params[] = {
 };
 
 static
-const OSSL_PARAM *sm2_gettable_params(void)
+const OSSL_PARAM *sm2_gettable_params(ossl_unused void *provctx)
 {
     return sm2_known_gettable_params;
 }
@@ -868,7 +836,7 @@ static const OSSL_PARAM sm2_known_settable_params[] = {
 };
 
 static
-const OSSL_PARAM *sm2_settable_params(void)
+const OSSL_PARAM *sm2_settable_params(ossl_unused void *provctx)
 {
     return sm2_known_settable_params;
 }
@@ -1184,8 +1152,21 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
         return NULL;
 
+    if (gctx->gen_group == NULL) {
+        if (!ec_gen_set_group_from_params(gctx))
+            goto err;
+    } else {
+        if (gctx->encoding) {
+            int flags = ec_encoding_name2id(gctx->encoding);
+            if (flags < 0)
+                goto err;
+            EC_GROUP_set_asn1_flag(gctx->gen_group, flags);
+        }
+    }
+
     /* We must always assign a group, no matter what */
     ret = ec_gen_assign_group(ec, gctx->gen_group);
+
     /* Whether you want it or not, you get a keypair, not just one half */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         /*
@@ -1198,7 +1179,9 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (ret)
         return ec;
-
+err:
+    /* Something went wrong, throw the key away */
+    EC_KEY_free(ec);
     return NULL;
 }
 #endif

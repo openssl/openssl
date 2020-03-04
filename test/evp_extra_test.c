@@ -921,33 +921,23 @@ static int test_EC_keygen_with_enc(int idx)
 
 static int test_EVP_SM2_verify(void)
 {
-    /* From https://tools.ietf.org/html/draft-shen-sm2-ecdsa-02#appendix-A */
     const char *pubkey =
-       "-----BEGIN PUBLIC KEY-----\n"
-       "MIIBMzCB7AYHKoZIzj0CATCB4AIBATAsBgcqhkjOPQEBAiEAhULWnkwETxjouSQ1\n"
-       "v2/33kVyg5FcRVF9ci7biwjx38MwRAQgeHlotPoyw/0kF4Quc7v+/y88hItoMdfg\n"
-       "7GUiizk35JgEIGPkxtOyOwyEnPhCQUhL/kj2HVmlsWugbm4S0donxSSaBEEEQh3r\n"
-       "1hti6rZ0ZDTrw8wxXjIiCzut1QvcTE5sFH/t1D0GgFEry7QsB9RzSdIVO3DE5df9\n"
-       "/L+jbqGoWEG55G4JogIhAIVC1p5MBE8Y6LkkNb9v990pdyBjBIVijVrnTufDLnm3\n"
-       "AgEBA0IABArkx3mKoPEZRxvuEYJb5GICu3nipYRElel8BP9N8lSKfAJA+I8c1OFj\n"
-       "Uqc8F7fxbwc1PlOhdtaEqf4Ma7eY6Fc=\n"
-       "-----END PUBLIC KEY-----\n";
+        "-----BEGIN PUBLIC KEY-----\n"
+        "MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEp1KLWq1ZE2jmoAnnBJE1LBGxVr18\n"
+        "YvvqECWCpXfAQ9qUJ+UmthnUPf0iM3SaXKHe6PlLIDyNlWMWb9RUh/yU3g==\n"
+        "-----END PUBLIC KEY-----\n";
 
     const char *msg = "message digest";
     const char *id = "ALICE123@YAHOO.COM";
 
     const uint8_t signature[] = {
-       0x30, 0x44, 0x02, 0x20,
-
-       0x40, 0xF1, 0xEC, 0x59, 0xF7, 0x93, 0xD9, 0xF4, 0x9E, 0x09, 0xDC,
-       0xEF, 0x49, 0x13, 0x0D, 0x41, 0x94, 0xF7, 0x9F, 0xB1, 0xEE, 0xD2,
-       0xCA, 0xA5, 0x5B, 0xAC, 0xDB, 0x49, 0xC4, 0xE7, 0x55, 0xD1,
-
-       0x02, 0x20,
-
-       0x6F, 0xC6, 0xDA, 0xC3, 0x2C, 0x5D, 0x5C, 0xF1, 0x0C, 0x77, 0xDF,
-       0xB2, 0x0F, 0x7C, 0x2E, 0xB6, 0x67, 0xA4, 0x57, 0x87, 0x2F, 0xB0,
-       0x9E, 0xC5, 0x63, 0x27, 0xA6, 0x7E, 0xC7, 0xDE, 0xEB, 0xE7
+        0x30, 0x44, 0x02, 0x20, 0x5b, 0xdb, 0xab, 0x81, 0x4f, 0xbb,
+        0x8b, 0x69, 0xb1, 0x05, 0x9c, 0x99, 0x3b, 0xb2, 0x45, 0x06,
+        0x4a, 0x30, 0x15, 0x59, 0x84, 0xcd, 0xee, 0x30, 0x60, 0x36,
+        0x57, 0x87, 0xef, 0x5c, 0xd0, 0xbe, 0x02, 0x20, 0x43, 0x8d,
+        0x1f, 0xc7, 0x77, 0x72, 0x39, 0xbb, 0x72, 0xe1, 0xfd, 0x07,
+        0x58, 0xd5, 0x82, 0xc8, 0x2d, 0xba, 0x3b, 0x2c, 0x46, 0x24,
+        0xe3, 0x50, 0xff, 0x04, 0xc7, 0xa0, 0x71, 0x9f, 0xa4, 0x70
     };
 
     int rc = 0;
@@ -978,13 +968,12 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
-                                          strlen(id)), 0))
-        goto done;
-
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, id, strlen(id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(mctx, msg, strlen(msg))))
@@ -1024,13 +1013,14 @@ static int test_EVP_SM2(void)
 
     uint8_t sm2_id[] = {1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r'};
 
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
     if (!TEST_ptr(pctx))
         goto done;
 
     if (!TEST_true(EVP_PKEY_paramgen_init(pctx) == 1))
         goto done;
 
+    /* TODO is this even needed? */
     if (!TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2)))
         goto done;
 
@@ -1047,9 +1037,6 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_keygen(kctx, &pkey)))
         goto done;
 
-    if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)))
-        goto done;
-
     if (!TEST_ptr(md_ctx = EVP_MD_CTX_new()))
         goto done;
 
@@ -1062,10 +1049,10 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
     EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
-    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
         goto done;
 
     if(!TEST_true(EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))))
@@ -1086,6 +1073,9 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
+        goto done;
+
     if (!TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify, kMsg, sizeof(kMsg))))
         goto done;
 
@@ -1093,6 +1083,13 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* now check encryption/decryption */
+    /*
+     * SM2 public key encrytion is not moved into default provider yet,
+     * so we make sure the key gets downgraded for the moment being.
+     * TODO Remove this call when provided SM2 encryption is implemented
+     */
+    if (!TEST_ptr(EVP_PKEY_get0(pkey)))
+       goto done;
 
     if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
@@ -1914,7 +1911,7 @@ static int test_pkey_ctx_fail_without_provider(int tst)
         break;
     case 1:
         keytype = "SM2";
-        expect_null = 0; /* TODO: change to 1 when we have a SM2 keymgmt */
+        expect_null = 1;
 #ifdef OPENSSL_NO_EC
         TEST_info("EC disable, skipping SM2 check...");
         goto end;

@@ -74,6 +74,19 @@ DEPEND[${DER_WRAP_GEN/.c/.o}]=$DER_WRAP_H
 GENERATE[$DER_WRAP_H]=der_wrap.h.in
 DEPEND[$DER_WRAP_H]=oids_to_c.pm
 
+#----- SM2
+$DER_SM2_H=../include/prov/der_sm2.h
+$DER_SM2_GEN=der_sm2_gen.c
+$DER_SM2_AUX=der_sm2_key.c der_sm2_sig.c
+
+GENERATE[$DER_SM2_GEN]=der_sm2_gen.c.in
+DEPEND[$DER_SM2_GEN]=oids_to_c.pm
+
+DEPEND[${DER_SM2_AUX/.c/.o}]=$DER_SM2_H $DER_EC_H
+DEPEND[${DER_SM2_GEN/.c/.o}]=$DER_SM2_H
+GENERATE[$DER_SM2_H]=der_sm2.h.in
+DEPEND[$DER_SM2_H]=oids_to_c.pm
+
 #----- Conclusion
 
 # TODO(3.0) $COMMON should go to libcommon.a, but this currently leads
@@ -84,7 +97,8 @@ $COMMON=\
         $DER_DSA_GEN $DER_DSA_AUX \
         $DER_EC_GEN $DER_EC_AUX \
         $DER_DIGESTS_GEN \
-        $DER_WRAP_GEN
+        $DER_WRAP_GEN \
+        $DER_SM2_GEN $DER_SM2_AUX
 
 IF[{- !$disabled{ec} -}]
   $COMMON = $COMMON $DER_ECX_GEN $DER_ECX_AUX
