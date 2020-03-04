@@ -3,6 +3,7 @@
 
 $DSA_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
+$SM2SIG_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa.c
@@ -14,9 +15,14 @@ IF[{- !$disabled{ec} -}]
   SOURCE[../../libnonfips.a]=ecdsa.c
 ENDIF
 
+IF[{- !$disabled{sm2} -}]
+  SOURCE[$SM2SIG_GOAL]=sm2sig.c
+ENDIF
+
 SOURCE[../../libfips.a]=rsa.c
 SOURCE[../../libnonfips.a]=rsa.c
 
 DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
 DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
+DEPEND[sm2sig.o]=../../common/include/prov/der_sm2.h
