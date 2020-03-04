@@ -111,8 +111,10 @@ struct conf_st {
     void *meth_data;
     LHASH_OF(CONF_VALUE) *data;
     unsigned int flag_dollarid:1;
+    OPENSSL_CTX *libctx;
 };
 
+CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
@@ -140,6 +142,8 @@ int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
+int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx, const char *filename,
+                                       const char *appname, unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
