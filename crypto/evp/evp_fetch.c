@@ -367,9 +367,41 @@ int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
 
     if (store != NULL)
         return ossl_method_store_set_global_properties(store, propq);
-    EVPerr(EVP_F_EVP_SET_DEFAULT_PROPERTIES, ERR_R_INTERNAL_ERROR);
+    EVPerr(0, ERR_R_INTERNAL_ERROR);
     return 0;
 }
+
+
+static int evp_default_properties_merge(OPENSSL_CTX *libctx, const char *propq)
+{
+    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+
+    if (store != NULL)
+        return ossl_method_store_merge_global_properties(store, propq);
+    EVPerr(0, ERR_R_INTERNAL_ERROR);
+    return 0;
+}
+
+static int evp_default_property_is_enabled(OPENSSL_CTX *libctx,
+                                           const char *prop_name)
+{
+    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+
+    return ossl_method_store_global_property_is_enabled(store, prop_name);
+}
+
+int EVP_default_properties_is_fips_enabled(OPENSSL_CTX *libctx)
+{
+    return evp_default_property_is_enabled(libctx, "fips");
+}
+
+int EVP_default_properties_enable_fips(OPENSSL_CTX *libctx, int enable)
+{
+    const char *query = (enable != 0) ? "fips=yes" : "-fips";
+
+    return evp_default_properties_merge(libctx, query);
+}
+
 
 struct do_all_data_st {
     void (*user_fn)(void *method, void *arg);
