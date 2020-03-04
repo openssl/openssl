@@ -978,13 +978,13 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
-                                          strlen(id)), 0))
-        goto done;
-
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
+                                          strlen(id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(mctx, msg, strlen(msg))))
@@ -1016,15 +1016,17 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
 
+#if 0
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
 
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
+#endif
 
     uint8_t sm2_id[] = {1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r'};
 
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
     if (!TEST_ptr(pctx))
         goto done;
 
@@ -1047,9 +1049,6 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_keygen(kctx, &pkey)))
         goto done;
 
-    if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)))
-        goto done;
-
     if (!TEST_ptr(md_ctx = EVP_MD_CTX_new()))
         goto done;
 
@@ -1062,10 +1061,13 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
     EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
+    if (!TEST_true(EVP_PKEY_sign_init(sctx)))
         goto done;
 
     if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
         goto done;
 
     if(!TEST_true(EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))))
@@ -1093,7 +1095,11 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* now check encryption/decryption */
-
+    /*
+     * Skip this since SM2 public key encrytion is not moved into
+     * default provider yet
+     */
+#if 0
     if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
@@ -1114,6 +1120,7 @@ static int test_EVP_SM2(void)
 
     if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
         goto done;
+#endif
 
     ret = 1;
 done:

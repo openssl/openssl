@@ -104,7 +104,7 @@ static int pkey_sm2_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
         return 0;
     }
 
-    ret = sm2_sign(tbs, tbslen, sig, &sltmp, ec);
+    ret = sm2_internal_sign(tbs, tbslen, sig, &sltmp, ec);
 
     if (ret <= 0)
         return ret;
@@ -118,7 +118,7 @@ static int pkey_sm2_verify(EVP_PKEY_CTX *ctx,
 {
     EC_KEY *ec = ctx->pkey->pkey.ec;
 
-    return sm2_verify(tbs, tbslen, sig, siglen, ec);
+    return sm2_internal_verify(tbs, tbslen, sig, siglen, ec);
 }
 
 static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,

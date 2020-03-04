@@ -142,6 +142,7 @@ extern "C" {
 #define OSSL_DIGEST_NAME_SHA3_512       "SHA3-512"
 #define OSSL_DIGEST_NAME_KECCAK_KMAC128 "KECCAK-KMAC-128"
 #define OSSL_DIGEST_NAME_KECCAK_KMAC256 "KECCAK-KMAC-256"
+#define OSSL_DIGEST_NAME_SM3            "SM3"
 
 /* MAC parameters */
 #define OSSL_MAC_PARAM_KEY          "key"        /* octet string */
