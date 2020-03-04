@@ -39,7 +39,7 @@ This function is deprecated.
 DH_new_by_nid() returns a set of DH parameters or B<NULL> if an error occurred.
 
 DH_get_nid() returns the NID of the matching set of parameters for p and g
-and optionally q, otherwise it return B<NID_undef> if there is no match.
+and optionally q, otherwise it returns B<NID_undef> if there is no match.
 
 =head1 HISTORY
 
