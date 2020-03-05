@@ -713,7 +713,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
      * the hash of the certificate, using the same hash algorithm
      * as is used to create and verify the certificate signature
      */
-    if ((certHash = OSSL_CMP_X509_digest(ctx->newCert)) == NULL)
+    if ((certHash = X509_digest_sig(ctx->newCert)) == NULL)
         goto err;
 
     if (!ossl_cmp_certstatus_set0_certHash(certStatus, certHash))
