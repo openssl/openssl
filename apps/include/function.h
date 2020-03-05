@@ -26,6 +26,7 @@ typedef struct function_st {
     int (*func)(int argc, char *argv[]);
     const OPTIONS *help;
     const char *deprecated_alternative;
+    const char *deprecated_version;
 } FUNCTION;
 
 DEFINE_LHASH_OF(FUNCTION);

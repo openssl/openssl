@@ -92,45 +92,48 @@ EOF
 
     my %cmd_disabler = (
         ciphers  => "sock",
+        genrsa   => "rsa",
+        gendsa   => "dsa",
+        dsaparam => "dsa",
+        gendh    => "dh",
+        dhparam  => "dh",
+        ecparam  => "ec",
         pkcs12   => "des",
     );
     my %cmd_deprecated = (
 # The format of this table is:
-#   [0] = 0/1, 1 means deprecated and gone, 0 is deprecated but still present
-#   [1] = alternative command to use instead
-#   [2] = deprecented in this version
-#   [3] = preprocessor conditional for exclusing irrespective of deprecation
-        rsa      => [ 0, "pkey",      "3_0", "rsa" ],
-        genrsa   => [ 0, "genpkey",   "3_0", "rsa" ],
-        rsautl   => [ 0, "pkeyutl",   "3_0", "rsa" ],
-        dhparam  => [ 0, "pkeyparam", "3_0", "dh"  ],
-        dsaparam => [ 0, "pkeyparam", "3_0", "dsa" ],
-        dsa      => [ 0, "pkey",      "3_0", "dsa" ],
-        gendsa   => [ 0, "genpkey",   "3_0", "dsa" ],
-        ec       => [ 0, "pkey",      "3_0", "ec"  ],
-        ecparam  => [ 0, "pkeyparam", "3_0", "ec"  ],
+#   [0] = alternative command to use instead
+#   [1] = deprecented in this version
+#   [2] = preprocessor conditional for exclusing irrespective of deprecation
+#        rsa      => [ "pkey",      "3_0", "rsa" ],
+#        genrsa   => [ "genpkey",   "3_0", "rsa" ],
+        rsautl   => [ "pkeyutl",   "3_0", "rsa" ],
+#        dhparam  => [ "pkeyparam", "3_0", "dh"  ],
+#        dsaparam => [ "pkeyparam", "3_0", "dsa" ],
+#        dsa      => [ "pkey",      "3_0", "dsa" ],
+#        gendsa   => [ "genpkey",   "3_0", "dsa" ],
+#        ec       => [ "pkey",      "3_0", "ec"  ],
+#        ecparam  => [ "pkeyparam", "3_0", "ec"  ],
     );
 
     print "FUNCTION functions[] = {\n";
     foreach my $cmd ( @ARGV ) {
         my $str =
-            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options, NULL},\n";
+            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options, NULL, NULL},\n";
         if ($cmd =~ /^s_/) {
             print "#ifndef OPENSSL_NO_SOCK\n${str}#endif\n";
         } elsif (my $deprecated = $cmd_deprecated{$cmd}) {
             my @dep = @{$deprecated};
-            print "#if ";
-            if ($dep[0]) {
-                print "!defined(OPENSSL_NO_DEPRECATED_" . $dep[2] . ")";
+            my $daltprg = $dep[0];
+            my $dver = $dep[1];
+            my $dsys = $dep[2];
+            print "#if !defined(OPENSSL_NO_DEPRECATED_" . $dver . ")";
+            if ($dsys) {
+                print " && !defined(OPENSSL_NO_" . uc($dsys) . ")";
             }
-            if ($dep[3]) {
-                if ($dep[0]) {
-                    print " && ";
-                }
-                print "!defined(OPENSSL_NO_" . uc($dep[3]) . ")";
-            }
-            my $dalt = "\"" . $dep[1] . "\"";
-            $str =~ s/NULL/$dalt/;
+            $dver =~ s/_/./g;
+            my $dalt = "\"" . $daltprg . "\", \"" . $dver . "\"";
+            $str =~ s/NULL, NULL/$dalt/;
             print "\n${str}#endif\n";
         } elsif (grep { $cmd eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($cmd) . "\n${str}#endif\n";
