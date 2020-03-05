@@ -495,34 +495,7 @@ static int ts_check_status_info(TS_RESP *response)
 
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
-    int i;
-    int length = 0;
-    char *result = NULL;
-    char *p;
-
-    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
-        ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
-        if (ASN1_STRING_length(current) > TS_MAX_STATUS_LENGTH - length - 1)
-            return NULL;
-        length += ASN1_STRING_length(current);
-        length += 1;            /* separator character */
-    }
-    if ((result = OPENSSL_malloc(length)) == NULL) {
-        TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
-        ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
-        length = ASN1_STRING_length(current);
-        if (i > 0)
-            *p++ = '/';
-        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
-        p += length;
-    }
-    *p = '\0';
-
-    return result;
+    return sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
 }
 
 static int ts_check_policy(const ASN1_OBJECT *req_oid,
