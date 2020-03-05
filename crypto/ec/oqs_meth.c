@@ -227,6 +227,30 @@ static int get_classical_sig_len(int classical_id)
 }
 
 /*
+ * Returns options when running OQS KEM, e.g., in openssl speed
+ */
+const char *OQSKEM_options(void)
+{
+    const char* OQSKEMALGS = "OQS build : ";
+    int offset;
+    char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
+    memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
+    offset += strlen(OQS_COMPILE_CFLAGS);
+    result[offset++]='-';
+    int i;
+    for (i=0; i<OQS_KEM_algs_length;i++) {
+       int l = strlen(OQS_KEM_alg_identifier(i));
+       memcpy(result+offset, OQS_KEM_alg_identifier(i), l);
+       if (i<OQS_KEM_algs_length-1) {
+          result[offset+l]=',';
+          offset = offset+l+1;
+       }
+    }
+    return result;
+}
+
+/*
  * Returns the security level in bits for an OQS alg.
  */
 static int get_oqs_security_bits(int openssl_nid)

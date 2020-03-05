@@ -15,6 +15,7 @@
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
 #define EdDSA_SECONDS   10
+#define OQSKEM_SECONDS  10
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,6 +98,10 @@
 #ifndef OPENSSL_NO_EC
 # include <openssl/ec.h>
 #endif
+#ifndef OPENSSL_NO_OQSKEM
+# include <oqs/oqs.h>
+extern const char *OQSKEM_options(void);
+#endif
 #include <openssl/modes.h>
 
 #ifndef HAVE_FORK
@@ -124,6 +129,7 @@ typedef struct openssl_speed_sec_st {
     int ecdsa;
     int ecdh;
     int eddsa;
+    int oqskem;
 } openssl_speed_sec_t;
 
 static volatile int run = 0;
@@ -591,6 +597,13 @@ static OPT_PAIR eddsa_choices[] = {
 
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_OQSKEM
+# define OQSKEM_NUM      OQS_KEM_algs_length 
+static OPT_PAIR oqskem_choices[OQSKEM_NUM];
+
+static double oqskem_results[OQSKEM_NUM][3];
+# endif
 
 #ifndef SIGALRM
 # define COND(d) (count < (d))
@@ -1411,7 +1424,7 @@ int speed_main(int argc, char **argv)
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
-                                    EdDSA_SECONDS };
+                                    EdDSA_SECONDS, OQSKEM_SECONDS };
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
@@ -1550,6 +1563,25 @@ int speed_main(int argc, char **argv)
     OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
 #endif                          /* ndef OPENSSL_NO_EC */
 
+#ifndef OPENSSL_NO_OQSKEM
+    char *oqskem_method_names[OQSKEM_NUM];
+    OQS_KEM *oqskem_kem[OQSKEM_NUM];
+    unsigned char *oqskem_secret_key;
+    unsigned char *oqskem_public_key;
+    unsigned char *oqskem_ciphertext;
+    unsigned char *oqskem_shared_secret_e;
+    unsigned char *oqskem_shared_secret_d;
+    long oqskem_c[OQSKEM_NUM][3];
+    int oqskem_doit[OQSKEM_NUM] = { 0 };
+
+    /* populate oqskem_choices */
+    int oqscnt = 0;
+    for (oqscnt = 0; oqscnt < OQSKEM_NUM; ++oqscnt) {
+        oqskem_choices[oqscnt].name = OQS_KEM_alg_identifier(oqscnt);
+        oqskem_choices[oqscnt].retval = oqscnt;
+    }
+#endif /* ndef OPENSSL_NO_OQSKEM */
+
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -1640,7 +1672,7 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_SECONDS:
             seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa
-                        = seconds.ecdh = seconds.eddsa = atoi(opt_arg());
+                        = seconds.ecdh = seconds.eddsa = seconds.oqskem = atoi(opt_arg());
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
@@ -1734,7 +1766,21 @@ int speed_main(int argc, char **argv)
             continue;
         }
 #endif
+#ifndef OPENSSL_NO_OQSKEM
+        if (strcmp(*argv, "oqskem") == 0) {
+            for (loop = 0; loop < OSSL_NELEM(oqskem_doit); loop++)
+                oqskem_doit[loop] = 1;
+            continue;
+        }
+        if (found(*argv, oqskem_choices, &i)) {
+            oqskem_doit[i] = 2;
+            continue;
+        }
+#endif
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
+#ifndef OPENSSL_NO_OQSKEM
+        BIO_printf(bio_err, "OQSKEM config: %s", OQSKEM_options());
+#endif
         goto end;
     }
 
@@ -2137,7 +2183,21 @@ int speed_main(int argc, char **argv)
 
     eddsa_c[R_EC_Ed25519][0] = count / 1800;
     eddsa_c[R_EC_Ed448][0] = count / 7200;
-#  endif
+#  endif /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_OQSKEM
+    for (i = 0; i <= OQSKEM_NUM; i++) {
+        oqskem_kem[i] = NULL;
+        oqskem_method_names[i] = oqskem_choices[i][0]; 
+        oqskem_c[i][0] = count/1000;
+        oqskem_c[i][1] = count/1000;
+    }
+    oqskem_secret_key = NULL;
+    oqskem_public_key = NULL;
+    oqskem_ciphertext = NULL;
+    oqskem_shared_secret_d = NULL;
+    oqskem_shared_secret_e = NULL;
+#endif
 
 # else
 /* not worth fixing */
@@ -3195,6 +3255,82 @@ int speed_main(int argc, char **argv)
     }
 
 #endif                          /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_OQSKEM
+    OQS_randombytes_custom_algorithm((void (*)(uint8_t *, size_t)) &RAND_bytes);
+    int j;
+    for (j = 0; j < OQSKEM_NUM; j++) {
+        if (!oqskem_doit[j])
+            continue;
+
+        oqskem_kem[j] = OQS_KEM_new(OQS_KEM_alg_identifier(j));
+        if (oqskem_kem[j] == NULL) {
+            BIO_printf(bio_err,"OQSKEM failure - OQS_KEM_new(%s).\n", OQS_KEM_alg_identifier(j));
+            ERR_print_errors(bio_err);
+            rsa_count=1;
+        } else {
+            oqskem_public_key = malloc(oqskem_kem[j]->length_public_key);
+            oqskem_secret_key = malloc(oqskem_kem[j]->length_secret_key);
+            oqskem_ciphertext = malloc(oqskem_kem[j]->length_ciphertext);
+            oqskem_shared_secret_d = malloc(oqskem_kem[j]->length_shared_secret);
+            oqskem_shared_secret_e = malloc(oqskem_kem[j]->length_shared_secret);
+
+            /* time OQSKEM keypair operation */
+            char lbl[1000];
+            sprintf(lbl, "OQS KEM %s", oqskem_kem[j]->method_name);
+            oqskem_method_names[j] = strdup(oqskem_kem[j]->method_name);
+            pkey_print_message(lbl, "keypair", oqskem_c[j][0], 0, seconds.oqskem);
+            Time_F(START);
+            for (count = 0, run = 1; COND(oqskem_c[j][0]); count++) {
+                OQS_KEM_keypair(oqskem_kem[j], oqskem_public_key, oqskem_secret_key);
+            }
+            d = Time_F(STOP);
+            sprintf(lbl, "%%ld OQS KEM %s keypair in %%.2fs\n", oqskem_kem[j]->method_name);
+            BIO_printf(bio_err, mr ? "+R9:%ld:%.2f\n" : lbl, count, d);
+            oqskem_results[j][0] = d / (double)count;
+            rsa_count = count;
+
+            /* time OQSKEM encaps operation */
+            sprintf(lbl, "OQS KEM %s", oqskem_kem[j]->method_name);
+            pkey_print_message(lbl, "encaps", oqskem_c[j][1], 0, seconds.oqskem);
+            Time_F(START);
+            for (count = 0, run = 1; COND(oqskem_c[j][1]); count++) {
+                OQS_KEM_encaps(oqskem_kem[j], oqskem_ciphertext, oqskem_shared_secret_e, oqskem_public_key);
+            }
+            d = Time_F(STOP);
+            sprintf(lbl, "%%ld OQS KEM %s encaps in %%.2fs\n", oqskem_kem[j]->method_name);
+            BIO_printf(bio_err, mr ? "+R10:%ld:%.2f\n" : lbl, count, d);
+            oqskem_results[j][1] = d / (double)count;
+            rsa_count = count;
+
+            /* time OQSKEM decaps operation */
+            sprintf(lbl, "OQS KEM %s", oqskem_kem[j]->method_name);
+            pkey_print_message(lbl, "decaps", oqskem_c[j][2], 0, seconds.oqskem);
+            Time_F(START);
+            for (count = 0, run = 1; COND(oqskem_c[j][2]); count++) {
+                OQS_KEM_decaps(oqskem_kem[j], oqskem_shared_secret_d, oqskem_ciphertext, oqskem_secret_key);
+            }
+            d = Time_F(STOP);
+            sprintf(lbl, "%%ld OQS KEM %s decaps in %%.2fs\n", oqskem_kem[j]->method_name);
+            BIO_printf(bio_err, mr ? "+R11:%ld:%.2f\n" : lbl, count, d);
+            oqskem_results[j][2] = d / (double)count;
+            rsa_count = count;
+            OQS_MEM_insecure_free(oqskem_public_key);
+            OQS_MEM_insecure_free(oqskem_ciphertext);
+            OQS_MEM_secure_free(oqskem_secret_key, oqskem_kem[j]->length_secret_key);
+            OQS_MEM_secure_free(oqskem_shared_secret_d, oqskem_kem[j]->length_shared_secret);
+            OQS_MEM_secure_free(oqskem_shared_secret_e, oqskem_kem[j]->length_shared_secret);
+        }
+        OQS_KEM_free(oqskem_kem[j]);
+
+        if (rsa_count <= 1) {
+            /* if longer than 10s, don't do any more */
+            for (j++; j < OQSKEM_NUM; j++)
+                oqskem_doit[j] = 0;
+        }
+    }
+#endif /* ndef OPENSSL_NO_OQSKEM */
+
 #ifndef NO_FORK
  show_res:
 #endif
@@ -3218,6 +3354,9 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());
+#endif
+#ifndef OPENSSL_NO_OQSKEM
+        printf("%s ", OQSKEM_options());
 #endif
         printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
     }
@@ -3347,6 +3486,27 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
+#ifndef OPENSSL_NO_OQSKEM
+    testnum = 1;
+    for (k = 0; k < OQSKEM_NUM; k++) {
+        if (!oqskem_doit[k])
+            continue;
+        if (testnum && !mr) {
+            printf("%30skeygen/s      encap/s      decap/s\n", " ");
+            testnum = 0;
+        }
+        if (mr)
+            printf("+F5:%u:%f:%f:%f\n",
+                   k, 
+                   oqskem_results[k][0], oqskem_results[k][1], oqskem_results[k][2]);
+
+        else
+            printf("%29s %8.1f     %8.1f     %8.1f\n",
+                   oqskem_method_names[k],
+                   1.0 / oqskem_results[k][0], 1.0 / oqskem_results[k][1], 1.0 / oqskem_results[k][2]);
+    }
+#endif
+
     ret = 0;
 
  end:
@@ -3408,15 +3568,25 @@ static void pkey_print_message(const char *str, const char *str2, long num,
                                unsigned int bits, int tm)
 {
 #ifdef SIGALRM
-    BIO_printf(bio_err,
+    if (bits)
+        BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
-               : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
+               : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm );
+    else
+        BIO_printf(bio_err,
+               mr ? "+DTP:%s:%s:%d\n"
+               : "Doing %s %s's for %ds: ", str, str2, tm );
     (void)BIO_flush(bio_err);
     alarm(tm);
 #else
-    BIO_printf(bio_err,
+    if (bits) 
+       BIO_printf(bio_err,
                mr ? "+DNP:%ld:%d:%s:%s\n"
-               : "Doing %ld %u bits %s %s's: ", num, bits, str, str2);
+               : "Doing %ld %s %s's: ", num, str, str2);
+    else 
+       BIO_printf(bio_err,
+               mr ? "+DNP:%ld:%d:%s:%s\n"
+               : "Doing %ld %s %s's: ", num, str, str2);
     (void)BIO_flush(bio_err);
 #endif
 }
