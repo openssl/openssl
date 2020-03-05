@@ -23,7 +23,7 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
-    OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
+    OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_MD, OPT_PASSIN, OPT_SPKAC,
     OPT_SPKSECT, OPT_KEYFORM
 } OPTION_CHOICE;
 
@@ -42,6 +42,7 @@ const OPTIONS spkac_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing - default MD5, SHA256 recommended"},
     {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
 
     OPT_SECTION("Output"),
@@ -59,6 +60,7 @@ int spkac_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     NETSCAPE_SPKI *spki = NULL;
+    const EVP_MD *sign_md = EVP_md5();
     char *challenge = NULL, *keyfile = NULL;
     char *infile = NULL, *outfile = NULL, *passinarg = NULL, *passin = NULL;
     char *spkstr = NULL, *prog;
@@ -107,6 +109,10 @@ int spkac_main(int argc, char **argv)
         case OPT_CHALLENGE:
             challenge = opt_arg();
             break;
+        case OPT_MD:
+            if (!opt_md(opt_arg(), &sign_md))
+                goto opthelp;
+            break;
         case OPT_SPKAC:
             spkac = opt_arg();
             break;
@@ -139,7 +145,7 @@ int spkac_main(int argc, char **argv)
             ASN1_STRING_set(spki->spkac->challenge,
                             challenge, (int)strlen(challenge));
         NETSCAPE_SPKI_set_pubkey(spki, pkey);
-        NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        NETSCAPE_SPKI_sign(spki, pkey, sign_md);
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
         if (spkstr == NULL)
             goto end;
