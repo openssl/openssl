@@ -19,16 +19,12 @@
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_DEPRECATED_0_9_8
-NON_EMPTY_TRANSLATION_UNIT
 
-#else
-
-# include <stdio.h>
-# include <time.h>
-# include "internal/cryptlib.h"
-# include <openssl/bn.h>
-# include <openssl/rsa.h>
+#include <stdio.h>
+#include <time.h>
+#include "internal/cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 RSA *RSA_generate_key(int bits, unsigned long e_value,
                       void (*callback) (int, int, void *), void *cb_arg)
@@ -64,4 +60,3 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
     BN_GENCB_free(cb);
     return 0;
 }
-#endif

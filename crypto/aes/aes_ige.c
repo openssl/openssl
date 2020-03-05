@@ -15,10 +15,6 @@
 
 #include "internal/cryptlib.h"
 
-#ifdef OPENSSL_NO_DEPRECATED_3_0
-NON_EMPTY_TRANSLATION_UNIT
-#else
-
 #include <openssl/aes.h>
 #include "aes_local.h"
 
@@ -301,4 +297,3 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
         }
     }
 }
-#endif

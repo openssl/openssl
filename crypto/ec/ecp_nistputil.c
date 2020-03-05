@@ -30,16 +30,13 @@
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
 /*
  * Common utility functions for ecp_nistp224.c, ecp_nistp256.c, ecp_nistp521.c.
  */
 
-# include <stddef.h>
-# include "ec_local.h"
+#include <stddef.h>
+#include "ec_local.h"
 
 /*
  * Convert an array of points into affine coordinates. (If the point at
@@ -80,10 +77,10 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 {
     int i = 0;
 
-# define tmp_felem(I) (&((char *)tmp_felems)[(I) * felem_size])
-# define X(I) (&((char *)point_array)[3*(I) * felem_size])
-# define Y(I) (&((char *)point_array)[(3*(I) + 1) * felem_size])
-# define Z(I) (&((char *)point_array)[(3*(I) + 2) * felem_size])
+#define tmp_felem(I) (&((char *)tmp_felems)[(I) * felem_size])
+#define X(I) (&((char *)point_array)[3*(I) * felem_size])
+#define Y(I) (&((char *)point_array)[(3*(I) + 1) * felem_size])
+#define Z(I) (&((char *)point_array)[(3*(I) + 2) * felem_size])
 
     if (!felem_is_zero(Z(0)))
         felem_assign(tmp_felem(0), Z(0));
@@ -226,4 +223,3 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
     *sign = s & 1;
     *digit = d;
 }
-#endif

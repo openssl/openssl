@@ -8,15 +8,12 @@
  */
 
 #include "internal/cryptlib.h"
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <openssl/evp.h>
-# include <openssl/objects.h>
-# include <openssl/x509.h>
-# include <openssl/rsa.h>
+#include <stdio.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/rsa.h>
 
 int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  const unsigned char *ek, int ekl, const unsigned char *iv,
@@ -73,4 +70,3 @@ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         i = EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
     return i;
 }
-#endif
