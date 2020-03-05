@@ -1,0 +1,73 @@
+
+ NOTES FOR THE Z/OS PLATFORM
+ ===========================
+
+ First of all note that OpenSSL is currently NOT supported on z/OS.
+
+ However, if you want to build OpenSSL on z/OS anyway, here are a few
+ hints on how to do that. Though these hints are intended to be helpful,
+ they might not work for you at all, depending on your build environment.
+
+ Building OpenSSL 1.1.1
+ ----------------------
+ (with xplink linkage, 64 bit, from EBCDIC sources)
+
+ 1. get a working EBCDIC perl version.
+
+ 2. gunzip the .tar file.
+
+ 3. use pax to extract from .tar. Example:
+
+      pax -ofrom=ISO8859-1,to=IBM-1047 -rvf openssl-1.1.1e.tar
+
+ 4. adjust the configuration files. Examples:
+
+ 4.1 10-main.conf
+
+     "OS390-Unix" => {
+         inherit_from     => [ "BASE_unix", asm("zos_asm") ],
+         cc               => "./tools/c99.sh",
+         cflags           => "-O -Wc,dll,XPLINK,exportall,hgpr,lp64 -Wa,'GOFF,SYSPARM(USE_XPLINK)' -qlongname -qlanglvl=extc99 -DB_ENDIAN -DCHARSET_EBCDIC -DNO_SYS_PARAM_H -D_ALL_SOURCE -D_OPEN_THREADS=2 -D_POSIX_SOURCE  -D_OPEN_MSGQ_EXT",
+         module_ldflags   => "-Wl,XPLINK,LP64",
+         shared_ldflags   => "-Wl,dll,XPLINK,LP64",
+         bn_ops           => "THIRTY_TWO_BIT RC4_CHAR",
+         thread_scheme    => "(unknown)",
+         perlasm_scheme   => "zOS64",
+     },
+
+ 4.2 00-base-templates.conf
+
+     # Copy and adjust the s390x_asm section by commenting out all asm
+     # or use a "no-asm" build right away.
+     zos_asm => {
+         template             => 1,
+         # cpuid_asm_src      => "s390xcap.c # s390xcpuid.s",
+         bn_asm_src           => "bn_asm.c", # s390x-gf2m.s
+         # ec_asm_src         => "ecp_s390x_nistp.c",
+         # aes_asm_src        => "aes-s390x.s aes-ctr.fake aes-xts.fake",
+         # sha1_asm_src       => "sha1-s390x.s sha256-s390x.s sha512-s390x.s",
+         # rc4_asm_src        => "rc4-s390x.s",
+         # modes_asm_src      => "ghash-s390x.s",
+         # chacha_asm_src     => "chacha-s390x.s",
+         # poly1305_asm_src   => "poly1305-s390x.s",
+         # keccak1600_asm_src => "keccak1600-s390x.s",
+     }
+
+ 4.3 tools/c99.sh
+
+     #!/bin/sh -k
+     #
+     # Re-order arguments so that -L comes first.
+     #
+     opts=""
+     lopts=""
+
+     for arg in $* ; do
+       case $arg in
+         -L*) lopts="$lopts $arg" ;;
+         *) opts="$opts $arg" ;;
+       esac
+     done
+
+     c99 -Wl,dll $lopts $opts
+
