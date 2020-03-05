@@ -22,11 +22,13 @@ static int _asn1_check_infinite_end(const unsigned char **p, long len)
     /*
      * If there is 0 or 1 byte left, the length check should pick things up
      */
-    if (len <= 0)
+    if (len <= 0) {
         return 1;
-    else if ((len >= 2) && ((*p)[0] == 0) && ((*p)[1] == 0)) {
-        (*p) += 2;
-        return 1;
+    } else {
+        if ((len >= 2) && ((*p)[0] == 0) && ((*p)[1] == 0)) {
+            (*p) += 2;
+            return 1;
+        }
     }
     return 0;
 }
@@ -45,7 +47,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
                     int *pclass, long omax)
 {
     int i, ret;
-    long l;
+    long len;
     const unsigned char *p = *pp;
     int tag, xclass, inf;
     long max = omax;
@@ -59,18 +61,18 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         p++;
         if (--max == 0)
             goto err;
-        l = 0;
+        len = 0;
         while (*p & 0x80) {
-            l <<= 7L;
-            l |= *(p++) & 0x7f;
+            len <<= 7L;
+            len |= *(p++) & 0x7f;
             if (--max == 0)
                 goto err;
-            if (l > (INT_MAX >> 7L))
+            if (len > (INT_MAX >> 7L))
                 goto err;
         }
-        l <<= 7L;
-        l |= *(p++) & 0x7f;
-        tag = (int)l;
+        len <<= 7L;
+        len |= *(p++) & 0x7f;
+        tag = (int)len;
         if (--max == 0)
             goto err;
     } else {
@@ -141,8 +143,9 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
             }
             if (ret > LONG_MAX)
                 return 0;
-        } else
+        } else {
             ret = i;
+        }
     }
     *pp = p;
     *rl = (long)ret;
@@ -160,9 +163,9 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 
     i = (constructed) ? V_ASN1_CONSTRUCTED : 0;
     i |= (xclass & V_ASN1_PRIVATE);
-    if (tag < 31)
+    if (tag < 31) {
         *(p++) = i | (tag & V_ASN1_PRIMITIVE_TAG);
-    else {
+    } else {
         *(p++) = i | V_ASN1_PRIMITIVE_TAG;
         for (i = 0, ttag = tag; ttag > 0; i++)
             ttag >>= 7;
@@ -185,6 +188,7 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 int ASN1_put_eoc(unsigned char **pp)
 {
     unsigned char *p = *pp;
+
     *p++ = 0;
     *p++ = 0;
     *pp = p;
@@ -194,20 +198,21 @@ int ASN1_put_eoc(unsigned char **pp)
 static void asn1_put_length(unsigned char **pp, int length)
 {
     unsigned char *p = *pp;
-    int i, l;
-    if (length <= 127)
+    int i, len;
+
+    if (length <= 127) {
         *(p++) = (unsigned char)length;
-    else {
-        l = length;
-        for (i = 0; l > 0; i++)
-            l >>= 8;
+    } else {
+        len = length;
+        for (i = 0; len > 0; i++)
+            len >>= 8;
         *(p++) = i | 0x80;
-        l = i;
+        len = i;
         while (i-- > 0) {
             p[i] = length & 0xff;
             length >>= 8;
         }
-        p += l;
+        p += len;
     }
     *pp = p;
 }
@@ -215,6 +220,7 @@ static void asn1_put_length(unsigned char **pp, int length)
 int ASN1_object_size(int constructed, int length, int tag)
 {
     int ret = 1;
+
     if (length < 0)
         return -1;
     if (tag >= 31) {
@@ -256,6 +262,7 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
 {
     ASN1_STRING *ret;
+
     if (!str)
         return NULL;
     ret = ASN1_STRING_new();
@@ -359,8 +366,9 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
             return a->type - b->type;
         else
             return i;
-    } else
+    } else {
         return i;
+    }
 }
 
 int ASN1_STRING_length(const ASN1_STRING *x)
@@ -383,9 +391,48 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
     return x->data;
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
     return x->data;
 }
 #endif
+
+char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
+                              size_t max_len /* excluding NUL terminator */)
+{
+    int i;
+    ASN1_UTF8STRING *current;
+    size_t length = 0, sep_len;
+    char *result = NULL;
+    char *p;
+
+    if (!ossl_assert(sep != NULL))
+        return NULL;
+    sep_len = strlen(sep);
+
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        if (i > 0)
+            length += sep_len;
+        length += ASN1_STRING_length(current);
+        if (length > max_len)
+            return NULL;
+    }
+    if ((result = OPENSSL_malloc(length + 1)) == NULL)
+        return NULL;
+
+    for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        length = ASN1_STRING_length(current);
+        if (i > 0 && sep_len > 0) {
+            strncpy(p, sep, sep_len);
+            p += sep_len;
+        }
+        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
+        p += length;
+    }
+    *p = '\0';
+
+    return result;
+}

@@ -23,6 +23,7 @@
 # include <openssl/crypto.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
+# include <openssl/asn1.h>
 # include <openssl/err.h>
 # include "internal/nelem.h"
 
@@ -234,5 +235,7 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 }
 #endif /* defined OPENSSL_SYS_UNIX */
 
+char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
+                              size_t max_len);
 
 #endif
