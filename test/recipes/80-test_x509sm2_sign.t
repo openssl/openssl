@@ -12,12 +12,12 @@ setup("x509sm2_sign");
 plan skip_all => "x509sm2_sign is not supported by this OpenSSL build"
     if disabled("sm2");
 
-plan tests => 2;  
+plan tests => 4;  
 ok(run(app(["openssl", "x509", "-req",
                 "-in", srctop_file("test", "certs", "sm2-csr.pem"),
                 "-signkey", srctop_file("test", "certs", "sm2-root.key"),
-                "-noout", "-sm3",
-                "-sm2-id", "1234567812345678",
+                "-out", srctop_file("test", "certs", "sm2-tmp.crt"),
+                "-sm3", "-sm2-id", "1234567812345678",
                 "-sigopt", "sm2_id:1234567812345678"])));
 
 ok(run(app(["openssl", "x509", "-req",
@@ -26,4 +26,11 @@ ok(run(app(["openssl", "x509", "-req",
                 "-noout", "-sm3",
                 "-sm2-hex-id", "31:32:33:34:35:36:37:38:31:32:33:34:35:36:37:38",
                 "-sigopt", "sm2_hex_id:31:32:33:34:35:36:37:38:31:32:33:34:35:36:37:38"])));
-                
+
+ok(run(app(["openssl", "x509",
+                "-in", srctop_file("test", "certs", "sm2-tmp.crt"),
+                "-noout"])));
+
+ok(run(app(["openssl", "verify",
+                "-CAfile", srctop_file("test", "certs", "sm2-tmp.crt"),
+                srctop_file("test", "certs", "sm2-tmp.crt")])));
