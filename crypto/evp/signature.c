@@ -105,7 +105,6 @@ static void *evp_signature_from_dispatch(int name_id,
                 break;
             signature->digest_sign_init
                 = OSSL_get_OP_signature_digest_sign_init(fns);
-            digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE:
             if (signature->digest_sign_update != NULL)
@@ -121,12 +120,17 @@ static void *evp_signature_from_dispatch(int name_id,
                 = OSSL_get_OP_signature_digest_sign_final(fns);
             digsignfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_SIGN:
+            if (signature->digest_sign != NULL)
+                break;
+            signature->digest_sign
+                = OSSL_get_OP_signature_digest_sign(fns);
+            break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
             if (signature->digest_verify_init != NULL)
                 break;
             signature->digest_verify_init
                 = OSSL_get_OP_signature_digest_verify_init(fns);
-            digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE:
             if (signature->digest_verify_update != NULL)
@@ -141,6 +145,12 @@ static void *evp_signature_from_dispatch(int name_id,
             signature->digest_verify_final
                 = OSSL_get_OP_signature_digest_verify_final(fns);
             digverifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY:
+            if (signature->digest_verify != NULL)
+                break;
+            signature->digest_verify
+                = OSSL_get_OP_signature_digest_verify(fns);
             break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
@@ -216,12 +226,20 @@ static void *evp_signature_from_dispatch(int name_id,
             && verifyfncnt == 0
             && verifyrecfncnt == 0
             && digsignfncnt == 0
-            && digverifyfncnt == 0)
+            && digverifyfncnt == 0
+            && signature->digest_sign == NULL
+            && signature->digest_verify == NULL)
         || (signfncnt != 0 && signfncnt != 2)
         || (verifyfncnt != 0 && verifyfncnt != 2)
         || (verifyrecfncnt != 0 && verifyrecfncnt != 2)
-        || (digsignfncnt != 0 && digsignfncnt != 3)
-        || (digverifyfncnt != 0 && digverifyfncnt != 3)
+        || (digsignfncnt != 0 && digsignfncnt != 2)
+        || (digsignfncnt == 2 && signature->digest_sign_init == NULL)
+        || (digverifyfncnt != 0 && digverifyfncnt != 2)
+        || (digverifyfncnt == 2 && signature->digest_verify_init == NULL)
+        || (signature->digest_sign != NULL
+            && signature->digest_sign_init == NULL)
+        || (signature->digest_verify != NULL
+            && signature->digest_verify_init == NULL)
         || (gparamfncnt != 0 && gparamfncnt != 2)
         || (sparamfncnt != 0 && sparamfncnt != 2)
         || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
@@ -234,7 +252,9 @@ static void *evp_signature_from_dispatch(int name_id,
          *  (verify_init verify) or
          *  (verify_recover_init, verify_recover) or
          *  (digest_sign_init, digest_sign_update, digest_sign_final) or
-         *  (digest_verify_init, digest_verify_update, digest_verify_final).
+         *  (digest_verify_init, digest_verify_update, digest_verify_final) or
+         *  (digest_sign_init, digest_sign) or
+         *  (digest_verify_init, digest_verify).
          *
          * set_ctx_params and settable_ctx_params are optional, but if one of
          * them is present then the other one must also be present. The same
