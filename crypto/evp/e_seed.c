@@ -14,15 +14,12 @@
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_SEED
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/evp.h>
-# include <openssl/err.h>
-# include <string.h>
-# include <assert.h>
-# include <openssl/seed.h>
-# include "crypto/evp.h"
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <string.h>
+#include <assert.h>
+#include <openssl/seed.h>
+#include "crypto/evp.h"
 
 static int seed_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc);
@@ -41,5 +38,3 @@ static int seed_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     SEED_set_key(key, &EVP_C_DATA(EVP_SEED_KEY,ctx)->ks);
     return 1;
 }
-
-#endif

@@ -16,14 +16,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_DEPRECATED_0_9_8
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include "internal/cryptlib.h"
-# include <openssl/bn.h>
-# include <openssl/dh.h>
+#include <stdio.h>
+#include "internal/cryptlib.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 DH *DH_generate_parameters(int prime_len, int generator,
                            void (*callback) (int, int, void *), void *cb_arg)
@@ -49,4 +46,3 @@ DH *DH_generate_parameters(int prime_len, int generator,
     DH_free(ret);
     return NULL;
 }
-#endif

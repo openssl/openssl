@@ -11,10 +11,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
-#ifdef OPENSSL_NO_DEPRECATED_3_0
-NON_EMPTY_TRANSLATION_UNIT
-#else
-
 #define COPY_SIZE(a, b) (sizeof(a) < sizeof(b) ? sizeof(a) : sizeof(b))
 
 /*
@@ -198,4 +194,3 @@ static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
     memcpy(&l, pval, COPY_SIZE(*pval, l));
     return BIO_printf(out, "%ld\n", l);
 }
-#endif

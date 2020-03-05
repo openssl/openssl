@@ -37,22 +37,19 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdint.h>
-# include <string.h>
-# include <openssl/err.h>
-# include "ec_local.h"
+#include <stdint.h>
+#include <string.h>
+#include <openssl/err.h>
+#include "ec_local.h"
 
-# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
-# else
-#  error "Your compiler doesn't appear to support 128-bit integer types"
-# endif
+#else
+# error "Your compiler doesn't appear to support 128-bit integer types"
+#endif
 
 typedef uint8_t u8;
 typedef uint64_t u64;
@@ -1755,5 +1752,3 @@ int ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp224);
 }
-
-#endif
