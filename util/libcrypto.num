@@ -4956,6 +4956,7 @@ OSSL_SELF_TEST_onbegin                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_oncorrupt_byte           ?	3_0_0	EXIST::FUNCTION:
 OSSL_SELF_TEST_onend                    ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_set_default_search_path   ?	3_0_0	EXIST::FUNCTION:
+X509_digest_sig                         ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_MSG_dup                        ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_dup                       ?	3_0_0	EXIST::FUNCTION:CMP
 d2i_OSSL_CMP_PKISI                      ?	3_0_0	EXIST::FUNCTION:CMP
@@ -4979,4 +4980,3 @@ OSSL_CMP_SRV_CTX_set_send_unprotected_errors ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_unprotected ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_raverified  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_X509_digest                    ?	3_0_0	EXIST::FUNCTION:CMP

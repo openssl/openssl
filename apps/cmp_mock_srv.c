@@ -342,7 +342,7 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     }
 
-    if ((digest = OSSL_CMP_X509_digest(ctx->certOut)) == NULL)
+    if ((digest = X509_digest_sig(ctx->certOut)) == NULL)
         return 0;
     if (ASN1_OCTET_STRING_cmp(certHash, digest) != 0) {
         ASN1_OCTET_STRING_free(digest);
