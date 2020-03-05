@@ -20,7 +20,7 @@ B<openssl> B<spkac>
 [B<-passin> I<arg>]
 [B<-challenge> I<string>]
 [B<-pubkey>]
-[B<-md>]
+[B<-md> I<digest>]
 [B<-spkac> I<spkacname>]
 [B<-spksect> I<section>]
 [B<-noout>]
@@ -94,10 +94,9 @@ SPKAC is being created).
 Output the public key of an SPKAC (not used if an SPKAC is
 being created).
 
-=item B<-md>
+=item B<-md> I<digest>
 
-The message digest used for signing. Historically the default value has
-been MD5, but SHA256 is recommended.
+The message digest used for signing. The default value is SHA256.
 
 =item B<-verify>
 

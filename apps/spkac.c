@@ -42,7 +42,7 @@ const OPTIONS spkac_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
-    {"md", OPT_MD, 's', "Digest algorithm to use when signing - default MD5, SHA256 recommended"},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing - default SHA256"},
     {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
 
     OPT_SECTION("Output"),
@@ -60,7 +60,7 @@ int spkac_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     NETSCAPE_SPKI *spki = NULL;
-    const EVP_MD *sign_md = EVP_md5();
+    const EVP_MD *sign_md = EVP_sha256();
     char *challenge = NULL, *keyfile = NULL;
     char *infile = NULL, *outfile = NULL, *passinarg = NULL, *passin = NULL;
     char *spkstr = NULL, *prog;
