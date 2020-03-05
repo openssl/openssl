@@ -38,11 +38,39 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
                                  size_t *routlen, size_t routsize,
                                  const unsigned char *sig, size_t siglen);
 
+ /* Digest Sign */
+ int OP_signature_digest_sign_init(void *ctx, const char *mdname,
+                                   const char *props, void *provkey);
+ int OP_signature_digest_sign_update(void *ctx, const unsigned char *data,
+                                     size_t datalen);
+ int OP_signature_digest_sign_final(void *ctx, unsigned char *sig,
+                                    size_t *siglen, size_t sigsize);
+ int OP_signature_digest_sign(void *ctx, unsigned char *sigret, size_t *siglen,
+                              size_t sigsize, const unsigned char *tbs,
+                              size_t tbslen);
+
+ /* Digest Verify */
+ int OP_signature_digest_verify_init(void *ctx, const char *mdname,
+                                     const char *props, void *provkey);
+ int OP_signature_digest_verify_update(void *ctx, const unsigned char *data,
+                                       size_t datalen);
+ int OP_signature_digest_verify_final(void *ctx, const unsigned char *sig,
+                                      size_t siglen);
+ int OP_signature_digest_verify(void *ctx, const unsigned char *sig,
+                                size_t siglen, const unsigned char *tbs,
+                                size_t tbslen);
+
  /* Signature parameters */
  int OP_signature_get_ctx_params(void *ctx, OSSL_PARAM params[]);
  const OSSL_PARAM *OP_signature_gettable_ctx_params(void);
  int OP_signature_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *OP_signature_settable_ctx_params(void);
+
+ /* MD parameters */
+ int OP_signature_get_ctx_md_params(void *ctx, OSSL_PARAM params[]);
+ const OSSL_PARAM * OP_signature_gettable_ctx_md_params(void *ctx);
+ int OP_signature_set_ctx_md_params(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM * OP_signature_settable_ctx_md_params(void *ctx);
 
 =head1 DESCRIPTION
 
@@ -88,18 +116,53 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_signature_verify_recover_init    OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT
  OP_signature_verify_recover         OSSL_FUNC_SIGNATURE_VERIFY_RECOVER
 
+ OP_signature_digest_sign_init       OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT
+ OP_signature_digest_sign_update     OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE
+ OP_signature_digest_sign_final      OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL
+ OP_signature_digest_sign            OSSL_FUNC_SIGNATURE_DIGEST_SIGN
+
+ OP_signature_digest_verify_init     OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT
+ OP_signature_digest_verify_update   OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE
+ OP_signature_digest_verify_final    OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL
+ OP_signature_digest_verify          OSSL_FUNC_SIGNATURE_DIGEST_VERIFY
+
  OP_signature_get_ctx_params         OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS
  OP_signature_gettable_ctx_params    OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS
  OP_signature_set_ctx_params         OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS
  OP_signature_settable_ctx_params    OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS
 
+ OP_signature_get_ctx_md_params      OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS
+ OP_signature_gettable_ctx_md_params OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS
+ OP_signature_set_ctx_md_params      OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS
+ OP_signature_settable_ctx_md_params OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS
+
 A signature algorithm implementation may not implement all of these functions.
-In order to be a consistent set of functions a provider must implement
-OP_signature_newctx and OP_signature_freectx.
-It must also implement both of OP_signature_sign_init and OP_signature_sign,
-or both of OP_signature_verify_init and OP_signature_verify, or both of
-OP_signature_verify_recover_init and OP_signature_verify_recover.
-All other functions are optional.
+In order to be a consistent set of functions we must have at least a set of
+context functions (OP_signature_newctx and OP_signature_freectx) as well as a
+set of "signature" functions, i.e. at least one of:
+
+=over 4
+
+=item OP_signature_sign_init and OP_signature_sign
+
+=item OP_signature_verify_init and OP_signature_verify
+
+=item OP_signature_verify_recover_init and OP_signature_verify_init
+
+=item OP_signature_digest_sign_init, OP_signature_digest_sign_update and OP_signature_digest_sign_final
+
+=item OP_signature_digest_verify_init, OP_signature_digest_verify_update and OP_signature_digest_verify_final
+
+=item OP_signature_digest_sign_init and OP_signature_digest_sign
+
+=item OP_signature_digest_verify_init and OP_signature_digest_verify
+
+=back
+
+OP_signature_set_ctx_params and OP_signature_settable_ctx_params are optional,
+but if one of them is present then the other one must also be present. The same
+applies to OP_signature_get_ctx_params and OP_signature_gettable_ctx_params, as
+well as the "md_params" functions. The OP_signature_dupctx function is optional.
 
 A signature algorithm must also implement some mechanism for generating,
 loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.
@@ -176,6 +239,70 @@ The length of the recovered data should be written to I<*routlen>.
 If I<rout> is NULL then the maximum size of the output buffer is written to
 the I<routlen> parameter.
 
+=head2 Digest Sign Functions
+
+OP_signature_digeset_sign_init() initialises a context for signing given a
+provider side signature context in the I<ctx> parameter, and a pointer to a
+provider key object in the I<provkey> parameter. The key object should have been
+previously generated, loaded or imported into the provider using the
+key management (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
+The name of the digest to be used will be in the I<mdname> parameter. There may
+also be properties to be used in fetching the digest in the I<props> parameter,
+although this may be ignored by providers.
+
+OP_signature_digest_sign_update() provides data to be signed in the I<data>
+parameter which should be of length I<datalen>. A previously initialised
+signature context is passed in the I<ctx> parameter. This function may be called
+multiple times to cummulatively add data to be signed.
+
+OP_signature_digest_sign_final() finalises a signature operation previously
+started through OP_signature_digest_sign_init() and
+OP_signature_digest_sign_update() calls. Once finalised no more data will be
+added through OP_signature_digest_sign_update(). A previously initialised
+signature context is passed in the I<ctx> parameter. Unless I<sig> is NULL, the
+signature should be written to the location pointed to by the I<sig> parameter
+and it should not exceed I<sigsize> bytes in length. The length of the signature
+should be written to I<*siglen>. If I<sig> is NULL then the maximum length of
+the signature should be written to I<*siglen>.
+
+OP_signature_digest_sign() implements a "one shot" digest sign operation
+previously started through OP_signature_digeset_sign_init(). A previously
+initialised signature context is passed in the I<ctx> parameter. The data to be
+signed is in I<tbs> which should be I<tbslen> bytes long. Unless I<sig> is NULL,
+the signature should be written to the location pointed to by the I<sig>
+parameter and it should not exceed I<sigsize> bytes in length. The length of the
+signature should be written to I<*siglen>. If I<sig> is NULL then the maximum
+length of the signature should be written to I<*siglen>.
+
+=head2 Digest Verify Functions
+
+OP_signature_digeset_verify_init() initialises a context for verifying given a
+provider side verification context in the I<ctx> parameter, and a pointer to a
+provider key object in the I<provkey> parameter. The key object should have been
+previously generated, loaded or imported into the provider using the
+key management (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
+The name of the digest to be used will be in the I<mdname> parameter. There may
+also be properties to be used in fetching the digest in the I<props> parameter,
+although this may be ignored by providers.
+
+OP_signature_digest_verify_update() provides data to be verified in the I<data>
+parameter which should be of length I<datalen>. A previously initialised
+verification context is passed in the I<ctx> parameter. This function may be
+called multiple times to cummulatively add data to be verified.
+
+OP_signature_digest_verify_final() finalises a verification operation previously
+started through OP_signature_digest_verify_init() and
+OP_signature_digest_verify_update() calls. Once finalised no more data will be
+added through OP_signature_digest_verify_update(). A previously initialised
+verification context is passed in the I<ctx> parameter. The signature to be
+verified is in I<sig> which is I<siglen> bytes long.
+
+OP_signature_digest_verify() implements a "one shot" digest verify operation
+previously started through OP_signature_digeset_verify_init(). A previously
+initialised verification context is passed in the I<ctx> parameter. The data to be
+verified is in I<tbs> which should be I<tbslen> bytes long. The signature to be
+verified is in I<sig> which is I<siglen> bytes long.
+
 =head2 Signature Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
@@ -214,10 +341,37 @@ i.e. parameters that can be used with OP_signature_get_ctx_params() and
 OP_signature_set_ctx_params() respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
+=head2 MD Parameters
+
+See L<OSSL_PARAM(3)> for further details on the parameters structure used by
+the OP_signature_get_md_ctx_params() and OP_signature_set_md_ctx_params()
+functions.
+
+OP_signature_get_md_ctx_params() gets digest parameters associated with the
+given provider side digest signature context I<ctx> and stores them in I<params>.
+OP_signature_set_ms_ctx_params() sets the digest parameters associated with the
+given provider side digest signature context I<ctx> to I<params>.
+Any parameter settings are additional to any that were previously set.
+
+Parameters currently recognised by built-in signature algorithms are the same
+as those for built-in digest algorithms. See
+L<provider-digest(7)/Digest Parameters> for further information.
+
+OP_signature_gettable_md_ctx_params() and OP_signature_settable_md_ctx_params()
+get a constant B<OSSL_PARAM> array that describes the gettable and settable
+digest parameters, i.e. parameters that can be used with
+OP_signature_get_md_ctx_params() and OP_signature_set_md_ctx_params()
+respectively. See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter
+descriptor.
+
 =head1 RETURN VALUES
 
 OP_signature_newctx() and OP_signature_dupctx() should return the newly created
 provider side signature, or NULL on failure.
+
+OP_signature_gettable_ctx_params(), OP_signature_settable_ctx_params(),
+OP_signature_gettable_md_ctx_params() and OP_signature_settable_md_ctx_params(),
+return the gettable or settable parameters in a constant B<OSSL_PARAM> array.
 
 All other functions should return 1 for success or 0 on error.
 
