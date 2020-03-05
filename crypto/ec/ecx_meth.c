@@ -648,6 +648,8 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_set_pub_key,
     ecx_get_priv_key,
     ecx_get_pub_key,
+    ecx_pkey_dirty_cnt,
+    ecx_pkey_export_to
 };
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
@@ -690,6 +692,8 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecx_set_pub_key,
     ecx_get_priv_key,
     ecx_get_pub_key,
+    ecx_pkey_dirty_cnt,
+    ecx_pkey_export_to
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
