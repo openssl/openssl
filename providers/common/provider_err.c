@@ -39,6 +39,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "failed to get parameter"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_SET_PARAMETER),
     "failed to set parameter"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_SIGN), "failed to sign"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE),
     "illegal or unsupported padding mode"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INAVLID_UKM_LENGTH),
