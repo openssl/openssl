@@ -209,9 +209,24 @@ To run a basic TLS server with all libOQS ciphersuites enabled, run the followin
 
 	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
 
-In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEX>` = one of the quantum-safe or hybrid key exchange algorithms listed in the [Supported Algorithms](#supported-algorithms) section above):
+In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEX>` = one of the quantum-safe or hybrid key exchange algorithms listed in the [Supported Algorithms section above](#key-exchange):
 
-	apps/openssl s_client -curves <KEX> -CAfile <SIG>_CA.crt -connect localhost:4433
+	apps/openssl s_client -groups <KEX> -CAfile <SIG>_CA.crt 
+
+#### Performance testing
+
+In order to do TLS-level end-to-end performance testing, one can run "empty" TLS handshakes via the standard `openssl s_time` command. In order to suitably trigger this with an OQS KEM/SIG pair of choice, one can follow all steps outlined above to obtain an OQS-signed server certificate. As the `openssl s_time` command does not permit selection of suitable groups --which are used to encode the OQS-KEM--, you have to exchange the two last commands in the description above as follows to facilitate timed OQS-TLS handshake performance testing (exchanging SERVER and KEX variables as per the instructions above):
+
+	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3 -groups <KEX>
+
+and
+
+	apps/openssl s_time 
+
+##### Performance testing simplified
+
+If you don't want to build all components but just want to do comparative QSC as well as "classic crypto" TLS handshake performance testing a [docker-based performance test environment is available in the `oqs-demos` subproject](https://github.com/open-quantum-safe/oqs-demos/tree/master/curl#performance-testing).
+
 
 #### CMS demo
 
