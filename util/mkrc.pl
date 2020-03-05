@@ -46,7 +46,7 @@ if ( $filename =~ /openssl/i ) {
     $vft = "VFT_APP";
 }
 
-my $YEAR = [localtime()]->[5] + 1900;
+my $YEAR = [gmtime($ENV{SOURCE_DATE_EPOCH} || time())]->[5] + 1900;
 print <<___;
 #include <winver.h>
 
