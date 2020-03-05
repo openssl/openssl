@@ -24,6 +24,18 @@ static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
     return 0;
 }
 
+/*
+ * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
+ * NULL for this.
+ */
+static const char *canon_mdname(const char *mdname)
+{
+    if (mdname != NULL && strcmp(mdname, "UNDEF") == 0)
+        return NULL;
+
+    return mdname;
+}
+
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           const char *props, ENGINE *e, EVP_PKEY *pkey,
@@ -134,12 +146,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (type != NULL) {
         ctx->reqdigest = type;
         if (mdname == NULL)
-            mdname = EVP_MD_name(type);
+            mdname = canon_mdname(EVP_MD_name(type));
     } else {
         if (mdname == NULL
             && EVP_PKEY_get_default_digest_name(locpctx->pkey, locmdname,
                                                 sizeof(locmdname)))
-            mdname = locmdname;
+            mdname = canon_mdname(locmdname);
 
         if (mdname != NULL) {
             /*
@@ -280,6 +292,11 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
             || pctx->op.sig.signature == NULL)
         goto legacy;
 
+    if (pctx->op.sig.signature->digest_sign_update == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     return pctx->op.sig.signature->digest_sign_update(pctx->op.sig.sigprovctx,
                                                       data, dsize);
 
@@ -296,6 +313,11 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
             || pctx->op.sig.sigprovctx == NULL
             || pctx->op.sig.signature == NULL)
         goto legacy;
+
+    if (pctx->op.sig.signature->digest_verify_update == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
 
     return pctx->op.sig.signature->digest_verify_update(pctx->op.sig.sigprovctx,
                                                         data, dsize);
@@ -391,8 +413,22 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
                    const unsigned char *tbs, size_t tbslen)
 {
-    if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestsign != NULL)
-        return ctx->pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
+    EVP_PKEY_CTX *pctx = ctx->pctx;
+
+    if (pctx != NULL
+            && pctx->operation == EVP_PKEY_OP_SIGNCTX
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature != NULL) {
+        if (pctx->op.sig.signature->digest_sign != NULL)
+            return pctx->op.sig.signature->digest_sign(pctx->op.sig.sigprovctx,
+                                                       sigret, siglen, SIZE_MAX,
+                                                       tbs, tbslen);
+    } else {
+        /* legacy */
+        if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestsign != NULL)
+            return ctx->pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
+    }
+
     if (sigret != NULL && EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
         return 0;
     return EVP_DigestSignFinal(ctx, sigret, siglen);
@@ -454,8 +490,22 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                      size_t siglen, const unsigned char *tbs, size_t tbslen)
 {
-    if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestverify != NULL)
-        return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
+    EVP_PKEY_CTX *pctx = ctx->pctx;
+
+    if (pctx != NULL
+            && pctx->operation == EVP_PKEY_OP_VERIFYCTX
+            && pctx->op.sig.sigprovctx != NULL
+            && pctx->op.sig.signature != NULL) {
+        if (pctx->op.sig.signature->digest_verify != NULL)
+            return pctx->op.sig.signature->digest_verify(pctx->op.sig.sigprovctx,
+                                                         sigret, siglen,
+                                                         tbs, tbslen);
+    } else {
+        /* legacy */
+        if (ctx->pctx->pmeth != NULL && ctx->pctx->pmeth->digestverify != NULL)
+            return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
+    }
+
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);
