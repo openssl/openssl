@@ -31,6 +31,11 @@
 #define KEYLENID(id)    (IS25519(id) ? X25519_KEYLEN \
                                      : ((id) == EVP_PKEY_X448 ? X448_KEYLEN \
                                                               : ED448_KEYLEN))
+#define KEYNID2TYPE(id) \
+    (IS25519(id) ?  ECX_KEY_TYPE_X25519 \
+                 : ((id) == EVP_PKEY_X448 ? ECX_KEY_TYPE_X448 \
+                                          : ((id) == EVP_PKEY_ED25519 ? ECX_KEY_TYPE_ED25519 \
+                                                                      : ECX_KEY_TYPE_ED448)))
 #define KEYLEN(p)       KEYLENID((p)->ameth->pkey_id)
 
 
@@ -65,7 +70,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         }
     }
 
-    key = ecx_key_new(KEYLENID(id), 1);
+    key = ecx_key_new(KEYNID2TYPE(id), 1);
     if (key == NULL) {
         ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -1104,7 +1109,7 @@ static int s390x_pkey_ecx_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(X25519_KEYLEN, 1);
+    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X25519, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -1146,7 +1151,7 @@ static int s390x_pkey_ecx_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(X448_KEYLEN, 1);
+    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X448, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -1191,7 +1196,7 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
-    ECX_KEY *key = ecx_key_new(ED25519_KEYLEN, 1);
+    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
 
@@ -1248,7 +1253,7 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x24, 0xbc, 0xb6, 0x6e, 0x71, 0x46, 0x3f, 0x69, 0x00
     };
     unsigned char x_dst[57], buff[114];
-    ECX_KEY *key = ecx_key_new(ED448_KEYLEN, 1);
+    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
 

@@ -31,11 +31,6 @@ struct pkcs8_encrypt_ctx_st {
     void *cbarg;
 };
 
-typedef enum {
-    ECX_KEY_TYPE_X25519,
-    ECX_KEY_TYPE_X448
-} ECX_KEY_TYPE;
-
 OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns);
 OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns);
 OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns);

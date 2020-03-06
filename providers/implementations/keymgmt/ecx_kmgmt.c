@@ -35,22 +35,22 @@ static OSSL_OP_keymgmt_export_types_fn ecx_imexport_types;
 
 static void *x25519_new_key(void *provctx)
 {
-    return ecx_key_new(X25519_KEYLEN, 0);
+    return ecx_key_new(ECX_KEY_TYPE_X25519, 0);
 }
 
 static void *x448_new_key(void *provctx)
 {
-    return ecx_key_new(X448_KEYLEN, 0);
+    return ecx_key_new(ECX_KEY_TYPE_X448, 0);
 }
 
 static void *ed25519_new_key(void *provctx)
 {
-    return ecx_key_new(ED25519_KEYLEN, 0);
+    return ecx_key_new(ECX_KEY_TYPE_ED25519, 0);
 }
 
 static void *ed448_new_key(void *provctx)
 {
-    return ecx_key_new(ED448_KEYLEN, 0);
+    return ecx_key_new(ECX_KEY_TYPE_ED448, 0);
 }
 
 static int ecx_has(void *keydata, int selection)

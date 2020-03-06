@@ -26,6 +26,14 @@ void ecx_get_new_free_import(ECX_KEY_TYPE type,
         *ecx_new = ossl_prov_get_keymgmt_new(x448_keymgmt_functions);
         *ecx_free = ossl_prov_get_keymgmt_free(x448_keymgmt_functions);
         *ecx_import = ossl_prov_get_keymgmt_import(x448_keymgmt_functions);
+    } else if (type == ECX_KEY_TYPE_ED25519) {
+        *ecx_new = ossl_prov_get_keymgmt_new(ed25519_keymgmt_functions);
+        *ecx_free = ossl_prov_get_keymgmt_free(ed25519_keymgmt_functions);
+        *ecx_import = ossl_prov_get_keymgmt_import(ed25519_keymgmt_functions);
+    } else if (type == ECX_KEY_TYPE_ED448) {
+        *ecx_new = ossl_prov_get_keymgmt_new(ed448_keymgmt_functions);
+        *ecx_free = ossl_prov_get_keymgmt_free(ed448_keymgmt_functions);
+        *ecx_import = ossl_prov_get_keymgmt_import(ed448_keymgmt_functions);
     } else {
         *ecx_new = NULL;
         *ecx_free = NULL;
@@ -40,22 +48,34 @@ int ossl_prov_print_ecx(BIO *out, ECX_KEY *ecxkey, enum ecx_print_type type)
 
     switch (type) {
     case ecx_print_priv:
-        switch (ecxkey->keylen) {
-        case X25519_KEYLEN:
+        switch (ecxkey->type) {
+        case ECX_KEY_TYPE_X25519:
             type_label = "X25519 Private-Key";
             break;
-        case X448_KEYLEN:
+        case ECX_KEY_TYPE_X448:
             type_label = "X448 Private-Key";
+            break;
+        case ECX_KEY_TYPE_ED25519:
+            type_label = "ED25519 Private-Key";
+            break;
+        case ECX_KEY_TYPE_ED448:
+            type_label = "ED448 Private-Key";
             break;
         }
         break;
     case ecx_print_pub:
-        switch (ecxkey->keylen) {
-        case X25519_KEYLEN:
+        switch (ecxkey->type) {
+        case ECX_KEY_TYPE_X25519:
             type_label = "X25519 Public-Key";
             break;
-        case X448_KEYLEN:
+        case ECX_KEY_TYPE_X448:
             type_label = "X448 Public-Key";
+            break;
+        case ECX_KEY_TYPE_ED25519:
+            type_label = "ED25519 Public-Key";
+            break;
+        case ECX_KEY_TYPE_ED448:
+            type_label = "ED448 Public-Key";
             break;
         }
         break;

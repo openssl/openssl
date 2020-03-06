@@ -42,18 +42,36 @@
 #  define ED448_SECURITY_BITS   224
 #  define ED448_SIGSIZE         114
 
+
+typedef enum {
+    ECX_KEY_TYPE_X25519,
+    ECX_KEY_TYPE_X448,
+    ECX_KEY_TYPE_ED25519,
+    ECX_KEY_TYPE_ED448
+} ECX_KEY_TYPE;
+
+#define KEYTYPE2NID(type) \
+    ((type) == ECX_KEY_TYPE_X25519 \
+     ?  EVP_PKEY_X25519 \
+     : ((type) == ECX_KEY_TYPE_X448 \
+        ? EVP_PKEY_X448 \
+        : ((type) == ECX_KEY_TYPE_ED25519 \
+           ? EVP_PKEY_ED25519 \
+           : EVP_PKEY_ED448)))
+
 struct ecx_key_st {
     unsigned int haspubkey:1;
     unsigned char pubkey[MAX_KEYLEN];
     unsigned char *privkey;
     size_t keylen;
+    ECX_KEY_TYPE type;
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 
 typedef struct ecx_key_st ECX_KEY;
 
-ECX_KEY *ecx_key_new(size_t keylen, int haspubkey);
+ECX_KEY *ecx_key_new(ECX_KEY_TYPE type, int haspubkey);
 unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
 void ecx_key_free(ECX_KEY *key);
 int ecx_key_up_ref(ECX_KEY *key);

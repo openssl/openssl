@@ -12,12 +12,15 @@
 #include <openssl/pem.h>
 #include <openssl/types.h>
 #include <openssl/params.h>
+#include "crypto/ecx.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn x25519_pub_newctx;
 static OSSL_OP_serializer_newctx_fn x448_pub_newctx;
+static OSSL_OP_serializer_newctx_fn ed25519_pub_newctx;
+static OSSL_OP_serializer_newctx_fn ed448_pub_newctx;
 static OSSL_OP_serializer_freectx_fn ecx_pub_freectx;
 static OSSL_OP_serializer_serialize_data_fn ecx_pub_der_data;
 static OSSL_OP_serializer_serialize_object_fn ecx_pub_der;
@@ -57,6 +60,16 @@ static void *x448_pub_newctx(void *provctx)
     return ecx_pub_newctx(provctx, ECX_KEY_TYPE_X448);
 }
 
+static void *ed25519_pub_newctx(void *provctx)
+{
+    return ecx_pub_newctx(provctx, ECX_KEY_TYPE_ED25519);
+}
+
+static void *ed448_pub_newctx(void *provctx)
+{
+    return ecx_pub_newctx(provctx, ECX_KEY_TYPE_ED448);
+}
+
 static void ecx_pub_freectx(void *ctx)
 {
     OPENSSL_free(ctx);
@@ -92,8 +105,7 @@ static int ecx_pub_der(void *vctx, void *ecxkey, BIO *out,
     struct ecx_pub_ctx_st *ctx = vctx;
 
     return ossl_prov_write_pub_der_from_obj(out, ecxkey,
-                                            ctx->type == ECX_KEY_TYPE_X25519
-                                            ? EVP_PKEY_X25519 : EVP_PKEY_X448,
+                                            KEYTYPE2NID(ctx->type),
                                             NULL,
                                             ossl_prov_ecx_pub_to_der);
 }
@@ -128,8 +140,7 @@ static int ecx_pub_pem(void *vctx, void *ecxkey, BIO *out,
     struct ecx_pub_ctx_st *ctx = vctx;
 
     return ossl_prov_write_pub_pem_from_obj(out, ecxkey,
-                                            ctx->type == ECX_KEY_TYPE_X25519
-                                            ? EVP_PKEY_X25519 : EVP_PKEY_X448,
+                                            KEYTYPE2NID(ctx->type),
                                             NULL,
                                             ossl_prov_ecx_pub_to_der);
 
@@ -182,3 +193,5 @@ static int ecx_pub_print(void *ctx, void *ecxkey, BIO *out,
 
 MAKE_SERIALIZER_FUNCTIONS_GROUP(x25519)
 MAKE_SERIALIZER_FUNCTIONS_GROUP(x448)
+MAKE_SERIALIZER_FUNCTIONS_GROUP(ed25519)
+MAKE_SERIALIZER_FUNCTIONS_GROUP(ed448)
