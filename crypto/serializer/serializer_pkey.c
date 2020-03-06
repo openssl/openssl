@@ -338,12 +338,14 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         OSSL_SERIALIZER_free(sel_data.first);
         OSSL_SERIALIZER_free(sel_data.desired);
 
-        current_props =
-            ossl_parse_property(libctx, OSSL_SERIALIZER_properties(ser));
-        if (ossl_property_match_count(check, current_props) > 0)
-            selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+        if (ser != NULL) {
+            current_props =
+                ossl_parse_property(libctx, OSSL_SERIALIZER_properties(ser));
+            if (ossl_property_match_count(check, current_props) > 0)
+                selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+            ossl_property_free(current_props);
+        }
 
-        ossl_property_free(current_props);
         ossl_property_free(check);
     }
 
