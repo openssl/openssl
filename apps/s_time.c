@@ -86,7 +86,7 @@ const OPTIONS s_time_options[] = {
     {"www", OPT_WWW, 's', "Fetch specified page from the site"},
 
     OPT_SECTION("Certificate"),
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},

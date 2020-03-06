@@ -30,22 +30,21 @@ B<openssl> B<s_client>
 [B<-verifyCAstore> I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>]
+[B<-cert_chain> I<filename>]
+[B<-build_chain>]
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
 [B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
-[B<-cert_chain> I<filename>]
-[B<-build_chain>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-pass> I<arg>]
-[B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
 [B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
 [B<-dane_ee_no_namechecks>]
-[B<-build_chain>]
 [B<-reconnect>]
 [B<-showcerts>]
 [B<-prexit>]
@@ -236,12 +235,25 @@ ClientHello message. Cannot be used in conjunction with the B<-servername> or
 
 =item B<-cert> I<certname>
 
-The certificate to use, if one is requested by the server. The default is
-not to use a certificate.
+The client certificate to use, if one is requested by the server.
+The default is not to use a certificate.
 
-=item B<-certform> I<format>
+The chain for the client certificate may be specified using B<-cert_chain>.
 
-The certificate format to use: DER or PEM. PEM is the default.
+=item B<-certform> B<DER>|B<PEM>
+
+The client certificate file format to use; the default is B<PEM>.
+see L<openssl(1)/Format Options>.
+
+=item B<-cert_chain>
+
+A file containing untrusted certificates to use when attempting to build the
+certificate chain related to the certificate specified via the B<-cert> option.
+
+=item B<-build_chain>
+
+Specify whether the application should build the client certificate chain to be
+provided to the server.
 
 =item B<-CRL> I<filename>
 
@@ -249,7 +261,7 @@ CRL file to use to check the server's certificate.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL format; the default is B<PEM>.
+The CRL file format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-crl_download>
@@ -258,24 +270,13 @@ Download CRL from distribution points in the certificate.
 
 =item B<-key> I<keyfile>
 
-The private key to use. If not specified then the certificate file will
-be used.
+The client private key file to use.
+If not specified then the certificate file will be used to read also the key.
 
-=item B<-keyform> I<format>
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The key format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
-
-=item B<-cert_chain>
-
-A file containing trusted certificates to use when attempting to build the
-client/server certificate chain related to the certificate specified via the
-B<-cert> option.
-
-=item B<-build_chain>
-
-Specify whether the application should build the certificate chain to be
-provided to the server.
 
 =item B<-pass> I<arg>
 
@@ -301,32 +302,42 @@ Limit verify output to only errors.
 
 =item B<-verifyCAfile> I<filename>
 
-CA file for verifying the server's certificate, in PEM format.
+A file in PEM format containing trusted certificates to use
+for verifying the server's certificate.
 
 =item B<-verifyCApath> I<dir>
 
-Use the specified directory as a certificate store path to verify
-the server's CA certificate.
+A directory containing trusted certificates to use
+for verifying the server's certificate.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-Use the specified URI as a store URI to verify the server's certificate.
-
-
-=item B<-chainCApath> I<directory>
-
-The directory to use for building the chain provided to the server. This
-directory must be in "hash format", see L<openssl-verify(1)> for more
-information.
+The URI of a store containing trusted certificates to use
+for verifying the server's certificate.
 
 =item B<-chainCAfile> I<file>
 
-A file containing trusted certificates to use when attempting to build the
-client certificate chain.
+A file in PEM format containing trusted certificates to use
+when attempting to build the client certificate chain.
+
+=item B<-chainCApath> I<directory>
+
+A directory containing trusted certificates to use
+for building the client certificate chain provided to the server.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
-The URI to use when attempting to build the client certificate chain.
+The URI of a store containing trusted certificates to use
+when attempting to build the client certificate chain.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
+B<-chainCApath>, depending on if the URI indicates a directory or a
+single file.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-requestCAfile> I<file>
 

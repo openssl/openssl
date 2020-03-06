@@ -117,7 +117,7 @@ const OPTIONS x509_options[] = {
     {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
 #endif
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
 
     OPT_SECTION("Certificate"),
     {"startdate", OPT_STARTDATE, '-', "Set notBefore field"},

@@ -38,10 +38,6 @@ This command verifies certificate chains.
 
 Print out a usage message.
 
-=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
 =item B<-CRLfile> I<file>
 
 The I<file> should contain one or more CRLs in PEM format.
@@ -50,7 +46,7 @@ I<file>s.
 
 =item B<-crl_download>
 
-Attempt to download CRL information for this certificate.
+Attempt to download CRL information for certificates via their CDP entries.
 
 =item B<-show_chain>
 
@@ -64,11 +60,16 @@ Print extra information about the operations being performed.
 
 =item B<-trusted> I<file>
 
-A file of trusted certificates.
+A file of trusted certificates in PEM format.
+This option can be specified more than once to load certificates from multiple
+I<file>s.
 
 =item B<-untrusted> I<file>
 
-A file of untrusted certificates.
+A file of untrusted certificates in PEM format to use for chain building.
+This option can be specified more than once to load certificates from multiple
+I<file>s.
+
 
 =item B<-vfyopt> I<nm>:I<v>
 

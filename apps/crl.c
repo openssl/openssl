@@ -46,7 +46,7 @@ const OPTIONS crl_options[] = {
 #ifndef OPENSSL_NO_MD5
     {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
 #endif
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"", OPT_MD, '-', "Any supported digest"},
 
     OPT_SECTION("CRL"),
