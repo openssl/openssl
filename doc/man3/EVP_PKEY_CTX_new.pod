@@ -32,7 +32,8 @@ The EVP_PKEY_CTX_new_from_name() function allocates a public key algorithm
 context using the library context I<libctx> (see L<OPENSSL_CTX(3)>), the
 key type specified by I<name> and the property query I<propquery>.  None
 of the arguments are duplicated, so they  must remain unchanged for the
-lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.
+lifetime of the returned B<EVP_PKEY_CTX> or of any of its duplicates.  Read
+further about the possible names in L</NOTES> below.
 
 The EVP_PKEY_CTX_new_from_pkey() function allocates a public key algorithm
 context using the library context I<libctx> (see L<OPENSSL_CTX(3)>) and the
@@ -52,22 +53,43 @@ If I<ctx> is NULL, nothing is done.
 
 =head1 NOTES
 
-=over 4
-
-=item 1.
+=head2 On B<EVP_PKEY_CTX>
 
 The B<EVP_PKEY_CTX> structure is an opaque public key algorithm context used
 by the OpenSSL high level public key API. Contexts B<MUST NOT> be shared between
 threads: that is it is not permissible to use the same context simultaneously
 in two threads.
 
-=item 2.
+=head2 On Key Types
 
 We mention "key type" in this manual, which is the same
 as "algorithm" in most cases, allowing either term to be used
 interchangeably.  There are algorithms where the I<key type> and the
 I<algorithm> of the operations that use the keys are not the same,
 such as EC keys being used for ECDSA and ECDH operations.
+
+Key types are given in two different manners:
+
+=over 4
+
+=item Legacy NID or EVP_PKEY type
+
+This is the I<id> used with EVP_PKEY_CTX_new_id().
+
+These are B<EVP_PKEY_RSA>, B<EVP_PKEY_RSA_PSS>, B<EVP_PKEY_DSA>,
+B<EVP_PKEY_DH>, B<EVP_PKEY_EC>, B<EVP_PKEY_SM2>, B<EVP_PKEY_X25519>,
+B<EVP_PKEY_X448>, and are used by legacy methods.
+
+=item Name strings
+
+This is the I<name> used with EVP_PKEY_CTX_new_from_name().
+
+These are names like "RSA", "DSA", and what's available depends on what
+providers are currently accessible.
+
+The OpenSSL providers offer a set of key types available this way, please
+see L<OSSL_PROVIDER-FIPS(7)> and L<OSSL_PROVIDER-default(7)> and related
+documentation for more information.
 
 =back
 
