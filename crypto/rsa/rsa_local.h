@@ -137,8 +137,6 @@ RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
 int rsa_multip_cap(int bits);
 
-uint16_t rsa_compute_security_bits(int n);
-
 int rsa_sp800_56b_validate_strength(int nbits, int strength);
 int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
                            int nbits);
