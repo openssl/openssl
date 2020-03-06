@@ -392,16 +392,18 @@ static int test_fromdata_dh(void)
 
 # define X25519_IDX      0
 # define X448_IDX        1
+# define ED25519_IDX     2
+# define ED448_IDX       3
 
 static int test_fromdata_ecx(int tst)
 {
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pk = NULL;
-    const char *alg = (tst == X25519_IDX) ? "X25519" : "X448";
+    const char *alg = NULL;
 
-    /* X448_KEYLEN > X25519_KEYLEN */
-    static unsigned char key_numbers[2][2][X448_KEYLEN] = {
+    /* ED448_KEYLEN > X448_KEYLEN > X25519_KEYLEN == ED25519_KEYLEN */
+    static unsigned char key_numbers[4][2][ED448_KEYLEN] = {
         /* X25519: Keys from RFC 7748 6.1 */
         {
             /* Private Key */
@@ -439,6 +441,44 @@ static int test_fromdata_ecx(int tst)
                 0x0c, 0x5b, 0x12, 0xda, 0x88, 0x12, 0x0d, 0x53, 0x17, 0x7f,
                 0x80, 0xe5, 0x32, 0xc4, 0x1f, 0xa0
             }
+        },
+        /* ED25519: Keys from RFC 8032 */
+        {
+            /* Private Key */
+            {
+                0x9d, 0x61, 0xb1, 0x9d, 0xef, 0xfd, 0x5a, 0x60, 0xba, 0x84,
+                0x4a, 0xf4, 0x92, 0xec, 0x2c, 0xc4, 0x44, 0x49, 0xc5, 0x69,
+                0x7b, 0x32, 0x69, 0x19, 0x70, 0x3b, 0xac, 0x03, 0x1c, 0xae,
+                0x7f, 0x60
+            },
+            /* Public Key */
+            {
+                0xd7, 0x5a, 0x98, 0x01, 0x82, 0xb1, 0x0a, 0xb7, 0xd5, 0x4b,
+                0xfe, 0xd3, 0xc9, 0x64, 0x07, 0x3a, 0x0e, 0xe1, 0x72, 0xf3,
+                0xda, 0xa6, 0x23, 0x25, 0xaf, 0x02, 0x1a, 0x68, 0xf7, 0x07,
+                0x51, 0x1a
+            }
+        },
+        /* ED448: Keys from RFC 8032 */
+        {
+            /* Private Key */
+            {
+                0x6c, 0x82, 0xa5, 0x62, 0xcb, 0x80, 0x8d, 0x10, 0xd6, 0x32,
+                0xbe, 0x89, 0xc8, 0x51, 0x3e, 0xbf, 0x6c, 0x92, 0x9f, 0x34,
+                0xdd, 0xfa, 0x8c, 0x9f, 0x63, 0xc9, 0x96, 0x0e, 0xf6, 0xe3,
+                0x48, 0xa3, 0x52, 0x8c, 0x8a, 0x3f, 0xcc, 0x2f, 0x04, 0x4e,
+                0x39, 0xa3, 0xfc, 0x5b, 0x94, 0x49, 0x2f, 0x8f, 0x03, 0x2e,
+                0x75, 0x49, 0xa2, 0x00, 0x98, 0xf9, 0x5b
+            },
+            /* Public Key */
+            {
+                0x5f, 0xd7, 0x44, 0x9b, 0x59, 0xb4, 0x61, 0xfd, 0x2c, 0xe7,
+                0x87, 0xec, 0x61, 0x6a, 0xd4, 0x6a, 0x1d, 0xa1, 0x34, 0x24,
+                0x85, 0xa7, 0x0e, 0x1f, 0x8a, 0x0e, 0xa7, 0x5d, 0x80, 0xe9,
+                0x67, 0x78, 0xed, 0xf1, 0x24, 0x76, 0x9b, 0x46, 0xc7, 0x06,
+                0x1b, 0xd6, 0x78, 0x3d, 0xf1, 0xe5, 0x0f, 0x6c, 0xd1, 0xfa,
+                0x1a, 0xbe, 0xaf, 0xe8, 0x25, 0x61, 0x80
+            }
         }
     };
     OSSL_PARAM x25519_fromdata_params[] = {
@@ -459,19 +499,59 @@ static int test_fromdata_ecx(int tst)
                                 X448_KEYLEN),
         OSSL_PARAM_END
     };
-    OSSL_PARAM *fromdata_params;
-    int bits, security_bits, size;
+    OSSL_PARAM ed25519_fromdata_params[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                key_numbers[ED25519_IDX][PRIV_KEY],
+                                ED25519_KEYLEN),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                key_numbers[ED25519_IDX][PUB_KEY],
+                                ED25519_KEYLEN),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM ed448_fromdata_params[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                key_numbers[ED448_IDX][PRIV_KEY],
+                                ED448_KEYLEN),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                key_numbers[ED448_IDX][PUB_KEY],
+                                ED448_KEYLEN),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM *fromdata_params = NULL;
+    int bits = 0, security_bits = 0, size = 0;
 
-    if (tst == X25519_IDX) {
+    switch (tst) {
+    case X25519_IDX:
         fromdata_params = x25519_fromdata_params;
         bits = X25519_BITS;
         security_bits = X25519_SECURITY_BITS;
         size = X25519_KEYLEN;
-    } else {
+        alg = "X25519";
+        break;
+
+    case X448_IDX:
         fromdata_params = x448_fromdata_params;
         bits = X448_BITS;
         security_bits = X448_SECURITY_BITS;
         size = X448_KEYLEN;
+        alg = "X448";
+        break;
+
+    case ED25519_IDX:
+        fromdata_params = ed25519_fromdata_params;
+        bits = ED25519_BITS;
+        security_bits = ED25519_SECURITY_BITS;
+        size = ED25519_KEYLEN;
+        alg = "ED25519";
+        break;
+
+    case ED448_IDX:
+        fromdata_params = ed448_fromdata_params;
+        bits = ED448_BITS;
+        security_bits = ED448_SECURITY_BITS;
+        size = ED448_KEYLEN;
+        alg = "ED448";
+        break;
     }
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
@@ -577,7 +657,7 @@ int setup_tests(void)
     ADD_TEST(test_fromdata_dh);
 #endif
 #ifndef OPENSSL_NO_EC
-    ADD_ALL_TESTS(test_fromdata_ecx, 2);
+    ADD_ALL_TESTS(test_fromdata_ecx, 4);
     ADD_TEST(test_fromdata_ec);
 #endif
     return 1;
