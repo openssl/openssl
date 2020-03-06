@@ -977,8 +977,8 @@ effect.
 Parse I<file> as a set of one or more certificates in PEM format.
 All certificates must be self-signed, unless the
 B<-partial_chain> option is specified.
-This option implies the B<-no-CAfile> and B<-no-CApath> options and it
-cannot be used with either the B<-CAfile> or B<-CApath> options, so
+This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
+and it cannot be used with the B<-CAfile>, B<-CApath> or B<-CAstore> options, so
 only certificates in the file are trust anchors.
 This option may be used multiple times.
 

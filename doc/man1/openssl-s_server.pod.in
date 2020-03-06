@@ -19,16 +19,20 @@ B<openssl> B<s_server>
 [B<-verify> I<int>]
 [B<-Verify> I<int>]
 [B<-cert> I<infile>]
-[B<-naccept> I<+int>]
-[B<-serverinfo> I<val>]
+[B<-cert2> I<infile>]
 [B<-certform> B<DER>|B<PEM>]
+[B<-cert_chain> I<infile>]
+[B<-build_chain>]
+[B<-serverinfo> I<val>]
 [B<-key> I<infile>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-key2> I<infile>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>]
+[B<-dcert_chain> I<infile>]
 [B<-dkey> I<infile>]
-[B<-dkeyform> B<DER>|B<PEM>]
+[B<-dkeyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -44,29 +48,24 @@ B<openssl> B<s_server>
 [B<-http_server_binmode>]
 [B<-servername>]
 [B<-servername_fatal>]
-[B<-cert2> I<infile>]
-[B<-key2> I<infile>]
 [B<-tlsextdebug>]
 [B<-HTTP>]
 [B<-id_prefix> I<val>]
 [B<-keymatexport> I<val>]
 [B<-keymatexportlen> I<+int>]
-[B<-CRLform> B<DER>|B<PEM>]
 [B<-CRL> I<infile>]
+[B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
-[B<-cert_chain> I<infile>]
-[B<-dcert_chain> I<infile>]
+[B<-chainCAfile> I<infile>]
 [B<-chainCApath> I<dir>]
-[B<-verifyCApath> I<dir>]
 [B<-chainCAstore> I<uri>]
+[B<-verifyCAfile> I<infile>]
+[B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<uri>]
 [B<-no_cache>]
 [B<-ext_cache>]
 [B<-verify_return_error>]
 [B<-verify_quiet>]
-[B<-build_chain>]
-[B<-chainCAfile> I<infile>]
-[B<-verifyCAfile> I<infile>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
 [B<-status>]
@@ -84,6 +83,7 @@ B<openssl> B<s_server>
 [B<-max_send_frag> I<+int>]
 [B<-split_send_frag> I<+int>]
 [B<-max_pipelines> I<+int>]
+[B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
 [B<-bugs>]
 [B<-no_comp>]
@@ -219,21 +219,20 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename F<server.pem> will be used.
 
+=item B<-certform> B<DER>|B<PEM>
+
+The server certificate file format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
 =item B<-cert_chain>
 
-A file containing trusted certificates to use when attempting to build the
-client/server certificate chain related to the certificate specified via the
-B<-cert> option.
+A file containing untrusted certificates to use when attempting to build the
+certificate chain related to the certificate specified via the B<-cert> option.
 
 =item B<-build_chain>
 
-Specify whether the application should build the certificate chain to be
+Specify whether the application should build the server certificate chain to be
 provided to the client.
-
-=item B<-naccept> I<+int>
-
-The server will exit after receiving the specified number of connections,
-default unlimited.
 
 =item B<-serverinfo> I<val>
 
@@ -243,17 +242,12 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-certform> B<DER>|B<PEM>, B<-CRLForm> B<DER>|B<PEM>
-
-The certificate and CRL format; the default is PEM.
-See L<openssl(1)/Format Options> for details.
-
 =item B<-key> I<infile>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The key format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
@@ -277,14 +271,19 @@ by using an appropriate certificate.
 
 =item B<-dcert_chain>
 
-A file containing trusted certificates to use when attempting to build the
+A file containing untrusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform> B<DER>|B<PEM>, B<-dkeyform> B<DER>|B<PEM>
+=item B<-dcertform> B<DER>|B<PEM>
 
-The format of the certificate and private key; the default is B<PEM>
-see L<openssl(1)/Format Options>.
+The format of the additional certificate file; the default is B<PEM>.
+See L<openssl(1)/Format Options>.
+
+=item B<-dkeyform> B<DER>|B<PEM>|B<ENGINE>
+
+The format of the additional private key; the default is B<PEM>.
+See L<openssl(1)/Format Options>.
 
 =item B<-dpass> I<val>
 
@@ -316,22 +315,53 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 Prints the SSL session states.
 
-=item B<-chainCApath> I<dir>
+=item B<-CRL> I<infile>
 
-The directory to use for building the chain provided to the client. This
-directory must be in "hash format", see L<openssl-verify(1)> for more
-information.
+The CRL file to use.
+
+=item B<-CRLform> B<DER>|B<PEM>
+
+The CRL file format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-crl_download>
+
+Download CRLs from distribution points given in CDP extensions of certificates
+
+=item B<-verifyCAfile> I<filename>
+
+A file in PEM format CA containing trusted certificates to use
+for verifying client certificates.
+
+=item B<-verifyCApath> I<dir>
+
+A directory containing trusted certificates to use
+for verifying client certificates.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
+
+=item B<-verifyCAstore> I<uri>
+
+The URI of a store containing trusted certificates to use
+for verifying client certificates.
 
 =item B<-chainCAfile> I<file>
 
-A file containing trusted certificates to use when attempting to build the
-server certificate chain.
+A file in PEM format containing trusted certificates to use
+when attempting to build the server certificate chain.
+
+=item B<-chainCApath> I<dir>
+
+A directory containing trusted certificates to use
+for building the server certificate chain provided to the client.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
-The URI to a store to use for building the chain provided to the client.
-The URI may indicate a single certificate, as well as a collection of
-them.
+The URI of a store containing trusted certificates to use
+for building the server certificate chain provided to the client.
+The URI may indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
 B<-chainCApath>, depending on if the URI indicates a directory or a
 single file.
@@ -461,6 +491,11 @@ The maximum number of encrypt/decrypt pipelines to be used. This will only have
 an effect if an engine has been loaded that supports pipelining (e.g. the dasync
 engine) and a suitable cipher suite has been negotiated. The default value is 1.
 See L<SSL_CTX_set_max_pipelines(3)> for further information.
+
+=item B<-naccept> I<+int>
+
+The server will exit after receiving the specified number of connections,
+default unlimited.
 
 =item B<-read_buf> I<+int>
 
