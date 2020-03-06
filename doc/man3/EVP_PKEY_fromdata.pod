@@ -35,12 +35,12 @@ for creating key parameters from user data.
 EVP_PKEY_key_fromdata_init() initializes a public key algorithm context for
 creating a key from user data.
 
-EVP_PKEY_fromdata() creates key parameters or a key, given data from
-I<params> and a context that's been initialized with
-EVP_PKEY_param_fromdata_init() or EVP_PKEY_key_fromdata_init().  The result is
-written to I<*ppkey>. The parameters that can be used for various types of key
-are as described in the "Built-in RSA Import/Export Types" section on the
-L<provider-keymgmt(7)> page.
+EVP_PKEY_fromdata() creates the structure to store key parameters or a
+key, given data from I<params> and a context that's been initialized with
+EVP_PKEY_param_fromdata_init() or EVP_PKEY_key_fromdata_init().  The result
+is written to I<*ppkey>.  The parameters that can be used are specific to
+the L<provider-keymgmt(7)> implementations, please see
+L<EVP_PKEY_CTX_new_from_name(3)> for further information.
 
 EVP_PKEY_param_fromdata_settable() and EVP_PKEY_key_fromdata_settable()
 get a constant B<OSSL_PARAM> array that describes the settable parameters
