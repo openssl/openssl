@@ -592,6 +592,121 @@ end:
 }
 #endif
 
+/*
+ * Very focused test to exercise a single case in the server-side state
+ * machine, when the ChangeCipherState message needs to actually change
+ * from one cipher to a different cipher (i.e., not changing from null
+ * encryption to reall encryption).
+ */
+static int test_ccs_change_cipher(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL, *sesspre, *sesspost;
+    int testresult = 0;
+    int i;
+    unsigned char buf;
+    size_t readbytes;
+
+    /*
+     * Create a conection so we can resume and potentially (but not) use
+     * a different cipher in the second connection.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                          NULL, NULL))
+            || !TEST_true(SSL_set_cipher_list(clientssl, "AES128-GCM-SHA256"))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_ptr(sesspre = SSL_get0_session(serverssl))
+            || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Resume, preferring a different cipher. Our server will force the
+     * same cipher to be used as the initial handshake. */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                          NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, sess))
+            || !TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384:AES128-GCM-SHA256"))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl))
+            || !TEST_true(SSL_session_reused(serverssl))
+            || !TEST_ptr(sesspost = SSL_get0_session(serverssl))
+            || !TEST_ptr_eq(sesspre, sesspost)
+            || !TEST_int_eq(TLS1_CK_RSA_WITH_AES_128_GCM_SHA256,
+                            SSL_CIPHER_get_id(SSL_get_current_cipher(clientssl))))
+        goto end;
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+
+    /*
+     * Now create a fresh connection and try to renegotiate a different
+     * cipher on it.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                          NULL, NULL))
+            || !TEST_true(SSL_set_cipher_list(clientssl, "AES128-GCM-SHA256"))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_ptr(sesspre = SSL_get0_session(serverssl))
+            || !TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384"))
+            || !TEST_true(SSL_renegotiate(clientssl))
+            || !TEST_true(SSL_renegotiate_pending(clientssl)))
+        goto end;
+    /* Actually drive the renegotiation. */
+    for (i = 0; i < 3; i++) {
+        if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0) {
+            if (!TEST_ulong_eq(readbytes, 0))
+                goto end;
+        } else if (!TEST_int_eq(SSL_get_error(clientssl, 0),
+                                SSL_ERROR_WANT_READ)) {
+            goto end;
+        }
+        if (SSL_read_ex(serverssl, &buf, sizeof(buf), &readbytes) > 0) {
+            if (!TEST_ulong_eq(readbytes, 0))
+                goto end;
+        } else if (!TEST_int_eq(SSL_get_error(serverssl, 0),
+                                SSL_ERROR_WANT_READ)) {
+            goto end;
+        }
+    }
+    /* sesspre and sesspost should be different since the cipher changed. */
+    if (!TEST_false(SSL_renegotiate_pending(clientssl))
+            || !TEST_false(SSL_session_reused(clientssl))
+            || !TEST_false(SSL_session_reused(serverssl))
+            || !TEST_ptr(sesspost = SSL_get0_session(serverssl))
+            || !TEST_ptr_ne(sesspre, sesspost)
+            || !TEST_int_eq(TLS1_CK_RSA_WITH_AES_256_GCM_SHA384,
+                            SSL_CIPHER_get_id(SSL_get_current_cipher(clientssl))))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(sess);
+
+    return testresult;
+}
+
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth,
                                       int min_version, int max_version,
@@ -6423,6 +6538,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
+    ADD_TEST(test_ccs_change_cipher);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_early_data_read_write, 3);
