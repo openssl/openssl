@@ -121,13 +121,13 @@ static void select_serializer(const char *name, void *data)
         return;
 
     if ((s = OSSL_SERIALIZER_fetch(d->libctx, name, d->propquery)) != NULL) {
-        if (d->first == NULL && s->serialize_data != NULL) {
-            d->first = s;
-        } else if (OSSL_SERIALIZER_provider(s) == d->desired_provider
-                   && s->serialize_object != NULL) {
+        if (OSSL_SERIALIZER_provider(s) == d->desired_provider
+                && s->serialize_object != NULL) {
             OSSL_SERIALIZER_free(d->first);
             d->first = NULL;
             d->desired = s;
+        } else if (d->first == NULL && s->serialize_data != NULL) {
+            d->first = s;
         } else {
             OSSL_SERIALIZER_free(s);
         }
