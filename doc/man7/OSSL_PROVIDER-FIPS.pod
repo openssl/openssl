@@ -2,14 +2,135 @@
 
 =head1 NAME
 
-OSSL_PROVIDER-FIPS - OPENSSL FIPS provider
+OSSL_PROVIDER-FIPS - OpenSSL FIPS provider
 
 =head1 DESCRIPTION
 
-The OPENSSL FIPS provider is a special provider that conforms to the Federal 
+The OpenSSL FIPS provider is a special provider that conforms to the Federal 
 Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
 contains an approved set of cryptographic algorithms that is validated by an
 accredited testing laboratory.
+
+=head2 Properties
+
+The implementations in this provider specifically have these properties
+defined:
+
+=over 4
+
+"provider=default"
+
+"fips=yes"
+
+=back
+
+It may be used in a property query string with fetching functions such as
+L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>, as well as with other
+functions that take a property query string, such as
+L<EVP_PKEY_CTX_new_from_name(3)>.
+
+It isn't mandatory to query for any of these properties, except to
+make sure to get implementations of this provider and none other.
+
+The "fips=yes" property can be use to make sure only FIPS approved
+implementations are used for crypto operations.  This may also include
+other non-crypto support operations that are not in the fips provider,
+such as asymmetric key serializers,
+see L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
+
+=head1 OPERATIONS AND ALGORITHMS
+
+The OpenSSL FIPS provider supports these operations and algorithms:
+
+=head2 Hashing Algorithms / Message Digests
+
+=over 4
+
+=item SHA1, see L<EVP_MD-SHA1(7)>
+
+=item SHA2, see L<EVP_MD-SHA2(7)>
+
+=item SHA3, see L<EVP_MD-SHA3(7)>
+
+=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
+
+=back
+
+=head2 Symmetric Ciphers
+
+=over 4
+
+=item AES, see L<EVP_CIPHER-AES(7)>
+
+=item DES-EDE3 (TrippleDES), see L<EVP_CIPHER-DES(7)>
+
+=back
+
+=head2 Message Authentication Code (MAC)
+
+=over 4
+
+=item CMAC, see L<EVP_MAC-CMAC(7)>
+
+=item GMAC, see L<EVP_MAC-GMAC(7)>
+
+=item HMAC, see L<EVP_MAC-HMAC(7)>
+
+=item KMAC, see L<EVP_MAC-KMAC(7)>
+
+=back
+
+=head2 Key Derivation Function (KDF)
+
+=over 4
+
+=item HKDF, see L<EVP_KDF-HKDF(7)>
+
+=item SSKDF, see L<EVP_KDF-SSKDF(7)>
+
+=item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
+
+=item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
+
+=item KBKDF, see L<EVP_KDF-KBKDF(7)>
+
+=back
+
+=head2 Key Exchange
+
+=over 4
+
+=item DH, see L<EVP_KEYEXCH-DH(7)>
+
+=back
+
+=head2 Asymmetric Signature
+
+=over 4
+
+=item DSA, see L<EVP_KEYEXCH-DSA(7)>
+
+=back
+
+=head2 Asymmetric Cipher
+
+=over 4
+
+=item RSA, see L<EVP_KEYEXCH-RSA(7)>
+
+=back
+
+=head2 Asymmetric Key Management
+
+=over 4
+
+=item DH, see L<EVP_KEYMGMT-DH(7)>
+
+=item DSA, see L<EVP_KEYMGMT-DSA(7)>
+
+=item RSA, see L<EVP_KEYMGMT-RSA(7)>
+
+=back
 
 =head1 SELF TESTING
 
@@ -19,7 +140,7 @@ L<OSSL_SELF_TEST_set_callback(3)>.
 
 The parameters passed to the callback are described in L<OSSL_SELF_TEST_new(3)>
 
-The OPENSSL FIPS module uses the following mechanism to provide information
+The OpenSSL FIPS module uses the following mechanism to provide information
 about the self tests as they run.
 This is useful for debugging if a self test is failing.
 The callback also allows forcing any self test to fail, in order to check that
@@ -196,7 +317,9 @@ L<fips_config(5)>,
 L<OSSL_SELF_TEST_set_callback(3)>,
 L<OSSL_SELF_TEST_new(3)>,
 L<OSSL_PARAM(3)>,
-L<openssl-core.h(7)>
+L<openssl-core.h(7)>,
+L<openssl-core_numbers.h(7)>,
+L<provider(7)>
 
 =head1 HISTORY
 
