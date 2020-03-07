@@ -91,6 +91,8 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         goto err;
     if (pport != NULL && (*pport = OPENSSL_strdup(port)) == NULL)
         goto err;
+    if (pssl != NULL && strcmp(port, "443") == 0)
+        *pssl = 1;
 
     OPENSSL_free(buf);
     return 1;
