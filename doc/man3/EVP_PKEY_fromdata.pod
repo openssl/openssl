@@ -205,7 +205,7 @@ TODO Write a set of cookbook documents and link to them.
 
 The descriptor L<OSSL_PARAM(3)> returned by
 EVP_PKEY_key_fromdata_settable() may also be used programatically, for
-example with L<OSSL_PARAM_allocate_from_text()>.
+example with L<OSSL_PARAM_allocate_from_text(3)>.
 
 =head1 SEE ALSO
 
