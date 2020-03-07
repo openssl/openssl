@@ -1895,9 +1895,8 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 }
 
 /*
- * Example of downloading CRLs from CRLDP: not usable for real world as it
- * always downloads, doesn't support non-blocking I/O and doesn't cache
- * anything.
+ * Example of downloading CRLs from CRLDP:
+ * not usable for real world as it always downloads and doesn't cache anything.
  */
 
 static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
