@@ -604,6 +604,8 @@ int x509_main(int argc, char **argv)
     }
 
     if (reqfile || newcert) {
+        X509_NAME *n;
+
         if (!sign_flag && CAkeyfile == NULL) {
             BIO_printf(bio_err,
                        "We need a private key to sign with, use -signkey or -CAkey or -CA <file> with private key\n");
@@ -624,15 +626,9 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if (req == NULL) {
-            if (!X509_set_issuer_name(x, fsubj)
-                || !X509_set_subject_name(x, fsubj))
-                goto end;
-        } else {
-            if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req))
-                || !X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
-                goto end;
-        }
+        n = req == NULL ? fsubj : X509_REQ_get_subject_name(req);
+        if (!X509_set_issuer_name(x, n) || !X509_set_subject_name(x, n))
+            goto end;
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 

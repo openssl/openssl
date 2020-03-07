@@ -409,7 +409,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 {
-    X509_NAME *nm = NULL;
+    X509_NAME *nm;
     ASN1_IA5STRING *email = NULL;
     X509_NAME_ENTRY *ne;
     GENERAL_NAME *gen = NULL;
@@ -424,11 +424,9 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
     }
     /* Find the subject name */
     if (ctx->subject_cert)
-        nm = X509_NAME_dup(X509_get_subject_name(ctx->subject_cert));
+        nm = X509_get_subject_name(ctx->subject_cert);
     else
-        nm = X509_NAME_dup(X509_REQ_get_subject_name(ctx->subject_req));
-    if (nm == NULL)
-        goto err;
+        nm = X509_REQ_get_subject_name(ctx->subject_req);
 
     /* Now add any email address(es) to STACK */
     while ((i = X509_NAME_get_index_by_NID(nm,
@@ -454,13 +452,11 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         gen = NULL;
     }
 
-    X509_NAME_free(nm);
     return 1;
 
  err:
     GENERAL_NAME_free(gen);
     ASN1_IA5STRING_free(email);
-    X509_NAME_free(nm);
     return 0;
 
 }
