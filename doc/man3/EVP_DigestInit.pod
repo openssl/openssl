@@ -142,14 +142,22 @@ Cleans up digest context B<ctx> and frees up the space allocated to it.
 
 =item EVP_MD_CTX_ctrl()
 
-This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
+I<This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
 is the mechanism that should be used to set and get parameters that are used by
-providers.
+providers.>
+
 Performs digest-specific control actions on context B<ctx>. The control command
 is indicated in B<cmd> and any additional arguments in B<p1> and B<p2>.
 EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
 may apply depending on the control type and digest implementation.
-See L</CONTROLS> below for more information.
+
+If this function happens to be used with a fetched B<EVP_MD>, it will
+translate the controls that are known to OpenSSL into L<OSSL_PARAM(3)>
+parameters with keys defined by OpenSSL and call EVP_MD_CTX_get_params() or
+EVP_MD_CTX_set_params() as is appropriate for each control command.
+
+See L</CONTROLS> below for more information, including what translations are
+being done.
 
 =item EVP_MD_get_params()
 
@@ -411,12 +419,18 @@ Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.
 The string value is written to B<p2>.
 
+When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
+an L<OSSL_PARAM(3)> item with the key "micalg" (B<OSSL_DIGEST_PARAM_MICALG>).
+
 =item EVP_MD_CTRL_XOF_LEN
 
 This control sets the digest length for extendable output functions to B<p1>.
 Sending this control directly should not be necessary, the use of
 C<EVP_DigestFinalXOF()> is preferred.
 Currently used by SHAKE.
+
+When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
+an L<OSSL_PARAM(3)> item with the key "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>).
 
 =back
 
