@@ -279,29 +279,29 @@ The following Import/Export types are available for the built-in RSA algorithm:
 
 =over 4
 
-=item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <integer>
+=item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <unsigned integer>
 
 The RSA "n" value.
 
-=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <integer>
+=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
 
 The RSA "e" value.
 
-=item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <integer>
+=item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <unsigned integer>
 
 The RSA "d" value.
 
-=item "rsa-factor" (B<OSSL_PKEY_PARAM_RSA_FACTOR>) <integer>
+=item "rsa-factor" (B<OSSL_PKEY_PARAM_RSA_FACTOR>) <unsigned integer>
 
 An RSA factor. In 2 prime RSA these are often known as "p" or "q". This value
 may be repeated up to 10 times in a single key.
 
-=item "rsa-exponent" (B<OSSL_PKEY_PARAM_RSA_EXPONENT>) <integer>
+=item "rsa-exponent" (B<OSSL_PKEY_PARAM_RSA_EXPONENT>) <unsigned integer>
 
 An RSA CRT (Chinese Remainder Theorem) exponent. This value may be repeated up
 to 10 times in a single key.
 
-=item "rsa-coefficient" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT>) <integer>
+=item "rsa-coefficient" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT>) <unsigned integer>
 
 An RSA CRT (Chinese Remainder Theorem) coefficient. This value may be repeated
 up to 9 times in a single key.
@@ -315,23 +315,23 @@ Diffie-Hellman algorithms:
 
 =over 4
 
-=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <integer> or <octet string>
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <unsigned integer>
 
 The public key value.
 
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <integer> or <octet string>
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <unsigned integer>
 
 The private key value.
 
-=item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <integer>
+=item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <unsigned integer>
 
 A DSA or Diffie-Hellman "p" value.
 
-=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <integer>
+=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
 
 A DSA or Diffie-Hellman "q" value.
 
-=item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <integer>
+=item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <unsigned integer>
 
 A DSA or Diffie-Hellman "g" value.
 
@@ -374,7 +374,7 @@ EC curve's cofactor (note for some curves the cofactor is 1).
 
 The public key value in EC point format.
 
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <integer>
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <unsigned integer>
 
 The private key value.
 
