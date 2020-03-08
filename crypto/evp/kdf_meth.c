@@ -21,8 +21,7 @@ static int evp_kdf_up_ref(void *vkdf)
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    CRYPTO_UP_REF(&kdf->refcnt, &ref, kdf->lock);
-    return 1;
+    return CRYPTO_UP_REF(&kdf->refcnt, &ref, kdf->lock);
 }
 
 static void evp_kdf_free(void *vkdf){
@@ -30,7 +29,8 @@ static void evp_kdf_free(void *vkdf){
     int ref = 0;
 
     if (kdf != NULL) {
-        CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
+        if (!CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock))
+            return;
         if (ref <= 0) {
             ossl_provider_free(kdf->prov);
             CRYPTO_THREAD_lock_free(kdf->lock);
@@ -130,21 +130,24 @@ static void *evp_kdf_from_dispatch(int name_id,
             break;
         }
     }
-    if (fnkdfcnt != 1 || fnctxcnt != 2) {
+    if (fnkdfcnt != 1
+        || fnctxcnt != 2) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a derive function, and a complete set of context management
          * functions.
          */
-        evp_kdf_free(kdf);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
     kdf->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return kdf;
+err:
+    evp_kdf_free(kdf);
+    return NULL;
 }
 
 EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,

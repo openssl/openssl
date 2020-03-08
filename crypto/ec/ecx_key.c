@@ -38,7 +38,8 @@ void ecx_key_free(ECX_KEY *key)
     if (key == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&key->references, &i, key->lock);
+    if (!CRYPTO_DOWN_REF(&key->references, &i, key->lock))
+        return;
     REF_PRINT_COUNT("ECX_KEY", r);
     if (i > 0)
         return;
@@ -53,7 +54,7 @@ int ecx_key_up_ref(ECX_KEY *key)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&key->references, &i, key->lock) <= 0)
+    if (!CRYPTO_UP_REF(&key->references, &i, key->lock))
         return 0;
 
     REF_PRINT_COUNT("ECX_KEY", key);

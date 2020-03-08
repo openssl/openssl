@@ -339,11 +339,14 @@ ENGINE *ENGINE_by_id(const char *id)
 
 int ENGINE_up_ref(ENGINE *e)
 {
-    int i;
+    int ref = 0;
+
     if (e == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_UP_REF(&e->struct_ref, &i, global_engine_lock);
-    return 1;
+    if (!CRYPTO_UP_REF(&e->struct_ref, &ref, global_engine_lock))
+        return 0;
+
+    return ref > 0;
 }

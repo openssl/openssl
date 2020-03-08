@@ -256,14 +256,18 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     cipher->lock = CRYPTO_THREAD_lock_new();
     if (cipher->lock == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(cipher);
-        return NULL;
+        goto err;
     }
+    if (!ossl_provider_up_ref(prov))
+        goto err;
     cipher->prov = prov;
-    ossl_provider_up_ref(prov);
     cipher->refcnt = 1;
 
     return cipher;
+err:
+    CRYPTO_THREAD_lock_free(cipher->lock);
+    OPENSSL_free(cipher);
+    return NULL;
 }
 
 static void *evp_asym_cipher_from_dispatch(int name_id,
@@ -384,7 +388,8 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
     if (cipher != NULL) {
         int i;
 
-        CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+        if (!CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock))
+            return;
         if (i > 0)
             return;
         ossl_provider_free(cipher->prov);
@@ -397,8 +402,7 @@ int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
-    return 1;
+    return CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
 }
 
 OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)

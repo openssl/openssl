@@ -28,14 +28,18 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
     signature->lock = CRYPTO_THREAD_lock_new();
     if (signature->lock == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(signature);
-        return NULL;
+        goto err;
     }
+    if (!ossl_provider_up_ref(prov))
+        goto err;
     signature->prov = prov;
-    ossl_provider_up_ref(prov);
     signature->refcnt = 1;
 
     return signature;
+err:
+    CRYPTO_THREAD_lock_free(signature->lock);
+    OPENSSL_free(signature);
+    return NULL;
 }
 
 static void *evp_signature_from_dispatch(int name_id,
@@ -256,7 +260,8 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
     if (signature != NULL) {
         int i;
 
-        CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
+        if (!CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock))
+            return;
         if (i > 0)
             return;
         ossl_provider_free(signature->prov);
@@ -269,8 +274,7 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&signature->refcnt, &ref, signature->lock);
-    return 1;
+    return CRYPTO_UP_REF(&signature->refcnt, &ref, signature->lock);
 }
 
 OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)

@@ -140,15 +140,17 @@ static void *keymgmt_from_dispatch(int name_id,
         || (setparamfncnt != 0 && setparamfncnt != 2)
         || (importfncnt != 0 && importfncnt != 2)
         || (exportfncnt != 0 && exportfncnt != 2)) {
-        EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
     keymgmt->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return keymgmt;
+err:
+    EVP_KEYMGMT_free(keymgmt);
+    return NULL;
 }
 
 EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
@@ -174,8 +176,7 @@ int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
-    return 1;
+    return CRYPTO_UP_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
@@ -185,7 +186,8 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
     if (keymgmt == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
+    if (!CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock))
+        return;
     if (ref > 0)
         return;
     ossl_provider_free(keymgmt->prov);

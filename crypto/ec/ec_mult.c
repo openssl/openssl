@@ -77,10 +77,13 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 
 EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
-    int i;
-    if (pre != NULL)
-        CRYPTO_UP_REF(&pre->references, &i, pre->lock);
-    return pre;
+    int ref = 0;
+
+    if (pre != NULL) {
+        if (!CRYPTO_UP_REF(&pre->references, &ref, pre->lock))
+            return NULL;
+    }
+    return ref > 0 ? pre : NULL;
 }
 
 void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
@@ -90,7 +93,8 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
     if (pre == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
+    if (!CRYPTO_DOWN_REF(&pre->references, &i, pre->lock))
+        return;
     REF_PRINT_COUNT("EC_ec", pre);
     if (i > 0)
         return;

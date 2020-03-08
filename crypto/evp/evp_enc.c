@@ -1582,15 +1582,17 @@ static void *evp_cipher_from_dispatch(const int name_id,
          * functions, or a single "cipher" function. In all cases we need both
          * the "newctx" and "freectx" functions.
          */
-        EVP_CIPHER_free(cipher);
         EVPerr(EVP_F_EVP_CIPHER_FROM_DISPATCH, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
     cipher->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return cipher;
+err:
+    EVP_CIPHER_free(cipher);
+    return NULL;
 }
 
 static int evp_cipher_up_ref(void *cipher)
@@ -1622,8 +1624,7 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
-    return 1;
+    return CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
 }
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
@@ -1633,7 +1634,8 @@ void EVP_CIPHER_free(EVP_CIPHER *cipher)
     if (cipher == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+    if (!CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock))
+        return;
     if (i > 0)
         return;
     ossl_provider_free(cipher->prov);

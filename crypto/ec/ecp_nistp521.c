@@ -1715,10 +1715,13 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
 
 NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *p)
 {
-    int i;
-    if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i, p->lock);
-    return p;
+    int ref = 0;
+
+    if (p != NULL) {
+        if (!CRYPTO_UP_REF(&p->references, &ref, p->lock))
+            return NULL;
+    }
+    return ref > 0 ? p : NULL;
 }
 
 void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
@@ -1728,7 +1731,8 @@ void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
     if (p == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&p->references, &i, p->lock);
+    if (!CRYPTO_DOWN_REF(&p->references, &i, p->lock))
+        return;
     REF_PRINT_COUNT("EC_nistp521", x);
     if (i > 0)
         return;

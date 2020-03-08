@@ -441,8 +441,9 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     out->pctx = NULL;
     out->provctx = NULL;
 
-    if (in->fetched_digest != NULL)
-        EVP_MD_up_ref(in->fetched_digest);
+    if (in->fetched_digest != NULL
+        && !EVP_MD_up_ref(in->fetched_digest))
+            return 0;
 
     out->provctx = in->digest->dupctx(in->provctx);
     if (out->provctx == NULL) {
@@ -854,15 +855,17 @@ static void *evp_md_from_dispatch(int name_id,
          * The "digest" function can standalone. We at least need one way to
          * generate digests.
          */
-        EVP_MD_free(md);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
     md->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return md;
+err:
+    EVP_MD_free(md);
+    return NULL;
 }
 
 static int evp_md_up_ref(void *md)
@@ -889,8 +892,7 @@ int EVP_MD_up_ref(EVP_MD *md)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
-    return 1;
+    return CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
 }
 
 void EVP_MD_free(EVP_MD *md)
@@ -900,7 +902,8 @@ void EVP_MD_free(EVP_MD *md)
     if (md == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
+    if (!CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock))
+        return;
     if (i > 0)
         return;
     ossl_provider_free(md->prov);

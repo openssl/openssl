@@ -11,8 +11,7 @@ static int evp_mac_up_ref(void *vmac)
     EVP_MAC *mac = vmac;
     int ref = 0;
 
-    CRYPTO_UP_REF(&mac->refcnt, &ref, mac->lock);
-    return 1;
+    return CRYPTO_UP_REF(&mac->refcnt, &ref, mac->lock);
 }
 
 static void evp_mac_free(void *vmac)
@@ -23,7 +22,8 @@ static void evp_mac_free(void *vmac)
     if (mac == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&mac->refcnt, &ref, mac->lock);
+    if (!CRYPTO_DOWN_REF(&mac->refcnt, &ref, mac->lock))
+        return;
     if (ref > 0)
         return;
     ossl_provider_free(mac->prov);
@@ -138,15 +138,17 @@ static void *evp_mac_from_dispatch(int name_id,
          * a complete set of "mac" functions, and a complete set of context
          * management functions, as well as the size function.
          */
-        evp_mac_free(mac);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
     mac->prov = prov;
-    if (prov != NULL)
-        ossl_provider_up_ref(prov);
 
     return mac;
+err:
+    evp_mac_free(mac);
+    return NULL;
 }
 
 EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,

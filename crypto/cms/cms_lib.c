@@ -417,9 +417,10 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 int CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
 {
     int r;
+
     r = CMS_add0_cert(cms, cert);
-    if (r > 0)
-        X509_up_ref(cert);
+    if (r > 0 && !X509_up_ref(cert))
+        r = 0;
     return r;
 }
 
@@ -480,9 +481,10 @@ int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 {
     int r;
+
     r = CMS_add0_crl(cms, crl);
-    if (r > 0)
-        X509_CRL_up_ref(crl);
+    if (r > 0 && !X509_CRL_up_ref(crl))
+        r = 0;
     return r;
 }
 
@@ -504,11 +506,11 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
                 if (!certs)
                     return NULL;
             }
-            if (!sk_X509_push(certs, cch->d.certificate)) {
+            if (!sk_X509_push(certs, cch->d.certificate)
+                || !X509_up_ref(cch->d.certificate)) {
                 sk_X509_pop_free(certs, X509_free);
                 return NULL;
             }
-            X509_up_ref(cch->d.certificate);
         }
     }
     return certs;
@@ -533,11 +535,11 @@ STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms)
                 if (!crls)
                     return NULL;
             }
-            if (!sk_X509_CRL_push(crls, rch->d.crl)) {
+            if (!sk_X509_CRL_push(crls, rch->d.crl)
+                || !X509_CRL_up_ref(rch->d.crl)) {
                 sk_X509_CRL_pop_free(crls, X509_CRL_free);
                 return NULL;
             }
-            X509_CRL_up_ref(rch->d.crl);
         }
     }
     return crls;

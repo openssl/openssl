@@ -44,8 +44,7 @@ int OSSL_SERIALIZER_up_ref(OSSL_SERIALIZER *ser)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&ser->refcnt, &ref, ser->lock);
-    return 1;
+    return CRYPTO_UP_REF(&ser->refcnt, &ref, ser->lock);
 }
 
 void OSSL_SERIALIZER_free(OSSL_SERIALIZER *ser)
@@ -55,7 +54,8 @@ void OSSL_SERIALIZER_free(OSSL_SERIALIZER *ser)
     if (ser == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&ser->refcnt, &ref, ser->lock);
+    if (!CRYPTO_DOWN_REF(&ser->refcnt, &ref, ser->lock))
+        return;
     if (ref > 0)
         return;
     ossl_provider_free(ser->prov);
@@ -210,18 +210,18 @@ static void *serializer_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
     if (!((ser->newctx == NULL && ser->freectx == NULL)
           || (ser->newctx != NULL && ser->freectx != NULL))
         || (ser->serialize_data == NULL && ser->serialize_object == NULL)) {
-        OSSL_SERIALIZER_free(ser);
         ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
-        return NULL;
+        goto err;
     }
 
-    if (prov != NULL && !ossl_provider_up_ref(prov)) {
-        OSSL_SERIALIZER_free(ser);
-        return NULL;
-    }
+    if (prov != NULL && !ossl_provider_up_ref(prov))
+        goto err;
 
     ser->prov = prov;
     return ser;
+err:
+    OSSL_SERIALIZER_free(ser);
+    return NULL;
 }
 
 

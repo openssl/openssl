@@ -866,7 +866,7 @@ int SSL_up_ref(SSL *s)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&s->references, &i, s->lock) <= 0)
+    if (!CRYPTO_UP_REF(&s->references, &i, s->lock))
         return 0;
 
     REF_PRINT_COUNT("SSL", s);
@@ -1148,7 +1148,8 @@ void SSL_free(SSL *s)
 
     if (s == NULL)
         return;
-    CRYPTO_DOWN_REF(&s->references, &i, s->lock);
+    if (!CRYPTO_DOWN_REF(&s->references, &i, s->lock))
+        return;
     REF_PRINT_COUNT("SSL", s);
     if (i > 0)
         return;
@@ -1591,7 +1592,8 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
             return 0;
     }
 
-    CRYPTO_UP_REF(&f->cert->references, &i, f->cert->lock);
+    if (!CRYPTO_UP_REF(&f->cert->references, &i, f->cert->lock))
+        return 0;
     ssl_cert_free(t->cert);
     t->cert = f->cert;
     if (!SSL_set_session_id_context(t, f->sid_ctx, (int)f->sid_ctx_length)) {
@@ -3294,7 +3296,7 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&ctx->references, &i, ctx->lock) <= 0)
+    if (!CRYPTO_UP_REF(&ctx->references, &i, ctx->lock))
         return 0;
 
     REF_PRINT_COUNT("SSL_CTX", ctx);
@@ -3309,7 +3311,8 @@ void SSL_CTX_free(SSL_CTX *a)
     if (a == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&a->references, &i, a->lock);
+    if (!CRYPTO_DOWN_REF(&a->references, &i, a->lock))
+        return;
     REF_PRINT_COUNT("SSL_CTX", a);
     if (i > 0)
         return;
@@ -3932,7 +3935,8 @@ SSL *SSL_dup(SSL *s)
 
     /* If we're not quiescent, just up_ref! */
     if (!SSL_in_init(s) || !SSL_in_before(s)) {
-        CRYPTO_UP_REF(&s->references, &i, s->lock);
+        if (!CRYPTO_UP_REF(&s->references, &i, s->lock))
+            return NULL;
         return s;
     }
 

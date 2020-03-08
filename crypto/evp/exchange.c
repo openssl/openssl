@@ -28,14 +28,19 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     exchange->lock = CRYPTO_THREAD_lock_new();
     if (exchange->lock == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(exchange);
-        return NULL;
+        goto err;
     }
+    if (!ossl_provider_up_ref(prov))
+        goto err;
     exchange->prov = prov;
-    ossl_provider_up_ref(prov);
     exchange->refcnt = 1;
 
     return exchange;
+err:
+    CRYPTO_THREAD_lock_free(exchange->lock);
+    OPENSSL_free(exchange);
+    return NULL;
+
 }
 
 static void *evp_keyexch_from_dispatch(int name_id,
@@ -144,7 +149,8 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
     if (exchange != NULL) {
         int i;
 
-        CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
+        if (!CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock))
+            return;
         if (i > 0)
             return;
         ossl_provider_free(exchange->prov);
@@ -157,8 +163,7 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&exchange->refcnt, &ref, exchange->lock);
-    return 1;
+    return CRYPTO_UP_REF(&exchange->refcnt, &ref, exchange->lock);
 }
 
 OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)

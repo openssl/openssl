@@ -233,25 +233,28 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    if (pkey != NULL && !EVP_PKEY_up_ref(pkey))
+        goto err;
+
+    ret->pkey = pkey;
     ret->libctx = libctx;
     ret->keytype = name;
     ret->propquery = propquery;
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
-    ret->pkey = pkey;
-    if (pkey != NULL)
-        EVP_PKEY_up_ref(pkey);
 
     if (pmeth != NULL && pmeth->init != NULL) {
         if (pmeth->init(ret) <= 0) {
             ret->pmeth = NULL;
-            EVP_PKEY_CTX_free(ret);
-            return NULL;
+            goto err;
         }
     }
 
     return ret;
+err:
+    EVP_PKEY_CTX_free(ret);
+    return NULL;
 }
 
 /*- All methods below can also be used in FIPS_MODE */
@@ -386,7 +389,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
-    EVP_PKEY_CTX *rctx;
+    EVP_PKEY_CTX *rctx = NULL;
 
     if (((pctx->pmeth == NULL) || (pctx->pmeth->copy == NULL))
             && ((EVP_PKEY_CTX_IS_DERIVE_OP(pctx)
@@ -407,8 +410,10 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         return NULL;
     }
 
-    if (pctx->pkey != NULL)
-        EVP_PKEY_up_ref(pctx->pkey);
+    if (pctx->pkey != NULL && !EVP_PKEY_up_ref(pctx->pkey)) {
+        OPENSSL_free(rctx);
+        return NULL;
+    }
     rctx->pkey = pctx->pkey;
     rctx->operation = pctx->operation;
     rctx->libctx = pctx->libctx;
@@ -482,13 +487,13 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->engine = pctx->engine;
 # endif
 
-    if (pctx->peerkey)
-        EVP_PKEY_up_ref(pctx->peerkey);
+    if (pctx->peerkey != NULL && !EVP_PKEY_up_ref(pctx->peerkey))
+        goto err;
     rctx->peerkey = pctx->peerkey;
 
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
-
+err:
     rctx->pmeth = NULL;
     EVP_PKEY_CTX_free(rctx);
     return NULL;

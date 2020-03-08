@@ -382,7 +382,8 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri,  X509 *recip, EVP_PKEY *r
              return 0;
     }
 
-    EVP_PKEY_up_ref(recipPubKey);
+    if (!EVP_PKEY_up_ref(recipPubKey))
+        return 0;
     rek->pkey = recipPubKey;
     return 1;
 }

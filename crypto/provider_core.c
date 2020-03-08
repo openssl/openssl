@@ -223,7 +223,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 {
     int ref = 0;
 
-    if (CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock) <= 0)
+    if (!CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock))
         return 0;
     return ref;
 }
@@ -290,7 +290,8 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
     if (prov != NULL) {
         int ref = 0;
 
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+        if (!CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock))
+            return;
 
         /*
          * When the refcount drops below two, the store is the only

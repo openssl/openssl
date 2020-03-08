@@ -125,7 +125,8 @@ void DH_free(DH *r)
     if (r == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
+    if (!CRYPTO_DOWN_REF(&r->references, &i, r->lock))
+        return;
     REF_PRINT_COUNT("DH", r);
     if (i > 0)
         return;
@@ -152,7 +153,7 @@ int DH_up_ref(DH *r)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
+    if (!CRYPTO_UP_REF(&r->references, &i, r->lock))
         return 0;
 
     REF_PRINT_COUNT("DH", r);

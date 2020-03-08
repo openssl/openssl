@@ -621,8 +621,9 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret = EVP_PKEY_assign_RSA(pkey, key);
-    if (ret)
-        RSA_up_ref(key);
+
+    if (ret && !RSA_up_ref(key))
+        ret = 0;
     return ret;
 }
 
@@ -638,8 +639,9 @@ RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
     RSA *ret = EVP_PKEY_get0_RSA(pkey);
-    if (ret != NULL)
-        RSA_up_ref(ret);
+
+    if (ret != NULL && !RSA_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 # endif
@@ -648,8 +650,9 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 {
     int ret = EVP_PKEY_assign_DSA(pkey, key);
-    if (ret)
-        DSA_up_ref(key);
+
+    if (ret && !DSA_up_ref(key))
+        ret = 0;
     return ret;
 }
 
@@ -665,8 +668,9 @@ DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
     DSA *ret = EVP_PKEY_get0_DSA(pkey);
-    if (ret != NULL)
-        DSA_up_ref(ret);
+
+    if (ret != NULL && !DSA_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 # endif
@@ -676,8 +680,9 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
     int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
-    if (ret)
-        EC_KEY_up_ref(key);
+
+    if (ret && !EC_KEY_up_ref(key))
+        ret = 0;
     return ret;
 }
 
@@ -693,8 +698,9 @@ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 {
     EC_KEY *ret = EVP_PKEY_get0_EC_KEY(pkey);
-    if (ret != NULL)
-        EC_KEY_up_ref(ret);
+
+    if (ret != NULL && !EC_KEY_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 # endif
@@ -706,8 +712,8 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
     int type = DH_get0_q(key) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
     int ret = EVP_PKEY_assign(pkey, type, key);
 
-    if (ret)
-        DH_up_ref(key);
+    if (ret && !DH_up_ref(key))
+        ret = 0;
     return ret;
 }
 
@@ -723,8 +729,9 @@ DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 {
     DH *ret = EVP_PKEY_get0_DH(pkey);
-    if (ret != NULL)
-        DH_up_ref(ret);
+
+    if (ret != NULL && !DH_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 # endif
@@ -1003,7 +1010,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&pkey->references, &i, pkey->lock) <= 0)
+    if (!CRYPTO_UP_REF(&pkey->references, &i, pkey->lock))
         return 0;
 
     REF_PRINT_COUNT("EVP_PKEY", pkey);
@@ -1054,7 +1061,8 @@ void EVP_PKEY_free(EVP_PKEY *x)
     if (x == NULL)
         return;
 
-    CRYPTO_DOWN_REF(&x->references, &i, x->lock);
+    if (!CRYPTO_DOWN_REF(&x->references, &i, x->lock))
+        return;
     REF_PRINT_COUNT("EVP_PKEY", x);
     if (i > 0)
         return;
