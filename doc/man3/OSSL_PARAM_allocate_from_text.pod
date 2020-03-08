@@ -26,34 +26,74 @@ OpenSSL 3.0 introduces a new mechanism to do the same thing with an
 array of parameters that contain name, value, value type and value
 size (see L<OSSL_PARAM(3)> for more information).
 
-OSSL_PARAM_allocate_from_text() takes a control I<key>, I<value> and
-value size I<value_n>, and given a parameter descriptor array
-I<paramdefs>, it converts the value to something suitable for
-L<OSSL_PARAM(3)> and stores that in the buffer I<buf>, and modifies
-the parameter I<to> to match.
-I<buf_n>, if not NULL, will be assigned the number of bytes used in
-I<buf>.
-If I<buf> is NULL, only I<buf_n> will be modified, everything else is
-left untouched, allowing a caller to find out how large the buffer
-should be.
-I<buf> needs to be correctly aligned for the type of the B<OSSL_PARAM>
-I<key>.
-If <found> is not NULL, it is set to 1 if the parameter can be located and
-to 0 otherwise.
+OSSL_PARAM_allocate_from_text() uses I<key> to look up an item in
+I<paramdefs>.  If an item was found, it converts I<value> to something
+suitable for that item's I<data_type>, and stores the result in
+I<< to->data >> as well as its size in I<< to->data_size >>.
+I<< to->key >> and I<< to->data_type >> are assigned the corresponding
+values from the item that was found, and I<< to->return_size >> is set
+to zero.
 
-The caller must remember to free the data of I<to> when it's not
-useful any more.
+I<< to->data >> is always allocated using L<OPENSSL_zalloc(3)> and
+needs to be freed by the caller when it's not useful any more, using
+L<OPENSSL_free(3)>.
 
-For parameters having the type B<OSSL_PARAM_INTEGER>,
-B<OSSL_PARAM_UNSIGNED_INTEGER>, or B<OSSL_PARAM_OCTET_STRING>, both
-functions will interpret the I<value> differently if the key starts
-with "hex".
-In that case, the value is decoded first, and the result will be used
-as parameter value.
+If I<found> is not NULL, I<*found> is set to 1 if I<key> could be
+located in I<paramdefs>, and to 0 otherwise.
+
+=head2 The use of I<key> and I<value> in detail
+
+OSSL_PARAM_allocate_from_text() takes note if I<key> starts with
+"hex", and will only use the rest of I<key> to look up an item in
+I<paramdefs> in that case.  As an example, if I<key> is "hexid", "id"
+will be looked up in I<paramdefs>.
+
+When an item in I<paramdefs> has been found, I<value> is converted
+depending on that item's I<data_type>, as follows:
+
+=over 4
+
+=item B<OSSL_PARAM_INTEGER> and B<OSSL_PARAM_UNSIGNED_INTEGER>
+
+If I<key> started with "hex", I<value> is assumed to contain
+I<value_n> hexadecimal characters, which are decoded, and the
+resulting bytes become the number stored in the I<< to->data >>
+storage.
+
+If I<key> didn't start with "hex", I<value> is assumed to contain
+I<value_n> decimal characters, which are decoded, and the resulting
+bytes become the number stored in the I<< to->data >> storage.
+
+If I<value> contains characters that couldn't be decoded as
+hexadecimal or decimal characters, OSSL_PARAM_allocate_from_text()
+considers that an error.
+
+=item B<OSSL_PARAM_UTF8_STRING>
+
+If I<key> started with "hex", OSSL_PARAM_allocate_from_text()
+considers that an error.
+
+Otherwise, I<value> is considered a C string and is copied with no
+further checks to the I<< to->data >> storage.
+
+=item B<OSSL_PARAM_OCTET_STRING>
+
+If I<key> started with "hex", I<value> is assumed to contain
+I<value_n> hexadecimal characters, which are decoded, and the
+resulting bytes are stored in the I<< to->data >> storage.
+If I<value> contains characters that couldn't be decoded as
+hexadecimal or decimal characters, OSSL_PARAM_allocate_from_text()
+considers that an error.
+
+If I<key> didn't start with "hex", I<value_n> bytes from I<value> are
+copied to the I<< to->data >> storage.
+
+=back
 
 =head1 RETURN VALUES
 
-OSSL_PARAM_allocate_from_text() returns 1 on success, and 0 on error.
+OSSL_PARAM_allocate_from_text() returns 1 if I<key> was found in
+I<paramdefs> and there was no other failure, otherwise 0.
 
 =head1 NOTES
 
@@ -65,7 +105,7 @@ The following B<OSSL_PARAM> attributes are used:
 
 =item I<key>
 
-=item I<data>
+=item I<data_type>
 
 =item I<data_size>
 
