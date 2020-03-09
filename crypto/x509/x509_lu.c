@@ -287,7 +287,8 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
     return ret;
 }
 
-int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
+int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
+                                  X509_LOOKUP_TYPE type,
                                   const X509_NAME *name, X509_OBJECT *ret)
 {
     X509_STORE *store = vs->store;
@@ -533,6 +534,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *v)
     return v->objs;
 }
 
+/* TODO param type could be constified as change to lock is intermittent */
 STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
 {
     STACK_OF(X509) *sk;
@@ -626,7 +628,8 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     return sk;
 }
 
-STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, const X509_NAME *nm)
+STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
+                                             const X509_NAME *nm)
 {
     int i, idx, cnt;
     STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
@@ -802,7 +805,7 @@ int X509_STORE_set_trust(X509_STORE *ctx, int trust)
     return X509_VERIFY_PARAM_set_trust(ctx->param, trust);
 }
 
-int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *param)
+int X509_STORE_set1_param(X509_STORE *ctx, const X509_VERIFY_PARAM *param)
 {
     return X509_VERIFY_PARAM_set1(ctx->param, param);
 }

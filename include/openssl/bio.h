@@ -566,7 +566,7 @@ int BIO_ctrl_reset_read_request(BIO *b);
 #define BIO_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, l, p, newf, dupf, freef)
 int BIO_set_ex_data(BIO *bio, int idx, void *data);
-void *BIO_get_ex_data(BIO *bio, int idx);
+void *BIO_get_ex_data(const BIO *bio, int idx);
 uint64_t BIO_number_read(BIO *bio);
 uint64_t BIO_number_written(BIO *bio);
 

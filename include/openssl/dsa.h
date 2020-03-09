@@ -130,7 +130,7 @@ DEPRECATEDIN_3_0(int DSA_verify(int type, const unsigned char *dgst,
         CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, l, p, newf, dupf, freef)
 #  endif
 DEPRECATEDIN_3_0(int DSA_set_ex_data(DSA *d, int idx, void *arg))
-DEPRECATEDIN_3_0(void *DSA_get_ex_data(DSA *d, int idx))
+DEPRECATEDIN_3_0(void *DSA_get_ex_data(const DSA *d, int idx))
 
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPrivateKey)

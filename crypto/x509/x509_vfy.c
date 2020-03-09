@@ -361,7 +361,8 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
         return 0;
 }
 
-static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, const X509_NAME *nm)
+static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
+                                       const X509_NAME *nm)
 {
     STACK_OF(X509) *sk = NULL;
     X509 *x;
@@ -2092,7 +2093,7 @@ STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx)
     return ctx->chain;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx)
 {
     if (!ctx->chain)
         return NULL;

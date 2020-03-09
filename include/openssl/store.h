@@ -179,7 +179,8 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type);
  */
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name);
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
-                                                      const ASN1_INTEGER *serial);
+                                                      const ASN1_INTEGER
+                                                      *serial);
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
                                                         const unsigned char
                                                         *bytes, size_t len);

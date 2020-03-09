@@ -171,7 +171,7 @@ int DH_set_ex_data(DH *d, int idx, void *arg)
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
 
-void *DH_get_ex_data(DH *d, int idx)
+void *DH_get_ex_data(const DH *d, int idx)
 {
     return CRYPTO_get_ex_data(&d->ex_data, idx);
 }

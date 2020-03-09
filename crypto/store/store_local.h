@@ -73,7 +73,7 @@ struct ossl_store_search_st {
      * Used by OSSL_STORE_SEARCH_BY_NAME and
      * OSSL_STORE_SEARCH_BY_ISSUER_SERIAL
      */
-    X509_NAME *name;
+    X509_NAME *name; /* TODO constify this; leads to API incompatibility */
 
     /* Used by OSSL_STORE_SEARCH_BY_ISSUER_SERIAL */
     const ASN1_INTEGER *serial;
