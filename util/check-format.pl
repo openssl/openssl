@@ -868,7 +868,8 @@ while (<>) { # loop over all lines of all input files
     if ($paren_expr_start || $return_enum_start || $assignment_start)
     {
         my ($head, $mid, $tail) = ($1, $3, $4);
-        $keyword_opening_brace = $mid if $mid ne "=" && $tail =~ m/\{/;
+        $keyword_opening_brace = $mid if $mid ne "=";
+        # to cope with multi-line expressions, do this also if !($tail =~ m/\{/)
         push @in_if_hanging_offsets, $hanging_offset if $mid eq "if";
 
         # already handle $head, i.e., anything before expression
