@@ -7,10 +7,7 @@
 
   Major changes between OpenSSL 1.1.1d and OpenSSL 1.1.1e [under development]
 
-      o X509 certificates signed using SHA1 are no longer allowed at security
-        level 1 or higher. The default security level for TLS is 1, so
-        certificates signed using SHA1 are by default no longer trusted to
-        authenticate servers or clients.
+      o
 
   Major changes between OpenSSL 1.1.1c and OpenSSL 1.1.1d [10 Sep 2019]
 
