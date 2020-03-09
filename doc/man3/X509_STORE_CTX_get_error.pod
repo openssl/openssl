@@ -13,15 +13,15 @@ information
 
  #include <openssl/x509.h>
 
- int   X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
+ int   X509_STORE_CTX_get_error(const X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);
- int   X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
+ int   X509_STORE_CTX_get_error_depth(const X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
- X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+ X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
- X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
+ X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
 
- STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
+ STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx);
 
  const char *X509_verify_cert_error_string(long n);
 

@@ -12,16 +12,16 @@ subject names
  #include <openssl/x509.h>
 
  X509_NAME *X509_get_subject_name(const X509 *x);
- int X509_set_subject_name(X509 *x, X509_NAME *name);
+ int X509_set_subject_name(X509 *x, const X509_NAME *name);
 
  X509_NAME *X509_get_issuer_name(const X509 *x);
- int X509_set_issuer_name(X509 *x, X509_NAME *name);
+ int X509_set_issuer_name(X509 *x, const X509_NAME *name);
 
  X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
- int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
+ int X509_REQ_set_subject_name(X509_REQ *req, const X509_NAME *name);
 
  X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
- int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
+ int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name);
 
 =head1 DESCRIPTION
 
