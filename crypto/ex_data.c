@@ -79,28 +79,6 @@ void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx)
     global->ex_data_lock = NULL;
 }
 
-
-/*
- * Unregister a new index by replacing the callbacks with no-ops.
- * Any in-use instances are leaked.
- */
-static void dummy_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                     long argl, void *argp)
-{
-}
-
-static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                       long argl, void *argp)
-{
-}
-
-static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                     void *from_d, int idx,
-                     long argl, void *argp)
-{
-    return 1;
-}
-
 int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
 {
     EX_CALLBACKS *ip;
@@ -117,12 +95,11 @@ int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx)
     if (idx < 0 || idx >= sk_EX_CALLBACK_num(ip->meth))
         goto err;
     a = sk_EX_CALLBACK_value(ip->meth, idx);
-    if (a == NULL)
-        goto err;
-    a->new_func = dummy_new;
-    a->dup_func = dummy_dup;
-    a->free_func = dummy_free;
-    toret = 1;
+    if (a != NULL) {
+        free(a);
+        sk_EX_CALLBACK_set(ip->meth, idx, NULL);
+        toret = 1;
+    }
 err:
     CRYPTO_THREAD_unlock(global->ex_data_lock);
     return toret;
@@ -182,7 +159,6 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
     }
     toret = sk_EX_CALLBACK_num(ip->meth) - 1;
     (void)sk_EX_CALLBACK_set(ip->meth, toret, a);
-
  err:
     CRYPTO_THREAD_unlock(global->ex_data_lock);
     return toret;
