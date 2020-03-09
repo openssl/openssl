@@ -122,7 +122,7 @@ static void select_serializer(const char *name, void *data)
 
     if ((s = OSSL_SERIALIZER_fetch(d->libctx, name, d->propquery)) != NULL) {
         if (OSSL_SERIALIZER_provider(s) == d->desired_provider
-                   && s->serialize_object != NULL) {
+                && s->serialize_object != NULL) {
             OSSL_SERIALIZER_free(d->first);
             d->first = NULL;
             d->desired = s;
