@@ -31,7 +31,7 @@ B<openssl> B<ciphers>
 =head1 DESCRIPTION
 
 This command converts textual OpenSSL cipher lists into
-ordered SSL cipher preference lists. It can be used when testing to
+ordered SSL cipher preference lists. It can be used to
 determine the appropriate cipherlist.
 
 =head1 OPTIONS

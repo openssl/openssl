@@ -603,9 +603,9 @@ sub wording {
         if $contents =~ /\bepoch\b/;
     if ( $id =~ m@man1/@ ) {
         err($id, "found 'tool' in NAME, should use 'command'")
-            if $contents =~ /=head1 NAME.*tool.*=head1 SYNOPSIS/s;
+            if $contents =~ /=head1 NAME.*\btool\b.*=head1 SYNOPSIS/s;
         err($id, "found 'utility' in NAME, should use 'command'")
-            if $contents =~ /NAME.*utility.*=head1 SYNOPSIS/s;
+            if $contents =~ /NAME.*\butility\b.*=head1 SYNOPSIS/s;
 
     }
 }
