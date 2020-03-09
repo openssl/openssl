@@ -376,9 +376,6 @@ openssl req -new -nodes -subj "/CN=localhost" \
     ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \
     server-pss-restrict-cert rootkey rootcert
 
-# CT entry
-./mkcert.sh genct server.example embeddedSCTs1-key embeddedSCTs1 embeddedSCTs1_issuer-key embeddedSCTs1_issuer ct-server-key
-
 OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genroot "Root Ed448" \
     root-ed448-key root-ed448-cert
 OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
