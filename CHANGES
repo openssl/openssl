@@ -21,18 +21,6 @@
      resolve symbols with longer names.
      [Richard Levitte]
 
-  *) X509 certificates signed using SHA1 are no longer allowed at security
-     level 1 and above.
-     In TLS/SSL the default security level is 1. It can be set either
-     using the cipher string with @SECLEVEL, or calling
-     SSL_CTX_set_security_level(). If the leaf certificate is signed with SHA-1,
-     a call to SSL_CTX_use_certificate() will fail if the security level is not
-     lowered first.
-     Outside TLS/SSL, the default security level is -1 (effectively 0). It can
-     be set using X509_VERIFY_PARAM_set_auth_level() or using the -auth_level
-     options of the apps.
-     [Kurt Roeckx]
-
   *) Corrected the documentation of the return values from the EVP_DigestSign*
      set of functions.  The documentation mentioned negative values for some
      errors, but this was never the case, so the mention of negative values
