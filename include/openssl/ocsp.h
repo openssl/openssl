@@ -371,5 +371,5 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 #  ifdef  __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_OCSP */
+# endif /* !defined(OPENSSL_NO_OCSP) */
 #endif

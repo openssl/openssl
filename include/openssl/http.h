@@ -69,4 +69,4 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 # ifdef  __cplusplus
 }
 # endif
-#endif /* !defined OPENSSL_HTTP_H */
+#endif /* !defined(OPENSSL_HTTP_H) */
