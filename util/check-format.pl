@@ -1001,7 +1001,7 @@ while (<>) { # loop over all lines of all input files
     # check for opening brace after if/while/for/switch/do not on same line
     # note that "no '{' on same line after '} else'" is handled further below
     if (/^[\s@]*{/ && # leading '{'
-        $line_before > 0 &&
+        $line_before > 0 && !($contents_before_ =~ m/^\s*#/) && # not preprocessor directive '#if
         (my ($head, $mid, $tail) = ($contents_before_ =~ m/(^|^.*\W)(if|while|for|switch|do)(\W.*$|$)/))) {
         my $brace_after  = $tail =~ /^[\s@]*{/; # any whitespace or comments then '{'
         report("'{' not on same line as preceding '$mid'") if !$brace_after;
