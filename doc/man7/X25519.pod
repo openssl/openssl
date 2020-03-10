@@ -10,7 +10,7 @@ X448
 
 The B<X25519> and B<X448> EVP_PKEY implementation supports key generation and
 key derivation using B<X25519> and B<X448>. It has associated private and public
-key formats compatible with draft-ietf-curdle-pkix-03.
+key formats compatible with RFC 8410.
 
 No additional parameters can be set during key generation.
 
