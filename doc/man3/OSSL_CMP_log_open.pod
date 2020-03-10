@@ -13,7 +13,7 @@ OSSL_CMP_LOG_WARNING,
 OSSL_CMP_LOG_NOTICE,
 OSSL_CMP_LOG_INFO,
 OSSL_CMP_LOG_DEBUG,
-OSSL_cmp_log_cb_t,
+OSSL_CMP_log_cb_t,
 OSSL_CMP_print_to_bio,
 OSSL_CMP_print_errors_cb
 - functions for logging and error reporting
@@ -36,12 +36,12 @@ OSSL_CMP_print_errors_cb
  #define OSSL_CMP_LOG_INFO    6
  #define OSSL_CMP_LOG_DEBUG   7
 
- typedef int (*OSSL_cmp_log_cb_t)(const char *component,
+ typedef int (*OSSL_CMP_log_cb_t)(const char *component,
                                   const char *file, int line,
                                   OSSL_CMP_severity level, const char *msg);
  int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
                            int line, OSSL_CMP_severity level, const char *msg);
- void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
+ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn);
 
 =head1 DESCRIPTION
 
@@ -56,7 +56,7 @@ should be provided for user information, debugging, and auditing purposes.
 A CMP application can obtain this information by providing a callback function
 with the following type:
 
- typedef int (*OSSL_cmp_log_cb_t)(const char *component,
+ typedef int (*OSSL_CMP_log_cb_t)(const char *component,
                                   const char *file, int line,
                                   OSSL_CMP_severity level, const char *msg);
 

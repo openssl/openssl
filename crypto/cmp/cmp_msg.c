@@ -348,7 +348,8 @@ OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
     return msg;
 
  err:
-    CMPerr(0, err_code);
+    if (err_code != 0)
+        CMPerr(0, err_code);
     OSSL_CRMF_MSG_free(crm);
     OSSL_CMP_MSG_free(msg);
     return NULL;

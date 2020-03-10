@@ -39,13 +39,13 @@ typedef int OSSL_CMP_severity;
 #  define OSSL_CMP_LOG_NOTICE  5
 #  define OSSL_CMP_LOG_INFO    6
 #  define OSSL_CMP_LOG_DEBUG   7
-typedef int (*OSSL_cmp_log_cb_t)(const char *func, const char *file, int line,
+typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg);
 
 int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
                           int line, OSSL_CMP_severity level, const char *msg);
 /* use of the logging callback for outputting error queue */
-void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
+void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn);
 
 #  ifdef  __cplusplus
 }

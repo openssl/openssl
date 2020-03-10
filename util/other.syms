@@ -352,7 +352,10 @@ OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
 OSSL_CMP_CTX_set_log_verbosity          define
+OSSL_CMP_CR                             define
 OSSL_CMP_DEFAULT_PORT                   define
+OSSL_CMP_IR                             define
+OSSL_CMP_KUR                            define
 OSSL_CMP_LOG_ALERT                      define
 OSSL_CMP_LOG_CRIT                       define
 OSSL_CMP_LOG_DEBUG                      define
@@ -363,10 +366,12 @@ OSSL_CMP_LOG_NOTICE                     define
 OSSL_CMP_LOG_WARNING                    define
 OSSL_CMP_MSTR_HELPER                    define
 OSSL_CMP_MSTR                           define
+OSSL_CMP_P10CR                          define
+ossl_cmp_allow_unprotected_cb_t         datatype
+OSSL_CMP_certConf_cb_t                  datatype
+OSSL_CMP_log_cb_t                       datatype
 OSSL_CMP_severity                       datatype
-OSSL_cmp_certConf_cb_t                  datatype
-OSSL_cmp_log_cb_t                       datatype
-OSSL_cmp_transfer_cb_t                  datatype
+OSSL_CMP_transfer_cb_t                  datatype
 OSSL_CMP_SRV_cert_request_cb_t          datatype
 OSSL_CMP_SRV_rr_cb_t                    datatype
 OSSL_CMP_SRV_certConf_cb_t              datatype

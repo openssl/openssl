@@ -44,12 +44,6 @@ static void tear_down(CMP_VFY_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static int print_to_bio_out(const char *func, const char *file, int line,
-                            OSSL_CMP_severity level, const char *msg)
-{
-    return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
-}
-
 static time_t test_time_valid = 0, test_time_after_expiration = 0;
 
 static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)

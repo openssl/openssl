@@ -426,7 +426,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     char *sname = NULL;
     char *skid_str = NULL;
     const ASN1_OCTET_STRING *skid = msg->header->senderKID;
-    OSSL_cmp_log_cb_t backup_log_cb = ctx->log_cb;
+    OSSL_CMP_log_cb_t backup_log_cb = ctx->log_cb;
     int res = 0;
 
     if (sender == NULL || msg->body == NULL)
@@ -633,8 +633,8 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  *
  * Ensures that:
  * it has a valid body type
- * its protection is valid or absent (allowed only if callback function is
- *    present and function yields non-zero result using also supplied argument)
+ * its protection is valid (or invalid/absent, but only if a callback function
+ *     is present and yields a positive result using also the supplied argument)
  * its transaction ID matches the previous transaction ID stored in ctx (if any)
  * its recipNonce matches the previous senderNonce stored in the ctx (if any)
  *
@@ -660,32 +660,26 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     if (msg->header->protectionAlg != 0) {
         /* detect explicitly permitted exceptions for invalid protection */
         if (!OSSL_CMP_validate_msg(ctx, msg)
-                && (cb == NULL || !(*cb)(ctx, msg, 1, cb_arg))) {
+                && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
             CMPerr(0, CMP_R_ERROR_VALIDATING_PROTECTION);
             return -1;
         }
     } else {
         /* detect explicitly permitted exceptions for missing protection */
-        if (cb == NULL || !(*cb)(ctx, msg, 0, cb_arg)) {
+        if (cb == NULL || (*cb)(ctx, msg, 0, cb_arg) <= 0) {
             CMPerr(0, CMP_R_MISSING_PROTECTION);
             return -1;
         }
     }
 
-    /*
-     * Store any provided extraCerts in ctx for future use,
-     * such that they are available to ctx->certConf_cb and
-     * the peer does not need to send them again in the same transaction.
-     * For efficiency, the extraCerts are prepended so they get used first.
-     */
-    if (!ossl_cmp_sk_X509_add1_certs(ctx->untrusted_certs, msg->extraCerts,
-                                     0 /* this allows self-issued certs */,
-                                     1 /* no_dups */, 1 /* prepend */))
-        return -1;
-
     /* check CMP version number in header */
     if (ossl_cmp_hdr_get_pvno(OSSL_CMP_MSG_get0_header(msg)) != OSSL_CMP_PVNO) {
         CMPerr(0, CMP_R_UNEXPECTED_PVNO);
+        return -1;
+    }
+
+    if ((rcvd_type = ossl_cmp_msg_get_bodytype(msg)) < 0) {
+        CMPerr(0, CMP_R_PKIBODY_ERROR);
         return -1;
     }
 
@@ -720,10 +714,17 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         && !OSSL_CMP_CTX_set1_transactionID(ctx, msg->header->transactionID))
         return -1;
 
-    if ((rcvd_type = ossl_cmp_msg_get_bodytype(msg)) < 0) {
-        CMPerr(0, CMP_R_PKIBODY_ERROR);
+    /*
+     * Store any provided extraCerts in ctx for future use,
+     * such that they are available to ctx->certConf_cb and
+     * the peer does not need to send them again in the same transaction.
+     * For efficiency, the extraCerts are prepended so they get used first.
+     */
+    if (!ossl_cmp_sk_X509_add1_certs(ctx->untrusted_certs, msg->extraCerts,
+                                     0 /* this allows self-issued certs */,
+                                     1 /* no_dups */, 1 /* prepend */))
         return -1;
-    }
+
     return rcvd_type;
 }
 

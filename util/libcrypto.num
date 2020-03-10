@@ -4802,6 +4802,7 @@ OSSL_CMP_CTX_set1_transactionID         ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_senderNonce           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_log_open                       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_log_close                      ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_print_errors_cb                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CRMF_CERTID_get0_issuer            ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_CERTID_get0_serialNumber      ?	3_0_0	EXIST::FUNCTION:CRMF
@@ -4937,7 +4938,6 @@ X509_STORE_CTX_print_verify_cb          ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_get1_all_certs               ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_validate_msg                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_validate_cert_path             ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_PKEY_CTX_set_ecdh_cofactor_mode     ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_get_ecdh_cofactor_mode     ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_set_ecdh_kdf_type          ?	3_0_0	EXIST::FUNCTION:EC
@@ -4985,6 +4985,14 @@ OSSL_CMP_SRV_CTX_set_send_unprotected_errors ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_unprotected ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_raverified  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_IR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_CR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_P10CR_ses                 ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_KUR_ses                   ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_try_certreq                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_certConf_cb                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_RR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_GENM_ses                  ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:RSA

@@ -215,8 +215,8 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                            &certOut, &chainOut, &caPubs);
         if (si == NULL)
             goto err;
-        /* set OSSL_CMP_OPT_IMPLICITCONFIRM if and only if transaction ends */
-        if (!OSSL_CMP_CTX_set_option(srv_ctx->ctx, OSSL_CMP_OPT_IMPLICITCONFIRM,
+        /* set OSSL_CMP_OPT_IMPLICIT_CONFIRM if and only if transaction ends */
+        if (!OSSL_CMP_CTX_set_option(srv_ctx->ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM,
                                      ossl_cmp_hdr_has_implicitConfirm(hdr)
                                          && srv_ctx->grantImplicitConfirm
                                          /* do not set if polling starts: */
@@ -264,7 +264,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if ((details = sk_OSSL_CMP_REVDETAILS_value(req->body->value.rr,
                                                 OSSL_CMP_REVREQSID)) == NULL) {
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MSG);
+        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
         return NULL;
     }
 
@@ -341,7 +341,7 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     ccc = req->body->value.certConf;
     num = sk_OSSL_CMP_CERTSTATUS_num(ccc);
 
-    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICITCONFIRM) == 1) {
+    if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1) {
         CMPerr(0, CMP_R_ERROR_UNEXPECTED_CERTCONF);
         return NULL;
     }
@@ -415,13 +415,17 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
 }
 
 /*
- * Determines whether missing protection is allowed
+ * Determine whether missing/invalid protection of request message is allowed.
+ * Return 1 on acceptance, 0 on rejection, or -1 on (internal) error.
  */
 static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  const OSSL_CMP_MSG *req,
                                  int invalid_protection,
                                  int accept_unprotected_requests)
 {
+    if (!ossl_assert(ctx != NULL && req != NULL))
+        return -1;
+
     if (accept_unprotected_requests) {
         ossl_cmp_log1(WARN, ctx, "ignoring %s protection of request message",
                       invalid_protection ? "invalid" : "missing");
@@ -574,7 +578,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_CP:
     case OSSL_CMP_PKIBODY_KUP:
     case OSSL_CMP_PKIBODY_RP:
-        if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICITCONFIRM) == 0)
+        if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 0)
             break;
         /* fall through */
 
@@ -607,7 +611,7 @@ OSSL_CMP_MSG * OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
     }
 
     if ((srv_ctx = OSSL_CMP_CTX_get_transfer_cb_arg(client_ctx)) == NULL) {
-        CMPerr(0, CMP_R_ERROR_TRANSFERRING_OUT);
+        CMPerr(0, CMP_R_TRANSFER_ERROR);
         return 0;
     }
 

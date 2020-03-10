@@ -144,7 +144,7 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
 
 #define ERR_PRINT_BUF_SIZE 4096
 /* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
-void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
+void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 {
     unsigned long err;
     char msg[ERR_PRINT_BUF_SIZE];

@@ -75,7 +75,7 @@ int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si)
     int i;
     int res = 0;
 
-    if (!ossl_assert(si != NULL && si->failInfo != NULL))
+    if (!ossl_assert(si != NULL))
         return -1;
     for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
         if (ASN1_BIT_STRING_get_bit(si->failInfo, i))

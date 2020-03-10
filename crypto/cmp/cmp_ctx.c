@@ -103,7 +103,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
 
     ctx->serverPort = OSSL_CMP_DEFAULT_PORT;
     ctx->proxyPort = OSSL_CMP_DEFAULT_PORT;
-    ctx->msgtimeout = 2 * 60;
+    ctx->msg_timeout = 2 * 60;
 
     if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
         goto err;
@@ -257,7 +257,7 @@ int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert)
  * it be rejected.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_certConf_cb_t cb)
+int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
@@ -384,7 +384,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
  * Set a callback function for error reporting and logging messages.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb)
+int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
@@ -911,7 +911,7 @@ void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx)
  * Set callback function for sending CMP request and receiving response.
  * Returns 1 on success, 0 on error
  */
-int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_transfer_cb_t cb)
+int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_transfer_cb_t cb)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
@@ -1010,7 +1010,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_REVOCATION_REASON:
         min_val = OCSP_REVOKED_STATUS_NOSTATUS;
         break;
-    case OSSL_CMP_OPT_POPOMETHOD:
+    case OSSL_CMP_OPT_POPO_METHOD:
         min_val = OSSL_CRMF_POPO_NONE;
         break;
     default:
@@ -1030,10 +1030,10 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         }
         ctx->log_verbosity = val;
         break;
-    case OSSL_CMP_OPT_IMPLICITCONFIRM:
+    case OSSL_CMP_OPT_IMPLICIT_CONFIRM:
         ctx->implicitConfirm = val;
         break;
-    case OSSL_CMP_OPT_DISABLECONFIRM:
+    case OSSL_CMP_OPT_DISABLE_CONFIRM:
         ctx->disableConfirm = val;
         break;
     case OSSL_CMP_OPT_UNPROTECTED_SEND:
@@ -1042,7 +1042,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         ctx->unprotectedErrors = val;
         break;
-    case OSSL_CMP_OPT_VALIDITYDAYS:
+    case OSSL_CMP_OPT_VALIDITY_DAYS:
         ctx->days = val;
         break;
     case OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT:
@@ -1057,7 +1057,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_IGNORE_KEYUSAGE:
         ctx->ignore_keyusage = val;
         break;
-    case OSSL_CMP_OPT_POPOMETHOD:
+    case OSSL_CMP_OPT_POPO_METHOD:
         if (val > OSSL_CRMF_POPO_KEYAGREE) {
             CMPerr(0, CMP_R_INVALID_ARGS);
             return 0;
@@ -1073,11 +1073,11 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_MAC_ALGNID:
         ctx->pbm_mac = val;
         break;
-    case OSSL_CMP_OPT_MSGTIMEOUT:
-        ctx->msgtimeout = val;
+    case OSSL_CMP_OPT_MSG_TIMEOUT:
+        ctx->msg_timeout = val;
         break;
-    case OSSL_CMP_OPT_TOTALTIMEOUT:
-        ctx->totaltimeout = val;
+    case OSSL_CMP_OPT_TOTAL_TIMEOUT:
+        ctx->total_timeout = val;
         break;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         ctx->permitTAInExtraCertsForIR = val;
@@ -1111,15 +1111,15 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     switch (opt) {
     case OSSL_CMP_OPT_LOG_VERBOSITY:
         return ctx->log_verbosity;
-    case OSSL_CMP_OPT_IMPLICITCONFIRM:
+    case OSSL_CMP_OPT_IMPLICIT_CONFIRM:
         return ctx->implicitConfirm;
-    case OSSL_CMP_OPT_DISABLECONFIRM:
+    case OSSL_CMP_OPT_DISABLE_CONFIRM:
         return ctx->disableConfirm;
     case OSSL_CMP_OPT_UNPROTECTED_SEND:
         return ctx->unprotectedSend;
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         return ctx->unprotectedErrors;
-    case OSSL_CMP_OPT_VALIDITYDAYS:
+    case OSSL_CMP_OPT_VALIDITY_DAYS:
         return ctx->days;
     case OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT:
         return ctx->SubjectAltName_nodefault;
@@ -1129,7 +1129,7 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->setPoliciesCritical;
     case OSSL_CMP_OPT_IGNORE_KEYUSAGE:
         return ctx->ignore_keyusage;
-    case OSSL_CMP_OPT_POPOMETHOD:
+    case OSSL_CMP_OPT_POPO_METHOD:
         return ctx->popoMethod;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
         return ctx->digest;
@@ -1137,10 +1137,10 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->pbm_owf;
     case OSSL_CMP_OPT_MAC_ALGNID:
         return ctx->pbm_mac;
-    case OSSL_CMP_OPT_MSGTIMEOUT:
-        return ctx->msgtimeout;
-    case OSSL_CMP_OPT_TOTALTIMEOUT:
-        return ctx->totaltimeout;
+    case OSSL_CMP_OPT_MSG_TIMEOUT:
+        return ctx->msg_timeout;
+    case OSSL_CMP_OPT_TOTAL_TIMEOUT:
+        return ctx->total_timeout;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
         return ctx->permitTAInExtraCertsForIR;
     case OSSL_CMP_OPT_REVOCATION_REASON:
