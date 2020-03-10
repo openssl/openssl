@@ -26,7 +26,7 @@
 typedef struct {
     /* message digest */
     const EVP_MD *md;
-    /* Distinguishing Identifier, ISO/IEC 15946-3 */
+    /* Distinguishing Identifier, ISO/IEC 15946-3, FIPS 196 */
     uint8_t *id;
     size_t id_len;
     /* id_set indicates if the 'id' field is set (1) or not (0) */
@@ -247,14 +247,10 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
         else
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
-    } else if (strcmp(type, "sm2_id") == 0) {
+    } else if (strcmp(type, "distid") == 0) {
         return pkey_sm2_ctrl(ctx, EVP_PKEY_CTRL_SET1_ID,
                              (int)strlen(value), (void *)value);
-    } else if (strcmp(type, "sm2_hex_id") == 0) {
-        /*
-         * TODO(3.0): reconsider the name "sm2_hex_id", OR change
-         * OSSL_PARAM_allocate_from_text() to handle infix "_hex_"
-         */
+    } else if (strcmp(type, "hexdistid") == 0) {
         hex_id = OPENSSL_hexstr2buf((const char *)value, &hex_len);
         if (hex_id == NULL) {
             SM2err(SM2_F_PKEY_SM2_CTRL_STR, ERR_R_PASSED_INVALID_ARGUMENT);
