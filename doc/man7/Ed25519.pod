@@ -11,7 +11,7 @@ Ed448
 The B<Ed25519> and B<Ed448> EVP_PKEY implementation supports key generation,
 one-shot digest sign and digest verify using PureEdDSA and B<Ed25519> or B<Ed448>
 (see RFC8032). It has associated private and public key formats compatible with
-draft-ietf-curdle-pkix-04.
+RFC 8410.
 
 No additional parameters can be set during key generation, one-shot signing or
 verification. In particular, because PureEdDSA is used, a digest must B<NOT> be
