@@ -14,7 +14,7 @@ ossl_cmp_hdr_push1_freeText,
 ossl_cmp_hdr_generalinfo_item_push0,
 ossl_cmp_hdr_generalinfo_items_push1,
 ossl_cmp_hdr_set_implicitConfirm,
-ossl_cmp_hdr_check_implicitConfirm,
+ossl_cmp_hdr_has_implicitConfirm,
 ossl_cmp_hdr_init
 - functions manipulating CMP message headers
 
@@ -41,7 +41,7 @@ ossl_cmp_hdr_init
   int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr,
                                   ASN1_UTF8STRING *text);
   int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
-  int ossl_cmp_hdr_check_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
+  int ossl_cmp_hdr_has_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 =head1 DESCRIPTION
@@ -85,7 +85,7 @@ pointer.
 ossl_cmp_hdr_set_implicitConfirm() sets implicitConfirm in the generalInfo field
 of the PKIMessage header.
 
-ossl_cmp_hdr_check_implicitConfirm() returns 1 if implicitConfirm is
+ossl_cmp_hdr_has_implicitConfirm() returns 1 if implicitConfirm is
 set int generalInfo field of the given PKIMessage header, 0 if not.
 
 ossl_cmp_hdr_init() initializes a PKIHeader structure based on the

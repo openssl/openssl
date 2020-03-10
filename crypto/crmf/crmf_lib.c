@@ -303,7 +303,7 @@ static int crmf_asn1_get_int(const ASN1_INTEGER *a)
     return (int)res;
 }
 
-int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm)
+int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm)
 {
     if (crm == NULL || /* not really needed: */ crm->certReq == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, CRMF_R_NULL_ARGUMENT);
@@ -495,11 +495,17 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 
     switch (req->popo->type) {
     case OSSL_CRMF_POPO_RAVERIFIED:
-        if (acceptRAVerified)
-            return 1;
+        if (!acceptRAVerified) {
+            CRMFerr(0, CRMF_R_POPO_RAVERIFIED_NOT_ACCEPTED);
+            return 0;
+        }
         break;
     case OSSL_CRMF_POPO_SIGNATURE:
         pubkey = req->certReq->certTemplate->publicKey;
+        if (pubkey == NULL) {
+            CRMFerr(0, CRMF_R_POPO_MISSING_PUBLIC_KEY);
+            return 0;
+        }
         sig = req->popo->value.signature;
         if (sig->poposkInput != NULL) {
             /*
@@ -507,26 +513,34 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
              * the public key from the certificate template. This MUST be
              * exactly the same value as contained in the certificate template.
              */
-            const ASN1_ITEM *rptr = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
-
-            if (pubkey == NULL
-                    || sig->poposkInput->publicKey == NULL
-                    || X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey)
-                    || ASN1_item_verify(rptr, sig->algorithmIdentifier,
-                                        sig->signature, sig->poposkInput,
-                                        X509_PUBKEY_get0(pubkey)) < 1)
-                break;
+            if (sig->poposkInput->publicKey == NULL) {
+                CRMFerr(0, CRMF_R_POPO_MISSING_PUBLIC_KEY);
+                return 0;
+            }
+            if (X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey) != 0) {
+                CRMFerr(0, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
+                return 0;
+            }
+            /*
+             * TODO check the contents of the authInfo sub-field,
+             * see RFC 4211 https://tools.ietf.org/html/rfc4211#section-4.1
+             */
+            if (ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
+                                 sig->algorithmIdentifier, sig->signature,
+                                 sig->poposkInput,
+                                 X509_PUBKEY_get0(pubkey)) < 1)
+                return 0;
         } else {
-            if (pubkey == NULL
-                    || req->certReq->certTemplate->subject == NULL
-                    || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                                        sig->algorithmIdentifier,
-                                        sig->signature,
-                                        req->certReq,
-                                        X509_PUBKEY_get0(pubkey)) < 1)
-                break;
+            if (req->certReq->certTemplate->subject == NULL) {
+                CRMFerr(0, CRMF_R_POPO_MISSING_SUBJECT);
+                return 0;
+            }
+            if (ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                                 sig->algorithmIdentifier, sig->signature,
+                                 req->certReq, X509_PUBKEY_get0(pubkey)) < 1)
+                return 0;
         }
-        return 1;
+        break;
     case OSSL_CRMF_POPO_KEYENC:
         /*
          * TODO: when OSSL_CMP_certrep_new() supports encrypted certs,
@@ -540,19 +554,19 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                 CRMF_R_UNSUPPORTED_POPO_METHOD);
         return 0;
     }
-    CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
-            CRMF_R_UNSUPPORTED_POPO_NOT_ACCEPTED);
-    return 0;
+    return 1;
 }
 
 /* retrieves the serialNumber of the given cert template or NULL on error */
-ASN1_INTEGER *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *tmpl)
+ASN1_INTEGER
+*OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->serialNumber : NULL;
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
-X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl)
+X509_NAME
+*OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
@@ -606,7 +620,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
  * returns a pointer to the decrypted certificate
  * returns NULL on error or if no certificate available
  */
-X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
+X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                                             EVP_PKEY *pkey)
 {
     X509 *cert = NULL; /* decrypted certificate */

@@ -47,8 +47,10 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
 /* use of the logging callback for outputting error queue */
 void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
 
+ASN1_OCTET_STRING *OSSL_CMP_X509_digest(const X509 *cert);
+
 #  ifdef  __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_CMP */
-#endif /* !defined OPENSSL_CMP_UTIL_H */
+# endif /* !defined(OPENSSL_NO_CMP) */
+#endif /* !defined(OPENSSL_CMP_UTIL_H) */
