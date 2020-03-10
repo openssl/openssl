@@ -203,6 +203,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts);
+int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,

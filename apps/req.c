@@ -87,11 +87,11 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_KEYGEN_ENGINE, OPT_KEY,
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
-    OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
+    OPT_PKEYOPT, OPT_SIGOPT, OPT_VFYOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
-    OPT_REQEXTS, OPT_PRECERT, OPT_MD, OPT_SM2ID, OPT_SM2HEXID,
+    OPT_REQEXTS, OPT_PRECERT, OPT_MD,
     OPT_SECTION,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -143,13 +143,8 @@ const OPTIONS req_options[] = {
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
+    {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_SM2
-    {"sm2-id", OPT_SM2ID, 's',
-     "Specify an ID string to verify an SM2 certificate request"},
-    {"sm2-hex-id", OPT_SM2HEXID, 's',
-     "Specify a hex ID string to verify an SM2 certificate request"},
-#endif
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
@@ -237,7 +232,7 @@ int req_main(int argc, char **argv)
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL, *vfyopts = NULL;
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
@@ -260,9 +255,6 @@ int req_main(int argc, char **argv)
     int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
-    unsigned char *sm2_id = NULL;
-    size_t sm2_idlen = 0;
-    int sm2_free = 0;
 
 #ifndef OPENSSL_NO_DES
     cipher = EVP_des_ede3_cbc();
@@ -359,6 +351,12 @@ int req_main(int argc, char **argv)
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_VFYOPT:
+            if (!vfyopts)
+                vfyopts = sk_OPENSSL_STRING_new_null();
+            if (!vfyopts || !sk_OPENSSL_STRING_push(vfyopts, opt_arg()))
+                goto opthelp;
+            break;
         case OPT_BATCH:
             batch = 1;
             break;
@@ -445,29 +443,6 @@ int req_main(int argc, char **argv)
             if (!opt_md(opt_unknown(), &md_alg))
                 goto opthelp;
             digest = md_alg;
-            break;
-        case OPT_SM2ID:
-            if (sm2_id != NULL) {
-                BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
-                goto end;
-            }
-            sm2_id = (unsigned char *)opt_arg();
-            sm2_idlen = strlen((const char *)sm2_id);
-            break;
-        case OPT_SM2HEXID:
-            if (sm2_id != NULL) {
-                BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id'\n");
-                goto end;
-            }
-            /* try to parse the input as hex string first */
-            sm2_free = 1;
-            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
-            if (sm2_id == NULL) {
-                BIO_printf(bio_err, "Invalid hex string input\n");
-                goto end;
-            }
             break;
         }
     }
@@ -901,27 +876,7 @@ int req_main(int argc, char **argv)
                 goto end;
         }
 
-        if (sm2_id != NULL) {
-#ifndef OPENSSL_NO_SM2
-            ASN1_OCTET_STRING *v;
-
-            v = ASN1_OCTET_STRING_new();
-            if (v == NULL) {
-                BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
-                goto end;
-            }
-
-            if (!ASN1_OCTET_STRING_set(v, sm2_id, sm2_idlen)) {
-                BIO_printf(bio_err, "error: setting SM2 ID failed\n");
-                ASN1_OCTET_STRING_free(v);
-                goto end;
-            }
-
-            X509_REQ_set0_sm2_id(req, v);
-#endif
-        }
-
-        i = X509_REQ_verify(req, tpubkey);
+        i = do_X509_REQ_verify(req, tpubkey, vfyopts);
 
         if (i < 0) {
             goto end;
@@ -1029,8 +984,6 @@ int req_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (sm2_free)
-        OPENSSL_free(sm2_id);
     if (ret) {
         ERR_print_errors(bio_err);
     }
@@ -1043,6 +996,7 @@ int req_main(int argc, char **argv)
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_free(vfyopts);
     lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
     lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
@@ -1685,6 +1639,44 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
+static int do_pkey_ctx_init(EVP_PKEY_CTX *pkctx, STACK_OF(OPENSSL_STRING) *opts)
+{
+    int i;
+
+    if (opts == NULL)
+        return 1;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
+        char *opt = sk_OPENSSL_STRING_value(opts, i);
+        if (pkey_ctrl_string(pkctx, opt) <= 0) {
+            BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
+            ERR_print_errors(bio_err);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int do_x509_init(X509 *x, STACK_OF(OPENSSL_STRING) *opts)
+{
+    int i;
+
+    if (opts == NULL)
+        return 1;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
+        char *opt = sk_OPENSSL_STRING_value(opts, i);
+        if (x509_ctrl_string(x, opt) <= 0) {
+            BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
+            ERR_print_errors(bio_err);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 static int do_x509_req_init(X509_REQ *x, STACK_OF(OPENSSL_STRING) *opts)
 {
     int i;
@@ -1708,28 +1700,10 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    int i, def_nid, ret = 0;
+    int def_nid;
 
     if (ctx == NULL)
-        goto err;
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
-        pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (pctx == NULL) {
-            BIO_printf(bio_err, "memory allocation failure.\n");
-            goto err;
-        }
-        /* set SM2 ID from sig options before calling the real init routine */
-        for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-            char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
-            if (pkey_ctrl_string(pctx, sigopt) <= 0) {
-                BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
-                ERR_print_errors(bio_err);
-                goto err;
-            }
-        }
-        EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
-    }
+        return 0;
     /*
      * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
      * for this algorithm.
@@ -1739,36 +1713,8 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         /* The signing algorithm requires there to be no digest */
         md = NULL;
     }
-    if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
-        goto err;
-    for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
-        char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
-        if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
-            BIO_printf(bio_err, "parameter error \"%s\"\n", sigopt);
-            ERR_print_errors(bio_err);
-            goto err;
-        }
-    }
-
-    ret = 1;
- err:
-    if (!ret)
-        EVP_PKEY_CTX_free(pctx);
-    return ret;
-}
-
-static void do_sign_cleanup(EVP_MD_CTX *ctx, EVP_PKEY *pkey)
-{
-    /*
-     * With SM2, do_sign_init() attached an EVP_PKEY_CTX to the EVP_MD_CTX,
-     * and we have to free it explicitly.
-     */
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
-
-        EVP_MD_CTX_set_pkey_ctx(ctx, NULL);
-        EVP_PKEY_CTX_free(pctx);
-    }
+    return EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey)
+        && do_pkey_ctx_init(pkctx, sigopts);
 }
 
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
@@ -1777,10 +1723,8 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(x, mctx) > 0);
-        do_sign_cleanup(mctx, pkey);
-    }
     EVP_MD_CTX_free(mctx);
     return rv;
 }
@@ -1791,11 +1735,18 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_REQ_sign_ctx(x, mctx) > 0);
-        do_sign_cleanup(mctx, pkey);
-    }
     EVP_MD_CTX_free(mctx);
+    return rv;
+}
+
+int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts)
+{
+    int rv = 0;
+
+    if (do_x509_init(x, vfyopts) > 0)
+        rv = (X509_verify(x, pkey) > 0);
     return rv;
 }
 
@@ -1815,10 +1766,8 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0) {
+    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_CRL_sign_ctx(x, mctx) > 0);
-        do_sign_cleanup(mctx, pkey);
-    }
     EVP_MD_CTX_free(mctx);
     return rv;
 }

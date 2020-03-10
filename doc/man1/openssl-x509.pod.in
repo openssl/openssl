@@ -71,6 +71,7 @@ B<openssl> B<x509>
 [B<-extfile> I<filename>]
 [B<-extensions> I<section>]
 [B<-sigopt> I<nm>:I<v>]
+[B<-vfyopt> I<nm>:I<v>]
 [B<-preserve_dates>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -371,7 +372,12 @@ for testing.
 
 =item B<-sigopt> I<nm>:I<v>
 
-Pass options to the signature algorithm during sign or verify operations.
+Pass options to the signature algorithm during sign operations.
+Names and values of these options are algorithm-specific.
+
+=item B<-vfyopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during verify operations.
 Names and values of these options are algorithm-specific.
 
 =item B<-passin> I<arg>

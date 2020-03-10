@@ -53,17 +53,16 @@ B<openssl> B<ca>
 [B<-subj> I<arg>]
 [B<-utf8>]
 [B<-sigopt> I<nm>:I<v>]
+[B<-vfyopt> I<nm>:I<v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
-[B<-sm2-id> I<string>]
-[B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
 
-=for openssl ifdef engine sm2-id sm2-hex-id
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -147,8 +146,17 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
-Pass options to the signature algorithm during sign or verify operations.
+Pass options to the signature algorithm during sign operations.
 Names and values of these options are algorithm-specific.
+
+=item B<-vfyopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during verify operations.
+Names and values of these options are algorithm-specific.
+
+This often needs to be given while signing too, because the input
+certificate signature request is verified against its own public key,
+and that verification may need its own set of options.
 
 =item B<-key> I<password>
 
@@ -296,16 +304,6 @@ support for multivalued RDNs. Example:
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
-
-=item B<-sm2-id> I<string>
-
-Specify the ID string to use when verifying an SM2 certificate. The ID string is
-required by the SM2 signature algorithm for signing and verification.
-
-=item B<-sm2-hex-id> I<hex-string>
-
-Specify a binary ID string to use when signing or verifying using an SM2
-certificate. The argument for this option is string of hexadecimal digits.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -617,7 +615,9 @@ Sign a certificate request:
 
 Sign an SM2 certificate request:
 
- openssl ca -in sm2.csr -out sm2.crt -md sm3 -sigopt "sm2_id:1234567812345678" -sm2-id "1234567812345678"
+ openssl ca -in sm2.csr -out sm2.crt -md sm3 \
+         -sigopt "distid:1234567812345678" \
+         -vfyopt "distid:1234567812345678"
 
 Sign a certificate request, using CA extensions:
 

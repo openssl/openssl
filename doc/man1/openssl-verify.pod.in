@@ -12,11 +12,10 @@ B<openssl> B<verify>
 [B<-CRLfile> I<file>]
 [B<-crl_download>]
 [B<-show_chain>]
-[B<-sm2-id> I<hexstring>]
-[B<-sm2-hex-id> I<hexstring>]
 [B<-verbose>]
 [B<-trusted> I<file>]
 [B<-untrusted> I<file>]
+[B<-vfyopt> I<nm>:I<v>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
@@ -25,7 +24,7 @@ B<openssl> B<verify>
 [B<-->]
 [I<certificate> ...]
 
-=for openssl ifdef engine sm2-id sm2-hex-id
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -59,16 +58,6 @@ Display information about the certificate chain that has been built (if
 successful). Certificates in the chain that came from the untrusted list will be
 flagged as "untrusted".
 
-=item B<-sm2-id> I<hexstring>
-
-Specify the ID string to use when verifying an SM2 certificate. The ID string is
-required by the SM2 signature algorithm for signing and verification.
-
-=item B<-sm2-hex-id> I<hexstring>
-
-Specify a binary ID string to use when signing or verifying using an SM2
-certificate. The argument for this option is string of hexadecimal digits.
-
 =item B<-verbose>
 
 Print extra information about the operations being performed.
@@ -80,6 +69,11 @@ A file of trusted certificates.
 =item B<-untrusted> I<file>
 
 A file of untrusted certificates.
+
+=item B<-vfyopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during verify operations.
+Names and values of these options are algorithm-specific.
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -158,8 +152,6 @@ L<ossl_store-file(7)>
 =head1 HISTORY
 
 The B<-show_chain> option was added in OpenSSL 1.1.0.
-
-The B<-sm2-id> and B<-sm2-hex-id> options were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

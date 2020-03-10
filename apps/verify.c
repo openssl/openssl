@@ -22,7 +22,7 @@ static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain,
-                 unsigned char *sm2id, size_t sm2idlen);
+                 STACK_OF(OPENSSL_STRING) *opts);
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
@@ -30,8 +30,8 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
-    OPT_V_ENUM, OPT_NAMEOPT,
-    OPT_VERBOSE, OPT_SM2ID, OPT_SM2HEXID,
+    OPT_V_ENUM, OPT_NAMEOPT, OPT_VFYOPT,
+    OPT_VERBOSE,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -67,12 +67,7 @@ const OPTIONS verify_options[] = {
         "Display information about the certificate chain"},
 
     OPT_V_OPTIONS,
-#ifndef OPENSSL_NO_SM2
-    {"sm2-id", OPT_SM2ID, 's',
-     "Specify an ID string to verify an SM2 certificate"},
-    {"sm2-hex-id", OPT_SM2HEXID, 's',
-     "Specify a hex ID string to verify an SM2 certificate"},
-#endif
+    {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
 
     OPT_PROV_OPTIONS,
 
@@ -86,15 +81,13 @@ int verify_main(int argc, char **argv)
     ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
+    STACK_OF(OPENSSL_STRING) *vfyopts = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     const char *prog, *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
-    unsigned char *sm2_id = NULL;
-    size_t sm2_idlen = 0;
-    int sm2_free = 0;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
@@ -104,6 +97,7 @@ int verify_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
+ opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -186,31 +180,14 @@ int verify_main(int argc, char **argv)
             if (!set_nameopt(opt_arg()))
                 goto end;
             break;
+        case OPT_VFYOPT:
+            if (!vfyopts)
+                vfyopts = sk_OPENSSL_STRING_new_null();
+            if (!vfyopts || !sk_OPENSSL_STRING_push(vfyopts, opt_arg()))
+                goto opthelp;
+            break;
         case OPT_VERBOSE:
             v_verbose = 1;
-            break;
-        case OPT_SM2ID:
-            if (sm2_id != NULL) {
-                BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
-                goto end;
-            }
-            sm2_id = (unsigned char *)opt_arg();
-            sm2_idlen = strlen((const char *)sm2_id);
-            break;
-        case OPT_SM2HEXID:
-            if (sm2_id != NULL) {
-                BIO_printf(bio_err,
-                           "Use one of the options 'sm2-hex-id' or 'sm2-id' \n");
-                goto end;
-            }
-            /* try to parse the input as hex string first */
-            sm2_free = 1;
-            sm2_id = OPENSSL_hexstr2buf(opt_arg(), (long *)&sm2_idlen);
-            if (sm2_id == NULL) {
-                BIO_printf(bio_err, "Invalid hex string input\n");
-                goto end;
-            }
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -244,23 +221,22 @@ int verify_main(int argc, char **argv)
     ret = 0;
     if (argc < 1) {
         if (check(store, NULL, untrusted, trusted, crls, show_chain,
-                  sm2_id, sm2_idlen) != 1)
+                  vfyopts) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
-            if (check(store, argv[i], untrusted, trusted, crls,
-                      show_chain, sm2_id, sm2_idlen) != 1)
+            if (check(store, argv[i], untrusted, trusted, crls, show_chain,
+                      vfyopts) != 1)
                 ret = -1;
     }
 
  end:
-    if (sm2_free)
-        OPENSSL_free(sm2_id);
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    sk_OPENSSL_STRING_free(vfyopts);
     release_engine(e);
     return (ret < 0 ? 2 : ret);
 }
@@ -268,7 +244,7 @@ int verify_main(int argc, char **argv)
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain,
-                 unsigned char *sm2id, size_t sm2idlen)
+                 STACK_OF(OPENSSL_STRING) *opts)
 {
     X509 *x = NULL;
     int i = 0, ret = 0;
@@ -280,24 +256,15 @@ static int check(X509_STORE *ctx, const char *file,
     if (x == NULL)
         goto end;
 
-    if (sm2id != NULL) {
-#ifndef OPENSSL_NO_SM2
-        ASN1_OCTET_STRING *v;
-
-        v = ASN1_OCTET_STRING_new();
-        if (v == NULL) {
-            BIO_printf(bio_err, "error: SM2 ID allocation failed\n");
-            goto end;
+    if (opts != NULL) {
+        for (i = 0; i < sk_OPENSSL_STRING_num(opts); i++) {
+            char *opt = sk_OPENSSL_STRING_value(opts, i);
+            if (x509_ctrl_string(x, opt) <= 0) {
+                BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
+                ERR_print_errors(bio_err);
+                return 0;
+            }
         }
-
-        if (!ASN1_OCTET_STRING_set(v, sm2id, sm2idlen)) {
-            BIO_printf(bio_err, "error: setting SM2 ID failed\n");
-            ASN1_OCTET_STRING_free(v);
-            goto end;
-        }
-
-        X509_set0_sm2_id(x, v);
-#endif
     }
 
     csc = X509_STORE_CTX_new();
