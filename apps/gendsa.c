@@ -58,6 +58,8 @@ int gendsa_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;
     DSA *dsa = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
     char *dsaparams = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
@@ -139,14 +141,38 @@ int gendsa_main(int argc, char **argv)
                    "         Your key size is %d! Larger key size may behave not as expected.\n",
                    OPENSSL_DSA_MAX_MODULUS_BITS, BN_num_bits(p));
 
+    pkey = EVP_PKEY_new();
+    if (pkey == NULL) {
+        BIO_printf(bio_err, "unable to allocate PKEY\n");
+        goto end;
+    }
+    if (!EVP_PKEY_set1_DSA(pkey, dsa)) {
+        BIO_printf(bio_err, "unable to associate DSA parameters with PKEY\n");
+        goto end;
+    }
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (ctx == NULL) {
+        BIO_printf(bio_err, "unable to create PKEY context\n");
+        goto end;
+    }
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+    if (EVP_PKEY_keygen_init(ctx) <= 0) {
+        BIO_printf(bio_err, "unable to set up for key generation\n");
+        goto end;
+    }
     if (verbose)
         BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
-    if (!DSA_generate_key(dsa))
+    if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
+        BIO_printf(bio_err, "unable to generate key\n");
         goto end;
+    }
 
     assert(private);
-    if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
+    if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout)) {
+        BIO_printf(bio_err, "unable to output generated key\n");
         goto end;
+    }
     ret = 0;
  end:
     if (ret != 0)
@@ -155,6 +181,8 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
     release_engine(e);
     OPENSSL_free(passout);
     return ret;
