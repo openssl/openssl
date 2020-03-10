@@ -74,6 +74,8 @@ struct evp_pkey_ctx_st {
     EVP_PKEY *peerkey;
     /* Algorithm specific data */
     void *data;
+    /* Indicator if digest_custom needs to be called */
+    unsigned int flag_call_digest_custom:1;
 } /* EVP_PKEY_CTX */ ;
 
 #define EVP_PKEY_FLAG_DYNAMIC   1

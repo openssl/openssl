@@ -250,8 +250,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * This indicates the current algorithm requires
      * special treatment before hashing the tbs-message.
      */
+    ctx->pctx->flag_call_digest_custom = 0;
     if (ctx->pctx->pmeth->digest_custom != NULL)
-        return ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx);
+        ctx->pctx->flag_call_digest_custom = 1;
 
     return 1;
 }
@@ -301,6 +302,12 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
                                                       data, dsize);
 
  legacy:
+    /* do_sigver_init() checked that |digest_custom| is non-NULL */
+    if (pctx->flag_call_digest_custom
+        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+        return 0;
+    pctx->flag_call_digest_custom = 0;
+
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
@@ -323,6 +330,12 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
                                                         data, dsize);
 
  legacy:
+    /* do_sigver_init() checked that |digest_custom| is non-NULL */
+    if (pctx->flag_call_digest_custom
+        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+        return 0;
+    pctx->flag_call_digest_custom = 0;
+
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
@@ -347,6 +360,12 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
+
+    /* do_sigver_init() checked that |digest_custom| is non-NULL */
+    if (pctx->flag_call_digest_custom
+        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+        return 0;
+    pctx->flag_call_digest_custom = 0;
 
     if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
         if (sigret == NULL)
@@ -457,6 +476,12 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
+
+    /* do_sigver_init() checked that |digest_custom| is non-NULL */
+    if (pctx->flag_call_digest_custom
+        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+        return 0;
+    pctx->flag_call_digest_custom = 0;
 
     if (pctx->pmeth->verifyctx != NULL)
         vctx = 1;
