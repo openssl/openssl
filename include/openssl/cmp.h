@@ -248,19 +248,19 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
 /* various CMP options: */
 #  define OSSL_CMP_OPT_LOG_VERBOSITY 0
-#  define OSSL_CMP_OPT_MSGTIMEOUT 1
-#  define OSSL_CMP_OPT_TOTALTIMEOUT 2
-#  define OSSL_CMP_OPT_VALIDITYDAYS 3
+#  define OSSL_CMP_OPT_MSG_TIMEOUT 1
+#  define OSSL_CMP_OPT_TOTAL_TIMEOUT 2
+#  define OSSL_CMP_OPT_VALIDITY_DAYS 3
 #  define OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT 4
 #  define OSSL_CMP_OPT_SUBJECTALTNAME_CRITICAL 5
 #  define OSSL_CMP_OPT_POLICIES_CRITICAL 6
-#  define OSSL_CMP_OPT_POPOMETHOD 7
+#  define OSSL_CMP_OPT_POPO_METHOD 7
 #  define OSSL_CMP_OPT_DIGEST_ALGNID 8
 #  define OSSL_CMP_OPT_OWF_ALGNID 9
 #  define OSSL_CMP_OPT_MAC_ALGNID 10
 #  define OSSL_CMP_OPT_REVOCATION_REASON 11
-#  define OSSL_CMP_OPT_IMPLICITCONFIRM 12
-#  define OSSL_CMP_OPT_DISABLECONFIRM 13
+#  define OSSL_CMP_OPT_IMPLICIT_CONFIRM 12
+#  define OSSL_CMP_OPT_DISABLE_CONFIRM 13
 #  define OSSL_CMP_OPT_UNPROTECTED_SEND 14
 #  define OSSL_CMP_OPT_UNPROTECTED_ERRORS 15
 #  define OSSL_CMP_OPT_IGNORE_KEYUSAGE 16
@@ -268,7 +268,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
 int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 /* CMP-specific callback for logging and outputting the error queue: */
-int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb);
+int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
 #  define OSSL_CMP_CTX_set_log_verbosity(ctx, level) \
     OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_LOG_VERBOSITY, level)
 void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx);
@@ -282,9 +282,9 @@ int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port);
 int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_HTTP_bio_cb_t cb);
 int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx);
-typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
+typedef OSSL_CMP_MSG *(*OSSL_CMP_transfer_cb_t) (OSSL_CMP_CTX *ctx,
                                                  const OSSL_CMP_MSG *req);
-int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_transfer_cb_t cb);
+int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_transfer_cb_t cb);
 int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_transfer_cb_arg(const OSSL_CMP_CTX *ctx);
 /* server authentication: */
@@ -320,9 +320,9 @@ int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr);
 /* misc body contents: */
 int OSSL_CMP_CTX_push0_genm_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav);
 /* certificate confirmation: */
-typedef int (*OSSL_cmp_certConf_cb_t) (OSSL_CMP_CTX *ctx, X509 *cert,
+typedef int (*OSSL_CMP_certConf_cb_t) (OSSL_CMP_CTX *ctx, X509 *cert,
                                        int fail_info, const char **txt);
-int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_certConf_cb_t cb);
+int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb);
 int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
 void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx);
 /* result fetching: */
@@ -409,6 +409,21 @@ int OSSL_CMP_SRV_CTX_set_accept_unprotected(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx, int val);
 int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                 int val);
+
+/* from cmp_client.c */
+X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
+X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
+X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
+X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
+# define OSSL_CMP_IR    OSSL_CMP_PKIBODY_IR
+# define OSSL_CMP_CR    OSSL_CMP_PKIBODY_CR
+# define OSSL_CMP_P10CR OSSL_CMP_PKIBODY_P10CR
+# define OSSL_CMP_KUR   OSSL_CMP_PKIBODY_KUR
+int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter);
+int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
+                         const char **text);
+X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
+STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 
 #  ifdef  __cplusplus
 }

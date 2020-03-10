@@ -126,3 +126,9 @@ int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert)
         X509_free(cert); /* down-ref */
     return res;
 }
+
+int print_to_bio_out(const char *func, const char *file, int line,
+                     OSSL_CMP_severity level, const char *msg)
+{
+    return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
+}

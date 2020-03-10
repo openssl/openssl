@@ -19,7 +19,7 @@ OSSL_CMP_DEFAULT_PORT,
 OSSL_CMP_CTX_set_http_cb,
 OSSL_CMP_CTX_set_http_cb_arg,
 OSSL_CMP_CTX_get_http_cb_arg,
-OSSL_cmp_transfer_cb_t,
+OSSL_CMP_transfer_cb_t,
 OSSL_CMP_CTX_set_transfer_cb,
 OSSL_CMP_CTX_set_transfer_cb_arg,
 OSSL_CMP_CTX_get_transfer_cb_arg,
@@ -47,7 +47,7 @@ OSSL_CMP_CTX_push0_policy,
 OSSL_CMP_CTX_set1_oldCert,
 OSSL_CMP_CTX_set1_p10CSR,
 OSSL_CMP_CTX_push0_genm_ITAV,
-OSSL_cmp_certConf_cb_t,
+OSSL_CMP_certConf_cb_t,
 OSSL_CMP_CTX_set_certConf_cb,
 OSSL_CMP_CTX_set_certConf_cb_arg,
 OSSL_CMP_CTX_get_certConf_cb_arg,
@@ -72,7 +72,7 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 
  /* logging and error reporting: */
- int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb);
+ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
  #define OSSL_CMP_CTX_set_log_verbosity(ctx, level)
  void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx);
 
@@ -86,10 +86,10 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, HTTP_bio_cb_t cb);
  int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx);
- typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t)(OSSL_CMP_CTX *ctx,
+ typedef OSSL_CMP_MSG *(*OSSL_CMP_transfer_cb_t)(OSSL_CMP_CTX *ctx,
                                                  const OSSL_CMP_MSG *req);
  int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx,
-                                  OSSL_cmp_transfer_cb_t cb);
+                                  OSSL_CMP_transfer_cb_t cb);
  int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_transfer_cb_arg(const OSSL_CMP_CTX *ctx);
 
@@ -134,9 +134,9 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_push0_genm_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav);
 
  /* certificate confirmation: */
- typedef int (*OSSL_cmp_certConf_cb_t)(OSSL_CMP_CTX *ctx, X509 *cert,
+ typedef int (*OSSL_CMP_certConf_cb_t)(OSSL_CMP_CTX *ctx, X509 *cert,
                                        int fail_info, const char **txt);
- int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_certConf_cb_t cb);
+ int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb);
  int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx);
 
@@ -149,7 +149,7 @@ OSSL_CMP_CTX_set1_senderNonce
  STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
  STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx);
 
- /* for test purposes only: */
+ /* for testing and debugging purposes: */
  int OSSL_CMP_CTX_set1_transactionID(OSSL_CMP_CTX *ctx,
                                      const ASN1_OCTET_STRING *id);
  int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
@@ -172,7 +172,7 @@ from the last executed transaction.
 All other field values (i.e., CMP options) are retained for potential re-use.
 
 OSSL_CMP_CTX_set_option() sets the given value for the given option
-(e.g., OSSL_CMP_OPT_IMPLICITCONFIRM) in the given OSSL_CMP_CTX structure.
+(e.g., OSSL_CMP_OPT_IMPLICIT_CONFIRM) in the given OSSL_CMP_CTX structure.
 
 The following options can be set:
 
@@ -184,17 +184,17 @@ The following options can be set:
         due to errors, warnings, general info, debugging, etc.
         Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
 
-=item B<OSSL_CMP_OPT_MSGTIMEOUT>
+=item B<OSSL_CMP_OPT_MSG_TIMEOUT>
 
         Number of seconds (or 0 for infinite) a CMP message round trip is
         allowed to take before a timeout error is returned. Default is 120.
 
-=item B<OSSL_CMP_OPT_TOTALTIMEOUT>
+=item B<OSSL_CMP_OPT_TOTAL_TIMEOUT>
 
         Maximum total number of seconds an enrollment (including polling)
         may take. Default is 0 (infinite).
 
-=item B<OSSL_CMP_OPT_VALIDITYDAYS>
+=item B<OSSL_CMP_OPT_VALIDITY_DAYS>
 
         Number of days new certificates are asked to be valid for.
 
@@ -211,7 +211,7 @@ The following options can be set:
 
         Demand that the given policies are flagged as critical.
 
-=item B<OSSL_CMP_OPT_POPOMETHOD>
+=item B<OSSL_CMP_OPT_POPO_METHOD>
 
         Select the proof of possession method to use. Possible values are:
 
@@ -247,14 +247,14 @@ The following options can be set:
         The reason code to be included in a Revocation Request (RR);
         values: 0..10 (RFC 5210, 5.3.1) or -1 for none, which is the default.
 
-=item B<OSSL_CMP_OPT_IMPLICITCONFIRM>
+=item B<OSSL_CMP_OPT_IMPLICIT_CONFIRM>
 
         Request server to enable implicit confirm mode, where the client
         does not need to send confirmation upon receiving the
         certificate. If the server does not enable implicit confirmation
         in the return message, then confirmation is sent anyway.
 
-=item B<OSSL_CMP_OPT_DISABLECONFIRM>
+=item B<OSSL_CMP_OPT_DISABLE_CONFIRM>
 
         Do not confirm enrolled certificates, to cope with broken servers
         not supporting implicit confirmation correctly.
@@ -290,7 +290,7 @@ RFC 4210.
 =back
 
 OSSL_CMP_CTX_get_option() reads the current value of the given option
-(e.g., OSSL_CMP_OPT_IMPLICITCONFIRM) from the given OSSL_CMP_CTX structure.
+(e.g., OSSL_CMP_OPT_IMPLICIT_CONFIRM) from the given OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_set_log_cb() sets in B<ctx> the callback function C<cb>
 for handling error queue entries and logging messages.
@@ -350,14 +350,14 @@ OSSL_CMP_CTX_set_http_cb_arg() or NULL if unset.
 OSSL_CMP_CTX_set_transfer_cb() sets the message transfer callback function,
 which has the type
 
- typedef OSSL_CMP_MSG *(*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
+ typedef OSSL_CMP_MSG *(*OSSL_CMP_transfer_cb_t) (OSSL_CMP_CTX *ctx,
                                                   const OSSL_CMP_MSG *req);
 
 Returns 1 on success, 0 on error.
 
 Default is NULL, which implies the use of L<OSSL_CMP_MSG_http_perform(3)>.
 The callback should send the CMP request message it obtains via the B<req>
-parameter and on success return the response.
+parameter and on success return the response, else it must return NULL.
 The transfer callback may make use of a custom defined argument stored in
 the ctx by means of OSSL_CMP_CTX_set_transfer_cb_arg(), which may be retrieved
 again through OSSL_CMP_CTX_get_transfer_cb_arg().
@@ -512,7 +512,7 @@ OSSL_CMP_CTX_set_certConf_cb() sets the callback used for evaluating the newly
 enrolled certificate before the library sends, depending on its result,
 a positive or negative certConf message to the server. The callback has type
 
- typedef int (*OSSL_cmp_certConf_cb_t) (OSSL_CMP_CTX *ctx, X509 *cert,
+ typedef int (*OSSL_CMP_certConf_cb_t) (OSSL_CMP_CTX *ctx, X509 *cert,
                                         int fail_info, const char **txt);
 
 and should inspect the certificate it obtains via the B<cert> parameter and may
