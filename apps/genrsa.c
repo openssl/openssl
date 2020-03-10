@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use the deprecated RSA low level calls */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
@@ -32,7 +29,7 @@
 
 static int verbose = 0;
 
-static int genrsa_cb(int p, int n, BN_GENCB *cb);
+static int genrsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -73,23 +70,23 @@ const OPTIONS genrsa_options[] = {
 int genrsa_main(int argc, char **argv)
 {
     BN_GENCB *cb = BN_GENCB_new();
-    PW_CB_DATA cb_data;
     ENGINE *eng = NULL;
     BIGNUM *bn = BN_new();
+    RSA *rsa;
     BIO *out = NULL;
     const BIGNUM *e;
-    RSA *rsa = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
     int ret = 1, num = DEFBITS, private = 0, primes = DEFPRIMES;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *prog, *hexe, *dece;
     OPTION_CHOICE o;
+    unsigned char *ebuf = NULL;
 
     if (bn == NULL || cb == NULL)
         goto end;
-
-    BN_GENCB_set(cb, genrsa_cb, bio_err);
 
     prog = opt_init(argc, argv, genrsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -104,7 +101,7 @@ opthelp:
             opt_help(genrsa_options);
             goto end;
         case OPT_3:
-            f4 = 3;
+            f4 = RSA_3;
             break;
         case OPT_F4:
             f4 = RSA_F4;
@@ -165,49 +162,74 @@ opthelp:
     if (out == NULL)
         goto end;
 
+    if (!init_gen_str(&ctx, "RSA", eng, 0))
+        goto end;
+
+    EVP_PKEY_CTX_set_cb(ctx, genrsa_cb);
+    EVP_PKEY_CTX_set_app_data(ctx, bio_err);
+
+    if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, num) <= 0) {
+        BIO_printf(bio_err, "Error setting RSA length\n");
+        goto end;
+    }
+    if (!BN_set_word(bn, f4)) {
+        BIO_printf(bio_err, "Error allocating RSA public exponent\n");
+        goto end;
+    }
+    if (EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, bn) <= 0) {
+        BIO_printf(bio_err, "Error setting RSA public exponent\n");
+        goto end;
+    }
+    if (EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, primes) <= 0) {
+        BIO_printf(bio_err, "Error setting number of primes\n");
+        goto end;
+    }
     if (verbose)
         BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus (%d primes)\n",
                    num, primes);
-    rsa = eng ? RSA_new_method(eng) : RSA_new();
-    if (rsa == NULL)
+    if (!EVP_PKEY_keygen(ctx, &pkey)) {
+        BIO_printf(bio_err, "Error generating RSA key\n");
         goto end;
-
-    if (!BN_set_word(bn, f4)
-        || !RSA_generate_multi_prime_key(rsa, num, primes, bn, cb))
-        goto end;
-
-    RSA_get0_key(rsa, NULL, &e, NULL);
-    hexe = BN_bn2hex(e);
-    dece = BN_bn2dec(e);
-    if (hexe && dece && verbose) {
-        BIO_printf(bio_err, "e is %s (0x%s)\n", dece, hexe);
     }
-    OPENSSL_free(hexe);
-    OPENSSL_free(dece);
-    cb_data.password = passout;
-    cb_data.prompt_info = outfile;
-    assert(private);
-    if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
-                                     (pem_password_cb *)password_callback,
-                                     &cb_data))
+
+    if (verbose) {
+        if ((rsa = EVP_PKEY_get0_RSA(pkey)) != NULL) {
+            RSA_get0_key(rsa, NULL, &e, NULL);
+        } else {
+            BIO_printf(bio_err, "Error cannot access RSA e\n");
+            goto end;
+        }
+        hexe = BN_bn2hex(e);
+        dece = BN_bn2dec(e);
+        if (hexe && dece) {
+            BIO_printf(bio_err, "e is %s (0x%s)\n", dece, hexe);
+        }
+        OPENSSL_free(hexe);
+        OPENSSL_free(dece);
+    }
+    if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
         goto end;
 
     ret = 0;
  end:
     BN_free(bn);
     BN_GENCB_free(cb);
-    RSA_free(rsa);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
     BIO_free_all(out);
     release_engine(eng);
     OPENSSL_free(passout);
+    OPENSSL_free(ebuf);
     if (ret != 0)
         ERR_print_errors(bio_err);
     return ret;
 }
 
-static int genrsa_cb(int p, int n, BN_GENCB *cb)
+static int genrsa_cb(EVP_PKEY_CTX *ctx)
 {
     char c = '*';
+    BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
+    int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
 
     if (!verbose)
         return 1;
@@ -220,7 +242,7 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb)
         c = '*';
     if (p == 3)
         c = '\n';
-    BIO_write(BN_GENCB_get_arg(cb), &c, 1);
-    (void)BIO_flush(BN_GENCB_get_arg(cb));
+    BIO_write(b, &c, 1);
+    (void)BIO_flush(b);
     return 1;
 }

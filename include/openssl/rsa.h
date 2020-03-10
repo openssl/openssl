@@ -50,10 +50,12 @@ extern "C" {
 #   ifndef OPENSSL_RSA_MAX_PUBEXP_BITS
 #    define OPENSSL_RSA_MAX_PUBEXP_BITS    64
 #   endif
+#  endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
-#   define RSA_3   0x3L
-#   define RSA_F4  0x10001L
+#  define RSA_3   0x3L
+#  define RSA_F4  0x10001L
 
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* based on RFC 8017 appendix A.1.2 */
 #   define RSA_ASN1_VERSION_DEFAULT        0
 #   define RSA_ASN1_VERSION_MULTI          1
