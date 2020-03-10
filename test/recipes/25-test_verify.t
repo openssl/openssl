@@ -378,10 +378,8 @@ SKIP: {
     skip "SM2 is not supported by this OpenSSL build", 2
 	      if disabled("sm2");
 
-   # Test '-sm2-id' and '-sm2-hex-id'  option
-   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-id", "1234567812345678"),
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-vfyopt", "distid:1234567812345678"),
        "SM2 ID test");
-   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-hex-id",
-             "31323334353637383132333435363738"),
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
        "SM2 hex ID test");
 }

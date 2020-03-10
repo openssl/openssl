@@ -212,20 +212,9 @@ static int set_sm2_id(EVP_MD_CTX *mctx, EVP_PKEY *pkey)
     static const char sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
     EVP_PKEY_CTX *pctx;
 
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL))
+    if (!TEST_ptr(pctx = EVP_MD_CTX_pkey_ctx(mctx))
         || !TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, sm2_id, sizeof(sm2_id)), 0))
         return 0;
-    EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
-    return 1;
-}
-
-static int clean_sm2_id(EVP_MD_CTX *mctx)
-{
-    EVP_PKEY_CTX *pctx;
-
-    if (!TEST_ptr(pctx = EVP_MD_CTX_pkey_ctx(mctx)))
-        return 0;
-    EVP_PKEY_CTX_free(pctx);
     return 1;
 }
 
@@ -283,46 +272,40 @@ static int test_builtin(int n, int as)
     if (!TEST_int_ge(temp, 0)
         || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
         /* create a signature */
-        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))
         || !TEST_int_le(sig_len, ECDSA_size(eckey))
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
         /* negative test, verify with wrong key, 0 return */
-        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey_neg))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey_neg))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey_neg))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 0)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
         /* negative test, verify with wrong signature length, -1 return */
-        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len - 1, tbs, sizeof(tbs)), -1)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx))
         /* positive test, verify with correct key, 1 return */
-        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
     /* muck with the message, test it fails with 0 return */
     tbs[0] ^= 1;
-    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
-        || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 0)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
     /* un-muck and test it verifies */
     tbs[0] ^= 1;
-    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
-        || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
@@ -355,18 +338,16 @@ static int test_builtin(int n, int as)
     offset = tbs[0] % sig_len;
     dirt = tbs[1] ? tbs[1] : 1;
     sig[offset] ^= dirt;
-    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
-        || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_ne(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
     /* un-muck and test it verifies */
     sig[offset] ^= dirt;
-    if ((as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
-        || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
+        || (as == EVP_PKEY_SM2 && !set_sm2_id(mctx, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1)
-        || (as == EVP_PKEY_SM2 && !clean_sm2_id(mctx))
         || !TEST_true(EVP_MD_CTX_reset(mctx)))
         goto err;
 
