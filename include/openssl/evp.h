@@ -84,7 +84,8 @@
 # define EVP_PKEY_RSA3072_QTESLAPI NID_rsa3072_qteslapi
 # define EVP_PKEY_QTESLAPIII NID_qteslapiii
 # define EVP_PKEY_P384_QTESLAPIII NID_p384_qteslapiii
-///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
+#define OQS_OPENSSL_SIG_algs_length 20
+/////// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
 
 #ifdef  __cplusplus
 extern "C" {

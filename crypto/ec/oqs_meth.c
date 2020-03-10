@@ -73,6 +73,31 @@ typedef enum {
     KEY_TYPE_PRIVATE,
 } oqs_key_type_t;
 
+int oqssl_sig_nids_list[] = {
+///// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_START
+        NID_oqs_sig_default,
+        NID_p256_oqs_sig_default,
+        NID_rsa3072_oqs_sig_default,
+        NID_dilithium2,
+        NID_p256_dilithium2,
+        NID_rsa3072_dilithium2,
+        NID_dilithium3,
+        NID_dilithium4,
+        NID_p384_dilithium4,
+        NID_picnicl1fs,
+        NID_p256_picnicl1fs,
+        NID_rsa3072_picnicl1fs,
+        NID_picnic2l1fs,
+        NID_p256_picnic2l1fs,
+        NID_rsa3072_picnic2l1fs,
+        NID_qteslapi,
+        NID_p256_qteslapi,
+        NID_rsa3072_qteslapi,
+        NID_qteslapiii,
+        NID_p384_qteslapiii
+/////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_END
+};
+
 /*
  * Maps OpenSSL NIDs to OQS IDs
  */
@@ -231,7 +256,7 @@ static int get_classical_sig_len(int classical_id)
  */
 const char *OQSKEM_options(void)
 {
-    const char* OQSKEMALGS = "OQS build : ";
+    const char* OQSKEMALGS = "OQS KEM build : ";
     int offset;
     char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
@@ -243,6 +268,31 @@ const char *OQSKEM_options(void)
        int l = strlen(OQS_KEM_alg_identifier(i));
        memcpy(result+offset, OQS_KEM_alg_identifier(i), l);
        if (i<OQS_KEM_algs_length-1) {
+          result[offset+l]=',';
+          offset = offset+l+1;
+       }
+    }
+    return result;
+}
+
+/*
+ * Returns options when running OQS SIG, e.g., in openssl speed
+ */
+const char *OQSSIG_options(void)
+{
+    const char* OQSSIGALGS = "OQS SIG build : ";
+    int offset;
+    char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_OPENSSL_SIG_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    memcpy(result, OQSSIGALGS, offset = strlen(OQSSIGALGS));
+    memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
+    offset += strlen(OQS_COMPILE_CFLAGS);
+    result[offset++]='-';
+    int i;
+    for (i=0; i<OQS_OPENSSL_SIG_algs_length;i++) {
+       const char* name = OBJ_nid2sn(oqssl_sig_nids_list[i]);
+       int l = strlen(name);
+       memcpy(result+offset, name, l);
+       if (i<OQS_OPENSSL_SIG_algs_length-1) {
           result[offset+l]=',';
           offset = offset+l+1;
        }
@@ -727,7 +777,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     return rv;
 }
 
-static int oqs_size(const EVP_PKEY *pkey)
+int oqs_size(const EVP_PKEY *pkey)
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     if (oqs_key == NULL || oqs_key->s == NULL) {
@@ -1399,4 +1449,3 @@ DEFINE_OQS_EVP_METHODS(rsa3072_qteslapi, NID_rsa3072_qteslapi, "rsa3072_qteslapi
 DEFINE_OQS_EVP_METHODS(qteslapiii, NID_qteslapiii, "qteslapiii", "OpenSSL qTESLA-p-III algorithm")
 DEFINE_OQS_EVP_METHODS(p384_qteslapiii, NID_p384_qteslapiii, "p384_qteslapiii", "OpenSSL ECDSA p384 qTESLA-p-III algorithm")
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END
-
