@@ -113,7 +113,46 @@ int f(void) /*
         5;
     else
         6;
+
+    if (1) {
+        if (2) {
+        case MAC_TYPE_MAC:
+            {
+                EVP_MAC_CTX *new_mac_ctx;
+
+                if (ctx->pkey == NULL)
+                    return 0;
+            }
+            break;
+        default:
+            /* This should be dead code */
+            return 0;
+        }
+    }
+    if (expr_line1
+        == expr_line2
+            && expr_line3) {
+        c1;
+    } else {
+        c;
+        d;
+    }
+    if (expr_line1
+        == expr_line2
+            && expr_line3)
+        hanging_stmt;
 }
+
+const OPTIONS passwd_options[] = {
+    {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
+#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
+#endif
+    OPT_R_OPTIONS,
+
+    {NULL}
+};
+
 typedef * d(int)
     x;
 typedef (int)
