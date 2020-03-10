@@ -48,12 +48,12 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
+    /* If a PSS only key this contains the parameter restrictions */
+    /* be careful using this if the RSA structure is shared */
     RSA_PSS_PARAMS *pss;
 #ifndef FIPS_MODE
     /* for multi-prime RSA, defined in RFC 8017 */
     STACK_OF(RSA_PRIME_INFO) *prime_infos;
-    /* If a PSS only key this contains the parameter restrictions */
-    /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
 #endif
     CRYPTO_REF_COUNT references;
