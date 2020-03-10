@@ -53,14 +53,14 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     switch (operation) {
     case ASN1_OP_D2I_PRE:
-        ASN1_OCTET_STRING_free(ret->sm2_id);
+        ASN1_OCTET_STRING_free(ret->distinguishing_id);
         /* fall thru */
     case ASN1_OP_NEW_POST:
-        ret->sm2_id = NULL;
+        ret->distinguishing_id = NULL;
         break;
 
     case ASN1_OP_FREE_POST:
-        ASN1_OCTET_STRING_free(ret->sm2_id);
+        ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
     }
 #endif
@@ -90,15 +90,13 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)
 
-#ifndef OPENSSL_NO_SM2
-void X509_REQ_set0_sm2_id(X509_REQ *x, ASN1_OCTET_STRING *sm2_id)
+void X509_REQ_set0_distinguishing_id(X509_REQ *x, ASN1_OCTET_STRING *d_id)
 {
-    ASN1_OCTET_STRING_free(x->sm2_id);
-    x->sm2_id = sm2_id;
+    ASN1_OCTET_STRING_free(x->distinguishing_id);
+    x->distinguishing_id = d_id;
 }
 
-ASN1_OCTET_STRING *X509_REQ_get0_sm2_id(X509_REQ *x)
+ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x)
 {
-    return x->sm2_id;
+    return x->distinguishing_id;
 }
-#endif

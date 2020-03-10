@@ -71,10 +71,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
-#ifndef OPENSSL_NO_SM2
-    id = a->sm2_id;
-#endif
-
+    id = a->distinguishing_id;
     if ((ctx = make_id_ctx(r, id)) != NULL) {
         rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                                   &a->signature, &a->cert_info, ctx);
@@ -89,10 +86,7 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
     EVP_MD_CTX *ctx = NULL;
     ASN1_OCTET_STRING *id = NULL;
 
-#ifndef OPENSSL_NO_SM2
-    id = a->sm2_id;
-#endif
-
+    id = a->distinguishing_id;
     if ((ctx = make_id_ctx(r, id)) != NULL) {
         rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
                                   a->signature, &a->req_info, ctx);

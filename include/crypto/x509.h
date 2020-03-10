@@ -71,9 +71,9 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
+
+    /* Set on live certificates for authentication purposes */
+    ASN1_OCTET_STRING *distinguishing_id;
 };
 
 struct X509_crl_info_st {
@@ -186,9 +186,9 @@ struct x509_st {
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
+
+    /* Set on live certificates for authentication purposes */
+    ASN1_OCTET_STRING *distinguishing_id;
 } /* X509 */ ;
 
 /*
