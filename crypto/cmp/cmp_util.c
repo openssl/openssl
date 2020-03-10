@@ -320,6 +320,26 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
     return result;
 }
 
+int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
+                                         const char *text)
+{
+    ASN1_UTF8STRING *utf8string;
+
+    if (!ossl_assert(sk != NULL && text != NULL))
+        return 0;
+    if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+        return 0;
+    if (!ASN1_STRING_set(utf8string, text, -1))
+        goto err;
+    if (!sk_ASN1_UTF8STRING_push(sk, utf8string))
+        goto err;
+    return 1;
+
+ err:
+    ASN1_UTF8STRING_free(utf8string);
+    return 0;
+}
+
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src)
 {
@@ -363,4 +383,40 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     ASN1_OCTET_STRING_free(*tgt);
     *tgt = new;
     return 1;
+}
+
+/*
+ * calculate a digest of the given certificate,
+ * using the same hash algorithm as in the certificate signature.
+ */
+ASN1_OCTET_STRING *OSSL_CMP_X509_digest(const X509 *cert)
+{
+    unsigned int len;
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    int md_NID;
+    const EVP_MD *md = NULL;
+    ASN1_OCTET_STRING *new = NULL;
+
+    if (!ossl_assert(cert != NULL))
+        return NULL;
+
+    /*-
+     * select hash algorithm, as stated in CMP RFC 4210 Appendix F.
+     * Compilable ASN.1 defs:
+     * the hash of the certificate, using the same hash algorithm
+     * as is used to create and verify the certificate signature
+     */
+    if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &md_NID, NULL)
+            || (md = EVP_get_digestbynid(md_NID)) == NULL) {
+        CMPerr(0, CMP_R_UNSUPPORTED_ALGORITHM);
+        return NULL;
+    }
+    if (!X509_digest(cert, md, hash, &len)
+            || (new = ASN1_OCTET_STRING_new()) == NULL)
+        return NULL;
+    if (!(ASN1_OCTET_STRING_set(new, hash, len))) {
+        ASN1_OCTET_STRING_free(new);
+        return NULL;
+    }
+    return new;
 }

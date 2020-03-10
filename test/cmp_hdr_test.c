@@ -350,9 +350,9 @@ static int
 execute_HDR_set_and_check_implicitConfirm_test(CMP_HDR_TEST_FIXTURE
                                                * fixture)
 {
-    return TEST_false(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr))
+    return TEST_false(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr))
         && TEST_true(ossl_cmp_hdr_set_implicitConfirm(fixture->hdr))
-        && TEST_true(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr));
+        && TEST_true(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr));
 }
 
 static int test_HDR_set_and_check_implicit_confirm(void)

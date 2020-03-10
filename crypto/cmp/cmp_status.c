@@ -28,17 +28,13 @@
 
 /* CMP functions related to PKIStatus */
 
-int ossl_cmp_pkisi_get_pkistatus(const OSSL_CMP_PKISI *si)
+int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si)
 {
     if (!ossl_assert(si != NULL && si->status != NULL))
         return -1;
     return ossl_cmp_asn1_get_int(si->status);
 }
 
-/*
- * return the declared identifier and a short explanation for the PKIStatus
- * value as specified in RFC4210, Appendix F.
- */
 const char *ossl_cmp_PKIStatus_to_string(int status)
 {
     switch (status) {
@@ -67,21 +63,13 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
     }
 }
 
-/*
- * returns a pointer to the statusString contained in a PKIStatusInfo
- * returns NULL on error
- */
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si)
+OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *si)
 {
     if (!ossl_assert(si != NULL))
         return NULL;
     return si->statusString;
 }
 
-/*
- * returns the FailureInfo bits of the given PKIStatusInfo
- * returns -1 on error
- */
 int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si)
 {
     int i;
@@ -95,12 +83,9 @@ int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si)
     return res;
 }
 
-/*
- * internal function
+/*-
  * convert PKIFailureInfo number to human-readable string
- *
- * returns pointer to static string
- * returns NULL on error
+ * returns pointer to static string, or NULL on error
  */
 static const char *CMP_PKIFAILUREINFO_to_string(int number)
 {
@@ -164,11 +149,7 @@ static const char *CMP_PKIFAILUREINFO_to_string(int number)
     }
 }
 
-/*
- * checks PKIFailureInfo bits in a given PKIStatusInfo
- * returns 1 if a given bit is set, 0 if not, -1 on error
- */
-int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index)
+int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int bit_index)
 {
     if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;
@@ -180,16 +161,17 @@ int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index)
     return ASN1_BIT_STRING_get_bit(si->failInfo, bit_index);
 }
 
-/*
+/*-
  * place human-readable error string created from PKIStatusInfo in given buffer
  * returns pointer to the same buffer containing the string, or NULL on error
  */
-char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
-                                     size_t bufsize)
+static
+char *snprint_PKIStatusInfo_parts(int status, int fail_info,
+                                  const OSSL_CMP_PKIFREETEXT *status_strings,
+                                  char *buf, size_t bufsize)
 {
-    int status, failure, fail_info;
+    int failure;
     const char *status_string, *failure_string;
-    OSSL_CMP_PKIFREETEXT *status_strings;
     ASN1_UTF8STRING *text;
     int i;
     int printed_chars;
@@ -197,22 +179,22 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     int n_status_strings;
     char *write_ptr = buf;
 
-#define ADVANCE_BUFFER                                         \
-    if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
-        return NULL; \
-    write_ptr += printed_chars; \
-    bufsize -= printed_chars;
-
-    if (ctx == NULL
-            || buf == NULL
-            || (status = OSSL_CMP_CTX_get_status(ctx)) < 0
+    if (buf == NULL
+            || status < 0
             || (status_string = ossl_cmp_PKIStatus_to_string(status)) == NULL)
         return NULL;
+
+#define ADVANCE_BUFFER                                         \
+        if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
+            return NULL; \
+        write_ptr += printed_chars; \
+        bufsize -= printed_chars;
+
     printed_chars = BIO_snprintf(write_ptr, bufsize, "%s", status_string);
     ADVANCE_BUFFER;
 
     /* failInfo is optional and may be empty */
-    if ((fail_info = OSSL_CMP_CTX_get_failInfoCode(ctx)) > 0) {
+    if (fail_info != 0) {
         printed_chars = BIO_snprintf(write_ptr, bufsize, "; PKIFailureInfo: ");
         ADVANCE_BUFFER;
         for (failure = 0; failure <= OSSL_CMP_PKIFAILUREINFO_MAX; failure++) {
@@ -220,7 +202,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
                 failure_string = CMP_PKIFAILUREINFO_to_string(failure);
                 if (failure_string != NULL) {
                     printed_chars = BIO_snprintf(write_ptr, bufsize, "%s%s",
-                                                 failure > 0 ? ", " : "",
+                                                 failinfo_found ? ", " : "",
                                                  failure_string);
                     ADVANCE_BUFFER;
                     failinfo_found = 1;
@@ -235,7 +217,6 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     }
 
     /* statusString sequence is optional and may be empty */
-    status_strings = OSSL_CMP_CTX_get0_statusString(ctx);
     n_status_strings = sk_ASN1_UTF8STRING_num(status_strings);
     if (n_status_strings > 0) {
         printed_chars = BIO_snprintf(write_ptr, bufsize, "; StatusString%s: ",
@@ -253,13 +234,44 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(OSSL_CMP_CTX *ctx, char *buf,
     return buf;
 }
 
-/*
+char *OSSL_CMP_snprint_PKIStatusInfo(const OSSL_CMP_PKISI *statusInfo,
+                                     char *buf, size_t bufsize)
+{
+    int failure_info;
+
+    if (statusInfo == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+
+    failure_info = ossl_cmp_pkisi_get_pkifailureinfo(statusInfo);
+
+    return snprint_PKIStatusInfo_parts(ASN1_INTEGER_get(statusInfo->status),
+                                       failure_info,
+                                       statusInfo->statusString, buf, bufsize);
+}
+
+char *OSSL_CMP_CTX_snprint_PKIStatus(const OSSL_CMP_CTX *ctx, char *buf,
+                                     size_t bufsize)
+{
+    if (ctx == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+
+    return snprint_PKIStatusInfo_parts(OSSL_CMP_CTX_get_status(ctx),
+                                       OSSL_CMP_CTX_get_failInfoCode(ctx),
+                                       OSSL_CMP_CTX_get0_statusString(ctx),
+                                       buf, bufsize);
+}
+
+/*-
  * Creates a new PKIStatusInfo structure and fills it in
  * returns a pointer to the structure on success, NULL on error
  * note: strongly overlaps with TS_RESP_CTX_set_status_info()
  * and TS_RESP_CTX_add_failure_info() in ../ts/ts_rsp_sign.c
  */
-OSSL_CMP_PKISI *ossl_cmp_statusinfo_new(int status, int fail_info,
+OSSL_CMP_PKISI *OSSL_CMP_STATUSINFO_new(int status, int fail_info,
                                         const char *text)
 {
     OSSL_CMP_PKISI *si = OSSL_CMP_PKISI_new();

@@ -23,6 +23,9 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   $OPENSSLSRC=$OPENSSLSRC \
         dhparam.c dsa.c dsaparam.c gendsa.c rsa.c rsautl.c genrsa.c
 ENDIF
+IF[{- !$disabled{'cmp'} -}]
+  $OPENSSLSRC=$OPENSSLSRC cmp_mock_srv.c
+ENDIF
 
 IF[{- !$disabled{apps} -}]
   PROGRAMS=openssl
