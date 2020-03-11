@@ -23,12 +23,14 @@
 #include "crypto/bn_dh.h"
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
+#include "e_os.h" /* strcasecmp */
 
 
-#define FFDHE(sz) { NID_ffdhe##sz, sz, &_bignum_ffdhe##sz##_p }
-#define MODP(sz)  { NID_modp_##sz, sz, &_bignum_modp_##sz##_p }
+#define FFDHE(sz) { SN_ffdhe##sz, NID_ffdhe##sz, sz, &_bignum_ffdhe##sz##_p }
+#define MODP(sz)  { SN_modp_##sz, NID_modp_##sz, sz, &_bignum_modp_##sz##_p }
 
 typedef struct safe_prime_group_st {
+    const char *name;
     int nid;
     int32_t nbits;
     const BIGNUM *p;
@@ -49,6 +51,28 @@ static const SP_GROUP sp_groups[] = {
     MODP(6144),
     MODP(8192),
 };
+
+int ffc_named_group_to_nid(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(sp_groups); ++i) {
+        if (strcasecmp(sp_groups[i].name, name) == 0)
+            return sp_groups[i].nid;
+    }
+    return NID_undef;
+}
+
+const char *ffc_named_group_from_nid(int nid)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(sp_groups); ++i) {
+        if (sp_groups[i].nid == nid)
+            return sp_groups[i].name;
+    }
+    return NULL;
+}
 
 #ifndef FIPS_MODE
 static DH *dh_new_by_nid_with_ctx(OPENSSL_CTX *libctx, int nid);

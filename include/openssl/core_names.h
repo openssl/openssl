@@ -191,6 +191,12 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_P        "p"
 #define OSSL_PKEY_PARAM_FFC_G        "g"
 #define OSSL_PKEY_PARAM_FFC_Q        "q"
+#define OSSL_PKEY_PARAM_FFC_GINDEX   "gindex"
+#define OSSL_PKEY_PARAM_FFC_PCOUNTER "pcounter"
+#define OSSL_PKEY_PARAM_FFC_SEED     "seed"
+#define OSSL_PKEY_PARAM_FFC_COFACTOR "j"
+#define OSSL_PKEY_PARAM_FFC_H        "hindex"
+#define OSSL_PKEY_PARAM_FFC_GROUP    "group"
 
 /* Elliptic Curve Domain Parameters */
 #define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
@@ -254,6 +260,13 @@ extern "C" {
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_RSA_BITS        OSSL_PKEY_PARAM_BITS
 #define OSSL_PKEY_PARAM_RSA_PRIMES      "primes"
+
+/* Key generation parameters */
+#define OSSL_PKEY_PARAM_FFC_TYPE         "type"
+#define OSSL_PKEY_PARAM_FFC_PBITS        "pbits"
+#define OSSL_PKEY_PARAM_FFC_QBITS        "qbits"
+#define OSSL_PKEY_PARAM_FFC_DIGEST       OSSL_PKEY_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_FFC_DIGEST_PROPS OSSL_PKEY_PARAM_PROPERTIES
 
 /* Key Exchange parameters */
 

@@ -617,14 +617,6 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 # endif
 
 # ifndef OPENSSL_NO_DSA
-int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
-{
-    int ret = EVP_PKEY_assign_DSA(pkey, key);
-    if (ret)
-        DSA_up_ref(key);
-    return ret;
-}
-
 DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
     if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
@@ -638,6 +630,13 @@ DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
     return pkey->pkey.dsa;
 }
 
+int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
+{
+    int ret = EVP_PKEY_assign_DSA(pkey, key);
+    if (ret)
+        DSA_up_ref(key);
+    return ret;
+}
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
     DSA *ret = EVP_PKEY_get0_DSA(pkey);
@@ -645,10 +644,11 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
         DSA_up_ref(ret);
     return ret;
 }
-# endif
+# endif /*  OPENSSL_NO_DSA */
+#endif /* FIPS_MODE */
 
+#ifndef FIPS_MODE
 # ifndef OPENSSL_NO_EC
-
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
     int ret = EVP_PKEY_assign_EC_KEY(pkey, key);

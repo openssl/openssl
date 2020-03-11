@@ -33,6 +33,10 @@ EVP_PKEY_CTX_get0_rsa_oaep_label,
 EVP_PKEY_CTX_set_dsa_paramgen_bits,
 EVP_PKEY_CTX_set_dsa_paramgen_q_bits,
 EVP_PKEY_CTX_set_dsa_paramgen_md,
+EVP_PKEY_CTX_set_dsa_paramgen_md_props,
+EVP_PKEY_CTX_set_dsa_paramgen_gindex,
+EVP_PKEY_CTX_set_dsa_paramgen_type,
+EVP_PKEY_CTX_set_dsa_paramgen_seed,
 EVP_PKEY_CTX_set_dh_paramgen_prime_len,
 EVP_PKEY_CTX_set_dh_paramgen_subprime_len,
 EVP_PKEY_CTX_set_dh_paramgen_generator,
@@ -121,6 +125,14 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
  int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits);
  int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
+                                            const char *md_name,
+                                            const char *md_properties);
+ int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name);
+ int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
+ int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                        const unsigned char *seed,
+                                        size_t seedlen);
 
  #include <openssl/dh.h>
 
@@ -395,18 +407,41 @@ negotiated protocol version. Otherwise it should be left unset.
 
 =head2 DSA parameters
 
-The EVP_PKEY_CTX_set_dsa_paramgen_bits() macro sets the number of bits used
+The EVP_PKEY_CTX_set_dsa_paramgen_bits() method sets the number of bits used
 for DSA parameter generation to I<nbits>. If not specified, 2048 is used.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_q_bits() macro sets the number of bits in the
+The EVP_PKEY_CTX_set_dsa_paramgen_q_bits() method sets the number of bits in the
 subprime parameter I<q> for DSA parameter generation to I<qbits>. If not
 specified, 224 is used. If a digest function is specified below, this parameter
 is ignored and instead, the number of bits in I<q> matches the size of the
 digest.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_md() macro sets the digest function used for
+The EVP_PKEY_CTX_set_dsa_paramgen_md() method sets the digest function used for
 DSA parameter generation to I<md>. If not specified, one of SHA-1, SHA-224, or
 SHA-256 is selected to match the bit length of I<q> above.
+
+The EVP_PKEY_CTX_set_dsa_paramgen_md_props() method sets the digest function
+used for DSA parameter generation using I<md_name> and I<md_properties> to
+retrieve the digest from a provider.
+If not specified, I<md_name> will be set to one of SHA-1, SHA-224, or
+SHA-256 depending on the bit length of I<q> above. I<md_properties> is a
+property query string that has a default value of '' if not specified.
+
+The EVP_PKEY_CTX_set_dsa_paramgen_gindex() method sets the I<gindex> used by
+the generator G. The default value is -1 which uses unverifiable g, otherwise
+a positive value uses verifiable g. This value must be saved if key validation
+of g is required, since it is not part of a persisted key.
+
+The EVP_PKEY_CTX_set_dsa_paramgen_seed() method sets the I<seed> to use for
+generation rather than using a randomly generated value for the seed. This is
+useful for testing purposes only and can fail if the seed does not produce
+primes for both p & q on its first iteration. This value must be saved if
+key validation of p, q, and verifiable g are required, since it is not part of
+a persisted key.
+
+The EVP_PKEY_CTX_set_dsa_paramgen_type() method sets the generation type to
+use FIPS186-4 generation if I<name> is "fips186_4", or FIPS186-2 generation if
+I<name> is "fips186_2". The default value is "fips186_4".
 
 =head2 DH parameters
 
@@ -417,8 +452,7 @@ then 2048 is used. Only accepts lengths greater than or equal to 256.
 The EVP_PKEY_CTX_set_dh_paramgen_subprime_len() macro sets the length of the DH
 optional subprime parameter I<q> for DH parameter generation. The default is
 256 if the prime is at least 2048 bits long or 160 otherwise. The DH
-paramgen type must have been set to B<DH_PARAMGEN_TYPE_FIPS_186_2> or
-B<DH_PARAMGEN_TYPE_FIPS_186_4>.
+paramgen type must have been set to "fips186_4".
 
 The EVP_PKEY_CTX_set_dh_paramgen_generator() macro sets DH generator to I<gen>
 for DH parameter generation. If not specified 2 is used.
@@ -633,12 +667,16 @@ EVP_PKEY_CTX_get_rsa_padding(), EVP_PKEY_CTX_get_rsa_mgf1_md(),
 EVP_PKEY_CTX_set_rsa_mgf1_md(), EVP_PKEY_CTX_set_rsa_oaep_md(),
 EVP_PKEY_CTX_get_rsa_oaep_md(), EVP_PKEY_CTX_set0_rsa_oaep_label(),
 EVP_PKEY_CTX_get0_rsa_oaep_label(), EVP_PKEY_CTX_set_rsa_pss_saltlen(),
-EVP_PKEY_CTX_get_rsa_pss_saltlen(), were macros in OpenSSL 1.1.1 and below.
+EVP_PKEY_CTX_get_rsa_pss_saltlen(), EVP_PKEY_CTX_set_dsa_paramgen_bits(),
+EVP_PKEY_CTX_set_dsa_paramgen_q_bits() and EVP_PKEY_CTX_set_dsa_paramgen_md()
+were macros in OpenSSL 1.1.1 and below.
 From OpenSSL 3.0 they are functions.
 
 EVP_PKEY_CTX_get_rsa_oaep_md_name(), EVP_PKEY_CTX_get_rsa_mgf1_md_name(),
-EVP_PKEY_CTX_set_rsa_mgf1_md_name() and EVP_PKEY_CTX_set_rsa_oaep_md_name() were
-added in OpenSSL 3.0.
+EVP_PKEY_CTX_set_rsa_mgf1_md_name(), EVP_PKEY_CTX_set_rsa_oaep_md_name(),
+EVP_PKEY_CTX_set_dsa_paramgen_md_props(), EVP_PKEY_CTX_set_dsa_paramgen_gindex(),
+EVP_PKEY_CTX_set_dsa_paramgen_type() and EVP_PKEY_CTX_set_dsa_paramgen_seed()
+were added in OpenSSL 3.0.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and
 EVP_PKEY_CTX_get1_id_len() macros were added in 1.1.1, other functions were
@@ -646,7 +684,7 @@ added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

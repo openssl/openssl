@@ -165,7 +165,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     const char *post_label_spc = " ";
     int bytes;
     BN_ULONG *words;
-    int n, i;
+    int n, i, z = 0;
 
     if (bn == NULL)
         return 0;
@@ -201,7 +201,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
      * first limb.
      * i is used as limb index, j is used as the "byte index" in the limb
      */
-    for (i = bytes / BN_BYTES - 1; i >= 0; i--) {
+    for (i = (bytes + (BN_BYTES - 1)) / BN_BYTES - 1; i >= 0; i--) {
         BN_ULONG l = words[i];
         int  j;
 
@@ -209,32 +209,37 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
             int o = 8 * j;
             int b = ((l & (0xffLU << o)) >> o) & 0xff;
 
-            /* Indent every new line with 4 spaces */
-            if ((n % 15) == 0) {
-                if (n > 0)
-                    if (ossl_prov_bio_printf(out, "\n") <= 0)
+            /* strip leading zeros */
+            if (z || b != 0) {
+                z = 1;
+
+                /* Indent every new line with 4 spaces */
+                if ((n % 15) == 0) {
+                    if (n > 0)
+                        if (ossl_prov_bio_printf(out, "\n") <= 0)
+                            return 0;
+                    if (ossl_prov_bio_printf(out, "    ") <= 0)
                         return 0;
-                if (ossl_prov_bio_printf(out, "    ") <= 0)
-                    return 0;
-            }
+                }
 
-            /*
-             * Upper bit set, then we print an extra zero and pretend the
-             * BIGNUM was one byte longer
-             */
-            if (n == 0 && b > 127) {
-                if (ossl_prov_bio_printf(out, "%02x:", 0) <= 0)
-                    return 0;
-                n++;
-                bytes++;
-            }
+                /*
+                 * Upper bit set, then we print an extra zero and pretend the
+                 * BIGNUM was one byte longer
+                 */
+                if (n == 0 && b > 127) {
+                    if (ossl_prov_bio_printf(out, "%02x:", 0) <= 0)
+                        return 0;
+                    n++;
+                    bytes++;
+                }
 
-            if (++n < bytes) {
-                if (ossl_prov_bio_printf(out, "%02x:", b) <= 0)
-                    return 0;
-            } else {
-                if (ossl_prov_bio_printf(out, "%02x", b) <= 0)
-                    return 0;
+                if (++n < bytes) {
+                    if (ossl_prov_bio_printf(out, "%02x:", b) <= 0)
+                        return 0;
+                } else {
+                    if (ossl_prov_bio_printf(out, "%02x", b) <= 0)
+                        return 0;
+                }
             }
         }
     }
