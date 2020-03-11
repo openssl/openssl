@@ -98,6 +98,16 @@ int oqssl_sig_nids_list[] = {
 /////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_END
 };
 
+static int* sig_nid_list = NULL;
+
+int* get_oqssl_sig_nids() {
+   if (!sig_nid_list) {
+      sig_nid_list = OPENSSL_malloc(sizeof(oqssl_sig_nids_list));
+      memcpy(sig_nid_list, oqssl_sig_nids_list, sizeof(oqssl_sig_nids_list));
+   }
+   return sig_nid_list;
+}
+
 /*
  * Maps OpenSSL NIDs to OQS IDs
  */

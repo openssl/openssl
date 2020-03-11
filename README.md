@@ -71,7 +71,7 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - `oqs_kem_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **BIKE**: `bike1l1cpa`, `bike1l3cpa`, `bike1l1fo`, `bike1l3fo`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
-- **Kyber**: `kyber512`, `kyber1024`
+- **Kyber**: `kyber512`, `kyber768`, `kyber1024`
 - **NewHope**: `newhope512cca`, `newhope1024cca`
 - **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hrss701`
 - **Saber**: `lightsaber`, `saber`, `firesaber`
@@ -226,6 +226,20 @@ This command can be used to verify (and extract the contents) of the CMS file re
 	apps/openssl cms -verify -CAfile <SIG>_CA.crt -inform pem -in signedfile.cms -crlfeol -out signeddatafile
 
 It would be expected that the contents of `inputfile` and the resultant `signeddatafile` are the same.
+
+#### Speed
+
+OpenSSL has facilities to perform pure speed tests of the cryptographic algorithms supported. This can now also be used to compare relative performance of OQS algorithms.
+
+This command can be used to determine the speed of all KEM algorithms supported by the underlying `liboqs`:
+
+	apps/openssl speed oqskem
+
+This command can be used to determine the speed of all OQS signature algorithms supported by OQS-openssl:
+
+	apps/openssl speed oqssig
+
+As with standard OpenSSL one can also pass the specific algorithm name to be tested, e.g., `apps/openssl speed dilithium2`.
 
 
 ## Third Party Integrations

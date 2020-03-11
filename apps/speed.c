@@ -107,7 +107,7 @@ extern const char *OQSKEM_options(void);
 #ifndef OPENSSL_NO_OQSSIG
 # include <oqs/oqs.h>
 extern const char *OQSSIG_options(void);
-extern const int oqssl_sig_nids_list[]; 
+extern int* get_oqssl_sig_nids(); 
 extern int oqs_size(const EVP_PKEY *pkey);
 #endif
 #include <openssl/modes.h>
@@ -1658,6 +1658,7 @@ int speed_main(int argc, char **argv)
 
     /* populate oqssig_choices */
     int oqssigcnt = 0;
+    int* oqssl_sig_nids_list = get_oqssl_sig_nids(); 
     for (oqssigcnt = 0; oqssigcnt < OQSSIG_NUM; ++oqssigcnt) {
         oqssig_choices[oqssigcnt].name = OBJ_nid2sn(oqssl_sig_nids_list[oqssigcnt]);
         oqssig_choices[oqssigcnt].retval = oqssigcnt;
@@ -3437,7 +3438,6 @@ int speed_main(int argc, char **argv)
 #endif /* ndef OPENSSL_NO_OQSKEM */
 
 #ifndef OPENSSL_NO_OQSSIG
-    // Core idea: Reuse all EDDSA structs
     for (testnum = 0; testnum < OQSSIG_NUM; testnum++) {
         int st = 1;
         EVP_PKEY *oqssig_pkey = NULL;
