@@ -19,11 +19,11 @@
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
+#include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "crypto/dsa.h"
 #include "crypto/evp.h"
-#include "openssl/param_build.h"
 #include "internal/ffc.h"
 #include "dsa_local.h"
 
@@ -586,7 +586,7 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *key)
         return 0;
     }
 
-    if (!ffc_fromdata(dsa_get0_params(dsa), params)
+    if (!dsa_ffc_params_fromdata(dsa, params)
         || !dsa_key_fromdata(dsa, params)
         || !EVP_PKEY_assign_DSA(pkey, dsa)) {
         DSA_free(dsa);

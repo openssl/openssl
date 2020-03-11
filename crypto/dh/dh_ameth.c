@@ -24,7 +24,7 @@
 #include "crypto/evp.h"
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "openssl/param_build.h"
+#include <openssl/param_build.h>
 #include "internal/ffc.h"
 
 /*
@@ -558,7 +558,7 @@ static int dh_pkey_import_from(const OSSL_PARAM params[], void *key)
         return 0;
     }
 
-    if (!ffc_fromdata(dh_get0_params(dh), params)
+    if (!ffc_params_fromdata(dh_get0_params(dh), params)
         || !dh_key_fromdata(dh, params)
         || !EVP_PKEY_assign_DH(pkey, dh)) {
         DH_free(dh);

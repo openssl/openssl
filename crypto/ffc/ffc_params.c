@@ -8,7 +8,10 @@
  */
 
 #include <string.h> /* memset */
+#include <openssl/core_names.h>
 #include "internal/ffc.h"
+#include "internal/param_build_set.h"
+
 #ifndef FIPS_MODE
 # include <openssl/asn1.h> /* ffc_params_print */
 #endif
@@ -67,15 +70,17 @@ void ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j)
         d->j = j;
 }
 
-int ffc_params_set_validate_params(FFC_PARAMS *params,
-                                   const unsigned char *seed, size_t seedlen,
-                                   int counter)
+int ffc_params_set_seed(FFC_PARAMS *params,
+                        const unsigned char *seed, size_t seedlen)
 {
     if (params == NULL)
         return 0;
 
-    if (params->seed != NULL)
+    if (params->seed != NULL) {
+        if (params->seed == seed)
+            return 1;
         OPENSSL_free(params->seed);
+    }
 
     if (seed != NULL && seedlen > 0) {
         params->seed = OPENSSL_memdup(seed, seedlen);
@@ -86,6 +91,30 @@ int ffc_params_set_validate_params(FFC_PARAMS *params,
         params->seed = NULL;
         params->seedlen = 0;
     }
+    return 1;
+}
+
+void ffc_params_set_gindex(FFC_PARAMS *params, int index)
+{
+    params->gindex = index;
+}
+
+void ffc_params_set_pcounter(FFC_PARAMS *params, int index)
+{
+    params->pcounter = index;
+}
+
+void ffc_params_set_h(FFC_PARAMS *params, int index)
+{
+    params->h = index;
+}
+
+int ffc_params_set_validate_params(FFC_PARAMS *params,
+                                   const unsigned char *seed, size_t seedlen,
+                                   int counter)
+{
+    if (!ffc_params_set_seed(params, seed, seedlen))
+        return 0;
     params->pcounter = counter;
     return 1;
 }
@@ -139,7 +168,10 @@ int ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src)
     } else {
         dst->seed = NULL;
     }
+    dst->nid = src->nid;
     dst->pcounter = src->pcounter;
+    dst->h = src->h;
+    dst->gindex = src->gindex;
     return 1;
 }
 
@@ -150,7 +182,52 @@ int ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q)
            && (ignore_q || BN_cmp(a->q, b->q) == 0); /* Note: q may be NULL */
 }
 
+int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
+                      OSSL_PARAM params[])
+{
+    if (ffc == NULL)
+        return 0;
+
+    if (ffc->p != NULL
+        && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_FFC_P, ffc->p))
+        return 0;
+    if (ffc->q != NULL
+        && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_FFC_Q, ffc->q))
+        return 0;
+    if (ffc->g != NULL
+        && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_FFC_G, ffc->g))
+        return 0;
+    if (ffc->j != NULL
+        && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_FFC_COFACTOR,
+                                    ffc->j))
+        return 0;
+    if (!ossl_param_build_set_int(bld, params, OSSL_PKEY_PARAM_FFC_GINDEX,
+                                  ffc->gindex))
+        return 0;
+    if (!ossl_param_build_set_int(bld, params, OSSL_PKEY_PARAM_FFC_PCOUNTER,
+                                  ffc->pcounter))
+        return 0;
+    if (!ossl_param_build_set_int(bld, params, OSSL_PKEY_PARAM_FFC_H, ffc->h))
+        return 0;
+    if (ffc->seed != NULL
+        && !ossl_param_build_set_octet_string(bld, params,
+                                              OSSL_PKEY_PARAM_FFC_SEED,
+                                              ffc->seed, ffc->seedlen))
+        return 0;
+    if (ffc->nid != NID_undef) {
+        const char *name = ffc_named_group_from_nid(ffc->nid);
+
+        if (name == NULL
+            || !ossl_param_build_set_utf8_string(bld, params,
+                                                 OSSL_PKEY_PARAM_FFC_GROUP,
+                                                 name))
+            return 0;
+    }
+    return 1;
+}
+
 #ifndef FIPS_MODE
+
 int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
 {
     if (!ASN1_bn_print(bp, "prime P:", ffc->p, NULL, indent))

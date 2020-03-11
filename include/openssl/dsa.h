@@ -182,15 +182,17 @@ DEPRECATEDIN_3_0(int DSA_print_fp(FILE *bp, const DSA *x, int off))
 DEPRECATEDIN_3_0(DH *DSA_dup_DH(const DSA *r))
 #  endif
 
-#  define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL)
-#  define EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, qbits) \
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL)
-#  define EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md) \
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md))
+int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
+int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits);
+int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
+                                           const char *md_name,
+                                           const char *md_properties);
+int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
+int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name);
+int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                       const unsigned char *seed,
+                                       size_t seedlen);
+int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
 #  define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
 #  define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
