@@ -352,8 +352,8 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr);
 
 /* from cmp_msg.c */
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
-OSSL_CMP_MSG *OSSL_d2i_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg);
-int OSSL_i2d_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg);
+OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg);
+int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg);
 
 /* from cmp_vfy.c */
 int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg);
