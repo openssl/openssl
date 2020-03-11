@@ -45,6 +45,11 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     return 1;
 }
 
+const DH_METHOD *dh_get_method(const DH *dh)
+{
+    return dh->meth;
+}
+
 DH *DH_new(void)
 {
     return dh_new_intern(NULL, NULL);
@@ -211,11 +216,16 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 
     ffc_params_set0_pqg(&dh->params, p, q, g);
     dh->params.nid = NID_undef;
-    DH_get_nid(dh); /* Check if this is a named group and cache it */
-
-    if (q != NULL)
-        dh->length = BN_num_bits(q);
-
+    /*
+     * Check if this is a named group. If it finds a named group then the
+     * 'q' and 'length' value are either already set or are set by the
+     * call.
+     */
+    if (DH_get_nid(dh) == NID_undef) {
+        /* If its not a named group then set the 'length' if q is not NULL */
+        if (q != NULL)
+            dh->length = BN_num_bits(q);
+    }
     dh->dirty_cnt++;
     return 1;
 }

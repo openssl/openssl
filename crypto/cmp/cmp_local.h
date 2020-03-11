@@ -246,7 +246,6 @@ struct ossl_cmp_itav_st {
     } infoValue;
 } /* OSSL_CMP_ITAV */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 
 typedef struct ossl_cmp_certorenccert_st {
     int type;
@@ -284,8 +283,6 @@ struct ossl_cmp_pkisi_st {
     OSSL_CMP_PKIFREETEXT *statusString;
     OSSL_CMP_PKIFAILUREINFO *failInfo;
 } /* OSSL_CMP_PKISI */;
-DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_PKISI)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 
 /*-
@@ -296,10 +293,11 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
  *      crlEntryDetails     Extensions       OPTIONAL
  *  }
  */
-typedef struct ossl_cmp_revdetails_st {
+struct ossl_cmp_revdetails_st {
     OSSL_CRMF_CERTTEMPLATE *certDetails;
     X509_EXTENSIONS *crlEntryDetails;
-} OSSL_CMP_REVDETAILS;
+} /* OSSL_CMP_REVDETAILS */;
+typedef struct ossl_cmp_revdetails_st OSSL_CMP_REVDETAILS;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_REVDETAILS)
 DEFINE_STACK_OF(OSSL_CMP_REVDETAILS)
 
@@ -375,7 +373,6 @@ struct ossl_cmp_certstatus_st {
     OSSL_CMP_PKISI *statusInfo;
 } /* OSSL_CMP_CERTSTATUS */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTSTATUS)
-
 typedef STACK_OF(OSSL_CMP_CERTSTATUS) OSSL_CMP_CERTCONFIRMCONTENT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTCONFIRMCONTENT)
 
@@ -670,7 +667,6 @@ struct ossl_cmp_msg_st {
     STACK_OF(X509) *extraCerts; /* 1 */
 } /* OSSL_CMP_MSG */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSG)
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 
 /*-
  * ProtectedPart ::= SEQUENCE {
@@ -728,17 +724,6 @@ DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
  *   }
  */
 
-/*
- * constants
- */
-/* certReqId for the first - and so far only - certificate request */
-# define OSSL_CMP_CERTREQID 0
-/* sequence id for the first - and so far only - revocation request */
-# define OSSL_CMP_REVREQSID 0
-/*
- * functions
- */
-
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);
 
@@ -755,6 +740,9 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
                                 int no_self_issued, int no_dups, int prepend);
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                                    int only_self_issued);
+STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);
+int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
+                                         const char *text);
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src);
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
@@ -800,32 +788,30 @@ int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce);
 
 /* from cmp_status.c */
-OSSL_CMP_PKISI *
-ossl_cmp_statusinfo_new(int status, int fail_info, const char *text);
-int ossl_cmp_pkisi_get_pkistatus(const OSSL_CMP_PKISI *statusInfo);
+int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
 const char *ossl_cmp_PKIStatus_to_string(int status);
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusstring(const OSSL_CMP_PKISI *si);
+OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *si);
 int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si);
-int ossl_cmp_pkisi_pkifailureinfo_check(const OSSL_CMP_PKISI *si, int bit_index);
+int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int index);
 
 /* from cmp_hdr.c */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
 int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
 ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
 int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_set1_senderKID(OSSL_CMP_PKIHEADER *hdr,
                                 const ASN1_OCTET_STRING *senderKID);
-int ossl_cmp_pkifreetext_push_str(OSSL_CMP_PKIFREETEXT *ft, const char *text);
 int ossl_cmp_hdr_push0_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
 int ossl_cmp_hdr_push1_freeText(OSSL_CMP_PKIHEADER *hdr, ASN1_UTF8STRING *text);
 int ossl_cmp_hdr_generalInfo_push0_item(OSSL_CMP_PKIHEADER *hdr,
                                         OSSL_CMP_ITAV *itav);
 int ossl_cmp_hdr_generalInfo_push1_items(OSSL_CMP_PKIHEADER *hdr,
-                                         STACK_OF(OSSL_CMP_ITAV) *itavs);
+                                         const STACK_OF(OSSL_CMP_ITAV) *itavs);
 int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
-int ossl_cmp_hdr_check_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_TRANSACTIONID_LENGTH 16
 # define OSSL_CMP_SENDERNONCE_LENGTH 16
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
@@ -860,6 +846,10 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_PKIBODY_POLLREQ  25
 # define OSSL_CMP_PKIBODY_POLLREP  26
 # define OSSL_CMP_PKIBODY_TYPE_MAX OSSL_CMP_PKIBODY_POLLREP
+/* certReqId for the first - and so far only - certificate request */
+# define OSSL_CMP_CERTREQID 0
+/* sequence id for the first - and so far only - revocation request */
+# define OSSL_CMP_REVREQSID 0
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
 int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
@@ -875,24 +865,26 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx);
 OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
                               OSSL_CRMF_CERTID *certId, int unprot_err);
 OSSL_CMP_MSG *ossl_cmp_pkiconf_new(OSSL_CMP_CTX *ctx);
+OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
+                                   int64_t poll_after);
 int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav);
 int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
-                                 STACK_OF(OSSL_CMP_ITAV) *itavs);
+                                 const STACK_OF(OSSL_CMP_ITAV) *itavs);
 OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
-OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx);
+OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
+                                const STACK_OF(OSSL_CMP_ITAV) *itavs);
 OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
                                  int errorCode,
-                                 OSSL_CMP_PKIFREETEXT *errorDetails,
-                                 int unprotected);
-int ossl_cmp_certstatus_set_certHash(OSSL_CMP_CERTSTATUS *certStatus,
-                                     const X509 *cert);
+                                 const char *details, int unprotected);
+int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
+                                      ASN1_OCTET_STRING *hash);
 OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
                                     const char *text);
 OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid);
 OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
                                    int64_t poll_after);
 OSSL_CMP_PKISI *
-ossl_cmp_revrepcontent_get_pkistatusinfo(OSSL_CMP_REVREPCONTENT *rrep, int rsid);
+ossl_cmp_revrepcontent_get_pkisi(OSSL_CMP_REVREPCONTENT *rrep, int rsid);
 OSSL_CRMF_CERTID *ossl_cmp_revrepcontent_get_CertId(OSSL_CMP_REVREPCONTENT *rrep,
                                                     int rsid);
 OSSL_CMP_POLLREP *
@@ -904,11 +896,6 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crepmsg
 X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
                                              const OSSL_CMP_CERTRESPONSE *crep);
 OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
-/* BIO definitions */
-# define OSSL_d2i_CMP_MSG_bio(bp, p) \
-    ASN1_d2i_bio_of(OSSL_CMP_MSG, OSSL_CMP_MSG_new, d2i_OSSL_CMP_MSG, bp, p)
-# define OSSL_i2d_CMP_MSG_bio(bp, o) \
-    ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bp, o)
 
 /* from cmp_protect.c */
 ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
@@ -925,4 +912,4 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                 ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
-#endif /* !defined OSSL_CRYPTO_CMP_LOCAL_H */
+#endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

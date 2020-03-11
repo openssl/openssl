@@ -18,7 +18,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_ssl");
 
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,

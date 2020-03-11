@@ -278,6 +278,38 @@ static int test_MSG_protect_no_key_no_secret(void)
     return result;
 }
 
+static int test_MSG_protect_pbmac_no_sender(int with_ref)
+{
+    static unsigned char secret[] = { 47, 11, 8, 15 };
+    static unsigned char ref[] = { 0xca, 0xfe, 0xba, 0xbe };
+
+    SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    fixture->expected = with_ref;
+    if (!TEST_ptr(fixture->msg = OSSL_CMP_MSG_dup(ir_unprotected))
+            || !SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 0)
+            || !ossl_cmp_hdr_set1_sender(fixture->msg->header, NULL)
+            || !OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx,
+                                              secret, sizeof(secret))
+            || (!OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
+                                                  with_ref ? ref : NULL,
+                                                  sizeof(ref)))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_MSG_protect_test, tear_down);
+    return result;
+}
+
+static int test_MSG_protect_pbmac_no_sender_with_ref(void)
+{
+    return test_MSG_protect_pbmac_no_sender(1);
+}
+
+static int test_MSG_protect_pbmac_no_sender_no_ref(void)
+{
+    return test_MSG_protect_pbmac_no_sender(0);
+}
+
 static int execute_MSG_add_extraCerts_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     return TEST_true(ossl_cmp_msg_add_extraCerts(fixture->cmp_ctx,
@@ -511,7 +543,8 @@ int setup_tests(void)
     ADD_TEST(test_MSG_protect_certificate_based_without_cert);
     ADD_TEST(test_MSG_protect_unprotected_request);
     ADD_TEST(test_MSG_protect_no_key_no_secret);
-
+    ADD_TEST(test_MSG_protect_pbmac_no_sender_with_ref);
+    ADD_TEST(test_MSG_protect_pbmac_no_sender_no_ref);
     ADD_TEST(test_MSG_add_extraCerts);
 
 #ifndef OPENSSL_NO_EC

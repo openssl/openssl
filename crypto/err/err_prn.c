@@ -68,7 +68,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
     if (separator == NULL)
         separator = "";
     if (err == 0)
-        put_error(ERR_LIB_CMP, NULL, 0, "", 0);
+        put_error(ERR_LIB_NONE, NULL, 0, "", 0);
 
     do {
         size_t available_len, data_len;
@@ -125,7 +125,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
                 ERR_add_error_data(2, separator, tmp);
                 OPENSSL_free(tmp);
             }
-            put_error(ERR_LIB_CMP, func, err, file, line);
+            put_error(ERR_GET_LIB(err), func, err, file, line);
             txt = curr;
         } else {
             if (trailing_separator) {

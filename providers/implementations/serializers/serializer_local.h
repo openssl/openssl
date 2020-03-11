@@ -50,8 +50,17 @@ OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void);
 OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void);
 OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void);
 
+void ec_get_new_free_import(OSSL_OP_keymgmt_new_fn **ec_new,
+                            OSSL_OP_keymgmt_free_fn **ec_free,
+                            OSSL_OP_keymgmt_import_fn **ec_import);
+
+int ossl_prov_prepare_ec_params(const void *eckey, int nid,
+                                void **pstr, int *pstrtype);
+int ossl_prov_ec_pub_to_der(const void *eckey, unsigned char **pder);
+int ossl_prov_ec_priv_to_der(const void *eckey, unsigned char **pder);
+
 int ossl_prov_prepare_dh_params(const void *dh, int nid,
-                                ASN1_STRING **pstr, int *pstrtype);
+                                void **pstr, int *pstrtype);
 int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);
 int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
 
@@ -63,14 +72,14 @@ int ossl_prov_ecx_pub_to_der(const void *ecxkey, unsigned char **pder);
 int ossl_prov_ecx_priv_to_der(const void *ecxkey, unsigned char **pder);
 
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
-                                 ASN1_STRING **pstr, int *pstrtype);
+                                void **pstr, int *pstrtype);
 /*
  * Special variant of ossl_prov_prepare_dsa_params() that requires all
  * three parameters (P, Q and G) to be set.  This is used when serializing
  * the public key.
  */
 int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
-                                     ASN1_STRING **pstr, int *pstrtype);
+                                     void **pstr, int *pstrtype);
 int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder);
 int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder);
 
@@ -87,6 +96,16 @@ enum dh_print_type {
 };
 
 int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type);
+
+#ifndef OPENSSL_NO_EC
+enum ec_print_type {
+    ec_print_priv,
+    ec_print_pub,
+    ec_print_params
+};
+
+int ossl_prov_print_eckey(BIO *out, EC_KEY *eckey, enum ec_print_type type);
+#endif /*  OPENSSL_NO_EC */
 
 enum dsa_print_type {
     dsa_print_priv,
@@ -107,27 +126,27 @@ int ossl_prov_print_ecx(BIO *out, ECX_KEY *ecxkey, enum ecx_print_type type);
 
 int ossl_prov_write_priv_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
-                                                 ASN1_STRING **str,
+                                                 void **str,
                                                  int *strtype),
                                       int (*k2d)(const void *obj,
                                                  unsigned char **pder),
                                       struct pkcs8_encrypt_ctx_st *ctx);
 int ossl_prov_write_priv_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                       int (*p2s)(const void *obj, int nid,
-                                                 ASN1_STRING **str,
+                                                 void **str,
                                                  int *strtype),
                                       int (*k2d)(const void *obj,
                                                  unsigned char **pder),
                                       struct pkcs8_encrypt_ctx_st *ctx);
 int ossl_prov_write_pub_der_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
-                                                ASN1_STRING **str,
+                                                void **str,
                                                 int *strtype),
                                      int (*k2d)(const void *obj,
                                                 unsigned char **pder));
 int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
                                      int (*p2s)(const void *obj, int nid,
-                                                ASN1_STRING **str,
+                                                void **str,
                                                 int *strtype),
                                      int (*k2d)(const void *obj,
                                                 unsigned char **pder));

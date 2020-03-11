@@ -21,7 +21,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT
+    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS mac_options[] = {
@@ -39,6 +40,8 @@ const OPTIONS mac_options[] = {
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"mac_name", 0, 0, "MAC algorithm"},
@@ -88,6 +91,10 @@ opthelp:
                 opts = sk_OPENSSL_STRING_new_null();
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
             break;
         }
     }

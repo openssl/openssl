@@ -49,5 +49,6 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md);
 
+int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test);
 # endif /* OPENSSL_NO_EC */
 #endif

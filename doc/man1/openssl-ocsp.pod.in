@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-ocsp - Online Certificate Status Protocol utility
+openssl-ocsp - Online Certificate Status Protocol command
 
 =head1 SYNOPSIS
 
@@ -70,6 +70,7 @@ B<openssl> B<ocsp>
 [B<-I<digest>>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef multi
 
@@ -268,6 +269,8 @@ digest used by subsequent certificate identifiers.
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-pkey - public or private key processing tool
+openssl-pkey - public or private key processing command
 
 =head1 SYNOPSIS
 
@@ -31,6 +31,7 @@ B<openssl> B<pkey>
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -141,6 +142,8 @@ B<Note> the B<implicitlyCA> alternative, as specified in RFC 3279,
 is currently not implemented in OpenSSL.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

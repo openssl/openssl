@@ -367,6 +367,12 @@ OSSL_CMP_severity                       datatype
 OSSL_cmp_certConf_cb_t                  datatype
 OSSL_cmp_log_cb_t                       datatype
 OSSL_cmp_transfer_cb_t                  datatype
+OSSL_CMP_SRV_cert_request_cb_t          datatype
+OSSL_CMP_SRV_rr_cb_t                    datatype
+OSSL_CMP_SRV_certConf_cb_t              datatype
+OSSL_CMP_SRV_genm_cb_t                  datatype
+OSSL_CMP_SRV_error_cb_t                 datatype
+OSSL_CMP_SRV_pollReq_cb_t               datatype
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define

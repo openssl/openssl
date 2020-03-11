@@ -2,7 +2,7 @@
 
 SSL testcases are configured in the `ssl-tests` directory.
 
-Each `ssl_*.conf.in` file contains a number of test configurations. These files
+Each `ssl_*.cnf.in` file contains a number of test configurations. These files
 are used to generate testcases in the OpenSSL CONF format.
 
 The precise test output can be dependent on the library configuration. The test
@@ -10,9 +10,9 @@ harness generates the output files on the fly.
 
 However, for verification, we also include checked-in configuration outputs
 corresponding to the default configuration. These testcases live in
-`test/ssl-tests/*.conf` files.
+`test/ssl-tests/*.cnf` files.
 
-For more details, see `ssl-tests/01-simple.conf.in` for an example.
+For more details, see `ssl-tests/01-simple.cnf.in` for an example.
 
 ## Configuring the test
 
@@ -219,24 +219,24 @@ client => {
 ## Adding a test to the test harness
 
 1. Add a new test configuration to `test/ssl-tests`, following the examples of
-   existing `*.conf.in` files (for example, `01-simple.conf.in`).
+   existing `*.cnf.in` files (for example, `01-simple.cnf.in`).
 
-2. Generate the generated `*.conf` test input file. You can do so by running
+2. Generate the generated `*.cnf` test input file. You can do so by running
    `generate_ssl_tests.pl`:
 
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.conf.in \
-  > ssl-tests/my.conf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.cnf.in \
+  > ssl-tests/my.cnf
 ```
 
-where `my.conf.in` is your test input file.
+where `my.cnf.in` is your test input file.
 
-For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
+For example, to generate the test cases in `ssl-tests/01-simple.cnf.in`, do
 
 ```
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.cnf.in > ssl-tests/01-simple.cnf
 ```
 
 Alternatively (hackish but simple), you can comment out
@@ -273,15 +273,15 @@ environment variable to point to the location of the certs. E.g., from the root
 OpenSSL directory, do
 
 ```
-$ CTLOG_FILE=test/ct/log_list.conf TEST_CERTS_DIR=test/certs test/ssl_test \
-  test/ssl-tests/01-simple.conf
+$ CTLOG_FILE=test/ct/log_list.cnf TEST_CERTS_DIR=test/certs test/ssl_test \
+  test/ssl-tests/01-simple.cnf
 ```
 
 or for shared builds
 
 ```
-$ CTLOG_FILE=test/ct/log_list.conf  TEST_CERTS_DIR=test/certs \
-  util/wrap.pl test/ssl_test test/ssl-tests/01-simple.conf
+$ CTLOG_FILE=test/ct/log_list.cnf  TEST_CERTS_DIR=test/certs \
+  util/wrap.pl test/ssl_test test/ssl-tests/01-simple.cnf
 ```
 
 Note that the test expectations sometimes depend on the Configure settings. For
@@ -293,7 +293,7 @@ The Perl test harness automatically generates expected outputs, so users who
 just run `make test` do not need any extra steps.
 
 However, when running a test manually, keep in mind that the repository version
-of the generated `test/ssl-tests/*.conf` correspond to expected outputs in with
+of the generated `test/ssl-tests/*.cnf` correspond to expected outputs in with
 the default Configure options. To run `ssl_test` manually from the command line
 in a build with a different configuration, you may need to generate the right
-`*.conf` file from the `*.conf.in` input first.
+`*.cnf` file from the `*.cnf.in` input first.

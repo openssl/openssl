@@ -37,31 +37,38 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-A DH object contains the parameters B<p>, B<q> and B<g>. Note that the B<q>
-parameter is optional. It also contains a public key (B<pub_key>) and
-(optionally) a private key (B<priv_key>).
+A DH object contains the parameters I<p>, I<q> and I<g>. Note that the I<q>
+parameter is optional. It also contains a public key (I<pub_key>) and
+(optionally) a private key (I<priv_key>).
 
-The B<p>, B<q> and B<g> parameters can be obtained by calling DH_get0_pqg().
-If the parameters have not yet been set then B<*p>, B<*q> and B<*g> will be set
+The I<p>, I<q> and I<g> parameters can be obtained by calling DH_get0_pqg().
+If the parameters have not yet been set then I<*p>, I<*q> and I<*g> will be set
 to NULL. Otherwise they are set to pointers to their respective values. These
 point directly to the internal representations of the values and therefore
 should not be freed directly.
-Any of the out parameters B<p>, B<q>, and B<g> can be NULL, in which case no
+Any of the out parameters I<p>, I<q>, and I<g> can be NULL, in which case no
 value will be returned for that parameter.
 
-The B<p>, B<q> and B<g> values can be set by calling DH_set0_pqg() and passing
-the new values for B<p>, B<q> and B<g> as parameters to the function. Calling
+The I<p>, I<q> and I<g> values can be set by calling DH_set0_pqg() and passing
+the new values for I<p>, I<q> and I<g> as parameters to the function. Calling
 this function transfers the memory management of the values to the DH object,
 and therefore the values that have been passed in should not be freed directly
-after this function has been called. The B<q> parameter may be NULL.
+after this function has been called. The I<q> parameter may be NULL.
+DH_set0_pqg() also checks if the parameters associated with I<p> and I<g> and
+optionally I<q> are associated with known safe prime groups. If it is a safe
+prime group then the value of I<q> will be set to q = (p - 1) / 2 if I<q> is NULL.
+For safe prime groups the optional length parameter I<length> is set to twice
+the value of the maximum_target_security_strength(BN_num_bits(I<p>)) as listed in
+SP800-56Ar3 Table(s) 25 & 26. If it is not a safe prime group then the optional
+length parameter will be set if I<q> is not NULL to BN_num_bits(I<q>).
 
 To get the public and private key values use the DH_get0_key() function. A
-pointer to the public key will be stored in B<*pub_key>, and a pointer to the
-private key will be stored in B<*priv_key>. Either may be NULL if they have not
+pointer to the public key will be stored in I<*pub_key>, and a pointer to the
+private key will be stored in I<*priv_key>. Either may be NULL if they have not
 been set yet, although if the private key has been set then the public key must
 be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
-Any of the out parameters B<pub_key> and B<priv_key> can be NULL, in which case
+Any of the out parameters I<pub_key> and I<priv_key> can be NULL, in which case
 no value will be returned for that parameter.
 
 The public and private key values can be set using DH_set0_key(). Either
@@ -70,14 +77,14 @@ untouched. As with DH_set0_pqg() this function transfers the memory management
 of the key values to the DH object, and therefore they should not be freed
 directly after this function has been called.
 
-Any of the values B<p>, B<q>, B<g>, B<priv_key>, and B<pub_key> can also be
+Any of the values I<p>, I<q>, I<g>, I<priv_key>, and I<pub_key> can also be
 retrieved separately by the corresponding function DH_get0_p(), DH_get0_q(),
 DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key(), respectively.
 
-DH_set_flags() sets the flags in the B<flags> parameter on the DH object.
+DH_set_flags() sets the flags in the I<flags> parameter on the DH object.
 Multiple flags can be passed in one go (bitwise ORed together). Any flags that
 are already set are left set. DH_test_flags() tests to see whether the flags
-passed in the B<flags> parameter are currently set in the DH object. Multiple
+passed in the I<flags> parameter are currently set in the DH object. Multiple
 flags can be tested in one go. All flags that are currently set are returned, or
 zero if none of the flags are set. DH_clear_flags() clears the specified flags
 within the DH object.
@@ -87,7 +94,7 @@ object, or NULL if no such ENGINE has been set. This function is deprecated.
 
 The DH_get_length() and DH_set_length() functions get and set the optional
 length parameter associated with this DH object. If the length is nonzero then
-it is used, otherwise it is ignored. The B<length> parameter indicates the
+it is used, otherwise it is ignored. The I<length> parameter indicates the
 length of the secret exponent (private key) in bits. These functions are
 deprecated.
 

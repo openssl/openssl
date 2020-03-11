@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-spkac - SPKAC printing and generating utility
+openssl-spkac - SPKAC printing and generating command
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,7 @@ B<openssl> B<spkac>
 [B<-noout>]
 [B<-verify>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -98,6 +99,8 @@ being created).
 Verifies the digital signature on the supplied SPKAC.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

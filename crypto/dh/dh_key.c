@@ -251,8 +251,7 @@ static int generate_key(DH *dh)
              * (where s = max security strength supported).
              * N = dh->length (N = maximum bit length of private key)
              */
-            if (dh->length == 0
-                || dh->params.q == NULL
+            if (dh->params.q == NULL
                 || dh->length > BN_num_bits(dh->params.q))
                 goto err;
             if (!ffc_generate_private_key(ctx, &dh->params, dh->length,

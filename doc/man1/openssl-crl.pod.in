@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-crl - CRL utility
+openssl-crl - CRL command
 
 =head1 SYNOPSIS
 
@@ -29,6 +29,7 @@ B<openssl> B<crl>
 [B<-nextupdate>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef hash_old
 
@@ -122,6 +123,8 @@ Output the nextUpdate field.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

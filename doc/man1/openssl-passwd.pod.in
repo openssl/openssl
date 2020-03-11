@@ -23,6 +23,7 @@ B<openssl passwd>
 [B<-table>]
 [B<-reverse>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<password>]
 
 =for openssl ifdef crypt
@@ -99,6 +100,8 @@ to each password hash.
 When the B<-table> option is used, reverse the order of cleartext and hash.
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

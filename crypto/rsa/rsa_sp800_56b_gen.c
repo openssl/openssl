@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include "crypto/bn.h"
+#include "crypto/security_bits.h"
 #include "rsa_local.h"
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
@@ -144,7 +145,7 @@ err:
  */
 int rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
-    int s = (int)rsa_compute_security_bits(nbits);
+    int s = (int)ifc_ffc_compute_security_bits(nbits);
 
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {

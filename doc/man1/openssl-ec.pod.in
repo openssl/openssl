@@ -32,6 +32,7 @@ B<openssl> B<ec>
 [B<-no_public>]
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -140,6 +141,8 @@ This option omits the public key components from the private key output.
 This option checks the consistency of an EC private or public key.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

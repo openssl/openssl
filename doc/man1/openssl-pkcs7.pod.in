@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-pkcs7 - PKCS#7 utility
+openssl-pkcs7 - PKCS#7 command
 
 =head1 SYNOPSIS
 
@@ -22,6 +22,7 @@ B<openssl> B<pkcs7>
 [B<-text>]
 [B<-noout>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -76,6 +77,8 @@ Don't output the encoded version of the PKCS#7 structure (or certificates
 if B<-print_certs> is set).
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

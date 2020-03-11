@@ -22,6 +22,33 @@
 #include <openssl/objects.h>
 #include "crypto/bn_dh.h"
 #include "crypto/dh.h"
+#include "crypto/security_bits.h"
+
+
+#define FFDHE(sz) { NID_ffdhe##sz, sz, &_bignum_ffdhe##sz##_p }
+#define MODP(sz)  { NID_modp_##sz, sz, &_bignum_modp_##sz##_p }
+
+typedef struct safe_prime_group_st {
+    int nid;
+    int32_t nbits;
+    const BIGNUM *p;
+} SP_GROUP;
+
+static const SP_GROUP sp_groups[] = {
+    FFDHE(2048),
+    FFDHE(3072),
+    FFDHE(4096),
+    FFDHE(6144),
+    FFDHE(8192),
+#ifndef FIPS_MODE
+    MODP(1536),
+#endif
+    MODP(2048),
+    MODP(3072),
+    MODP(4096),
+    MODP(6144),
+    MODP(8192),
+};
 
 #ifndef FIPS_MODE
 static DH *dh_new_by_nid_with_ctx(OPENSSL_CTX *libctx, int nid);
@@ -54,40 +81,24 @@ static DH *dh_param_init(OPENSSL_CTX *libctx, int nid, const BIGNUM *p,
 
 static DH *dh_new_by_nid_with_ctx(OPENSSL_CTX *libctx, int nid)
 {
-    /*
-     * The last parameter specified in these fields is
-     * 2 * max_target_security_strength.
-     * See SP800-56Ar3 Table(s) 25 & 26.
-     */
-    switch (nid) {
-    case NID_ffdhe2048:
-        return dh_param_init(libctx, nid, &_bignum_ffdhe2048_p, 225);
-    case NID_ffdhe3072:
-        return dh_param_init(libctx, nid, &_bignum_ffdhe3072_p, 275);
-    case NID_ffdhe4096:
-        return dh_param_init(libctx, nid, &_bignum_ffdhe4096_p, 325);
-    case NID_ffdhe6144:
-        return dh_param_init(libctx, nid, &_bignum_ffdhe6144_p, 375);
-    case NID_ffdhe8192:
-        return dh_param_init(libctx, nid, &_bignum_ffdhe8192_p, 400);
-#ifndef FIPS_MODE
-    case NID_modp_1536:
-        return dh_param_init(libctx, nid, &_bignum_modp_1536_p, 190);
-#endif
-    case NID_modp_2048:
-        return dh_param_init(libctx, nid, &_bignum_modp_2048_p, 225);
-    case NID_modp_3072:
-        return dh_param_init(libctx, nid, &_bignum_modp_3072_p, 275);
-    case NID_modp_4096:
-        return dh_param_init(libctx, nid, &_bignum_modp_4096_p, 325);
-    case NID_modp_6144:
-        return dh_param_init(libctx, nid, &_bignum_modp_6144_p, 375);
-    case NID_modp_8192:
-        return dh_param_init(libctx, nid, &_bignum_modp_8192_p, 400);
-    default:
-        DHerr(0, DH_R_INVALID_PARAMETER_NID);
-        return NULL;
+    int i;
+
+    for (i = 0; i < (int)OSSL_NELEM(sp_groups); ++i) {
+        if (sp_groups[i].nid == nid) {
+            int max_target_security_strength =
+                ifc_ffc_compute_security_bits(sp_groups[i].nbits);
+
+            /*
+             * The last parameter specified here is
+             * 2 * max_target_security_strength.
+             * See SP800-56Ar3 Table(s) 25 & 26.
+             */
+            return dh_param_init(libctx, nid, sp_groups[i].p,
+                                 2 * max_target_security_strength);
+        }
     }
+    DHerr(0, DH_R_INVALID_PARAMETER_NID);
+    return NULL;
 }
 
 DH *DH_new_by_nid(int nid)
@@ -98,49 +109,44 @@ DH *DH_new_by_nid(int nid)
 
 int DH_get_nid(DH *dh)
 {
-    int nid = dh->params.nid;
+    BIGNUM *q = NULL;
+    int i, nid;
 
+    if (dh == NULL)
+        return NID_undef;
+
+    nid = dh->params.nid;
+    /* Just return if it is already cached */
     if (nid != NID_undef)
         return nid;
 
     if (BN_get_word(dh->params.g) != 2)
         return NID_undef;
-    if (!BN_cmp(dh->params.p, &_bignum_ffdhe2048_p))
-        nid = NID_ffdhe2048;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe3072_p))
-        nid = NID_ffdhe3072;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe4096_p))
-        nid = NID_ffdhe4096;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe6144_p))
-        nid = NID_ffdhe6144;
-    else if (!BN_cmp(dh->params.p, &_bignum_ffdhe8192_p))
-        nid = NID_ffdhe8192;
-#ifndef FIPS_MODE
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_1536_p))
-        nid = NID_modp_1536;
-#endif
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_2048_p))
-        nid = NID_modp_2048;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_3072_p))
-        nid = NID_modp_3072;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_4096_p))
-        nid = NID_modp_4096;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_6144_p))
-        nid = NID_modp_6144;
-    else if (!BN_cmp(dh->params.p, &_bignum_modp_8192_p))
-        nid = NID_modp_8192;
-    else
-        return NID_undef;
 
-    /* Verify q is correct if it exists - reset the nid if it is not correct */
-    if (dh->params.q != NULL) {
-        BIGNUM *q = BN_dup(dh->params.p);
+    for (i = 0; i < (int)OSSL_NELEM(sp_groups); ++i) {
+        /* If a matching p is found then we will break out of the loop */
+        if (!BN_cmp(dh->params.p, sp_groups[i].p)) {
+            /* Set q = (p - 1) / 2 (p is known to be odd so just shift right ) */
+            q = BN_dup(dh->params.p);
 
-        /* Check q = p * 2 + 1 we already know q is odd, so just shift right */
-        if (q == NULL || !BN_rshift1(q, q) || (BN_cmp(dh->params.q, q) != 0))
-            nid = NID_undef;
-        BN_free(q);
+            if (q == NULL || !BN_rshift1(q, q))
+                break; /* returns nid = NID_undef on failure */
+
+            /* Verify q is correct if it exists */
+            if (dh->params.q != NULL) {
+                if (BN_cmp(dh->params.q, q) != 0)
+                    break;  /* returns nid = NID_undef if q does not match */
+            } else {
+                /* assign the calculated q */
+                dh->params.q = q;
+                q = NULL; /* set to NULL so it is not freed */
+            }
+            dh->params.nid = sp_groups[i].nid; /* cache the nid */
+            dh->length = 2 * ifc_ffc_compute_security_bits(sp_groups[i].nbits);
+            dh->dirty_cnt++;
+            break;
+        }
     }
-    dh->params.nid = nid; /* cache the nid */
+    BN_free(q);
     return nid;
 }

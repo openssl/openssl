@@ -23,6 +23,7 @@ B<openssl srp>
 [B<-passout> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<user> ...]
 
 =for openssl ifdef engine
@@ -73,6 +74,8 @@ For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 {- $OpenSSL::safe::opt_r_synopsis -}
 

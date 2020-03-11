@@ -227,44 +227,6 @@ values associated with the give provider side digest context I<dctx>
 and stores them in I<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Parameters currently recognised by built-in digests are as follows. Not all
-parameters are relevant to, or are understood by all digests:
-
-=over 4
-
-=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
-
-Sets the digest length for extendable output functions.
-The length of the "xoflen" parameter should not exceed that of a B<size_t>.
-
-=item "ssl3-ms" (B<OSSL_DIGEST_PARAM_SSL3_MS>) <octet string>
-
-This parameter is set by libssl in order to calculate a signature hash for an
-SSLv3 CertificateVerify message as per RFC6101.
-It is only set after all handshake messages have already been digested via
-OP_digest_update() calls.
-The parameter provides the master secret value to be added to the digest.
-The digest implementation should calculate the complete digest as per RFC6101
-section 5.6.8.
-The next call after setting this parameter will be OP_digest_final().
-This is only relevant for implementations of SHA1 or MD5_SHA1.
-
-=item "pad_type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
-
-Sets the pad type to be used.
-The only built-in digest that uses this is MDC2.
-Normally the final MDC2 block is padded with 0s.
-If the pad type is set to 2 then the final block is padded with 0x80 followed by
-0s.
-
-=item "micalg" (B<OSSL_DIGEST_PARAM_MICALG>) <UTF8 string>
-
-Gets the digest Message Integrity Check algorithm string.
-This is used when creating S/MIME multipart/signed messages, as specified in
-RFC 5751.
-
-=back
-
 =head1 RETURN VALUES
 
 OP_digest_newctx() and OP_digest_dupctx() should return the newly created
@@ -281,7 +243,8 @@ algorithm.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
+L<OSSL_PROVIDER-legacy(7)>
 
 =head1 HISTORY
 

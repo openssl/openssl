@@ -23,3 +23,5 @@ int dh_get0_nid(const DH *dh);
 int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret);
 int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret);
 int dh_check_pairwise(DH *dh);
+
+const DH_METHOD *dh_get_method(const DH *dh);

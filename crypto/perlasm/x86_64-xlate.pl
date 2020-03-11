@@ -110,6 +110,11 @@ elsif (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 {
     $gnuas=1;
 }
+elsif (`$ENV{CC} --version 2>/dev/null`
+		=~ /clang .*/)
+{
+    $gnuas=1;
+}
 
 my $cet_property;
 if ($flavour =~ /elf/) {

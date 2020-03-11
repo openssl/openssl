@@ -10,6 +10,7 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
@@ -92,6 +93,7 @@ static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
 struct provider_store_st {
     STACK_OF(OSSL_PROVIDER) *providers;
     CRYPTO_RWLOCK *lock;
+    char *default_path;
     unsigned int use_fallbacks:1;
 };
 
@@ -101,6 +103,7 @@ static void provider_store_free(void *vstore)
 
     if (store == NULL)
         return;
+    OPENSSL_free(store->default_path);
     sk_OSSL_PROVIDER_pop_free(store->providers, ossl_provider_free);
     CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
@@ -384,6 +387,29 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
+int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *libctx, const char *path)
+{
+    struct provider_store_st *store;
+    char *p = NULL;
+
+    if (path != NULL) {
+        p = OPENSSL_strdup(path);
+        if (p == NULL) {
+            CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    if ((store = get_provider_store(libctx)) != NULL
+            && CRYPTO_THREAD_write_lock(store->lock)) {
+        OPENSSL_free(store->default_path);
+        store->default_path = p;
+        CRYPTO_THREAD_unlock(store->lock);
+        return 1;
+    }
+    OPENSSL_free(p);
+    return 0;
+}
+
 /*
  * Internal version that doesn't affect the store flags, and thereby avoid
  * locking.  Direct callers must remember to set the store flags when
@@ -413,15 +439,24 @@ static int provider_activate(OSSL_PROVIDER *prov)
             char *allocated_path = NULL;
             const char *module_path = NULL;
             char *merged_path = NULL;
-            const char *load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+            const char *load_dir = NULL;
+            struct provider_store_st *store;
 
             if ((prov->module = DSO_new()) == NULL) {
                 /* DSO_new() generates an error already */
                 return 0;
             }
 
-            if (load_dir == NULL)
-                load_dir = MODULESDIR;
+            if ((store = get_provider_store(prov->libctx)) == NULL
+                    || !CRYPTO_THREAD_read_lock(store->lock))
+                return 0;
+            load_dir = store->default_path;
+
+            if (load_dir == NULL) {
+                load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+                if (load_dir == NULL)
+                    load_dir = MODULESDIR;
+            }
 
             DSO_ctrl(prov->module, DSO_CTRL_SET_FLAGS,
                      DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
@@ -432,6 +467,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
                     DSO_convert_filename(prov->module, prov->name);
             if (module_path != NULL)
                 merged_path = DSO_merge(prov->module, module_path, load_dir);
+            CRYPTO_THREAD_unlock(store->lock);
 
             if (merged_path == NULL
                 || (DSO_load(prov->module, merged_path, NULL, 0)) == NULL) {

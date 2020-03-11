@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-cms - CMS utility
+openssl-cms - CMS command
 
 =head1 SYNOPSIS
 
@@ -46,6 +46,7 @@ B<openssl> B<cms>
 [B<-print>]
 [B<-md> I<digest>]
 [B<-I<cipher>>]
+[B<-wrap> I<cipher>]
 [B<-nointern>]
 [B<-noverify>]
 [B<-nocerts>]
@@ -58,6 +59,7 @@ B<openssl> B<cms>
 [B<-certfile> I<file>]
 [B<-certsout> I<file>]
 [B<-signer> I<file>]
+[B<-originator> I<file>]
 [B<-recip> I<file>]
 [B<-keyid>]
 [B<-receipt_request_all>]
@@ -79,6 +81,7 @@ B<openssl> B<cms>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cert.pem> ...]
 
 =for openssl ifdef des-wrap engine
@@ -300,6 +303,12 @@ supported by your version of OpenSSL.
 If not specified triple DES is used. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
 
+=item B<-wrap> I<cipher>
+
+Cipher algorithm to use for key wrap when encrypting the message using Key
+Agreement for key transport. The algorithm specified should be suitable for key
+wrap.
+
 =item B<-nointern>
 
 When verifying a message normally certificates (if any) included in
@@ -373,6 +382,11 @@ A signing certificate when signing or resigning a message, this option can be
 used multiple times if more than one signer is required. If a message is being
 verified then the signers certificates will be written to this file if the
 verification was successful.
+
+=item B<-originator> I<file>
+
+A certificate of the originator of the encrypted message. Necessary for
+decryption when Key Agreement is in use for a shared key.
 
 =item B<-recip> I<file>
 
@@ -476,6 +490,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<cert.pem> ...
 

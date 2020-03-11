@@ -107,7 +107,7 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
 }
 
 int ossl_prov_prepare_dh_params(const void *dh, int nid,
-                                ASN1_STRING **pstr, int *pstrtype)
+                                void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
 

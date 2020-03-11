@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-x509 - Certificate display and signing utility
+openssl-x509 - Certificate display and signing command
 
 =head1 SYNOPSIS
 
@@ -75,12 +75,13 @@ B<openssl> B<x509>
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine subject_hash_old issuer_hash_old
 
 =head1 DESCRIPTION
 
-This command is a multi purpose certificate utility. It can
+This command is a multi-purposes certificate command. It can
 be used to display certificate information, convert certificates to
 various forms, sign certificate requests like a "mini CA" or edit
 certificate trust settings.
@@ -134,6 +135,8 @@ Cannot be used with the B<-days> option.
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

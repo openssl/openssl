@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,10 +17,12 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
+#include <openssl/self_test.h>
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-static int dsa_builtin_keygen(DSA *dsa);
+static int dsa_keygen(DSA *dsa, int pairwise_test);
+static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg);
 
 int DSA_generate_key(DSA *dsa)
 {
@@ -28,7 +30,7 @@ int DSA_generate_key(DSA *dsa)
     if (dsa->meth->dsa_keygen != NULL)
         return dsa->meth->dsa_keygen(dsa);
 #endif
-    return dsa_builtin_keygen(dsa);
+    return dsa_keygen(dsa, 0);
 }
 
 int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
@@ -50,7 +52,7 @@ err:
     return ret;
 }
 
-static int dsa_builtin_keygen(DSA *dsa)
+static int dsa_keygen(DSA *dsa, int pairwise_test)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
@@ -82,8 +84,26 @@ static int dsa_builtin_keygen(DSA *dsa)
 
     dsa->priv_key = priv_key;
     dsa->pub_key = pub_key;
-    dsa->dirty_cnt++;
+
+#ifdef FIPS_MODE
+    pairwise_test = 1;
+#endif /* FIPS_MODE */
+
     ok = 1;
+    if (pairwise_test) {
+        OSSL_CALLBACK *cb = NULL;
+        void *cbarg = NULL;
+
+        OSSL_SELF_TEST_get_callback(dsa->libctx, &cb, &cbarg);
+        ok = dsa_keygen_pairwise_test(dsa, cb, cbarg);
+        if (!ok) {
+            BN_free(dsa->pub_key);
+            BN_clear_free(dsa->priv_key);
+            BN_CTX_free(ctx);
+            return ok;
+        }
+    }
+    dsa->dirty_cnt++;
 
  err:
     if (pub_key != dsa->pub_key)
@@ -91,5 +111,42 @@ static int dsa_builtin_keygen(DSA *dsa)
     if (priv_key != dsa->priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
+
     return ok;
+}
+
+/*
+ * FIPS 140-2 IG 9.9 AS09.33
+ * Perform a sign/verify operation.
+ */
+static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg)
+{
+    int ret = 0;
+    unsigned char dgst[16] = {0};
+    unsigned int dgst_len = (unsigned int)sizeof(dgst);
+    DSA_SIG *sig = NULL;
+    OSSL_SELF_TEST *st = NULL;
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        goto err;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_DSA);
+
+    sig = DSA_do_sign(dgst, (int)dgst_len, dsa);
+    if (sig == NULL)
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, dgst);
+
+    if (DSA_do_verify(dgst, dgst_len, sig, dsa) != 1)
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    DSA_SIG_free(sig);
+    return ret;
 }

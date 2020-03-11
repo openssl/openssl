@@ -52,7 +52,7 @@ struct rsa_priv_ctx_st {
 /* Helper functions to prepare RSA-PSS params for serialization */
 
 static int prepare_rsa_params(const void *rsa, int nid,
-                              ASN1_STRING **pstr, int *pstrtype)
+                              void **pstr, int *pstrtype)
 {
     const RSA_PSS_PARAMS *pss = RSA_get0_pss_params(rsa);
     *pstr = NULL;
@@ -68,7 +68,8 @@ static int prepare_rsa_params(const void *rsa, int nid,
         return 1;
     }
     /* Encode PSS parameters */
-    if (ASN1_item_pack((void *)pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), pstr)
+    if (ASN1_item_pack((void *)pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS),
+                       (ASN1_STRING **)pstr)
         == NULL)
         return 0;
 

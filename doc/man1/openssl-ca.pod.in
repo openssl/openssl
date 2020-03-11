@@ -12,6 +12,7 @@ B<openssl> B<ca>
 [B<-verbose>]
 [B<-config> I<filename>]
 [B<-name> I<section>]
+[B<-section> I<section>]
 [B<-gencrl>]
 [B<-revoke> I<file>]
 [B<-valid> I<file>]
@@ -59,6 +60,7 @@ B<openssl> B<ca>
 [B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
 
 =for openssl ifdef engine sm2-id sm2-hex-id
@@ -93,7 +95,7 @@ Specifies the configuration file to use.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
-=item B<-name> I<section>
+=item B<-name> I<section>, B<-section> I<section>
 
 Specifies the configuration file section to use (overrides
 B<default_ca> in the B<ca> section).
@@ -153,8 +155,9 @@ Names and values of these options are algorithm-specific.
 =for openssl foreign manual ps(1)
 
 The password used to encrypt the private key. Since on some
-systems the command line arguments are visible (e.g. Unix with
-the L<ps(1)> utility) this option should be used with caution.
+systems the command line arguments are visible (e.g., when using
+L<ps(1)> on Unix),
+this option should be used with caution.
 
 =item B<-selfsign>
 
@@ -307,6 +310,8 @@ certificate. The argument for this option is string of hexadecimal digits.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -708,8 +713,8 @@ numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
 This command really needs rewriting or the required functionality
-exposed at either a command or interface level so a more friendly utility
-(perl script or GUI) can handle things properly. The script
+exposed at either a command or interface level so that a more user-friendly
+replacement could handle things properly. The script
 B<CA.pl> helps a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
@@ -768,6 +773,8 @@ OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
 seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
+
+The B<-section> option was added in OpenSSL 3.0.0.
 
 =head1 SEE ALSO
 

@@ -350,9 +350,9 @@ static int
 execute_HDR_set_and_check_implicitConfirm_test(CMP_HDR_TEST_FIXTURE
                                                * fixture)
 {
-    return TEST_false(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr))
+    return TEST_false(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr))
         && TEST_true(ossl_cmp_hdr_set_implicitConfirm(fixture->hdr))
-        && TEST_true(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr));
+        && TEST_true(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr));
 }
 
 static int test_HDR_set_and_check_implicit_confirm(void)
@@ -397,7 +397,7 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
     return 1;
 }
 
-static int test_HDR_init(void)
+static int test_HDR_init_with_ref(void)
 {
     SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
@@ -431,14 +431,6 @@ static int test_HDR_init_with_subject(void)
     return result;
 }
 
-static int test_HDR_init_no_ref_no_subject(void)
-{
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
-    fixture->expected = 0;
-    EXECUTE_TEST(execute_HDR_init_test, tear_down);
-    return result;
-}
-
 
 void cleanup_tests(void)
 {
@@ -464,9 +456,8 @@ int setup_tests(void)
     /* also tests public function OSSL_CMP_HDR_get0_transactionID(): */
     /* also tests public function OSSL_CMP_HDR_get0_recipNonce(): */
     /* also tests internal function ossl_cmp_hdr_get_pvno(): */
-    ADD_TEST(test_HDR_init);
+    ADD_TEST(test_HDR_init_with_ref);
     ADD_TEST(test_HDR_init_with_subject);
-    ADD_TEST(test_HDR_init_no_ref_no_subject);
     /*
      *  TODO make sure that total number of tests (here currently 24) is shown,
      *  also for other cmp_*text.c. Currently the test drivers always show 1.

@@ -37,6 +37,7 @@ B<openssl> B<dsa>
 [B<-pubin>]
 [B<-pubout>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-string pvk-weak pvk-none engine
 
@@ -122,6 +123,8 @@ key will be output instead. This option is automatically set if the input is
 a public key.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

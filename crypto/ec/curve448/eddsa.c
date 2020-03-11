@@ -12,6 +12,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include "crypto/ecx.h"
 #include "curve448_local.h"
 #include "word.h"
 #include "ed448.h"
@@ -58,7 +59,12 @@ static c448_error_t hash_init_with_dom(OPENSSL_CTX *ctx, EVP_MD_CTX *hashctx,
                                        const uint8_t *context,
                                        size_t context_len)
 {
-    const char *dom_s = "SigEd448";
+#ifdef CHARSET_EBCDIC
+    const char dom_s[] = {0x53, 0x69, 0x67, 0x45,
+                          0x64, 0x34, 0x34, 0x38, 0x00};
+#else
+    const char dom_s[] = "SigEd448";
+#endif
     uint8_t dom[2];
     EVP_MD *shake256 = NULL;
 

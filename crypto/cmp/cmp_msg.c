@@ -205,18 +205,20 @@ static X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
  * Create CRMF certificate request message for IR/CR/KUR
  * returns a pointer to the OSSL_CRMF_MSG on success, NULL on error
  */
-static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
-                              int rid, EVP_PKEY *rkey)
+static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
     X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->clCert;
     /* refcert defaults to current client cert */
+    EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;
     X509_NAME *subject = determine_subj(ctx, refcert, bodytype);
     int crit = ctx->setSubjectAltNameCritical || subject == NULL;
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;
 
+    if (rkey == NULL)
+        rkey = ctx->pkey; /* default is independent of ctx->oldClCert */
     if (rkey == NULL
             || (bodytype == OSSL_CMP_PKIBODY_KUR && refcert == NULL)) {
         CMPerr(0, CMP_R_INVALID_ARGS);
@@ -300,18 +302,11 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
 
 OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
 {
-    EVP_PKEY *rkey;
-    EVP_PKEY *privkey;
     OSSL_CMP_MSG *msg;
     OSSL_CRMF_MSG *crm = NULL;
 
     if (!ossl_assert(ctx != NULL))
         return NULL;
-
-    rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
-    if (rkey == NULL)
-        return NULL;
-    privkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
 
     if (type != OSSL_CMP_PKIBODY_IR && type != OSSL_CMP_PKIBODY_CR
             && type != OSSL_CMP_PKIBODY_KUR && type != OSSL_CMP_PKIBODY_P10CR) {
@@ -329,15 +324,19 @@ OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
     /* body */
     /* For P10CR the content has already been set in OSSL_CMP_MSG_create */
     if (type != OSSL_CMP_PKIBODY_P10CR) {
+        EVP_PKEY *privkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
+
+        if (privkey == NULL)
+            privkey = ctx->pkey; /* default is independent of ctx->oldCert */
         if (ctx->popoMethod == OSSL_CRMF_POPO_SIGNATURE && privkey == NULL) {
             CMPerr(0, CMP_R_MISSING_PRIVATE_KEY);
             goto err;
         }
-        if ((crm = crm_new(ctx, type, OSSL_CMP_CERTREQID, rkey)) == NULL
-                || !OSSL_CRMF_MSG_create_popo(crm, privkey, ctx->digest,
-                                              ctx->popoMethod)
-                /* value.ir is same for cr and kur */
-                || !sk_OSSL_CRMF_MSG_push(msg->body->value.ir, crm))
+        if ((crm = crm_new(ctx, type, OSSL_CMP_CERTREQID)) == NULL
+            || !OSSL_CRMF_MSG_create_popo(crm, privkey, ctx->digest,
+                                          ctx->popoMethod)
+            /* value.ir is same for cr and kur */
+            || !sk_OSSL_CRMF_MSG_push(msg->body->value.ir, crm))
             goto err;
         crm = NULL;
         /* TODO: here optional 2nd certreqmsg could be pushed to the stack */
@@ -385,7 +384,7 @@ OSSL_CMP_MSG *ossl_cmp_certRep_new(OSSL_CMP_CTX *ctx, int bodytype,
             || !ASN1_INTEGER_set(resp->certReqId, certReqId))
         goto err;
 
-    status = ossl_cmp_pkisi_get_pkistatus(resp->status);
+    status = ossl_cmp_pkisi_get_status(resp->status);
     if (status != OSSL_CMP_PKISTATUS_rejection
             && status != OSSL_CMP_PKISTATUS_waiting && cert != NULL) {
         if (encrypted) {
@@ -416,7 +415,7 @@ OSSL_CMP_MSG *ossl_cmp_certRep_new(OSSL_CMP_CTX *ctx, int bodytype,
         goto err;
 
     if (!unprotectedErrors
-            || ossl_cmp_pkisi_get_pkistatus(si) != OSSL_CMP_PKISTATUS_rejection)
+            || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)
         if (!ossl_cmp_msg_protect(ctx, msg))
             goto err;
 
@@ -511,7 +510,7 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
     }
 
     if (!unprot_err
-            || ossl_cmp_pkisi_get_pkistatus(si) != OSSL_CMP_PKISTATUS_rejection)
+            || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)
         if (!ossl_cmp_msg_protect(ctx, msg))
             goto err;
 
@@ -560,7 +559,7 @@ int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav)
 }
 
 int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
-                                 STACK_OF(OSSL_CMP_ITAV) *itavs)
+                                 const STACK_OF(OSSL_CMP_ITAV) *itavs)
 {
     int i;
     OSSL_CMP_ITAV *itav = NULL;
@@ -583,7 +582,9 @@ int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
  * Creates a new General Message/Response with an empty itav stack
  * returns a pointer to the PKIMessage on success, NULL on error
  */
-static OSSL_CMP_MSG *gen_new(OSSL_CMP_CTX *ctx, int body_type, int err_code)
+static OSSL_CMP_MSG *gen_new(OSSL_CMP_CTX *ctx,
+                             const STACK_OF(OSSL_CMP_ITAV) *itavs,
+                             int body_type, int err_code)
 {
     OSSL_CMP_MSG *msg = NULL;
 
@@ -594,7 +595,7 @@ static OSSL_CMP_MSG *gen_new(OSSL_CMP_CTX *ctx, int body_type, int err_code)
         return NULL;
 
     if (ctx->genm_ITAVs != NULL
-            && !ossl_cmp_msg_gen_push1_ITAVs(msg, ctx->genm_ITAVs))
+            && !ossl_cmp_msg_gen_push1_ITAVs(msg, itavs))
         goto err;
 
     if (!ossl_cmp_msg_protect(ctx, msg))
@@ -610,20 +611,23 @@ static OSSL_CMP_MSG *gen_new(OSSL_CMP_CTX *ctx, int body_type, int err_code)
 
 OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx)
 {
-    return gen_new(ctx, OSSL_CMP_PKIBODY_GENM, CMP_R_ERROR_CREATING_GENM);
+    return gen_new(ctx, ctx->genm_ITAVs,
+                   OSSL_CMP_PKIBODY_GENM, CMP_R_ERROR_CREATING_GENM);
 }
 
-OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx)
+OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
+                                const STACK_OF(OSSL_CMP_ITAV) *itavs)
 {
-    return gen_new(ctx, OSSL_CMP_PKIBODY_GENP, CMP_R_ERROR_CREATING_GENP);
+    return gen_new(ctx, itavs,
+                   OSSL_CMP_PKIBODY_GENP, CMP_R_ERROR_CREATING_GENP);
 }
 
 OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
                                  int errorCode,
-                                 OSSL_CMP_PKIFREETEXT *errorDetails,
-                                 int unprotected)
+                                 const char *details, int unprotected)
 {
     OSSL_CMP_MSG *msg = NULL;
+    OSSL_CMP_PKIFREETEXT *ft;
 
     if (!ossl_assert(ctx != NULL && si != NULL))
         return NULL;
@@ -641,11 +645,13 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
         if (!ASN1_INTEGER_set(msg->body->value.error->errorCode, errorCode))
             goto err;
     }
-    if (errorDetails != NULL)
-        if ((msg->body->value.error->errorDetails =
-             sk_ASN1_UTF8STRING_deep_copy(errorDetails, ASN1_STRING_dup,
-                                          ASN1_STRING_free)) == NULL)
+    if (details != NULL) {
+        if ((ft = sk_ASN1_UTF8STRING_new_null()) == NULL)
             goto err;
+        msg->body->value.error->errorDetails = ft;
+        if (!ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details))
+            goto err;
+    }
 
     if (!unprotected && !ossl_cmp_msg_protect(ctx, msg))
         goto err;
@@ -658,44 +664,18 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
 }
 
 /*
- * OSSL_CMP_CERTSTATUS_set_certHash() calculates a hash of the certificate,
- * using the same hash algorithm as is used to create and verify the
- * certificate signature, and places the hash into the certHash field of a
- * OSSL_CMP_CERTSTATUS structure. This is used in the certConf message,
- * for example, to confirm that the certificate was received successfully.
+ * Set the certHash field of a OSSL_CMP_CERTSTATUS structure.
+ * This is used in the certConf message, for example,
+ * to confirm that the certificate was received successfully.
  */
-int ossl_cmp_certstatus_set_certHash(OSSL_CMP_CERTSTATUS *certStatus,
-                                     const X509 *cert)
+int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
+                                      ASN1_OCTET_STRING *hash)
 {
-    unsigned int len;
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    int md_NID;
-    const EVP_MD *md = NULL;
-
-    if (!ossl_assert(certStatus != NULL && cert != NULL))
+    if (!ossl_assert(certStatus != NULL))
         return 0;
-
-    /*-
-     * select hash algorithm, as stated in Appendix F. Compilable ASN.1 defs:
-     * the hash of the certificate, using the same hash algorithm
-     * as is used to create and verify the certificate signature
-     */
-    if (OBJ_find_sigid_algs(X509_get_signature_nid(cert), &md_NID, NULL)
-            && (md = EVP_get_digestbynid(md_NID)) != NULL) {
-        if (!X509_digest(cert, md, hash, &len))
-            goto err;
-        if (!ossl_cmp_asn1_octet_string_set1_bytes(&certStatus->certHash, hash,
-                                                   len))
-            goto err;
-    } else {
-        CMPerr(0, CMP_R_UNSUPPORTED_ALGORITHM);
-        return 0;
-    }
-
+    ASN1_OCTET_STRING_free(certStatus->certHash);
+    certStatus->certHash = hash;
     return 1;
- err:
-    CMPerr(0, CMP_R_ERROR_SETTING_CERTHASH);
-    return 0;
 }
 
 /*
@@ -707,6 +687,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_CERTSTATUS *certStatus = NULL;
+    ASN1_OCTET_STRING *certHash = NULL;
     OSSL_CMP_PKISI *sinfo;
 
     if (!ossl_assert(ctx != NULL && ctx->newCert != NULL))
@@ -732,8 +713,12 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
      * the hash of the certificate, using the same hash algorithm
      * as is used to create and verify the certificate signature
      */
-    if (!ossl_cmp_certstatus_set_certHash(certStatus, ctx->newCert))
+    if ((certHash = X509_digest_sig(ctx->newCert)) == NULL)
         goto err;
+
+    if (!ossl_cmp_certstatus_set0_certHash(certStatus, certHash))
+        goto err;
+    certHash = NULL;
     /*
      * For any particular CertStatus, omission of the statusInfo field
      * indicates ACCEPTANCE of the specified certificate.  Alternatively,
@@ -742,8 +727,8 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
      * the CA/RA.
      */
     sinfo = fail_info != 0 ?
-        ossl_cmp_statusinfo_new(OSSL_CMP_PKISTATUS_rejection, fail_info, text) :
-        ossl_cmp_statusinfo_new(OSSL_CMP_PKISTATUS_accepted, 0, text);
+        OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection, fail_info, text) :
+        OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_accepted, 0, text);
     if (sinfo == NULL)
         goto err;
     certStatus->statusInfo = sinfo;
@@ -756,6 +741,7 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
  err:
     CMPerr(0, CMP_R_ERROR_CREATING_CERTCONF);
     OSSL_CMP_MSG_free(msg);
+    ASN1_OCTET_STRING_free(certHash);
     return NULL;
 }
 
@@ -827,7 +813,7 @@ OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
  * returns NULL on error
  */
 OSSL_CMP_PKISI *
-ossl_cmp_revrepcontent_get_pkistatusinfo(OSSL_CMP_REVREPCONTENT *rrep, int rsid)
+ossl_cmp_revrepcontent_get_pkisi(OSSL_CMP_REVREPCONTENT *rrep, int rsid)
 {
     OSSL_CMP_PKISI *status;
 
@@ -993,4 +979,15 @@ OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file)
     msg = OSSL_d2i_CMP_MSG_bio(bio, NULL);
     BIO_free(bio);
     return msg;
+}
+
+OSSL_CMP_MSG *OSSL_d2i_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
+{
+    return ASN1_d2i_bio_of(OSSL_CMP_MSG, OSSL_CMP_MSG_new,
+                           d2i_OSSL_CMP_MSG, bio, msg);
+}
+
+int OSSL_i2d_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
+{
+    return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
 }

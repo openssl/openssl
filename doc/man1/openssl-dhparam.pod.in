@@ -23,6 +23,7 @@ B<openssl dhparam>
 [B<-5>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
 =for openssl ifdef dsaparam engine
@@ -108,6 +109,8 @@ be loaded by calling the get_dhNNNN() function.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

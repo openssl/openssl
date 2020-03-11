@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-openssl - OpenSSL command line tool
+openssl - OpenSSL command line program
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ OpenSSL is a cryptography toolkit implementing the Secure Sockets Layer (SSL
 v2/v3) and Transport Layer Security (TLS v1) network protocols and related
 cryptography standards required by them.
 
-The B<openssl> program is a command line tool for using the various
+The B<openssl> program is a command line program for using the various
 cryptography functions of OpenSSL's B<crypto> library from the shell.
 It can be used for
 
@@ -104,7 +104,7 @@ Cipher Suite Description Determination.
 
 =item B<cms>
 
-CMS (Cryptographic Message Syntax) utility.
+CMS (Cryptographic Message Syntax) command.
 
 =item B<crl>
 
@@ -196,7 +196,7 @@ Create or examine a Netscape certificate sequence.
 
 =item B<ocsp>
 
-Online Certificate Status Protocol utility.
+Online Certificate Status Protocol command.
 
 =item B<passwd>
 
@@ -212,7 +212,7 @@ PKCS#7 Data Management.
 
 =item B<pkcs8>
 
-PKCS#8 format private key conversion tool.
+PKCS#8 format private key conversion command.
 
 =item B<pkey>
 
@@ -224,7 +224,7 @@ Public key algorithm parameter management.
 
 =item B<pkeyutl>
 
-Public key algorithm cryptographic operation utility.
+Public key algorithm cryptographic operation command.
 
 =item B<prime>
 
@@ -252,7 +252,7 @@ RSA key management.
 
 =item B<rsautl>
 
-RSA utility for signing, verification, encryption, and decryption. Superseded
+RSA command for signing, verification, encryption, and decryption. Superseded
 by  L<openssl-pkeyutl(1)>.
 
 =item B<s_client>
@@ -289,7 +289,7 @@ Algorithm Speed Measurement.
 
 =item B<spkac>
 
-SPKAC printing and generating utility.
+SPKAC printing and generating command.
 
 =item B<srp>
 
@@ -297,11 +297,11 @@ Maintain SRP password file.
 
 =item B<storeutl>
 
-Utility to list and display certificates, keys, CRLs, etc.
+Command to list and display certificates, keys, CRLs, etc.
 
 =item B<ts>
 
-Time Stamping Authority tool (client/server).
+Time Stamping Authority command.
 
 =item B<verify>
 
@@ -727,11 +727,11 @@ Do not use the default store.
 
 =head2 Random State Options
 
-Prior to OpenSSL 3.0, it was common for applications to store information
+Prior to OpenSSL 1.1.1, it was common for applications to store information
 about the state of the random-number generator in a file that was loaded
 at startup and rewritten upon exit. On modern operating systems, this is
-generally no longer necessary as OpenSSL will seed itself from the
-appropriate CPU flags, device files, and so on. These flags are still
+generally no longer necessary as OpenSSL will seed itself from a trusted
+entropy source provided by the operating system. These flags are still
 supported for special platforms or circumstances that might require them.
 
 It is generally an error to use the same seed file more than once and
@@ -752,6 +752,26 @@ with different filenames.
 
 Writes the seed data to the specified I<file> upon exit.
 This file can be used in a subsequent command invocation.
+
+=back
+
+=head2 Provider Options
+
+With the move to provider based cryptographic operations in OpenSSL 3.0,
+options were added to allow specific providers or sets of providers to be used.
+
+=over 4
+
+=item B<-provider> I<name>
+
+Use the provider identified by I<name> and use all the methods it
+implements (algorithms, key storage, etc.).  This option can be specified
+multiple time to load more than one provider.
+
+=item B<-provider_path> I<path>
+
+Specify the search I<path> that is used to locate provider modules.  The format
+of I<path> varies depending on the operating system being used.
 
 =back
 

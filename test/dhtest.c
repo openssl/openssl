@@ -700,6 +700,7 @@ static int dh_test_prime_groups(int index)
     int ok = 0;
     DH *dh = NULL;
     const BIGNUM *p, *q, *g;
+    long len;
 
     if (!TEST_ptr(dh = DH_new_by_nid(prime_groups[index])))
         goto err;
@@ -709,11 +710,80 @@ static int dh_test_prime_groups(int index)
 
     if (!TEST_int_eq(DH_get_nid(dh), prime_groups[index]))
         goto err;
+
+    len = DH_get_length(dh);
+    if (!TEST_true(len > 0)
+        || !TEST_true(len <= BN_num_bits(q)))
+        goto err;
+
     ok = 1;
 err:
     DH_free(dh);
     return ok;
 }
+
+static int dh_get_nid(void)
+{
+    int ok = 0;
+    const BIGNUM *p, *q, *g;
+    BIGNUM *pcpy = NULL, *gcpy = NULL, *qcpy = NULL;
+    DH *dh1 = DH_new_by_nid(NID_ffdhe2048);
+    DH *dh2 = DH_new();
+
+    if (!TEST_ptr(dh1)
+        || !TEST_ptr(dh2))
+        goto err;
+
+    /* Set new DH parameters manually using a existing named group's p & g */
+    DH_get0_pqg(dh1, &p, &q, &g);
+    if (!TEST_ptr(p)
+        || !TEST_ptr(q)
+        || !TEST_ptr(g)
+        || !TEST_ptr(pcpy = BN_dup(p))
+        || !TEST_ptr(gcpy = BN_dup(g)))
+        goto err;
+
+    if (!TEST_true(DH_set0_pqg(dh2, pcpy, NULL, gcpy)))
+        goto err;
+    pcpy = gcpy = NULL;
+    /* Test q is set if p and g are provided */
+    if (!TEST_ptr(DH_get0_q(dh2)))
+        goto err;
+
+    /* Test that setting p & g manually returns that it is a named group */
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_ffdhe2048))
+        goto err;
+
+    /* Test that after changing g it is no longer a named group */
+    if (!TEST_ptr(gcpy = BN_dup(BN_value_one())))
+       goto err;
+    if (!TEST_true(DH_set0_pqg(dh2, NULL, NULL, gcpy)))
+       goto err;
+    gcpy = NULL;
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_undef))
+        goto err;
+
+    /* Test that setting an incorrect q results in this not being a named group */
+    if (!TEST_ptr(pcpy = BN_dup(p))
+        || !TEST_ptr(qcpy = BN_dup(q))
+        || !TEST_ptr(gcpy = BN_dup(g))
+        || !TEST_int_eq(BN_add_word(qcpy, 2), 1)
+        || !TEST_true(DH_set0_pqg(dh2, pcpy, qcpy, gcpy)))
+        goto err;
+    pcpy = qcpy = gcpy = NULL;
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_undef))
+        goto err;
+
+    ok = 1;
+err:
+    BN_free(pcpy);
+    BN_free(qcpy);
+    BN_free(gcpy);
+    DH_free(dh2);
+    DH_free(dh1);
+    return ok;
+}
+
 #endif
 
 
@@ -726,6 +796,7 @@ int setup_tests(void)
     ADD_TEST(rfc5114_test);
     ADD_TEST(rfc7919_test);
     ADD_ALL_TESTS(dh_test_prime_groups, OSSL_NELEM(prime_groups));
+    ADD_TEST(dh_get_nid);
 #endif
     return 1;
 }

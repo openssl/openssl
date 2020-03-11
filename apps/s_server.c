@@ -757,7 +757,8 @@ typedef enum OPTION_choice {
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
-    OPT_X_ENUM
+    OPT_X_ENUM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_server_options[] = {
@@ -992,6 +993,7 @@ const OPTIONS s_server_options[] = {
     {"chainCAfile", OPT_CHAINCAFILE, '<',
      "CA file for certificate chain (PEM format)"},
     OPT_X_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -1564,6 +1566,10 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_SERVERNAME:

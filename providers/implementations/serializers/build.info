@@ -6,6 +6,7 @@ $RSA_GOAL=../../libimplementations.a
 $DH_GOAL=../../libimplementations.a
 $DSA_GOAL=../../libimplementations.a
 $ECX_GOAL=../../libimplementations.a
+$EC_GOAL=../../libimplementations.a
 
 SOURCE[$SERIALIZER_GOAL]=serializer_common.c
 SOURCE[$RSA_GOAL]=serializer_rsa.c serializer_rsa_priv.c serializer_rsa_pub.c
@@ -17,4 +18,5 @@ IF[{- !$disabled{dsa} -}]
 ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$ECX_GOAL]=serializer_ecx.c serializer_ecx_priv.c serializer_ecx_pub.c
+  SOURCE[$EC_GOAL]=serializer_ec.c serializer_ec_priv.c serializer_ec_pub.c serializer_ec_param.c
 ENDIF

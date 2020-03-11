@@ -239,7 +239,7 @@ The following options can be set:
 
     OSSL_CMP_OPT_MAC_ALGNID
         The MAC algorithm NID to be used in RFC 4210's MSG_MAC_ALG,
-        if applicable used for message protection. 
+        if applicable used for message protection.
         Default is HMAC-SHA1 as per RFC 4210.
 
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
@@ -362,7 +362,6 @@ The transfer callback may make use of a custom defined argument stored in
 the ctx by means of OSSL_CMP_CTX_set_transfer_cb_arg(), which may be retrieved
 again through OSSL_CMP_CTX_get_transfer_cb_arg().
 
-
 OSSL_CMP_CTX_set_transfer_cb_arg() sets an argument, respectively a pointer to a
 structure containing arguments, optionally to be used by the transfer callback.
 B<arg> is not consumed, and it must therefore explicitly be freed when not
@@ -372,9 +371,9 @@ OSSL_CMP_CTX_get_transfer_cb_arg() gets the argument, respectively the pointer
 to a structure containing arguments, previously set by
 OSSL_CMP_CTX_set_transfer_cb_arg() or NULL if unset.
 
-OSSL_CMP_CTX_set1_srvCert() pins the server certificate to be directly trusted
-(even if it is expired) for verifying response messages.
-The cert pointer is not consumed. It may be NULL to clear the entry.
+OSSL_CMP_CTX_set1_srvCert() pins the given server certificate B<srvCert>
+directly trusts it (even if it is expired) for verifying response messages.
+The B<cert> argument may be NULL to clear the entry.
 
 OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN) expected to
 be given in the sender response for messages protected with MSG_SIG_ALG. This
@@ -384,8 +383,7 @@ identify the server certificate.
 This can be used to ensure that only a particular entity is accepted to act as
 CMP server, and attackers are not able to use arbitrary certificates of a
 trusted PKI hierarchy to fraudulently pose as server.
-This defaults to the subject DN of the certificate set via
-OSSL_CMP_CTX_set1_srvCert(), if any.
+This defaults to the subject of the B<srvCert>, if any.
 
 OSSL_CMP_CTX_set0_trustedStore() sets the X509_STORE type certificate store
 containing trusted (root) CA certificates. The certificate store may also hold
@@ -404,32 +402,52 @@ The reference counts of those certificates handled successfully are increased.
 OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
 list of untrusted certs, which my be empty if unset.
 
-OSSL_CMP_CTX_set1_clCert() sets the client certificate in the given
-OSSL_CMP_CTX structure. The client certificate will then be used by the
-functions to set the "sender" field for outgoing messages and it will be
-included in the extraCerts field.
+OSSL_CMP_CTX_set1_clCert() sets the client certificate in the given B<ctx>.
+The public key of this B<clCert> must correspond to
+the private key set via B<OSSL_CMP_CTX_set1_pkey()>.
+When using signature-based protection of CMP request messages
+this "protection certificate" will be included first in the extraCerts field.
+The subject of this B<clCert> will be used as the "sender" field
+of outgoing CMP messages, with the fallback being
+the B<subjectName> set via B<OSSL_CMP_CTX_set1_subjectName()>.
+The B<cert> argument may be NULL to clear the entry.
 
-OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the client
-certificate set with B<OSSL_CMP_CTX_set1_clCert()> in the given CMP context.
-Used to create the protection in case of MSG_SIG_ALG.
+OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to
+the client certificate B<clCert> set via B<OSSL_CMP_CTX_set1_clCert()>.
+This key is used create signature-based protection (protectionAlg = MSG_SIG_ALG)
+of outgoing messages
+unless a PBM secret has been set via  B<OSSL_CMP_CTX_set1_secretValue()>.
+The B<pkey> argument may be NULL to clear the entry.
 
-OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue in the given
-B<ctx> or clears it if the B<ref> argument is NULL.
+OSSL_CMP_CTX_set1_secretValue() sets the byte string B<sec> with length B<len>
+as PBM secret in the given B<ctx> or clears it if the B<sec> argument is NULL.
+If present, this secret is used to create PBM-based protection of outgoing
+messages and to verify any PBM-based protection of incoming messages
+(protectionAlg = MSG_MAC_ALG). PBM stands for Password-Based MAC.
+PBM-based protection takes precedence over signature-based protection.
 
-OSSL_CMP_CTX_set1_secretValue() sets the B<sec> with the length B<len> in the
-given B<ctx> or clears it if the B<sec> argument is NULL.
+OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue B<ref> with
+length B<len> in the given B<ctx> or clears it if the B<ref> argument is NULL.
+According to RFC 4210 section 5.1.1, if no value for the "sender" field in
+CMP message headers can be determined (i.e., no B<clCert> and no B<subjectName>
+is given) then the "sender" field will contain the NULL-DN
+and the senderKID field of the CMP message header must be set.
+When signature-based protection is used the senderKID will be set to
+the subjectKeyIdentifier of the <clCert> as far as present.
+If not present or when PBM-based protection is used
+the B<ref> value is taken as the fallback value for the senderKID.
 
 OSSL_CMP_CTX_set1_recipient() sets the recipient name that will be used in the
 PKIHeader of a request message, i.e. the X509 name of the (CA) server.
-Setting is overruled by subject of srvCert if set.
-If neither srvCert nor recipient are set, the recipient of the PKI message is
+Setting is overruled by subject of B<srvCert> if set.
+If neither B<srvCert> nor recipient are set, the recipient of the PKI message is
 determined in the following order: issuer, issuer of old cert (oldCert),
-issuer of client cert (clCert), else NULL-DN.
+issuer of client cert (B<clCert>), else NULL-DN.
 When a response is received, its sender must match the recipient of the request.
 
 OSSL_CMP_CTX_push0_geninfo_ITAV() adds B<itav> to the stack in the B<ctx> to be
 added to the GeneralInfo field of the CMP PKIMessage header of a request
-message sent with this context.  Consumes the pointer to B<itav>.
+message sent with this context.
 
 OSSL_CMP_CTX_set1_extraCertsOut() sets the stack of extraCerts that will be
 sent to remote.
@@ -450,24 +468,22 @@ will be set in the CertTemplate, i.e., the X509 name of the CA server.
 
 OSSL_CMP_CTX_set1_subjectName() sets the subject DN that will be used in
 the CertTemplate structure when requesting a new cert. For Key Update Requests
-(KUR), it defaults to the subject DN of the reference certificate,
+(KUR), it defaults to the subject DN of the B<reference certificate>,
 see B<OSSL_CMP_CTX_set1_oldCert()>. This default is used for Initialization
 Requests (IR) and Certification Requests (CR) only if no SANs are set.
-
-If clCert is not set (e.g. in case of IR with MSG_MAC_ALG), the subject DN
-is also used as sender of the PKI message.
+The B<subjectName> is also used as the "sender" field for outgoing CMP messages
+if no B<clCert> has been set (e.g., in case requests are protected using PBM).
 
 OSSL_CMP_CTX_push1_subjectAltName() adds the given X509 name to the list of
 alternate names on the certificate template request. This cannot be used if
 any Subject Alternative Name extension is set via
 OSSL_CMP_CTX_set0_reqExtensions().
 By default, unless OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT has been set,
-the Subject Alternative Names are copied from the reference certificate,
-see OSSL_CMP_CTX_set1_oldCert().
-
+the Subject Alternative Names are copied from the B<reference certificate>,
+see B<OSSL_CMP_CTX_set1_oldCert()>.
 If set and the subject DN is not set with OSSL_CMP_CTX_set1_subjectName(), then
 the certificate template of an IR and CR will not be filled with the default
-subject DN from the reference certificate (see OSSL_CMP_CTX_set1_oldCert().
+subject DN from the B<reference certificate>.
 If a subject DN is desired it needs to be set explicitly with
 OSSL_CMP_CTX_set1_subjectName().
 
@@ -483,7 +499,7 @@ to the X509_EXTENSIONS of the requested certificate template.
 OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to B<clCert>.
-The reference certificate determined in this way, if any, is also used for
+The B<reference certificate> determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
 Its issuer, if any, is used as default recipient in the CMP message header.
 
@@ -491,7 +507,6 @@ OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to be used in P10CR.
 
 OSSL_CMP_CTX_push0_genm_ITAV() adds B<itav> to the stack in the B<ctx> which
 will be the body of a General Message sent with this context.
-Consumes the pointer to B<itav>.
 
 OSSL_CMP_CTX_set_certConf_cb() sets the callback used for evaluating the newly
 enrolled certificate before the library sends, depending on its result,

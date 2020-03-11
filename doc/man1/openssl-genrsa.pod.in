@@ -30,6 +30,7 @@ B<openssl> B<genrsa>
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<numbits>]
 
 =for openssl ifdef engine
@@ -84,6 +85,8 @@ Print extra details about the operations being performed.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item B<numbits>
 

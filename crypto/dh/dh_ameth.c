@@ -20,6 +20,7 @@
 #include "dh_local.h"
 #include <openssl/bn.h>
 #include "crypto/asn1.h"
+#include "crypto/dh.h"
 #include "crypto/evp.h"
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
@@ -498,6 +499,13 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     const BIGNUM *priv_key = DH_get0_priv_key(dh);
     OSSL_PARAM *params;
     int rv;
+
+    /*
+     * If the DH method is foreign, then we can't be sure of anything, and
+     * can therefore not export or pretend to export.
+     */
+    if (dh_get_method(dh) != DH_OpenSSL())
+        return 0;
 
     if (p == NULL || g == NULL)
         return 0;

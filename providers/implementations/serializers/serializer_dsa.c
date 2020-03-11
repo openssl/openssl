@@ -98,7 +98,7 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
 }
 
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
-                                ASN1_STRING **pstr, int *pstrtype)
+                                 void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
 
@@ -121,7 +121,7 @@ int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
 }
 
 int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
-                                     ASN1_STRING **pstr, int *pstrtype)
+                                     void **pstr, int *pstrtype)
 {
     const BIGNUM *p = DSA_get0_p(dsa);
     const BIGNUM *q = DSA_get0_q(dsa);

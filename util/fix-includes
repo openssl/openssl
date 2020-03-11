@@ -14,6 +14,6 @@ find -name ossl_typ.h -o \( \
 	 -name '*.ec' -o \
 	 -name 'README*' -o \
 	 -name '*.pod' -o \
-	 -name '*.conf' \
+	 -name '*.cnf' -o -name '*.conf' \
 	 \) -exec sed -E -i \
 	 -f util/fix-includes.sed {} \;

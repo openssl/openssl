@@ -19,9 +19,9 @@ use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
 setup("test_ssl_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 
-my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
+my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
 map { s/\^// } @conf_files if $^O eq "VMS";
@@ -54,56 +54,56 @@ my $no_ocsp = disabled("ocsp");
 # Add your test here if the test conf.in generates test cases and/or
 # expectations dynamically based on the OpenSSL compile-time config.
 my %conf_dependent_tests = (
-  "02-protocol-version.conf" => !$is_default_tls,
-  "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls
+  "02-protocol-version.cnf" => !$is_default_tls,
+  "04-client_auth.cnf" => !$is_default_tls || !$is_default_dtls
                            || !disabled("sctp"),
-  "05-sni.conf" => disabled("tls1_1"),
-  "07-dtls-protocol-version.conf" => !$is_default_dtls || !disabled("sctp"),
-  "10-resumption.conf" => !$is_default_tls || $no_ec,
-  "11-dtls_resumption.conf" => !$is_default_dtls || !disabled("sctp"),
-  "16-dtls-certstatus.conf" => !$is_default_dtls || !disabled("sctp"),
-  "17-renegotiate.conf" => disabled("tls1_2"),
-  "18-dtls-renegotiate.conf" => disabled("dtls1_2") || !disabled("sctp"),
-  "19-mac-then-encrypt.conf" => !$is_default_tls,
-  "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
-  "22-compression.conf" => !$is_default_tls,
-  "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
-  "27-ticket-appdata.conf" => !$is_default_tls,
-  "28-seclevel.conf" => disabled("tls1_2") || $no_ec,
-  "30-extended-master-secret.conf" => disabled("tls1_2"),
+  "05-sni.cnf" => disabled("tls1_1"),
+  "07-dtls-protocol-version.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "10-resumption.cnf" => !$is_default_tls || $no_ec,
+  "11-dtls_resumption.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "16-dtls-certstatus.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "17-renegotiate.cnf" => disabled("tls1_2"),
+  "18-dtls-renegotiate.cnf" => disabled("dtls1_2") || !disabled("sctp"),
+  "19-mac-then-encrypt.cnf" => !$is_default_tls,
+  "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa,
+  "22-compression.cnf" => !$is_default_tls,
+  "25-cipher.cnf" => disabled("poly1305") || disabled("chacha"),
+  "27-ticket-appdata.cnf" => !$is_default_tls,
+  "28-seclevel.cnf" => disabled("tls1_2") || $no_ec,
+  "30-extended-master-secret.cnf" => disabled("tls1_2"),
 );
 
 # Add your test here if it should be skipped for some compile-time
 # configurations. Default is $no_tls but some tests have different skip
 # conditions.
 my %skip = (
-  "06-sni-ticket.conf" => $no_tls_below1_3,
-  "07-dtls-protocol-version.conf" => $no_dtls,
-  "08-npn.conf" => (disabled("tls1") && disabled("tls1_1")
+  "06-sni-ticket.cnf" => $no_tls_below1_3,
+  "07-dtls-protocol-version.cnf" => $no_dtls,
+  "08-npn.cnf" => (disabled("tls1") && disabled("tls1_1")
                     && disabled("tls1_2")) || $no_npn,
-  "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
-  "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
-  "12-ct.conf" => $no_tls || $no_ct || $no_ec,
+  "10-resumption.cnf" => disabled("tls1_1") || disabled("tls1_2"),
+  "11-dtls_resumption.cnf" => disabled("dtls1") || disabled("dtls1_2"),
+  "12-ct.cnf" => $no_tls || $no_ct || $no_ec,
   # We could run some of these tests without TLS 1.2 if we had a per-test
   # disable instruction but that's a bizarre configuration not worth
   # special-casing for.
   # TODO(TLS 1.3): We should review this once we have TLS 1.3.
-  "13-fragmentation.conf" => disabled("tls1_2"),
-  "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
-  "15-certstatus.conf" => $no_tls || $no_ocsp,
-  "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
-  "17-renegotiate.conf" => $no_tls_below1_3,
-  "18-dtls-renegotiate.conf" => $no_dtls,
-  "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
-  "20-cert-select.conf" => disabled("tls1_2") || $no_ec,
-  "21-key-update.conf" => disabled("tls1_3"),
-  "22-compression.conf" => disabled("zlib") || $no_tls,
-  "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
+  "13-fragmentation.cnf" => disabled("tls1_2"),
+  "14-curves.cnf" => disabled("tls1_2") || $no_ec || $no_ec2m,
+  "15-certstatus.cnf" => $no_tls || $no_ocsp,
+  "16-dtls-certstatus.cnf" => $no_dtls || $no_ocsp,
+  "17-renegotiate.cnf" => $no_tls_below1_3,
+  "18-dtls-renegotiate.cnf" => $no_dtls,
+  "19-mac-then-encrypt.cnf" => $no_pre_tls1_3,
+  "20-cert-select.cnf" => disabled("tls1_2") || $no_ec,
+  "21-key-update.cnf" => disabled("tls1_3"),
+  "22-compression.cnf" => disabled("zlib") || $no_tls,
+  "23-srp.cnf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
-  "24-padding.conf" => disabled("tls1_3"),
-  "25-cipher.conf" => disabled("ec") || disabled("tls1_2"),
-  "26-tls13_client_auth.conf" => disabled("tls1_3"),
-  "29-dtls-sctp-label-bug.conf" => disabled("sctp") || disabled("sock"),
+  "24-padding.cnf" => disabled("tls1_3"),
+  "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
+  "26-tls13_client_auth.cnf" => disabled("tls1_3"),
+  "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
 );
 
 foreach my $conf (@conf_files) {
@@ -133,7 +133,7 @@ sub test_conf {
            "Getting output from generate_ssl_tests.pl.");
 
     SKIP: {
-        # Test 2. Compare against existing output in test/ssl_tests.conf.
+        # Test 2. Compare against existing output in test/ssl_tests.cnf.
         skip "Skipping generated source test for $conf", 1
           if !$check_source;
 
