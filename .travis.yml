@@ -11,10 +11,10 @@ git:
 
 before_install:
     - if [ -n "$COVERALLS" ]; then
-          pip install --user cpp-coveralls;
+          travis_retry pip install --user cpp-coveralls;
       fi;
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
-          git submodule update --init --recursive;
+          travis_retry git submodule update --init --recursive;
       fi;
     - eval "${MATRIX_EVAL}"
 
@@ -246,7 +246,7 @@ script:
           if [ -e krb5/src ]; then
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
-          if ! HARNESS_VERBOSE_FAILURE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
+          if ! HARNESS_VERBOSE_FAILURE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner travis_wait 60 make test; then
               echo -e '\052\052 FAILED -- MAKE TEST';
               travis_terminate 1;
           fi;
