@@ -20,6 +20,7 @@ B<openssl dsaparam>
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -92,6 +93,8 @@ Print extra details about the operations being performed.
 This option specifies that a parameter set should be generated of size
 I<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

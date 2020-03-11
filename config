@@ -847,14 +847,6 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in aes aria bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha sm2 sm3 sm4
-do
-  if [ ! -d $THERE/crypto/$i ]
-  then
-    options="$options no-$i"
-  fi
-done
-
 if [ -z "$OUT" ]; then
   OUT="$CC"
 fi

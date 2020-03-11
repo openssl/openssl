@@ -28,6 +28,7 @@ B<openssl> B<s_time>
 {- $OpenSSL::safe::opt_name_synopsis -}
 [B<-cafile> I<file>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
 
@@ -121,6 +122,8 @@ can establish.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-cafile> I<file>
 

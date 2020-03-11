@@ -61,7 +61,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
-    OPT_R_ENUM, OPT_EXT
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -144,6 +144,7 @@ const OPTIONS x509_options[] = {
      "The CA key, must be PEM format; if not in CAfile"},
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
     {"CAkeyform", OPT_CAKEYFORM, 'E', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -268,6 +269,10 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_EXTENSIONS:

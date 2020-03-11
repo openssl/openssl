@@ -26,6 +26,7 @@ B<openssl ecparam>
 [B<-genkey>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -129,6 +130,8 @@ This option will generate an EC private key using the specified parameters.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

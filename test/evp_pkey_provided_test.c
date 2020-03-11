@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include "crypto/ecx.h"
 #include "internal/nelem.h"
+#include "internal/param_build.h"
 #include "crypto/evp.h"          /* For the internal API */
 #include "testutil.h"
 
@@ -155,7 +156,7 @@ static int test_print_key_type_using_serializer(const char *alg, int type,
     const char *pq;
     OSSL_SERIALIZER_CTX *ctx = NULL;
     BIO *membio = BIO_new(BIO_s_mem());
-    int ret = 1;
+    int ret = 0;
 
     switch (type) {
     case PRIV_TEXT:
@@ -187,10 +188,8 @@ static int test_print_key_type_using_serializer(const char *alg, int type,
         goto err;
     }
 
-    if (!TEST_ptr(membio)) {
-        ret = 0;
+    if (!TEST_ptr(membio))
         goto err;
-    }
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_SERIALIZER context with passphrase");
@@ -203,7 +202,7 @@ static int test_print_key_type_using_serializer(const char *alg, int type,
     TEST_note("Testing with no encryption");
     if (!TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
         || !TEST_true(compare_with_file(alg, type, membio)))
-        ret = 0;
+        goto err;
 
     if (type == PRIV_PEM) {
         /* Set a passphrase to be used later */
@@ -216,22 +215,22 @@ static int test_print_key_type_using_serializer(const char *alg, int type,
         TEST_note("Displaying PEM encrypted with AES-256-CBC");
         if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
             || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
-            ret = 0;
+            goto err;
 
         /* Use an invalid cipher name, which should generate no output */
         TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
         if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher(ctx, "FOO", NULL))
             || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
-            ret = 0;
+            goto err;
 
         /* Clear the cipher.  This should give us an unencrypted PEM again */
         TEST_note("Testing with encryption cleared (no encryption)");
         if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, NULL, NULL))
             || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
             || !TEST_true(compare_with_file(alg, type, membio)))
-            ret = 0;
+            goto err;
     }
-
+    ret = 1;
 err:
     BIO_free(membio);
     OSSL_SERIALIZER_CTX_free(ctx);
@@ -332,7 +331,7 @@ static int test_fromdata_rsa(void)
 static int test_fromdata_dh(void)
 {
     int ret = 0;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL, *key_ctx = NULL;
     EVP_PKEY *pk = NULL;
     /*
      * 32-bit DH key, extracted from this command,
@@ -368,9 +367,19 @@ static int test_fromdata_dh(void)
     ret = test_print_key_using_pem("DH", pk)
           && test_print_key_using_serializer("DH", pk);
 
+    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
+        goto err;
+
+    if (!TEST_false(EVP_PKEY_check(key_ctx))
+        || !TEST_true(EVP_PKEY_public_check(key_ctx))
+        || !TEST_false(EVP_PKEY_private_check(key_ctx)) /* Need a q */
+        || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+        goto err;
+
  err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(key_ctx);
 
     return ret;
 }
@@ -479,14 +488,79 @@ static int test_fromdata_ecx(int tst)
     ret = test_print_key_using_pem(alg, pk)
           && test_print_key_using_serializer(alg, pk);
 
- err:
+err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
 
     return ret;
 }
-#endif
 
+static int test_fromdata_ec(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pk = NULL;
+    OSSL_PARAM_BLD bld;
+    BIGNUM *ec_priv_bn = NULL;
+    OSSL_PARAM *fromdata_params = NULL;
+    const char *alg = "EC";
+    static const unsigned char ec_pub_keydata[] = {
+       0x04,
+       0x1b, 0x93, 0x67, 0x55, 0x1c, 0x55, 0x9f, 0x63,
+       0xd1, 0x22, 0xa4, 0xd8, 0xd1, 0x0a, 0x60, 0x6d,
+       0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
+       0x3a, 0x6a, 0x08, 0x28, 0x39, 0xbd, 0xc9, 0xd2,
+       0x80, 0xec, 0xe9, 0xa7, 0x08, 0x29, 0x71, 0x2f,
+       0xc9, 0x56, 0x82, 0xee, 0x9a, 0x85, 0x0f, 0x6d,
+       0x7f, 0x59, 0x5f, 0x8c, 0xd1, 0x96, 0x0b, 0xdf,
+       0x29, 0x3e, 0x49, 0x07, 0x88, 0x3f, 0x9a, 0x29
+    };
+    static const unsigned char ec_priv_keydata[] = {
+        0x33, 0xd0, 0x43, 0x83, 0xa9, 0x89, 0x56, 0x03,
+        0xd2, 0xd7, 0xfe, 0x6b, 0x01, 0x6f, 0xe4, 0x59,
+        0xcc, 0x0d, 0x9a, 0x24, 0x6c, 0x86, 0x1b, 0x2e,
+        0xdc, 0x4b, 0x4d, 0x35, 0x43, 0xe1, 0x1b, 0xad
+    };
+
+    ossl_param_bld_init(&bld);
+
+    if (!TEST_ptr(ec_priv_bn = BN_bin2bn(ec_priv_keydata,
+                                         sizeof(ec_priv_keydata), NULL)))
+        goto err;
+
+    if (ossl_param_bld_push_utf8_string(&bld, OSSL_PKEY_PARAM_EC_NAME,
+                                        "prime256v1", 0) <= 0)
+        goto err;
+    if (ossl_param_bld_push_octet_string(&bld, OSSL_PKEY_PARAM_PUB_KEY,
+                                         ec_pub_keydata,
+                                         sizeof(ec_pub_keydata)) <= 0)
+        goto err;
+    if (ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, ec_priv_bn) <= 0)
+        goto err;
+    if (!TEST_ptr(fromdata_params = ossl_param_bld_to_param(&bld)))
+        goto err;
+    ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+        || !TEST_int_eq(EVP_PKEY_bits(pk), 256)
+        || !TEST_int_eq(EVP_PKEY_security_bits(pk), 128)
+        || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2))
+        goto err;
+
+    ret = test_print_key_using_pem(alg, pk)
+          && test_print_key_using_serializer(alg, pk);
+err:
+    BN_free(ec_priv_bn);
+    ossl_param_bld_free(fromdata_params);
+    EVP_PKEY_free(pk);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+#endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
 {
@@ -504,6 +578,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_fromdata_ecx, 2);
+    ADD_TEST(test_fromdata_ec);
 #endif
     return 1;
 }

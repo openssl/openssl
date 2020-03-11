@@ -16,8 +16,8 @@ use File::Compare qw(compare_text);
 setup('test_conf');
 
 my %input_result = (
-    'dollarid_on.conf'  => 'dollarid_on.txt',
-    'dollarid_off.conf' => 'dollarid_off.txt',
+    'dollarid_on.cnf'  => 'dollarid_on.txt',
+    'dollarid_off.cnf' => 'dollarid_off.txt',
 );
 
 plan skip_all => 'This is unsupported for cross compiled configurations'

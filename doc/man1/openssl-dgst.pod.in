@@ -32,6 +32,7 @@ B<openssl> B<dgst>|I<digest>
 {- $OpenSSL::safe::opt_engine_synopsis -}
 [B<-engine_impl> I<id>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<file> ...]
 
 =head1 DESCRIPTION
@@ -183,6 +184,8 @@ used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<file> ...
 

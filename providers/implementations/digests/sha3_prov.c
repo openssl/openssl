@@ -247,7 +247,7 @@ static void *keccak_dupctx(void *ctx)
 }
 
 static const OSSL_PARAM known_shake_settable_ctx_params[] = {
-    {OSSL_DIGEST_PARAM_SSL3_MS, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
+    {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *shake_settable_ctx_params(void)

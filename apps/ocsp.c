@@ -137,7 +137,7 @@ typedef enum OPTION_choice {
     OPT_RCID,
     OPT_V_ENUM,
     OPT_MD,
-    OPT_MULTI
+    OPT_MULTI, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ocsp_options[] = {
@@ -230,6 +230,7 @@ const OPTIONS ocsp_options[] = {
     {"status_age", OPT_STATUS_AGE, 'p', "Maximum status age in seconds"},
 
     OPT_V_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -540,6 +541,10 @@ int ocsp_main(int argc, char **argv)
 # ifdef OCSP_DAEMON
             multi = atoi(opt_arg());
 # endif
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

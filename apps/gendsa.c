@@ -31,7 +31,7 @@ NON_EMPTY_TRANSLATION_UNIT
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS gendsa_options[] = {
@@ -47,6 +47,7 @@ const OPTIONS gendsa_options[] = {
     {"out", OPT_OUT, '>', "Output the key to the specified file"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
 
@@ -90,6 +91,10 @@ int gendsa_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_CIPHER:

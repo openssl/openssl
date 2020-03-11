@@ -50,5 +50,5 @@ void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
 #  ifdef  __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_CMP */
-#endif /* !defined OPENSSL_CMP_UTIL_H */
+# endif /* !defined(OPENSSL_NO_CMP) */
+#endif /* !defined(OPENSSL_CMP_UTIL_H) */

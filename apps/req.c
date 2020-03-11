@@ -32,7 +32,6 @@
 # include <openssl/dsa.h>
 #endif
 
-#define SECTION         "req"
 
 #define BITS            "default_bits"
 #define KEYFILE         "default_keyfile"
@@ -77,6 +76,8 @@ static int join(char buf[], size_t buf_size, const char *name,
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
                                     int *pkey_type, long *pkeylen,
                                     char **palgnam, ENGINE *keygen_engine);
+
+static const char *section = "req";
 static CONF *req_conf = NULL;
 static CONF *addext_conf = NULL;
 static int batch = 0;
@@ -91,7 +92,8 @@ typedef enum OPTION_choice {
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD, OPT_SM2ID, OPT_SM2HEXID,
-    OPT_R_ENUM
+    OPT_SECTION,
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
@@ -109,6 +111,7 @@ const OPTIONS req_options[] = {
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
+    {"section", OPT_SECTION, 's', "Config section to use (default \"req\")"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
@@ -160,6 +163,7 @@ const OPTIONS req_options[] = {
     {"modulus", OPT_MODULUS, '-', "RSA modulus"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -308,6 +312,9 @@ int req_main(int argc, char **argv)
         case OPT_CONFIG:
             template = opt_arg();
             break;
+        case OPT_SECTION:
+            section = opt_arg();
+            break;
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
@@ -329,6 +336,10 @@ int req_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_NEWKEY:
@@ -514,7 +525,7 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (md_alg == NULL) {
-        p = NCONF_get_string(req_conf, SECTION, "default_md");
+        p = NCONF_get_string(req_conf, section, "default_md");
         if (p == NULL) {
             ERR_clear_error();
         } else {
@@ -525,7 +536,7 @@ int req_main(int argc, char **argv)
     }
 
     if (extensions == NULL) {
-        extensions = NCONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
+        extensions = NCONF_get_string(req_conf, section, V3_EXTENSIONS);
         if (extensions == NULL)
             ERR_clear_error();
     }
@@ -553,19 +564,19 @@ int req_main(int argc, char **argv)
 
     if (passin == NULL) {
         passin = nofree_passin =
-            NCONF_get_string(req_conf, SECTION, "input_password");
+            NCONF_get_string(req_conf, section, "input_password");
         if (passin == NULL)
             ERR_clear_error();
     }
 
     if (passout == NULL) {
         passout = nofree_passout =
-            NCONF_get_string(req_conf, SECTION, "output_password");
+            NCONF_get_string(req_conf, section, "output_password");
         if (passout == NULL)
             ERR_clear_error();
     }
 
-    p = NCONF_get_string(req_conf, SECTION, STRING_MASK);
+    p = NCONF_get_string(req_conf, section, STRING_MASK);
     if (p == NULL)
         ERR_clear_error();
 
@@ -575,7 +586,7 @@ int req_main(int argc, char **argv)
     }
 
     if (chtype != MBSTRING_UTF8) {
-        p = NCONF_get_string(req_conf, SECTION, UTF8_IN);
+        p = NCONF_get_string(req_conf, section, UTF8_IN);
         if (p == NULL)
             ERR_clear_error();
         else if (strcmp(p, "yes") == 0)
@@ -583,7 +594,7 @@ int req_main(int argc, char **argv)
     }
 
     if (req_exts == NULL) {
-        req_exts = NCONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+        req_exts = NCONF_get_string(req_conf, section, REQ_EXTENSIONS);
         if (req_exts == NULL)
             ERR_clear_error();
     }
@@ -606,14 +617,14 @@ int req_main(int argc, char **argv)
             /* load_key() has already printed an appropriate message */
             goto end;
         } else {
-            app_RAND_load_conf(req_conf, SECTION);
+            app_RAND_load_conf(req_conf, section);
         }
     }
 
     if (newreq && (pkey == NULL)) {
-        app_RAND_load_conf(req_conf, SECTION);
+        app_RAND_load_conf(req_conf, section);
 
-        if (!NCONF_get_number(req_conf, SECTION, BITS, &newkey)) {
+        if (!NCONF_get_number(req_conf, section, BITS, &newkey)) {
             newkey = DEFAULT_KEY_LENGTH;
         }
 
@@ -683,7 +694,7 @@ int req_main(int argc, char **argv)
         genctx = NULL;
 
         if (keyout == NULL) {
-            keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);
+            keyout = NCONF_get_string(req_conf, section, KEYFILE);
             if (keyout == NULL)
                 ERR_clear_error();
         }
@@ -696,10 +707,10 @@ int req_main(int argc, char **argv)
         if (out == NULL)
             goto end;
 
-        p = NCONF_get_string(req_conf, SECTION, "encrypt_rsa_key");
+        p = NCONF_get_string(req_conf, section, "encrypt_rsa_key");
         if (p == NULL) {
             ERR_clear_error();
-            p = NCONF_get_string(req_conf, SECTION, "encrypt_key");
+            p = NCONF_get_string(req_conf, section, "encrypt_key");
             if (p == NULL)
                 ERR_clear_error();
         }
@@ -1057,13 +1068,13 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
     STACK_OF(CONF_VALUE) *dn_sk, *attr_sk = NULL;
     char *tmp, *dn_sect, *attr_sect;
 
-    tmp = NCONF_get_string(req_conf, SECTION, PROMPT);
+    tmp = NCONF_get_string(req_conf, section, PROMPT);
     if (tmp == NULL)
         ERR_clear_error();
     if ((tmp != NULL) && strcmp(tmp, "no") == 0)
         no_prompt = 1;
 
-    dn_sect = NCONF_get_string(req_conf, SECTION, DISTINGUISHED_NAME);
+    dn_sect = NCONF_get_string(req_conf, section, DISTINGUISHED_NAME);
     if (dn_sect == NULL) {
         BIO_printf(bio_err, "unable to find '%s' in config\n",
                    DISTINGUISHED_NAME);
@@ -1075,7 +1086,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
         goto err;
     }
 
-    attr_sect = NCONF_get_string(req_conf, SECTION, ATTRIBUTES);
+    attr_sect = NCONF_get_string(req_conf, section, ATTRIBUTES);
     if (attr_sect == NULL) {
         ERR_clear_error();
         attr_sk = NULL;

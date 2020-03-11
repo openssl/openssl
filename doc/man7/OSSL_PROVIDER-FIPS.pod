@@ -2,14 +2,135 @@
 
 =head1 NAME
 
-OSSL_PROVIDER-FIPS - OPENSSL FIPS provider
+OSSL_PROVIDER-FIPS - OpenSSL FIPS provider
 
 =head1 DESCRIPTION
 
-The OPENSSL FIPS provider is a special provider that conforms to the Federal 
+The OpenSSL FIPS provider is a special provider that conforms to the Federal 
 Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
 contains an approved set of cryptographic algorithms that is validated by an
 accredited testing laboratory.
+
+=head2 Properties
+
+The implementations in this provider specifically have these properties
+defined:
+
+=over 4
+
+"provider=default"
+
+"fips=yes"
+
+=back
+
+It may be used in a property query string with fetching functions such as
+L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>, as well as with other
+functions that take a property query string, such as
+L<EVP_PKEY_CTX_new_from_name(3)>.
+
+It isn't mandatory to query for any of these properties, except to
+make sure to get implementations of this provider and none other.
+
+The "fips=yes" property can be use to make sure only FIPS approved
+implementations are used for crypto operations.  This may also include
+other non-crypto support operations that are not in the fips provider,
+such as asymmetric key serializers,
+see L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
+
+=head1 OPERATIONS AND ALGORITHMS
+
+The OpenSSL FIPS provider supports these operations and algorithms:
+
+=head2 Hashing Algorithms / Message Digests
+
+=over 4
+
+=item SHA1, see L<EVP_MD-SHA1(7)>
+
+=item SHA2, see L<EVP_MD-SHA2(7)>
+
+=item SHA3, see L<EVP_MD-SHA3(7)>
+
+=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
+
+=back
+
+=head2 Symmetric Ciphers
+
+=over 4
+
+=item AES, see L<EVP_CIPHER-AES(7)>
+
+=item DES-EDE3 (TrippleDES), see L<EVP_CIPHER-DES(7)>
+
+=back
+
+=head2 Message Authentication Code (MAC)
+
+=over 4
+
+=item CMAC, see L<EVP_MAC-CMAC(7)>
+
+=item GMAC, see L<EVP_MAC-GMAC(7)>
+
+=item HMAC, see L<EVP_MAC-HMAC(7)>
+
+=item KMAC, see L<EVP_MAC-KMAC(7)>
+
+=back
+
+=head2 Key Derivation Function (KDF)
+
+=over 4
+
+=item HKDF, see L<EVP_KDF-HKDF(7)>
+
+=item SSKDF, see L<EVP_KDF-SSKDF(7)>
+
+=item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
+
+=item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
+
+=item KBKDF, see L<EVP_KDF-KBKDF(7)>
+
+=back
+
+=head2 Key Exchange
+
+=over 4
+
+=item DH, see L<EVP_KEYEXCH-DH(7)>
+
+=back
+
+=head2 Asymmetric Signature
+
+=over 4
+
+=item DSA, see L<EVP_KEYEXCH-DSA(7)>
+
+=back
+
+=head2 Asymmetric Cipher
+
+=over 4
+
+=item RSA, see L<EVP_KEYEXCH-RSA(7)>
+
+=back
+
+=head2 Asymmetric Key Management
+
+=over 4
+
+=item DH, see L<EVP_KEYMGMT-DH(7)>
+
+=item DSA, see L<EVP_KEYMGMT-DSA(7)>
+
+=item RSA, see L<EVP_KEYMGMT-RSA(7)>
+
+=back
 
 =head1 SELF TESTING
 
@@ -17,59 +138,16 @@ One of the requirements for the FIPS module is self testing. An optional callbac
 mechanism is available to return information to the user using
 L<OSSL_SELF_TEST_set_callback(3)>.
 
-The OPENSSL FIPS module uses the following mechanism to provide information
+The parameters passed to the callback are described in L<OSSL_SELF_TEST_new(3)>
+
+The OpenSSL FIPS module uses the following mechanism to provide information
 about the self tests as they run.
 This is useful for debugging if a self test is failing.
 The callback also allows forcing any self test to fail, in order to check that
 it operates correctly on failure.
-
-The 'args' parameter of B<OSSL_CALLBACK> contains the B<OPENSSL_CTX> associated
-with the provider that is triggering the self test. This may be useful if
-multiple fips providers are present.
-
-The OSSL_PARAM names used are:
-
-=over 4
-
-=item "st-phase" (B<OSSL_PROV_PARAM_SELF_TEST_PHASE>) <UTF8 string>
-
-Each self test calls the callback 3 times with the following string values
-for the phase.
-
-=over 4
-
-=item "Start" (B<OSSL_SELF_TEST_PHASE_START>)
-
-This is the initial phase before the self test has run.
-This is used for informational purposes only.
-The value returned by the callback is ignored.
-
-=item "Corrupt" (B<OSSL_SELF_TEST_PHASE_CORRUPT>)
-
-The corrupt phase is run after the self test has calculated its known value.
-The callback may be used to force the self test to fail by returning a value
-of 0 from the callback during this phase.
-Returning any other value from the callback causes the self test to run normally.
-
-=item "Pass" (B<OSSL_SELF_TEST_PHASE_PASS>)
-
-=item "Fail" (B<OSSL_SELF_TEST_PHASE_FAIL>)
-
-The final phase runs after the self test is complete and indicates if a self
-test passed or failed. This is used for informational purposes only.
-The value returned by the callback is ignored.
-"Fail" should normally only be returned if any self test was forced to fail
-during the "Corrupt" phase (or if there was an error such as the integrity
-check of the module failed).
-
 Note that all self tests run even if a self test failure occurs.
 
-=back
-
-=item "st-type" (B<OSSL_PROV_PARAM_SELF_TEST_TYPE>) <UTF8 string>
-
-Used as a category to identify the type of self test being run.
-It includes the following string values:
+The FIPS module passes the following type(s) to OSSL_SELF_TEST_onbegin().
 
 =over 4
 
@@ -126,10 +204,8 @@ All other self test categories are run once at installation time, except for the
 There is only one instance of the "Module_Integrity" and "Install_Integrity"
 self tests. All other self tests may have multiple instances.
 
-=item "st-desc" (B<OSSL_PROV_PARAM_SELF_TEST_DESC>) <UTF8 string>
 
-Used as a sub category to identify an individual self test.
-The following description strings are used.
+The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin().
 
 =over 4
 
@@ -187,8 +263,6 @@ DRBG tests used with the "DRBG" type.
 
 =back
 
-=back
-
 =head1 EXAMPLES
 
 A simple self test callback is shown below for illustrative purposes.
@@ -241,8 +315,11 @@ A simple self test callback is shown below for illustrative purposes.
 L<openssl-fipsinstall(1)>,
 L<fips_config(5)>,
 L<OSSL_SELF_TEST_set_callback(3)>,
+L<OSSL_SELF_TEST_new(3)>,
 L<OSSL_PARAM(3)>,
-L<openssl-core.h(7)>
+L<openssl-core.h(7)>,
+L<openssl-core_numbers.h(7)>,
+L<provider(7)>
 
 =head1 HISTORY
 
@@ -250,7 +327,7 @@ The type and functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -46,4 +46,4 @@ ASN1_VALUE *HTTP_sendreq_bio(BIO *bio, OSSL_HTTP_bio_cb_t bio_update_fn,
                              int maxline, unsigned long max_resp_len,
                              int timeout, const ASN1_ITEM *rsp_it);
 
-#endif /* !defined OSSL_CRYPTO_HTTP_LOCAL_H */
+#endif /* !defined(OSSL_CRYPTO_HTTP_LOCAL_H) */

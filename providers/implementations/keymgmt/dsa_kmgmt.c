@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,12 +17,11 @@
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
 #include <openssl/params.h>
-#include "internal/param_build.h"
-#include "crypto/dsa.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
+#include "internal/param_build.h"
 
 static OSSL_OP_keymgmt_new_fn dsa_newdata;
 static OSSL_OP_keymgmt_free_fn dsa_freedata;
@@ -30,6 +29,7 @@ static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn dsa_gettable_params;
 static OSSL_OP_keymgmt_has_fn dsa_has;
 static OSSL_OP_keymgmt_match_fn dsa_match;
+static OSSL_OP_keymgmt_validate_fn dsa_validate;
 static OSSL_OP_keymgmt_import_fn dsa_import;
 static OSSL_OP_keymgmt_import_types_fn dsa_import_types;
 static OSSL_OP_keymgmt_export_fn dsa_export;
@@ -329,6 +329,55 @@ static const OSSL_PARAM *dsa_gettable_params(void)
     return dsa_params;
 }
 
+static int dsa_validate_domparams(DSA *dsa)
+{
+    int status = 0;
+
+    return dsa_check_params(dsa, &status);
+}
+
+static int dsa_validate_public(DSA *dsa)
+{
+    int status = 0;
+    const BIGNUM *pub_key = NULL;
+
+    DSA_get0_key(dsa, &pub_key, NULL);
+    return dsa_check_pub_key(dsa, pub_key, &status);
+}
+
+static int dsa_validate_private(DSA *dsa)
+{
+    int status = 0;
+    const BIGNUM *priv_key = NULL;
+
+    DSA_get0_key(dsa, NULL, &priv_key);
+    return dsa_check_priv_key(dsa, priv_key, &status);
+}
+
+static int dsa_validate(void *keydata, int selection)
+{
+    DSA *dsa = keydata;
+    int ok = 0;
+
+    if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && dsa_validate_domparams(dsa);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && dsa_validate_public(dsa);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && dsa_validate_private(dsa);
+
+    /* If the whole key is selected, we do a pairwise validation */
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
+        == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        ok = ok && dsa_check_pairwise(dsa);
+    return ok;
+}
+
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dsa_freedata },
@@ -336,6 +385,7 @@ const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dsa_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))dsa_match },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))dsa_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dsa_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dsa_export },

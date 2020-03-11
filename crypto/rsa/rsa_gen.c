@@ -23,10 +23,12 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
+#include <openssl/self_test.h>
 #include "rsa_local.h"
 
-static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
-                              BN_GENCB *cb);
+static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
+static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test);
 
 /*
  * NB: this wrapper would normally be placed in rsa_lib.c and the static
@@ -65,19 +67,21 @@ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
             return 0;
     }
 #endif /* FIPS_MODE */
-    return rsa_builtin_keygen(rsa, bits, primes, e_value, cb);
+    return rsa_keygen(NULL, rsa, bits, primes, e_value, cb, 0);
 }
 
-static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
-                              BN_GENCB *cb)
+static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
 {
+    int ok = -1;
 #ifdef FIPS_MODE
     if (primes != 2)
         return 0;
-    return rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+    ok = rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+    pairwise_test = 1; /* FIPS MODE needs to always run the pairwise test */
 #else
     BIGNUM *r0 = NULL, *r1 = NULL, *r2 = NULL, *tmp, *prime;
-    int ok = -1, n = 0, bitsr[RSA_MAX_PRIME_NUM], bitse = 0;
+    int n = 0, bitsr[RSA_MAX_PRIME_NUM], bitse = 0;
     int i = 0, quo = 0, rmd = 0, adj = 0, retries = 0;
     RSA_PRIME_INFO *pinfo = NULL;
     STACK_OF(RSA_PRIME_INFO) *prime_infos = NULL;
@@ -87,13 +91,13 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
 
     if (bits < RSA_MIN_MODULUS_BITS) {
         ok = 0;             /* we set our own err */
-        RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_SIZE_TOO_SMALL);
+        RSAerr(0, RSA_R_KEY_SIZE_TOO_SMALL);
         goto err;
     }
 
     if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
         ok = 0;             /* we set our own err */
-        RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_PRIME_NUM_INVALID);
+        RSAerr(0, RSA_R_KEY_PRIME_NUM_INVALID);
         goto err;
     }
 
@@ -398,11 +402,83 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     ok = 1;
  err:
     if (ok == -1) {
-        RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, ERR_LIB_BN);
+        RSAerr(0, ERR_LIB_BN);
         ok = 0;
     }
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-    return ok;
 #endif /* FIPS_MODE */
+
+    if (pairwise_test && ok > 0) {
+        OSSL_CALLBACK *stcb = NULL;
+        void *stcbarg = NULL;
+
+        OSSL_SELF_TEST_get_callback(libctx, &stcb, &stcbarg);
+        ok = rsa_keygen_pairwise_test(rsa, stcb, stcbarg);
+        if (!ok) {
+            /* Clear intermediate results */
+            BN_clear_free(rsa->d);
+            BN_clear_free(rsa->p);
+            BN_clear_free(rsa->q);
+            BN_clear_free(rsa->dmp1);
+            BN_clear_free(rsa->dmq1);
+            BN_clear_free(rsa->iqmp);
+        }
+    }
+    return ok;
+}
+
+/*
+ * For RSA key generation it is not known whether the key pair will be used
+ * for key transport or signatures. FIPS 140-2 IG 9.9 states that in this case
+ * either a signature verification OR an encryption operation may be used to
+ * perform the pairwise consistency check. The simpler encrypt/decrypt operation
+ * has been chosen for this case.
+ */
+static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
+{
+    int ret = 0;
+    unsigned int ciphertxt_len;
+    unsigned char *ciphertxt = NULL;
+    const unsigned char plaintxt[16] = {0};
+    unsigned char decoded[256];
+    unsigned int decoded_len;
+    unsigned int plaintxt_len = (unsigned int)sizeof(plaintxt_len);
+    int padding = RSA_PKCS1_PADDING;
+    OSSL_SELF_TEST *st = NULL;
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        goto err;
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1);
+
+    ciphertxt_len = RSA_size(rsa);
+    ciphertxt = OPENSSL_zalloc(ciphertxt_len);
+    if (ciphertxt == NULL)
+        goto err;
+
+    ciphertxt_len = RSA_public_encrypt(plaintxt_len, plaintxt, ciphertxt, rsa,
+                                       padding);
+    if (ciphertxt_len <= 0)
+        goto err;
+    if (ciphertxt_len == plaintxt_len
+        && memcmp(decoded, plaintxt, plaintxt_len) == 0)
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, ciphertxt);
+
+    decoded_len = RSA_private_decrypt(ciphertxt_len, ciphertxt, decoded, rsa,
+                                      padding);
+    if (decoded_len != plaintxt_len
+        || memcmp(decoded, plaintxt,  decoded_len) != 0)
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    OPENSSL_free(ciphertxt);
+
+    return ret;
 }

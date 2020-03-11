@@ -110,8 +110,8 @@ The B<EVP_MD> type is a structure for digest method implementation.
 
 =item EVP_MD_fetch()
 
-Fetches the digest implementation for the given B<algorithm> from any
-provider offering it, within the criteria given by the B<properties>.
+Fetches the digest implementation for the given I<algorithm> from any
+provider offering it, within the criteria given by the I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
 The returned value must eventually be freed with EVP_MD_free().
@@ -133,37 +133,45 @@ Allocates and returns a digest context.
 
 =item EVP_MD_CTX_reset()
 
-Resets the digest context B<ctx>.  This can be used to reuse an already
+Resets the digest context I<ctx>.  This can be used to reuse an already
 existing context.
 
 =item EVP_MD_CTX_free()
 
-Cleans up digest context B<ctx> and frees up the space allocated to it.
+Cleans up digest context I<ctx> and frees up the space allocated to it.
 
 =item EVP_MD_CTX_ctrl()
 
-This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
+I<This is a legacy method. EVP_MD_CTX_set_params() and EVP_MD_CTX_get_params()
 is the mechanism that should be used to set and get parameters that are used by
-providers.
-Performs digest-specific control actions on context B<ctx>. The control command
-is indicated in B<cmd> and any additional arguments in B<p1> and B<p2>.
+providers.>
+
+Performs digest-specific control actions on context I<ctx>. The control command
+is indicated in I<cmd> and any additional arguments in I<p1> and I<p2>.
 EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
 may apply depending on the control type and digest implementation.
-See L</CONTROLS> below for more information.
+
+If this function happens to be used with a fetched B<EVP_MD>, it will
+translate the controls that are known to OpenSSL into L<OSSL_PARAM(3)>
+parameters with keys defined by OpenSSL and call EVP_MD_CTX_get_params() or
+EVP_MD_CTX_set_params() as is appropriate for each control command.
+
+See L</CONTROLS> below for more information, including what translations are
+being done.
 
 =item EVP_MD_get_params()
 
-Retrieves the requested list of B<params> from a MD B<md>.
+Retrieves the requested list of I<params> from a MD I<md>.
 See L</PARAMETERS> below for more information.
 
 =item EVP_MD_CTX_get_params()
 
-Retrieves the requested list of B<params> from a MD context B<ctx>.
+Retrieves the requested list of I<params> from a MD context I<ctx>.
 See L</PARAMETERS> below for more information.
 
 =item EVP_MD_CTX_set_params()
 
-Sets the list of B<params> into a MD context B<ctx>.
+Sets the list of I<params> into a MD context I<ctx>.
 See L</PARAMETERS> below for more information.
 
 =item EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
@@ -181,36 +189,36 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
-Sets, clears and tests B<ctx> flags.  See L</FLAGS> below for more information.
+Sets, clears and tests I<ctx> flags.  See L</FLAGS> below for more information.
 
 =item EVP_Digest()
 
 A wrapper around the Digest Init_ex, Update and Final_ex functions.
-Hashes B<count> bytes of data at B<data> using a digest B<type> from ENGINE
-B<impl>. The digest value is placed in B<md> and its length is written at B<size>
+Hashes I<count> bytes of data at I<data> using a digest I<type> from ENGINE
+I<impl>. The digest value is placed in I<md> and its length is written at I<size>
 if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
-If B<impl> is NULL the default implementation of digest B<type> is used.
+If I<impl> is NULL the default implementation of digest I<type> is used.
 
 =item EVP_DigestInit_ex()
 
-Sets up digest context B<ctx> to use a digest B<type>.
-B<type> is typically supplied by a function such as EVP_sha1(), or a
+Sets up digest context I<ctx> to use a digest I<type>.
+I<type> is typically supplied by a function such as EVP_sha1(), or a
 value explicitly fetched with EVP_MD_fetch().
 
-If B<impl> is non-NULL, its implementation of the digest B<type> is used if
+If I<impl> is non-NULL, its implementation of the digest I<type> is used if
 there is one, and if not, the default implementation is used.
 
 =item EVP_DigestUpdate()
 
-Hashes B<cnt> bytes of data at B<d> into the digest context B<ctx>. This
-function can be called several times on the same B<ctx> to hash additional
+Hashes I<cnt> bytes of data at I<d> into the digest context I<ctx>. This
+function can be called several times on the same I<ctx> to hash additional
 data.
 
 =item EVP_DigestFinal_ex()
 
-Retrieves the digest value from B<ctx> and places it in B<md>. If the B<s>
+Retrieves the digest value from I<ctx> and places it in I<md>. If the I<s>
 parameter is not NULL then the number of bytes of data written (i.e. the
-length of the digest) will be written to the integer at B<s>, at most
+length of the digest) will be written to the integer at I<s>, at most
 B<EVP_MAX_MD_SIZE> bytes will be written.  After calling EVP_DigestFinal_ex()
 no additional calls to EVP_DigestUpdate() can be made, but
 EVP_DigestInit_ex() can be called to initialize a new digest operation.
@@ -218,13 +226,13 @@ EVP_DigestInit_ex() can be called to initialize a new digest operation.
 =item EVP_DigestFinalXOF()
 
 Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
-It retrieves the digest value from B<ctx> and places it in B<len>-sized <B>md.
+It retrieves the digest value from I<ctx> and places it in I<len>-sized <B>md.
 After calling this function no additional calls to EVP_DigestUpdate() can be
 made, but EVP_DigestInit_ex() can be called to initialize a new operation.
 
 =item EVP_MD_CTX_copy_ex()
 
-Can be used to copy the message digest state from B<in> to B<out>. This is
+Can be used to copy the message digest state from I<in> to I<out>. This is
 useful if large amounts of data are to be hashed which only differ in the last
 few bytes.
 
@@ -235,12 +243,12 @@ default digest implementation and calls EVP_MD_CTX_reset().
 
 =item EVP_DigestFinal()
 
-Similar to EVP_DigestFinal_ex() except the digest context B<ctx> is
+Similar to EVP_DigestFinal_ex() except the digest context I<ctx> is
 automatically cleaned up.
 
 =item EVP_MD_CTX_copy()
 
-Similar to EVP_MD_CTX_copy_ex() except the destination B<out> does not have to
+Similar to EVP_MD_CTX_copy_ex() except the destination I<out> does not have to
 be initialized.
 
 =item EVP_MD_is_a()
@@ -311,17 +319,17 @@ should not be used after the EVP_MD_CTX is freed.
 
 =item EVP_MD_CTX_set_update_fn()
 
-Sets the update function for B<ctx> to B<update>.
+Sets the update function for I<ctx> to I<update>.
 This is the function that is called by EVP_DigestUpdate. If not set, the
 update function from the B<EVP_MD> type specified at initialization is used.
 
 =item EVP_MD_CTX_update_fn()
 
-Returns the update function for B<ctx>.
+Returns the update function for I<ctx>.
 
 =item EVP_MD_flags()
 
-Returns the B<md> flags. Note that these are different from the B<EVP_MD_CTX>
+Returns the I<md> flags. Note that these are different from the B<EVP_MD_CTX>
 ones. See L<EVP_MD_meth_set_flags(3)> for more information.
 
 =item EVP_MD_pkey_type()
@@ -345,16 +353,16 @@ B<ASN1_OBJECT> structure respectively.
 
 =item EVP_MD_CTX_pkey_ctx()
 
-Returns the B<EVP_PKEY_CTX> assigned to B<ctx>. The returned pointer should not
+Returns the B<EVP_PKEY_CTX> assigned to I<ctx>. The returned pointer should not
 be freed by the caller.
 
 =item EVP_MD_CTX_set_pkey_ctx()
 
 Assigns an B<EVP_PKEY_CTX> to B<EVP_MD_CTX>. This is usually used to provide
 a customized B<EVP_PKEY_CTX> to L<EVP_DigestSignInit(3)> or
-L<EVP_DigestVerifyInit(3)>. The B<pctx> passed to this function should be freed
-by the caller. A NULL B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CTX>
-assigned to B<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
+L<EVP_DigestVerifyInit(3)>. The I<pctx> passed to this function should be freed
+by the caller. A NULL I<pctx> pointer is also allowed to clear the B<EVP_PKEY_CTX>
+assigned to I<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
 depends on how the B<EVP_PKEY_CTX> is created.
 
 =item EVP_MD_do_all_provided()
@@ -382,7 +390,7 @@ using a B<size_t>.
 
 =item "pad_type" (B<OSSL_PARAM_DIGEST_KEY_PAD_TYPE>) <integer>
 
-Sets the pad type.
+Sets the padding type.
 It is used by the MDC2 algorithm.
 
 =back
@@ -409,14 +417,20 @@ EVP_MD_CTX_ctrl() can be used to send the following standard controls:
 
 Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.
-The string value is written to B<p2>.
+The string value is written to I<p2>.
+
+When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
+an L<OSSL_PARAM(3)> item with the key "micalg" (B<OSSL_DIGEST_PARAM_MICALG>).
 
 =item EVP_MD_CTRL_XOF_LEN
 
-This control sets the digest length for extendable output functions to B<p1>.
+This control sets the digest length for extendable output functions to I<p1>.
 Sending this control directly should not be necessary, the use of
-C<EVP_DigestFinalXOF()> is preferred.
+EVP_DigestFinalXOF() is preferred.
 Currently used by SHAKE.
+
+When used with a fetched B<EVP_MD>, EVP_MD_CTX_get_params() gets called with
+an L<OSSL_PARAM(3)> item with the key "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>).
 
 =back
 
@@ -529,7 +543,7 @@ New applications should use the SHA-2 (such as L<EVP_sha256(3)>) or the SHA-3
 digest algorithms (such as L<EVP_sha3_512(3)>). The other digest algorithms
 are still in common use.
 
-For most applications the B<impl> parameter to EVP_DigestInit_ex() will be
+For most applications the I<impl> parameter to EVP_DigestInit_ex() will be
 set to NULL to use the default digest implementation.
 
 The functions EVP_DigestInit(), EVP_DigestFinal() and EVP_MD_CTX_copy() are

@@ -40,7 +40,7 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_NOOUT, OPT_TEXT, OPT_PARAM_OUT, OPT_PUBIN, OPT_PUBOUT,
     OPT_PASSIN, OPT_PASSOUT, OPT_PARAM_ENC, OPT_CONV_FORM, OPT_CIPHER,
-    OPT_NO_PUBLIC, OPT_CHECK
+    OPT_NO_PUBLIC, OPT_CHECK, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ec_options[] = {
@@ -70,6 +70,8 @@ const OPTIONS ec_options[] = {
     {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"no_public", OPT_NO_PUBLIC, '-', "exclude public key from private key"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -160,6 +162,10 @@ int ec_main(int argc, char **argv)
             break;
         case OPT_CHECK:
             check = 1;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }

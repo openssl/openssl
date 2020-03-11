@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkcs12 - PKCS#12 file utility
+openssl-pkcs12 - PKCS#12 file command
 
 =head1 SYNOPSIS
 
@@ -57,6 +57,7 @@ B<openssl> B<pkcs12>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -292,6 +293,8 @@ Write I<name> as a Microsoft CSP name.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

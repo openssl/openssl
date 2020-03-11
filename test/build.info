@@ -144,7 +144,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
-  DEPEND[evp_pkey_provided_test]=../libcrypto libtestutil.a
+  DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
@@ -438,7 +438,8 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{cmp} -}]
     PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test cmp_status_test cmp_hdr_test \
-                     cmp_protect_test cmp_msg_test cmp_vfy_test
+                     cmp_protect_test cmp_msg_test cmp_vfy_test \
+                     cmp_server_test
   ENDIF
 
   SOURCE[cmp_asn_test]=cmp_asn_test.c cmp_testlib.c
@@ -465,9 +466,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_msg_test]=.. ../include ../apps/include
   DEPEND[cmp_msg_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[cmp_vfy_test]=cmp_status_test.c cmp_testlib.c
+  SOURCE[cmp_vfy_test]=cmp_vfy_test.c cmp_testlib.c
   INCLUDE[cmp_vfy_test]=.. ../include ../apps/include
   DEPEND[cmp_vfy_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[cmp_server_test]=cmp_server_test.c cmp_testlib.c
+  INCLUDE[cmp_server_test]=.. ../include ../apps/include
+  DEPEND[cmp_server_test]=../libcrypto.a libtestutil.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
@@ -716,8 +721,8 @@ IF[{- !$disabled{tests} -}]
     DEFINE[provider_test]=NO_PROVIDER_MODULE
     DEFINE[provider_internal_test]=NO_PROVIDER_MODULE
   ENDIF
-  DEPEND[]=provider_internal_test.conf
-  GENERATE[provider_internal_test.conf]=provider_internal_test.conf.in
+  DEPEND[]=provider_internal_test.cnf
+  GENERATE[provider_internal_test.cnf]=provider_internal_test.cnf.in
 
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c

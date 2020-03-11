@@ -480,19 +480,21 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keyexch_gettable_ctx_params,
 # define OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT        8
 # define OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE      9
 # define OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL      10
-# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT     11
-# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE   12
-# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL    13
-# define OSSL_FUNC_SIGNATURE_FREECTX                14
-# define OSSL_FUNC_SIGNATURE_DUPCTX                 15
-# define OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS         16
-# define OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS    17
-# define OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS         18
-# define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS    19
-# define OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS      20
-# define OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS 21
-# define OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS      22
-# define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS 23
+# define OSSL_FUNC_SIGNATURE_DIGEST_SIGN            11
+# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT     12
+# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE   13
+# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL    14
+# define OSSL_FUNC_SIGNATURE_DIGEST_VERIFY          15
+# define OSSL_FUNC_SIGNATURE_FREECTX                16
+# define OSSL_FUNC_SIGNATURE_DUPCTX                 17
+# define OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS         18
+# define OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS    19
+# define OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS         20
+# define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS    21
+# define OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS      22
+# define OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS 23
+# define OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS      24
+# define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS 25
 
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_sign_init, (void *ctx, void *provkey))
@@ -522,6 +524,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign_update,
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign_final,
                     (void *ctx, unsigned char *sig, size_t *siglen,
                      size_t sigsize))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign,
+                    (void *ctx, unsigned char *sigret, size_t *siglen,
+                     size_t sigsize, const unsigned char *tbs, size_t tbslen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_init,
                     (void *ctx, const char *mdname, const char *props,
                      void *provkey))
@@ -529,6 +534,9 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_update,
                     (void *ctx, const unsigned char *data, size_t datalen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_final,
                     (void *ctx, const unsigned char *sig, size_t siglen))
+OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify,
+                    (void *ctx, const unsigned char *sig, size_t siglen,
+                     const unsigned char *tbs, size_t tbslen))
 OSSL_CORE_MAKE_FUNC(void, OP_signature_freectx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_signature_dupctx, (void *ctx))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_get_ctx_params,

@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-pkeyparam - public key algorithm parameter processing tool
+openssl-pkeyparam - public key algorithm parameter processing command
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,7 @@ B<openssl> B<pkeyparam>
 [B<-noout>]
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -58,6 +59,8 @@ Do not output the encoded version of the parameters.
 This option checks the correctness of parameters.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

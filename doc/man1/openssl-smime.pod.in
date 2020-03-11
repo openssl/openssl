@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-smime - S/MIME utility
+openssl-smime - S/MIME command
 
 =head1 SYNOPSIS
 
@@ -49,6 +49,7 @@ B<openssl> B<smime>
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 I<cert.pem> ...
 
 =for openssl ifdef engine
@@ -287,6 +288,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<cert.pem> ...
 

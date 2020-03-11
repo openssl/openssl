@@ -26,6 +26,7 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
 =for openssl ifdef engine
@@ -75,6 +76,8 @@ Print extra details about the operations being performed.
 The DSA parameter file to use. The parameters in this file determine
 the size of the private key. DSA parameters can be generated and
 examined using the L<openssl-dsaparam(1)> command.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

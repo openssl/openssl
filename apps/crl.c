@@ -24,7 +24,7 @@ typedef enum OPTION_choice {
     OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_TEXT, OPT_HASH,
-    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD
+    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS crl_options[] = {
@@ -69,6 +69,7 @@ const OPTIONS crl_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -193,6 +194,11 @@ int crl_main(int argc, char **argv)
         case OPT_MD:
             if (!opt_md(opt_unknown(), &digest))
                 goto opthelp;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();

@@ -637,6 +637,13 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             || (ecg = EC_KEY_get0_group(eckey)) == NULL)
         return 0;
 
+    /*
+     * If the EC_KEY method is foreign, then we can't be sure of anything,
+     * and can therefore not export or pretend to export.
+     */
+    if (EC_KEY_get_method(eckey) != EC_KEY_OpenSSL())
+        return 0;
+
     ossl_param_bld_init(&tmpl);
 
     /* export the domain parameters */

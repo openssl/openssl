@@ -169,12 +169,13 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
 
     if (r == NULL || kinv == NULL) {
         /*
-         * Generate random k and copy to param param block. RAND_priv_bytes
+         * Generate random k and copy to param param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
          * because kdsa instruction constructs an in-range, invertible nonce
          * internally implementing counter-measures for RNG weakness.
          */
-         if (RAND_priv_bytes(param + S390X_OFF_RN(len), len) != 1) {
+         if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
+                                len) != 1) {
              ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
                    EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;

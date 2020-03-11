@@ -23,6 +23,7 @@
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
+#include "crypto/security_bits.h"
 #include "rsa_local.h"
 
 static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
@@ -281,11 +282,20 @@ static uint32_t ilog_e(uint64_t v)
  * NIST SP 800-56B rev 2 Appendix D: Maximum Security Strength Estimates for IFC
  * Modulus Lengths.
  *
+ * Note that this formula is also referred to in SP800-56A rev3 Appendix D:
+ * for FFC safe prime groups for modp and ffdhe.
+ * After Table 25 and Table 26 it refers to
+ * "The maximum security strength estimates were calculated using the formula in
+ * Section 7.5 of the FIPS 140 IG and rounded to the nearest multiple of eight
+ * bits".
+ *
+ * The formula is:
+ *
  * E = \frac{1.923 \sqrt[3]{nBits \cdot log_e(2)}
  *           \cdot(log_e(nBits \cdot log_e(2))^{2/3} - 4.69}{log_e(2)}
  * The two cube roots are merged together here.
  */
-uint16_t rsa_compute_security_bits(int n)
+uint16_t ifc_ffc_compute_security_bits(int n)
 {
     uint64_t x;
     uint32_t lx;
@@ -322,6 +332,8 @@ uint16_t rsa_compute_security_bits(int n)
     return (y + 4) & ~7;
 }
 
+
+
 int RSA_security_bits(const RSA *rsa)
 {
     int bits = BN_num_bits(rsa->n);
@@ -335,7 +347,7 @@ int RSA_security_bits(const RSA *rsa)
             return 0;
     }
 #endif
-    return rsa_compute_security_bits(bits);
+    return ifc_ffc_compute_security_bits(bits);
 }
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)

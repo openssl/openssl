@@ -36,12 +36,18 @@ int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
 int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
                                   int N, int s, BIGNUM *priv)
 {
-    int ret = 0;
+    int ret = 0, qbits = BN_num_bits(params->q);
     BIGNUM *m, *two_powN = NULL;
 
     /* Step (2) : check range of N */
-    if (N < 2 * s || N > BN_num_bits(params->q))
+    if (N < 2 * s || N > qbits)
         return 0;
+
+    /* Deal with the edge case where the value of N is not set */
+    if (N == 0) {
+        N = qbits;
+        s = N / 2;
+    }
 
     two_powN = BN_new();
     /* 2^N */
@@ -50,6 +56,7 @@ int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
 
     /* Step (5) : M = min(2 ^ N, q) */
     m = (BN_cmp(two_powN, params->q) > 0) ? params->q : two_powN;
+
     do {
         /* Steps (3, 4 & 7) :  c + 1 = 1 + random[0..2^N - 1] */
         if (!BN_priv_rand_range_ex(priv, two_powN, ctx)

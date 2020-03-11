@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkcs8 - PKCS#8 format private key conversion tool
+openssl-pkcs8 - PKCS#8 format private key conversion command
 
 =head1 SYNOPSIS
 
@@ -29,6 +29,7 @@ B<openssl> B<pkcs8>
 [B<-scrypt_p> I<p>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine scrypt scrypt_N scrypt_r scrypt_p
 
@@ -149,6 +150,8 @@ Sets the scrypt I<N>, I<r> or I<p> parameters.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

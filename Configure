@@ -265,6 +265,19 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 
 $config{perlargv} = [ @argvcopy ];
 
+# Historical: if known directories in crypto/ have been removed, it means
+# that those sub-systems are disabled.
+# (the other option would be to removed them from the SUBDIRS statement in
+# crypto/build.info)
+# We reverse the input list for cosmetic purely reasons, to compensate that
+# 'unshift' adds at the front of the list (i.e. in reverse input order).
+foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
+                        'dsa', 'ec', 'hmac', 'idea', 'md2', 'md5', 'mdc2',
+                        'rc2', 'rc4', 'rc5', 'ripemd', 'rsa', 'seed', 'sha',
+                        'sm2', 'sm3', 'sm4') ) {
+    unshift @argvcopy, "no-$_" if ! -d catdir($srcdir, 'crypto', $_);
+}
+
 # Collect version numbers
 my %version = ();
 

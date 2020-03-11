@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-rsautl - RSA utility
+openssl-rsautl - RSA command
 
 =head1 SYNOPSIS
 
@@ -33,6 +33,7 @@ B<openssl> B<rsautl>
 [B<-asn1parse>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -126,6 +127,8 @@ B<-verify> option.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 NOTES
@@ -164,7 +167,7 @@ encrypt and decrypt the block would have been of type 2 (the second byte)
 and random padding data visible instead of the 0xff bytes.
 
 It is possible to analyse the signature of certificates using this
-utility in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
+command in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
 example in F<certs/pca-cert.pem>. Running L<openssl-asn1parse(1)> as follows
 yields:
 

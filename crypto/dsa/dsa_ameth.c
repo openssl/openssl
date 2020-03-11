@@ -528,6 +528,13 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params;
     int rv;
 
+    /*
+     * If the DSA method is foreign, then we can't be sure of anything, and
+     * can therefore not export or pretend to export.
+     */
+    if (DSA_get_method(dsa) != DSA_OpenSSL())
+        return 0;
+
     if (p == NULL || q == NULL || g == NULL)
         return 0;
 

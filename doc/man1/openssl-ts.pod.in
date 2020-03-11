@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-ts - Time Stamping Authority tool (client/server)
+openssl-ts - Time Stamping Authority command
 
 =head1 SYNOPSIS
 
@@ -23,6 +23,7 @@ B<-query>
 [B<-out> I<request.tsq>]
 [B<-text>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-reply>
@@ -42,6 +43,7 @@ B<-reply>
 [B<-token_out>]
 [B<-text>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-verify>
@@ -54,6 +56,7 @@ B<-verify>
 [B<-CApath> I<dir>]
 [B<-CAstore> I<uri>]
 {- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -284,6 +287,8 @@ If this option is specified the output is human-readable text format
 instead of DER. (Optional)
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

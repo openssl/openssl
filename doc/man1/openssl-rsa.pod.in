@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-rsa - RSA key processing tool
+openssl-rsa - RSA key processing command
 
 =head1 SYNOPSIS
 
@@ -40,6 +40,7 @@ B<openssl> B<rsa>
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-strong pvk-weak pvk-none engine
 
@@ -135,6 +136,8 @@ the input is a public key.
 Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 

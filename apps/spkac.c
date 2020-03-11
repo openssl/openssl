@@ -24,7 +24,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
-    OPT_SPKSECT, OPT_KEYFORM
+    OPT_SPKSECT, OPT_KEYFORM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
@@ -49,6 +50,8 @@ const OPTIONS spkac_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -116,6 +119,10 @@ int spkac_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -138,8 +145,15 @@ int spkac_main(int argc, char **argv)
         if (challenge != NULL)
             ASN1_STRING_set(spki->spkac->challenge,
                             challenge, (int)strlen(challenge));
-        NETSCAPE_SPKI_set_pubkey(spki, pkey);
-        NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
+            BIO_printf(bio_err, "Error setting public key\n");
+            goto end;
+        }
+        i = NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (i <= 0) {
+            BIO_printf(bio_err, "Error signing SPKAC\n");
+            goto end;
+        }
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
         if (spkstr == NULL)
             goto end;
