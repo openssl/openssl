@@ -110,7 +110,6 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_BAD_SIGNATURE                              104
 # define RSA_R_BLOCK_TYPE_IS_NOT_01                       106
 # define RSA_R_BLOCK_TYPE_IS_NOT_02                       107
-# define RSA_R_DATA_GREATER_THAN_MOD_LEN                  108
 # define RSA_R_DATA_TOO_LARGE                             109
 # define RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE                110
 # define RSA_R_DATA_TOO_LARGE_FOR_MODULUS                 132

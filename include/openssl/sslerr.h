@@ -768,7 +768,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_WRONG_CERTIFICATE_TYPE                     383
 # define SSL_R_WRONG_CIPHER_RETURNED                      261
 # define SSL_R_WRONG_CURVE                                378
-# define SSL_R_WRONG_SIGNATURE_LENGTH                     264
 # define SSL_R_WRONG_SIGNATURE_SIZE                       265
 # define SSL_R_WRONG_SIGNATURE_TYPE                       370
 # define SSL_R_WRONG_SSL_VERSION                          266

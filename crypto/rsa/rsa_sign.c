@@ -293,11 +293,6 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     size_t decrypt_len, encoded_len = 0;
     unsigned char *decrypt_buf = NULL, *encoded = NULL;
 
-    if (siglen != (size_t)RSA_size(rsa)) {
-        RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_WRONG_SIGNATURE_LENGTH);
-        return 0;
-    }
-
     /* Recover the encoded digest. */
     decrypt_buf = OPENSSL_malloc(siglen);
     if (decrypt_buf == NULL) {

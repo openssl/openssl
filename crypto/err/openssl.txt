@@ -2892,7 +2892,6 @@ RSA_R_BAD_PAD_BYTE_COUNT:103:bad pad byte count
 RSA_R_BAD_SIGNATURE:104:bad signature
 RSA_R_BLOCK_TYPE_IS_NOT_01:106:block type is not 01
 RSA_R_BLOCK_TYPE_IS_NOT_02:107:block type is not 02
-RSA_R_DATA_GREATER_THAN_MOD_LEN:108:data greater than mod len
 RSA_R_DATA_TOO_LARGE:109:data too large
 RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE:110:data too large for key size
 RSA_R_DATA_TOO_LARGE_FOR_MODULUS:132:data too large for modulus
@@ -3273,7 +3272,6 @@ SSL_R_VERSION_TOO_LOW:396:version too low
 SSL_R_WRONG_CERTIFICATE_TYPE:383:wrong certificate type
 SSL_R_WRONG_CIPHER_RETURNED:261:wrong cipher returned
 SSL_R_WRONG_CURVE:378:wrong curve
-SSL_R_WRONG_SIGNATURE_LENGTH:264:wrong signature length
 SSL_R_WRONG_SIGNATURE_SIZE:265:wrong signature size
 SSL_R_WRONG_SIGNATURE_TYPE:370:wrong signature type
 SSL_R_WRONG_SSL_VERSION:266:wrong ssl version

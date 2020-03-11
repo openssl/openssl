@@ -24,8 +24,6 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     "block type is not 01"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_BLOCK_TYPE_IS_NOT_02),
     "block type is not 02"},
-    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_DATA_GREATER_THAN_MOD_LEN),
-    "data greater than mod len"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_DATA_TOO_LARGE), "data too large"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),
     "data too large for key size"},

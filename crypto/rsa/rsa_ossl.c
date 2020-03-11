@@ -400,13 +400,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         goto err;
     }
 
-    /*
-     * This check was for equality but PGP does evil things and chops off the
-     * top '0' bytes
-     */
-    if (flen > num) {
-        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT,
-               RSA_R_DATA_GREATER_THAN_MOD_LEN);
+    if (flen != num) {
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_WRONG_SIGNATURE_LENGTH);
         goto err;
     }
 
@@ -556,12 +551,8 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         goto err;
     }
 
-    /*
-     * This check was for equality but PGP does evil things and chops off the
-     * top '0' bytes
-     */
-    if (flen > num) {
-        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_DATA_GREATER_THAN_MOD_LEN);
+    if (flen != num) {
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_WRONG_SIGNATURE_LENGTH);
         goto err;
     }
 

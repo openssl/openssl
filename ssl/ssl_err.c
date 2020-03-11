@@ -534,8 +534,6 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_WRONG_CIPHER_RETURNED),
     "wrong cipher returned"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_WRONG_CURVE), "wrong curve"},
-    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_WRONG_SIGNATURE_LENGTH),
-    "wrong signature length"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_WRONG_SIGNATURE_SIZE),
     "wrong signature size"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_WRONG_SIGNATURE_TYPE),

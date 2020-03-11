@@ -67,12 +67,6 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     const unsigned char *p;
     ASN1_OCTET_STRING *sig = NULL;
 
-    if (siglen != (unsigned int)RSA_size(rsa)) {
-        RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
-               RSA_R_WRONG_SIGNATURE_LENGTH);
-        return 0;
-    }
-
     s = OPENSSL_malloc((unsigned int)siglen);
     if (s == NULL) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
