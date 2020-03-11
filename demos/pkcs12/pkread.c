@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     name = find_friendly_name(p12);
     PKCS12_free(p12);
     if ((fp = fopen(argv[3], "w")) == NULL) {
-        fprintf(stderr, "Error opening file %s\n", argv[1]);
+        fprintf(stderr, "Error opening file %s\n", argv[3]);
         goto err;
     }
     if (name != NULL)

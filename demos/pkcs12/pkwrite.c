@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     if ((fp = fopen(argv[4], "wb")) == NULL) {
-        fprintf(stderr, "Error opening file %s\n", argv[1]);
+        fprintf(stderr, "Error opening file %s\n", argv[4]);
         ERR_print_errors_fp(stderr);
         exit(1);
     }
