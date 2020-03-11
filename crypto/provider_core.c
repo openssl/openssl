@@ -935,7 +935,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
-    { OSSL_FUNC_CORE_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
+    { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))OSSL_SELF_TEST_get_callback },
 #endif
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },

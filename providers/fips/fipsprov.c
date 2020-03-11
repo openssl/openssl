@@ -58,7 +58,6 @@ static OSSL_core_vset_error_fn *c_vset_error;
 static OSSL_core_set_error_mark_fn *c_set_error_mark;
 static OSSL_core_clear_last_error_mark_fn *c_clear_last_error_mark;
 static OSSL_core_pop_error_to_mark_fn *c_pop_error_to_mark;
-static OSSL_core_vsnprintf_fn *c_core_vsnprintf;
 static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
 static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
 static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
@@ -70,6 +69,7 @@ static OSSL_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
 static OSSL_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
 static OSSL_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
 static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
+static OSSL_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 
 typedef struct fips_global_st {
     const OSSL_PROVIDER *prov;
@@ -912,9 +912,6 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
             c_pop_error_to_mark = OSSL_get_core_pop_error_to_mark(in);
             break;
-        case OSSL_FUNC_CORE_VSNPRINTF:
-            c_core_vsnprintf = OSSL_get_core_vsnprintf(in);
-            break;
         case OSSL_FUNC_CRYPTO_MALLOC:
             c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
             break;
@@ -959,6 +956,9 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
             break;
         case OSSL_FUNC_BIO_FREE:
             selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
+            break;
+        case OSSL_FUNC_BIO_VSNPRINTF:
+            c_BIO_vsnprintf = OSSL_get_BIO_vsnprintf(in);
             break;
         case OSSL_FUNC_SELF_TEST_CB: {
             stcbfn = OSSL_get_self_test_cb(in);
@@ -1167,7 +1167,7 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
     int ret;
 
     va_start(args, format);
-    ret = c_core_vsnprintf(buf, n, format, args);
+    ret = c_BIO_vsnprintf(buf, n, format, args);
     va_end(args);
     return ret;
 }
