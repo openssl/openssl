@@ -90,6 +90,23 @@ def run_cms(sig_alg ):
         env={'SIGALG': sig_alg}
     )
 
+def test_speed():
+   try:
+        st=os.environ['SKIP_TESTS']
+   except KeyError:
+        st=""
+   if "speed" in st:
+        return -1
+
+   yield(run_speed)
+
+def run_speed():
+    cmd = os.path.join('oqs_test', 'scripts', 'do_openssl-speed.sh');
+    helpers.run_subprocess(
+        [cmd],
+        os.path.join('..')
+    )
+
 def test_cleanup():
     global sig_algs
     # cleanup all keys and certs

@@ -4582,3 +4582,7 @@ OPENSSL_INIT_set_config_file_flags      4535	1_1_1b	EXIST::FUNCTION:STDIO
 EVP_PKEY_get0_engine                    4536	1_1_1c	EXIST::FUNCTION:ENGINE
 X509_get0_authority_serial              4537	1_1_1d	EXIST::FUNCTION:
 X509_get0_authority_issuer              4538	1_1_1d	EXIST::FUNCTION:
+OQSKEM_options                          4539	1_1_1d	EXIST::FUNCTION:
+OQSSIG_options                          4540	1_1_1d	EXIST::FUNCTION:
+oqs_size                                4541	1_1_1d  EXIST::FUNCTION:
+get_oqssl_sig_nids                      4542	1_1_1d  EXIST::FUNCTION:
