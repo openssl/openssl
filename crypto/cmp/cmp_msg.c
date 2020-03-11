@@ -976,18 +976,18 @@ OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file)
 
     if ((bio = BIO_new_file(file, "rb")) == NULL)
         return NULL;
-    msg = OSSL_d2i_CMP_MSG_bio(bio, NULL);
+    msg = d2i_OSSL_CMP_MSG_bio(bio, NULL);
     BIO_free(bio);
     return msg;
 }
 
-OSSL_CMP_MSG *OSSL_d2i_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
+OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 {
     return ASN1_d2i_bio_of(OSSL_CMP_MSG, OSSL_CMP_MSG_new,
                            d2i_OSSL_CMP_MSG, bio, msg);
 }
 
-int OSSL_i2d_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
+int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
     return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
 }

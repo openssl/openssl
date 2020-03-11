@@ -4967,8 +4967,8 @@ OSSL_CMP_PKISI_it                       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_PKISI_dup                      ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_snprint_PKIStatusInfo          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_STATUSINFO_new                 ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_d2i_CMP_MSG_bio                    ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_i2d_CMP_MSG_bio                    ?	3_0_0	EXIST::FUNCTION:CMP
+d2i_OSSL_CMP_MSG_bio                    ?	3_0_0	EXIST::FUNCTION:CMP
+i2d_OSSL_CMP_MSG_bio                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_process_request            ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_server_perform             ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_new                    ?	3_0_0	EXIST::FUNCTION:CMP
