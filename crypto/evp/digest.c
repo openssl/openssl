@@ -657,12 +657,12 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     size_t sz;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    if (ctx == NULL || ctx->digest == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    if (ctx->digest->prov == NULL)
+    if (ctx->digest != NULL && ctx->digest->prov == NULL)
         goto legacy;
 
     switch (cmd) {
