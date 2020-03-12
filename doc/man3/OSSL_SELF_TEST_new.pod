@@ -133,7 +133,7 @@ A single self test could be set up in the following way:
         || !EVP_DigestUpdate(ctx, pt, pt_len)
         || !EVP_DigestFinal(ctx, out, &out_len))
         goto err;
-    
+
     /* Optional corruption - If the application callback returns 0 */
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
