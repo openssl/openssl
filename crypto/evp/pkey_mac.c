@@ -51,8 +51,12 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
     MAC_PKEY_CTX *hctx;
     /* We're being smart and using the same base NIDs for PKEY and for MAC */
     int nid = ctx->pmeth->pkey_id;
-    EVP_MAC *mac = EVP_MAC_fetch(NULL, OBJ_nid2sn(nid), NULL);
+    EVP_MAC *mac = EVP_MAC_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propquery);
 
+    if (mac == NULL) {
+        EVPerr(EVP_F_PKEY_MAC_INIT, EVP_R_FETCH_FAILED);
+        return 0;
+    }
     if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
         EVPerr(EVP_F_PKEY_MAC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;

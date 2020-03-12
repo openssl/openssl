@@ -2500,6 +2500,7 @@ EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
 EVP_R_EXPECTING_A_EC_KEY:142:expecting a ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
+EVP_R_FETCH_FAILED:202:fetch failed
 EVP_R_FINAL_ERROR:188:final error
 EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
