@@ -2093,10 +2093,16 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
     }
 
-    if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
-        BIO_printf(bio_err, "error setting PSK identity hint to context\n");
-        ERR_print_errors(bio_err);
-        goto end;
+    if (psk_identity_hint != NULL) {
+        if (min_version == TLS1_3_VERSION) {
+            BIO_printf(bio_s_out, "PSK warning: there is NO identity hint in TLSv1.3\n");
+        } else {
+            if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
+                BIO_printf(bio_err, "error setting PSK identity hint to context\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
     }
 #endif
     if (psksessf != NULL) {
