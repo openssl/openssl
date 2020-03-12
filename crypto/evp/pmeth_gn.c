@@ -280,21 +280,52 @@ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 
 #ifndef FIPS_MODE
 
+static EVP_PKEY *gen_and_set_mac_key(EVP_PKEY_CTX *mac_ctx,
+                                     const unsigned char *key,
+                                     size_t keylen)
+{
+    EVP_PKEY *mac_key = NULL;
+
+    if (keylen > INT_MAX)
+        return 0;
+    if (EVP_PKEY_keygen_init(mac_ctx) <= 0)
+        return NULL;
+    if (EVP_PKEY_CTX_set_mac_key(mac_ctx, key, (int)keylen) <= 0)
+        return NULL;
+    if (EVP_PKEY_keygen(mac_ctx, &mac_key) <= 0)
+        return NULL;
+
+    return mac_key;
+}
+
+EVP_PKEY *EVP_PKEY_new_mac_key_from_name(OPENSSL_CTX *libctx, const char *name,
+                                         const char *propq,
+                                         const unsigned char *key,
+                                         size_t keylen)
+{
+    EVP_PKEY_CTX *mac_ctx;
+    EVP_PKEY *mac_key;
+
+    mac_ctx = EVP_PKEY_CTX_new_from_name(libctx, name, propq);
+    if (mac_ctx == NULL)
+        return NULL;
+
+    mac_key = gen_and_set_mac_key(mac_ctx, key, keylen);
+    EVP_PKEY_CTX_free(mac_ctx);
+    return mac_key;
+}
+
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen)
 {
     EVP_PKEY_CTX *mac_ctx = NULL;
     EVP_PKEY *mac_key = NULL;
+
     mac_ctx = EVP_PKEY_CTX_new_id(type, e);
-    if (!mac_ctx)
+    if (mac_ctx == NULL)
         return NULL;
-    if (EVP_PKEY_keygen_init(mac_ctx) <= 0)
-        goto merr;
-    if (EVP_PKEY_CTX_set_mac_key(mac_ctx, key, keylen) <= 0)
-        goto merr;
-    if (EVP_PKEY_keygen(mac_ctx, &mac_key) <= 0)
-        goto merr;
- merr:
+
+    mac_key = gen_and_set_mac_key(mac_ctx, key, (size_t)keylen);
     EVP_PKEY_CTX_free(mac_ctx);
     return mac_key;
 }
