@@ -59,16 +59,21 @@ IF[{- !$disabled{asm} && $config{processor} ne '386' -}]
   ENDIF
 ENDIF
 
-# CPUID support.  We need to add that explicitly in every provider module that
-# uses it.
-SOURCE[../libcrypto]=$CPUIDASM cpuid.c
+# CPUID support.  We need to add that explicitly in every shared library and
+# provider module that uses it.  ctype.c is included here because the CPUID
+# uses functions from there to parse magic environment variables.
+$CPUID_COMMON=$CPUIDASM cpuid.c ctype.c
+
+SOURCE[../libcrypto]=$CPUID_COMMON
 DEFINE[../libcrypto]=$CPUIDDEF
 INCLUDE[cpuid.o]=..
 IF[{- !$disabled{module} -}]
-  SOURCE[../providers/legacy]=$CPUIDASM cpuid.c
+  # Only in module form for the legacy provider, because when it's not in
+  # that form, it's included in libcrypto anyway.
+  SOURCE[../providers/legacy]=$CPUID_COMMON
   DEFINE[../providers/legacy]=$CPUIDDEF
 ENDIF
-SOURCE[../providers/fips]=$CPUIDASM cpuid.c
+SOURCE[../providers/fips]=$CPUID_COMMON
 DEFINE[../providers/fips]=$CPUIDDEF
 
 # Implementations are now spread across several libraries, so the CPUID define
@@ -87,7 +92,7 @@ SOURCE[../providers/libfips.a]=$CORE_COMMON
 # Central utilities
 $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
-        ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
+        threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c \
         param_build_set.c der_writer.c passphrase.c threads_lib.c
 
