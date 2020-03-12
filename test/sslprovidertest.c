@@ -16,9 +16,7 @@ static char *cert = NULL;
 static char *privkey = NULL;
 
 /* TODO(3.0): Re-enable this code. See comment in setup_tests() */
-#if 0
 OSSL_PROVIDER *defctxlegacy = NULL;
-#endif
 
 static int test_different_libctx(void)
 {
@@ -27,12 +25,9 @@ static int test_different_libctx(void)
     int testresult = 0;
     OPENSSL_CTX *libctx = OPENSSL_CTX_new();
 
-/* TODO(3.0): Re-enable this code. See comment in setup_tests() */
-#if 0
     /* Verify that the default provider in the default libctx is not available */
     if (!TEST_false(OSSL_PROVIDER_available(NULL, "default")))
         goto end;
-#endif
 
     cctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_client_method());
     if (!TEST_ptr(cctx))
@@ -41,11 +36,21 @@ static int test_different_libctx(void)
     if (!TEST_ptr(sctx))
         goto end;
 
+    /*
+     * TODO(3.0): Make this work in TLSv1.3. Currently we can only do RSA key
+     * exchange, because we don't have key gen/param gen for EC yet - which
+     * implies TLSv1.2 only
+     */
     if (!TEST_true(create_ssl_ctx_pair(NULL,
                                        NULL,
                                        TLS1_VERSION,
-                                       0,
-                                       &sctx, NULL, cert, privkey)))
+                                       TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /* Ensure we use a FIPS compatible ciphersuite and sigalg */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA256"))
+            || !TEST_true(SSL_CTX_set1_sigalgs_list(cctx, "RSA+SHA256")))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -56,15 +61,12 @@ static int test_different_libctx(void)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
-/* TODO(3.0): Re-enable this code. See comment in setup_tests() */
-#if 0
     /*
      * Verify that the default provider in the default libctx is still not
      * available
      */
     if (!TEST_false(OSSL_PROVIDER_available(NULL, "default")))
         goto end;
-#endif
 
     testresult = 1;
 
@@ -83,14 +85,6 @@ int setup_tests(void)
 {
     char *certsdir = NULL;
     /*
-     * TODO(3.0): Re-enable this code when key generation is provider aware. At
-     * the moment the below causes the tests to fail because libssl attempts to
-     * generate a key for the key_share, which ultimately invokes RAND_bytes().
-     * However, because key generation is not yet provider aware it just uses
-     * the default library context - and hence fails.
-     */
-#if 0
-    /*
      * For tests in this file we want to ensure the default ctx does not have
      * the default provider loaded into the default ctx. So we load "legacy" to
      * prevent default from being auto-loaded. This tests that there is no
@@ -99,7 +93,6 @@ int setup_tests(void)
      * libctx
      */
     defctxlegacy = OSSL_PROVIDER_load(NULL, "legacy");
-#endif
 
     if (!TEST_ptr(certsdir = test_get_argument(0)))
         return 0;
@@ -122,7 +115,5 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     /* TODO(3.0): Re-enable this code. See comment in setup_tests() */
-#if 0
     OSSL_PROVIDER_unload(defctxlegacy);
-#endif
 }
