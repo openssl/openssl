@@ -326,7 +326,9 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
                                                (int)*mac_secret_size);
         if (mac_key == NULL
-            || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
+            || EVP_DigestSignInit_ex(mac_ctx, NULL,
+                                     EVP_MD_name(m), s->ctx->propq,
+                                     mac_key, s->ctx->libctx) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);

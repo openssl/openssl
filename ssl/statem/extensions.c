@@ -1595,7 +1595,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         binderout = tmpbinder;
 
     bindersize = hashsize;
-    if (EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
+    if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_name(md), s->ctx->propq,
+                              mackey, s->ctx->libctx) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {
