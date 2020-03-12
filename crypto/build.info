@@ -63,18 +63,20 @@ ENDIF
 # provider module that uses it.  ctype.c is included here because the CPUID
 # uses functions from there to parse magic environment variables.
 $CPUID_COMMON=$CPUIDASM cpuid.c ctype.c
+INCLUDE[cpuid.o]=..
 
 SOURCE[../libcrypto]=$CPUID_COMMON
 DEFINE[../libcrypto]=$CPUIDDEF
-INCLUDE[cpuid.o]=..
-IF[{- !$disabled{module} -}]
-  # Only in module form for the legacy provider, because when it's not in
-  # that form, it's included in libcrypto anyway.
+SOURCE[../providers/fips]=$CPUID_COMMON
+DEFINE[../providers/fips]=$CPUIDDEF
+# We only need to include the CPUID stuff in the legacy provider when it's a
+# separate module and it's dynamically linked with libcrypto.  Otherwise, it
+# already gets everything that the static libcrypto.a has, and doesn't need it
+# added again.
+IF[{- !$disabled{module} && !$disabled{shared} -}]
   SOURCE[../providers/legacy]=$CPUID_COMMON
   DEFINE[../providers/legacy]=$CPUIDDEF
 ENDIF
-SOURCE[../providers/fips]=$CPUID_COMMON
-DEFINE[../providers/fips]=$CPUIDDEF
 
 # Implementations are now spread across several libraries, so the CPUID define
 # need to be applied to all affected libraries and modules.
