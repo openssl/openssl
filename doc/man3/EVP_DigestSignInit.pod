@@ -11,7 +11,7 @@ EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 
  int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                            const char *mdname, const char *props,
-                           EVP_PKEY *pkey);
+                           EVP_PKEY *pkey, OPENSSL_CTX *libctx);
  int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                         const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -51,7 +51,9 @@ existing value in I<*pctx> is overwritten. The EVP_PKEY_CTX value returned must
 not be freed directly by the application if I<ctx> is not assigned an
 EVP_PKEY_CTX value before being passed to EVP_DigestSignInit_ex() (which means
 the EVP_PKEY_CTX is created inside EVP_DigestSignInit_ex() and it will be freed
-automatically when the EVP_MD_CTX is freed).
+automatically when the EVP_MD_CTX is freed). If the EVP_PKEY_CTX to be used is
+created by EVP_DigestSignInit_ex then it will use the B<OPENSSL_CTX> specified
+in I<libctx> and the property query string specified in I<props>.
 
 The digest I<mdname> may be NULL if the signing algorithm supports it. The
 I<props> argument can always be NULL.

@@ -11,7 +11,7 @@ EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
 
  int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                              const char *mdname, const char *props,
-                             EVP_PKEY *pkey, EVP_SIGNATURE *signature);
+                             EVP_PKEY *pkey, OPENSSL_CTX *libctx);
  int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -26,20 +26,17 @@ The EVP signature routines are a high level interface to digital signatures.
 Input data is digested first before the signature verification takes place.
 
 EVP_DigestVerifyInit_ex() sets up verification context B<ctx> to use a digest
-with the name B<mdname> and public key B<pkey>. The signature algorithm
-B<signature> will be used for the actual signature verification which must be
-compatible with the public key. The name of the digest to be used is passed to
-the provider of the signature algorithm in use. How that provider interprets the
-digest name is provider specific. The provider may implement that digest
-directly itself or it may (optionally) choose to fetch it (which could result in
-a digest from a different provider being selected). If the provider supports
-fetching the digest then it may use the B<props> argument for the properties to
-be used during the fetch.
+with the name B<mdname> and public key B<pkey>. The name of the digest to be
+used is passed to the provider of the signature algorithm in use. How that
+provider interprets the digest name is provider specific. The provider may
+implement that digest directly itself or it may (optionally) choose to fetch it
+(which could result in a digest from a different provider being selected). If
+the provider supports fetching the digest then it may use the B<props> argument
+for the properties to be used during the fetch.
 
-The B<signature> parameter may be NULL in which case a suitable signature
-algorithm implementation will be implicitly fetched based on the type of key in
-use. See L<provider(7)> for further information about providers and fetching
-algorithms.
+The I<pkey> algorithm is used to fetch a B<EVP_SIGNATURE> method implicitly, to
+be used for the actual signing. See L<provider(7)/Implicit fetch> for
+more information about implict fetches.
 
 The OpenSSL default and legacy providers support fetching digests and can fetch
 those digests from any available provider. The OpenSSL fips provider also
@@ -53,7 +50,9 @@ Note that any existing value in B<*pctx> is overwritten. The EVP_PKEY_CTX value
 returned must not be freed directly by the application if B<ctx> is not assigned
 an EVP_PKEY_CTX value before being passed to EVP_DigestVerifyInit_ex() (which
 means the EVP_PKEY_CTX is created inside EVP_DigestVerifyInit_ex() and it will
-be freed automatically when the EVP_MD_CTX is freed).
+be freed automatically when the EVP_MD_CTX is freed). If the EVP_PKEY_CTX to be
+used is created by EVP_DigestVerifyInit_ex then it will use the B<OPENSSL_CTX>
+specified in I<libctx> and the property query string specified in I<props>.
 
 No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the passed
 B<ctx> has already been assigned one via L<EVP_MD_CTX_set_pkey_ctx(3)>. See also
