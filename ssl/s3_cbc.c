@@ -17,6 +17,7 @@
 #include "ssl_local.h"
 #include "internal/cryptlib.h"
 
+#include <openssl/core_names.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
@@ -90,31 +91,40 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
 #undef  LARGEST_DIGEST_CTX
 #define LARGEST_DIGEST_CTX SHA512_CTX
 
-/*
- * ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
- * which ssl3_cbc_digest_record supports.
- */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
+
+int ssl_get_md_nid_from_hash(const EVP_MAC_CTX *ctx)
 {
-    switch (EVP_MD_CTX_type(ctx)) {
-    case NID_md5:
-    case NID_sha1:
-    case NID_sha224:
-    case NID_sha256:
-    case NID_sha384:
-    case NID_sha512:
-        return 1;
-    default:
-        return 0;
-    }
+    OSSL_PARAM params[3], *p = params;
+    char md[80];
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md,
+                                            sizeof(md));
+    *p = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_get_params(ctx, params))
+        return NID_undef;
+
+    if (EVP_MD_is_a(EVP_md5(), md))
+        return NID_md5;
+    if (EVP_MD_is_a(EVP_sha1(), md))
+        return NID_sha1;
+    if (EVP_MD_is_a(EVP_sha224(), md))
+        return NID_sha224;
+    if (EVP_MD_is_a(EVP_sha256(), md))
+        return NID_sha256;
+    if (EVP_MD_is_a(EVP_sha512(), md))
+        return NID_sha512;
+
+    /* Anything else is not supported by ssl3_cbc_digest_record */
+    return NID_undef;
 }
 
 /*-
  * ssl3_cbc_digest_record computes the MAC of a decrypted, padded SSLv3/TLS
  * record.
  *
- *   ctx: the EVP_MD_CTX from which we take the hash function.
- *     ssl3_cbc_record_digest_supported must return true for this EVP_MD_CTX.
+ *   hashnid: the nid of the underlying digest (must not be NID_undef, and must
+ *            be one we support)
  *   md_out: the digest output. At most EVP_MAX_MD_SIZE bytes will be written.
  *   md_out_size: if non-NULL, the number of output bytes is written here.
  *   header: the 13-byte, TLS record header.
@@ -131,7 +141,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * padding too. )
  * Returns 1 on success or 0 on error
  */
-int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+int ssl3_cbc_digest_record(int hashnid,
                            unsigned char *md_out,
                            size_t *md_out_size,
                            const unsigned char header[13],
@@ -175,7 +185,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
         return 0;
 
-    switch (EVP_MD_CTX_type(ctx)) {
+    switch (hashnid) {
     case NID_md5:
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
             return 0;
@@ -232,8 +242,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         break;
     default:
         /*
-         * ssl3_cbc_record_digest_supported should have been called first to
-         * check that the hash function is supported.
+         * We don't support this NID. Should not happen.
          */
         if (md_out_size != NULL)
             *md_out_size = 0;
@@ -461,7 +470,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ) <= 0)
+    if (EVP_DigestInit_ex(md_ctx, EVP_get_digestbynid(hashnid),
+                          NULL /* engine */ ) <= 0)
         goto err;
     if (is_sslv3) {
         /* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */

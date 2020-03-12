@@ -1261,7 +1261,7 @@ struct ssl_st {
             unsigned char *key_block;
             const EVP_CIPHER *new_sym_enc;
             const EVP_MD *new_hash;
-            int new_mac_pkey_type;
+            const char *new_mac_pkey_name;
             size_t new_mac_secret_size;
 # ifndef OPENSSL_NO_COMP
             const SSL_COMP *new_compression;
@@ -1406,12 +1406,12 @@ struct ssl_st {
     unsigned char early_exporter_master_secret[EVP_MAX_MD_SIZE];
     EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
     unsigned char read_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static read IV */
-    EVP_MD_CTX *read_hash;      /* used for mac generation */
+    EVP_MAC_CTX *read_hash;      /* used for mac generation */
     COMP_CTX *compress;         /* compression */
     COMP_CTX *expand;           /* uncompress */
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     unsigned char write_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static write IV */
-    EVP_MD_CTX *write_hash;     /* used for mac generation */
+    EVP_MAC_CTX *write_hash;     /* used for mac generation */
     /* session info */
     /* client cert? */
     /* This is used to hold the server certificate used */
@@ -1801,7 +1801,7 @@ typedef struct {
 
 struct dtls1_retransmit_state {
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
-    EVP_MD_CTX *write_hash;     /* used for mac generation */
+    EVP_MAC_CTX *write_hash;     /* used for mac generation */
     COMP_CTX *compress;         /* compression */
     SSL_SESSION *session;
     unsigned short epoch;
@@ -2365,7 +2365,8 @@ __owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
 void ssl_update_cache(SSL *s, int mode);
 __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
                               const EVP_CIPHER **enc, const EVP_MD **md,
-                              int *mac_pkey_type, size_t *mac_secret_size,
+                              const char **mac_pkey_name,
+                              size_t *mac_secret_size,
                               SSL_COMP **comp, int use_etm);
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
@@ -2652,8 +2653,12 @@ __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,
 
 int tls_choose_sigalg(SSL *s, int fatalerrs);
 
-__owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
+__owur EVP_MAC_CTX *ssl_replace_hash(SSL *s, EVP_MAC_CTX **hash,
+                                     const char *mac_name, const EVP_MD *md,
+                                     int freeit);
+__owur int ssl_init_hash(EVP_MAC_CTX *hash, const unsigned char *key,
+                         size_t keylen);
+void ssl_clear_hash_ctx(EVP_MAC_CTX **hash);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);
@@ -2707,8 +2712,8 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
 #define EXPORTER_SECRET_LABEL "EXPORTER_SECRET"
 
 /* s3_cbc.c */
-__owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-__owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+__owur int ssl_get_md_nid_from_hash(const EVP_MAC_CTX *ctx);
+__owur int ssl3_cbc_digest_record(int hashnid,
                                   unsigned char *md_out,
                                   size_t *md_out_size,
                                   const unsigned char header[13],

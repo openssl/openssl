@@ -98,7 +98,7 @@ void dtls1_hm_fragment_free(hm_fragment *frag)
     if (frag->msg_header.is_ccs) {
         EVP_CIPHER_CTX_free(frag->msg_header.
                             saved_retransmit_state.enc_write_ctx);
-        EVP_MD_CTX_free(frag->msg_header.saved_retransmit_state.write_hash);
+        EVP_MAC_CTX_free(frag->msg_header.saved_retransmit_state.write_hash);
     }
     OPENSSL_free(frag->fragment);
     OPENSSL_free(frag->reassembly);
@@ -130,13 +130,13 @@ int dtls1_do_write(SSL *s, int type)
             return -1;
     }
 
-    if (s->write_hash) {
+    if (s->write_hash != NULL) {
         if (s->enc_write_ctx
             && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
                 EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
             mac_size = 0;
         else
-            mac_size = EVP_MD_CTX_size(s->write_hash);
+            mac_size = EVP_MAC_size(s->write_hash);
     } else
         mac_size = 0;
 

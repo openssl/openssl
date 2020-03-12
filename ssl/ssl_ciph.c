@@ -124,19 +124,19 @@ static int ssl_cipher_info_find(const ssl_cipher_table * table,
     ssl_cipher_info_find(table, OSSL_NELEM(table), x)
 
 /*
- * PKEY_TYPE for GOST89MAC is known in advance, but, because implementation
- * is engine-provided, we'll fill it only if corresponding EVP_PKEY_METHOD is
+ * GOST names are known in advance, but, because implementation
+ * is engine-provided, we'll fill them only if corresponding EVP_PKEY_METHOD is
  * found
  */
-static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
+static const char *ssl_mac_pkey_name[SSL_MD_NUM_IDX] = {
     /* MD5, SHA, GOST94, MAC89 */
-    EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
+    "HMAC", "HMAC", "HMAC", NULL,
     /* SHA256, SHA384, GOST2012_256, MAC89-12 */
-    EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
+    "HMAC", "HMAC", "HMAC", NULL,
     /* GOST2012_512 */
-    EVP_PKEY_HMAC,
+    "HMAC",
     /* MD5/SHA1, SHA224, SHA512 */
-    NID_undef, NID_undef, NID_undef
+    NULL, NULL, NULL
 };
 
 #define CIPHER_ADD      1
@@ -377,15 +377,16 @@ int ssl_load_ciphers(SSL_CTX *ctx)
      * Check for presence of GOST 34.10 algorithms, and if they are not
      * present, disable appropriate auth and key exchange
      */
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
+    ssl_mac_pkey_name[SSL_MD_GOST89MAC_IDX] =
+        get_optional_pkey_id("gost-mac") ? "gost-mac" : NULL;;
+    if (ssl_mac_pkey_name[SSL_MD_GOST89MAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC;
 
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
-        get_optional_pkey_id("gost-mac-12");
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
+    ssl_mac_pkey_name[SSL_MD_GOST89MAC12_IDX] =
+        get_optional_pkey_id("gost-mac-12") ? "gost-mac-12" : NULL;
+    if (ssl_mac_pkey_name[SSL_MD_GOST89MAC12_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC12;
@@ -441,7 +442,7 @@ static int load_builtin_compressions(void)
 
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
-                       int *mac_pkey_type, size_t *mac_secret_size,
+                       const char **mac_pkey_name, size_t *mac_secret_size,
                        SSL_COMP **comp, int use_etm)
 {
     int i;
@@ -496,27 +497,27 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
     if (i == -1) {
         *md = NULL;
-        if (mac_pkey_type != NULL)
-            *mac_pkey_type = NID_undef;
+        if (mac_pkey_name != NULL)
+            *mac_pkey_name = NULL;
         if (mac_secret_size != NULL)
             *mac_secret_size = 0;
         if (c->algorithm_mac == SSL_AEAD)
-            mac_pkey_type = NULL;
+            mac_pkey_name = NULL;
     } else {
         if (!ssl_evp_md_up_ref(ctx->ssl_digest_methods[i])) {
             ssl_evp_cipher_free(*enc);
             return 0;
         }
         *md = ctx->ssl_digest_methods[i];
-        if (mac_pkey_type != NULL)
-            *mac_pkey_type = ssl_mac_pkey_id[i];
+        if (mac_pkey_name != NULL)
+            *mac_pkey_name = ssl_mac_pkey_name[i];
         if (mac_secret_size != NULL)
             *mac_secret_size = ctx->ssl_mac_secret_size[i];
     }
 
     if ((*enc != NULL) &&
         (*md != NULL || (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER))
-        && (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
+        && (mac_pkey_name == NULL || *mac_pkey_name != NULL)) {
         const EVP_CIPHER *evp = NULL;
 
         if (use_etm

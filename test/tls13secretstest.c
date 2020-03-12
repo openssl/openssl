@@ -167,7 +167,7 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
-                       int *mac_pkey_type, size_t *mac_secret_size,
+                       const char **mac_pkey_name, size_t *mac_secret_size,
                        SSL_COMP **comp, int use_etm)
 
 {

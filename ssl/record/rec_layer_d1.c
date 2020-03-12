@@ -836,20 +836,13 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     sess = s->session;
 
-    if ((sess == NULL) ||
-        (s->enc_write_ctx == NULL) || (EVP_MD_CTX_md(s->write_hash) == NULL))
+    if (sess == NULL || s->enc_write_ctx == NULL || s->write_hash == NULL)
         clear = 1;
 
     if (clear)
         mac_size = 0;
-    else {
-        mac_size = EVP_MD_CTX_size(s->write_hash);
-        if (mac_size < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
-                     SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-            return -1;
-        }
-    }
+    else
+        mac_size = EVP_MAC_size(s->write_hash);
 
     p = SSL3_BUFFER_get_buf(wb) + prefix_len;
 

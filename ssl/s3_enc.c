@@ -134,7 +134,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         }
         dd = s->enc_read_ctx;
 
-        if (ssl_replace_hash(&s->read_hash, m) == NULL) {
+        if (ssl_replace_hash(s, &s->read_hash, "HMAC", m, 1) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -170,7 +170,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_reset(s->enc_write_ctx);
         }
         dd = s->enc_write_ctx;
-        if (ssl_replace_hash(&s->write_hash, m) == NULL) {
+        if (ssl_replace_hash(s, &s->write_hash, "HMAC", m, 1) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_CHANGE_CIPHER_STATE,
                      ERR_R_MALLOC_FAILURE);
             goto err;

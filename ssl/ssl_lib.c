@@ -22,6 +22,7 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
@@ -4684,22 +4685,63 @@ size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
  * Returns the newly allocated ctx;
  */
 
-EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
+EVP_MAC_CTX *ssl_replace_hash(SSL *s, EVP_MAC_CTX **hash, const char *mac_name,
+                              const EVP_MD *md, int freeit)
 {
-    ssl_clear_hash_ctx(hash);
-    *hash = EVP_MD_CTX_new();
-    if (*hash == NULL || (md && EVP_DigestInit_ex(*hash, md, NULL) <= 0)) {
-        EVP_MD_CTX_free(*hash);
+    EVP_MAC *mac;
+
+    if (freeit)
+        ssl_clear_hash_ctx(hash);
+    else
         *hash = NULL;
+
+    if (mac_name == NULL || md == NULL)
         return NULL;
+
+    mac = EVP_MAC_fetch(s->ctx->libctx, mac_name, s->ctx->propq);
+    if (mac == NULL)
+        return NULL;
+
+    *hash = EVP_MAC_CTX_new(mac);
+    EVP_MAC_free(mac);
+
+    if (*hash != NULL) {
+        OSSL_PARAM params[2], *p = params;
+
+        /* Won't be changed so cast is safe */
+        *(p++) = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                  (char *)EVP_MD_name(md), 0);
+        *(p++) = OSSL_PARAM_construct_end();
+
+        if (!EVP_MAC_CTX_set_params(*hash, params)) {
+            EVP_MAC_CTX_free(*hash);
+            *hash = NULL;
+            return NULL;
+        }
     }
+
     return *hash;
 }
 
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
+int ssl_init_hash(EVP_MAC_CTX *hash, const unsigned char *key, size_t keylen)
 {
+    OSSL_PARAM params[2], *p = params;
 
-    EVP_MD_CTX_free(*hash);
+    /* Won't be changed so cast is safe */
+    *(p++) = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, (char *)key,
+                                               keylen);
+    *(p++) = OSSL_PARAM_construct_end();
+
+    if (!EVP_MAC_CTX_set_params(hash, params)
+            || !EVP_MAC_init(hash))
+        return 0;
+
+    return 1;
+}
+
+void ssl_clear_hash_ctx(EVP_MAC_CTX **hash)
+{
+    EVP_MAC_CTX_free(*hash);
     *hash = NULL;
 }
 

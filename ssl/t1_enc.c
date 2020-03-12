@@ -144,10 +144,9 @@ int tls1_change_cipher_state(SSL *s, int which)
     const SSL_COMP *comp;
 #endif
     const EVP_MD *m;
-    int mac_type;
+    const char *mac_name;
     size_t *mac_secret_size;
-    EVP_MD_CTX *mac_ctx;
-    EVP_PKEY *mac_key;
+    EVP_MAC_CTX *mac_ctx;
     size_t n, i, j, k, cl;
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
@@ -164,7 +163,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     c = s->s3.tmp.new_sym_enc;
     m = s->s3.tmp.new_hash;
-    mac_type = s->s3.tmp.new_mac_pkey_type;
+    mac_name = s->s3.tmp.new_mac_pkey_name;
 #ifndef OPENSSL_NO_COMP
     comp = s->s3.tmp.new_compression;
 #endif
@@ -193,8 +192,13 @@ int tls1_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_reset(s->enc_read_ctx);
         }
         dd = s->enc_read_ctx;
-        mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
-        if (mac_ctx == NULL) {
+        mac_ctx = ssl_replace_hash(s, &s->read_hash, mac_name, m, 1);
+        /*
+         * In the event of AEAD ssl_replace_hash will just clear read_hash
+         * and return NULL
+         */
+        if (mac_ctx == NULL
+                && !(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -238,23 +242,21 @@ int tls1_change_cipher_state(SSL *s, int which)
             goto err;
         }
         dd = s->enc_write_ctx;
-        if (SSL_IS_DTLS(s)) {
-            mac_ctx = EVP_MD_CTX_new();
-            if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                         ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            s->write_hash = mac_ctx;
-        } else {
-            mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
-            if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                         ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
+        /*
+         * In DTLS we replace the hash but don't clear the old value. It is
+         * stored elsewhere in case of retransmits.
+         */
+        mac_ctx = ssl_replace_hash(s, &s->write_hash, mac_name, m, !SSL_IS_DTLS(s));
+        /*
+         * In the event of AEAD ssl_replace_hash will just clear write_hash
+         * and return NULL
+         */
+        if (mac_ctx == NULL
+                && !(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS1_CHANGE_CIPHER_STATE,
+                     ERR_R_MALLOC_FAILURE);
+            goto err;
         }
 #ifndef OPENSSL_NO_COMP
         COMP_CTX_free(s->compress);
@@ -322,19 +324,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     memcpy(mac_secret, ms, i);
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-        /* TODO(size_t): Convert this function */
-        mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
-                                               (int)*mac_secret_size);
-        if (mac_key == NULL
-            || EVP_DigestSignInit_ex(s->ctx->libctx, mac_ctx, NULL,
-                                     EVP_MD_name(m), s->ctx->propq,
-                                     mac_key) <= 0) {
-            EVP_PKEY_free(mac_key);
+        if (!ssl_init_hash(mac_ctx, mac_secret, *mac_secret_size)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        EVP_PKEY_free(mac_key);
     }
 
     OSSL_TRACE_BEGIN(TLS) {
@@ -533,14 +527,14 @@ int tls1_setup_key_block(SSL *s)
     const EVP_CIPHER *c;
     const EVP_MD *hash;
     SSL_COMP *comp;
-    int mac_type = NID_undef;
+    const char *mac_name = NULL;
     size_t num, mac_secret_size = 0;
     int ret = 0;
 
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_type,
+    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_name,
                             &mac_secret_size, &comp, s->ext.use_etm)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
@@ -551,7 +545,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3.tmp.new_sym_enc = c;
     ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
-    s->s3.tmp.new_mac_pkey_type = mac_type;
+    s->s3.tmp.new_mac_pkey_name = mac_name;
     s->s3.tmp.new_mac_secret_size = mac_secret_size;
     num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
     num *= 2;
