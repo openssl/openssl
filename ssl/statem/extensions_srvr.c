@@ -780,7 +780,8 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     hmaclen = SHA256_DIGEST_LENGTH;
-    if (EVP_DigestSignInit(hctx, NULL, EVP_sha256(), NULL, pkey) <= 0
+    if (EVP_DigestSignInit_ex(hctx, NULL, "SHA2-256", s->ctx->propq, pkey,
+                              s->ctx->libctx) <= 0
             || EVP_DigestSign(hctx, hmac, &hmaclen, data,
                               rawlen - SHA256_DIGEST_LENGTH) <= 0
             || hmaclen != SHA256_DIGEST_LENGTH) {
@@ -1864,7 +1865,8 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
         goto err;
     }
 
-    if (EVP_DigestSignInit(hctx, NULL, EVP_sha256(), NULL, pkey) <= 0
+    if (EVP_DigestSignInit_ex(hctx, NULL, "SHA2-256", s->ctx->propq, pkey,
+                              s->ctx->libctx) <= 0
             || EVP_DigestSign(hctx, hmac, &hmaclen, cookie,
                               totcookielen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
