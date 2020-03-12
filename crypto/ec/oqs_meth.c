@@ -268,10 +268,17 @@ const char *OQSKEM_options(void)
 {
     const char* OQSKEMALGS = "OQS KEM build : ";
     int offset;
+// TODO: Revisit which OQS_COMPILE_FLAGS to show
+#ifdef OQS_COMPILE_CFLAGS
     char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
     memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
     offset += strlen(OQS_COMPILE_CFLAGS);
+#else 
+    char* result =  OPENSSL_zalloc(OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
+#endif
+
     result[offset++]='-';
     int i;
     for (i=0; i<OQS_KEM_algs_length;i++) {
@@ -292,10 +299,17 @@ const char *OQSSIG_options(void)
 {
     const char* OQSSIGALGS = "OQS SIG build : ";
     int offset;
+// TODO: Revisit which OQS_COMPILE_FLAGS to show
+#ifdef OQS_COMPILE_CFLAGS
     char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_OPENSSL_SIG_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSSIGALGS, offset = strlen(OQSSIGALGS));
     memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
     offset += strlen(OQS_COMPILE_CFLAGS);
+#else
+    char* result =  OPENSSL_zalloc(OQS_OPENSSL_SIG_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    memcpy(result, OQSSIGALGS, offset = strlen(OQSSIGALGS));
+#endif
+
     result[offset++]='-';
     int i;
     for (i=0; i<OQS_OPENSSL_SIG_algs_length;i++) {
