@@ -23,6 +23,7 @@
 #include <openssl/ssl.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
+#include "rsa_local.h"
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
@@ -123,15 +124,16 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     return j;
 }
 
-int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
-                                 const unsigned char *from, int flen)
+int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
+                                             unsigned char *to, int tlen,
+                                             const unsigned char *from,
+                                             int flen)
 {
     int i, j;
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -143,12 +145,12 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes(p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes(p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -158,6 +160,12 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 
     memcpy(p, from, (unsigned int)flen);
     return 1;
+}
+
+int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
+                                 const unsigned char *from, int flen)
+{
+    return rsa_padding_add_PKCS1_type_2_with_libctx(NULL, to, tlen, from, flen);
 }
 
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
@@ -291,9 +299,10 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
  * decrypted data will be randomly generated (as per
  * https://tools.ietf.org/html/rfc5246#section-7.4.7.1).
  */
-int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
-                                       const unsigned char *from, size_t flen,
-                                       int client_version, int alt_version)
+int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
+                                       size_t tlen, const unsigned char *from,
+                                       size_t flen, int client_version,
+                                       int alt_version)
 {
     unsigned int i, good, version_good;
     unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
@@ -312,8 +321,8 @@ int rsa_padding_check_PKCS1_type_2_TLS(unsigned char *to, size_t tlen,
      * Generate a random premaster secret to use in the event that we fail
      * to decrypt.
      */
-    if (RAND_priv_bytes(rand_premaster_secret,
-                      sizeof(rand_premaster_secret)) <= 0) {
+    if (RAND_priv_bytes_ex(libctx, rand_premaster_secret,
+                           sizeof(rand_premaster_secret)) <= 0) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         return -1;
     }

@@ -225,7 +225,8 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                 ERR_raise(ERR_LIB_PROV, PROV_R_BAD_TLS_CLIENT_VERSION);
                 return 0;
             }
-            ret = rsa_padding_check_PKCS1_type_2_TLS(out, outsize,
+            ret = rsa_padding_check_PKCS1_type_2_TLS(prsactx->libctx, out,
+                                                     outsize,
                                                      tbuf, len,
                                                      prsactx->client_version,
                                                      prsactx->alt_version);
