@@ -111,14 +111,18 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
-        i = RSA_padding_add_PKCS1_type_2(buf, num, from, flen);
+        i = rsa_padding_add_PKCS1_type_2_with_libctx(rsa->libctx, buf, num,
+                                                     from, flen);
         break;
     case RSA_PKCS1_OAEP_PADDING:
-        i = RSA_padding_add_PKCS1_OAEP(buf, num, from, flen, NULL, 0);
+        i = rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(rsa->libctx, buf, num,
+                                                        from, flen, NULL, 0,
+                                                        NULL, NULL);
         break;
 #ifndef FIPS_MODE
     case RSA_SSLV23_PADDING:
-        i = RSA_padding_add_SSLv23(buf, num, from, flen);
+        i = rsa_padding_add_SSLv23_with_libctx(rsa->libctx, buf, num, from,
+                                               flen);
         break;
 #endif
     case RSA_NO_PADDING:
