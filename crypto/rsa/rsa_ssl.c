@@ -19,16 +19,17 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include "internal/constant_time.h"
+#include "rsa_local.h"
 
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-                           const unsigned char *from, int flen)
+int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
+                                       int tlen, const unsigned char *from,
+                                       int flen)
 {
     int i, j;
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_SSLV23,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -40,12 +41,12 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
     /* pad out with non-zero random data */
     j = tlen - 3 - 8 - flen;
 
-    if (RAND_bytes(p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes(p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -57,6 +58,12 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
 
     memcpy(p, from, (unsigned int)flen);
     return 1;
+}
+
+int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+                           const unsigned char *from, int flen)
+{
+    return rsa_padding_add_SSLv23_with_libctx(NULL, to, tlen, from, flen);
 }
 
 /*
