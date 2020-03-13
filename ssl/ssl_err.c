@@ -171,6 +171,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "ext length mismatch"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_FAILED_TO_INIT_ASYNC),
     "failed to init async"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ALGORITHM_FETCH_FAILED),
+     "algorithm fetch failed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_FRAGMENTED_CLIENT_HELLO),
     "fragmented client hello"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_GOT_A_FIN_BEFORE_A_CCS),
