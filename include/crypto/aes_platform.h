@@ -90,6 +90,10 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_decrypt aes_v8_decrypt
 #    define HWAES_cbc_encrypt aes_v8_cbc_encrypt
 #    define HWAES_ecb_encrypt aes_v8_ecb_encrypt
+#    if __ARM_MAX_ARCH__>=8
+#     define HWAES_xts_encrypt aes_v8_xts_encrypt
+#     define HWAES_xts_decrypt aes_v8_xts_decrypt
+#    endif
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
 #    define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
 #    define AES_GCM_ENC_BYTES 512
