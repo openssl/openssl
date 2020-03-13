@@ -3089,6 +3089,7 @@ SSL_R_EXTENSION_NOT_RECEIVED:279:extension not received
 SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
 SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
+SSL_R_ALGORITHM_FETCH_FAILED:295:algorithm fetch failed
 SSL_R_FRAGMENTED_CLIENT_HELLO:401:fragmented client hello
 SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
 SSL_R_HTTPS_PROXY_REQUEST:155:https proxy request

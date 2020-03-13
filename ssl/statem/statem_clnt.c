@@ -2560,6 +2560,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
     PACKET nonce;
+    EVP_MD *sha256 = NULL;
 
     PACKET_null_init(&nonce);
 
@@ -2675,20 +2676,28 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * other way is to set zero length session ID when the ticket is
      * presented and rely on the handshake to determine session resumption.
      * We choose the former approach because this fits in with assumptions
-     * elsewhere in OpenSSL. The session ID is set to the SHA256 (or SHA1 is
-     * SHA256 is disabled) hash of the ticket.
+     * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
+     * ticket.
      */
+    sha256 = EVP_MD_fetch(s->ctx->libctx, "SHA2-256", s->ctx->propq);
+    if (sha256 == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
+                 SSL_R_ALGORITHM_FETCH_FAILED);
+        goto err;
+    }
     /*
      * TODO(size_t): we use sess_len here because EVP_Digest expects an int
      * but s->session->session_id_length is a size_t
      */
     if (!EVP_Digest(s->session->ext.tick, ticklen,
                     s->session->session_id, &sess_len,
-                    EVP_sha256(), NULL)) {
+                    sha256, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                  ERR_R_EVP_LIB);
         goto err;
     }
+    EVP_MD_free(sha256);
+    sha256 = NULL;
     s->session->session_id_length = sess_len;
     s->session->not_resumable = 0;
 
@@ -2727,6 +2736,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     return MSG_PROCESS_CONTINUE_READING;
  err:
+    EVP_MD_free(sha256);
     OPENSSL_free(exts);
     return MSG_PROCESS_ERROR;
 }
