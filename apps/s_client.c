@@ -2408,16 +2408,14 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_IRC:
         {
-            int numeric, pos, foundit = 0;
+            int numeric, pos;
             char *buf;
             char command[11] = { 0 };
             BIO *fbio = BIO_new(BIO_f_buffer());
 
-            BIO_printf(bio_c_out, "[sending plaintext] CAP LS 302\\r\\n"
-                       "STARTTLS\\r\\n\n");
+            BIO_printf(bio_c_out, "[sending plaintext] STARTTLS\n");
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CAP LS 302\r\n"
-                       "STARTTLS\r\n");
+            BIO_printf(fbio, "STARTTLS\r\n");
             (void)BIO_flush(fbio);
             width = SSL_get_fd(con) + 1;
 
@@ -2457,12 +2455,6 @@ int s_client_main(int argc, char **argv)
                 if (sscanf(buf, "%10s %n", &command[0], &pos) != 1)
                     break;
                 buf += pos;
-                /* :example.net CAP * LS :sasl tls */
-                if (strncmp(command, "CAP", 3) == 0) {
-                    strncpy(sbuf, buf, BUFSIZZ);
-                    if (strstr(buf, "tls"))
-                        foundit = 1;
-                }
                 /* :example.net NOTICE AUTH :*** Looking up your hostname... */
                 BIO_printf(bio_c_out, "[plaintext %s] %s", command, buf);
                 numeric = atoi(command);
@@ -2480,9 +2472,6 @@ int s_client_main(int argc, char **argv)
                 }
             } while (numeric != 670);
 
-            if (!foundit)
-                BIO_printf(bio_err,
-                           "Didn't find STARTTLS in server response\n");
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -2490,10 +2479,6 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "Server does not support STARTTLS.\n");
                 ret = 1;
                 goto shut;
-            }
-            if (*sbuf) {
-                mbuf_len = BIO_snprintf(mbuf, BUFSIZZ, "[end capability negotiation with CAP END] CAP %s", sbuf);
-                sbuf[0] = '\0';
             }
         }
         break;
