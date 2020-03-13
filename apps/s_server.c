@@ -103,6 +103,8 @@ static int keymatexportlen = 20;
 
 static int async = 0;
 
+static int use_sendfile = 0;
+
 static const char *session_id_prefix = NULL;
 
 #ifndef OPENSSL_NO_DTLS
@@ -749,7 +751,7 @@ typedef enum OPTION_choice {
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
     OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
-    OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
+    OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_SENDFILE,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
@@ -981,6 +983,9 @@ const OPTIONS s_server_options[] = {
 #endif
     {"alpn", OPT_ALPN, 's',
      "Set the advertised protocols for the ALPN extension (comma-separated list)"},
+#ifndef OPENSSL_NO_KTLS
+    {"sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW"},
+#endif
 
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
@@ -1095,6 +1100,7 @@ int s_server_main(int argc, char *argv[])
     s_quiet = 0;
     s_brief = 0;
     async = 0;
+    use_sendfile = 0;
 
     cctx = SSL_CONF_CTX_new();
     vpm = X509_VERIFY_PARAM_new();
@@ -1643,6 +1649,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_HTTP_SERVER_BINMODE:
             http_server_binmode = 1;
             break;
+        case OPT_SENDFILE:
+#ifndef OPENSSL_NO_KTLS
+            use_sendfile = 1;
+#endif
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1692,6 +1703,13 @@ int s_server_main(int argc, char *argv[])
         }
         /* SCTP is unusual. It uses DTLS over a SOCK_STREAM protocol */
         socket_type = SOCK_STREAM;
+    }
+#endif
+
+#ifndef OPENSSL_NO_KTLS
+    if (use_sendfile && www <= 1) {
+        BIO_printf(bio_err, "Can't use -sendfile without -WWW or -HTTP\n");
+        goto end;
     }
 #endif
 
@@ -3336,38 +3354,79 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                              "HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
             }
             /* send the file */
-            for (;;) {
-                i = BIO_read(file, buf, bufsize);
-                if (i <= 0)
-                    break;
+#ifndef OPENSSL_NO_KTLS
+            if (use_sendfile) {
+                FILE *fp = NULL;
+                int fd;
+                struct stat st;
+                off_t offset = 0;
+                size_t filesize;
 
-#ifdef RENEG
-                total_bytes += i;
-                BIO_printf(bio_err, "%d\n", i);
-                if (total_bytes > 3 * 1024) {
-                    total_bytes = 0;
-                    BIO_printf(bio_err, "RENEGOTIATE\n");
-                    SSL_renegotiate(con);
+                BIO_get_fp(file, &fp);
+                fd = fileno(fp);
+                if (fstat(fd, &st) < 0) {
+                    BIO_printf(io, "Error fstat '%s'\r\n", p);
+                    ERR_print_errors(io);
+                    goto write_error;
                 }
-#endif
 
-                for (j = 0; j < i;) {
+                filesize = st.st_size;
+                if (((int)BIO_flush(io)) < 0)
+                    goto write_error;
+
+                for (;;) {
+                    i = SSL_sendfile(con, fd, offset, filesize, 0);
+                    if (i < 0) {
+                        BIO_printf(io, "Error SSL_sendfile '%s'\r\n", p);
+                        ERR_print_errors(io);
+                        break;
+                    } else {
+                        offset += i;
+                        filesize -= i;
+                    }
+
+                    if (filesize <= 0) {
+                        if (!s_quiet)
+                            BIO_printf(bio_err, "KTLS SENDFILE '%s' OK\n", p);
+
+                        break;
+                    }
+                }
+            } else
+#endif
+            {
+                for (;;) {
+                    i = BIO_read(file, buf, bufsize);
+                    if (i <= 0)
+                        break;
+
 #ifdef RENEG
-                    static count = 0;
-                    if (++count == 13) {
+                    total_bytes += i;
+                    BIO_printf(bio_err, "%d\n", i);
+                    if (total_bytes > 3 * 1024) {
+                        total_bytes = 0;
+                        BIO_printf(bio_err, "RENEGOTIATE\n");
                         SSL_renegotiate(con);
                     }
 #endif
-                    k = BIO_write(io, &(buf[j]), i - j);
-                    if (k <= 0) {
-                        if (!BIO_should_retry(io)
-                            && !SSL_waiting_for_async(con))
-                            goto write_error;
-                        else {
-                            BIO_printf(bio_s_out, "rwrite W BLOCK\n");
+
+                    for (j = 0; j < i;) {
+#ifdef RENEG
+                        static count = 0;
+                        if (++count == 13)
+                            SSL_renegotiate(con);
+#endif
+                        k = BIO_write(io, &(buf[j]), i - j);
+                        if (k <= 0) {
+                            if (!BIO_should_retry(io)
+                                && !SSL_waiting_for_async(con)) {
+                                goto write_error;
+                            } else {
+                                BIO_printf(bio_s_out, "rwrite W BLOCK\n");
+                            }
+                        } else {
+                            j += k;
                         }
-                    } else {
-                        j += k;
                     }
                 }
             }
