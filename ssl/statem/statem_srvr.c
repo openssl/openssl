@@ -3906,7 +3906,14 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
         }
         iv_len = EVP_CIPHER_CTX_iv_length(ctx);
     } else {
-        const EVP_CIPHER *cipher = EVP_aes_256_cbc();
+        EVP_CIPHER *cipher = EVP_CIPHER_fetch(s->ctx->libctx, "AES-256-CBC",
+                                              s->ctx->propq);
+
+        if (cipher == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                     SSL_R_ALGORITHM_FETCH_FAILED);
+            goto err;
+        }
 
         iv_len = EVP_CIPHER_iv_length(cipher);
         if (RAND_bytes_ex(s->ctx->libctx, iv, iv_len) <= 0
@@ -3915,10 +3922,12 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
                 || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
                                   sizeof(tctx->ext.secure->tick_hmac_key),
                                   "SHA256")) {
+            EVP_CIPHER_free(cipher);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        EVP_CIPHER_free(cipher);
         memcpy(key_name, tctx->ext.tick_key_name,
                sizeof(tctx->ext.tick_key_name));
     }
