@@ -82,7 +82,7 @@ EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
     return ctx->meth;
 }
 
-size_t EVP_MAC_size(EVP_MAC_CTX *ctx)
+size_t EVP_MAC_size(const EVP_MAC_CTX *ctx)
 {
     size_t sz = 0;
 
@@ -144,7 +144,7 @@ int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[])
     return 1;
 }
 
-int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
+int EVP_MAC_CTX_get_params(const EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->meth->get_ctx_params != NULL)
         return ctx->meth->get_ctx_params(ctx->data, params);
