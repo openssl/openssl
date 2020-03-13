@@ -124,6 +124,7 @@ B<openssl> B<s_server>
 [B<-nextprotoneg> I<val>]
 [B<-use_srtp> I<val>]
 [B<-alpn> I<val>]
+[B<-sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
 [B<-max_early_data> I<int>]
@@ -151,6 +152,8 @@ B<openssl> B<s_server>
 =for openssl ifdef sctp sctp_label_bug trace mtu timeout listen
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
+
+=for openssl ifdef sendfile
 
 =head1 DESCRIPTION
 
@@ -612,6 +615,12 @@ names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
+
+=item B<-sendfile>
+
+If this option is set and KTLS is enabled, SSL_sendfile() will be used
+instead of BIO_write() to send the HTTP response requested by a client.
+This option is only valid if B<-WWW> or B<-HTTP> is specified.
 
 =item B<-keylogfile> I<outfile>
 
