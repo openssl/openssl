@@ -108,6 +108,7 @@
         */
 #    include <winsock2.h>
 #    include <ws2tcpip.h>
+#    include <wspiapi.h>
        /* yes, they have to be #included prior to <windows.h> */
 #   endif
 #   include <windows.h>
