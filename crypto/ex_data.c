@@ -152,13 +152,12 @@ int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index, long argl,
     a->dup_func = dup_func;
     a->free_func = free_func;
 
-    if (!sk_EX_CALLBACK_push(ip->meth, NULL)) {
+    if (!sk_EX_CALLBACK_push(ip->meth, a)) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(a);
         goto err;
     }
     toret = sk_EX_CALLBACK_num(ip->meth) - 1;
-    (void)sk_EX_CALLBACK_set(ip->meth, toret, a);
  err:
     CRYPTO_THREAD_unlock(global->ex_data_lock);
     return toret;
