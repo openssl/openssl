@@ -9,7 +9,6 @@
 
 #include <openssl/core_names.h>
 #include "internal/ffc.h"
-#include "internal/sizes.h"
 
 /*
  * The intention with the "backend" source file is to offer backend support
@@ -22,25 +21,19 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     const OSSL_PARAM *prm;
     const OSSL_PARAM *param_p, *param_q, *param_g;
     BIGNUM *p = NULL, *q = NULL, *g = NULL, *j = NULL;
-#if 0
-    char group_name[OSSL_MAX_NAME_SIZE];
-    char *str = group_name;
-#endif
     int i;
 
     if (ffc == NULL)
         return 0;
 
-/* TODO(3.0) Add for DH PR */
-#if 0
     prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GROUP);
     if (prm != NULL) {
-        if (!OSSL_PARAM_get_utf8_string(prm, &str, sizeof(group_name)))
+        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
             goto err;
-        if (!ffc_set_group_pqg(ffc, group_name))
+        if (!ffc_set_group_pqg(ffc, prm->data))
             goto err;
     }
-#endif
+
     param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
     param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
     param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_Q);

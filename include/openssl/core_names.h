@@ -196,7 +196,10 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_SEED     "seed"
 #define OSSL_PKEY_PARAM_FFC_COFACTOR "j"
 #define OSSL_PKEY_PARAM_FFC_H        "hindex"
+
+/* Diffie-Hellman params */
 #define OSSL_PKEY_PARAM_FFC_GROUP    "group"
+#define OSSL_PKEY_PARAM_FFC_GENERATOR "safeprime-generator"
 
 /* Elliptic Curve Domain Parameters */
 #define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
