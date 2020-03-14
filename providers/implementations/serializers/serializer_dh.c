@@ -13,11 +13,12 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/dh.h>
 #include <openssl/err.h>
 #include "prov/bio.h"             /* ossl_prov_bio_printf() */
 #include "prov/implementations.h" /* rsa_keymgmt_functions */
 #include "prov/providercommonerr.h" /* PROV_R_BN_ERROR */
+#include "internal/ffc.h"
+#include "crypto/dh.h"
 #include "serializer_local.h"
 
 OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void)
@@ -39,8 +40,7 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
 {
     const char *type_label = NULL;
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
-    const BIGNUM *p = NULL, *g = NULL;
-
+    const BIGNUM *p = NULL;
 
     switch (type) {
     case dh_print_priv:
@@ -67,35 +67,19 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
     }
 
     p = DH_get0_p(dh);
-    g = DH_get0_g(dh);
-    if (p == NULL || g == NULL)
+    if (p == NULL)
         goto null_err;
-
-    /*
-     * TODO(3.0): add printing of:
-     *
-     * - q (label "subgroup order:")
-     * - j (label "subgroup factor:")
-     * - seed (label "seed:")
-     * - counter (label "counter:")
-     *
-     * This can happen as soon as there are DH_get0_ functions for them.
-     */
 
     if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
         <= 0)
         goto err;
     if (priv_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    private-key:", priv_key))
+        && !ossl_prov_print_labeled_bignum(out, "private-key:", priv_key))
         goto err;
     if (pub_key != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    public-key:", pub_key))
+        && !ossl_prov_print_labeled_bignum(out, "public-key:", pub_key))
         goto err;
-    if (p != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    prime:", p))
-        goto err;
-    if (g != NULL
-        && !ossl_prov_print_labeled_bignum(out, "    generator:", g))
+    if (!ffc_params_prov_print(out, dh_get0_params(dh)))
         goto err;
 
     return 1;

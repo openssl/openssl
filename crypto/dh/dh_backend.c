@@ -24,10 +24,8 @@ int dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
     if (dh == NULL)
         return 0;
 
-    param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
+    param_priv_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
+    param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
 
     /*
      * DH documentation says that a public key must be present if a

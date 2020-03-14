@@ -164,10 +164,11 @@ int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
                              int *ret);
 
 int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
-                              OSSL_PARAM params[]);
+                      OSSL_PARAM params[]);
 int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
-int ffc_named_group_to_nid(const char *name);
-const char *ffc_named_group_from_nid(int nid);
+int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
+int ffc_named_group_to_uid(const char *name);
+const char *ffc_named_group_from_uid(int nid);
 int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
 
 #endif /* OSSL_INTERNAL_FFC_H */

@@ -41,6 +41,8 @@ EVP_PKEY_CTX_set_dh_paramgen_prime_len,
 EVP_PKEY_CTX_set_dh_paramgen_subprime_len,
 EVP_PKEY_CTX_set_dh_paramgen_generator,
 EVP_PKEY_CTX_set_dh_paramgen_type,
+EVP_PKEY_CTX_set_dh_paramgen_gindex,
+EVP_PKEY_CTX_set_dh_paramgen_seed,
 EVP_PKEY_CTX_set_dh_rfc5114,
 EVP_PKEY_CTX_set_dhx_rfc5114,
 EVP_PKEY_CTX_set_dh_pad,
@@ -144,6 +146,10 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int rfc5114);
  int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int rfc5114);
+ int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
+ int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                        const unsigned char *seed,
+                                        size_t seedlen);
  int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
  int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid);
@@ -462,21 +468,38 @@ parameter generation. The supported parameters are:
 
 =over 4
 
-=item B<DH_PARAMGEN_TYPE_GENERATOR>
+=item B<DH_PARAMGEN_TYPE_GROUP>
 
-Uses a generator g (PKCS#3 format).
-
-=item B<DH_PARAMGEN_TYPE_FIPS_186_2>
-
-FIPS186-2 FFC parameter generator (X9.42 DH).
+Use a named group. If only the safe prime parameter I<p> is set this can be
+used to select a ffdhe safe prime group of the correct size.
 
 =item B<DH_PARAMGEN_TYPE_FIPS_186_4>
 
 FIPS186-4 FFC parameter generator.
 
+=item B<DH_PARAMGEN_TYPE_FIPS_186_2>
+
+FIPS186-2 FFC parameter generator (X9.42 DH).
+
+=item B<DH_PARAMGEN_TYPE_GENERATOR>
+
+Uses a safe prime generator g (PKCS#3 format).
+
 =back
 
 The default is B<DH_PARAMGEN_TYPE_GENERATOR>.
+
+The EVP_PKEY_CTX_set_dh_paramgen_gindex() method sets the I<gindex> used by
+the generator G. The default value is -1 which uses unverifiable g, otherwise
+a positive value uses verifiable g. This value must be saved if key validation
+of g is required, since it is not part of a persisted key.
+
+The EVP_PKEY_CTX_set_dh_paramgen_seed() method sets the I<seed> to use for
+generation rather than using a randomly generated value for the seed. This is
+useful for testing purposes only and can fail if the seed does not produce
+primes for both p & q on its first iteration. This value must be saved if
+key validation of p, q, and verifiable g are required, since it is not part of
+a persisted key.
 
 The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
 If I<pad> is 1 the shared secret is padded with zeros up to the size of the DH

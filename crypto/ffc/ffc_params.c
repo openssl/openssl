@@ -227,7 +227,6 @@ int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
 }
 
 #ifndef FIPS_MODE
-
 int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
 {
     if (!ASN1_bn_print(bp, "prime P:", ffc->p, NULL, indent))

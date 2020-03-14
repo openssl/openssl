@@ -104,11 +104,10 @@ DECLARE_ASN1_ITEM(DHparams)
 #  define DH_CHECK_P_NOT_STRONG_PRIME     DH_CHECK_P_NOT_SAFE_PRIME
 
 /* DH parameter generation types used by EVP_PKEY_CTX_set_dh_paramgen_type() */
-#   define DH_PARAMGEN_TYPE_GENERATOR    0   /* Use a generator g */
-#   define DH_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
+#   define DH_PARAMGEN_TYPE_GENERATOR    0   /* Use a safe prime generator */
+#   define DH_PARAMGEN_TYPE_FIPS_186_2   1   /* Use FIPS186-2 standard */
 #   define DH_PARAMGEN_TYPE_FIPS_186_4   2   /* Use FIPS186-4 standard */
-
-#   define DH_CHECK_P_NOT_STRONG_PRIME     DH_CHECK_P_NOT_SAFE_PRIME
+#   define DH_PARAMGEN_TYPE_GROUP        3   /* Use a named safe prime group */
 
 #   define d2i_DHparams_fp(fp, x) \
         (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
@@ -270,35 +269,17 @@ DEPRECATEDIN_3_0(int DH_meth_set_generate_params(DH_METHOD *dhm,
                                                      (DH *, int, int,
                                                       BN_GENCB *)))
 
-#  define EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN, len, NULL)
-
-#  define EVP_PKEY_CTX_set_dh_paramgen_subprime_len(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN, len, NULL)
-
-#  define EVP_PKEY_CTX_set_dh_paramgen_type(ctx, typ) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL)
-
-#  define EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, gen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL)
-
-#  define EVP_PKEY_CTX_set_dh_rfc5114(ctx, gen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_RFC5114, gen, NULL)
-
-#  define EVP_PKEY_CTX_set_dhx_rfc5114(ctx, gen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, \
-                          EVP_PKEY_CTRL_DH_RFC5114, gen, NULL)
-
-#  define EVP_PKEY_CTX_set_dh_nid(ctx, nid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, \
-                        EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN, \
-                        EVP_PKEY_CTRL_DH_NID, nid, NULL)
-
+int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ);
+int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
+int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                      const unsigned char *seed,
+                                      size_t seedlen);
+int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits);
+int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qlen);
+int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen);
+int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid);
+int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen);
+int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen);
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
 
 #  define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
