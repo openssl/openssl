@@ -49,10 +49,8 @@ const char *ec_query_operation_name(int operation_id)
     switch (operation_id) {
     case OSSL_OP_KEYEXCH:
         return "ECDH";
-#if 0
     case OSSL_OP_SIGNATURE:
-        return deflt_signature;
-#endif
+        return "ECDSA";
     }
     return NULL;
 }
@@ -135,7 +133,8 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
         if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
             return 0;
 
-        if (!ossl_param_bld_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
+        if (!ossl_param_bld_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME,
+                                             curve_name, 0))
             return 0;
     }
 
