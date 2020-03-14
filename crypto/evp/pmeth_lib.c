@@ -835,6 +835,30 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         }
     }
 # endif
+    if (keytype == EVP_PKEY_RSA) {
+        switch (cmd) {
+        case EVP_PKEY_CTRL_RSA_OAEP_MD:
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
+            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_MGF1_MD:
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
+            return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
+        case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
+            return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
+        case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
+            return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, p1);
+        case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
+            return EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, p2);
+        case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
+            return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, p1);
+        }
+    }
+    /*
+     * keytype == -1 is used when several key types share the same structure,
+     * or for generic controls that are the same across multiple key types.
+     */
     if (keytype == -1) {
         switch (cmd) {
         case EVP_PKEY_CTRL_MD:
@@ -845,18 +869,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return EVP_PKEY_CTX_set_rsa_padding(ctx, p1);
         case EVP_PKEY_CTRL_GET_RSA_PADDING:
             return EVP_PKEY_CTX_get_rsa_padding(ctx, p2);
-        case EVP_PKEY_CTRL_RSA_OAEP_MD:
-            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
-        case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
-            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
-        case EVP_PKEY_CTRL_RSA_MGF1_MD:
-            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
         case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
             return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
-        case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
-            return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
-        case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
-            return EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, (unsigned char **)p2);
         case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
             return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, p1);
         case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
@@ -872,12 +886,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             ERR_raise(ERR_LIB_EVP,
                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             return -2;
-        case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
-            return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, p1);
-        case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
-            return EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, p2);
-        case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
-            return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, p1);
         }
     }
     return 0;
