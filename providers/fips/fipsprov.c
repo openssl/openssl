@@ -797,7 +797,7 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { "DH:dhKeyAgreement", "provider=fips,fips=yes", dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH:id-ecPublicKey", "provider=fips,fips=yes", ecdh_keyexch_functions },
+    { "ECDH", "provider=fips,fips=yes", ecdh_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -807,6 +807,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { "DSA:dsaEncryption", "provider=fips,fips=yes", dsa_signature_functions },
 #endif
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_signature_functions },
+#ifndef OPENSSL_NO_EC
+    { "ECDSA", "provider=fips,fips=yes", ecdsa_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

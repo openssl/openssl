@@ -373,7 +373,7 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { "DH:dhKeyAgreement", "provider=default", dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH:id-ecPublicKey", "provider=default", ecdh_keyexch_functions },
+    { "ECDH", "provider=default", ecdh_keyexch_functions },
     { "X25519", "provider=default", x25519_keyexch_functions },
     { "X448", "provider=default", x448_keyexch_functions },
 #endif
@@ -388,6 +388,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519:Ed25519", "provider=default", ed25519_signature_functions },
     { "ED448:Ed448", "provider=default", ed448_signature_functions },
+    { "ECDSA", "provider=default", ecdsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };

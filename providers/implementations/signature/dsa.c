@@ -73,7 +73,7 @@ typedef struct {
 
     char mdname[OSSL_MAX_NAME_SIZE];
 
-    /* The Algorithm Identifier of the combined signature agorithm */
+    /* The Algorithm Identifier of the combined signature algorithm */
     unsigned char aid[OSSL_MAX_ALGORITHM_ID_SIZE];
     size_t  aid_len;
 
