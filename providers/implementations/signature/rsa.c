@@ -328,7 +328,6 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             goto end;
         }
 #endif
-
         switch (prsactx->pad_mode) {
         case RSA_X931_PADDING:
             if ((size_t)RSA_size(prsactx->rsa) < tbslen + 1) {

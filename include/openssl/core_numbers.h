@@ -85,7 +85,7 @@ OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_PROVIDER *prov))
 # define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
 OSSL_CORE_MAKE_FUNC(int, core_clear_last_error_mark,
                     (const OSSL_PROVIDER *prov))
-# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK 10
+# define OSSL_FUNC_CORE_POP_ERROR_TO_MARK     10
 OSSL_CORE_MAKE_FUNC(int, core_pop_error_to_mark, (const OSSL_PROVIDER *prov))
 
 /* Memory allocation, freeing, clearing. */
@@ -134,6 +134,7 @@ OSSL_CORE_MAKE_FUNC(void,
 #define OSSL_FUNC_BIO_READ_EX                 42
 #define OSSL_FUNC_BIO_FREE                    43
 #define OSSL_FUNC_BIO_VPRINTF                 44
+#define OSSL_FUNC_BIO_VSNPRINTF               45
 
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_membuf, (const void *buf, int len))
@@ -142,6 +143,8 @@ OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
                                        va_list args))
+OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
+                   (char *buf, size_t n, const char *fmt, va_list args))
 
 #define OSSL_FUNC_SELF_TEST_CB               100
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CTX *ctx, OSSL_CALLBACK **cb,

@@ -635,13 +635,10 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
     return r->iqmp;
 }
 
-/* TODO(3.0): Temporary until we move PSS support into the FIPS module */
-#ifndef FIPS_MODE
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
     return r->pss;
 }
-#endif
 
 void RSA_clear_flags(RSA *r, int flags)
 {

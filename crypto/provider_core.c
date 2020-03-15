@@ -911,7 +911,7 @@ static int core_pop_error_to_mark(const OSSL_PROVIDER *prov)
 {
     return ERR_pop_to_mark();
 }
-#endif
+#endif /* FIPS_MODE */
 
 /*
  * Functions provided by the core.  Blank line separates "families" of related
@@ -929,13 +929,13 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_SET_ERROR_MARK, (void (*)(void))core_set_error_mark },
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
       (void (*)(void))core_clear_last_error_mark },
-    { OSSL_FUNC_CORE_POP_ERROR_TO_MARK,
-      (void (*)(void))core_pop_error_to_mark },
+    { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
+    { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))OSSL_SELF_TEST_get_callback },
 #endif
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
