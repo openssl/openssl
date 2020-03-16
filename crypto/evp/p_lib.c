@@ -24,6 +24,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/ec.h>
 #include <openssl/cmac.h>
 #include <openssl/engine.h>
 #include <openssl/params.h>
@@ -34,6 +35,11 @@
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+
+#include "crypto/ec.h"
+
+/* TODO remove this when the EVP_PKEY_is_a() #legacy support hack is removed */
+#include "e_os.h"                /* strcasecmp on Windows */
 
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
@@ -732,6 +738,77 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
     return EVP_PKEY_type(pkey->type);
 }
 
+int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
+{
+#ifndef FIPS_MODE
+    if (pkey->keymgmt == NULL) {
+        /*
+         * These hard coded cases are pure hackery to get around the fact
+         * that names in crypto/objects/objects.txt are a mess.  There is
+         * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
+         * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
+         * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
+         * "DSA" is accurate...  but still, better be safe and hard-code
+         * names that we know.
+         * TODO Clean this away along with all other #legacy support.
+         */
+        int type;
+
+        if (strcasecmp(name, "RSA") == 0)
+            type = EVP_PKEY_RSA;
+#ifndef OPENSSL_NO_EC
+        else if (strcasecmp(name, "EC") == 0)
+            type = EVP_PKEY_EC;
+#endif
+#ifndef OPENSSL_NO_DSA
+        else if (strcasecmp(name, "DSA") == 0)
+            type = EVP_PKEY_DSA;
+#endif
+        else
+            type = EVP_PKEY_type(OBJ_sn2nid(name));
+        return EVP_PKEY_type(pkey->type) == type;
+    }
+#endif
+    return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
+}
+
+int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
+{
+    if (pkey->keymgmt == NULL) {
+        switch (EVP_PKEY_base_id(pkey)) {
+        case EVP_PKEY_RSA:
+            return 1;
+#ifndef OPENSSL_NO_DSA
+        case EVP_PKEY_DSA:
+            return 1;
+#endif
+#ifndef OPENSSL_NO_EC
+        case EVP_PKEY_ED25519:
+        case EVP_PKEY_ED448:
+            return 1;
+        case EVP_PKEY_EC:        /* Including SM2 */
+            return EC_KEY_can_sign(pkey->pkey.ec);
+#endif
+        default:
+            break;
+        }
+    } else {
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+        OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+        const char *supported_sig =
+            pkey->keymgmt->query_operation_name != NULL
+            ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
+            : evp_first_name(prov, pkey->keymgmt->name_id);
+        EVP_SIGNATURE *signature = NULL;
+
+        signature = EVP_SIGNATURE_fetch(libctx, supported_sig, NULL);
+        if (signature != NULL) {
+            EVP_SIGNATURE_free(signature);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 static int print_reset_indent(BIO **out, int pop_f_prefix, long saved_indent)
 {

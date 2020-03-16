@@ -5037,3 +5037,5 @@ EVP_PKEY_get_size_t_param               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_bn_param                   ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_can_sign                       ?	3_0_0	EXIST::FUNCTION:
