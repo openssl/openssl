@@ -815,19 +815,22 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)))
         goto done;
 
+    if (!TEST_true(EVP_PKEY_is_a(pkey, "SM2")))
+        goto done;
+
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto done;
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
-                                          strlen(id)), 0))
-        goto done;
-
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
+                                          strlen(id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(mctx, msg, strlen(msg))))
