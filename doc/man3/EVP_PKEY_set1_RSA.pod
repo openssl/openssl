@@ -51,52 +51,61 @@ EVP_PKEY_set1_engine, EVP_PKEY_get0_engine - EVP_PKEY assignment functions
 =head1 DESCRIPTION
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
-EVP_PKEY_set1_EC_KEY() set the key referenced by B<pkey> to B<key>.
+EVP_PKEY_set1_EC_KEY() set the key referenced by I<pkey> to I<key>.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
-EVP_PKEY_get1_EC_KEY() return the referenced key in B<pkey> or
-B<NULL> if the key is not of the correct type.
+EVP_PKEY_get1_EC_KEY() return the referenced key in I<pkey> or
+NULL if the key is not of the correct type.
 
 EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305(), EVP_PKEY_get0_siphash(),
 EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH()
-and EVP_PKEY_get0_EC_KEY() also return the referenced key in B<pkey> or B<NULL>
+and EVP_PKEY_get0_EC_KEY() also return the referenced key in I<pkey> or NULL
 if the key is not of the correct type but the reference count of the
 returned key is B<not> incremented and so must not be freed up after use.
 
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH(),
 EVP_PKEY_assign_EC_KEY(), EVP_PKEY_assign_POLY1305() and
-EVP_PKEY_assign_SIPHASH() also set the referenced key to B<key>
-however these use the supplied B<key> internally and so B<key>
-will be freed when the parent B<pkey> is freed.
+EVP_PKEY_assign_SIPHASH() also set the referenced key to I<key>
+however these use the supplied I<key> internally and so I<key>
+will be freed when the parent I<pkey> is freed.
 
-EVP_PKEY_base_id() returns the type of B<pkey>. For example
+EVP_PKEY_base_id() returns the type of I<pkey>. For example
 an RSA key will return B<EVP_PKEY_RSA>.
 
-EVP_PKEY_id() returns the actual OID associated with B<pkey>. Historically keys
+EVP_PKEY_id() returns the actual OID associated with I<pkey>. Historically keys
 using the same algorithm could use different OIDs. For example an RSA key could
 use the OIDs corresponding to the NIDs B<NID_rsaEncryption> (equivalent to
 B<EVP_PKEY_RSA>) or B<NID_rsa> (equivalent to B<EVP_PKEY_RSA2>). The use of
 alternative non-standard OIDs is now rare so B<EVP_PKEY_RSA2> et al are not
 often seen in practice.
 
-EVP_PKEY_type() returns the underlying type of the NID B<type>. For example
+EVP_PKEY_type() returns the underlying type of the NID I<type>. For example
 EVP_PKEY_type(EVP_PKEY_RSA2) will return B<EVP_PKEY_RSA>.
 
-EVP_PKEY_get0_engine() returns a reference to the ENGINE handling B<pkey>.
+EVP_PKEY_get0_engine() returns a reference to the ENGINE handling I<pkey>.
 
-EVP_PKEY_set1_engine() sets the ENGINE handling B<pkey> to B<engine>. It
+EVP_PKEY_set1_engine() sets the ENGINE handling I<pkey> to I<engine>. It
 must be called after the key algorithm and components are set up.
-If B<engine> does not include an B<EVP_PKEY_METHOD> for B<pkey> an
+If I<engine> does not include an B<EVP_PKEY_METHOD> for I<pkey> an
 error occurs.
 
 EVP_PKEY_set_alias_type() allows modifying a EVP_PKEY to use a
 different set of algorithms than the default.
 
+=head1 WARNINGS
+
+The following functions are only reliable with B<EVP_PKEY>s that have
+been assigned an internal key with EVP_PKEY_assign_*():
+
+EVP_PKEY_id(), EVP_PKEY_base_id(), EVP_PKEY_type(), EVP_PKEY_set_alias_type()
+
+For EVP_PKEY key type checking purposes, L<EVP_PKEY_is_a(3)> is more generic.
+
 =head1 NOTES
 
 In accordance with the OpenSSL naming convention the key obtained
-from or assigned to the B<pkey> using the B<1> functions must be
-freed as well as B<pkey>.
+from or assigned to the I<pkey> using the B<1> functions must be
+freed as well as I<pkey>.
 
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH(),
 EVP_PKEY_assign_EC_KEY(), EVP_PKEY_assign_POLY1305()
@@ -129,7 +138,7 @@ EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
 EVP_PKEY_set1_EC_KEY() return 1 for success or 0 for failure.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
-EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if
+EVP_PKEY_get1_EC_KEY() return the referenced key or NULL if
 an error occurred.
 
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH(),
