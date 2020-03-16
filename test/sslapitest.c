@@ -596,7 +596,7 @@ end:
  * Very focused test to exercise a single case in the server-side state
  * machine, when the ChangeCipherState message needs to actually change
  * from one cipher to a different cipher (i.e., not changing from null
- * encryption to reall encryption).
+ * encryption to real encryption).
  */
 static int test_ccs_change_cipher(void)
 {
@@ -651,12 +651,8 @@ static int test_ccs_change_cipher(void)
      * Now create a fresh connection and try to renegotiate a different
      * cipher on it.
      */
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION, TLS1_2_VERSION,
-                                       &sctx, &cctx, cert, privkey))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                          NULL, NULL))
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
             || !TEST_true(SSL_set_cipher_list(clientssl, "AES128-GCM-SHA256"))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE))
