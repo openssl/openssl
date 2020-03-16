@@ -437,6 +437,11 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             st->hand_state = TLS_ST_SW_CERT_REQ;
             return WRITE_TRAN_CONTINUE;
         }
+        if (s->ext.extra_tickets_expected > 0) {
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+            s->ext.extra_tickets_expected--;
+            return WRITE_TRAN_CONTINUE;
+        }
         /* Try to read from the client instead */
         return WRITE_TRAN_FINISHED;
 
@@ -527,7 +532,9 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
          * Following an initial handshake we send the number of tickets we have
          * been configured for.
          */
-        if (s->hit || s->num_tickets <= s->sent_tickets) {
+        if (s->ext.extra_tickets_expected > 0) {
+            s->ext.extra_tickets_expected--;
+        } else if (s->hit || s->num_tickets <= s->sent_tickets) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }
@@ -723,7 +730,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_IS_TLS13(s) && s->sent_tickets == 0) {
+        if (SSL_IS_TLS13(s) && s->sent_tickets == 0 && s->ext.extra_tickets_expected == 0) {
             /*
              * Actually this is the end of the handshake, but we're going
              * straight into writing the session ticket out. So we finish off
