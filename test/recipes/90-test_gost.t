@@ -24,9 +24,10 @@ plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
 plan skip_all => "EC is disabled in this OpenSSL build"
     if disabled("ec");
 
-
 plan skip_all => "No test GOST engine found"
     if !$ENV{OPENSSL_GOST_ENGINE_SO};
+
+plan skip_all => "Test temporarily disabled due to lack of EVP_MAC support in gost engine";
 
 plan tests => 1;
 
