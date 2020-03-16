@@ -8,14 +8,46 @@
 
 
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_file bldtop_dir/;
 
+BEGIN {
 setup("test_sslprovider");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
-plan tests => 1;
+plan tests => 3;
 
-ok(run(test(["sslprovidertest", srctop_dir("test", "certs")])),
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+
+SKIP: {
+    skip "Skipping FIPS installation", 1
+        if disabled("fips");
+
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-module', bldtop_file('providers', platform->dso('fips')),
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+}
+
+ok(run(test(["sslprovidertest", srctop_dir("test", "certs"), "default",
+             srctop_file("test", "default.cnf")])),
              "running sslprovidertest");
+
+SKIP: {
+    skip "Skipping FIPS provider test", 1
+        if disabled("fips");
+
+    ok(run(test(["sslprovidertest", srctop_dir("test", "certs"), "fips",
+                 srctop_file("test", "fips.cnf")])),
+                 "running sslprovidertest");
+}
