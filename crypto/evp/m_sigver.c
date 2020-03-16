@@ -200,6 +200,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      */
     ERR_pop_to_mark();
 
+    if (type == NULL && mdname != NULL)
+        type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
+
     if (ctx->pctx->pmeth == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
