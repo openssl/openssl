@@ -4984,3 +4984,4 @@ EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:

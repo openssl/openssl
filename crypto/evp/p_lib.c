@@ -755,6 +755,14 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
     return EVP_PKEY_type(pkey->type);
 }
 
+int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
+{
+#ifndef FIPS_MODE
+    if (pkey->keymgmt == NULL)
+        return EVP_PKEY_type(pkey->type) == EVP_PKEY_type(OBJ_sn2nid(name));
+#endif
+    return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
+}
 
 static int print_reset_indent(BIO **out, int pop_f_prefix, long saved_indent)
 {
