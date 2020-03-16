@@ -1539,6 +1539,8 @@ struct ssl_st {
 
         /* RFC4507 session ticket expected to be received or sent */
         int ticket_expected;
+	/* TLS 1.3 tickets requested by the application. */
+	int extra_tickets_expected;
 # ifndef OPENSSL_NO_EC
         size_t ecpointformats_len;
         /* our list */
