@@ -732,7 +732,8 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
              * Calls SSLfatal as required.
              */
             return tls_finish_handshake(s, wst, 0, 0);
-        } if (SSL_IS_DTLS(s)) {
+        }
+        if (SSL_IS_DTLS(s)) {
             /*
              * We're into the last flight. We don't retransmit the last flight
              * unless we need to, so we don't use the timer
