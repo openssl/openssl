@@ -21,13 +21,13 @@ B<-signCA> |
 B<-signcert> |
 B<-crl> |
 B<-newca>
-[B<-extra-cmd> I<extra-params>]
+[B<-extra-I<cmd>> I<parameter>]
 
-B<CA.pl> B<-pkcs12> [B<-extra-pkcs12> I<extra-params>] [I<certname>]
+B<CA.pl> B<-pkcs12> [B<-extra-pkcs12> I<parameter>] [I<certname>]
 
-B<CA.pl> B<-verify> [B<-extra-verify> I<extra-params>] I<certfile> ...
+B<CA.pl> B<-verify> [B<-extra-verify> I<parameter>] I<certfile> ...
 
-B<CA.pl> B<-revoke> [B<-extra-ca> I<extra-params>] I<certfile> [I<reason>]
+B<CA.pl> B<-revoke> [B<-extra-ca> I<parameter>] I<certfile> [I<reason>]
 
 =head1 DESCRIPTION
 
@@ -35,6 +35,23 @@ The B<CA.pl> script is a perl script that supplies the relevant command line
 arguments to the L<openssl(1)> command for some common certificate operations.
 It is intended to simplify the process of certificate creation and management
 by the use of some simple options.
+
+The script is intended as a simple front end for the L<openssl(1)> program for
+use by a beginner. Its behaviour isn't always what is wanted. For more control
+over the behaviour of the certificate commands call the L<openssl(1)> command
+directly.
+
+Most of the filenames mentioned below can be modified by editing the
+B<CA.pl> script.
+
+Under some environments it may not be possible to run the B<CA.pl> script
+directly (for example Win32) and the default configuration file location may
+be wrong. In this case the command:
+
+ perl -S CA.pl
+
+can be used and the B<OPENSSL_CONF> environment variable can be set to point to
+the correct path of the configuration file.
 
 =head1 OPTIONS
 
@@ -69,6 +86,11 @@ certificates (which should also contain the private key) or by hitting ENTER
 details of the CA will be prompted for. The relevant files and directories
 are created in a directory called F<demoCA> in the current directory.
 Uses L<openssl-req(1)> and L<openssl-ca(1)>.
+
+If the F<demoCA> directory already exists then the B<-newca> command will not
+overwrite it and will do nothing. This can happen if a previous call using
+the B<-newca> option terminated abnormally. To get the correct behaviour
+delete the directory if it already exists.
 
 =item B<-pkcs12>
 
@@ -120,13 +142,15 @@ Verifies certificates against the CA certificate for F<demoCA>. If no
 certificates are specified on the command line it tries to verify the file
 F<newcert.pem>.  Invokes L<openssl-verify(1)>.
 
-=item B<-extra-req> | B<-extra-ca> | B<-extra-pkcs12> | B<-extra-x509> | B<-extra-verify> I<extra-params>
+=item B<-extra-I<cmd>> I<parameter>
 
-For each option B<extra-I<cmd>>, pass I<extra-params> to the L<openssl(1)>
+For each option B<extra-I<cmd>>, pass I<parameter> to the L<openssl(1)>
 sub-command with the same name as I<cmd>, if that sub-command is invoked.
-For example, if L<openssl-req(1)> is invoked, the I<extra-params> given with
+For example, if L<openssl-req(1)> is invoked, the I<parameter> given with
 B<-extra-req> will be passed to it.
-Users should consult L<openssl(1)> command documentation for more information.
+For multi-word parameters, either repeat the option or quote the I<parameters>
+so it looks like one word to your shell.
+See the individual command documentation for more information.
 
 =back
 
@@ -144,65 +168,15 @@ the request and finally create a PKCS#12 file containing it.
  CA.pl -signreq
  CA.pl -pkcs12 "My Test Certificate"
 
-=head1 DSA CERTIFICATES
-
-Although the B<CA.pl> creates RSA CAs and requests it is still possible to
-use it with DSA certificates and requests using the L<openssl-req(1)> command
-directly. The following example shows the steps that would typically be taken.
-
-Create some DSA parameters:
-
- openssl dsaparam -out dsap.pem 1024
-
-Create a DSA CA certificate and private key:
-
- openssl req -x509 -newkey dsa:dsap.pem -keyout cacert.pem -out cacert.pem
-
-Create the CA directories and files:
-
- CA.pl -newca
-
-enter a filename (for example, F<cacert.pem>) when prompted for the CA file
-name.
-
-Create a DSA certificate request and private key (a different set of parameters
-can optionally be created first):
-
- openssl req -out newreq.pem -newkey dsa:dsap.pem
-
-Sign the request:
-
- CA.pl -signreq
-
 =head1 ENVIRONMENT
+
+The environment variable B<OPENSSL> may be used to specify the name of
+the OpenSSL program. It can be a full pathname, or a relative one.
 
 The environment variable B<OPENSSL_CONFIG> may be used to specify a
 configuration option and value to the B<req> and B<ca> commands invoked by
 this script. It's value should be the option and pathname, as in
 C<-config /path/to/conf-file>.
-
-=head1 NOTES
-
-Most of the filenames mentioned can be modified by editing the B<CA.pl> script.
-
-If the F<demoCA> directory already exists then the B<-newca> command will not
-overwrite it and will do nothing. This can happen if a previous call using
-the B<-newca> option terminated abnormally. To get the correct behaviour
-delete the demoCA directory if it already exists.
-
-Under some environments it may not be possible to run the B<CA.pl> script
-directly (for example Win32) and the default configuration file location may
-be wrong. In this case the command:
-
- perl -S CA.pl
-
-can be used and the B<OPENSSL_CONF> environment variable changed to point to
-the correct path of the configuration file.
-
-The script is intended as a simple front end for the L<openssl(1)> program for
-use by a beginner. Its behaviour isn't always what is wanted. For more control
-over the behaviour of the certificate commands call the L<openssl(1)> command
-directly.
 
 =head1 SEE ALSO
 
