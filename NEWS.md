@@ -1301,10 +1301,10 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
-[CVE-2019-1551]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1551
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
 [CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
 [CVE-2019-1552]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1552
+[CVE-2019-1551]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1551
 [CVE-2019-1549]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1549
 [CVE-2019-1547]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1547
 [CVE-2019-1543]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1543
