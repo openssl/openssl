@@ -938,7 +938,33 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Changes between 1.1.1d and 1.1.1e [xx XXX xxxx] ###
+### Changes between 1.1.1e and 1.1.1f [xx XXX xxxx] ###
+
+
+### Changes between 1.1.1d and 1.1.1e [17 Mar 2020] ###
+
+ * Properly detect EOF while reading in libssl. Previously if we hit an EOF
+   while reading in libssl then we would report an error back to the
+   application (SSL_ERROR_SYSCALL) but errno would be 0. We now add
+   an error to the stack (which means we instead return SSL_ERROR_SSL) and
+   therefore give a hint as to what went wrong.
+
+   *Matt Caswell*
+
+ * Check that ed25519 and ed448 are allowed by the security level. Previously
+   signature algorithms not using an MD were not being checked that they were
+   allowed by the security level.
+
+   *Kurt Roeckx*
+
+ * Fixed SSL_get_servername() behaviour. The behaviour of SSL_get_servername()
+   was not quite right. The behaviour was not consistent between resumption
+   and normal handshakes, and also not quite consistent with historical
+   behaviour. The behaviour in various scenarios has been clarified and
+   it has been updated to make it match historical behaviour as closely as
+   possible.
+
+   *Matt Caswell*
 
  * *[VMS only]* The header files that the VMS compilers include automatically,
    `__DECC_INCLUDE_PROLOGUE.H` and `__DECC_INCLUDE_EPILOGUE.H`, use pragmas
