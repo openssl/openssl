@@ -322,6 +322,20 @@ extern const OSSL_DISPATCH x448_pub_der_serializer_functions[];
 extern const OSSL_DISPATCH x448_priv_pem_serializer_functions[];
 extern const OSSL_DISPATCH x448_pub_pem_serializer_functions[];
 
+extern const OSSL_DISPATCH ed25519_priv_print_serializer_functions[];
+extern const OSSL_DISPATCH ed25519_pub_print_serializer_functions[];
+extern const OSSL_DISPATCH ed25519_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH ed25519_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH ed25519_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH ed25519_pub_pem_serializer_functions[];
+
+extern const OSSL_DISPATCH ed448_priv_print_serializer_functions[];
+extern const OSSL_DISPATCH ed448_pub_print_serializer_functions[];
+extern const OSSL_DISPATCH ed448_priv_der_serializer_functions[];
+extern const OSSL_DISPATCH ed448_pub_der_serializer_functions[];
+extern const OSSL_DISPATCH ed448_priv_pem_serializer_functions[];
+extern const OSSL_DISPATCH ed448_pub_pem_serializer_functions[];
+
 extern const OSSL_DISPATCH ec_priv_text_serializer_functions[];
 extern const OSSL_DISPATCH ec_pub_text_serializer_functions[];
 extern const OSSL_DISPATCH ec_param_text_serializer_functions[];

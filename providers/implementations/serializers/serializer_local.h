@@ -31,11 +31,6 @@ struct pkcs8_encrypt_ctx_st {
     void *cbarg;
 };
 
-typedef enum {
-    ECX_KEY_TYPE_X25519,
-    ECX_KEY_TYPE_X448
-} ECX_KEY_TYPE;
-
 OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns);
 OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns);
 OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns);
@@ -64,12 +59,14 @@ int ossl_prov_prepare_dh_params(const void *dh, int nid,
 int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);
 int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
 
+#ifndef OPENSSL_NO_EC
 void ecx_get_new_free_import(ECX_KEY_TYPE type,
                              OSSL_OP_keymgmt_new_fn **ecx_new,
                              OSSL_OP_keymgmt_free_fn **ecx_free,
                              OSSL_OP_keymgmt_import_fn **ecx_import);
 int ossl_prov_ecx_pub_to_der(const void *ecxkey, unsigned char **pder);
 int ossl_prov_ecx_priv_to_der(const void *ecxkey, unsigned char **pder);
+#endif
 
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
                                 void **pstr, int *pstrtype);

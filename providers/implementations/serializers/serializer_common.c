@@ -14,6 +14,7 @@
 #include <openssl/types.h>
 #include <openssl/x509.h>        /* i2d_X509_PUBKEY_bio() */
 #include "crypto/bn.h"           /* bn_get_words() */
+#include "crypto/ecx.h"
 #include "prov/bio.h"            /* ossl_prov_bio_printf() */
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h" /* PROV_R_READ_KEY */

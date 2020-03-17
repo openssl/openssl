@@ -13,12 +13,15 @@
 #include <openssl/pem.h>
 #include <openssl/types.h>
 #include <openssl/params.h>
+#include "crypto/ecx.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn x25519_priv_newctx;
 static OSSL_OP_serializer_newctx_fn x448_priv_newctx;
+static OSSL_OP_serializer_newctx_fn ed25519_priv_newctx;
+static OSSL_OP_serializer_newctx_fn ed448_priv_newctx;
 static OSSL_OP_serializer_freectx_fn ecx_priv_freectx;
 static OSSL_OP_serializer_set_ctx_params_fn ecx_priv_set_ctx_params;
 static OSSL_OP_serializer_settable_ctx_params_fn ecx_priv_settable_ctx_params;
@@ -63,6 +66,16 @@ static void *x25519_priv_newctx(void *provctx)
 static void *x448_priv_newctx(void *provctx)
 {
     return ecx_priv_newctx(provctx, ECX_KEY_TYPE_X448);
+}
+
+static void *ed25519_priv_newctx(void *provctx)
+{
+    return ecx_priv_newctx(provctx, ECX_KEY_TYPE_ED25519);
+}
+
+static void *ed448_priv_newctx(void *provctx)
+{
+    return ecx_priv_newctx(provctx, ECX_KEY_TYPE_ED448);
 }
 
 static void ecx_priv_freectx(void *vctx)
@@ -150,14 +163,13 @@ static int ecx_priv_der(void *vctx, void *vecxkey, BIO *out,
     struct ecx_priv_ctx_st *ctx = vctx;
     ECX_KEY *ecxkey = vecxkey;
     int ret;
-    int type = (ctx->type == ECX_KEY_TYPE_X25519) ? EVP_PKEY_X25519
-                                                  : EVP_PKEY_X448;
+    int nid = KEYTYPE2NID(ctx->type);
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
     ret = ossl_prov_write_priv_der_from_obj(out, ecxkey,
-                                            type,
+                                            nid,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
@@ -194,14 +206,13 @@ static int ecx_priv_pem(void *vctx, void *ecxkey, BIO *out,
 {
     struct ecx_priv_ctx_st *ctx = vctx;
     int ret;
-    int type = (ctx->type == ECX_KEY_TYPE_X25519) ? EVP_PKEY_X25519
-                                                  : EVP_PKEY_X448;
+    int nid = KEYTYPE2NID(ctx->type);
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
     ret = ossl_prov_write_priv_pem_from_obj(out, ecxkey,
-                                            type,
+                                            nid,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
@@ -268,3 +279,5 @@ static int ecx_priv_print(void *ctx, void *ecxkey, BIO *out,
 
 MAKE_SERIALIZER_FUNCTIONS_GROUP(x25519)
 MAKE_SERIALIZER_FUNCTIONS_GROUP(x448)
+MAKE_SERIALIZER_FUNCTIONS_GROUP(ed25519)
+MAKE_SERIALIZER_FUNCTIONS_GROUP(ed448)
