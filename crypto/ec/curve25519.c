@@ -5577,13 +5577,23 @@ err:
     return res;
 }
 
-void ED25519_public_from_private(uint8_t out_public_key[32],
-                                 const uint8_t private_key[32])
+int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
+                                const uint8_t private_key[32])
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
+    int r;
+    EVP_MD *sha512 = NULL;
 
-    SHA512(private_key, 32, az);
+    sha512 = EVP_MD_fetch(ctx, SN_sha512, NULL);
+    if (sha512 == NULL)
+        return 0;
+    r = EVP_Digest(private_key, 32, az, NULL, sha512, NULL);
+    EVP_MD_free(sha512);
+    if (!r) {
+        OPENSSL_cleanse(az, sizeof(az));
+        return 0;
+    }
 
     az[0] &= 248;
     az[31] &= 63;
@@ -5593,6 +5603,7 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
     ge_p3_tobytes(out_public_key, &A);
 
     OPENSSL_cleanse(az, sizeof(az));
+    return 1;
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
