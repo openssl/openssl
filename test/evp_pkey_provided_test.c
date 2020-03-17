@@ -12,6 +12,7 @@
 #include <openssl/serializer.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
+#include <openssl/ec.h>
 #include <openssl/core_names.h>
 #include "crypto/ecx.h"
 #include "internal/nelem.h"
@@ -495,7 +496,7 @@ err:
     return ret;
 }
 
-static int test_fromdata_ec(void)
+static int test_fromdata_todata_ec(void)
 {
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
@@ -504,8 +505,10 @@ static int test_fromdata_ec(void)
     BIGNUM *ec_priv_bn = NULL;
     OSSL_PARAM *fromdata_params = NULL;
     const char *alg = "EC";
+    const char *curve = "prime256v1";
+    /* UNCOMPRESSED FORMAT */
     static const unsigned char ec_pub_keydata[] = {
-       0x04,
+       POINT_CONVERSION_UNCOMPRESSED,
        0x1b, 0x93, 0x67, 0x55, 0x1c, 0x55, 0x9f, 0x63,
        0xd1, 0x22, 0xa4, 0xd8, 0xd1, 0x0a, 0x60, 0x6d,
        0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
@@ -515,6 +518,7 @@ static int test_fromdata_ec(void)
        0x7f, 0x59, 0x5f, 0x8c, 0xd1, 0x96, 0x0b, 0xdf,
        0x29, 0x3e, 0x49, 0x07, 0x88, 0x3f, 0x9a, 0x29
     };
+    const int compressed_sz = 1 + (sizeof(ec_pub_keydata) - 1) / 2;
     static const unsigned char ec_priv_keydata[] = {
         0x33, 0xd0, 0x43, 0x83, 0xa9, 0x89, 0x56, 0x03,
         0xd2, 0xd7, 0xfe, 0x6b, 0x01, 0x6f, 0xe4, 0x59,
@@ -529,7 +533,7 @@ static int test_fromdata_ec(void)
         goto err;
 
     if (ossl_param_bld_push_utf8_string(&bld, OSSL_PKEY_PARAM_EC_NAME,
-                                        "prime256v1", 0) <= 0)
+                                        curve, 0) <= 0)
         goto err;
     if (ossl_param_bld_push_octet_string(&bld, OSSL_PKEY_PARAM_PUB_KEY,
                                          ec_pub_keydata,
@@ -550,6 +554,37 @@ static int test_fromdata_ec(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2))
         goto err;
 
+    char pub[sizeof(ec_pub_keydata)];
+    char priv[sizeof(ec_priv_keydata)];
+    char curve_name[80];
+    OSSL_PARAM todata_params[4];
+    todata_params[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME, curve_name,
+                                         sizeof(curve_name));
+    todata_params[1] =
+        OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub,
+                                         sizeof(pub));
+    todata_params[2] =
+        OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_PRIV_KEY, (unsigned char *)priv,
+                                sizeof(priv));
+    todata_params[3] = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_PKEY_todata(pk, todata_params)))
+        goto err;
+
+    if (!TEST_str_eq(curve_name, curve))
+        goto err;
+
+    /* The public key is returned is in COMPRESSED FORMAT */
+    if (!TEST_true(pub[0] == (POINT_CONVERSION_COMPRESSED + 1))
+        || !TEST_mem_eq(pub + 1, todata_params[1].data_size - 1,
+                        ec_pub_keydata + 1, compressed_sz - 1))
+        goto err;
+
+    /*
+     * TODO(3.0): How do we compare bignums here?
+     * The value returned in priv is in BE order.
+     */
     ret = test_print_key_using_pem(alg, pk)
           && test_print_key_using_serializer(alg, pk);
 err:
@@ -578,7 +613,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_fromdata_ecx, 2);
-    ADD_TEST(test_fromdata_ec);
+    ADD_TEST(test_fromdata_todata_ec);
 #endif
     return 1;
 }

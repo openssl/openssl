@@ -370,3 +370,82 @@ void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 
     return keydata;
 }
+
+struct export_todata_st {
+    OSSL_PARAM *params;
+};
+
+/*
+ * Some keys have multiple instances, so mark them as used so that they are only
+ * found once.
+ */
+static OSSL_PARAM *locate_used(const OSSL_PARAM *params, const char *key,\
+                               int used[], int used_len)
+{
+    int i;
+    OSSL_PARAM *p = (OSSL_PARAM *)params;
+
+    for (i = 0; p->key != NULL && i < used_len; p++, i++) {
+        if (!used[i] && strcmp(key, p->key) == 0) {
+            used[i] = 1;
+            return p;
+        }
+    }
+    return NULL;
+}
+
+#define OSSL_PARAM_TODATA_MAX 25
+
+static int todata(const OSSL_PARAM src[], void *cbarg)
+{
+    int i;
+    struct export_todata_st *data = cbarg;
+    OSSL_PARAM *p, *dst = data->params;
+    int used[OSSL_PARAM_TODATA_MAX];
+
+    memset(used, 0, sizeof(used));
+
+    for (i = 0; dst[i].key != NULL; ++i) {
+        p = locate_used(src, dst[i].key, used, OSSL_PARAM_TODATA_MAX);
+        if (p == NULL)
+            continue;
+        if (dst[i].data_type != p->data_type)
+            return 0;
+        if (p->return_size > dst[i].data_size)
+            return 0;
+        switch (dst[i].data_type) {
+        case OSSL_PARAM_UTF8_PTR:
+        case OSSL_PARAM_OCTET_PTR:
+            dst[i].data = p->data;
+            dst[i].data_size = p->data_size;
+            dst[i].return_size = p->return_size;
+            break;
+        case OSSL_PARAM_REAL:
+        case OSSL_PARAM_INTEGER:
+        case OSSL_PARAM_UNSIGNED_INTEGER:
+        case OSSL_PARAM_OCTET_STRING:
+        case OSSL_PARAM_UTF8_STRING:
+            memcpy(dst[i].data, p->data, p->data_size);
+            dst[i].data_size = p->data_size;
+            dst[i].return_size = p->return_size;
+            break;
+        default:
+            continue;
+        }
+    }
+    return 1;
+}
+
+int evp_keymgmt_util_todata(EVP_PKEY *pkey, int selection, OSSL_PARAM params[])
+{
+    struct export_todata_st exprt_todata;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keymgmt->export == NULL)
+        return 0;
+
+    exprt_todata.params = params;
+    return evp_keymgmt_export(pkey->keymgmt, pkey->keydata, selection,
+                              &todata, &exprt_todata);
+}

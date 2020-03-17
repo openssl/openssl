@@ -368,6 +368,17 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
     return 1;
 }
 
+int EVP_PKEY_todata(EVP_PKEY *pkey, OSSL_PARAM params[])
+{
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
+
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+    return evp_keymgmt_util_todata(pkey, selection, params);
+}
+
 /*
  * TODO(3.0) Re-evaluate the names, it's possible that we find these to be
  * better:

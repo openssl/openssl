@@ -261,14 +261,16 @@ int params_to_key(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
  *
  * This function only exports the bare keypair, domain parameters and other
  * parameters are exported separately.
+ * Note that the caller needs to free the allocated pub_key as it is required
+ * by OSSL_PARAM_BLD.
  */
 static ossl_inline
-int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private)
+int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
+                  int include_private, unsigned char **pub_key)
 {
     const BIGNUM *priv_key = NULL;
     const EC_POINT *pub_point = NULL;
     const EC_GROUP *ecg = NULL;
-    unsigned char *pub_key = NULL;
     size_t pub_key_len = 0;
     int ret = 0;
 
@@ -284,12 +286,12 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
         return 0;
     if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
                                           POINT_CONVERSION_COMPRESSED,
-                                          &pub_key, NULL)) == 0)
+                                          pub_key, NULL)) == 0)
         return 0;
 
     if (!ossl_param_bld_push_octet_string(tmpl,
                                           OSSL_PKEY_PARAM_PUB_KEY,
-                                          pub_key, pub_key_len))
+                                          *pub_key, pub_key_len))
         goto err;
 
     if (priv_key != NULL && include_private) {
@@ -340,9 +342,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
     }
 
     ret = 1;
-
  err:
-    OPENSSL_free(pub_key);
     return ret;
 }
 
@@ -528,6 +528,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     EC_KEY *ec = keydata;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
+    unsigned char *pub_key = NULL;
     int ok = 1;
 
     if (ec == NULL)
@@ -563,7 +564,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
-        ok = ok && key_to_params(ec, &tmpl, include_private);
+        ok = ok && key_to_params(ec, &tmpl, include_private, &pub_key);
     }
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && otherparams_to_params(ec, &tmpl);
@@ -574,6 +575,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     ok = param_cb(params, cbarg);
     ossl_param_bld_free(params);
+    OPENSSL_free(pub_key);
     return ok;
 }
 

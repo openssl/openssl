@@ -633,6 +633,7 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
 void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                 int selection, const OSSL_PARAM params[]);
+int evp_keymgmt_util_todata(EVP_PKEY *pkey, int selection, OSSL_PARAM params[]);
 int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
 int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
 int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
