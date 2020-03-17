@@ -23,14 +23,12 @@ struct evp_pkey_ctx_st {
     int operation;
 
     /*
-     * Library context, Key type name and properties associated
-     * with this context
+     * Library context, property query, keytype and keymgmt associated with
+     * this context
      */
     OPENSSL_CTX *libctx;
-    const char *keytype;
     const char *propquery;
-
-    /* cached key manager */
+    const char *keytype;
     EVP_KEYMGMT *keymgmt;
 
     union {

@@ -1105,13 +1105,15 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         *keymgmt = NULL;
     }
 
-    /* If no keymgmt was given or found, get a default keymgmt */
+    /*
+     * If no keymgmt was given or found, get a default keymgmt.  We do so by
+     * letting EVP_PKEY_CTX_new_from_pkey() do it for us, then we steal it.
+     */
     if (tmp_keymgmt == NULL) {
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
 
-        if (ctx != NULL && ctx->keytype != NULL)
-            tmp_keymgmt = allocated_keymgmt =
-                EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, propquery);
+        tmp_keymgmt = ctx->keymgmt;
+        ctx->keymgmt = NULL;
         EVP_PKEY_CTX_free(ctx);
     }
 
@@ -1249,14 +1251,17 @@ void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         if (pk->ameth->export_to == NULL)
             return NULL;
 
-        /* If no keymgmt was given, get a default keymgmt */
+        /*
+         * If no keymgmt was given or found, get a default keymgmt.  We do
+         * so by letting EVP_PKEY_CTX_new_from_pkey() do it for us, then we
+         * steal it.
+         */
         if (tmp_keymgmt == NULL) {
             EVP_PKEY_CTX *ctx =
                 EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
 
-            if (ctx != NULL && ctx->keytype != NULL)
-                tmp_keymgmt = allocated_keymgmt =
-                    EVP_KEYMGMT_fetch(ctx->libctx, ctx->keytype, propquery);
+            tmp_keymgmt = ctx->keymgmt;
+            ctx->keymgmt = NULL;
             EVP_PKEY_CTX_free(ctx);
         }
 

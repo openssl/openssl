@@ -138,12 +138,13 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 
 static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
-                                 const char *name, const char *propquery,
+                                 const char *keytype, const char *propquery,
                                  int id)
 
 {
     EVP_PKEY_CTX *ret;
     const EVP_PKEY_METHOD *pmeth = NULL;
+    EVP_KEYMGMT *keymgmt = NULL;
 
     /*
      * When using providers, the context is bound to the algo implementation
@@ -160,11 +161,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;
-        name = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
-        /*
-         * TODO: I wonder if the EVP_PKEY should have the name and propquery
-         * that were used when building it....  /RL
-         */
+        keytype = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
         goto common;
     }
 #ifndef FIPS_MODE
@@ -187,10 +184,10 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * since that can only happen internally, it's safe to make an
      * assertion.
      */
-    if (!ossl_assert(e == NULL || name == NULL))
+    if (!ossl_assert(e == NULL || keytype == NULL))
         return NULL;
     if (e == NULL)
-        name = OBJ_nid2sn(id);
+        keytype = OBJ_nid2sn(id);
 
 # ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
@@ -225,6 +222,13 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     /* END legacy */
 #endif /* FIPS_MODE */
  common:
+    /*
+     * If there's no engine and there's a name, we try fetching a provider
+     * implementation.
+     */
+    if (e == NULL && keytype != NULL)
+        keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
+
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
@@ -234,8 +238,9 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         return NULL;
     }
     ret->libctx = libctx;
-    ret->keytype = name;
     ret->propquery = propquery;
+    ret->keytype = keytype;
+    ret->keymgmt = keymgmt;
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;

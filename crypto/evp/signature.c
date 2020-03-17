@@ -359,7 +359,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      */
     ERR_set_mark();
 
-    if (ctx->engine != NULL || ctx->keytype == NULL)
+    if (ctx->keymgmt == NULL)
         goto legacy;
 
     /*
