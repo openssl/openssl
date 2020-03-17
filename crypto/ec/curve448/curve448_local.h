@@ -18,7 +18,4 @@ int ED448ph_verify(OPENSSL_CTX *ctx, const uint8_t hash[64],
                    const uint8_t signature[114], const uint8_t public_key[57],
                    const uint8_t *context, size_t context_len);
 
-int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
-                              const uint8_t private_key[57]);
-
 #endif              /* OSSL_CRYPTO_EC_CURVE448_LOCAL_H */
