@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.1d and 1.1.1e [17 Mar 2020]
   *) Properly detect EOF while reading in libssl. Previously if we hit an EOF
      while reading in libssl then we would report an error back to the
