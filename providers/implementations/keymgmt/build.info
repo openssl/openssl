@@ -15,8 +15,20 @@ ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$EC_GOAL]=ec_kmgmt.c
 ENDIF
+
+IF[{- !$disabled{asm} -}]
+  $ECDEF_s390x=S390X_EC_ASM
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$ECASM_{- $target{asm_arch} -}]
+    $ECDEF=$ECDEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
 IF[{- !$disabled{ec} -}]
   SOURCE[$ECX_GOAL]=ecx_kmgmt.c
+  DEFINE[$ECX_GOAL]=$ECDEF
 ENDIF
 
 SOURCE[../../libfips.a]=rsa_kmgmt.c

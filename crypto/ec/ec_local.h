@@ -679,8 +679,6 @@ ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
 int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
                             const ECDSA_SIG *sig, EC_KEY *eckey);
 
-void ED25519_public_from_private(uint8_t out_public_key[32],
-                                 const uint8_t private_key[32]);
 
 /*-
  * This functions computes a single point multiplication over the EC group,

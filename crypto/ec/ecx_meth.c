@@ -92,7 +92,11 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             X25519_public_from_private(pubkey, privkey);
             break;
         case EVP_PKEY_ED25519:
-            ED25519_public_from_private(pubkey, privkey);
+            /*
+             * TODO(3.0): We set the library context to NULL for now. This will
+             * need to change or this code be removed.
+             */
+            ED25519_public_from_private(NULL, pubkey, privkey);
             break;
         case EVP_PKEY_X448:
             X448_public_from_private(pubkey, privkey);
@@ -100,7 +104,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         case EVP_PKEY_ED448:
             /*
              * TODO(3.0): We set the library context to NULL for now. This will
-             * need to change.
+             * need to change or this code be removed.
              */
             ED448_public_from_private(NULL, pubkey, privkey);
             break;
