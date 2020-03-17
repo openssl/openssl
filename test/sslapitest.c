@@ -2093,6 +2093,148 @@ static int test_psk_tickets(void)
 
     return testresult;
 }
+
+static int test_extra_tickets(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    int testresult = 0;
+    int stateful = 0;
+    size_t nbytes;
+    unsigned char c, buf[1];
+
+    new_called = 0;
+    do_cache = 1;
+
+    if (idx >= 3) {
+        idx -= 3;
+        stateful = 1;
+    }
+
+    if (!TEST_ptr(bretry) || !setup_ticket_test(stateful, idx, &sctx, &cctx))
+        goto end;
+    SSL_CTX_sess_set_new_cb(sctx, new_session_cb);
+    /* setup_ticket_test() uses new_cachesession_cb which we don't need. */
+    SSL_CTX_sess_set_new_cb(cctx, new_session_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL)))
+        goto end;
+
+    /*
+     * Note that we have new_session_cb on both sctx and cctx, so new_called is
+     * incremented by both client and server.
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+               /* Check we got the number of tickets we were expecting */
+            || !TEST_int_eq(idx * 2, new_called)
+            || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_int_eq(idx * 2, new_called))
+        goto end;
+
+    /* Now try a (real) write to actually send the tickets */
+    c = '1';
+    if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
+            || !TEST_size_t_eq(1, nbytes)
+            || !TEST_int_eq(idx * 2 + 2, new_called)
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(idx * 2 + 4, new_called)
+            || !TEST_int_eq(sizeof(buf), nbytes)
+            || !TEST_int_eq(c, buf[0])
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
+        goto end;
+
+    /* Try with only requesting one new ticket, too */
+    c = '2';
+    new_called = 0;
+    if (!TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_write_ex(serverssl, &c, sizeof(c), &nbytes))
+            || !TEST_size_t_eq(sizeof(c), nbytes)
+            || !TEST_int_eq(1, new_called)
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(2, new_called)
+            || !TEST_size_t_eq(sizeof(buf), nbytes)
+            || !TEST_int_eq(c, buf[0]))
+        goto end;
+
+    /* Do it again but use dummy writes to drive the ticket generation */
+    c = '3';
+    new_called = 0;
+    if (!TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_write_ex(serverssl, &c, 0, &nbytes))
+            || !TEST_size_t_eq(0, nbytes)
+            || !TEST_int_eq(2, new_called)
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(4, new_called))
+        goto end;
+
+    /*
+     * Use the always-retry BIO to exercise the logic that forces ticket
+     * generation to wait until a record boundary.
+     */
+    c = '4';
+    new_called = 0;
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+    if (!TEST_false(SSL_write_ex(serverssl, &c, 1, &nbytes))
+            || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_WRITE)
+            || !TEST_size_t_eq(nbytes, 0))
+        goto end;
+    /* Restore a BIO that will let the write succeed */
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+    /* These calls should just queue the request and not send anything. */
+    if (!TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_int_eq(0, new_called))
+        goto end;
+    /* Re-do the write; still no tickets sent */
+    if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
+            || !TEST_size_t_eq(1, nbytes)
+            || !TEST_int_eq(0, new_called)
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(0, new_called)
+            || !TEST_int_eq(sizeof(buf), nbytes)
+            || !TEST_int_eq(c, buf[0])
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
+        goto end;
+    /* Now the *next* write should send the tickets */
+    c = '5';
+    if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
+            || !TEST_size_t_eq(1, nbytes)
+            || !TEST_int_eq(2, new_called)
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(4, new_called)
+            || !TEST_int_eq(sizeof(buf), nbytes)
+            || !TEST_int_eq(c, buf[0])
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    testresult = 1;
+
+ end:
+    BIO_free(bretry);
+    BIO_free(tmp);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    clientssl = serverssl = NULL;
+    sctx = cctx = NULL;
+    return testresult;
+}
 #endif
 
 #define USE_NULL            0
@@ -7395,6 +7537,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
     ADD_TEST(test_psk_tickets);
+    ADD_ALL_TESTS(test_extra_tickets, 6);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
