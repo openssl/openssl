@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.1.1d and OpenSSL 1.1.1e [under development]
 
-      o
+      o Fixed an an overflow bug in the x64_64 Montgomery squaring procedure
+        used in exponentiation with 512-bit moduli (CVE-2019-1551)
 
   Major changes between OpenSSL 1.1.1c and OpenSSL 1.1.1d [10 Sep 2019]
 
