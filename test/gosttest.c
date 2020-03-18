@@ -46,7 +46,7 @@ static int test_tls13(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION,
                                        0,

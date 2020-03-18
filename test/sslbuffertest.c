@@ -165,7 +165,7 @@ int setup_tests(void)
             || !TEST_ptr(pkey = test_get_argument(1)))
         return 0;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, 0,
                              &serverctx, &clientctx, cert, pkey)) {
         TEST_error("Failed to create SSL_CTX pair\n");

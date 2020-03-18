@@ -28,7 +28,7 @@ static int test_fatalerr(void)
         0x17, 0x03, 0x03, 0x00, 0x05, 'D', 'u', 'm', 'm', 'y'
     };
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_method(), TLS_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_method(), TLS_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto err;
