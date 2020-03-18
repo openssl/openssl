@@ -147,6 +147,30 @@ The number for this operation is B<OSSL_OP_KEYEXCH>.
 The functions the provider can offer are described in
 L<provider-keyexch(7)>
 
+=item Asymmetric Ciphers
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_ASYM_CIPHER>.
+The number for this operation is B<OSSL_OP_ASYM_CIPHER>.
+The functions the provider can offer are described in
+L<provider-asym_cipher(7)>
+
+=item Signatures
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_SIGNATURE>.
+The number for this operation is B<OSSL_OP_SIGNATURE>.
+The functions the provider can offer are described in
+L<provider-signature(7)>
+
+=item Key Management
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_KEYMGMT>.
+The number for this operation is B<OSSL_OP_KEYMGMT>.
+The functions the provider can offer are described in
+L<provider-keymgmt(7)>
+
 =item Serialization
 
 In the OpenSSL libraries, the corresponding method object is
@@ -165,10 +189,9 @@ I<NOTE: This section is mostly interesting to OpenSSL users.>
 
 Users of the OpenSSL libraries never query the provider directly for
 its diverse implementations and dispatch tables.
-Instead, the diverse OpenSSL APIs often have fetching functions that
-do the work, and they return an appropriate method object back to the
-user.
-These functions usually have the name C<APINAME_fetch>, where
+Instead, the OpenSSL APIs often have fetching functions that do the work, and
+they return an appropriate method object back to the user.
+These functions often have the name C<APINAME_fetch>, where
 C<APINAME> is the name of the API, for example L<EVP_MD_fetch(3)>.
 
 These fetching functions follow a fairly common pattern, where three
@@ -203,6 +226,15 @@ an implementation.
 
 The method object that is fetched can then be used with diverse other
 functions that use them, for example L<EVP_DigestInit_ex(3)>.
+
+Operations that work with asymmetric keys via an B<EVP_PKEY_CTX> have a slightly
+different form. In those cases the fetch of the algorithm is done internally
+to the library. However the same arguments to be used during the fetch are still
+supplied by the application via the functions L<EVP_PKEY_CTX_new_from_name(3)>.
+
+There is also an alternative functions called L<EVP_PKEY_CTX_new_from_pkey(3)>
+which works in the same way except that the algorithm name is not explicitly
+passed. Instead it is inferred from an EVP_PKEY object.
 
 =head3 Implicit fetch
 
