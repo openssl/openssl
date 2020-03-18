@@ -315,6 +315,20 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group,
     if (!BN_GF2m_add(x2, x2, &group->b))
         goto err;               /* x2 = x^4 + b */
 
+    /* blinding: make sure z1 has the same bit length as z2. */
+    do {
+        if (!BN_rand(z1, BN_num_bits(z2), 0, 0)) {
+            ECerr(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY, ERR_R_BN_LIB);
+            return 0;
+        }
+    } while (BN_is_zero(z1));
+
+    /* if field_encode defined convert between representations */
+    if ((group->meth->field_encode != NULL
+         && !group->meth->field_encode(group, z1, z1, ctx))
+        || !group->meth->field_mul(group, x1, x1, z1, ctx))
+        return 0;
+
     /* find top most bit and go one past it */
     i = scalar->top - 1;
     mask = BN_TBIT;
