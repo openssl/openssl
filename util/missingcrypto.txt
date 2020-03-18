@@ -1558,6 +1558,8 @@ conf_ssl_name_find(3)
 d2i_X509_bio(3)
 d2i_X509_fp(3)
 err_free_strings_int(3)
+# The following is internal but exported by libcrypto
+evp_pkey_get_EC_KEY_curve_nid(3)
 i2a_ACCESS_DESCRIPTION(3)
 i2a_ASN1_ENUMERATED(3)
 i2a_ASN1_INTEGER(3)
