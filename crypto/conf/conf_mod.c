@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,8 +13,10 @@
 #include <openssl/crypto.h>
 #include "internal/conf.h"
 #include "internal/dso.h"
+#include "internal/thread_once.h"
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+#include <openssl/engine.h>
 
 #define DSO_mod_init_name "OPENSSL_init"
 #define DSO_mod_finish_name "OPENSSL_finish"
@@ -54,6 +56,8 @@ struct conf_imodule_st {
 
 static STACK_OF(CONF_MODULE) *supported_modules = NULL;
 static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
+
+static CRYPTO_ONCE load_builtin_modules = CRYPTO_ONCE_STATIC_INIT;
 
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
@@ -158,20 +162,18 @@ int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
 int CONF_modules_load_file(const char *filename,
                            const char *appname, unsigned long flags)
 {
-    char *file = (char *)filename;
-    int ret = 0;
+    return CONF_modules_load_file_with_libctx(NULL, filename, appname, flags);
+}
 
-    if (file == NULL) {
-        /* If we specify a default configuration to load try to load it */
-        file = CONF_get1_default_config_file();
-        /* dont fail if there is no default though */
-        if (file == NULL)
-            return 1;
-    }
-    ret = CONF_modules_load_file_with_libctx(NULL, file, appname, flags);
-    if (file != filename)
-        OPENSSL_free(file);
-    return ret;
+DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)
+{
+    OPENSSL_load_builtin_modules();
+#ifndef OPENSSL_NO_ENGINE
+    /* Need to load ENGINEs */
+    ENGINE_load_builtin_engines();
+#endif
+    ERR_clear_error();
+    return 1;
 }
 
 static int module_run(const CONF *cnf, const char *name, const char *value,
@@ -179,6 +181,10 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
 {
     CONF_MODULE *md;
     int ret;
+
+    if (!RUN_ONCE(&load_builtin_modules, do_load_builtin_modules)) {
+        return -1;
+    }
 
     md = module_find(name);
 
