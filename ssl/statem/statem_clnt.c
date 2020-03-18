@@ -2990,7 +2990,8 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    pctx = EVP_PKEY_CTX_new(pkey, NULL);
+
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, pkey, s->ctx->propq);
     if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
         || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_RSA,
