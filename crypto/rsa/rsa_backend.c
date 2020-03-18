@@ -20,19 +20,23 @@
 DEFINE_STACK_OF(BIGNUM)
 
 static int collect_numbers(STACK_OF(BIGNUM) *numbers,
-                           const OSSL_PARAM params[], const char *key)
+                           const OSSL_PARAM params[], const char *names[])
 {
     const OSSL_PARAM *p = NULL;
+    int i;
 
     if (numbers == NULL)
         return 0;
 
-    for (p = params; (p = OSSL_PARAM_locate_const(p, key)) != NULL; p++) {
-        BIGNUM *tmp = NULL;
+    for (i = 0; names[i] != NULL; i++){
+        p = OSSL_PARAM_locate_const(params, names[i]);
+        if (p != NULL) {
+            BIGNUM *tmp = NULL;
 
-        if (!OSSL_PARAM_get_BN(p, &tmp)
-            || sk_BIGNUM_push(numbers, tmp) == 0)
-            return 0;
+            if (!OSSL_PARAM_get_BN(p, &tmp)
+                || sk_BIGNUM_push(numbers, tmp) == 0)
+                return 0;
+        }
     }
 
     return 1;
@@ -65,11 +69,11 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
     if (is_private) {
         if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
-                             OSSL_PKEY_PARAM_RSA_FACTOR)
+                             rsa_mp_factor_names)
             || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
-                                OSSL_PKEY_PARAM_RSA_EXPONENT)
+                                rsa_mp_exp_names)
             || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
-                                OSSL_PKEY_PARAM_RSA_COEFFICIENT))
+                                rsa_mp_coeff_names))
             goto err;
 
         /* It's ok if this private key just has n, e and d */

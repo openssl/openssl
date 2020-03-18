@@ -20,7 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "openssl/param_build.h"
+#include <openssl/param_build.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -1142,27 +1142,24 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
-        for (i = 0; i < numprimes; i++) {
+        for (i = 0; i < numprimes  && rsa_mp_factor_names[i] != NULL; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
-                                        num))
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_factor_names[i], num))
                 goto err;
         }
 
-        for (i = 0; i < numexps; i++) {
+        for (i = 0; i < numexps && rsa_mp_exp_names[i] != NULL; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
-                                        num))
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_exp_names[i], num))
                 goto err;
         }
 
-        for (i = 0; i < numcoeffs; i++) {
+        for (i = 0; i < numcoeffs && rsa_mp_coeff_names[i] != NULL; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
-                                        num))
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_coeff_names[i], num))
                 goto err;
         }
     }

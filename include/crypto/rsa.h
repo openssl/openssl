@@ -40,4 +40,8 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len);
 const unsigned char *rsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 
+extern const char *rsa_mp_factor_names[];
+extern const char *rsa_mp_exp_names[];
+extern const char *rsa_mp_coeff_names[];
+
 #endif

@@ -10,11 +10,10 @@
 #include <assert.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include "openssl/param_build.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "internal/param_build_set.h"
 
 static OSSL_OP_keymgmt_new_fn x25519_new_key;
 static OSSL_OP_keymgmt_new_fn x448_new_key;
@@ -90,18 +89,21 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     return ok;
 }
 
-static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl)
+static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl,
+                         OSSL_PARAM params[])
 {
     if (key == NULL)
         return 0;
 
-    if (!OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
-                                          key->pubkey, key->keylen))
+    if (!ossl_param_build_set_octet_string(tmpl, params,
+                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                           key->pubkey, key->keylen))
         return 0;
 
     if (key->privkey != NULL
-        && !OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             key->privkey, key->keylen))
+        && !ossl_param_build_set_octet_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_PRIV_KEY,
+                                              key->privkey, key->keylen))
         return 0;
 
     return 1;
@@ -113,7 +115,7 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     ECX_KEY *key = keydata;
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
-    int ret;
+    int ret = 0;
 
     if (key == NULL)
         return 0;
@@ -123,24 +125,30 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
-            && !key_to_params(key, tmpl)) {
-        OSSL_PARAM_BLD_free(tmpl);
-        return 0;
-    }
+         && !key_to_params(key, tmpl, NULL))
+        goto err;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
+         && !key_to_params(key, tmpl, NULL))
+        goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
-    OSSL_PARAM_BLD_free(tmpl);
     if (params == NULL)
-        return 0;
+        goto err;
 
     ret = param_cb(params, cbarg);
     OSSL_PARAM_BLD_free_params(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
     return ret;
 }
 
+#define ECX_KEY_TYPES()                                                        \
+OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),                     \
+OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
+
 static const OSSL_PARAM ecx_key_types[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+    ECX_KEY_TYPES(),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *ecx_imexport_types(int selection)
@@ -150,9 +158,10 @@ static const OSSL_PARAM *ecx_imexport_types(int selection)
     return NULL;
 }
 
-static int ecx_get_params(OSSL_PARAM params[], int bits, int secbits,
+static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
                           int size)
 {
+    ECX_KEY *ecx = key;
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
@@ -164,33 +173,38 @@ static int ecx_get_params(OSSL_PARAM params[], int bits, int secbits,
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, size))
         return 0;
-    return 1;
+    return key_to_params(ecx, NULL, params);
 }
 
 static int x25519_get_params(void *key, OSSL_PARAM params[])
 {
-    return ecx_get_params(params, X25519_BITS, X25519_SECURITY_BITS, X25519_KEYLEN);
+    return ecx_get_params(key, params, X25519_BITS, X25519_SECURITY_BITS,
+                          X25519_KEYLEN);
 }
 
 static int x448_get_params(void *key, OSSL_PARAM params[])
 {
-    return ecx_get_params(params, X448_BITS, X448_SECURITY_BITS, X448_KEYLEN);
+    return ecx_get_params(key, params, X448_BITS, X448_SECURITY_BITS,
+                          X448_KEYLEN);
 }
 
 static int ed25519_get_params(void *key, OSSL_PARAM params[])
 {
-    return ecx_get_params(params, ED25519_BITS, ED25519_SECURITY_BITS, ED25519_KEYLEN);
+    return ecx_get_params(key, params, ED25519_BITS, ED25519_SECURITY_BITS,
+                          ED25519_KEYLEN);
 }
 
 static int ed448_get_params(void *key, OSSL_PARAM params[])
 {
-    return ecx_get_params(params, ED448_BITS, ED448_SECURITY_BITS, ED448_KEYLEN);
+    return ecx_get_params(key, params, ED448_BITS, ED448_SECURITY_BITS,
+                          ED448_KEYLEN);
 }
 
 static const OSSL_PARAM ecx_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    ECX_KEY_TYPES(),
     OSSL_PARAM_END
 };
 

@@ -52,7 +52,7 @@ not supported by the public key algorithm.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_new(3)>, L<provider(7)>
+L<EVP_PKEY_CTX_new(3)>, L<provider(7)>, L<EVP_PKEY_gettable_params(3)>
 
 =head1 HISTORY
 
