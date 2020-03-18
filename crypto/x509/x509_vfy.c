@@ -1804,9 +1804,15 @@ static int internal_verify(X509_STORE_CTX *ctx)
             xs = xi;
             goto check_cert_time;
         }
-        if (n <= 0)
-            return verify_cb_cert(ctx, xi, 0,
-                                  X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE);
+        if (n <= 0) {
+            if (!verify_cb_cert(ctx, xi, 0,
+                                X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE))
+                return 0;
+
+            xs = xi;
+            goto check_cert_time;
+        }
+
         n--;
         ctx->error_depth = n;
         xs = sk_X509_value(ctx->chain, n);
