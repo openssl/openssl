@@ -33,8 +33,11 @@
 
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "internal/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+
+#include "crypto/ec.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
@@ -779,6 +782,48 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
     }
     return 0;
 }
+
+#ifndef OPENSSL_NO_EC
+/*
+ * TODO rewrite when we have proper data extraction functions
+ * Note: an octet pointer would be desirable!
+ */
+static OSSL_CALLBACK get_ec_curve_name_cb;
+static int get_ec_curve_name_cb(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = NULL;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME)) != NULL)
+        return OSSL_PARAM_get_utf8_string(p, arg, 0);
+
+    /* If there is no curve name, this is not an EC key */
+    return 0;
+}
+
+int evp_pkey_get_EC_KEY_curve_nid(const EVP_PKEY *pkey)
+{
+    int ret = NID_undef;
+
+    if (pkey->keymgmt == NULL) {
+        if (EVP_PKEY_base_id(pkey) == EVP_PKEY_EC) {
+            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+
+            ret = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+        }
+    } else if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "SM2")) {
+        char *curve_name = NULL;
+
+        ret = evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
+                                 OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                 get_ec_curve_name_cb, &curve_name);
+        if (ret)
+            ret = ec_curve_name2nid(curve_name);
+        OPENSSL_free(curve_name);
+    }
+
+    return ret;
+}
+#endif
 
 static int print_reset_indent(BIO **out, int pop_f_prefix, long saved_indent)
 {
