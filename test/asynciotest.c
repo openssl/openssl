@@ -296,7 +296,8 @@ static int test_asyncio(int test)
     const char testdata[] = "Test data";
     char buf[sizeof(testdata)];
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
+                                       TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &serverctx, &clientctx, cert, privkey)))
         goto end;
