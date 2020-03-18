@@ -200,6 +200,8 @@ static int key2048p3_v1(RSA *key)
 
 static int key2048p3_v2(RSA *key)
 {
+    BIGNUM *bn_p = NULL, *bn_q = NULL;
+    BIGNUM *bn_dp = NULL, *bn_dq = NULL, *bn_qinv = NULL;
     STACK_OF(BIGNUM) *primes = NULL, *exps = NULL, *coeffs = NULL;
     BIGNUM *num = NULL;
     int rv = RSA_size(key);
@@ -209,29 +211,28 @@ static int key2048p3_v2(RSA *key)
         || !TEST_ptr(coeffs = sk_BIGNUM_new_null()))
         goto err;
 
-    if (!TEST_ptr(num = BN_bin2bn(p, sizeof(p) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(primes, num), 0)
-        || !TEST_ptr(num = BN_bin2bn(q, sizeof(q) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(primes, num), 0)
-        || !TEST_ptr(num = BN_bin2bn(ex_prime, sizeof(ex_prime) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(primes, num), 0))
+    if (!TEST_ptr(bn_p = BN_bin2bn(p, sizeof(p) - 1, NULL))
+        || !TEST_ptr(bn_q = BN_bin2bn(q, sizeof(q) - 1, NULL))
+        || !TEST_ptr(bn_dp = BN_bin2bn(dmp1, sizeof(dmp1) - 1, NULL))
+        || !TEST_ptr(bn_dq = BN_bin2bn(dmq1, sizeof(dmq1) - 1, NULL))
+        || !TEST_ptr(bn_qinv = BN_bin2bn(iqmp, sizeof(iqmp) - 1, NULL)))
         goto err;
+    if (!TEST_true(RSA_set0_factors(key, bn_p, bn_q)))
+        goto err;
+    bn_p = bn_q = NULL;
 
-    if (!TEST_ptr(num = BN_bin2bn(dmp1, sizeof(dmp1) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(exps, num), 0)
-        || !TEST_ptr(num = BN_bin2bn(dmq1, sizeof(dmq1) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(exps, num), 0)
+    if (!TEST_true(RSA_set0_crt_params(key, bn_dp, bn_dq, bn_qinv)))
+        goto err;
+    bn_dp = bn_dq = bn_qinv;
+
+
+    if (!TEST_ptr(num = BN_bin2bn(ex_prime, sizeof(ex_prime) - 1, NULL))
+        || !TEST_int_ne(sk_BIGNUM_push(primes, num), 0)
         || !TEST_ptr(num = BN_bin2bn(ex_exponent, sizeof(ex_exponent) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(exps, num), 0))
-        goto err;
-
-    if (!TEST_ptr(num = BN_bin2bn(iqmp, sizeof(iqmp) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(coeffs, num), 0)
+        || !TEST_int_ne(sk_BIGNUM_push(exps, num), 0)
         || !TEST_ptr(num = BN_bin2bn(ex_coefficient, sizeof(ex_coefficient) - 1, NULL))
-        || !TEST_int_ne(sk_BIGNUM_push(coeffs, num), 0))
-        goto err;
-
-    if (!TEST_true(rsa_set0_all_params(key, primes, exps, coeffs)))
+        || !TEST_int_ne(sk_BIGNUM_push(coeffs, num), 0)
+        || !TEST_true(rsa_set0_all_mp_params(key, primes, exps, coeffs)))
         goto err;
 
  ret:
@@ -244,6 +245,11 @@ static int key2048p3_v2(RSA *key)
     sk_BIGNUM_pop_free(exps, BN_free);
     sk_BIGNUM_pop_free(coeffs, BN_free);
     primes = exps = coeffs = NULL;
+    BN_free(bn_p);
+    BN_free(bn_q);
+    BN_free(bn_dp);
+    BN_free(bn_dq);
+    BN_free(bn_qinv);
     rv = 0;
     goto ret;
 }

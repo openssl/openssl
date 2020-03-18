@@ -1307,3 +1307,12 @@ void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     return keydata;
 }
 #endif  /* FIPS_MODE */
+
+int EVP_PKEY_get_params(EVP_PKEY *pkey, OSSL_PARAM params[])
+{
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL)
+        return 0;
+    return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+}

@@ -1086,11 +1086,11 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD tmpl;
     const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
-    const BIGNUM *d = RSA_get0_d(rsa);
+    const BIGNUM *d = RSA_get0_d(rsa), *p = RSA_get0_p(rsa);
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
-    int numprimes = 0, numexps = 0, numcoeffs = 0;
+    int num_primes = 0;
     OSSL_PARAM *params = NULL;
-    int rv = 0;
+    int rv = 0, i;
 
     /*
      * If the RSA method is foreign, then we can't be sure of anything, and
@@ -1112,64 +1112,65 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     if (d != NULL) {
-        int i;
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+            goto err;
+    }
+    /* optional CRT params */
+    if (p != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_P, p))
+            goto err;
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_Q,
+                                    RSA_get0_q(rsa)))
+            goto err;
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_DP,
+                                    RSA_get0_dmp1(rsa)))
+            goto err;
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_DQ,
+                                    RSA_get0_dmq1(rsa)))
+            goto err;
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_QINV,
+                                    RSA_get0_iqmp(rsa)))
+            goto err;
 
-        /* Get all the primes and CRT params */
+        /* Get all the multi-primes  */
         if ((primes = sk_BIGNUM_const_new_null()) == NULL
             || (exps = sk_BIGNUM_const_new_null()) == NULL
             || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
             goto err;
 
-        if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
+        if (!rsa_get0_all_mp_params(rsa, primes, exps, coeffs))
             goto err;
 
-        numprimes = sk_BIGNUM_const_num(primes);
-        numexps = sk_BIGNUM_const_num(exps);
-        numcoeffs = sk_BIGNUM_const_num(coeffs);
+        num_primes = sk_BIGNUM_const_num(primes);
 
         /*
          * It's permisssible to have zero primes, i.e. no CRT params.
-         * Otherwise, there must be at least two, as many exponents,
-         * and one coefficient less.
          */
-        if (numprimes != 0
-            && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
+        if (num_primes != 0) {
+            /* assert that an OSSL_PARAM_BLD has enough space. */
+            if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* crt params */ 5
+                             + /* multi-primes */ 3 * num_primes
+                             <= OSSL_PARAM_BLD_MAX))
             goto err;
+        }
 
-        /* assert that an OSSL_PARAM_BLD has enough space. */
-        if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
-                         + numprimes + numexps + numcoeffs
-                         <= OSSL_PARAM_BLD_MAX))
-            goto err;
-
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
-            goto err;
-
-        for (i = 0; i < numprimes; i++) {
+        for (i = 0; i < num_primes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
+            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_MP_FACTOR,
                                         num))
                 goto err;
-        }
-
-        for (i = 0; i < numexps; i++) {
-            const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
-
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
-                                        num))
+            num = sk_BIGNUM_const_value(exps, i);
+            if (!ossl_param_bld_push_BN(&tmpl,
+                                        OSSL_PKEY_PARAM_RSA_MP_EXPONENT, num))
                 goto err;
-        }
-
-        for (i = 0; i < numcoeffs; i++) {
-            const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
-
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
+            num = sk_BIGNUM_const_value(coeffs, i);
+            if (!ossl_param_bld_push_BN(&tmpl,
+                                        OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT,
                                         num))
                 goto err;
         }
     }
-
     if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
         goto err;
 
@@ -1177,7 +1178,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
                             params);
 
- err:
+err:
     sk_BIGNUM_const_free(primes);
     sk_BIGNUM_const_free(exps);
     sk_BIGNUM_const_free(coeffs);

@@ -48,6 +48,7 @@ static OSSL_OP_keymgmt_export_types_fn rsa_export_types;
 #define RSA_POSSIBLE_SELECTIONS                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)
 
+#ifndef FIPS_MODE
 DEFINE_STACK_OF(BIGNUM)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -69,13 +70,20 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
 
     return 1;
 }
+#endif
 
 static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_n, *param_e,  *param_d;
+    const OSSL_PARAM *param_p, *param_q;
+    const OSSL_PARAM *param_dp, *param_dq,  *param_qinv;
     BIGNUM *n = NULL, *e = NULL, *d = NULL;
-    STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
+    BIGNUM *p = NULL, *q = NULL;
+    BIGNUM *dp = NULL, *dq = NULL, *qinv = NULL;
     int is_private = 0;
+#ifndef FIPS_MODE
+    STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
+#endif
 
     if (rsa == NULL)
         return 0;
@@ -96,88 +104,142 @@ static int params_to_key(RSA *rsa, const OSSL_PARAM params[])
     n = e = d = NULL;
 
     if (is_private) {
-        if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
-                             OSSL_PKEY_PARAM_RSA_FACTOR)
-            || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
-                                OSSL_PKEY_PARAM_RSA_EXPONENT)
-            || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
-                                OSSL_PKEY_PARAM_RSA_COEFFICIENT))
-            goto err;
+        param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_P);
+        if (param_p != NULL) {
+            param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_Q);
+            if ((param_p != NULL && !OSSL_PARAM_get_BN(param_p, &p))
+                || (param_q != NULL && !OSSL_PARAM_get_BN(param_q, &q))
+                || !RSA_set0_factors(rsa, p, q))
+                goto err;
+            p = q = NULL;
 
-        /* It's ok if this private key just has n, e and d */
-        if (sk_BIGNUM_num(factors) != 0
-            && !rsa_set0_all_params(rsa, factors, exps, coeffs))
-            goto err;
+            param_dp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_DP);
+            param_dq = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_DQ);
+            param_qinv = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_QINV);
+            if ((param_dp != NULL && !OSSL_PARAM_get_BN(param_dp, &dp))
+                || (param_dq != NULL && !OSSL_PARAM_get_BN(param_dq, &dq))
+                || (param_qinv != NULL && !OSSL_PARAM_get_BN(param_qinv, &qinv))
+                || !RSA_set0_crt_params(rsa, dp, dq, qinv))
+                goto err;
+            dp = dq = qinv = NULL;
+#ifndef FIPS_MODE
+            if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
+                                 OSSL_PKEY_PARAM_RSA_MP_FACTOR)
+                || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
+                                    OSSL_PKEY_PARAM_RSA_MP_EXPONENT)
+                || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
+                                    OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT))
+                goto err;
+
+            /* It's ok if this private key just has n, e and d */
+            if (sk_BIGNUM_num(factors) != 0
+                && !rsa_set0_all_mp_params(rsa, factors, exps, coeffs))
+                goto err;
+#endif
+        }
     }
 
+#ifndef FIPS_MODE
     sk_BIGNUM_free(factors);
     sk_BIGNUM_free(exps);
     sk_BIGNUM_free(coeffs);
+#endif
     return 1;
 
  err:
     BN_free(n);
     BN_free(e);
     BN_free(d);
+    BN_free(p);
+    BN_free(q);
+    BN_free(dp);
+    BN_free(dq);
+    BN_free(qinv);
+#ifndef FIPS_MODE
     sk_BIGNUM_pop_free(factors, BN_free);
     sk_BIGNUM_pop_free(exps, BN_free);
     sk_BIGNUM_pop_free(coeffs, BN_free);
+#endif
     return 0;
 }
 
-static int export_numbers(OSSL_PARAM_BLD *tmpl, const char *key,
-                          STACK_OF(BIGNUM_const) *numbers)
+static int set_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p, const char *key,
+                  const BIGNUM *bn)
 {
-    int i, nnum;
+    if (bld != NULL)
+        return ossl_param_bld_push_BN(bld, key, bn);
 
-    if (numbers == NULL)
-        return 0;
-
-    nnum = sk_BIGNUM_const_num(numbers);
-
-    for (i = 0; i < nnum; i++) {
-        if (!ossl_param_bld_push_BN(tmpl, key,
-                                    sk_BIGNUM_const_value(numbers, i)))
-            return 0;
-    }
-
+    p = OSSL_PARAM_locate(p, key);
+    if (p != NULL)
+        return OSSL_PARAM_set_BN(p, bn) > 0;
     return 1;
 }
 
-static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *tmpl)
+#ifndef FIPS_MODE
+static int set_multi_key_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                            const char *key, STACK_OF(BIGNUM_const) *stk)
+{
+    int i, sz = sk_BIGNUM_const_num(stk);
+
+    if (bld != NULL) {
+
+        for (i = 0; i < sz; ++i) {
+            if (!ossl_param_bld_push_BN(bld, key, sk_BIGNUM_const_value(stk, i)))
+                return 0;
+        }
+        return 1;
+    }
+    p = OSSL_PARAM_locate(p, key);
+    for (i = 0; p != NULL && i < sz; ++i) {
+        if (!OSSL_PARAM_set_BN(p, sk_BIGNUM_const_value(stk, i)))
+            return 0;
+        p = OSSL_PARAM_locate(p, key);
+    }
+    return 1;
+}
+#endif
+
+static int key_to_params(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 {
     int ret = 0;
-    const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
-    STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
-    STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
-    STACK_OF(BIGNUM_const) *coeffs = sk_BIGNUM_const_new_null();
 
-    if (rsa == NULL || factors == NULL || exps == NULL || coeffs == NULL)
+    if (rsa == NULL)
         goto err;
 
-    RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    rsa_get0_all_params(rsa, factors, exps, coeffs);
+    if (!set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, RSA_get0_n(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, RSA_get0_e(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D, RSA_get0_d(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_P, RSA_get0_p(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_Q, RSA_get0_q(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_DP, RSA_get0_dmp1(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_DQ, RSA_get0_dmq1(rsa))
+        || !set_bn(bld, params, OSSL_PKEY_PARAM_RSA_QINV, RSA_get0_iqmp(rsa)))
+        goto err;
+#ifndef FIPS_MODE
+    {
+        int ok = 1;
+        STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
+        STACK_OF(BIGNUM_const) *exps  = sk_BIGNUM_const_new_null();
+        STACK_OF(BIGNUM_const) *coeffs  = sk_BIGNUM_const_new_null();
 
-    if (rsa_n != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_N, rsa_n))
-        goto err;
-    if (rsa_e != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_E, rsa_e))
-        goto err;
-    if (rsa_d != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_D, rsa_d))
-        goto err;
-
-    if (!export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_FACTOR, factors)
-        || !export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT, exps)
-        || !export_numbers(tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT, coeffs))
-        goto err;
-
+        if (rsa_get0_all_mp_params(rsa, factors, exps, coeffs)) {
+            ok = set_multi_key_bn(bld, params,
+                                  OSSL_PKEY_PARAM_RSA_MP_FACTOR, factors)
+                 && set_multi_key_bn(bld, params,
+                                     OSSL_PKEY_PARAM_RSA_MP_EXPONENT, exps)
+                 && set_multi_key_bn(bld, params,
+                                     OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT,
+                                     coeffs);
+        }
+        sk_BIGNUM_const_free(factors);
+        sk_BIGNUM_const_free(exps);
+        sk_BIGNUM_const_free(coeffs);
+        if (!ok)
+            goto err;
+    }
+#endif
     ret = 1;
- err:
-    sk_BIGNUM_const_free(factors);
-    sk_BIGNUM_const_free(exps);
-    sk_BIGNUM_const_free(coeffs);
+err:
     return ret;
 }
 
@@ -256,7 +318,7 @@ static int rsa_export(void *keydata, int selection,
     ossl_param_bld_init(&tmpl);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && key_to_params(rsa, &tmpl);
+        ok = ok && key_to_params(rsa, &tmpl, NULL);
 
     if (!ok
         || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
@@ -267,6 +329,48 @@ static int rsa_export(void *keydata, int selection,
     return ok;
 }
 
+#ifdef FIPS_MODE
+# define RSA_KEY_MP_TYPES()
+#else
+/* We allow up to 8 multi-prime values */
+# define RSA_KEY_MP_TYPES()                                                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_FACTOR, NULL, 0),                         \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_EXPONENT, NULL, 0),                       \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),                    \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT, NULL, 0),
+#endif
+
+#define RSA_KEY_TYPES()                                                        \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),                                 \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),                                 \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0),                                 \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_P, NULL, 0),                                 \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_Q, NULL, 0),                                 \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_DP, NULL, 0),                                \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_DQ, NULL, 0),                                \
+OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_QINV, NULL, 0),                              \
+RSA_KEY_MP_TYPES()
+
 /*
  * This provider can export everything in an RSA key, so we use the exact
  * same type description for export as for import.  Other providers might
@@ -275,41 +379,8 @@ static int rsa_export(void *keydata, int selection,
  * different arrays.
  */
 static const OSSL_PARAM rsa_key_types[] = {
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_N, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_D, NULL, 0),
-    /* We tolerate up to 10 factors... */
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR, NULL, 0),
-    /* ..., up to 10 CRT exponents... */
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_EXPONENT, NULL, 0),
-    /* ..., and up to 9 CRT coefficients */
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_COEFFICIENT, NULL, 0),
+    RSA_KEY_TYPES()
+    OSSL_PARAM_END
 };
 /*
  * We lied about the amount of factors, exponents and coefficients, the
@@ -376,8 +447,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
     }
-
-    return 1;
+    return key_to_params(rsa, NULL, params);
 }
 
 static const OSSL_PARAM rsa_params[] = {
@@ -385,6 +455,7 @@ static const OSSL_PARAM rsa_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST, NULL, 0),
+    RSA_KEY_TYPES()
     OSSL_PARAM_END
 };
 

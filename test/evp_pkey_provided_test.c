@@ -248,6 +248,18 @@ static int test_print_key_using_serializer(const char *alg, const EVP_PKEY *pk)
     return ret;
 }
 
+static int get_ulong_via_BN(const OSSL_PARAM *p, unsigned long *goal)
+{
+    BIGNUM *n = NULL;
+    int ret = 1;                 /* Ever so hopeful */
+
+    if (!TEST_true(OSSL_PARAM_get_BN(p, &n))
+        || !TEST_true(BN_bn2nativepad(n, (unsigned char *)goal, sizeof(*goal))))
+        ret = 0;
+    BN_free(n);
+    return ret;
+}
+
 /* Array indexes used in test_fromdata_rsa */
 #define N       0
 #define E       1
@@ -260,7 +272,7 @@ static int test_print_key_using_serializer(const char *alg, const EVP_PKEY *pk)
 
 static int test_fromdata_rsa(void)
 {
-    int ret = 0;
+    int ret = 0, i;
     EVP_PKEY_CTX *ctx = NULL, *key_ctx = NULL;
     EVP_PKEY *pk = NULL;
     /*
@@ -283,13 +295,16 @@ static int test_fromdata_rsa(void)
         OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_N, &key_numbers[N]),
         OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_E, &key_numbers[E]),
         OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_D, &key_numbers[D]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_FACTOR, &key_numbers[P]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_FACTOR, &key_numbers[Q]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_EXPONENT, &key_numbers[DP]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_EXPONENT, &key_numbers[DQ]),
-        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_COEFFICIENT, &key_numbers[QINV]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_P, &key_numbers[P]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_Q, &key_numbers[Q]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_DP, &key_numbers[DP]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_DQ, &key_numbers[DQ]),
+        OSSL_PARAM_ulong(OSSL_PKEY_PARAM_RSA_QINV, &key_numbers[QINV]),
         OSSL_PARAM_END
     };
+    int sz = OSSL_NELEM(key_numbers);
+    OSSL_PARAM out_params[1 + sz];
+    unsigned long out_data[sz];
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL)))
         goto err;
@@ -299,6 +314,8 @@ static int test_fromdata_rsa(void)
         || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
         || !TEST_int_eq(EVP_PKEY_size(pk), 4))
+        goto err;
+    if (!TEST_true(EVP_PKEY_get_params(pk, out_params)))
         goto err;
 
     if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
@@ -310,6 +327,22 @@ static int test_fromdata_rsa(void)
         || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
         goto err;
 
+    out_params[N] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_N, &out_data[N]);
+    out_params[E] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_E, &out_data[E]);
+    out_params[D] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_D, &out_data[D]);
+    out_params[P] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_P, &out_data[P]);
+    out_params[Q] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_Q, &out_data[Q]);
+    out_params[DP] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_DP, &out_data[DP]);
+    out_params[DQ] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_DQ, &out_data[DQ]);
+    out_params[QINV] = OSSL_PARAM_construct_ulong(OSSL_PKEY_PARAM_RSA_QINV, &out_data[QINV]);
+    out_params[sz] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_PKEY_get_params(pk, out_params)))
+        goto err;
+    for (i = 0; i < sz; ++i) {
+        if (!get_ulong_via_BN(&out_params[i], &out_data[i])
+            || key_numbers[i] != out_data[i])
+            goto err;
+    }
     ret = test_print_key_using_pem("RSA", pk)
           && test_print_key_using_serializer("RSA", pk);
 
@@ -504,8 +537,10 @@ static int test_fromdata_ec(void)
     BIGNUM *ec_priv_bn = NULL;
     OSSL_PARAM *fromdata_params = NULL;
     const char *alg = "EC";
+    const char *curve = "prime256v1";
+    /* UNCOMPRESSED FORMAT */
     static const unsigned char ec_pub_keydata[] = {
-       0x04,
+       POINT_CONVERSION_UNCOMPRESSED,
        0x1b, 0x93, 0x67, 0x55, 0x1c, 0x55, 0x9f, 0x63,
        0xd1, 0x22, 0xa4, 0xd8, 0xd1, 0x0a, 0x60, 0x6d,
        0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
@@ -521,7 +556,13 @@ static int test_fromdata_ec(void)
         0xcc, 0x0d, 0x9a, 0x24, 0x6c, 0x86, 0x1b, 0x2e,
         0xdc, 0x4b, 0x4d, 0x35, 0x43, 0xe1, 0x1b, 0xad
     };
-
+#if 0
+    const int compressed_sz = 1 + (sizeof(ec_pub_keydata) - 1) / 2;
+    OSSL_PARAM out_params[4];
+    char out_pub[sizeof(ec_pub_keydata)];
+    char out_priv[sizeof(ec_priv_keydata)];
+    char out_curve_name[80];
+#endif
     ossl_param_bld_init(&bld);
 
     if (!TEST_ptr(ec_priv_bn = BN_bin2bn(ec_priv_keydata,
@@ -529,7 +570,7 @@ static int test_fromdata_ec(void)
         goto err;
 
     if (ossl_param_bld_push_utf8_string(&bld, OSSL_PKEY_PARAM_EC_NAME,
-                                        "prime256v1", 0) <= 0)
+                                        curve, 0) <= 0)
         goto err;
     if (ossl_param_bld_push_octet_string(&bld, OSSL_PKEY_PARAM_PUB_KEY,
                                          ec_pub_keydata,
@@ -549,7 +590,26 @@ static int test_fromdata_ec(void)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 128)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2))
         goto err;
+#if 0
+    out_params[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME, out_curve_name,
+                                         sizeof(out_curve_name));
+    out_params[1] =
+        OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, out_pub,
+                                         sizeof(out_pub));
+    out_params[2] =
+        OSSL_PARAM_construct_BN(OSSL_PKEY_PARAM_PRIV_KEY,
+                                (unsigned char *)out_priv, sizeof(out_priv));
+    out_params[3] = OSSL_PARAM_construct_end();
 
+    if (!TEST_true(EVP_PKEY_get_params(pk, out_params))
+        || !TEST_str_eq(out_curve_name, curve)
+        /* The public key is returned is in COMPRESSED FORMAT */
+        || !TEST_true(out_pub[0] == (POINT_CONVERSION_COMPRESSED + 1))
+        || !TEST_mem_eq(out_pub + 1, out_params[1].data_size - 1,
+                        ec_pub_keydata + 1, compressed_sz - 1))
+        goto err;
+#endif
     ret = test_print_key_using_pem(alg, pk)
           && test_print_key_using_serializer(alg, pk);
 err:

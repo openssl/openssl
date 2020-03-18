@@ -214,12 +214,17 @@ extern "C" {
  * (the base i for the coefficients is 2, not 1, at least as implied by
  * RFC 8017)
  */
-#define OSSL_PKEY_PARAM_RSA_N           "n"
-#define OSSL_PKEY_PARAM_RSA_E           "e"
-#define OSSL_PKEY_PARAM_RSA_D           "d"
-#define OSSL_PKEY_PARAM_RSA_FACTOR      "rsa-factor"
-#define OSSL_PKEY_PARAM_RSA_EXPONENT    "rsa-exponent"
-#define OSSL_PKEY_PARAM_RSA_COEFFICIENT "rsa-coefficient"
+#define OSSL_PKEY_PARAM_RSA_N              "n"
+#define OSSL_PKEY_PARAM_RSA_E              "e"
+#define OSSL_PKEY_PARAM_RSA_D              "d"
+#define OSSL_PKEY_PARAM_RSA_P              "p"
+#define OSSL_PKEY_PARAM_RSA_Q              "q"
+#define OSSL_PKEY_PARAM_RSA_DP             "dp"
+#define OSSL_PKEY_PARAM_RSA_DQ             "dq"
+#define OSSL_PKEY_PARAM_RSA_QINV           "qinv"
+#define OSSL_PKEY_PARAM_RSA_MP_FACTOR      "rsa-factor"
+#define OSSL_PKEY_PARAM_RSA_MP_EXPONENT    "rsa-exponent"
+#define OSSL_PKEY_PARAM_RSA_MP_COEFFICIENT "rsa-coefficient"
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_RSA_BITS        OSSL_PKEY_PARAM_BITS
 #define OSSL_PKEY_PARAM_RSA_PRIMES      "primes"
