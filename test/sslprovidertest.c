@@ -50,20 +50,14 @@ static int test_different_libctx(void)
         goto end;
     TEST_note("%s provider loaded", modulename);
 
-    cctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_client_method());
-    if (!TEST_ptr(cctx))
-        goto end;
-    sctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_server_method());
-    if (!TEST_ptr(sctx))
-        goto end;
-
     /*
      * TODO(3.0): Make this work in TLSv1.3. Currently we can only do RSA key
      * exchange, because we don't have key gen/param gen for EC yet - which
      * implies TLSv1.2 only
      */
-    if (!TEST_true(create_ssl_ctx_pair(NULL,
-                                       NULL,
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+                                       TLS_server_method(),
+                                       TLS_client_method(),
                                        TLS1_VERSION,
                                        TLS1_2_VERSION,
                                        &sctx, &cctx, cert, privkey)))

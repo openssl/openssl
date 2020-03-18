@@ -61,7 +61,7 @@ static int test_dtls_unprocessed(int testidx)
 
     timer_cb_count = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -156,7 +156,7 @@ static int test_dtls_drop_records(int idx)
     SSL_SESSION *sess = NULL;
     int cli_to_srv_epoch0, cli_to_srv_epoch1, srv_to_cli_epoch0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -267,7 +267,7 @@ static int test_cookie(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -299,7 +299,7 @@ static int test_dtls_duplicate_records(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
