@@ -423,6 +423,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     const ECX_KEY *key = from->pkey.ecx;
     OSSL_PARAM_BLD tmpl;
     OSSL_PARAM *params = NULL;
+    int selection = 0;
     int rv = 0;
 
     ossl_param_bld_init(&tmpl);
@@ -431,19 +432,20 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (!ossl_param_bld_push_octet_string(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                           key->pubkey, key->keylen))
         goto err;
+    selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (key->privkey != NULL) {
         if (!ossl_param_bld_push_octet_string(&tmpl,
                                               OSSL_PKEY_PARAM_PRIV_KEY,
                                               key->privkey, key->keylen))
             goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
     ossl_param_bld_free(params);

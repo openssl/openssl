@@ -630,6 +630,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params = NULL;
     const BIGNUM *priv_key = NULL;
     const EC_POINT *pub_point = NULL;
+    int selection = 0;
     int rv = 0;
 
     if (from == NULL
@@ -648,26 +649,24 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
     /* export the domain parameters */
     if (!ecparams_to_params(eckey, &tmpl))
-        return 0;
+        goto err;
+    selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
 
     priv_key = EC_KEY_get0_private_key(eckey);
     pub_point = EC_KEY_get0_public_key(eckey);
 
-    /* public_key must be present, priv_key is optional */
-    if (pub_point == NULL)
-        return 0;
-
-    /* convert pub_point to a octet string according to the SECG standard */
-    if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
-                                             POINT_CONVERSION_COMPRESSED,
-                                             &pub_key_buf, NULL)) == 0)
-        return 0;
-
-    if (!ossl_param_bld_push_octet_string(&tmpl,
-                OSSL_PKEY_PARAM_PUB_KEY,
-                pub_key_buf,
-                pub_key_buflen))
-        goto err;
+    if (pub_point != NULL) {
+        /* convert pub_point to a octet string according to the SECG standard */
+        if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
+                                                 POINT_CONVERSION_COMPRESSED,
+                                                 &pub_key_buf, NULL)) == 0
+            || !ossl_param_bld_push_octet_string(&tmpl,
+                                                 OSSL_PKEY_PARAM_PUB_KEY,
+                                                 pub_key_buf,
+                                                 pub_key_buflen))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    }
 
     if (priv_key != NULL) {
         size_t sz;
@@ -716,6 +715,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                                         OSSL_PKEY_PARAM_PRIV_KEY,
                                         priv_key, sz))
             goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
         /*
          * The ECDH Cofactor Mode is defined only if the EC_KEY actually
@@ -730,13 +730,13 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                                      OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
                                      ecdh_cofactor_mode))
             goto err;
+        selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
 
     params = ossl_param_bld_to_param(&tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
     ossl_param_bld_free(params);

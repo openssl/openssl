@@ -526,6 +526,7 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
     const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
     OSSL_PARAM *params;
+    int selection = 0;
     int rv;
 
     /*
@@ -543,21 +544,25 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
         || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
         return 0;
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
-                                pub_key))
-        return 0;
+    selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+    if (pub_key != NULL) {
+        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+                                    pub_key))
+            return 0;
+        selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    }
     if (priv_key != NULL) {
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                     priv_key))
             return 0;
+        selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
     if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
         return 0;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
     ossl_param_bld_free(params);
 

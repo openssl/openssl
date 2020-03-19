@@ -1090,6 +1090,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
     int numprimes = 0, numexps = 0, numcoeffs = 0;
     OSSL_PARAM *params = NULL;
+    int selection = 0;
     int rv = 0;
 
     /*
@@ -1110,6 +1111,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
     if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n))
         goto err;
+    selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (d != NULL) {
         int i;
@@ -1144,6 +1146,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
         if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
         for (i = 0; i < numprimes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
@@ -1174,8 +1177,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            params);
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
     sk_BIGNUM_const_free(primes);
