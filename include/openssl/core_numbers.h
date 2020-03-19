@@ -388,12 +388,14 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
 
 /* Generation, a more complex constructor */
-# define OSSL_FUNC_KEYMGMT_GEN_INIT                    3
-# define OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE            4
-# define OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS              5
-# define OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS         6
-# define OSSL_FUNC_KEYMGMT_GEN                         7
-# define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 8
+# define OSSL_FUNC_KEYMGMT_GEN_INIT                    2
+# define OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE            3
+# define OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS              4
+# define OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS         5
+# define OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS              6
+# define OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS         7
+# define OSSL_FUNC_KEYMGMT_GEN                         8
+# define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 9
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gen_init,
                     (void *provctx, int selection))
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_set_template,
@@ -402,23 +404,27 @@ OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_set_params,
                     (void *genctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     OP_keymgmt_gen_settable_params, (void *provctx))
+OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_get_params,
+                    (void *genctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
+                    OP_keymgmt_gen_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gen,
                     (void *genctx, OSSL_CALLBACK *cb, void *cbarg))
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_gen_cleanup, (void *genctx))
 
 /* Basic key object destruction */
-# define OSSL_FUNC_KEYMGMT_FREE                        9
+# define OSSL_FUNC_KEYMGMT_FREE                       10
 OSSL_CORE_MAKE_FUNC(void, OP_keymgmt_free, (void *keydata))
 
 /* Key object information, with discovery */
-#define OSSL_FUNC_KEYMGMT_GET_PARAMS                  10
-#define OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS             11
+#define OSSL_FUNC_KEYMGMT_GET_PARAMS                  11
+#define OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS             12
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_get_params,
                     (void *keydata, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_gettable_params, (void))
 
-#define OSSL_FUNC_KEYMGMT_SET_PARAMS                  12
-#define OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS             13
+#define OSSL_FUNC_KEYMGMT_SET_PARAMS                  13
+#define OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS             14
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_set_params,
                     (void *keydata, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keymgmt_settable_params, (void))
