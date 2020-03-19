@@ -93,6 +93,13 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     MAC_PKEY_CTX *sctx, *dctx;
 
     sctx = EVP_PKEY_CTX_get_data(src);
+
+    if (sctx->ctx == NULL) {
+        /* This actually means the fetch failed during the init call */
+        EVPerr(0, EVP_R_FETCH_FAILED);
+        return 0;
+    }
+
     if (sctx->ctx->data == NULL)
         return 0;
 
@@ -104,12 +111,6 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 
     EVP_PKEY_CTX_set_data(dst, dctx);
     dst->keygen_info_count = 0;
-
-    if (sctx->ctx == NULL) {
-        /* This actually means the fetch failed during the init call */
-        EVPerr(0, EVP_R_FETCH_FAILED);
-        return 0;
-    }
 
     dctx->ctx = EVP_MAC_CTX_dup(sctx->ctx);
     if (dctx->ctx == NULL)
@@ -373,6 +374,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
             params[0] =
                 OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
+
+            if (hctx->ctx == NULL) {
+                /*
+                 * This actually means the fetch failed during the init call
+                 */
+                EVPerr(0, EVP_R_FETCH_FAILED);
+                return 0;
+            }
 
             if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
                 return 0;
