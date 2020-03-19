@@ -20,6 +20,17 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_EC)
+# define TMP_SM2_HACK
+#endif
+
+/* TODO(3.0) remove when provider SM2 key generation is implemented */
+#ifdef TMP_SM2_HACK
+# include <openssl/ec.h>
+# include <openssl/serializer.h>
+# include "internal/sizes.h"
+#endif
+
 static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
@@ -32,6 +43,12 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx->keymgmt == NULL || ctx->keymgmt->gen_init == NULL)
         goto legacy;
+
+/* TODO remove when provider SM2 key generation is implemented */
+#ifdef TMP_SM2_HACK
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id == EVP_PKEY_SM2)
+        goto legacy;
+#endif
 
     switch (operation) {
     case EVP_PKEY_OP_PARAMGEN:
@@ -143,7 +160,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         return -1;
     }
 
-    if (ctx->keymgmt == NULL || ctx->op.keymgmt.genctx == NULL)
+    if (ctx->op.keymgmt.genctx == NULL)
         goto legacy;
 
     ret = 1;
@@ -174,6 +191,31 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         evp_pkey_free_legacy(*ppkey);
 #endif
 
+/* TODO remove when SM2 key have been cleanly separated from EC keys */
+#ifdef TMP_SM2_HACK
+    /*
+     * Legacy SM2 keys are implemented as EC_KEY with a twist.  The legacy
+     * key generation detects the SM2 curve and "magically" changes the pkey
+     * id accordingly.
+     * Since we don't have SM2 in the provider implementation, we need to
+     * downgrade the generated provider side key to a legacy one under the
+     * same conditions.
+     *
+     * THIS IS AN UGLY BUT TEMPORARY HACK
+     */
+    {
+        char curve_name[OSSL_MAX_NAME_SIZE] = "";
+
+        if (EVP_PKEY_CTX_get_ec_paramgen_curve_name(ctx, curve_name,
+                                                    sizeof(curve_name)) < 1
+            || strcmp(curve_name, "SM2") != 0)
+            goto end;
+    }
+
+    if (!evp_pkey_downgrade(*ppkey)
+        || !EVP_PKEY_set_alias_type(*ppkey, EVP_PKEY_SM2))
+        ret = 0;
+#endif
     goto end;
 
  legacy:
