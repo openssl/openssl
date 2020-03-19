@@ -16,15 +16,25 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
 
 static OSSL_OP_keymgmt_new_fn ec_newdata;
+static OSSL_OP_keymgmt_gen_init_fn ec_gen_init;
+static OSSL_OP_keymgmt_gen_set_template_fn ec_gen_set_template;
+static OSSL_OP_keymgmt_gen_set_params_fn ec_gen_set_params;
+static OSSL_OP_keymgmt_gen_settable_params_fn ec_gen_settable_params;
+static OSSL_OP_keymgmt_gen_get_params_fn ec_gen_get_params;
+static OSSL_OP_keymgmt_gen_gettable_params_fn ec_gen_gettable_params;
+static OSSL_OP_keymgmt_gen_fn ec_gen;
+static OSSL_OP_keymgmt_gen_cleanup_fn ec_gen_cleanup;
 static OSSL_OP_keymgmt_free_fn ec_freedata;
 static OSSL_OP_keymgmt_get_params_fn ec_get_params;
 static OSSL_OP_keymgmt_gettable_params_fn ec_gettable_params;
@@ -558,8 +568,195 @@ int ec_validate(void *keydata, int selection)
     return ok;
 }
 
+struct ec_gen_ctx {
+    OPENSSL_CTX *libctx;
+
+    EC_GROUP *gen_group;
+    int selection;
+};
+
+static void *ec_gen_init(void *provctx, int selection)
+{
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    struct ec_gen_ctx *gctx = NULL;
+
+    if ((selection & (EC_POSSIBLE_SELECTIONS)) == 0)
+        return NULL;
+
+    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
+        gctx->libctx = libctx;
+        gctx->gen_group = NULL;
+        gctx->selection = selection;
+    }
+    return gctx;
+}
+
+static int ec_gen_set_group(void *genctx, int nid)
+{
+    struct ec_gen_ctx *gctx = genctx;
+    EC_GROUP *group;
+
+    group = EC_GROUP_new_by_curve_name_ex(gctx->libctx, nid);
+    if (group == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
+        return 0;
+    }
+    EC_GROUP_free(gctx->gen_group);
+    gctx->gen_group = group;
+    return 1;
+}
+static int ec_gen_set_template(void *genctx, void *templ)
+{
+    struct ec_gen_ctx *gctx = genctx;
+    EC_KEY *ec = templ;
+    const EC_GROUP *ec_group;
+
+    if (gctx == NULL || ec == NULL)
+        return 0;
+    if ((ec_group = EC_KEY_get0_group(ec)) == NULL)
+        return 0;
+    return ec_gen_set_group(gctx, EC_GROUP_get_curve_name(ec_group));
+}
+
+static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
+{
+    struct ec_gen_ctx *gctx = genctx;
+    const OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME))
+        != NULL) {
+        const char *curve_name = NULL;
+        int ret = 0;
+
+        switch (p->data_type) {
+        case OSSL_PARAM_UTF8_STRING:
+            /* The OSSL_PARAM functions have no support for this */
+            curve_name = p->data;
+            ret = (curve_name != NULL);
+            break;
+        case OSSL_PARAM_UTF8_PTR:
+            ret = OSSL_PARAM_get_utf8_ptr(p, &curve_name);
+            break;
+        }
+
+        if (ret) {
+            int nid = ec_curve_name2nid(curve_name);
+
+            if (nid == NID_undef) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
+                ret = 0;
+            } else {
+                ret = ec_gen_set_group(gctx, nid);
+            }
+        }
+        return ret;
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
+{
+    static OSSL_PARAM settable[] = {
+        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
+        OSSL_PARAM_END
+    };
+
+    return settable;
+}
+
+static int ec_gen_get_params(void *genctx, OSSL_PARAM params[])
+{
+    struct ec_gen_ctx *gctx = genctx;
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_NAME)) != NULL) {
+        int nid = EC_GROUP_get_curve_name(gctx->gen_group);
+        int ret = 0;
+        const char *curve_name = ec_curve_nid2name(nid);
+
+        switch (p->data_type) {
+        case OSSL_PARAM_UTF8_STRING:
+            ret = OSSL_PARAM_set_utf8_string(p, curve_name);
+            break;
+        case OSSL_PARAM_UTF8_PTR:
+            ret = OSSL_PARAM_set_utf8_ptr(p, curve_name);
+            break;
+        }
+        return ret;
+    }
+    return 1;
+}
+
+static const OSSL_PARAM *ec_gen_gettable_params(void *provctx)
+{
+    static OSSL_PARAM gettable[] = {
+        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
+        OSSL_PARAM_END
+    };
+
+    return gettable;
+}
+
+static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
+{
+    if (group == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_PARAMETERS_SET);
+        return 0;
+    }
+    return EC_KEY_set_group(ec, group) > 0;
+}
+
+/*
+ * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
+ */
+static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+{
+    struct ec_gen_ctx *gctx = genctx;
+    EC_KEY *ec = NULL;
+    int ret = 1;                 /* Start optimistically */
+
+    if (gctx == NULL
+        || (ec = EC_KEY_new_ex(gctx->libctx)) == NULL)
+        return NULL;
+
+    /* We must always assign a group, no matter what */
+    ret = ec_gen_assign_group(ec, gctx->gen_group);
+    /* Whether you want it or not, you get a keypair, not just one half */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ret = ret && EC_KEY_generate_key(ec);
+
+    if (ret)
+        return ec;
+
+    /* Something went wrong, throw the key away */
+    EC_KEY_free(ec);
+    return NULL;
+}
+
+static void ec_gen_cleanup(void *genctx)
+{
+    struct ec_gen_ctx *gctx = genctx;
+
+    if (gctx == NULL)
+        return;
+
+    EC_GROUP_free(gctx->gen_group);
+    OPENSSL_free(gctx);
+}
+
 const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
+      (void (*)(void))ec_gen_set_template },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+      (void (*)(void))ec_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))ec_gen_get_params },
+    { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
+      (void (*)(void))ec_gen_gettable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ec_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))ec_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ec_gettable_params },
@@ -573,6 +770,6 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
-        (void (*)(void))ec_query_operation_name },
+      (void (*)(void))ec_query_operation_name },
     { 0, NULL }
 };
