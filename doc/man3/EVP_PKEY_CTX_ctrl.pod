@@ -51,6 +51,8 @@ EVP_PKEY_CTX_set_dh_kdf_outlen,
 EVP_PKEY_CTX_get_dh_kdf_outlen,
 EVP_PKEY_CTX_set0_dh_kdf_ukm,
 EVP_PKEY_CTX_get0_dh_kdf_ukm,
+EVP_PKEY_CTX_set_ec_paramgen_curve_name,
+EVP_PKEY_CTX_get_ec_paramgen_curve_name,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
 EVP_PKEY_CTX_set_ec_param_enc,
 EVP_PKEY_CTX_set_ecdh_cofactor_mode,
@@ -143,6 +145,10 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 
  #include <openssl/ec.h>
 
+ int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
+                                             const char *name);
+ int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
+                                             char *name, size_t namelen);
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
  int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
@@ -513,11 +519,23 @@ by the library and should not be freed by the caller.
 
 =head2 EC parameters
 
-The EVP_PKEY_CTX_set_ec_paramgen_curve_nid() sets the EC curve for EC parameter
-generation to I<nid>. For EC parameter generation this macro must be called
-or an error occurs because there is no default curve.
-This function can also be called to set the curve explicitly when
+EVP_PKEY_CTX_set_ec_paramgen_curve_name() sets the EC curve to I<name> for EC
+parameter generation.
+
+EVP_PKEY_CTX_set_ec_paramgen_curve_nid() does the same as
+EVP_PKEY_CTX_set_ec_paramgen_curve_name(), but uses a I<nid> rather than a
+name string.
+
+For EC parameter generation, one of EVP_PKEY_CTX_set_ec_paramgen_curve_name()
+or EVP_PKEY_CTX_set_ec_paramgen_curve_nid() must be called or an error occurs
+because there is no default curve.
+These function can also be called to set the curve explicitly when
 generating an EC key.
+
+EVP_PKEY_CTX_get_ec_paramgen_curve_name() finds the curve name that's currently
+set with I<ctx>, and writes it to the location that I<name> points at, as long
+as its size I<namelen> is large enough to store that name, including a
+terminating NUL byte.
 
 The EVP_PKEY_CTX_set_ec_param_enc() macro sets the EC parameter encoding to
 I<param_enc> when generating EC parameters or an EC key. The encoding can be
