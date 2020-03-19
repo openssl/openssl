@@ -182,9 +182,8 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
     CONF_MODULE *md;
     int ret;
 
-    if (!RUN_ONCE(&load_builtin_modules, do_load_builtin_modules)) {
+    if (!RUN_ONCE(&load_builtin_modules, do_load_builtin_modules))
         return -1;
-    }
 
     md = module_find(name);
 
