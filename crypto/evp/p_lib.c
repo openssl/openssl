@@ -120,15 +120,13 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     }
 
     /*
-     * If |from| is provided, we upgrade |to| to be provided as well.
-     * This drops the legacy key from |to|.
-     * evp_pkey_upgrade_to_provider() checks if |to| is already provided,
-     * we don't need to do that here.
+     * If |from| is provided and |to| isn't, we upgrade |to| to be provided
+     * as well.  This drops the legacy key from |to|.
      *
      * TODO(3.0) We should investigate if that's too aggressive and make
      * this scenario unsupported instead.
      */
-    if (from->keymgmt != NULL) {
+    if (from->keymgmt != NULL && to->type != EVP_PKEY_NONE) {
         EVP_KEYMGMT *tmp_keymgmt = from->keymgmt;
 
         /*
@@ -144,7 +142,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     }
 
     /* For purely provided keys, we just call the keymgmt utility */
-    if (to->keymgmt != NULL && from->keymgmt != NULL)
+    if (from->keymgmt != NULL)
         return evp_keymgmt_util_copy(to, (EVP_PKEY *)from,
                                      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
 
