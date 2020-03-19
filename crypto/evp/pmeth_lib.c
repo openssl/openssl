@@ -611,6 +611,12 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
             && ctx->op.ciph.cipher->get_ctx_params != NULL)
         return ctx->op.ciph.cipher->get_ctx_params(ctx->op.ciph.ciphprovctx,
                                                    params);
+    if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+        && ctx->op.keymgmt.genctx != NULL
+        && ctx->keymgmt != NULL
+        && ctx->keymgmt->gen_get_params != NULL)
+        return evp_keymgmt_gen_get_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
+                                          params);
     return 0;
 }
 
