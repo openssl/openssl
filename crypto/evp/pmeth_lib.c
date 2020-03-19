@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -820,6 +819,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
 # ifndef OPENSSL_NO_EC
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
+        case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
+            return EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, p1);
         case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:
             if (p1 == -2) {
                 return EVP_PKEY_CTX_get_ecdh_cofactor_mode(ctx);
@@ -965,6 +966,24 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
 static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
                                     const char *value)
 {
+
+    /* Special cases that we intercept */
+# ifndef OPENSSL_NO_EC
+    /*
+     * We don't support encoding settings for providers, i.e. the only
+     * possible encoding is "named_curve", so we simply fail when something
+     * else is given, and otherwise just pretend all is fine.
+     */
+    if (strcmp(name, "ec_param_enc") == 0) {
+        if (strcmp(value, "named_curve") == 0) {
+            return 1;
+        } else {
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+            return -2;
+        }
+    }
+# endif
+
     if (strcmp(name, "rsa_padding_mode") == 0)
         name = OSSL_ASYM_CIPHER_PARAM_PAD_MODE;
     else if (strcmp(name, "rsa_mgf1_md") == 0)
@@ -986,6 +1005,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_EXCHANGE_PARAM_PAD;
 # endif
 # ifndef OPENSSL_NO_EC
+    else if (strcmp(name, "ec_paramgen_curve") == 0)
+        name = OSSL_PKEY_PARAM_EC_NAME;
     else if (strcmp(name, "ecdh_cofactor_mode") == 0)
         name = OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE;
     else if (strcmp(name, "ecdh_kdf_md") == 0)
