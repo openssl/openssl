@@ -147,9 +147,16 @@ if ($WHAT eq '-newcert' ) {
     # create the directory hierarchy
     my @dirs = ( "${CATOP}", "${CATOP}/certs", "${CATOP}/crl",
                 "${CATOP}/newcerts", "${CATOP}/private" );
+    die "${CATOP}/index.txt exists.\nRemove old sub-tree to proceed,"
+        if -f "${CATOP}/index.txt";
+    die "${CATOP}/serial exists.\nRemove old sub-tree to proceed,"
+        if -f "${CATOP}/serial";
     foreach my $d ( @dirs ) {
-        die "Directory $d exists" if -d $d;
-        mkdir $d or die "Can't mkdir $d, $!";
+        if ( -d $d ) {
+            warn "Directory $d exists" if -d $d;
+        } else {
+            mkdir $d or die "Can't mkdir $d, $!";
+        }
     }
 
     open OUT, ">${CATOP}/index.txt";
