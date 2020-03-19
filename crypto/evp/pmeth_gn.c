@@ -20,6 +20,17 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#ifndef FIPS_MODE
+# define TMP_SM2_HACK
+#endif
+
+/* TODO remove when provider SM2 key generation is implemented */
+#ifdef TMP_SM2_HACK
+# include <openssl/ec.h>
+# include <openssl/serializer.h>
+# include "internal/sizes.h"
+#endif
+
 static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
@@ -32,6 +43,12 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx->keymgmt == NULL || ctx->keymgmt->gen_init == NULL)
         goto legacy;
+
+/* TODO remove when provider SM2 key generation is implemented */
+#ifdef TMP_SM2_HACK
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id == EVP_PKEY_SM2)
+        goto legacy;
+#endif
 
     switch (operation) {
     case EVP_PKEY_OP_PARAMGEN:
@@ -143,7 +160,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         return -1;
     }
 
-    if (ctx->keymgmt == NULL || ctx->op.keymgmt.genctx == NULL)
+    if (ctx->op.keymgmt.genctx == NULL)
         goto legacy;
 
     ret = 1;
@@ -174,6 +191,77 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         evp_pkey_free_legacy(*ppkey);
 #endif
 
+/* TODO remove when SM2 key have been cleanly separated from EC keys */
+#ifdef TMP_SM2_HACK
+    /*
+     * Legacy SM2 keys are implemented as EC_KEY with a twist.  The legacy
+     * key generation detects the SM2 curve and "magically" changes the pkey
+     * id accordingly.
+     * Since we don't have SM2 in the provider implementation, we need to
+     * downgrade the generated provider side key to a legacy one under the
+     * same conditions.
+     *
+     * THIS IS AN UGLY BUT TEMPORARY HACK
+     */
+    {
+        char curve_name[OSSL_MAX_NAME_SIZE] = "";
+
+        if (EVP_PKEY_CTX_get_ec_paramgen_curve_name(ctx, curve_name,
+                                                    sizeof(curve_name)) < 1
+            || strcmp(curve_name, "SM2") != 0)
+            goto end;
+    }
+
+    /*
+     * The "magic" in downgrading a provider side key involves serializing
+     * it to DER, and then using the appropriate d2i function to create a
+     * legacy key from that.
+     */
+    {
+        EC_KEY *ec = NULL;
+        EC_KEY *(*d2i)(EC_KEY **, const unsigned char **, long) =
+            ctx->operation == EVP_PKEY_OP_PARAMGEN
+            ? d2i_ECParameters
+            : d2i_ECPrivateKey;
+        const char *serprop =
+            ctx->operation == EVP_PKEY_OP_PARAMGEN
+            ? OSSL_SERIALIZER_Parameters_TO_DER_PQ
+            : OSSL_SERIALIZER_PrivateKey_TO_DER_PQ;
+        OSSL_SERIALIZER_CTX *serctx =
+            OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(*ppkey, serprop);
+        BIO *out = BIO_new(BIO_s_mem());
+        BUF_MEM *buf = NULL;
+        const unsigned char *pp = NULL;
+
+        ret = -1;        /* Same as memory allocation failure above */
+        if (serctx != NULL
+            && out != NULL
+            && OSSL_SERIALIZER_CTX_get_serializer(serctx) != NULL
+            && OSSL_SERIALIZER_to_bio(serctx, out)
+            && BIO_get_mem_ptr(out, &buf) > 0
+            && (pp = (const unsigned char *)buf->data,
+                (ec = d2i(NULL, &pp, buf->length)) != NULL))
+            ret = 1;
+
+        BIO_free(out);
+        OSSL_SERIALIZER_CTX_free(serctx);
+        if (ret > 0) {
+            /* Remove all provider side stuff */
+            evp_keymgmt_util_clear_operation_cache(*ppkey);
+            evp_keymgmt_freedata((*ppkey)->keymgmt, (*ppkey)->keydata);
+            EVP_KEYMGMT_free((*ppkey)->keymgmt);
+            (*ppkey)->keymgmt = NULL;
+            (*ppkey)->keydata = NULL;
+            EVP_PKEY_assign_EC_KEY(*ppkey, ec);
+            if (!EVP_PKEY_set_alias_type(*ppkey, EVP_PKEY_SM2)) {
+                EVP_PKEY_assign(*ppkey, EVP_PKEY_NONE, NULL);
+                ret = 0;
+            }
+        }
+        if (ret < 1)
+            EC_KEY_free(ec);
+    }
+#endif
     goto end;
 
  legacy:
