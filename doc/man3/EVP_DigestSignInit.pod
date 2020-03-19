@@ -9,9 +9,9 @@ EVP_DigestSignFinal, EVP_DigestSign - EVP signing functions
 
  #include <openssl/evp.h>
 
- int EVP_DigestSignInit_ex(OPENSSL_CTX *libctx, EVP_MD_CTX *ctx,
-                           EVP_PKEY_CTX **pctx, const char *mdname,
-                           const char *props, EVP_PKEY *pkey);
+ int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                           const char *mdname, const char *props,
+                           EVP_PKEY *pkey, OPENSSL_CTX *libctx);
  int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                         const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
