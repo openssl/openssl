@@ -5003,3 +5003,9 @@ OPENSSL_CTX_load_config                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_type_by_keymgmt            ?	3_0_0	EXIST::FUNCTION:
 OCSP_RESPID_set_by_key_ex               ?	3_0_0	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match_ex                    ?	3_0_0	EXIST::FUNCTION:OCSP
+SRP_create_verifier_ex                  ?	3_0_0	EXIST::FUNCTION:SRP
+SRP_create_verifier_BN_ex               ?	3_0_0	EXIST::FUNCTION:SRP
+SRP_Calc_B_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
+SRP_Calc_u_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
+SRP_Calc_x_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
+SRP_Calc_client_key_ex                  ?	3_0_0	EXIST::FUNCTION:SRP

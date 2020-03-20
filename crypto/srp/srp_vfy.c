@@ -594,8 +594,9 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
 /*
  * create a verifier (*salt,*verifier,g and N are in base64)
  */
-char *SRP_create_verifier(const char *user, const char *pass, char **salt,
-                          char **verifier, const char *N, const char *g)
+char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
+                             char **verifier, const char *N, const char *g,
+                             OPENSSL_CTX *libctx, const char *propq)
 {
     int len;
     char *result = NULL, *vf = NULL;
@@ -634,7 +635,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     }
 
     if (*salt == NULL) {
-        if (RAND_bytes(tmp2, SRP_RANDOM_SALT_LEN) <= 0)
+        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN) <= 0)
             goto err;
 
         s = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);
@@ -646,7 +647,8 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     if (s == NULL)
         goto err;
 
-    if (!SRP_create_verifier_BN(user, pass, &s, &v, N_bn, g_bn))
+    if (!SRP_create_verifier_BN_ex(user, pass, &s, &v, N_bn, g_bn, libctx,
+                                   propq))
         goto err;
 
     if (BN_bn2bin(v, tmp) < 0)
@@ -683,6 +685,12 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     return result;
 }
 
+char *SRP_create_verifier(const char *user, const char *pass, char **salt,
+                          char **verifier, const char *N, const char *g)
+{
+    return SRP_create_verifier_ex(user, pass, salt, verifier, N, g, NULL, NULL);
+}
+
 /*
  * create a verifier (*salt,*verifier,g and N are BIGNUMs). If *salt != NULL
  * then the provided salt will be used. On successful exit *verifier will point
@@ -692,13 +700,14 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
  * The caller is responsible for freeing the allocated *salt and *verifier
  * BIGNUMS.
  */
-int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
-                           BIGNUM **verifier, const BIGNUM *N,
-                           const BIGNUM *g)
+int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
+                              BIGNUM **verifier, const BIGNUM *N,
+                              const BIGNUM *g, OPENSSL_CTX *libctx,
+                              const char *propq)
 {
     int result = 0;
     BIGNUM *x = NULL;
-    BN_CTX *bn_ctx = BN_CTX_new();
+    BN_CTX *bn_ctx = BN_CTX_new_ex(libctx);
     unsigned char tmp2[MAX_LEN];
     BIGNUM *salttmp = NULL;
 
@@ -709,7 +718,7 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
         goto err;
 
     if (*salt == NULL) {
-        if (RAND_bytes(tmp2, SRP_RANDOM_SALT_LEN) <= 0)
+        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN) <= 0)
             goto err;
 
         salttmp = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);
@@ -719,7 +728,7 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
         salttmp = *salt;
     }
 
-    x = SRP_Calc_x(salttmp, user, pass);
+    x = SRP_Calc_x_ex(salttmp, user, pass, libctx, propq);
     if (x == NULL)
         goto err;
 
@@ -743,4 +752,11 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
     return result;
 }
 
+int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
+                           BIGNUM **verifier, const BIGNUM *N,
+                           const BIGNUM *g)
+{
+    return SRP_create_verifier_BN_ex(user, pass, salt, verifier, N, g, NULL,
+                                     NULL);
+}
 #endif
