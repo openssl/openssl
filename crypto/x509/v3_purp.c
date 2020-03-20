@@ -15,8 +15,6 @@
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
 
-static void x509v3_cache_extensions(X509 *x);
-
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);
@@ -80,8 +78,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
     int idx;
     const X509_PURPOSE *pt;
 
-    x509v3_cache_extensions(x);
-    if (x->ex_flags & EXFLAG_INVALID)
+    if (!X509v3_cache_extensions(x, NULL, NULL))
         return -1;
 
     /* Return if side-effect only call */
@@ -352,7 +349,7 @@ static int setup_crldp(X509 *x)
 #define ns_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-static void x509v3_cache_extensions(X509 *x)
+int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
@@ -361,21 +358,25 @@ static void x509v3_cache_extensions(X509 *x)
     EXTENDED_KEY_USAGE *extusage;
     X509_EXTENSION *ex;
     int i;
+    EVP_MD *sha1;
 
 #ifdef tsan_ld_acq
     /* fast lock-free check, see end of the function for details. */
     if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
-        return;
+        return (x->ex_flags & EXFLAG_INVALID) == 0;
 #endif
 
     CRYPTO_THREAD_write_lock(x->lock);
     if (x->ex_flags & EXFLAG_SET) {
         CRYPTO_THREAD_unlock(x->lock);
-        return;
+        return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
 
-    if (!X509_digest(x, EVP_sha1(), x->sha1_hash, NULL))
-        x->ex_flags |= EXFLAG_INVALID;
+    sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    if (sha1 == NULL || !X509_digest(x, sha1, x->sha1_hash, NULL))
+            x->ex_flags |= EXFLAG_INVALID;
+    EVP_MD_free(sha1);
+
     /* V1 should mean no extensions ... */
     if (!X509_get_version(x))
         x->ex_flags |= EXFLAG_V1;
@@ -538,6 +539,8 @@ static void x509v3_cache_extensions(X509 *x)
      */
 #endif
     CRYPTO_THREAD_unlock(x->lock);
+
+    return (x->ex_flags & EXFLAG_INVALID) == 0;
 }
 
 /*-
@@ -590,7 +593,9 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 
 int X509_check_ca(X509 *x)
 {
-    x509v3_cache_extensions(x);
+    /* Note 0 normally means "not a CA" - but in this case means error. */
+    if (!X509v3_cache_extensions(x, NULL, NULL))
+        return 0;
 
     return check_ca(x);
 }
@@ -806,11 +811,8 @@ int X509_check_issued(X509 *issuer, X509 *subject)
                       X509_get_issuer_name(subject)))
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    x509v3_cache_extensions(issuer);
-    if (issuer->ex_flags & EXFLAG_INVALID)
-        return X509_V_ERR_UNSPECIFIED;
-    x509v3_cache_extensions(subject);
-    if (subject->ex_flags & EXFLAG_INVALID)
+    if (!X509v3_cache_extensions(issuer, NULL, NULL)
+            || !X509v3_cache_extensions(subject, NULL, NULL))
         return X509_V_ERR_UNSPECIFIED;
 
     if (subject->akid) {
