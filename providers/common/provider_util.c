@@ -76,12 +76,17 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
         return 0;
 
     EVP_CIPHER_free(pc->alloc_cipher);
+    ERR_set_mark();
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL)
         pc->cipher = EVP_get_cipherbyname(p->data);
 #endif
+    if (pc->cipher != NULL)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     return pc->cipher != NULL;
 }
 
@@ -131,12 +136,17 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
         return 0;
 
     EVP_MD_free(pd->alloc_md);
+    ERR_set_mark();
     pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)
         pd->md = EVP_get_digestbyname(p->data);
 #endif
+    if (pd->md != NULL)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     return pd->md != NULL;
 }
 

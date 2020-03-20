@@ -5848,6 +5848,8 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
                                        int nid,
                                        const char *properties)
 {
+    EVP_CIPHER *ciph;
+
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *eng;
 
@@ -5862,8 +5864,11 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
     }
 #endif
 
-    /* Otherwise we do an explicit fetch */
-    return EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
+    /* Otherwise we do an explicit fetch. This may fail and that could be ok */
+    ERR_set_mark();
+    ciph = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
+    ERR_pop_to_mark();
+    return ciph;
 }
 
 
@@ -5898,6 +5903,8 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
                                int nid,
                                const char *properties)
 {
+    EVP_MD *md;
+
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *eng;
 
@@ -5913,7 +5920,10 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
 #endif
 
     /* Otherwise we do an explicit fetch */
-    return EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
+    ERR_set_mark();
+    md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
+    ERR_pop_to_mark();
+    return md;
 }
 
 int ssl_evp_md_up_ref(const EVP_MD *md)

@@ -391,10 +391,12 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
 
     /*
      * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if signature is already there.
+     * checking if signature is already there. This can fail in the legacy case.
      */
+    ERR_set_mark();
     signature =
         EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+    ERR_pop_to_mark();
 
     if (signature == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)

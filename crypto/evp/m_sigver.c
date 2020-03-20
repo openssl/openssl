@@ -110,10 +110,13 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     /*
      * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if signature is already there.
+     * checking if signature is already there. The fetch can fail in the legacy
+     * case.
      */
+    ERR_set_mark();
     signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
                                     locpctx->propquery);
+    ERR_pop_to_mark();
 
     if (signature == NULL
         || (EVP_KEYMGMT_provider(locpctx->keymgmt)
@@ -163,10 +166,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * In that case the "explicit fetch" rules apply for that
              * function (as per man pages), i.e. the ref count is not updated
              * so the EVP_MD should not be used beyound the lifetime of the
-             * EVP_MD_CTX.
+             * EVP_MD_CTX. This can fail.
              */
+            ERR_set_mark();
             ctx->reqdigest = ctx->fetched_digest =
                 EVP_MD_fetch(locpctx->libctx, mdname, props);
+            ERR_pop_to_mark();
         }
     }
 
