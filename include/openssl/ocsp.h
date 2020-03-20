@@ -277,7 +277,11 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
                         X509 *signer, EVP_MD_CTX *ctx,
                         STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
+int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
+                              OPENSSL_CTX *libctx, const char *propq);
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
+int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OPENSSL_CTX *libctx,
+                         const char *propq);
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
 X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
