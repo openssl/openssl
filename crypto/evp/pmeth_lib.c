@@ -226,8 +226,12 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If there's no engine and there's a name, we try fetching a provider
      * implementation.
      */
-    if (e == NULL && keytype != NULL)
+    if (e == NULL && keytype != NULL) {
+        /* This could fail so ignore errors */
+        ERR_set_mark();
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
+        ERR_pop_to_mark();
+    }
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
