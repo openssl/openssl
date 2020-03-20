@@ -938,6 +938,8 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
 
         if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
             TEST_info("SSL_connect() failed %d, %d", retc, err);
+            if (want != SSL_ERROR_SSL)
+                TEST_openssl_errors();
             clienterr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
@@ -954,6 +956,8 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                 && err != SSL_ERROR_WANT_READ
                 && err != SSL_ERROR_WANT_X509_LOOKUP) {
             TEST_info("SSL_accept() failed %d, %d", rets, err);
+            if (want != SSL_ERROR_SSL)
+                TEST_openssl_errors();
             servererr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
