@@ -14,6 +14,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
 static int ssl_set_cert(CERT *c, X509 *x509);
@@ -29,6 +30,10 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509v3_cache_extensions(x, ssl->ctx->libctx, ssl->ctx->propq)) {
+        SSLerr(0, ERR_LIB_X509);
         return 0;
     }
     rv = ssl_security_cert(ssl, NULL, x, 0, 1);
@@ -303,6 +308,10 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq)) {
+        SSLerr(0, ERR_LIB_X509);
         return 0;
     }
     rv = ssl_security_cert(NULL, ctx, x, 0, 1);
