@@ -374,6 +374,8 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "KECCAK-KMAC-128:KECCAK-KMAC128", "provider=fips,fips=yes", keccak_kmac_128_functions },
     { "KECCAK-KMAC-256:KECCAK-KMAC256", "provider=fips,fips=yes", keccak_kmac_256_functions },
 
+    /* Non-FIPS algorithm to support oneshot_hash in the Ed448 code */
+    { "SHAKE-256:SHAKE256", "provider=fips,fips=no", shake_256_functions },
     { NULL, NULL, NULL }
 };
 
@@ -447,6 +449,8 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 #endif
 #ifndef OPENSSL_NO_EC
     { "ECDH", "provider=fips,fips=yes", ecdh_keyexch_functions },
+    { "X25519", "provider=fips,fips=no", x25519_keyexch_functions },
+    { "X448", "provider=fips,fips=no", x448_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -457,6 +461,8 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #endif
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
+    { "ED25519", "provider=fips,fips=no", ed25519_signature_functions },
+    { "ED448", "provider=fips,fips=no", ed448_signature_functions },
     { "ECDSA", "provider=fips,fips=yes", ecdsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
@@ -477,6 +483,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
     { "EC:id-ecPublicKey", "provider=fips,fips=yes", ec_keymgmt_functions },
+    { "X25519", "provider=fips,fips=no", x25519_keymgmt_functions },
+    { "X448", "provider=fips,fips=no", x448_keymgmt_functions },
+    { "ED25519", "provider=fips,fips=no", ed25519_keymgmt_functions },
+    { "ED448", "provider=fips,fips=no", ed448_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
