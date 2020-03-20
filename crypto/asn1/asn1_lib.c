@@ -426,7 +426,7 @@ char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
         current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_length(current);
         if (i > 0 && sep_len > 0) {
-            strncpy(p, sep, sep_len);
+            strncpy(p, sep, sep_len + 1);
             p += sep_len;
         }
         strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
