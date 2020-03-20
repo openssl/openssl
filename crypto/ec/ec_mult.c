@@ -421,7 +421,36 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         || (bn_wexpand(&r->Z, group_top) == NULL))
         goto err;
 
-    /* top bit is a 1, in a fixed pos */
+    /* blinding: use point r as temporary variable. */
+
+    /* first randomize r->Z and later adjust s accordingly. */
+    do {
+        if (!BN_rand(&r->Z, BN_num_bits(&group->order), 0, 0)) {
+            ECerr(EC_F_EC_POINT_MUL, ERR_R_BN_LIB);
+            goto err;
+        }
+    } while (BN_is_zero(&r->Z));
+
+    /* convert r->Z to the correct field representation. */
+    if (group->meth->field_encode != NULL
+        && !group->meth->field_encode(group, &r->Z, &r->Z, ctx)) {
+        goto err;
+    }
+
+    /* scale s->X and s->Y by r->Z^2 and r->Z^3, respectively. */
+    if (!group->meth->field_sqr(group, &r->X, &r->Z, ctx)
+        || !group->meth->field_mul(group, &r->Y, &r->X, &r->Z, ctx)) {
+        goto err;
+    }
+    if (!group->meth->field_mul(group, &s->X, &s->X, &r->X, ctx)
+        || !group->meth->field_mul(group, &s->Y, &s->Y, &r->Y, ctx)
+        || !group->meth->field_mul(group, &s->Z, &s->Z, &r->Z, ctx)) {
+        goto err;
+    }
+    /* mark the flag in s to full projective coordinates. */
+    s->Z_is_one = 0;
+
+    /* top bit is a 1, in a fixed pos; blinding makes r projective as well */
     if (!EC_POINT_copy(r, s))
         goto err;
 
