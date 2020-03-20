@@ -439,6 +439,32 @@ static int load_builtin_compressions(void)
 }
 #endif
 
+int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+                              const EVP_CIPHER **enc)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+
+    if (i == -1) {
+        *enc = NULL;
+    } else {
+        if (i == SSL_ENC_NULL_IDX) {
+            /*
+             * We assume we don't care about this coming from an ENGINE so
+             * just do a normal EVP_CIPHER_fetch instead of
+             * ssl_evp_cipher_fetch()
+             */
+            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
+            if (*enc == NULL)
+                return 0;
+        } else {
+            if (!ssl_evp_cipher_up_ref(ctx->ssl_cipher_methods[i]))
+                return 0;
+            *enc = ctx->ssl_cipher_methods[i];
+        }
+    }
+    return 1;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        const EVP_CIPHER **enc, const EVP_MD **md,
                        int *mac_pkey_type, size_t *mac_secret_size,
@@ -474,24 +500,8 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if ((enc == NULL) || (md == NULL))
         return 0;
 
-    i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, c->algorithm_enc);
-
-    if (i == -1) {
-        *enc = NULL;
-    } else {
-        if (i == SSL_ENC_NULL_IDX) {
-            /*
-             * We assume we don't care about this coming from an ENGINE so
-             * just do a normal EVP_CIPHER_fetch instead of
-             * ssl_evp_cipher_fetch()
-             */
-            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
-        } else {
-            if (!ssl_evp_cipher_up_ref(ctx->ssl_cipher_methods[i]))
-                return 0;
-            *enc = ctx->ssl_cipher_methods[i];
-        }
-    }
+    if (!ssl_cipher_get_evp_cipher(ctx, c, enc))
+        return 0;
 
     i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
     if (i == -1) {
