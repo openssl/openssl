@@ -157,7 +157,7 @@ int SSL_srp_server_param_with_username(SSL *s, int *ad)
         (s->srp_ctx.s == NULL) || (s->srp_ctx.v == NULL))
         return SSL3_AL_FATAL;
 
-    if (RAND_priv_bytes(b, sizeof(b)) <= 0)
+    if (RAND_priv_bytes_ex(s->ctx->libctx, b, sizeof(b)) <= 0)
         return SSL3_AL_FATAL;
     s->srp_ctx.b = BN_bin2bn(b, sizeof(b), NULL);
     OPENSSL_cleanse(b, sizeof(b));
@@ -165,8 +165,8 @@ int SSL_srp_server_param_with_username(SSL *s, int *ad)
     /* Calculate:  B = (kv + g^b) % N  */
 
     return ((s->srp_ctx.B =
-             SRP_Calc_B(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
-                        s->srp_ctx.v)) !=
+             SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
+                           s->srp_ctx.v, s->ctx->libctx, s->ctx->propq)) !=
             NULL) ? SSL_ERROR_NONE : SSL3_AL_FATAL;
 }
 
@@ -186,8 +186,9 @@ int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
     s->srp_ctx.v = NULL;
     BN_clear_free(s->srp_ctx.s);
     s->srp_ctx.s = NULL;
-    if (!SRP_create_verifier_BN
-        (user, pass, &s->srp_ctx.s, &s->srp_ctx.v, GN->N, GN->g))
+    if (!SRP_create_verifier_BN_ex(user, pass, &s->srp_ctx.s, &s->srp_ctx.v,
+                                   GN->N, GN->g, s->ctx->libctx,
+                                   s->ctx->propq))
         return -1;
 
     return 1;
@@ -254,7 +255,8 @@ int srp_generate_server_master_secret(SSL *s)
 
     if (!SRP_Verify_A_mod_N(s->srp_ctx.A, s->srp_ctx.N))
         goto err;
-    if ((u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)) == NULL)
+    if ((u = SRP_Calc_u_ex(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N,
+                           s->ctx->libctx, s->ctx->propq)) == NULL)
         goto err;
     if ((K = SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
                                  s->srp_ctx.N)) == NULL)
@@ -287,7 +289,8 @@ int srp_generate_client_master_secret(SSL *s)
      * Checks if b % n == 0
      */
     if (SRP_Verify_B_mod_N(s->srp_ctx.B, s->srp_ctx.N) == 0
-            || (u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N))
+            || (u = SRP_Calc_u_ex(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N,
+                                  s->ctx->libctx, s->ctx->propq))
                == NULL
             || s->srp_ctx.SRP_give_srp_client_pwd_callback == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -302,10 +305,13 @@ int srp_generate_client_master_secret(SSL *s)
                  SSL_R_CALLBACK_FAILED);
         goto err;
     }
-    if ((x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)) == NULL
-            || (K = SRP_Calc_client_key(s->srp_ctx.N, s->srp_ctx.B,
-                                        s->srp_ctx.g, x,
-                                        s->srp_ctx.a, u)) == NULL) {
+    if ((x = SRP_Calc_x_ex(s->srp_ctx.s, s->srp_ctx.login, passwd,
+                           s->ctx->libctx, s->ctx->propq)) == NULL
+            || (K = SRP_Calc_client_key_ex(s->srp_ctx.N, s->srp_ctx.B,
+                                           s->srp_ctx.g, x,
+                                           s->srp_ctx.a, u,
+                                           s->ctx->libctx,
+                                           s->ctx->propq)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_SRP_GENERATE_CLIENT_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -369,7 +375,7 @@ int SRP_Calc_A_param(SSL *s)
 {
     unsigned char rnd[SSL_MAX_MASTER_KEY_LENGTH];
 
-    if (RAND_priv_bytes(rnd, sizeof(rnd)) <= 0)
+    if (RAND_priv_bytes_ex(s->ctx->libctx, rnd, sizeof(rnd)) <= 0)
         return 0;
     s->srp_ctx.a = BN_bin2bn(rnd, sizeof(rnd), s->srp_ctx.a);
     OPENSSL_cleanse(rnd, sizeof(rnd));
