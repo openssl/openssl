@@ -599,7 +599,18 @@ int tls13_change_cipher_state(SSL *s, int which)
                          SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            cipher = EVP_get_cipherbynid(SSL_CIPHER_get_cipher_nid(sslcipher));
+
+            /*
+             * This ups the ref count on cipher so we better make sure we free
+             * it again
+             */
+            if (!ssl_cipher_get_evp_cipher(s->ctx, sslcipher, &cipher)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                         SSL_R_ALGORITHM_FETCH_FAILED);
+                goto err;
+            }
+
             md = ssl_md(s->ctx, sslcipher->algorithm2);
             if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)
                     || !EVP_DigestUpdate(mdctx, hdata, handlen)
@@ -755,6 +766,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;
  err:
+    if ((which & SSL3_CC_EARLY) != 0) {
+        /* We up-refed this so now we need to down ref */
+        ssl_evp_cipher_free(cipher);
+    }
     OPENSSL_cleanse(secret, sizeof(secret));
     return ret;
 }
