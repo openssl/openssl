@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,8 +13,10 @@
 #include <openssl/crypto.h>
 #include "internal/conf.h"
 #include "internal/dso.h"
+#include "internal/thread_once.h"
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+#include <openssl/engine.h>
 
 #define DSO_mod_init_name "OPENSSL_init"
 #define DSO_mod_finish_name "OPENSSL_finish"
@@ -54,6 +56,8 @@ struct conf_imodule_st {
 
 static STACK_OF(CONF_MODULE) *supported_modules = NULL;
 static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
+
+static CRYPTO_ONCE load_builtin_modules = CRYPTO_ONCE_STATIC_INIT;
 
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
@@ -113,22 +117,25 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 }
 
-int CONF_modules_load_file(const char *filename, const char *appname,
-                           unsigned long flags)
+int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
+                                       const char *filename,
+                                       const char *appname, unsigned long flags)
 {
     char *file = NULL;
     CONF *conf = NULL;
     int ret = 0;
-    conf = NCONF_new(NULL);
+
+    conf = NCONF_new_with_libctx(libctx, NULL);
     if (conf == NULL)
         goto err;
 
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
-        if (!file)
+        if (file == NULL)
             goto err;
-    } else
+    } else {
         file = (char *)filename;
+    }
 
     if (NCONF_load(conf, file, NULL) <= 0) {
         if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
@@ -152,11 +159,31 @@ int CONF_modules_load_file(const char *filename, const char *appname,
     return ret;
 }
 
+int CONF_modules_load_file(const char *filename,
+                           const char *appname, unsigned long flags)
+{
+    return CONF_modules_load_file_with_libctx(NULL, filename, appname, flags);
+}
+
+DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)
+{
+    OPENSSL_load_builtin_modules();
+#ifndef OPENSSL_NO_ENGINE
+    /* Need to load ENGINEs */
+    ENGINE_load_builtin_engines();
+#endif
+    ERR_clear_error();
+    return 1;
+}
+
 static int module_run(const CONF *cnf, const char *name, const char *value,
                       unsigned long flags)
 {
     CONF_MODULE *md;
     int ret;
+
+    if (!RUN_ONCE(&load_builtin_modules, do_load_builtin_modules))
+        return -1;
 
     md = module_find(name);
 

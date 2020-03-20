@@ -121,7 +121,7 @@ foreach my $setup (@setups) {
 
 foreach my $alg (@types) {
     foreach my $testcase (@testdata) {
-        $ENV{OPENSSL_CONF} = $testcase->{config};
+        $ENV{OPENSSL_CONF} = "";
         foreach my $test (@{$testcase->{tests}}) {
             my @testproviders =
                 @{ $test->{providers} // $testcase->{providers} };
@@ -137,6 +137,7 @@ foreach my $alg (@types) {
                 "running evp_fetch_prov_test with $alg$testprovstr$testmsg";
 
             ok(run(test(["evp_fetch_prov_test", "-type", "$alg",
+                         "-config", "$testcase->{config}",
                          @testargs, @testproviders])),
                $message);
         }

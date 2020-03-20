@@ -455,7 +455,7 @@ priority and B</tmp> used if neither is defined:
 Simple OpenSSL library configuration example to enter FIPS mode:
 
  # Default appname: should match "appname" parameter (if any)
- # supplied to CONF_modules_load_file et al.
+ # supplied to CONF_modules_load_file_with_libctx et al.
  openssl_conf = openssl_conf_section
 
  [openssl_conf_section]
@@ -488,7 +488,7 @@ minimum TLS version:
 More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
 
  # Default appname: should match "appname" parameter (if any)
- # supplied to CONF_modules_load_file et al.
+ # supplied to CONF_modules_load_file_with_libctx et al.
  openssl_conf = openssl_conf_section
 
  [openssl_conf_section]
@@ -576,7 +576,7 @@ L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>, L<fips_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

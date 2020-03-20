@@ -20,6 +20,7 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
+static char *config_file = NULL;
 static char *alg = "digest";
 static int use_default_ctx = 0;
 static char *fetch_property = NULL;
@@ -32,6 +33,7 @@ typedef enum OPTION_choice {
     OPT_FETCH_PROPERTY,
     OPT_FETCH_FAILURE,
     OPT_USE_DEFAULTCTX,
+    OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -39,6 +41,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
+        { "config", OPT_CONFIG_FILE, '<', "The configuration file to use for the libctx" },
         { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
         { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. provider=fips" },
         { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
@@ -75,7 +78,7 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
 
 static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
 {
-    OPENSSL_CTX *ctx;
+    OPENSSL_CTX *ctx = NULL;
     int ret = 0;
     size_t i;
 
@@ -83,6 +86,8 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
     if (!TEST_ptr(ctx))
         goto err;
 
+    if (!TEST_true(OPENSSL_CTX_load_config(ctx, config_file)))
+        goto err;
     if (test_get_argument_count() > 2)
         goto err;
 
@@ -92,9 +97,12 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
         if (!TEST_ptr(prov[i]))
             goto err;
     }
+
     ret = 1;
     *libctx = ctx;
 err:
+    if (ret == 0)
+        OPENSSL_CTX_free(ctx);
     return ret;
 }
 
@@ -231,6 +239,9 @@ int setup_tests(void)
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            break;
         case OPT_ALG_FETCH_TYPE:
             alg = opt_arg();
             break;
