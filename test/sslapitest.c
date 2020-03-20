@@ -5533,8 +5533,8 @@ static int create_new_vfile(char *userid, char *password, const char *filename)
     if (!TEST_ptr(dummy) || !TEST_ptr(row))
         goto end;
 
-    gNid = SRP_create_verifier(userid, password, &row[DB_srpsalt],
-                               &row[DB_srpverifier], NULL, NULL);
+    gNid = SRP_create_verifier_ex(userid, password, &row[DB_srpsalt],
+                                  &row[DB_srpverifier], NULL, NULL, NULL, NULL);
     if (!TEST_ptr(gNid))
         goto end;
 
@@ -5590,8 +5590,8 @@ static int create_new_vbase(char *userid, char *password)
     if (!TEST_ptr(lgN))
         goto end;
 
-    if (!TEST_true(SRP_create_verifier_BN(userid, password, &salt, &verifier,
-                                          lgN->N, lgN->g)))
+    if (!TEST_true(SRP_create_verifier_BN_ex(userid, password, &salt, &verifier,
+                                             lgN->N, lgN->g, NULL, NULL)))
         goto end;
 
     user_pwd = OPENSSL_zalloc(sizeof(*user_pwd));
