@@ -23,7 +23,7 @@ use platform;
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
-plan tests => 2;
+plan tests => 3;
 
 (undef, my $tmpfilename) = tempfile();
 
@@ -43,6 +43,12 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test", "recipes", "90-test_sslapi_data",
                          "passwd.txt"), $tmpfilename, "default",
              srctop_file("test", "default.cnf")])),
+             "running sslapitest");
+
+ok(run(test(["sslapitest", srctop_dir("test", "certs"),
+             srctop_file("test", "recipes", "90-test_sslapi_data",
+                         "passwd.txt"), $tmpfilename, "fips",
+             srctop_file("test", "fips.cnf")])),
              "running sslapitest");
 
 unlink $tmpfilename;

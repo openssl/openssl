@@ -64,6 +64,8 @@ static char *privkey = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 
+static int is_fips = 0;
+
 #define LOG_BUFFER_SIZE 2048
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
 static size_t server_log_buffer_index = 0;
@@ -3748,6 +3750,10 @@ static int test_ciphersuite_change(void)
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                                   "TLS_AES_128_GCM_SHA256:"
+                                                   "TLS_AES_256_GCM_SHA384:"
+                                                   "TLS_AES_128_CCM_SHA256"))
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
                                                    "TLS_AES_128_GCM_SHA256"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
@@ -3768,9 +3774,9 @@ static int test_ciphersuite_change(void)
 # if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     /* Check we can resume a session with a different SHA-256 ciphersuite */
     if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
-                                            "TLS_CHACHA20_POLY1305_SHA256"))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL))
+                                            "TLS_AES_128_CCM_SHA256"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                             &clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE))
@@ -4033,15 +4039,19 @@ static int test_tls13_ciphersuite(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    static const char *t13_ciphers[] = {
-        TLS1_3_RFC_AES_128_GCM_SHA256,
-        TLS1_3_RFC_AES_256_GCM_SHA384,
-        TLS1_3_RFC_AES_128_CCM_SHA256,
+    static const struct {
+        const char *ciphername;
+        int fipscapable;
+    } t13_ciphers[] = {
+        { TLS1_3_RFC_AES_128_GCM_SHA256, 1 },
+        { TLS1_3_RFC_AES_256_GCM_SHA384, 1 },
+        { TLS1_3_RFC_AES_128_CCM_SHA256, 1 },
 # if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
-        TLS1_3_RFC_AES_256_GCM_SHA384 ":" TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        { TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0 },
+        { TLS1_3_RFC_AES_256_GCM_SHA384
+          ":" TLS1_3_RFC_CHACHA20_POLY1305_SHA256, 0 },
 # endif
-        TLS1_3_RFC_AES_128_CCM_8_SHA256 ":" TLS1_3_RFC_AES_128_CCM_SHA256
+        { TLS1_3_RFC_AES_128_CCM_8_SHA256 ":" TLS1_3_RFC_AES_128_CCM_SHA256, 1 }
     };
     const char *t13_cipher = NULL;
     const char *t12_cipher = NULL;
@@ -4076,7 +4086,9 @@ static int test_tls13_ciphersuite(int idx)
             continue;
 # endif
         for (i = 0; i < OSSL_NELEM(t13_ciphers); i++) {
-            t13_cipher = t13_ciphers[i];
+            if (is_fips && !t13_ciphers[i].fipscapable)
+                continue;
+            t13_cipher = t13_ciphers[i].ciphername;
             if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                                TLS_client_method(),
                                                TLS1_VERSION, max_ver,
@@ -4192,6 +4204,16 @@ static int test_tls13_psk(int idx)
          * prefer SHA256 automatically.
          */
         if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                "TLS_AES_128_GCM_SHA256")))
+            goto end;
+    } else {
+        /*
+         * As noted above the server should prefer SHA256 automatically. However
+         * we are careful not to offer TLS_CHACHA20_POLY1305_SHA256 so this same
+         * code works even if we are testing with only the FIPS provider loaded.
+         */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                "TLS_AES_256_GCM_SHA384:"
                                                 "TLS_AES_128_GCM_SHA256")))
             goto end;
     }
@@ -4933,6 +4955,9 @@ static int test_export_key_mat(int tst)
     if (tst == 1)
         return 1;
 #endif
+    /* TODO(3.0): No TLSv1.0/TLSv1.1 support with FIPS at the moment */
+    if (is_fips && (tst == 0 || tst == 1))
+        return 1;
 #ifdef OPENSSL_NO_TLS1_2
     if (tst == 2)
         return 1;
@@ -7285,6 +7310,9 @@ int setup_tests(void)
     if (strcmp(modulename, "default") != 0
             && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
         return 0;
+
+    if (strcmp(modulename, "fips") == 0)
+        is_fips = 1;
 
     if (getenv("OPENSSL_TEST_GETCOUNTS") != NULL) {
 #ifdef OPENSSL_NO_CRYPTO_MDEBUG
