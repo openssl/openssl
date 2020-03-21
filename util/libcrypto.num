@@ -5000,3 +5000,4 @@ EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
 NCONF_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_with_libctx      ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_load_config                 ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_set_type_by_keymgmt            ?	3_0_0	EXIST::FUNCTION:

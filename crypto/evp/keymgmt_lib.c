@@ -206,17 +206,15 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                 int selection, const OSSL_PARAM params[])
 {
-    void *keydata = evp_keymgmt_newdata(keymgmt);
+    void *keydata = NULL;
 
+    if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL
+        || !evp_keymgmt_import(keymgmt, keydata, selection, params)
+        || !EVP_PKEY_set_type_by_keymgmt(target, keymgmt)) {
+        evp_keymgmt_freedata(keymgmt, keydata);
+        keydata = NULL;
+    }
     if (keydata != NULL) {
-        if (!evp_keymgmt_import(keymgmt, keydata, selection, params)
-            || !EVP_KEYMGMT_up_ref(keymgmt)) {
-            evp_keymgmt_freedata(keymgmt, keydata);
-            return NULL;
-        }
-
-        evp_keymgmt_util_clear_operation_cache(target);
-        target->keymgmt = keymgmt;
         target->keydata = keydata;
         evp_keymgmt_util_cache_keyinfo(target);
     }
@@ -303,7 +301,7 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
             }
         }
         /*
-         * If we've successfully cross exported one way, there's not point
+         * If we've successfully cross exported one way, there's no point
          * doing it the other way, hence the |!ok| check.
          */
         if (!ok
@@ -387,12 +385,10 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
     }
 
     if (to->keymgmt == NULL
-        && !EVP_KEYMGMT_up_ref(to_keymgmt)) {
+        && !EVP_PKEY_set_type_by_keymgmt(to, to_keymgmt)) {
         evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
         return 0;
     }
-    evp_keymgmt_util_clear_operation_cache(to);
-    to->keymgmt = to_keymgmt;
     to->keydata = to_keydata;
     evp_keymgmt_util_cache_keyinfo(to);
 
@@ -402,16 +398,14 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
 void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
-    void *keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg);
+    void *keydata = NULL;
 
+    if ((keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg)) == NULL
+        || !EVP_PKEY_set_type_by_keymgmt(target, keymgmt)) {
+        evp_keymgmt_freedata(keymgmt, keydata);
+        keydata = NULL;
+    }
     if (keydata != NULL) {
-        if (!EVP_KEYMGMT_up_ref(keymgmt)) {
-            evp_keymgmt_freedata(keymgmt, keydata);
-            return NULL;
-        }
-
-        evp_keymgmt_util_clear_operation_cache(target);
-        target->keymgmt = keymgmt;
         target->keydata = keydata;
         evp_keymgmt_util_cache_keyinfo(target);
     }
