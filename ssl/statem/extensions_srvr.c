@@ -628,7 +628,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     int do_pqc = 0; /* 1 if post-quantum alg, 0 otherwise */
     int do_hybrid = 0; /* 1 if post-quantum hybrid alg, 0 otherwise */
     unsigned char *classical_encoded_pt = NULL, *oqs_encoded_pt = NULL;
-    uint32_t classical_encodedlen = 0, oqs_encodedlen = 0;
+    uint16_t classical_encodedlen = 0, oqs_encodedlen = 0;
     int has_error = 0;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
@@ -1739,7 +1739,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint = NULL, *classical_encodedPoint = NULL, *oqs_encodedPoint = NULL;
-    size_t encoded_pt_len = 0, classical_encoded_pt_len = 0, oqs_encoded_pt_len = 0;
+    size_t encoded_pt_len = 0;
+    uint16_t classical_encoded_pt_len = 0, oqs_encoded_pt_len = 0;
     unsigned char* shared_secret = NULL, *oqs_shared_secret = NULL;
     size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
@@ -1884,9 +1885,9 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
     }
 
     if (do_hybrid) {
-      uint32_t encoded_pt_len32;
-      int ret = OQS_encode_hybrid_message(classical_encodedPoint, classical_encoded_pt_len, oqs_encodedPoint, oqs_encoded_pt_len, &encodedPoint, &encoded_pt_len32);
-      encoded_pt_len = encoded_pt_len32;
+      uint16_t encoded_pt_len16;
+      int ret = OQS_encode_hybrid_message(classical_encodedPoint, classical_encoded_pt_len, oqs_encodedPoint, oqs_encoded_pt_len, &encodedPoint, &encoded_pt_len16);
+      encoded_pt_len = encoded_pt_len16;
       OPENSSL_free(classical_encodedPoint);
       OPENSSL_free(oqs_encodedPoint);
       if (!ret) {
