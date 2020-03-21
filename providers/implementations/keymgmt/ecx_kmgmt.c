@@ -56,17 +56,18 @@ static void *ed448_new_key(void *provctx)
 static int ecx_has(void *keydata, int selection)
 {
     ECX_KEY *key = keydata;
-    int ok = 1;
+    int ok = 0;
 
-    if ((selection & ECX_POSSIBLE_SELECTIONS) == 0)
-        return 0;
+    if (key != NULL) {
+        if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
+            ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && key->haspubkey;
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+            ok = ok && key->haspubkey;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && key->privkey != NULL;
-
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+            ok = ok && key->privkey != NULL;
+    }
     return ok;
 }
 

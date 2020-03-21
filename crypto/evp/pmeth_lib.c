@@ -157,7 +157,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If the key doesn't contain anything legacy, then it must be provided,
      * so we extract the necessary information and use that.
      */
-    if (pkey != NULL && pkey->ameth == NULL) {
+    if (pkey != NULL && pkey->type == EVP_PKEY_NONE) {
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;

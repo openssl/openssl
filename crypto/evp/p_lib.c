@@ -1069,13 +1069,16 @@ void EVP_PKEY_free(EVP_PKEY *x)
 
 int EVP_PKEY_size(const EVP_PKEY *pkey)
 {
+    int size = 0;
+
     if (pkey != NULL) {
-        if (pkey->ameth == NULL)
-            return pkey->cache.size;
-        else if (pkey->ameth->pkey_size != NULL)
-            return pkey->ameth->pkey_size(pkey);
+        size = pkey->cache.size;
+#ifndef FIPS_MODE
+        if (pkey->ameth != NULL && pkey->ameth->pkey_size != NULL)
+            size = pkey->ameth->pkey_size(pkey);
+#endif
     }
-    return 0;
+    return size;
 }
 
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
@@ -1085,8 +1088,18 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
     void *keydata = NULL;
+    int check;
 
     if (pk == NULL)
+        return NULL;
+
+    /* No key data => nothing to export */
+    check = 1;
+#ifndef FIPS_MODE
+    check = check && pk->pkey.ptr == NULL;
+#endif
+    check = check && pk->keydata == NULL;
+    if (check)
         return NULL;
 
 #ifndef FIPS_MODE

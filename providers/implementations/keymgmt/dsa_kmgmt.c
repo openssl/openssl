@@ -164,15 +164,17 @@ static int dsa_has(void *keydata, int selection)
     DSA *dsa = keydata;
     int ok = 0;
 
-    if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
-        ok = 1;
+    if (dsa != NULL) {
+        if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
+            ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && (DSA_get0_pub_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && (DSA_get0_priv_key(dsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+            ok = ok && (DSA_get0_pub_key(dsa) != NULL);
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+            ok = ok && (DSA_get0_priv_key(dsa) != NULL);
+        if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+            ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
+    }
     return ok;
 }
 

@@ -432,21 +432,22 @@ int ec_has(void *keydata, int selection)
     EC_KEY *ec = keydata;
     int ok = 0;
 
-    if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
-        ok = 1;
+    if (ec != NULL) {
+        if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
+            ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && (EC_KEY_get0_public_key(ec) != NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && (EC_KEY_get0_private_key(ec) != NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && (EC_KEY_get0_group(ec) != NULL);
-    /*
-     * We consider OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS to always be available,
-     * so no extra check is needed other than the previous one against
-     * EC_POSSIBLE_SELECTIONS.
-     */
-
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+            ok = ok && (EC_KEY_get0_public_key(ec) != NULL);
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+            ok = ok && (EC_KEY_get0_private_key(ec) != NULL);
+        if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+            ok = ok && (EC_KEY_get0_group(ec) != NULL);
+        /*
+         * We consider OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS to always be
+         * available, so no extra check is needed other than the previous one
+         * against EC_POSSIBLE_SELECTIONS.
+         */
+    }
     return ok;
 }
 

@@ -39,13 +39,26 @@ static int try_import(const OSSL_PARAM params[], void *arg)
 {
     struct import_data_st *data = arg;
 
+    /*
+     * It's fine if there was no data to transfer, we just end up with an
+     * empty destination key.
+     */
+    if (params[0].key == NULL)
+        return 1;
+
+    /* Just in time creation of keydata, if needed */
+    if (data->keydata == NULL
+        && (data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
     return evp_keymgmt_import(data->keymgmt, data->keydata, data->selection,
                               params);
 }
 
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
-    void *keydata = NULL;
     struct import_data_st import_data;
     size_t i = 0;
 
@@ -54,7 +67,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
 
     /* If we have an unassigned key, give up */
-    if (pk->keymgmt == NULL)
+    if (pk->keydata == NULL)
         return NULL;
 
     /* If |keymgmt| matches the "origin" |keymgmt|, no more to do */
@@ -91,10 +104,6 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (!ossl_assert(match_type(pk->keymgmt, keymgmt)))
         return NULL;
 
-    /* Create space to import data into */
-    if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL)
-        return NULL;
-
     /*
      * We look at the already cached provider keys, and import from the
      * first that supports it (i.e. use its export function), and export
@@ -102,7 +111,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      */
 
     /* Setup for the export callback */
-    import_data.keydata = keydata;
+    import_data.keydata = NULL;  /* try_import will create it */
     import_data.keymgmt = keymgmt;
     import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
 
@@ -113,17 +122,17 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, OSSL_KEYMGMT_SELECT_ALL,
                             &try_import, &import_data)) {
         /* If there was an error, bail out */
-        evp_keymgmt_freedata(keymgmt, keydata);
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
     /* Add the new export to the operation cache */
-    if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, keydata)) {
-        evp_keymgmt_freedata(keymgmt, keydata);
+    if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
-    return keydata;
+    return import_data.keydata;
 }
 
 void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
@@ -175,7 +184,7 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
      *
      * This services functions like EVP_PKEY_size, EVP_PKEY_bits, etc
      */
-    if (pk->keymgmt != NULL) {
+    if (pk->keydata != NULL) {
         int bits = 0;
         int security_bits = 0;
         int size = 0;
@@ -254,7 +263,17 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
     keydata2 = pk2->keydata;
 
     if (keymgmt1 != keymgmt2) {
-        void *tmp_keydata = NULL;
+        /*
+         * The condition for a successful cross export is that the
+         * keydata to be exported is NULL (typed, but otherwise empty
+         * EVP_PKEY), or that it was possible to export it with
+         * evp_keymgmt_util_export_to_provider().
+         *
+         * We use |ok| to determine if it's ok to cross export one way,
+         * but also to determine if we should attempt a cross export
+         * the other way.  There's no point doing it both ways.
+         */
+        int ok = 1;
 
         /* Complex case, where the keymgmt differ */
         if (keymgmt1 != NULL
@@ -270,17 +289,35 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
          */
         if (keymgmt2 != NULL
             && keymgmt2->match != NULL) {
-            tmp_keydata = evp_keymgmt_util_export_to_provider(pk1, keymgmt2);
-            if (tmp_keydata != NULL) {
+            void *tmp_keydata = NULL;
+
+            ok = 1;
+            if (keydata1 != NULL) {
+                tmp_keydata =
+                    evp_keymgmt_util_export_to_provider(pk1, keymgmt2);
+                ok = (tmp_keydata != NULL);
+            }
+            if (ok) {
                 keymgmt1 = keymgmt2;
                 keydata1 = tmp_keydata;
             }
         }
-        if (tmp_keydata == NULL
+        /*
+         * If we've successfully cross exported one way, there's not point
+         * doing it the other way, hence the |!ok| check.
+         */
+        if (!ok
             && keymgmt1 != NULL
             && keymgmt1->match != NULL) {
-            tmp_keydata = evp_keymgmt_util_export_to_provider(pk2, keymgmt1);
-            if (tmp_keydata != NULL) {
+            void *tmp_keydata = NULL;
+
+            ok = 1;
+            if (keydata2 != NULL) {
+                tmp_keydata =
+                    evp_keymgmt_util_export_to_provider(pk2, keymgmt1);
+                ok = (tmp_keydata != NULL);
+            }
+            if (ok) {
                 keymgmt2 = keymgmt1;
                 keydata2 = tmp_keydata;
             }
@@ -291,6 +328,13 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
     if (keymgmt1 != keymgmt2)
         return -2;
 
+    /* If both keydata are NULL, then they're the same key */
+    if (keydata1 == NULL && keydata2 == NULL)
+        return 1;
+    /* If only one of the keydata is NULL, then they're different keys */
+    if (keydata1 == NULL || keydata2 == NULL)
+        return 0;
+    /* If both keydata are non-NULL, we let the backend decide */
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
 
@@ -301,23 +345,21 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
     void *to_keydata = to->keydata, *alloc_keydata = NULL;
 
     /* An unassigned key can't be copied */
-    if (from == NULL || from->keymgmt == NULL)
+    if (from == NULL || from->keydata == NULL)
         return 0;
 
-    /* If |from| doesn't support copying, we fail */
-    if (from->keymgmt->copy == NULL)
-        return 0;
-
-    /* If |to| doesn't have a provider side "origin" yet, create one */
-    if (to_keymgmt == NULL) {
-        to_keydata = alloc_keydata = evp_keymgmt_newdata(from->keymgmt);
-        if (to_keydata == NULL)
+    if (to_keymgmt == from->keymgmt && to_keymgmt->copy != NULL) {
+        /* Make sure there's somewhere to copy to */
+        if (to_keydata == NULL
+            && (to_keydata = evp_keymgmt_newdata(to_keymgmt)) == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return 0;
-        to_keymgmt = from->keymgmt;
-    }
+        }
 
-    if (to_keymgmt == from->keymgmt) {
-        /* |to| and |from| have the same keymgmt, just copy and be done */
+        /*
+         * |to| and |from| have the same keymgmt, and the copy function is
+         * implemented, so just copy and be done
+         */
         if (!evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
                               selection))
             return 0;
@@ -333,6 +375,12 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
             evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
         }
+
+        /*
+         * In this case to_keydata was previously unallocated, try_import()
+         * may have created it for us.
+         */
+        to_keydata = import_data.keydata;
     } else {
         ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
         return 0;
