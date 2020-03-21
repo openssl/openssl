@@ -180,6 +180,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 #ifdef FIPS_MODE
     goto not_supported;
 #else
+    if (ctx->pkey && !evp_pkey_downgrade(ctx->pkey))
+        goto not_accessible;
     switch (ctx->operation) {
     case EVP_PKEY_OP_PARAMGEN:
         ret = ctx->pmeth->paramgen(ctx, *ppkey);
@@ -208,6 +210,12 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
     ret = -1;
     goto end;
+#ifndef FIPS_MODE
+ not_accessible:
+    ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS);
+    ret = -1;
+    goto end;
+#endif
 }
 
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)

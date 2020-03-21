@@ -630,10 +630,8 @@ void evp_app_cleanup_int(void);
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
-void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                                   EVP_KEYMGMT **keymgmt,
-                                   const char *propquery);
 #ifndef FIPS_MODE
+int evp_pkey_downgrade(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
 

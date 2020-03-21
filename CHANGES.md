@@ -24,6 +24,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+ * EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH(), and
+   EVP_PKEY_get0_EC_KEY() can now handle EVP_PKEYs with provider side
+   internal keys, if they correspond to one of those built in types.
+
+   *Richard Levitte*
+
  * Added EVP_PKEY_set_type_by_keymgmt(), to initialise an EVP_PKEY to
    contain a provider side internal key.
 

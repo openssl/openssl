@@ -10,12 +10,6 @@
 
 #ifndef OPENSSL_EVPERR_H
 # define OPENSSL_EVPERR_H
-# pragma once
-
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_EVPERR_H
-# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -199,6 +193,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_GET_RAW_KEY_FAILED                         182
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
+# define EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS             204
+# define EVP_R_INACCESSIBLE_KEY                           203
 # define EVP_R_INITIALIZATION_ERROR                       134
 # define EVP_R_INPUT_NOT_INITIALIZED                      111
 # define EVP_R_INVALID_CUSTOM_LENGTH                      185
@@ -211,6 +207,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_PROVIDER_FUNCTIONS                 193
 # define EVP_R_INVALID_SALT_LENGTH                        186
 # define EVP_R_KEYGEN_FAILURE                             120
+# define EVP_R_KEYMGMT_EXPORT_FAILURE                     205
 # define EVP_R_KEY_SETUP_FAILED                           180
 # define EVP_R_MEMORY_LIMIT_EXCEEDED                      172
 # define EVP_R_MESSAGE_DIGEST_IS_NULL                     159
@@ -221,6 +218,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_CIPHER_SET                              131
 # define EVP_R_NO_DEFAULT_DIGEST                          158
 # define EVP_R_NO_DIGEST_SET                              139
+# define EVP_R_NO_IMPORT_FUNCTION                         206
 # define EVP_R_NO_KEYMGMT_AVAILABLE                       199
 # define EVP_R_NO_KEYMGMT_PRESENT                         196
 # define EVP_R_NO_KEY_SET                                 154
@@ -238,6 +236,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_TOO_MANY_RECORDS                           183
 # define EVP_R_UNKNOWN_CIPHER                             160
 # define EVP_R_UNKNOWN_DIGEST                             161
+# define EVP_R_UNKNOWN_KEY_TYPE                           207
 # define EVP_R_UNKNOWN_OPTION                             169
 # define EVP_R_UNKNOWN_PBE_ALGORITHM                      121
 # define EVP_R_UNSUPPORTED_ALGORITHM                      156

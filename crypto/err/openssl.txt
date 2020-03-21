@@ -2525,6 +2525,8 @@ EVP_R_FINAL_ERROR:188:final error
 EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
+EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS:204:inaccessible domain parameters
+EVP_R_INACCESSIBLE_KEY:203:inaccessible key
 EVP_R_INITIALIZATION_ERROR:134:initialization error
 EVP_R_INPUT_NOT_INITIALIZED:111:input not initialized
 EVP_R_INVALID_CUSTOM_LENGTH:185:invalid custom length
@@ -2537,6 +2539,7 @@ EVP_R_INVALID_OPERATION:148:invalid operation
 EVP_R_INVALID_PROVIDER_FUNCTIONS:193:invalid provider functions
 EVP_R_INVALID_SALT_LENGTH:186:invalid salt length
 EVP_R_KEYGEN_FAILURE:120:keygen failure
+EVP_R_KEYMGMT_EXPORT_FAILURE:205:keymgmt export failure
 EVP_R_KEY_SETUP_FAILED:180:key setup failed
 EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
 EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null
@@ -2547,6 +2550,7 @@ EVP_R_NOT_XOF_OR_INVALID_LENGTH:178:not XOF or invalid length
 EVP_R_NO_CIPHER_SET:131:no cipher set
 EVP_R_NO_DEFAULT_DIGEST:158:no default digest
 EVP_R_NO_DIGEST_SET:139:no digest set
+EVP_R_NO_IMPORT_FUNCTION:206:no import function
 EVP_R_NO_KEYMGMT_AVAILABLE:199:no keymgmt available
 EVP_R_NO_KEYMGMT_PRESENT:196:no keymgmt present
 EVP_R_NO_KEY_SET:154:no key set
@@ -2566,6 +2570,7 @@ EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNKNOWN_CIPHER:160:unknown cipher
 EVP_R_UNKNOWN_DIGEST:161:unknown digest
+EVP_R_UNKNOWN_KEY_TYPE:207:unknown key type
 EVP_R_UNKNOWN_OPTION:169:unknown option
 EVP_R_UNKNOWN_PBE_ALGORITHM:121:unknown pbe algorithm
 EVP_R_UNSUPPORTED_ALGORITHM:156:unsupported algorithm

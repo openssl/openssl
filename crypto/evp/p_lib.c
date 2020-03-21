@@ -94,16 +94,35 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      */
 
     /*
-     * Only check that type match this early when both keys are legacy.
-     * If either of them is provided, we let evp_keymgmt_util_copy()
-     * do this check, after having exported either of them that isn't
-     * provided.
+     * If |to| is a legacy key and |from| isn't, we must downgrade |from|.
+     * If that fails, this function fails.
      */
-    if (to->keymgmt == NULL && from->keymgmt == NULL) {
-        if (to->type == EVP_PKEY_NONE) {
+    if (to->type != EVP_PKEY_NONE && from->keymgmt != NULL)
+        if (!evp_pkey_downgrade((EVP_PKEY *)from))
+            return 0;
+
+    /*
+     * Make sure |to| is typed.  Content is less important at this early
+     * stage.
+     *
+     * 1.  If |to| is untyped, assign |from|'s key type to it.
+     * 2.  If |to| contains a legacy key, compare its |type| to |from|'s.
+     *     (|from| was already downgraded above)
+     *
+     * If |to| is a provided key, there's nothing more to do here, functions
+     * like evp_keymgmt_util_copy() and evp_pkey_export_to_provider() called
+     * further down help us find out if they are the same or not.
+     */
+    if (to->type == EVP_PKEY_NONE && to->keymgmt == NULL) {
+        if (from->type != EVP_PKEY_NONE) {
             if (EVP_PKEY_set_type(to, from->type) == 0)
                 return 0;
-        } else if (to->type != from->type) {
+        } else {
+            if (EVP_PKEY_set_type_by_keymgmt(to, from->keymgmt) == 0)
+                return 0;
+        }
+    } else if (to->type != EVP_PKEY_NONE) {
+        if (to->type != from->type) {
             EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
             goto err;
         }
@@ -119,30 +138,6 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             return 1;
         EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_PARAMETERS);
         return 0;
-    }
-
-    /*
-     * If |from| is provided, we upgrade |to| to be provided as well.
-     * This drops the legacy key from |to|.
-     * evp_pkey_upgrade_to_provider() checks if |to| is already provided,
-     * we don't need to do that here.
-     *
-     * TODO(3.0) We should investigate if that's too aggressive and make
-     * this scenario unsupported instead.
-     */
-    if (from->keymgmt != NULL) {
-        EVP_KEYMGMT *tmp_keymgmt = from->keymgmt;
-
-        /*
-         * The returned pointer is known to be cached, so we don't have to
-         * save it.  However, if it's NULL, something went wrong and we can't
-         * copy.
-         */
-        if (evp_pkey_upgrade_to_provider(to, NULL,
-                                         &tmp_keymgmt, NULL) == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
     }
 
     /* For purely provided keys, we just call the keymgmt utility */
@@ -161,8 +156,12 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             evp_pkey_export_to_provider((EVP_PKEY *)from, NULL, &to_keymgmt,
                                         NULL);
 
+        /*
+         * If we get a NULL, it could be an internal error, or it could be
+         * that there's a key mismatch.  We're pretending the latter...
+         */
         if (from_keydata == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
             return 0;
         }
         return evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
@@ -208,19 +207,24 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
         return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b, selection);
 
     /*
-     * Here, we know that we have a mixture of legacy and provided keys.
-     * Try cross export and compare the resulting key data.
+     * At this point, one of them is provided, the other not.  This allows
+     * us to compare types using legacy NIDs.
+     */
+    if ((a->type != EVP_PKEY_NONE
+         && !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type)))
+        || (b->type != EVP_PKEY_NONE
+            && !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type))))
+        return -1;               /* not the same key type */
+
+    /*
+     * We've determined that they both are the same keytype, so the next
+     * step is to do a bit of cross export to ensure we have keydata for
+     * both keys in the same keymgmt.
      */
     keymgmt1 = a->keymgmt;
     keydata1 = a->keydata;
     keymgmt2 = b->keymgmt;
     keydata2 = b->keydata;
-
-    if ((keymgmt1 == NULL
-         && !EVP_KEYMGMT_is_a(keymgmt2, OBJ_nid2sn(a->type)))
-        || (keymgmt2 == NULL
-            && !EVP_KEYMGMT_is_a(keymgmt1, OBJ_nid2sn(b->type))))
-        return -1;               /* not the same key type */
 
     if (keymgmt2 != NULL && keymgmt2->match != NULL) {
         tmp_keydata =
@@ -359,6 +363,7 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
 int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
                                  size_t *len)
 {
+    /* TODO(3.0) Do we need to do anything about provider side keys? */
      if (pkey->ameth->get_priv_key == NULL) {
         EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -376,6 +381,7 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len)
 {
+    /* TODO(3.0) Do we need to do anything about provider side keys? */
      if (pkey->ameth->get_pub_key == NULL) {
         EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -524,6 +530,10 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 
 void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
     return pkey->pkey.ptr;
 }
 
@@ -579,6 +589,10 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 
 RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
     if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA_PSS) {
         EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
         return NULL;
@@ -606,6 +620,10 @@ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 
 DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
     if (pkey->type != EVP_PKEY_DSA) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DSA, EVP_R_EXPECTING_A_DSA_KEY);
         return NULL;
@@ -634,6 +652,10 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 
 EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 {
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
     if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
         EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
@@ -664,6 +686,10 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 
 DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 {
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DH, EVP_R_EXPECTING_A_DH_KEY);
         return NULL;
@@ -1349,101 +1375,87 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 }
 
 #ifndef FIPS_MODE
-/*
- * This differs from exporting in that it releases the legacy key and assigns
- * the export keymgmt and keydata to the "origin" provider side key instead
- * of the operation cache.
- */
-void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                                   EVP_KEYMGMT **keymgmt,
-                                   const char *propquery)
+int evp_pkey_downgrade(EVP_PKEY *pk)
 {
-    EVP_KEYMGMT *allocated_keymgmt = NULL;
-    EVP_KEYMGMT *tmp_keymgmt = NULL;
-    void *keydata = NULL;
+    EVP_KEYMGMT *keymgmt = pk->keymgmt;
+    void *keydata = pk->keydata;
+    int type = pk->save_type;
+    const char *keytype = NULL;
 
-    if (pk == NULL)
-        return NULL;
+    /* If this isn't a provider side key, we're done */
+    if (keymgmt == NULL)
+        return 1;
+
+    /* Get the key type name for error reporting */
+    if (type != EVP_PKEY_NONE)
+        keytype = OBJ_nid2sn(type);
+    else
+        keytype =
+            evp_first_name(EVP_KEYMGMT_provider(keymgmt), keymgmt->name_id);
 
     /*
-     * If this key is already "upgraded", this function shouldn't have been
-     * called.
+     * |save_type| was set when any of the EVP_PKEY_set_type functions
+     * was called.  It was set to EVP_PKEY_NONE if the key type wasn't
+     * recognised to be any of the legacy key types, and the downgrade
+     * isn't possible.
      */
-    if (!ossl_assert(pk->keymgmt == NULL))
-        return NULL;
-
-    if (keymgmt != NULL) {
-        tmp_keymgmt = *keymgmt;
-        *keymgmt = NULL;
+    if (type == EVP_PKEY_NONE) {
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_KEY_TYPE,
+                       "key type = %s, can't downgrade", keytype);
+        return 0;
     }
 
-    /* If the key isn't a legacy one, bail out, but with proper values */
-    if (pk->pkey.ptr == NULL) {
-        tmp_keymgmt = pk->keymgmt;
-        keydata = pk->keydata;
-    } else {
-        /* If the legacy key doesn't have an export function, give up */
-        if (pk->ameth->export_to == NULL)
-            return NULL;
-
-        /*
-         * If no keymgmt was given or found, get a default keymgmt.  We do
-         * so by letting EVP_PKEY_CTX_new_from_pkey() do it for us, then we
-         * steal it.
-         */
-        if (tmp_keymgmt == NULL) {
-            EVP_PKEY_CTX *ctx =
-                EVP_PKEY_CTX_new_from_pkey(libctx, pk, propquery);
-
-            tmp_keymgmt = ctx->keymgmt;
-            ctx->keymgmt = NULL;
-            EVP_PKEY_CTX_free(ctx);
-        }
-
-        /* If we still don't have a keymgmt, give up */
-        if (tmp_keymgmt == NULL)
-            goto end;
-
-        /* Make sure that the keymgmt key type matches the legacy NID */
-        if (!ossl_assert(EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type))))
-            goto end;
-
-        if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
-            goto end;
-
-        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt)
-            || !EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
-            evp_keymgmt_freedata(tmp_keymgmt, keydata);
-            keydata = NULL;
-            goto end;
-        }
-
-        /*
-         * Clear the operation cache, all the legacy data, as well as the
-         * dirty counters
-         */
-        evp_pkey_free_legacy(pk);
-        pk->dirty_cnt_copy = 0;
-
-        evp_keymgmt_util_clear_operation_cache(pk);
-        pk->keymgmt = tmp_keymgmt;
-        pk->keydata = keydata;
-        evp_keymgmt_util_cache_keyinfo(pk);
-    }
-
- end:
     /*
-     * If nothing was upgraded, |tmp_keymgmt| might point at a freed
-     * EVP_KEYMGMT, so we clear it to be safe.  It shouldn't be useful for
-     * the caller either way in that case.
+     * To be able to downgrade, we steal the provider side "origin" keymgmt
+     * and keydata.  We've already grabbed the pointers, so all we need to
+     * do is clear those pointers in |pk| and then call evp_pkey_free_it().
+     * That way, we can restore |pk| if we need to.
      */
-    if (keydata == NULL)
-        tmp_keymgmt = NULL;
+    pk->keymgmt = NULL;
+    pk->keydata = NULL;
+    evp_pkey_free_it(pk);
+    if (EVP_PKEY_set_type(pk, type)) {
+        /* If the key is typed but empty, we're done */
+        if (keydata == NULL)
+            return 1;
 
-    if (keymgmt != NULL)
-        *keymgmt = tmp_keymgmt;
+        if (pk->ameth->import_from == NULL) {
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_NO_IMPORT_FUNCTION,
+                           "key type = %s", keytype);
+        } else if (evp_keymgmt_export(keymgmt, keydata,
+                                      OSSL_KEYMGMT_SELECT_ALL,
+                                      pk->ameth->import_from, pk)) {
+            /*
+             * Save the provider side data in the operation cache, so they'll
+             * find it again.  evp_pkey_free_it() cleared the cache, so it's
+             * safe to assume slot zero is free.
+             * Note that evp_keymgmt_util_cache_keydata() increments keymgmt's
+             * reference count.
+             */
+            evp_keymgmt_util_cache_keydata(pk, 0, keymgmt, keydata);
 
-    EVP_KEYMGMT_free(allocated_keymgmt);
-    return keydata;
+            /* Synchronize the dirty count */
+            pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+            return 1;
+        }
+
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_KEYMGMT_EXPORT_FAILURE,
+                       "key type = %s", keytype);
+    }
+
+    /*
+     * Something went wrong.  This could for example happen if the keymgmt
+     * turns out to be an HSM implementation that refuses to let go of some
+     * of the key data, typically the private bits.  In this case, we restore
+     * the provider side internal "origin" and leave it at that.
+     */
+    if (!ossl_assert(EVP_PKEY_set_type_by_keymgmt(pk, keymgmt))) {
+        /* This should not be impossible */
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    pk->keydata = keydata;
+    evp_keymgmt_util_cache_keyinfo(pk);
+    return 0;     /* No downgrade, but at least the key is restored */
 }
 #endif  /* FIPS_MODE */

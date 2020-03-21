@@ -11,6 +11,8 @@
 
 /* ASN1 public key method structure */
 
+#include <openssl/core.h>
+
 struct evp_pkey_asn1_method_st {
     int pkey_id;
     int pkey_base_id;
@@ -68,10 +70,11 @@ struct evp_pkey_asn1_method_st {
      * TODO: Make sure these functions are defined for key types that are
      * implemented in providers.
      */
-    /* Exports to providers */
+    /* Exports and imports to / from providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     int (*export_to) (const EVP_PKEY *pk, void *to_keydata,
                       EVP_KEYMGMT *to_keymgmt);
+    OSSL_CALLBACK *import_from;
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
