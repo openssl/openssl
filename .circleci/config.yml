@@ -119,7 +119,7 @@ workflows:
   build:
     jobs:
       - macOS-shared-noconn    
-      - ubuntu-bionic-x86_64-shared-noconn
+      - ubuntu-bionic-x86_64-shared
       - ubuntu-bionic-x86_64-noconn
   nightly:
     triggers:
@@ -133,6 +133,6 @@ workflows:
       - macOS-shared    
       - debian-buster-amd64
       - macOS-static    
+      - ubuntu-bionic-x86_64-shared-noconn
       - ubuntu-bionic-x86_64
-      - ubuntu-bionic-x86_64-shared
 
