@@ -875,9 +875,9 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
     wrlen = BIO_write(out, tmp, outlen);
     OPENSSL_free(tmp);
     if (wrlen == outlen) {
-        PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);
         return outlen;
     }
+    PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);
     return -1;
 }
 
