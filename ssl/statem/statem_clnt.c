@@ -2560,13 +2560,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
     PACKET nonce;
-    EVP_MD *sha256 = EVP_MD_fetch(s->ctx->libctx, "SHA2-256", s->ctx->propq);
-
-    if (sha256 == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
-                 SSL_R_ALGORITHM_FETCH_FAILED);
-        goto err;
-    }
+    EVP_MD *sha256 = NULL;
 
     PACKET_null_init(&nonce);
 
@@ -2685,6 +2679,12 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
      * ticket.
      */
+    sha256 = EVP_MD_fetch(s->ctx->libctx, "SHA2-256", s->ctx->propq);
+    if (sha256 == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
+                 SSL_R_ALGORITHM_FETCH_FAILED);
+        goto err;
+    }
     /*
      * TODO(size_t): we use sess_len here because EVP_Digest expects an int
      * but s->session->session_id_length is a size_t
