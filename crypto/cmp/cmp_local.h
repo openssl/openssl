@@ -674,11 +674,11 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSG)
  * body      PKIBody
  * }
  */
-typedef struct cmp_protectedpart_st {
+typedef struct ossl_cmp_protectedpart_st {
     OSSL_CMP_PKIHEADER *header;
     OSSL_CMP_PKIBODY *body;
-} CMP_PROTECTEDPART;
-DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
+} OSSL_CMP_PROTECTEDPART;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
 
 /*-
  *  this is not defined here as it is already in CRMF:
