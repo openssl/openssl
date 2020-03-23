@@ -1107,8 +1107,7 @@ static int prompt_info(X509_REQ *req,
     char *type, *value;
     const char *def;
     CONF_VALUE *v;
-    X509_NAME *subj;
-    subj = X509_REQ_get_subject_name(req);
+    X509_NAME *subj = X509_REQ_get_subject_name(req);
 
     if (!batch) {
         BIO_printf(bio_err,
@@ -1193,8 +1192,7 @@ static int prompt_info(X509_REQ *req,
                 return 0;
         }
         if (X509_NAME_entry_count(subj) == 0) {
-            BIO_printf(bio_err,
-                       "error, no objects specified in config file\n");
+            BIO_printf(bio_err, "error, no objects specified in config file\n");
             return 0;
         }
 

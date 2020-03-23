@@ -304,7 +304,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
 
 static int setup_dp(X509 *x, DIST_POINT *dp)
 {
-    X509_NAME *iname = NULL;
+    const X509_NAME *iname = NULL;
     int i;
 
     if (dp->reasons) {

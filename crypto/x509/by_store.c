@@ -151,9 +151,10 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 }
 
 static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            X509_NAME *name, X509_OBJECT *ret)
+                            const X509_NAME *name, X509_OBJECT *ret)
 {
-    OSSL_STORE_SEARCH *criterion = OSSL_STORE_SEARCH_by_name(name);
+    OSSL_STORE_SEARCH *criterion =
+        OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
     int ok = by_store(ctx, type, criterion, ret);
     STACK_OF(X509_OBJECT) *store_objects =
         X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));

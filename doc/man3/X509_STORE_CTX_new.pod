@@ -28,18 +28,18 @@ X509_STORE_CTX_verify_fn
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
  void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x);
- STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *ctx);
+ STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *chain);
  void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
 
- X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
+ X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
  int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
- STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx);
+ STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
- int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
+ int X509_STORE_CTX_get_num_untrusted(const X509_STORE_CTX *ctx);
 
  typedef int (*X509_STORE_CTX_verify_fn)(X509_STORE_CTX *);
  void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, X509_STORE_CTX_verify_fn verify);

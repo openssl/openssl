@@ -57,7 +57,7 @@ X509_OBJECT_set1_X509, X509_OBJECT_set1_X509_CRL
 
  typedef int (*X509_LOOKUP_get_by_subject_fn)(X509_LOOKUP *ctx,
                                               X509_LOOKUP_TYPE type,
-                                              X509_NAME *name,
+                                              const X509_NAME *name,
                                               X509_OBJECT *ret);
  int X509_LOOKUP_meth_set_get_by_subject(X509_LOOKUP_METHOD *method,
      X509_LOOKUP_get_by_subject_fn fn);
@@ -66,8 +66,8 @@ X509_OBJECT_set1_X509, X509_OBJECT_set1_X509_CRL
 
  typedef int (*X509_LOOKUP_get_by_issuer_serial_fn)(X509_LOOKUP *ctx,
                                                     X509_LOOKUP_TYPE type,
-                                                    X509_NAME *name,
-                                                    ASN1_INTEGER *serial,
+                                                    const X509_NAME *name,
+                                                    const ASN1_INTEGER *serial,
                                                     X509_OBJECT *ret);
  int X509_LOOKUP_meth_set_get_by_issuer_serial(
      X509_LOOKUP_METHOD *method, X509_LOOKUP_get_by_issuer_serial_fn fn);

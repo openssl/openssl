@@ -968,7 +968,7 @@ static int set_table_opts(unsigned long *flags, const char *arg,
     return 0;
 }
 
-void print_name(BIO *out, const char *title, X509_NAME *nm,
+void print_name(BIO *out, const char *title, const X509_NAME *nm,
                 unsigned long lflags)
 {
     char *buf;
@@ -1900,7 +1900,8 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
  * anything.
  */
 
-static STACK_OF(X509_CRL) *crls_http_cb(X509_STORE_CTX *ctx, X509_NAME *nm)
+static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
+                                        const X509_NAME *nm)
 {
     X509 *x;
     STACK_OF(X509_CRL) *crls = NULL;

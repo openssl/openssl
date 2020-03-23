@@ -567,14 +567,14 @@ ASN1_INTEGER
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
-X509_NAME
-*OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+const X509_NAME
+    *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
 /* retrieves the issuer name of the given CertId or NULL on error */
-X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
+const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 {
     return cid != NULL && cid->issuer->type == GEN_DIRNAME ?
         cid->issuer->d.directoryName : NULL;
@@ -600,9 +600,9 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if (subject != NULL && !X509_NAME_set(&tmpl->subject, subject))
+    if (subject != NULL && !X509_NAME_set((X509_NAME **)&tmpl->subject, subject))
         return 0;
-    if (issuer != NULL && !X509_NAME_set(&tmpl->issuer, issuer))
+    if (issuer != NULL && !X509_NAME_set((X509_NAME **)&tmpl->issuer, issuer))
         return 0;
     if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);

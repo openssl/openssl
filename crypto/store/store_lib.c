@@ -509,7 +509,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
 }
 
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
-                                                    const ASN1_INTEGER *serial)
+                                                      const ASN1_INTEGER *serial)
 {
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
@@ -589,7 +589,7 @@ X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
 }
 
 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
-                                                 *criterion)
+                                                  *criterion)
 {
     return criterion->serial;
 }

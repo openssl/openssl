@@ -313,7 +313,7 @@ static int test_validate_msg_signature_sender_cert_absent(void)
 }
 
 
-static int test_validate_with_sender(X509_NAME *name, int expected)
+static int test_validate_with_sender(const X509_NAME *name, int expected)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = expected;

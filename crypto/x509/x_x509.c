@@ -117,7 +117,7 @@ int X509_set_ex_data(X509 *r, int idx, void *arg)
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
-void *X509_get_ex_data(X509 *r, int idx)
+void *X509_get_ex_data(const X509 *r, int idx)
 {
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }

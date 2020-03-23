@@ -69,7 +69,7 @@ int X509_policy_level_node_count(X509_POLICY_LEVEL *level)
     return n;
 }
 
-X509_POLICY_NODE *X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i)
+X509_POLICY_NODE *X509_policy_level_get0_node(const X509_POLICY_LEVEL *level, int i)
 {
     if (!level)
         return NULL;

@@ -1430,7 +1430,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    CONF *lconf, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign)
 {
-    X509_NAME *name = NULL, *CAname = NULL, *subject = NULL;
+    const X509_NAME *name = NULL;
+    X509_NAME *CAname = NULL, *subject = NULL;
     const ASN1_TIME *tm;
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;

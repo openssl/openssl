@@ -21,7 +21,7 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 {
     X509 *ret = NULL;
     X509_CINF *xi = NULL;
-    X509_NAME *xn;
+    const X509_NAME *xn;
     EVP_PKEY *pubkey = NULL;
 
     if ((ret = X509_new()) == NULL) {

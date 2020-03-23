@@ -155,7 +155,7 @@ DEPRECATEDIN_3_0(int DH_security_bits(const DH *dh))
         CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DH, l, p, newf, dupf, freef)
 #  endif
 DEPRECATEDIN_3_0(int DH_set_ex_data(DH *d, int idx, void *arg))
-DEPRECATEDIN_3_0(void *DH_get_ex_data(DH *d, int idx))
+DEPRECATEDIN_3_0(void *DH_get_ex_data(const DH *d, int idx))
 
 /* Deprecated version */
 DEPRECATEDIN_0_9_8(DH *DH_generate_parameters(int prime_len, int generator,

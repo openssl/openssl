@@ -48,7 +48,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 
 /* Set requestorName from an X509_NAME structure */
 
-int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
+int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm)
 {
     GENERAL_NAME *gen;
 

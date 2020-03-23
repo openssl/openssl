@@ -233,7 +233,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
     STACK_OF (X509_INFO) *inf = NULL;
     X509_INFO *x;
-    X509_NAME *name = NULL;
+    const X509_NAME *name = NULL;
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];

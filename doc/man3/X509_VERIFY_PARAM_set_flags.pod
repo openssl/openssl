@@ -57,7 +57,7 @@ X509_VERIFY_PARAM_set1_ip_asc
  void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                       unsigned int flags);
  unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
- char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
+ char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,

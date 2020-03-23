@@ -310,8 +310,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
                 if (ctx->pkey == NULL)
                     return 0;
-                new_mac_ctx = EVP_MAC_CTX_dup((EVP_MAC_CTX *)ctx->pkey
-                                              ->pkey.ptr);
+                new_mac_ctx = EVP_MAC_CTX_dup(ctx->pkey->pkey.ptr);
                 if (new_mac_ctx == NULL)
                     return 0;
                 EVP_MAC_CTX_free(hctx->ctx);

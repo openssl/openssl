@@ -39,7 +39,7 @@ X509_get_ex_new_index, X509_set_ex_data, X509_get_ex_data
 
  int TYPE_set_ex_data(TYPE *d, int idx, void *arg);
 
- void *TYPE_get_ex_data(TYPE *d, int idx);
+ void *TYPE_get_ex_data(const TYPE *d, int idx);
 
  #define TYPE_set_app_data(TYPE *d, void *arg)
  #define TYPE_get_app_data(TYPE *d)

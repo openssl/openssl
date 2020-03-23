@@ -13,7 +13,7 @@ functions
  #include <openssl/x509.h>
 
  int X509_CRL_get0_by_serial(X509_CRL *crl,
-                             X509_REVOKED **ret, ASN1_INTEGER *serial);
+                             X509_REVOKED **ret, const ASN1_INTEGER *serial);
  int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 
  STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);

@@ -27,8 +27,8 @@ ASN1_SEQUENCE(X509_REVOKED) = {
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r);
 static int def_crl_lookup(X509_CRL *crl,
-                          X509_REVOKED **ret, ASN1_INTEGER *serial,
-                          X509_NAME *issuer);
+                          X509_REVOKED **ret, const ASN1_INTEGER *serial,
+                          const X509_NAME *issuer);
 
 static X509_CRL_METHOD int_crl_meth = {
     0,
@@ -354,7 +354,7 @@ int X509_CRL_verify(X509_CRL *crl, EVP_PKEY *r)
 }
 
 int X509_CRL_get0_by_serial(X509_CRL *crl,
-                            X509_REVOKED **ret, ASN1_INTEGER *serial)
+                            X509_REVOKED **ret, const ASN1_INTEGER *serial)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret, serial, NULL);
@@ -376,7 +376,7 @@ static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
                              &crl->sig_alg, &crl->signature, &crl->crl, r));
 }
 
-static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
+static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,
                                     X509_REVOKED *rev)
 {
     int i;
@@ -404,8 +404,8 @@ static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
 }
 
 static int def_crl_lookup(X509_CRL *crl,
-                          X509_REVOKED **ret, ASN1_INTEGER *serial,
-                          X509_NAME *issuer)
+                          X509_REVOKED **ret, const ASN1_INTEGER *serial,
+                          const X509_NAME *issuer)
 {
     X509_REVOKED rtmp, *rev;
     int idx, num;
@@ -454,8 +454,8 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_free) (X509_CRL *crl),
                                      int (*crl_lookup) (X509_CRL *crl,
                                                         X509_REVOKED **ret,
-                                                        ASN1_INTEGER *ser,
-                                                        X509_NAME *issuer),
+                                                        const ASN1_INTEGER *ser,
+                                                        const X509_NAME *issuer),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk))
 {

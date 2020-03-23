@@ -64,7 +64,7 @@ struct x509_crl_method_st {
     int (*crl_init) (X509_CRL *crl);
     int (*crl_free) (X509_CRL *crl);
     int (*crl_lookup) (X509_CRL *crl, X509_REVOKED **ret,
-                       ASN1_INTEGER *ser, X509_NAME *issuer);
+                       const ASN1_INTEGER *ser, const X509_NAME *issuer);
     int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
 };
 
@@ -77,9 +77,10 @@ struct x509_lookup_method_st {
     int (*ctrl) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
                  char **ret);
     int (*get_by_subject) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                           X509_NAME *name, X509_OBJECT *ret);
+                           const X509_NAME *name, X509_OBJECT *ret);
     int (*get_by_issuer_serial) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                                 X509_NAME *name, ASN1_INTEGER *serial,
+                                 const X509_NAME *name,
+                                 const ASN1_INTEGER *serial,
                                  X509_OBJECT *ret);
     int (*get_by_fingerprint) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                const unsigned char *bytes, int len,
@@ -128,8 +129,11 @@ struct x509_store_st {
     int (*cert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
     /* Check policy status of the chain */
     int (*check_policy) (X509_STORE_CTX *ctx);
-    STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx, X509_NAME *nm);
-    STACK_OF(X509_CRL) *(*lookup_crls) (X509_STORE_CTX *ctx, X509_NAME *nm);
+    STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx,
+                                     const X509_NAME *nm);
+    /* cannot constify 'ctx' param due to lookup_certs_sk() in x509_vfy.c */
+    STACK_OF(X509_CRL) *(*lookup_crls) (const X509_STORE_CTX *ctx,
+                                        const X509_NAME *nm);
     int (*cleanup) (X509_STORE_CTX *ctx);
     CRYPTO_EX_DATA ex_data;
     CRYPTO_REF_COUNT references;

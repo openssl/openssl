@@ -750,7 +750,7 @@ int BIO_set_ex_data(BIO *bio, int idx, void *data)
     return CRYPTO_set_ex_data(&(bio->ex_data), idx, data);
 }
 
-void *BIO_get_ex_data(BIO *bio, int idx)
+void *BIO_get_ex_data(const BIO *bio, int idx)
 {
     return CRYPTO_get_ex_data(&(bio->ex_data), idx);
 }

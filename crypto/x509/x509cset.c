@@ -27,7 +27,7 @@ int X509_CRL_set_version(X509_CRL *x, long version)
     return ASN1_INTEGER_set(x->crl.version, version);
 }
 
-int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
+int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name)
 {
     if (x == NULL)
         return 0;

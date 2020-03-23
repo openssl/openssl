@@ -214,7 +214,7 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void));
 # define UI_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI, l, p, newf, dupf, freef)
 int UI_set_ex_data(UI *r, int idx, void *arg);
-void *UI_get_ex_data(UI *r, int idx);
+void *UI_get_ex_data(const UI *r, int idx);
 
 /* Use specific methods instead of the built-in one */
 void UI_set_default_method(const UI_METHOD *meth);
