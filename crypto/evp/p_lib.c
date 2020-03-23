@@ -41,6 +41,9 @@ static void evp_pkey_free_it(EVP_PKEY *key);
 
 #ifndef FIPS_MODE
 
+/* The type of parameters selected in key parameter functions */
+# define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+
 int EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
     if (pkey != NULL) {
@@ -142,8 +145,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
     /* For purely provided keys, we just call the keymgmt utility */
     if (to->keymgmt != NULL && from->keymgmt != NULL)
-        return evp_keymgmt_util_copy(to, (EVP_PKEY *)from,
-                                     OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        return evp_keymgmt_util_copy(to, (EVP_PKEY *)from, SELECT_PARAMETERS);
 
     /*
      * If |to| is provided, we know that |from| is legacy at this point.
@@ -165,7 +167,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             return 0;
         }
         return evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
-                                OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+                                SELECT_PARAMETERS);
     }
 
     /* Both keys are legacy */
@@ -179,8 +181,7 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 {
     if (pkey != NULL) {
         if (pkey->keymgmt != NULL)
-            return !evp_keymgmt_util_has((EVP_PKEY *)pkey,
-                                         OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+            return !evp_keymgmt_util_has((EVP_PKEY *)pkey, SELECT_PARAMETERS);
         else if (pkey->ameth != NULL && pkey->ameth->param_missing != NULL)
             return pkey->ameth->param_missing(pkey);
     }
@@ -258,7 +259,7 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
      */
 
     if (a->keymgmt != NULL || b->keymgmt != NULL)
-        return evp_pkey_cmp_any(a, b, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        return evp_pkey_cmp_any(a, b, SELECT_PARAMETERS);
 
     /* All legacy keys */
     if (a->type != b->type)
@@ -276,9 +277,8 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
      */
 
     if (a->keymgmt != NULL || b->keymgmt != NULL)
-        return evp_pkey_cmp_any(a, b,
-                                OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
-                                | OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
+        return evp_pkey_cmp_any(a, b, (SELECT_PARAMETERS
+                                       | OSSL_KEYMGMT_SELECT_PUBLIC_KEY));
 
     /* All legacy keys */
     if (a->type != b->type)
