@@ -32,7 +32,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
                             const OSSL_CMP_MSG *msg, X509 *cert)
 {
     EVP_MD_CTX *ctx = NULL;
-    CMP_PROTECTEDPART prot_part;
+    OSSL_CMP_PROTECTEDPART prot_part;
     int digest_nid, pk_nid;
     const EVP_MD *digest = NULL;
     EVP_PKEY *pubkey = NULL;
@@ -62,7 +62,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     prot_part.header = msg->header;
     prot_part.body = msg->body;
 
-    len = i2d_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
+    len = i2d_OSSL_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
     if (len < 0 || prot_part_der == NULL)
         goto end;
     prot_part_der_len = (size_t) len;
