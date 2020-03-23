@@ -10,6 +10,7 @@
 #ifndef OSSL_INTERNAL_FFC_H
 # define OSSL_INTERNAL_FFC_H
 
+# include <openssl/core.h>
 # include <openssl/bn.h>
 # include <openssl/evp.h>
 # include <openssl/dh.h> /* Uses Error codes from DH */
@@ -153,5 +154,7 @@ int ffc_validate_public_key_partial(const FFC_PARAMS *params,
                                     const BIGNUM *pub_key, int *ret);
 int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
                              int *ret);
+
+int ffc_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
 
 #endif /* OSSL_INTERNAL_FFC_H */

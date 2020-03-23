@@ -25,19 +25,7 @@
 #include "crypto/ecx.h"
 #include "ec_local.h"
 #include "curve448/curve448_local.h"
-
-#define ISX448(id)      ((id) == EVP_PKEY_X448)
-#define IS25519(id)     ((id) == EVP_PKEY_X25519 || (id) == EVP_PKEY_ED25519)
-#define KEYLENID(id)    (IS25519(id) ? X25519_KEYLEN \
-                                     : ((id) == EVP_PKEY_X448 ? X448_KEYLEN \
-                                                              : ED448_KEYLEN))
-#define KEYNID2TYPE(id) \
-    (IS25519(id) ?  ECX_KEY_TYPE_X25519 \
-                 : ((id) == EVP_PKEY_X448 ? ECX_KEY_TYPE_X448 \
-                                          : ((id) == EVP_PKEY_ED25519 ? ECX_KEY_TYPE_ED25519 \
-                                                                      : ECX_KEY_TYPE_ED448)))
-#define KEYLEN(p)       KEYLENID((p)->ameth->pkey_id)
-
+#include "ecx_backend.h"
 
 typedef enum {
     KEY_OP_PUBLIC,
@@ -452,6 +440,30 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
+static int ecx_generic_import_from(const OSSL_PARAM params[], void *key,
+                                   int keytype)
+{
+    EVP_PKEY *pkey = key;
+    ECX_KEY *ecx = ecx_key_new(KEYNID2TYPE(keytype), 0);
+
+    if (ecx == NULL) {
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ecx_key_fromdata(ecx, params, 1)
+        || !EVP_PKEY_assign(pkey, keytype, ecx)) {
+        ecx_key_free(ecx);
+        return 0;
+    }
+    return 1;
+}
+
+static int x25519_import_from(const OSSL_PARAM params[], void *key)
+{
+    return ecx_generic_import_from(params, key, EVP_PKEY_X25519);
+}
+
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     EVP_PKEY_X25519,
     EVP_PKEY_X25519,
@@ -494,8 +506,14 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_get_priv_key,
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
-    ecx_pkey_export_to
+    ecx_pkey_export_to,
+    x25519_import_from
 };
+
+static int x448_import_from(const OSSL_PARAM params[], void *key)
+{
+    return ecx_generic_import_from(params, key, EVP_PKEY_X448);
+}
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     EVP_PKEY_X448,
@@ -539,7 +557,8 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_get_priv_key,
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
-    ecx_pkey_export_to
+    ecx_pkey_export_to,
+    x448_import_from
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
@@ -614,6 +633,10 @@ static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
+static int ed25519_import_from(const OSSL_PARAM params[], void *key)
+{
+    return ecx_generic_import_from(params, key, EVP_PKEY_ED25519);
+}
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     EVP_PKEY_ED25519,
@@ -656,8 +679,14 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_get_priv_key,
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
-    ecx_pkey_export_to
+    ecx_pkey_export_to,
+    ed25519_import_from
 };
+
+static int ed448_import_from(const OSSL_PARAM params[], void *key)
+{
+    return ecx_generic_import_from(params, key, EVP_PKEY_ED448);
+}
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     EVP_PKEY_ED448,
@@ -700,7 +729,8 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecx_get_priv_key,
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
-    ecx_pkey_export_to
+    ecx_pkey_export_to,
+    ed448_import_from
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)

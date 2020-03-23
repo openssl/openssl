@@ -744,6 +744,26 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
+static int ec_pkey_import_from(const OSSL_PARAM params[], void *key)
+{
+    EVP_PKEY *pkey = key;
+    EC_KEY *ec = EC_KEY_new();
+
+    if (ec == NULL) {
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ec_key_domparams_fromdata(ec, params)
+        || !ec_key_otherparams_fromdata(ec, params)
+        || !ec_key_fromdata(ec, params, 1)
+        || !EVP_PKEY_assign_EC_KEY(pkey, ec)) {
+        EC_KEY_free(ec);
+        return 0;
+    }
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
@@ -789,7 +809,8 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     0, /* get_pub_key */
 
     ec_pkey_dirty_cnt,
-    ec_pkey_export_to
+    ec_pkey_export_to,
+    ec_pkey_import_from
 };
 
 #if !defined(OPENSSL_NO_SM2)

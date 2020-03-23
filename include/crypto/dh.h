@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core.h>
 #include <openssl/dh.h>
 #include "internal/ffc.h"
 
@@ -19,6 +20,7 @@ int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
 
 FFC_PARAMS *dh_get0_params(DH *dh);
 int dh_get0_nid(const DH *dh);
+int dh_key_fromdata(DH *dh, const OSSL_PARAM params[]);
 
 int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret);
 int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret);

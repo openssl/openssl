@@ -21,8 +21,10 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
+#include "crypto/dsa.h"
 #include "crypto/evp.h"
 #include "internal/param_build.h"
+#include "internal/ffc.h"
 #include "dsa_local.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
@@ -569,6 +571,25 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
+static int dsa_pkey_import_from(const OSSL_PARAM params[], void *key)
+{
+    EVP_PKEY *pkey = key;
+    DSA *dsa = DSA_new();
+
+    if (dsa == NULL) {
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ffc_fromdata(dsa_get0_params(dsa), params)
+        || !dsa_key_fromdata(dsa, params)
+        || !EVP_PKEY_assign_DSA(pkey, dsa)) {
+        DSA_free(dsa);
+        return 0;
+    }
+    return 1;
+}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
@@ -632,6 +653,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
      NULL, NULL, NULL, NULL,
 
      dsa_pkey_dirty_cnt,
-     dsa_pkey_export_to
+     dsa_pkey_export_to,
+     dsa_pkey_import_from
     }
 };

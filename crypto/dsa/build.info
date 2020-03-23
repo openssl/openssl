@@ -1,7 +1,7 @@
 LIBS=../../libcrypto
 
 $COMMON=dsa_sign.c dsa_vrf.c dsa_lib.c dsa_ossl.c dsa_aid.c dsa_check.c \
-        dsa_key.c
+        dsa_key.c dsa_backend.c
 
 SOURCE[../../libcrypto]=$COMMON\
         dsa_gen.c dsa_asn1.c \

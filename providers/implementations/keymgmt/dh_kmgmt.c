@@ -39,32 +39,6 @@ static OSSL_OP_keymgmt_export_types_fn dh_export_types;
 #define DH_POSSIBLE_SELECTIONS                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
-static int params_to_domparams(DH *dh, const OSSL_PARAM params[])
-{
-    const OSSL_PARAM *param_p, *param_g;
-    BIGNUM *p = NULL, *g = NULL;
-
-    if (dh == NULL)
-        return 0;
-
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
-
-    if ((param_p != NULL && !OSSL_PARAM_get_BN(param_p, &p))
-        || (param_g != NULL && !OSSL_PARAM_get_BN(param_g, &g)))
-        goto err;
-
-    if (!DH_set0_pqg(dh, p, NULL, g))
-        goto err;
-
-    return 1;
-
- err:
-    BN_free(p);
-    BN_free(g);
-    return 0;
-}
-
 static int domparams_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 {
     const BIGNUM *dh_p = NULL, *dh_g = NULL;
@@ -81,47 +55,6 @@ static int domparams_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
         return 0;
 
     return 1;
-}
-
-static int params_to_key(DH *dh, const OSSL_PARAM params[])
-{
-    const OSSL_PARAM *param_priv_key, *param_pub_key;
-    BIGNUM *priv_key = NULL, *pub_key = NULL;
-
-    if (dh == NULL)
-        return 0;
-
-    if (!params_to_domparams(dh, params))
-        return 0;
-
-    param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-
-    /*
-     * DH documentation says that a public key must be present if a
-     * private key is present.
-     * We want to have at least a public key either way, so we end up
-     * requiring it unconditionally.
-     */
-    if (param_pub_key == NULL)
-        return 0;
-
-    if ((param_priv_key != NULL
-         && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
-        || !OSSL_PARAM_get_BN(param_pub_key, &pub_key))
-        goto err;
-
-    if (!DH_set0_key(dh, pub_key, priv_key))
-        goto err;
-
-    return 1;
-
- err:
-    BN_clear_free(priv_key);
-    BN_free(pub_key);
-    return 0;
 }
 
 static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
@@ -204,9 +137,9 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && params_to_domparams(dh, params);
+        ok = ok && ffc_fromdata(dh_get0_params(dh), params);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && params_to_key(dh, params);
+        ok = ok && dh_key_fromdata(dh, params);
 
     return ok;
 }

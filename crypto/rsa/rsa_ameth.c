@@ -1187,6 +1187,24 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
+static int rsa_pkey_import_from(const OSSL_PARAM params[], void *key)
+{
+    EVP_PKEY *pkey = key;
+    RSA *rsa = RSA_new();
+
+    if (rsa == NULL) {
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!rsa_fromdata(rsa, params)
+        || !EVP_PKEY_assign_RSA(pkey, rsa)) {
+        RSA_free(rsa);
+        return 0;
+    }
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
@@ -1225,7 +1243,8 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      0, 0, 0, 0,
 
      rsa_pkey_dirty_cnt,
-     rsa_pkey_export_to
+     rsa_pkey_export_to,
+     rsa_pkey_import_from
     },
 
     {
@@ -1270,5 +1289,6 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      0, 0, 0, 0,
 
      rsa_pkey_dirty_cnt,
-     rsa_pkey_export_to
+     rsa_pkey_export_to,
+     rsa_pkey_import_from
 };

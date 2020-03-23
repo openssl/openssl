@@ -25,6 +25,7 @@
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include "internal/param_build.h"
+#include "internal/ffc.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for
@@ -543,6 +544,25 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
+static int dh_pkey_import_from(const OSSL_PARAM params[], void *key)
+{
+    EVP_PKEY *pkey = key;
+    DH *dh = DH_new();
+
+    if (dh == NULL) {
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ffc_fromdata(dh_get0_params(dh), params)
+        || !dh_key_fromdata(dh, params)
+        || !EVP_PKEY_assign_DH(pkey, dh)) {
+        DH_free(dh);
+        return 0;
+    }
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
@@ -585,6 +605,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 
     dh_pkey_dirty_cnt,
     dh_pkey_export_to,
+    dh_pkey_import_from,
 };
 
 const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {

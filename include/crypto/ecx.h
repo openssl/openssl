@@ -15,6 +15,7 @@
 
 # ifndef OPENSSL_NO_EC
 
+#  include <openssl/core.h>
 #  include <openssl/e_os2.h>
 #  include <openssl/crypto.h>
 #  include "internal/refcount.h"
@@ -106,6 +107,10 @@ int s390x_x25519_mul(unsigned char u_dst[32],
 int s390x_x448_mul(unsigned char u_dst[56],
                    const unsigned char u_src[56],
                    const unsigned char d_src[56]);
+
+/* Backend support */
+int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
+                     int include_private);
 
 # endif /* OPENSSL_NO_EC */
 #endif

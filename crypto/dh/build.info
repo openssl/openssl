@@ -1,6 +1,6 @@
 LIBS=../../libcrypto
 
-$COMMON=dh_lib.c dh_key.c dh_group_params.c dh_check.c
+$COMMON=dh_lib.c dh_key.c dh_group_params.c dh_check.c dh_backend.c
 
 SOURCE[../../libcrypto]=$COMMON\
         dh_asn1.c dh_gen.c dh_err.c dh_depr.c \

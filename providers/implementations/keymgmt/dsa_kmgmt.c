@@ -39,35 +39,6 @@ static OSSL_OP_keymgmt_export_types_fn dsa_export_types;
 #define DSA_POSSIBLE_SELECTIONS                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
-static int params_to_domparams(DSA *dsa, const OSSL_PARAM params[])
-{
-    const OSSL_PARAM *param_p, *param_q, *param_g;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL;
-
-    if (dsa == NULL)
-        return 0;
-
-    param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P);
-    param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_Q);
-    param_g = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G);
-
-    if ((param_p != NULL && !OSSL_PARAM_get_BN(param_p, &p))
-        || (param_q != NULL && !OSSL_PARAM_get_BN(param_q, &q))
-        || (param_g != NULL && !OSSL_PARAM_get_BN(param_g, &g)))
-        goto err;
-
-    if (!DSA_set0_pqg(dsa, p, q, g))
-        goto err;
-
-    return 1;
-
- err:
-    BN_free(p);
-    BN_free(q);
-    BN_free(g);
-    return 0;
-}
-
 static int domparams_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 {
     const BIGNUM *dsa_p = NULL, *dsa_q = NULL, *dsa_g = NULL;
@@ -87,46 +58,6 @@ static int domparams_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
         return 0;
 
     return 1;
-}
-
-static int params_to_key(DSA *dsa, const OSSL_PARAM params[])
-{
-    const OSSL_PARAM *param_priv_key, *param_pub_key;
-    BIGNUM *priv_key = NULL, *pub_key = NULL;
-
-    if (dsa == NULL)
-        return 0;
-
-    if (!params_to_domparams(dsa, params))
-        return 0;
-
-    param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-
-    /*
-     * DSA documentation says that a public key must be present if a private key
-     * is.
-     */
-    if (param_priv_key != NULL && param_pub_key == NULL)
-        return 0;
-
-    if ((param_priv_key != NULL
-         && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
-        || (param_pub_key != NULL
-            && !OSSL_PARAM_get_BN(param_pub_key, &pub_key)))
-        goto err;
-
-    if (pub_key != NULL && !DSA_set0_key(dsa, pub_key, priv_key))
-        goto err;
-
-    return 1;
-
- err:
-    BN_clear_free(priv_key);
-    BN_free(pub_key);
-    return 0;
 }
 
 static int key_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
@@ -211,9 +142,9 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && params_to_domparams(dsa, params);
+        ok = ok && ffc_fromdata(dsa_get0_params(dsa), params);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && params_to_key(dsa, params);
+        ok = ok && dsa_key_fromdata(dsa, params);
 
     return ok;
 }

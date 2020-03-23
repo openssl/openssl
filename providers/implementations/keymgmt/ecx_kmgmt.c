@@ -74,9 +74,8 @@ static int ecx_has(void *keydata, int selection)
 static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     ECX_KEY *key = keydata;
-    size_t privkeylen = 0, pubkeylen;
-    const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
-    unsigned char *pubkey;
+    int ok = 1;
+    int include_private = 0;
 
     if (key == NULL)
         return 0;
@@ -84,38 +83,11 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    param_pub_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
+    include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ok = ok && ecx_key_fromdata(key, params, include_private);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        param_priv_key =
-            OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    /*
-     * If a private key is present then a public key must also be present.
-     * Alternatively we've just got a public key.
-     */
-    if (param_pub_key == NULL)
-        return 0;
-
-    if (param_priv_key != NULL
-             && !OSSL_PARAM_get_octet_string(param_priv_key,
-                                            (void **)&key->privkey, key->keylen,
-                                             &privkeylen))
-        return 0;
-
-    pubkey = key->pubkey;
-    if (!OSSL_PARAM_get_octet_string(param_pub_key,
-                                     (void **)&pubkey,
-                                     sizeof(key->pubkey), &pubkeylen))
-        return 0;
-
-    if (pubkeylen != key->keylen
-            || (param_priv_key != NULL && privkeylen != key->keylen))
-        return 0;
-
-    key->haspubkey = 1;
-
-    return 1;
+    return ok;
 }
 
 static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl)

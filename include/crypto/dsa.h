@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core.h>
 #include <openssl/dsa.h>
 #include "internal/ffc.h"
 
@@ -24,6 +25,7 @@ int dsa_sign_int(int type, const unsigned char *dgst,
 const unsigned char *dsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 
 FFC_PARAMS *dsa_get0_params(DSA *dsa);
+int dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[]);
 
 int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
                             BIGNUM *pub_key);
