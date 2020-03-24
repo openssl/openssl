@@ -109,25 +109,23 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
     size_t pub_key_len = 0;
     int ret = 0;
 
-    if (eckey == NULL)
+    if (eckey == NULL
+        || (ecg = EC_KEY_get0_group(eckey)) == NULL)
         return 0;
 
-    ecg = EC_KEY_get0_group(eckey);
     priv_key = EC_KEY_get0_private_key(eckey);
     pub_point = EC_KEY_get0_public_key(eckey);
 
-    /* group and public_key must be present, priv_key is optional */
-    if (ecg == NULL || pub_point == NULL)
-        return 0;
-    if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
-                                          POINT_CONVERSION_COMPRESSED,
-                                          &pub_key, NULL)) == 0)
-        return 0;
-
-    if (!ossl_param_bld_push_octet_string(tmpl,
-                                          OSSL_PKEY_PARAM_PUB_KEY,
-                                          pub_key, pub_key_len))
-        goto err;
+    if (pub_point != NULL) {
+        /* convert pub_point to a octet string according to the SECG standard */
+        if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
+                                              POINT_CONVERSION_COMPRESSED,
+                                              &pub_key, NULL)) == 0
+            || !ossl_param_bld_push_octet_string(tmpl,
+                                                 OSSL_PKEY_PARAM_PUB_KEY,
+                                                 pub_key, pub_key_len))
+            goto err;
+    }
 
     if (priv_key != NULL && include_private) {
         size_t sz;

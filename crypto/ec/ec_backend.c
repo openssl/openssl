@@ -63,7 +63,7 @@ int ec_set_param_ecdh_cofactor_mode(EC_KEY *ec, const OSSL_PARAM *p)
  */
 int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
 {
-    const OSSL_PARAM *param_priv_key, *param_pub_key;
+    const OSSL_PARAM *param_priv_key = NULL, *param_pub_key = NULL;
     BN_CTX *ctx = NULL;
     BIGNUM *priv_key = NULL;
     unsigned char *pub_key = NULL;
@@ -76,24 +76,25 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     if (ecg == NULL)
         return 0;
 
-    param_priv_key =
-        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
     param_pub_key =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
+    if (include_private)
+        param_priv_key =
+            OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
 
     ctx = BN_CTX_new_ex(ec_key_get_libctx(ec));
     if (ctx == NULL)
         goto err;
-    /*
-     * We want to have at least a public key either way, so we end up
-     * requiring it unconditionally.
-     */
-    if (param_pub_key == NULL
-            || !OSSL_PARAM_get_octet_string(param_pub_key,
-                                            (void **)&pub_key, 0, &pub_key_len)
+
+    /* OpenSSL decree: If there's a private key, there must be a public key */
+    if (param_priv_key != NULL && param_pub_key == NULL)
+        goto err;
+
+    if (param_pub_key != NULL)
+        if (!OSSL_PARAM_get_octet_string(param_pub_key,
+                                         (void **)&pub_key, 0, &pub_key_len)
             || (pub_point = EC_POINT_new(ecg)) == NULL
-            || !EC_POINT_oct2point(ecg, pub_point,
-                                   pub_key, pub_key_len, ctx))
+            || !EC_POINT_oct2point(ecg, pub_point, pub_key, pub_key_len, ctx))
         goto err;
 
     if (param_priv_key != NULL && include_private) {
@@ -150,10 +151,11 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     }
 
     if (priv_key != NULL
-            && !EC_KEY_set_private_key(ec, priv_key))
+        && !EC_KEY_set_private_key(ec, priv_key))
         goto err;
 
-    if (!EC_KEY_set_public_key(ec, pub_point))
+    if (pub_point != NULL
+        && !EC_KEY_set_public_key(ec, pub_point))
         goto err;
 
     ok = 1;
