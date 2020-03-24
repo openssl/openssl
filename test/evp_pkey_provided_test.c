@@ -15,7 +15,7 @@
 #include <openssl/core_names.h>
 #include "crypto/ecx.h"
 #include "internal/nelem.h"
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "crypto/evp.h"          /* For the internal API */
 #include "testutil.h"
 
@@ -618,22 +618,22 @@ static int test_fromdata_ec(void)
         0xdc, 0x4b, 0x4d, 0x35, 0x43, 0xe1, 0x1b, 0xad
     };
 
-    ossl_param_bld_init(&bld);
+    OSSL_PARAM_BLD_init(&bld);
 
     if (!TEST_ptr(ec_priv_bn = BN_bin2bn(ec_priv_keydata,
                                          sizeof(ec_priv_keydata), NULL)))
         goto err;
 
-    if (ossl_param_bld_push_utf8_string(&bld, OSSL_PKEY_PARAM_EC_NAME,
+    if (OSSL_PARAM_BLD_push_utf8_string(&bld, OSSL_PKEY_PARAM_EC_NAME,
                                         "prime256v1", 0) <= 0)
         goto err;
-    if (ossl_param_bld_push_octet_string(&bld, OSSL_PKEY_PARAM_PUB_KEY,
+    if (OSSL_PARAM_BLD_push_octet_string(&bld, OSSL_PKEY_PARAM_PUB_KEY,
                                          ec_pub_keydata,
                                          sizeof(ec_pub_keydata)) <= 0)
         goto err;
-    if (ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, ec_priv_bn) <= 0)
+    if (OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, ec_priv_bn) <= 0)
         goto err;
-    if (!TEST_ptr(fromdata_params = ossl_param_bld_to_param(&bld)))
+    if (!TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(&bld)))
         goto err;
     ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
     if (!TEST_ptr(ctx))
@@ -654,7 +654,7 @@ static int test_fromdata_ec(void)
           && test_print_key_using_serializer(alg, pk);
 err:
     BN_free(ec_priv_bn);
-    ossl_param_bld_free(fromdata_params);
+    OSSL_PARAM_BLD_free(fromdata_params);
     EVP_PKEY_free(pk);
     EVP_PKEY_free(copy_pk);
     EVP_PKEY_CTX_free(ctx);

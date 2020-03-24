@@ -26,7 +26,7 @@
 #include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/nelem.h"
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -255,14 +255,14 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         || !hextobn(dsa_priv_hex, &priv))
         goto err;
 
-    ossl_param_bld_init(&bld);
-    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+    OSSL_PARAM_BLD_init(&bld);
+    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
-    params = ossl_param_bld_to_param(&bld);
+    params = OSSL_PARAM_BLD_to_param(&bld);
 
     /* Create a EVP_PKEY_CTX to load the DSA key into */
     kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
@@ -279,11 +279,11 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         goto err;
 
     /* set signature parameters */
-    ossl_param_bld_init(&bld);
-    if (!ossl_param_bld_push_utf8_string(&bld, OSSL_SIGNATURE_PARAM_DIGEST,
+    OSSL_PARAM_BLD_init(&bld);
+    if (!OSSL_PARAM_BLD_push_utf8_string(&bld, OSSL_SIGNATURE_PARAM_DIGEST,
                                          SN_sha256,strlen(SN_sha256) + 1))
         goto err;
-    params_sig = ossl_param_bld_to_param(&bld);
+    params_sig = OSSL_PARAM_BLD_to_param(&bld);
     if (EVP_PKEY_CTX_set_params(sctx, params_sig) <= 0)
         goto err;
 
@@ -293,8 +293,8 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         goto err;
     ret = 1;
 err:
-    ossl_param_bld_free(params);
-    ossl_param_bld_free(params_sig);
+    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free(params_sig);
     BN_free(p);
     BN_free(q);
     BN_free(g);
@@ -404,23 +404,23 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         || !hextobin(dh_secret_exptd_hex, &kat_secret, &kat_secret_len))
         goto err;
 
-    ossl_param_bld_init(&bld);
-    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+    OSSL_PARAM_BLD_init(&bld);
+    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
-    params = ossl_param_bld_to_param(&bld);
+    params = OSSL_PARAM_BLD_to_param(&bld);
 
-    ossl_param_bld_init(&bld);
-    if (!ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !ossl_param_bld_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub_peer))
+    OSSL_PARAM_BLD_init(&bld);
+    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub_peer))
         goto err;
 
-    params_peer = ossl_param_bld_to_param(&bld);
+    params_peer = OSSL_PARAM_BLD_to_param(&bld);
     if (params == NULL || params_peer == NULL)
         goto err;
 
@@ -450,8 +450,8 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         goto err;
     ret = 1;
 err:
-    ossl_param_bld_free(params_peer);
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params_peer);
+    OSSL_PARAM_BLD_free(params);
     BN_free(p);
     BN_free(q);
     BN_free(g);

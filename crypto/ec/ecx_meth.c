@@ -19,7 +19,7 @@
 #include <openssl/ec.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/ecx.h"
@@ -414,29 +414,29 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     int selection = 0;
     int rv = 0;
 
-    ossl_param_bld_init(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
 
     /* A key must at least have a public part */
-    if (!ossl_param_bld_push_octet_string(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+    if (!OSSL_PARAM_BLD_push_octet_string(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                           key->pubkey, key->keylen))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (key->privkey != NULL) {
-        if (!ossl_param_bld_push_octet_string(&tmpl,
+        if (!OSSL_PARAM_BLD_push_octet_string(&tmpl,
                                               OSSL_PKEY_PARAM_PRIV_KEY,
                                               key->privkey, key->keylen))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    params = OSSL_PARAM_BLD_to_param(&tmpl);
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     return rv;
 }
 

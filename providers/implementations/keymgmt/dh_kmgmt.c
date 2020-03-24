@@ -22,7 +22,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dh.h"
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 
 static OSSL_OP_keymgmt_new_fn dh_newdata;
 static OSSL_OP_keymgmt_free_fn dh_freedata;
@@ -48,10 +48,10 @@ static int domparams_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 
     DH_get0_pqg(dh, &dh_p, NULL, &dh_g);
     if (dh_p != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dh_p))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dh_p))
         return 0;
     if (dh_g != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dh_g))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dh_g))
         return 0;
 
     return 1;
@@ -68,10 +68,10 @@ static int key_to_params(DH *dh, OSSL_PARAM_BLD *tmpl)
 
     DH_get0_key(dh, &pub_key, &priv_key);
     if (priv_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY, priv_key))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY, priv_key))
         return 0;
     if (pub_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
         return 0;
 
     return 1;
@@ -155,7 +155,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (dh == NULL)
         return 0;
 
-    ossl_param_bld_init(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && domparams_to_params(dh, &tmpl);
@@ -163,11 +163,11 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         ok = ok && key_to_params(dh, &tmpl);
 
     if (!ok
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        || (params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
         return 0;
 
     ok = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     return ok;
 }
 
