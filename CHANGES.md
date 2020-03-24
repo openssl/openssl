@@ -24,6 +24,14 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+ * Added OSSL_PARAM_BLD to the public interface.  This allows OSSL_PARAM
+   arrays to be more easily constructed via a series of utility functions.
+   Create a parameter builder using OSSL_PARAM_BLD_new(), add parameters using
+   the various push functions and finally convert to a passable OSSL_PARAM
+   array using OSSL_PARAM_BLD_to_param().
+
+   * Paul Dale *
+
  * EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH(), and
    EVP_PKEY_get0_EC_KEY() can now handle EVP_PKEYs with provider side
    internal keys, if they correspond to one of those built in types.

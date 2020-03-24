@@ -31,6 +31,7 @@ OpenSSL 3.0
   * enable-crypto-mdebug and enable-crypto-mdebug-backtrace were mostly
     disabled; the project uses address sanitize/leak-detect instead.
   * Added OSSL_SERIALIZER, a generic serializer API.
+  * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
   * Deprecated ERR_put_error().
   * Added OSSL_PROVIDER_available(), to check provider availibility.
