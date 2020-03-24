@@ -492,11 +492,13 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     default:
         /* transactionID should be already initialized */
         if (ctx->transactionID == NULL) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_UNEXPECTED_PKIBODY);
             /* ignore any (extra) error in next two function calls: */
             (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
             (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
             goto err;
+#endif
         }
     }
 
@@ -547,6 +549,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     default:
         /* TODO possibly support further request message types */
         CMPerr(0, CMP_R_UNEXPECTED_PKIBODY);
+        break;
     }
 
  err:

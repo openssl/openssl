@@ -700,26 +700,34 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         /* detect explicitly permitted exceptions for invalid protection */
         if (!OSSL_CMP_validate_msg(ctx, msg)
                 && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_ERROR_VALIDATING_PROTECTION);
             return -1;
+#endif
         }
     } else {
         /* detect explicitly permitted exceptions for missing protection */
         if (cb == NULL || (*cb)(ctx, msg, 0, cb_arg) <= 0) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_MISSING_PROTECTION);
             return -1;
+#endif
         }
     }
 
     /* check CMP version number in header */
     if (ossl_cmp_hdr_get_pvno(OSSL_CMP_MSG_get0_header(msg)) != OSSL_CMP_PVNO) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_UNEXPECTED_PVNO);
         return -1;
+#endif
     }
 
     if ((rcvd_type = ossl_cmp_msg_get_bodytype(msg)) < 0) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_PKIBODY_ERROR);
         return -1;
+#endif
     }
 
     /* compare received transactionID with the expected one in previous msg */
@@ -727,8 +735,10 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             && (msg->header->transactionID == NULL
                 || ASN1_OCTET_STRING_cmp(ctx->transactionID,
                                          msg->header->transactionID) != 0)) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_TRANSACTIONID_UNMATCHED);
         return -1;
+#endif
     }
 
     /* compare received nonce with the one we sent */
@@ -736,8 +746,10 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
             && (msg->header->recipNonce == NULL
                 || ASN1_OCTET_STRING_cmp(ctx->senderNonce,
                                          msg->header->recipNonce) != 0)) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_RECIPNONCE_UNMATCHED);
         return -1;
+#endif
     }
 
     /*
@@ -776,19 +788,27 @@ int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified)
         {
             X509_REQ *req = msg->body->value.p10cr;
 
-            if (X509_REQ_verify(req, X509_REQ_get0_pubkey(req)) > 0)
-                return 1;
-            CMPerr(0, CMP_R_REQUEST_NOT_ACCEPTED);
-            return 0;
+            if (X509_REQ_verify(req, X509_REQ_get0_pubkey(req)) <= 0) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+                CMPerr(0, CMP_R_REQUEST_NOT_ACCEPTED);
+                return 0;
+#endif
+            }
         }
+        break;
     case OSSL_CMP_PKIBODY_IR:
     case OSSL_CMP_PKIBODY_CR:
     case OSSL_CMP_PKIBODY_KUR:
-        return OSSL_CRMF_MSGS_verify_popo(msg->body->value.ir,
-                                          OSSL_CMP_CERTREQID,
-                                          accept_RAVerified);
+        if (!OSSL_CRMF_MSGS_verify_popo(msg->body->value.ir, OSSL_CMP_CERTREQID,
+                                        accept_RAVerified)) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+            return 0;
+#endif
+        }
+        break;
     default:
         CMPerr(0, CMP_R_PKIBODY_ERROR);
         return 0;
     }
+    return 1;
 }
