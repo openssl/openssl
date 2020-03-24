@@ -11,7 +11,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -95,12 +95,12 @@ static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl)
     if (key == NULL)
         return 0;
 
-    if (!ossl_param_bld_push_octet_string(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+    if (!OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                           key->pubkey, key->keylen))
         return 0;
 
     if (key->privkey != NULL
-        && !ossl_param_bld_push_octet_string(tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
+        && !OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                              key->privkey, key->keylen))
         return 0;
 
@@ -122,15 +122,15 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
             && !key_to_params(key, &tmpl))
         return 0;
 
-    ossl_param_bld_init(&tmpl);
-    params = ossl_param_bld_to_param(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
+    params = OSSL_PARAM_BLD_to_param(&tmpl);
     if (params == NULL) {
-        ossl_param_bld_free(params);
+        OSSL_PARAM_BLD_free(params);
         return 0;
     }
 
     ret = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     return ret;
 }
 

@@ -23,7 +23,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include <openssl/core_names.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "ec_local.h"
 
 #ifndef OPENSSL_NO_CMS
@@ -611,7 +611,7 @@ int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
         if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
             return 0;
 
-        if (!ossl_param_bld_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
+        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
             return 0;
     }
 
@@ -645,7 +645,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (EC_KEY_get_method(eckey) != EC_KEY_OpenSSL())
         return 0;
 
-    ossl_param_bld_init(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
 
     /* export the domain parameters */
     if (!ecparams_to_params(eckey, &tmpl))
@@ -660,7 +660,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
                                                  POINT_CONVERSION_COMPRESSED,
                                                  &pub_key_buf, NULL)) == 0
-            || !ossl_param_bld_push_octet_string(&tmpl,
+            || !OSSL_PARAM_BLD_push_octet_string(&tmpl,
                                                  OSSL_PKEY_PARAM_PUB_KEY,
                                                  pub_key_buf,
                                                  pub_key_buflen))
@@ -711,7 +711,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             goto err;
 
         sz = (ecbits + 7 ) / 8;
-        if (!ossl_param_bld_push_BN_pad(&tmpl,
+        if (!OSSL_PARAM_BLD_push_BN_pad(&tmpl,
                                         OSSL_PKEY_PARAM_PRIV_KEY,
                                         priv_key, sz))
             goto err;
@@ -726,20 +726,20 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             (EC_KEY_get_flags(eckey) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
 
         /* Export the ECDH_COFACTOR_MODE parameter */
-        if (!ossl_param_bld_push_int(&tmpl,
+        if (!OSSL_PARAM_BLD_push_int(&tmpl,
                                      OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
                                      ecdh_cofactor_mode))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
 
-    params = ossl_param_bld_to_param(&tmpl);
+    params = OSSL_PARAM_BLD_to_param(&tmpl);
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     OPENSSL_free(pub_key_buf);
     return rv;
 }

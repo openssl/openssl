@@ -10,7 +10,7 @@
 
 #include <string.h>
 #include <openssl/params.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -28,20 +28,20 @@ static int template_public_test(void)
     const char *cutf;
     int res = 0;
 
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_int(&bld, "i", -6))
-        || !TEST_true(ossl_param_bld_push_long(&bld, "l", 42))
-        || !TEST_true(ossl_param_bld_push_int32(&bld, "i32", 1532))
-        || !TEST_true(ossl_param_bld_push_int64(&bld, "i64", -9999999))
-        || !TEST_true(ossl_param_bld_push_double(&bld, "d", 1.61803398875))
+    OSSL_PARAM_BLD_init(&bld);
+    if (!TEST_true(OSSL_PARAM_BLD_push_int(&bld, "i", -6))
+        || !TEST_true(OSSL_PARAM_BLD_push_long(&bld, "l", 42))
+        || !TEST_true(OSSL_PARAM_BLD_push_int32(&bld, "i32", 1532))
+        || !TEST_true(OSSL_PARAM_BLD_push_int64(&bld, "i64", -9999999))
+        || !TEST_true(OSSL_PARAM_BLD_push_double(&bld, "d", 1.61803398875))
         || !TEST_ptr(bn = BN_new())
         || !TEST_true(BN_set_word(bn, 1729))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bignumber", bn))
-        || !TEST_true(ossl_param_bld_push_utf8_string(&bld, "utf8_s", "foo",
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(&bld, "bignumber", bn))
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(&bld, "utf8_s", "foo",
                                                       sizeof("foo")))
-        || !TEST_true(ossl_param_bld_push_utf8_ptr(&bld, "utf8_p", "bar-boom",
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_ptr(&bld, "utf8_p", "bar-boom",
                                                    0))
-        || !TEST_ptr(params = ossl_param_bld_to_param(&bld))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(&bld))
         /* Check int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
         || !TEST_true(OSSL_PARAM_get_int(p, &i))
@@ -95,7 +95,7 @@ static int template_public_test(void)
         goto err;
     res = 1;
 err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     OPENSSL_free(utf);
     BN_free(bn);
     BN_free(bn_res);
@@ -116,20 +116,20 @@ static int template_private_test(void)
     BIGNUM *bn = NULL, *bn_res = NULL;
     int res = 0;
 
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_uint(&bld, "i", 6))
-        || !TEST_true(ossl_param_bld_push_ulong(&bld, "l", 42))
-        || !TEST_true(ossl_param_bld_push_uint32(&bld, "i32", 1532))
-        || !TEST_true(ossl_param_bld_push_uint64(&bld, "i64", 9999999))
-        || !TEST_true(ossl_param_bld_push_size_t(&bld, "st", 65537))
+    OSSL_PARAM_BLD_init(&bld);
+    if (!TEST_true(OSSL_PARAM_BLD_push_uint(&bld, "i", 6))
+        || !TEST_true(OSSL_PARAM_BLD_push_ulong(&bld, "l", 42))
+        || !TEST_true(OSSL_PARAM_BLD_push_uint32(&bld, "i32", 1532))
+        || !TEST_true(OSSL_PARAM_BLD_push_uint64(&bld, "i64", 9999999))
+        || !TEST_true(OSSL_PARAM_BLD_push_size_t(&bld, "st", 65537))
         || !TEST_ptr(bn = BN_secure_new())
         || !TEST_true(BN_set_word(bn, 1729))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bignumber", bn))
-        || !TEST_true(ossl_param_bld_push_octet_string(&bld, "oct_s", data1,
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(&bld, "bignumber", bn))
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(&bld, "oct_s", data1,
                                                        sizeof(data1)))
-        || !TEST_true(ossl_param_bld_push_octet_ptr(&bld, "oct_p", data2,
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_ptr(&bld, "oct_p", data2,
                                                     sizeof(data2)))
-        || !TEST_ptr(params = ossl_param_bld_to_param(&bld))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(&bld))
         /* Check unsigned int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
         || !TEST_true(OSSL_PARAM_get_uint(p, &i))
@@ -184,7 +184,7 @@ static int template_private_test(void)
         goto err;
     res = 1;
 err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     BN_free(bn);
     BN_free(bn_res);
     return res;

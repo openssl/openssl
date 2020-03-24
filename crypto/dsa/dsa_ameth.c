@@ -23,7 +23,7 @@
 #include "crypto/asn1.h"
 #include "crypto/dsa.h"
 #include "crypto/evp.h"
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "internal/ffc.h"
 #include "dsa_local.h"
 
@@ -541,32 +541,32 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (p == NULL || q == NULL || g == NULL)
         return 0;
 
-    ossl_param_bld_init(&tmpl);
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    OSSL_PARAM_BLD_init(&tmpl);
+    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
         return 0;
     selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
     if (pub_key != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                     pub_key))
             return 0;
         selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
     }
     if (priv_key != NULL) {
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                     priv_key))
             return 0;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
-    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+    if ((params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
         return 0;
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
 
     return rv;
 }

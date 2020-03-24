@@ -21,7 +21,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 
 static OSSL_OP_keymgmt_new_fn dsa_newdata;
 static OSSL_OP_keymgmt_free_fn dsa_freedata;
@@ -48,13 +48,13 @@ static int domparams_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 
     DSA_get0_pqg(dsa, &dsa_p, &dsa_q, &dsa_g);
     if (dsa_p != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dsa_p))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, dsa_p))
         return 0;
     if (dsa_q != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q, dsa_q))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q, dsa_q))
         return 0;
     if (dsa_g != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dsa_g))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, dsa_g))
         return 0;
 
     return 1;
@@ -71,10 +71,10 @@ static int key_to_params(DSA *dsa, OSSL_PARAM_BLD *tmpl)
 
     DSA_get0_key(dsa, &pub_key, &priv_key);
     if (priv_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY, priv_key))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY, priv_key))
         return 0;
     if (pub_key != NULL
-        && !ossl_param_bld_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
+        && !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
         return 0;
 
     return 1;
@@ -160,7 +160,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (dsa == NULL)
         return 0;
 
-    ossl_param_bld_init(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && domparams_to_params(dsa, &tmpl);
@@ -168,11 +168,11 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         ok = ok && key_to_params(dsa, &tmpl);
 
     if (!ok
-        || (params = ossl_param_bld_to_param(&tmpl)) == NULL)
+        || (params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
         return 0;
 
     ok = param_cb(params, cbarg);
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     return ok;
 }
 

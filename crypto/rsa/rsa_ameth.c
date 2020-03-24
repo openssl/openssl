@@ -20,7 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -1104,12 +1104,12 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (n == NULL || e == NULL)
         goto err;
 
-    ossl_param_bld_init(&tmpl);
+    OSSL_PARAM_BLD_init(&tmpl);
 
     /* |e| and |n| are always present */
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
         goto err;
-    if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n))
+    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
@@ -1144,14 +1144,14 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                          <= OSSL_PARAM_BLD_MAX))
             goto err;
 
-        if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
         for (i = 0; i < numprimes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
+            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
                                         num))
                 goto err;
         }
@@ -1159,7 +1159,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         for (i = 0; i < numexps; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
+            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
                                         num))
                 goto err;
         }
@@ -1167,13 +1167,13 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         for (i = 0; i < numcoeffs; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
 
-            if (!ossl_param_bld_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
+            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
                                         num))
                 goto err;
         }
     }
 
-    if ((params = ossl_param_bld_to_param(&tmpl)) == NULL)
+    if ((params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
         goto err;
 
     /* We export, the provider imports */
@@ -1183,7 +1183,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     sk_BIGNUM_const_free(primes);
     sk_BIGNUM_const_free(exps);
     sk_BIGNUM_const_free(coeffs);
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
     return rv;
 }
 

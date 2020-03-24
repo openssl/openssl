@@ -2,44 +2,44 @@
 
 =head1 NAME
 
-ossl_param_bld_init, ossl_param_bld_to_param,
-ossl_param_bld_free, ossl_param_bld_push_int, ossl_param_bld_push_uint,
-ossl_param_bld_push_long, ossl_param_bld_push_ulong,
-ossl_param_bld_push_int32, ossl_param_bld_push_uint32,
-ossl_param_bld_push_int64, ossl_param_bld_push_uint64,
-ossl_param_bld_push_size_t, ossl_param_bld_push_double,
-ossl_param_bld_push_BN, ossl_param_bld_push_BN_pad,
-ossl_param_bld_push_utf8_string, ossl_param_bld_push_utf8_ptr,
-ossl_param_bld_push_octet_string, ossl_param_bld_push_octet_ptr
+OSSL_PARAM_BLD_init, OSSL_PARAM_BLD_to_param,
+OSSL_PARAM_BLD_free, OSSL_PARAM_BLD_push_int, OSSL_PARAM_BLD_push_uint,
+OSSL_PARAM_BLD_push_long, OSSL_PARAM_BLD_push_ulong,
+OSSL_PARAM_BLD_push_int32, OSSL_PARAM_BLD_push_uint32,
+OSSL_PARAM_BLD_push_int64, OSSL_PARAM_BLD_push_uint64,
+OSSL_PARAM_BLD_push_size_t, OSSL_PARAM_BLD_push_double,
+OSSL_PARAM_BLD_push_BN, OSSL_PARAM_BLD_push_BN_pad,
+OSSL_PARAM_BLD_push_utf8_string, OSSL_PARAM_BLD_push_utf8_ptr,
+OSSL_PARAM_BLD_push_octet_string, OSSL_PARAM_BLD_push_octet_ptr
 - functions to assist in the creation of OSSL_PARAM arrays
 
 =head1 SYNOPSIS
 
 =for openssl generic
 
- #include "internal/params_build.h"
+ #include "openssl/param_build.h"
 
  #define OSSL_PARAM_BLD_MAX 10
  typedef struct { ... } OSSL_PARAM_BLD;
 
- void ossl_param_bld_init(OSSL_PARAM_BLD *bld);
- OSSL_PARAM *ossl_param_bld_to_param(OSSL_PARAM_BLD *bld);
- void ossl_param_bld_free(OSSL_PARAM *params);
+ void OSSL_PARAM_BLD_init(OSSL_PARAM_BLD *bld);
+ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld);
+ void OSSL_PARAM_BLD_free(OSSL_PARAM *params);
 
- int ossl_param_bld_push_TYPE(OSSL_PARAM_BLD *bld, const char *key, TYPE val);
+ int OSSL_PARAM_BLD_push_TYPE(OSSL_PARAM_BLD *bld, const char *key, TYPE val);
 
- int ossl_param_bld_push_BN(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
                             const BIGNUM *bn);
- int ossl_param_bld_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
                                 const BIGNUM *bn, size_t sz);
 
- int ossl_param_bld_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                                      const char *buf, size_t bsize);
- int ossl_param_bld_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
                                   char *buf, size_t bsize);
- int ossl_param_bld_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
                                       const void *buf, size_t bsize);
- int ossl_param_bld_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
+ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
                                    void *buf, size_t bsize);
 
 
@@ -48,17 +48,17 @@ ossl_param_bld_push_octet_string, ossl_param_bld_push_octet_ptr
 A collection of utility functions that simplify the creation of OSSL_PARAM
 arrays.  The B<I<TYPE>> names are as per L<OSSL_PARAM_int(3)>.
 
-ossl_param_bld_init() initialises the OSSL_PARAM_BLD structure so that values
+OSSL_PARAM_BLD_init() initialises the OSSL_PARAM_BLD structure so that values
 can be added.
 Any existing values are cleared.
 
-ossl_param_bld_to_param() converts a built up OSSL_PARAM_BLD structure
+OSSL_PARAM_BLD_to_param() converts a built up OSSL_PARAM_BLD structure
 I<bld> into an allocated OSSL_PARAM array.
 The OSSL_PARAM array and all associated storage must be freed by calling
-ossl_param_bld_free() with the functions return value.
+OSSL_PARAM_BLD_free() with the functions return value.
 
-ossl_param_bld_free() deallocates the memory allocated by
-ossl_param_bld_to_param().
+OSSL_PARAM_BLD_free() deallocates the memory allocated by
+OSSL_PARAM_BLD_to_param().
 
 =begin comment
 
@@ -68,55 +68,55 @@ the processor along
 
 =end comment
 
-B<ossl_param_bld_push_I<TYPE>>() are a series of functions which will create
+B<OSSL_PARAM_BLD_push_I<TYPE>>() are a series of functions which will create
 OSSL_PARAM objects of the specified size and correct type for the I<val>
 argument.
 I<val> is stored by value and an expression or auto variable can be used.
 
-ossl_param_bld_push_BN() is a function that will create an OSSL_PARAM object
+OSSL_PARAM_BLD_push_BN() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
 If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
-must exist until after ossl_param_bld_to_param() has been called.
+must exist until after OSSL_PARAM_BLD_to_param() has been called.
 
-ossl_param_bld_push_BN_pad() is a function that will create an OSSL_PARAM object
+OSSL_PARAM_BLD_push_BN_pad() is a function that will create an OSSL_PARAM object
 that holds the specified BIGNUM I<bn>.
 The object will be padded to occupy exactly I<sz> bytes, if insufficient space
 is specified an error results.
 If I<bn> is marked as being securely allocated, its OSSL_PARAM representation
 will also be securely allocated.
 The I<bn> argument is stored by reference and the underlying BIGNUM object
-must exist until after ossl_param_bld_to_param() has been called.
+must exist until after OSSL_PARAM_BLD_to_param() has been called.
 
-ossl_param_bld_push_utf8_string() is a function that will create an OSSL_PARAM
+OSSL_PARAM_BLD_push_utf8_string() is a function that will create an OSSL_PARAM
 object that references the UTF8 string specified by I<buf>.
 If the length of the string, I<bsize>, is zero then it will be calculated.
 The string that I<buf> points to is stored by reference and must remain in
-scope until after ossl_param_bld_to_param() has been called.
+scope until after OSSL_PARAM_BLD_to_param() has been called.
 
-ossl_param_bld_push_octet_string() is a function that will create an OSSL_PARAM
+OSSL_PARAM_BLD_push_octet_string() is a function that will create an OSSL_PARAM
 object that references the octet string specified by I<buf> and <bsize>.
 The memory that I<buf> points to is stored by reference and must remain in
-scope until after ossl_param_bld_to_param() has been called.
+scope until after OSSL_PARAM_BLD_to_param() has been called.
 
-ossl_param_bld_push_utf8_ptr() is a function that will create an OSSL_PARAM
+OSSL_PARAM_BLD_push_utf8_ptr() is a function that will create an OSSL_PARAM
 object that references the UTF8 string specified by I<buf>.
 If the length of the string, I<bsize>, is zero then it will be calculated.
 The string I<buf> points to is stored by reference and must remain in
 scope until the OSSL_PARAM array is freed.
 
-ossl_param_bld_push_octet_ptr() is a function that will create an OSSL_PARAM
+OSSL_PARAM_BLD_push_octet_ptr() is a function that will create an OSSL_PARAM
 object that references the octet string specified by I<buf>.
 The memory I<buf> points to is stored by reference and must remain in
 scope until the OSSL_PARAM array is freed.
 
 =head1 RETURN VALUES
 
-ossl_param_bld_to_param() returns the allocated OSSL_PARAM array, or NULL
+OSSL_PARAM_BLD_to_param() returns the allocated OSSL_PARAM array, or NULL
 on error.
 
-All of the ossl_param_bld_push_TYPE functions return 1 on success and 0
+All of the OSSL_PARAM_BLD_push_TYPE functions return 1 on success and 0
 on error.
 
 =head1 NOTES
@@ -124,6 +124,8 @@ on error.
 The constant B<OSSL_PARAM_BLD_MAX> specifies the maximum number of parameters
 that can be added.
 Exceeding this will result in the push functions returning errors.
+The define used for this will always be at least 10 but otherwise no assumption
+should be made about it's specific value.
 
 The structure B<OSSL_PARAM_BLD> should be considered opaque and subject to
 change between versions.
@@ -146,17 +148,17 @@ private key.
     OSSL_PARAM_BLD bld;
     OSSL_PARAM *params;
 
-    ossl_param_bld_init(&bld, &secure);
-    if (!ossl_param_bld_push_BN(&bld, "p", p)
-        || !ossl_param_bld_push_BN(&bld, "q", q)
-        || !ossl_param_bld_push_uint(&bld, "e", e)
-        || !ossl_param_bld_push_BN(&bld, "n", n)
-        || !ossl_param_bld_push_BN(&bld, "d", d)
-        || (params = ossl_param_bld_to_param(&bld)) == NULL)
+    OSSL_PARAM_BLD_init(&bld, &secure);
+    if (!OSSL_PARAM_BLD_push_BN(&bld, "p", p)
+        || !OSSL_PARAM_BLD_push_BN(&bld, "q", q)
+        || !OSSL_PARAM_BLD_push_uint(&bld, "e", e)
+        || !OSSL_PARAM_BLD_push_BN(&bld, "n", n)
+        || !OSSL_PARAM_BLD_push_BN(&bld, "d", d)
+        || (params = OSSL_PARAM_BLD_to_param(&bld)) == NULL)
         goto err;
     /* Use params */
     ...
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
 
 =head2 Example 2
 
@@ -166,14 +168,14 @@ public key.
     OSSL_PARAM_BLD bld;
     OSSL_PARAM *params;
 
-    ossl_param_bld_init(&bld, &secure);
-    if (!ossl_param_bld_push_BN(&bld, "n", n)
-        || !ossl_param_bld_push_BN(&bld, "d", d)
-        || (params = ossl_param_bld_to_param(&bld)) == NULL)
+    OSSL_PARAM_BLD_init(&bld, &secure);
+    if (!OSSL_PARAM_BLD_push_BN(&bld, "n", n)
+        || !OSSL_PARAM_BLD_push_BN(&bld, "d", d)
+        || (params = OSSL_PARAM_BLD_to_param(&bld)) == NULL)
         goto err;
     /* Use params */
     ...
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free(params);
 
 =head1 SEE ALSO
 
