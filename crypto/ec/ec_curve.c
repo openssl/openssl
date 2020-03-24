@@ -3117,25 +3117,65 @@ static const ec_list_element curve_list[] = {
 
 #define curve_list_length OSSL_NELEM(curve_list)
 
+static const ec_list_element *ec_curve_nid2curve(int nid)
+{
+    size_t i;
+
+    if (nid <= 0)
+        return NULL;
+
+    for (i = 0; i < curve_list_length; i++) {
+        if (curve_list[i].nid == nid)
+            return &curve_list[i];
+    }
+    return NULL;
+}
+
+static const ec_list_element *ec_curve_name2curve(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < curve_list_length; i++) {
+        if (strcasecmp(curve_list[i].name, name) == 0)
+            return &curve_list[i];
+    }
+    return NULL;
+}
+
 const char *ec_curve_nid2name(int nid)
 {
-    int i;
+    /*
+     * TODO(3.0) Figure out if we should try to find the nid with
+     * EC_curve_nid2nist() first, i.e. make it a priority to return
+     * NIST names if there is one for the NID.  This is related to
+     * the TODO comment in ec_curve_name2nid().
+     */
+    const ec_list_element *curve = ec_curve_nid2curve(nid);
 
-    for (i = 0; i < (int)curve_list_length; i++) {
-        if (curve_list[i].nid == nid)
-            return curve_list[i].name;
-    }
+    if (curve != NULL)
+        return curve->name;
     return NULL;
 }
 
 int ec_curve_name2nid(const char *name)
 {
-    int i;
+    const ec_list_element *curve = NULL;
+    int nid;
 
-    for (i = 0; i < (int)curve_list_length; i++) {
-        if (strcasecmp(curve_list[i].name, name) == 0)
-            return curve_list[i].nid;
-    }
+    if ((nid = EC_curve_nist2nid(name)) != NID_undef)
+        return nid;
+
+#ifndef FIPS_MODE
+    /*
+     * TODO(3.0) Figure out if we can use other names than the NIST names
+     * ("B-163", "K-163" & "P-192") in the FIPS module, or if other names
+     * are allowed as well as long as they lead to the same curve data.
+     * If only the NIST names are allowed in the FIPS module, we should
+     * move '#endif' to just before 'return NID_undef'.
+     */
+#endif
+    if ((curve = ec_curve_name2curve(name)) != NULL)
+        return curve->nid;
     return NID_undef;
 }
 
@@ -3250,28 +3290,11 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
 
 EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid)
 {
-    size_t i;
     EC_GROUP *ret = NULL;
+    const ec_list_element *curve;
 
-    if (nid <= 0)
-        return NULL;
-
-#ifdef FIPS_MODE
-    /*
-     * Only use approved NIST curves in FIPS.
-     * NOTE: "B-163", "K-163" & "P-192" can only be used for legacy use
-     * (i.e- ECDSA signature verification).
-     */
-    if (EC_curve_nid2nist(nid) == NULL)
-        return NULL;
-#endif /* FIPS_MODE */
-    for (i = 0; i < curve_list_length; i++)
-        if (curve_list[i].nid == nid) {
-            ret = ec_group_new_from_data(libctx, curve_list[i]);
-            break;
-        }
-
-    if (ret == NULL) {
+    if ((curve = ec_curve_nid2curve(nid)) == NULL
+        || (ret = ec_group_new_from_data(libctx, *curve)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_BY_CURVE_NAME_EX, EC_R_UNKNOWN_GROUP);
         return NULL;
     }
