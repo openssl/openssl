@@ -608,13 +608,15 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b;
+    size_t len;
 
     if (val == NULL
         || p == NULL
         || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
-    b = BN_native2bn(p->data, (int)p->data_size, *val);
+    len = p->return_size > 0 ? p->return_size : p->data_size;
+    b = BN_native2bn(p->data, (int)len, *val);
     if (b != NULL) {
         *val = b;
         return 1;
@@ -623,6 +625,13 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 }
 
 int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
+{
+    if (p == NULL)
+        return 0;
+    return OSSL_PARAM_set_BN_pad(p, val, p->data_size);
+}
+
+int OSSL_PARAM_set_BN_pad(OSSL_PARAM *p, const BIGNUM *val, size_t sz)
 {
     size_t bytes;
 
@@ -638,11 +647,14 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
 
     bytes = (size_t)BN_num_bytes(val);
     p->return_size = bytes;
+    if (sz < bytes)
+        return 0;
+
     if (p->data == NULL)
         return 1;
-    if (p->data_size >= bytes) {
-        p->return_size = p->data_size;
-        return BN_bn2nativepad(val, p->data, p->data_size) >= 0;
+    if (p->data_size >= sz) {
+        p->return_size = sz;
+        return BN_bn2nativepad(val, p->data, sz) >= 0;
     }
     return 0;
 }

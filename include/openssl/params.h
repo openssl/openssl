@@ -119,6 +119,7 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val);
 
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val);
 int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val);
+int OSSL_PARAM_set_BN_pad(OSSL_PARAM *p, const BIGNUM *val, size_t sz);
 
 int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len);
 int OSSL_PARAM_set_utf8_string(OSSL_PARAM *p, const char *val);

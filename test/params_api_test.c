@@ -401,6 +401,34 @@ err:
     return ret;
 }
 
+static int test_param_bignum_pad(void)
+{
+    unsigned char buf[MAX_LEN];
+    OSSL_PARAM param;
+    BIGNUM *bn, *out = NULL;
+    size_t i;
+    int ret = 0;
+
+    param = OSSL_PARAM_construct_BN("bn", buf, sizeof(buf));
+    if (!TEST_ptr(bn = BN_new())
+            || !TEST_ptr(out = BN_new())
+            || !TEST_true(BN_set_word(bn, 54321)))
+        goto err;
+    for (i = sizeof(BN_ULONG); i < MAX_LEN; i++) {
+        if (!TEST_true(OSSL_PARAM_set_BN_pad(&param, bn, i))
+                || !TEST_size_t_eq(param.return_size, i)
+                || !TEST_true(OSSL_PARAM_get_BN(&param, &out))
+                || !TEST_BN_eq(bn, out)
+                || !TEST_true(BN_set_word(out, 999)))
+            goto err;
+    }
+    ret = 1;
+err:
+    BN_free(out);
+    BN_free(bn);
+    return ret;
+}
+
 static int test_param_real(void)
 {
     double p;
@@ -575,6 +603,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_int64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_bignum, OSSL_NELEM(raw_values));
+    ADD_TEST(test_param_bignum_pad);
     ADD_TEST(test_param_real);
     ADD_TEST(test_param_construct);
     return 1;
