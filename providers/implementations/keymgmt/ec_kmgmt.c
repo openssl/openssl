@@ -312,7 +312,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
               void *cbarg)
 {
     EC_KEY *ec = keydata;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
@@ -341,25 +341,29 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
             && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
 
-    OSSL_PARAM_BLD_init(&tmpl);
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && domparams_to_params(ec, &tmpl);
+        ok = ok && domparams_to_params(ec, tmpl);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
-        ok = ok && key_to_params(ec, &tmpl, include_private);
+        ok = ok && key_to_params(ec, tmpl, include_private);
     }
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && otherparams_to_params(ec, &tmpl);
+        ok = ok && otherparams_to_params(ec, tmpl);
 
     if (!ok
-        || (params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
-        return 0;
+        || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
+        goto err;
 
     ok = param_cb(params, cbarg);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free_params(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
     return ok;
 }
 

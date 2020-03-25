@@ -175,7 +175,7 @@ static int rsa_export(void *keydata, int selection,
                       OSSL_CALLBACK *param_callback, void *cbarg)
 {
     RSA *rsa = keydata;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
@@ -184,17 +184,22 @@ static int rsa_export(void *keydata, int selection,
 
     /* TODO(3.0) PSS and OAEP should bring on parameters */
 
-    OSSL_PARAM_BLD_init(&tmpl);
-
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && key_to_params(rsa, &tmpl);
-
-    if (!ok
-        || (params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
         return 0;
 
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ok = ok && key_to_params(rsa, tmpl);
+
+    if (!ok
+        || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
+        OSSL_PARAM_BLD_free(tmpl);
+        return 0;
+    }
+    OSSL_PARAM_BLD_free(tmpl);
+
     ok = param_callback(params, cbarg);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free_params(params);
     return ok;
 }
 

@@ -11,37 +11,10 @@
 #include <openssl/params.h>
 #include <openssl/types.h>
 
-#define OSSL_PARAM_BLD_MAX 25
-
-typedef struct {
-    const char *key;
-    int type;
-    int secure;
-    size_t size;
-    size_t alloc_blocks;
-    const BIGNUM *bn;
-    const void *string;
-    union {
-        /*
-         * These fields are never directly addressed, but their sizes are
-         * imporant so that all native types can be copied here without overrun.
-         */
-        ossl_intmax_t i;
-        ossl_uintmax_t u;
-        double d;
-    } num;
-} OSSL_PARAM_BLD_DEF;
-
-typedef struct {
-    size_t curr;
-    size_t total_blocks;
-    size_t secure_blocks;
-    OSSL_PARAM_BLD_DEF params[OSSL_PARAM_BLD_MAX];
-} OSSL_PARAM_BLD;
-
-void OSSL_PARAM_BLD_init(OSSL_PARAM_BLD *bld);
+OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void);
 OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld);
-void OSSL_PARAM_BLD_free(OSSL_PARAM *params);
+void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld);
+void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params);
 
 int OSSL_PARAM_BLD_push_int(OSSL_PARAM_BLD *bld, const char *key, int val);
 int OSSL_PARAM_BLD_push_uint(OSSL_PARAM_BLD *bld, const char *key,

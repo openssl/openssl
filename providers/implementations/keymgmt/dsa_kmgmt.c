@@ -153,26 +153,26 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                       void *cbarg)
 {
     DSA *dsa = keydata;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
     if (dsa == NULL)
-        return 0;
-
-    OSSL_PARAM_BLD_init(&tmpl);
+        goto err;;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && domparams_to_params(dsa, &tmpl);
+        ok = ok && domparams_to_params(dsa, tmpl);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && key_to_params(dsa, &tmpl);
+        ok = ok && key_to_params(dsa, tmpl);
 
     if (!ok
-        || (params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
-        return 0;
+        || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
+        goto err;;
 
     ok = param_cb(params, cbarg);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free_params(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
     return ok;
 }
 

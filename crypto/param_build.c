@@ -12,10 +12,46 @@
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
 #include <openssl/params.h>
+#include <openssl/types.h>
 #include "internal/cryptlib.h"
 #include "openssl/param_build.h"
 
+/*
+ * The number of OSSL_PARAM elements a builder will allow.
+ */
+#define OSSL_PARAM_BLD_MAX          25
+
+/*
+ * Special internal param type to indicate the end of an allocate OSSL_PARAM
+ * array.
+ */
 #define OSSL_PARAM_ALLOCATED_END    127
+
+typedef struct {
+    const char *key;
+    int type;
+    int secure;
+    size_t size;
+    size_t alloc_blocks;
+    const BIGNUM *bn;
+    const void *string;
+    union {
+        /*
+         * These fields are never directly addressed, but their sizes are
+         * imporant so that all native types can be copied here without overrun.
+         */
+        ossl_intmax_t i;
+        ossl_uintmax_t u;
+        double d;
+    } num;
+} OSSL_PARAM_BLD_DEF;
+
+struct ossl_param_bld_st {
+    size_t curr;
+    size_t total_blocks;
+    size_t secure_blocks;
+    OSSL_PARAM_BLD_DEF params[OSSL_PARAM_BLD_MAX];
+};
 
 typedef union {
     OSSL_UNION_ALIGN;
@@ -66,9 +102,14 @@ static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
     return 1;
 }
 
-void OSSL_PARAM_BLD_init(OSSL_PARAM_BLD *bld)
+OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void)
 {
-    memset(bld, 0, sizeof(*bld));
+    return OPENSSL_zalloc(sizeof(OSSL_PARAM_BLD));
+}
+
+void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld)
+{
+    OPENSSL_free(bld);
 }
 
 int OSSL_PARAM_BLD_push_int(OSSL_PARAM_BLD *bld, const char *key, int num)
@@ -301,12 +342,14 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
         if (s == NULL) {
             CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
                       CRYPTO_R_SECURE_MALLOC_FAILURE);
+            OPENSSL_free(bld);
             return NULL;
         }
     }
     params = OPENSSL_malloc(total);
     if (params == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(bld);
         OPENSSL_secure_free(s);
         return NULL;
     }
@@ -315,10 +358,13 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     last->data_size = ss;
     last->data = s;
     last->data_type = OSSL_PARAM_ALLOCATED_END;
+
+    /* Reset for reuse */
+    memset(bld, 0, sizeof(*bld));
     return params;
 }
 
-void OSSL_PARAM_BLD_free(OSSL_PARAM *params)
+void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params)
 {
     if (params != NULL) {
         OSSL_PARAM *p;
