@@ -294,9 +294,26 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
-    return inner_evp_generic_fetch(libctx,
-                                   operation_id, 0, name, properties,
-                                   new_method, up_ref_method, free_method);
+    void *ret = inner_evp_generic_fetch(libctx,
+                                        operation_id, 0, name, properties,
+                                        new_method, up_ref_method, free_method);
+
+    if (ret == NULL) {
+        int code = EVP_R_FETCH_FAILED;
+
+#ifdef FIPS_MODE
+        ERR_raise(ERR_LIB_EVP, code);
+#else
+        ERR_raise_data(ERR_LIB_EVP, code,
+                       "%s, Algorithm (%s), Properties (%s)",
+                       (openssl_ctx_is_default(libctx)
+                        ? "Default library context"
+                        : "Non-default library context"),
+                       name = NULL ? "<null>" : name,
+                       properties == NULL ? "<null>" : properties);
+#endif
+    }
+    return ret;
 }
 
 /*
@@ -314,9 +331,34 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
 {
-    return inner_evp_generic_fetch(libctx,
-                                   operation_id, name_id, NULL, properties,
-                                   new_method, up_ref_method, free_method);
+    void *ret = inner_evp_generic_fetch(libctx,
+                                        operation_id, name_id, NULL,
+                                        properties, new_method, up_ref_method,
+                                        free_method);
+
+    if (ret == NULL) {
+        int code = EVP_R_FETCH_FAILED;
+
+#ifdef FIPS_MODE
+        ERR_raise(ERR_LIB_EVP, code);
+#else
+        {
+            OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+            const char *name = (namemap == NULL)
+                               ? NULL
+                               : ossl_namemap_num2name(namemap, name_id, 0);
+
+            ERR_raise_data(ERR_LIB_EVP, code,
+                           "%s, Algorithm (%s), Properties (%s)",
+                           (openssl_ctx_is_default(libctx)
+                            ? "Default library context"
+                            : "Non-default library context"),
+                           name = NULL ? "<null>" : name,
+                           properties == NULL ? "<null>" : properties);
+        }
+#endif
+    }
+    return ret;
 }
 
 int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)

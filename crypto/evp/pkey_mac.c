@@ -51,7 +51,11 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
     MAC_PKEY_CTX *hctx;
     /* We're being smart and using the same base NIDs for PKEY and for MAC */
     int nid = ctx->pmeth->pkey_id;
-    EVP_MAC *mac = EVP_MAC_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propquery);
+    EVP_MAC *mac;
+
+    ERR_set_mark();
+    mac = EVP_MAC_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propquery);
+    ERR_pop_to_mark();
 
     /*
      * mac == NULL may actually be ok in some situations. In an
