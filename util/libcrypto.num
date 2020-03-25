@@ -4755,7 +4755,7 @@ OSSL_CMP_CTX_get_option                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set_log_cb                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_print_errors               ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_serverPath            ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_set1_serverName            ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set1_server                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set_serverPort             ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_proxy                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_no_proxy              ?	3_0_0	EXIST::FUNCTION:CMP
@@ -4990,9 +4990,9 @@ OSSL_CMP_exec_CR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_exec_P10CR_ses                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_exec_KUR_ses                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_try_certreq                    ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_certConf_cb                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_exec_RR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_exec_GENM_ses                  ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_certConf_cb                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_http_perform               ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA

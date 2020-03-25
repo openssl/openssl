@@ -11,11 +11,10 @@ OSSL_CMP_CTX_set_log_cb,
 OSSL_CMP_CTX_set_log_verbosity,
 OSSL_CMP_CTX_print_errors,
 OSSL_CMP_CTX_set1_serverPath,
-OSSL_CMP_CTX_set1_serverName,
+OSSL_CMP_CTX_set1_server,
 OSSL_CMP_CTX_set_serverPort,
 OSSL_CMP_CTX_set1_proxy,
 OSSL_CMP_CTX_set1_no_proxy,
-OSSL_CMP_DEFAULT_PORT,
 OSSL_CMP_CTX_set_http_cb,
 OSSL_CMP_CTX_set_http_cb_arg,
 OSSL_CMP_CTX_get_http_cb_arg,
@@ -78,11 +77,10 @@ OSSL_CMP_CTX_set1_senderNonce
 
  /* message transfer: */
  int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);
- int OSSL_CMP_CTX_set1_serverName(OSSL_CMP_CTX *ctx, const char *name);
+ int OSSL_CMP_CTX_set1_server(OSSL_CMP_CTX *ctx, const char *address);
  int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port);
  int OSSL_CMP_CTX_set1_proxy(OSSL_CMP_CTX *ctx, const char *name);
  int OSSL_CMP_CTX_set1_no_proxy(OSSL_CMP_CTX *ctx, const char *names);
- #define OSSL_CMP_DEFAULT_PORT 80
  int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, HTTP_bio_cb_t cb);
  int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_http_cb_arg(const OSSL_CMP_CTX *ctx);
@@ -306,19 +304,26 @@ It is similar to B<ERR_print_errors_cb()> but uses the CMP log callback function
 if set in the C<ctx> for uniformity with CMP logging if given. Otherwise it uses
 B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
-OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host.
+OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,
+also known as "CMP alias".
+The default is "/".
 
-OSSL_CMP_CTX_set1_serverName() sets the given server Address (as IP or name)
-in the given OSSL_CMP_CTX structure.
+OSSL_CMP_CTX_set1_server() sets the given server B<address>
+(which may be a hostname or IP address or NULL) in the given B<ctx>.
 
 OSSL_CMP_CTX_set_serverPort() sets the port of the CMP server to connect to.
-Port defaults to OSSL_CMP_DEFAULT_PORT = 80 if not set explicitly.
+If not used or the B<port> argument is 0
+the default port applies, which is 80 for HTTP and 443 for HTTPS.
 
-OSSL_CMP_CTX_set1_proxy() sets the HTTP proxy to be used for connecting to the
-CMP server.
-Defaults to the environment variable B<http_proxy> if set, else B<HTTP_PROXY>
-in case no TLS is used, otherwise B<https_proxy> if set, else B<HTTPS_PROXY>.
-The format is [http://]address[:port][/path] where the optional path is ignored.
+OSSL_CMP_CTX_set1_proxy() sets the HTTP proxy to be used for connecting to
+the given CMP server unless overruled by any "no_proxy" settings (see below).
+If TLS is not used this defaults to the value of
+the environment variable B<http_proxy> if set, else B<HTTP_PROXY>.
+Otherwise defaults to the value of B<https_proxy> if set, else B<HTTPS_PROXY>.
+An empty proxy string specifies not to use a proxy.
+Else the format is I<[http[s]://]address[:port][/path]>,
+where any path given is ignored.
+The default port number is 80, or 443 in case "https:" is given.
 
 OSSL_CMP_CTX_set1_no_proxy() sets the list of server hostnames not to use
 an HTTP proxy for. The names may be separated by commas and/or whitespace.
@@ -606,7 +611,7 @@ All other functions return 1 on success, 0 on error.
 The following code does an Initialization Request:
 
         cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_serverName(cmp_ctx, opt_serverName);
+        OSSL_CMP_CTX_set1_server(cmp_ctx, address);
         OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, ref, ref_len);
         OSSL_CMP_CTX_set1_secretValue(cmp_ctx, sec, sec_len);
         OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
@@ -618,7 +623,7 @@ The following code does an Initialization Request using an
 external identity certificate (RFC 4210, Appendix E.7):
 
         cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_serverName(cmp_ctx, sname);
+        OSSL_CMP_CTX_set1_server(cmp_ctx, sname);
         OSSL_CMP_CTX_set1_clCert(cmp_ctx, cl_cert);
         OSSL_CMP_CTX_set1_pkey(cmp_ctx, pkey);
         OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
@@ -633,7 +638,7 @@ which is trusted by the current CA the code will connect to.
 The following code does a Key Update Request:
 
         cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_serverName(cmp_ctx, sname);
+        OSSL_CMP_CTX_set1_server(cmp_ctx, url);
         OSSL_CMP_CTX_set1_pkey(cmp_ctx, pkey);
         OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
         OSSL_CMP_CTX_set1_clCert(cmp_ctx, cl_cert);
@@ -646,7 +651,7 @@ including, as an example, the id-it-signKeyPairTypes OID and prints info on
 the General Response contents.
 
     cmp_ctx = OSSL_CMP_CTX_new();
-    OSSL_CMP_CTX_set1_serverName(cmp_ctx, sname);
+    OSSL_CMP_CTX_set1_server(cmp_ctx, sname);
     OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, ref, ref_len);
     OSSL_CMP_CTX_set1_secretValue(cmp_ctx, sec, sec_len);
 

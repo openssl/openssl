@@ -3,35 +3,46 @@
 =head1 NAME
 
 OSSL_CMP_MSG_http_perform
-- implementation of HTTP transfer for CMP messages
+- client-side HTTP(S) transfer of a CMP request-response pair
 
 =head1 SYNOPSIS
 
  #include <openssl/cmp.h>
 
- SSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
-                                        const OSSL_CMP_MSG *req);
+ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
+                                         const OSSL_CMP_MSG *req);
 
 =head1 DESCRIPTION
 
-This is the API for creating a BIO for CMP (Certificate Management
-Protocol) over HTTP(S) with OpenSSL.
+OSSL_CMP_MSG_http_perform() sends the given PKIMessage B<req>
+to the CMP server specified in B<ctx> via L<OSSL_CMP_CTX_set1_server(3)>
+and optionally L<OSSL_CMP_CTX_set_serverPort(3)>, using
+any "CMP alias" optionally specified via L<OSSL_CMP_CTX_set1_serverPath(3)>.
+The default port is 80 for HTTP and 443 for HTTPS; the default path is "/".
+On success the function returns the server's response PKIMessage.
 
-OSSL_CMP_MSG_http_perform() sends the given PKIMessage req to the CMP server
-specified in ctx. On success it returns the server's response.
+The function makes use of any HTTP callback function
+set via L<OSSL_CMP_CTX_set_http_cb(3)>.
+It respects any timeout value set via L<OSSL_CMP_CTX_set_option(3)>
+with an B<OSSL_CMP_OPT_MSG_TIMEOUT> argument.
+It also respects any HTTP(S) proxy options set via L<OSSL_CMP_CTX_set1_proxy(3)>
+and L<OSSL_CMP_CTX_set1_no_proxy(3)> and the respective environment variables.
+Proxying plain HTTP is supported directly,
+while using a proxy for HTTPS connections requires a suitable callback function
+such as L<OSSL_HTTP_proxy_connect(3)>.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 4210.
+HTTP transfer for CMP is defined in RFC 6712.
 
 =head1 RETURN VALUES
 
-OSSL_CMP_MSG_http_perform() returns a message on success or else NULL.
-It uses ctx->http_cb if set and respects ctx->msgTimeOut.
+OSSL_CMP_MSG_http_perform() returns a CMP message on success, else NULL.
 
 =head1 SEE ALSO
 
-L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_exec_IR_ses(3)>
+L<OSSL_CMP_CTX_new(3)>, L<OSSL_HTTP_proxy_connect(3)>.
 
 =head1 HISTORY
 

@@ -95,7 +95,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
     ctx->status = -1;
     ctx->failInfoCode = -1;
 
-    ctx->serverPort = OSSL_CMP_DEFAULT_PORT;
     ctx->msg_timeout = 2 * 60;
 
     if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
@@ -146,7 +145,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
         return;
 
     OPENSSL_free(ctx->serverPath);
-    OPENSSL_free(ctx->serverName);
+    OPENSSL_free(ctx->server);
     OPENSSL_free(ctx->proxy);
     OPENSSL_free(ctx->no_proxy);
 
@@ -775,7 +774,7 @@ int OSSL_CMP_CTX_set1_senderNonce(OSSL_CMP_CTX *ctx,
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
 /* Set the (HTTP) host name of the CMP server */
-DEFINE_OSSL_CMP_CTX_set1(serverName, char)
+DEFINE_OSSL_CMP_CTX_set1(server, char)
 
 /* Set the server exclusion list of the HTTP proxy server */
 DEFINE_OSSL_CMP_CTX_set1(no_proxy, char)

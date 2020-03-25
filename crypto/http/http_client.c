@@ -21,7 +21,7 @@
 #include <openssl/buffer.h>
 #include <openssl/http.h>
 #include "internal/sockets.h"
-#include "internal/cryptlib.h"
+#include "internal/cryptlib.h" /* for ossl_assert() */
 
 #include "http_local.h"
 
@@ -157,7 +157,7 @@ int OSSL_HTTP_REQ_CTX_header(OSSL_HTTP_REQ_CTX *rctx, const char *server,
          * Section 5.1.2 of RFC 1945 states that the absoluteURI form is only
          * allowed when using a proxy
          */
-        if (BIO_printf(rctx->mem, "http://%s", server) <= 0)
+        if (BIO_printf(rctx->mem, OSSL_HTTP_PREFIX"%s", server) <= 0)
             return 0;
         if (port != NULL && BIO_printf(rctx->mem, ":%s", port) <= 0)
             return 0;
@@ -701,10 +701,8 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
     const char *port = server_port;
     BIO *cbio;
 
-    if (server == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+    if (!ossl_assert(server != NULL))
         return NULL;
-    }
 
     if (proxy != NULL) {
         host = proxy;
@@ -714,7 +712,7 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
     host_end = strchr(host, '/');
     if (host_end != NULL && (size_t)(host_end - host) < sizeof(host_name)) {
         /* chop trailing string starting with '/' */
-        strncpy(host_name, host, host_end - host);
+        strncpy(host_name, host, host_end - host + 1);
         host = host_name;
     }
 
@@ -849,18 +847,28 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
         HTTPerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
-    /* remaining parameters are checked indirectly by the functions called */
 
-    proxy = http_adapt_proxy(proxy, no_proxy, server, use_ssl);
-    if (bio != NULL)
+    if (bio != NULL) {
         cbio = bio;
-    else
+    } else {
 #ifndef OPENSSL_NO_SOCK
+        if (server == NULL) {
+            HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+            return NULL;
+        }
+        if (*port == '\0')
+            port = NULL;
+        if (port == NULL && strchr(server, ':') == NULL)
+            port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
+        proxy = http_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if ((cbio = HTTP_new_bio(server, port, proxy)) == NULL)
             return NULL;
 #else
+        HTTPerr(0, HTTP_R_SOCK_NOT_SUPPORTED);
         return NULL;
 #endif
+    }
+    /* remaining parameters are checked indirectly by the functions called */
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
     if (rbio == NULL && BIO_connect_retry(cbio, timeout) <= 0)
@@ -902,10 +910,10 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
             if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
                     || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_TIMEOUT)
                     || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_ERROR)
-# ifndef OPENSSL_NO_CMP
+#ifndef OPENSSL_NO_CMP
                     || (lib == ERR_LIB_CMP
                         && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
-# endif
+#endif
                 ) {
                 BIO_snprintf(buf, 200, "server=%s:%s", server, port);
                 ERR_add_error_data(1, buf);
@@ -949,8 +957,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
 
 static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
 {
-    static const char https[] = "https:";
-    int https_len = 6; /* strlen(https) */
+    size_t https_len = strlen(OSSL_HTTPS_NAME":");
 
     if (n_redir >= HTTP_VERSION_MAX_REDIRECTIONS) {
         HTTPerr(0, HTTP_R_TOO_MANY_REDIRECTIONS);
@@ -958,8 +965,8 @@ static int redirection_ok(int n_redir, const char *old_url, const char *new_url)
     }
     if (*new_url == '/') /* redirection to same server => same protocol */
         return 1;
-    if (strncmp(old_url, https, https_len) == 0 &&
-        strncmp(new_url, https, https_len) != 0) {
+    if (strncmp(old_url, OSSL_HTTPS_NAME":", https_len) == 0 &&
+        strncmp(new_url, OSSL_HTTPS_NAME":", https_len) != 0) {
         HTTPerr(0, HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP);
         return 0;
     }
@@ -1122,8 +1129,8 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog)
 {
-# undef BUF_SIZE
-# define BUF_SIZE (8 * 1024)
+#undef BUF_SIZE
+#define BUF_SIZE (8 * 1024)
     char *mbuf = OPENSSL_malloc(BUF_SIZE);
     char *mbufp;
     int read_len = 0;
@@ -1132,11 +1139,13 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     int rv;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
 
-    if (bio == NULL || server == NULL || port == NULL
+    if (bio == NULL || server == NULL
             || (bio_err != NULL && prog == NULL)) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
     }
+    if (port == NULL || *port == '\0')
+        port = OSSL_HTTPS_PORT;
 
     if (mbuf == NULL || fbio == NULL) {
         BIO_printf(bio_err /* may be NULL */, "%s: out of memory", prog);
@@ -1256,6 +1265,5 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     }
     OPENSSL_free(mbuf);
     return ret;
-# undef BUF_SIZE
+#undef BUF_SIZE
 }
-

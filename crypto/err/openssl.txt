@@ -2606,6 +2606,7 @@ HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
 HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
+HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
 HTTP_R_TLS_NOT_ENABLED:107:tls not enabled
 HTTP_R_TOO_MANY_REDIRECTIONS:115:too many redirections

@@ -69,17 +69,18 @@ and returns it on success as a pointer to I<ASN1_VALUE>.
 
 OSSL_HTTP_post_asn1() uses the HTTP POST method to send a request B<req>
 with the ASN.1 structure defined in B<req_it> and the given B<content_type> to
-the given B<server> and optional B<port> and B<path>, which defaults to "/".
+the given B<server> and optional B<port> and B<path>.
 If B<use_ssl> is nonzero a TLS connection is requested and the B<bio_update_fn>
 parameter, described below, must be provided.
 The optional list B<headers> may contain additional custom HTTP header lines.
 The expected structure of the response is specified by B<rsp_it>.
 On success it returns the response as a pointer to B<ASN1_VALUE>.
 
-OSSL_HTTP_transfer() exchanges an HTTP request and response with
-the given B<server> and optional B<port> and B<path>, which defaults to "/".
-If B<use_ssl> is nonzero a TLS connection is requested and the B<bio_update_fn>
-parameter, described below, must be provided.
+OSSL_HTTP_transfer() exchanges any form of HTTP request and response.
+It implements the core of the functions described above.
+If B<path> parameter is NULL it defaults to "/".
+If B<use_ssl> is nonzero a TLS connection is requested
+and the B<bio_update_fn> parameter, described below, must be provided.
 If B<req_mem> is NULL it uses the HTTP GET method, else it uses HTTP POST to
 send a request with the contents of the memory BIO and optional B<content_type>.
 The optional list B<headers> may contain additional custom HTTP header lines.
@@ -91,29 +92,35 @@ L<OPENSSL_free(3)>.
 
 The above functions have the following parameters in common.
 
-If the optional B<proxy> parameter contains a non-empty string or
-it is NULL and one of the environment variables B<http_proxy> and B<HTTP_PROXY>
-(or B<https_proxy> and B<HTTPS_PROXY>, respectively, in case B<use_ssl> != 0)
-is set and contains a non-empty string this is used as the candidate address
-of HTTP(S) proxy to use.
-The address may include a port specification separated by ':'.
-Any prefix "http://" and any trailing string starting with '/' is ignored.
-The HTTP client functions connect via the given proxy unless the B<server>
-is found in the optional list B<no_proxy> of proxy hostnames (if it is not NULL,
-else in the environment variable B<no_proxy> if set or else in B<HTTP_PROXY>).
-Proxying plain HTTP is supported directly,
-while using a proxy for HTTPS connections requires a suitable callback function
-such as OSSL_HTTP_proxy_connect(), described below.
-
-Typically the B<bio> and B<rbio> parameters are NULL and the client creates a
-network BIO internally for connecting to the given server and port (optionally
-via a proxy and its port), and uses it for exchanging the request and response.
-If B<bio> is given and B<rbio> is NULL then the client uses this BIO instead.
+Typically the OpenSSL build supports sockets
+and the B<bio> and B<rbio> parameters are both NULL.
+In this case the client creates a network BIO internally
+for connecting to the given B<server>
+at the specified B<port> (if any, defaulting to 80 for HTTP or 443 for HTTPS),
+optionally via a B<proxy> (respecting B<no_proxy>) as described below.
+Then the client uses this internal BIO for exchanging the request and response.
+If B<bio> is given and B<rbio> is NULL then the client uses this B<bio> instead.
 If both B<bio> and B<rbio> are given (which may be memory BIOs for instance)
 then no explicit connection is attempted,
 B<bio> is used for writing the request, and B<rbio> for reading the response.
 As soon as the client has flushed B<bio> the server must be ready to provide
 a response or indicate a waiting condition via B<rbio>.
+
+The optional B<proxy> parameter can be used to set the address of the an
+HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
+If TLS is not used this defaults to the environment variable B<http_proxy>
+if set, else B<HTTP_PROXY>.
+If B<use_ssl> != 0 it defaults to B<https_proxy> if set, else B<HTTPS_PROXY>.
+An empty proxy string specifies not to use a proxy.
+Else the format is I<[http[s]://]address[:port][/path]>,
+where any path given is ignored.
+The default proxy port number is 80, or 443 in case "https:" is given.
+The HTTP client functions connect via the given proxy unless the B<server>
+is found in the optional list B<no_proxy> of proxy hostnames (if not NULL;
+default is the environment variable B<no_proxy> if set, else B<NO_PROXY>).
+Proxying plain HTTP is supported directly,
+while using a proxy for HTTPS connections requires a suitable callback function
+such as B<OSSL_HTTP_proxy_connect()>, described below.
 
 The B<maxline> parameter specifies the response header maximum line length,
 where 0 indicates the default value, which currently is 4k.
@@ -123,7 +130,7 @@ where 0 indicates the default value, which currently is 100k.
 An ASN.1-encoded response is expected by OSSL_HTTP_get_asn1() and
 OSSL_HTTP_post_asn1(), while for OSSL_HTTP_get() or OSSL_HTTP_transfer()
 this is only the case if the B<expect_asn1> parameter is nonzero.
-If the response header contains one or more Content-Length header lines and/or
+If the response header contains one or more "Content-Length" header lines and/or
 an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
 and for not exceeding the maximum response length.
@@ -172,11 +179,12 @@ Here is a simple example that supports TLS connections (but not via a proxy):
 After disconnect the modified BIO will be deallocated using BIO_free_all().
 
 OSSL_HTTP_proxy_connect() may be used by an above BIO connect callback function
-to set up an SSL/TLS connection via an HTTP proxy.
+to set up an SSL/TLS connection via an HTTPS proxy.
 It promotes the given BIO B<bio> representing a connection
 pre-established with a TLS proxy using the HTTP CONNECT method,
 optionally using proxy client credentials B<proxyuser> and B<proxypass>,
 to connect with TLS protection ultimately to B<server> and B<port>.
+If the B<port> argument is NULL or the empty string it defaults to "443".
 The B<timeout> parameter is used as described above.
 Since this function is typically called by appplications such as
 L<openssl-s_client(1)> it uses the B<bio_err> and B<prog> parameters (unless
@@ -191,6 +199,13 @@ As far as the result pointer arguments are not NULL it assigns via
 them copies of the respective string components.
 The strings returned this way must be deallocated by the caller using
 L<OPENSSL_free(3)> unless they are NULL, which is their default value on error.
+
+=head1 NOTES
+
+The names of the environment variables used by this implementation:
+B<http_proxy>, B<HTTP_PROXY>, B<https_proxy>, B<HTTPS_PROXY>, B<no_proxy>, and
+B<NO_PROXY>, have been chosen for maximal compatibility with
+other HTTP client implementations such as wget, curl, and git.
 
 =head1 RETURN VALUES
 
