@@ -509,6 +509,19 @@ distribution.
  TLS_GOSTR341094_WITH_NULL_GOSTR3411 GOST94-NULL-GOST94
  TLS_GOSTR341001_WITH_NULL_GOSTR3411 GOST2001-NULL-GOST94
 
+=head2 GOST cipher suites, extending TLS v1.2
+
+Note: these ciphers require an engine which including GOST cryptographic
+algorithms, such as the B<gost> engine, which isn't part of the OpenSSL
+distribution.
+
+ TLS_GOSTR341112_256_WITH_28147_CNT_IMIT GOST2012-GOST8912-GOST8912
+ TLS_GOSTR341112_256_WITH_NULL_GOSTR3411 GOST2012-NULL-GOST12
+
+Note: GOST2012-GOST8912-GOST8912 is an alias for two ciphers ID
+old LEGACY-GOST2012-GOST8912-GOST8912 and new IANA-GOST2012-GOST8912-GOST8912
+
+
 =head2 Additional Export 1024 and other cipher suites
 
 Note: these ciphers can also be used in SSL v3.

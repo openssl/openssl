@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -237,6 +237,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_CAMELLIA256, NULL, 0, 0, 0, SSL_CAMELLIA256},
     {0, SSL_TXT_CAMELLIA, NULL, 0, 0, 0, SSL_CAMELLIA},
     {0, SSL_TXT_CHACHA20, NULL, 0, 0, 0, SSL_CHACHA20},
+    {0, SSL_TXT_GOST2012_GOST8912_GOST8912, NULL, 0, 0, 0, SSL_eGOST2814789CNT12},
 
     {0, SSL_TXT_ARIA, NULL, 0, 0, 0, SSL_ARIA},
     {0, SSL_TXT_ARIA_GCM, NULL, 0, 0, 0, SSL_ARIA128GCM | SSL_ARIA256GCM},
