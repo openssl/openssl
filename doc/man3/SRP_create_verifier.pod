@@ -2,7 +2,9 @@
 
 =head1 NAME
 
+SRP_create_verifier_ex,
 SRP_create_verifier,
+SRP_create_verifier_BN_ex,
 SRP_create_verifier_BN,
 SRP_check_known_gN_param,
 SRP_get_default_gN
@@ -12,8 +14,15 @@ SRP_get_default_gN
 
  #include <openssl/srp.h>
 
+ int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
+                               BIGNUM **verifier, const BIGNUM *N,
+                               const BIGNUM *g, OPENSSL_CTX *libctx,
+                               const char *propq);
  char *SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
                               BIGNUM **verifier, const BIGNUM *N, const BIGNUM *g);
+ char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
+                              char **verifier, const char *N, const char *g,
+                              OPENSSL_CTX *libctx, const char *propq);
  char *SRP_create_verifier(const char *user, const char *pass, char **salt,
                            char **verifier, const char *N, const char *g);
 
@@ -22,46 +31,55 @@ SRP_get_default_gN
 
 =head1 DESCRIPTION
 
-The SRP_create_verifier_BN() function creates an SRP password verifier from
-the supplied parameters as defined in section 2.4 of RFC 5054.
-On successful exit B<*verifier> will point to a newly allocated BIGNUM containing
-the verifier and (if a salt was not provided) B<*salt> will be populated with a
-newly allocated BIGNUM containing a random salt. If B<*salt> is not NULL then
+The SRP_create_verifier_BN_ex() function creates an SRP password verifier from
+the supplied parameters as defined in section 2.4 of RFC 5054 using the library
+context I<libctx> and property query string I<propq>. Any cryptographic
+algorithms that need to be fetched will use the I<libctx> and I<propq>. See
+L<provider(7)/Fetching algorithms>.
+
+SRP_create_verifier_BN() is the same as SRP_create_verifier_BN_ex() except the
+default library context and property query string is used.
+
+On successful exit I<*verifier> will point to a newly allocated BIGNUM containing
+the verifier and (if a salt was not provided) I<*salt> will be populated with a
+newly allocated BIGNUM containing a random salt. If I<*salt> is not NULL then
 the provided salt is used instead.
-The caller is responsible for freeing the allocated B<*salt> and B<*verifier>
+The caller is responsible for freeing the allocated I<*salt> and I<*verifier>
 BIGNUMS (use L<BN_free(3)>).
 
 The SRP_create_verifier() function is similar to SRP_create_verifier_BN() but
 all numeric parameters are in a non-standard base64 encoding originally designed
 for compatibility with libsrp. This is mainly present for historical compatibility
 and its use is discouraged.
-It is possible to pass NULL as B<N> and an SRP group id as B<g> instead to
+It is possible to pass NULL as I<N> and an SRP group id as I<g> instead to
 load the appropriate gN values (see SRP_get_default_gN()).
-If both B<N> and B<g> are NULL the 8192-bit SRP group parameters are used.
-The caller is responsible for freeing the allocated B<*salt> and B<*verifier>
+If both I<N> and I<g> are NULL the 8192-bit SRP group parameters are used.
+The caller is responsible for freeing the allocated I<*salt> and I<*verifier>
 (use L<OPENSSL_free(3)>).
 
-The SRP_check_known_gN_param() function checks that B<g> and B<N> are valid
+The SRP_check_known_gN_param() function checks that I<g> and I<N> are valid
 SRP group parameters from RFC 5054 appendix A.
 
-The SRP_get_default_gN() function returns the gN parameters for the RFC 5054 B<id>
+The SRP_get_default_gN() function returns the gN parameters for the RFC 5054 I<id>
 SRP group size.
 The known ids are "1024", "1536", "2048", "3072", "4096", "6144" and "8192".
 
 =head1 RETURN VALUES
 
-SRP_create_verifier_BN() returns 1 on success and 0 on failure.
+SRP_create_verifier_BN_ex() and SRP_create_verifier_BN() return 1 on success and
+0 on failure.
 
-SRP_create_verifier() returns NULL on failure and a non-NULL value on success:
-"*" if B<N> is not NULL, the selected group id otherwise. This value should
+SRP_create_verifier_ex() and SRP_create_verifier() return NULL on failure and a
+non-NULL value on success:
+"*" if I<N> is not NULL, the selected group id otherwise. This value should
 not be freed.
 
 SRP_check_known_gN_param() returns the text representation of the group id
 (ie. the prime bit size) or NULL if the arguments are not valid SRP group parameters.
 This value should not be freed.
 
-SRP_get_default_gN() returns NULL if B<id> is not a valid group size,
-or the 8192-bit group parameters if B<id> is NULL.
+SRP_get_default_gN() returns NULL if I<id> is not a valid group size,
+or the 8192-bit group parameters if I<id> is NULL.
 
 =head1 EXAMPLES
 
@@ -79,7 +97,8 @@ omitted for clarity):
  SRP_gN *gN = SRP_get_default_gN("8192");
 
  BIGNUM *salt = NULL, *verifier = NULL;
- SRP_create_verifier_BN(username, password, &salt, &verifier, gN->N, gN->g);
+ SRP_create_verifier_BN_ex(username, password, &salt, &verifier, gN->N, gN->g,
+                           NULL, NULL);
 
  SRP_user_pwd *pwd = SRP_user_pwd_new();
  SRP_user_pwd_set1_ids(pwd, username, NULL);
