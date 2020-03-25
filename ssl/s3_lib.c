@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -2637,7 +2637,23 @@ static SSL_CIPHER ssl3_ciphers[] = {
      },
     {
      1,
-     "GOST2012-GOST8912-GOST8912",
+     "IANA-GOST2012-GOST8912-GOST8912",
+     NULL,
+     0x0300c102,
+     SSL_kGOST,
+     SSL_aGOST12 | SSL_aGOST01,
+     SSL_eGOST2814789CNT12,
+     SSL_GOST89MAC12,
+     TLS1_VERSION, TLS1_2_VERSION,
+     0, 0,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
+     256,
+     256,
+     },
+    {
+     1,
+     "LEGACY-GOST2012-GOST8912-GOST8912",
      NULL,
      0x0300ff85,
      SSL_kGOST,

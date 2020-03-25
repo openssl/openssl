@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,6 +27,14 @@ static struct {
     {"GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 0},
     /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
     {"GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 1},
+    /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
+    {"IANA-GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 0},
+    /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
+    {"IANA-GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 1},
+    /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
+    {"LEGACY-GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 0},
+    /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
+    {"LEGACY-GOST2012-GOST8912-GOST8912", TLS1_2_VERSION, 1},
     /* Server doesn't have a TLSv1.3 capable cert - should use TLSv1.2 */
     {"GOST2001-GOST89-GOST89", TLS1_2_VERSION, 0},
 };

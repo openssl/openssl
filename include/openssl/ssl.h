@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -136,6 +136,7 @@ extern "C" {
 # define SSL_TXT_ARIA_GCM        "ARIAGCM"
 # define SSL_TXT_ARIA128         "ARIA128"
 # define SSL_TXT_ARIA256         "ARIA256"
+# define SSL_TXT_GOST2012_GOST8912_GOST8912 "GOST2012-GOST8912-GOST8912"
 
 # define SSL_TXT_MD5             "MD5"
 # define SSL_TXT_SHA1            "SHA1"
