@@ -9,6 +9,13 @@
 
  Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
 
+  *) Revert the change of EOF detection while reading in libssl to avoid
+     regressions in applications depending on the current way of reporting
+     the EOF. As the existing method is not fully accurate the change to
+     reporting the EOF via SSL_ERROR_SSL is kept on the current development
+     branch and will be present in the 3.0 release.
+     [Tomas Mraz]
+
   *) Revised BN_generate_prime_ex to not avoid factors 3..17863 in p-1
      when primes for RSA keys are computed.
      Since we previously always generated primes == 2 (mod 3) for RSA keys,
