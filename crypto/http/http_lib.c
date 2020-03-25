@@ -11,6 +11,7 @@
 #include <openssl/httperr.h>
 #include <openssl/err.h>
 #include <string.h>
+#include "internal/cryptlib.h" /* for ossl_assert() */
 
 #include "http_local.h"
 
@@ -24,8 +25,11 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 {
     char *p, *buf;
     char *host;
-    char *port = "80";
+    const char *port = OSSL_HTTP_PORT;
+    size_t https_len = strlen(OSSL_HTTPS_NAME);
 
+    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
+        return 0;
     if (url == NULL) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -46,16 +50,16 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 
     /* Check for initial colon */
     p = strchr(buf, ':');
-    if (p == NULL || p - buf > 5 /* strlen("https") */) {
+    if (p == NULL || (size_t)(p - buf) > https_len) {
         p = buf;
     } else {
         *(p++) = '\0';
 
-        if (strcmp(buf, "https") == 0) {
+        if (strcmp(buf, OSSL_HTTPS_NAME) == 0) {
             if (pssl != NULL)
                 *pssl = 1;
-            port = "443";
-        } else if (strcmp(buf, "http") != 0) {
+            port = OSSL_HTTPS_PORT;
+        } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
             goto parse_err;
         }
 
@@ -119,13 +123,21 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 
 int http_use_proxy(const char *no_proxy, const char *server)
 {
-    size_t sl = strlen(server);
+    size_t sl;
     const char *found = NULL;
 
+    if (!ossl_assert(server != NULL))
+        return 0;
+    sl = strlen(server);
+
+    /*
+     * using environment variable names, both lowercase and uppercase variants,
+     * compatible with other HTTP client implementations like wget, curl and git
+     */
     if (no_proxy == NULL)
         no_proxy = getenv("no_proxy");
     if (no_proxy == NULL)
-        no_proxy = getenv("NO_PROXY");
+        no_proxy = getenv(OPENSSL_NO_PROXY);
     if (no_proxy != NULL)
         found = strstr(no_proxy, server);
     while (found != NULL
@@ -138,17 +150,28 @@ int http_use_proxy(const char *no_proxy, const char *server)
 const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
                              const char *server, int use_ssl)
 {
-    int prefix_len = strlen(HTTP_URL_PREFIX);
+    const int http_len = strlen(OSSL_HTTP_PREFIX);
+    const int https_len = strlen(OSSL_HTTPS_PREFIX);
 
+    /*
+     * using environment variable names, both lowercase and uppercase variants,
+     * compatible with other HTTP client implementations like wget, curl and git
+     */
     if (proxy == NULL)
         proxy = getenv(use_ssl ? "https_proxy" : "http_proxy");
     if (proxy == NULL)
-        proxy = getenv(use_ssl ? "HTTPS_PROXY" : "HTTP_PROXY");
-    if (proxy != NULL && strncmp(proxy, HTTP_URL_PREFIX, prefix_len) == 0)
-        proxy += prefix_len; /* skip any leading "http://" */
-    if (proxy != NULL && *proxy == '\0')
-        proxy = NULL;
-    if (proxy != NULL && !http_use_proxy(no_proxy, server))
-        proxy = NULL;
+        proxy = getenv(use_ssl ? OPENSSL_HTTP_PROXY :
+                       OPENSSL_HTTPS_PROXY);
+    if (proxy == NULL)
+        return NULL;
+
+    /* skip any leading "http://" or "https://" */
+    if (strncmp(proxy, OSSL_HTTP_PREFIX, http_len) == 0)
+        proxy += http_len;
+    else if (strncmp(proxy, OSSL_HTTPS_PREFIX, https_len) == 0)
+        proxy += https_len;
+
+    if (*proxy == '\0' || !http_use_proxy(no_proxy, server))
+        return NULL;
     return proxy;
 }

@@ -36,7 +36,7 @@ struct ossl_cmp_ctx_st {
     void *transfer_cb_arg; /* allows to store optional argument to cb */
     /* HTTP-based transfer */
     char *serverPath;
-    char *serverName;
+    char *server;
     int serverPort;
     char *proxy;
     char *no_proxy;

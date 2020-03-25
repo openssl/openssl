@@ -492,7 +492,6 @@ static X509_STORE *X509_STORE_new_1(void)
 
 #define IS_NEG(x) ((x) < 0)
 #define IS_0(x) ((x) == 0) /* for any type */
-#define IS_DEFAULT_PORT(x) ((x) == OSSL_CMP_DEFAULT_PORT)
 #define DROP(x) (void)(x) /* dummy free() for non-pointer and function types */
 
 #define ERR(x) (CMPerr(0, CMP_R_NULL_ARGUMENT), x)
@@ -555,12 +554,12 @@ typedef OSSL_HTTP_bio_cb_t OSSL_CMP_http_cb_t;
                              DEFAULT, 1, DROP)
 #define DEFINE_SET_GET_INT_TEST(OSSL_CMP, CTX, FIELD) \
     DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_NEG)
-#define DEFINE_SET_PORT_TEST(FIELD) \
+#define DEFINE_SET_INT_TEST(FIELD) \
     static int OSSL_CMP_CTX_get_##FIELD(const CMP_CTX *ctx) \
     { \
         return ctx == NULL ? ERR(-1) : ctx->FIELD; \
     } \
-    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_DEFAULT_PORT)
+    DEFINE_SET_GET_INT_TEST_DEFAULT(OSSL_CMP, CTX, FIELD, IS_0)
 
 #define DEFINE_SET_GET_ARG_FN(SETN, GETN, FIELD, ARG, T) \
     static int OSSL_CMP_CTX_##SETN##_##FIELD##_##ARG(CMP_CTX *ctx, T val) \
@@ -716,8 +715,8 @@ DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set, get, 0, option_16, int, -1, IS_0, \
 DEFINE_SET_CB_TEST(log_cb)
 
 DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, serverPath, char, IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, serverName, char)
-DEFINE_SET_PORT_TEST(serverPort)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, server, char)
+DEFINE_SET_INT_TEST(serverPort)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, proxy, char)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, no_proxy, char)
 DEFINE_SET_CB_TEST(http_cb)
@@ -801,7 +800,7 @@ int setup_tests(void)
 #endif
     /* message transfer: */
     ADD_TEST(test_CTX_set1_get0_serverPath);
-    ADD_TEST(test_CTX_set1_get0_serverName);
+    ADD_TEST(test_CTX_set1_get0_server);
     ADD_TEST(test_CTX_set_get_serverPort);
     ADD_TEST(test_CTX_set1_get0_proxy);
     ADD_TEST(test_CTX_set1_get0_no_proxy);
