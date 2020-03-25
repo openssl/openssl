@@ -111,26 +111,30 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                       void *cbarg)
 {
     ECX_KEY *key = keydata;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ret;
 
     if (key == NULL)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
-            && !key_to_params(key, &tmpl))
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
         return 0;
 
-    OSSL_PARAM_BLD_init(&tmpl);
-    params = OSSL_PARAM_BLD_to_param(&tmpl);
-    if (params == NULL) {
-        OSSL_PARAM_BLD_free(params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
+            && !key_to_params(key, tmpl)) {
+        OSSL_PARAM_BLD_free(tmpl);
         return 0;
     }
 
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+    OSSL_PARAM_BLD_free(tmpl);
+    if (params == NULL)
+        return 0;
+
     ret = param_cb(params, cbarg);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free_params(params);
     return ret;
 }
 

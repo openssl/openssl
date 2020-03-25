@@ -5000,9 +5000,8 @@ EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
 NCONF_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_with_libctx      ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_load_config                 ?	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_BLD_init                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_to_param                 ?	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_BLD_free                     ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_free_params              ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_int                 ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_uint                ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_long                ?	3_0_0	EXIST::FUNCTION:
@@ -5019,6 +5018,8 @@ OSSL_PARAM_BLD_push_utf8_string         ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_utf8_ptr            ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_octet_string        ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_octet_ptr           ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_new                      ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_free                     ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_type_by_keymgmt            ?	3_0_0	EXIST::FUNCTION:
 OCSP_RESPID_set_by_key_ex               ?	3_0_0	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match_ex                    ?	3_0_0	EXIST::FUNCTION:OCSP

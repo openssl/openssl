@@ -523,13 +523,13 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                               EVP_KEYMGMT *to_keymgmt)
 {
     DSA *dsa = from->pkey.dsa;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl;
     const BIGNUM *p = DSA_get0_p(dsa), *g = DSA_get0_g(dsa);
     const BIGNUM *q = DSA_get0_q(dsa), *pub_key = DSA_get0_pub_key(dsa);
     const BIGNUM *priv_key = DSA_get0_priv_key(dsa);
     OSSL_PARAM *params;
     int selection = 0;
-    int rv;
+    int rv = 0;
 
     /*
      * If the DSA method is foreign, then we can't be sure of anything, and
@@ -541,33 +541,37 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (p == NULL || q == NULL || g == NULL)
         return 0;
 
-    OSSL_PARAM_BLD_init(&tmpl);
-    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-        || !OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
         return 0;
+
+    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, g))
+        goto err;
     selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
     if (pub_key != NULL) {
-        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                     pub_key))
-            return 0;
+            goto err;
         selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
     }
     if (priv_key != NULL) {
-        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
+        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PRIV_KEY,
                                     priv_key))
-            return 0;
+            goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
-    if ((params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
-        return 0;
+    if ((params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
+        goto err;
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
-    OSSL_PARAM_BLD_free(params);
-
+    OSSL_PARAM_BLD_free_params(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
     return rv;
 }
 

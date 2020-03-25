@@ -194,7 +194,7 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
     BIGNUM *pub = NULL, *priv = NULL;
     OSSL_PARAM *params = NULL, *params_sig = NULL;
-    OSSL_PARAM_BLD bld;
+    OSSL_PARAM_BLD *bld = NULL;
     EVP_PKEY_CTX *sctx = NULL, *kctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned char sig[64];
@@ -255,14 +255,15 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         || !hextobn(dsa_priv_hex, &priv))
         goto err;
 
-    OSSL_PARAM_BLD_init(&bld);
-    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+    bld = OSSL_PARAM_BLD_new();
+    if (bld == NULL
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
-    params = OSSL_PARAM_BLD_to_param(&bld);
+    params = OSSL_PARAM_BLD_to_param(bld);
 
     /* Create a EVP_PKEY_CTX to load the DSA key into */
     kctx = EVP_PKEY_CTX_new_from_name(libctx, SN_dsa, "");
@@ -279,11 +280,10 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         goto err;
 
     /* set signature parameters */
-    OSSL_PARAM_BLD_init(&bld);
-    if (!OSSL_PARAM_BLD_push_utf8_string(&bld, OSSL_SIGNATURE_PARAM_DIGEST,
+    if (!OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_SIGNATURE_PARAM_DIGEST,
                                          SN_sha256,strlen(SN_sha256) + 1))
         goto err;
-    params_sig = OSSL_PARAM_BLD_to_param(&bld);
+    params_sig = OSSL_PARAM_BLD_to_param(bld);
     if (EVP_PKEY_CTX_set_params(sctx, params_sig) <= 0)
         goto err;
 
@@ -293,8 +293,9 @@ static int dsa_key_signature_test(OPENSSL_CTX *libctx)
         goto err;
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free(params);
-    OSSL_PARAM_BLD_free(params_sig);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free_params(params_sig);
+    OSSL_PARAM_BLD_free(bld);
     BN_free(p);
     BN_free(q);
     BN_free(g);
@@ -320,7 +321,7 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
     OSSL_PARAM *params_peer = NULL;
     unsigned char secret[256];
     size_t secret_len, kat_secret_len = 0;
-    OSSL_PARAM_BLD bld;
+    OSSL_PARAM_BLD *bld = NULL;
 
     /* DH KAT */
     static const char *dh_p_hex[] = {
@@ -404,23 +405,23 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         || !hextobin(dh_secret_exptd_hex, &kat_secret, &kat_secret_len))
         goto err;
 
-    OSSL_PARAM_BLD_init(&bld);
-    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
+    bld = OSSL_PARAM_BLD_new();
+    if (bld == NULL
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         goto err;
-    params = OSSL_PARAM_BLD_to_param(&bld);
+    params = OSSL_PARAM_BLD_to_param(bld);
 
-    OSSL_PARAM_BLD_init(&bld);
-    if (!OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_P, p)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_Q, q)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_FFC_G, g)
-        || !OSSL_PARAM_BLD_push_BN(&bld, OSSL_PKEY_PARAM_PUB_KEY, pub_peer))
+    if (!OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)
+        || !OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub_peer))
         goto err;
 
-    params_peer = OSSL_PARAM_BLD_to_param(&bld);
+    params_peer = OSSL_PARAM_BLD_to_param(bld);
     if (params == NULL || params_peer == NULL)
         goto err;
 
@@ -450,8 +451,9 @@ static int dh_key_exchange_test(OPENSSL_CTX *libctx)
         goto err;
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free(params_peer);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_BLD_free_params(params_peer);
+    OSSL_PARAM_BLD_free_params(params);
     BN_free(p);
     BN_free(q);
     BN_free(g);

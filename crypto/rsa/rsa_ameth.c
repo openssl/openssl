@@ -1084,7 +1084,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                               EVP_KEYMGMT *to_keymgmt)
 {
     RSA *rsa = from->pkey.rsa;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
     const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
     const BIGNUM *d = RSA_get0_d(rsa);
     STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
@@ -1093,23 +1093,23 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     int selection = 0;
     int rv = 0;
 
+    if (tmpl == NULL)
+        return 0;
     /*
      * If the RSA method is foreign, then we can't be sure of anything, and
      * can therefore not export or pretend to export.
      */
     if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
-        return 0;
+        goto err;
 
     /* Public parameters must always be present */
     if (n == NULL || e == NULL)
         goto err;
 
-    OSSL_PARAM_BLD_init(&tmpl);
-
     /* |e| and |n| are always present */
-    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_E, e))
         goto err;
-    if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_N, n))
+    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_N, n))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
@@ -1138,20 +1138,14 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
             goto err;
 
-        /* assert that an OSSL_PARAM_BLD has enough space. */
-        if (!ossl_assert(/* n, e */ 2 + /* d */ 1 + /* numprimes */ 1
-                         + numprimes + numexps + numcoeffs
-                         <= OSSL_PARAM_BLD_MAX))
-            goto err;
-
-        if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_D, d))
+        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_D, d))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
         for (i = 0; i < numprimes; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_FACTOR,
                                         num))
                 goto err;
         }
@@ -1159,7 +1153,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         for (i = 0; i < numexps; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_EXPONENT,
                                         num))
                 goto err;
         }
@@ -1167,13 +1161,13 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         for (i = 0; i < numcoeffs; i++) {
             const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
 
-            if (!OSSL_PARAM_BLD_push_BN(&tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
+            if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_COEFFICIENT,
                                         num))
                 goto err;
         }
     }
 
-    if ((params = OSSL_PARAM_BLD_to_param(&tmpl)) == NULL)
+    if ((params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
         goto err;
 
     /* We export, the provider imports */
@@ -1183,7 +1177,8 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     sk_BIGNUM_const_free(primes);
     sk_BIGNUM_const_free(exps);
     sk_BIGNUM_const_free(coeffs);
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(tmpl);
     return rv;
 }
 

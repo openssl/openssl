@@ -409,34 +409,36 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                               EVP_KEYMGMT *to_keymgmt)
 {
     const ECX_KEY *key = from->pkey.ecx;
-    OSSL_PARAM_BLD tmpl;
+    OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
 
-    OSSL_PARAM_BLD_init(&tmpl);
+    if (tmpl == NULL)
+        return 0;
 
     /* A key must at least have a public part */
-    if (!OSSL_PARAM_BLD_push_octet_string(&tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+    if (!OSSL_PARAM_BLD_push_octet_string(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
                                           key->pubkey, key->keylen))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (key->privkey != NULL) {
-        if (!OSSL_PARAM_BLD_push_octet_string(&tmpl,
+        if (!OSSL_PARAM_BLD_push_octet_string(tmpl,
                                               OSSL_PKEY_PARAM_PRIV_KEY,
                                               key->privkey, key->keylen))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
 
-    params = OSSL_PARAM_BLD_to_param(&tmpl);
+    params = OSSL_PARAM_BLD_to_param(tmpl);
 
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
-    OSSL_PARAM_BLD_free(params);
+    OSSL_PARAM_BLD_free(tmpl);
+    OSSL_PARAM_BLD_free_params(params);
     return rv;
 }
 
