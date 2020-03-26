@@ -18,8 +18,7 @@ static char *privkey = NULL;
 static char *modulename = NULL;
 static char *configfile = NULL;
 
-/* TODO(3.0): Re-enable this code. See comment in setup_tests() */
-OSSL_PROVIDER *defctxlegacy = NULL;
+static OSSL_PROVIDER *defctxlegacy = NULL;
 
 static int test_different_libctx(void)
 {
@@ -43,9 +42,9 @@ static int test_different_libctx(void)
     prov = OSSL_PROVIDER_load(libctx, modulename);
     if (!TEST_ptr(prov)
                /* Check we have the provider available */
-            || !TEST_true(OSSL_PROVIDER_available(libctx, modulename))
-               /* Check the default provider is not available */)
+            || !TEST_true(OSSL_PROVIDER_available(libctx, modulename)))
         goto end;
+    /* Check the default provider is not available */
     if (strcmp(modulename, "default") != 0
             && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
         goto end;
@@ -146,6 +145,5 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    /* TODO(3.0): Re-enable this code. See comment in setup_tests() */
     OSSL_PROVIDER_unload(defctxlegacy);
 }
