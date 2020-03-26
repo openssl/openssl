@@ -322,7 +322,6 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     const ssl_cipher_table *t;
 
     disabled_enc_mask = 0;
-
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
         if (t->nid != NID_undef) {
             const EVP_CIPHER *cipher

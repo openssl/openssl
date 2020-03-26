@@ -229,12 +229,9 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     /*
      * Because we cleared out old ops, we shouldn't need to worry about
-     * checking if exchange is already there. The fetch can fail in the legacy
-     * case.
+     * checking if exchange is already there.
      */
-    ERR_set_mark();
     exchange = EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
-    ERR_pop_to_mark();
 
     if (exchange == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
