@@ -15,6 +15,7 @@ OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key excha
   * [Building](#building)
     * [Linux and macOS](#linux-and-macOS)
     * [Windows](#windows)
+    * [Cross-compiling for Windows on Linux](#cross-compiling-for-windows-on-linux)
   * [Running](#running)
 - [Third Party Integrations](#third-party-integrations)
 - [Contributing](#contributing)
@@ -107,7 +108,7 @@ The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubunt
 
 On **Ubuntu**, you need to install the following packages:
 
-	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip xsltproc
+	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip xsltproc git
 
 On **macOS**, you need to install the following packages using `brew` (or a package manager of your choice):
 
@@ -176,6 +177,38 @@ Now we follow the standard instructions for building OpenSSL:
 
 	perl Configure VC-WIN64A
 	nmake
+
+#### Cross-compiling for Windows on Linux
+
+#### Step 0: Get pre-requisites
+
+On **Ubuntu**, you need to install the following packages:
+
+	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip xsltproc gcc-mingw-w64 git
+
+Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choosing):
+
+	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git <OPENSSL_DIR>
+
+#### Step 1: 	Build and install liboqs
+
+	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	cd liboqs
+	mkdir build && cd build
+	cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=../.CMake/toolchain_windows-amd64.cmake -DCMAKE_INSTALL_PREFIX=<OPENSSL_DIR>/oqs ..
+	ninja
+	ninja install
+
+#### Step 2: Build the fork
+
+Now we follow the standard instructions for building OpenSSL. Navigate to `<OPENSSL_DIR>`, and:
+
+on **Ubuntu**, run:
+
+	./Configure no-shared mingw64 -lm --cross-compile-prefix=x86_64-w64-mingw32- -Wl,--dynamicbase,--nxcompat -static-libgcc no-capieng
+	make -j
+
+The fork can also be built as a set of shared libraries by specifying `shared` instead of `no-shared` in the above commands; We have used `no-shared` to avoid having to get the libraries in the right place for the runtime linker.
 
 ### Running
 
