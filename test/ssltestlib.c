@@ -915,11 +915,14 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 }
 
 /*
- * Create an SSL connection, but does not ready any post-handshake
+ * Create an SSL connection, but does not read any post-handshake
  * NewSessionTicket messages.
  * If |read| is set and we're using DTLS then we will attempt to SSL_read on
  * the connection once we've completed one half of it, to ensure any retransmits
  * get triggered.
+ * We stop the connection attempt (and return a failure value) if either peer
+ * has SSL_get_error() return the value in the |want| parameter. The connection
+ * attempt could be restarted by a subsequent call to this function.
  */
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                                int read)
