@@ -2753,6 +2753,7 @@ PKCS7_R_CTRL_ERROR:152:ctrl error
 PKCS7_R_DECRYPT_ERROR:119:decrypt error
 PKCS7_R_DIGEST_FAILURE:101:digest failure
 PKCS7_R_ENCRYPTION_CTRL_FAILURE:149:encryption ctrl failure
+PKCS7_R_ENCRYPTION_FAILURE:125:encryption failure
 PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE:150:\
 	encryption not supported for this key type
 PKCS7_R_ERROR_ADDING_RECIPIENT:120:error adding recipient

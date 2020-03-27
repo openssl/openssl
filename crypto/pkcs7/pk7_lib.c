@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "crypto/asn1.h"
@@ -303,14 +304,14 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
                           const EVP_MD *dgst)
 {
-    int ret;
+    int ret = 0;
 
     /* We now need to add another PKCS7_SIGNER_INFO entry */
     if (!ASN1_INTEGER_set(p7i->version, 1))
-        goto err;
+        return 0;
     if (!X509_NAME_set(&p7i->issuer_and_serial->issuer,
                        X509_get_issuer_name(x509)))
-        goto err;
+        return 0;
 
     /*
      * because ASN1_INTEGER_set is used to set a 'long' we will do things the
@@ -319,7 +320,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
     if (!(p7i->issuer_and_serial->serial =
           ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
-        goto err;
+        return 0;
 
     /* lets keep the pkey around for a while */
     EVP_PKEY_up_ref(pkey);
@@ -327,9 +328,37 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 
     /* Set the algorithms */
 
-    X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_type(dgst)),
-                    V_ASN1_NULL, NULL);
+    if (EVP_MD_provider(dgst) == NULL) {
+        X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_type(dgst)),
+                        V_ASN1_NULL, NULL);
+    } else {
+        X509_ALGOR *tmp_digest_alg =
+            evp_md_get_algid(dgst, OSSL_PKEY_PARAM_ALGORITHM_ID);
 
+        if (tmp_digest_alg == NULL)
+            goto err;
+        X509_ALGOR_free(p7i->digest_alg);
+        p7i->digest_alg = tmp_digest_alg;
+    }
+
+    if (pkey->keymgmt == NULL)
+        goto legacy;
+
+    if (ret > 0) {
+        X509_ALGOR *tmp_sig_alg =
+            evp_pkey_get_algid(pkey, OSSL_PKEY_PARAM_ALGORITHM_ID);
+
+        if (tmp_sig_alg == NULL)
+            goto err;
+        X509_ALGOR_free(p7i->digest_enc_alg);
+        p7i->digest_enc_alg = tmp_sig_alg;
+    } else {
+        goto err;
+    }
+
+    return 1;
+
+ legacy:
     if (pkey->ameth && pkey->ameth->pkey_ctrl) {
         ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
         if (ret > 0)
@@ -340,9 +369,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
             return 0;
         }
     }
+ err:
     PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SET,
              PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
- err:
     return 0;
 }
 
@@ -461,8 +490,11 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 {
-    int ret;
+    int ret = 0;
     EVP_PKEY *pkey = NULL;
+    /* For the provider case */
+    EVP_PKEY_CTX *pkctx = NULL;
+
     if (!ASN1_INTEGER_set(p7i->version, 0))
         return 0;
     if (!X509_NAME_set(&p7i->issuer_and_serial->issuer,
@@ -476,6 +508,21 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 
     pkey = X509_get0_pubkey(x509);
 
+    if (pkey->keymgmt == NULL)
+        goto legacy;
+
+    pkctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (EVP_PKEY_encrypt_init(pkctx) <= 0) {
+        PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET, PKCS7_R_ENCRYPTION_FAILURE);
+        goto end;
+    }
+    p7i->key_enc_algor =
+        evp_pkey_ctx_get_algid(pkctx, OSSL_PKEY_PARAM_ALGORITHM_ID);
+    if (p7i->key_enc_algor != NULL)
+        goto end;
+    goto err;
+
+ legacy:
     if (!pkey || !pkey->ameth || !pkey->ameth->pkey_ctrl) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
@@ -494,13 +541,15 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         goto err;
     }
 
+ end:
     X509_up_ref(x509);
     p7i->cert = x509;
 
-    return 1;
+    ret = 1;
 
  err:
-    return 0;
+    EVP_PKEY_CTX_free(pkctx);
+    return ret;
 }
 
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
