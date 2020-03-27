@@ -192,9 +192,53 @@ err:
     return res;
 }
 
+static int builder_limit_test(void)
+{
+    const int n = 100;
+    char names[100][3];
+    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
+    OSSL_PARAM *params = NULL;
+    int i, res = 0;
+
+    if (!TEST_ptr(bld))
+        goto err;
+    
+    for (i = 0; i < n; i++) {
+        names[i][0] = 'A' + (i / 26) - 1;
+        names[i][0] = 'a' + (i % 26) - 1;
+        names[i][2] = '\0';
+        if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, names[i], 3 * i + 1)))
+            goto err;
+    }
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+    /* Count the elements in the params arrary, expecting n */
+    for (i = 0; params[i].key != NULL; i++);
+    if (!TEST_int_eq(i, n))
+        goto err;
+
+    /* Verify that the build, cleared the builder structure */
+    OSSL_PARAM_BLD_free_params(params);
+    params = NULL;
+
+    if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, "g", 2))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+    /* Count the elements in the params arrary, expecting 1 */
+    for (i = 0; params[i].key != NULL; i++);
+    if (!TEST_int_eq(i, 1))
+        goto err;
+    res = 1;
+err:
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(template_public_test);
     ADD_TEST(template_private_test);
+    ADD_TEST(builder_limit_test);
     return 1;
 }
