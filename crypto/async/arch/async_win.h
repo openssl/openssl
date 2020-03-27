@@ -25,7 +25,7 @@ typedef struct async_fibre_st {
 } async_fibre;
 
 # define async_fibre_swapcontext(o,n,r) \
-        (SwitchToFiber((n)->fibre), 1)
+        ((o)->fibre = GetCurrentFiber(), SwitchToFiber((n)->fibre), 1)
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x600
 #   define async_fibre_makecontext(c) \
@@ -38,7 +38,7 @@ typedef struct async_fibre_st {
 
 # define async_fibre_free(f)             (DeleteFiber((f)->fibre))
 
-int async_fibre_init_dispatcher(async_fibre *fibre);
+int async_fibre_init_dispatcher(async_ctx *ctx);
 VOID CALLBACK async_start_func_win(PVOID unused);
 
 #endif

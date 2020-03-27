@@ -414,6 +414,56 @@ static int test_ASYNC_start_job_ex(void)
     return ret;
 }
 
+static int job_child(void *arg)
+{
+    return 1;
+}
+
+static int job_parent(void *arg)
+{
+    ASYNC_JOB *job = NULL;
+    int funcret;
+    ASYNC_WAIT_CTX *waitctx = NULL;
+
+    ASYNC_pause_job();
+
+    if (       (waitctx = ASYNC_WAIT_CTX_new()) == NULL
+            || ASYNC_start_job(&job, waitctx, &funcret, job_child, NULL, 0)
+                != ASYNC_FINISH
+            || funcret != 1) {
+        fprintf(stderr, "test_ASYNC_nested() failed\n");
+        ASYNC_WAIT_CTX_free(waitctx);
+        return 0;
+    }
+
+    ASYNC_WAIT_CTX_free(waitctx);
+    return 1;
+}
+
+static int test_ASYNC_nested(void)
+{
+    ASYNC_JOB *job = NULL;
+    ASYNC_WAIT_CTX *waitctx = NULL;
+    int funcret;
+
+    if (       !ASYNC_init_thread(3, 0)
+            || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
+            || ASYNC_start_job(&job, waitctx, &funcret, job_parent, NULL, 0)
+                != ASYNC_PAUSE
+            || ASYNC_start_job(&job, waitctx, &funcret, job_parent, NULL, 0)
+                != ASYNC_FINISH
+            || funcret != 1) {
+        fprintf(stderr, "test_ASYNC_nested() failed\n");
+        ASYNC_WAIT_CTX_free(waitctx);
+        ASYNC_cleanup_thread();
+        return 0;
+    }
+
+    ASYNC_WAIT_CTX_free(waitctx);
+    ASYNC_cleanup_thread();
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
@@ -426,7 +476,8 @@ int main(int argc, char **argv)
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()
                 || !test_ASYNC_block_pause()
-                || !test_ASYNC_start_job_ex()) {
+                || !test_ASYNC_start_job_ex()
+                || !test_ASYNC_nested()) {
             return 1;
         }
     }
