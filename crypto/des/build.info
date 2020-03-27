@@ -22,8 +22,10 @@ SOURCE[../../libcrypto]=$COMMON\
         str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
         fcrypt.c xcbc_enc.c cbc_cksm.c
 SOURCE[../../providers/libfips.a]=$COMMON
+SOURCE[../../providers/liblegacy.a]=$COMMON
 DEFINE[../../libcrypto]=$DESDEF
 DEFINE[../../providers/libfips.a]=$DESDEF
+DEFINE[../../providers/liblegacy.a]=$DESDEF
 
 # When all deprecated symbols are removed, libcrypto doesn't export the
 # DES functions, so we must include them directly in liblegacy.a
