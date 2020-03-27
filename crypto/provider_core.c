@@ -540,12 +540,13 @@ static int provider_activate(OSSL_PROVIDER *prov)
          * with the error library number, so we need to make a copy of that
          * array either way.
          */
-        cnt = 1;                 /* One for the terminating item */
+        cnt = 0;
         while (reasonstrings[cnt].id != 0) {
             if (ERR_GET_LIB(reasonstrings[cnt].id) != 0)
                 return 0;
             cnt++;
         }
+        cnt++;                   /* One for the terminating item */
 
         /* Allocate one extra item for the "library" name */
         prov->error_strings =
