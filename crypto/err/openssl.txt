@@ -2493,7 +2493,7 @@ ESS_R_ESS_SIGNING_CERTIFICATE_ERROR:102:ess signing certificate error
 ESS_R_ESS_SIGNING_CERT_ADD_ERROR:100:ess signing cert add error
 ESS_R_ESS_SIGNING_CERT_V2_ADD_ERROR:101:ess signing cert v2 add error
 EVP_R_AES_KEY_SETUP_FAILED:143:aes key setup failed
-EVP_R_ALGORITHM_IDENTIFIER_NOT_SUPPORTED:203:algorithm identifier not supported
+EVP_R_ALGORITHM_IDENTIFIER_NOT_SUPPORTED:208:algorithm identifier not supported
 EVP_R_ARIA_KEY_SETUP_FAILED:176:aria key setup failed
 EVP_R_BAD_ALGORITHM_NAME:200:bad algorithm name
 EVP_R_BAD_DECRYPT:100:bad decrypt
