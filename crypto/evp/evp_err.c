@@ -16,6 +16,8 @@
 static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_AES_KEY_SETUP_FAILED),
     "aes key setup failed"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ALGORITHM_IDENTIFIER_NOT_SUPPORTED),
+    "algorithm identifier not supported"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ARIA_KEY_SETUP_FAILED),
     "aria key setup failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BAD_ALGORITHM_NAME), "bad algorithm name"},

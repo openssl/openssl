@@ -160,6 +160,7 @@ int ERR_load_EVP_strings(void);
  * EVP reason codes.
  */
 # define EVP_R_AES_KEY_SETUP_FAILED                       143
+# define EVP_R_ALGORITHM_IDENTIFIER_NOT_SUPPORTED         203
 # define EVP_R_ARIA_KEY_SETUP_FAILED                      176
 # define EVP_R_BAD_ALGORITHM_NAME                         200
 # define EVP_R_BAD_DECRYPT                                100

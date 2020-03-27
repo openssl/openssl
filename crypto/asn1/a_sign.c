@@ -147,6 +147,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     size_t inl = 0, outl = 0, outll = 0;
     int signid, paramtype, buf_len = 0;
     int rv, pkey_id;
+    EVP_PKEY_CTX *pctx = NULL;
+    X509_ALGOR *alg1 = NULL, *alg2 = NULL;
 
     type = EVP_MD_CTX_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
@@ -157,47 +159,28 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     }
 
     if (pkey->ameth == NULL) {
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
-        OSSL_PARAM params[2];
-        unsigned char aid[128];
-        size_t aid_len = 0;
-
+        pctx = EVP_MD_CTX_pkey_ctx(ctx);
         if (pctx == NULL
             || !EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
             goto err;
         }
 
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID,
-                                              aid, sizeof(aid));
-        params[1] = OSSL_PARAM_construct_end();
-
-        if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
-            goto err;
-
-        if ((aid_len = params[0].return_size) == 0) {
-            ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
-                    ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+        if (((alg1 =
+              evp_pkey_ctx_get_algid(pctx, OSSL_PKEY_PARAM_ALGORITHM_ID))
+             == NULL)
+            || (algor2 != NULL && (alg2 = X509_ALGOR_dup(alg1)) == NULL)) {
+            ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         if (algor1 != NULL) {
-            const unsigned char *pp = aid;
-
-            if (d2i_X509_ALGOR(&algor1, &pp, aid_len) == NULL) {
-                ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+            *algor1 = *alg1;
+            memset(alg1, 0, sizeof(*alg1));
         }
-
         if (algor2 != NULL) {
-            const unsigned char *pp = aid;
-
-            if (d2i_X509_ALGOR(&algor2, &pp, aid_len) == NULL) {
-                ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+            *algor2 = *alg2;
+            memset(alg2, 0, sizeof(*alg2));
         }
 
         rv = 3;
@@ -286,6 +269,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
+    X509_ALGOR_free(alg1);
+    X509_ALGOR_free(alg2);
     OPENSSL_clear_free((char *)buf_in, inl);
     OPENSSL_clear_free((char *)buf_out, outll);
     return outl;

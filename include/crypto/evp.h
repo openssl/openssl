@@ -730,3 +730,18 @@ const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
 int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 #endif /* !defined(FIPS_MODE) */
+
+#ifndef FIPS_MODE
+/*
+ * Internal helpers to find out the algorithm identifier associated with an
+ * operation or keypair.  It's especially important to know that the
+ * response differs based on operation with evp_pkey_ctx_get_algid().
+ */
+X509_ALGOR *evp_md_ctx_get_algid(const EVP_MD_CTX *ctx, const char *name);
+X509_ALGOR *evp_md_get_algid(const EVP_MD *md, const char *name);
+X509_ALGOR *evp_cipher_ctx_get_algid(const EVP_CIPHER_CTX *ctx,
+                                     const char *name);
+X509_ALGOR *evp_cipher_get_algid(const EVP_CIPHER *ctx, const char *name);
+X509_ALGOR *evp_pkey_ctx_get_algid(const EVP_PKEY_CTX *ctx, const char *name);
+X509_ALGOR *evp_pkey_get_algid(const EVP_PKEY *pkey, const char *name);
+#endif  /* !FIPS_MODE */

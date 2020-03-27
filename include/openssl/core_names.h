@@ -34,6 +34,7 @@ extern "C" {
 #define OSSL_ALG_PARAM_CIPHER       "cipher"    /* utf8_string */
 #define OSSL_ALG_PARAM_MAC          "mac"       /* utf8_string */
 #define OSSL_ALG_PARAM_PROPERTIES   "properties"/* utf8_string */
+#define OSSL_ALG_PARAM_ALGORITHM_ID "algorithm-id" /* octet_string */
 
 /* cipher parameters */
 #define OSSL_CIPHER_PARAM_PADDING              "padding"    /* uint */
@@ -182,6 +183,20 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DIGEST_SIZE         "digest-size"
 #define OSSL_PKEY_PARAM_MGF1_DIGEST         "mgf1-digest"
 #define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
+/*
+ * These are used to get diverse DER encoded AlgorithmIdentifiers, conforming
+ * to RFC 3279 with updates as well as other similar standards.  They may be
+ * used with a KEYMGMT to get the Subject Public Key Algorithm as well as
+ * with diverse other PKEY operations, such as getting a Signature Algorithm
+ * from a SIGNATURE operation.
+ *
+ * The value is expected to be an octet string with the DER encoded
+ * AlgorithmIdentifier for that operation or keypair.
+ *
+ * Supporting this parameter is not mandatory, but will determine whether
+ * it can be used for certain purposes.
+ */
+#define OSSL_PKEY_PARAM_ALGORITHM_ID        OSSL_ALG_PARAM_ALGORITHM_ID
 
 /* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
@@ -280,7 +295,7 @@ extern "C" {
 #define OSSL_EXCHANGE_PARAM_KDF_UKM_LEN           "kdf-ukm-len" /* size_t */
 
 /* Signature parameters */
-#define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"
+#define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       OSSL_ALG_PARAM_ALGORITHM_ID
 #define OSSL_SIGNATURE_PARAM_PAD_MODE           OSSL_PKEY_PARAM_PAD_MODE
 #define OSSL_SIGNATURE_PARAM_DIGEST             OSSL_PKEY_PARAM_DIGEST
 #define OSSL_SIGNATURE_PARAM_PROPERTIES         OSSL_PKEY_PARAM_PROPERTIES
