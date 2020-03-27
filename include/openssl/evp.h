@@ -1595,6 +1595,7 @@ int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM param[]);
 const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx);
 const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_get_params(EVP_PKEY *pkey, OSSL_PARAM *params);
 const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
 int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out);
 int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out);

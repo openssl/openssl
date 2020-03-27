@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_size, EVP_PKEY_bits, EVP_PKEY_security_bits
+EVP_PKEY_size, EVP_PKEY_bits, EVP_PKEY_security_bits,
+EVP_PKEY_get_params, EVP_PKEY_gettable_params
 - EVP_PKEY information functions
 
 =head1 SYNOPSIS
@@ -12,6 +13,9 @@ EVP_PKEY_size, EVP_PKEY_bits, EVP_PKEY_security_bits
  int EVP_PKEY_size(const EVP_PKEY *pkey);
  int EVP_PKEY_bits(const EVP_PKEY *pkey);
  int EVP_PKEY_security_bits(const EVP_PKEY *pkey);
+
+ int EVP_PKEY_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -37,10 +41,25 @@ of cryptographic length is specific to the key cryptosystem.
 EVP_PKEY_security_bits() returns the number of security bits of the given
 I<pkey>, bits of security is defined in NIST SP800-57.
 
+EVP_PKEY_get_params() gets arbitrary parameters from the I<pkey>.  The
+available parameters depend on the provider that supports this particular
+I<pkey>.
+See L<OSSL_PROVIDER(3)> for more information on providers.
+See L<OSSL_PARAM(3)> for more information on parameters.
+
+EVP_PKEY_gettable_params() gets a constant B<OSSL_PARAM> array that
+describes the  gettable parameters for the current algorithm implementation,
+i.e. parameters that can be used with EVP_PKEY_get_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_size(), EVP_PKEY_bits() and EVP_PKEY_security_bits() return a
 positive number, or 0 if this size isn't available.
+
+EVP_PKEY_get_params() returns 1 for success or 0 otherwise.
+EVP_PKEY_gettable_params() returns an OSSL_PARAM array on success or NULL on
+error.
 
 =head1 NOTES
 

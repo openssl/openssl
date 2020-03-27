@@ -5040,3 +5040,4 @@ EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_can_sign                       ?	3_0_0	EXIST::FUNCTION:
 evp_pkey_get_EC_KEY_curve_nid           ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get_params                     ?	3_0_0	EXIST::FUNCTION:

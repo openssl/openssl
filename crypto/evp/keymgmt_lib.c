@@ -195,7 +195,7 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
                                              &security_bits);
         params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_MAX_SIZE, &size);
         params[3] = OSSL_PARAM_construct_end();
-        if (evp_keymgmt_get_params(pk->keymgmt, pk->keydata, params)) {
+        if (EVP_PKEY_get_params(pk, params)) {
             pk->cache.size = size;
             pk->cache.bits = bits;
             pk->cache.security_bits = security_bits;
