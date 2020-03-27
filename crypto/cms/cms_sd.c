@@ -243,9 +243,11 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, EVP_PKEY_CTX *pctx, int cmd)
     alg = evp_pkey_ctx_get_algid(pctx, OSSL_CMS_PARAM_ALGORITHM_ID);
     if (alg == NULL)
         alg = evp_pkey_get_algid(pkey, OSSL_CMS_PARAM_ALGORITHM_ID);
-    /* Try the common X509_ALGOR as a fallback */
+    /* Try the common X509_ALGOR as a fallback. */
     if (alg == NULL)
         alg = evp_pkey_ctx_get_algid(pctx, OSSL_PKEY_PARAM_ALGORITHM_ID);
+    if (alg == NULL)
+        alg = evp_pkey_get_algid(pkey, OSSL_PKEY_PARAM_ALGORITHM_ID);
 
     if (alg == NULL) {
         CMSerr(CMS_F_CMS_SD_ASN1_CTRL, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
