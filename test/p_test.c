@@ -41,6 +41,7 @@ static const OSSL_PARAM p_param_types[] = {
 /* This is a trick to ensure we define the provider functions correctly */
 static OSSL_provider_gettable_params_fn p_gettable_params;
 static OSSL_provider_get_params_fn p_get_params;
+static OSSL_provider_get_reason_strings_fn p_get_reason_strings;
 
 static const OSSL_PARAM *p_gettable_params(void *_)
 {
@@ -100,9 +101,21 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
     return ok;
 }
 
+static const OSSL_ITEM *p_get_reason_strings(void *_)
+{
+    static const OSSL_ITEM reason_strings[] = {
+        {1, "dummy reason string"},
+        {0, NULL}
+    };
+
+    return reason_strings;
+}
+
 static const OSSL_DISPATCH p_test_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))p_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))p_get_params },
+    { OSSL_FUNC_PROVIDER_GET_REASON_STRINGS,
+        (void (*)(void))p_get_reason_strings},
     { 0, NULL }
 };
 
