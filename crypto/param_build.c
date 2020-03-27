@@ -13,13 +13,9 @@
 #include <openssl/cryptoerr.h>
 #include <openssl/params.h>
 #include <openssl/types.h>
+#include <openssl/safestack.h>
 #include "internal/cryptlib.h"
 #include "openssl/param_build.h"
-
-/*
- * The number of OSSL_PARAM elements a builder will allow.
- */
-#define OSSL_PARAM_BLD_MAX          25
 
 /*
  * Special internal param type to indicate the end of an allocate OSSL_PARAM
@@ -46,11 +42,12 @@ typedef struct {
     } num;
 } OSSL_PARAM_BLD_DEF;
 
+DEFINE_STACK_OF(OSSL_PARAM_BLD_DEF)
+
 struct ossl_param_bld_st {
-    size_t curr;
     size_t total_blocks;
     size_t secure_blocks;
-    OSSL_PARAM_BLD_DEF params[OSSL_PARAM_BLD_MAX];
+    STACK_OF(OSSL_PARAM_BLD_DEF) *params;
 };
 
 typedef union {
@@ -68,14 +65,12 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
                                       int size, size_t alloc, int type,
                                       int secure)
 {
-    OSSL_PARAM_BLD_DEF *pd;
+    OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
 
-    if (bld->curr >= OSSL_PARAM_BLD_MAX) {
-        CRYPTOerr(CRYPTO_F_PARAM_PUSH, CRYPTO_R_TOO_MANY_RECORDS);
+    if (pd == NULL) {
+        CRYPTOerr(CRYPTO_F_PARAM_PUSH, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    pd = bld->params + bld->curr++;
-    memset(pd, 0, sizeof(*pd));
     pd->key = key;
     pd->type = type;
     pd->size = size;
@@ -84,6 +79,10 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
         bld->secure_blocks += pd->alloc_blocks;
     else
         bld->total_blocks += pd->alloc_blocks;
+    if (sk_OSSL_PARAM_BLD_DEF_push(bld->params, pd) <= 0) {
+        OPENSSL_free(pd);
+        pd = NULL;
+    }
     return pd;
 }
 
@@ -104,11 +103,30 @@ static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
 
 OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void)
 {
-    return OPENSSL_zalloc(sizeof(OSSL_PARAM_BLD));
+    OSSL_PARAM_BLD *r = OPENSSL_zalloc(sizeof(OSSL_PARAM_BLD));
+
+    if (r != NULL) {
+        r->params = sk_OSSL_PARAM_BLD_DEF_new_null();
+        if (r->params == NULL) {
+            OPENSSL_free(r);
+            r = NULL;
+        }
+    }
+    return r;
+}
+
+static void free_all_params(OSSL_PARAM_BLD *bld)
+{
+    int i, n = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
+
+    for (i = 0; i < n; i++)
+        OPENSSL_free(sk_OSSL_PARAM_BLD_DEF_pop(bld->params));
 }
 
 void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld)
 {
+    free_all_params(bld);
+    sk_OSSL_PARAM_BLD_DEF_free(bld->params);
     OPENSSL_free(bld);
 }
 
@@ -285,12 +303,12 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
                                      OSSL_PARAM_BLD_BLOCK *blk,
                                      OSSL_PARAM_BLD_BLOCK *secure)
 {
-    size_t i;
+    int i, num = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
     OSSL_PARAM_BLD_DEF *pd;
     void *p;
 
-    for (i = 0; i < bld->curr; i++) {
-        pd = bld->params + i;
+    for (i = 0; i < num; i++) {
+        pd = sk_OSSL_PARAM_BLD_DEF_value(bld->params, i);
         param[i].key = pd->key;
         param[i].data_type = pd->type;
         param[i].data_size = pd->size;
@@ -333,7 +351,8 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
 {
     OSSL_PARAM_BLD_BLOCK *blk, *s = NULL;
     OSSL_PARAM *params, *last;
-    const size_t p_blks = bytes_to_blocks((1 + bld->curr) * sizeof(*params));
+    const int num = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
+    const size_t p_blks = bytes_to_blocks((1 + num) * sizeof(*params));
     const size_t total = ALIGN_SIZE * (p_blks + bld->total_blocks);
     const size_t ss = ALIGN_SIZE * bld->secure_blocks;
 
@@ -359,8 +378,10 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     last->data = s;
     last->data_type = OSSL_PARAM_ALLOCATED_END;
 
-    /* Reset for reuse */
-    memset(bld, 0, sizeof(*bld));
+    /* Reset builder for reuse */
+    bld->total_blocks = 0;
+    bld->secure_blocks = 0;
+    free_all_params(bld);
     return params;
 }
 
