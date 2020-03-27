@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -53,19 +54,60 @@ static CMS_EnvelopedData *cms_enveloped_data_init(CMS_ContentInfo *cms)
 int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 {
     EVP_PKEY *pkey;
-    int i;
-    if (ri->type == CMS_RECIPINFO_TRANS)
-        pkey = ri->d.ktri->pkey;
-    else if (ri->type == CMS_RECIPINFO_AGREE) {
-        EVP_PKEY_CTX *pctx = ri->d.kari->pctx;
+    EVP_PKEY_CTX *pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+    EVP_PKEY_CTX *alloc_pctx = NULL;
+    int i, rv = 0;
+    X509_ALGOR **ppalg, *alg = NULL;
 
+    if (ri->type == CMS_RECIPINFO_TRANS) {
+        pkey = ri->d.ktri->pkey;
+        ppalg = &ri->d.ktri->keyEncryptionAlgorithm;
+    } else if (ri->type == CMS_RECIPINFO_AGREE) {
         if (pctx == NULL)
             return 0;
         pkey = EVP_PKEY_CTX_get0_pkey(pctx);
         if (pkey == NULL)
             return 0;
-    } else
+        ppalg = &ri->d.kari->keyEncryptionAlgorithm;
+    } else {
         return 0;
+    }
+
+    if (pkey->keymgmt == NULL)
+        goto legacy;
+
+    /* Compensate for not setting this up in the CMS_RECIPINFO_TRANS case */
+    if (pctx == NULL) {
+        if ((pctx = alloc_pctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL
+            || EVP_PKEY_encrypt_init(pctx) <= 0)
+            goto end;
+    }
+
+    if (!ossl_assert(EVP_PKEY_CTX_get_operation(pctx)
+                     != EVP_PKEY_OP_UNDEFINED))
+        goto end;
+
+    /* Find the X509_ALGOR made specially for CMS */
+    alg = evp_pkey_ctx_get_algid(pctx, OSSL_CMS_PARAM_ALGORITHM_ID);
+    /* If that failed, fall back to the common X509_ALGOR */
+    if (alg == NULL)
+        alg = evp_pkey_ctx_get_algid(pctx, OSSL_PKEY_PARAM_ALGORITHM_ID);
+
+    if (alg == NULL) {
+        CMSerr(CMS_F_CMS_ENV_ASN1_CTRL,
+               CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        goto end;
+    }
+
+    X509_ALGOR_free(*ppalg);
+    *ppalg = alg;
+
+    rv = 1;
+ end:
+    EVP_PKEY_CTX_free(alloc_pctx);
+    return rv;
+
+ legacy:
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
@@ -1031,6 +1073,7 @@ BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
  */
 int cms_pkey_get_ri_type(EVP_PKEY *pk)
 {
+#if 0                            /* This should just be removed */
     if (pk->ameth && pk->ameth->pkey_ctrl) {
         int i, r;
         i = pk->ameth->pkey_ctrl(pk, ASN1_PKEY_CTRL_CMS_RI_TYPE, 0, &r);
@@ -1038,12 +1081,41 @@ int cms_pkey_get_ri_type(EVP_PKEY *pk)
             return r;
     }
     return CMS_RECIPINFO_TRANS;
+#else
+    /*
+     * We try to figure out what the key type supports by doing one init
+     * after the other.
+     */
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pk, NULL);
+    int r;
+
+    ERR_set_mark();
+    if (EVP_PKEY_derive_init(pctx) > 0)
+        r = CMS_RECIPINFO_AGREE;
+    else if (EVP_PKEY_encrypt_init(pctx) > 0)
+        r = CMS_RECIPINFO_TRANS;
+    else
+        r = CMS_RECIPINFO_NONE;
+
+    /*
+     * If we didn't get a working type, we want too know why.  If we did,
+     * through away errors from any failed attempt.
+     */
+    if (r == CMS_RECIPINFO_NONE)
+        ERR_clear_last_mark();
+    else
+        ERR_pop_to_mark();
+
+    EVP_PKEY_CTX_free(pctx);
+    return r;
+#endif
 }
 
 int cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type)
 {
     int supportedRiType;
 
+#if 0                            /* Why is this needed? */
     if (pk->ameth != NULL && pk->ameth->pkey_ctrl != NULL) {
         int i, r;
 
@@ -1051,6 +1123,7 @@ int cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type)
         if (i > 0)
             return r;
     }
+#endif
 
     supportedRiType = cms_pkey_get_ri_type(pk);
     if (supportedRiType < 0)

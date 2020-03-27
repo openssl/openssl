@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -223,10 +224,39 @@ int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
         return -1;
 }
 
-static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
+static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, EVP_PKEY_CTX *pctx, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
+    X509_ALGOR *alg = NULL;
     int i;
+
+    if (pkey->keymgmt == NULL)
+        goto legacy;
+
+    /*
+     * Key algorithms that should lead to an AlgorithmIdentifier with
+     * the combined keyalg-with-digestalg OID should respond to the
+     * evp_pkey_ctx_get_algid().  When the OID should specify the keyalg
+     * only, the response is allowed to come from either that or
+     * evp_pkey_get_algid().
+     */
+    alg = evp_pkey_ctx_get_algid(pctx, OSSL_CMS_PARAM_ALGORITHM_ID);
+    if (alg == NULL)
+        alg = evp_pkey_get_algid(pkey, OSSL_CMS_PARAM_ALGORITHM_ID);
+    /* Try the common X509_ALGOR as a fallback */
+    if (alg == NULL)
+        alg = evp_pkey_ctx_get_algid(pctx, OSSL_PKEY_PARAM_ALGORITHM_ID);
+
+    if (alg == NULL) {
+        CMSerr(CMS_F_CMS_SD_ASN1_CTRL, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        return 0;
+    }
+
+    X509_ALGOR_free(si->signatureAlgorithm);
+    si->signatureAlgorithm = alg;
+    return 1;
+
+ legacy:
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
@@ -327,8 +357,15 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         }
     }
 
-    if (!(flags & CMS_KEY_PARAM) && !cms_sd_asn1_ctrl(si, 0))
-        goto err;
+    if (!(flags & CMS_KEY_PARAM)) {
+        EVP_MD_CTX *tmp_mctx = EVP_MD_CTX_new();
+        int ok = (EVP_DigestSignInit(tmp_mctx, NULL, md, NULL, pk) > 0);
+
+        ok = ok && cms_sd_asn1_ctrl(si, EVP_MD_CTX_pkey_ctx(tmp_mctx), 0);
+        EVP_MD_CTX_free(tmp_mctx);
+        if (!ok)
+            goto err;
+    }
     if (!(flags & CMS_NOATTR)) {
         /*
          * Initialize signed attributes structure so other attributes
@@ -596,7 +633,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, si->digestAlgorithm))
         goto err;
     /* Set SignerInfo algorithm details if we used custom parameter */
-    if (si->pctx && !cms_sd_asn1_ctrl(si, 0))
+    if (si->pctx && !cms_sd_asn1_ctrl(si, si->pctx, 0))
         goto err;
 
     /*
@@ -795,7 +832,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (EVP_DigestVerifyInit(mctx, &si->pctx, md, NULL, si->pkey) <= 0)
         goto err;
 
-    if (!cms_sd_asn1_ctrl(si, 1))
+    if (!cms_sd_asn1_ctrl(si, si->pctx, 1))
         goto err;
 
     alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
@@ -906,7 +943,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
         if (EVP_PKEY_CTX_set_signature_md(pkctx, md) <= 0)
             goto err;
         si->pctx = pkctx;
-        if (!cms_sd_asn1_ctrl(si, 1))
+        if (!cms_sd_asn1_ctrl(si, pkctx, 1))
             goto err;
         r = EVP_PKEY_verify(pkctx, si->signature->data,
                             si->signature->length, mval, mlen);

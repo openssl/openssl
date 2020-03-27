@@ -197,6 +197,15 @@ extern "C" {
  * it can be used for certain purposes.
  */
 #define OSSL_PKEY_PARAM_ALGORITHM_ID        OSSL_ALG_PARAM_ALGORITHM_ID
+/*
+ * CMS has a different set of standards, sometimes resulting in slightly
+ * different DER blobs, so we have a variant of this param for CMS code
+ * to use exclusively.  Depending on the algorithm, it may result in the
+ * same as with OSSL_PKEY_PARAM_ALGORITHM_ID, or it may not.
+ * https://datatracker.ietf.org/wg/smime/documents is a starting point to
+ * figure these out.
+ */
+#define OSSL_CMS_PARAM_ALGORITHM_ID        OSSL_ALG_PARAM_ALGORITHM_ID":CMS"
 
 /* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
