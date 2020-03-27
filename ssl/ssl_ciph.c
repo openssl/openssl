@@ -457,7 +457,10 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
             if (*enc == NULL)
                 return 0;
         } else {
-            if (!ssl_evp_cipher_up_ref(ctx->ssl_cipher_methods[i]))
+            const EVP_CIPHER *cipher = ctx->ssl_cipher_methods[i];
+
+            if (cipher == NULL
+                    || !ssl_evp_cipher_up_ref(cipher))
                 return 0;
             *enc = ctx->ssl_cipher_methods[i];
         }
