@@ -62,11 +62,9 @@ IF[{- !$disabled{des} -}]
   SOURCE[$TDES_2_GOAL]=\
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c
-  IF[{- $disabled{'deprecated-3.0'} -}]
-    SOURCE[$DES_GOAL]=\
-        cipher_desx.c cipher_desx_hw.c cipher_tdes_common.c\
-        cipher_des.c cipher_des_hw.c
-  ENDIF
+  SOURCE[$DES_GOAL]=\
+      cipher_desx.c cipher_desx_hw.c cipher_tdes_common.c\
+      cipher_des.c cipher_des_hw.c
 ENDIF
 
 IF[{- !$disabled{aria} -}]
