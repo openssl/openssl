@@ -10,11 +10,16 @@
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/provider.h>
+#include <openssl/safestack.h>
+
+DEFINE_STACK_OF(OSSL_PROVIDER)
 
 /*
  * See comments in opt_verify for explanation of this.
  */
 enum prov_range { OPT_PROV_ENUM };
+
+static STACK_OF(OSSL_PROVIDER) *app_providers = NULL;
 
 static int opt_provider_load(const char *provider)
 {
@@ -26,7 +31,25 @@ static int opt_provider_load(const char *provider)
                           opt_getprog(), provider);
         return 0;
     }
+    if (app_providers == NULL)
+        app_providers = sk_OSSL_PROVIDER_new_null();
+    if (app_providers == NULL
+        || !sk_OSSL_PROVIDER_push(app_providers, prov)) {
+        app_providers_cleanup();
+        return 0;
+    }
     return 1;
+}
+
+static void provider_free(OSSL_PROVIDER *prov)
+{
+    OSSL_PROVIDER_unload(prov);
+}
+
+void app_providers_cleanup(void)
+{
+    sk_OSSL_PROVIDER_pop_free(app_providers, provider_free);
+    app_providers = NULL;
 }
 
 static int opt_provider_path(const char *path)
