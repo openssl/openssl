@@ -266,17 +266,10 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         goto err;
     }
 
-    /*-
-     * Apply coordinate blinding for EC_POINT.
-     *
-     * The underlying EC_METHOD can optionally implement this function:
-     * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
-     * success or if coordinate blinding is not implemented for this
-     * group.
-     */
-    if (!ec_point_blind_coordinates(group, p, ctx)) {
-        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_POINT_COORDINATES_BLIND_FAILURE);
-        goto err;
+    /* ensure input point is in affine coords for ladder step efficiency */
+    if (!p->Z_is_one && !EC_POINT_make_affine(group, p, ctx)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_EC_LIB);
+            goto err;
     }
 
     /* Initialize the Montgomery ladder */
