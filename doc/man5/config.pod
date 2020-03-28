@@ -23,7 +23,7 @@ L<ASN1_generate_nconf(3)>.
 A configuration file is a series of lines.  Blank lines, and whitespace
 between the elements of a line, have no significance. A comment starts
 with a B<#> character; the rest of the line is ignored. If the B<#>
-is he first non-space character in a line, the entire line is ignored.
+is the first non-space character in a line, the entire line is ignored.
 
 =head2 Directives
 
@@ -81,6 +81,7 @@ A configuration file is divided into a number of I<sections>.  A section
 begins with the section name in square brackets, and ends when a new
 section starts, or at the end of the file.  The section name can consist
 of alphanumeric characters and underscores.
+Whitespace between the name and the brackets is removed.
 
 The first section of a configuration file is special and is referred to
 as the B<default> section. This section is usually unnamed and spans from
@@ -104,6 +105,7 @@ are required, not optional:
 
 The B<name> can contain any alphanumeric characters as well as a few
 punctuation symbols such as B<.> B<,> B<;> and B<_>.
+Whitespace after the name and before the equal sign is ignored.
 
 If a name is repeated in the same section, then all but the last
 value are ignored. In certain circumstances, such as with
@@ -111,15 +113,15 @@ DNs, the same field may occur multiple times.
 In order to support this, commands like L<openssl-req(1)> ignore any
 leading text that is preceeded with a period. For example:
 
- 1.OU = "First OU"
- 2.OU = "Second OU"
+ 1.OU = First OU
+ 2.OU = Second OU
 
 The B<value> consists of the string following the B<=> character until end
 of line with any leading and trailing white space removed.
 
 The value string undergoes variable expansion. The text C<$var> or C<${var}>
-substitutes the value of the named variable from the current section.
-To substitute a value from another section use C<$section::name>
+inserts the value of the named variable from the current section.
+To use a value from another section use C<$section::name>
 or C<${section::name}>.
 By using C<$ENV::name>, the value of the specified environment
 variable will be substituted.
@@ -254,7 +256,7 @@ available to the provider.
 The name B<alg_section> in the initialization section names the section
 containing algorithmic properties when using the B<EVP> API.
 
-The supported algorithm commands are:
+Within the algorithm properties section, the following names have meaning:
 
 =over 4
 
@@ -371,8 +373,8 @@ For example:
  [foo_engine]
  dynamic_path = /some/path/fooengine.so
  some_ctrl = some_value
- other_ctrl = EMPTY
  default_algorithms = ALL
+ other_ctrl = EMPTY
 
 =head1 EXAMPLES
 
@@ -395,12 +397,12 @@ This example shows how to using quoting and escaping.
 
 This example shows how to expand environment variables safely.
 In this example, the variable B<tempfile> is intended to refer
-to a temporary file, and the environment variable B<TMP> or
-B<TEMP>, if present, specify the directory where the file
+to a temporary file, and the environment variable B<TEMP> or
+B<TMP>, if present, specify the directory where the file
 should be put.
 Since the default section is checked if a variable does not
-exist, it is possible to set B<TMP> default to F</tmp>, and
-B<TEMP> defaulting to B<TMP>.
+exist, it is possible to set B<TMP> to default to F</tmp>, and
+B<TEMP> to default to B<TMP>.
 
  # These two lines must be in the default section.
  TMP = /tmp
@@ -453,8 +455,8 @@ are all null terminated so nulls cannot form part of the value.
 The escaping isn't quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
 
-Files are loaded in a single pass. This means that an variable expansion
-will only work if the variables referenced are defined earlier in the file.
+Files are loaded in a single pass. This means that variable expansion
+requires the referenced variables to be defined earlier in the file.
 
 =head1 HISTORY
 
