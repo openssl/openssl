@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2019 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2020 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -205,6 +205,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_EC_KEY_PRINT_FP), "EC_KEY_print_fp"},
     {ERR_FUNC(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES),
      "EC_KEY_set_public_key_affine_coordinates"},
+    {ERR_FUNC(EC_F_EC_MUL_CONSTTIME), "EC_MUL_CONSTTIME"},
     {ERR_FUNC(EC_F_EC_POINTS_MAKE_AFFINE), "EC_POINTs_make_affine"},
     {ERR_FUNC(EC_F_EC_POINT_ADD), "EC_POINT_add"},
     {ERR_FUNC(EC_F_EC_POINT_CMP), "EC_POINT_cmp"},

@@ -424,10 +424,10 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     /* blinding for prime curves: use point r as temporary variable. */
     if (group->meth->field_type == NID_X9_62_prime_field) {
 
-        /* first randomize r->Z and later adjust s accordingly. */
+        /* first randomize r->Z to blind s. */
         do {
             if (!BN_rand(&r->Z, BN_num_bits(&group->order), 0, 0)) {
-                ECerr(EC_F_EC_POINT_MUL, ERR_R_BN_LIB);
+                ECerr(EC_F_EC_MUL_CONSTTIME, ERR_R_BN_LIB);
                 goto err;
             }
         } while (BN_is_zero(&r->Z));
@@ -450,11 +450,38 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         }
         /* mark the flag in s to full projective coordinates. */
         s->Z_is_one = 0;
-    }
 
-    /* top bit is a 1, in a fixed pos; blinding makes r projective as well */
-    if (!EC_POINT_copy(r, s))
-        goto err;
+        /* blinding: now rerandomize r->Z to make r a blinded copy of s. */
+        do {
+            if (!BN_rand(&r->Z, BN_num_bits(&group->order), 0, 0)) {
+                ECerr(EC_F_EC_MUL_CONSTTIME, ERR_R_BN_LIB);
+                goto err;
+            }
+        } while (BN_is_zero(&r->Z));
+
+        /* convert r->Z to the correct field representation. */
+        if (group->meth->field_encode != NULL
+            && !group->meth->field_encode(group, &r->Z, &r->Z, ctx)) {
+            goto err;
+        }
+
+        /* scale r->X and r->Y by r->Z^2 and r->Z^3, respectively. */
+        if (!group->meth->field_sqr(group, &r->X, &r->Z, ctx)
+            || !group->meth->field_mul(group, &r->Y, &r->X, &r->Z, ctx)) {
+            goto err;
+        }
+        if (!group->meth->field_mul(group, &r->X, &s->X, &r->X, ctx)
+            || !group->meth->field_mul(group, &r->Y, &s->Y, &r->Y, ctx)
+            || !group->meth->field_mul(group, &r->Z, &s->Z, &r->Z, ctx)) {
+            goto err;
+        }
+        /* mark the flag in s to full projective coordinates. */
+        r->Z_is_one = 0;
+    } else {
+        /* top bit is a 1, in a fixed pos; binary curves are not blinded here */
+        if (!EC_POINT_copy(r, s))
+            goto err;
+    }
 
     EC_POINT_BN_set_flags(r, BN_FLG_CONSTTIME);
 
