@@ -1479,14 +1479,15 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
 int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
 {
     int ret = 0;
-    unsigned char buffer[2048];
     OSSL_PARAM params[2];
+    unsigned char buffer[2048];
     /*
      * Use -1 as the terminator here instead of sizeof(buffer) + 1 since
      * -1 is less likely to be a valid value.
      */
     const size_t not_set = (size_t)-1;
     unsigned char *buf = NULL;
+    size_t buf_sz = 0;
 
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1504,15 +1505,16 @@ int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
         if (params[0].return_size == not_set
             || params[0].return_size == 0)
             return 0;
+        buf_sz = params[0].return_size;
         /*
          * If it failed because the buffer was too small then allocate the
          * required buffer size and retry.
          */
-        buf = OPENSSL_zalloc(params[0].return_size);
+        buf = OPENSSL_zalloc(buf_sz);
         if (buf == NULL)
             return 0;
         params[0].data = buf;
-        params[0].data_size = params[0].return_size;
+        params[0].data_size = buf_sz;
 
         if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
             goto err;
