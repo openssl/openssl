@@ -155,7 +155,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
     {
         switch (p->type) {
         case OSSL_PARAM_UNSIGNED_INTEGER: {
-            BIGNUM *bn = BN_CTX_get(ctx); /* grab a bn from the pool */
+            BIGNUM *bn = BN_CTX_get(ctx);
 
             if (bn == NULL
                 || (BN_bin2bn(p->data, p->data_len, bn) == NULL)
