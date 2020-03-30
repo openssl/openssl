@@ -56,6 +56,8 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_CHACHA20POLY1305, NID_chacha20_poly1305}, /* SSL_ENC_CHACHA_IDX 19 */
     {SSL_ARIA128GCM, NID_aria_128_gcm}, /* SSL_ENC_ARIA128GCM_IDX 20 */
     {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
+    {SSL_MAGMA, NID_magma_ctr_acpkm}, /* SSL_ENC_MAGMA_IDX */
+    {SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm}, /* SSL_ENC_KUZNYECHIK_IDX */
 };
 
 #define SSL_COMP_NULL_IDX       0
@@ -81,7 +83,9 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_GOST12_512, NID_id_GostR3411_2012_512}, /* SSL_MD_GOST12_512_IDX 8 */
     {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
     {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
-    {0, NID_sha512}             /* SSL_MD_SHA512_IDX 11 */
+    {0, NID_sha512},            /* SSL_MD_SHA512_IDX 11 */
+    {SSL_MAGMAOMAC, NID_magma_mac}, /* sSL_MD_MAGMAOMAC_IDX */
+    {SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac} /* SSL_MD_KUZNYECHIKOMAC_IDX */
 };
 
 /* *INDENT-OFF* */
@@ -95,6 +99,7 @@ static const ssl_cipher_table ssl_cipher_table_kx[] = {
     {SSL_kPSK,      NID_kx_psk},
     {SSL_kSRP,      NID_kx_srp},
     {SSL_kGOST,     NID_kx_gost},
+    {SSL_kGOST18,   NID_kx_gost18},
     {SSL_kANY,      NID_kx_any}
 };
 
@@ -138,8 +143,8 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
     /* GOST2012_512 */
     EVP_PKEY_HMAC,
-    /* MD5/SHA1, SHA224, SHA512 */
-    NID_undef, NID_undef, NID_undef
+    /* MD5/SHA1, SHA224, SHA512, MAGMAOMAC, KUZNYECHIKOMAC */
+    NID_undef, NID_undef, NID_undef, NID_undef, NID_undef
 };
 
 #define CIPHER_ADD      1
@@ -193,6 +198,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_kDHEPSK, NULL, 0, SSL_kDHEPSK},
     {0, SSL_TXT_kSRP, NULL, 0, SSL_kSRP},
     {0, SSL_TXT_kGOST, NULL, 0, SSL_kGOST},
+    {0, SSL_TXT_kGOST18, NULL, 0, SSL_kGOST18},
 
     /* server authentication aliases */
     {0, SSL_TXT_aRSA, NULL, 0, 0, SSL_aRSA},
@@ -226,7 +232,8 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_IDEA, NULL, 0, 0, 0, SSL_IDEA},
     {0, SSL_TXT_SEED, NULL, 0, 0, 0, SSL_SEED},
     {0, SSL_TXT_eNULL, NULL, 0, 0, 0, SSL_eNULL},
-    {0, SSL_TXT_GOST, NULL, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12},
+    {0, SSL_TXT_GOST, NULL, 0, 0, 0,
+     SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12 | SSL_MAGMA | SSL_KUZNYECHIK},
     {0, SSL_TXT_AES128, NULL, 0, 0, 0,
      SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8},
     {0, SSL_TXT_AES256, NULL, 0, 0, 0,
@@ -381,24 +388,38 @@ int ssl_load_ciphers(SSL_CTX *ctx)
      * Check for presence of GOST 34.10 algorithms, and if they are not
      * present, disable appropriate auth and key exchange
      */
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id(SN_id_Gost28147_89_MAC);
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC;
 
     ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
-        get_optional_pkey_id("gost-mac-12");
+        get_optional_pkey_id(SN_gost_mac_12);
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
         disabled_mac_mask |= SSL_GOST89MAC12;
 
-    if (!get_optional_pkey_id("gost2001"))
+    ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] =
+        get_optional_pkey_id(SN_magma_mac);
+    if (ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX])
+        ctx->ssl_mac_secret_size[SSL_MD_MAGMAOMAC_IDX] = 32;
+    else
+        disabled_mac_mask |= SSL_MAGMAOMAC;
+
+    ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] =
+        get_optional_pkey_id(SN_kuznyechik_mac);
+    if (ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX])
+        ctx->ssl_mac_secret_size[SSL_MD_KUZNYECHIKOMAC_IDX] = 32;
+    else
+        disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
+
+    if (!get_optional_pkey_id(SN_id_GostR3410_2001))
         disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
-    if (!get_optional_pkey_id("gost2012_256"))
+    if (!get_optional_pkey_id(SN_id_GostR3410_2012_256))
         disabled_auth_mask |= SSL_aGOST12;
-    if (!get_optional_pkey_id("gost2012_512"))
+    if (!get_optional_pkey_id(SN_id_GostR3410_2012_512))
         disabled_auth_mask |= SSL_aGOST12;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
@@ -406,6 +427,9 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) ==
         (SSL_aGOST01 | SSL_aGOST12))
         disabled_mkey_mask |= SSL_kGOST;
+
+    if ((disabled_auth_mask & SSL_aGOST12) ==  SSL_aGOST12)
+        disabled_mkey_mask |= SSL_kGOST18;
 
     return 1;
 }
@@ -1695,6 +1719,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kGOST:
         kx = "GOST";
         break;
+    case SSL_kGOST18:
+        kx = "GOST18";
+        break;
     case SSL_kANY:
         kx = "any";
         break;
@@ -1797,6 +1824,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_eGOST2814789CNT:
     case SSL_eGOST2814789CNT12:
         enc = "GOST89(256)";
+        break;
+    case SSL_MAGMA:
+        enc = "MAGMA";
+        break;
+    case SSL_KUZNYECHIK:
+        enc = "KUZNYECHIK";
         break;
     case SSL_CHACHA20POLY1305:
         enc = "CHACHA20/POLY1305(256)";

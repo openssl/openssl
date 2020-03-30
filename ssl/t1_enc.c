@@ -180,6 +180,11 @@ int tls1_change_cipher_state(SSL *s, int which)
         else
             s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
+        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_TLSTREE)
+            s->mac_flags |= SSL_MAC_FLAG_READ_MAC_TLSTREE;
+        else
+            s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
+
         if (s->enc_read_ctx != NULL) {
             reuse_dd = 1;
         } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
@@ -230,6 +235,11 @@ int tls1_change_cipher_state(SSL *s, int which)
             s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
         else
             s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
+
+        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_TLSTREE)
+            s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
+        else
+            s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
         if (s->enc_write_ctx != NULL && !SSL_IS_DTLS(s)) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
@@ -617,6 +627,10 @@ size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
 {
     size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
+    size_t finished_size = TLS1_FINISH_MAC_LENGTH;
+
+    if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kGOST18)
+        finished_size = 32;
 
     if (!ssl3_digest_cached_records(s, 0)) {
         /* SSLfatal() already called */
@@ -630,12 +644,12 @@ size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
 
     if (!tls1_PRF(s, str, slen, hash, hashlen, NULL, 0, NULL, 0, NULL, 0,
                   s->session->master_key, s->session->master_key_length,
-                  out, TLS1_FINISH_MAC_LENGTH, 1)) {
+                  out, finished_size, 1)) {
         /* SSLfatal() already called */
         return 0;
     }
     OPENSSL_cleanse(hash, hashlen);
-    return TLS1_FINISH_MAC_LENGTH;
+    return finished_size;
 }
 
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
