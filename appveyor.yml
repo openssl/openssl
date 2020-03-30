@@ -25,7 +25,7 @@ before_build:
     - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
-            $env:TARGET="VC-WIN32 no-asm --strict-warnings"
+            $env:TARGET="VC-WIN32 no-asm -DOPENSSL_AES_CONST_TIME --strict-warnings"
         } Else {
             $env:VCVARS_PLATFORM="amd64"
             $env:TARGET="VC-WIN64A-masm"
@@ -34,7 +34,7 @@ before_build:
         If ($env:Configuration -Match "shared") {
             $env:SHARED="no-makedepend"
         } ElseIf ($env:Configuration -Match "minimal") {
-            $env:SHARED="no-shared no-dso no-makedepend no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_SMALL_FOOTPRINT"
+            $env:SHARED="no-shared no-dso no-makedepend no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_AES_CONST_TIME -DOPENSSL_SMALL_FOOTPRINT"
         } Else {
             $env:SHARED="no-shared no-makedepend"
         }
