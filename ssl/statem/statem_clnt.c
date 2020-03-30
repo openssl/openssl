@@ -2157,8 +2157,10 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
                       0, dh)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_PROCESS_SKE_DHE,
                  SSL_R_DH_KEY_TOO_SMALL);
+        dh = NULL;
         goto err;
     }
+    dh = NULL;
 
     s->s3.peer_tmp = peer_tmp;
 
