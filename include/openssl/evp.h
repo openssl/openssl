@@ -153,6 +153,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 #  define EVP_MD_CTRL_DIGALGID                    0x1
 #  define EVP_MD_CTRL_MICALG                      0x2
 #  define EVP_MD_CTRL_XOF_LEN                     0x3
+#  define EVP_MD_CTRL_TLSTREE                     0x4
 
 /* Minimum Algorithm specific ctrl value */
 
@@ -382,6 +383,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_PROCESS_UNPROTECTED            0x28
 /* Get the supplementary wrap cipher */
 #define          EVP_CTRL_GET_WRAP_CIPHER                0x29
+/* TLSTREE key diversification */
+#define          EVP_CTRL_TLSTREE                        0x2A
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1

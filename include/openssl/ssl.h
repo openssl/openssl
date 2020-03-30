@@ -87,6 +87,7 @@ extern "C" {
 # define SSL_TXT_kECDHEPSK       "kECDHEPSK"
 # define SSL_TXT_kDHEPSK         "kDHEPSK"
 # define SSL_TXT_kGOST           "kGOST"
+# define SSL_TXT_kGOST18         "kGOST18"
 # define SSL_TXT_kSRP            "kSRP"
 
 # define SSL_TXT_aRSA            "aRSA"
@@ -933,6 +934,8 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 
 # define SSL_MAC_FLAG_READ_MAC_STREAM 1
 # define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
+# define SSL_MAC_FLAG_READ_MAC_TLSTREE 4
+# define SSL_MAC_FLAG_WRITE_MAC_TLSTREE 8
 
 /*
  * A callback for logging out TLS key material. This callback should log out
