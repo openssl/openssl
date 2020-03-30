@@ -3495,11 +3495,11 @@ void ssl_set_masks(SSL *s)
 
 #ifndef OPENSSL_NO_GOST
     if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
-        mask_k |= SSL_kGOST;
+        mask_k |= SSL_kGOST | SSL_kGOST18;
         mask_a |= SSL_aGOST12;
     }
     if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
-        mask_k |= SSL_kGOST;
+        mask_k |= SSL_kGOST | SSL_kGOST18;
         mask_a |= SSL_aGOST12;
     }
     if (ssl_has_cert(s, SSL_PKEY_GOST01)) {

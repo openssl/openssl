@@ -444,6 +444,9 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
     {0xFF85, "LEGACY-GOST2012-GOST8912-GOST8912"},
     {0xFF87, "GOST2012-NULL-GOST12"},
+    {0xC100, "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC"},
+    {0xC101, "GOST2012-MAGMA-MAGMAOMAC"},
+    {0xC102, "GOST2012-GOST8912-IANA"},
 };
 
 /* Compression methods */
@@ -593,7 +596,9 @@ static const ssl_trace_tbl ssl_ctype_tbl[] = {
     {20, "fortezza_dms"},
     {64, "ecdsa_sign"},
     {65, "rsa_fixed_ecdh"},
-    {66, "ecdsa_fixed_ecdh"}
+    {66, "ecdsa_fixed_ecdh"},
+    {67, "gost_sign256"},
+    {68, "gost_sign512"},
 };
 
 static const ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
@@ -1078,6 +1083,10 @@ static int ssl_get_keyex(const char **pname, const SSL *ssl)
         *pname = "GOST";
         return SSL_kGOST;
     }
+    if (alg_k & SSL_kGOST18) {
+        *pname = "GOST18";
+        return SSL_kGOST18;
+    }
     *pname = "UNKNOWN";
     return 0;
 }
@@ -1124,7 +1133,11 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
         ssl_print_hex(bio, indent + 2, "GostKeyTransportBlob", msg, msglen);
         msglen = 0;
         break;
-
+    case SSL_kGOST18:
+        ssl_print_hex(bio, indent + 2,
+                      "GOST-wrapped PreMasterSecret", msg, msglen);
+        msglen = 0;
+        break;
     }
 
     return !msglen;

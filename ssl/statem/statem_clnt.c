@@ -3314,6 +3314,146 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
 #endif
 }
 
+#ifndef OPENSSL_NO_GOST
+int gost18_cke_cipher_nid(const SSL *s)
+{
+    if ((s->s3.tmp.new_cipher->algorithm_enc & SSL_MAGMA) != 0)
+        return NID_magma_ctr;
+    else if ((s->s3.tmp.new_cipher->algorithm_enc & SSL_KUZNYECHIK) != 0)
+        return NID_kuznyechik_ctr;
+
+    return NID_undef;
+}
+
+int gost_ukm(const SSL *s, unsigned char *dgst_buf)
+{
+    EVP_MD_CTX * hash = NULL;
+    unsigned int md_len;
+    const EVP_MD *md = ssl_evp_md_fetch(s->ctx->libctx, NID_id_GostR3411_2012_256, s->ctx->propq);
+
+    if (md == NULL)
+        return 0;
+
+    if ((hash = EVP_MD_CTX_new()) == NULL
+        || EVP_DigestInit(hash, md) <= 0
+        || EVP_DigestUpdate(hash, s->s3.client_random, SSL3_RANDOM_SIZE) <= 0
+        || EVP_DigestUpdate(hash, s->s3.server_random, SSL3_RANDOM_SIZE) <= 0
+        || EVP_DigestFinal_ex(hash, dgst_buf, &md_len) <= 0) {
+        EVP_MD_CTX_free(hash);
+        ssl_evp_md_free(md);
+        return 0;
+    }
+
+    EVP_MD_CTX_free(hash);
+    ssl_evp_md_free(md);
+    return 1;
+}
+#endif
+
+static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
+{
+#ifndef OPENSSL_NO_GOST
+    /* GOST 2018 key exchange message creation */
+    unsigned char rnd_dgst[32], tmp[255];
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    X509 *peer_cert;
+    unsigned char *pms = NULL;
+    size_t pmslen = 0;
+    size_t msglen;
+    int cipher_nid = gost18_cke_cipher_nid(s);
+
+    if (cipher_nid == NID_undef) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (gost_ukm(s, rnd_dgst) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                      ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Pre-master secret - random bytes */
+    pmslen = 32;
+    pms = OPENSSL_malloc(pmslen);
+    if (pms == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (RAND_bytes_ex(s->ctx->libctx, pms, (int)pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+     /* Get server certificate PKEY and create ctx from it */
+    peer_cert = s->session->peer;
+    if (peer_cert == NULL) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+               SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
+        return 0;
+    }
+
+    pkey_ctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, X509_get0_pubkey(peer_cert), s->ctx->propq);
+    if (pkey_ctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0 ) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    };
+
+    /* Reuse EVP_PKEY_CTRL_SET_IV, make choice in engine code */
+    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
+                          EVP_PKEY_CTRL_SET_IV, 32, rnd_dgst) < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 SSL_R_LIBRARY_BUG);
+        goto err;
+    }
+
+    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
+                          EVP_PKEY_CTRL_CIPHER, cipher_nid, NULL) < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 SSL_R_LIBRARY_BUG);
+        goto err;
+    }
+
+    msglen = 255;
+    if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, pms, pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 SSL_R_LIBRARY_BUG);
+        goto err;
+    }
+
+    if (!WPACKET_memcpy(pkt, tmp, msglen)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    EVP_PKEY_CTX_free(pkey_ctx);
+    s->s3.tmp.pms = pms;
+    s->s3.tmp.pmslen = pmslen;
+
+    return 1;
+ err:
+    EVP_PKEY_CTX_free(pkey_ctx);
+    OPENSSL_clear_free(pms, pmslen);
+    return 0;
+#else
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
+             ERR_R_INTERNAL_ERROR);
+    return 0;
+#endif
+}
+
 static int tls_construct_cke_srp(SSL *s, WPACKET *pkt)
 {
 #ifndef OPENSSL_NO_SRP
@@ -3369,6 +3509,9 @@ int tls_construct_client_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
     } else if (alg_k & SSL_kGOST) {
         if (!tls_construct_cke_gost(s, pkt))
+            goto err;
+    } else if (alg_k & SSL_kGOST18) {
+        if (!tls_construct_cke_gost18(s, pkt))
             goto err;
     } else if (alg_k & SSL_kSRP) {
         if (!tls_construct_cke_srp(s, pkt))
