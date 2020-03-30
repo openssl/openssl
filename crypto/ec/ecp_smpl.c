@@ -1477,12 +1477,19 @@ int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
 }
 
 /*-
- * Set s := p, r := 2p. Assumes p is in affine coords.
+ * Input:
+ * - p: affine coordinates
+ *
+ * Output:
+ * - s := p, r := 2p: blinded projective (homogeneous) coordinates
  *
  * For doubling we use Formula 3 from Izu-Takagi "A fast parallel elliptic curve
  * multiplication resistant against side channel attacks" appendix, described at
  * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#doubling-dbl-2002-it-2
  * simplified for Z1=1.
+ *
+ * Blinding uses the equivalence relation (\lambda X, \lambda Y, \lambda Z)
+ * for any non-zero \lambda that holds for projective (homogeneous) coords.
  */
 int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
                              EC_POINT *r, EC_POINT *s,
@@ -1540,13 +1547,17 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
 }
 
 /*-
+ * Input:
+ * - s, r: projective (homogeneous) coordinates
+ * - p: affine coordinates
+ *
+ * Output:
+ * - s := r + s, r := 2r: projective (homogeneous) coordinates
+ *
  * Differential addition-and-doubling using Eq. (9) and (10) from Izu-Takagi
  * "A fast parallel elliptic curve multiplication resistant against side channel
  * attacks", as described at
  * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#ladder-mladd-2002-it-4
- * s := r + s, r := 2r
- * s, r: projective (homogeneous) coordinates
- * p: affine coordinates
  */
 int ec_GFp_simple_ladder_step(const EC_GROUP *group,
                               EC_POINT *r, EC_POINT *s,
@@ -1614,6 +1625,13 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
 }
 
 /*-
+ * Input:
+ * - s, r: projective (homogeneous) coordinates
+ * - p: affine coordinates
+ *
+ * Output:
+ * - r := (x,y): affine coordinates
+ *
  * Recovers the y-coordinate of r using Eq. (8) from Brier-Joye, "Weierstrass
  * Elliptic Curves and Side-Channel Attacks", modified to work in mixed
  * projective coords, i.e. p is affine and (r,s) in projective (homogeneous)
