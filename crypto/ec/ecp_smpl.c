@@ -1509,11 +1509,13 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
         || !group->meth->field_sqr(group, t4, t4, ctx)
         || !group->meth->field_mul(group, t5, p->X, group->b, ctx)
         || !BN_mod_lshift_quick(t5, t5, 3, group->field)
-        || !BN_mod_sub_quick(t4, t4, t5, group->field)
+        /* r->X coord output */
+        || !BN_mod_sub_quick(r->X, t4, t5, group->field)
         || !BN_mod_add_quick(t1, t3, group->a, group->field)
         || !group->meth->field_mul(group, t2, p->X, t1, ctx)
         || !BN_mod_add_quick(t2, group->b, t2, group->field)
-        || !BN_mod_lshift_quick(t2, t2, 2, group->field))
+        /* r->Z coord output */
+        || !BN_mod_lshift_quick(r->Z, t2, 2, group->field))
         return 0;
 
     /* make sure lambda (r->Y here for storage) is not zero */
@@ -1615,7 +1617,7 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
         || !BN_mod_lshift1_quick(t1, t1, group->field)
         /* r->Z coord output */
         || !BN_mod_add_quick(r->Z, t4, t1, group->field))
-            goto err;
+        goto err;
 
     ret = 1;
 
