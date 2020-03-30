@@ -1496,7 +1496,7 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
     t4 = r->X;
     t5 = s->Y;
 
-    if (!p->Z_is_one
+    if (!p->Z_is_one /* r := 2p */
         || !group->meth->field_sqr(group, t3, p->X, ctx)
         || !BN_mod_sub_quick(t4, t3, group->a, group->field)
         || !group->meth->field_sqr(group, t4, t4, ctx)
@@ -1530,7 +1530,7 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
     /* blind r and s independently */
     if (!group->meth->field_mul(group, r->Z, r->Z, r->Y, ctx)
         || !group->meth->field_mul(group, r->X, r->X, r->Y, ctx)
-        || !group->meth->field_mul(group, s->X, p->X, s->Z, ctx))
+        || !group->meth->field_mul(group, s->X, p->X, s->Z, ctx)) /* s := p */
         return 0;
 
     r->Z_is_one = 0;
@@ -1540,11 +1540,13 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
 }
 
 /*-
- * Differential addition-and-doubling using  Eq. (9) and (10) from Izu-Takagi
+ * Differential addition-and-doubling using Eq. (9) and (10) from Izu-Takagi
  * "A fast parallel elliptic curve multiplication resistant against side channel
  * attacks", as described at
  * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#ladder-mladd-2002-it-4
  * s := r + s, r := 2r
+ * s, r: projective (homogeneous) coordinates
+ * p: affine coordinates
  */
 int ec_GFp_simple_ladder_step(const EC_GROUP *group,
                               EC_POINT *r, EC_POINT *s,
@@ -1576,9 +1578,11 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
         || !group->meth->field_mul(group, t0, t2, t0, ctx)
         || !BN_mod_lshift1_quick(t5, t5, group->field)
         || !BN_mod_sub_quick(t3, t4, t3, group->field)
+        /* s->Z coord output */
         || !group->meth->field_sqr(group, s->Z, t3, ctx)
         || !group->meth->field_mul(group, t4, s->Z, p->X, ctx)
         || !BN_mod_add_quick(t0, t0, t5, group->field)
+        /* s->X coord output */
         || !BN_mod_sub_quick(s->X, t0, t4, group->field)
         || !group->meth->field_sqr(group, t4, r->X, ctx)
         || !group->meth->field_sqr(group, t5, r->Z, ctx)
@@ -1591,12 +1595,14 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
         || !group->meth->field_sqr(group, t3, t3, ctx)
         || !group->meth->field_mul(group, t0, t5, t1, ctx)
         || !group->meth->field_mul(group, t0, t2, t0, ctx)
+        /* r->X coord output */
         || !BN_mod_sub_quick(r->X, t3, t0, group->field)
         || !BN_mod_add_quick(t3, t4, t6, group->field)
         || !group->meth->field_sqr(group, t4, t5, ctx)
         || !group->meth->field_mul(group, t4, t4, t2, ctx)
         || !group->meth->field_mul(group, t1, t1, t3, ctx)
         || !BN_mod_lshift1_quick(t1, t1, group->field)
+        /* r->Z coord output */
         || !BN_mod_add_quick(r->Z, t4, t1, group->field))
             goto err;
 
@@ -1610,7 +1616,8 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
 /*-
  * Recovers the y-coordinate of r using Eq. (8) from Brier-Joye, "Weierstrass
  * Elliptic Curves and Side-Channel Attacks", modified to work in mixed
- * projective coordinates and return r in affine coordinates.
+ * projective coords, i.e. p is affine and (r,s) in projective (homogeneous)
+ * coords, and return r in affine coordinates.
  *
  * X4 = two*Y1*X2*Z3*Z2;
  * Y4 = two*b*Z3*SQR(Z2) + Z3*(a*Z2+X1*X2)*(X1*Z2+X2) - X3*SQR(X1*Z2-X2);
