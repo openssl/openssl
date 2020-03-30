@@ -1215,3 +1215,15 @@ modp_3072		1214
 modp_4096		1215
 modp_6144		1216
 modp_8192		1217
+magma_ctr_acpkm		1218
+magma_ctr_acpkm_omac		1219
+kuznyechik_ctr_acpkm		1220
+kuznyechik_ctr_acpkm_omac		1221
+magma_kexp15		1222
+kuznyechik_kexp15		1223
+kuznyechik_ecb		1224
+kuznyechik_ctr		1225
+kuznyechik_ofb		1226
+kuznyechik_cbc		1227
+kuznyechik_cfb		1228
+kuznyechik_mac		1229

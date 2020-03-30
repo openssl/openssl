@@ -4280,25 +4280,25 @@
 #define NID_id_tc26_cipher_gostr3412_2015_magma         1173
 #define OBJ_id_tc26_cipher_gostr3412_2015_magma         OBJ_id_tc26_cipher,1L
 
-#define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm         "id-tc26-cipher-gostr3412-2015-magma-ctracpkm"
-#define NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm                1174
-#define OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm                OBJ_id_tc26_cipher_gostr3412_2015_magma,1L
+#define SN_magma_ctr_acpkm              "magma-ctr-acpkm"
+#define NID_magma_ctr_acpkm             1218
+#define OBJ_magma_ctr_acpkm             OBJ_id_tc26_cipher_gostr3412_2015_magma,1L
 
-#define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac            "id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac"
-#define NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac           1175
-#define OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac           OBJ_id_tc26_cipher_gostr3412_2015_magma,2L
+#define SN_magma_ctr_acpkm_omac         "magma-ctr-acpkm-omac"
+#define NID_magma_ctr_acpkm_omac                1219
+#define OBJ_magma_ctr_acpkm_omac                OBJ_id_tc26_cipher_gostr3412_2015_magma,2L
 
 #define SN_id_tc26_cipher_gostr3412_2015_kuznyechik             "id-tc26-cipher-gostr3412-2015-kuznyechik"
 #define NID_id_tc26_cipher_gostr3412_2015_kuznyechik            1176
 #define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik            OBJ_id_tc26_cipher,2L
 
-#define SN_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm            "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm"
-#define NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm           1177
-#define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm           OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,1L
+#define SN_kuznyechik_ctr_acpkm         "kuznyechik-ctr-acpkm"
+#define NID_kuznyechik_ctr_acpkm                1220
+#define OBJ_kuznyechik_ctr_acpkm                OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,1L
 
-#define SN_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac               "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac"
-#define NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac              1178
-#define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac              OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,2L
+#define SN_kuznyechik_ctr_acpkm_omac            "kuznyechik-ctr-acpkm-omac"
+#define NID_kuznyechik_ctr_acpkm_omac           1221
+#define OBJ_kuznyechik_ctr_acpkm_omac           OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,2L
 
 #define SN_id_tc26_agreement            "id-tc26-agreement"
 #define NID_id_tc26_agreement           991
@@ -4320,17 +4320,17 @@
 #define NID_id_tc26_wrap_gostr3412_2015_magma           1180
 #define OBJ_id_tc26_wrap_gostr3412_2015_magma           OBJ_id_tc26_wrap,1L
 
-#define SN_id_tc26_wrap_gostr3412_2015_magma_kexp15             "id-tc26-wrap-gostr3412-2015-magma-kexp15"
-#define NID_id_tc26_wrap_gostr3412_2015_magma_kexp15            1181
-#define OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15            OBJ_id_tc26_wrap_gostr3412_2015_magma,1L
+#define SN_magma_kexp15         "magma-kexp15"
+#define NID_magma_kexp15                1222
+#define OBJ_magma_kexp15                OBJ_id_tc26_wrap_gostr3412_2015_magma,1L
 
 #define SN_id_tc26_wrap_gostr3412_2015_kuznyechik               "id-tc26-wrap-gostr3412-2015-kuznyechik"
 #define NID_id_tc26_wrap_gostr3412_2015_kuznyechik              1182
 #define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik              OBJ_id_tc26_wrap,2L
 
-#define SN_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15                "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15"
-#define NID_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               1183
-#define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik,1L
+#define SN_kuznyechik_kexp15            "kuznyechik-kexp15"
+#define NID_kuznyechik_kexp15           1223
+#define OBJ_kuznyechik_kexp15           OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik,1L
 
 #define SN_id_tc26_constants            "id-tc26-constants"
 #define NID_id_tc26_constants           994
@@ -4430,23 +4430,23 @@
 #define NID_issuerSignTool              1008
 #define OBJ_issuerSignTool              OBJ_member_body,643L,100L,112L
 
-#define SN_grasshopper_ecb              "grasshopper-ecb"
-#define NID_grasshopper_ecb             1012
+#define SN_kuznyechik_ecb               "kuznyechik-ecb"
+#define NID_kuznyechik_ecb              1224
 
-#define SN_grasshopper_ctr              "grasshopper-ctr"
-#define NID_grasshopper_ctr             1013
+#define SN_kuznyechik_ctr               "kuznyechik-ctr"
+#define NID_kuznyechik_ctr              1225
 
-#define SN_grasshopper_ofb              "grasshopper-ofb"
-#define NID_grasshopper_ofb             1014
+#define SN_kuznyechik_ofb               "kuznyechik-ofb"
+#define NID_kuznyechik_ofb              1226
 
-#define SN_grasshopper_cbc              "grasshopper-cbc"
-#define NID_grasshopper_cbc             1015
+#define SN_kuznyechik_cbc               "kuznyechik-cbc"
+#define NID_kuznyechik_cbc              1227
 
-#define SN_grasshopper_cfb              "grasshopper-cfb"
-#define NID_grasshopper_cfb             1016
+#define SN_kuznyechik_cfb               "kuznyechik-cfb"
+#define NID_kuznyechik_cfb              1228
 
-#define SN_grasshopper_mac              "grasshopper-mac"
-#define NID_grasshopper_mac             1017
+#define SN_kuznyechik_mac               "kuznyechik-mac"
+#define NID_kuznyechik_mac              1229
 
 #define SN_magma_ecb            "magma-ecb"
 #define NID_magma_ecb           1187
