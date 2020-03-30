@@ -298,6 +298,7 @@ int ERR_load_SSL_strings(void);
 #  define SSL_F_TLS_CONSTRUCT_CKE_DHE                      0
 #  define SSL_F_TLS_CONSTRUCT_CKE_ECDHE                    0
 #  define SSL_F_TLS_CONSTRUCT_CKE_GOST                     0
+#  define SSL_F_TLS_CONSTRUCT_CKE_GOST18                   0
 #  define SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE             0
 #  define SSL_F_TLS_CONSTRUCT_CKE_RSA                      0
 #  define SSL_F_TLS_CONSTRUCT_CKE_SRP                      0
@@ -422,6 +423,7 @@ int ERR_load_SSL_strings(void);
 #  define SSL_F_TLS_PROCESS_CKE_DHE                        0
 #  define SSL_F_TLS_PROCESS_CKE_ECDHE                      0
 #  define SSL_F_TLS_PROCESS_CKE_GOST                       0
+#  define SSL_F_TLS_PROCESS_CKE_GOST18                     0
 #  define SSL_F_TLS_PROCESS_CKE_PSK_PREAMBLE               0
 #  define SSL_F_TLS_PROCESS_CKE_RSA                        0
 #  define SSL_F_TLS_PROCESS_CKE_SRP                        0
@@ -457,6 +459,7 @@ int ERR_load_SSL_strings(void);
 /*
  * SSL reason codes.
  */
+# define SSL_R_ALGORITHM_FETCH_FAILED                     295
 # define SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY        291
 # define SSL_R_APP_DATA_IN_HANDSHAKE                      100
 # define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
@@ -556,7 +559,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_EXTRA_DATA_IN_MESSAGE                      153
 # define SSL_R_EXT_LENGTH_MISMATCH                        163
 # define SSL_R_FAILED_TO_INIT_ASYNC                       405
-# define SSL_R_ALGORITHM_FETCH_FAILED                     295
 # define SSL_R_FRAGMENTED_CLIENT_HELLO                    401
 # define SSL_R_GOT_A_FIN_BEFORE_A_CCS                     154
 # define SSL_R_HTTPS_PROXY_REQUEST                        155
