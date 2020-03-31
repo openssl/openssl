@@ -472,7 +472,7 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
             BIO_printf(bio, "certs in trust store:\n");
             print_store_certs(bio, X509_STORE_CTX_get0_store(ctx));
         }
-        CMPerr(0, X509_R_CERTIFICATE_VERIFICATION_FAILED);
+        X509err(0, X509_R_CERTIFICATE_VERIFICATION_FAILED);
         ERR_add_error_mem_bio("\n", bio);
         BIO_free(bio);
     }
