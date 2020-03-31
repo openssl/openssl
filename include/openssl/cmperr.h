@@ -44,6 +44,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_CERTRESPONSE_NOT_FOUND                     113
 #  define CMP_R_CERT_AND_KEY_DO_NOT_MATCH                  114
 #  define CMP_R_CHECKAFTER_OUT_OF_RANGE                    181
+#  define CMP_R_CHECKING_PBM_NO_SECRET_AVAILABLE           166
 #  define CMP_R_ENCOUNTERED_KEYUPDATEWARNING               176
 #  define CMP_R_ENCOUNTERED_WAITING                        162
 #  define CMP_R_ERROR_CALCULATING_PROTECTION               115
