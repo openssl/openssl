@@ -71,7 +71,7 @@ $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM \
-        param_build_set.c
+        param_build_set.c der_writer.c
 $UTIL_DEFINE=$CPUIDDEF
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
