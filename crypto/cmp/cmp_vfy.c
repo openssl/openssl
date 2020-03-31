@@ -577,6 +577,11 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     switch (nid) {
         /* 5.1.3.1.  Shared Secret Information */
     case NID_id_PasswordBasedMAC:
+        if (ctx->secretValue == 0) {
+            CMPerr(0, CMP_R_CHECKING_PBM_NO_SECRET_AVAILABLE);
+            break;
+        }
+
         if (verify_PBMAC(msg, ctx->secretValue)) {
             /*
              * RFC 4210, 5.3.2: 'Note that if the PKI Message Protection is
