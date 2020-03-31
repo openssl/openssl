@@ -18,3 +18,4 @@ SOURCE[../../libfips.a]=rsa.c
 SOURCE[../../libnonfips.a]=rsa.c
 
 DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
+DEPEND[dsa.o]=../../common/include/prov/der_dsa.h

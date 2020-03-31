@@ -25,11 +25,13 @@
 #include <openssl/err.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
+#include "internal/cryptlib.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dsa.h"
+#include "prov/der_dsa.h"
 
 static OSSL_OP_signature_newctx_fn dsa_newctx;
 static OSSL_OP_signature_sign_init_fn dsa_signature_init;
@@ -74,7 +76,8 @@ typedef struct {
     char mdname[OSSL_MAX_NAME_SIZE];
 
     /* The Algorithm Identifier of the combined signature algorithm */
-    unsigned char aid[OSSL_MAX_ALGORITHM_ID_SIZE];
+    unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+    unsigned char *aid;
     size_t  aid_len;
 
     /* main digest */
@@ -146,25 +149,35 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
     if (mdname != NULL) {
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid = dsa_get_md_nid(md);
-        size_t algorithmidentifier_len = 0;
-        const unsigned char *algorithmidentifier;
+        WPACKET pkt;
 
-        EVP_MD_free(ctx->md);
-        ctx->md = NULL;
-        ctx->mdname[0] = '\0';
-
-        algorithmidentifier =
-            dsa_algorithmidentifier_encoding(md_nid, &algorithmidentifier_len);
-
-        if (algorithmidentifier == NULL) {
+        if (md == NULL || md_nid == NID_undef) {
             EVP_MD_free(md);
             return 0;
         }
 
+        EVP_MD_CTX_free(ctx->mdctx);
+        EVP_MD_free(ctx->md);
+
+        /*
+         * TODO(3.0) Should we care about DER writing errors?
+         * All it really means is that for some reason, there's no
+         * AlgorithmIdentifier to be had, but the operation itself is
+         * still valid, just as long as it's not used to construct
+         * anything that needs an AlgorithmIdentifier.
+         */
+        ctx->aid_len = 0;
+        if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
+            && DER_w_algorithmIdentifier_DSA_with(&pkt, -1, ctx->dsa, md_nid)
+            && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &ctx->aid_len);
+            ctx->aid = WPACKET_get_curr(&pkt);
+        }
+        WPACKET_cleanup(&pkt);
+
+        ctx->mdctx = NULL;
         ctx->md = md;
         OPENSSL_strlcpy(ctx->mdname, mdname, sizeof(ctx->mdname));
-        memcpy(ctx->aid, algorithmidentifier, algorithmidentifier_len);
-        ctx->aid_len = algorithmidentifier_len;
     }
     return 1;
 }
