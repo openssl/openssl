@@ -28,6 +28,7 @@
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_rsa.h"
 
 static OSSL_OP_signature_newctx_fn rsa_newctx;
 static OSSL_OP_signature_sign_init_fn rsa_signature_init;
@@ -83,7 +84,8 @@ typedef struct {
     unsigned int flag_allow_md : 1;
 
     /* The Algorithm Identifier of the combined signature agorithm */
-    unsigned char aid[128];
+    unsigned char aid_buf[128];
+    unsigned char *aid;
     size_t  aid_len;
 
     /* main digest */
@@ -216,35 +218,38 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (mdname != NULL) {
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid = rsa_get_md_nid(md);
-        size_t algorithmidentifier_len = 0;
-        const unsigned char *algorithmidentifier = NULL;
+        WPACKET pkt;
 
-        if (md == NULL)
-            return 0;
-
-        if (!rsa_check_padding(md_nid, ctx->pad_mode)) {
+        if (md == NULL
+            || md_nid == NID_undef
+            || !rsa_check_padding(md_nid, ctx->pad_mode)) {
             EVP_MD_free(md);
             return 0;
         }
 
         EVP_MD_CTX_free(ctx->mdctx);
         EVP_MD_free(ctx->md);
-        ctx->md = NULL;
-        ctx->mdctx = NULL;
-        ctx->mdname[0] = '\0';
-        ctx->aid[0] = '\0';
+
+        /*
+         * TODO(3.0) Should we care about DER writing errors?
+         * All it really means is that for some reason, there's no
+         * AlgorithmIdentifier to be had (consider RSA with MD5-SHA1),
+         * but the operation itself is still valid, just as long as it's
+         * not used to construct anything that needs an AlgorithmIdentifier.
+         */
         ctx->aid_len = 0;
+        if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
+            && DER_w_algorithmIdentifier_RSA_with(&pkt, -1, ctx->rsa, md_nid)
+            && WPACKET_finish(&pkt)) {
+            WPACKET_get_total_written(&pkt, &ctx->aid_len);
+            ctx->aid = WPACKET_get_curr(&pkt);
+        }
+        WPACKET_cleanup(&pkt);
 
-        algorithmidentifier =
-            rsa_algorithmidentifier_encoding(md_nid, &algorithmidentifier_len);
-
+        ctx->mdctx = NULL;
         ctx->md = md;
         ctx->mdnid = md_nid;
         OPENSSL_strlcpy(ctx->mdname, mdname, sizeof(ctx->mdname));
-        if (algorithmidentifier != NULL) {
-            memcpy(ctx->aid, algorithmidentifier, algorithmidentifier_len);
-            ctx->aid_len = algorithmidentifier_len;
-        }
     }
 
     return 1;
