@@ -30,7 +30,7 @@ OpenSSL 3.0
    the various push functions and finally convert to a passable OSSL_PARAM
    array using OSSL_PARAM_BLD_to_param().
 
-   * Paul Dale *
+   *Paul Dale*
 
  * EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH(), and
    EVP_PKEY_get0_EC_KEY() can now handle EVP_PKEYs with provider side
@@ -43,9 +43,9 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * `ASN1_verify()`, `ASN1_digest()` and `ASN1_sign()` have been deprecated.
+ * ASN1_verify(), ASN1_digest() and ASN1_sign() have been deprecated.
    They are old functions that we don't use, and that you could disable with
-   the macro `NO_ASN1_OLD`.  This goes all the way back to OpenSSL 0.9.7.
+   the macro NO_ASN1_OLD.  This goes all the way back to OpenSSL 0.9.7.
 
    *Richard Levitte*
 
