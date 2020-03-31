@@ -88,6 +88,7 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
             goto err;
     }
 
+
     sk_BIGNUM_free(factors);
     sk_BIGNUM_free(exps);
     sk_BIGNUM_free(coeffs);
@@ -145,6 +146,11 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_coeff_names,
                                               coeffs))
         goto err;
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    /* The acvp test results are not meant for export so check for bld == NULL */
+    if (bld == NULL)
+        rsa_acvp_test_get_params(rsa, params);
+#endif
     ret = 1;
  err:
     sk_BIGNUM_const_free(factors);

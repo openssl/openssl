@@ -35,28 +35,21 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
 #endif /* FIPS_MODULE */
 
-int dh_generate_ffc_parameters(DH *dh, int type, int pbits,
-                               int qbits, EVP_MD *md, BN_GENCB *cb)
+int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
+                               BN_GENCB *cb)
 {
     int ret, res;
 
-    if (qbits <= 0) {
-        if (md != NULL)
-            qbits = EVP_MD_size(md) * 8;
-        else
-            qbits = (pbits >= 2048 ? SHA256_DIGEST_LENGTH :
-                                     SHA_DIGEST_LENGTH) * 8;
-    }
 #ifndef FIPS_MODULE
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
         ret = ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
                                             FFC_PARAM_TYPE_DH,
-                                            pbits, qbits, md, &res, cb);
+                                            pbits, qbits, &res, cb);
     else
 #endif
         ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
                                             FFC_PARAM_TYPE_DH,
-                                            pbits, qbits, md, &res, cb);
+                                            pbits, qbits, &res, cb);
     if (ret > 0)
         dh->dirty_cnt++;
     return ret;
