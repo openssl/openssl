@@ -51,7 +51,7 @@ $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
         curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
-        $ECASM ecdsa_aid.c ec_backend.c ecx_backend.c
+        $ECASM ec_backend.c ecx_backend.c
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
                         ec_err.c ecdh_kdf.c eck_prn.c ec_evp_lib.c
 SOURCE[../../providers/libfips.a]=$COMMON
