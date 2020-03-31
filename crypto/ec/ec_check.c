@@ -19,12 +19,12 @@
 int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
                                BN_CTX *ctx)
 {
-    int nid = NID_undef;
+    int nid;
     BN_CTX *new_ctx = NULL;
 
     if (group == NULL) {
         ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
-        goto err;
+        return NID_undef;
     }
 
     if (ctx == NULL) {
@@ -39,7 +39,6 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
     if (nid > 0 && nist_only && EC_curve_nid2nist(nid) == NULL)
         nid = NID_undef;
 
-err:
     BN_CTX_free(new_ctx);
     return nid;
 }
