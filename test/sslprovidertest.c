@@ -29,7 +29,7 @@ static int test_different_libctx(void)
     OSSL_PROVIDER *prov = NULL;
 
     /*
-     * Verify that the default and fips providers in the default libctx iare not
+     * Verify that the default and fips providers in the default libctx are not
      * available
      */
     if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
@@ -107,14 +107,6 @@ static int test_different_libctx(void)
 int setup_tests(void)
 {
     char *certsdir = NULL;
-    /*
-     * For tests in this file we want to ensure the default ctx does not have
-     * the default provider loaded into the default ctx. So we load "legacy" to
-     * prevent default from being auto-loaded. This tests that there is no
-     * "leakage", i.e. when using SSL_CTX_new_with_libctx() we expect only the
-     * specific libctx to be used - nothing should fall back to the default
-     * libctx
-     */
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -136,6 +128,14 @@ int setup_tests(void)
         return 0;
     }
 
+    /*
+     * For tests in this file we want to ensure the default ctx does not have
+     * the default provider loaded into the default ctx. So we load "legacy" to
+     * prevent default from being auto-loaded. This tests that there is no
+     * "leakage", i.e. when using SSL_CTX_new_with_libctx() we expect only the
+     * specific libctx to be used - nothing should fall back to the default
+     * libctx
+     */
     defctxlegacy = OSSL_PROVIDER_load(NULL, "legacy");
 
     ADD_TEST(test_different_libctx);
