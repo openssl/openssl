@@ -4816,7 +4816,7 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
     EVP_PKEY *pkey = NULL;
     const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
 #if 0
-    const char * pkey_ctx_name;
+    const char *pkey_ctx_name;
 #else
     int pkey_ctx_id;
 #endif
@@ -4838,7 +4838,7 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
      * provider aware.
      */
 #if 0
-    pkey_ctx_name = (ginf->flags & TLS_GROUP_FFDHE) ? "DH" : "EC";
+    pkey_ctx_name = (ginf->flags & TLS_GROUP_FFDHE) != 0 ? "DH" : "EC";
     pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, pkey_ctx_name,
                                       s->ctx->propq);
 #else
