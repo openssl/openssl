@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
+ Changes between 1.1.1e and 1.1.1f [31 Mar 2020]
 
   *) Revert the change of EOF detection while reading in libssl to avoid
      regressions in applications depending on the current way of reporting
