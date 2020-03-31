@@ -599,12 +599,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     BIGNUM *a1, *a2, *a3, *b1, *b2, *b3;
 #ifndef FIPS_MODE
     BN_CTX *ctx_new = NULL;
-
-    if (ctx == NULL)
-        ctx_new = ctx = BN_CTX_new();
 #endif
-    if (ctx == NULL)
-        return -1;
 
     /* compare the field types */
     if (EC_METHOD_get_field_type(EC_GROUP_method_of(a)) !=
@@ -616,6 +611,13 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         return 1;
     if (a->meth->flags & EC_FLAGS_CUSTOM_CURVE)
         return 0;
+
+#ifndef FIPS_MODE
+    if (ctx == NULL)
+        ctx_new = ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return -1;
 
     BN_CTX_start(ctx);
     a1 = BN_CTX_get(ctx);
@@ -1047,14 +1049,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t i = 0;
 #ifndef FIPS_MODE
     BN_CTX *new_ctx = NULL;
-
-    if (ctx == NULL)
-        ctx = new_ctx = BN_CTX_secure_new();
 #endif
-    if (ctx == NULL) {
-        ECerr(EC_F_EC_POINTS_MUL, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
 
     if ((scalar == NULL) && (num == 0)) {
         return EC_POINT_set_to_infinity(group, r);
@@ -1069,6 +1064,15 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
             ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
             return 0;
         }
+    }
+
+#ifndef FIPS_MODE
+    if (ctx == NULL)
+        ctx = new_ctx = BN_CTX_secure_new();
+#endif
+    if (ctx == NULL) {
+        ECerr(EC_F_EC_POINTS_MUL, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     if (group->meth->mul != NULL)
@@ -1183,15 +1187,17 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
     int ret = 0;
 #ifndef FIPS_MODE
     BN_CTX *new_ctx = NULL;
+#endif
 
+    if (group->mont_data == NULL)
+        return 0;
+
+#ifndef FIPS_MODE
     if (ctx == NULL)
         ctx = new_ctx = BN_CTX_secure_new();
 #endif
     if (ctx == NULL)
         return 0;
-
-    if (group->mont_data == NULL)
-        goto err;
 
     BN_CTX_start(ctx);
     if ((e = BN_CTX_get(ctx)) == NULL)
