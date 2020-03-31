@@ -17,8 +17,6 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_RC4
-
 #define ASN1_BROKEN_SEQUENCE(tname) \
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
         ASN1_SEQUENCE(tname)
@@ -59,5 +57,3 @@ ASN1_SEQUENCE(NETSCAPE_PKEY) = {
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_PKEY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(NETSCAPE_PKEY, NETSCAPE_PKEY)
 IMPLEMENT_ASN1_FUNCTIONS(NETSCAPE_PKEY)
-
-#endif                         /* OPENSSL_NO_RC4 */
