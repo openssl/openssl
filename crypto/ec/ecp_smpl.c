@@ -1442,36 +1442,38 @@ int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
     temp = BN_CTX_get(ctx);
     if (temp == NULL) {
         ECerr(EC_F_EC_GFP_SIMPLE_BLIND_COORDINATES, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto end;
     }
 
-    /* make sure lambda is not zero */
+    /*-
+     * Make sure lambda is not zero.
+     * If the RNG fails, we cannot blind but nevertheless want
+     * code to continue smoothly and not clobber the error stack.
+     */
     do {
-        if (!BN_priv_rand_range_ex(lambda, group->field, ctx)) {
-            ECerr(EC_F_EC_GFP_SIMPLE_BLIND_COORDINATES, ERR_R_BN_LIB);
-            goto err;
+        ERR_set_mark();
+        ret = BN_priv_rand_range_ex(lambda, group->field, ctx);
+        ERR_pop_to_mark();
+        if (ret == 0) {
+            ret = 1;
+            goto end;
         }
     } while (BN_is_zero(lambda));
 
     /* if field_encode defined convert between representations */
-    if (group->meth->field_encode != NULL
-        && !group->meth->field_encode(group, lambda, lambda, ctx))
-        goto err;
-    if (!group->meth->field_mul(group, p->Z, p->Z, lambda, ctx))
-        goto err;
-    if (!group->meth->field_sqr(group, temp, lambda, ctx))
-        goto err;
-    if (!group->meth->field_mul(group, p->X, p->X, temp, ctx))
-        goto err;
-    if (!group->meth->field_mul(group, temp, temp, lambda, ctx))
-        goto err;
-    if (!group->meth->field_mul(group, p->Y, p->Y, temp, ctx))
-        goto err;
-    p->Z_is_one = 0;
+    if ((group->meth->field_encode != NULL
+         && !group->meth->field_encode(group, lambda, lambda, ctx))
+        || !group->meth->field_mul(group, p->Z, p->Z, lambda, ctx)
+        || !group->meth->field_sqr(group, temp, lambda, ctx)
+        || !group->meth->field_mul(group, p->X, p->X, temp, ctx)
+        || !group->meth->field_mul(group, temp, temp, lambda, ctx)
+        || !group->meth->field_mul(group, p->Y, p->Y, temp, ctx))
+        goto end;
 
+    p->Z_is_one = 0;
     ret = 1;
 
- err:
+ end:
     BN_CTX_end(ctx);
     return ret;
 }
