@@ -746,6 +746,20 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                     if (r_is_at_infinity) {
                         if (!EC_POINT_copy(r, val_sub[i][digit >> 1]))
                             goto err;
+
+                        /*-
+                         * Apply coordinate blinding for EC_POINT.
+                         *
+                         * The underlying EC_METHOD can optionally implement this function:
+                         * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
+                         * success or if coordinate blinding is not implemented for this
+                         * group.
+                         */
+                        if (!ec_point_blind_coordinates(group, r, ctx)) {
+                            ECerr(EC_F_EC_WNAF_MUL, EC_R_POINT_COORDINATES_BLIND_FAILURE);
+                            goto err;
+                        }
+
                         r_is_at_infinity = 0;
                     } else {
                         if (!EC_POINT_add
