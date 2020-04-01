@@ -425,7 +425,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
 {
     int ret = 0;
     OSSL_PARAM *params = NULL, *params_sig = NULL;
-    OSSL_PARAM_BLD *bld;
+    OSSL_PARAM_BLD *bld = NULL;
     EVP_PKEY_CTX *sctx = NULL, *kctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned char sig[256];
