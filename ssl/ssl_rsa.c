@@ -1055,8 +1055,14 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
     int j;
     int rv;
     CERT *c = ssl != NULL ? ssl->cert : ctx->cert;
+    SSL_CTX *actualctx = ssl == NULL ? ctx : ssl->ctx;
     STACK_OF(X509) *dup_chain = NULL;
     EVP_PKEY *pubkey = NULL;
+
+    if (!X509v3_cache_extensions(x509, actualctx->libctx, actualctx->propq)) {
+        SSLerr(0, ERR_R_X509_LIB);
+        goto out;
+    }
 
     /* Do all security checks before anything else */
     rv = ssl_security_cert(ssl, ctx, x509, 0, 1);
