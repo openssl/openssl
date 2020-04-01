@@ -284,7 +284,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             if (check_after < 0 || (uint64_t)check_after
                 > (sleep ? ULONG_MAX / 1000 : INT_MAX)) {
                 CMPerr(0, CMP_R_CHECKAFTER_OUT_OF_RANGE);
-                if (BIO_snprintf(str, OSSL_CMP_PKISI_BUFLEN, "value = %ld",
+                if (BIO_snprintf(str, OSSL_CMP_PKISI_BUFLEN, "value = %jd",
                                  check_after) >= 0)
                     ERR_add_error_data(1, str);
                 goto err;
