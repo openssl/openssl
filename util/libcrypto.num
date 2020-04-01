@@ -5036,3 +5036,4 @@ EVP_PKEY_get_size_t_param               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_bn_param                   ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_CTX_new_with_libctx          ?	3_0_0	EXIST::FUNCTION:

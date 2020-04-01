@@ -352,6 +352,8 @@ X509_STORE_CTX_cleanup_fn X509_STORE_get_cleanup(const X509_STORE *ctx);
 int X509_STORE_set_ex_data(X509_STORE *ctx, int idx, void *data);
 void *X509_STORE_get_ex_data(const X509_STORE *ctx, int idx);
 
+X509_STORE_CTX *X509_STORE_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+                                               const char *propq);
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);

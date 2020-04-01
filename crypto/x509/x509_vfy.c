@@ -2202,16 +2202,34 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     return 1;
 }
 
-X509_STORE_CTX *X509_STORE_CTX_new(void)
+X509_STORE_CTX *X509_STORE_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+                                               const char *propq)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
-        X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    ctx->libctx = libctx;
+    if (propq != NULL) {
+        ctx->propq = OPENSSL_strdup(propq);
+        if (ctx->propq == NULL) {
+            OPENSSL_free(ctx);
+            X509err(0, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    }
+
     return ctx;
 }
+
+X509_STORE_CTX *X509_STORE_CTX_new(void)
+{
+    return X509_STORE_CTX_new_with_libctx(NULL, NULL);
+}
+
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
@@ -2219,6 +2237,10 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
         return;
 
     X509_STORE_CTX_cleanup(ctx);
+
+    /* libctx and propq survive X509_STORE_CTX_cleanup() */
+    OPENSSL_free(ctx->propq);
+
     OPENSSL_free(ctx);
 }
 
