@@ -17,13 +17,12 @@
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
 #include <openssl/objects.h>
-#include <openssl/params.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
-#include "openssl/param_build.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "internal/param_build_set.h"
 
 static OSSL_OP_keymgmt_new_fn ec_newdata;
 static OSSL_OP_keymgmt_free_fn ec_freedata;
@@ -40,8 +39,8 @@ static OSSL_OP_keymgmt_export_fn ec_export;
 static OSSL_OP_keymgmt_export_types_fn ec_export_types;
 static OSSL_OP_keymgmt_query_operation_name_fn ec_query_operation_name;
 
-#define EC_POSSIBLE_SELECTIONS                 \
-    (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
+#define EC_POSSIBLE_SELECTIONS                                                 \
+    (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
 
 static
 const char *ec_query_operation_name(int operation_id)
@@ -56,7 +55,8 @@ const char *ec_query_operation_name(int operation_id)
 }
 
 static ossl_inline
-int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
+int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
+                        OSSL_PARAM params[])
 {
     const EC_GROUP *ecg;
     int curve_nid;
@@ -71,11 +71,7 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
     curve_nid = EC_GROUP_get_curve_name(ecg);
 
     if (curve_nid == NID_undef) {
-        /* explicit parameters */
-
-        /*
-         * TODO(3.0): should we support explicit parameters curves?
-         */
+        /* TODO(3.0): should we support explicit parameters curves? */
         return 0;
     } else {
         /* named curve */
@@ -83,9 +79,10 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
 
         if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
             return 0;
+        if (!ossl_param_build_set_utf8_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_EC_NAME,
+                                              curve_name))
 
-        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME,
-                                             curve_name, 0))
             return 0;
     }
 
@@ -100,12 +97,13 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
  * parameters are exported separately.
  */
 static ossl_inline
-int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private)
+int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
+                  OSSL_PARAM params[], int include_private,
+                  unsigned char **pub_key)
 {
     const BIGNUM *priv_key = NULL;
     const EC_POINT *pub_point = NULL;
     const EC_GROUP *ecg = NULL;
-    unsigned char *pub_key = NULL;
     size_t pub_key_len = 0;
     int ret = 0;
 
@@ -120,10 +118,10 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
         /* convert pub_point to a octet string according to the SECG standard */
         if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
                                               POINT_CONVERSION_COMPRESSED,
-                                              &pub_key, NULL)) == 0
-            || !OSSL_PARAM_BLD_push_octet_string(tmpl,
-                                                 OSSL_PKEY_PARAM_PUB_KEY,
-                                                 pub_key, pub_key_len))
+                                              pub_key, NULL)) == 0
+            || !ossl_param_build_set_octet_string(tmpl, params,
+                                                  OSSL_PKEY_PARAM_PUB_KEY,
+                                                  *pub_key, pub_key_len))
             goto err;
     }
 
@@ -168,21 +166,20 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl, int include_private
         if (ecbits <= 0)
             goto err;
         sz = (ecbits + 7 ) / 8;
-        if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
-                                        OSSL_PKEY_PARAM_PRIV_KEY,
-                                        priv_key, sz))
+
+        if (!ossl_param_build_set_bn_pad(tmpl, params,
+                                         OSSL_PKEY_PARAM_PRIV_KEY,
+                                         priv_key, sz))
             goto err;
     }
-
     ret = 1;
-
  err:
-    OPENSSL_free(pub_key);
     return ret;
 }
 
 static ossl_inline
-int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
+int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
+                          OSSL_PARAM params[])
 {
     int ecdh_cofactor_mode = 0;
 
@@ -191,12 +188,9 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl)
 
     ecdh_cofactor_mode =
         (EC_KEY_get_flags(ec) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
-    if (!OSSL_PARAM_BLD_push_int(tmpl,
-                OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
-                ecdh_cofactor_mode))
-        return 0;
-
-    return 1;
+    return ossl_param_build_set_int(tmpl, params,
+                                    OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                                    ecdh_cofactor_mode);
 }
 
 static
@@ -314,6 +308,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     EC_KEY *ec = keydata;
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
+    unsigned char *pub_key = NULL;
     int ok = 1;
 
     if (ec == NULL)
@@ -346,15 +341,16 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && domparams_to_params(ec, tmpl);
+        ok = ok && domparams_to_params(ec, tmpl, NULL);
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
 
-        ok = ok && key_to_params(ec, tmpl, include_private);
+        ok = ok && key_to_params(ec, tmpl, NULL, include_private, &pub_key);
     }
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && otherparams_to_params(ec, tmpl);
+        ok = ok && otherparams_to_params(ec, tmpl, NULL);
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
@@ -364,6 +360,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     OSSL_PARAM_BLD_free_params(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
+    OPENSSL_free(pub_key);
     return ok;
 }
 
@@ -423,9 +420,11 @@ const OSSL_PARAM *ec_export_types(int selection)
 static
 int ec_get_params(void *key, OSSL_PARAM params[])
 {
+    int ret;
     EC_KEY *eck = key;
     const EC_GROUP *ecg = NULL;
     OSSL_PARAM *p;
+    unsigned char *pub_key = NULL;
 
     ecg = EC_KEY_get0_group(eck);
     if (ecg == NULL)
@@ -485,15 +484,21 @@ int ec_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
             return 0;
     }
-
-    return 1;
+    ret = domparams_to_params(eck, NULL, params)
+          && key_to_params(eck, NULL, params, 1, &pub_key)
+          && otherparams_to_params(eck, NULL, params);
+    OPENSSL_free(pub_key);
+    return ret;
 }
 
 static const OSSL_PARAM ec_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
+    EC_IMEXPORTABLE_DOM_PARAMETERS,
+    EC_IMEXPORTABLE_PUBLIC_KEY,
+    EC_IMEXPORTABLE_PRIVATE_KEY,
+    EC_IMEXPORTABLE_OTHER_PARAMETERS,
     OSSL_PARAM_END
 };
 

@@ -334,20 +334,74 @@ The RSA "e" value.
 
 The RSA "d" value.
 
-=item "rsa-factor" (B<OSSL_PKEY_PARAM_RSA_FACTOR>) <unsigned integer>
+=item "rsa-factor1" (B<OSSL_PKEY_PARAM_RSA_FACTOR1>) <unsigned integer>
 
-An RSA factor. In 2 prime RSA these are often known as "p" or "q". This value
-may be repeated up to 10 times in a single key.
+=item "rsa-factor2" (B<OSSL_PKEY_PARAM_RSA_FACTOR2>) <unsigned integer>
 
-=item "rsa-exponent" (B<OSSL_PKEY_PARAM_RSA_EXPONENT>) <unsigned integer>
+=item "rsa-factor3" (B<OSSL_PKEY_PARAM_RSA_FACTOR3>) <unsigned integer>
 
-An RSA CRT (Chinese Remainder Theorem) exponent. This value may be repeated up
-to 10 times in a single key.
+=item "rsa-factor4" (B<OSSL_PKEY_PARAM_RSA_FACTOR4>) <unsigned integer>
 
-=item "rsa-coefficient" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT>) <unsigned integer>
+=item "rsa-factor5" (B<OSSL_PKEY_PARAM_RSA_FACTOR5>) <unsigned integer>
 
-An RSA CRT (Chinese Remainder Theorem) coefficient. This value may be repeated
-up to 9 times in a single key.
+=item "rsa-factor6" (B<OSSL_PKEY_PARAM_RSA_FACTOR6>) <unsigned integer>
+
+=item "rsa-factor7" (B<OSSL_PKEY_PARAM_RSA_FACTOR7>) <unsigned integer>
+
+=item "rsa-factor8" (B<OSSL_PKEY_PARAM_RSA_FACTOR8>) <unsigned integer>
+
+=item "rsa-factor9" (B<OSSL_PKEY_PARAM_RSA_FACTOR9>) <unsigned integer>
+
+=item "rsa-factor10" (B<OSSL_PKEY_PARAM_RSA_FACTOR10>) <unsigned integer>
+
+RSA prime factors. The factors are known as "p", "q" and "r_i" in RFC8017.
+Up to eight additional "r_i" prime factors are supported.
+
+=item "rsa-exponent1" (B<OSSL_PKEY_PARAM_RSA_EXPONENT1>) <unsigned integer>
+
+=item "rsa-exponent2" (B<OSSL_PKEY_PARAM_RSA_EXPONENT2>) <unsigned integer>
+
+=item "rsa-exponent3" (B<OSSL_PKEY_PARAM_RSA_EXPONENT3>) <unsigned integer>
+
+=item "rsa-exponent4" (B<OSSL_PKEY_PARAM_RSA_EXPONENT4>) <unsigned integer>
+
+=item "rsa-exponent5" (B<OSSL_PKEY_PARAM_RSA_EXPONENT5>) <unsigned integer>
+
+=item "rsa-exponent6" (B<OSSL_PKEY_PARAM_RSA_EXPONENT6>) <unsigned integer>
+
+=item "rsa-exponent7" (B<OSSL_PKEY_PARAM_RSA_EXPONENT7>) <unsigned integer>
+
+=item "rsa-exponent8" (B<OSSL_PKEY_PARAM_RSA_EXPONENT8>) <unsigned integer>
+
+=item "rsa-exponent9" (B<OSSL_PKEY_PARAM_RSA_EXPONENT9>) <unsigned integer>
+
+=item "rsa-exponent10" (B<OSSL_PKEY_PARAM_RSA_EXPONENT10>) <unsigned integer>
+
+RSA CRT (Chinese Remainder Theorem) exponents. The exponents are known
+as "dP", "dQ" and "d_i in RFC8017".
+Up to eight additional "d_i" exponents are supported.
+
+=item "rsa-coefficient1" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT1>) <unsigned integer>
+
+=item "rsa-coefficient2" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT2>) <unsigned integer>
+
+=item "rsa-coefficient3" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT3>) <unsigned integer>
+
+=item "rsa-coefficient4" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT4>) <unsigned integer>
+
+=item "rsa-coefficient5" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT5>) <unsigned integer>
+
+=item "rsa-coefficient6" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT6>) <unsigned integer>
+
+=item "rsa-coefficient7" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT7>) <unsigned integer>
+
+=item "rsa-coefficient8" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT8>) <unsigned integer>
+
+=item "rsa-coefficient9" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT9>) <unsigned integer>
+
+RSA CRT (Chinese Remainder Theorem) coefficients. The coefficients are known as
+"qInv" and "t_i".
+Up to eight additional "t_i" exponents are supported.
 
 =back
 
@@ -427,10 +481,12 @@ The private key value.
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Parameters currently recognised by built-in keymgmt algorithms
-are as follows.
+The Built-in Import/Export Types listed above are also Information Parameters.
 Not all parameters are relevant to, or are understood by all keymgmt
 algorithms:
+
+Parameters currently recognised by built-in keymgmt algorithms
+also include the following.
 
 =over 4
 

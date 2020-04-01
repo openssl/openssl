@@ -66,7 +66,7 @@ static FIXTURE *set_up(const char *testcase_name)
 #define DQ      7
 #define E3      8                /* Extra exponent */
 #define QINV    9
-#define C3      10               /* Extra coefficient */
+#define C2      10               /* Extra coefficient */
 
 /*
  * We have to do this because OSSL_PARAM_get_ulong() can't handle params
@@ -92,10 +92,6 @@ static int export_cb(const OSSL_PARAM *params, void *arg)
 {
     unsigned long *keydata = arg;
     const OSSL_PARAM *p = NULL;
-    int factors_idx;
-    int exponents_idx;
-    int coefficients_idx;
-    int ret = 1;                 /* Ever so hopeful */
 
     if (keydata == NULL)
         return 0;
@@ -106,35 +102,31 @@ static int export_cb(const OSSL_PARAM *params, void *arg)
         || !TEST_true(get_ulong_via_BN(p, &keydata[E]))
         || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D))
         || !TEST_true(get_ulong_via_BN(p, &keydata[D])))
-        ret = 0;
+        return 0;
 
-    for (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR),
-             factors_idx = P;
-         p != NULL && factors_idx <= F3;
-         p = OSSL_PARAM_locate_const(p + 1, OSSL_PKEY_PARAM_RSA_FACTOR),
-         factors_idx++)
-        if (!TEST_true(get_ulong_via_BN(p, &keydata[factors_idx])))
-            ret = 0;
-    for (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_EXPONENT),
-             exponents_idx = DP;
-         p != NULL && exponents_idx <= E3;
-         p = OSSL_PARAM_locate_const(p + 1, OSSL_PKEY_PARAM_RSA_EXPONENT),
-         exponents_idx++)
-        if (!TEST_true(get_ulong_via_BN(p, &keydata[exponents_idx])))
-            ret = 0;
-    for (p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_COEFFICIENT),
-             coefficients_idx = QINV;
-         p != NULL && coefficients_idx <= C3;
-         p = OSSL_PARAM_locate_const(p + 1, OSSL_PKEY_PARAM_RSA_COEFFICIENT),
-         coefficients_idx++)
-        if (!TEST_true(get_ulong_via_BN(p, &keydata[coefficients_idx])))
-            ret = 0;
+    if (!TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[P]))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[Q]))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR3))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[F3])))
+        return 0;
 
-    if (!TEST_int_le(factors_idx, F3)
-        || !TEST_int_le(exponents_idx, E3)
-        || !TEST_int_le(coefficients_idx, C3))
-        ret = 0;
-    return ret;
+    if (!TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_EXPONENT1))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[DP]))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_EXPONENT2))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[DQ]))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_EXPONENT3))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[E3])))
+        return 0;
+
+    if (!TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_COEFFICIENT1))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[QINV]))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_COEFFICIENT2))
+        || !TEST_true(get_ulong_via_BN(p, &keydata[C2])))
+        return 0;
+
+    return 1;
 }
 
 static int test_pass_rsa(FIXTURE *fixture)
@@ -146,9 +138,13 @@ static int test_pass_rsa(FIXTURE *fixture)
     EVP_PKEY *pk = NULL;
     EVP_KEYMGMT *km1 = NULL, *km2 = NULL;
     void *provkey = NULL;
+    BIGNUM *bn_primes[1] = { NULL };
+    BIGNUM *bn_exps[1] = { NULL };
+    BIGNUM *bn_coeffs[1] = { NULL };
     /*
      * 32-bit RSA key, extracted from this command,
      * executed with OpenSSL 1.0.2:
+     * An extra factor was added just for testing purposes.
      *
      * openssl genrsa 32 | openssl rsa -text
      */
@@ -158,12 +154,12 @@ static int test_pass_rsa(FIXTURE *fixture)
         0x7b133399,              /* D */
         0xe963,                  /* P */
         0xceb7,                  /* Q */
-        0,                       /* F3 */
+        1,                       /* F3 */
         0x8599,                  /* DP */
         0xbd87,                  /* DQ */
-        0,                       /* E3 */
+        2,                       /* E3 */
         0xcc3b,                  /* QINV */
-        0,                       /* C3 */
+        3,                       /* C3 */
         0                        /* Extra, should remain zero */
     };
     static unsigned long keydata[OSSL_NELEM(expected)] = { 0, };
@@ -196,6 +192,16 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_true(RSA_set0_crt_params(rsa, bn1, bn2, bn3)))
         goto err;
     bn1 = bn2 = bn3 = NULL;
+
+    if (!TEST_ptr(bn_primes[0] = BN_new())
+        || !TEST_true(BN_set_word(bn_primes[0], expected[F3]))
+        || !TEST_ptr(bn_exps[0] = BN_new())
+        || !TEST_true(BN_set_word(bn_exps[0], expected[E3]))
+        || !TEST_ptr(bn_coeffs[0] = BN_new())
+        || !TEST_true(BN_set_word(bn_coeffs[0], expected[C2]))
+        || !TEST_true(RSA_set0_multi_prime_params(rsa, bn_primes, bn_exps,
+                                                  bn_coeffs, 1)))
+        goto err;
 
     if (!TEST_ptr(pk = EVP_PKEY_new())
         || !TEST_true(EVP_PKEY_assign_RSA(pk, rsa)))

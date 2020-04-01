@@ -1459,3 +1459,163 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     return 0;     /* No downgrade, but at least the key is restored */
 }
 #endif  /* FIPS_MODE */
+
+const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
+{
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL)
+        return 0;
+    return evp_keymgmt_gettable_params(pkey->keymgmt);
+}
+
+/*
+ * For the following methods param->return_size is set to a value
+ * larger than can be returned by the call to evp_keymgmt_get_params().
+ * If it is still this value then the parameter was ignored - and in this
+ * case it returns an error..
+ */
+
+int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
+{
+    int ret = 0;
+    OSSL_PARAM params[2];
+    unsigned char buffer[2048];
+    /*
+     * Use -1 as the terminator here instead of sizeof(buffer) + 1 since
+     * -1 is less likely to be a valid value.
+     */
+    const size_t not_set = (size_t)-1;
+    unsigned char *buf = NULL;
+    size_t buf_sz = 0;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL
+        || key_name == NULL
+        || bn == NULL)
+        return 0;
+
+    memset(buffer, 0, sizeof(buffer));
+    params[0] = OSSL_PARAM_construct_BN(key_name, buffer, sizeof(buffer));
+    /* If the return_size is still not_set then we know it was not found */
+    params[0].return_size = not_set;
+    params[1] = OSSL_PARAM_construct_end();
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)) {
+        if (params[0].return_size == not_set
+            || params[0].return_size == 0)
+            return 0;
+        buf_sz = params[0].return_size;
+        /*
+         * If it failed because the buffer was too small then allocate the
+         * required buffer size and retry.
+         */
+        buf = OPENSSL_zalloc(buf_sz);
+        if (buf == NULL)
+            return 0;
+        params[0].data = buf;
+        params[0].data_size = buf_sz;
+
+        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+            goto err;
+    }
+    /* Fail if the param was not found */
+    if (params[0].return_size == not_set)
+        goto err;
+    ret = OSSL_PARAM_get_BN(params, bn);
+err:
+    OPENSSL_free(buf);
+    return ret;
+}
+
+int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
+                                    unsigned char *buf, size_t max_buf_sz,
+                                    size_t *out_sz)
+{
+    OSSL_PARAM params[2];
+    const size_t not_set = max_buf_sz + 1;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL
+        || key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
+    params[0].return_size = not_set;
+    params[1] = OSSL_PARAM_construct_end();
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        return 0;
+    if (params[0].return_size == not_set)
+        return 0;
+    if (out_sz != NULL)
+        *out_sz = params[0].return_size;
+    return 1;
+}
+
+int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
+                                    char *str, size_t max_buf_sz,
+                                    size_t *out_sz)
+{
+    OSSL_PARAM params[2];
+    const size_t not_set = max_buf_sz + 1;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL
+        || key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
+    params[0].return_size = not_set;
+    params[1] = OSSL_PARAM_construct_end();
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        return 0;
+    if (params[0].return_size == not_set)
+        return 0;
+    if (out_sz != NULL)
+        *out_sz = params[0].return_size;
+    return 1;
+}
+
+int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
+{
+    OSSL_PARAM params[2];
+    const size_t not_set = sizeof(int) + 1;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL
+        || key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_int(key_name, out);
+    params[0].return_size = not_set;
+    params[1] = OSSL_PARAM_construct_end();
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        return 0;
+    if (params[0].return_size == not_set)
+        return 0;
+    return 1;
+}
+
+int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out)
+{
+    OSSL_PARAM params[2];
+    const size_t not_set = sizeof(size_t) + 1;
+
+    if (pkey == NULL
+        || pkey->keymgmt == NULL
+        || pkey->keydata == NULL
+        || key_name == NULL)
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_size_t(key_name, out);
+    params[0].return_size = not_set;
+    params[1] = OSSL_PARAM_construct_end();
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        return 0;
+    if (params[0].return_size == not_set)
+        return 0;
+    return 1;
+}

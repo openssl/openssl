@@ -5030,3 +5030,9 @@ SRP_Calc_u_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_x_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_client_key_ex                  ?	3_0_0	EXIST::FUNCTION:SRP
 X509v3_cache_extensions                 ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_gettable_params                ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_int_param                  ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_size_t_param               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_bn_param                   ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
