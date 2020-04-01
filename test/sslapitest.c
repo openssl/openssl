@@ -649,7 +649,6 @@ end:
 
     return testresult;
 }
-#endif
 
 /*
  * Very focused test to exercise a single case in the server-side state
@@ -761,6 +760,7 @@ end:
 
     return testresult;
 }
+#endif
 
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth,
