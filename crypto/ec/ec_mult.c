@@ -421,8 +421,21 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         || (bn_wexpand(&r->Z, group_top) == NULL))
         goto err;
 
-    /* blinding for prime curves: use point r as temporary variable. */
     if (group->meth->field_type == NID_X9_62_prime_field) {
+        /*
+         * Apply blinding independently to r and s: use point r as temporary
+         * variable.
+         *
+         * Blinding requires using a projective representation, and later we
+         * implement the ladder step using EC_POINT_add() and EC_POINT_dbl():
+         * this requires EC_METHODs that support projective coordinates in their
+         * point addition and point doubling implementations.
+         *
+         * All the built-in EC_METHODs for prime curves at the moment satisfy
+         * this condition, while the EC_METHOD for binary curves does not.
+         *
+         * This is why we check for a prime field to apply blinding.
+         */
 
         /* first randomize r->Z to blind s. */
         do {
