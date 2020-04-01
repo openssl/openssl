@@ -12,14 +12,14 @@ With `clang` from a package manager
 Install `clang`, which [ships with `libfuzzer`](http://llvm.org/docs/LibFuzzer.html#fuzzer-usage)
 since version 6.0:
 
-    $ sudo apt-get install clang
+    sudo apt-get install clang
 
 Configure `openssl` for fuzzing. For now, you'll still need to pass in the path
 to the `libFuzzer` library file while configuring; this is represented as
 `$PATH_TO_LIBFUZZER` below. A typical value would be
-`/usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.fuzzer-x86_64.a`.
+`/usr/lib/llvm-7/lib/clang/7.0.1/lib/linux/libclang_rt.fuzzer-x86_64.a`.
 
-    $ CC=clang ./config enable-fuzz-libfuzzer \
+    CC=clang ./config enable-fuzz-libfuzzer \
             --with-fuzzer-lib=$PATH_TO_LIBFUZZER \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
@@ -31,14 +31,16 @@ to the `libFuzzer` library file while configuring; this is represented as
 
 Compile:
 
-    $ sudo apt-get install make
-    $ LDCMD=clang++ make -j
+    sudo apt-get install make
+    make clean
+    LDCMD=clang++ make -j4
 
 Finally, perform the actual fuzzing:
 
-    $ fuzz/helper.py $FUZZER
+    fuzz/helper.py $FUZZER
 
 where $FUZZER is one of the executables in `fuzz/`.
+It will run until you stop it.
 
 If you get a crash, you should find a corresponding input file in
 `fuzz/corpora/$FUZZER-crash/`.
@@ -54,7 +56,7 @@ fuzzing is the same, except that you also need to specify
 a `--with-fuzzer-include` option, which should be the parent directory of the
 prebuilt fuzzer library. This is represented as `$PATH_TO_LIBFUZZER_DIR` below.
 
-    $ CC=clang ./config enable-fuzz-libfuzzer \
+    CC=clang ./config enable-fuzz-libfuzzer \
             --with-fuzzer-include=$PATH_TO_LIBFUZZER_DIR \
             --with-fuzzer-lib=$PATH_TO_LIBFUZZER \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
@@ -68,21 +70,24 @@ prebuilt fuzzer library. This is represented as `$PATH_TO_LIBFUZZER_DIR` below.
 AFL
 ===
 
+This is an alternative to using LibFuzzer.
+
 Configure for fuzzing:
 
-    $ sudo apt-get install afl-clang
-    $ CC=afl-clang-fast ./config enable-fuzz-afl no-shared no-module \
+    sudo apt-get install afl-clang
+    CC=afl-clang-fast ./config enable-fuzz-afl no-shared no-module \
         -DPEDANTIC enable-tls1_3 enable-weak-ssl-ciphers enable-rc5 \
         enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg \
         enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment \
         --debug
-    $ make
+    make clean
+    make
 
 The following options can also be enabled: enable-asan, enable-ubsan, enable-msan
 
 Run one of the fuzzers:
 
-    $ afl-fuzz -i fuzz/corpora/$FUZZER -o fuzz/corpora/$FUZZER/out fuzz/$FUZZER
+    afl-fuzz -i fuzz/corpora/$FUZZER -o fuzz/corpora/$FUZZER/out fuzz/$FUZZER
 
 Where $FUZZER is one of the executables in `fuzz/`.
 
@@ -100,7 +105,7 @@ reproduce the generated random numbers.
 
 To reproduce the crash you can run:
 
-    $ fuzz/$FUZZER-test $file
+    fuzz/$FUZZER-test $file
 
 Random numbers
 ==============
@@ -140,3 +145,13 @@ The client and server corpus is generated with multiple config options:
 
 The libfuzzer merge option is used to add the additional coverage
 from each config to the minimal set.
+
+Minimizing the corpus
+=====================
+
+When you have gathered corpus data from more than one fuzzer run
+or for any other reason want to to minimize the data
+in some corpus subdirectory `fuzz/corpora/DIR` this can be done as follows:
+
+    mkdir fuzz/corpora/NEWDIR
+    fuzz/$FUZZER -merge=1 fuzz/corpora/NEWDIR fuzz/corpora/DIR
