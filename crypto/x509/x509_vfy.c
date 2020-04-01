@@ -104,11 +104,12 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/* Return 1 is a certificate is self signed */
-static int cert_self_signed(X509 *x)
+/* Return 1 is a certificate is self signed, 0 if not, or -1 on error */
+static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x)
 {
-    if (X509_check_purpose(x, -1, 0) != 1)
-        return 0;
+    if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq))
+        return -1;
+
     if (x->ex_flags & EXFLAG_SS)
         return 1;
     else
@@ -324,14 +325,26 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
     int ret;
-    if (x == issuer)
-        return cert_self_signed(x);
+    int ss;
+
+    if (x == issuer) {
+        ss = cert_self_signed(ctx, x);
+        if (ss < 0)
+            return 0;
+        return ss;
+    }
+
     ret = X509_check_issued(issuer, x);
     if (ret == X509_V_OK) {
         int i;
         X509 *ch;
+
+        ss = cert_self_signed(ctx, x);
+        if (ss < 0)
+            return 0;
+
         /* Special case: single self signed certificate */
-        if (cert_self_signed(x) && sk_X509_num(ctx->chain) == 1)
+        if (ss > 0 && sk_X509_num(ctx->chain) == 1)
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
@@ -2920,7 +2933,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
-    int ss = cert_self_signed(cert);
+    int ss;
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -2933,6 +2946,13 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     /* Our chain starts with a single untrusted element. */
     if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
+        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+
+    ss = cert_self_signed(ctx, cert);
+    if (ss < 0) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -3110,7 +3130,12 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    ss = cert_self_signed(x);
+                    ss = cert_self_signed(ctx, x);
+                    if (ss < 0) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        return 0;
+                    }
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3222,7 +3247,12 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
-            ss = cert_self_signed(xtmp);
+            ss = cert_self_signed(ctx, xtmp);
+            if (ss < 0) {
+                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                return 0;
+            }
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
