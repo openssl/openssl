@@ -324,7 +324,7 @@ $code.=<<___;
 .asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 #if !defined(__KERNELL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
+.hidden	OPENSSL_armcap_P
 #endif
 ___
 }}}

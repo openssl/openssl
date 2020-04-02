@@ -831,7 +831,7 @@ ___
 
 $code.=<<___;
 #if !defined(__KERNEL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
+.hidden	OPENSSL_armcap_P
 #endif
 ___
 
