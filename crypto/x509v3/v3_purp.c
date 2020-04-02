@@ -384,12 +384,16 @@ static void x509v3_cache_extensions(X509 *x)
         if (bs->ca)
             x->ex_flags |= EXFLAG_CA;
         if (bs->pathlen) {
-            if ((bs->pathlen->type == V_ASN1_NEG_INTEGER)
-                || !bs->ca) {
+            if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
                 x->ex_flags |= EXFLAG_INVALID;
                 x->ex_pathlen = 0;
-            } else
+            } else {
                 x->ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
+                if (!bs->ca && x->ex_pathlen != 0) {
+                    x->ex_flags |= EXFLAG_INVALID;
+                    x->ex_pathlen = 0;
+                }
+            }
         } else
             x->ex_pathlen = -1;
         BASIC_CONSTRAINTS_free(bs);
