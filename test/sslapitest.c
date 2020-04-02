@@ -2097,6 +2097,8 @@ static int test_extra_tickets(int idx)
     if (!setup_ticket_test(0, idx, &sctx, &cctx))
         goto end;
     SSL_CTX_sess_set_new_cb(sctx, new_session_cb);
+    /* setup_ticket_test() uses new_cachesession_cb which we don't need. */
+    SSL_CTX_sess_set_new_cb(cctx, new_session_cb);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL)))
