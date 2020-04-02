@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/buffer.h>
+#include <openssl/rand.h>
 #include "internal/packet.h"
 #include "testutil.h"
 
@@ -21,6 +22,9 @@ static const unsigned char empty[] = { 0x00 };
 static const unsigned char alloc[] = { 0x02, 0xfe, 0xff };
 static const unsigned char submem[] = { 0x03, 0x02, 0xfe, 0xff };
 static const unsigned char fixed[] = { 0xff, 0xff, 0xff };
+static const unsigned char simpleder[] = {
+    0xfc, 0x04, 0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd
+};
 
 static BUF_MEM *buf;
 
@@ -349,6 +353,43 @@ static int test_WPACKET_memcpy(void)
     return 1;
 }
 
+static int test_WPACKET_init_der(void)
+{
+    WPACKET pkt;
+    unsigned char sbuf[1024];
+    unsigned char testdata[] = { 0x00, 0x01, 0x02, 0x03 };
+    unsigned char testdata2[259]  = { 0x82, 0x01, 0x00 };
+    size_t written;
+
+    /* Test initialising for writing DER */
+    if (!TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf)))
+            || !TEST_true(WPACKET_put_bytes_u24(&pkt, 0xfffefd))
+               /* Test writing data in a length prefixed sub-packet */
+            || !TEST_true(WPACKET_start_sub_packet(&pkt))
+            || !TEST_true(WPACKET_memcpy(&pkt, testdata, sizeof(testdata)))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_put_bytes_u8(&pkt, 0xfc))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written, simpleder,
+                            sizeof(simpleder)))
+        return cleanup(&pkt);
+
+    /* Test with a sub-packet that has 2 length bytes */
+    if (!TEST_true(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3))
+            || !TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf)))
+            || !TEST_true(WPACKET_start_sub_packet(&pkt))
+            || !TEST_true(WPACKET_memcpy(&pkt, &testdata2[3], sizeof(testdata2) - 3))
+            || !TEST_true(WPACKET_close(&pkt))
+            || !TEST_true(WPACKET_finish(&pkt))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written, testdata2,
+                            sizeof(testdata2)))
+        return cleanup(&pkt);
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(buf = BUF_MEM_new()))
@@ -360,6 +401,7 @@ int setup_tests(void)
     ADD_TEST(test_WPACKET_set_flags);
     ADD_TEST(test_WPACKET_allocate_bytes);
     ADD_TEST(test_WPACKET_memcpy);
+    ADD_TEST(test_WPACKET_init_der);
     return 1;
 }
 
