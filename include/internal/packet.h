@@ -638,6 +638,9 @@ struct wpacket_st {
 
     /* Our sub-packets (always at least one if not finished) */
     WPACKET_SUB *subs;
+
+    /* Writing from the end first? */
+    unsigned int endfirst : 1;
 };
 
 /* Flags */
@@ -683,6 +686,13 @@ int WPACKET_init_null(WPACKET *pkt, size_t lenbytes);
  */
 int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
                             size_t lenbytes);
+
+/*
+ * Same as WPACKET_init_static_len except lenbytes is always 0, and we set the
+ * WPACKET to write to the end of the buffer moving towards the start.
+ */
+int WPACKET_init_der(WPACKET *pkt, unsigned char *buf, size_t len);
+
 /*
  * Set the flags to be applied to the current sub-packet
  */
