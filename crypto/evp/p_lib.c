@@ -1594,15 +1594,6 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 }
 #endif  /* FIPS_MODE */
 
-const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
-{
-    if (pkey == NULL
-        || pkey->keymgmt == NULL
-        || pkey->keydata == NULL)
-        return 0;
-    return evp_keymgmt_gettable_params(pkey->keymgmt);
-}
-
 /*
  * For the following methods param->return_size is set to a value
  * larger than can be returned by the call to evp_keymgmt_get_params().
