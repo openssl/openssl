@@ -11,6 +11,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "internal/param_build_set.h"
@@ -21,11 +22,8 @@
 #include "prov/provider_ctx.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
-
-static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx);
-static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx);
-static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx);
-static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
+# include "prov/ecx.h"
+# include <openssl/sha.h>   /* For SHA512_DIGEST_LENGTH */
 #endif
 
 static OSSL_OP_keymgmt_new_fn x25519_new_key;
@@ -59,6 +57,12 @@ struct ecx_gen_ctx {
     ECX_KEY_TYPE type;
 };
 
+#ifdef S390X_EC_ASM
+static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx);
+static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx);
+static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx);
+static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
+#endif
 
 static void *x25519_new_key(void *provctx)
 {
@@ -281,11 +285,17 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
     ECX_KEY *key;
     unsigned char *privkey;
 
-    if (gctx == NULL
-            || (key = ecx_key_new(gctx->type, 0)) == NULL)
+    if (gctx == NULL)
         return NULL;
-    if ((privkey = ecx_key_allocate_privkey(key)) == NULL
-            || RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen) <= 0)
+    if ((key = ecx_key_new(gctx->type, 0)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    if ((privkey = ecx_key_allocate_privkey(key)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen) <= 0)
         goto err;
     switch (gctx->type) {
     case ECX_KEY_TYPE_X25519:
@@ -604,7 +614,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -612,11 +622,11 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 248;
@@ -625,7 +635,6 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     if (s390x_x25519_mul(pubkey, generator, privkey) != 1)
         goto err;
-
     return key;
  err:
     ecx_key_free(key);
@@ -645,7 +654,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -653,11 +662,11 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 252;
@@ -665,7 +674,6 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     if (s390x_x448_mul(pubkey, generator, privkey) != 1)
         goto err;
-
     return key;
  err:
     ecx_key_free(key);
@@ -688,9 +696,11 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
     ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
+    EVP_MD *sha = NULL;
+    int j;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -698,14 +708,19 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED25519_KEYLEN) <= 0)
         goto err;
 
-    if (!EVP_Digest(privkey, 32, buff, &sz, EVP_sha512(), NULL))
+    sha = EVP_MD_fetch(gctx->libctx, "SHA512", NULL);
+    if (sha == NULL)
+        goto err;
+    j = EVP_Digest(privkey, 32, buff, &sz, sha, NULL);
+    EVP_MD_free(sha);
+    if (!j)
         goto err;
 
     buff[0] &= 248;
@@ -743,9 +758,10 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
     ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
+    EVP_MD *shake = NULL;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -753,17 +769,20 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED448_KEYLEN) <= 0)
+    shake = EVP_MD_fetch(gctx->libctx, "SHAKE256", NULL);
+    if (shake == NULL)
+        goto err;
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED448_KEYLEN) <= 0)
         goto err;
 
     hashctx = EVP_MD_CTX_new();
     if (hashctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL) != 1)
+    if (EVP_DigestInit_ex(hashctx, shake, NULL) != 1)
         goto err;
     if (EVP_DigestUpdate(hashctx, privkey, 57) != 1)
         goto err;
@@ -779,12 +798,13 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
         goto err;
 
     pubkey[56] |= ((x_dst[0] & 0x01) << 7);
-
     EVP_MD_CTX_free(hashctx);
+    EVP_MD_free(shake);
     return key;
  err:
     ecx_key_free(key);
     EVP_MD_CTX_free(hashctx);
+    EVP_MD_free(shake);
     return NULL;
 }
 #endif

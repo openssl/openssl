@@ -18,6 +18,7 @@
 #include "prov/providercommonerr.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
+# include "prov/ecx.h"
 #endif
 
 static OSSL_OP_keyexch_newctx_fn x25519_newctx;
