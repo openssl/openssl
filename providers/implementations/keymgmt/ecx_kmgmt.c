@@ -11,6 +11,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "internal/param_build_set.h"
@@ -21,11 +22,7 @@
 #include "prov/provider_ctx.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
-
-static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx);
-static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx);
-static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx);
-static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
+# include <openssl/sha.h>   /* For SHA512_DIGEST_LENGTH */
 #endif
 
 static OSSL_OP_keymgmt_new_fn x25519_new_key;
@@ -59,6 +56,12 @@ struct ecx_gen_ctx {
     ECX_KEY_TYPE type;
 };
 
+#ifdef S390X_EC_ASM
+static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx);
+static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx);
+static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx);
+static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
+#endif
 
 static void *x25519_new_key(void *provctx)
 {
@@ -281,11 +284,17 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
     ECX_KEY *key;
     unsigned char *privkey;
 
-    if (gctx == NULL
-            || (key = ecx_key_new(gctx->type, 0)) == NULL)
+    if (gctx == NULL)
         return NULL;
-    if ((privkey = ecx_key_allocate_privkey(key)) == NULL
-            || RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen) <= 0)
+    if ((key = ecx_key_new(gctx->type, 0)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    if ((privkey = ecx_key_allocate_privkey(key)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen) <= 0)
         goto err;
     switch (gctx->type) {
     case ECX_KEY_TYPE_X25519:
@@ -393,205 +402,6 @@ MAKE_KEYMGMT_FUNCTIONS(ed448)
 
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
-# include "internal/constant_time.h"
-
-static void s390x_x25519_mod_p(unsigned char u[32])
-{
-    unsigned char u_red[32];
-    unsigned int c = 0;
-    int i;
-
-    memcpy(u_red, u, sizeof(u_red));
-
-    c += (unsigned int)u_red[31] + 19;
-    u_red[31] = (unsigned char)c;
-    c >>= 8;
-
-    for (i = 30; i >= 0; i--) {
-        c += (unsigned int)u_red[i];
-        u_red[i] = (unsigned char)c;
-        c >>= 8;
-    }
-
-    c = (u_red[0] & 0x80) >> 7;
-    u_red[0] &= 0x7f;
-    constant_time_cond_swap_buff(0 - (unsigned char)c,
-                                 u, u_red, sizeof(u_red));
-}
-
-static void s390x_x448_mod_p(unsigned char u[56])
-{
-    unsigned char u_red[56];
-    unsigned int c = 0;
-    int i;
-
-    memcpy(u_red, u, sizeof(u_red));
-
-    c += (unsigned int)u_red[55] + 1;
-    u_red[55] = (unsigned char)c;
-    c >>= 8;
-
-    for (i = 54; i >= 28; i--) {
-        c += (unsigned int)u_red[i];
-        u_red[i] = (unsigned char)c;
-        c >>= 8;
-    }
-
-    c += (unsigned int)u_red[27] + 1;
-    u_red[27] = (unsigned char)c;
-    c >>= 8;
-
-    for (i = 26; i >= 0; i--) {
-        c += (unsigned int)u_red[i];
-        u_red[i] = (unsigned char)c;
-        c >>= 8;
-    }
-
-    constant_time_cond_swap_buff(0 - (unsigned char)c,
-                                 u, u_red, sizeof(u_red));
-}
-
-int s390x_x25519_mul(unsigned char u_dst[32],
-                     const unsigned char u_src[32],
-                     const unsigned char d_src[32])
-{
-    union {
-        struct {
-            unsigned char u_dst[32];
-            unsigned char u_src[32];
-            unsigned char d_src[32];
-        } x25519;
-        unsigned long long buff[512];
-    } param;
-    int rc;
-
-    memset(&param, 0, sizeof(param));
-
-    s390x_flip_endian32(param.x25519.u_src, u_src);
-    param.x25519.u_src[0] &= 0x7f;
-    s390x_x25519_mod_p(param.x25519.u_src);
-
-    s390x_flip_endian32(param.x25519.d_src, d_src);
-    param.x25519.d_src[31] &= 248;
-    param.x25519.d_src[0] &= 127;
-    param.x25519.d_src[0] |= 64;
-
-    rc = s390x_pcc(S390X_SCALAR_MULTIPLY_X25519, &param.x25519) ? 0 : 1;
-    if (rc == 1)
-        s390x_flip_endian32(u_dst, param.x25519.u_dst);
-
-    OPENSSL_cleanse(param.x25519.d_src, sizeof(param.x25519.d_src));
-    return rc;
-}
-
-int s390x_x448_mul(unsigned char u_dst[56],
-                   const unsigned char u_src[56],
-                   const unsigned char d_src[56])
-{
-    union {
-        struct {
-            unsigned char u_dst[64];
-            unsigned char u_src[64];
-            unsigned char d_src[64];
-        } x448;
-        unsigned long long buff[512];
-    } param;
-    int rc;
-
-    memset(&param, 0, sizeof(param));
-
-    memcpy(param.x448.u_src, u_src, 56);
-    memcpy(param.x448.d_src, d_src, 56);
-
-    s390x_flip_endian64(param.x448.u_src, param.x448.u_src);
-    s390x_x448_mod_p(param.x448.u_src + 8);
-
-    s390x_flip_endian64(param.x448.d_src, param.x448.d_src);
-    param.x448.d_src[63] &= 252;
-    param.x448.d_src[8] |= 128;
-
-    rc = s390x_pcc(S390X_SCALAR_MULTIPLY_X448, &param.x448) ? 0 : 1;
-    if (rc == 1) {
-        s390x_flip_endian64(param.x448.u_dst, param.x448.u_dst);
-        memcpy(u_dst, param.x448.u_dst, 56);
-    }
-
-    OPENSSL_cleanse(param.x448.d_src, sizeof(param.x448.d_src));
-    return rc;
-}
-
-static int s390x_ed25519_mul(unsigned char x_dst[32],
-                             unsigned char y_dst[32],
-                             const unsigned char x_src[32],
-                             const unsigned char y_src[32],
-                             const unsigned char d_src[32])
-{
-    union {
-        struct {
-            unsigned char x_dst[32];
-            unsigned char y_dst[32];
-            unsigned char x_src[32];
-            unsigned char y_src[32];
-            unsigned char d_src[32];
-        } ed25519;
-        unsigned long long buff[512];
-    } param;
-    int rc;
-
-    memset(&param, 0, sizeof(param));
-
-    s390x_flip_endian32(param.ed25519.x_src, x_src);
-    s390x_flip_endian32(param.ed25519.y_src, y_src);
-    s390x_flip_endian32(param.ed25519.d_src, d_src);
-
-    rc = s390x_pcc(S390X_SCALAR_MULTIPLY_ED25519, &param.ed25519) ? 0 : 1;
-    if (rc == 1) {
-        s390x_flip_endian32(x_dst, param.ed25519.x_dst);
-        s390x_flip_endian32(y_dst, param.ed25519.y_dst);
-    }
-
-    OPENSSL_cleanse(param.ed25519.d_src, sizeof(param.ed25519.d_src));
-    return rc;
-}
-
-static int s390x_ed448_mul(unsigned char x_dst[57],
-                           unsigned char y_dst[57],
-                           const unsigned char x_src[57],
-                           const unsigned char y_src[57],
-                           const unsigned char d_src[57])
-{
-    union {
-        struct {
-            unsigned char x_dst[64];
-            unsigned char y_dst[64];
-            unsigned char x_src[64];
-            unsigned char y_src[64];
-            unsigned char d_src[64];
-        } ed448;
-        unsigned long long buff[512];
-    } param;
-    int rc;
-
-    memset(&param, 0, sizeof(param));
-
-    memcpy(param.ed448.x_src, x_src, 57);
-    memcpy(param.ed448.y_src, y_src, 57);
-    memcpy(param.ed448.d_src, d_src, 57);
-    s390x_flip_endian64(param.ed448.x_src, param.ed448.x_src);
-    s390x_flip_endian64(param.ed448.y_src, param.ed448.y_src);
-    s390x_flip_endian64(param.ed448.d_src, param.ed448.d_src);
-
-    rc = s390x_pcc(S390X_SCALAR_MULTIPLY_ED448, &param.ed448) ? 0 : 1;
-    if (rc == 1) {
-        s390x_flip_endian64(param.ed448.x_dst, param.ed448.x_dst);
-        s390x_flip_endian64(param.ed448.y_dst, param.ed448.y_dst);
-        memcpy(x_dst, param.ed448.x_dst, 57);
-        memcpy(y_dst, param.ed448.y_dst, 57);
-    }
-
-    OPENSSL_cleanse(param.ed448.d_src, sizeof(param.ed448.d_src));
-    return rc;
-}
 
 static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 {
@@ -604,7 +414,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -612,11 +422,11 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 248;
@@ -625,7 +435,6 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     if (s390x_x25519_mul(pubkey, generator, privkey) != 1)
         goto err;
-
     return key;
  err:
     ecx_key_free(key);
@@ -645,7 +454,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -653,11 +462,11 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 252;
@@ -665,7 +474,6 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     if (s390x_x448_mul(pubkey, generator, privkey) != 1)
         goto err;
-
     return key;
  err:
     ecx_key_free(key);
@@ -688,9 +496,11 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
     ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
+    EVP_MD *sha = NULL;
+    int j;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -698,14 +508,19 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED25519_KEYLEN) <= 0)
         goto err;
 
-    if (!EVP_Digest(privkey, 32, buff, &sz, EVP_sha512(), NULL))
+    sha = EVP_MD_fetch(gctx->libctx, "SHA512", NULL);
+    if (sha == NULL)
+        goto err;
+    j = EVP_Digest(privkey, 32, buff, &sz, sha, NULL);
+    EVP_MD_free(sha);
+    if (!j)
         goto err;
 
     buff[0] &= 248;
@@ -743,9 +558,10 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
     ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
+    EVP_MD *shake = NULL;
 
     if (key == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -753,17 +569,20 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED448_KEYLEN) <= 0)
+    shake = EVP_MD_fetch(gctx->libctx, "SHAKE256", NULL);
+    if (shake == NULL)
+        goto err;
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED448_KEYLEN) <= 0)
         goto err;
 
     hashctx = EVP_MD_CTX_new();
     if (hashctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL) != 1)
+    if (EVP_DigestInit_ex(hashctx, shake, NULL) != 1)
         goto err;
     if (EVP_DigestUpdate(hashctx, privkey, 57) != 1)
         goto err;
@@ -779,12 +598,13 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
         goto err;
 
     pubkey[56] |= ((x_dst[0] & 0x01) << 7);
-
     EVP_MD_CTX_free(hashctx);
+    EVP_MD_free(shake);
     return key;
  err:
     ecx_key_free(key);
     EVP_MD_CTX_free(hashctx);
+    EVP_MD_free(shake);
     return NULL;
 }
 #endif

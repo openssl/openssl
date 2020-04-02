@@ -18,7 +18,7 @@ IF[{- !$disabled{asm} -}]
   $ECASM_mips32=
   $ECASM_mips64=
 
-  $ECASM_s390x=ecp_s390x_nistp.c
+  $ECASM_s390x=ecp_s390x_nistp.c ecx_s390x.c
   $ECDEF_s390x=S390X_EC_ASM
 
   $ECASM_armv4=ecp_nistz256.c ecp_nistz256-armv4.S
@@ -76,6 +76,7 @@ GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl
 INCLUDE[ecp_nistz256-sparcv9.o]=..
 
 INCLUDE[ecp_s390x_nistp.o]=..
+INCLUDE[ecx_s390x.o]=..
 INCLUDE[ecx_meth.o]=..
 
 GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl
