@@ -638,6 +638,9 @@ struct wpacket_st {
 
     /* Our sub-packets (always at least one if not finished) */
     WPACKET_SUB *subs;
+
+    /* Writing from the end first? */
+    unsigned int endfirst : 1;
 };
 
 /* Flags */
@@ -677,12 +680,26 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
 int WPACKET_init_null(WPACKET *pkt, size_t lenbytes);
 
 /*
+ * Same as WPACKET_init_null except we set the WPACKET to assume DER length
+ * encoding for sub-packets.
+ */
+int WPACKET_init_null_der(WPACKET *pkt);
+
+/*
  * Same as WPACKET_init_len except we do not use a growable BUF_MEM structure.
  * A fixed buffer of memory |buf| of size |len| is used instead. A failure will
  * occur if you attempt to write beyond the end of the buffer
  */
 int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
                             size_t lenbytes);
+
+/*
+ * Same as WPACKET_init_static_len except lenbytes is always 0, and we set the
+ * WPACKET to write to the end of the buffer moving towards the start and use
+ * DER length encoding for sub-packets.
+ */
+int WPACKET_init_der(WPACKET *pkt, unsigned char *buf, size_t len);
+
 /*
  * Set the flags to be applied to the current sub-packet
  */
