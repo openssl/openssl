@@ -67,7 +67,7 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     }
     if (allocbytes != NULL) {
         *allocbytes = WPACKET_get_curr(pkt);
-        if (pkt->endfirst)
+        if (pkt->endfirst && *allocbytes != NULL)
             *allocbytes -= len;
     }
 
@@ -181,6 +181,16 @@ int WPACKET_init_null(WPACKET *pkt, size_t lenbytes)
     pkt->buf = NULL;
     pkt->maxsize = maxmaxsize(lenbytes);
     pkt->endfirst = 0;
+
+    return wpacket_intern_init_len(pkt, 0);
+}
+
+int WPACKET_init_null_der(WPACKET *pkt)
+{
+    pkt->staticbuf = NULL;
+    pkt->buf = NULL;
+    pkt->maxsize = SIZE_MAX;
+    pkt->endfirst = 1;
 
     return wpacket_intern_init_len(pkt, 0);
 }
