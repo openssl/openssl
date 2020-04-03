@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 10;
+plan tests => 12;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
@@ -99,3 +99,21 @@ ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
             '-section_name', 'fips_install', '-corrupt_desc', 'CTR'])),
    "fipsinstall fails when the DRBG CTR result is corrupted");
+
+# corrupt a KAS test
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install',
+            '-corrupt_desc', 'DH',
+            '-corrupt_type', 'KAT_KA'])),
+   "fipsinstall fails when the kas result is corrupted");
+
+# corrupt a Signature test
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-section_name', 'fips_install',
+            '-corrupt_desc', 'DSA',
+            '-corrupt_type', 'KAT_Signature'])),
+   "fipsinstall fails when the signature result is corrupted");

@@ -52,9 +52,10 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_DRBG_CTR       "CTR"
 # define OSSL_SELF_TEST_DESC_DRBG_HASH      "HASH"
 # define OSSL_SELF_TEST_DESC_DRBG_HMAC      "HMAC"
+# define OSSL_SELF_TEST_DESC_KA_DH          "DH"
 # define OSSL_SELF_TEST_DESC_KA_ECDH        "ECDH"
-# define OSSL_SELF_TEST_DESC_KA_ECDSA       "ECDSA"
 # define OSSL_SELF_TEST_DESC_KDF_HKDF       "HKDF"
+# define OSSL_SELF_TEST_DESC_KDF_SSKDF      "SSKDF"
 
 # ifdef __cplusplus
 }
