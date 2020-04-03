@@ -22,6 +22,8 @@
  * Information about a CT log server.
  */
 struct ctlog_st {
+    OPENSSL_CTX *libctx;
+    char *propq;
     char *name;
     uint8_t log_id[CT_V1_HASHLEN];
     EVP_PKEY *public_key;
@@ -32,6 +34,8 @@ struct ctlog_st {
  * It takes ownership of any CTLOG instances added to it.
  */
 struct ctlog_store_st {
+    OPENSSL_CTX *libctx;
+    char *propq;
     STACK_OF(CTLOG) *logs;
 };
 
@@ -70,53 +74,78 @@ static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx)
 }
 
 /* Converts a log's public key into a SHA256 log ID */
-static int ct_v1_log_id_from_pkey(EVP_PKEY *pkey,
-                                  unsigned char log_id[CT_V1_HASHLEN])
+static int ct_v1_log_id_from_pkey(CTLOG *log, EVP_PKEY *pkey)
 {
     int ret = 0;
     unsigned char *pkey_der = NULL;
     int pkey_der_len = i2d_PUBKEY(pkey, &pkey_der);
     unsigned int len;
+    EVP_MD *sha256 = NULL;
 
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, CT_R_LOG_KEY_INVALID);
         goto err;
     }
+    sha256 = EVP_MD_fetch(log->libctx, "SHA2-256", log->propq);
+    if (sha256 == NULL) {
+        CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, ERR_LIB_EVP);
+        goto err;
+    }
 
-    ret = EVP_Digest(pkey_der, pkey_der_len, log_id, &len, EVP_sha256(), NULL);
+    ret = EVP_Digest(pkey_der, pkey_der_len, log->log_id, &len, sha256,
+                     NULL);
 err:
+    EVP_MD_free(sha256);
     OPENSSL_free(pkey_der);
     return ret;
 }
 
-CTLOG_STORE *CTLOG_STORE_new(void)
+CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
 {
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        CTerr(CT_F_CTLOG_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        CTerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
+    ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            CTerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
+
     ret->logs = sk_CTLOG_new_null();
-    if (ret->logs == NULL)
+    if (ret->logs == NULL) {
+        CTerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     return ret;
 err:
-    OPENSSL_free(ret);
+    CTLOG_STORE_free(ret);
     return NULL;
+}
+
+CTLOG_STORE *CTLOG_STORE_new(void)
+{
+    return CTLOG_STORE_new_with_libctx(NULL, NULL);
 }
 
 void CTLOG_STORE_free(CTLOG_STORE *store)
 {
     if (store != NULL) {
+        OPENSSL_free(store->propq);
         sk_CTLOG_pop_free(store->logs, CTLOG_free);
         OPENSSL_free(store);
     }
 }
 
-static int ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *section)
+static int ctlog_new_from_conf(CTLOG_STORE *store, CTLOG **ct_log,
+                               const CONF *conf, const char *section)
 {
     const char *description = NCONF_get_string(conf, section, "description");
     char *pkey_base64;
@@ -132,7 +161,8 @@ static int ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *sec
         return 0;
     }
 
-    return CTLOG_new_from_base64(ct_log, pkey_base64, description);
+    return CTLOG_new_from_base64_with_libctx(ct_log, pkey_base64, description,
+                                             store->libctx, store->propq);
 }
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
@@ -168,7 +198,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
     if (tmp == NULL)
         goto mem_err;
 
-    ret = ctlog_new_from_conf(&ct_log, load_ctx->conf, tmp);
+    ret = ctlog_new_from_conf(load_ctx->log_store, &ct_log, load_ctx->conf, tmp);
     OPENSSL_free(tmp);
 
     if (ret < 0) {
@@ -234,22 +264,32 @@ end:
  * Takes ownership of the public key.
  * Copies the name.
  */
-CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
+CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
+                             OPENSSL_CTX *libctx, const char *propq)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
+        CTerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
+
+    ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->name = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            CTerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
     }
 
     ret->name = OPENSSL_strdup(name);
     if (ret->name == NULL) {
-        CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
+        CTerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (ct_v1_log_id_from_pkey(public_key, ret->log_id) != 1)
+    if (ct_v1_log_id_from_pkey(ret, public_key) != 1)
         goto err;
 
     ret->public_key = public_key;
@@ -259,12 +299,18 @@ err:
     return NULL;
 }
 
+CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
+{
+    return CTLOG_new_with_libctx(public_key, name, NULL, NULL);
+}
+
 /* Frees CT log and associated structures */
 void CTLOG_free(CTLOG *log)
 {
     if (log != NULL) {
         OPENSSL_free(log->name);
         EVP_PKEY_free(log->public_key);
+        OPENSSL_free(log->propq);
         OPENSSL_free(log);
     }
 }

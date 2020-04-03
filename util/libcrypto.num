@@ -5041,3 +5041,7 @@ EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_can_sign                       ?	3_0_0	EXIST::FUNCTION:
 evp_pkey_get_EC_KEY_curve_nid           ?	3_0_0	EXIST::FUNCTION:EC
 X509_STORE_CTX_new_with_libctx          ?	3_0_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_new_with_libctx      ?	3_0_0	EXIST::FUNCTION:CT
+CTLOG_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:CT
+CTLOG_new_from_base64_with_libctx       ?	3_0_0	EXIST::FUNCTION:CT
+CTLOG_STORE_new_with_libctx             ?	3_0_0	EXIST::FUNCTION:CT
