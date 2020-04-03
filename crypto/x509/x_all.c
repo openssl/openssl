@@ -34,13 +34,14 @@ static void clean_id_ctx(EVP_MD_CTX *ctx)
     EVP_MD_CTX_free(ctx);
 }
 
-static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
+static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id,
+                               OPENSSL_CTX *libctx, const char *propq)
 {
     EVP_MD_CTX *ctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
 
     if ((ctx = EVP_MD_CTX_new()) == NULL
-        || (pctx = EVP_PKEY_CTX_new(r, NULL)) == NULL) {
+        || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, r, propq)) == NULL) {
         X509err(0, ERR_R_MALLOC_FAILURE);
         goto error;
     }
@@ -63,7 +64,7 @@ static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id)
     return NULL;
 }
 
-int X509_verify(X509 *a, EVP_PKEY *r)
+int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
@@ -73,7 +74,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
         return 0;
 
     id = a->distinguishing_id;
-    if ((ctx = make_id_ctx(r, id)) != NULL) {
+    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
         rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                                   &a->signature, &a->cert_info, ctx);
         clean_id_ctx(ctx);
@@ -81,19 +82,30 @@ int X509_verify(X509 *a, EVP_PKEY *r)
     return rv;
 }
 
-int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
+int X509_verify(X509 *a, EVP_PKEY *r)
+{
+    return X509_verify_ex(a, r, NULL, NULL);
+}
+
+int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+                       const char *propq)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
     ASN1_OCTET_STRING *id = NULL;
 
     id = a->distinguishing_id;
-    if ((ctx = make_id_ctx(r, id)) != NULL) {
+    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
         rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
                                   a->signature, &a->req_info, ctx);
         clean_id_ctx(ctx);
     }
     return rv;
+}
+
+int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
+{
+    return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
