@@ -359,7 +359,8 @@ static int test_WPACKET_init_der(void)
     unsigned char sbuf[1024];
     unsigned char testdata[] = { 0x00, 0x01, 0x02, 0x03 };
     unsigned char testdata2[259]  = { 0x82, 0x01, 0x00 };
-    size_t written;
+    size_t written[2];
+    int i;
 
     /* Test initialising for writing DER */
     if (!TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf)))
@@ -370,22 +371,46 @@ static int test_WPACKET_init_der(void)
             || !TEST_true(WPACKET_close(&pkt))
             || !TEST_true(WPACKET_put_bytes_u8(&pkt, 0xfc))
             || !TEST_true(WPACKET_finish(&pkt))
-            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
-            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written, simpleder,
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written[0]))
+            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written[0], simpleder,
                             sizeof(simpleder)))
         return cleanup(&pkt);
 
-    /* Test with a sub-packet that has 2 length bytes */
-    if (!TEST_true(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3))
-            || !TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf)))
-            || !TEST_true(WPACKET_start_sub_packet(&pkt))
-            || !TEST_true(WPACKET_memcpy(&pkt, &testdata2[3], sizeof(testdata2) - 3))
+    /* Generate random packet data for test */
+    if (!TEST_true(RAND_bytes(&testdata2[3], sizeof(testdata2) - 3)))
+        return 0;
+
+    /*
+     * Test with a sub-packet that has 2 length bytes. We do 2 passes - first
+     * with a NULL buffer, just to calculate lengths, and a second pass with a
+     * real buffer to actually generate a packet
+     */
+    for (i = 0; i < 2; i++) {
+        if (i == 0) {
+            if (!TEST_true(WPACKET_init_null_der(&pkt)))
+                return 0;
+        } else { 
+            if (!TEST_true(WPACKET_init_der(&pkt, sbuf, sizeof(sbuf))))
+                return 0;
+        }
+        if (!TEST_true(WPACKET_start_sub_packet(&pkt))
+            || !TEST_true(WPACKET_memcpy(&pkt, &testdata2[3],
+                                         sizeof(testdata2) - 3))
             || !TEST_true(WPACKET_close(&pkt))
             || !TEST_true(WPACKET_finish(&pkt))
-            || !TEST_true(WPACKET_get_total_written(&pkt, &written))
-            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written, testdata2,
-                            sizeof(testdata2)))
+            || !TEST_true(WPACKET_get_total_written(&pkt, &written[i])))
         return cleanup(&pkt);
+    }
+
+    /*
+     * Check that the size calculated in the first pass equals the size of the
+     * packet actually generated in the second pass. Also check the generated
+     * packet looks as we expect it to.
+     */
+    if (!TEST_size_t_eq(written[0], written[1])
+            || !TEST_mem_eq(WPACKET_get_curr(&pkt), written[1], testdata2,
+                            sizeof(testdata2)))
+        return 0;
 
     return 1;
 }
