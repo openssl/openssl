@@ -330,7 +330,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
     if (x == issuer) {
         ss = cert_self_signed(ctx, x);
         if (ss < 0)
-            return X509_V_ERR_UNSPECIFIED;
+            return 0;
         return ss;
     }
 
@@ -341,7 +341,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 
         ss = cert_self_signed(ctx, x);
         if (ss < 0)
-            return X509_V_ERR_UNSPECIFIED;
+            return 0;
 
         /* Special case: single self signed certificate */
         if (ss > 0 && sk_X509_num(ctx->chain) == 1)
