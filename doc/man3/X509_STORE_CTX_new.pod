@@ -53,7 +53,7 @@ by X509_verify_cert().
 
 X509_STORE_CTX_new_with_libctx() returns a newly initialised B<X509_STORE_CTX>
 structure associated with the specified library context I<libctx> and property
-quuery string I<propq>. Any cryptographic algorithms fetched while performing
+query string I<propq>. Any cryptographic algorithms fetched while performing
 processing with the X509_STORE_CTX will use that library context and property
 query string.
 
