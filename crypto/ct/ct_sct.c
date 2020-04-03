@@ -312,7 +312,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
         return 0;
     }
 
-    sctx = SCT_CTX_new();
+    sctx = SCT_CTX_new(ctx->libctx, ctx->propq);
     if (sctx == NULL)
         goto err;
 
