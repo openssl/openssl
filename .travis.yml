@@ -1,5 +1,4 @@
-dist: xenial
-sudo: required
+dist: bionic
 
 osx_image: xcode9.3
 
@@ -30,38 +29,28 @@ compiler:
     - gcc
 
 env:
+    # Note: env entry here must exactly match the value in the exclude: table below that contains env:, otherwise it will not find a match.
     - CONFIG_OPTS="" DESTDIR="_install"
-    # Note: This CONFIG_OPTS entry must match the value in the exclude: table below that contains env: CONFIG_OPTS , otherwise it will not find a match.
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
 
-matrix:
+jobs:
+    exclude:
+        - os: linux
+          compiler: clang
+          env: CONFIG_OPTS="" DESTDIR="_install"
+        - os: linux
+          compiler: clang
+          env: CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
+        - os: osx
+          compiler: gcc
+        - os: osx
+          env: CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     include:
         - os: linux
           arch: arm64
-          dist: bionic
-          compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
-        - os: linux
-          arch: arm64
-          compiler: clang
-          addons:
-              apt:
-                  packages:
-                      - clang-6.0
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-        - os: linux
-          arch: arm64
-          compiler: clang
-          addons:
-              apt:
-                  packages:
-                      - clang-6.0
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
-        - os: linux
-          arch: arm64
           compiler: gcc
-          env: CONFIG_OPTS="" MAKEVERBOSE="yes"
+          env: CONFIG_OPTS="--strict-warnings" MAKEVERBOSE="yes"
         - os: linux
           arch: arm64
           compiler: gcc
@@ -79,11 +68,11 @@ matrix:
         - os: linux
           dist: trusty
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated"
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
-          dist: bionic
-          compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+          dist: xenial
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings no-deprecated enable-rc5 enable-md2"
         - os: linux
           addons:
               apt:
@@ -92,12 +81,6 @@ matrix:
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
-        # Uncomment if there is reason to believe that PPC-specific problem
-        # can be diagnosed with this possibly >30 mins sanitizer build...
-        #- os: linux-ppc64le
-        #  sudo: false
-        #  compiler: gcc
-        #  env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-ubsan no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
@@ -115,18 +98,15 @@ matrix:
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="g++" TESTS="test_external_boringssl test_external_krb5"
         - os: linux
           compiler: clang
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" CXX="clang++"
-#Temporarily removed because memleak test fails for unknown reasons in this build. Other builds with memleak testing ("-fsanitize=address") are passing.
-#        - os: linux
-#          compiler: clang
-#          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -Wno-unused-command-line-argument" CXX="clang++"
         - os: linux
           compiler: gcc
           env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 enable-buildtest-c++ -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
+          dist: xenial
           addons:
               apt:
                   packages:
@@ -135,6 +115,7 @@ matrix:
           compiler: i686-w64-mingw32-gcc
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
         - os: linux
+          dist: xenial
           addons:
               apt:
                   packages:
@@ -155,11 +136,6 @@ matrix:
         - os: linux
           compiler: gcc
           env: CONFIGURE_TARGET="linux-generic32" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-cmp no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-ktls no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT"
-    exclude:
-        - os: linux
-          compiler: clang
-        - os: osx
-          compiler: gcc
 
 
 before_script:
