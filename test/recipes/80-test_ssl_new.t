@@ -145,7 +145,8 @@ sub test_conf {
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
-      ok(run(test(["ssl_test", $output_file])), "running ssl_test $conf");
+      ok(run(test(["ssl_test", $output_file, "default"])),
+         "running ssl_test $conf");
     }
 }
 
