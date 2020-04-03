@@ -93,10 +93,10 @@ OpenSSL 3.0
    *Richard Levitte*
 
  * Added an implementation of CMP and CRMF (RFC 4210, RFC 4211 RFC 6712).
-   This adds crypto/cmp/, crpyto/crmf/, and test/cmp_*.
-   See L<OSSL_CMP_exec_IR_ses(3)> as starting point.
+   This adds crypto/cmp/, crpyto/crmf/, apps/cmp.c, and test/cmp_*.
+   See L<openssl-cmp(1)> and L<OSSL_CMP_exec_IR_ses(3)> as starting points.
 
-   *David von Oheimb*
+   *David von Oheimb, Martin Peylo*
 
  * Generalized the HTTP client code from crypto/ocsp/ into crpyto/http/.
    The legacy OCSP-focused and only partly documented API is retained.
