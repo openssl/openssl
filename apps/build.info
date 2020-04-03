@@ -52,7 +52,7 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   ENDIF
 ENDIF
 IF[{- !$disabled{'cmp'} -}]
-  $OPENSSLSRC=$OPENSSLSRC cmp_mock_srv.c
+  $OPENSSLSRC=$OPENSSLSRC cmp.c cmp_mock_srv.c
 ENDIF
 
 IF[{- !$disabled{apps} -}]
