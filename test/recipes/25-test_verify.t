@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 137;
+plan tests => 139;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -222,6 +222,10 @@ ok(verify("ee-client", "sslclient", [qw(ee+clientAuth)], [], "-partial_chain"),
    "accept direct match with client trust");
 ok(!verify("ee-client", "sslclient", [qw(ee-clientAuth)], [], "-partial_chain"),
    "reject direct match with client mistrust");
+ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept non-ca with pathlen:0 by default");
+ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
+   "reject non-ca with pathlen:0 with strict flag");
 
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
