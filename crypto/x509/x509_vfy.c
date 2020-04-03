@@ -1763,7 +1763,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
                         X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
                     return 0;
-            } else if (X509_verify(xs, pkey) <= 0) {
+            } else if (X509_verify_ex(xs, pkey, ctx->libctx, ctx->propq) <= 0) {
                 if (!verify_cb_cert(ctx, xs, n,
                                     X509_V_ERR_CERT_SIGNATURE_FAILURE))
                     return 0;
@@ -2809,7 +2809,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
         if (t->usage != DANETLS_USAGE_DANE_TA ||
             t->selector != DANETLS_SELECTOR_SPKI ||
             t->mtype != DANETLS_MATCHING_FULL ||
-            X509_verify(cert, t->spki) <= 0)
+            X509_verify_ex(cert, t->spki, ctx->libctx, ctx->propq) <= 0)
             continue;
 
         /* Clear any PKIX-?? matches that failed to extend to a full chain */
