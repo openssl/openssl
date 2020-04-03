@@ -3141,7 +3141,7 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL)
         goto err;
 #ifndef OPENSSL_NO_CT
-    ret->ctlog_store = CTLOG_STORE_new();
+    ret->ctlog_store = CTLOG_STORE_new_with_libctx(libctx, propq);
     if (ret->ctlog_store == NULL)
         goto err;
 #endif
@@ -5145,7 +5145,7 @@ int ssl_validate_ct(SSL *s)
         }
     }
 
-    ctx = CT_POLICY_EVAL_CTX_new();
+    ctx = CT_POLICY_EVAL_CTX_new_with_libctx(s->ctx->libctx, s->ctx->propq);
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_VALIDATE_CT,
                  ERR_R_MALLOC_FAILURE);
