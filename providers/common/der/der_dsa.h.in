@@ -16,6 +16,6 @@
                                        filter => \&oids_to_c::filter_to_H });
 -}
 
-int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int cont, DSA *dsa);
-int DER_w_algorithmIdentifier_DSA_with(WPACKET *pkt, int cont,
+int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa);
+int DER_w_algorithmIdentifier_DSA_with(WPACKET *pkt, int tag,
                                        DSA *dsa, int mdnid);
