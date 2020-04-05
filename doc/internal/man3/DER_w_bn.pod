@@ -37,8 +37,8 @@ DER_w_null() writes the primitive NULL.
 
 All the functions return 1 on success and 0 on failure.  Failure may
 mean that the buffer held by the I<pkt> is too small, but may also
-mean that the values given to the functions are invalid, like a too
-large I<cont>.
+mean that the values given to the functions are invalid, such as the provided
+I<cont> value being too large for the implementation.
 
 =head1 SEE ALSO
 

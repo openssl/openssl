@@ -24,9 +24,9 @@ When readers are added, add this:
 
 =end comment
 
-I<pkt> is the packet context used, and I<cont> should be the context
-number of the element being handled, or -1 if there is no context
-number for that element (you may use the convenience macro
+I<pkt> is the packet context used, and I<cont> should be the
+context-specific tag value of the element being handled, or -1 if there
+is no tag number for that element (you may use the convenience macro
 B<DER_NO_CONTEXT> instead of -1).  Any argument following is the C
 variable that's being encoded or decoded.
 

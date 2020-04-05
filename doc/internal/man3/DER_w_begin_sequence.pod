@@ -19,8 +19,8 @@ i.e. the ASN.1 SEQUENCE, SET and CHOICE specifications.  They all come
 in pairs, as noted by the function names containing the words C<begin>
 and B<end>.
 
-When using these, special care must be taken to ensure that I<cont> is
-the same in the matching C<begin> and C<end> function calls.
+When using these, special care must be taken to ensure that the ASN.1 tag
+value I<cont> is the same in the matching C<begin> and C<end> function calls.
 
 DER_w_begin_sequence() and DER_w_end_sequence() begins and ends a
 SEQUENCE.
@@ -29,8 +29,8 @@ SEQUENCE.
 
 All the functions return 1 on success and 0 on failure.  Failure may
 mean that the buffer held by the I<pkt> is too small, but may also
-mean that the values given to the functions are invalid, like a too
-large I<cont>.
+mean that the values given to the functions are invalid, such as the provided
+I<cont> value being too large for the implementation.
 
 =head1 SEE ALSO
 
