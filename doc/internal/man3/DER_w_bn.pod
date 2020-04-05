@@ -9,10 +9,10 @@ DER_w_boolean, DER_w_ulong, DER_w_bn, DER_w_null
 
  #include "internal/der.h"
 
- int DER_w_boolean(WPACKET *pkt, int cont, int b);
- int DER_w_ulong(WPACKET *pkt, int cont, unsigned long v);
- int DER_w_bn(WPACKET *pkt, int cont, const BIGNUM *v);
- int DER_w_null(WPACKET *pkt, int cont);
+ int DER_w_boolean(WPACKET *pkt, int tag, int b);
+ int DER_w_ulong(WPACKET *pkt, int tag, unsigned long v);
+ int DER_w_bn(WPACKET *pkt, int tag, const BIGNUM *v);
+ int DER_w_null(WPACKET *pkt, int tag);
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@ DER_w_null() writes the primitive NULL.
 All the functions return 1 on success and 0 on failure.  Failure may
 mean that the buffer held by the I<pkt> is too small, but may also
 mean that the values given to the functions are invalid, such as the provided
-I<cont> value being too large for the implementation.
+I<tag> value being too large for the implementation.
 
 =head1 SEE ALSO
 

@@ -14,17 +14,17 @@ more similar functions to encode and decode larger structures.
 All these functions have similar function signatures (C<something>
 will vary depending on what the function will encode):
 
-    int DER_w_something(WPACKET *pkt, int cont, ...);
+    int DER_w_something(WPACKET *pkt, int tag, ...);
 
 =begin comment
 
 When readers are added, add this:
 
-    int DER_r_something(PACKET *pkt, int cont, ...);
+    int DER_r_something(PACKET *pkt, int tag, ...);
 
 =end comment
 
-I<pkt> is the packet context used, and I<cont> should be the
+I<pkt> is the packet context used, and I<tag> should be the
 context-specific tag value of the element being handled, or -1 if there
 is no tag number for that element (you may use the convenience macro
 B<DER_NO_CONTEXT> instead of -1).  Any argument following is the C
@@ -55,7 +55,7 @@ B<BIGNUM>s I<r> and I<s>:
           && DER_w_bn(pkg, -1, r)
           && DER_w_end_sequence(pkt, -1);
 
-As an example of the use of I<cont>, an ASN.1 element like this:
+As an example of the use of I<tag>, an ASN.1 element like this:
 
     v [1] INTEGER OPTIONAL
 
@@ -113,10 +113,10 @@ looks as follows. This is a complete function to write that specific
 value:
 
     int DER_w_AlgorithmIdentifier_RSASSA_PSS_special(WPACKET *pkt,
-                                                     int cont,
+                                                     int tag,
                                                      RSA *rsa)
     {
-        return DER_w_begin_sequence(pkt, cont)
+        return DER_w_begin_sequence(pkt, tag)
             && (DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
                 && DER_w_ulong(pkt, 2, 20)
                 && DER_w_precompiled(pkt, 1,
@@ -129,7 +129,7 @@ value:
             && DER_w_precompiled(pkt, DER_NO_CONTEXT,
                                  der_id_RSASSA_PSS,
                                  sizeof(der_id_RSASSA_PSS))
-            && DER_w_end_sequence(pkt, cont);
+            && DER_w_end_sequence(pkt, tag);
     }
 
 =head1 SEE ALSO

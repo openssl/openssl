@@ -13,53 +13,53 @@
 #include "internal/der.h"
 #include "crypto/bn.h"
 
-static int int_start_context(WPACKET *pkt, int cont)
+static int int_start_context(WPACKET *pkt, int tag)
 {
-    if (cont < 0)
+    if (tag < 0)
         return 1;
     return WPACKET_start_sub_packet(pkt);
 }
 
-static int int_end_context(WPACKET *pkt, int cont)
+static int int_end_context(WPACKET *pkt, int tag)
 {
-    if (cont < 0)
+    if (tag < 0)
         return 1;
     return WPACKET_close(pkt)
-        && WPACKET_put_bytes_u8(pkt, DER_C_CONTEXT | cont);
+        && WPACKET_put_bytes_u8(pkt, DER_C_CONTEXT | tag);
 }
 
-int DER_w_precompiled(WPACKET *pkt, int cont,
+int DER_w_precompiled(WPACKET *pkt, int tag,
                       const unsigned char *precompiled, size_t precompiled_n)
 {
-    return int_start_context(pkt, cont)
+    return int_start_context(pkt, tag)
         && WPACKET_memcpy(pkt, precompiled, precompiled_n)
-        && int_end_context(pkt, cont);
+        && int_end_context(pkt, tag);
 }
 
-int DER_w_boolean(WPACKET *pkt, int cont, int b)
+int DER_w_boolean(WPACKET *pkt, int tag, int b)
 {
-    return int_start_context(pkt, cont)
+    return int_start_context(pkt, tag)
         && WPACKET_start_sub_packet(pkt)
         && (!b || WPACKET_put_bytes_u8(pkt, 0xFF))
         && !WPACKET_close(pkt)
         && !WPACKET_put_bytes_u8(pkt, DER_P_BOOLEAN)
-        && int_end_context(pkt, cont);
+        && int_end_context(pkt, tag);
 }
 
-static int int_der_w_integer(WPACKET *pkt, int cont,
+static int int_der_w_integer(WPACKET *pkt, int tag,
                              int (*put_bytes)(WPACKET *pkt, const void *v,
                                               unsigned int *top_byte),
                              const void *v)
 {
     unsigned int top_byte = 0;
 
-    return int_start_context(pkt, cont)
+    return int_start_context(pkt, tag)
         && WPACKET_start_sub_packet(pkt)
         && put_bytes(pkt, v, &top_byte)
         && ((top_byte & 0x80) == 0 || WPACKET_put_bytes_u8(pkt, 0))
         && WPACKET_close(pkt)
         && WPACKET_put_bytes_u8(pkt, DER_P_INTEGER)
-        && int_end_context(pkt, cont);
+        && int_end_context(pkt, tag);
 }
 
 static int int_put_bytes_ulong(WPACKET *pkt, const void *v,
@@ -81,9 +81,9 @@ static int int_put_bytes_ulong(WPACKET *pkt, const void *v,
 }
 
 /* For integers, we only support unsigned values for now */
-int DER_w_ulong(WPACKET *pkt, int cont, unsigned long v)
+int DER_w_ulong(WPACKET *pkt, int tag, unsigned long v)
 {
-    return int_der_w_integer(pkt, cont, int_put_bytes_ulong, &v);
+    return int_der_w_integer(pkt, tag, int_put_bytes_ulong, &v);
 }
 
 static int int_put_bytes_bn(WPACKET *pkt, const void *v,
@@ -104,35 +104,35 @@ static int int_put_bytes_bn(WPACKET *pkt, const void *v,
     return 1;
 }
 
-int DER_w_bn(WPACKET *pkt, int cont, const BIGNUM *v)
+int DER_w_bn(WPACKET *pkt, int tag, const BIGNUM *v)
 {
     if (v == NULL || BN_is_negative(v))
         return 0;
     if (BN_is_zero(v))
-        return DER_w_ulong(pkt, cont, 0);
+        return DER_w_ulong(pkt, tag, 0);
 
-    return int_der_w_integer(pkt, cont, int_put_bytes_bn, v);
+    return int_der_w_integer(pkt, tag, int_put_bytes_bn, v);
 }
 
-int DER_w_null(WPACKET *pkt, int cont)
+int DER_w_null(WPACKET *pkt, int tag)
 {
-    return int_start_context(pkt, cont)
+    return int_start_context(pkt, tag)
         && WPACKET_start_sub_packet(pkt)
         && WPACKET_close(pkt)
         && WPACKET_put_bytes_u8(pkt, DER_P_NULL)
-        && int_end_context(pkt, cont);
+        && int_end_context(pkt, tag);
 }
 
 /* Constructed things need a start and an end */
-int DER_w_begin_sequence(WPACKET *pkt, int cont)
+int DER_w_begin_sequence(WPACKET *pkt, int tag)
 {
-    return int_start_context(pkt, cont)
+    return int_start_context(pkt, tag)
         && WPACKET_start_sub_packet(pkt);
 }
 
-int DER_w_end_sequence(WPACKET *pkt, int cont)
+int DER_w_end_sequence(WPACKET *pkt, int tag)
 {
     return WPACKET_close(pkt)
         && WPACKET_put_bytes_u8(pkt, DER_F_CONSTRUCTED | DER_P_SEQUENCE)
-        && int_end_context(pkt, cont);
+        && int_end_context(pkt, tag);
 }
