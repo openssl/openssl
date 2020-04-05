@@ -17,6 +17,8 @@ static int int_start_context(WPACKET *pkt, int tag)
 {
     if (tag < 0)
         return 1;
+    if (!ossl_assert(tag <= 30))
+        return 0;
     return WPACKET_start_sub_packet(pkt);
 }
 
@@ -24,6 +26,8 @@ static int int_end_context(WPACKET *pkt, int tag)
 {
     if (tag < 0)
         return 1;
+    if (!ossl_assert(tag <= 30))
+        return 0;
     return WPACKET_close(pkt)
         && WPACKET_put_bytes_u8(pkt, DER_C_CONTEXT | tag);
 }
