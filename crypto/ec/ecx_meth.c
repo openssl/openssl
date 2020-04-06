@@ -35,7 +35,8 @@ typedef enum {
 
 /* Setup EVP_PKEY using public, private or generation */
 static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
-                      const unsigned char *p, int plen, ecx_key_op_t op)
+                      const unsigned char *p, int plen, ecx_key_op_t op,
+                      OPENSSL_CTX *libctx, const char *propq)
 {
     ECX_KEY *key = NULL;
     unsigned char *privkey, *pubkey;
@@ -102,11 +103,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             X448_public_from_private(pubkey, privkey);
             break;
         case EVP_PKEY_ED448:
-            /*
-             * TODO(3.0): We set the library context to NULL for now. This will
-             * need to change or this code be removed.
-             */
-            ED448_public_from_private(NULL, pubkey, privkey);
+            ED448_public_from_private(libctx, pubkey, privkey);
             break;
         }
     }
@@ -152,7 +149,7 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
     return ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, pklen,
-                      KEY_OP_PUBLIC);
+                      KEY_OP_PUBLIC, NULL, NULL);
 }
 
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -166,7 +163,9 @@ static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return CRYPTO_memcmp(akey->pubkey, bkey->pubkey, KEYLEN(a)) == 0;
 }
 
-static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
+static int ecx_priv_decode_with_libctx(EVP_PKEY *pkey,
+                                       const PKCS8_PRIV_KEY_INFO *p8,
+                                       OPENSSL_CTX *libctx, const char *propq)
 {
     const unsigned char *p;
     int plen;
@@ -186,7 +185,8 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         plen = ASN1_STRING_length(oct);
     }
 
-    rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, KEY_OP_PRIVATE);
+    rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, KEY_OP_PRIVATE,
+                    libctx, propq);
     ASN1_STRING_clear_free(oct);
     return rv;
 }
@@ -314,7 +314,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
         return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, arg2, arg1,
-                          KEY_OP_PUBLIC);
+                          KEY_OP_PUBLIC, NULL, NULL);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         if (pkey->pkey.ecx != NULL) {
@@ -349,14 +349,15 @@ static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
                             size_t len)
 {
+    /* TODO(3.0): We should pass a libctx here */
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, len,
-                       KEY_OP_PRIVATE);
+                       KEY_OP_PRIVATE, NULL, NULL);
 }
 
 static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
 {
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, len,
-                      KEY_OP_PUBLIC);
+                      KEY_OP_PUBLIC, NULL, NULL);
 }
 
 static int ecx_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
@@ -483,7 +484,7 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_pub_cmp,
     ecx_pub_print,
 
-    ecx_priv_decode,
+    NULL,
     ecx_priv_encode,
     ecx_priv_print,
 
@@ -514,7 +515,9 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
-    x25519_import_from
+    x25519_import_from,
+
+    ecx_priv_decode_with_libctx
 };
 
 static int x448_import_from(const OSSL_PARAM params[], void *key)
@@ -534,7 +537,7 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_pub_cmp,
     ecx_pub_print,
 
-    ecx_priv_decode,
+    NULL,
     ecx_priv_encode,
     ecx_priv_print,
 
@@ -565,7 +568,9 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
-    x448_import_from
+    x448_import_from,
+
+    ecx_priv_decode_with_libctx
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
@@ -657,7 +662,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_pub_cmp,
     ecx_pub_print,
 
-    ecx_priv_decode,
+    NULL,
     ecx_priv_encode,
     ecx_priv_print,
 
@@ -687,7 +692,9 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
-    ed25519_import_from
+    ed25519_import_from,
+
+    ecx_priv_decode_with_libctx
 };
 
 static int ed448_import_from(const OSSL_PARAM params[], void *key)
@@ -707,7 +714,7 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecx_pub_cmp,
     ecx_pub_print,
 
-    ecx_priv_decode,
+    NULL,
     ecx_priv_encode,
     ecx_priv_print,
 
@@ -737,12 +744,15 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecx_get_pub_key,
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
-    ed448_import_from
+    ed448_import_from,
+
+    ecx_priv_decode_with_libctx
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, KEY_OP_KEYGEN);
+    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, KEY_OP_KEYGEN,
+                      NULL, NULL);
 }
 
 static int validate_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
