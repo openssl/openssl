@@ -406,7 +406,8 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt)
+                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              const char *propq)
 {
     const ECX_KEY *key = from->pkey.ecx;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();

@@ -1081,7 +1081,8 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
 static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt)
+                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();

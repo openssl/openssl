@@ -1442,7 +1442,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
             goto end;
 
-        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt)) {
+        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt, libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;
