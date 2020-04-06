@@ -73,7 +73,8 @@ struct evp_pkey_asn1_method_st {
     /* Exports and imports to / from providers */
     size_t (*dirty_cnt) (const EVP_PKEY *pk);
     int (*export_to) (const EVP_PKEY *pk, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt);
+                      EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                      const char *propq);
     OSSL_CALLBACK *import_from;
 } /* EVP_PKEY_ASN1_METHOD */ ;
 

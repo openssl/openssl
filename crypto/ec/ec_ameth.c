@@ -620,7 +620,8 @@ int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
 
 static
 int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt)
+                      EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                      const char *propq)
 {
     const EC_KEY *eckey = NULL;
     const EC_GROUP *ecg = NULL;
@@ -632,6 +633,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     const EC_POINT *pub_point = NULL;
     int selection = 0;
     int rv = 0;
+    BN_CTX *bnctx = NULL;
 
     if (from == NULL
             || (eckey = from->pkey.ec) == NULL
@@ -658,10 +660,18 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     pub_point = EC_KEY_get0_public_key(eckey);
 
     if (pub_point != NULL) {
+        /*
+         * EC_POINT_point2buf() can generate random numbers in some
+         * implementations so we need to ensure we use the correct libctx.
+         */
+        bnctx = BN_CTX_new_ex(libctx);
+        if (bnctx == NULL)
+            goto err;
+
         /* convert pub_point to a octet string according to the SECG standard */
         if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
                                                  POINT_CONVERSION_COMPRESSED,
-                                                 &pub_key_buf, NULL)) == 0
+                                                 &pub_key_buf, bnctx)) == 0
             || !OSSL_PARAM_BLD_push_octet_string(tmpl,
                                                  OSSL_PKEY_PARAM_PUB_KEY,
                                                  pub_key_buf,
@@ -744,6 +754,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM_BLD_free(tmpl);
     OSSL_PARAM_BLD_free_params(params);
     OPENSSL_free(pub_key_buf);
+    BN_CTX_free(bnctx);
     return rv;
 }
 
