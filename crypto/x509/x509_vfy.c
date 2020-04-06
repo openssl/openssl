@@ -334,7 +334,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         return ss;
     }
 
-    ret = X509_check_issued(issuer, x);
+    ret = x509_check_issued_int(issuer, x, ctx->libctx, ctx->propq);
     if (ret == X509_V_OK) {
         int i;
         X509 *ch;
