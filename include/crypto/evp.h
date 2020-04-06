@@ -733,4 +733,7 @@ const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
  */
 int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+
+EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+                             const char *propq);
 #endif /* !defined(FIPS_MODE) */

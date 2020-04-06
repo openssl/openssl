@@ -5064,3 +5064,7 @@ EVP_PKEY_CTX_set_dh_paramgen_generator  ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dh_nid                 ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dh_rfc5114             ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dhx_rfc5114            ?	3_0_0	EXIST::FUNCTION:DH
+d2i_PrivateKey_ex                       ?	3_0_0	EXIST::FUNCTION:
+d2i_AutoPrivateKey_ex                   ?	3_0_0	EXIST::FUNCTION:
+d2i_PrivateKey_ex_fp                    ?	3_0_0	EXIST::FUNCTION:STDIO
+d2i_PrivateKey_ex_bio                   ?	3_0_0	EXIST::FUNCTION:
