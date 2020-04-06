@@ -185,7 +185,8 @@ sub extract_pod_info {
 
     return ( section => $podinfo{section},
              names => [ @names, @invisible_names ],
-             contents =>  $contents );
+             contents => $contents,
+             filename => $filename );
 }
 
 1;
