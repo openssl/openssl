@@ -27,8 +27,9 @@
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
-EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
-                                  void *u)
+EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
+                                     void *u, OPENSSL_CTX *libctx,
+                                     const char *propq)
 {
     EVP_PKEY *ret = NULL;
     OSSL_STORE_CTX *ctx = NULL;
@@ -38,7 +39,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u)) == NULL)
+    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u, libctx,
+                                         propq)) == NULL)
         goto err;
 #ifndef OPENSSL_NO_SECURE_HEAP
     {
@@ -64,6 +66,12 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     UI_destroy_method(ui_method);
     OSSL_STORE_INFO_free(info);
     return ret;
+}
+
+EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
+                                  void *u)
+{
+    return PEM_read_bio_PrivateKey_ex(bp, x, cb, u, NULL, NULL);
 }
 
 PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
@@ -97,7 +105,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_STORE_INFO *info = NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, UI_null(), NULL)) == NULL)
+    if ((ctx = ossl_store_attach_pem_bio(bp, UI_null(), NULL, NULL, NULL)) == NULL)
         goto err;
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
@@ -134,20 +142,27 @@ PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 }
 
 #ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                              void *u)
+EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
+                                 void *u, OPENSSL_CTX *libctx,
+                                 const char *propq)
 {
     BIO *b;
     EVP_PKEY *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_READ_PRIVATEKEY, ERR_R_BUF_LIB);
+        PEMerr(0, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_read_bio_PrivateKey(b, x, cb, u);
+    ret = PEM_read_bio_PrivateKey_ex(b, x, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
+}
+
+EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
+                              void *u)
+{
+    return PEM_read_PrivateKey_ex(fp, x, cb, u, NULL, NULL);
 }
 
 int PEM_write_PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
@@ -183,7 +198,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u)) == NULL)
+    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u, NULL, NULL)) == NULL)
         goto err;
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
