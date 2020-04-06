@@ -811,14 +811,15 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * codes for X509_verify_cert()
  */
 
-int X509_check_issued(X509 *issuer, X509 *subject)
+int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
+                          const char *propq)
 {
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
                       X509_get_issuer_name(subject)))
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    if (!X509v3_cache_extensions(issuer, NULL, NULL)
-            || !X509v3_cache_extensions(subject, NULL, NULL))
+    if (!X509v3_cache_extensions(issuer, libctx, propq)
+            || !X509v3_cache_extensions(subject, libctx, propq))
         return X509_V_ERR_UNSPECIFIED;
 
     if (subject->akid) {
@@ -851,6 +852,11 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     } else if (ku_reject(issuer, KU_KEY_CERT_SIGN))
         return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
     return X509_V_OK;
+}
+
+int X509_check_issued(X509 *issuer, X509 *subject)
+{
+    return x509_check_issued_int(issuer, subject, NULL, NULL);
 }
 
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
