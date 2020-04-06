@@ -5045,3 +5045,7 @@ CT_POLICY_EVAL_CTX_new_with_libctx      ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_from_base64_with_libctx       ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_STORE_new_with_libctx             ?	3_0_0	EXIST::FUNCTION:CT
+d2i_PrivateKey_ex                       ?	3_0_0	EXIST::FUNCTION:
+d2i_AutoPrivateKey_ex                   ?	3_0_0	EXIST::FUNCTION:
+d2i_PrivateKey_ex_fp                    ?	3_0_0	EXIST::FUNCTION:STDIO
+d2i_PrivateKey_ex_bio                   ?	3_0_0	EXIST::FUNCTION:

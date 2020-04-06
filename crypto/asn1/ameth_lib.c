@@ -283,6 +283,18 @@ void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
 
     dst->pkey_check = src->pkey_check;
 
+    dst->pkey_public_check = src->pkey_public_check;
+    dst->pkey_param_check = src->pkey_param_check;
+
+    dst->set_priv_key = src->set_priv_key;
+    dst->set_pub_key = src->set_pub_key;
+    dst->get_priv_key = src->get_priv_key;
+    dst->get_pub_key = src->get_pub_key;
+
+    dst->dirty_cnt = src->dirty_cnt;
+    dst->export_to = src->export_to;
+
+    dst->priv_decode_with_libctx = src->priv_decode_with_libctx;
 }
 
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
