@@ -24,6 +24,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
+#include "crypto/asn1.h"
 
 static void clean_id_ctx(EVP_MD_CTX *ctx)
 {
@@ -594,6 +595,22 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
 }
 
+EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+                               const char *propq)
+{
+    BIO *b;
+    void *ret;
+
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
+        X509err(0, ERR_R_BUF_LIB);
+        return NULL;
+    }
+    BIO_set_fp(b, fp, BIO_NOCLOSE);
+    ret = d2i_PrivateKey_ex_bio(b, a, libctx, propq);
+    BIO_free(b);
+    return ret;
+}
+
 int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey)
 {
     return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
@@ -640,6 +657,25 @@ int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey)
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 {
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
+}
+
+EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+                                const char *propq)
+{
+    BUF_MEM *b = NULL;
+    const unsigned char *p;
+    void *ret = NULL;
+    int len;
+
+    len = asn1_d2i_read_bio(bp, &b);
+    if (len < 0)
+        goto err;
+
+    p = (unsigned char *)b->data;
+    ret = d2i_AutoPrivateKey_ex(a, &p, len, libctx, propq);
+ err:
+    BUF_MEM_free(b);
+    return ret;
 }
 
 int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey)

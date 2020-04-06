@@ -5050,3 +5050,7 @@ EVP_PKEY_get_ex_data                    ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_ec_paramgen_curve_name ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_get_ec_paramgen_curve_name ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid  ?	3_0_0	EXIST::FUNCTION:EC
+d2i_PrivateKey_ex                       ?	3_0_0	EXIST::FUNCTION:
+d2i_AutoPrivateKey_ex                   ?	3_0_0	EXIST::FUNCTION:
+d2i_PrivateKey_ex_fp                    ?	3_0_0	EXIST::FUNCTION:STDIO
+d2i_PrivateKey_ex_bio                   ?	3_0_0	EXIST::FUNCTION:
