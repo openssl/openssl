@@ -317,7 +317,7 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group,
 
     /* blinding: make sure z1 and z2 are independently blinded. */
     do {
-        if (!BN_rand(z1, BN_num_bits(&group->field), 0, 0)) {
+        if (!BN_rand(z1, BN_num_bits(&group->field) - 1, -1, 0)) {
             ECerr(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY, ERR_R_BN_LIB);
             return 0;
         }
@@ -332,7 +332,7 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group,
 
     /* now generate another random field element to blind (x1,z1) */
     do {
-        if (!BN_rand(z1, BN_num_bits(&group->field), 0, 0)) {
+        if (!BN_rand(z1, BN_num_bits(&group->field) - 1, -1, 0)) {
             ECerr(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY, ERR_R_BN_LIB);
             return 0;
         }
