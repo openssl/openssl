@@ -128,5 +128,7 @@ int ossl_store_file_loader_init(void);
  *  -------------------
  */
 
-OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
+OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp,
+                                                          OPENSSL_CTX *libctx,
+                                                          const char *propq);
 int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);

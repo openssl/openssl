@@ -652,14 +652,16 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
 }
 
 OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
-                                          void *ui_data)
+                                          void *ui_data, OPENSSL_CTX *libctx,
+                                          const char *propq)
 {
     OSSL_STORE_CTX *ctx = NULL;
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
 
     if ((loader = ossl_store_get0_loader_int("file")) == NULL
-        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
+        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp, libctx,
+                                                             propq)) == NULL))
         goto done;
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
