@@ -11,7 +11,9 @@ OPENSSL_instrument_bus2                 assembler
 #
 ADMISSION_SYNTAX                        datatype
 ADMISSIONS                              datatype
+ASN1_ITEM                               datatype
 ASN1_STRING_TABLE                       datatype
+ASYNC_callback_fn                       datatype
 BIO_ADDR                                datatype
 BIO_ADDRINFO                            datatype
 BIO_callback_fn                         datatype
@@ -37,7 +39,6 @@ GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
-OCSP_parse_url                          define
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
@@ -68,6 +69,7 @@ RAND_poll_cb                            datatype
 SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_allow_early_data_cb_fn              datatype
+SSL_async_callback_fn                   datatype
 SSL_client_hello_cb_fn                  datatype
 SSL_custom_ext_add_cb_ex                datatype
 SSL_custom_ext_free_cb_ex               datatype
@@ -111,9 +113,8 @@ custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
 pem_password_cb                         datatype
 ssl_ct_validation_cb                    datatype
-ASYNC_callback_fn                       datatype
-SSL_async_callback_fn                   datatype
 #
+ASN1_BIT_STRING_digest                  define
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
 BIO_do_accept                           define
@@ -124,6 +125,8 @@ BIO_flush                               define
 BIO_get_accept_name                     define
 BIO_get_accept_port                     define
 BIO_get_accept_ip_family                define
+BIO_get_app_data                        define
+BIO_get_ex_new_index                    define
 BIO_get_peer_name                       define
 BIO_get_peer_port                       define
 BIO_get_bind_mode                       define
@@ -161,6 +164,7 @@ BIO_set_accept_bios                     define
 BIO_set_accept_name                     define
 BIO_set_accept_port                     define
 BIO_set_accept_ip_family                define
+BIO_set_app_data                        define
 BIO_set_bind_mode                       define
 BIO_set_buffer_read_data                define
 BIO_set_buffer_size                     define
@@ -315,6 +319,7 @@ EVP_rc5_32_12_16_cfb                    define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
+OCSP_parse_url                          define
 OPENSSL_FILE                            define
 OPENSSL_FUNC                            define
 OPENSSL_LINE                            define
@@ -366,7 +371,6 @@ OSSL_CMP_LOG_WARNING                    define
 OSSL_CMP_MSTR_HELPER                    define
 OSSL_CMP_MSTR                           define
 OSSL_CMP_P10CR                          define
-ossl_cmp_allow_unprotected_cb_t         datatype
 OSSL_CMP_certConf_cb_t                  datatype
 OSSL_CMP_log_cb_t                       datatype
 OSSL_CMP_severity                       datatype
