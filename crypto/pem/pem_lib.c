@@ -787,6 +787,7 @@ err:
 enum header_status {
     MAYBE_HEADER,
     IN_HEADER,
+    MAYBE_POST_HEADER,
     POST_HEADER
 };
 
@@ -811,6 +812,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
     enum header_status got_header = MAYBE_HEADER;
     unsigned int flags_mask;
     size_t namelen;
+
 
     /* Need to hold trailing NUL (accounted for by BIO_gets() and the newline
      * that will be added by sanitize_line() (the extra '1'). */
@@ -843,8 +845,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
                 PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
                 goto err;
             }
-            got_header = POST_HEADER;
-            tmp = *data;
+            got_header = MAYBE_POST_HEADER;
             continue;
         }
 
@@ -857,7 +858,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
                 PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
                 goto err;
             }
-            if (got_header == MAYBE_HEADER) {
+            if (got_header == MAYBE_HEADER || got_header == MAYBE_POST_HEADER) {
                 *header = *data;
                 *data = tmp;
             }
@@ -867,6 +868,12 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
             goto err;
         }
+
+        if (got_header == MAYBE_POST_HEADER) {
+            got_header = POST_HEADER;
+            tmp = *data;
+        }
+
         /*
          * Else, a line of text -- could be header or data; we don't
          * know yet.  Just pass it through.

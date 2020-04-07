@@ -43,6 +43,7 @@ my %cert_expected = (
     "cert-misalignedpad.pem" => 0,
     "cert-onecolumn.pem" => 1,
     "cert-oneline.pem" => 1,
+    "cert-oneline-multiple-of-254.pem" => 1,
     "cert-shortandlongline.pem" => 1,
     "cert-shortline.pem" => 1,
     "cert-threecolumn.pem" => 1,
