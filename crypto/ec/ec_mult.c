@@ -439,7 +439,7 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
 
         /* first randomize r->Z to blind s. */
         do {
-            if (!BN_rand(&r->Z, BN_num_bits(&group->field), -1, 0)) {
+            if (!BN_rand_range(&r->Z, &group->field)) {
                 ECerr(EC_F_EC_MUL_CONSTTIME, ERR_R_BN_LIB);
                 goto err;
             }
@@ -466,7 +466,7 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
 
         /* blinding: now rerandomize r->Z to make r a blinded copy of s. */
         do {
-            if (!BN_rand(&r->Z, BN_num_bits(&group->field), -1, 0)) {
+            if (!BN_rand_range(&r->Z, &group->field)) {
                 ECerr(EC_F_EC_MUL_CONSTTIME, ERR_R_BN_LIB);
                 goto err;
             }
