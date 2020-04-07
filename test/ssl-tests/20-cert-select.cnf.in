@@ -9,15 +9,26 @@ use warnings;
 package ssltests;
 use OpenSSL::Test::Utils;
 
-my $server = {
-    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-    "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
-    "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
-    "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
-    "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
-    "MaxProtocol" => "TLSv1.2"
-};
+my $server;
+
+if (FIPS_MODE) {
+    #TODO(3.0): No EdDSA support in FIPS mode at the moment
+    $server = {
+        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+        "MaxProtocol" => "TLSv1.2"
+    };
+} else {
+    $server = {
+        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+        "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+        "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+        "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+        "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+        "MaxProtocol" => "TLSv1.2"
+    };
+}
 
 my $server_pss = {
     "PSS.Certificate" => test_pem("server-pss-cert.pem"),
@@ -119,63 +130,6 @@ our @tests = (
         },
     },
     {
-        name => "Ed25519 CipherString and Signature Algorithm Selection",
-        server => $server,
-        client => {
-            "CipherString" => "aECDSA",
-            "MaxProtocol" => "TLSv1.2",
-            "SignatureAlgorithms" => "ed25519:ECDSA+SHA256",
-            "RequestCAFile" => test_pem("root-cert.pem"),
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "Ed25519",
-            "ExpectedServerSignType" =>, "Ed25519",
-            # Note: certificate_authorities not sent for TLS < 1.3
-            "ExpectedServerCANames" =>, "empty",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "Ed448 CipherString and Signature Algorithm Selection",
-        server => $server,
-        client => {
-            "CipherString" => "aECDSA",
-            "MaxProtocol" => "TLSv1.2",
-            "SignatureAlgorithms" => "ed448:ECDSA+SHA256",
-            "RequestCAFile" => test_pem("root-ed448-cert.pem"),
-            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "Ed448",
-            "ExpectedServerSignType" =>, "Ed448",
-            # Note: certificate_authorities not sent for TLS < 1.3
-            "ExpectedServerCANames" =>, "empty",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "ECDSA with brainpool",
-        server =>  {
-            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
-            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
-            "Groups" => "brainpoolP256r1",
-        },
-        client => {
-            #We don't restrict this to TLSv1.2, although use of brainpool
-            #should force this anyway so that this should succeed
-            "CipherString" => "aECDSA",
-            "RequestCAFile" => test_pem("root-cert.pem"),
-            "Groups" => "brainpoolP256r1",
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "brainpoolP256r1",
-            "ExpectedServerSignType" =>, "EC",
-            # Note: certificate_authorities not sent for TLS < 1.3
-            "ExpectedServerCANames" =>, "empty",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
         name => "RSA CipherString Selection",
         server => $server,
         client => {
@@ -200,41 +154,6 @@ our @tests = (
             "ExpectedServerCertType" => "P-256",
             "ExpectedServerSignHash" => "SHA256",
             "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "Ed25519 CipherString and Curves Selection",
-        server => $server,
-        client => {
-            "CipherString" => "aECDSA",
-            "MaxProtocol" => "TLSv1.2",
-            "SignatureAlgorithms" => "ECDSA+SHA256:ed25519",
-            # Excluding P-256 from the supported curves list means server
-            # certificate should be Ed25519 and not P-256
-            "Curves" => "X25519"
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "Ed25519",
-            "ExpectedServerSignType" =>, "Ed25519",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "Ed448 CipherString and Curves Selection",
-        server => $server,
-        client => {
-            "CipherString" => "aECDSA",
-            "MaxProtocol" => "TLSv1.2",
-            "SignatureAlgorithms" => "ECDSA+SHA256:ed448",
-            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
-            # Excluding P-256 from the supported curves list means server
-            # certificate should be Ed25519 and not P-256
-            "Curves" => "X448"
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "Ed448",
-            "ExpectedServerSignType" =>, "Ed448",
             "ExpectedResult" => "Success"
         },
     },
@@ -392,6 +311,102 @@ our @tests = (
             "ExpectedServerCertType" => "P-384",
             "ExpectedServerSignHash" => "SHA384",
             "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+my @tests_non_fips = (
+    # TODO(3.0) No Ed25519/Ed448 in FIPS mode at the moment
+    {
+        name => "Ed25519 CipherString and Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "SignatureAlgorithms" => "ed25519:ECDSA+SHA256",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "Ed25519",
+            "ExpectedServerSignType" =>, "Ed25519",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Ed448 CipherString and Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "SignatureAlgorithms" => "ed448:ECDSA+SHA256",
+            "RequestCAFile" => test_pem("root-ed448-cert.pem"),
+            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "Ed448",
+            "ExpectedServerSignType" =>, "Ed448",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "ECDSA with brainpool",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            #We don't restrict this to TLSv1.2, although use of brainpool
+            #should force this anyway so that this should succeed
+            "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "brainpoolP256r1",
+            "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Ed25519 CipherString and Curves Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "SignatureAlgorithms" => "ECDSA+SHA256:ed25519",
+            # Excluding P-256 from the supported curves list means server
+            # certificate should be Ed25519 and not P-256
+            "Curves" => "X25519"
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "Ed25519",
+            "ExpectedServerSignType" =>, "Ed25519",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Ed448 CipherString and Curves Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "SignatureAlgorithms" => "ECDSA+SHA256:ed448",
+            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
+            # Excluding P-256 from the supported curves list means server
+            # certificate should be Ed25519 and not P-256
+            "Curves" => "X448"
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "Ed448",
+            "ExpectedServerSignType" =>, "Ed448",
             "ExpectedResult" => "Success"
         },
     },
@@ -580,21 +595,34 @@ my @tests_tls_1_1 = (
     },
 );
 
+push @tests, @tests_non_fips unless FIPS_MODE;
+
 #TODO(3.0): Re-enable these PSS tests in a NO_DEFLT_LIBCTX build once we have
 #           support for it
 push @tests, @tests_pss unless NO_DEFLT_LIBCTX;
 push @tests, @tests_tls_1_1 unless disabled("tls1_1") || NO_DEFLT_LIBCTX;
 
-my $server_tls_1_3 = {
-    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-    "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
-    "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
-    "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
-    "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
-    "MinProtocol" => "TLSv1.3",
-    "MaxProtocol" => "TLSv1.3"
-};
+my $server_tls_1_3;
+
+if (FIPS_MODE) {
+    $server_tls_1_3 = {
+        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+        "MinProtocol" => "TLSv1.3",
+        "MaxProtocol" => "TLSv1.3"
+    };
+} else {
+    $server_tls_1_3 = {
+        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+        "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+        "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+        "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+        "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+        "MinProtocol" => "TLSv1.3",
+        "MaxProtocol" => "TLSv1.3"
+    };
+}
 
 my $client_tls_1_3 = {
     "RSA.Certificate" => test_pem("ee-client-chain.pem"),
@@ -714,6 +742,57 @@ my @tests_tls_1_3 = (
         },
     },
     {
+        name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection",
+        server => {
+            "ClientSignatureAlgorithms" => "PSS+SHA256",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => $client_tls_1_3,
+        test   => {
+            "ExpectedClientCertType" => "RSA",
+            "ExpectedClientSignHash" => "SHA256",
+            "ExpectedClientSignType" => "RSA-PSS",
+            "ExpectedClientCANames" => "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection non-empty CA Names",
+        server => {
+            "ClientSignatureAlgorithms" => "PSS+SHA256",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => $client_tls_1_3,
+        test   => {
+            "ExpectedClientCertType" => "RSA",
+            "ExpectedClientSignHash" => "SHA256",
+            "ExpectedClientSignType" => "RSA-PSS",
+            "ExpectedClientCANames" => test_pem("root-cert.pem"),
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA Client Auth Signature Algorithm Selection",
+        server => {
+            "ClientSignatureAlgorithms" => "ECDSA+SHA256",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => $client_tls_1_3,
+        test   => {
+            "ExpectedClientCertType" => "P-256",
+            "ExpectedClientSignHash" => "SHA256",
+            "ExpectedClientSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+my @tests_tls_1_3_non_fips = (
+    {
         name => "TLS 1.3 Ed25519 Signature Algorithm Selection",
         server => $server_tls_1_3,
         client => {
@@ -767,54 +846,6 @@ my @tests_tls_1_3 = (
         test   => {
             "ExpectedServerCertType" =>, "P-256",
             "ExpectedServerSignType" =>, "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection",
-        server => {
-            "ClientSignatureAlgorithms" => "PSS+SHA256",
-            "VerifyCAFile" => test_pem("root-cert.pem"),
-            "VerifyMode" => "Require"
-        },
-        client => $client_tls_1_3,
-        test   => {
-            "ExpectedClientCertType" => "RSA",
-            "ExpectedClientSignHash" => "SHA256",
-            "ExpectedClientSignType" => "RSA-PSS",
-            "ExpectedClientCANames" => "empty",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection non-empty CA Names",
-        server => {
-            "ClientSignatureAlgorithms" => "PSS+SHA256",
-            "VerifyCAFile" => test_pem("root-cert.pem"),
-            "RequestCAFile" => test_pem("root-cert.pem"),
-            "VerifyMode" => "Require"
-        },
-        client => $client_tls_1_3,
-        test   => {
-            "ExpectedClientCertType" => "RSA",
-            "ExpectedClientSignHash" => "SHA256",
-            "ExpectedClientSignType" => "RSA-PSS",
-            "ExpectedClientCANames" => test_pem("root-cert.pem"),
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "TLS 1.3 ECDSA Client Auth Signature Algorithm Selection",
-        server => {
-            "ClientSignatureAlgorithms" => "ECDSA+SHA256",
-            "VerifyCAFile" => test_pem("root-cert.pem"),
-            "VerifyMode" => "Require"
-        },
-        client => $client_tls_1_3,
-        test   => {
-            "ExpectedClientCertType" => "P-256",
-            "ExpectedClientSignHash" => "SHA256",
-            "ExpectedClientSignType" => "EC",
             "ExpectedResult" => "Success"
         },
     },
@@ -874,6 +905,7 @@ my @tests_tls_1_3 = (
 );
 
 push @tests, @tests_tls_1_3 unless disabled("tls1_3");
+push @tests, @tests_tls_1_3_non_fips unless disabled("tls1_3") || FIPS_MODE;
 
 my @tests_dsa_tls_1_2 = (
     {

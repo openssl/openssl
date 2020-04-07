@@ -511,7 +511,7 @@ err:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("conf_file\n")
+OPT_TEST_DECLARE_USAGE("conf_file modulename [fips_conf_file]\n")
 
 int setup_tests(void)
 {
@@ -534,9 +534,15 @@ int setup_tests(void)
         return 0;
 
     if (strcmp(modulename, "none") != 0) {
+        const char *configfile = test_get_argument(2);
+
         defctxnull = OSSL_PROVIDER_load(NULL, "null");
         libctx = OPENSSL_CTX_new();
         if (!TEST_ptr(libctx))
+            return 0;
+
+        if (configfile != NULL
+                && !TEST_true(OPENSSL_CTX_load_config(libctx, configfile)))
             return 0;
 
         thisprov = OSSL_PROVIDER_load(libctx, modulename);

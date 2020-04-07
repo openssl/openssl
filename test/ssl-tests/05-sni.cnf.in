@@ -166,4 +166,4 @@ our @tests_tls_1_1 = (
     },
 );
 
-push @tests, @tests_tls_1_1 unless disabled("tls1_1");
+push @tests, @tests_tls_1_1 unless disabled("tls1_1") || FIPS_MODE;
