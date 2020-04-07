@@ -289,9 +289,9 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         len = (size_t)len_in;
     }
     /*
-     * Veryif that the length fits within an integer for assignment to
+     * Verify that the length fits within an integer for assignment to
      * str->length below.  The additional 1 is subtracted to allow for the
-     * \0 terminator even though this isn't strictly necessary.
+     * '\0' terminator even though this isn't strictly necessary.
      */
     if (len > INT_MAX - 1) {
         ASN1err(0, ASN1_R_TOO_LARGE);
