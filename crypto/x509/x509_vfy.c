@@ -2946,7 +2946,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     }
 
     ss = cert_self_signed(ctx, cert);
-    if (ss == -1) {
+    if (ss < 0) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -3125,7 +3125,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         continue;
                     }
                     ss = cert_self_signed(ctx, x);
-                    if (ss == -1) {
+                    if (ss < 0) {
                         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                         ctx->error = X509_V_ERR_UNSPECIFIED;
                         return 0;
@@ -3242,7 +3242,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
             ss = cert_self_signed(ctx, xtmp);
-            if (ss == -1) {
+            if (ss < 0) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                 ctx->error = X509_V_ERR_UNSPECIFIED;
                 return 0;
