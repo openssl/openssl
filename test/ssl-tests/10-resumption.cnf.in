@@ -16,4 +16,9 @@ package ssltests;
 
 use protocol_version;
 
-our @tests = generate_resumption_tests("TLS");
+our @tests;
+if (FIPS_MODE) {
+    @tests = generate_resumption_tests("TLS", 1);
+} else {
+    @tests = generate_resumption_tests("TLS", 0);
+}
