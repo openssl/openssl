@@ -22,7 +22,7 @@ int f(void) /*
              */
 {
     if (ctx == NULL) { /* non-leading intra-line comment */
-        if (pem_name != NULL)
+        if (/* comment after '(' */ pem_name != NULL /* comment before ')' */)
             /* entire-line comment indent usually like for the following line */
             return NULL; /* hanging indent also for this line after comment */
         /* leading comment has same indentation as normal code */ stmt;
