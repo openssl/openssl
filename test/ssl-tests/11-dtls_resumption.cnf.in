@@ -16,4 +16,6 @@ package ssltests;
 
 use protocol_version;
 
-our @tests = generate_resumption_tests("DTLS");
+our $fips_mode;
+
+our @tests = generate_resumption_tests("DTLS", $fips_mode);

@@ -17,6 +17,9 @@ sub test_pem
     return "\${ENV::TEST_CERTS_DIR}" . $dir_sep . $file,
 }
 
+our $fips_mode = 0;
+our $no_deflt_libctx = 0;
+
 our %base_server = (
     "Certificate" => test_pem("servercert.pem"),
     "PrivateKey"  => test_pem("serverkey.pem"),

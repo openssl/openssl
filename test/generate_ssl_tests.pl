@@ -128,18 +128,13 @@ sub print_templates {
 sub read_config {
     my $fname = shift;
     my $provider = shift;
-    my $fips_mode = "0";
-    my $no_deflt_libctx = "0";
-
-    $fips_mode = "1" if $provider eq "fips";
-    $no_deflt_libctx = "1" if $provider eq "default" || $provider eq "fips";
+    local $ssltests::fips_mode = $provider eq "fips";
+    local $ssltests::no_deflt_libctx =
+        $provider eq "default" || $provider eq "fips";
 
     open(INPUT, "< $fname") or die "Can't open input file '$fname'!\n";
     local $/ = undef;
     my $content = <INPUT>;
-    $content =~ s/FIPS_MODE/$fips_mode/g;
-    $content =~ s/NO_DEFLT_LIBCTX/$no_deflt_libctx/g;
-
     close(INPUT);
     eval $content;
     warn $@ if $@;

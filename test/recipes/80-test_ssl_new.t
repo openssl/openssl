@@ -13,11 +13,21 @@ use warnings;
 use File::Basename;
 use File::Compare qw/compare_text/;
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_file bldtop_dir/;
 use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
 
+BEGIN {
 setup("test_ssl_new");
+}
 
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 
@@ -28,7 +38,8 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 30;  # = scalar @conf_srcs
+plan tests => 30 # = scalar @conf_srcs
+              + ($no_fips ? 0 : 1); # fipsinstall
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -106,9 +117,19 @@ my %skip = (
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
 );
 
+unless ($no_fips) {
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-module', bldtop_file('providers', platform->dso('fips')),
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+}
+
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
-        plan tests => 6;
+        plan tests => 6 + ($no_fips ? 0 : 3);
         test_conf($conf,
                   $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1,
                   defined($skip{$conf}) ? $skip{$conf} : $no_tls,
@@ -117,6 +138,10 @@ foreach my $conf (@conf_files) {
                   0,
                   defined($skip{$conf}) ? $skip{$conf} : $no_tls,
                   "default");
+        test_conf($conf,
+                  0,
+                  defined($skip{$conf}) ? $skip{$conf} : $no_tls,
+                  "fips") unless $no_fips;
     }
 }
 
@@ -149,8 +174,14 @@ sub test_conf {
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
-      ok(run(test(["ssl_test", $output_file, $provider])),
-         "running ssl_test $conf");
+      if ($provider eq "fips") {
+          ok(run(test(["ssl_test", $output_file, $provider,
+                       srctop_file("test", "fips.cnf")])),
+             "running ssl_test $conf");
+      } else {
+          ok(run(test(["ssl_test", $output_file, $provider])),
+             "running ssl_test $conf");
+      }
     }
 }
 
