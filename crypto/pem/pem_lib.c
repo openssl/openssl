@@ -791,7 +791,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
 {
     BIO *tmp = *header;
     char *linebuf, *p;
-    int len, line, ret = 0, end = 0;
+    int len, line, ret = 0, end = 0, prev_partial_line_read = 0, partial_line_read = 0;
     /* 0 if not seen (yet), 1 if reading header, 2 if finished header */
     enum header_status got_header = MAYBE_HEADER;
     unsigned int flags_mask;
@@ -813,6 +813,14 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
             goto err;
         }
 
+        /*
+         * Check if line has been read completely or if only part of the line
+         * has been read. Keep the previous value to ignore newlines that
+         * appear due to reading a line up until the char before the newline.
+         */
+        prev_partial_line_read = partial_line_read;
+        partial_line_read = len == LINESIZE-1 && linebuf[LINESIZE-2] != '\n';
+
         if (got_header == MAYBE_HEADER) {
             if (memchr(linebuf, ':', len) != NULL)
                 got_header = IN_HEADER;
@@ -823,13 +831,19 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
 
         /* Check for end of header. */
         if (linebuf[0] == '\n') {
-            if (got_header == POST_HEADER) {
-                /* Another blank line is an error. */
-                PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
-                goto err;
+            /*
+             * If previous line has been read only partially this newline is a
+             * regular newline at the end of a line and not an empty line.
+             */
+            if (!prev_partial_line_read) {
+                if (got_header == POST_HEADER) {
+                    /* Another blank line is an error. */
+                    PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
+                    goto err;
+                }
+                got_header = POST_HEADER;
+                tmp = *data;
             }
-            got_header = POST_HEADER;
-            tmp = *data;
             continue;
         }
 
