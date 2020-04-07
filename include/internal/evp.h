@@ -12,10 +12,12 @@
 
 # include <openssl/evp.h>
 
+# ifndef OPENSSL_NO_EC
 /*
  * TODO(3.0) While waiting for more generic getters, we have these functions
  * as an interim solution.  This should be removed when the generic getters
  * appear.
  */
 int evp_pkey_get_EC_KEY_curve_nid(const EVP_PKEY *pkey);
+# endif
 #endif
