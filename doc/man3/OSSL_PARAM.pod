@@ -159,6 +159,9 @@ The parameter data is a pointer to a printable string.
 The difference between this and B<OSSL_PARAM_UTF8_STRING> is that I<data>
 doesn't point directly at the data, but to a pointer that points to the data.
 
+If there is any uncertainty about which to use, B<OSSL_PARAM_UTF8_STRING> is
+almost certainly the correct choice.
+
 This is used to indicate that constant data is or will be passed,
 and there is therefore no need to copy the data that is passed, just
 the pointer to it.
@@ -181,6 +184,9 @@ The parameter data is a pointer to an arbitrary string of bytes.
 The difference between this and B<OSSL_PARAM_OCTET_STRING> is that
 I<data> doesn't point directly at the data, but to a pointer that
 points to the data.
+
+If there is any uncertainty about which to use, B<OSSL_PARAM_OCTET_STRING> is
+almost certainly the correct choice.
 
 This is used to indicate that constant data is or will be passed, and
 there is therefore no need to copy the data that is passed, just the
