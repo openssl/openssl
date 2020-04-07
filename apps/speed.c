@@ -1980,6 +1980,14 @@ int speed_main(int argc, char **argv)
         for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
             eddsa_doit[loop] = 1;
 #endif
+#ifndef OPENSSL_NO_OQSKEM
+    	for (i = 0; i < OQSKEM_NUM; i++) 
+            oqskem_doit[i] = 1;
+#endif
+#ifndef OPENSSL_NO_OQSSIG
+    	for (i = 0; i < OQSSIG_NUM; i++) 
+            oqssig_doit[i] = 1;
+#endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
         if (doit[i])
