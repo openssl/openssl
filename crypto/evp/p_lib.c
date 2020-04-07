@@ -96,6 +96,16 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
     return 0;
 }
 
+int EVP_PKEY_set_ex_data(EVP_PKEY *key, int idx, void *arg)
+{
+    return CRYPTO_set_ex_data(&key->ex_data, idx, arg);
+}
+
+void *EVP_PKEY_get_ex_data(const EVP_PKEY *key, int idx)
+{
+    return CRYPTO_get_ex_data(&key->ex_data, idx);
+}
+
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     /*
@@ -1090,10 +1100,20 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
+        goto err;
     }
+#ifndef FIPS_MODE
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
+        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+#endif
     return ret;
+
+ err:
+    CRYPTO_THREAD_lock_free(ret->lock);
+    OPENSSL_free(ret);
+    return NULL;
 }
 
 /*
@@ -1328,6 +1348,9 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
     REF_ASSERT_ISNT(i < 0);
     evp_pkey_free_it(x);
+#ifndef FIPS_MODE
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, x, &x->ex_data);
+#endif
     CRYPTO_THREAD_lock_free(x->lock);
 #ifndef FIPS_MODE
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);

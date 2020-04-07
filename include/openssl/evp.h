@@ -1616,6 +1616,11 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx);
 
+# define EVP_PKEY_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_EVP_PKEY, l, p, newf, dupf, freef)
+int EVP_PKEY_set_ex_data(EVP_PKEY *key, int idx, void *arg);
+void *EVP_PKEY_get_ex_data(const EVP_PKEY *key, int idx);
+
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
 
