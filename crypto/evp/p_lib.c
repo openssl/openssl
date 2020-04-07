@@ -39,6 +39,9 @@
 
 #include "crypto/ec.h"
 
+/* TODO remove this when the EVP_PKEY_is_a() #legacy support hack is removed */
+#include "e_os.h"                /* strcasecmp on Windows */
+
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);
@@ -739,8 +742,29 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 {
 #ifndef FIPS_MODE
-    if (pkey->keymgmt == NULL)
-        return EVP_PKEY_type(pkey->type) == EVP_PKEY_type(OBJ_sn2nid(name));
+    if (pkey->keymgmt == NULL) {
+        /*
+         * These hard coded cases are pure hackery to get around the fact
+         * that names in crypto/objects/objects.txt are a mess.  There is
+         * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
+         * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
+         * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
+         * "DSA" is accurate...  but still, better be safe and hard-code
+         * names that we know.
+         * TODO Clean this away along with all other #legacy support.
+         */
+        int type;
+
+        if (strcasecmp(name, "EC") == 0)
+            type = EVP_PKEY_EC;
+        else if (strcasecmp(name, "RSA") == 0)
+            type = EVP_PKEY_RSA;
+        else if (strcasecmp(name, "DSA") == 0)
+            type = EVP_PKEY_DSA;
+        else
+            type = EVP_PKEY_type(OBJ_sn2nid(name));
+        return EVP_PKEY_type(pkey->type) == type;
+    }
 #endif
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
 }
