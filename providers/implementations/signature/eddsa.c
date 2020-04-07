@@ -87,7 +87,8 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 0;
     }
 
-    if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey) == 0) {
+    if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
+                     peddsactx->libctx, NULL) == 0) {
         PROVerr(0, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
@@ -130,7 +131,8 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
     if (siglen != ED25519_SIGSIZE)
         return 0;
 
-    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
+    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
+                          NULL);
 }
 
 int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
