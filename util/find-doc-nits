@@ -945,8 +945,9 @@ sub checklinks {
             err("${filename}:1:", "reference to non-existing $link")
                 unless defined $name_map{$link} || defined $missing{$link};
             err("${filename}:1:", "reference of internal $link in public documentation $filename")
-                if (($state{$link} // '') eq 'internal'
-                    && $filename !~ /\/internal\//);
+                if ( ( ($state{$link} // '') eq 'internal'
+                       || ($missing{$link} // '') eq 'internal' )
+                     && $filename !~ /\/internal\// );
         }
     }
 }
