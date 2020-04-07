@@ -49,6 +49,7 @@ The specific structures are:
     DSA
     EC_KEY
     ENGINE
+    EVP_PKEY
     RAND_DRBG
     RSA
     SSL

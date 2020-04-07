@@ -557,6 +557,9 @@ struct evp_pkey_st {
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
+#ifndef FIPS_MODE
+    CRYPTO_EX_DATA ex_data;
+#endif
 
     /* == Provider attributes == */
 

@@ -5045,3 +5045,5 @@ CT_POLICY_EVAL_CTX_new_with_libctx      ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_from_base64_with_libctx       ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_STORE_new_with_libctx             ?	3_0_0	EXIST::FUNCTION:CT
+EVP_PKEY_set_ex_data                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_ex_data                    ?	3_0_0	EXIST::FUNCTION:
