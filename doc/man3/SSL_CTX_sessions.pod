@@ -8,7 +8,7 @@ SSL_CTX_sessions - access internal session cache
 
  #include <openssl/ssl.h>
 
- struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx);
+ LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
 
 =head1 DESCRIPTION
 
