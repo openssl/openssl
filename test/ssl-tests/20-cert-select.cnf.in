@@ -41,13 +41,21 @@ my $server_pss_restrict_only = {
     "PrivateKey" => test_pem("server-pss-restrict-key.pem"),
 };
 
+my $server_rsa_all;
 
-my $server_rsa_all = {
-    "PSS.Certificate" => test_pem("server-pss-cert.pem"),
-    "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
-    "Certificate" => test_pem("servercert.pem"),
-    "PrivateKey" => test_pem("serverkey.pem"),
-};
+if (NO_DEFLT_LIBCTX) {
+    $server_rsa_all = {
+        "Certificate" => test_pem("servercert.pem"),
+        "PrivateKey" => test_pem("serverkey.pem"),
+    };
+} else {
+    $server_rsa_all = {
+        "PSS.Certificate" => test_pem("server-pss-cert.pem"),
+        "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
+        "Certificate" => test_pem("servercert.pem"),
+        "PrivateKey" => test_pem("serverkey.pem"),
+    };
+}
 
 our @tests = (
     {
@@ -176,19 +184,6 @@ our @tests = (
         },
         test   => {
             "ExpectedServerCertType" =>, "RSA",
-            "ExpectedServerSignType" =>, "RSA-PSS",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "RSA-PSS Certificate CipherString Selection",
-        server => $server_pss,
-        client => {
-            "CipherString" => "aRSA",
-            "MaxProtocol" => "TLSv1.2",
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "RSA-PSS",
             "ExpectedServerSignType" =>, "RSA-PSS",
             "ExpectedResult" => "Success"
         },
@@ -351,6 +346,108 @@ our @tests = (
         },
     },
     {
+        name => "RSA key exchange with all RSA certificate types",
+        server => $server_rsa_all,
+        client => {
+            "CipherString" => "kRSA",
+            "MaxProtocol" => "TLSv1.2",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Suite B P-256 Hash Algorithm Selection",
+        server =>  {
+            "ECDSA.Certificate" => test_pem("p256-server-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("p256-server-key.pem"),
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "SUITEB128"
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "SignatureAlgorithms" => "ECDSA+SHA384:ECDSA+SHA256"
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Suite B P-384 Hash Algorithm Selection",
+        server =>  {
+            "ECDSA.Certificate" => test_pem("p384-server-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("p384-server-key.pem"),
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "SUITEB128"
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "SignatureAlgorithms" => "ECDSA+SHA256:ECDSA+SHA384"
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-384",
+            "ExpectedServerSignHash" => "SHA384",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.2 Ed25519 Client Auth",
+        server => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => {
+            "Ed25519.Certificate" => test_pem("client-ed25519-cert.pem"),
+            "Ed25519.PrivateKey" => test_pem("client-ed25519-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test   => {
+            "ExpectedClientCertType" => "Ed25519",
+            "ExpectedClientSignType" => "Ed25519",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.2 Ed448 Client Auth",
+        server => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => {
+            "Ed448.Certificate" => test_pem("client-ed448-cert.pem"),
+            "Ed448.PrivateKey" => test_pem("client-ed448-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test   => {
+            "ExpectedClientCertType" => "Ed448",
+            "ExpectedClientSignType" => "Ed448",
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+my @tests_pss = (
+    {
+        name => "RSA-PSS Certificate CipherString Selection",
+        server => $server_pss,
+        client => {
+            "CipherString" => "aRSA",
+            "MaxProtocol" => "TLSv1.2",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA-PSS",
+            "ExpectedServerSignType" =>, "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
         name => "RSA-PSS Certificate Legacy Signature Algorithm Selection",
         server => $server_pss,
         client => {
@@ -458,18 +555,6 @@ our @tests = (
         },
     },
     {
-        name => "RSA key exchange with all RSA certificate types",
-        server => $server_rsa_all,
-        client => {
-            "CipherString" => "kRSA",
-            "MaxProtocol" => "TLSv1.2",
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "RSA",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
         name => "RSA key exchange with only RSA-PSS certificate",
         server => $server_pss_only,
         client => {
@@ -478,80 +563,6 @@ our @tests = (
         },
         test   => {
             "ExpectedResult" => "ServerFail"
-        },
-    },
-    {
-        name => "Suite B P-256 Hash Algorithm Selection",
-        server =>  {
-            "ECDSA.Certificate" => test_pem("p256-server-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("p256-server-key.pem"),
-            "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "SUITEB128"
-        },
-        client => {
-            "VerifyCAFile" => test_pem("p384-root.pem"),
-            "SignatureAlgorithms" => "ECDSA+SHA384:ECDSA+SHA256"
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-256",
-            "ExpectedServerSignHash" => "SHA256",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "Suite B P-384 Hash Algorithm Selection",
-        server =>  {
-            "ECDSA.Certificate" => test_pem("p384-server-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("p384-server-key.pem"),
-            "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "SUITEB128"
-        },
-        client => {
-            "VerifyCAFile" => test_pem("p384-root.pem"),
-            "SignatureAlgorithms" => "ECDSA+SHA256:ECDSA+SHA384"
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-384",
-            "ExpectedServerSignHash" => "SHA384",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "TLS 1.2 Ed25519 Client Auth",
-        server => {
-            "VerifyCAFile" => test_pem("root-cert.pem"),
-            "VerifyMode" => "Require"
-        },
-        client => {
-            "Ed25519.Certificate" => test_pem("client-ed25519-cert.pem"),
-            "Ed25519.PrivateKey" => test_pem("client-ed25519-key.pem"),
-            "MinProtocol" => "TLSv1.2",
-            "MaxProtocol" => "TLSv1.2"
-        },
-        test   => {
-            "ExpectedClientCertType" => "Ed25519",
-            "ExpectedClientSignType" => "Ed25519",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "TLS 1.2 Ed448 Client Auth",
-        server => {
-            "VerifyCAFile" => test_pem("root-cert.pem"),
-            "VerifyMode" => "Require"
-        },
-        client => {
-            "Ed448.Certificate" => test_pem("client-ed448-cert.pem"),
-            "Ed448.PrivateKey" => test_pem("client-ed448-key.pem"),
-            "MinProtocol" => "TLSv1.2",
-            "MaxProtocol" => "TLSv1.2"
-        },
-        test   => {
-            "ExpectedClientCertType" => "Ed448",
-            "ExpectedClientSignType" => "Ed448",
-            "ExpectedResult" => "Success"
         },
     },
 );
@@ -569,7 +580,10 @@ my @tests_tls_1_1 = (
     },
 );
 
-push @tests, @tests_tls_1_1 unless disabled("tls1_1");
+#TODO(3.0): Re-enable these PSS tests in a NO_DEFLT_LIBCTX build once we have
+#           support for it
+push @tests, @tests_pss unless NO_DEFLT_LIBCTX;
+push @tests, @tests_tls_1_1 unless disabled("tls1_1") || NO_DEFLT_LIBCTX;
 
 my $server_tls_1_3 = {
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
@@ -578,19 +592,6 @@ my $server_tls_1_3 = {
     "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
     "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
     "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
-    "MinProtocol" => "TLSv1.3",
-    "MaxProtocol" => "TLSv1.3"
-};
-
-my $server_tls_1_3_pss = {
-    "PSS.Certificate" => test_pem("server-pss-cert.pem"),
-    "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
-    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-    "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
-    "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
-    "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
-    "Ed448.PrivateKey" => test_pem("server-ed449-key.pem"),
     "MinProtocol" => "TLSv1.3",
     "MaxProtocol" => "TLSv1.3"
 };
