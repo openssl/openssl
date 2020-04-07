@@ -5438,13 +5438,14 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 }
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32])
+                 const uint8_t public_key[32], const uint8_t private_key[32],
+                 OPENSSL_CTX *libctx, const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     uint8_t nonce[SHA512_DIGEST_LENGTH];
     ge_p3 R;
     uint8_t hram[SHA512_DIGEST_LENGTH];
-    EVP_MD *sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
+    EVP_MD *sha512 = EVP_MD_fetch(libctx, SN_sha512, propq);
     EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
     unsigned int sz;
     int res = 0;
@@ -5493,7 +5494,8 @@ err:
 static const char allzeroes[15];
 
 int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32])
+                   const uint8_t signature[64], const uint8_t public_key[32],
+                   OPENSSL_CTX *libctx, const char *propq)
 {
     int i;
     ge_p3 A;
@@ -5548,7 +5550,7 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
     fe_neg(A.X, A.X);
     fe_neg(A.T, A.T);
 
-    sha512 = EVP_MD_fetch(NULL, SN_sha512, NULL);
+    sha512 = EVP_MD_fetch(libctx, SN_sha512, propq);
     if (sha512 == NULL)
         return 0;
     hash_ctx = EVP_MD_CTX_new();
