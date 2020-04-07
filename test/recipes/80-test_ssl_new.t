@@ -108,26 +108,30 @@ my %skip = (
 
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
+        plan tests => 6;
         test_conf($conf,
                   $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1,
-                  defined($skip{$conf}) ? $skip{$conf} : $no_tls);
+                  defined($skip{$conf}) ? $skip{$conf} : $no_tls,
+                  "none");
+        test_conf($conf,
+                  0,
+                  defined($skip{$conf}) ? $skip{$conf} : $no_tls,
+                  "default");
     }
 }
 
 sub test_conf {
-    plan tests => 3;
-
-    my ($conf, $check_source, $skip) = @_;
+    my ($conf, $check_source, $skip, $provider) = @_;
 
     my $conf_file = srctop_file("test", "ssl-tests", $conf);
     my $input_file = $conf_file . ".in";
-    my $output_file = $conf;
+    my $output_file = $conf . "." . $provider;
     my $run_test = 1;
 
   SKIP: {
       # "Test" 1. Generate the source.
       skip 'failure', 2 unless
-        ok(run(perltest(["generate_ssl_tests.pl", $input_file],
+        ok(run(perltest(["generate_ssl_tests.pl", $input_file, $provider],
                         interpreter_args => [ "-I", srctop_dir("util", "perl")],
                         stdout => $output_file)),
            "Getting output from generate_ssl_tests.pl.");
@@ -145,7 +149,7 @@ sub test_conf {
       skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
-      ok(run(test(["ssl_test", $output_file, "default"])),
+      ok(run(test(["ssl_test", $output_file, $provider])),
          "running ssl_test $conf");
     }
 }

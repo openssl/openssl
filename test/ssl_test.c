@@ -533,14 +533,16 @@ int setup_tests(void)
     if (!TEST_ptr(modulename = test_get_argument(1)))
         return 0;
 
-    defctxnull = OSSL_PROVIDER_load(NULL, "null");
-    libctx = OPENSSL_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 0;
+    if (strcmp(modulename, "none") != 0) {
+        defctxnull = OSSL_PROVIDER_load(NULL, "null");
+        libctx = OPENSSL_CTX_new();
+        if (!TEST_ptr(libctx))
+            return 0;
 
-    thisprov = OSSL_PROVIDER_load(libctx, modulename);
-    if (!TEST_ptr(thisprov))
-        return 0;
+        thisprov = OSSL_PROVIDER_load(libctx, modulename);
+        if (!TEST_ptr(thisprov))
+            return 0;
+    }
 
     ADD_ALL_TESTS(test_handshake, (int)num_tests);
     return 1;
