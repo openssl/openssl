@@ -21,8 +21,8 @@ setup("test_cms");
 plan skip_all => "CMS is not supported by this OpenSSL build"
     if disabled("cms");
 
-my $bldtop = bldtop_dir("providers");
-my @prov = ("-provider_path", $bldtop, "-provider", "default", "-provider", "legacy");
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");

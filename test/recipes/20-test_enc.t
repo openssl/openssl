@@ -26,8 +26,8 @@ my $testsrc = srctop_file("test","recipes",basename($0));
 my $test = catfile(".", "p");
 
 my $cmd = "openssl";
-my $bldtop = bldtop_dir("providers");
-my @prov = ("-provider_path", $bldtop, "-provider", "default", "-provider", "legacy");
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =

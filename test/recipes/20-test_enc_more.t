@@ -25,8 +25,8 @@ my $cipherlist = undef;
 my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
-my $bldtop = bldtop_dir("providers");
-my @prov = ("-provider_path", $bldtop, "-provider", "default", "-provider", "legacy");
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =
