@@ -2127,6 +2127,8 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_dsa_sha512                                0x0602
 #define TLSEXT_SIGALG_dsa_sha224                                0x0302
 #define TLSEXT_SIGALG_dsa_sha1                                  0x0202
+#define TLSEXT_SIGALG_gostr34102012_256_intrinsic               0x0840
+#define TLSEXT_SIGALG_gostr34102012_512_intrinsic               0x0841
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
