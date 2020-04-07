@@ -755,12 +755,16 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
          */
         int type;
 
-        if (strcasecmp(name, "EC") == 0)
-            type = EVP_PKEY_EC;
-        else if (strcasecmp(name, "RSA") == 0)
+        if (strcasecmp(name, "RSA") == 0)
             type = EVP_PKEY_RSA;
+#ifndef OPENSSL_NO_EC
+        else if (strcasecmp(name, "EC") == 0)
+            type = EVP_PKEY_EC;
+#endif
+#ifndef OPENSSL_NO_DSA
         else if (strcasecmp(name, "DSA") == 0)
             type = EVP_PKEY_DSA;
+#endif
         else
             type = EVP_PKEY_type(OBJ_sn2nid(name));
         return EVP_PKEY_type(pkey->type) == type;
