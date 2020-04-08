@@ -1089,11 +1089,17 @@ int cms_pkey_get_ri_type(EVP_PKEY *pk)
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pk, NULL);
     int r;
 
+    /*
+     * TODO(3.0) Investigate whether the order of the probes is significant
+     * and if there's a better way to find out the capabilities of the
+     * implementation without introducing too much special hacks in the
+     * backend.
+     */
     ERR_set_mark();
-    if (EVP_PKEY_derive_init(pctx) > 0)
-        r = CMS_RECIPINFO_AGREE;
-    else if (EVP_PKEY_encrypt_init(pctx) > 0)
+    if (EVP_PKEY_encrypt_init(pctx) > 0)
         r = CMS_RECIPINFO_TRANS;
+    else if (EVP_PKEY_derive_init(pctx) > 0)
+        r = CMS_RECIPINFO_AGREE;
     else
         r = CMS_RECIPINFO_NONE;
 
