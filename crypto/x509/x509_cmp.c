@@ -21,6 +21,10 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
     int i;
     const X509_CINF *ai, *bi;
 
+    if (b == NULL)
+        return a != NULL;
+    if (a == NULL)
+        return -1;
     ai = &a->cert_info;
     bi = &b->cert_info;
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
@@ -161,8 +165,12 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {
     int ret;
 
-    /* Ensure canonical encoding is present and up to date */
+    if (b == NULL)
+        return a != NULL;
+    if (a == NULL)
+        return -1;
 
+    /* Ensure canonical encoding is present and up to date */
     if (!a->canon_enc || a->modified) {
         ret = i2d_X509_NAME((X509_NAME *)a, NULL);
         if (ret < 0)
