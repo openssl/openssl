@@ -248,6 +248,27 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     size_t enckeylen;
     size_t ceklen;
     CMS_EncryptedContentInfo *ec;
+
+    {
+        /*
+         * TODO(3.0) Remove this when we have functionality to deserialize
+         * parameters in EVP_PKEY form from an X509_ALGOR.
+         * This is needed to be able to replace the EC_KEY specific decoding
+         * that happens in ecdh_cms_set_peerkey() (crypto/ec/ec_ameth.c)
+         *
+         * THIS IS TEMPORARY
+         */
+        EVP_PKEY_CTX *pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+        EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+
+        EVP_PKEY_get0(pkey);
+        if (EVP_PKEY_id(pkey) == EVP_PKEY_NONE) {
+            CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_DECRYPT,
+                   CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            goto err;
+        }
+    }
+
     enckeylen = rek->encryptedKey->length;
     enckey = rek->encryptedKey->data;
     /* Setup all parameters to derive KEK */
@@ -445,6 +466,32 @@ int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
     CMS_RecipientEncryptedKey *rek;
     STACK_OF(CMS_RecipientEncryptedKey) *reks;
     int i;
+
+    {
+        /*
+         * TODO(3.0) Remove this when we have figured out all the details
+         * need to set up encryption right.  With legacy keys, a *lot* is
+         * happening in the CMS specific EVP_PKEY_ASN1_METHOD functions,
+         * such as automatically setting a default KDF type, KDF digest,
+         * all that kind of stuff.
+         * With EVP_SIGNATURE, setting a default digest is done by getting
+         * the default MD for the key, and then inject that back into the
+         * signature implementation...  we could do something similar with
+         * CMS, possibly using CMS specific OSSL_PARAM keys, just like we
+         * have for certain AlgorithmIdentifier retrievals.
+         *
+         * THIS IS TEMPORARY
+         */
+        EVP_PKEY_CTX *pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+        EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+
+        EVP_PKEY_get0(pkey);
+        if (EVP_PKEY_id(pkey) == EVP_PKEY_NONE) {
+            CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT,
+                   CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            return 0;
+        }
+    }
 
     if (ri->type != CMS_RECIPINFO_AGREE) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT, CMS_R_NOT_KEY_AGREEMENT);
