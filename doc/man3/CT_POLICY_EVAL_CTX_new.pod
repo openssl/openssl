@@ -59,7 +59,7 @@ the current time
 The above requirements are met using the setters described below.
 
 CT_POLICY_EVAL_CTX_new_with_libctx() creates an empty policy evaluation context
-and associates it with the give library context I<libctx> and property query
+and associates it with the given library context I<libctx> and property query
 string I<propq>.
 
 CT_POLICY_EVAL_CTX_new() does the same thing as

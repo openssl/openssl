@@ -40,7 +40,7 @@ library context and the default property query string.
 CTLOG_new_from_base64_with_libctx() also creates a new CTLOG, but takes the
 public key in base64-encoded DER form and sets the ct_log pointer to point to
 the new CTLOG. The base64 will be decoded and the public key parsed. The CTLOG
-will be associated with the give library context I<libctx> and property query
+will be associated with the given library context I<libctx> and property query
 string I<propq>.
 
 CTLOG_new_from_base64() does the same thing as
