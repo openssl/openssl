@@ -248,6 +248,27 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     size_t enckeylen;
     size_t ceklen;
     CMS_EncryptedContentInfo *ec;
+
+    {
+        /*
+         * TODO(3.0) Remove this when we have functionality to deserialize
+         * parameters in EVP_PKEY form from an X509_ALGOR.
+         * This is needed to be able to replace the EC_KEY specific decoding
+         * that happens in ecdh_cms_set_peerkey() (crypto/ec/ec_ameth.c)
+         *
+         * THIS IS TEMPORARY
+         */
+        EVP_PKEY_CTX *pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+        EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+
+        EVP_PKEY_get0(pkey);
+        if (EVP_PKEY_id(pkey) == EVP_PKEY_NONE) {
+            CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_DECRYPT,
+                   CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            goto err;
+        }
+    }
+
     enckeylen = rek->encryptedKey->length;
     enckey = rek->encryptedKey->data;
     /* Setup all parameters to derive KEK */
