@@ -20,8 +20,13 @@
 
 int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
 {
+    /*
+     * The following RFCs specify that for AlgIDs produced here, parameters
+     * are optional.  We currently take the simpler route.
+     * X.509: RFC 3279 section 2.3.2
+     * CMS: RFC 3370 section-3.1 (id-dsa)
+     */
     return DER_w_begin_sequence(pkt, tag)
-        /* No parameters (yet?) */
         && DER_w_precompiled(pkt, -1, der_oid_id_dsa, sizeof(der_oid_id_dsa))
         && DER_w_end_sequence(pkt, tag);
 }
@@ -52,8 +57,13 @@ int DER_w_algorithmIdentifier_DSA_with(WPACKET *pkt, int tag,
         return 0;
     }
 
+    /*
+     * The following RFCs specify that the AlgIDs produced here shall omit
+     * parameters:
+     * X.509: RFC 3279 section 2.2.2, RFC 5758 section 3.1
+     * CMS: RFC 3370 section-3.1 (id-dsa-with-sha1)
+     */
     return DER_w_begin_sequence(pkt, tag)
-        /* No parameters (yet?) */
         && DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
         && DER_w_end_sequence(pkt, tag);
 }
