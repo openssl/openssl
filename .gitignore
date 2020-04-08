@@ -28,6 +28,14 @@
 # Auto generated doc files
 doc/man1/openssl-*.pod
 
+# Auto generated der files
+providers/common/der/der_dsa.c
+providers/common/der/der_ec.c
+providers/common/der/der_rsa.c
+providers/common/include/prov/der_dsa.h
+providers/common/include/prov/der_ec.h
+providers/common/include/prov/der_rsa.h
+
 # error code files
 /crypto/err/openssl.txt.old
 /engines/e_afalg.txt.old
