@@ -563,6 +563,7 @@ int EVP_PKEY_deassign(EVP_PKEY *pkey)
     }
 
     evp_pkey_free_legacy(pkey);
+    pkey->ameth = NULL;
     return 1;
 }
 
