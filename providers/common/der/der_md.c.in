@@ -1,0 +1,218 @@
+/*
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include "prov/der_md.h"
+#include "prov/der_general.h"
+
+/* Well known OIDs precompiled */
+{-
+    $OUT = oids_to_c::process_leaves('providers/common/der/MD.asn1',
+                                     { dir => $config{sourcedir},
+                                       filter => \&oids_to_c::filter_to_C });
+-}
+
+/* Well known AlgorithmIdentifiers precompiled */
+/*
+ * NOTE: we don't have an AlgorithmIdentifier value parser yet, so we hand
+ * code them in a manner that should correspond to what a generator will
+ * produce.
+ */
+
+/*-
+ * -- Inspired from RFC 4055
+ *
+ * ossl-md2Identifier AlgorithmIdentifier ::= {
+ *                         algorithm md2,
+ *                         parameters nullParameters }
+ * ossl-md5Identifier AlgorithmIdentifier ::= {
+ *                         algorithm md5,
+ *                         parameters nullParameters }
+ */
+
+#if DER_OID_SZ_md2 + DER_SZ_nullParameters > 127
+# error "The combined sizes of md2 and NULL is larger than 127"
+#endif
+#define DER_V_ossl_md2Identifier                \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,           \
+        DER_OID_SZ_md2 + DER_SZ_nullParameters, \
+        DER_OID_V_md2,                          \
+        DER_V_nullParameters
+const unsigned char der_ossl_md2Identifier[DER_SZ_md2Identifier] =
+    { DER_V_ossl_md2Identifier };
+
+#if DER_OID_SZ_md5 + DER_SZ_nullParameters > 127
+# error "The combined sizes of md5 and NULL is larger than 127"
+#endif
+#define DER_V_ossl_md5Identifier                \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,           \
+        DER_OID_SZ_md5 + DER_SZ_nullParameters, \
+        DER_OID_V_md5,                          \
+        DER_V_nullParameters
+const unsigned char der_ossl_md5Identifier[DER_SZ_md5Identifier] =
+    { DER_V_ossl_md5Identifier };
+
+/*-
+ * -- -------------------------------------------------------------------
+ * -- From RFC 4055, section 6.  ASN.1 Module
+ * -- https://tools.ietf.org/html/rfc4055#section-6
+ *
+ * -- =========================
+ * --   Algorithm Identifiers
+ * -- =========================
+ *
+ * sha1Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-sha1,
+ *                         parameters nullParameters  }
+ *
+ * sha224Identifier    AlgorithmIdentifier  ::=  {
+ *                         algorithm id-sha224,
+ *                         parameters nullParameters  }
+ *
+ * sha256Identifier    AlgorithmIdentifier  ::=  {
+ *                         algorithm id-sha256,
+ *                         parameters nullParameters  }
+ *
+ * sha384Identifier    AlgorithmIdentifier  ::=  {
+ *                         algorithm id-sha384,
+ *                         parameters nullParameters  }
+ *
+ * sha512Identifier    AlgorithmIdentifier  ::=  {
+ *                         algorithm id-sha512,
+ *                         parameters nullParameters  }
+ *
+ * mgf1SHA1Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-mgf1,
+ *                         parameters sha1Identifier }
+ *
+ * mgf1SHA224Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-mgf1,
+ *                         parameters sha224Identifier }
+ *
+ * mgf1SHA256Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-mgf1,
+ *                         parameters sha256Identifier }
+ *
+ * mgf1SHA384Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-mgf1,
+ *                         parameters sha384Identifier }
+ *
+ * mgf1SHA512Identifier  AlgorithmIdentifier  ::=  {
+ *                         algorithm id-mgf1,
+ *                         parameters sha512Identifier }
+ */
+
+#if DER_OID_SZ_id_sha1 + DER_OID_SZ_nullParameters > 127
+# error "The combined sizes of id-sha1 and NULL is larger than 127"
+#endif
+#define DER_V_sha1Identifier                            \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_sha1 + DER_SZ_nullParameters,     \
+        DER_OID_V_id_sha1,                              \
+        DER_V_nullParameters
+const unsigned char der_sha1Identifier[DER_SZ_sha1Identifier] =
+    { DER_V_sha1Identifier };
+
+#if DER_OID_SZ_id_sha224 + DER_OID_SZ_nullParameters > 127
+# error "The combined sizes of id-sha224 and NULL is larger than 127"
+#endif
+#define DER_V_sha224Identifier                          \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_sha224 + DER_SZ_nullParameters,   \
+        DER_OID_V_id_sha224,                            \
+        DER_V_nullParameters
+const unsigned char der_sha224Identifier[DER_SZ_sha224Identifier] =
+    { DER_V_sha224Identifier };
+
+#if DER_OID_SZ_id_sha256 + DER_OID_SZ_nullParameters > 127
+# error "The combined sizes of id-sha256 and NULL is larger than 127"
+#endif
+#define DER_V_sha256Identifier                          \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_sha256 + DER_SZ_nullParameters,   \
+        DER_OID_V_id_sha256,                            \
+        DER_V_nullParameters
+const unsigned char der_sha256Identifier[DER_SZ_sha256Identifier] =
+    { DER_V_sha256Identifier };
+
+#if DER_OID_SZ_id_sha384 + DER_OID_SZ_nullParameters > 127
+# error "The combined sizes of id-sha384 and NULL is larger than 127"
+#endif
+#define DER_V_sha384Identifier                          \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_sha384 + DER_SZ_nullParameters,   \
+        DER_OID_V_id_sha384,                            \
+        DER_V_nullParameters
+const unsigned char der_sha384Identifier[DER_SZ_sha384Identifier] =
+    { DER_V_sha384Identifier };
+
+#if DER_OID_SZ_id_sha512 + DER_OID_SZ_nullParameters > 127
+# error "The combined sizes of id-sha512 and NULL is larger than 127"
+#endif
+#define DER_V_sha512Identifier                          \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_sha512 + DER_SZ_nullParameters,   \
+        DER_OID_V_id_sha512,                            \
+        DER_V_nullParameters
+const unsigned char der_sha512Identifier[DER_SZ_sha512Identifier] =
+    { DER_V_sha512Identifier };
+
+#if DER_OID_SZ_id_mgf1 + DER_SZ_sha1Identifier > 127
+# error "The combined sizes of id-mgf1 and sha1Identifier is larger than 127"
+#endif
+#define DER_V_mgf1SHA1Identifier                        \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_mgf1 + DER_SZ_sha1Identifier      \
+        DER_OID_V_id_mgf1,                              \
+        DER_V_sha1Identifier
+const unsigned char der_sha1Identifier[DER_SZ_mgf1SHA1Identifier] =
+    { DER_V_mgf1SHA1Identifier };
+
+#if DER_OID_SZ_id_mgf1 + DER_SZ_sha224Identifier > 127
+# error "The combined sizes of id-mgf1 and sha224Identifier is larger than 127"
+#endif
+#define DER_V_mgf1SHA224Identifier                      \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_mgf1 + DER_SZ_sha224Identifier    \
+        DER_OID_V_id_mgf1,                              \
+        DER_V_sha224Identifier
+const unsigned char der_sha224Identifier[DER_SZ_mgf1SHA224Identifier] =
+    { DER_V_mgf1SHA224Identifier };
+
+#if DER_OID_SZ_id_mgf1 + DER_SZ_sha256Identifier > 127
+# error "The combined sizes of id-mgf1 and sha256Identifier is larger than 127"
+#endif
+#define DER_V_mgf1SHA256Identifier                      \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_mgf1 + DER_SZ_sha256Identifier    \
+        DER_OID_V_id_mgf1,                              \
+        DER_V_sha256Identifier
+const unsigned char der_sha256Identifier[DER_SZ_mgf1SHA256Identifier] =
+    { DER_V_mgf1SHA256Identifier };
+
+#if DER_OID_SZ_id_mgf1 + DER_SZ_sha384Identifier > 127
+# error "The combined sizes of id-mgf1 and sha384Identifier is larger than 127"
+#endif
+#define DER_V_mgf1SHA384Identifier                      \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_mgf1 + DER_SZ_sha384Identifier    \
+        DER_OID_V_id_mgf1,                              \
+        DER_V_sha384Identifier
+const unsigned char der_sha384Identifier[DER_SZ_mgf1SHA384Identifier] =
+    { DER_V_mgf1SHA384Identifier };
+
+#if DER_OID_SZ_id_mgf1 + DER_SZ_sha512Identifier > 127
+# error "The combined sizes of id-mgf1 and sha512Identifier is larger than 127"
+#endif
+#define DER_V_mgf1SHA512Identifier                      \
+    DER_C_CONSTRUCTED|DER_P_SEQUENCE,                   \
+        DER_OID_SZ_id_mgf1 + DER_SZ_sha512Identifier    \
+        DER_OID_V_id_mgf1,                              \
+        DER_V_sha512Identifier
+const unsigned char der_sha512Identifier[DER_SZ_mgf1SHA512Identifier] =
+    { DER_V_mgf1SHA512Identifier };

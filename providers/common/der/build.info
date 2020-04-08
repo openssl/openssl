@@ -23,3 +23,17 @@ DEPEND[der_ec.c]=oids_to_c.pm
 DEPEND[der_ec.o]=../include/prov/der_ec.h
 GENERATE[../include/prov/der_ec.h]=der_ec.h.in
 DEPEND[../include/prov/der_ec.h]=oids_to_c.pm
+
+GENERATE[der_md.c]=der_md.c.in
+DEPEND[der_md.c]=oids_to_c.pm
+
+DEPEND[der_md.o]=../include/prov/der_md.h
+GENERATE[../include/prov/der_md.h]=der_md.h.in
+DEPEND[../include/prov/der_md.h]=oids_to_c.pm
+
+GENERATE[der_general.c]=der_general.c.in
+DEPEND[der_general.c]=oids_to_c.pm
+
+DEPEND[der_general.o]=../include/prov/der_general.h
+GENERATE[../include/prov/der_general.h]=der_general.h.in
+DEPEND[../include/prov/der_general.h]=oids_to_c.pm

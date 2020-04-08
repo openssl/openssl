@@ -1,0 +1,50 @@
+/*
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include "internal/der.h"
+
+
+/* Well known OIDs precompiled */
+{-
+    $OUT = oids_to_c::process_leaves('providers/common/der/MD.asn1',
+                                     { dir => $config{sourcedir},
+                                       filter => \&oids_to_c::filter_to_C });
+-}
+
+/* Well known AlgorithmIdentifiers precompiled */
+/*
+ * NOTE: we don't have an AlgorithmIdentifier value parser yet, so we hand
+ * code them in a manner that should correspond to what a generator will
+ * produce.
+ */
+#define DER_SZ_sha1Identifier (2 + sizeof(der_oid_id_sha1) + DER_SZ_NULL)
+extern const unsigned char der_sha1Identifier[DER_SZ_sha1Identifier];
+#define DER_SZ_sha224Identifier (2 + sizeof(der_oid_id_sha224) + DER_SZ_NULL)
+extern const unsigned char der_sha224Identifier[DER_SZ_sha224Identifier];
+#define DER_SZ_sha256Identifier (2 + sizeof(der_oid_id_sha256) + DER_SZ_NULL)
+extern const unsigned char der_sha256Identifier[DER_SZ_sha256Identifier];
+#define DER_SZ_sha384Identifier (2 + sizeof(der_oid_id_sha384) + DER_SZ_NULL)
+extern const unsigned char der_sha384Identifier[DER_SZ_sha384Identifier];
+#define DER_SZ_sha512Identifier (2 + sizeof(der_oid_id_sha512) + DER_SZ_NULL)
+extern const unsigned char der_sha512Identifier[DER_SZ_sha512Identifier];
+#define DER_SZ_mgf1SHA1Identifier                                       \
+    (2 + sizeof(der_oid_id_mgf1) + sizeof(der_sha1Identifier))
+extern const unsigned char der_sha1Identifier[DER_SZ_mgf1SHA1Identifier];
+#define DER_SZ_mgf1SHA224Identifier                                     \
+    (2 + sizeof(der_oid_id_mgf1) + sizeof(der_sha224Identifier))
+extern const unsigned char der_sha224Identifier[DER_SZ_mgf1SHA224Identifier];
+#define DER_SZ_mgf1SHA256Identifier                                     \
+    (2 + sizeof(der_oid_id_mgf1) + sizeof(der_sha256Identifier))
+extern const unsigned char der_sha256Identifier[DER_SZ_mgf1SHA256Identifier];
+#define DER_SZ_mgf1SHA384Identifier                                     \
+    (2 + sizeof(der_oid_id_mgf1) + sizeof(der_sha384Identifier))
+extern const unsigned char der_sha384Identifier[DER_SZ_mgf1SHA384Identifier];
+#define DER_SZ_mgf1SHA512Identifier                                     \
+    (2 + sizeof(der_oid_id_mgf1) + sizeof(der_sha512Identifier))
+extern const unsigned char der_sha512Identifier[DER_SZ_mgf1SHA512Identifier];

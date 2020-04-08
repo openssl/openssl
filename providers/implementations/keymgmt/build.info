@@ -21,3 +21,7 @@ ENDIF
 
 SOURCE[../../libfips.a]=rsa_kmgmt.c
 SOURCE[../../libnonfips.a]=rsa_kmgmt.c
+
+DEPEND[rsa_kmgmt.o]=../../common/include/prov/der_rsa.h
+DEPEND[dsa_kmgmt.o]=../../common/include/prov/der_dsa.h
+DEPEND[ec_kmgmt.o]=../../common/include/prov/der_ec.h
