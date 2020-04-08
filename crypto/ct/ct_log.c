@@ -112,13 +112,17 @@ CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
     ret->libctx = libctx;
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
-        if (ret->propq == NULL)
+        if (ret->propq == NULL) {
+            CTerr(0, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
     }
 
     ret->logs = sk_CTLOG_new_null();
-    if (ret->logs == NULL)
+    if (ret->logs == NULL) {
+        CTerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     return ret;
 err:

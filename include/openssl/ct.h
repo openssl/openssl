@@ -435,7 +435,7 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
  * Creates a new CTLOG instance with the base64-encoded SubjectPublicKeyInfo DER
- * in |pkey_base64| and associated with the give library context |libctx| and
+ * in |pkey_base64| and associated with the given library context |libctx| and
  * property query string |propq|. The |name| is a string to help users identify
  * this log.
  * Returns 1 on success, 0 on failure.
