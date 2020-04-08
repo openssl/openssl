@@ -2,16 +2,16 @@
 
 =head1 NAME
 
-EVP_PKEY_gettable_params, EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
+EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
 EVP_PKEY_get_bn_param, EVP_PKEY_get_utf8_string_param,
-EVP_PKEY_get_octet_string_param
+EVP_PKEY_get_octet_string_param,
+EVP_PKEY_get_params, EVP_PKEY_gettable_params, 
 - retrieve key parameters from a key
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
  int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out);
  int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out);
  int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn);
@@ -21,11 +21,10 @@ EVP_PKEY_get_octet_string_param
                                     unsigned char *buf, size_t max_buf_sz,
                                     size_t *out_sz);
 
-=head1 DESCRIPTION
+ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
+ int EVP_PKEY_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
-EVP_PKEY_gettable_params() returns a constant list of I<params> indicating
-the names and types of key parameters that can be retrieved.
-See L<OSSL_PARAM(3)> for information about parameters.
+=head1 DESCRIPTION
 
 EVP_PKEY_get_int_param() retrieves a key I<pkey> integer value I<*out>
 associated with a name of I<key_name>.
@@ -45,12 +44,25 @@ EVP_PKEY_get_octet_string_param() copy a I<pkey>'s octet string value into a buf
 I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
 I<*out_sz> is the returned size of the buffer if it is not NULL.
 
+EVP_PKEY_gettable_params() gets a constant B<OSSL_PARAM> array that
+describes the  gettable parameters for the current algorithm implementation,
+i.e. parameters that can be used with EVP_PKEY_get_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+
+EVP_PKEY_get_params() gets arbitrary parameters from the I<pkey>.  The
+available parameters depend on the provider that supports this particular
+I<pkey>.  If you only need to get one parameter value, the singular param
+functions above are easier to use.
+See L<OSSL_PROVIDER(3)> for more information on providers.
+See L<OSSL_PARAM(3)> for more information on parameters.
+
 =head1 NOTES
 
 These functions only work for B<EVP_PKEY>s that contain a provider side key.
 
 =head1 RETURN VALUES
 
+EVP_PKEY_get_params() returns 1 for success or 0 otherwise.
 EVP_PKEY_gettable_params() returns NULL on error or if it is not supported,
 
 All other methods return 1 if a value associated with the key's I<key_name> was
