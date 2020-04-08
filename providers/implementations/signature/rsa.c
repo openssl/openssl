@@ -740,6 +740,16 @@ static void *rsa_dupctx(void *vprsactx)
     return NULL;
 }
 
+static OSSL_OP_keymgmt_get_params_fn *
+find_keymgmt_get_params(const OSSL_DISPATCH *d)
+{
+    for (; d->function_id != 0; d++) {
+        if (d->function_id == OSSL_FUNC_KEYMGMT_GET_PARAMS)
+            return (OSSL_OP_keymgmt_get_params_fn *)d->function;
+    }
+    return NULL;
+}
+
 static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
@@ -748,6 +758,29 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     if (prsactx == NULL || params == NULL)
         return 0;
 
+    p = OSSL_PARAM_locate(params, OSSL_CMS_PARAM_ALGORITHM_ID);
+    if (p != NULL) {
+        /*
+         * CMS requires rsaEncryption as the RSA signature OID.  The
+         * AlgorithmIdentifier looks exactly like the X.509 Subject Public
+         * Key Information for RSA, so that's what we use.
+         * Ref: RFS 3370 section 3.2 (compared with RFC 4055 section 1.2)
+         */
+        OSSL_PARAM tmp_params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_OP_keymgmt_get_params_fn *rsa_keymgmt_get_params =
+            find_keymgmt_get_params(rsa_keymgmt_functions);
+
+        if (rsa_keymgmt_get_params == NULL)
+            return 0;
+        /*
+         * Copy the incoming param, then change the param key to something
+         * our RSA keymgmt understands.
+         */
+        tmp_params[0] = *p;          /* Straight copy */
+        tmp_params[0].key = OSSL_PKEY_PARAM_ALGORITHM_ID;
+        if (!rsa_keymgmt_get_params(prsactx->rsa, tmp_params))
+            return 0;
+    }
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
     if (p != NULL
         && !OSSL_PARAM_set_octet_string(p, prsactx->aid, prsactx->aid_len))

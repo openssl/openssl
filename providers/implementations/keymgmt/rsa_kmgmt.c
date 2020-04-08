@@ -22,6 +22,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_rsa.h"
 #include "crypto/rsa.h"
 #include "internal/param_build_set.h"
 
@@ -301,6 +302,53 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
             ) {
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
+    }
+    /*
+     * We answer both on the X.509 and the CMS algorithmIdentifier requests.
+     * The latter is needed because it's tested first by relevant CMS code,
+     * and CMS specifies an RSA signature AlgorithmIdentifier that looks
+     * like the X.509 RSA Subject Public Key Algorithm AlgorithmIdentifier.
+     * If we don't do allow this here, the CMS code will instead pick up
+     *
+     */
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ALGORITHM_ID)) != NULL
+        || ((p = OSSL_PARAM_locate(params, OSSL_CMS_PARAM_ALGORITHM_ID))
+            != NULL)) {
+        WPACKET pkt;
+        void *buf = NULL;
+        size_t length;
+        int ok = 0;
+
+        switch (p->data_type) {
+        case OSSL_PARAM_OCTET_STRING:
+            /*
+             * TODO(3.0) figure out a way to have a precompiled algorithm
+             * identifier.
+             * In that case, we could OSSL_PARAM_set_octet_string().
+             */
+            ok = WPACKET_init_null_der(&pkt)
+                && DER_w_algorithmIdentifier_RSA(&pkt, -1, rsa)
+                && WPACKET_finish(&pkt)
+                && WPACKET_get_total_written(&pkt, &length)
+                && (length <= p->data_size)
+                && WPACKET_init_der(&pkt, buf, length)
+                && DER_w_algorithmIdentifier_RSA(&pkt, -1, rsa)
+                && WPACKET_finish(&pkt);
+            WPACKET_cleanup(&pkt);
+            if (!ok)
+                return 0;
+            break;
+        case OSSL_PARAM_OCTET_PTR:
+            /*
+             * TODO(3.0) figure out a way to have a precompiled algorithm
+             * identifier.
+             * In that case, we could OSSL_PARAM_set_octet_ptr().  Right
+             * now, though, there's nothing to point at.
+             */
+            return 0;
+        default:
+            return 0;
+        }
     }
     return key_to_params(rsa, NULL, params);
 }

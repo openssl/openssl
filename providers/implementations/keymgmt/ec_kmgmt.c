@@ -22,6 +22,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_ec.h"
 #include "internal/param_build_set.h"
 
 static OSSL_OP_keymgmt_new_fn ec_newdata;
@@ -480,6 +481,43 @@ int ec_get_params(void *key, OSSL_PARAM params[])
 
         if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
             return 0;
+    }
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ALGORITHM_ID)) != NULL) {
+        WPACKET pkt;
+        void *buf = NULL;
+        size_t length;
+        int ok = 0;
+
+        switch (p->data_type) {
+        case OSSL_PARAM_OCTET_STRING:
+            /*
+             * TODO(3.0) figure out a way to have a precompiled algorithm
+             * identifier.
+             * In that case, we could OSSL_PARAM_set_octet_string().
+             */
+            ok = WPACKET_init_null_der(&pkt)
+                && DER_w_algorithmIdentifier_EC(&pkt, -1, eck)
+                && WPACKET_finish(&pkt)
+                && WPACKET_get_total_written(&pkt, &length)
+                && (length <= p->data_size)
+                && WPACKET_init_der(&pkt, buf, length)
+                && DER_w_algorithmIdentifier_EC(&pkt, -1, eck)
+                && WPACKET_finish(&pkt);
+            WPACKET_cleanup(&pkt);
+            if (!ok)
+                return 0;
+            break;
+        case OSSL_PARAM_OCTET_PTR:
+            /*
+             * TODO(3.0) figure out a way to have a precompiled algorithm
+             * identifier.
+             * In that case, we could OSSL_PARAM_set_octet_ptr().  Right
+             * now, though, there's nothing to point at.
+             */
+            return 0;
+        default:
+            return 0;
+        }
     }
     ret = domparams_to_params(eck, NULL, params)
           && key_to_params(eck, NULL, params, 1, &pub_key)
