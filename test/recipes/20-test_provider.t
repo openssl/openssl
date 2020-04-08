@@ -14,7 +14,7 @@ use OpenSSL::Test;
 
 setup("test_provider");
 
-plan tests => 7;
+plan tests => 9;
 
  SKIP: {
      skip "No default provider?", 6
@@ -43,5 +43,20 @@ plan tests => 7;
 
          $prev = $curr;
      }
+}
+
+ SKIP: {
+     skip "No null provider?", 1
+         unless ok(run(app([qw(openssl provider null)])),
+                   "try running 'openssl provider null'");
+
+     my @cmd = ('openssl', 'provider', '-vvv', 'null');
+     my @lines = ( map { (my $x = $_) =~ s|\R$||; $x }
+                   run(app([@cmd]), capture => 1) );
+
+     my $curr = scalar @lines;
+     my $cmp = "$curr == 1";
+     ok(eval $cmp,
+        "'openssl provider $_ default' line count == 1");
 }
 
