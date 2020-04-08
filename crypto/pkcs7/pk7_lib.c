@@ -333,7 +333,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
                         V_ASN1_NULL, NULL);
     } else {
         X509_ALGOR *tmp_digest_alg =
-            evp_md_get_algid(dgst, OSSL_PKEY_PARAM_ALGORITHM_ID);
+            evp_md_get_algid(dgst, OSSL_DIGEST_PARAM_ALGORITHM_ID);
 
         if (tmp_digest_alg == NULL)
             goto err;

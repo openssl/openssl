@@ -79,13 +79,14 @@ extern "C" {
     "tls1multi_enclen"     /* size_t */
 
 /* digest parameters */
-#define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
-#define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */
-#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* uint */
-#define OSSL_DIGEST_PARAM_MICALG     "micalg"    /* utf8 string */
-#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* size_t */
-#define OSSL_DIGEST_PARAM_SIZE       "size"      /* size_t */
-#define OSSL_DIGEST_PARAM_FLAGS      "flags"     /* ulong */
+#define OSSL_DIGEST_PARAM_XOFLEN        "xoflen"    /* size_t */
+#define OSSL_DIGEST_PARAM_SSL3_MS       "ssl3-ms"   /* octet string */
+#define OSSL_DIGEST_PARAM_PAD_TYPE      "pad_type"  /* uint */
+#define OSSL_DIGEST_PARAM_MICALG        "micalg"    /* utf8 string */
+#define OSSL_DIGEST_PARAM_BLOCK_SIZE    "blocksize" /* size_t */
+#define OSSL_DIGEST_PARAM_SIZE          "size"      /* size_t */
+#define OSSL_DIGEST_PARAM_FLAGS         "flags"     /* ulong */
+#define OSSL_DIGEST_PARAM_ALGORITHM_ID  OSSL_ALG_PARAM_ALGORITHM_ID
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_MD5            "MD5"
