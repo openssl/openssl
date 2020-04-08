@@ -196,6 +196,8 @@ extern "C" {
  *
  * Supporting this parameter is not mandatory, but will determine whether
  * it can be used for certain purposes.
+ * (as an example, certain CMS operations require support of this parameter
+ * or OSSL_CMS_PARAM_ALGORITHM_ID, as described further down).
  */
 #define OSSL_PKEY_PARAM_ALGORITHM_ID        OSSL_ALG_PARAM_ALGORITHM_ID
 /*
