@@ -383,9 +383,10 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
     p = OSSL_PARAM_locate(params, OSSL_CMS_PARAM_ALGORITHM_ID);
     if (p != NULL) {
         /*
-         * CMS requires id-dsa-with-sha1 as the DSA signature algo-id, we
+         * CMS requires id-dsa-with-sha1 as the DSA signature OID. We
          * enforce that by checking the MD, and otherwise proceed as for
          * X.509 signature algo-ids.
+         * Ref: RFS 3370 section 3.1
          */
         if (pdsactx->md == NULL || !EVP_MD_is_a(pdsactx->md, "SHA1"))
             return 0;
