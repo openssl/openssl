@@ -303,17 +303,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
     }
-    /*
-     * We answer both on the X.509 and the CMS algorithmIdentifier requests.
-     * The latter is needed because it's tested first by relevant CMS code,
-     * and CMS specifies an RSA signature AlgorithmIdentifier that looks
-     * like the X.509 RSA Subject Public Key Algorithm AlgorithmIdentifier.
-     * If we don't do allow this here, the CMS code will instead pick up
-     *
-     */
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ALGORITHM_ID)) != NULL
-        || ((p = OSSL_PARAM_locate(params, OSSL_CMS_PARAM_ALGORITHM_ID))
-            != NULL)) {
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ALGORITHM_ID)) != NULL) {
         WPACKET pkt;
         void *buf = NULL;
         size_t length;
