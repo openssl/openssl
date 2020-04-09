@@ -22,7 +22,13 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
              registered_oid_arcs registered_oid_leaves);
 @EXPORT_OK = qw(encode_oid_nums);
 
-use List::Util;
+# Unfortunately, the pairwise List::Util functionality came with perl
+# v5.19.3, and I want to target absolute compatibility with perl 5.10
+# and up.  That means I have to implement quick pairwise functions here.
+
+#use List::Util;
+sub _pairs (@);
+sub _pairmap (&@);
 
 =head1 NAME
 
@@ -163,7 +169,8 @@ sub parse_oid {
     # As we currently only support a name without number as first
     # component, the easiest is to have a direct look at it and
     # hack it.
-    my @first = List::Util::pairmap {
+    my @first = _pairmap {
+        my ($a, $b) = @$_;
         return $b if $b ne '';
         return @{$name2oid{$a}->{nums}} if $a ne '' && defined $name2oid{$a};
         croak "Undefined identifier $a" if $a ne '';
@@ -173,7 +180,8 @@ sub parse_oid {
     my @numbers =
         (
          @first,
-         List::Util::pairmap {
+         _pairmap {
+             my ($a, $b) = @$_;
              return $b if $b ne '';
              croak "Unsupported relative OID $a" if $a ne '';
              croak "Empty OID element (how's that possible?)";
@@ -277,6 +285,25 @@ Richard levitte, C<< <richard at levitte.org> >>
 
 =cut
 
+######## Helpers
+
+sub _pairs (@) {
+    croak "Odd number of arguments" if @_ & 1;
+
+    my @pairlist = ();
+
+    while (@_) {
+        my $x = [ shift, shift ];
+        push @pairlist, $x;
+    }
+    return @pairlist;
+}
+
+sub _pairmap (&@) {
+    my $block = shift;
+    map { $block->($_) } _pairs @_;
+}
+
 ######## UNIT TESTING
 
 use Test::More;
@@ -309,7 +336,7 @@ sub TEST {
         + scalar @bad_cases;
 
     note 'Predefine a few names OIDs';
-    foreach my $pair ( List::Util::pairs @predefined ) {
+    foreach my $pair ( _pairs @predefined ) {
         ok( defined eval { register_oid(@$pair) },
             "Registering $pair->[0] => $pair->[1]" );
     }
