@@ -108,9 +108,10 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     } else if (alg_enc & SSL_CHACHA20) {
         taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
     } else {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+        taglen = 16;
+        /*SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
                  ERR_R_INTERNAL_ERROR);
-        return -1;
+        return -1;*/
     }
 
     if (!sending) {
@@ -124,6 +125,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     }
 
     /* Set up IV */
+    ivlen = 16;
     if (ivlen < SEQ_NUM_SIZE) {
         /* Should not happen */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
@@ -173,8 +175,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     if (((alg_enc & SSL_AESCCM) != 0
                  && EVP_CipherUpdate(ctx, NULL, &lenu, NULL,
                                      (unsigned int)rec->length) <= 0)
-            || EVP_CipherUpdate(ctx, NULL, &lenu, recheader,
-                                sizeof(recheader)) <= 0
+/*            || EVP_CipherUpdate(ctx, NULL, &lenu, recheader,
+                                sizeof(recheader)) <= 0 */
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
                                 (unsigned int)rec->length) <= 0
             || EVP_CipherFinal_ex(ctx, rec->data + lenu, &lenf) <= 0

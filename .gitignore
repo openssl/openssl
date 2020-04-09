@@ -183,3 +183,6 @@ pod2htmd.tmp
 # Windows manifest files
 *.manifest
 doc-nits
+.vscode/launch.json
+.vscode/tasks.json
+.gitignore
