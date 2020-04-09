@@ -2272,7 +2272,7 @@ static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
     SSL *ssl = NULL;
     int testresult = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method()))
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method()))
             || !TEST_ptr(ssl = SSL_new(ctx))
             || !TEST_ptr(sslbio = BIO_new(BIO_f_ssl()))
             || !TEST_ptr(membio1 = BIO_new(BIO_s_mem())))
@@ -4873,7 +4873,7 @@ static int test_serverinfo(int tst)
     int ret, expected, testresult = 0;
     SSL_CTX *ctx;
 
-    ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method());
+    ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 
@@ -5413,7 +5413,7 @@ static int test_max_fragment_len_ext(int idx_tst)
     int testresult = 0, MFL_mode = 0;
     BIO *rbio, *wbio;
 
-    ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method());
+    ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 

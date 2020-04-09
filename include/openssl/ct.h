@@ -74,11 +74,11 @@ DEFINE_STACK_OF(CTLOG)
  * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
  * with the CT_POLICY_EVAL_CTX.
  */
-CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_ex(OPENSSL_CTX *libctx,
                                                        const char *propq);
                                                        
 /*
- * The same as CT_POLICY_EVAL_CTX_new_with_libctx() but the default library
+ * The same as CT_POLICY_EVAL_CTX_new_ex() but the default library
  * context and property query string is used.
  */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
@@ -424,11 +424,11 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
  * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
-                             OPENSSL_CTX *libctx, const char *propq);
+CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name,
+                    OPENSSL_CTX *libctx, const char *propq);
 
 /*
- * The same as CTLOG_new_with_libctx except that the default library context and
+ * The same as CTLOG_new_ex except that the default library context and
  * property query string are used.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
@@ -441,12 +441,12 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
  * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
-                                      const char *name, OPENSSL_CTX *libctx,
-                                      const char *propq);
+int CTLOG_new_from_base64_ex(CTLOG **ct_log, const char *pkey_base64,
+                             const char *name, OPENSSL_CTX *libctx,
+                             const char *propq);
 
 /*
- * The same as CTLOG_new_from_base64_with_libctx() except that the default
+ * The same as CTLOG_new_from_base64_ex() except that the default
  * library context and property query string are used.
  * Returns 1 on success, 0 on failure.
  */
@@ -475,10 +475,10 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
  * property query string.
  * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
  */
-CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+CTLOG_STORE *CTLOG_STORE_new_ex(OPENSSL_CTX *libctx, const char *propq);
 
 /*
- * Same as CTLOG_STORE_new_with_libctx except that the default libctx and
+ * Same as CTLOG_STORE_new_ex except that the default libctx and
  * property query string are used.
  * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
  */

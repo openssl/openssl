@@ -50,6 +50,13 @@ static int test_different_libctx(void)
         goto end;
     TEST_note("%s provider loaded", modulename);
 
+    cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    if (!TEST_ptr(cctx))
+        goto end;
+    sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    if (!TEST_ptr(sctx))
+        goto end;
+
     /*
      * TODO(3.0): Make this work in TLSv1.3. Currently we can only do RSA key
      * exchange, because we don't have key gen/param gen for EC yet - which
@@ -126,7 +133,7 @@ int setup_tests(void)
      * For tests in this file we want to ensure the default ctx does not have
      * the default provider loaded into the default ctx. So we load "legacy" to
      * prevent default from being auto-loaded. This tests that there is no
-     * "leakage", i.e. when using SSL_CTX_new_with_libctx() we expect only the
+     * "leakage", i.e. when using SSL_CTX_new_ex() we expect only the
      * specific libctx to be used - nothing should fall back to the default
      * libctx
      */

@@ -3086,8 +3086,8 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
-                                 const SSL_METHOD *meth)
+SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
+                        const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
 
@@ -3141,7 +3141,7 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL)
         goto err;
 #ifndef OPENSSL_NO_CT
-    ret->ctlog_store = CTLOG_STORE_new_with_libctx(libctx, propq);
+    ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
     if (ret->ctlog_store == NULL)
         goto err;
 #endif
@@ -3287,7 +3287,7 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
-    return SSL_CTX_new_with_libctx(NULL, NULL, meth);
+    return SSL_CTX_new_ex(NULL, NULL, meth);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
@@ -5145,7 +5145,7 @@ int ssl_validate_ct(SSL *s)
         }
     }
 
-    ctx = CT_POLICY_EVAL_CTX_new_with_libctx(s->ctx->libctx, s->ctx->propq);
+    ctx = CT_POLICY_EVAL_CTX_new_ex(s->ctx->libctx, s->ctx->propq);
     if (ctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_VALIDATE_CT,
                  ERR_R_MALLOC_FAILURE);

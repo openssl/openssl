@@ -512,4 +512,4 @@ SSL_CTX_load_verify_file                ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_dir                 ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_store               ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_ticket_key_evp_cb    ?	3_0_0	EXIST::FUNCTION:
-SSL_CTX_new_with_libctx                 ?	3_0_0	EXIST::FUNCTION:
+SSL_CTX_new_ex                          ?	3_0_0	EXIST::FUNCTION:

@@ -114,7 +114,7 @@ struct conf_st {
     OPENSSL_CTX *libctx;
 };
 
-CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
+CONF *NCONF_new_ex(OPENSSL_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
