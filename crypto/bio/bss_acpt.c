@@ -150,7 +150,7 @@ static int acpt_free(BIO *a)
 static int acpt_state(BIO *b, BIO_ACCEPT *c)
 {
     BIO *bio = NULL, *dbio;
-    int s = -1, ret = -1;
+    int s = -1, ret = -1, sock = -1;
 
     for (;;) {
         switch (c->state) {
@@ -222,18 +222,18 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             break;
 
         case ACPT_S_CREATE_SOCKET:
-            ret = BIO_socket(BIO_ADDRINFO_family(c->addr_iter),
-                             BIO_ADDRINFO_socktype(c->addr_iter),
-                             BIO_ADDRINFO_protocol(c->addr_iter), 0);
-            if (ret == (int)INVALID_SOCKET) {
+            sock = BIO_socket(BIO_ADDRINFO_family(c->addr_iter),
+                              BIO_ADDRINFO_socktype(c->addr_iter),
+                              BIO_ADDRINFO_protocol(c->addr_iter), 0);
+            if (sock == (int)INVALID_SOCKET) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling socket(%s, %s)",
                                 c->param_addr, c->param_serv);
                 BIOerr(BIO_F_ACPT_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
-            c->accept_sock = ret;
-            b->num = ret;
+            c->accept_sock = sock;
+            b->num = sock;
             c->state = ACPT_S_LISTEN;
             break;
 
