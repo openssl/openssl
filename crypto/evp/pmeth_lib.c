@@ -890,7 +890,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         case EVP_PKEY_CTRL_CMS_DECRYPT:
         case EVP_PKEY_CTRL_CMS_ENCRYPT:
 # endif
-            if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+            /* TODO (3.0) Temporary hack, this should probe */
+            if (!EVP_PKEY_is_a(EVP_PKEY_CTX_get0_pkey(ctx), "RSASSA-PSS"))
                 return 1;
             ERR_raise(ERR_LIB_EVP,
                       EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
