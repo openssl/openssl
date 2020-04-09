@@ -30,7 +30,7 @@ typedef struct prov_tdes_ctx_st {
 
 } PROV_TDES_CTX;
 
-#define IMPLEMENT_tdes_cipher(type, UCTYPE, lcmode, UCMODE, flags,             \
+#define IMPLEMENT_tdes_cipher(type, UCTYPE, lcmode, UCMODE, flags,            \
                               kbits, blkbits, ivbits, block)                   \
 static OSSL_OP_cipher_newctx_fn tdes_##type##_##lcmode##_newctx;               \
 static void *tdes_##type##_##lcmode##_newctx(void *provctx)                    \
@@ -53,6 +53,7 @@ const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void))tdes_##type##_##lcmode##_newctx },                       \
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))tdes_dupctx },                  \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))tdes_freectx },                \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void))tdes_##type##_##lcmode##_get_params },                   \
@@ -70,16 +71,18 @@ const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                   size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw);
+OSSL_OP_cipher_dupctx_fn tdes_dupctx;
 OSSL_OP_cipher_freectx_fn tdes_freectx;
 OSSL_OP_cipher_encrypt_init_fn tdes_einit;
 OSSL_OP_cipher_decrypt_init_fn tdes_dinit;
 OSSL_OP_cipher_get_ctx_params_fn tdes_get_ctx_params;
 OSSL_OP_cipher_gettable_ctx_params_fn tdes_gettable_ctx_params;
 
-#define PROV_CIPHER_HW_tdes_mode(type, mode)                                   \
+#define PROV_CIPHER_HW_tdes_mode(type, mode)                                  \
 static const PROV_CIPHER_HW type##_##mode = {                                  \
     cipher_hw_tdes_##type##_initkey,                                           \
-    cipher_hw_tdes_##mode                                                      \
+    cipher_hw_tdes_##mode,                                                     \
+    cipher_hw_tdes_copyctx                                                     \
 };                                                                             \
 const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_##type##_##mode(void)                \
 {                                                                              \
@@ -88,6 +91,7 @@ const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_##type##_##mode(void)                \
 
 int cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx, const unsigned char *key,
                                 size_t keylen);
+void cipher_hw_tdes_copyctx(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 int cipher_hw_tdes_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
                        const unsigned char *in, size_t inl);
 int cipher_hw_tdes_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,

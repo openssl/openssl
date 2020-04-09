@@ -45,6 +45,15 @@ int cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
+void cipher_hw_tdes_copyctx(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src)
+{
+    PROV_TDES_CTX *sctx = (PROV_TDES_CTX *)src;
+    PROV_TDES_CTX *dctx = (PROV_TDES_CTX *)dst;
+
+    *dctx = *sctx;
+    dst->ks = &dctx->tks.ks;
+}
+
 int cipher_hw_tdes_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
                        const unsigned char *in, size_t inl)
 {
