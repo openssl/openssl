@@ -275,8 +275,8 @@
 
 # define OPT_PROV_OPTIONS \
         OPT_SECTION("Provider"), \
-        { "provider", OPT_PROV_PROVIDER, 's', "Provder to load (can be specified multiple times)" }, \
-        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path" }
+        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
 
 # define OPT_PROV_CASES \
         OPT_PROV__FIRST: case OPT_PROV__LAST: break; \

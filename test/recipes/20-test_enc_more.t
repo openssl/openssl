@@ -15,7 +15,7 @@ use File::Spec::Functions qw/catfile/;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 
 setup("test_evp_more");
 
@@ -25,6 +25,8 @@ my $cipherlist = undef;
 my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =
@@ -49,9 +51,9 @@ SKIP: {
         my $clearfile = "$plaintext.$ciphername.clear";
         my @common = ( $cmd, "enc", "$cipher", "-k", "test" );
 
-        ok(run(app([@common, "-e", "-in", $plaintext, "-out", $cipherfile]))
+        ok(run(app([@common, @prov, "-e", "-in", $plaintext, "-out", $cipherfile]))
            && compare_text($plaintext, $cipherfile) != 0
-           && run(app([@common, "-d", "-in", $cipherfile, "-out", $clearfile]))
+           && run(app([@common, @prov, "-d", "-in", $cipherfile, "-out", $clearfile]))
            && compare_text($plaintext, $clearfile) == 0
            , $ciphername);
     }

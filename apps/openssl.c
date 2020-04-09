@@ -368,6 +368,7 @@ int main(int argc, char *argv[])
     }
     ret = 1;
  end:
+    app_providers_cleanup();
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);

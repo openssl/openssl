@@ -13,13 +13,16 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 
 setup("test_cms");
 
 plan skip_all => "CMS is not supported by this OpenSSL build"
     if disabled("cms");
+
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -311,10 +314,11 @@ my @smime_cms_tests = (
     ],
 
     [ "encrypted content test streaming PEM format, 128 bit RC2 key",
-      [ "{cmd1}", "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
+      [ "{cmd1}", @prov, "-EncryptedData_encrypt",
+        "-in", $smcont, "-outform", "PEM",
         "-rc2", "-secretkey", "000102030405060708090A0B0C0D0E0F",
         "-stream", "-out", "{output}.cms" ],
-      [ "{cmd2}", "-EncryptedData_decrypt", "-in", "{output}.cms",
+      [ "{cmd2}", @prov, "-EncryptedData_decrypt", "-in", "{output}.cms",
         "-inform", "PEM",
         "-secretkey", "000102030405060708090A0B0C0D0E0F",
         "-out", "{output}.txt" ],
@@ -322,10 +326,11 @@ my @smime_cms_tests = (
     ],
 
     [ "encrypted content test streaming PEM format, 40 bit RC2 key",
-      [ "{cmd1}", "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
+      [ "{cmd1}", @prov, "-EncryptedData_encrypt",
+        "-in", $smcont, "-outform", "PEM",
         "-rc2", "-secretkey", "0001020304",
         "-stream", "-out", "{output}.cms" ],
-      [ "{cmd2}", "-EncryptedData_decrypt", "-in", "{output}.cms",
+      [ "{cmd2}", @prov, "-EncryptedData_decrypt", "-in", "{output}.cms",
         "-inform", "PEM",
         "-secretkey", "0001020304", "-out", "{output}.txt" ],
       \&final_compare

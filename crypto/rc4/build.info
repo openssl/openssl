@@ -19,6 +19,12 @@ ENDIF
 
 SOURCE[../../libcrypto]=$RC4ASM
 
+# When all deprecated symbols are removed, libcrypto doesn't export the
+# rc4 functions, so we must include them directly in liblegacy.a
+IF[{- $disabled{'deprecated-3.0'} -}]
+  SOURCE[../../providers/liblegacy.a]=$RC4ASM
+ENDIF
+
 GENERATE[rc4-586.s]=asm/rc4-586.pl
 DEPEND[rc4-586.s]=../perlasm/x86asm.pl
 

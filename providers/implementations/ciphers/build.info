@@ -11,17 +11,17 @@ $NULL_GOAL=../../libimplementations.a
 $AES_GOAL=../../libimplementations.a
 $TDES_1_GOAL=../../libimplementations.a
 $TDES_2_GOAL=../../libimplementations.a
-$DES_GOAL=../../libimplementations.a
 $ARIA_GOAL=../../libimplementations.a
 $CAMELLIA_GOAL=../../libimplementations.a
-$BLOWFISH_GOAL=../../libimplementations.a
-$IDEA_GOAL=../../libimplementations.a
-$CAST5_GOAL=../../libimplementations.a
-$SEED_GOAL=../../libimplementations.a
+$DES_GOAL=../../liblegacy.a
+$BLOWFISH_GOAL=../../liblegacy.a
+$IDEA_GOAL=../../liblegacy.a
+$CAST5_GOAL=../../liblegacy.a
+$RC2_GOAL=../../liblegacy.a
+$RC4_GOAL=../../liblegacy.a
+$RC5_GOAL=../../liblegacy.a
+$SEED_GOAL=../../liblegacy.a
 $SM4_GOAL=../../libimplementations.a
-$RC4_GOAL=../../libimplementations.a
-$RC5_GOAL=../../libimplementations.a
-$RC2_GOAL=../../libimplementations.a
 $CHACHA_GOAL=../../libimplementations.a
 $CHACHAPOLY_GOAL=../../libimplementations.a
 $SIV_GOAL=../../libimplementations.a
@@ -33,7 +33,7 @@ SOURCE[$COMMON_GOAL]=\
         ciphercommon_ccm.c ciphercommon_ccm_hw.c
 
 IF[{- !$disabled{des} -}]
-  SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_hw.c
+  SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
 ENDIF
 
 SOURCE[$NULL_GOAL]=\
@@ -63,7 +63,7 @@ IF[{- !$disabled{des} -}]
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c
   SOURCE[$DES_GOAL]=\
-      cipher_desx.c cipher_desx_hw.c \
+      cipher_desx.c cipher_desx_hw.c cipher_tdes_common.c\
       cipher_des.c cipher_des_hw.c
 ENDIF
 
