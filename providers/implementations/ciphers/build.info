@@ -55,7 +55,7 @@ ENDIF
 
 IF[{- !$disabled{des} -}]
   SOURCE[$TDES_GOAL]=\
-      cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
+      cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c \
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c
   SOURCE[$DES_GOAL]=\
