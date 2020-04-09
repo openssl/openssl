@@ -10,12 +10,6 @@
 
 #ifndef OPENSSL_RANDERR_H
 # define OPENSSL_RANDERR_H
-# pragma once
-
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_RANDERR_H
-# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -41,12 +35,14 @@ int ERR_load_RAND_strings(void);
 #  define RAND_F_RAND_DRBG_GENERATE                        0
 #  define RAND_F_RAND_DRBG_GET_ENTROPY                     0
 #  define RAND_F_RAND_DRBG_GET_NONCE                       0
+#  define RAND_F_RAND_DRBG_INIT_METHOD                     0
 #  define RAND_F_RAND_DRBG_INSTANTIATE                     0
 #  define RAND_F_RAND_DRBG_NEW                             0
 #  define RAND_F_RAND_DRBG_RESEED                          0
 #  define RAND_F_RAND_DRBG_RESTART                         0
 #  define RAND_F_RAND_DRBG_SET                             0
 #  define RAND_F_RAND_DRBG_SET_DEFAULTS                    0
+#  define RAND_F_RAND_DRBG_SET_DEFAULTS_EX                 0
 #  define RAND_F_RAND_DRBG_UNINSTANTIATE                   0
 #  define RAND_F_RAND_LOAD_FILE                            0
 #  define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 0

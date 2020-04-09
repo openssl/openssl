@@ -8,6 +8,7 @@ RAND_DRBG_secure_new_ex,
 RAND_DRBG_secure_new,
 RAND_DRBG_set,
 RAND_DRBG_set_defaults,
+RAND_DRBG_set_defaults_ex,
 RAND_DRBG_instantiate,
 RAND_DRBG_uninstantiate,
 RAND_DRBG_free
@@ -40,6 +41,8 @@ RAND_DRBG_free
 
  int RAND_DRBG_set_defaults(int type, unsigned int flags);
 
+ int RAND_DRBG_set_defaults_ex(OPENSSL_CTX *ctx, int type, unsigned int flags);
+
  int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                            const unsigned char *pers, size_t perslen);
 
@@ -52,16 +55,19 @@ RAND_DRBG_free
 
 RAND_DRBG_new_ex() and RAND_DRBG_secure_new_ex()
 create a new DRBG instance of the given B<type>, allocated from the heap resp.
-the secure heap, for the given OPENSSL_CTX <ctx>
-(using OPENSSL_zalloc() resp. OPENSSL_secure_zalloc()). The <ctx> parameter can
+the secure heap, for the given B<ctx>
+(using OPENSSL_zalloc() resp. OPENSSL_secure_zalloc()). The B<ctx> parameter can
 be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_new() and
 RAND_DRBG_secure_new() are the same as RAND_DRBG_new_ex() and
 RAND_DRBG_secure_new_ex() except that the default OPENSSL_CTX is always used.
 
 RAND_DRBG_set() initializes the B<drbg> with the given B<type> and B<flags>.
 
-RAND_DRBG_set_defaults() sets the default B<type> and B<flags> for new DRBG
-instances.
+RAND_DRBG_set_defaults_ex() sets the default B<type> and B<flags> for new DRBG
+instances in the given B<ctx>. The B<ctx> parameter be NULL in which cae the
+default OPENSSL_CTX is used.
+RAND_DRBG_set_defaults() is the same as RAND_DRBG_set_defaults_ex() with a
+NULL B<ctx>.
 
 The DRBG types are AES-CTR, HMAC and HASH so B<type> can be one of the
 following values:
@@ -159,6 +165,8 @@ L<RAND_DRBG(7)>
 =head1 HISTORY
 
 The RAND_DRBG functions were added in OpenSSL 1.1.1.
+
+RAND_DRBG_set_defaults_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

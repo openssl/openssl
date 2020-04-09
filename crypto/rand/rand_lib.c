@@ -863,7 +863,7 @@ int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_private_drbg(ctx);
+    drbg = RAND_DRBG_get0_private_ex(ctx);
     if (drbg != NULL)
         return RAND_DRBG_bytes(drbg, buf, num);
 
@@ -887,7 +887,7 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_public_drbg(ctx);
+    drbg = RAND_DRBG_get0_public_ex(ctx);
     if (drbg != NULL)
         return RAND_DRBG_bytes(drbg, buf, num);
 

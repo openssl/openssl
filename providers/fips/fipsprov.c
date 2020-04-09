@@ -139,7 +139,7 @@ static int dummy_evp_call(void *provctx)
     BN_CTX *bnctx = NULL;
     BIGNUM *a = NULL, *b = NULL;
     unsigned char randbuf[128];
-    RAND_DRBG *drbg = OPENSSL_CTX_get0_public_drbg(libctx);
+    RAND_DRBG *drbg = RAND_DRBG_get0_public_ex(libctx);
 #ifndef OPENSSL_NO_EC
     EC_KEY *key = NULL;
 #endif

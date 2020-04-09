@@ -411,16 +411,16 @@ static int rand_drbg_init_method(RAND_DRBG *drbg)
  *
  * Returns 1 on success, 0 on failure.
  */
-int RAND_DRBG_set_defaults(int type, unsigned int flags)
+int RAND_DRBG_set_defaults_ex(OPENSSL_CTX *ctx, int type, unsigned int flags)
 {
     int all;
     if (!(is_digest(type) || is_ctr(type))) {
-        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS, RAND_R_UNSUPPORTED_DRBG_TYPE);
+        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS_EX, RAND_R_UNSUPPORTED_DRBG_TYPE);
         return 0;
     }
 
     if ((flags & ~rand_drbg_used_flags) != 0) {
-        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS, RAND_R_UNSUPPORTED_DRBG_FLAGS);
+        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS_EX, RAND_R_UNSUPPORTED_DRBG_FLAGS);
         return 0;
     }
 
@@ -438,6 +438,11 @@ int RAND_DRBG_set_defaults(int type, unsigned int flags)
         rand_drbg_flags[RAND_DRBG_TYPE_PRIVATE] = flags | RAND_DRBG_FLAG_PRIVATE;
     }
     return 1;
+}
+
+int RAND_DRBG_set_defaults(int type, unsigned int flags)
+{
+    return RAND_DRBG_set_defaults_ex(NULL, type, flags);
 }
 
 
@@ -671,6 +676,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
     int index = -1, type, flags;
+
     if (drbg->meth != NULL) {
         drbg->meth->uninstantiate(drbg);
         drbg->meth = NULL;
@@ -1366,7 +1372,7 @@ static int drbg_status(void)
  * Returns pointer to the DRBG on success, NULL on failure.
  *
  */
-RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx)
+RAND_DRBG *RAND_DRBG_get0_master_ex(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
 
@@ -1378,14 +1384,14 @@ RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx)
 
 RAND_DRBG *RAND_DRBG_get0_master(void)
 {
-    return OPENSSL_CTX_get0_master_drbg(NULL);
+    return RAND_DRBG_get0_master_ex(NULL);
 }
 
 /*
  * Get the public DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  */
-RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
+RAND_DRBG *RAND_DRBG_get0_public_ex(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
@@ -1411,14 +1417,14 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 
 RAND_DRBG *RAND_DRBG_get0_public(void)
 {
-    return OPENSSL_CTX_get0_public_drbg(NULL);
+    return RAND_DRBG_get0_public_ex(NULL);
 }
 
 /*
  * Get the private DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  */
-RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
+RAND_DRBG *RAND_DRBG_get0_private_ex(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
     RAND_DRBG *drbg;
@@ -1444,7 +1450,7 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 
 RAND_DRBG *RAND_DRBG_get0_private(void)
 {
-    return OPENSSL_CTX_get0_private_drbg(NULL);
+    return RAND_DRBG_get0_private_ex(NULL);
 }
 
 RAND_METHOD rand_meth = {
