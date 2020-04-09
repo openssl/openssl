@@ -30,6 +30,20 @@ void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
     return tctx;
 }
 
+void *tdes_dupctx(void *ctx)
+{
+    PROV_TDES_CTX *in = (PROV_TDES_CTX *)ctx;
+    PROV_TDES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    in->base.hw->copyctx(&ret->base, &in->base);
+
+    return ret;
+}
+
 void tdes_freectx(void *vctx)
 {
     PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;

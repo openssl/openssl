@@ -40,6 +40,20 @@ static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
     return ctx;
 }
 
+static void *des_dupctx(void *ctx)
+{
+    PROV_DES_CTX *in = (PROV_DES_CTX *)ctx;
+    PROV_DES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    in->base.hw->copyctx(&ret->base, &in->base);
+
+    return ret;
+}
+
 static void des_freectx(void *vctx)
 {
     PROV_DES_CTX *ctx = (PROV_DES_CTX *)vctx;
@@ -137,6 +151,7 @@ const OSSL_DISPATCH des_##lcmode##_functions[] = {                             \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void))des_##lcmode##_newctx },                                 \
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))des_dupctx },                   \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))des_freectx },                 \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void))des_##lcmode##_get_params },                             \
