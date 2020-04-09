@@ -87,6 +87,7 @@ int ERR_load_CMS_strings(void);
 #   define CMS_F_CMS_RECEIPT_VERIFY                         0
 #   define CMS_F_CMS_RECIPIENTINFO_DECRYPT                  0
 #   define CMS_F_CMS_RECIPIENTINFO_ENCRYPT                  0
+#   define CMS_F_CMS_RECIPIENTINFO_KARI_DECRYPT             0
 #   define CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT             0
 #   define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG            0
 #   define CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID        0
