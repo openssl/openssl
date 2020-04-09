@@ -9,8 +9,7 @@ $COMMON_GOAL=../../libcommon.a
 
 $NULL_GOAL=../../libimplementations.a
 $AES_GOAL=../../libimplementations.a
-$TDES_1_GOAL=../../libimplementations.a
-$TDES_2_GOAL=../../libimplementations.a
+$TDES_GOAL=../../libimplementations.a
 $ARIA_GOAL=../../libimplementations.a
 $CAMELLIA_GOAL=../../libimplementations.a
 $DES_GOAL=../../liblegacy.a
@@ -31,10 +30,6 @@ SOURCE[$COMMON_GOAL]=\
         ciphercommon.c ciphercommon_hw.c ciphercommon_block.c \
         ciphercommon_gcm.c ciphercommon_gcm_hw.c \
         ciphercommon_ccm.c ciphercommon_ccm_hw.c
-
-IF[{- !$disabled{des} -}]
-  SOURCE[$TDES_1_GOAL]=cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
-ENDIF
 
 SOURCE[$NULL_GOAL]=\
         cipher_null.c
@@ -59,11 +54,12 @@ IF[{- !$disabled{siv} -}]
 ENDIF
 
 IF[{- !$disabled{des} -}]
-  SOURCE[$TDES_2_GOAL]=\
+  SOURCE[$TDES_GOAL]=\
+      cipher_tdes.c cipher_tdes_common.c cipher_tdes_hw.c
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c
   SOURCE[$DES_GOAL]=\
-      cipher_desx.c cipher_desx_hw.c cipher_tdes_common.c\
+      cipher_desx.c cipher_desx_hw.c \
       cipher_des.c cipher_des_hw.c
 ENDIF
 
