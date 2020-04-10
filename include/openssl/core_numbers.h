@@ -57,6 +57,7 @@ extern "C" {
  * 0 serves as a marker for the end of the OSSL_DISPATCH array, and must
  * therefore NEVER be used as a function identity.
  */
+
 /* Functions provided by the Core to the provider, reserved numbers 1-1023 */
 # define OSSL_FUNC_CORE_GETTABLE_PARAMS        1
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
@@ -130,19 +131,18 @@ OSSL_CORE_MAKE_FUNC(void,
 
 /* Bio functions provided by the core */
 #define OSSL_FUNC_BIO_NEW_FILE                40
-#define OSSL_FUNC_BIO_NEW_MEMBUF              41
-#define OSSL_FUNC_BIO_READ_EX                 42
-#define OSSL_FUNC_BIO_FREE                    43
-#define OSSL_FUNC_BIO_VPRINTF                 44
-#define OSSL_FUNC_BIO_VSNPRINTF               45
-
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_file, (const char *filename, const char *mode))
+#define OSSL_FUNC_BIO_NEW_MEMBUF              41
 OSSL_CORE_MAKE_FUNC(BIO *, BIO_new_membuf, (const void *buf, int len))
+#define OSSL_FUNC_BIO_READ_EX                 42
 OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (BIO *bio, void *data, size_t data_len,
                                        size_t *bytes_read))
+#define OSSL_FUNC_BIO_FREE                    43
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (BIO *bio))
+#define OSSL_FUNC_BIO_VPRINTF                 44
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (BIO *bio, const char *format,
                                        va_list args))
+#define OSSL_FUNC_BIO_VSNPRINTF               45
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
                    (char *buf, size_t n, const char *fmt, va_list args))
 
