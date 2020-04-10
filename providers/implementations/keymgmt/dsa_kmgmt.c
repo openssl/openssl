@@ -13,7 +13,7 @@
  */
 #include "internal/deprecated.h"
 
-#include <string.h> /* strcmp */
+#include "e_os.h" /* strcasecmp */
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
@@ -83,7 +83,7 @@ static int dsa_gen_type_name2id(const char *name)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(dsatype2id); ++i) {
-        if (strcmp(dsatype2id[i].name, name) == 0)
+        if (strcasecmp(dsatype2id[i].name, name) == 0)
             return dsatype2id[i].id;
     }
     return -1;
