@@ -85,15 +85,15 @@ static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
 #define RAND_DRBG_TYPE_PRIVATE                    2
 
 /* Defaults */
-static int rand_drbg_type[3] = {
-    RAND_DRBG_TYPE, /* Master */
-    RAND_DRBG_TYPE, /* Public */
-    RAND_DRBG_TYPE  /* Private */
-};
-static unsigned int rand_drbg_flags[3] = {
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_MASTER, /* Master */
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PUBLIC, /* Public */
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PRIVATE /* Private */
+typedef struct drbg_types_st {
+    int type;
+    int flags;
+} DRBG_TYPES;
+
+static DRBG_TYPES types[3] = {
+    {RAND_DRBG_TYPE, RAND_DRBG_FLAGS | RAND_DRBG_FLAG_MASTER},
+    {RAND_DRBG_TYPE, RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PUBLIC},
+    {RAND_DRBG_TYPE, RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PRIVATE}
 };
 
 static unsigned int master_reseed_interval = MASTER_RESEED_INTERVAL;
@@ -350,8 +350,8 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
 static int rand_drbg_set(RAND_DRBG *drbg, int type, unsigned int flags)
 {
     if (type == 0 && flags == 0) {
-        type = rand_drbg_type[RAND_DRBG_TYPE_MASTER];
-        flags = rand_drbg_flags[RAND_DRBG_TYPE_MASTER];
+        type = types[RAND_DRBG_TYPE_MASTER].type;
+        flags = types[RAND_DRBG_TYPE_MASTER].flags;
     }
 
     /* If set is called multiple times - clear the old one */
@@ -426,16 +426,16 @@ int RAND_DRBG_set_defaults_ex(OPENSSL_CTX *ctx, int type, unsigned int flags)
 
     all = ((flags & RAND_DRBG_TYPE_FLAGS) == 0);
     if (all || (flags & RAND_DRBG_FLAG_MASTER) != 0) {
-        rand_drbg_type[RAND_DRBG_TYPE_MASTER] = type;
-        rand_drbg_flags[RAND_DRBG_TYPE_MASTER] = flags | RAND_DRBG_FLAG_MASTER;
+        types[RAND_DRBG_TYPE_MASTER].type = type;
+        types[RAND_DRBG_TYPE_MASTER].flags = flags | RAND_DRBG_FLAG_MASTER;
     }
     if (all || (flags & RAND_DRBG_FLAG_PUBLIC) != 0) {
-        rand_drbg_type[RAND_DRBG_TYPE_PUBLIC]  = type;
-        rand_drbg_flags[RAND_DRBG_TYPE_PUBLIC] = flags | RAND_DRBG_FLAG_PUBLIC;
+        types[RAND_DRBG_TYPE_PUBLIC].type  = type;
+        types[RAND_DRBG_TYPE_PUBLIC].flags = flags | RAND_DRBG_FLAG_PUBLIC;
     }
     if (all || (flags & RAND_DRBG_FLAG_PRIVATE) != 0) {
-        rand_drbg_type[RAND_DRBG_TYPE_PRIVATE] = type;
-        rand_drbg_flags[RAND_DRBG_TYPE_PRIVATE] = flags | RAND_DRBG_FLAG_PRIVATE;
+        types[RAND_DRBG_TYPE_PRIVATE].type = type;
+        types[RAND_DRBG_TYPE_PRIVATE].flags = flags | RAND_DRBG_FLAG_PRIVATE;
     }
     return 1;
 }
@@ -691,8 +691,8 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
         index = RAND_DRBG_TYPE_PUBLIC;
 
     if (index != -1) {
-        flags = rand_drbg_flags[index];
-        type = rand_drbg_type[index];
+        flags = types[index].flags;
+        type = types[index].type;
     } else {
         flags = drbg->flags;
         type = drbg->type;
@@ -1179,8 +1179,9 @@ static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *parent, int drbg_type)
 {
     RAND_DRBG *drbg;
 
-    drbg = RAND_DRBG_secure_new_ex(ctx, rand_drbg_type[drbg_type],
-                                   rand_drbg_flags[drbg_type], parent);
+    drbg = RAND_DRBG_secure_new_ex(ctx,
+                                   types[drbg_type].type,
+                                   types[drbg_type].flags, parent);
     if (drbg == NULL)
         return NULL;
 
