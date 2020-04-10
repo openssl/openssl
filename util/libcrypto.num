@@ -5050,4 +5050,4 @@ d2i_AutoPrivateKey_ex                   ?	3_0_0	EXIST::FUNCTION:
 d2i_PrivateKey_ex_fp                    ?	3_0_0	EXIST::FUNCTION:STDIO
 d2i_PrivateKey_ex_bio                   ?	3_0_0	EXIST::FUNCTION:
 PEM_read_bio_PrivateKey_ex              ?	3_0_0	EXIST::FUNCTION:
-PEM_read_PrivateKey_ex                  ?	3_0_0	EXIST::FUNCTION:
+PEM_read_PrivateKey_ex                  ?	3_0_0	EXIST::FUNCTION:STDIO
