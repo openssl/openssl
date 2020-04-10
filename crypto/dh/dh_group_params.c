@@ -163,7 +163,7 @@ DH *dh_new_by_nid_with_libctx(OPENSSL_CTX *libctx, int nid)
 {
     const char *name = ffc_named_group_from_uid(nid);
 
-    return dh_new_by_group_name(NULL, name);
+    return dh_new_by_group_name(libctx, name);
 }
 
 DH *DH_new_by_nid(int nid)
