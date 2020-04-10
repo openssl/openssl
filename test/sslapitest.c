@@ -2272,7 +2272,7 @@ static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
     SSL *ssl = NULL;
     int testresult = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method()))
+    if (!TEST_ptr(ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method()))
             || !TEST_ptr(ssl = SSL_new(ctx))
             || !TEST_ptr(sslbio = BIO_new(BIO_f_ssl()))
             || !TEST_ptr(membio1 = BIO_new(BIO_s_mem())))
@@ -4875,7 +4875,7 @@ static int test_serverinfo(int tst)
     int ret, expected, testresult = 0;
     SSL_CTX *ctx;
 
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 
@@ -5416,7 +5416,7 @@ static int test_max_fragment_len_ext(int idx_tst)
     int testresult = 0, MFL_mode = 0;
     BIO *rbio, *wbio;
 
-    ctx = SSL_CTX_new(TLS_method());
+    ctx = SSL_CTX_new_with_libctx(libctx, NULL, TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
 
@@ -6236,16 +6236,26 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     const unsigned char tick_hmac_key[16] = "0123456789abcdef";
+    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA-256", NULL);
+    int ret;
 
     tick_key_cb_called = 1;
     memset(iv, 0, AES_BLOCK_SIZE);
     memset(key_name, 0, 16);
-    if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, tick_aes_key, iv, enc)
-            || !HMAC_Init_ex(hctx, tick_hmac_key, sizeof(tick_hmac_key),
-                             EVP_sha256(), NULL))
-        return -1;
+    if (aes128cbc == NULL
+            || sha256 == NULL
+            || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
+            || !HMAC_Init_ex(hctx, tick_hmac_key, sizeof(tick_hmac_key), sha256,
+                             NULL))
+        ret = -1;
+    else
+        ret = tick_key_renew ? 2 : 1;
 
-    return tick_key_renew ? 2 : 1;
+    EVP_CIPHER_free(aes128cbc);
+    EVP_MD_free(sha256);
+
+    return ret;
 }
 #endif
 
@@ -6256,6 +6266,8 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     unsigned char tick_hmac_key[16] = "0123456789abcdef";
     OSSL_PARAM params[3];
+    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    int ret;
 
     tick_key_cb_called = 1;
     memset(iv, 0, AES_BLOCK_SIZE);
@@ -6266,12 +6278,17 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
                                                   tick_hmac_key,
                                                   sizeof(tick_hmac_key));
     params[2] = OSSL_PARAM_construct_end();
-    if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, tick_aes_key, iv, enc)
+    if (aes128cbc == NULL
+            || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
             || !EVP_MAC_CTX_set_params(hctx, params)
             || !EVP_MAC_init(hctx))
-        return -1;
+        ret = -1;
+    else
+        ret = tick_key_renew ? 2 : 1;
 
-    return tick_key_renew ? 2 : 1;
+    EVP_CIPHER_free(aes128cbc);
+
+    return ret;
 }
 
 /*
