@@ -24,30 +24,44 @@ IF[{- !$disabled{apps} -}]
   DEPEND[openssl]=libapps.a ../libssl
   IF[{- !$disabled{'des'} -}]
     SOURCE[openssl]=pkcs12.c
+    DEPEND[pkcs12.o]=progs.h
   ENDIF
   IF[{- !$disabled{'ec'} -}]
     SOURCE[openssl]=ec.c ecparam.c
+    DEPEND[ec.o]=progs.h
+    DEPEND[ecparam.o]=progs.h
   ENDIF
   IF[{- !$disabled{'ocsp'} -}]
     SOURCE[openssl]=ocsp.c
+    DEPEND[ocsp.o]=progs.h
   ENDIF
   IF[{- !$disabled{'srp'} -}]
     SOURCE[openssl]=srp.c
+    DEPEND[srp.o]=progs.h
   ENDIF
   IF[{- !$disabled{'ts'} -}]
     SOURCE[openssl]=ts.c
+    DEPEND[ts.o]=progs.h
   ENDIF
   IF[{- !$disabled{'dh'} -}]
     SOURCE[openssl]=dhparam.c
+    DEPEND[dhparam.o]=progs.h
   ENDIF
   IF[{- !$disabled{'dsa'} -}]
     SOURCE[openssl]=dsa.c dsaparam.c gendsa.c
+    DEPEND[dsa.o]=progs.h
+    DEPEND[dsaparam.o]=progs.h
+    DEPEND[gendsa.o]=progs.h
   ENDIF
   IF[{- !$disabled{'engine'} -}]
     SOURCE[openssl]=engine.c
+    DEPEND[engine.o]=progs.h
   ENDIF
   IF[{- !$disabled{'rsa'} -}]
     SOURCE[openssl]=rsa.c rsautl.c genrsa.c
+    DEPEND[rsa.o]=progs.h
+    DEPEND[rsautl.o]=progs.h
+    DEPEND[genrsa.o]=progs.h
   ENDIF
   IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
