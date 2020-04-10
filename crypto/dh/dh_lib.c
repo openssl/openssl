@@ -351,7 +351,7 @@ static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
     /* If key type not DH return error */
     if (ctx->pmeth != NULL
         && (ctx->pmeth->pkey_id != EVP_PKEY_DH
-            || ctx->pmeth->pkey_id != EVP_PKEY_DHX))
+            && ctx->pmeth->pkey_id != EVP_PKEY_DHX))
         return -1;
     return 1;
 }
