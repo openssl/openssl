@@ -172,8 +172,9 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
         if (keydata == NULL)
             goto not_supported;
-        ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
-                                           ctx->op.keymgmt.genctx, keydata);
+        if (ctx->keymgmt->gen_set_template != NULL)
+            ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
+                                            ctx->op.keymgmt.genctx, keydata);
     }
 
     /*
