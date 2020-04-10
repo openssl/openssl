@@ -4739,40 +4739,10 @@ EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
         goto err;
     }
     gtype = ginf->flags & TLS_GROUP_TYPE;
-    /*
-     * TODO(3.0): Convert these EVP_PKEY_CTX_new_id calls to ones that take
-     * s->ctx->libctx and s->ctx->propq when keygen has been updated to be
-     * provider aware.
-     */
-# ifndef OPENSSL_NO_DH
-    if (gtype == TLS_GROUP_FFDHE)
-#  if 0
-        pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "DH", s->ctx->propq);
-#  else
-        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, NULL);
-#  endif
-#  ifndef OPENSSL_NO_EC
-    else
-#  endif /* OPENSSL_NO_EC */
-# endif /* OPENSSL_NO_DH */
-# ifndef OPENSSL_NO_EC
-    {
-        /*
-         * TODO(3.0): When provider based EC key gen is present we can enable
-         * this code.
-         */
-        if (gtype == TLS_GROUP_CURVE_CUSTOM)
-            pctx = EVP_PKEY_CTX_new_id(ginf->nid, NULL);
-        else
-#  if 0
-            pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "EC",
-                                              s->ctx->propq);
-#  else
-            pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-#  endif
 
-    }
-# endif /* OPENSSL_NO_EC */
+    pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, ginf->keytype,
+                                      s->ctx->propq);
+
     if (pctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
                  ERR_R_MALLOC_FAILURE);
@@ -4838,11 +4808,7 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
     const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
-#if 0
     const char *pkey_ctx_name;
-#else
-    int pkey_ctx_id;
-#endif
 
     if (ginf == NULL)
         goto err;
@@ -4855,20 +4821,9 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
         return NULL;
     }
 
-    /*
-     * TODO(3.0): Convert this EVP_PKEY_CTX_new_id call to one that takes
-     * s->ctx->libctx and s->ctx->propq when paramgen has been updated to be
-     * provider aware.
-     */
-#if 0
     pkey_ctx_name = (ginf->flags & TLS_GROUP_FFDHE) != 0 ? "DH" : "EC";
     pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, pkey_ctx_name,
                                       s->ctx->propq);
-#else
-    pkey_ctx_id = (ginf->flags & TLS_GROUP_FFDHE)
-                        ? EVP_PKEY_DH : EVP_PKEY_EC;
-    pctx = EVP_PKEY_CTX_new_id(pkey_ctx_id, NULL);
-#endif
 
     if (pctx == NULL)
         goto err;

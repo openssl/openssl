@@ -1760,6 +1760,7 @@ typedef struct sigalg_lookup_st {
 
 typedef struct tls_group_info_st {
     int nid;                    /* Curve NID */
+    const char *keytype;
     int secbits;                /* Bits of security (from SP800-57) */
     uint32_t flags;             /* For group type and applicable TLS versions */
     uint16_t group_id;          /* Group ID */
