@@ -106,6 +106,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
     const EC_GROUP *ecg = NULL;
     size_t pub_key_len = 0;
     int ret = 0;
+    BN_CTX *bnctx = NULL;
 
     if (eckey == NULL
         || (ecg = EC_KEY_get0_group(eckey)) == NULL)
@@ -115,10 +116,18 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
     pub_point = EC_KEY_get0_public_key(eckey);
 
     if (pub_point != NULL) {
+        /*
+         * EC_POINT_point2buf() can generate random numbers in some
+         * implementations so we need to ensure we use the correct libctx.
+         */
+        bnctx = BN_CTX_new_ex(ec_key_get_libctx(eckey));
+        if (bnctx == NULL)
+            goto err;
+
         /* convert pub_point to a octet string according to the SECG standard */
         if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
                                               POINT_CONVERSION_COMPRESSED,
-                                              pub_key, NULL)) == 0
+                                              pub_key, bnctx)) == 0
             || !ossl_param_build_set_octet_string(tmpl, params,
                                                   OSSL_PKEY_PARAM_PUB_KEY,
                                                   *pub_key, pub_key_len))
@@ -174,6 +183,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
     }
     ret = 1;
  err:
+    BN_CTX_free(bnctx);
     return ret;
 }
 
