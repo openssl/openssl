@@ -367,6 +367,10 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-256", "provider=fips,fips=yes", sha3_256_functions },
     { "SHA3-384", "provider=fips,fips=yes", sha3_384_functions },
     { "SHA3-512", "provider=fips,fips=yes", sha3_512_functions },
+
+    { "SHAKE-128:SHAKE128", "provider=fips,fips=yes", shake_128_functions },
+    { "SHAKE-256:SHAKE256", "provider=fips,fips=yes", shake_256_functions },
+
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * KMAC128 and KMAC256.
