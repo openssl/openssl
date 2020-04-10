@@ -450,10 +450,11 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     return rv;
 }
 
-static int ecx_generic_import_from(const OSSL_PARAM params[], void *key,
+static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
                                    int keytype)
 {
-    EVP_PKEY *pkey = key;
+    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     ECX_KEY *ecx = ecx_key_new(KEYNID2TYPE(keytype), 0);
 
     if (ecx == NULL) {
@@ -469,9 +470,9 @@ static int ecx_generic_import_from(const OSSL_PARAM params[], void *key,
     return 1;
 }
 
-static int x25519_import_from(const OSSL_PARAM params[], void *key)
+static int x25519_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    return ecx_generic_import_from(params, key, EVP_PKEY_X25519);
+    return ecx_generic_import_from(params, vpctx, EVP_PKEY_X25519);
 }
 
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
@@ -522,9 +523,9 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_priv_decode_with_libctx
 };
 
-static int x448_import_from(const OSSL_PARAM params[], void *key)
+static int x448_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    return ecx_generic_import_from(params, key, EVP_PKEY_X448);
+    return ecx_generic_import_from(params, vpctx, EVP_PKEY_X448);
 }
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
@@ -647,9 +648,9 @@ static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
-static int ed25519_import_from(const OSSL_PARAM params[], void *key)
+static int ed25519_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    return ecx_generic_import_from(params, key, EVP_PKEY_ED25519);
+    return ecx_generic_import_from(params, vpctx, EVP_PKEY_ED25519);
 }
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
@@ -699,9 +700,9 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_priv_decode_with_libctx
 };
 
-static int ed448_import_from(const OSSL_PARAM params[], void *key)
+static int ed448_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    return ecx_generic_import_from(params, key, EVP_PKEY_ED448);
+    return ecx_generic_import_from(params, vpctx, EVP_PKEY_ED448);
 }
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {

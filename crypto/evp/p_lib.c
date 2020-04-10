@@ -1568,24 +1568,38 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         if (pk->ameth->import_from == NULL) {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_NO_IMPORT_FUNCTION,
                            "key type = %s", keytype);
-        } else if (evp_keymgmt_export(keymgmt, keydata,
-                                      OSSL_KEYMGMT_SELECT_ALL,
-                                      pk->ameth->import_from, pk)) {
+        } else {
             /*
-             * Save the provider side data in the operation cache, so they'll
-             * find it again.  evp_pkey_free_it() cleared the cache, so it's
-             * safe to assume slot zero is free.
-             * Note that evp_keymgmt_util_cache_keydata() increments keymgmt's
-             * reference count.
+             * We perform the export in the same libctx as the keymgmt that we
+             * are using.
              */
-            evp_keymgmt_util_cache_keydata(pk, 0, keymgmt, keydata);
+            OPENSSL_CTX *libctx = ossl_provider_library_context(keymgmt->prov);
+            EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, NULL);
+            if (pctx == NULL)
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
 
-            /* Synchronize the dirty count */
-            pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+            if (pctx != NULL
+                    && evp_keymgmt_export(keymgmt, keydata,
+                                          OSSL_KEYMGMT_SELECT_ALL,
+                                          pk->ameth->import_from, pctx)) {
+                /*
+                 * Save the provider side data in the operation cache, so they'll
+                 * find it again.  evp_pkey_free_it() cleared the cache, so it's
+                 * safe to assume slot zero is free.
+                 * Note that evp_keymgmt_util_cache_keydata() increments keymgmt's
+                 * reference count.
+                 */
+                evp_keymgmt_util_cache_keydata(pk, 0, keymgmt, keydata);
+                EVP_PKEY_CTX_free(pctx);
 
-            /* evp_keymgmt_export() increased the refcount... */
-            EVP_KEYMGMT_free(keymgmt);
-            return 1;
+                /* Synchronize the dirty count */
+                pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+
+                /* evp_keymgmt_export() increased the refcount... */
+                EVP_KEYMGMT_free(keymgmt);
+                return 1;
+            }
+            EVP_PKEY_CTX_free(pctx);
         }
 
         ERR_raise_data(ERR_LIB_EVP, EVP_R_KEYMGMT_EXPORT_FAILURE,

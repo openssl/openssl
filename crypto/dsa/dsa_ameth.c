@@ -576,10 +576,11 @@ err:
     return rv;
 }
 
-static int dsa_pkey_import_from(const OSSL_PARAM params[], void *key)
+static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    EVP_PKEY *pkey = key;
-    DSA *dsa = DSA_new();
+    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+    DSA *dsa = dsa_new_with_ctx(pctx->libctx);
 
     if (dsa == NULL) {
         ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
