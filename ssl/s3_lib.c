@@ -4738,23 +4738,9 @@ EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
     }
     gtype = ginf->flags & TLS_GROUP_TYPE;
 
-# ifndef OPENSSL_NO_DH
-    if (gtype == TLS_GROUP_FFDHE)
-        pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "DH", s->ctx->propq);
-#  ifndef OPENSSL_NO_EC
-    else
-#  endif /* OPENSSL_NO_EC */
-# endif /* OPENSSL_NO_DH */
-# ifndef OPENSSL_NO_EC
-    {
-        if (gtype == TLS_GROUP_CURVE_CUSTOM)
-            pctx = EVP_PKEY_CTX_new_id(ginf->nid, NULL);
-        else
-            pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "EC",
-                                              s->ctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, ginf->keyname,
+                                      s->ctx->propq);
 
-    }
-# endif /* OPENSSL_NO_EC */
     if (pctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
                  ERR_R_MALLOC_FAILURE);

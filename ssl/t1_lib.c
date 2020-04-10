@@ -142,44 +142,44 @@ int tls1_clear(SSL *s)
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const TLS_GROUP_INFO nid_list[] = {
 # ifndef OPENSSL_NO_EC
-    {NID_sect163k1, 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
-    {NID_sect163r1, 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
-    {NID_sect163r2, 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
-    {NID_sect193r1, 80, TLS_GROUP_CURVE_CHAR2, 0x0004}, /* sect193r1 (4) */
-    {NID_sect193r2, 80, TLS_GROUP_CURVE_CHAR2, 0x0005}, /* sect193r2 (5) */
-    {NID_sect233k1, 112, TLS_GROUP_CURVE_CHAR2, 0x0006}, /* sect233k1 (6) */
-    {NID_sect233r1, 112, TLS_GROUP_CURVE_CHAR2, 0x0007}, /* sect233r1 (7) */
-    {NID_sect239k1, 112, TLS_GROUP_CURVE_CHAR2, 0x0008}, /* sect239k1 (8) */
-    {NID_sect283k1, 128, TLS_GROUP_CURVE_CHAR2, 0x0009}, /* sect283k1 (9) */
-    {NID_sect283r1, 128, TLS_GROUP_CURVE_CHAR2, 0x000A}, /* sect283r1 (10) */
-    {NID_sect409k1, 192, TLS_GROUP_CURVE_CHAR2, 0x000B}, /* sect409k1 (11) */
-    {NID_sect409r1, 192, TLS_GROUP_CURVE_CHAR2, 0x000C}, /* sect409r1 (12) */
-    {NID_sect571k1, 256, TLS_GROUP_CURVE_CHAR2, 0x000D}, /* sect571k1 (13) */
-    {NID_sect571r1, 256, TLS_GROUP_CURVE_CHAR2, 0x000E}, /* sect571r1 (14) */
-    {NID_secp160k1, 80, TLS_GROUP_CURVE_PRIME, 0x000F}, /* secp160k1 (15) */
-    {NID_secp160r1, 80, TLS_GROUP_CURVE_PRIME, 0x0010}, /* secp160r1 (16) */
-    {NID_secp160r2, 80, TLS_GROUP_CURVE_PRIME, 0x0011}, /* secp160r2 (17) */
-    {NID_secp192k1, 80, TLS_GROUP_CURVE_PRIME, 0x0012}, /* secp192k1 (18) */
-    {NID_X9_62_prime192v1, 80, TLS_GROUP_CURVE_PRIME, 0x0013}, /* secp192r1 (19) */
-    {NID_secp224k1, 112, TLS_GROUP_CURVE_PRIME, 0x0014}, /* secp224k1 (20) */
-    {NID_secp224r1, 112, TLS_GROUP_CURVE_PRIME, 0x0015}, /* secp224r1 (21) */
-    {NID_secp256k1, 128, TLS_GROUP_CURVE_PRIME, 0x0016}, /* secp256k1 (22) */
-    {NID_X9_62_prime256v1, 128, TLS_GROUP_CURVE_PRIME, 0x0017}, /* secp256r1 (23) */
-    {NID_secp384r1, 192, TLS_GROUP_CURVE_PRIME, 0x0018}, /* secp384r1 (24) */
-    {NID_secp521r1, 256, TLS_GROUP_CURVE_PRIME, 0x0019}, /* secp521r1 (25) */
-    {NID_brainpoolP256r1, 128, TLS_GROUP_CURVE_PRIME, 0x001A}, /* brainpoolP256r1 (26) */
-    {NID_brainpoolP384r1, 192, TLS_GROUP_CURVE_PRIME, 0x001B}, /* brainpoolP384r1 (27) */
-    {NID_brainpoolP512r1, 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
-    {EVP_PKEY_X25519, 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
-    {EVP_PKEY_X448, 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
+    {NID_sect163k1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
+    {NID_sect163r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
+    {NID_sect163r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
+    {NID_sect193r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0004}, /* sect193r1 (4) */
+    {NID_sect193r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0005}, /* sect193r2 (5) */
+    {NID_sect233k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0006}, /* sect233k1 (6) */
+    {NID_sect233r1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0007}, /* sect233r1 (7) */
+    {NID_sect239k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0008}, /* sect239k1 (8) */
+    {NID_sect283k1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x0009}, /* sect283k1 (9) */
+    {NID_sect283r1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x000A}, /* sect283r1 (10) */
+    {NID_sect409k1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000B}, /* sect409k1 (11) */
+    {NID_sect409r1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000C}, /* sect409r1 (12) */
+    {NID_sect571k1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000D}, /* sect571k1 (13) */
+    {NID_sect571r1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000E}, /* sect571r1 (14) */
+    {NID_secp160k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x000F}, /* secp160k1 (15) */
+    {NID_secp160r1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0010}, /* secp160r1 (16) */
+    {NID_secp160r2, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0011}, /* secp160r2 (17) */
+    {NID_secp192k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0012}, /* secp192k1 (18) */
+    {NID_X9_62_prime192v1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0013}, /* secp192r1 (19) */
+    {NID_secp224k1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0014}, /* secp224k1 (20) */
+    {NID_secp224r1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0015}, /* secp224r1 (21) */
+    {NID_secp256k1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0016}, /* secp256k1 (22) */
+    {NID_X9_62_prime256v1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0017}, /* secp256r1 (23) */
+    {NID_secp384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x0018}, /* secp384r1 (24) */
+    {NID_secp521r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x0019}, /* secp521r1 (25) */
+    {NID_brainpoolP256r1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x001A}, /* brainpoolP256r1 (26) */
+    {NID_brainpoolP384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x001B}, /* brainpoolP384r1 (27) */
+    {NID_brainpoolP512r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
+    {EVP_PKEY_X25519, "X25519", 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
+    {EVP_PKEY_X448, "X448", 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
 # endif /* OPENSSL_NO_EC */
 # ifndef OPENSSL_NO_DH
     /* Security bit values for FFDHE groups are updated as per RFC 7919 */
-    {NID_ffdhe2048, 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
-    {NID_ffdhe3072, 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
-    {NID_ffdhe4096, 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
-    {NID_ffdhe6144, 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
-    {NID_ffdhe8192, 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
+    {NID_ffdhe2048, "DH", 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
+    {NID_ffdhe3072, "DH", 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
+    {NID_ffdhe4096, "DH", 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
+    {NID_ffdhe6144, "DH", 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
+    {NID_ffdhe8192, "DH", 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
 # endif /* OPENSSL_NO_DH */
 };
 #endif
