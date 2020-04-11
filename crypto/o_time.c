@@ -41,7 +41,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
     if (gmtime_r(timer, result) == NULL)
         return NULL;
     ts = result;
-#elif defined (OPENSSL_SYS_WINDOWS) && defined(_MSC_VER) && _MSC_VER >= 1400
+#elif defined (OPENSSL_SYS_WINDOWS) && defined(_MSC_VER) && _MSC_VER >= 1400 && !defined(_WIN32_WCE)
     if (gmtime_s(result, timer))
         return NULL;
     ts = result;

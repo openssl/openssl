@@ -26,7 +26,7 @@
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
-# ifdef _WIN32
+# if defined(_WIN32) && !defined(_WIN32_WCE)
 #  include <windows.h>
 #  include <io.h>
 #  define stat    _stat

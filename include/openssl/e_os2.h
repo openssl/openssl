@@ -220,7 +220,7 @@ typedef UINT64 uint64_t;
 #  undef OPENSSL_NO_INTTYPES_H
 /* Because the specs say that inttypes.h includes stdint.h if present */
 #  undef OPENSSL_NO_STDINT_H
-# elif defined(_MSC_VER) && _MSC_VER<=1500
+# elif defined(_MSC_VER) && _MSC_VER<1600
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
  * stdint.h: currently just older VC++
