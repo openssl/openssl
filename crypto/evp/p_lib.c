@@ -1536,8 +1536,11 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     evp_pkey_free_it(pk);
     if (EVP_PKEY_set_type(pk, type)) {
         /* If the key is typed but empty, we're done */
-        if (keydata == NULL)
+        if (keydata == NULL) {
+            /* We're dropping the EVP_KEYMGMT */
+            EVP_KEYMGMT_free(keymgmt);
             return 1;
+        }
 
         if (pk->ameth->import_from == NULL) {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_NO_IMPORT_FUNCTION,
@@ -1568,6 +1571,9 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 
                 /* Synchronize the dirty count */
                 pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+
+                /* evp_keymgmt_export() increased the refcount... */
+                EVP_KEYMGMT_free(keymgmt);
                 return 1;
             }
         }
@@ -1587,6 +1593,8 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    /* EVP_PKEY_set_type_by_keymgmt() increased the refcount... */
+    EVP_KEYMGMT_free(keymgmt);
     pk->keydata = keydata;
     evp_keymgmt_util_cache_keyinfo(pk);
     return 0;     /* No downgrade, but at least the key is restored */
