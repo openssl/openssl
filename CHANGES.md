@@ -24,6 +24,14 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+ * Deprecated EC_POINT_set_Jprojective_coordinates_GFp() and
+   EC_POINT_get_Jprojective_coordinates_GFp(). These functions are not widely
+   used and applications should instead use the
+   L<EC_POINT_set_affine_coordinates(3)> and
+   L<EC_POINT_get_affine_coordinates(3)> functions.
+
+   *Billy Bob Brumley*
+
  * Added OSSL_PARAM_BLD to the public interface.  This allows OSSL_PARAM
    arrays to be more easily constructed via a series of utility functions.
    Create a parameter builder using OSSL_PARAM_BLD_new(), add parameters using

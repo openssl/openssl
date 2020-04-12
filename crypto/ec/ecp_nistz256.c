@@ -1694,8 +1694,6 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ecp_nistz256_get_affine,
         0, 0, 0,

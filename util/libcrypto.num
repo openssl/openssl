@@ -223,7 +223,7 @@ EVP_MD_meth_set_input_blocksize         226	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_attrs               227	3_0_0	EXIST::FUNCTION:
 PKCS8_get_attr                          228	3_0_0	EXIST::FUNCTION:
 DSAparams_print_fp                      229	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA,STDIO
-EC_POINT_set_Jprojective_coordinates_GFp 230	3_0_0	EXIST::FUNCTION:EC
+EC_POINT_set_Jprojective_coordinates_GFp 230	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 DIST_POINT_NAME_new                     231	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_file                        232	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_decrypt               233	3_0_0	EXIST::FUNCTION:
@@ -2419,7 +2419,7 @@ MD2_Final                               2469	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 OCSP_REQ_CTX_add1_header                2470	3_0_0	EXIST::FUNCTION:
 NETSCAPE_SPKAC_it                       2471	3_0_0	EXIST::FUNCTION:
 ASIdOrRange_free                        2472	3_0_0	EXIST::FUNCTION:RFC3779
-EC_POINT_get_Jprojective_coordinates_GFp 2473	3_0_0	EXIST::FUNCTION:EC
+EC_POINT_get_Jprojective_coordinates_GFp 2473	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_aes_128_cbc_hmac_sha256             2474	3_0_0	EXIST::FUNCTION:
 i2d_PKCS7_SIGNED                        2475	3_0_0	EXIST::FUNCTION:
 TS_VERIFY_CTX_set_data                  2476	3_0_0	EXIST::FUNCTION:TS

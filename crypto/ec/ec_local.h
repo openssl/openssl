@@ -76,14 +76,6 @@ struct ec_method_st {
      * EC_POINT_set_compressed_coordinates:
      */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
-    int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,
-                                                  EC_POINT *, const BIGNUM *x,
-                                                  const BIGNUM *y,
-                                                  const BIGNUM *z, BN_CTX *);
-    int (*point_get_Jprojective_coordinates_GFp) (const EC_GROUP *,
-                                                  const EC_POINT *, BIGNUM *x,
-                                                  BIGNUM *y, BIGNUM *z,
-                                                  BN_CTX *);
     int (*point_set_affine_coordinates) (const EC_GROUP *, EC_POINT *,
                                          const BIGNUM *x, const BIGNUM *y,
                                          BN_CTX *);
