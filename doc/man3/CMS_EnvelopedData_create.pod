@@ -1,0 +1,48 @@
+=pod
+
+=head1 NAME
+
+CMS_EnvelopedData_create - Create CMS envelope
+
+=head1 SYNOPSIS
+
+ #include <openssl/cms.h>
+
+CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
+
+=head1 DESCRIPTION
+
+The B<CMS_ContentInfo>  
+
+CMS_EnvelopedData_create() creates a B<CMS_ContentInfo> structure with
+a type B<NID_pkcs7_enveloped>.
+
+The recipients can be added afterwards and the CMS_final() needs to be called
+to finalize the B<CMS_ContentInfo> structure.
+
+=head1 NOTES
+
+Although CMS_EnvelopedData_create() allocates a new B<CMS_ContentInfo>
+structure it is usually not used in applications. The wrappers CMS_encrypt()
+and CMS_decrypt() are often used instead.
+
+=head1 RETURN VALUES
+
+If the allocation fails, CMS_EnvelopedData_create() returns NULL and sets
+an error code that can be obtained by L<ERR_get_error(3)>.
+Otherwise it returns a pointer to the newly allocated structure.
+
+=head1 SEE ALSO
+
+L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
