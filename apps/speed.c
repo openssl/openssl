@@ -3396,11 +3396,9 @@ int speed_main(int argc, char **argv)
                     || loopargs[i].sm2_vfy_ctx[testnum] == NULL)
                 break;
 
-            /* SM2 keys are generated as normal EC keys with a special curve */
-            st = !((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
+            /* SM2 keys are generated directly by specifying the NID */
+            st = !((pctx = EVP_PKEY_CTX_new_id(sm2_curves[testnum].nid, NULL)) == NULL
                 || EVP_PKEY_keygen_init(pctx) <= 0
-                || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                    sm2_curves[testnum].nid) <= 0
                 || EVP_PKEY_keygen(pctx, &sm2_pkey) <= 0);
             EVP_PKEY_CTX_free(pctx);
             if (st == 0)
