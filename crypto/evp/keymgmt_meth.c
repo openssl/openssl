@@ -39,7 +39,7 @@ static void *keymgmt_from_dispatch(int name_id,
 {
     EVP_KEYMGMT *keymgmt = NULL;
     int setparamfncnt = 0, getparamfncnt = 0;
-    int setgenparamfncnt = 0, getgenparamfncnt = 0;;
+    int setgenparamfncnt = 0, getgenparamfncnt = 0;
     int importfncnt = 0, exportfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL) {
